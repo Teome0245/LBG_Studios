@@ -7,7 +7,8 @@
 | **O1** | **Studio** — Cortex, Pilot, Campus, agents | [`packages/cortex`](packages/cortex/) |
 | **O2** | **Jeu** — Godot Prime Client → serveur 246 | [`packages/prime-client`](packages/prime-client/) |
 
-Voir [`OBJECTIVES.md`](OBJECTIVES.md) et [`docs/REGISTRE.md`](docs/REGISTRE.md).
+Voir [`OBJECTIVES.md`](OBJECTIVES.md) et [`docs/REGISTRE.md`](docs/REGISTRE.md).  
+Smoke LAN (Pilot, Cockpit, Orch UI, Core3 `:8792`) : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — `bash tools/smoke_lan_surfaces.sh [--functional]`.
 
 ## Démarrer
 
@@ -19,6 +20,9 @@ code /home/sdesh/projects/LBG_Studios/LBG_Studios.code-workspace
 cd packages/cortex
 # Deploy Pilot/API → 140 : bash ../../tools/deploy_cortex_140.sh
 
+# Smoke surfaces LAN
+bash tools/smoke_lan_surfaces.sh --functional
+
 # Jeu — client Godot
 cd packages/prime-client
 # Sync J: / patches 246 : tools/ dans ce package
@@ -26,9 +30,12 @@ cd packages/prime-client
 
 ## Remotes liés (hors monorepo pour l’instant)
 
-| Dépôt | Rôle |
-|-------|------|
+| Dépôt / runtime | Rôle |
+|-----------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
+| Cockpit `.100:8093` | Ops infra (sources `_shelf/LBG_Project_03`) |
+| Orch UI `.100:5174` | SPA Vue Lyra / carte agents (sources `_archive/LBG_IA`) |
+| Prime / PreCU `:8792` | État serveurs + comptes Core3 |
 | Legacy | `../LBG_IA_MMORPG`, `../new_mmo` ; archive `../_archive/avatar_app` |
 
 ## Règle

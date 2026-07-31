@@ -9,10 +9,20 @@
 ## Checks LAN
 
 ```bash
-# Manifeste patches
+# Surfaces projet (Pilot, Cockpit, Orch, Core3 :8792, patches)
+bash ../../tools/smoke_lan_surfaces.sh --functional
+
+# Manifeste patches seul
 curl -sf -o /dev/null -w "%{http_code}\n" http://192.168.0.246:8080/patches/prime/manifest.json
 # Attendu : 200
+
+# État serveurs (pastilles Launchpad)
+curl -s http://192.168.0.246:8792/api/servers | jq .
+curl -s http://192.168.0.245:8792/api/servers | jq .
 ```
+
+UI comptes / état : http://192.168.0.246:8792/ (Prime) · http://192.168.0.245:8792/ (PreCU).  
+Doc globale : [`docs/SMOKE_LAN.md`](../../docs/SMOKE_LAN.md).
 
 ## Sync client → J:
 

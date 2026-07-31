@@ -1,9 +1,10 @@
 # Registre LBG Studios
 
-**Date** : 2026-07-31 (rectif : `avatar_app` → archive)  
+**Date** : 2026-07-31 (surfaces LAN + smoke)  
 **Source de vérité** : ce fichier.
 
-**Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`.
+**Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`.  
+**Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).
 
 **Règle** : dépôt **legacy / archive / étagère** = pas de nouvelle feature produit ; correctifs OK.
 

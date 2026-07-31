@@ -37,7 +37,11 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 Puis : `http://127.0.0.1:8000/pilot/` (UI), `GET /healthz`, `GET /v1/pilot/status` (santé agrégée, calcul serveur).
-`GET /v1/pilot/status` affiche normalement `backend: ok` et `orchestrator: error` (attendu, cf. ci-dessus).
+`GET /v1/pilot/status` affiche normalement `backend: ok` et `orchestrator: error` (attendu, cf. ci-dessus) en Cloud ;
+sur LAN 140, orchestrator + agents sont en général **ok**.
+
+Smoke surfaces LAN (Pilot 140, Cockpit/Orch `.100`, Core3 `:8792`) :
+`bash tools/smoke_lan_surfaces.sh --functional` — voir `docs/SMOKE_LAN.md`.
 
 ### Tests
 
