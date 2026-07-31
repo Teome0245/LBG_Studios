@@ -22,12 +22,13 @@
 | Chemin local | Rôle |
 |--------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
+| **Cockpit P03** (runtime) | Ops infra LAN — http://192.168.0.100:8093/pilot/#/cockpit (sources `_shelf/LBG_Project_03`) |
 
 ## Étagère
 
 | Dépôt | Motif |
 |-------|--------|
-| `_shelf/LBG_Project_03` | Cockpit ops / LangGraph — hors focus |
+| `_shelf/LBG_Project_03` | Sources Cockpit / LangGraph — runtime actif sur `.100:8093` ; pas de nouvelles features majeures ici (lien depuis Pilot Ops) |
 
 ## Archive / legacy upstream
 
