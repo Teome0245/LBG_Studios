@@ -1958,6 +1958,7 @@
             <button type="button" id="btn-assistant-preset-web">Web</button>
             <button type="button" id="btn-assistant-preset-mail">Mail</button>
             <button type="button" id="btn-assistant-preset-selfcheck">Infra</button>
+            <button type="button" id="btn-assistant-preset-mmo-dev" title="OpenGame prototype_game — dry-run, cible Prime / Godot (ADR 0003)">Forge Prime</button>
           </div>
         </div>
 
@@ -1999,13 +2000,6 @@
               <span class="assistant-muted" id="assistant-session-hint">—</span>
             </p>
             <pre id="assistant-session-summary-out" class="assistant-raw-collapsed" style="max-height:10rem;margin-top:0.35rem">—</pre>
-          </details>
-          <details class="pilot-legacy-lab" id="assistant-legacy-lab" style="margin-top:0.65rem">
-            <summary>⊘ Legacy lab — forge sandbox OpenGame</summary>
-            <p class="legacy-banner">Preset prototype dry-run (hors produit Godot ↔ 246).</p>
-            <p class="assistant-chip-row" style="margin:0.35rem 0">
-              <button type="button" id="btn-assistant-preset-mmo-dev">Forge sandbox</button>
-            </p>
           </details>
         </div>
       </aside>
@@ -5839,7 +5833,7 @@
       if (kind === "notepad_append") out.push("Vérifier que le chemin Notepad est dans l'allowlist du worker.");
       if (cap === "devops_probe") out.push("Conserver le selfcheck en lecture seule tant qu'aucun correctif humain n'est décidé.");
       if (cap === "prototype_game") {
-        out.push("La forge reste en sandbox ; aucun merge vers le dépôt canon sans revue humaine.");
+        out.push("La forge écrit en sandbox isolée ; aucun merge vers Prime / Godot sans revue humaine (ADR 0003).");
         if (proposal.source === "mmo_session_bridge" || (proposal.mmo_trace && typeof proposal.mmo_trace === "object")) {
           out.push("Trace MMO : idée issue d'un session_summary importé — ne pas renvoyer de données poste vers le persona MMO.");
         }
@@ -6225,13 +6219,14 @@
         textEl.value = "vérifie l'état du backend et de l'orchestrateur";
         ctxEl.value = JSON.stringify({ history: [] }, null, 2);
       } else if (kind === "mmo_dev") {
-        textEl.value = "forge un prototype sandbox à partir d'une session importée — dry-run uniquement, pas de merge";
+        textEl.value =
+          "forge un prototype OpenGame pour Prime / Godot à partir du session_summary — dry-run uniquement, pas de merge vers le tronc";
         let baseCtx = assistantParseJsonTextarea("assistant-context", {});
         if (!baseCtx || typeof baseCtx !== "object") baseCtx = {};
         if (!baseCtx.session_summary || typeof baseCtx.session_summary !== "object") {
           pilotInlineHint(
             "assistant-hint",
-            'Importez un session_summary et cliquez « Fusionner dans context » avant ce preset (ou complétez le JSON).',
+            "Importez un session_summary (Résumé de session) puis « Fusionner dans contexte » avant ce preset.",
             true
           );
         }
