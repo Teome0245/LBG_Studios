@@ -1,7 +1,7 @@
 # Registre LBG Studios
 
-**Date** : 2026-07-31  
-**Source de vérité** : ce fichier (anciennement `~/projects/docs/REGISTRE_PROJETS_LBG.md`).
+**Date** : 2026-07-31 (rectif : `avatar_app` → archive)  
+**Source de vérité** : ce fichier.
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`.
 
@@ -22,7 +22,6 @@
 | Chemin local | Rôle |
 |--------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
-| `../avatar_app` | Bac avatars web |
 
 ## Étagère
 
@@ -34,6 +33,7 @@
 
 | Dépôt | Motif |
 |-------|--------|
+| `_archive/avatar_app` | Bac avatars web Three.js — gelé |
 | `_archive/mmmorpg` | Pivot Core3 / sandbox WS gelée |
 | `_archive/LBG_IA` | Orchestrateur Vue historique |
 | `../LBG_IA_MMORPG` | **Upstream legacy** Cortex (avant extraction) |
@@ -41,7 +41,7 @@
 
 ### Composants gelés (ne pas réimporter)
 
-`mmo_server`, `mmmorpg_server`, `web_client`, `pilot_web/mmo`, `lbg_client_godot` 3D phase 0.
+`mmo_server`, `mmmorpg_server`, `web_client`, `pilot_web/mmo`, `lbg_client_godot` 3D phase 0, `avatar_app`.
 
 ---
 
@@ -56,14 +56,17 @@ flowchart LR
   end
   subgraph linked["Liés"]
     INFO["Infographiste_IA"]
+  end
+  subgraph arch["Archive"]
     AVA["avatar_app"]
+    MMM["mmmorpg"]
+    LIA["LBG_IA"]
   end
   subgraph legacy["Legacy"]
     MMO["LBG_IA_MMORPG"]
     NM["new_mmo"]
   end
   INFO --> PC
-  AVA --> INFO
   CX -.->|"upstream"| MMO
   PC -.->|"upstream"| NM
 ```

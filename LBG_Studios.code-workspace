@@ -9,16 +9,16 @@
       "path": "../Infographiste_IA"
     },
     {
-      "name": "Avatars — avatar_app",
-      "path": "../avatar_app"
-    },
-    {
       "name": "⊘ Legacy — LBG_IA_MMORPG",
       "path": "../LBG_IA_MMORPG"
     },
     {
       "name": "⊘ Legacy — new_mmo",
       "path": "../new_mmo"
+    },
+    {
+      "name": "⊘ Archive — avatar_app",
+      "path": "../_archive/avatar_app"
     }
   ],
   "settings": {

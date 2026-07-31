@@ -29,8 +29,7 @@ cd packages/prime-client
 | Dépôt | Rôle |
 |-------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
-| `../avatar_app` | Bac avatars web |
-| Legacy | `../LBG_IA_MMORPG`, `../new_mmo` (upstream historique) |
+| Legacy | `../LBG_IA_MMORPG`, `../new_mmo` ; archive `../_archive/avatar_app` |
 
 ## Règle
 

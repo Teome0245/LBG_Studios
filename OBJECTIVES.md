@@ -34,6 +34,6 @@ Client **Godot** `prime-client` + Launchpad + serveur **Prime 246**.
 
 ## Hors scope (volontaire)
 
-- Fusion Infographiste + avatar dans ce monorepo
+- Fusion Infographiste dans ce monorepo ; avatar_app reste en _archive
 - Migration Core3 serveur dans Git
 - Suppression immédiate des repos GitHub legacy
