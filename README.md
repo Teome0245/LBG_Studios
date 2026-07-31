@@ -7,7 +7,7 @@
 | **O1** | **Studio** — Cortex, Pilot, Campus, agents | [`packages/cortex`](packages/cortex/) |
 | **O2** | **Jeu** — Godot Prime Client → serveur 246 | [`packages/prime-client`](packages/prime-client/) |
 
-Voir [`OBJECTIVES.md`](OBJECTIVES.md) et [`docs/REGISTRE.md`](docs/REGISTRE.md).  
+Voir [`OBJECTIVES.md`](OBJECTIVES.md), [`docs/REGISTRE.md`](docs/REGISTRE.md), restauration produit [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
 Smoke LAN (Pilot, Cockpit, Orch UI, Core3 `:8792`) : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — `bash tools/smoke_lan_surfaces.sh [--functional]`.
 
 ## Démarrer

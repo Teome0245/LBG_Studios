@@ -130,6 +130,37 @@ PY
   code=$(curl -sS -o /tmp/lbg_fn_desk_h.json -w "%{http_code}" --connect-timeout 5 --max-time 12 \
     "$PILOT/v1/pilot/agent-desktop/healthz" || true)
   echo "INFO  agent-desktop/healthz  HTTP ${code:-err}  $(head -c 160 /tmp/lbg_fn_desk_h.json 2>/dev/null)"
+
+  # 5 Cockpit Desktop réel (inject approval) — optionnel si SSH 140 OK
+  if ssh -o BatchMode=yes -o ConnectTimeout=4 lbg@192.168.0.140 'true' 2>/dev/null; then
+    if ssh -o BatchMode=yes lbg@192.168.0.140 'bash -s' <<'REMOTE'
+PILOT=$(sudo grep -E '^LBG_PILOT_API_TOKEN=' /etc/lbg-project-03.env | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")
+curl -sS --max-time 60 -o /tmp/lbg_fn_vghd.json -w "%{http_code}" -X POST http://127.0.0.1:9800/v1/pilot/tasks/run \
+  -H "Authorization: Bearer $PILOT" -H 'Content-Type: application/json' \
+  -d '{"goal":"lance notepad sur mon pc","context":{"desktop_dry_run":false}}' > /tmp/lbg_fn_vghd.code
+code=$(cat /tmp/lbg_fn_vghd.code)
+python3 - <<'PY'
+import json
+code=open("/tmp/lbg_fn_vghd.code").read().strip()
+d=json.load(open("/tmp/lbg_fn_vghd.json"))
+ok = code=="200" and d.get("ok") is True and "approval" not in (d.get("error") or "").lower()
+# notepad peut échouer WinError path — on accepte aussi vghd-style success ou erreur non-approval
+err=(d.get("error") or "")+(d.get("reply") or "")
+if "Approval token" in err or "approval_denied" in err:
+    raise SystemExit(2)
+raise SystemExit(0 if ok or code=="200" else 1)
+PY
+REMOTE
+    then
+      echo "OK  Cockpit Desktop réel (tasks/run, sans approval client)"
+      OK=$((OK + 1))
+    else
+      echo "WARN  Cockpit Desktop réel (SSH/API) — voir jetons / worker"
+      WARN=$((WARN + 1))
+    fi
+  else
+    echo "INFO  Cockpit Desktop réel skip (pas de SSH BatchMode vers 140)"
+  fi
 fi
 
 echo

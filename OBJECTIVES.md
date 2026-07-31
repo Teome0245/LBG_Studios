@@ -2,6 +2,10 @@
 
 **Ordre** : Studio (**O1**) puis Jeu (**O2**).
 
+**Étoile du nord produit** (origine, avant le recentrage packaging) :  
+IA incarnée sur **PC/infra** → persona au **cœur du MMO** → évolution **contrôlée** du monde.  
+Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).
+
 ## O0 — Cadre (ce repo)
 
 - [x] Dépôt `Teome0245/LBG_Studios` = point de départ docs / Cursor / Team
@@ -21,6 +25,7 @@ Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud
 | Accueil Pilot | Cartes Studio/Campus/Ops/Jeu/Projet + liens LAN (Cockpit, Orch UI, `:8792`) | OK |
 | Freeze soft | `LEGACY.md` sur LBG_IA_MMORPG / new_mmo | OK |
 | Smoke LAN surfaces | [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) + `tools/smoke_lan_surfaces.sh` | OK (2026-07-31) |
+| Fil produit d’origine | [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md) | OK (checklist) |
 
 ## O2 — Jeu (ensuite)
 

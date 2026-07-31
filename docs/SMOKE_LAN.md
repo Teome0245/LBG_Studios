@@ -53,6 +53,25 @@ Worker Desktop Windows et login Godot restent **manuels** sur le PC Teome (hors 
 
 Dernière passe script : **OK=19 WARN=0 KO=0** (`bash tools/smoke_lan_surfaces.sh --functional`).
 
+## Jetons exécution réelle (Cockpit / Desktop)
+
+| Usage | Variable | Où (chemins seulement) |
+|-------|----------|-------------------------|
+| Auth Cockpit | `LBG_PILOT_API_TOKEN` | VM **140** `/etc/lbg-project-03.env` |
+| Approval DevOps / team | `LBG_DEVOPS_APPROVAL_TOKEN` | idem |
+| Approval Desktop | `LBG_DESKTOP_APPROVAL_TOKEN` | **140** (même fichier) **et** `C:\Agent_IA\desktop.env` — **même valeur** |
+
+Workflow LAN solo :
+
+1. Coller le jeton **Pilot** dans Réglages Cockpit.
+2. Décocher **Dry-run** pour exécution réelle (Team ops + Desktop).
+3. Champ **approval** : laisser vide — injecté serveur après auth Pilot.
+4. Si « Approval token requis » : vérifier que le jeton Windows = celui de 140 (hot-reload `desktop.env`).
+
+Garde-fous qui restent : Bearer Pilot, allowlists apps/URL sur le worker, dry-run explicite.
+
+Fil produit / checklist : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).
+
 ## Voir aussi
 
 - [`REGISTRE.md`](REGISTRE.md) — actifs / runtime

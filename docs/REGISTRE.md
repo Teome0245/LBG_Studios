@@ -3,7 +3,8 @@
 **Date** : 2026-07-31 (surfaces LAN + smoke)  
 **Source de vérité** : ce fichier.
 
-**Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`.  
+**Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
+sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
 **Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).
 
 **Règle** : dépôt **legacy / archive / étagère** = pas de nouvelle feature produit ; correctifs OK.
