@@ -1592,7 +1592,7 @@
           </div>
           <div class="pilot-home-card">
             <h3><a href="#/ops" style="color:inherit;text-decoration:none;">Ops</a></h3>
-            <p>Santé LAN, métriques, desktop hybride Windows.</p>
+            <p>Santé LAN, métriques, actions réelles sur ton PC (worker Windows).</p>
             <div class="pilot-home-links">
               <a href="#/ops">Santé</a>
               <a href="#/desktop">Desktop</a>
@@ -1610,8 +1610,8 @@
             <h3>Jeu Prime</h3>
             <p>Client <strong>Godot</strong> + <strong>Launchpad</strong> → serveur <code>246</code>. (legacy <code>/mmo/</code> retiré)</p>
             <div class="pilot-home-links">
-              <a href="#/desktop?launch=godot" title="Préremplit open_app Godot + --path prime-client (Desktop hybride)">Godot</a>
-              <a href="#/desktop?launch=launchpad" title="Préremplit open_app LBG Launchpad (Desktop hybride)">Launchpad</a>
+              <a href="#/desktop?launch=godot" title="Préremplit open_app Godot + --path prime-client (action poste)">Godot</a>
+              <a href="#/desktop?launch=launchpad" title="Préremplit open_app LBG Launchpad (action poste)">Launchpad</a>
               <a href="http://192.168.0.246:8080/patches/prime/manifest.json" target="_blank" rel="noopener noreferrer" title="Manifeste patches Prime sur 246">Patches 246</a>
             </div>
           </div>
@@ -1980,7 +1980,7 @@
           <details style="margin-top:0.65rem" open>
             <summary>Résumé de session volontaire</summary>
             <p class="assistant-muted" style="margin:0.35rem 0 0.5rem">
-              Notes + JSON <code>session_summary</code> (partagé avec Desktop) — export / pont API pour enrichir le contexte Assistant.
+              Notes + JSON <code>session_summary</code> — export / pont API. Stockage navigateur partagé (clé Desktop) pour synchro.
             </p>
             <label for="assistant-session-notes" style="margin-top:0.5rem;display:block">Notes</label>
             <textarea id="assistant-session-notes" rows="2" placeholder="Objectifs, décisions…" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:0.88rem"></textarea>
@@ -2008,25 +2008,30 @@
 
   <div id="pilot-page-desktop" class="pilot-page" hidden>
     <header>
-      <h1>Desktop (hybride)</h1>
-      <p class="muted">
-        <strong>Proposer (orchestrateur)</strong> appelle <code>POST /v1/pilot/action-proposal</code> (aligné Assistant Core) puis peut enchaîner simulation · exécution réelle comme les cases « flux orchestrateur ».
-        Exécution PC via <strong>worker Windows</strong> (HTTP) derrière allowlists + dry-run + approval + audit.
-        Le routage est forcé quand <code>context.desktop_action</code> est présent.
-        <strong>Proposer via IA</strong> appelle <code>POST /v1/pilot/agent-dialogue/invoke</code> ; relisez le JSON puis utilisez <strong>Envoyer</strong>.
-        Si le LLM est indisponible, <strong>Déduire du texte</strong> remplit <code>desktop_action</code> pour des formulations du type « ouvre l’application <em>x</em> (learn) » ou une URL.
-        Agent dialogue : activer <code>LBG_DIALOGUE_DESKTOP_PLAN=1</code>.
-        Autre modèle ou infra lente : sur l’agent (8020), <code>LBG_DIALOGUE_LLM_MODEL</code> (ex. <code>phi4-mini:latest</code>, voir <code>ollama list</code>) et <code>LBG_DIALOGUE_LLM_TIMEOUT</code> ; option Groq/OpenAI : variables <code>LBG_DIALOGUE_FAST_*</code> / <code>LBG_DIALOGUE_REMOTE_*</code> puis <code>"dialogue_target":"fast"</code> ou <code>"remote"</code> dans le JSON <strong>context</strong> ci‑dessous. Le proxy Pilot utilise <code>LBG_PILOT_AGENT_DIALOGUE_INVOKE_TIMEOUT</code> (doit dépasser le timeout LLM).
+      <h1>Desktop — poste &amp; infra</h1>
+      <p class="muted" style="max-width:48rem">
+        Interaction <strong>physique</strong> avec ton PC et l’environnement : ouvrir apps / URLs, notepad, mail, recherche web,
+        lancer Godot ou Launchpad — via le <strong>worker Windows</strong> (allowlists, dry-run, approval, audit).
+        Ce n’est pas le chat agents ni le résumé de session (ceux-là vivent surtout dans Assistant).
       </p>
+      <details style="margin-top:0.5rem;max-width:48rem">
+        <summary class="muted" style="cursor:pointer;font-size:0.88rem">Détails techniques (API)</summary>
+        <p class="muted" style="margin:0.4rem 0 0;font-size:0.85rem">
+          <strong>Proposer (orchestrateur)</strong> → <code>POST /v1/pilot/action-proposal</code> puis simulation / réel.
+          Routage forcé si <code>context.desktop_action</code>.
+          <strong>Proposer via IA</strong> → <code>POST /v1/pilot/agent-dialogue/invoke</code> (<code>LBG_DIALOGUE_DESKTOP_PLAN=1</code>).
+          Sans LLM : <strong>Déduire du texte</strong>. Timeouts LLM : <code>LBG_DIALOGUE_LLM_*</code> / <code>LBG_PILOT_AGENT_DIALOGUE_INVOKE_TIMEOUT</code>.
+        </p>
+      </details>
     </header>
     <section>
       <p class="muted" id="desktop-config-hint" style="margin:0.35rem 0 0 0;font-size:0.88rem;">—</p>
 
-      <label for="desktop-text">Texte (trace / intention)</label>
+      <label for="desktop-text">Intention (ce que le PC doit faire)</label>
       <textarea id="desktop-text" rows="2" style="font-family: inherit;">ouvre https://example.org dans le navigateur</textarea>
 
-      <label for="desktop-dictation" style="margin-top:0.75rem">Dictée (Web Speech API — Chromium recommandé, page en HTTPS ou localhost)</label>
-      <textarea id="desktop-dictation" rows="3" placeholder="Les segments reconnus (finalisés) s’ajoutent ici ; puis « Appliquer → notepad_append »." style="font-family: inherit;"></textarea>
+      <label for="desktop-dictation" style="margin-top:0.75rem">Dictée (Web Speech — Chromium, HTTPS ou localhost)</label>
+      <textarea id="desktop-dictation" rows="3" placeholder="Segments reconnus → « Appliquer → notepad_append »." style="font-family: inherit;"></textarea>
       <p class="muted" style="margin:0.35rem 0 0 0;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
         <button type="button" id="btn-desktop-dictation-start">Écouter</button>
         <button type="button" id="btn-desktop-dictation-stop">Arrêter</button>
@@ -2034,7 +2039,7 @@
         <span id="desktop-dictation-hint">—</span>
       </p>
 
-      <label for="desktop-action" style="margin-top:0.75rem">desktop_action (JSON)</label>
+      <label for="desktop-action" style="margin-top:0.75rem">Action poste (<code>desktop_action</code> JSON)</label>
       <textarea id="desktop-action" rows="6" style="font-family: ui-monospace, monospace; font-size: 0.85rem;">{
   "kind": "open_url",
   "url": "https://example.org"
@@ -2045,34 +2050,28 @@
   "desktop_dry_run": true,
   "history": []
 }</textarea>
-      <label for="desktop-mmo-summary" style="margin-top:0.75rem">Résumé de session (<code>session_summary</code>)</label>
-      <p class="muted" style="margin:0.25rem 0 0 0;font-size:0.85rem;max-width:46rem;">
-        Contexte volontaire pour l’Assistant Core (notes, quête, ton) — JSON borné, stocké dans ce navigateur,
-        injecté dans <code>context</code> à l’envoi. Partagé avec la vue Assistant.
-      </p>
-      <textarea id="desktop-mmo-summary" rows="3" placeholder='{"player_note":"…","session_mood":"…","tracked_quest":"…"}' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
-      <label for="desktop-approval" style="margin-top:0.75rem">Approval token (optionnel)</label>
+      <label for="desktop-approval" style="margin-top:0.75rem">Approval token (actions réelles)</label>
       <input type="password" id="desktop-approval" placeholder="desktop_approval (stocké localement)" autocomplete="off" />
 
       <label style="margin-top:0.65rem;display:flex;align-items:flex-start;gap:0.45rem;max-width:44rem;">
         <input type="checkbox" id="desktop-dry-run-toggle" checked style="margin-top:0.2rem" />
-        <span class="muted" style="line-height:1.35">Forcer <code>desktop_dry_run: true</code> à l’envoi (<strong>Proposer via IA</strong> et <strong>Envoyer</strong>), en surcharge du champ JSON si besoin — persistant (navigateur).</span>
+        <span class="muted" style="line-height:1.35">Rester en <strong>dry-run</strong> (simulation) — décoche seulement pour exécuter vraiment sur le PC.</span>
       </label>
 
       <div style="margin-top:0.85rem;padding:0.65rem 0.85rem;border:1px solid #ddd;border-radius:10px;max-width:46rem;background:#f8fafc;">
         <p class="muted" style="margin:0 0 0.55rem;font-size:0.88rem">
-          <strong>Flux orchestrateur</strong> (comme vue Assistant après <code>POST /v1/pilot/action-proposal</code>) : simulation automatique puis exécution réelle si le curseur réel est actif et que la synthèse est OK.
+          <strong>Enchaînement</strong> après « Proposer (orchestrateur) » : simuler puis, si OK et curseur réel ON, exécuter sur le poste.
         </p>
         <label style="display:flex;align-items:flex-start;gap:0.45rem;margin-bottom:0.35rem">
           <input type="checkbox" id="desktop-pipeline-auto-sim" checked />
-          <span class="muted">Après « Proposer (orchestrateur) » : simuler (dry-run) tout de suite</span>
+          <span class="muted">Après proposition : simuler tout de suite</span>
         </label>
         <label style="display:flex;align-items:flex-start;gap:0.45rem;margin-bottom:0.55rem">
           <input type="checkbox" id="desktop-pipeline-auto-real" checked />
-          <span class="muted">Si simulation OK et réel ci-dessous : enchaîner sans clic supplémentaire</span>
+          <span class="muted">Si simulation OK et réel ON : exécuter sans clic de plus</span>
         </label>
         <p style="margin:0;display:flex;gap:0.65rem;flex-wrap:wrap;align-items:center">
-          <span class="muted" style="font-size:0.84rem;font-weight:600">2ᵉ étape · envoi réel</span>
+          <span class="muted" style="font-size:0.84rem;font-weight:600">Exécution réelle sur le PC</span>
           <span class="muted" style="font-size:0.8rem">off</span>
           <label class="assistant-switch" for="desktop-pipeline-real-toggle" style="vertical-align:middle;">
             <input type="checkbox" id="desktop-pipeline-real-toggle" autocomplete="off" />
@@ -2082,25 +2081,34 @@
         </p>
       </div>
 
-      <p class="muted" style="margin:0.6rem 0 0 0">Presets :</p>
+      <p class="muted" style="margin:0.6rem 0 0 0">Actions poste :</p>
       <p style="margin:0.35rem 0 0 0; display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
-        <button type="button" id="btn-desktop-preset-open-url">open_url</button>
-        <button type="button" id="btn-desktop-preset-notepad">notepad_append</button>
-        <button type="button" id="btn-desktop-preset-open-app-learn">open_app (learn)</button>
-        <button type="button" id="btn-desktop-preset-search-web" title="Nécessite LBG_DESKTOP_WEB_SEARCH=1 sur l’exécuteur">search_web_open</button>
-        <button type="button" id="btn-desktop-preset-mail-imap" title="Nécessite LBG_DESKTOP_MAIL_ENABLED=1 + IMAP sur le worker">mail_imap_preview</button>
+        <button type="button" id="btn-desktop-preset-open-url">Ouvrir URL</button>
+        <button type="button" id="btn-desktop-preset-notepad">Notepad</button>
+        <button type="button" id="btn-desktop-preset-open-app-learn">Ouvrir app</button>
+        <button type="button" id="btn-desktop-preset-search-web" title="Nécessite LBG_DESKTOP_WEB_SEARCH=1 sur l’exécuteur">Recherche web</button>
+        <button type="button" id="btn-desktop-preset-mail-imap" title="Nécessite LBG_DESKTOP_MAIL_ENABLED=1 + IMAP sur le worker">Aperçu mail</button>
       </p>
 
       <p style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-        <button type="button" id="btn-desktop-propose-llm">Proposer via IA (dialogue)</button>
-        <button type="button" id="btn-desktop-infer-text" title="Sans LLM : open_app / open_url depuis le champ « Texte »">Déduire du texte</button>
-        <button type="button" id="btn-desktop-propose-backend" title="/v1/pilot/action-proposal puis enchaînement optionnel comme Assistant Core">
+        <button type="button" id="btn-desktop-propose-llm">Proposer via IA</button>
+        <button type="button" id="btn-desktop-infer-text" title="Sans LLM : open_app / open_url depuis l’intention">Déduire du texte</button>
+        <button type="button" id="btn-desktop-propose-backend" title="/v1/pilot/action-proposal puis enchaînement optionnel">
           Proposer (orchestrateur)
         </button>
-        <button type="button" id="btn-desktop-send">Envoyer (POST /v1/pilot/route)</button>
-        <button type="button" id="btn-desktop-health">GET agent-desktop /healthz</button>
+        <button type="button" id="btn-desktop-send">Envoyer sur le poste</button>
+        <button type="button" id="btn-desktop-health">Santé worker</button>
         <span class="muted" id="desktop-hint">—</span>
       </p>
+
+      <details style="margin-top:1rem;max-width:46rem">
+        <summary class="muted" style="cursor:pointer;font-size:0.9rem">Option — résumé de session (partagé avec Assistant)</summary>
+        <p class="muted" style="margin:0.35rem 0 0.25rem;font-size:0.85rem">
+          JSON <code>session_summary</code> injecté dans le context à l’envoi — utile pour Forge / dialogue, pas pour piloter le PC.
+        </p>
+        <label for="desktop-mmo-summary">session_summary</label>
+        <textarea id="desktop-mmo-summary" rows="3" placeholder='{"player_note":"…","session_mood":"…","tracked_quest":"…"}' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
+      </details>
 
       <div id="desktop-pretty" style="margin-top:0.75rem"></div>
       <pre id="desktop-raw" class="muted" style="font-size:0.82rem;max-height:18rem;">—</pre>
