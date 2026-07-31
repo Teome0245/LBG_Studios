@@ -1,0 +1,11 @@
+---
+description: Priorité Studio puis Jeu dans LBG_Studios
+alwaysApply: true
+---
+
+# LBG Studios
+
+- Source de vérité : ce dépôt (`OBJECTIVES.md`, `docs/REGISTRE.md`).
+- Priorité : **O1 Studio** (`packages/cortex`) puis **O2 Jeu** (`packages/prime-client`).
+- Ne pas réintroduire le client web legacy `/mmo/` ni `mmo_server` / `mmmorpg_server`.
+- Repos `LBG_IA_MMORPG` et `new_mmo` = upstream legacy (lecture / sync), pas cible de nouvelles features.

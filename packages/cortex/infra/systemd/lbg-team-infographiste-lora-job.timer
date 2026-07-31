@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer — Pygmalion pipeline LoRA (vision par lots + Kohya)
+
+[Timer]
+OnBootSec=70min
+OnUnitActiveSec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

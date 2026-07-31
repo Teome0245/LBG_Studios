@@ -1,0 +1,31 @@
+[Unit]
+Description=LBG équipe virtuelle — Pygmalion pipeline LoRA (vision → Kohya → train)
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src:/opt/LBG_IA_MMO/orchestrator
+Environment=LBG_TEAM_INFOGRAPHISTE_LORA_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_INFOGRAPHISTE_LORA_JOB_STATE=/var/lib/lbg/team_infographiste/lora_job_state.json
+Environment=LBG_TEAM_INFOGRAPHISTE_LORA_JOB_ACTOR_ID=system:team_infographiste_lora
+Environment=LBG_INFOGRAPHISTE_IA_ROOT=/opt/Infographiste_IA
+Environment=LBG_LORA_VISION_UNCLASSIFIED_TARGET=200
+Environment=LBG_LORA_VISION_BATCH_LIMIT=100
+Environment=LBG_INFOGRAPHISTE_LORA_TRAIN_ENABLED=1
+Environment=LBG_INFOGRAPHISTE_LORA_TRAIN_REMOTE=1
+Environment=LBG_LAN_HOST_DESKTOP=192.168.0.10
+Environment=LBG_INFOGRAPHISTE_WSL_SSH_HOST=192.168.0.10
+Environment=LBG_INFOGRAPHISTE_WSL_SSH_PORT=2222
+Environment=LBG_INFOGRAPHISTE_WSL_SSH_USER=sdesh
+Environment=LBG_INFOGRAPHISTE_WSL_PROJECT=/home/sdesh/projects/Infographiste_IA
+Environment=LBG_INFOGRAPHISTE_LORA_TRAIN_SSH_IDENTITY=/home/lbg/.ssh/id_ed25519
+Environment=LBG_LORA_TRAIN_DEPLOY=1
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_team_infographiste_lora_job
+
+[Install]
+WantedBy=multi-user.target

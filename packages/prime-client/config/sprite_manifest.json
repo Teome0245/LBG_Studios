@@ -1,0 +1,109 @@
+{
+  "schema_version": 3,
+  "display_px": 0,
+  "tint_strength": 0.35,
+  "sprite_scales": {
+    "npc_guard": 0.95,
+    "npc_default": 1.0,
+    "player_bot": 1.0,
+    "player_human": 1.05
+  },
+  "sprites": {
+    "player_lia": "res://assets/sprites/units/player_lia.png",
+    "player_nix": "res://assets/sprites/units/player_nix.png",
+    "player_mira": "res://assets/sprites/units/player_mira.png",
+    "player_teome": "res://assets/sprites/units/player_teome.png",
+    "player_gally": "res://assets/sprites/units/player_gally.png",
+    "player_kael": "res://assets/sprites/units/player_kael.png",
+    "player_bot": "res://assets/sprites/units/player_bot.png",
+    "player_human": "res://assets/sprites/units/player_human.svg",
+    "player_official": "res://assets/sprites/units/player_human.svg",
+    "npc_default": "res://assets/sprites/units/npc_default.png",
+    "npc_guard": "res://assets/sprites/units/npc_guard.png",
+    "npc_bartender": "res://assets/sprites/units/npc_bartender.svg",
+    "npc_merchant": "res://assets/sprites/units/npc_merchant.svg",
+    "npc_guide": "res://assets/sprites/units/npc_guide.svg",
+    "npc_agent": "res://assets/sprites/units/npc_agent.svg",
+    "npc_trainer": "res://assets/sprites/units/npc_trainer.svg",
+    "npc_civilian": "res://assets/sprites/units/npc_civilian.svg"
+  },
+  "player_tints": {
+    "lia": "#7dffb8",
+    "nix": "#5ec8ff",
+    "mira": "#ff8ec8",
+    "teome": "#6a9eff",
+    "gally": "#d4b06a",
+    "kael": "#b08cff",
+    "bot_ia": "#88ffaa",
+    "voyageur": "#58a8ff"
+  },
+  "rules": [
+    { "kind": "player", "name_exact": "lia", "sprite": "player_lia" },
+    { "kind": "player", "name_exact": "nix", "sprite": "player_nix" },
+    { "kind": "player", "name_exact": "mira", "sprite": "player_mira" },
+    { "kind": "player", "name_exact": "teome", "sprite": "player_teome" },
+    { "kind": "player", "name_exact": "gally", "sprite": "player_gally" },
+    { "kind": "player", "name_exact": "kael", "sprite": "player_kael" },
+    {
+      "kind": "player",
+      "name_match": ["lia", "nix", "mira", "gally", "kael", "bot_ia"],
+      "sprite": "player_bot"
+    },
+    { "kind": "player", "name_match": ["voyageur", "humain", "you"], "sprite": "player_human" },
+    { "kind": "player", "sprite": "player_human" },
+    {
+      "kind": "npc",
+      "role_match": ["bartender", "host", "performer", "patron", "cantina_fallback"],
+      "sprite": "npc_bartender"
+    },
+    {
+      "kind": "npc",
+      "role_match": ["guide", "quest_giver", "archivist", "rumormonger", "pilot", "traffic"],
+      "sprite": "npc_guide"
+    },
+    {
+      "kind": "npc",
+      "role_match": ["merchant", "resident"],
+      "sprite": "npc_merchant"
+    },
+    {
+      "kind": "npc",
+      "role_match": [
+        "combat_trainer", "medic_trainer", "scout_trainer",
+        "artisan_trainer", "politician_trainer", "entertainer_trainer"
+      ],
+      "sprite": "npc_trainer"
+    },
+    {
+      "kind": "npc",
+      "role_match": ["guard", "bouncer", "sergeant", "guard_fallback"],
+      "sprite": "npc_guard"
+    },
+    {
+      "kind": "npc",
+      "name_match": ["garde", "sergent", "guard", "mecha", "mechari", "bouncer"],
+      "sprite": "npc_guard"
+    },
+    {
+      "kind": "npc",
+      "name_match": ["agent", "fleuriste", "marchand", "vendeur", "commer"],
+      "sprite": "npc_merchant"
+    },
+    {
+      "kind": "npc",
+      "name_match": ["guide", "odo", "mission", "archiv"],
+      "sprite": "npc_guide"
+    },
+    {
+      "kind": "npc",
+      "name_match": ["barman", "barmaid", "cantina", "serveur"],
+      "sprite": "npc_bartender"
+    },
+    {
+      "kind": "npc",
+      "name_match": ["trainer", "formateur", "instructeur", "maître"],
+      "sprite": "npc_trainer"
+    },
+    { "kind": "npc", "sprite": "npc_civilian" }
+  ]
+}

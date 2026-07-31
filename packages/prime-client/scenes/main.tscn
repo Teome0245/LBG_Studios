@@ -1,0 +1,166 @@
+[gd_scene format=3 uid="uid://c41aqiq0riuq2"]
+
+[ext_resource type="Script" uid="uid://cqlfrtiqyx7p8" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://gylgk20kfgy7" path="res://scripts/entity_manager.gd" id="2_em"]
+[ext_resource type="Script" uid="uid://c4e62gj0620rk" path="res://scripts/network_bridge.gd" id="3_bridge"]
+[ext_resource type="Script" uid="uid://icqdttcxq2ms" path="res://scripts/world_map.gd" id="4_wmap"]
+[ext_resource type="Script" uid="uid://bpbfxahhuy574" path="res://scripts/player_controller.gd" id="5_pctrl"]
+
+[ext_resource type="Script" path="res://scripts/snapshot_bridge.gd" id="6_snap"]
+[ext_resource type="Script" path="res://scripts/poi_layer.gd" id="7_poi"]
+[ext_resource type="Script" path="res://scripts/zone_layers.gd" id="8_zones"]
+[ext_resource type="Script" path="res://scripts/ws_objects_layer.gd" id="9_ws"]
+[ext_resource type="Script" path="res://scripts/hub_buildings_layer.gd" id="10_hub"]
+[ext_resource type="Script" path="res://scripts/hub_ground_layer.gd" id="10_ground"]
+[ext_resource type="Script" path="res://scripts/hub_props_layer.gd" id="10_props"]
+[ext_resource type="Script" path="res://scripts/retail_layout_layer.gd" id="10_retail"]
+[ext_resource type="PackedScene" path="res://scenes/ui/minimap_hud.tscn" id="11_mm"]
+[ext_resource type="PackedScene" path="res://scenes/ui/planet_map_panel.tscn" id="12_pmap"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hotbar.tscn" id="13_hotbar"]
+[ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="14_inv"]
+[ext_resource type="PackedScene" path="res://scenes/ui/talents_craft_panel.tscn" id="15_tal"]
+[ext_resource type="Theme" path="res://themes/prime_ui.tres" id="16_theme"]
+[ext_resource type="PackedScene" path="res://scenes/ui/login_panel.tscn" id="17_login"]
+[ext_resource type="Script" path="res://scripts/LbgWsClient.gd" id="18_ws"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_portrait_panel.tscn" id="19_dialog"]
+
+[node name="Main" type="Node2D" unique_id=1985474402]
+script = ExtResource("1_main")
+
+[node name="WorldMap" type="Node2D" parent="." unique_id=261177181]
+script = ExtResource("4_wmap")
+planet_name = "tatooine"
+
+[node name="MapSprite" type="Sprite2D" parent="WorldMap" unique_id=96787536]
+z_index = -10
+
+[node name="PoiLayer" type="Node2D" parent="WorldMap"]
+z_index = -9
+script = ExtResource("7_poi")
+
+[node name="ZoneLayers" type="Node2D" parent="WorldMap"]
+z_index = -8
+script = ExtResource("8_zones")
+
+[node name="WsObjectsLayer" type="Node2D" parent="WorldMap"]
+z_index = -7
+script = ExtResource("9_ws")
+
+[node name="HubGroundLayer" type="Node2D" parent="WorldMap"]
+z_index = -7
+script = ExtResource("10_ground")
+
+[node name="HubBuildingsLayer" type="Node2D" parent="WorldMap"]
+z_index = -6
+script = ExtResource("10_hub")
+
+[node name="HubPropsLayer" type="Node2D" parent="WorldMap"]
+z_index = -5
+script = ExtResource("10_props")
+
+[node name="RetailLayoutLayer" type="Node2D" parent="WorldMap"]
+z_index = -4
+script = ExtResource("10_retail")
+visible_layout = true
+city_id = "lost_heaven"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=213625031]
+
+[node name="EntityManager" type="Node2D" parent="." unique_id=1911858875]
+script = ExtResource("2_em")
+
+[node name="NetworkBridge" type="Node" parent="." unique_id=299903085]
+script = ExtResource("3_bridge")
+entity_manager_path = NodePath("../EntityManager")
+snapshot_bridge_path = NodePath("../SnapshotBridge")
+world_map_path = NodePath("../WorldMap")
+main_path = NodePath("..")
+
+[node name="SnapshotBridge" type="Node" parent="." unique_id=884120337]
+script = ExtResource("6_snap")
+
+[node name="PlayerController" type="Node" parent="." unique_id=381393563]
+script = ExtResource("5_pctrl")
+enabled = false
+follow_camera = true
+
+[node name="LbgWsClient" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("18_ws")
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=319586651]
+
+[node name="HudLayer" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("16_theme")
+
+[node name="InfoPanel" type="PanelContainer" parent="UI/HudLayer" unique_id=769391809]
+visible = false
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -118.0
+offset_right = 380.0
+offset_bottom = -86.0
+
+[node name="VBox" type="VBoxContainer" parent="UI/HudLayer/InfoPanel" unique_id=994384847]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="UI/HudLayer/InfoPanel/VBox" unique_id=1705965394]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Prime Client v0.2  |  HUD"
+
+[node name="StatsLabel" type="Label" parent="UI/HudLayer/InfoPanel/VBox" unique_id=2054250193]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "[H] hub  [T] talents  [I] inventaire  [1-0] hotbar  [Esc] quit"
+
+[node name="StatePanel" type="PanelContainer" parent="UI/HudLayer" unique_id=2095658107]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 40.0
+
+[node name="StateLabel" type="Label" parent="UI/HudLayer/StatePanel" unique_id=401423268]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "STANDING"
+horizontal_alignment = 1
+
+[node name="Hotbar" parent="UI/HudLayer" instance=ExtResource("13_hotbar")]
+
+[node name="MinimapHud" parent="UI/HudLayer" instance=ExtResource("11_mm")]
+
+[node name="ModalLayer" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("16_theme")
+
+[node name="TalentsCraftPanel" parent="UI/ModalLayer" instance=ExtResource("15_tal")]
+
+[node name="InventoryPanel" parent="UI/ModalLayer" instance=ExtResource("14_inv")]
+
+[node name="PlanetMapPanel" parent="UI/ModalLayer" instance=ExtResource("12_pmap")]
+visible = false
+
+[node name="DialoguePortraitPanel" parent="UI/ModalLayer" instance=ExtResource("19_dialog")]
+
+[node name="LoginPanel" parent="UI" instance=ExtResource("17_login")]
+z_index = 200

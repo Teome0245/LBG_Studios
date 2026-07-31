@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+*.asar
+
+# Godot
+.godot/
+*.translation
+export_presets.cfg.bak
+
+# Binaires / assets lourds
+*.glb
+*.GLB
+*.tre
+*.TRE
+*.zip
+*.7z
+*.pak
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Core3 / DB (ne jamais importer)
+**/databases/
+**/MMOCoreORB/bin/databases/
+third_party/new_mmo/
+**/core3*/**/bin/
+
+# Secrets / env
+.env
+*.env.local
+infra/secrets/*.env
+!infra/secrets/*.env.example
+**/desktop.env
+**/linux.env
+
+# OS / IDE
+.DS_Store
+*:Zone.Identifier
+.idea/
+*.swp
+
+# Logs / traces
+*.log
+team_trace.jsonl
+**/__pycache__/
+
+# Exception Pilot avatar (léger)
+!packages/cortex/pilot_web/orchestrator_avatar/models/*.glb

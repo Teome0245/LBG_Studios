@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LBG IA MMO - Client Web</title>
+  <script type="module" crossorigin src="/mmo/assets/index-DSBxc_N4.js"></script>
+  <link rel="stylesheet" crossorigin href="/mmo/assets/index-DPQKaQ5S.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Écran de Connexion -->
+        <div id="login-screen" class="overlay">
+            <div class="glass-panel login-box">
+                <h1>LBG IA MMO</h1>
+                <p class="muted" style="margin:-1.2rem 0 1.2rem 0;letter-spacing:1px;">v1.1.3</p>
+                <p>Bienvenue dans le multivers. Entrez votre nom pour commencer.</p>
+                <div class="input-group">
+                    <input type="text" id="server-url" value="192.168.0.245" placeholder="IP du serveur (ex: 192.168.0.245)">
+                    <input type="text" id="player-name" placeholder="Nom du voyageur..." maxlength="15">
+                    <button id="connect-btn">REJOINDRE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interface de Jeu -->
+        <div id="game-container" class="hidden">
+            <canvas id="game-canvas"></canvas>
+            
+            <!-- HUD -->
+            <div id="hud">
+                <div class="hud-top-left glass-panel">
+                    <div class="stat">
+                        <span class="label">JOUEUR :</span>
+                        <span id="stat-name">?</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">ID :</span>
+                        <span id="stat-id">?</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">POS X :</span>
+                        <span id="pos-x">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">POS Z :</span>
+                        <span id="pos-y">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">TIME :</span>
+                        <span id="world-time">--:--</span>
+                    </div>
+                    <div class="panel-title sheet-panel-title">Fiche voyageur</div>
+                    <div id="player-sheet-body" class="character-sheet-body">
+                        <span class="muted">—</span>
+                    </div>
+                    <div id="active-quest-summary" class="active-quest-summary">
+                        Quête suivie : aucune
+                    </div>
+                </div>
+
+                <div class="hud-top-right glass-panel">
+                    <div class="panel-title">ACTIONS IA</div>
+                    <div id="world-event-feed">
+                        <div class="world-event empty">Aucune action monde.</div>
+                    </div>
+                    <div class="panel-title quest-title">QUÊTES</div>
+                    <button id="clear-quests-btn" class="mini-action-btn" type="button">VIDER</button>
+                    <div id="quest-log-feed">
+                        <div class="world-event empty">Aucune quête active.</div>
+                    </div>
+                </div>
+
+                <div class="hud-bottom-bar">
+                    <div class="hud-bottom-left glass-panel">
+                        <div id="console-logs">
+                            <div class="log system">Initialisation du système...</div>
+                        </div>
+                        <div class="chat-input-group">
+                            <input type="text" id="chat-msg" placeholder="Parler aux PNJ...">
+                            <button id="send-chat-btn">ENVOYER</button>
+                        </div>
+                    </div>
+
+                    <div class="hud-bottom-right glass-panel">
+                        <div class="panel-title">PNJ</div>
+                        <div class="stat">
+                            <span class="label">CIBLE :</span>
+                            <span id="dialogue-target">?</span>
+                        </div>
+                        <div class="panel-title sheet-panel-title">Fiche PNJ</div>
+                        <div id="npc-sheet-body" class="character-sheet-body">
+                            <span class="muted">Sélectionnez un PNJ sur la carte.</span>
+                        </div>
+                        <div class="npc-actions">
+                            <button id="quick-aid-btn" type="button">DEMANDER AIDE</button>
+                            <button id="quick-quest-btn" type="button">PROPOSER QUÊTE</button>
+                            <button id="quick-quest-complete-btn" type="button">TERMINER QUÊTE</button>
+                            <button id="stub-pickup-btn" type="button" title="Sans LLM : world_commit player_item (touche E)">RAMASSER (E)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay de Déconnexion -->
+        <div id="disconnect-screen" class="overlay hidden">
+            <div class="glass-panel">
+                <h2 class="error-text">CONNEXION PERDUE</h2>
+                <p>La liaison avec le multivers a été rompue.</p>
+                <button id="reconnect-btn">RECONNEXION</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

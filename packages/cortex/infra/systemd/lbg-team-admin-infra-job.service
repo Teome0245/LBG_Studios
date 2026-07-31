@@ -1,0 +1,19 @@
+[Unit]
+Description=LBG équipe virtuelle — Atlas admin_infra LLM locale
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_TEAM_ADMIN_INFRA_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_ADMIN_INFRA_JOB_STATE=/var/lib/lbg/team_admin_infra/state.json
+Environment=LBG_TEAM_ADMIN_INFRA_JOB_ACTOR_ID=system:team_admin_infra
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_team_admin_infra_job
+
+[Install]
+WantedBy=multi-user.target

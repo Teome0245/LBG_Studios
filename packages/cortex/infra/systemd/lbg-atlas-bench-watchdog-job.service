@@ -1,0 +1,20 @@
+[Unit]
+Description=LBG Atlas — bench stabilise + retry KO + alerte Element
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_ATLAS_BENCH_WATCHDOG_JOB_ENABLED=1
+Environment=LBG_IA_MMO_ROOT=/opt/LBG_IA_MMO
+Environment=LBG_ATLAS_BENCH_WATCHDOG_STATE=/var/lib/lbg/atlas_bench_watchdog/state.json
+Environment=LBG_ATLAS_BENCH_MIN_OKS=3
+Environment=LBG_ATLAS_BENCH_WATCHDOG_ACTOR_ID=system:atlas_bench_watchdog
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_atlas_bench_watchdog_job
+
+[Install]
+WantedBy=multi-user.target

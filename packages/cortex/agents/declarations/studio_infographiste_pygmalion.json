@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "agent_id": "studio_infographiste_pygmalion",
+  "display_name": "Pygmalion",
+  "role": "dev_game",
+  "persona": "pygmalion",
+  "description": "Infographiste IA — textures SVG, manifest GLB, pipeline Blender → Godot",
+  "capabilities": [
+    {"id": "audit_assets", "probe": "infographiste_probe"},
+    {"id": "scan_inspiration_styles", "probe": "inspiration_probe", "description": "Classifier images inspiration par profil LoRA"},
+    {"id": "lora_pipeline", "workflow": "infographiste_lora_workflow", "description": "Vision par lots → Kohya → train mmorpg_insp / lbg_sprite2d"},
+    {"id": "sprites_2d_pipeline", "workflow": "sprites_2d_workflow", "description": "Deploy sprites 2D Prime via WSL + sync core"},
+    {"id": "generate_comfyui", "module": "comfyui_media", "description": "Génération image ComfyUI (MEDIA)"},
+    {"id": "svg_planet_texture", "description": "Enrichir tatooine.svg Scrapaltai"},
+    {"id": "glb_manifest", "path": "config/sprite_manifest.json"}
+  ],
+  "constraints": ["revue_humaine_textures", "l1_audit_only"],
+  "subproject": "infographiste_ia",
+  "owner_timer": "lbg-team-infographiste-job",
+  "owner_timers": ["lbg-team-infographiste-job", "lbg-team-infographiste-lora-job", "lbg-team-infographiste-sprites-job"],
+  "consults_with": ["godot_dev_iris"]
+}

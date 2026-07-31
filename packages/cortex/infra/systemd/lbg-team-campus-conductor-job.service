@@ -1,0 +1,18 @@
+[Unit]
+Description=LBG équipe virtuelle — Campus Conductor (Lyra) drain file queued
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_JOB_STATE=/var/lib/lbg/team_campus_conductor/state.json
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_team_campus_conductor_job
+
+[Install]
+WantedBy=multi-user.target

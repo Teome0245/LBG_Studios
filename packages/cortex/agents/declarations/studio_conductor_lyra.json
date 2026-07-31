@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "agent_id": "studio_conductor_lyra",
+  "display_name": "Lyra",
+  "role": "pm",
+  "persona": "lyra",
+  "description": "Conducteur de campus — drain file queued, cap busy, rapport idle (pas un chat LLM)",
+  "capabilities": [
+    {"id": "campus_conduct", "description": "POST /v1/team/campus/conduct — préfill L1"},
+    {"id": "campus_status", "description": "GET /v1/team/campus/status — audit idle"}
+  ],
+  "constraints": ["opt_in_env", "no_l2_without_token", "background_run_only"],
+  "owner_timer": "lbg-team-campus-conductor-job"
+}

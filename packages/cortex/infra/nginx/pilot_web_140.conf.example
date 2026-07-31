@@ -1,0 +1,80 @@
+# Nginx Pilot — VM core 192.168.0.140
+# Sert `pilot_web` en statique + reverse-proxy API locale (même origin, pas de CORS).
+#
+# Install :
+#   LBG_LAN_HOST_FRONT=192.168.0.140 LBG_NGINX_PILOT_PORT=8080 \
+#     bash infra/scripts/install_nginx_pilot_140.sh
+#
+# URL canonique : http://192.168.0.140:8080/
+
+server {
+    listen 8080;
+    server_name 192.168.0.140;
+
+    root /opt/LBG_IA_MMO/pilot_web;
+    index index.html;
+
+    # Team presence WS → orchestrateur 8010 (Upgrade).
+    location = /v1/pilot/team/presence/ws {
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600s;
+        proxy_pass http://127.0.0.1:8010/v1/team/presence/ws;
+    }
+
+    location = /v1/team/presence/ws {
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600s;
+        proxy_pass http://127.0.0.1:8010/v1/team/presence/ws;
+    }
+
+    # API backend locale (core sur la même VM).
+    location ^~ /v1/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location = /openapi.json {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://127.0.0.1:8000/openapi.json;
+    }
+
+    location ^~ /compagnon/ {
+        try_files $uri $uri/ /compagnon/index.html;
+    }
+
+    location ^~ /companion-api/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://127.0.0.1:8065/;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    access_log /var/log/nginx/lbg-pilot-access.log;
+    error_log  /var/log/nginx/lbg-pilot-error.log;
+}

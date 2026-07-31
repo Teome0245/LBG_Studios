@@ -1,0 +1,193 @@
+# Architecture (vue d'ensemble)
+
+## Objectif
+
+Construire un framework complet permettant :
+- orchestration d’agents IA (LLM locaux + API)
+- gestion d’un monde MMORPG dynamique
+- simulation de populations civiles (NPC)
+- quêtes dynamiques
+- système de classes flexible et combinable
+- jauges physiologiques (Lyra Engine)
+
+## Composants
+
+### Backend (`backend/`)
+- API FastAPI typée, stable, orientée contrats.
+- Ne contient pas de logique “métier MMO” directement : elle est portée par `mmo_server/` et exposée via des services/DTO.
+- **Observabilité (opt-in)** : `GET /metrics` (format Prometheus texte) si `LBG_METRICS_ENABLED=1` ; protection optionnelle `LBG_METRICS_TOKEN` (header `Authorization: Bearer …`). Défaut **désactivé** ; checklist déploiement : `docs/runbook_validation_serveurs_lan.md` (§2bis, §2ter) et `bootstrap.md` (section métriques).
+
+### Orchestrator (`orchestrator/`)
+- Point d’entrée unique pour router une “intention” vers un ou plusieurs agents.
+- **Observabilité (opt-in)** : même schéma que le backend pour `GET /metrics` (`LBG_METRICS_*`, désactivé par défaut).
+- Registry de capacités + introspection robuste.
+- Fallbacks déterministes (graceful degradation).
+- **Lyra (futur)** : le contrat d’état optionnel `context.lyra` / `output.lyra` est décrit dans `lyra.md` ; **`lbg_agents.lyra_bridge`** applique un pas sur **`lyra_engine.gauges`** (si **`mmo_server`** dans le venv) pour **`agent.fallback`** et pour **`agent.dialogue`** avant l’appel HTTP à l’agent dialogue.
+- Après routage, appelle le paquet **`agents/`** (`lbg_agents.dispatch.invoke_after_route`) pour enrichir le champ `output`. Le dialogue peut cibler un **agent HTTP** (`LBG_AGENT_DIALOGUE_URL`, port **8020** en prod systemd, voir `agents/README.md`). L’intention **`devops_probe`** déclenche **`agent.devops`** : GET HTTP et lecture de fichiers **uniquement** via listes blanches d’environnement (`agents/README.md`) ; dry-run **`LBG_DEVOPS_DRY_RUN`** ; garde **`LBG_DEVOPS_APPROVAL_TOKEN`** + `context.devops_approval` ; audit JSON **`agents.devops.audit`** (champ `ts`) sur stdout et/ou fichier **`LBG_DEVOPS_AUDIT_LOG_PATH`** (JSONL).
+- **Forge de prototypes OpenGame (cadrage)** : si OpenGame est intégré, il reste une capability expérimentale orchestrée (`agent.opengame`) pour générer des prototypes isolés ; l’orchestrateur reste maître du déclenchement, et le code généré ne modifie pas le cœur MMO automatiquement. Décision : `docs/adr/0003-opengame-forge-prototypes.md`.
+- **Assistant poste vs persona MMO** : deux modes produit (`local_assistant` ↔ **`desktop_control`/`agent.desktop`** + worker ; `mmo_persona` ↔ dialogue/WS MMO), isolation des secrets et routage ; pas d’exécution OS sensible depuis le flux MMO sans pont dédié. Décision : `docs/adr/0004-assistant-local-vs-persona-mmo.md`.
+- **Serveur jeu Core3 (`new_mmo`) vs stack MMO Python** : le dépôt **`new_mmo`** n’est pas un remplacement silencieux de `mmmorpg_server` / `mmo_server` ; coexistence documentée, migration par phases. Décision : `docs/adr/0005-new-mmo-core3-coexistence.md`, guide `docs/migration_new_mmo_core3.md`.
+- **Classification d’intention (langage courant)** : couche **LLM optionnelle** côté orchestrateur (`LBG_ORCHESTRATOR_INTENT_LLM*`) avec repli déterministe ; métadonnées `output.orchestrator_route_meta` ; Pilot accueil **Routage intention**. Voir `orchestrator/README.md`, `introspection/llm_intent_classifier.py`.
+- Introspection : **`GET /v1/capabilities`** (liste des `CapabilitySpec`). Le backend expose **`GET /v1/pilot/capabilities`** en proxy pour l’UI `/pilot/`.
+
+#### Dialogue orchestré multi‑LLM (cadrage backlog)
+
+Objectif : permettre à l’orchestrateur d’orienter les requêtes de dialogue vers plusieurs LLM (locaux et distants) avec un arbitrage explicite **coût / latence / qualité**.
+
+Périmètre à couvrir :
+- **Router dialogue** : sélection de modèle selon intent, contexte, budget, SLA et fallback.
+- **Profils de style** : base `guardrails` commune + profils nominaux (assistant et MMO/PNJ), injectés de manière traçable dans le prompt système.
+- **Registre PNJ** : source de vérité des PNJ (contexte narratif + contraintes comportementales) pour enrichir le prompt MMO.
+- **Suivi et pilotage coût** : journal par échange (trace_id, routeur, modèle, profil, tokens in/out, coût estimé, latence, issue) pour observation et optimisation.
+
+Contrainte produit :
+- le routage vers modèles distants doit rester **opt-in**, plafonné par budget et observable (pas d’explosion de coût silencieuse).
+
+#### Brain (autonomie) — v1 (conscience + motivation)
+
+Objectif : fournir une **autonomie safe** (“je fais des checks tout seul”) + une **conscience de l’état** (jauges) qui pilote une **motivation** (intent) — sans exécution destructive implicite.
+
+- **Tick** : toutes les \(30s\) (configurable).
+- **Périmètre v0 (safe)** :
+  - DevOps `selfcheck` en **dry-run** (étapes HTTP + systemd *allowlistées*).
+  - Ping `GET /healthz` du worker desktop (si `LBG_AGENT_DESKTOP_URL` est défini).
+- **Périmètre v0 (sous approbation)** :
+  - `systemd_restart` uniquement si opt-in + jeton d’approbation côté orchestrateur.
+
+Endpoints orchestrator :
+- `GET /v1/brain/status`
+- `POST /v1/brain/toggle` (`{ "enabled": true|false }`)
+- `POST /v1/brain/approve` (`{ "request_id": "…" }`) : approuve une demande (ex. restart) en file.
+
+Proxy backend (same-origin) pour l’UI pilot :
+- `GET /v1/pilot/orchestrator/brain/status`
+- `POST /v1/pilot/orchestrator/brain/toggle`
+- `POST /v1/pilot/orchestrator/brain/approve`
+
+Conscience/motivation exposées via `brain/status` :
+- `gauges` : jauges \([0–100]\) (ex. `confidence`, `stress`, `fatigue`, `curiosity`)
+- `intent` : intention courante (`monitor|diagnose|request_approval|remediate`)
+- `narrative` : résumé 1–2 lignes “pourquoi j’agis”
+- `approval_requests[]` : file des demandes (restart, raison, approved/done)
+
+Variables d’environnement (orchestrator) :
+- `LBG_BRAIN_ENABLED` : `1|0` (défaut `0`)
+- `LBG_BRAIN_INTERVAL_S` : secondes (défaut `30`, borné \([5,3600]\))
+- `LBG_BRAIN_DEVOPS_AUTORESTART` : `1|0` (défaut `0`) — autorise la tentative de restart automatique
+- `LBG_BRAIN_DEVOPS_APPROVAL` : jeton d’approbation (si vide, aucun restart n’est tenté en autonomie)
+- `LBG_BRAIN_STATE_PATH` : chemin du fichier de persistance (défaut `/var/lib/lbg/brain/state.json`)
+- `LBG_BRAIN_MAX_ACTIONS_PER_TICK` : budget d’actions par tick (défaut `3`)
+- `LBG_BRAIN_RESTART_COOLDOWN_S` : cooldown restart systemd (défaut `600`)
+- `LBG_BRAIN_LYRA_BRIDGE_ENABLED` : `1|0` (défaut `0`) — active l’influence Brain -> `context.lyra` côté backend
+- `LBG_BRAIN_LYRA_WORLD_SCALE` : coefficient max de nudging des besoins monde (défaut `0.03`, borné `[0,0.25]`)
+- `LBG_BRAIN_LYRA_ASSISTANT_SCALE` : coefficient max de nudging des jauges assistant (défaut `5`, borné `[0,25]`)
+
+Règles de sécurité du bridge Brain -> Lyra :
+- influence **faible et bornée** (pas de saut massif de jauges),
+- activable uniquement par feature flag,
+- désactivable par requête via `context.lyra.meta.skip_brain_bridge=true`.
+
+Régulateur Lyra (safe, orienté “but”) :
+- applique au plus **une micro-action** par tick (ex. réduire `hunger` dominante, restaurer `energie` assistant),
+- cooldown configurable (évite la sur-réaction),
+- aucune action infra destructive ; uniquement ajustement borné des jauges Lyra.
+
+Variables régulateur :
+- `LBG_LYRA_REGULATOR_ENABLED` : `1|0` (défaut `1`)
+- `LBG_LYRA_REGULATOR_COOLDOWN_S` : cooldown entre actions (défaut `60`)
+- `LBG_LYRA_REGULATOR_WORLD_WARNING` : seuil warning monde (défaut `0.55`)
+- `LBG_LYRA_REGULATOR_WORLD_CRITICAL` : seuil critique monde (défaut `0.75`)
+
+#### DevOps — exécution des remédiations (phase 3 produit)
+
+Les réponses **`selfcheck`** (et textes d’audit associés) peuvent inclure des **`remediation_hints`** : indications **lisibles** pour un opérateur (relancer un service, vérifier une URL, consulter un log). **Règle projet** : ces hints ne déclenchent **aucune** action corrective **automatique** côté LLM ou agent sans revue humaine. L’exécution sur l’infra (ex. **`systemd_restart`** après approbation, quota, fenêtre locale) reste **explicite** (outil DevOps, systemd, playbook) — typiquement un **humain** ou un **agent d’outillage contrôlé** (ex. Cursor sur poste de confiance avec les mêmes prérequis SSH que la doc `ops_vm_user.md`) applique le correctif. Ne pas brancher de boucle « LLM → restart production » sans garde-fous documentés et revus.
+
+### Agent hybride proactif (`hybrid_proactive_agent/`)
+
+Bibliothèque Python **isolée** (paquet installable, hors `orchestrator/`) : moteur **proactif léger / avancé / autonome**, tension et curiosité, objectifs internes, mémoire longue JSONL optionnelle, coordinateur **multi-rôles** (architecte, orchestrateur, game designer). Aucune route HTTP imposée : pensée pour un **greffon ultérieur** sur l’orchestrateur, le dialogue MMO ou un client web. Documentation produit du module : `hybrid_proactive_agent/README.md` et `hybrid_proactive_agent/docs/`. Un port TypeScript de référence existe dans `web_client/src/lib/hybridProactiveEngine.ts`.
+
+### MMO Server (`mmo_server/`)
+- Serveur headless tick-based.
+- Monde data-driven, entités, quêtes, classes, simulation.
+- NPC gouvernés par `lyra_engine/` (comportements + jauges).
+- **HTTP** (`http_app`, uvicorn typiquement **8050**) : tick en thread d’arrière-plan ; **`GET /v1/world/lyra`** expose les jauges PNJ pour **`context.lyra`** (voir `docs/lyra.md`, variable **`LBG_MMO_SERVER_URL`** côté backend). En **prod systemd** (`lbg-mmo-server`), l’écoute est **`0.0.0.0:8050`** pour permettre au **backend sur une autre VM** d’appeler le LAN (`192.168.x.x:8050`) ; en local, **`127.0.0.1`** reste recommandé. Persistance **`WorldState`** en JSON (chargement au boot, sauvegarde périodique + arrêt) — **`LBG_MMO_STATE_PATH`**, **`LBG_MMO_SAVE_INTERVAL_S`** (`mmo_server/README.md`).
+
+### Catalogue monde (`content/world/`) — races & bestiaire
+
+Données **data-driven** versionnées dans le monorepo : `LBG_IA_MMO/content/world/races.json`, `creatures.json`. **Consommateurs** : `lbg_agents.world_content` (enrichissement des prompts dialogue ; `GET /world-content` sur l’agent HTTP), `npc_registry.json` des agents (**`race_id`** par PNJ), `mmmorpg_server.world_catalog` + champ **`Entity.race_id`** / snapshot Lyra (`meta.race_id`, `meta.race_display`). **Pilot** : proxy same-origin **`GET /v1/pilot/agent-dialogue/world-content`**. Surcharge de répertoire : **`LBG_WORLD_CONTENT_DIR`**. Fil documentaire : `docs/plan_de_route.md` (section *Fil produit ↔ documentation*, Historique), `docs/plan_mmorpg.md`, `agents/README.md`, `pilot_web/README.md`.
+
+### Frontend et Pilotage (`pilot_web/` et `web_client/`)
+
+- **Bot compagnon (plan)** : service + UI chat dédiés décrits dans **`docs/plan_bot_compagnon_autonome.md`** (prototype type port Vite LAN, prod derrière reverse proxy).
+- **Routage unifié (Nginx, port 8080)** : La VM 110 centralise l'accès utilisateur.
+    - `http://<IP>:8080/` : Interface **Lyra / Pilotage** (Originale).
+    - `http://<IP>:8080/mmo/` : Interface **Client MMO** (Vite).
+    - `http://<IP>:8080/v1/` : Proxy vers le backend API (VM 140:8000).
+- **Déploiement** : 
+    - Le rôle `front` de `deploy_vm.sh` gère Lyra.
+    - `deploy_web_client.sh` gère le MMO (build avec `--base=/mmo/` et déploiement dans le sous-dossier). Variable **`LBG_MMO_WEB_DEPLOY_LOCAL_ONLY=1`** : build + vérifs + copie vers `pilot_web/mmo/` sans SSH VM.
+- **Assistant poste (`#/desktop`) vs boucle MMO** : navigateur, fichiers locaux et messagerie relevés sur le **poste** via **`desktop_control`** → **`agent.desktop`** (ADR 0004), indépendamment du serveur WS **`mmmorpg`**. Recette LAN « cœur seul » (sans santé HTTP interne **VM MMO jeu**) : **`infra/scripts/smoke_lan_core_desktop.sh`** (à la racine du workspace il existe un **wrapper** qui appelle la copie sous **`LBG_IA_MMO/`**) ; option **`LBG_SMOKE_DESKTOP_ROUTE=1`** pour un **`POST /v1/pilot/route`** en **`desktop_dry_run`**.
+- **Note** : Le serveur Python sur le port **8081** est déprécié et supprimé.
+
+#### Notes opérationnelles (client MMO `/mmo/`)
+
+- **Bundle “stable” vs rebuild** : le sous-dossier servi par Nginx est **`pilot_web/mmo/`** (copie de `web_client/dist/`). Un rebuild Vite **remplace** `index.html` + `assets/*` et peut casser le rendu si l’on mélange des fichiers d’époques différentes (mismatch *HTML → assets*).
+- **HUD (barres HP/MP/Énergie)** : le client met à jour les barres à partir de `entity.stats` reçu via WS. Le serveur WS (`mmmorpg_server`) doit donc inclure `stats` dans `Entity.to_snapshot()` (sinon HUD figé).
+- **Décor / bâtiments** : les bâtiments affichés proviennent des `locations` inclus dans `welcome` et `world_tick` (chargés depuis le seed `world_initial.json` côté serveur WS). Si les bâtiments semblent “non gérés”, vérifier que le seed est bien présent/lu sur la VM MMO.
+- **Attention aux modules legacy** : dans `mmmorpg_server/src/`, il existe aussi des fichiers `src/entities/*` et `src/game_state.py` historiques. Le serveur WS utilise le namespace paquet **`mmmorpg_server.*`** (ex. `mmmorpg_server/entities/entity.py`). En cas de correctif, modifier la version sous `mmmorpg_server/` (pas le legacy).
+
+## Exécution
+
+- **Local** : plusieurs processus Python (API, orchestrator, `mmo_server`, option **`mmmorpg_server`**).
+- **Docker** : 3 services + réseau interne.
+- **systemd** : unités séparées, redémarrage automatique, logs journald.
+
+## Production (VM)
+
+La prod **LBG_IA_MMO** sur le LAN privé est actuellement sur **`192.168.0.140`** (machine dédiée à ce monorepo). La **répartition LAN** (orchestration + LBG_IA, MMO, LLM) est décrite dans **`docs/fusion_env_lan.md`** ; vue historique / fusion : **`docs/plan_fusion_lbg_ia.md`**.
+
+Recommandation pour **cette** machine : **déploiement via systemd** (voir `../../bootstrap.md`) avec :
+- code dans `/opt/LBG_IA_MMO`
+- venv partagé `/opt/LBG_IA_MMO/.venv`
+- ports exposés : API `8000`, orchestrator `8010`, Nginx `8080` (Interface Unifiée).
+
+**Mise à jour depuis le dev** : le chemin nominal pour pousser une évolution vers cette VM est `infra/scripts/deploy_vm.sh` (staging + `rsync` sudo + `install_local.sh` en tant que **`lbg`** + reconfiguration systemd), lancé depuis le poste de développement (ex. WSL) **sans obligation** de faire tourner les mêmes services en local : la pile réelle est celle **systemd sur la VM** (unités `User=lbg`) ; les contrôles se font sur la prod privée (`curl`, UI `/pilot/`). Détail : `bootstrap.md`, `docs/ops_vm_user.md`.
+
+## Déploiement global final et reproductibilité
+
+**Finalité** : pouvoir **reconstruire un serveur équivalent** (même stack applicative, même emplacement des fichiers, mêmes services systemd) à partir d’une VM ou d’un matériel **neuf**, sans dépendre du tacite (mémoire d’une personne ou d’une seule machine déjà configurée).
+
+**Principes** :
+
+- **Source de vérité** : le dépôt `LBG_IA_MMO/` (code, `pyproject.toml`, unités sous `infra/systemd/`, scripts sous `infra/scripts/`). Les versions d’OS et de Python doivent rester **documentées** dans `bootstrap.md` (ex. Ubuntu 22.04 LTS, Python 3.10 côté Jammy).
+- **Chemins figés** : `/opt/LBG_IA_MMO` pour l’application, `/opt/LBG_IA_MMO/.venv` pour le venv partagé (aligné sur les unités systemd).
+- **Enchainement reproductible** : (1) prérequis système et utilisateur déployeur ; (2) mise du **contenu du monorepo** sur la cible ; (3) `install_local.sh` (venv + `pip install -e` des trois paquets) ; (4) installation des unités systemd et `daemon-reload` + `enable --now`. Le script `deploy_vm.sh` automatise (2)–(4) depuis le poste de dev ; pour un **premier** tir ou une VM sans accès depuis ce poste, suivre la checklist **serveur vierge** dans `bootstrap.md`.
+- **Découverte des dépendances Python** : aujourd’hui les versions sont dans les `pyproject.toml` ; à terme, figer des **lockfiles** ou un export `pip freeze` de référence si tu exiges une reproductibilité binaire stricte.
+- **Évolution** : toute nouvelle dépendance système (paquet `apt`, service additionnel, port, variable d’environnement obligatoire) doit être **répercutée dans `bootstrap.md` et, en cas d’impact produit, dans ce fichier**.
+
+**Piste d’industrialisation** (optionnelle, plus tard) : image disque ou **cloud-init**, recette **Ansible**, ou image **OCI** dérivée de `infra/docker/`, pour en équipe matérialiser le même « déploiement global » en une commande ; le contenu du dépôt reste la référence fonctionnelle.
+
+## Réseau et exposition (règle projet)
+
+- **Prod actuelle** : la VM de production **n’est pas exposée sur Internet**. Elle reste sur un **réseau privé** de confiance (LAN / segment dédié / accès contrôlé). Les services (`8000`, `8010`, etc.) ne doivent être joignables que depuis ce périmètre et les acteurs autorisés (postes, bastion, VPN, selon ton infra).
+- **Futur public** : si une offre ou un client doit être **accessible depuis l’extérieur**, le déploiement se fait sur une **VM (ou brique) distincte**, **exposée et durcie** (TLS, contrôle d’accès, surface minimale, séparation par rapport à la prod privée). La prod privée **ne devient pas** une cible Internet directe.
+- Tant que l’on reste en **réseau privé sécurisé**, l’administration (SSH, mises à jour) et l’accès aux APIs restent alignés sur cette règle : pas de dérogation sans revue d’architecture explicite.
+
+## Documents de référence
+
+- `lexique.md` : termes, acronymes et définitions (**ADR**, composants) — transmission / onboarding
+- `plan_de_route.md` : priorités (documentation, plateforme, Lyra, MMO, fusion) et état courant
+- `plan_fusion_lbg_ia.md` : stratégie de fusion **LBG_IA** + **mmmorpg** (`~/projects/mmmorpg`, serveur WS) + ce monorepo (alignement produit unique, pont jeu ↔ IA)
+- `fusion_etat_des_lieux_v0.md` : inventaire HTTP/WS et variables de pont (état des lieux fusion, phase A)
+- `adr/0002-mmo-autorite-pont.md` : autorité monde (`mmmorpg` vs slice IA `mmo_server`)
+- `fusion_spec_monde.md` / `fusion_pont_jeu_ia.md` : sources de vérité monde et pont IA
+- `vision_projet.md` : vision globale / agents / auto‑évolution
+- `lyra.md` : jauges & IA incarnée
+- `opengame.md` : forge de prototypes OpenGame orchestrée (`prototype_game` / `agent.opengame`)
+- `plan_mmorpg.md` : plan serveur MMO (modules cibles)
+- `ops_devops_audit.md` : VM — audit DevOps JSONL (logrotate), rotation du jeton d’approbation
+- `ops_vm_user.md` : compte **`lbg`** (sudoer, SSH, `User=` systemd, `/opt`, secrets `640 root:lbg`)
+- `adr/0003-opengame-forge-prototypes.md` : OpenGame comme forge de prototypes orchestrée et sandboxée
+- `adr/0004-assistant-local-vs-persona-mmo.md` : assistant poste de travail (`local_assistant`) vs incarnation MMO (`mmo_persona`)
+- `adr/0005-new-mmo-core3-coexistence.md` : dépôt **new_mmo** (Core3) — coexistence avec `mmmorpg_server` / `mmo_server`, pas de remplacement implicite
+

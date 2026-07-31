@@ -1,0 +1,64 @@
+[gd_scene load_steps=2 format=3 uid="uid://cloginpanelm1101"]
+
+[ext_resource type="Script" path="res://scripts/login_panel.gd" id="1_login"]
+
+[node name="LoginPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_login")
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/VBox"]
+layout_mode = 2
+text = "Lost Heaven — Connexion"
+horizontal_alignment = 1
+
+[node name="Username" type="LineEdit" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(280, 0)
+placeholder_text = "Compte LBG (ex. Teome)"
+
+[node name="Password" type="LineEdit" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(280, 0)
+placeholder_text = "Mot de passe"
+secret = true
+
+[node name="LoginButton" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Se connecter"
+
+[node name="CharacterList" type="ItemList" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(280, 120)
+
+[node name="EnterButton" type="Button" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Entrer en zone"
+disabled = true
+
+[node name="StatusLabel" type="Label" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
