@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LBG_IA_MMO — Pilotage</title>
+  <title>LBG Studios — Pilot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -1523,7 +1523,7 @@
 </head>
 <body>
   <div class="pilot-shell-bar">
-    <div class="pilot-shell-brand"><strong>LBG_IA_MMO</strong> <span class="muted">pilot</span></div>
+    <div class="pilot-shell-brand"><strong>LBG Studios</strong> <span class="muted">pilot</span></div>
     <nav class="pilot-nav" id="pilot-nav" aria-label="Navigation pilot">
       <a href="#/" data-nav-route="home">Accueil</a>
       <details class="pilot-nav-group" data-nav-group="studio">
@@ -1557,7 +1557,7 @@
       </details>
     </nav>
     <div class="pilot-shell-tools">
-      <label>Backend <input type="text" id="api-base" placeholder="LAN ex. http://192.168.0.140:8000" title="URL du backend MMO (/v1/pilot). Sur pilot 110:8080 défaut automatique si vide." /></label>
+      <label>Backend <input type="text" id="api-base" placeholder="LAN ex. http://192.168.0.140:8000" title="URL du backend Cortex (/v1/pilot). Sur pilot 140:8080 défaut automatique si vide." /></label>
       <label class="muted">Token <input type="text" id="service-token" placeholder="X-LBG-Service-Token" style="min-width:12rem;max-width:20rem" /></label>
     </div>
   </div>
@@ -1600,7 +1600,7 @@
           </div>
           <div class="pilot-home-card">
             <h3><a href="#/pm" style="color:inherit;text-decoration:none;">Projet</a></h3>
-            <p>Jalons PM et chat Lyra hors MMO.</p>
+            <p>Jalons PM et chat Lyra (agents Studio).</p>
             <div class="pilot-home-links">
               <a href="#/pm">Chef de projet</a>
               <a href="#/lyra">Lyra chat</a>
@@ -1710,11 +1710,11 @@
 
   <div id="pilot-page-lyra" class="pilot-page" hidden>
     <header>
-      <h1>Lyra (hors mmmorpg)</h1>
+      <h1>Lyra (agents)</h1>
       <p class="muted">
         Source Lyra « standalone » via <code>POST /v1/pilot/route</code> : on envoie <code>context.lyra</code> et on lit
         <code>result.output.lyra</code> (echo, ou pas de jauges si <code>lyra_engine</code> est dispo).
-        Objectif : préparer l’intégration hors WS jeu (pas besoin de <code>world_npc_id</code>).
+        Bac Studio — sans WS sandbox ni <code>world_npc_id</code> obligatoire. Produit jeu = Godot ↔ 246.
       </p>
     </header>
     <section>
@@ -1723,10 +1723,10 @@
           <h2 style="margin:0 0 0.5rem 0;font-size:1.05rem">Entrée (context.lyra)</h2>
           <p class="lyra-small">
             Deux modes (séparés pour éviter de mélanger 0–1 et 0–100 dans le même objet) :
-            <strong>PNJ monde</strong> (besoins 0–1) et <strong>Assistant</strong> (ton 0–100).
+            <strong>PNJ (dialogue)</strong> (besoins 0–1) et <strong>Assistant</strong> (ton 0–100).
           </p>
           <p class="lyra-controls" style="margin-top:0.25rem">
-            <label class="lyra-small"><input type="radio" name="lyra-mode" id="lyra-mode-world" value="world" checked> PNJ monde (0–1)</label>
+            <label class="lyra-small"><input type="radio" name="lyra-mode" id="lyra-mode-world" value="world" checked> PNJ dialogue (0–1)</label>
             <label class="lyra-small"><input type="radio" name="lyra-mode" id="lyra-mode-assistant" value="assistant"> Assistant (0–100)</label>
           </p>
           <label for="lyra-dt">dt_s (secondes simulées)</label>
@@ -1922,7 +1922,7 @@
 
         <div class="assistant-card" id="assistant-card-docs">
           <h2>Références ADR / docs</h2>
-          <p class="assistant-muted">Rappels de cadrage — chemins copiables (repo <code>LBG_IA_MMO</code>).</p>
+          <p class="assistant-muted">Rappels de cadrage — chemins copiables (repo <code>LBG_Studios/packages/cortex</code>).</p>
           <ul id="assistant-doc-refs" class="assistant-doc-list"></ul>
         </div>
 
@@ -1958,7 +1958,6 @@
             <button type="button" id="btn-assistant-preset-web">Web</button>
             <button type="button" id="btn-assistant-preset-mail">Mail</button>
             <button type="button" id="btn-assistant-preset-selfcheck">Infra</button>
-            <button type="button" id="btn-assistant-preset-mmo-dev">Forge MMO</button>
           </div>
         </div>
 
@@ -1985,21 +1984,28 @@
               <button type="button" id="btn-assistant-session-build">Générer</button>
               <button type="button" id="btn-assistant-session-copy">Copier JSON</button>
               <button type="button" id="btn-assistant-session-export-server" title="POST /v1/pilot/assistant/session-summary/export">Valider (API)</button>
-              <button type="button" id="btn-assistant-session-mmo-bridge" title="POST /v1/pilot/assistant/session-summary/mmo-bridge">Appliquer pont MMO (API)</button>
               <span class="assistant-muted" id="assistant-session-hint">—</span>
             </p>
             <pre id="assistant-session-summary-out" class="assistant-raw-collapsed" style="max-height:10rem;margin-top:0.35rem">—</pre>
           </details>
-          <details style="margin-top:0.5rem">
-            <summary>Pont MMO (session_summary)</summary>
-            <label for="assistant-mmo-session-import" style="margin-top:0.35rem;display:block">JSON</label>
-            <textarea id="assistant-mmo-session-import" rows="3" style="width:100%;box-sizing:border-box;font-size:0.78rem" placeholder='{"tracked_quest":"…"}'></textarea>
-            <p style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 0 0;">
-              <button type="button" id="btn-assistant-mmo-merge">Fusionner dans contexte</button>
-              <button type="button" id="btn-assistant-mmo-load-desktop-key">Depuis Desktop</button>
-              <button type="button" id="btn-assistant-mmo-save-desktop-key">Vers Desktop</button>
+          <details class="pilot-legacy-lab" id="assistant-legacy-lab" style="margin-top:0.65rem">
+            <summary>⊘ Legacy lab — pont session / forge sandbox</summary>
+            <p class="legacy-banner">Pont <code>session_summary</code> vers l’ancien persona sandbox (pas le client Godot ↔ 246).</p>
+            <p class="assistant-chip-row" style="margin:0.35rem 0">
+              <button type="button" id="btn-assistant-preset-mmo-dev">Forge sandbox</button>
+              <button type="button" id="btn-assistant-session-mmo-bridge" title="POST /v1/pilot/assistant/session-summary/mmo-bridge">Appliquer pont (API)</button>
             </p>
-            <span class="assistant-muted" id="assistant-mmo-hint">—</span>
+            <details style="margin-top:0.5rem">
+              <summary>JSON session_summary (import)</summary>
+              <label for="assistant-mmo-session-import" style="margin-top:0.35rem;display:block">JSON</label>
+              <textarea id="assistant-mmo-session-import" rows="3" style="width:100%;box-sizing:border-box;font-size:0.78rem" placeholder='{"tracked_quest":"…"}'></textarea>
+              <p style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 0 0;">
+                <button type="button" id="btn-assistant-mmo-merge">Fusionner dans contexte</button>
+                <button type="button" id="btn-assistant-mmo-load-desktop-key">Depuis Desktop</button>
+                <button type="button" id="btn-assistant-mmo-save-desktop-key">Vers Desktop</button>
+              </p>
+              <span class="assistant-muted" id="assistant-mmo-hint">—</span>
+            </details>
           </details>
         </div>
       </aside>
@@ -2045,8 +2051,12 @@
   "desktop_dry_run": true,
   "history": []
 }</textarea>
-      <label for="desktop-mmo-summary" style="margin-top:0.75rem">Résumé MMO → assistant (<code>session_summary</code>, JSON optionnel, persistant navigateur)</label>
-      <textarea id="desktop-mmo-summary" rows="3" placeholder='Ex. {"player_note":"…","session_mood":"…"} — clés tracked_quest / last_npc priment côté serveur si tu parles au PNJ via le jeu.' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
+      <details class="pilot-legacy-lab" id="desktop-legacy-lab" style="margin-top:0.75rem">
+        <summary>⊘ Legacy lab — résumé session sandbox</summary>
+        <p class="legacy-banner">Ancien pont <code>session_summary</code> (persona sandbox), pas le flux Godot / Launchpad.</p>
+        <label for="desktop-mmo-summary">JSON optionnel (persistant navigateur)</label>
+        <textarea id="desktop-mmo-summary" rows="3" placeholder='Ex. {"player_note":"…","session_mood":"…"}' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
+      </details>
       <label for="desktop-approval" style="margin-top:0.75rem">Approval token (optionnel)</label>
       <input type="password" id="desktop-approval" placeholder="desktop_approval (stocké localement)" autocomplete="off" />
 
@@ -2239,18 +2249,24 @@
             <button type="button" class="preset" data-team-preset="hermes_soe" title="Hermès — SOE + gateway live">Hermès SOE</button>
             <button type="button" class="preset" data-team-preset="client_live" title="M3 + M5 + ZB-0 + lbg-ws/2">Client live</button>
             <button type="button" class="preset" data-team-preset="validate_godot" title="Smokes + checklist lancement Godot">Valider client</button>
-            <button type="button" class="preset" data-team-preset="core3_build_plan" title="Plan build ZB-0 dry-run (Vulcan)">Plan build ZB-0</button>
-            <button type="button" class="preset" data-team-preset="core3_build_compile" title="Compiler Core3 — L2 requis">Compiler Core3</button>
             <button type="button" class="preset" data-team-preset="think_lia" title="Clic : configurer · double-clic : créer (L2)">Think Lia</button>
           </div>
+          <details class="pilot-legacy-lab" id="team-legacy-lab-core3" style="margin-bottom:0.65rem">
+            <summary>⊘ Ops serveur Prime 246 (Core3 build)</summary>
+            <p class="legacy-banner">Builds C++ sur <code>246</code> — utile Jeu O2, pas le client web legacy. L2 requis pour compiler.</p>
+            <p style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.35rem 0 0;">
+              <button type="button" class="preset" data-team-preset="core3_build_plan" title="Plan build ZB-0 dry-run (Vulcan)">Plan build ZB-0</button>
+              <button type="button" class="preset" data-team-preset="core3_build_compile" title="Compiler Core3 — L2 requis">Compiler Core3</button>
+            </p>
+          </details>
           <label for="team-role">Rôle</label>
           <select id="team-role">
             <option value="qa">Argus (qa) — smoke / healthz</option>
             <option value="ops">Héphaïstos (ops) — sonde infra</option>
             <option value="pm">Thémis (pm) — brief projet</option>
-            <option value="dev_game">Dédale (dev_game) — Core3 / forge gameplay</option>
-            <option value="dev_godot">Iris / Hermès (dev_godot) — Godot Prime Client IA</option>
-            <option value="player_ia">Chœur du monde (player_ia) — joueurs IA 246</option>
+            <option value="dev_game">Dédale (dev_game) — Prime Core3 / forge</option>
+            <option value="dev_godot">Iris / Hermès (dev_godot) — Godot Prime Client</option>
+            <option value="player_ia">Chœur (player_ia) — joueurs IA 246</option>
           </select>
           <div id="team-player-ia-wrap" hidden>
             <label for="team-player-ia-mode" style="margin-top:0.35rem;">Mode joueurs IA</label>
@@ -4970,11 +4986,11 @@
 
     const ASSISTANT_DOC_REFS = [
       { label: "Plan Assistant Core", path: "docs/assistant_core_plan.md" },
-      { label: "ADR 0004 — local vs persona MMO", path: "docs/adr/0004-assistant-local-vs-persona-mmo.md" },
+      { label: "ADR 0004 — local vs persona (legacy)", path: "docs/adr/0004-assistant-local-vs-persona-mmo.md" },
       { label: "ADR 0003 — forge OpenGame", path: "docs/adr/0003-opengame-forge-prototypes.md" },
       { label: "Desktop hybride", path: "docs/desktop_hybride.md" },
       { label: "Fusion protocole agents", path: "docs/fusion_spec_agents.md" },
-      { label: "Protocole MMO (session_summary)", path: "docs/mmmorpg_PROTOCOL.md" },
+      { label: "Protocole session_summary (legacy)", path: "docs/mmmorpg_PROTOCOL.md" },
     ];
 
     function assistantDocChipHtml(path) {
@@ -5206,7 +5222,7 @@
     async function assistantSessionMmoBridgeApply() {
       const ctxEl = document.getElementById("assistant-context");
       const mmoTa = document.getElementById("assistant-mmo-session-import");
-      pilotInlineHint("assistant-session-hint", "Pont MMO (API)…", false);
+      pilotInlineHint("assistant-session-hint", "Pont session (API)…", false);
       const payload = assistantCollectSessionPayloadForExport();
       try {
         const base = getBase();
@@ -5244,7 +5260,7 @@
           out.json.hint || "context_patch appliqué au contexte assistant.",
           false
         );
-        assistantUiHint("Pont MMO appliqué — vous pouvez Proposer ou Router.", false);
+        assistantUiHint("Pont session appliqué — vous pouvez Proposer ou Router.", false);
         try { assistantRenderSessionState(); } catch (_) {}
       } catch (e) {
         pilotInlineHint("assistant-session-hint", "Erreur : " + e, true);
@@ -5573,7 +5589,7 @@
         }
         if (j.disabled) {
           hint.textContent =
-            "Proxy désactivé : LBG_PILOT_LBGIA_BACKEND_URL ou LBG_IA_BACKEND_URL sur le backend MMO.";
+            "Proxy désactivé : LBG_PILOT_LBGIA_BACKEND_URL ou LBG_IA_BACKEND_URL sur le backend Cortex.";
           body.innerHTML =
             '<p class="assistant-lbgia-muted">Même VM (ex. 110) : URL interne FastAPI projet LBG_IA, sans CORS depuis le navigateur.</p>';
           return;
@@ -6209,7 +6225,7 @@
         textEl.value = "vérifie l'état du backend et de l'orchestrateur";
         ctxEl.value = JSON.stringify({ history: [] }, null, 2);
       } else if (kind === "mmo_dev") {
-        textEl.value = "forge un prototype sandbox à partir de ma session MMO importée — dry-run uniquement, pas de merge";
+        textEl.value = "forge un prototype sandbox à partir d'une session importée — dry-run uniquement, pas de merge";
         let baseCtx = assistantParseJsonTextarea("assistant-context", {});
         if (!baseCtx || typeof baseCtx !== "object") baseCtx = {};
         if (!baseCtx.session_summary || typeof baseCtx.session_summary !== "object") {
@@ -8368,7 +8384,7 @@
           return (
             '<button type="button" class="pm-path-chip" data-copy="' +
             escapeHtmlPm(p) +
-            '" title="Copier le chemin (repo LBG_IA_MMO)">' +
+            '" title="Copier le chemin (repo LBG_Studios)">' +
             escapeHtmlPm(p) +
             "</button>"
           );
