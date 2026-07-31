@@ -1976,36 +1976,36 @@
           </p>
           <span class="assistant-muted" id="assistant-history-hint">—</span>
           <div id="assistant-history" hidden aria-hidden="true"></div>
-          <details style="margin-top:0.65rem">
+          <details style="margin-top:0.65rem" open>
             <summary>Résumé de session volontaire</summary>
+            <p class="assistant-muted" style="margin:0.35rem 0 0.5rem">
+              Notes + JSON <code>session_summary</code> (partagé avec Desktop) — export / pont API pour enrichir le contexte Assistant.
+            </p>
             <label for="assistant-session-notes" style="margin-top:0.5rem;display:block">Notes</label>
             <textarea id="assistant-session-notes" rows="2" placeholder="Objectifs, décisions…" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:0.88rem"></textarea>
-            <p style="display:flex;gap:0.45rem;flex-wrap:wrap;margin:0.4rem 0 0;">
+            <label for="assistant-mmo-session-import" style="margin-top:0.5rem;display:block">session_summary (JSON)</label>
+            <textarea id="assistant-mmo-session-import" rows="3" style="width:100%;box-sizing:border-box;font-size:0.78rem" placeholder='{"tracked_quest":"…","player_note":"…"}'></textarea>
+            <p style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 0 0;">
+              <button type="button" id="btn-assistant-mmo-merge">Fusionner dans contexte</button>
+              <button type="button" id="btn-assistant-mmo-load-desktop-key">Depuis Desktop</button>
+              <button type="button" id="btn-assistant-mmo-save-desktop-key">Vers Desktop</button>
+              <span class="assistant-muted" id="assistant-mmo-hint">—</span>
+            </p>
+            <p style="display:flex;gap:0.45rem;flex-wrap:wrap;margin:0.55rem 0 0;">
               <button type="button" id="btn-assistant-session-build">Générer</button>
               <button type="button" id="btn-assistant-session-copy">Copier JSON</button>
               <button type="button" id="btn-assistant-session-export-server" title="POST /v1/pilot/assistant/session-summary/export">Valider (API)</button>
+              <button type="button" id="btn-assistant-session-mmo-bridge" title="POST /v1/pilot/assistant/session-summary/mmo-bridge">Appliquer pont (API)</button>
               <span class="assistant-muted" id="assistant-session-hint">—</span>
             </p>
             <pre id="assistant-session-summary-out" class="assistant-raw-collapsed" style="max-height:10rem;margin-top:0.35rem">—</pre>
           </details>
           <details class="pilot-legacy-lab" id="assistant-legacy-lab" style="margin-top:0.65rem">
-            <summary>⊘ Legacy lab — pont session / forge sandbox</summary>
-            <p class="legacy-banner">Pont <code>session_summary</code> vers l’ancien persona sandbox (pas le client Godot ↔ 246).</p>
+            <summary>⊘ Legacy lab — forge sandbox OpenGame</summary>
+            <p class="legacy-banner">Preset prototype dry-run (hors produit Godot ↔ 246).</p>
             <p class="assistant-chip-row" style="margin:0.35rem 0">
               <button type="button" id="btn-assistant-preset-mmo-dev">Forge sandbox</button>
-              <button type="button" id="btn-assistant-session-mmo-bridge" title="POST /v1/pilot/assistant/session-summary/mmo-bridge">Appliquer pont (API)</button>
             </p>
-            <details style="margin-top:0.5rem">
-              <summary>JSON session_summary (import)</summary>
-              <label for="assistant-mmo-session-import" style="margin-top:0.35rem;display:block">JSON</label>
-              <textarea id="assistant-mmo-session-import" rows="3" style="width:100%;box-sizing:border-box;font-size:0.78rem" placeholder='{"tracked_quest":"…"}'></textarea>
-              <p style="display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.4rem 0 0;">
-                <button type="button" id="btn-assistant-mmo-merge">Fusionner dans contexte</button>
-                <button type="button" id="btn-assistant-mmo-load-desktop-key">Depuis Desktop</button>
-                <button type="button" id="btn-assistant-mmo-save-desktop-key">Vers Desktop</button>
-              </p>
-              <span class="assistant-muted" id="assistant-mmo-hint">—</span>
-            </details>
           </details>
         </div>
       </aside>
@@ -2051,12 +2051,12 @@
   "desktop_dry_run": true,
   "history": []
 }</textarea>
-      <details class="pilot-legacy-lab" id="desktop-legacy-lab" style="margin-top:0.75rem">
-        <summary>⊘ Legacy lab — résumé session sandbox</summary>
-        <p class="legacy-banner">Ancien pont <code>session_summary</code> (persona sandbox), pas le flux Godot / Launchpad.</p>
-        <label for="desktop-mmo-summary">JSON optionnel (persistant navigateur)</label>
-        <textarea id="desktop-mmo-summary" rows="3" placeholder='Ex. {"player_note":"…","session_mood":"…"}' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
-      </details>
+      <label for="desktop-mmo-summary" style="margin-top:0.75rem">Résumé de session (<code>session_summary</code>)</label>
+      <p class="muted" style="margin:0.25rem 0 0 0;font-size:0.85rem;max-width:46rem;">
+        Contexte volontaire pour l’Assistant Core (notes, quête, ton) — JSON borné, stocké dans ce navigateur,
+        injecté dans <code>context</code> à l’envoi. Partagé avec la vue Assistant.
+      </p>
+      <textarea id="desktop-mmo-summary" rows="3" placeholder='{"player_note":"…","session_mood":"…","tracked_quest":"…"}' style="font-family: ui-monospace, monospace; font-size: 0.85rem;"></textarea>
       <label for="desktop-approval" style="margin-top:0.75rem">Approval token (optionnel)</label>
       <input type="password" id="desktop-approval" placeholder="desktop_approval (stocké localement)" autocomplete="off" />
 
@@ -4990,7 +4990,7 @@
       { label: "ADR 0003 — forge OpenGame", path: "docs/adr/0003-opengame-forge-prototypes.md" },
       { label: "Desktop hybride", path: "docs/desktop_hybride.md" },
       { label: "Fusion protocole agents", path: "docs/fusion_spec_agents.md" },
-      { label: "Protocole session_summary (legacy)", path: "docs/mmmorpg_PROTOCOL.md" },
+      { label: "Protocole session_summary", path: "docs/mmmorpg_PROTOCOL.md" },
     ];
 
     function assistantDocChipHtml(path) {
