@@ -17,6 +17,14 @@
 | **`packages/prime-client`** | Jeu : client Godot Prime | Launchpad / Godot → 246 |
 | **`packages/launchpad`** | Lanceur Electron (sources) | build Windows → `J:\swgemu\dist\` |
 
+Serveurs jeu (runtime, hors Git) :
+
+| Hôte | Rôle | Accès |
+|------|------|-------|
+| **`192.168.0.246:8792`** | **Prime** — état serveur + comptes Core3 | http://192.168.0.246:8792/ |
+| **`192.168.0.245:8792`** | **PreCU / ops** — état + comptes | http://192.168.0.245:8792/ |
+| **`192.168.0.246:8080`** | Patches Prime | http://192.168.0.246:8080/patches/prime/manifest.json |
+
 ## Actif — remotes liés (hors Git monorepo)
 
 | Chemin local | Rôle |
@@ -58,6 +66,12 @@ flowchart LR
   end
   subgraph linked["Liés"]
     INFO["Infographiste_IA"]
+    CK["Cockpit .100:8093"]
+    ORCH["Orch UI .100:5174"]
+  end
+  subgraph game["Serveurs jeu"]
+    P246["Prime 246:8792"]
+    P245["PreCU 245:8792"]
   end
   subgraph arch["Archive"]
     AVA["avatar_app"]
@@ -71,4 +85,6 @@ flowchart LR
   INFO --> PC
   CX -.->|"upstream"| MMO
   PC -.->|"upstream"| NM
+  LP --> P246
+  PC --> P246
 ```
