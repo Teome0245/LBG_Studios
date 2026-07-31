@@ -23,6 +23,7 @@
 |--------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
 | **Cockpit P03** (runtime) | Ops infra LAN — http://192.168.0.100:8093/pilot/#/cockpit (sources `_shelf/LBG_Project_03`) |
+| **Orchestrateur UI** (runtime) | SPA Vue — http://192.168.0.100:5174/ · `/lyra` · `/agents/map` (sources `_archive/LBG_IA`, API `:3000`) |
 
 ## Étagère
 
@@ -36,7 +37,7 @@
 |-------|--------|
 | `_archive/avatar_app` | Bac avatars web Three.js — gelé |
 | `_archive/mmmorpg` | Pivot Core3 / sandbox WS gelée |
-| `_archive/LBG_IA` | Orchestrateur Vue historique |
+| `_archive/LBG_IA` | Sources SPA Orchestrateur Vue — **runtime actif** sur `.100:5174` (pas à jeter) |
 | `../LBG_IA_MMORPG` | **Upstream legacy** Cortex (avant extraction) |
 | `../new_mmo` | **Upstream legacy** jeu (Core3 + historiques) |
 

@@ -1532,6 +1532,7 @@
           <a href="#/chat" data-nav-route="chat">Chat</a>
           <a href="#/assistant" data-nav-route="assistant">Assistant</a>
           <a href="#/jobs" data-nav-route="jobs">Jobs <span id="jobs-nav-badge" class="jobs-badge jobs-badge--waiting_approval" style="display:none; margin-left:0.25rem;">!</span></a>
+          <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="SPA Orchestrateur Vue — CT .100:5174">Orch UI</a>
         </div>
       </details>
       <details class="pilot-nav-group" data-nav-group="campus">
@@ -1539,6 +1540,7 @@
         <div class="pilot-nav-menu">
           <a href="#/team" data-nav-route="team">File tâches</a>
           <a href="#/team/office" data-nav-route="team_office">Bureau</a>
+          <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer" title="Carte agents — Orchestrateur UI .100:5174">Carte agents</a>
         </div>
       </details>
       <details class="pilot-nav-group" data-nav-group="ops">
@@ -1554,6 +1556,7 @@
         <div class="pilot-nav-menu">
           <a href="#/pm" data-nav-route="pm">Chef de projet</a>
           <a href="#/lyra" data-nav-route="lyra">Lyra chat</a>
+          <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer" title="Lyra riche — Orchestrateur UI .100:5174">Lyra UI</a>
         </div>
       </details>
     </nav>
@@ -1581,6 +1584,7 @@
               <a href="#/chat">Chat</a>
               <a href="#/assistant">Assistant</a>
               <a href="#/jobs">Jobs</a>
+              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="SPA Orchestrateur — CT .100:5174">Orch UI</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -1589,6 +1593,7 @@
             <div class="pilot-home-links">
               <a href="#/team/office">Bureau</a>
               <a href="#/team">File tâches</a>
+              <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer" title="Carte agents Orchestrateur UI">Carte agents</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -1602,10 +1607,11 @@
           </div>
           <div class="pilot-home-card">
             <h3><a href="#/pm" style="color:inherit;text-decoration:none;">Projet</a></h3>
-            <p>Jalons PM et chat Lyra (agents Studio).</p>
+            <p>Jalons PM et Lyra (Pilot + UI riche Orchestrateur).</p>
             <div class="pilot-home-links">
               <a href="#/pm">Chef de projet</a>
-              <a href="#/lyra">Lyra chat</a>
+              <a href="#/lyra">Lyra Pilot</a>
+              <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer" title="Lyra jauges / presets — .100:5174">Lyra UI</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -1615,6 +1621,15 @@
               <a href="#/desktop?launch=godot" title="Préremplit open_app Godot + --path prime-client (action poste)">Godot</a>
               <a href="#/desktop?launch=launchpad" title="Préremplit open_app LBG Launchpad (action poste)">Launchpad</a>
               <a href="http://192.168.0.246:8080/patches/prime/manifest.json" target="_blank" rel="noopener noreferrer" title="Manifeste patches Prime sur 246">Patches 246</a>
+            </div>
+          </div>
+          <div class="pilot-home-card">
+            <h3><a href="http://192.168.0.100:5174/" style="color:inherit;text-decoration:none;" target="_blank" rel="noopener noreferrer">Orchestrateur UI</a></h3>
+            <p>SPA Vue sur <code>.100:5174</code> — surfaces qui marchent (pas à jeter).</p>
+            <div class="pilot-home-links">
+              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer">Accueil</a>
+              <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer">Lyra</a>
+              <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer">Carte agents</a>
             </div>
           </div>
         </div>
@@ -1714,9 +1729,8 @@
     <header>
       <h1>Lyra (agents)</h1>
       <p class="muted">
-        Source Lyra « standalone » via <code>POST /v1/pilot/route</code> : on envoie <code>context.lyra</code> et on lit
-        <code>result.output.lyra</code> (echo, ou pas de jauges si <code>lyra_engine</code> est dispo).
-        Bac Studio — sans WS sandbox ni <code>world_npc_id</code> obligatoire. Produit jeu = Godot ↔ 246.
+        Bac Pilot via <code>POST /v1/pilot/route</code> (<code>context.lyra</code> → <code>result.output.lyra</code>).
+        UI riche (jauges, presets) : <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer">Orchestrateur · /lyra</a>.
       </p>
     </header>
     <section>
