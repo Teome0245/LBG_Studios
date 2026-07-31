@@ -22,11 +22,11 @@ SUBPROJECTS: list[dict[str, object]] = [
         "paths": [],
         "docs": [],
         "external_docs": [
-            "/home/sdesh/projects/LBG_Project_03/docs/registre_projets_ecosysteme.md",
-            "/home/sdesh/projects/LBG_Project_03/docs/coexistence_legacy_n-1.md",
+            "/home/sdesh/projects/_shelf/LBG_Project_03/docs/registre_projets_ecosysteme.md",
+            "/home/sdesh/projects/_shelf/LBG_Project_03/docs/coexistence_legacy_n-1.md",
         ],
-        "status": "actif",
-        "external_paths": ["/home/sdesh/projects/LBG_Project_03/"],
+        "status": "etagere",
+        "external_paths": ["/home/sdesh/projects/_shelf/LBG_Project_03/"],
     },
     {
         "id": "client_godot",
@@ -41,6 +41,7 @@ SUBPROJECTS: list[dict[str, object]] = [
         ],
         "status": "actif",
         "external_paths": [
+            "/home/sdesh/projects/LBG_Studios/packages/prime-client/",
             "/home/sdesh/projects/new_mmo/prime-client/",
             "/home/sdesh/projects/new_mmo/client-prime-lbg/",
         ],
@@ -52,7 +53,10 @@ SUBPROJECTS: list[dict[str, object]] = [
         "persona": "Iris",
         "paths": ["agents/declarations/godot_dev_iris.json", "docs/jalon_equipe_godot_dev_ia.md"],
         "docs": ["docs/jalon_equipe_godot_dev_ia.md", "docs/jalon_m9_scrapaltai_map_minimap.md"],
-        "external_paths": ["/home/sdesh/projects/new_mmo/prime-client/"],
+        "external_paths": [
+            "/home/sdesh/projects/LBG_Studios/packages/prime-client/",
+            "/home/sdesh/projects/new_mmo/prime-client/",
+        ],
         "status": "actif",
     },
     {
