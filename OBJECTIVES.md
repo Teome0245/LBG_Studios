@@ -6,31 +6,31 @@
 
 - [x] Dépôt `Teome0245/LBG_Studios` = point de départ docs / Cursor / Team
 - [x] Registre + objectifs versionnés ici
-- [ ] Allowlist Cursor Cloud Agent inclut ce repo
-- [ ] Workspace Cursor ouvert sur ce repo au quotidien
+- [x] Allowlist Cursor Cloud Agent inclut ce repo (`LBG_CURSOR_AGENT_REPOS` sur 140)
+- [x] Workspace Cursor : `LBG_Studios.code-workspace` + `~/projects/projects.active.code-workspace`
 
 ## O1 — Studio (prioritaire)
 
 Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud Agent, desktop hybride — **sans** client web legacy `/mmo/`.
 
-| Critère done | Mesure |
-|--------------|--------|
-| Code Cortex extrait | `packages/cortex/` (orchestrator, backend, agents, pilot_web allégé, infra) |
-| Pilot LAN | `http://192.168.0.140:8080/` servi / déployable depuis ce layout |
-| Team / healthz | API Team + healthz OK après deploy depuis `packages/cortex` |
-| Accueil Pilot | Carte Jeu Prime (Godot/Launchpad), pas de lien produit `/mmo/` |
-| Freeze soft | Features hors O1/O2 gelées dans repos legacy |
+| Critère done | Mesure | État |
+|--------------|--------|------|
+| Code Cortex extrait | `packages/cortex/` | OK |
+| Pilot LAN | Deploy `tools/deploy_cortex_140.sh` → 140:8080 | OK |
+| Team / healthz | `GET /v1/pilot/status` backend+orchestrator ok | OK |
+| Accueil Pilot | Carte Jeu Prime, pas de lien produit `/mmo/` | OK |
+| Freeze soft | `LEGACY.md` sur LBG_IA_MMORPG / new_mmo | OK |
 
 ## O2 — Jeu (ensuite)
 
 Client **Godot** `prime-client` + Launchpad + serveur **Prime 246**.
 
-| Critère done | Mesure |
-|--------------|--------|
-| Client extrait | `packages/prime-client/` (+ `packages/launchpad` sources utiles) |
-| Pas de Core3/DB dans Git | `.gitignore` + absence `third_party` Core3 / databases |
-| Smoke documenté | Launchpad/Godot → gateway 246 ; patches `http://192.168.0.246:8080/patches/prime/` |
-| Pipeline assets | Lien documenté vers `Infographiste_IA` (pas fusion forcée) |
+| Critère done | Mesure | État |
+|--------------|--------|------|
+| Client extrait | `packages/prime-client/` + `packages/launchpad` | OK |
+| Pas de Core3/DB dans Git | `.gitignore` + extract filtré | OK |
+| Smoke documenté | [`packages/prime-client/SMOKE.md`](packages/prime-client/SMOKE.md) ; patches 246:200 | OK (doc + HTTP) |
+| Pipeline assets | Lien `Infographiste_IA` dans registre | OK |
 
 ## Hors scope (volontaire)
 
