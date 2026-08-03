@@ -1,5 +1,6 @@
 extends Control
 ## LoginPanel — écran connexion compte LBG (M11). Branche LbgAuthClient + handoff WS M12.
+## Le LoginPanel PILOTE le connect WS (ne délègue plus à Main) pour éviter l’UI figée « WS … ».
 
 signal enter_world_requested(ws_url: String, character_id: int, session_token: String)
 
@@ -15,6 +16,7 @@ var _auth: Node = null
 var _chars: Array = []
 var _local_ws: Node = null
 var _handoff_watchdog: SceneTreeTimer = null
+var _handoff_active: bool = false
 
 
 func _ready() -> void:
@@ -101,6 +103,7 @@ func _on_enter_pressed() -> void:
 	var c: Dictionary = _chars[idx[0]]
 	var cid := int(c.get("id", 0))
 	_status.text = "Select character…"
+	_btn_enter.disabled = true
 	_auth.select_character(cid)
 
 
@@ -110,48 +113,78 @@ func _on_select_ok(_character_id: int, _ws_url: String) -> void:
 
 
 func _on_select_failed(code: String, message: String) -> void:
+	_btn_enter.disabled = false
 	_status.text = "%s: %s" % [code, message]
 
 
 func _on_enter_zone_ok(ws_url: String, your_character_id: int) -> void:
 	_status.text = "En zone — ouverture WS…"
 	_btn_enter.disabled = true
+	_handoff_active = true
 	_arm_handoff_watchdog()
 	var token := get_session_token()
 	if token.strip_edges().is_empty():
 		on_ws_failed("session_token vide — reconnecte (login HTTP)")
 		return
-	var main := _find_main()
-	if main:
-		# Différé : laisse HTTPRequest finir avant le handshake WS (Godot Windows).
-		main.call_deferred("_on_enter_world_requested", ws_url, your_character_id, token)
-	else:
-		call_deferred("_start_ws_handoff", ws_url, your_character_id, token)
+	# Toujours piloter le WS ici (Main ne fait que s’attacher pour le spawn entités).
+	call_deferred("_start_ws_handoff", ws_url, your_character_id, token)
 
 
 func _arm_handoff_watchdog() -> void:
-	# Si main.gd / cache .godot casse, le bouton reste grisé sans feedback — débloque après 30 s.
-	if _handoff_watchdog != null:
-		# SceneTreeTimer n'est pas annulable ; on ignore les tirages obsolètes via visible+disabled.
-		pass
 	var tree := get_tree()
 	if tree == null:
 		return
-	_handoff_watchdog = tree.create_timer(30.0)
+	_handoff_watchdog = tree.create_timer(28.0)
 	_handoff_watchdog.timeout.connect(_on_handoff_watchdog_timeout)
 
 
 func _on_handoff_watchdog_timeout() -> void:
-	if not visible:
+	if not visible or not _handoff_active:
 		return
 	if _btn_enter and _btn_enter.disabled:
 		_btn_enter.disabled = false
-		_status.text = "WS timeout — réessaie Entrer en zone (ou relance Godot si scripts en erreur)"
-		push_warning("[LoginPanel] handoff WS timeout 30s")
+		_handoff_active = false
+		_status.text = "WS timeout — ferme Godot puis relance Launchpad (Prime)"
+		push_warning("[LoginPanel] handoff WS timeout 28s")
+		if _local_ws != null and is_instance_valid(_local_ws) and _local_ws.has_method("disconnect_session"):
+			_local_ws.call("disconnect_session")
+
+
+func _wire_ws_signals(ws: Node) -> void:
+	if ws == null:
+		return
+	if ws.has_signal("connected") and not ws.connected.is_connected(_on_local_ws_connected):
+		ws.connected.connect(_on_local_ws_connected)
+	if ws.has_signal("disconnected") and not ws.disconnected.is_connected(_on_local_ws_disconnected):
+		ws.disconnected.connect(_on_local_ws_disconnected)
+	if ws.has_signal("error_message") and not ws.error_message.is_connected(_on_local_ws_error):
+		ws.error_message.connect(_on_local_ws_error)
+	if ws.has_signal("zone_state_received") and not ws.zone_state_received.is_connected(_on_local_zone_state):
+		ws.zone_state_received.connect(_on_local_zone_state)
+	if ws.has_signal("login_result") and not ws.login_result.is_connected(_on_local_login_result):
+		ws.login_result.connect(_on_local_login_result)
+	if ws.has_signal("handoff_progress") and not ws.handoff_progress.is_connected(_on_local_handoff_progress):
+		ws.handoff_progress.connect(_on_local_handoff_progress)
+	if ws.has_signal("connecting") and not ws.connecting.is_connected(_on_local_connecting):
+		ws.connecting.connect(_on_local_connecting)
+
+
+func _on_local_connecting(ws_url: String) -> void:
+	_status.text = "WS connexion %s…" % ws_url
+
+
+func _on_local_handoff_progress(phase: String, detail: String) -> void:
+	if phase == "state":
+		_status.text = "WS %s…" % detail
+	elif phase == "auth":
+		_status.text = "WS %s" % detail
+	elif phase == "error":
+		on_ws_failed(detail)
 
 
 func _ensure_local_ws() -> Node:
 	if _local_ws != null and is_instance_valid(_local_ws) and _local_ws.has_method("connect_session"):
+		_wire_ws_signals(_local_ws)
 		return _local_ws
 	var script_res: Resource = load("res://scripts/LbgWsClient.gd")
 	if script_res == null or not (script_res is GDScript):
@@ -168,17 +201,7 @@ func _ensure_local_ws() -> Node:
 		return null
 	_local_ws.name = "LbgWsClientLocal"
 	add_child(_local_ws)
-	# Ne pas polluer le groupe global (Main utilise %LbgWsClient).
-	if _local_ws.has_signal("connected") and not _local_ws.connected.is_connected(_on_local_ws_connected):
-		_local_ws.connected.connect(_on_local_ws_connected)
-	if _local_ws.has_signal("disconnected") and not _local_ws.disconnected.is_connected(_on_local_ws_disconnected):
-		_local_ws.disconnected.connect(_on_local_ws_disconnected)
-	if _local_ws.has_signal("error_message") and not _local_ws.error_message.is_connected(_on_local_ws_error):
-		_local_ws.error_message.connect(_on_local_ws_error)
-	if _local_ws.has_signal("zone_state_received") and not _local_ws.zone_state_received.is_connected(_on_local_zone_state):
-		_local_ws.zone_state_received.connect(_on_local_zone_state)
-	if _local_ws.has_signal("login_result") and not _local_ws.login_result.is_connected(_on_local_login_result):
-		_local_ws.login_result.connect(_on_local_login_result)
+	_wire_ws_signals(_local_ws)
 	print("[LoginPanel] LbgWsClient local créé")
 	return _local_ws
 
@@ -205,57 +228,52 @@ func _find_ws_client() -> Node:
 		if ws and ws.has_method("connect_session"):
 			return ws
 		n = n.get_parent()
-	var root := tree.root
-	if root:
-		for child in root.get_children():
-			ws = child.get_node_or_null("LbgWsClient")
-			if ws and ws.has_method("connect_session"):
-				return ws
-			# Recherche récursive légère (1 niveau de plus)
-			for grand in child.get_children():
-				if str(grand.name) == "LbgWsClient" and grand.has_method("connect_session"):
-					return grand
 	return null
 
 
 func _find_main() -> Node:
 	var n: Node = get_parent()
 	while n:
-		if n.has_method("_on_enter_world_requested"):
+		if n.has_method("_on_ws_handoff_started") or n.has_method("_on_enter_world_requested"):
 			return n
 		n = n.get_parent()
 	var tree := get_tree()
-	if tree and tree.current_scene and tree.current_scene.has_method("_on_enter_world_requested"):
+	if tree and tree.current_scene:
 		return tree.current_scene
 	return null
 
 
 func _start_ws_handoff(ws_url: String, character_id: int, session_token: String) -> void:
-	# 1) Préférer Main (spawn entités + UI globale) s'il est joignable.
-	var main := _find_main()
-	if main:
-		main.call("_on_enter_world_requested", ws_url, character_id, session_token)
-		return
-
-	# 2) Fallback autonome : trouver ou créer LbgWsClient (ne dépend plus de Main).
 	var ws := _find_ws_client()
 	if ws == null or not ws.has_method("connect_session"):
 		ws = _ensure_local_ws()
+	else:
+		_wire_ws_signals(ws)
 
 	if ws == null or not ws.has_method("connect_session"):
 		_status.text = "WS: impossible de créer LbgWsClient"
 		_btn_enter.disabled = false
-		var scene_path := ""
-		if get_tree() and get_tree().current_scene:
-			scene_path = str(get_tree().current_scene.get_path())
-		push_error("[LoginPanel] échec création WS — current_scene=%s" % scene_path)
+		_handoff_active = false
+		push_error("[LoginPanel] échec création WS")
+		return
+
+	# Attacher Main pour spawn / caméra — sans lui laisser le connect (évite busy/stuck).
+	var main := _find_main()
+	if main and main.has_method("_on_ws_handoff_started"):
+		main.call("_on_ws_handoff_started", ws_url, character_id, session_token, ws)
+	elif main and main.has_method("_on_enter_world_requested"):
+		# Ancien chemin : Main connecte aussi — on laisse Main, signaux UI déjà câblés.
+		main.call("_on_enter_world_requested", ws_url, character_id, session_token)
+		_status.text = "WS %s…" % ws_url
 		return
 
 	_status.text = "WS %s…" % ws_url
+	print("[LoginPanel] connect_session %s char=%d" % [ws_url, character_id])
 	var err: int = ws.connect_session(ws_url, session_token, character_id, "tatooine")
 	if err != OK:
 		_status.text = "WS connect err %s" % err
 		_btn_enter.disabled = false
+		_handoff_active = false
 
 
 func _on_local_ws_connected(character_id: int, zone: String) -> void:
@@ -266,11 +284,13 @@ func _on_local_ws_connected(character_id: int, zone: String) -> void:
 
 
 func _on_local_ws_disconnected(reason: String) -> void:
-	on_ws_failed(reason)
+	if _handoff_active or visible:
+		on_ws_failed(reason)
 
 
 func _on_local_ws_error(message: String) -> void:
-	on_ws_failed(message)
+	if _handoff_active or visible:
+		on_ws_failed(message)
 
 
 func _on_local_login_result(success: bool, reason: String) -> void:
@@ -284,10 +304,17 @@ func _on_local_zone_state(payload: Dictionary) -> void:
 	var main := _find_main()
 	if main and main.has_method("_on_ws_zone_state"):
 		main.call("_on_ws_zone_state", payload)
+	# Filet UI : premier zone_state = entrée monde même si signal connected a raté.
+	if visible and _handoff_active:
+		var your_id := int(payload.get("your_character_id", 0))
+		var zone := str(payload.get("zone", payload.get("map", "tatooine")))
+		if your_id > 0:
+			on_ws_connected(your_id, zone if zone != "" else "tatooine")
 
 
 func _on_enter_zone_failed(code: String, message: String) -> void:
 	_btn_enter.disabled = false
+	_handoff_active = false
 	_status.text = "%s: %s" % [code, message]
 
 
@@ -296,12 +323,14 @@ func set_ws_status(message: String) -> void:
 
 
 func on_ws_connected(_character_id: int, zone: String) -> void:
+	_handoff_active = false
 	_status.text = "Connecté — %s" % zone
 	_btn_enter.disabled = false
 	visible = false
 
 
 func on_ws_failed(reason: String) -> void:
+	_handoff_active = false
 	_btn_enter.disabled = false
 	visible = true
 	var short := reason if reason.length() < 120 else reason.substr(0, 117) + "…"

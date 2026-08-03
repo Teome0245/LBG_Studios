@@ -35,7 +35,15 @@ bash packages/prime-client/tools/sync_prime_client_to_j.sh
 ## Lancement
 
 1. Pilot Accueil → **Launchpad** / **Godot** (Desktop hybride), ou Launchpad Windows profil Prime
-2. Connexion compte test → zone (Lost Heaven / Scrapaltai selon build)
+2. Connexion compte test (ex. Teome) → perso → **Entrer en zone**
+3. Attendu : statut LoginPanel `WS connexion…` → `login_result` → monde ; logs `[LbgWs] state=`
+4. Si figé >28s : fermer Godot, relancer Launchpad (cache `.godot` régénéré par `sync_prime_client_to_j.sh`)
+
+Smoke HTTP seul (sans Godot) :
+
+```bash
+bash packages/cortex/infra/scripts/smoke_godot_m11_login_lan.sh
+```
 
 ## Doc
 

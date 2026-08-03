@@ -2,19 +2,29 @@
 extends Node2D
 
 @onready var camera:         Camera2D      = $Camera2D
-@onready var entity_manager: EntityManager = $EntityManager
+@onready var entity_manager: Node = $EntityManager
 @onready var info_label:     Label         = $UI/HudLayer/InfoPanel/VBox/InfoLabel
 @onready var stats_label:    Label         = $UI/HudLayer/InfoPanel/VBox/StatsLabel
 @onready var state_label:    Label         = $UI/HudLayer/StatePanel/StateLabel
-@onready var hotbar:         Hotbar        = $UI/HudLayer/Hotbar
-@onready var inventory_panel: InventoryPanel = $UI/ModalLayer/InventoryPanel
-@onready var _talents_panel: TalentsCraftPanel = $UI/ModalLayer/TalentsCraftPanel
-@onready var _dialogue_panel: DialoguePortraitPanel = $UI/ModalLayer/DialoguePortraitPanel
+@onready var hotbar:         Node         = $UI/HudLayer/Hotbar
+@onready var inventory_panel: Node = $UI/ModalLayer/InventoryPanel
+@onready var _talents_panel: Node = $UI/ModalLayer/TalentsCraftPanel
+@onready var _dialogue_panel: Node = $UI/ModalLayer/DialoguePortraitPanel
 @onready var _login_panel: Control = $UI/LoginPanel
 @onready var _ws: Node = get_node_or_null("%LbgWsClient")
 # preload (pas class_name) : évite casse du parse main.gd si le cache .godot est incomplet.
 const _DialogueBridgeScript = preload("res://scripts/dialogue_bridge.gd")
 var _dialogue_bridge: Node = null
+
+# preload (pas class_name) : main.gd reste parseable même si .godot/class cache est incomplet.
+const _Projection3D2D = preload("res://scripts/projection.gd")
+const _NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
+const _Crc32Util = preload("res://scripts/crc32_util.gd")
+const _LbgWsClientScript = preload("res://scripts/LbgWsClient.gd")
+const _EntityScript = preload("res://scripts/entity.gd")
+const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
+const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
+const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
 
 const CAM_SPEED:     float   = 400.0
 const CAM_ZOOM_STEP: float   = 0.15
@@ -40,6 +50,9 @@ var _last_ws_url: String = ""
 var _local_character_name: String = ""
 var _dialogue_demo_expression_index: int = 0
 var _selected_entity_id: int = 0
+var _dialogue_world_npc_id: String = ""
+var _dialogue_npc_name: String = ""
+var _dialogue_npc_role: String = ""
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
 const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
@@ -82,6 +95,11 @@ func _ensure_dialogue_bridge() -> void:
 	add_child(_dialogue_bridge)
 	if _dialogue_bridge.has_signal("reply_ready"):
 		_dialogue_bridge.reply_ready.connect(_on_dialogue_bridge_reply)
+	if _dialogue_bridge.has_signal("busy_changed"):
+		_dialogue_bridge.busy_changed.connect(_on_dialogue_bridge_busy)
+	if _dialogue_panel and _dialogue_panel.has_signal("followup_submitted"):
+		if not _dialogue_panel.followup_submitted.is_connected(_on_dialogue_followup):
+			_dialogue_panel.followup_submitted.connect(_on_dialogue_followup)
 
 
 func _log_build_info() -> void:
@@ -116,6 +134,51 @@ func _ensure_ws_client() -> void:
 		_ws.add_to_group("lbg_ws_client")
 
 
+## Appelé par LoginPanel : attache le WS déjà connecté (LoginPanel pilote le handshake).
+func _on_ws_handoff_started(ws_url: String, character_id: int, session_token: String, ws: Node) -> void:
+	_last_ws_url = ws_url
+	_ws_handoff_busy = true
+	if _login_panel and _login_panel.has_method("get_selected_character_name"):
+		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
+	print("[Main] handoff attaché (LoginPanel pilote) ws=%s char=%d name=%s" % [
+		ws_url, character_id, _local_character_name
+	])
+	if ws != null and is_instance_valid(ws):
+		_ws = ws
+		if not _ws.is_in_group("lbg_ws_client"):
+			_ws.add_to_group("lbg_ws_client")
+	else:
+		_ensure_ws_client()
+	_wire_ws_signals_only()
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc and pc.has_method("set_ws_client") and _ws:
+		pc.set_ws_client(_ws)
+	if state_label:
+		state_label.text = "WS…"
+	# session_token réservé (compat signature) — LoginPanel a déjà le token pour connect_session.
+	if session_token.strip_edges().is_empty():
+		push_warning("[Main] session_token vide à l’attach handoff")
+
+
+func _wire_ws_signals_only() -> void:
+	if _ws == null:
+		return
+	if _ws.has_signal("connecting") and not _ws.connecting.is_connected(_on_ws_connecting):
+		_ws.connecting.connect(_on_ws_connecting)
+	if _ws.has_signal("connected") and not _ws.connected.is_connected(_on_ws_connected):
+		_ws.connected.connect(_on_ws_connected)
+	if _ws.has_signal("zone_state_received") and not _ws.zone_state_received.is_connected(_on_ws_zone_state):
+		_ws.zone_state_received.connect(_on_ws_zone_state)
+	if _ws.has_signal("disconnected") and not _ws.disconnected.is_connected(_on_ws_disconnected):
+		_ws.disconnected.connect(_on_ws_disconnected)
+	if _ws.has_signal("error_message") and not _ws.error_message.is_connected(_on_ws_error):
+		_ws.error_message.connect(_on_ws_error)
+	if _ws.has_signal("login_result") and not _ws.login_result.is_connected(_on_ws_login_result):
+		_ws.login_result.connect(_on_ws_login_result)
+	if _ws.has_signal("handoff_progress") and not _ws.handoff_progress.is_connected(_on_ws_handoff_progress):
+		_ws.handoff_progress.connect(_on_ws_handoff_progress)
+
+
 func _wire_login_ws() -> void:
 	if _login_panel:
 		_login_panel.visible = show_login_on_start
@@ -123,38 +186,24 @@ func _wire_login_ws() -> void:
 			_dismiss_modals_for_login()
 		if _login_panel.has_signal("enter_world_requested"):
 			_login_panel.enter_world_requested.connect(_on_enter_world_requested)
-	if _ws:
-		if _ws.has_signal("connecting"):
-			_ws.connecting.connect(_on_ws_connecting)
-		if _ws.has_signal("connected"):
-			_ws.connected.connect(_on_ws_connected)
-		if _ws.has_signal("zone_state_received"):
-			_ws.zone_state_received.connect(_on_ws_zone_state)
-		if _ws.has_signal("disconnected"):
-			_ws.disconnected.connect(_on_ws_disconnected)
-		if _ws.has_signal("error_message"):
-			_ws.error_message.connect(_on_ws_error)
-		if _ws.has_signal("login_result"):
-			_ws.login_result.connect(_on_ws_login_result)
-		if _ws.has_signal("handoff_progress"):
-			_ws.handoff_progress.connect(_on_ws_handoff_progress)
-		var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
-		if pc and pc.has_method("set_ws_client"):
-			pc.set_ws_client(_ws)
+	_wire_ws_signals_only()
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc and pc.has_method("set_ws_client") and _ws:
+		pc.set_ws_client(_ws)
 
 
 func _dismiss_modals_for_login() -> void:
-	var pmap := get_node_or_null("UI/ModalLayer/PlanetMapPanel") as PlanetMapPanel
+	var pmap: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
 	if pmap and pmap.has_method("close_map"):
 		pmap.close_map()
-	if inventory_panel and inventory_panel.visible:
+	if inventory_panel and inventory_panel.get("visible") and inventory_panel.has_method("toggle"):
 		inventory_panel.toggle()
-	if _talents_panel and _talents_panel.visible:
+	if _talents_panel and _talents_panel.get("visible") and _talents_panel.has_method("toggle"):
 		_talents_panel.toggle()
-	if _dialogue_panel and _dialogue_panel.visible:
+	if _dialogue_panel and _dialogue_panel.get("visible") and _dialogue_panel.has_method("hide_portrait"):
 		_dialogue_panel.hide_portrait()
-	var retail := get_node_or_null("WorldMap/RetailLayoutLayer") as RetailLayoutLayer
-	if retail and retail.visible_layout:
+	var retail: Node = get_node_or_null("WorldMap/RetailLayoutLayer")
+	if retail and retail.has_method("set_visible_layout") and bool(retail.get("visible_layout")):
 		retail.set_visible_layout(false)
 
 
@@ -166,22 +215,22 @@ func _set_login_status(message: String) -> void:
 
 
 func _on_enter_world_requested(ws_url: String, character_id: int, session_token: String) -> void:
-	if _ws_handoff_busy:
+	# Compat : si un vieux LoginPanel délègue encore le connect à Main.
+	if _ws_handoff_busy and _ws != null and _ws.has_method("is_open") and bool(_ws.is_open()):
 		return
 	if session_token.strip_edges().is_empty():
 		_on_ws_error("session_token vide (login HTTP)")
 		return
 	_ws_handoff_busy = true
-	# Nom perso depuis le LoginPanel (évite double sprite Gally / Vous)
 	if _login_panel and _login_panel.has_method("get_selected_character_name"):
 		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
-	print("[Main] M11→M12 handoff ws=%s char=%d name=%s" % [ws_url, character_id, _local_character_name])
+	print("[Main] M11→M12 handoff (legacy) ws=%s char=%d name=%s" % [ws_url, character_id, _local_character_name])
 	_last_ws_url = ws_url
-	# Garder le panel visible jusqu'à enter_world (sinon status « WS… » figé sans feedback).
 	if _login_panel:
 		_login_panel.visible = true
 	_dismiss_modals_for_login()
 	_ensure_ws_client()
+	_wire_ws_signals_only()
 	_set_login_status("WS %s…" % ws_url)
 	if state_label:
 		state_label.text = "WS…"
@@ -273,7 +322,7 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 	var zone := str(payload.get("zone", payload.get("map", _planet_name)))
 	if zone != "":
 		_planet_name = zone
-		var wm: WorldMap = get_node_or_null("WorldMap") as WorldMap
+		var wm: Node = get_node_or_null("WorldMap")
 		if wm:
 			wm.set_planet(zone.to_lower())
 
@@ -303,13 +352,13 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 			if not ent is Dictionary:
 				continue
 			_apply_ws_entity(ent as Dictionary, your_id)
-		var retail := get_node_or_null("WorldMap/RetailLayoutLayer") as RetailLayoutLayer
+		var retail: Node = get_node_or_null("WorldMap/RetailLayoutLayer")
 		if retail:
 			retail.merge_zone_entities(entities, your_id)
 
 	# Joueur contrôlé — spawn une fois ; ne pas recentrer à chaque tick zone_state
 	if your_id > 0:
-		var existing := entity_manager.get_entity(your_id)
+		var existing: Node = entity_manager.get_entity(your_id)
 		var first_spawn := existing == null
 		if first_spawn:
 			var label := _local_character_name if _local_character_name != "" else "You"
@@ -323,18 +372,18 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 				if near_default or not has_pos:
 					pos = saved
 					has_pos = true
-			entity_manager.spawn(your_id, pos, Entity.COLOR_PLAYER_OFFICIAL, label, "player", "player:human")
+			entity_manager.spawn(your_id, pos, COLOR_PLAYER_OFFICIAL, label, "player", "player:human")
 		elif has_pos and existing != null:
 			# Client-authoritative pendant le play : pas de soft-correct (cause le rebond).
 			# On ne recentre que si le joueur est immobile ET très loin (> 40 m).
-			var pc_chk: PlayerController = get_node_or_null("PlayerController") as PlayerController
+			var pc_chk: Node = get_node_or_null("PlayerController")
 			var moving := pc_chk != null and pc_chk.has_method("is_moving") and bool(pc_chk.is_moving())
 			if not moving:
 				var dx: float = existing.core3_pos.x - pos.x
 				var dz: float = existing.core3_pos.z - pos.z
 				if dx * dx + dz * dz > 1600.0:  # > 40 m
 					entity_manager.move(your_id, pos)
-		var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
+		var pc: Node = get_node_or_null("PlayerController")
 		if pc:
 			pc.set_player_id(your_id)
 			if first_spawn and pc.has_method("send_initial_position"):
@@ -343,13 +392,13 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 			on_player_connected(your_id, zone if zone != "" else "tatooine")
 
 	for rid in payload.get("removed_entity_ids", []):
-		var oid := LbgWsClient.resolve_oid(rid)
+		var oid := _LbgWsClientScript.resolve_oid(rid)
 		if oid != 0 and oid != your_id:
 			entity_manager.despawn(oid)
 
 
 func _resolve_ws_oid(raw: Variant) -> int:
-	return LbgWsClient.resolve_oid(raw)
+	return _LbgWsClientScript.resolve_oid(raw)
 
 
 func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
@@ -376,9 +425,9 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		pos = Vector3(float(ent.get("x", 0)), float(ent.get("y", 0)), float(ent.get("z", 0)))
 	if name == "":
 		name = str(ent.get("id", ""))
-	var color := Entity.COLOR_NPC
+	var color := COLOR_NPC
 	if kind == "player":
-		color = Entity.COLOR_PLAYER_BOT
+		color = COLOR_PLAYER_BOT
 	if entity_manager.get_entity(oid) == null:
 		entity_manager.spawn(oid, pos, color, name, kind, str(ent.get("id", "")))
 	else:
@@ -386,7 +435,7 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 func _focus_lost_heaven_hub() -> void:
 	if camera == null:
 		return
-	var center := Projection3D2D.to_screen(LOST_HEAVEN_HUB)
+	var center := _Projection3D2D.to_screen(LOST_HEAVEN_HUB)
 	var fit_z := _hub_fit_zoom()
 	camera.position = center
 	camera.zoom = Vector2(fit_z, fit_z)
@@ -400,8 +449,8 @@ func _hub_fit_zoom() -> float:
 	var bounds := _hub_world_bounds()
 	if bounds.is_empty():
 		return LOST_HEAVEN_ZOOM.x
-	var span_x: float = (float(bounds["max_x"]) - float(bounds["min_x"])) * Projection3D2D.SCALE
-	var span_z: float = (float(bounds["max_z"]) - float(bounds["min_z"])) * Projection3D2D.SCALE
+	var span_x: float = (float(bounds["max_x"]) - float(bounds["min_x"])) * _Projection3D2D.SCALE
+	var span_z: float = (float(bounds["max_z"]) - float(bounds["min_z"])) * _Projection3D2D.SCALE
 	if span_x < 1.0 or span_z < 1.0:
 		return LOST_HEAVEN_ZOOM.x
 	var zx: float = (vp.x * HUB_FIT_MARGIN) / span_x
@@ -451,26 +500,26 @@ func _demo_spawn() -> void:
 	entity_manager.spawn(
 		0x0000_0001_0000_0001,
 		Vector3(3500.0, 0.0, -4800.0),
-		Entity.COLOR_PLAYER_OFFICIAL,
+		COLOR_PLAYER_OFFICIAL,
 		"SWG_Client",
 		"player"
 	)
 	entity_manager.spawn(
 		0x0000_0001_0000_0002,
 		Vector3(3510.0, 0.0, -4795.0),
-		Entity.COLOR_PLAYER_BOT,
+		COLOR_PLAYER_BOT,
 		"Bot_IA",
 		"player"
 	)
 	entity_manager.spawn(
 		0x0000_0002_0000_0001,
 		Vector3(3525.0, 8.0, -4810.0),
-		Entity.COLOR_NPC,
+		COLOR_NPC,
 		"NPC_Guard",
 		"npc"
 	)
 	entity_manager.spawn(0, Vector3(0.0, 0.0, 0.0), Color(1.0, 1.0, 0.0, 0.6), "(0,0)")
-	var center := Projection3D2D.to_screen(Vector3(3510.0, 0.0, -4800.0))
+	var center := _Projection3D2D.to_screen(Vector3(3510.0, 0.0, -4800.0))
 	camera.position = center
 	_cam_target     = center
 
@@ -499,7 +548,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_R:
 				_focus_lost_heaven_hub()
 			KEY_F:
-				var e := entity_manager.get_entity(0x0000_0001_0000_0002)
+				var e: Node = entity_manager.get_entity(0x0000_0001_0000_0002)
 				if e:
 					camera.position = e.position
 			KEY_T:
@@ -511,11 +560,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_O:
 				_cycle_dialogue_expression()
 			KEY_L:
-				Entity.toggle_nameplates()
+				_EntityScript.toggle_nameplates()
 				for e in entity_manager.get_all_entities():
 					if e:
 						e.queue_redraw()
-				print("[Main] nameplates=%s" % Entity.show_nameplates)
+				print("[Main] nameplates=%s" % _EntityScript.show_nameplates)
 			KEY_F9:
 				show_debug_hud = not show_debug_hud
 				_apply_debug_hud()
@@ -561,7 +610,7 @@ func _on_hotbar_slot(index: int) -> void:
 		3:
 			_hotbar_feedback("Emote — à brancher")
 		4: # Carte
-			var map_panel := get_node_or_null("UI/ModalLayer/PlanetMapPanel")
+			var map_panel: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
 			if map_panel and map_panel.has_method("toggle_map"):
 				map_panel.call("toggle_map")
 				_hotbar_feedback("Carte planétaire")
@@ -613,23 +662,27 @@ func _cycle_dialogue_expression() -> void:
 	_dialogue_panel.set_body_text("Expression active : %s" % expr)
 	_hotbar_feedback("Expression %s" % expr)
 
-func _open_npc_dialogue(entity: Entity) -> void:
+func _open_npc_dialogue(entity: Node) -> void:
 	if entity == null or _dialogue_panel == null:
 		return
 	_ensure_dialogue_bridge()
-	var speaker := entity.label_text if entity.label_text != "" else "PNJ"
-	var anchor := NpcAnchorResolver.resolve(entity.entity_key, entity.label_text)
+	var speaker: String = str(entity.get_display_name())
+	var anchor := _NpcAnchorResolver.resolve(entity.entity_key, speaker)
 	var role := str(anchor.get("role", ""))
-	var world_npc_id := NpcAnchorResolver.normalize_pilot_id(entity.entity_key)
+	var world_npc_id := _NpcAnchorResolver.normalize_pilot_id(entity.entity_key)
 	if world_npc_id.is_empty():
 		world_npc_id = "npc:unknown"
+	_dialogue_world_npc_id = world_npc_id
+	_dialogue_npc_name = speaker
+	_dialogue_npc_role = role
 	_dialogue_demo_expression_index = 0
 	_dialogue_panel.show_portrait(
 		speaker,
 		entity.kind,
 		"neutral",
 		"…",
-		entity.entity_key
+		entity.entity_key,
+		true
 	)
 	_hotbar_feedback("Interaction %s" % speaker)
 	if _dialogue_bridge == null or not bool(_dialogue_bridge.call("is_enabled")):
@@ -639,9 +692,11 @@ func _open_npc_dialogue(entity: Entity) -> void:
 		return
 	if bool(_dialogue_bridge.call("is_busy")):
 		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
+		_dialogue_panel.set_chat_busy(true)
 		return
 	_dialogue_bridge.call("touch_npc", speaker, world_npc_id)
 	_dialogue_bridge.call("update_session", {"last_npc": speaker})
+	_dialogue_panel.set_chat_busy(true)
 	var ok: bool = bool(
 		_dialogue_bridge.call(
 			"request_npc_reply",
@@ -652,19 +707,54 @@ func _open_npc_dialogue(entity: Entity) -> void:
 		)
 	)
 	if not ok:
+		_dialogue_panel.set_chat_busy(false)
 		_dialogue_panel.set_body_text(
 			"Impossible de joindre le Pilot (HTTP). Stub : %s" % _npc_dialogue_stub(role, speaker)
 		)
 
 
+func _on_dialogue_followup(text: String) -> void:
+	if _dialogue_bridge == null or _dialogue_panel == null:
+		return
+	if _dialogue_world_npc_id.is_empty():
+		return
+	if bool(_dialogue_bridge.call("is_busy")):
+		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
+		return
+	_dialogue_panel.set_chat_busy(true)
+	_dialogue_panel.set_body_text("…")
+	var ok: bool = bool(
+		_dialogue_bridge.call(
+			"request_npc_reply",
+			text,
+			_dialogue_world_npc_id,
+			_dialogue_npc_name,
+			"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
+		)
+	)
+	if not ok:
+		_dialogue_panel.set_chat_busy(false)
+		_dialogue_panel.set_body_text(
+			"Impossible d'envoyer la suite. Stub : %s"
+			% _npc_dialogue_stub(_dialogue_npc_role, _dialogue_npc_name)
+		)
+
+
+func _on_dialogue_bridge_busy(busy: bool) -> void:
+	if _dialogue_panel and _dialogue_panel.visible:
+		_dialogue_panel.set_chat_busy(busy)
+
+
 func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> void:
 	if _dialogue_panel == null or not _dialogue_panel.visible:
 		return
+	_dialogue_panel.set_chat_busy(false)
 	if ok and not reply.is_empty():
 		_dialogue_panel.set_body_text(reply)
 		var eng := str(meta.get("lyra_engagement_resolved", ""))
+		var turns := int(meta.get("history_turns", 0))
 		if eng != "":
-			_hotbar_feedback("Persona %s" % eng)
+			_hotbar_feedback("Persona %s · tours %d" % [eng, turns])
 		return
 	_dialogue_panel.set_body_text(
 		"Le pont dialogue est indisponible (%s). Réessaie plus tard." % str(meta.get("status", "?"))
@@ -717,26 +807,26 @@ func _canvas_mouse_pos() -> Vector2:
 
 
 func _screen_click_to_core3(canvas_pos: Vector2) -> Vector3:
-	return Projection3D2D.from_screen(canvas_pos)
+	return _Projection3D2D.from_screen(canvas_pos)
 
 
 func _set_selected_entity(oid: int) -> void:
 	if _selected_entity_id == oid:
 		return
 	if _selected_entity_id != 0:
-		var prev := entity_manager.get_entity(_selected_entity_id)
+		var prev: Node = entity_manager.get_entity(_selected_entity_id)
 		if prev:
 			prev.set_selected(false)
 	_selected_entity_id = oid
 	if oid == 0:
 		return
-	var e := entity_manager.get_entity(oid)
+	var e: Node = entity_manager.get_entity(oid)
 	if e:
 		e.set_selected(true)
 
 
 func _handle_world_left_click(screen_pos: Vector2) -> void:
-	var picked := entity_manager.pick_entity_at_screen(screen_pos)
+	var picked: Node = entity_manager.pick_entity_at_screen(screen_pos)
 	if picked:
 		_set_selected_entity(picked.object_id)
 		if picked.is_interactable():
@@ -749,29 +839,32 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 	_set_selected_entity(0)
 	if _dialogue_panel and _dialogue_panel.visible:
 		_dialogue_panel.hide_portrait()
-	var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
+	var pc: Node = get_node_or_null("PlayerController")
 	if pc == null or not pc.enabled or not _play_mode:
 		return
 	var core3 := _screen_click_to_core3(screen_pos)
-	var pid := pc.get_player_id()
+	var pid: int = int(pc.get_player_id())
 	if pid <= 0:
 		return
-	var me := entity_manager.get_entity(pid)
+	var me: Node = entity_manager.get_entity(pid)
 	if me:
 		core3.y = me.core3_pos.y
-		var zones := get_node_or_null("WorldMap/ZoneLayers") as ZoneLayers
+		var zones: Node = get_node_or_null("WorldMap/ZoneLayers")
 		if zones:
 			core3 = zones.clamp_move(me.core3_pos, core3)
 	pc.request_move_to(core3.x, core3.z)
 
 
-func _open_player_inspect(entity: Entity) -> void:
+func _open_player_inspect(entity: Node) -> void:
 	"""Portrait d'inspection joueur (pas de dialogue LLM — ADR 0004)."""
 	if entity == null or _dialogue_panel == null:
 		return
-	var speaker := entity.label_text if entity.label_text != "" else "Voyageur"
+	_dialogue_world_npc_id = ""
+	_dialogue_npc_name = ""
+	_dialogue_npc_role = ""
+	var speaker: String = str(entity.get_display_name())
 	var is_self := false
-	var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
+	var pc: Node = get_node_or_null("PlayerController")
 	if pc and pc.get_player_id() == entity.object_id:
 		is_self = true
 	var body := "%s — personnage joueur." % speaker
@@ -785,7 +878,8 @@ func _open_player_inspect(entity: Entity) -> void:
 		"player",
 		"neutral",
 		body,
-		entity.entity_key if entity.entity_key != "" else "player:human"
+		entity.entity_key if entity.entity_key != "" else "player:human",
+		false
 	)
 	_hotbar_feedback("Portrait %s" % speaker)
 
@@ -798,10 +892,10 @@ func _update_info() -> void:
 	if not show_debug_hud:
 		return
 	var center := camera.get_screen_center_position()
-	var core3  := Projection3D2D.from_screen(center)
+	var core3  := _Projection3D2D.from_screen(center)
 	if info_label:
 		var mode := "PLAY" if _play_mode else ("WS LIVE" if _ws_live else ("UDP LIVE" if _udp_live else ("PRIME" if _snapshot_live else "ATTENTE")))
-		var players := entity_manager.count()
+		var players: int = int(entity_manager.count())
 		info_label.text = (
 			"Prime Client v0.2  |  %s  |  Bots: %d\n" % [mode, players] +
 			"Zoom: %.2fx   Core3 cam: (%.0f, -, %.0f)" % [camera.zoom.x, core3.x, core3.z]
@@ -840,8 +934,8 @@ func on_snapshot_feed_active() -> void:
 func _focus_bot(name: String) -> bool:
 	if camera == null:
 		return false
-	var oid := Crc32Util.entity_oid("player:%s" % name)
-	var e := entity_manager.get_entity(oid)
+	var oid := _Crc32Util.entity_oid("player:%s" % name)
+	var e: Node = entity_manager.get_entity(oid)
 	if e == null:
 		print("[Main] focus %s : absent — lance run_m3_mirror.sh ?" % name)
 		return false
@@ -869,7 +963,7 @@ func on_player_connected(obj_id: int, planet: String) -> void:
 		else:
 			_login_panel.visible = false
 	var cfg := _load_human_cfg()
-	var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
+	var pc: Node = get_node_or_null("PlayerController")
 	if pc:
 		pc.enabled = true
 		pc.set_player_id(obj_id)
@@ -878,16 +972,16 @@ func on_player_connected(obj_id: int, planet: String) -> void:
 	if sb and sb.has_method("set_paused"):
 		sb.call("set_paused", true)
 	_despawn_local_player_ghosts(obj_id)
-	var wm: WorldMap = get_node_or_null("WorldMap") as WorldMap
+	var wm: Node = get_node_or_null("WorldMap")
 	if wm and planet != "":
 		wm.set_planet(planet.to_lower())
 	if bool(cfg.get("hide_npc_nameplates_on_play", true)):
-		Entity.show_nameplates = false
+		_EntityScript.show_nameplates = false
 		for e in entity_manager.get_all_entities():
 			if e:
 				e.queue_redraw()
 	if bool(cfg.get("auto_focus_on_connect", true)):
-		var e := entity_manager.get_entity(obj_id)
+		var e: Node = entity_manager.get_entity(obj_id)
 		if e and camera:
 			camera.position = e.position
 			var zf := float(cfg.get("play_zoom", 2.2))

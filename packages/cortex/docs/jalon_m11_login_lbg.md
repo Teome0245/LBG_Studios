@@ -1,6 +1,6 @@
 # Jalon M11 — Login compte LBG dans Godot (sans retail)
 
-**Statut** : **en cours** (contrat M11↔M12 rédigé · code LoginPanel / LbgAuthClient)  
+**Statut** : **livré code** (HTTP M11 smoke vert · handoff WS M12 LoginPanel→LbgWsClient·`set_process` · sync J: 2026-08-03) — validation humaine Launchpad recommandée  
 **Owner** : Hermès (`dev_godot`) · UI : Iris · Contrat : Thémis  
 **ADR** : [`0016-prime-axe-lbg-talents-artisanat.md`](../../../../new_mmo/lbg-mmo/docs/adr/0016-prime-axe-lbg-talents-artisanat.md)
 

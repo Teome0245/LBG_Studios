@@ -32,9 +32,9 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | Fonction | État | Où / note |
 |----------|------|-----------|
 | Serveur Prime 246 + comptes `:8792` | **vert** | Runtime ready (smoke LAN) |
-| Client Godot `prime-client` + Launchpad | **jaune** | Extract OK ; login manuel PC |
+| Client Godot `prime-client` + Launchpad | **jaune→vert partiel** | M11 HTTP smoke OK ; handoff WS code+sync J: (2026-08-03) ; validation Launchpad manuelle restante |
 | Sidecar joueurs IA `:8791` | **jaune** | Sondes Team `player_ia` ; pas focus courant |
-| Dialogue / Lyra *en jeu* (persona) | **jaune** | 2026-08-03 : pont Godot → Pilot `agent-dialogue` + `session_summary` (`DialogueBridge`) ; smoke `tools/smoke_rang2_persona_dialogue.sh` |
+| Dialogue / Lyra *en jeu* (persona) | **jaune** | Multi-tours (`history` + LineEdit) + `session_summary` ; lore Scrapaltai/Lost Heaven ; smoke `tools/smoke_rang2_persona_dialogue.sh` |
 | Bac Python `mmmorpg_server` / web `/mmo/` | **rouge** | Gelé volontairement |
 
 ## Rang 3 — Évolution monde / code par l’IA
@@ -65,4 +65,5 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 3. ~~Smoke Team Argus (`smoke_vm_lan.sh`)~~ — OK 2026-08-03 (Ollama `.110` LAN + soft-fail).
 4. ~~Parcours URL / web / notepad / session_summary~~ — OK 2026-08-03 (voir [`PLAN_RANG1_ASSISTANT.md`](PLAN_RANG1_ASSISTANT.md)).
 5. ~~Mail IMAP~~ — OK 2026-08-03 (`sdesharches@192.168.0.51`) ; dictée STT reportée.
-6. Rang 2 démarré : pont `session_summary` → persona MMO (Godot `DialogueBridge` + smoke LAN).
+6. Rang 2 : pont persona + multi-tours + sync `.godot`/Launchpad (voir [`PLAN_RANG2_PERSONA.md`](PLAN_RANG2_PERSONA.md)).
+7. Plus tard : enrichissement quête gateway 246 ; dictée STT.

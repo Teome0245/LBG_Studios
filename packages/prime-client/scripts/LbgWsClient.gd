@@ -67,6 +67,7 @@ func connect_session(ws_url: String, session_token: String, character_id: int, z
 		disconnected.emit("connect_to_url err %s" % err)
 		return err
 	_active = true
+	set_process(true)
 	connecting.emit(_url)
 	print("[LbgWs] connecting %s char=%d" % [_url, character_id])
 	return OK
@@ -118,6 +119,23 @@ func _ws_state_name(state: int) -> String:
 			return str(state)
 
 
+func _send_login_if_needed() -> void:
+	## Envoyer le login AVANT tout signal UI — un handler qui plante ne doit pas bloquer l’auth.
+	if _ready_sent or not _active:
+		return
+	if _peer.get_ready_state() != WebSocketPeer.STATE_OPEN:
+		return
+	_ready_sent = true
+	var login_payload := {
+		"type": "login",
+		"proto": proto,
+		"session_token": _session_token,
+	}
+	_send(login_payload)
+	print("[LbgWs] >> login token_len=%d" % _session_token.length())
+	handoff_progress.emit("auth", "login WS…")
+
+
 func _process(delta: float) -> void:
 	if not _active:
 		return
@@ -126,6 +144,9 @@ func _process(delta: float) -> void:
 	if state != _last_state:
 		_last_state = state
 		print("[LbgWs] state=%s url=%s" % [_ws_state_name(state), _url])
+		# Login immédiatement à l’ouverture TCP (avant emit state → UI).
+		if state == WebSocketPeer.STATE_OPEN:
+			_send_login_if_needed()
 		handoff_progress.emit("state", _ws_state_name(state))
 	if state == WebSocketPeer.STATE_CONNECTING:
 		_connect_elapsed += delta
@@ -143,19 +164,13 @@ func _process(delta: float) -> void:
 			disconnected.emit("timeout réponse gateway %ss après OPEN" % int(response_timeout_s))
 			return
 	if state == WebSocketPeer.STATE_OPEN:
-		if not _ready_sent:
-			_ready_sent = true
-			handoff_progress.emit("auth", "login WS…")
-			_send({
-				"type": "login",
-				"proto": proto,
-				"session_token": _session_token,
-			})
+		_send_login_if_needed()
 		while _peer.get_available_packet_count() > 0:
 			var raw := _peer.get_packet().get_string_from_utf8()
 			if raw.is_empty():
 				error_message.emit("paquet WS vide (binaire ?)")
 				continue
+			print("[LbgWs] << %s" % raw.substr(0, mini(120, raw.length())))
 			_dispatch(raw)
 	elif state == WebSocketPeer.STATE_CLOSING:
 		pass
