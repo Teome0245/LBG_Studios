@@ -41,6 +41,12 @@ def test_owners_for_bundle_godot_login() -> None:
     assert "hermes_m12" in owner_smokes.owners_for_bundle("godot_login")
 
 
+def test_owners_for_bundle_godot_craft() -> None:
+    assert owner_smokes.owners_for_bundle("godot_craft") == ["iris_m10"]
+    assert "iris_m10" in owner_smokes.OWNER_SCRIPTS
+    assert "iris_m10" in owner_smokes.owners_for_bundle("godot_client")
+
+
 def test_block_close_when_qa_smoke_red() -> None:
     qa = team_store.create_task(
         role="qa",

@@ -64,7 +64,7 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 
 1. A1+A2 autonomie (playbook jalon + smokes owner anti-clôture).
 2. ~~P1 M12 durci (smoke WS + move)~~ — fait 2026-08-03.
-3. P2 M10 craft B2B ; P3 persona (A3 scoring livré).
+3. P2 M10 — catalog/smoke `:8791` OK ; suite craft_combine ADR 0016 ; P3 persona.
 
 **Rang 1** (déjà largement vert) :
 

@@ -9,9 +9,11 @@ from typing import Any
 
 # Bundles nommés → liste d’owners (scripts).
 OWNER_BUNDLES: dict[str, tuple[str, ...]] = {
-    "godot_client": ("hermes_m11", "hermes_m12", "iris_m9"),
+    "godot_client": ("hermes_m11", "hermes_m12", "iris_m9", "iris_m10"),
     "godot_login": ("hermes_m11", "hermes_m12"),
     "godot_m9": ("iris_m9",),
+    "godot_m10": ("iris_m10",),
+    "godot_craft": ("iris_m10",),
     "lan_qa": ("argus_lan",),
 }
 
@@ -19,6 +21,7 @@ OWNER_SCRIPTS: dict[str, str] = {
     "hermes_m11": "infra/scripts/smoke_godot_m11_login_lan.sh",
     "hermes_m12": "infra/scripts/smoke_godot_m12_ws_lan.sh",
     "iris_m9": "infra/scripts/smoke_prime_client_minimap.sh",
+    "iris_m10": "infra/scripts/smoke_godot_m10_craft_lan.sh",
     "iris_planet": "infra/scripts/smoke_prime_client_planet_map.sh",
     "hermes_sidecar": "infra/scripts/smoke_godot_sidecar_mirror_lan.sh",
     "argus_lan": "infra/scripts/smoke_vm_lan.sh",

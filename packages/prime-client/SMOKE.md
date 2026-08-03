@@ -45,7 +45,9 @@ Smoke HTTP / WS (sans Godot) :
 bash packages/cortex/infra/scripts/smoke_godot_m11_login_lan.sh
 # M12 durci : login → WS → zone_state → move (±1.5 m)
 bash packages/cortex/infra/scripts/smoke_godot_m12_ws_lan.sh
-# Bundle owners M11+M12 (+ M9 si godot_client)
+# M10 craft : catalog skills/schematics sidecar :8791
+bash packages/cortex/infra/scripts/smoke_godot_m10_craft_lan.sh
+# Bundle owners M11+M12 (+ M9/M10 si godot_client)
 bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 ```
 

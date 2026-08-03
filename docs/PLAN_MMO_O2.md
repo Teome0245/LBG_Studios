@@ -29,7 +29,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |---|--------|------------|--------|------|
 | **P0** | Doc pivot | Ce fichier + liens OBJECTIVES / RESTAURATION | Thémis | **fait** 2026-08-03 |
 | **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone→move | Hermès + Argus | **fait** 2026-08-03 (smoke + move ±1.5 m) |
-| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 | Iris + Dédale | partiel (panel live) |
+| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 | Iris + Dédale | **en cours** — catalog live + smoke M10 ; craft_combine ADR ouvert |
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables | Chœur | jaune (Rang 2) |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
@@ -39,7 +39,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | Jalon | État |
 |-------|------|
 | M9 carte/minimap | **fait** client |
-| M10 talents/craft UI | **partiel** |
+| M10 talents/craft UI | **en cours** — panel live `:8791` + smoke catalog ; experiment Core3 ouvert |
 | M11 login LBG | **fait** (Launchpad + éditeur) |
 | M12 `lbg-ws/2` live | **fait** smoke login→WS→zone_state→move ; polish ZB optionnel |
 
@@ -81,9 +81,11 @@ Flag clôture : `LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL=1` (défaut) — smo
 # Smokes owner Godot (A2)
 bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 
-# M11 / M12 unitaires
+# M11 / M12 / M10 unitaires
 bash packages/cortex/infra/scripts/smoke_godot_m11_login_lan.sh
 bash packages/cortex/infra/scripts/smoke_godot_m12_ws_lan.sh
+bash packages/cortex/infra/scripts/smoke_godot_m10_craft_lan.sh
+BUNDLE=godot_craft bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 
 # Playbook jalon client (A1) — spawn tâches Team
 cd packages/cortex && source .venv/bin/activate
