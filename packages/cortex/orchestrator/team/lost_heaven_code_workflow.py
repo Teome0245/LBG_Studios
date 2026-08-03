@@ -14,6 +14,7 @@ from services.action_proposal import propose_action_from_text
 from team.human_summary import format_validation_summary
 from team.m9_map_probe import _repo_root
 from team.models import TeamTask
+from team.prime_client_paths import resolve_prime_client_root
 
 Dispatcher = Callable[..., dict[str, object]]
 
@@ -28,10 +29,7 @@ _LH_TRACKS = frozenset(
 
 
 def _prime_client_root(ctx: dict) -> Path:
-    raw = str(ctx.get("prime_client_root") or "").strip()
-    if raw:
-        return Path(raw)
-    return _repo_root().parent / "new_mmo" / "prime-client"
+    return resolve_prime_client_root(ctx)
 
 
 def _append_section_if_missing(path: Path, marker: str, block: str, *, auto_write: bool) -> dict[str, object]:

@@ -7,27 +7,15 @@ import os
 from pathlib import Path
 from typing import Any
 
+from team.prime_client_paths import resolve_prime_client_root
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
 def _prime_client_root() -> Path:
-    raw = os.environ.get("LBG_PRIME_CLIENT_ROOT", "").strip()
-    if raw:
-        return Path(raw)
-    new_mmo = os.environ.get("LBG_NEW_MMO_ROOT", "").strip()
-    if new_mmo:
-        candidate = Path(new_mmo) / "prime-client"
-        if candidate.is_dir():
-            return candidate
-    for candidate in (
-        Path("/home/sdesh/projects/new_mmo/prime-client"),
-        Path("/opt/new_mmo/prime-client"),
-    ):
-        if candidate.is_dir():
-            return candidate
-    return Path("/home/sdesh/projects/new_mmo/prime-client")
+    return resolve_prime_client_root()
 
 
 def _check_file(path: Path, *, gaps: list[str], label: str, checks: dict[str, Any]) -> bool:

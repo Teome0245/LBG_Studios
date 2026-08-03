@@ -16,19 +16,11 @@ from team.inspiration_scan import (
     _wsl_ssh_user,
     infographiste_ia_root,
 )
+from team.prime_client_paths import resolve_prime_client_root
 
 
 def _prime_client_root() -> Path:
-    raw = os.environ.get("LBG_PRIME_CLIENT_ROOT", "").strip()
-    if raw:
-        return Path(raw)
-    for cand in (
-        Path("/opt/new_mmo/prime-client"),
-        Path("/home/sdesh/projects/new_mmo/prime-client"),
-    ):
-        if cand.is_dir():
-            return cand
-    return Path("/opt/new_mmo/prime-client")
+    return resolve_prime_client_root()
 
 
 def _expected_sprites() -> list[str]:
