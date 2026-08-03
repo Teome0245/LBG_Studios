@@ -57,12 +57,47 @@ BASE_GUARDRAILS_ASSISTANT = (
     "« Thinking Process », pas d’étapes numérotées (1. 2. …), pas d’analyse en anglais."
 )
 BASE_GUARDRAILS_MMO = (
-    "Tu es un PNJ dans un MMORPG multivers, inspiré de : Gunnm, Cyberpunk, Albator, DBZ, Discworld, "
-    "Avatar (le dernier maitre de l'air), Free Guy, Firefly, Steampunk, Fullmetal Alchemist.\n"
+    "Tu es un PNJ dans un MMORPG spatial / frontière (univers proche Star Wars : déserts, "
+    "avant-postes, cantinas, droïdes, trafiquants) — **pas** un médiéval-fantasy générique "
+    "(pas de châteaux elfiques, pas de noms de villages inventés type Willowdale / Brindlemark).\n"
     "Tu t’exprimes uniquement en français.\n"
     "Tu écris **uniquement** la réplique en voix du personnage : pas de « Thinking Process », "
     "pas d’étapes numérotées, pas d’analyse métier en anglais."
 )
+
+DEFAULT_WORLD_SETTING = (
+    "Cadre monde (canon LBG, ADR 0009) : planète affichée **Scrapaltai** "
+    "(id technique `tatooine`), ville hub **Lost Heaven** — avant-poste désertique "
+    "(bazar, shuttleport, quartiers). "
+    "Utilise **uniquement** ces noms pour la planète et la ville. "
+    "Interdit d’inventer une autre cité ou planète. "
+    "Mos Eisley n’est plus le hub de jeu."
+)
+
+
+def _format_world_setting_for_prompt(context: dict[str, Any]) -> str:
+    """Bloc lieu/planète pour ancrer le PNJ (évite les villes génériques inventées)."""
+    parts: list[str] = []
+    planet = context.get("planet_display") or context.get("planet_name")
+    hub = context.get("hub_city") or context.get("city")
+    if isinstance(planet, str) and planet.strip():
+        parts.append(f"Planète : {planet.strip()}")
+    if isinstance(hub, str) and hub.strip():
+        parts.append(f"Ville / hub : {hub.strip()}")
+    scene = context.get("scene")
+    if isinstance(scene, str) and scene.strip():
+        parts.append(f"Lieu / scène : {scene.strip()}")
+    hint = context.get("world_hint")
+    if isinstance(hint, str) and hint.strip():
+        parts.append(hint.strip())
+    if parts:
+        body = "\n".join(f"- {p}" for p in parts)
+        return (
+            "Cadre monde (fourni par le client / serveur — à respecter strictement) :\n"
+            f"{body}\n"
+            "Ne remplace pas ces noms par d’autres villes ou planètes inventées."
+        )
+    return DEFAULT_WORLD_SETTING
 
 ASSISTANT_PROFILES: dict[str, str] = {
     "chaleureux": "Tu es un assistant IA chaleureux.\n" + BASE_GUARDRAILS_ASSISTANT,
@@ -1121,7 +1156,7 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
 
     lines = [
         _profile_prompt(profile, speaker=speaker, context=context),
-        f"Tu incarnes {speaker}, un personnage non-joueur (PNJ) dans un MMORPG médiéval-fantasy.",
+        f"Tu incarnes {speaker}, un personnage non-joueur (PNJ) sur la planète Scrapaltai, à Lost Heaven.",
         "Tu réponds en français. Reste dans ton rôle.",
         "Réponds court: 1 à 3 phrases (pas de liste), idéalement moins de 55 mots, sauf si le joueur demande explicitement une explication longue.",
         "Pas de raisonnement interne affiché : interdit « Thinking Process », interdit les étapes numérotées du type « 1. **Analyze** » en anglais ; écris seulement ce que le personnage dit.",
@@ -1135,6 +1170,9 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             "Ne suggère pas d'actions sur le poste réel du joueur (messagerie personnelle, fichiers locaux, navigateur hors contexte jeu). "
             "Les effets jeu autorisés passent par ACTION_JSON (si activé) ou par ta réplique uniquement."
         )
+    world_block = _format_world_setting_for_prompt(context)
+    if world_block:
+        lines.append(world_block)
     sum_line = _format_session_summary_for_prompt(context)
     if sum_line:
         lines.append(sum_line)
@@ -1152,8 +1190,6 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             "réagis en une courte phrase, **dans ton rôle** (doute poli, relance, taquinerie) — sans vocabulaire moderne hors cadre ni accusation violente."
         )
     for key, label in (
-        ("scene", "Lieu / scène"),
-        ("world_hint", "Monde"),
         ("quest_hint", "Quête ou objectif"),
     ):
         v = context.get(key)

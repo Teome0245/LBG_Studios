@@ -7,6 +7,7 @@ signal reply_ready(ok: bool, reply: String, meta: Dictionary)
 signal busy_changed(busy: bool)
 
 const CONFIG_PATH := "res://config/dialogue_bridge.json"
+const MAP_CFG_PATH := "res://assets/maps/tatooine_map_config.json"
 const SESSION_PATH := "user://session_summary.json"
 const SESSION_KEYS: Array[String] = [
 	"tracked_quest",
@@ -97,12 +98,17 @@ func request_npc_reply(
 	var ss := _sanitize_session_for_wire()
 	if not npc_name.is_empty():
 		ss["last_npc"] = npc_name if str(ss.get("last_npc", "")).is_empty() else str(ss.get("last_npc"))
+	var world := _world_context_for_wire()
 	var context := {
 		"world_npc_id": world_npc_id,
 		"npc_name": npc_name,
 		"lyra_engagement": "mmo_persona",
 		"_skip_factual_status": true,
 		"session_summary": ss,
+		"planet_display": str(world.get("planet_display", "Scrapaltai")),
+		"hub_city": str(world.get("hub_city", "Lost Heaven")),
+		"scene": str(world.get("scene", "Lost Heaven")),
+		"world_hint": str(world.get("world_hint", "")),
 	}
 	var body := {
 		"actor_id": actor_id,
@@ -122,6 +128,39 @@ func request_npc_reply(
 		reply_ready.emit(false, "", {"error": "http_request_failed", "code": err, "req_id": my_id})
 		return false
 	return true
+
+
+func _world_context_for_wire() -> Dictionary:
+	var planet := str(_cfg.get("planet_display", "Scrapaltai")).strip_edges()
+	var hub := str(_cfg.get("hub_city", "Lost Heaven")).strip_edges()
+	if FileAccess.file_exists(MAP_CFG_PATH):
+		var f := FileAccess.open(MAP_CFG_PATH, FileAccess.READ)
+		var raw: Variant = JSON.parse_string(f.get_as_text())
+		f.close()
+		if raw is Dictionary:
+			var d: Dictionary = raw
+			var dn := str(d.get("display_name", "")).strip_edges()
+			var hc := str(d.get("hub_city", "")).strip_edges()
+			if not dn.is_empty():
+				planet = dn
+			if not hc.is_empty():
+				hub = hc
+	if planet.is_empty():
+		planet = "Scrapaltai"
+	if hub.is_empty():
+		hub = "Lost Heaven"
+	var hint := str(_cfg.get("world_hint", "")).strip_edges()
+	if hint.is_empty():
+		hint = (
+			"Planète %s, ville hub %s — avant-poste désertique (bazar, shuttleport, quartiers). "
+			+ "Ne jamais inventer d'autre nom de ville ou de planète."
+		) % [planet, hub]
+	return {
+		"planet_display": planet,
+		"hub_city": hub,
+		"scene": "%s (%s)" % [hub, planet],
+		"world_hint": hint,
+	}
 
 
 func _sanitize_session_for_wire() -> Dictionary:

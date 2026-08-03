@@ -36,6 +36,26 @@ def test_build_prompt_includes_mmo_engagement_paragraph() -> None:
     assert "persona MMO" in p
     assert "Quête suivie" in p
     assert "q-help" in p
+    assert "Lost Heaven" in p
+    assert "Scrapaltai" in p
+    assert "médiéval-fantasy" not in p.lower()
+
+
+def test_build_prompt_respects_client_world_setting() -> None:
+    p = dialogue_llm.build_system_prompt(
+        "Odo",
+        {
+            "world_npc_id": "npc:odo_guide",
+            "planet_display": "Scrapaltai",
+            "hub_city": "Lost Heaven",
+            "scene": "Lost Heaven — place bazar",
+            "world_hint": "Ne pas inventer d'autre ville.",
+        },
+    )
+    assert "Scrapaltai" in p
+    assert "Lost Heaven" in p
+    assert "place bazar" in p
+    assert "Willowdale" not in p
 
 
 def test_build_prompt_includes_quest_snapshot() -> None:
