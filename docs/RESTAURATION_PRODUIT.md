@@ -20,7 +20,7 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | `open_url` réel (allowlist host) | **vert** | 2026-08-03 : `https://example.org` OK sur worker |
 | `search_web_open` | **vert** | 2026-08-03 : DDG réel OK (`LBG_DESKTOP_WEB_SEARCH=1`) |
 | `notepad_append` (proxy dictée) | **vert** | 2026-08-03 : `C:\Users\Public\lbg_rang1_notes.txt` |
-| Mail IMAP lecture | **vert** | 2026-08-03 : `mail_imap_preview` OK (`.51`, user `sdesharches`, INBOX ; port 143 `NO_SSL` en attendant restart worker TLS) |
+| Mail IMAP lecture | **vert** | 2026-08-03 : `mail_imap_preview` OK (`.51`, user `sdesharches`, INBOX ; TLS **993** + `INSECURE_SSL`) |
 | Dictée micro → STT → Notepad | **jaune** | Append texte OK ; micro/STT **reporté** (pas urgent) |
 | `session_summary` poste ↔ Assistant | **vert** | 2026-08-03 : `export` + `mmo-bridge` HTTP OK (Pilot Cortex) |
 | Audit disque / selfcheck infra (SSH, healthz) | **vert** | Supervisé GIR (ex. « audit disque prime 246 ») |

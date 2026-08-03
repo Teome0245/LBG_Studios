@@ -6,7 +6,7 @@
 | Étape | Parcours | Critère done | État |
 |-------|----------|--------------|------|
 | **1** | `session_summary` → `mmo_persona` (HTTP) | `meta.lyra_engagement_resolved=mmo_persona` + reply PNJ | **OK** — `tools/smoke_rang2_persona_dialogue.sh` |
-| **2** | Skip `factual_status` en mode persona | Chat « quête » reste PNJ | **OK** client (`_skip_factual_status`) ; auto-skip agent à déployer |
+| **2** | Skip `factual_status` en mode persona | Chat « quête » reste PNJ | **OK** — déployé sur `.140` (`lbg-agent-dialogue`) 2026-08-03 |
 | **3** | Godot `DialogueBridge` | Clic PNJ → Pilot `:8000` invoke | **OK** code (`scripts/dialogue_bridge.gd` + `main.gd`) |
 | **4** | Persistance `user://session_summary.json` | Clés ADR bornées | **OK** |
 | **5** | Enrichissement quête serveur (gateway 246) | Merge autoritatif quête/PNJ | **à faire** (hors MVP) |
