@@ -38,6 +38,8 @@ Déclencheur fréquent sur Prime : **build Antigravity** (`cmake --build` sous `
 
 Variable : `LBG_PROXMOX_HOST="192.168.0.201"` (ou `LBG_PROXMOX_SSH_HOST` pour la sonde stockage SSH).
 
+Matériel hôte (iDRAC HS, PERC in-band) : [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md) — `bash infra/scripts/diagnose_r720_hw_lan.sh`.
+
 Le disque **guest** Ubuntu peut afficher 50 %+ libre (`df -h /`) alors que Proxmox est en **io-error** : c'est le pool **hyperviseur** qui est plein, pas seulement la partition vue dans la VM.
 
 ## Prévention

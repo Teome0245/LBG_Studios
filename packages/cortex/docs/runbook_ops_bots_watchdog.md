@@ -101,5 +101,6 @@ Voir [`scrapaltai_starting_locations_mod.md`](scrapaltai_starting_locations_mod.
 - `infra/systemd/lbg-core3-ia-bots-ensure.service`
 - `agents/src/lbg_agents/infra_watchdog.py`
 - [`runbook_proxmox_storage_prime.md`](runbook_proxmox_storage_prime.md) — pool LVM thin / io-error 246
+- [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md) — matériel R720 201 in-band (iDRAC HS)
 - [`runbook_infra_remediation.md`](runbook_infra_remediation.md) — Track C remediation RAM
 - [`plan_parallel_next_steps.md`](plan_parallel_next_steps.md) — Track G

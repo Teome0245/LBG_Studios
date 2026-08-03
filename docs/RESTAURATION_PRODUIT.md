@@ -51,6 +51,7 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | `packages/cortex` Pilot 140 | **vert** |
 | Surfaces LAN liées (Cockpit, Orch, `:8792`) | **vert** |
 | Smoke `tools/smoke_lan_surfaces.sh` | **vert** |
+| Smoke Team `smoke_vm_lan.sh` (Argus) | **vert** (2026-08-03 : Ollama sondé sur `.110`, soft-fail) |
 | Pas de réintro client web legacy `/mmo/` | **vert** |
 
 ---
@@ -59,5 +60,6 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 
 1. ~~Exercer Team ops avec dry-run décoché~~ — OK (healthz réel 2026-07-31).
 2. Smoke optionnel Desktop **réel** (Cockpit + inject) dans `smoke_lan_surfaces.sh --functional`.
-3. Parcours mail / web / dictée un par un.
-4. Puis rang 2 : pont `session_summary` → persona MMO (ADR 0004).
+3. ~~Smoke Team Argus (`smoke_vm_lan.sh`)~~ — OK 2026-08-03 (Ollama `.110` LAN + soft-fail ; plus de faux négatif `.100`).
+4. Parcours mail / web / dictée un par un.
+5. Puis rang 2 : pont `session_summary` → persona MMO (ADR 0004).

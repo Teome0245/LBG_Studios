@@ -8,9 +8,11 @@
 # Variables :
 #   LBG_VM_USER              défaut : lbg
 #   LBG_LAN_HOST_CORE|MMO|FRONT — défauts 192.168.0.140 / .245 / .110
+#   LBG_SMOKE_OLLAMA_HOST        hôte Ollama (défaut 192.168.0.110 — pas le front web .100)
 #   LBG_LAN_HOST_MMO_SERVER  prioritaire sur LBG_LAN_HOST_MMO pour la VM mmo_server (245)
 #   LBG_SMOKE_CORE_SERVICES, LBG_SMOKE_MMO_SERVICES
 #   LBG_SMOKE_FRONT_OLLAMA=1|0 (défaut 1)
+#   LBG_SMOKE_OLLAMA_SOFT=1|0    si 1 (défaut) : Ollama KO = WARN, pas d’échec smoke
 #   LBG_SSH_IDENTITY         chemin vers une clé privée (ex. ~/.ssh/id_ed25519) si non utilisée par défaut
 #   LBG_SSH_KNOWN_HOSTS_FILE chemin vers un fichier known_hosts écrivable (sinon mktemp)
 #   LBG_SSH_BATCH=0          retire BatchMode=yes (permet saisie mot de passe SSH — déconseillé en routine)
@@ -22,9 +24,12 @@ H_CORE="${LBG_LAN_HOST_CORE:-192.168.0.140}"
 # mmo_server (245) ≠ Prime/Core3 (246) : préférer LBG_LAN_HOST_MMO_SERVER si défini.
 H_MMO="${LBG_LAN_HOST_MMO_SERVER:-${LBG_LAN_HOST_MMO:-192.168.0.245}}"
 H_FRONT="${LBG_LAN_HOST_FRONT:-192.168.0.110}"
+# Ollama tourne sur la VM heavy (.110), pas nécessairement sur le front web (.100).
+H_OLLAMA="${LBG_SMOKE_OLLAMA_HOST:-${LBG_LAN_HOST_OLLAMA:-192.168.0.110}}"
 SVC_CORE="${LBG_SMOKE_CORE_SERVICES:-lbg-backend lbg-orchestrator lbg-agent-dialogue lbg-agent-quests lbg-agent-combat}"
 SVC_MMO="${LBG_SMOKE_MMO_SERVICES:-lbg-mmo-server lbg-mmmorpg-ws}"
 CHECK_OLLAMA="${LBG_SMOKE_FRONT_OLLAMA:-1}"
+OLLAMA_SOFT="${LBG_SMOKE_OLLAMA_SOFT:-1}"
 
 # Éviter d'écrire dans ~/.ssh (peut être non accessible selon le contexte d'exécution).
 # On force un known_hosts dans un chemin écrivable.
@@ -118,9 +123,18 @@ EOF
 
 remote_ollama() {
   local host="$1"
-  echo "=== Front — Ollama (${host}) ==="
+  echo "=== Ollama (${host}) ==="
+  # Préférer HTTP LAN depuis le core (évite SSH manquant vers .110).
+  if curl -sf --connect-timeout 4 "http://${host}:11434/api/tags" >/dev/null 2>&1; then
+    echo "  Ollama : OK (api/tags via LAN ${host})"
+    return
+  fi
   if ! ssh "${SSH_OPTS[@]}" "${VM_USER}@${host}" "true"; then
-    echo "  SSH indisponible — ${VM_USER}@${host}"
+    echo "  HTTP+SSH indisponibles — ${host}:11434"
+    if [[ "${OLLAMA_SOFT}" == "1" ]]; then
+      echo "  WARN : Ollama non sondé — smoke core/mmo inchangé"
+      return
+    fi
     ssh_connect_failed=1
     fail=1
     return
@@ -128,18 +142,22 @@ remote_ollama() {
   # shellcheck disable=SC2029
   if ! ssh "${SSH_OPTS[@]}" "${VM_USER}@${host}" "curl -sf --connect-timeout 4 http://127.0.0.1:11434/api/tags >/dev/null"; then
     echo "  Ollama : indisponible sur :11434 (localhost VM)"
-    fail=1
+    if [[ "${OLLAMA_SOFT}" == "1" ]]; then
+      echo "  WARN : Ollama KO (soft) — ne fait pas échouer le smoke LAN"
+    else
+      fail=1
+    fi
   else
-    echo "  Ollama : OK (api/tags)"
+    echo "  Ollama : OK (api/tags via SSH)"
   fi
 }
 
-echo "Smoke LAN — core ${H_CORE}, mmo ${H_MMO}, front ${H_FRONT} (utilisateur SSH : ${VM_USER})"
+echo "Smoke LAN — core ${H_CORE}, mmo ${H_MMO}, front ${H_FRONT}, ollama ${H_OLLAMA} (utilisateur SSH : ${VM_USER})"
 remote_active_all "Core" "${H_CORE}" "${SVC_CORE}"
 remote_active_all "MMO" "${H_MMO}" "${SVC_MMO}"
 
 if [[ "${CHECK_OLLAMA}" == "1" ]]; then
-  remote_ollama "${H_FRONT}"
+  remote_ollama "${H_OLLAMA}"
 fi
 
 if [[ "${fail}" -ne 0 ]]; then

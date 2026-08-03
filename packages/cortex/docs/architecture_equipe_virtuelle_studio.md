@@ -24,7 +24,7 @@ Modèle : **rôles + file de tâches + garde-fous** (complète le moteur jobs Ja
 
 | Hôte | IP | Rôle |
 |------|-----|------|
-| Proxmox | `192.168.0.201` | Hyperviseur, backups — cible Ops (SSH RO) |
+| Proxmox | `192.168.0.201` | Hyperviseur R720 (`lbgr720`), backups — cible Ops (SSH RO) ; iDRAC HS → [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md) |
 | LBG-IA | `192.168.0.110` | Pilot `:8080`, Ollama `:11434`, nginx |
 | LBG-IA-MMORPG | `192.168.0.140` | Orchestrateur `:8010`, backend `:8000`, agents, **méta-orchestrateur** |
 | ServeurSWG | `192.168.0.245` | PreCU / legacy (sandbox Python gelé) |
