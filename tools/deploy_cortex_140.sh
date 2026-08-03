@@ -35,6 +35,16 @@ if [[ "$FULL" -eq 1 ]]; then
       "$CORTEX/$part/" \
       "${VM_USER}@${VM_HOST}:${REMOTE}/$part/"
   done
+  # Owner smokes (A2/P1/P2) — chemins relatifs depuis /opt/.../orchestrator/team/owner_smokes.py
+  if [[ -d "$CORTEX/infra/scripts" ]]; then
+    echo "=== deploy infra/scripts (smokes Godot / LAN) ==="
+    ssh -o BatchMode=yes "${VM_USER}@${VM_HOST}" "mkdir -p '${REMOTE}/infra/scripts'"
+    rsync -az \
+      -e "ssh -o BatchMode=yes" \
+      --include 'smoke_*.sh' --include 'smoke_*.py' --include '*/' --exclude '*' \
+      "$CORTEX/infra/scripts/" \
+      "${VM_USER}@${VM_HOST}:${REMOTE}/infra/scripts/"
+  fi
   echo "Note: redémarrer services systemd sur 140 si besoin (lbg-orchestrator, backend)."
 fi
 
