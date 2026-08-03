@@ -134,20 +134,20 @@ func _arm_handoff_watchdog() -> void:
 	var tree := get_tree()
 	if tree == null:
 		return
-	_handoff_watchdog = tree.create_timer(28.0)
+	# >= LbgWsClient.connect_timeout_s + response_timeout_s (12+25), process_always.
+	_handoff_watchdog = tree.create_timer(40.0, true, false, false)
 	_handoff_watchdog.timeout.connect(_on_handoff_watchdog_timeout)
 
 
 func _on_handoff_watchdog_timeout() -> void:
 	if not visible or not _handoff_active:
 		return
-	if _btn_enter and _btn_enter.disabled:
-		_btn_enter.disabled = false
-		_handoff_active = false
-		_status.text = "WS timeout — ferme Godot puis relance Launchpad (Prime)"
-		push_warning("[LoginPanel] handoff WS timeout 28s")
-		if _local_ws != null and is_instance_valid(_local_ws) and _local_ws.has_method("disconnect_session"):
-			_local_ws.call("disconnect_session")
+	_btn_enter.disabled = false
+	_handoff_active = false
+	_status.text = "WS timeout — ferme Godot puis relance Launchpad (Prime)"
+	push_warning("[LoginPanel] handoff WS timeout 40s")
+	if _local_ws != null and is_instance_valid(_local_ws) and _local_ws.has_method("disconnect_session"):
+		_local_ws.call("disconnect_session")
 
 
 func _wire_ws_signals(ws: Node) -> void:
@@ -184,6 +184,7 @@ func _on_local_handoff_progress(phase: String, detail: String) -> void:
 
 func _ensure_local_ws() -> Node:
 	if _local_ws != null and is_instance_valid(_local_ws) and _local_ws.has_method("connect_session"):
+		_local_ws.process_mode = Node.PROCESS_MODE_ALWAYS
 		_wire_ws_signals(_local_ws)
 		return _local_ws
 	var script_res: Resource = load("res://scripts/LbgWsClient.gd")
@@ -200,6 +201,7 @@ func _ensure_local_ws() -> Node:
 		_local_ws = null
 		return null
 	_local_ws.name = "LbgWsClientLocal"
+	_local_ws.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_local_ws)
 	_wire_ws_signals(_local_ws)
 	print("[LoginPanel] LbgWsClient local créé")
@@ -244,12 +246,10 @@ func _find_main() -> Node:
 
 
 func _start_ws_handoff(ws_url: String, character_id: int, session_token: String) -> void:
-	var ws := _find_ws_client()
-	if ws == null or not ws.has_method("connect_session"):
-		ws = _ensure_local_ws()
-	else:
-		_wire_ws_signals(ws)
-
+	# Toujours un WS local dédié sous LoginPanel (PROCESS_MODE_ALWAYS).
+	# Évite l'état busy/stuck du LbgWsClient de Main et les doubles connect.
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	var ws := _ensure_local_ws()
 	if ws == null or not ws.has_method("connect_session"):
 		_status.text = "WS: impossible de créer LbgWsClient"
 		_btn_enter.disabled = false
@@ -257,12 +257,12 @@ func _start_ws_handoff(ws_url: String, character_id: int, session_token: String)
 		push_error("[LoginPanel] échec création WS")
 		return
 
-	# Attacher Main pour spawn / caméra — sans lui laisser le connect (évite busy/stuck).
+	# Attacher Main pour spawn / caméra — sans lui laisser le connect.
 	var main := _find_main()
 	if main and main.has_method("_on_ws_handoff_started"):
 		main.call("_on_ws_handoff_started", ws_url, character_id, session_token, ws)
 	elif main and main.has_method("_on_enter_world_requested"):
-		# Ancien chemin : Main connecte aussi — on laisse Main, signaux UI déjà câblés.
+		# Très ancien Main : délègue tout le connect (signaux UI déjà câblés).
 		main.call("_on_enter_world_requested", ws_url, character_id, session_token)
 		_status.text = "WS %s…" % ws_url
 		return
@@ -304,12 +304,14 @@ func _on_local_zone_state(payload: Dictionary) -> void:
 	var main := _find_main()
 	if main and main.has_method("_on_ws_zone_state"):
 		main.call("_on_ws_zone_state", payload)
-	# Filet UI : premier zone_state = entrée monde même si signal connected a raté.
+	# Filet UI : premier zone_state / enter_world = entrée monde même si signal connected a raté.
 	if visible and _handoff_active:
 		var your_id := int(payload.get("your_character_id", 0))
+		if your_id <= 0 and _local_ws != null and is_instance_valid(_local_ws) and "your_character_id" in _local_ws:
+			your_id = int(_local_ws.your_character_id)
 		var zone := str(payload.get("zone", payload.get("map", "tatooine")))
-		if your_id > 0:
-			on_ws_connected(your_id, zone if zone != "" else "tatooine")
+		# Même sans id : si on reçoit zone_state pendant handoff, considérer succès.
+		on_ws_connected(your_id if your_id > 0 else 1, zone if zone != "" else "tatooine")
 
 
 func _on_enter_zone_failed(code: String, message: String) -> void:
