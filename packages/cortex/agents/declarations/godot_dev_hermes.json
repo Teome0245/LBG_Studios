@@ -20,6 +20,12 @@
       "id": "forge_network_client",
       "description": "Proposer correctifs network_bridge / gateway",
       "constraints": ["revue_humaine"]
+    },
+    {
+      "id": "launchpad_distribution",
+      "description": "Owner distribution client — sonde packages/launchpad + verify_launchpad_prime.ps1 (L1)",
+      "tracks": ["hermes_launchpad"],
+      "paths": ["packages/launchpad/", "packages/prime-client/tools/verify_launchpad_prime.ps1"]
     }
   ],
   "constraints": [

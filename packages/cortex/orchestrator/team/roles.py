@@ -126,7 +126,16 @@ def approval_token_valid(token: str | None) -> bool:
             if expected:
                 break
     if not expected:
-        return bool(token and str(token).strip())
+        # Soft (tout token non vide) uniquement si explicitement autorisé (tests/lab).
+        soft = os.environ.get("LBG_TEAM_APPROVAL_SOFT", "0").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if soft:
+            return bool(token and str(token).strip())
+        return False
     return bool(token and str(token).strip() == expected)
 
 
@@ -180,6 +189,12 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         outcome = str(storage.get("outcome") or "ok")
         ok = outcome != "critical"
         return {"kind": "ops_storage", "storage": storage, "outcome": outcome, "ok": ok}
+
+    hw = ctx.get("proxmox_hw")
+    if ops_kind == "proxmox_hw" and isinstance(hw, dict):
+        outcome = str(hw.get("outcome") or "ok")
+        ok = outcome != "critical"
+        return {"kind": "ops_hw", "proxmox_hw": hw, "outcome": outcome, "ok": ok}
 
     if ctx.get("m9_ops_sync") or ops_kind == "m9_prime_sync":
         if os.environ.get("LBG_TEAM_OPS_USE_OPENCLAW", "1").strip().lower() in ("1", "true", "yes", "on"):

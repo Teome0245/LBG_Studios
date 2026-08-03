@@ -164,4 +164,17 @@ def maybe_spawn_after_m9_failure(task: TeamTask) -> list[str]:
             "_m9_followup_ts": time.time(),
         },
     )
+    try:
+        from team import bus_hooks
+
+        bus_hooks.emit_spawned_followups(
+            parent_task_id=task.id,
+            child_task_ids=created_ids,
+            from_agent=bus_hooks.AGENT_IRIS,
+            actor_id=followup_actor_id(),
+            verify_summary="M9 failed — followups spawnés",
+            verify_ok=False,
+        )
+    except Exception:
+        pass
     return created_ids

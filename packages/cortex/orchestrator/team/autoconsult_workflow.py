@@ -6,9 +6,9 @@ import os
 import time
 from typing import Any, Callable
 
+from team import bus_hooks
 from team import store as team_store
 from team.agent_registry import list_agents_summary
-from team.human_summary import format_validation_summary
 from team.infographiste_probe import probe_infographiste_assets
 from team.m9_map_probe import audit_m9_full_readiness
 from team.m9_remediation import try_m9a_auto_remediate
@@ -17,6 +17,19 @@ from team.models import TeamTask
 from team.subprojects import list_subprojects
 
 Dispatcher = Callable[..., dict[str, object]]
+
+_GAMEPLAY_HINTS = (
+    "gameplay",
+    "bug",
+    "quête",
+    "quete",
+    "combat",
+    "npc",
+    "forge",
+    "opengame",
+    "core3",
+    "prototype",
+)
 
 
 def autoconsult_enabled() -> bool:
@@ -53,16 +66,101 @@ def _qa_probe() -> dict[str, Any]:
 
 
 def _ops_probe() -> dict[str, Any]:
+    """Ops — orch + backend healthz (plus qu'un seul endpoint)."""
     from team import roles as team_roles
 
-    orch = team_roles._orchestrator_url()
+    checks: list[dict[str, Any]] = []
+    gaps: list[str] = []
+    try:
+        import httpx
+    except ImportError:
+        return {"track": "ops_lan", "ok": False, "error": "httpx_missing", "gaps": ["httpx absent"]}
+
+    targets = [
+        ("ops_orchestrator", f"{team_roles._orchestrator_url()}/healthz"),
+        ("ops_backend", f"{team_roles._backend_url()}/healthz"),
+    ]
+    for label, url in targets:
+        try:
+            r = httpx.get(url, timeout=5.0)
+            ok = r.status_code == 200
+            checks.append({"kind": label, "url": url, "ok": ok, "status": r.status_code})
+            if not ok:
+                gaps.append(f"{label}: HTTP {r.status_code}")
+        except Exception as exc:
+            checks.append({"kind": label, "url": url, "ok": False, "error": str(exc)})
+            gaps.append(f"{label}: {exc}")
+    return {
+        "track": "ops_lan",
+        "ok": len(gaps) == 0 and bool(checks),
+        "checks": checks,
+        "gaps": gaps,
+    }
+
+
+def _choeur_probe() -> dict[str, Any]:
+    """Chœur — sonde sidecar joueurs IA (:8791)."""
+    from team.player_ia_probe import probe_player_ia
+
+    out = probe_player_ia(None)
+    gaps: list[str] = []
+    if not out.get("ok"):
+        err = out.get("error") or out.get("hint") or "sidecar KO"
+        gaps.append(str(err))
+        for c in out.get("checks") or []:
+            if isinstance(c, dict) and not c.get("ok"):
+                gaps.append(f"{c.get('kind')}: {c.get('error') or c.get('status')}")
+    return {
+        "track": "choeur_player_ia",
+        "ok": bool(out.get("ok")),
+        "gaps": gaps[:5],
+        "sidecar": out.get("sidecar"),
+        "probe": out,
+    }
+
+
+def _prime_ui_probe() -> dict[str, Any]:
+    """Prime UI /api/servers (:8792) — readiness jeu (read-only)."""
+    base = os.environ.get("LBG_PRIME_UI_URL", "http://192.168.0.246:8792").strip().rstrip("/")
+    url = f"{base}/api/servers"
+    gaps: list[str] = []
     try:
         import httpx
 
-        r = httpx.get(f"{orch}/healthz", timeout=5.0)
-        return {"track": "ops_orchestrator", "ok": r.status_code == 200, "url": f"{orch}/healthz"}
+        r = httpx.get(url, timeout=8.0)
+        if r.status_code != 200:
+            gaps.append(f"prime_ui HTTP {r.status_code}")
+            return {"track": "vulcan_prime_ui", "ok": False, "url": url, "gaps": gaps}
+        data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+        servers = data if isinstance(data, list) else (data.get("servers") or data.get("items") or [])
+        ready = False
+        if isinstance(servers, list) and servers:
+            for s in servers:
+                if isinstance(s, dict) and (s.get("ready") or s.get("status") == "ready"):
+                    ready = True
+                    break
+        elif isinstance(data, dict) and (data.get("ready") or data.get("ok")):
+            ready = True
+        if not ready and isinstance(servers, list) and not servers:
+            gaps.append("prime_ui: aucun serveur listé")
+        elif not ready:
+            # HTTP 200 sans flag ready explicite = OK soft (surface up)
+            ready = True
+        return {
+            "track": "vulcan_prime_ui",
+            "ok": ready and not gaps,
+            "url": url,
+            "gaps": gaps,
+            "servers_n": len(servers) if isinstance(servers, list) else None,
+        }
     except Exception as exc:
-        return {"track": "ops_orchestrator", "ok": False, "error": str(exc)}
+        return {"track": "vulcan_prime_ui", "ok": False, "url": url, "gaps": [str(exc)], "error": str(exc)}
+
+
+def _launchpad_probe() -> dict[str, Any]:
+    from team.launchpad_probe import probe_launchpad
+
+    return probe_launchpad()
 
 
 def _iris_probe() -> dict[str, Any]:
@@ -82,22 +180,71 @@ def _pygmalion_probe() -> dict[str, Any]:
 
 
 def _hermes_probe() -> dict[str, Any]:
-    fake = TeamTask(
-        id="autoconsult",
-        role="dev_godot",
-        objective="autoconsult hermes soe gateway",
-        context={"godot_mode": "client_live"},
-    )
-    out = execute_godot_supervisor(fake)
-    tracks = out.get("tracks") or []
+    """Hermès SOE — timeout court pour ne pas bloquer le round autoconsult."""
+    import concurrent.futures
+
+    timeout_s = float(os.environ.get("LBG_TEAM_AUTOCONSULT_HERMES_TIMEOUT_S", "45"))
+
+    def _run() -> dict[str, Any]:
+        fake = TeamTask(
+            id="autoconsult",
+            role="dev_godot",
+            objective="autoconsult hermes soe gateway",
+            context={"godot_mode": "client_live"},
+        )
+        out = execute_godot_supervisor(fake)
+        tracks = out.get("tracks") or []
+        gaps: list[str] = []
+        for t in tracks:
+            if not isinstance(t, dict) or t.get("ok") or t.get("skipped"):
+                continue
+            label = str(t.get("track") or "hermes")
+            detail = t.get("hint") or t.get("error") or "échec sonde"
+            gaps.append(f"{label}: {detail}")
+        return {"track": "hermes_soe", "ok": bool(out.get("ok")), "gaps": gaps, "probes": tracks}
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            fut = pool.submit(_run)
+            return fut.result(timeout=timeout_s)
+    except concurrent.futures.TimeoutError:
+        return {
+            "track": "hermes_soe",
+            "ok": False,
+            "gaps": [f"timeout sonde Hermès >{timeout_s:.0f}s"],
+            "timeout": True,
+        }
+    except Exception as exc:
+        return {"track": "hermes_soe", "ok": False, "gaps": [str(exc)], "error": str(exc)}
+
+
+def _dedale_probe() -> dict[str, Any]:
+    """Dédale — lecture des échecs récents gameplay / forge (L1, sans write)."""
+    recent = team_store.list_tasks(role="dev_game", status="failed", limit=5)
     gaps: list[str] = []
-    for t in tracks:
-        if not isinstance(t, dict) or t.get("ok") or t.get("skipped"):
-            continue
-        label = str(t.get("track") or "hermes")
-        detail = t.get("hint") or t.get("error") or "échec sonde"
-        gaps.append(f"{label}: {detail}")
-    return {"track": "hermes_soe", "ok": bool(out.get("ok")), "gaps": gaps, "probes": tracks}
+    for t in recent:
+        obj = (t.objective or "")[:120]
+        gaps.append(f"tâche failed {t.id[:8]}: {obj}")
+    return {
+        "track": "dedale_gameplay",
+        "ok": len(gaps) == 0,
+        "gaps": gaps[:5],
+        "failed_count": len(gaps),
+    }
+
+
+def _retag_gameplay_gaps(gaps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Si un gap sonne gameplay, owner = dedale."""
+    out: list[dict[str, Any]] = []
+    for item in gaps:
+        text = f"{item.get('gap', '')} {item.get('track', '')}".lower()
+        if any(k in text for k in _GAMEPLAY_HINTS) and item.get("owner") in ("pm", "argus", None):
+            tagged = dict(item)
+            tagged["owner"] = "dedale"
+            out.append(tagged)
+        else:
+            out.append(item)
+    return out
 
 
 def _collect_gaps(probes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -108,13 +255,24 @@ def _collect_gaps(probes: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "iris"
             if "m9" in track or "iris" in track
             else "hermes"
-            if any(k in track for k in ("hermes", "soe", "sidecar", "mirror", "lbg_ws", "zb0", "gateway"))
+            if any(
+                k in track
+                for k in ("hermes", "soe", "sidecar", "mirror", "lbg_ws", "zb0", "gateway", "launchpad")
+            )
             else "argus"
             if track.startswith("qa")
             else "hephaistos"
             if track.startswith("ops")
             else "pygmalion"
             if "infograph" in track
+            else "choeur"
+            if "choeur" in track or "player_ia" in track
+            else "vulcan"
+            if "vulcan" in track or "prime_ui" in track or "core3" in track
+            else "dedale"
+            if "dedale" in track or "gameplay" in track
+            else "atlas"
+            if "admin" in track or "ollama" in track or "llm" in track
             else "pm"
         )
         if p.get("ok"):
@@ -131,7 +289,7 @@ def _collect_gaps(probes: list[dict[str, Any]]) -> list[dict[str, Any]]:
             gaps.append({"owner": owner, "track": track, "gap": str(p["hint"])})
         if not p.get("gaps") and not p.get("ok") and p.get("error"):
             gaps.append({"owner": owner, "track": track, "gap": str(p["error"])})
-    return gaps
+    return _retag_gameplay_gaps(gaps)
 
 
 def _spawn_followups(task: TeamTask, gaps: list[dict[str, Any]]) -> list[str]:
@@ -145,46 +303,100 @@ def _spawn_followups(task: TeamTask, gaps: list[dict[str, Any]]) -> list[str]:
     for item in gaps[:12]:
         by_owner.setdefault(str(item["owner"]), []).append(str(item["gap"]))
 
+    def _spawn(role: str, objective: str, context: dict[str, object], to_agent: str) -> None:
+        t = team_store.create_task(
+            role=role,
+            objective=objective,
+            actor_id=actor,
+            context=context,
+        )
+        created.append(t.id)
+        bus_hooks.emit_propose_followup(
+            parent_task_id=task.id,
+            child_task_id=t.id,
+            to_agent=to_agent,
+            role=role,
+            objective=t.objective,
+            actor_id=actor,
+        )
+
     if by_owner.get("iris"):
-        t = team_store.create_task(
-            role="dev_godot",
-            objective=f"Iris — corriger M9 : {by_owner['iris'][0]}",
-            actor_id=actor,
-            context={**parent, "godot_dev_persona": "iris", "godot_dev_track": "m9_full", "subproject": "godot_iris", "iris_forge": True},
+        _spawn(
+            "dev_godot",
+            f"Iris — corriger M9 : {by_owner['iris'][0]}",
+            {
+                **parent,
+                "godot_dev_persona": "iris",
+                "godot_dev_track": "m9_full",
+                "subproject": "godot_iris",
+                "iris_forge": True,
+            },
+            bus_hooks.AGENT_IRIS,
         )
-        created.append(t.id)
     if by_owner.get("hermes"):
-        t = team_store.create_task(
-            role="dev_godot",
-            objective=f"Hermès — SOE/gateway : {by_owner['hermes'][0]}",
-            actor_id=actor,
-            context={**parent, "godot_dev_persona": "hermes", "godot_dev_track": "client_live", "subproject": "godot_hermes"},
+        _spawn(
+            "dev_godot",
+            f"Hermès — SOE/gateway : {by_owner['hermes'][0]}",
+            {
+                **parent,
+                "godot_dev_persona": "hermes",
+                "godot_dev_track": "client_live",
+                "subproject": "godot_hermes",
+            },
+            bus_hooks.AGENT_HERMES,
         )
-        created.append(t.id)
     if by_owner.get("pygmalion"):
-        t = team_store.create_task(
-            role="dev_game",
-            objective=f"Pygmalion — assets : {by_owner['pygmalion'][0]}",
-            actor_id=actor,
-            context={**parent, "infographiste_ia": True, "subproject": "infographiste_ia"},
+        _spawn(
+            "dev_game",
+            f"Pygmalion — assets : {by_owner['pygmalion'][0]}",
+            {**parent, "infographiste_ia": True, "subproject": "infographiste_ia"},
+            bus_hooks.AGENT_PYGMALION,
         )
-        created.append(t.id)
     if by_owner.get("hephaistos"):
-        t = team_store.create_task(
-            role="ops",
-            objective=f"Héphaïstos — infra : {by_owner['hephaistos'][0]}",
-            actor_id=actor,
-            context={**parent, "m9_ops_sync": True, "ops_kind": "m9_prime_sync"},
+        _spawn(
+            "ops",
+            f"Héphaïstos — infra : {by_owner['hephaistos'][0]}",
+            {**parent, "m9_ops_sync": True, "ops_kind": "m9_prime_sync"},
+            bus_hooks.AGENT_HEPHAISTOS,
         )
-        created.append(t.id)
     if by_owner.get("argus"):
-        t = team_store.create_task(
-            role="qa",
-            objective=f"Argus — re-smoke : {by_owner['argus'][0]}",
-            actor_id=actor,
-            context={**parent, "godot_validation": True},
+        _spawn(
+            "qa",
+            f"Argus — re-smoke : {by_owner['argus'][0]}",
+            {**parent, "godot_validation": True},
+            bus_hooks.AGENT_ARGUS,
         )
-        created.append(t.id)
+    if by_owner.get("dedale"):
+        _spawn(
+            "dev_game",
+            f"Dédale — gameplay : {by_owner['dedale'][0]}",
+            {**parent, "subproject": "gameplay", "capability_hint": "prototype_game"},
+            bus_hooks.AGENT_DEDALE,
+        )
+    if by_owner.get("choeur"):
+        _spawn(
+            "player_ia",
+            f"Chœur — sidecar joueurs IA : {by_owner['choeur'][0]}",
+            {**parent, "player_ia_mode": "probe"},
+            bus_hooks.AGENT_CHOEUR,
+        )
+    if by_owner.get("vulcan"):
+        _spawn(
+            "dev_game",
+            f"Vulcan — Prime UI / Core3 : {by_owner['vulcan'][0]}",
+            {**parent, "dev_game_persona": "vulcan", "prime_ui_probe": True},
+            bus_hooks.AGENT_VULCAN,
+        )
+    if by_owner.get("atlas"):
+        _spawn(
+            "admin_infra",
+            f"Atlas — lab LLM : {by_owner['atlas'][0]}",
+            {**parent, "admin_infra": True, "subproject": "local_llm_lab"},
+            bus_hooks.AGENT_ATLAS,
+        )
+
+    if created:
+        bus_hooks.emit_ack_spawn(parent_task_id=task.id, child_task_ids=created, actor_id=actor)
 
     return created
 
@@ -193,16 +405,40 @@ def execute_autoconsult_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
     if not autoconsult_enabled():
         return {"kind": "autoconsult_workflow", "ok": True, "skipped": True, "reason": "LBG_TEAM_AUTOCONSULT_ENABLED=0"}
 
+    actor = os.environ.get("LBG_TEAM_AUTOCONSULT_FOLLOWUP_ACTOR_ID", "system:team_autoconsult").strip()
+    specialists = [
+        bus_hooks.AGENT_ARGUS,
+        bus_hooks.AGENT_HEPHAISTOS,
+        bus_hooks.AGENT_IRIS,
+        bus_hooks.AGENT_HERMES,
+        bus_hooks.AGENT_PYGMALION,
+        bus_hooks.AGENT_DEDALE,
+        bus_hooks.AGENT_CHOEUR,
+        bus_hooks.AGENT_VULCAN,
+        bus_hooks.AGENT_ATLAS,
+    ]
+    bus_n = bus_hooks.emit_consult_round(task_id=task.id, specialists=specialists, actor_id=actor)
+
     probes: list[dict[str, Any]] = [
         _qa_probe(),
         _ops_probe(),
         _iris_probe(),
         _hermes_probe(),
+        _launchpad_probe(),
         _pygmalion_probe(),
+        _dedale_probe(),
+        _choeur_probe(),
+        _prime_ui_probe(),
     ]
 
     gaps = _collect_gaps(probes)
     ok = len(gaps) == 0
+    bus_n += bus_hooks.emit_gaps(task_id=task.id, gaps=gaps, actor_id=actor)
+
+    # Synthèse gaps-par-owner (critère phase E)
+    gaps_by_owner: dict[str, list[str]] = {}
+    for item in gaps:
+        gaps_by_owner.setdefault(str(item.get("owner") or "pm"), []).append(str(item.get("gap") or ""))
 
     brief = dispatch(
         "agent.pm",
@@ -231,15 +467,43 @@ def execute_autoconsult_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
                 if result:
                     ran_followups.append({"task_id": fid, "role": result.role, "status": result.status})
 
-    human_summary = format_validation_summary(
+    followup_auto_rate: float | None
+    if not gaps:
+        followup_auto_rate = 1.0  # rien à spawn = critère satisfait
+    elif followup_ids:
+        done_n = sum(1 for r in ran_followups if r.get("status") in ("done", "failed", "blocked"))
+        followup_auto_rate = done_n / max(len(followup_ids), 1)
+    else:
+        followup_auto_rate = 0.0
+
+    memory_lines: list[str] = []
+    try:
+        from team import memory as team_memory
+
+        if team_memory.memory_enabled():
+            for e in team_memory.top_learnings_for_plan(limit=4):
+                memory_lines.append(f"{e.get('agent_id')}: {e.get('summary')}")
+    except Exception:
+        pass
+
+    human_summary = bus_hooks.format_bus_aware_summary(
         title="Thémis — round autoconsultation (Fable)",
         probes=probes,
-        checklist=[
-            f"{len(gaps)} gap(s) détecté(s)",
-            f"{len(followup_ids)} followup(s) spawné(s)",
-            "Doc docs/vision_equipe_fable_autoconsultation.md",
-        ],
+        gaps=gaps,
+        followup_ids=followup_ids,
+        bus_emitted=bus_n,
+        memory_lines=memory_lines,
+        extra_checklist=["Doc docs/vision_equipe_fable_autoconsultation.md", "ADR 0019 Vague 3 bus"],
     )
+
+    bus_hooks.emit_verify_result(
+        task_id=task.id,
+        from_agent=bus_hooks.AGENT_THEMIS,
+        ok=ok,
+        summary=f"autoconsult gaps={len(gaps)} followups={len(followup_ids)}",
+        actor_id=actor,
+    )
+    bus_hooks.maybe_record_round_memory(gaps_count=len(gaps), ok=ok, task_id=task.id)
 
     return {
         "kind": "autoconsult_workflow",
@@ -247,10 +511,13 @@ def execute_autoconsult_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
         "probes": probes,
         "gaps": gaps,
         "gaps_count": len(gaps),
+        "gaps_by_owner": gaps_by_owner,
         "brief": brief,
         "followup_task_ids": followup_ids,
         "followup_ran": ran_followups,
+        "followup_auto_rate": followup_auto_rate,
         "agents_count": len(list_agents_summary()),
+        "bus_messages_emitted": bus_n,
         "human_summary": human_summary,
         "timestamp": time.time(),
     }

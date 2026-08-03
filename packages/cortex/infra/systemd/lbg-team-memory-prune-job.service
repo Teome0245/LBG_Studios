@@ -1,0 +1,17 @@
+[Unit]
+Description=LBG équipe — prune mémoire Team JSONL (rétention ADR 0019)
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_MEMORY_MAX_ENTRIES=500
+Environment=LBG_TEAM_MEMORY_MAX_AGE_DAYS=30
+ExecStart=/bin/bash /opt/LBG_Studios/packages/cortex/infra/scripts/prune_team_memory.sh
+
+[Install]
+WantedBy=multi-user.target

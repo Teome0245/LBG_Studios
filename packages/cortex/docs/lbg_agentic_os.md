@@ -1,8 +1,8 @@
-# LBG Agentic OS — carte CrewAI / Manus / Dify → Studio LAN
+# LBG Agentic OS — carte CrewAI / Manus / Dify / OpenClaw / OpenHands → Studio LAN
 
-**Date** : 2026-07-31  
+**Date** : 2026-07-31 · **MAJ** : 2026-08-03 (§ 6.1 greffe vs substitution)  
 **Public** : Team + ops  
-**Complète** : `plan_campus_conductor.md`, `plan_team_petri_peau.md`, `architecture_tri_backend_hybride.md`
+**Complète** : `plan_campus_conductor.md`, `plan_team_petri_peau.md`, `architecture_tri_backend_hybride.md`, ADR 0015 / 0019
 
 ## 1. Idée
 
@@ -102,11 +102,26 @@ Mission NL
 
 Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle observe→act→correct, HITL sur L2.
 
+### 6.1 Greffer en périphérie — pas substituer (décision 2026-08-03)
+
+**Principe** : Cortex / Team reste le cerveau du studio LAN tant qu’il est plus performant sur le chemin critique. Les produits type **OpenClaw**, **Manus**, **OpenHands** apportent surtout des *capacités périphériques* — on les greffe éventuellement, on ne remplace pas l’existant.
+
+| Capacité externe | Décision produit | Chez LBG |
+|------------------|------------------|----------|
+| Canaux messagerie grand public (WhatsApp, Telegram, Discord…) | **Pas utile pour l’instant** | **Element / Matrix** déjà en place ; **Slack** éventuel plus tard, hors chemin critique |
+| Computer-use générique (souris / clavier / écran A→Z) | **Utile plus tard, pas urgent** | Desktop hybride = kinds structurés + approval (pas vision UI libre) |
+| Édition de repo libre (shell / workspace type OpenHands) | **Utile plus tard, pas urgent** | Iris L3 allowlist + Cursor Cloud Agent (L2 token) ; pas de shell libre sur 140 |
+| Skills / playbooks OpenClaw | Greffe OK (déjà amorcée) | `openclaw_adapter.py` + `infra/openclaw/skills/` — EXEC borné, pas runtime OpenClaw comme OS |
+
+**Garde-fou** : toute greffe future (computer-use, OpenHands, Slack) reste en **L2 / allowlist**, jamais en substitution du Conductor, du bus Team ni de la file SQLite.
+
 ## 7. Roadmap produit (courte)
 
 1. **Fait** — Conductor V0–V2 (drain, coffee fill, act selon état, mission NL, UI Pilot) ; Cursor PR ; présence Petri.
-2. **Ensuite** — Clôture mission quand smoke vert ; mémoire autoconsult dans le plan.
-3. **Plus tard** — Adapter CrewAI en lab, pas en chemin critique.
+2. **Vague 0–4 + L3 Iris** — ADR 0019 : plan LLM, bus, mémoire, hooks, clôture mission, prune ; Iris L3 allowlist (`LBG_IRIS_FORGE_L3`).
+3. **Ensuite** — scoring playbooks ; élargissement allowlist Iris avec smoke.
+4. **Plus tard (périphérie)** — Slack optionnel ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
+5. **Lab only** — Adapter CrewAI hors chemin critique.
 
 ## 8. Commandes utiles
 

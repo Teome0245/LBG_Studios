@@ -153,6 +153,19 @@ def maybe_spawn_after_godot_failure(task: TeamTask) -> list[str]:
             "_godot_followup_ts": time.time(),
         },
     )
+    try:
+        from team import bus_hooks
+
+        bus_hooks.emit_spawned_followups(
+            parent_task_id=task.id,
+            child_task_ids=created_ids,
+            from_agent=bus_hooks.AGENT_HERMES,
+            actor_id=followup_actor_id(),
+            verify_summary="Godot supervisor failed — followups spawnés",
+            verify_ok=False,
+        )
+    except Exception:
+        pass
     return created_ids
 
 

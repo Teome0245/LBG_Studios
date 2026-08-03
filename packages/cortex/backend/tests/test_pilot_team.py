@@ -66,3 +66,41 @@ def test_pilot_team_run_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
     r = client.post("/v1/pilot/team/tasks/task-1/run", json={"approval_token": "tok"})
     assert r.status_code == 200
     assert _FakeAsyncClient.last_call["url"].endswith("/v1/team/tasks/task-1/run")
+
+
+def test_pilot_team_messages_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _client(monkeypatch)
+    r = client.get("/v1/pilot/team/messages", params={"task_id": "t1", "limit": 10})
+    assert r.status_code == 200
+    assert r.json().get("ok") is True
+    assert _FakeAsyncClient.last_call["url"].endswith("/v1/team/messages")
+    assert _FakeAsyncClient.last_call["params"]["task_id"] == "t1"
+
+    r2 = client.post(
+        "/v1/pilot/team/messages",
+        json={
+            "from_agent": "themis",
+            "to_agent": "argus",
+            "kind": "consult",
+            "payload": {"topic": "smoke"},
+            "task_id": "t1",
+        },
+    )
+    assert r2.status_code == 200
+    assert _FakeAsyncClient.last_call["method"] == "POST"
+    assert _FakeAsyncClient.last_call["url"].endswith("/v1/team/messages")
+
+
+def test_pilot_team_memory_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _client(monkeypatch)
+    r = client.get("/v1/pilot/team/memory", params={"agent_id": "argus"})
+    assert r.status_code == 200
+    assert r.json().get("ok") is True
+    assert _FakeAsyncClient.last_call["url"].endswith("/v1/team/memory")
+
+    r2 = client.post(
+        "/v1/pilot/team/memory",
+        json={"agent_id": "argus", "summary": "smoke vert", "tags": ["qa"]},
+    )
+    assert r2.status_code == 200
+    assert _FakeAsyncClient.last_call["method"] == "POST"

@@ -1110,6 +1110,8 @@ class TeamCreateBody(BaseModel):
 class TeamPlanBody(BaseModel):
     objective: str = Field(..., min_length=1)
     actor_id: str = "pilot:team"
+    use_llm: bool | None = None
+    include_memory: bool | None = None
 
 
 class TeamApproveBody(BaseModel):
@@ -1136,10 +1138,117 @@ async def pilot_team_meta() -> dict[str, object]:
 
 @router.post("/team/plan", tags=["pilot"])
 async def pilot_team_plan(payload: TeamPlanBody) -> dict[str, object]:
-    """Proxy same-origin vers `POST orchestrator /v1/team/plan`."""
+    """Proxy same-origin vers `POST orchestrator /v1/team/plan` (LLM possible → timeout long)."""
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             r = await client.post(f"{_orchestrator_base()}/v1/team/plan", json=payload.model_dump())
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+class TeamMessageBody(BaseModel):
+    from_agent: str = Field(..., min_length=1)
+    to_agent: str = Field(..., min_length=1)
+    kind: str = Field(..., min_length=1)
+    payload: dict[str, object] = Field(default_factory=dict)
+    task_id: str = ""
+    actor_id: str = "pilot:team"
+
+
+class TeamMemoryBody(BaseModel):
+    agent_id: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    kind: str = "learning"
+    tags: list[str] = Field(default_factory=list)
+    task_id: str = ""
+    meta: dict[str, object] = Field(default_factory=dict)
+
+
+@router.get("/team/messages", tags=["pilot"])
+async def pilot_team_messages_list(
+    task_id: str | None = None,
+    kind: str | None = None,
+    from_agent: str | None = None,
+    to_agent: str | None = None,
+    limit: int = 100,
+) -> dict[str, object]:
+    """Proxy → `GET /v1/team/messages` (bus ADR 0019)."""
+    try:
+        params: dict[str, object] = {"limit": max(1, min(limit, 500))}
+        if task_id:
+            params["task_id"] = task_id
+        if kind:
+            params["kind"] = kind
+        if from_agent:
+            params["from_agent"] = from_agent
+        if to_agent:
+            params["to_agent"] = to_agent
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(f"{_orchestrator_base()}/v1/team/messages", params=params)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/messages", tags=["pilot"])
+async def pilot_team_messages_create(payload: TeamMessageBody) -> dict[str, object]:
+    """Proxy → `POST /v1/team/messages`."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(
+                f"{_orchestrator_base()}/v1/team/messages",
+                json=payload.model_dump(),
+            )
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/team/memory", tags=["pilot"])
+async def pilot_team_memory_list(
+    agent_id: str | None = None,
+    kind: str | None = None,
+    tag: str | None = None,
+    limit: int = 50,
+) -> dict[str, object]:
+    """Proxy → `GET /v1/team/memory`."""
+    try:
+        params: dict[str, object] = {"limit": max(1, min(limit, 200))}
+        if agent_id:
+            params["agent_id"] = agent_id
+        if kind:
+            params["kind"] = kind
+        if tag:
+            params["tag"] = tag
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(f"{_orchestrator_base()}/v1/team/memory", params=params)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/memory", tags=["pilot"])
+async def pilot_team_memory_append(payload: TeamMemoryBody) -> dict[str, object]:
+    """Proxy → `POST /v1/team/memory`."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(
+                f"{_orchestrator_base()}/v1/team/memory",
+                json=payload.model_dump(),
+            )
         if r.status_code != 200:
             return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
         data = r.json()
@@ -1321,6 +1430,50 @@ async def pilot_team_campus_mission(payload: dict[str, object]) -> dict[str, obj
             return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
         data = r.json()
         return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/campus/mission/close", tags=["pilot"])
+async def pilot_team_campus_mission_close(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/campus/mission/close`."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(f"{_orchestrator_base()}/v1/team/campus/mission/close", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/team/campus/mission/closure", tags=["pilot"])
+async def pilot_team_campus_mission_closure() -> dict[str, object]:
+    """Proxy → `GET /v1/team/campus/mission/closure`."""
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            r = await client.get(f"{_orchestrator_base()}/v1/team/campus/mission/closure")
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/memory/prune", tags=["pilot"])
+async def pilot_team_memory_prune(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/memory/prune`."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(f"{_orchestrator_base()}/v1/team/memory/prune", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 

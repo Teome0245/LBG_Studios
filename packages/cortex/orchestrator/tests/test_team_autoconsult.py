@@ -28,17 +28,19 @@ def _reset_team_db() -> None:
 
 def test_agent_registry_loads_declarations() -> None:
     decls = load_agent_declarations()
-    assert len(decls) >= 9
+    assert len(decls) >= 10
     ids = {str(d.get("agent_id")) for d in decls}
     assert "studio_pm_themis" in ids
     assert "godot_dev_iris" in ids
     assert "godot_dev_hermes" in ids
+    assert "studio_admin_atlas" in ids
 
 
 def test_team_meta_agents_summary() -> None:
     agents = list_agents_summary()
-    assert len(agents) >= 9
+    assert len(agents) >= 10
     assert any(a.get("persona") == "iris" for a in agents)
+    assert any(a.get("persona") == "atlas" for a in agents)
     assert any(a.get("display_name") for a in agents)
 
 
@@ -80,22 +82,48 @@ def test_autoconsult_workflow_collects_probes(monkeypatch: pytest.MonkeyPatch) -
         "team.autoconsult_workflow._pygmalion_probe",
         lambda: {"track": "infographiste", "ok": True},
     )
+    monkeypatch.setattr(
+        "team.autoconsult_workflow._dedale_probe",
+        lambda: {"track": "dedale_gameplay", "ok": True, "gaps": []},
+    )
+    monkeypatch.setattr(
+        "team.autoconsult_workflow._launchpad_probe",
+        lambda: {"track": "hermes_launchpad", "ok": True, "gaps": []},
+    )
+    monkeypatch.setattr(
+        "team.autoconsult_workflow._choeur_probe",
+        lambda: {"track": "choeur_player_ia", "ok": True, "gaps": []},
+    )
+    monkeypatch.setattr(
+        "team.autoconsult_workflow._prime_ui_probe",
+        lambda: {"track": "vulcan_prime_ui", "ok": True, "gaps": []},
+    )
     monkeypatch.setattr("team.autoconsult_workflow.followup_auto_run", lambda: False)
+    monkeypatch.setattr("team.bus_hooks.bus_hooks_enabled", lambda: True)
 
     def fake_dispatch(agent: str, **kwargs: Any) -> dict[str, object]:
         return {"agent": agent, "text": "brief ok"}
 
-    task = TeamTask(
-        id="ac1",
+    stored = team_store.create_task(
         role="pm",
         objective="Round autoconsultation",
+        actor_id="u:ac",
         context={"autoconsult_round": True},
     )
-    out = execute_autoconsult_workflow(task, fake_dispatch)
+    out = execute_autoconsult_workflow(stored, fake_dispatch)
     assert out["kind"] == "autoconsult_workflow"
     assert out["ok"] is True
-    assert len(out["probes"]) == 5
+    assert len(out["probes"]) == 9
+    assert out["gaps_by_owner"] == {}
+    assert out.get("followup_auto_rate") == 1.0
     assert out["agents_count"] == len(list_agents_summary())
+    assert out.get("bus_messages_emitted", 0) >= 9  # consult ×9 minimum
+    from team import messages as team_messages
+
+    msgs = team_messages.list_messages(task_id=stored.id, limit=50)
+    kinds = {m.kind for m in msgs}
+    assert "consult" in kinds
+    assert "verify_result" in kinds
 
 
 def test_pm_role_routes_to_autoconsult(monkeypatch: pytest.MonkeyPatch) -> None:

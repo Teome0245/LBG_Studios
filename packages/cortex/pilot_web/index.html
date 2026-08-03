@@ -2279,6 +2279,7 @@
             <button type="button" class="preset" data-team-preset="client_live" title="M3 + M5 + ZB-0 + lbg-ws/2">Client live</button>
             <button type="button" class="preset" data-team-preset="validate_godot" title="Smokes + checklist lancement Godot">Valider client</button>
             <button type="button" class="preset" data-team-preset="think_lia" title="Clic : configurer · double-clic : créer (L2)">Think Lia</button>
+            <button type="button" class="preset" data-team-preset="plan_llm_demo" title="Remplit un objectif NL sans mots-clés + lance le plan (LLM si activé)">Plan LLM démo</button>
           </div>
           <details class="pilot-legacy-lab" id="team-legacy-lab-core3" style="margin-bottom:0.65rem">
             <summary>⊘ Ops serveur Prime 246 (Core3 build)</summary>
@@ -2331,8 +2332,14 @@
             </label>
             <label for="team-plan-objective" style="margin-top:0.45rem;">Planifier depuis un objectif NL</label>
             <textarea id="team-plan-objective" style="min-height:3rem;" placeholder="ex. valide le LAN et brief PM"></textarea>
-            <button type="button" id="btn-team-plan" style="margin-top:0.35rem;">Proposer des tâches</button>
-            <pre id="team-plan-out" class="muted" style="font-size:0.82rem; max-height:8rem;">—</pre>
+            <label style="display:inline-flex; align-items:center; gap:0.35rem; margin-top:0.35rem; font-size:0.88rem;">
+              <input type="checkbox" id="team-plan-use-llm" /> Forcer plan LLM (sinon flag orch. LBG_TEAM_PLAN_LLM)
+            </label>
+            <p style="margin:0.35rem 0 0; display:flex; flex-wrap:wrap; gap:0.35rem; align-items:center;">
+              <button type="button" id="btn-team-plan" style="margin:0;">Proposer des tâches</button>
+              <span id="team-plan-source-badge" class="muted" style="font-size:0.82rem;">source: —</span>
+            </p>
+            <pre id="team-plan-out" class="muted" style="font-size:0.82rem; max-height:12rem; overflow:auto;">—</pre>
           </details>
         </section>
         <section>
@@ -2385,6 +2392,8 @@
             </p>
             <p id="team-forge-hint" class="muted" style="font-size:0.82rem; margin:0.25rem 0 0.5rem 0;" hidden></p>
             <pre id="team-detail-summary" class="muted" style="font-size:0.88rem; white-space:pre-wrap; margin:0 0 0.5rem 0; padding:0.5rem; background:var(--panel-bg,#1a1d24); border-radius:4px; max-height:14rem; overflow:auto;">—</pre>
+            <p class="muted" style="font-size:0.82rem; margin:0.35rem 0 0.2rem 0;">Bus inter-agents (ADR 0019)</p>
+            <pre id="team-detail-messages" class="muted" style="font-size:0.78rem; white-space:pre-wrap; margin:0 0 0.5rem 0; padding:0.5rem; background:var(--panel-bg,#1a1d24); border-radius:4px; max-height:10rem; overflow:auto;">—</pre>
             <pre id="team-detail-result" class="muted" style="font-size:0.78rem; max-height:22rem;">—</pre>
           </div>
         </section>
@@ -2423,6 +2432,7 @@
       <input type="text" id="office-mission" placeholder="Mission NL… ex. valide le LAN et brief PM" />
       <button type="button" id="office-btn-act" title="Décide selon l'état puis agit">Conduire</button>
       <button type="button" id="office-btn-mission" title="Planifie la mission puis conduit">Mission</button>
+      <button type="button" id="office-btn-mission-close" title="Clôture mission si file terminée / smoke vert (force = double-clic)">Clôturer</button>
       <pre class="office-lyra-report" id="office-lyra-report">—</pre>
     </div>
     <p class="office-banner" id="office-banner" hidden></p>
@@ -6760,6 +6770,17 @@
           officeLyraMission().catch(function () {});
         });
       }
+      const btnClose = document.getElementById("office-btn-mission-close");
+      if (btnClose && !btnClose._officeBound) {
+        btnClose._officeBound = true;
+        btnClose.addEventListener("click", function () {
+          officeLyraCloseMission(false).catch(function () {});
+        });
+        btnClose.addEventListener("dblclick", function (ev) {
+          ev.preventDefault();
+          officeLyraCloseMission(true).catch(function () {});
+        });
+      }
       officeApplyView(__officeView);
       officeFetchSnapshot()
         .catch(function () { officeSetConn("snapshot KO"); })
@@ -6802,9 +6823,38 @@
           " queued=" + (d.queued_count != null ? d.queued_count : "?") +
           " café=" + ((d.coffee_fill || {}).coffee_idle != null ? d.coffee_fill.coffee_idle : "?"),
       ];
-      if (miss.id) lines.push("mission: " + (miss.status || "?") + " — " + String(miss.objective || "").slice(0, 60));
+      if (miss.id) {
+        lines.push("mission: " + (miss.status || "?") + " — " + String(miss.objective || "").slice(0, 60));
+        const cl = d.mission_closure || {};
+        if (cl.closable) {
+          lines.push("clôturable → " + (cl.outcome || "?") + " (" + (cl.reason || "") + ")");
+        } else if (cl.reason && cl.reason !== "no_open_mission") {
+          lines.push("clôture: " + cl.reason);
+        }
+      }
       if (lr.outcome) lines.push("dernier: " + lr.outcome + (lr.acted_as ? " (" + lr.acted_as + ")" : ""));
       officeLyraSetReport(lines.join("\n"));
+    }
+
+    async function officeLyraCloseMission(force) {
+      officeLyraSetReport(force ? "Clôture forcée…" : "Clôture mission…");
+      const out = await postJson(
+        getBase() + "/v1/pilot/team/campus/mission/close",
+        { force: !!force, reason: force ? "pilot_force" : "pilot_ui" },
+        30000
+      );
+      const d = out.json || {};
+      if (d.error && d.ok === false) {
+        officeLyraSetReport("Clôture KO: " + d.error + (d.evaluation ? " — " + JSON.stringify(d.evaluation.reason || d.evaluation) : ""));
+        return;
+      }
+      const m = d.mission || {};
+      officeLyraSetReport(
+        "mission " + (m.status || "?") +
+          " · " + String(m.close_reason || m.objective || "").slice(0, 80)
+      );
+      try { await officeFetchSnapshot(); } catch (_) {}
+      try { await officeLyraRefresh(); } catch (_) {}
     }
 
     async function officeLyraAct() {
@@ -6974,6 +7024,24 @@
     }
 
     function teamApplyPreset(key, launch) {
+      if (key === "plan_llm_demo") {
+        const planEl = document.getElementById("team-plan-objective");
+        const llmCk = document.getElementById("team-plan-use-llm");
+        const demo =
+          "l'équipe doit vérifier que tout fonctionne avant la démo de demain";
+        if (planEl) planEl.value = demo;
+        if (llmCk) llmCk.checked = true;
+        const adv = document.getElementById("team-advanced");
+        if (adv) adv.open = true;
+        document.querySelectorAll("[data-team-preset]").forEach(function (btn) {
+          btn.classList.toggle("preset--active", btn.getAttribute("data-team-preset") === key);
+        });
+        teamHint("Plan LLM démo — objectif NL sans mots-clés. Cliquez Proposer (ou double-clic preset).", false);
+        if (launch) {
+          teamPlan().catch(function () {});
+        }
+        return;
+      }
       const preset = TEAM_PRESETS[key];
       if (!preset) return;
       __teamObjectiveCustom = false;
@@ -7178,6 +7246,43 @@
       });
     }
 
+    async function teamLoadMessages(task) {
+      const pre = document.getElementById("team-detail-messages");
+      if (!pre || !task || !task.id) return;
+      pre.textContent = "…";
+      const ids = [task.id];
+      const parent = task.context && task.context.parent_task_id ? String(task.context.parent_task_id) : "";
+      if (parent && parent !== task.id) ids.push(parent);
+      const all = [];
+      for (let i = 0; i < ids.length; i++) {
+        const tid = ids[i];
+        try {
+          const out = await jobsGet(
+            getBase() + "/v1/pilot/team/messages?task_id=" + encodeURIComponent(tid) + "&limit=40"
+          );
+          const msgs = (out.json && out.json.messages) || [];
+          msgs.forEach(function (m) {
+            all.push(Object.assign({ _scope: tid === task.id ? "task" : "parent" }, m));
+          });
+        } catch (_) {}
+      }
+      all.sort(function (a, b) {
+        return (b.created_ts || 0) - (a.created_ts || 0);
+      });
+      if (!all.length) {
+        pre.textContent = "(aucun message bus pour cette tâche)";
+        return;
+      }
+      pre.textContent = all.slice(0, 40).map(function (m) {
+        const scope = m._scope === "parent" ? "↑parent " : "";
+        const pay = m.payload && typeof m.payload === "object"
+          ? JSON.stringify(m.payload).slice(0, 140)
+          : "";
+        return scope + (m.kind || "?") + " " + (m.from_agent || "?") + "→" + (m.to_agent || "?") +
+          (pay ? " " + pay : "");
+      }).join("\n");
+    }
+
     async function teamSelect(id, opts) {
       if (!id) return;
       __teamSelectedId = id;
@@ -7214,6 +7319,7 @@
         sum.textContent = hs || "—";
         sum.hidden = !hs;
       }
+      await teamLoadMessages(t);
       if (res) res.textContent = JSON.stringify(t.result || {}, null, 2);
       __teamLastForgePatch = null;
       const forgeBtn = document.getElementById("btn-team-forge-assistant");
@@ -7317,20 +7423,43 @@
       const el = document.getElementById("team-plan-objective");
       const objective = el && el.value ? el.value.trim() : "";
       if (!objective) { teamHint("Objectif NL vide.", true); return; }
-      teamHint("Planification…");
-      const out = await postJson(getBase() + "/v1/pilot/team/plan", {
+      const llmCk = document.getElementById("team-plan-use-llm");
+      const forceLlm = !!(llmCk && llmCk.checked);
+      const body = {
         objective: objective,
         actor_id: teamGetActor(),
-      }, 30000);
+      };
+      if (forceLlm) body.use_llm = true;
+      teamHint(forceLlm ? "Planification LLM…" : "Planification…");
+      const badge = document.getElementById("team-plan-source-badge");
+      if (badge) badge.textContent = "source: …";
+      const out = await postJson(getBase() + "/v1/pilot/team/plan", body, 120000);
       const pre = document.getElementById("team-plan-out");
       if (!teamResponseOk(out)) {
         if (pre) pre.textContent = teamApiError(out);
+        if (badge) badge.textContent = "source: erreur";
         teamHint("Échec plan : " + teamApiError(out), true);
         return;
       }
       const data = out.json || {};
-      if (pre) pre.textContent = JSON.stringify(data.proposals || [], null, 2);
-      teamHint((data.proposals || []).length + " proposition(s).", false);
+      const source = data.source || "heuristic";
+      const proposals = data.proposals || [];
+      if (badge) {
+        badge.textContent = "source: " + source + " · " + proposals.length + " prop.";
+      }
+      const lines = proposals.map(function (p, i) {
+        const role = p.role_label || p.alias || p.role || "?";
+        const rat = p.rationale ? " — " + String(p.rationale).slice(0, 120) : "";
+        const src = p.plan_source ? " [" + p.plan_source + "]" : "";
+        return (i + 1) + ". " + role + src + ": " + (p.objective || "") + rat;
+      });
+      if (pre) {
+        pre.textContent =
+          (lines.length ? lines.join("\n") : "(aucune)") +
+          "\n\n— meta —\n" +
+          JSON.stringify(data.meta || {}, null, 2);
+      }
+      teamHint(proposals.length + " proposition(s) · source " + source + ".", false);
     }
 
     async function teamRun() {

@@ -157,15 +157,32 @@ def forge_with_llm_and_smoke(
     smoke = run_forge_smoke(track) if iris_forge_smoke_required() else {"ok": True, "skipped": True}
     smoke_ok = bool(smoke.get("ok"))
 
-    should_apply = (iris_forge_auto_apply() if auto_apply is None else auto_apply) and smoke_ok
+    from team.iris_l3 import (
+        filter_patches_for_l3_apply,
+        iris_forge_l3_enabled,
+        should_auto_apply_l3,
+    )
+
+    want_apply = should_auto_apply_l3(
+        smoke_ok=smoke_ok,
+        explicit_auto_apply=auto_apply if auto_apply is not None else (
+            True if iris_forge_auto_apply() else None
+        ),
+    )
+    # Apply (L3 ou legacy AUTO_APPLY) : toujours borné à l'allowlist L3
+    apply_candidates = list(template_result.patches)
+    rejected_l3: list[dict[str, str]] = []
+    if want_apply:
+        apply_candidates, rejected_l3 = filter_patches_for_l3_apply(template_result.patches)
+
     applied_count = 0
-    if should_apply and template_result.patches:
+    if want_apply and apply_candidates:
         import shutil
 
         from team.m9_map_probe import _prime_client_root
 
         prime = _prime_client_root()
-        for patch in template_result.patches:
+        for patch in apply_candidates:
             if patch.skipped_reason or not patch.staging_path:
                 continue
             src = Path(patch.staging_path)
@@ -183,7 +200,18 @@ def forge_with_llm_and_smoke(
         "smoke": smoke,
         "smoke_ok": smoke_ok,
         "applied_count": applied_count,
-        "apply_blocked_by_smoke": (iris_forge_auto_apply() if auto_apply is None else auto_apply) and not smoke_ok,
+        "l3": {
+            "enabled": iris_forge_l3_enabled(),
+            "want_apply": want_apply,
+            "rejected": rejected_l3,
+            "applied_via_allowlist": want_apply,
+        },
+        "apply_blocked_by_smoke": bool(
+            (iris_forge_auto_apply() or iris_forge_l3_enabled()) and not smoke_ok
+        ),
         "persona": persona,
         "track": track,
+        "autonomy": "L3" if (iris_forge_l3_enabled() and want_apply and smoke_ok) else (
+            "L1_staging" if applied_count == 0 else "L2_or_legacy_auto"
+        ),
     }

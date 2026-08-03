@@ -25,6 +25,53 @@ _last_mission: dict[str, Any] = {}
 _last_decision: dict[str, Any] = {}
 _lock = threading.Lock()
 _last_coffee_spawn_ts: float = 0.0
+_mission_loaded: bool = False
+
+
+def mission_persist_path() -> str:
+    raw = os.environ.get("LBG_TEAM_MISSION_PATH", "").strip()
+    if raw:
+        return raw
+    db = os.environ.get("LBG_TEAM_DB_PATH", "/var/lib/lbg-ia-mmo/team_tasks.db").strip()
+    if db and db != ":memory:":
+        from pathlib import Path
+
+        return str(Path(db).with_name("campus_mission.json"))
+    return "/var/lib/lbg-ia-mmo/campus_mission.json"
+
+
+def _load_mission_from_disk() -> dict[str, Any]:
+    path = mission_persist_path()
+    try:
+        import json
+        from pathlib import Path
+
+        p = Path(path)
+        if not p.is_file():
+            return {}
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_mission_to_disk(mission: dict[str, Any]) -> None:
+    path = mission_persist_path()
+    try:
+        import json
+        from pathlib import Path
+
+        p = Path(path)
+        if p.parent and str(p.parent) not in (".", ""):
+            p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(p.suffix + ".tmp")
+        payload = dict(mission)
+        payload["_persisted_ts"] = time.time()
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(p)
+    except Exception:
+        return
+
 
 _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
     {
@@ -135,8 +182,23 @@ def last_report() -> dict[str, Any]:
 
 
 def last_mission() -> dict[str, Any]:
+    global _mission_loaded, _last_mission
     with _lock:
+        if not _mission_loaded:
+            disk = _load_mission_from_disk()
+            if disk and not _last_mission:
+                _last_mission = dict(disk)
+            _mission_loaded = True
         return dict(_last_mission)
+
+
+def auto_close_enabled() -> bool:
+    return os.environ.get("LBG_TEAM_CAMPUS_MISSION_AUTO_CLOSE", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
 
 
 def last_decision() -> dict[str, Any]:
@@ -151,9 +213,219 @@ def _set_report(report: dict[str, Any]) -> None:
 
 
 def _set_mission(mission: dict[str, Any]) -> None:
+    global _last_mission, _mission_loaded
     with _lock:
-        global _last_mission
         _last_mission = dict(mission)
+        _mission_loaded = True
+    if mission:
+        _save_mission_to_disk(mission)
+    else:
+        try:
+            from pathlib import Path
+
+            p = Path(mission_persist_path())
+            if p.is_file():
+                p.unlink()
+        except Exception:
+            pass
+
+
+def _mission_tasks(mission: dict[str, Any]) -> list[TeamTask]:
+    ids = [str(x) for x in (mission.get("task_ids") or []) if x]
+    out: list[TeamTask] = []
+    for tid in ids:
+        t = team_store.get_task(tid)
+        if t is not None:
+            out.append(t)
+    return out
+
+
+def _task_result_ok(task: TeamTask) -> bool | None:
+    if task.status == "cancelled":
+        return None
+    if task.status != "done":
+        return False
+    res = task.result if isinstance(task.result, dict) else {}
+    if "ok" in res:
+        return bool(res.get("ok"))
+    # done sans champ ok → considéré succès opérationnel
+    return True
+
+
+def evaluate_mission_closure(mission: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Évalue si la mission Lyra peut être clôturée.
+
+    Règles (Vague 4) :
+    - toutes les tâches de la mission sont terminales (done|failed|cancelled)
+    - smoke vert : si la mission contient du QA, tous les QA done avec result.ok≠false
+    - sinon (pas de QA) : clôture succès si aucune failed
+    - s'il reste des failed → closable avec outcome closed_failed
+    """
+    m = dict(mission or last_mission())
+    mid = str(m.get("id") or "")
+    status = str(m.get("status") or "")
+    if not mid or status not in ("open", "driving"):
+        return {
+            "closable": False,
+            "reason": "no_open_mission",
+            "mission_id": mid or None,
+            "status": status or None,
+        }
+    if m.get("dry_run"):
+        return {"closable": False, "reason": "dry_run_mission", "mission_id": mid}
+
+    tasks = _mission_tasks(m)
+    if not tasks:
+        return {
+            "closable": True,
+            "outcome": "closed_empty",
+            "reason": "aucune tâche liée",
+            "mission_id": mid,
+            "task_stats": {"total": 0},
+            "smoke_ok": None,
+        }
+
+    terminal = {"done", "failed", "cancelled"}
+    pending = [t for t in tasks if t.status not in terminal]
+    done = [t for t in tasks if t.status == "done"]
+    failed = [t for t in tasks if t.status == "failed"]
+    cancelled = [t for t in tasks if t.status == "cancelled"]
+    stats = {
+        "total": len(tasks),
+        "pending": len(pending),
+        "done": len(done),
+        "failed": len(failed),
+        "cancelled": len(cancelled),
+    }
+
+    if pending:
+        return {
+            "closable": False,
+            "reason": f"{len(pending)} tâche(s) encore active(s)",
+            "mission_id": mid,
+            "task_stats": stats,
+            "pending_ids": [t.id for t in pending[:8]],
+        }
+
+    qa_tasks = [t for t in tasks if t.role == "qa"]
+    smoke_ok: bool | None
+    smoke_note: str
+    if not qa_tasks:
+        smoke_ok = None
+        smoke_note = "no_qa_in_mission"
+    else:
+        bad = [t for t in qa_tasks if _task_result_ok(t) is False]
+        if bad:
+            smoke_ok = False
+            smoke_note = f"qa_not_green:{bad[0].id[:8]}"
+        else:
+            smoke_ok = True
+            smoke_note = "qa_green"
+
+    if failed or smoke_ok is False:
+        return {
+            "closable": True,
+            "outcome": "closed_failed",
+            "reason": smoke_note if smoke_ok is False else f"{len(failed)} failed",
+            "mission_id": mid,
+            "task_stats": stats,
+            "smoke_ok": smoke_ok,
+            "smoke_note": smoke_note,
+        }
+
+    return {
+        "closable": True,
+        "outcome": "closed",
+        "reason": "toutes tâches terminales" + (f" · {smoke_note}" if smoke_note else ""),
+        "mission_id": mid,
+        "task_stats": stats,
+        "smoke_ok": smoke_ok,
+        "smoke_note": smoke_note,
+    }
+
+
+def close_mission(
+    *,
+    force: bool = False,
+    reason: str = "",
+    actor_id: str = ACTOR_ID,
+) -> dict[str, Any]:
+    """Clôture manuelle ou forcée de la mission courante."""
+    mission = last_mission()
+    mid = str(mission.get("id") or "")
+    if not mid:
+        return {"ok": False, "error": "aucune mission"}
+    if mission.get("status") not in ("open", "driving") and not force:
+        return {"ok": False, "error": f"mission déjà {mission.get('status')}", "mission": mission}
+
+    evaluation = evaluate_mission_closure(mission)
+    if not evaluation.get("closable") and not force:
+        return {"ok": False, "error": evaluation.get("reason") or "not_closable", "evaluation": evaluation}
+
+    outcome = str(evaluation.get("outcome") or ("closed" if force else "closed"))
+    if force and not evaluation.get("closable"):
+        outcome = "closed_forced"
+    closed = dict(mission)
+    closed["status"] = outcome
+    closed["closed_ts"] = time.time()
+    closed["close_reason"] = (reason or str(evaluation.get("reason") or "")).strip()[:300]
+    closed["close_evaluation"] = {
+        k: evaluation.get(k)
+        for k in ("task_stats", "smoke_ok", "smoke_note", "outcome")
+        if k in evaluation
+    }
+    _set_mission(closed)
+
+    try:
+        from team import bus_hooks
+
+        bus_hooks.emit_verify_result(
+            task_id=mid,
+            from_agent=bus_hooks.AGENT_LYRA,
+            ok=outcome == "closed",
+            summary=f"mission {outcome}: {closed.get('close_reason')}",
+            actor_id=actor_id,
+        )
+        bus_hooks.safe_append(
+            from_agent=bus_hooks.AGENT_LYRA,
+            to_agent=bus_hooks.AGENT_THEMIS,
+            kind="ack",
+            payload={"mission_id": mid, "status": outcome, "objective": str(closed.get("objective") or "")[:160]},
+            task_id=mid,
+            actor_id=actor_id,
+        )
+    except Exception:
+        pass
+
+    try:
+        from team import memory as team_memory
+
+        if team_memory.memory_enabled():
+            team_memory.append_learning(
+                agent_id="lyra",
+                summary=f"Mission {outcome} — {str(closed.get('objective') or '')[:120]}",
+                kind="mission_close",
+                tags=["campus", "mission", outcome],
+                task_id=mid,
+                meta={"smoke_ok": evaluation.get("smoke_ok"), "stats": evaluation.get("task_stats")},
+            )
+    except Exception:
+        pass
+
+    label = "vert" if outcome == "closed" else outcome
+    _emit_conductor("idle", f"Mission clôturée ({label}) — {str(closed.get('objective') or '')[:60]}")
+    return {"ok": True, "mission": closed, "evaluation": evaluation}
+
+
+def maybe_close_mission(*, actor_id: str = ACTOR_ID) -> dict[str, Any] | None:
+    """Auto-clôture si critères remplis (flag LBG_TEAM_CAMPUS_MISSION_AUTO_CLOSE)."""
+    if not auto_close_enabled():
+        return None
+    evaluation = evaluate_mission_closure()
+    if not evaluation.get("closable"):
+        return None
+    # Auto : on ferme succès ET échec (file terminée) — pas force sur pending
+    return close_mission(force=False, reason=str(evaluation.get("reason") or "auto"), actor_id=actor_id)
 
 
 def _set_decision(decision: dict[str, Any]) -> None:
@@ -410,9 +682,12 @@ def decide_action(snap: dict[str, Any] | None = None) -> dict[str, Any]:
         and mission.get("status") in ("open", "driving")
         and not mission.get("dry_run")
     )
+    closure = evaluate_mission_closure(mission) if mission_open else {"closable": False}
 
     if failed:
         mode, reason = "triage_failed", f"{len(failed)} agent(s) failed — drain + follow-up"
+    elif mission_open and closure.get("closable"):
+        mode, reason = "mission_close", f"mission {mission.get('id')} — {closure.get('reason')}"
     elif mission_open and (waiting or queued_n):
         mode, reason = "mission_drive", f"mission {mission.get('id')} — avancer la file"
     elif waiting and slots > 0:
@@ -434,6 +709,8 @@ def decide_action(snap: dict[str, Any] | None = None) -> dict[str, Any]:
         "queued_count": queued_n,
         "failed_count": len(failed),
         "mission_open": mission_open,
+        "mission_closable": bool(closure.get("closable")),
+        "mission_close_outcome": closure.get("outcome"),
         "ts": time.time(),
     }
     _set_decision(decision)
@@ -608,7 +885,26 @@ def act(*, dry_run: bool = False, max_starts_override: int | None = None) -> dic
     mode = str(decision.get("mode") or "observe")
     _emit_conductor("busy", f"Mode {mode} — {decision.get('reason')}")
 
+    if mode == "mission_close":
+        closed = None if dry_run else maybe_close_mission()
+        report = {
+            "ok": True,
+            "enabled": enabled(),
+            "dry_run": dry_run,
+            "outcome": "mission_closed" if closed and closed.get("ok") else ("mission_close_dry" if dry_run else "mission_close_skipped"),
+            "decision": decision,
+            "mission_close": closed or evaluate_mission_closure(),
+            "started": [],
+            "ts": time.time(),
+        }
+        _set_report(report)
+        if dry_run:
+            _emit_conductor("idle", f"Mission close dry-run — {decision.get('reason')}")
+        return report
+
     if mode == "observe":
+        # Même en observe : tenter clôture si file terminée hors decide (race)
+        closed = None if dry_run else maybe_close_mission()
         report = {
             "ok": True,
             "enabled": enabled(),
@@ -616,6 +912,7 @@ def act(*, dry_run: bool = False, max_starts_override: int | None = None) -> dic
             "outcome": "observe",
             "decision": decision,
             "started": [],
+            "mission_close": closed,
             "ts": time.time(),
         }
         _set_report(report)
@@ -625,6 +922,9 @@ def act(*, dry_run: bool = False, max_starts_override: int | None = None) -> dic
     report = conduct(dry_run=dry_run, max_starts_override=max_starts_override)
     report["decision"] = decision
     report["acted_as"] = mode
+    closed = None if dry_run else maybe_close_mission()
+    if closed:
+        report["mission_close"] = closed
     _set_report(report)
 
     mission = last_mission()
@@ -737,6 +1037,7 @@ def status() -> dict[str, Any]:
     queued = _queued_tasks()
     idle = analyze_idle(snap)
     decision = decide_action(snap)
+    closure = evaluate_mission_closure()
     return {
         "ok": True,
         "enabled": enabled(),
@@ -748,6 +1049,9 @@ def status() -> dict[str, Any]:
         "queued_count": len(queued),
         "decision": decision,
         "mission": last_mission(),
+        "mission_closure": closure,
+        "auto_close": auto_close_enabled(),
+        "mission_persist_path": mission_persist_path(),
         "coffee_fill": {
             "enabled": coffee_fill_enabled(),
             "min_coffee": coffee_min(),
@@ -767,5 +1071,5 @@ def status() -> dict[str, Any]:
         ],
         "last_report": last_report(),
         "conductor_agent_id": CONDUCTOR_AGENT_ID,
-        "docs": ["docs/plan_campus_conductor.md", "docs/lbg_agentic_os.md"],
+        "docs": ["docs/plan_campus_conductor.md", "docs/lbg_agentic_os.md", "docs/adr/0019-team-plan-llm-bus.md"],
     }

@@ -197,7 +197,15 @@ def iris_forge_enabled() -> bool:
 
 
 def iris_forge_auto_apply() -> bool:
+    """Legacy full auto-apply (préférer L3 allowlist : LBG_IRIS_FORGE_L3=1)."""
     return os.environ.get("LBG_IRIS_FORGE_AUTO_APPLY", "0").strip().lower() in ("1", "true", "yes", "on")
+
+
+def iris_forge_l3_apply() -> bool:
+    """L3 : apply auto borné allowlist après smoke (voir team.iris_l3)."""
+    from team.iris_l3 import iris_forge_l3_enabled
+
+    return iris_forge_l3_enabled()
 
 
 def _template_root(persona: str = "iris") -> Path:

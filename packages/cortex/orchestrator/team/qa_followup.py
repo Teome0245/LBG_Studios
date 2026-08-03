@@ -120,6 +120,19 @@ def maybe_spawn_after_qa_failure(task: TeamTask) -> list[str]:
             "_qa_followup_ts": time.time(),
         },
     )
+    try:
+        from team import bus_hooks
+
+        bus_hooks.emit_spawned_followups(
+            parent_task_id=task.id,
+            child_task_ids=created_ids,
+            from_agent=bus_hooks.AGENT_ARGUS,
+            actor_id=followup_actor_id(),
+            verify_summary="QA failed — followups spawnés",
+            verify_ok=False,
+        )
+    except Exception:
+        pass
     return created_ids
 
 

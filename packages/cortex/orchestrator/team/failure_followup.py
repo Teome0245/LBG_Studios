@@ -122,6 +122,19 @@ def maybe_spawn_after_failure(task: TeamTask) -> list[str]:
             "_failure_followup_ts": time.time(),
         },
     )
+    try:
+        from team import bus_hooks
+
+        bus_hooks.emit_spawned_followups(
+            parent_task_id=task.id,
+            child_task_ids=created,
+            from_agent=bus_hooks.agent_for_role(task.role, context=task.context),
+            actor_id=actor_id(),
+            verify_summary=f"échec {task.role} — triage spawnés",
+            verify_ok=False,
+        )
+    except Exception:
+        pass
     return created
 
 

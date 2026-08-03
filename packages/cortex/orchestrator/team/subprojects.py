@@ -70,10 +70,17 @@ SUBPROJECTS: list[dict[str, object]] = [
     },
     {
         "id": "client_swgemu",
-        "label": "Client SWGEmu LBG (launchpad)",
-        "owner_role": "dev_game",
-        "paths": ["docs/client_dual_launchpad.md"],
-        "status": "prod_parallèle",
+        "label": "Client SWGEmu LBG (Launchpad) — owner Hermès",
+        "owner_role": "dev_godot",
+        "persona": "Hermès",
+        "paths": [
+            "packages/launchpad/",
+            "packages/prime-client/tools/verify_launchpad_prime.ps1",
+            "docs/client_dual_launchpad.md",
+        ],
+        "docs": ["docs/client_dual_launchpad.md", "docs/jalon_godot_client_live_team.md"],
+        "status": "actif",
+        "notes": "L1 sonde Team (launchpad_probe) ; build Windows hors E2E 140",
     },
     {
         "id": "equipe_virtuelle",

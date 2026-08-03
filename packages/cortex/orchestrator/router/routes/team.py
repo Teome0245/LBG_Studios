@@ -1,5 +1,5 @@
 """
-API équipe virtuelle studio (phase A).
+API équipe virtuelle studio (phase A + ADR 0019 fondation).
 
 - ``POST /v1/team/plan`` : objectif NL → tâches proposées
 - ``POST /v1/team/tasks`` : créer une tâche
@@ -8,21 +8,27 @@ API équipe virtuelle studio (phase A).
 - ``POST /v1/team/tasks/{id}/approve`` : approuver (token)
 - ``POST /v1/team/tasks/{id}/run`` : exécuter
 - ``POST /v1/team/tasks/{id}/cancel`` : annuler
+- ``GET/POST /v1/team/messages`` : bus inter-agents (ADR 0019)
+- ``GET/POST /v1/team/memory`` : mémoire équipe JSONL (ADR 0019)
 """
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
+from team import memory as team_memory
+from team import messages as team_messages
 from team import presence as team_presence
 from team import roles as team_roles
 from team import store as team_store
 from team.models import VALID_PRIORITIES, VALID_ROLES
+from team.plan_schema import VALID_MESSAGE_KINDS
 from team.player_ia_think import infer_approval_on_create
-from team.role_aliases import enrich_task_view, role_aliases, role_display
+from team.role_aliases import enrich_task_view, role_display
 from team.subprojects import list_subprojects
 from team.agent_registry import list_agents_summary
 
@@ -32,10 +38,14 @@ router = APIRouter(tags=["team"])
 class PlanRequest(BaseModel):
     objective: str = Field(..., min_length=1)
     actor_id: str = "pilot:team"
+    use_llm: bool | None = None
+    include_memory: bool | None = None
 
 
 class PlanResponse(BaseModel):
     proposals: list[dict[str, object]] = Field(default_factory=list)
+    source: str = "heuristic"
+    meta: dict[str, object] = Field(default_factory=dict)
 
 
 class CreateTaskRequest(BaseModel):
@@ -78,10 +88,29 @@ class TeamMetaResponse(BaseModel):
     roles: list[dict[str, object]] = Field(default_factory=list)
     subprojects: list[dict[str, object]] = Field(default_factory=list)
     agents: list[dict[str, object]] = Field(default_factory=list)
+    features: dict[str, object] = Field(default_factory=dict)
 
 
 class TaskListResponse(BaseModel):
     tasks: list[TaskView] = Field(default_factory=list)
+
+
+class TeamMessageCreate(BaseModel):
+    from_agent: str = Field(..., min_length=1)
+    to_agent: str = Field(..., min_length=1)
+    kind: str = Field(..., min_length=1)
+    payload: dict[str, object] = Field(default_factory=dict)
+    task_id: str = ""
+    actor_id: str = "pilot:team"
+
+
+class TeamMemoryCreate(BaseModel):
+    agent_id: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    kind: str = "learning"
+    tags: list[str] = Field(default_factory=list)
+    task_id: str = ""
+    meta: dict[str, object] = Field(default_factory=dict)
 
 
 def _to_view(task: object) -> TaskView:
@@ -94,7 +123,6 @@ def _to_view(task: object) -> TaskView:
 @router.get("/team/meta", response_model=TeamMetaResponse)
 def team_meta() -> TeamMetaResponse:
     specs = team_roles.ROLE_SPECS
-    aliases = role_aliases()
     roles: list[dict[str, object]] = []
     for role in sorted(VALID_ROLES):
         disp = role_display(role)
@@ -107,15 +135,134 @@ def team_meta() -> TeamMetaResponse:
                 "default_objective": spec.get("default_objective"),
             }
         )
-    return TeamMetaResponse(roles=roles, subprojects=list_subprojects(), agents=list_agents_summary())
+    features = {
+        "plan_llm": team_store.plan_llm_enabled(),
+        "messages": True,
+        "memory": team_memory.memory_enabled(),
+        "message_kinds": sorted(VALID_MESSAGE_KINDS),
+        "adr": "0019",
+        "bus_hooks": os.environ.get("LBG_TEAM_BUS_HOOKS", "1").strip().lower()
+        in ("1", "true", "yes", "on"),
+        "mission_auto_close": os.environ.get("LBG_TEAM_CAMPUS_MISSION_AUTO_CLOSE", "1")
+        .strip()
+        .lower()
+        in ("1", "true", "yes", "on"),
+        "iris_l3": __import__("team.iris_l3", fromlist=["l3_status"]).l3_status(),
+        "write_paths": {
+            "godot_l3_allowlist": "Iris L3 — smoke OK + LBG_IRIS_FORGE_L3=1",
+            "godot_complex": "Cursor Cloud Agent / humain (L2 token) — write principal hors allowlist",
+            "core3_build": "Vulcan L2 token",
+            "note": "Pas d'édition de repo libre type OpenHands sur 140",
+        },
+    }
+    from team import plan_llm as team_plan_llm
+    from team import campus_conductor
+
+    extras: dict[str, object] = {
+        "last_plan": team_plan_llm.last_plan_trace(),
+        "mission": campus_conductor.last_mission(),
+        "mission_persist_path": campus_conductor.mission_persist_path(),
+        "memory_path": str(team_memory.memory_path()),
+    }
+    return TeamMetaResponse(
+        roles=roles,
+        subprojects=list_subprojects(),
+        agents=list_agents_summary(),
+        features={**features, **{"traces": extras}},
+    )
 
 
 @router.post("/team/plan", response_model=PlanResponse)
 def team_plan(payload: PlanRequest) -> PlanResponse:
     if not team_store.team_enabled():
         raise HTTPException(status_code=503, detail="équipe virtuelle désactivée (LBG_TEAM_ENABLED=0)")
-    proposals = team_roles.plan_from_objective(payload.objective, actor_id=payload.actor_id)
-    return PlanResponse(proposals=proposals)
+    from team import plan_llm as team_plan_llm
+
+    result = team_plan_llm.plan_objective(
+        payload.objective,
+        actor_id=payload.actor_id,
+        use_llm=payload.use_llm,
+        include_memory=payload.include_memory,
+    )
+    return PlanResponse(
+        proposals=list(result.get("proposals") or []),
+        source=str(result.get("source") or "heuristic"),
+        meta=dict(result.get("meta") or {}),
+    )
+
+
+@router.get("/team/messages")
+def team_list_messages(
+    task_id: str | None = None,
+    kind: str | None = None,
+    from_agent: str | None = None,
+    to_agent: str | None = None,
+    limit: int = 100,
+) -> dict[str, object]:
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    msgs = team_messages.list_messages(
+        task_id=task_id,
+        kind=kind,
+        from_agent=from_agent,
+        to_agent=to_agent,
+        limit=limit,
+    )
+    return {"messages": [m.to_dict() for m in msgs]}
+
+
+@router.post("/team/messages")
+def team_create_message(payload: TeamMessageCreate) -> dict[str, object]:
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    try:
+        msg = team_messages.append_message(
+            from_agent=payload.from_agent,
+            to_agent=payload.to_agent,
+            kind=payload.kind,
+            payload=payload.payload,
+            task_id=payload.task_id,
+            actor_id=payload.actor_id,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return msg.to_dict()
+
+
+@router.get("/team/memory")
+def team_list_memory(
+    agent_id: str | None = None,
+    kind: str | None = None,
+    tag: str | None = None,
+    limit: int = 50,
+) -> dict[str, object]:
+    if not team_memory.memory_enabled():
+        raise HTTPException(status_code=503, detail="mémoire équipe désactivée")
+    entries = team_memory.list_learnings(
+        agent_id=agent_id, kind=kind, tag=tag, limit=limit
+    )
+    return {
+        "learnings": [e.to_dict() for e in entries],
+        "path": str(team_memory.memory_path()),
+    }
+
+
+@router.post("/team/memory")
+def team_append_memory(payload: TeamMemoryCreate) -> dict[str, object]:
+    try:
+        entry = team_memory.append_learning(
+            agent_id=payload.agent_id,
+            summary=payload.summary,
+            kind=payload.kind,
+            tags=payload.tags,
+            task_id=payload.task_id,
+            meta=payload.meta,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return entry.to_dict()
 
 
 @router.post("/team/tasks", response_model=TaskView)
@@ -286,6 +433,50 @@ def team_campus_mission(payload: CampusMissionBody) -> dict[str, object]:
         auto_act=payload.auto_act,
         max_tasks=payload.max_tasks,
     )
+
+
+class CampusMissionCloseBody(BaseModel):
+    force: bool = False
+    reason: str = ""
+
+
+@router.post("/team/campus/mission/close")
+def team_campus_mission_close(payload: CampusMissionCloseBody | None = None) -> dict[str, object]:
+    """Clôture mission Lyra (manuelle ou force). Auto aussi via act/mission_close."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import campus_conductor
+
+    body = payload or CampusMissionCloseBody()
+    out = campus_conductor.close_mission(force=body.force, reason=body.reason)
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "close_failed"))
+    return out  # type: ignore[return-value]
+
+
+@router.get("/team/campus/mission/closure")
+def team_campus_mission_closure() -> dict[str, object]:
+    """Évalue si la mission courante est clôturable (smoke vert / file terminée)."""
+    from team import campus_conductor
+
+    return campus_conductor.evaluate_mission_closure()  # type: ignore[return-value]
+
+
+class TeamMemoryPruneBody(BaseModel):
+    max_entries: int | None = None
+    max_age_days: float | None = None
+
+
+@router.post("/team/memory/prune")
+def team_memory_prune(payload: TeamMemoryPruneBody | None = None) -> dict[str, object]:
+    body = payload or TeamMemoryPruneBody()
+    out = team_memory.prune_learnings(
+        max_entries=body.max_entries,
+        max_age_days=body.max_age_days,
+    )
+    if not out.get("ok"):
+        raise HTTPException(status_code=503, detail=str(out.get("error") or "prune_failed"))
+    return out  # type: ignore[return-value]
 
 
 @router.get("/team/cursor/health")

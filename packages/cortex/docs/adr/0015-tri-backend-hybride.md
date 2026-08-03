@@ -64,9 +64,11 @@ Le poste 10 devient **optionnel** (dev confort), pas **critique** pour l'équipe
 - **Tout sur Claude API cloud depuis 140 vers infra** — rejeté : coût + surface d'attaque.
 - **OpenClaw seul sans orchestrateur** — rejeté : pas de roster personas ni autoconsult.
 - **Ollama seul pour tout** — rejeté : qualité code long horizon insuffisante vs Claude pour REASON.
+- **Substituer Team/Cortex par Manus / OpenHands / messagerie grand public** — rejeté : greffer en périphérie uniquement (voir `docs/lbg_agentic_os.md` § 6.1).
 
 ## Références
 
 - `docs/architecture_tri_backend_hybride.md`
+- `docs/lbg_agentic_os.md` (§ 6.1 greffe vs substitution)
 - `docs/jalon_iris_forge_gdscript.md`
 - `team/autoconsult_workflow.py`

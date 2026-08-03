@@ -1,0 +1,97 @@
+{
+  "schema": "team.plan_corpus.v1",
+  "adr": "0019",
+  "notes": "Corpus Thémis + Cursor — bench Vague 2. expected_roles = rôles minimaux attendus (heuristique actuelle ou plan LLM).",
+  "cases": [
+    {
+      "id": "smoke_lan_brief",
+      "objective": "valide le LAN et fais un brief PM",
+      "expected_roles": ["qa", "pm"],
+      "notes": "cas de référence test_team_plan_proposes_roles"
+    },
+    {
+      "id": "ops_disk",
+      "objective": "sonde disque et santé ollama sur le LAN",
+      "expected_roles": ["ops", "admin_infra"],
+      "notes": "ops + admin_infra via mots-clés ollama"
+    },
+    {
+      "id": "godot_supervise",
+      "objective": "supervise le client godot et lbg-ws/2",
+      "expected_roles_any_of": ["qa", "dev_game", "dev_godot"],
+      "notes": "godot_supervisor path"
+    },
+    {
+      "id": "m9_minimap",
+      "objective": "audit carte M9 scrapaltai minimap Iris",
+      "expected_roles_any_of": ["dev_godot", "dev_game", "pm"],
+      "notes": "à affiner Vague 2 si heuristique faible"
+    },
+    {
+      "id": "player_ia_lia",
+      "objective": "sonde joueurs IA Lia et Nix sur Prime 246",
+      "expected_roles": ["player_ia"],
+      "notes": ""
+    },
+    {
+      "id": "infographiste_glb",
+      "objective": "audit pipeline assets GLB blender infographiste",
+      "expected_roles_any_of": ["dev_game"],
+      "notes": "context infographiste_ia"
+    },
+    {
+      "id": "llm_bench",
+      "objective": "bench modèles ollama et latence routage agentique",
+      "expected_roles": ["admin_infra"],
+      "notes": ""
+    },
+    {
+      "id": "reunification",
+      "objective": "brief réunification sous-projets et prochaines tâches",
+      "expected_roles": ["pm"],
+      "notes": ""
+    },
+    {
+      "id": "core3_build",
+      "objective": "planifier un build Core3 ZB avec revue",
+      "expected_roles_any_of": ["dev_game", "pm"],
+      "notes": "L2 approval attendu à la création tâche"
+    },
+    {
+      "id": "nl_without_keywords",
+      "objective": "l'équipe doit vérifier que tout fonctionne avant la démo de demain",
+      "expected_roles_any_of": ["qa", "pm", "ops"],
+      "notes": "Vague 2 : plan LLM doit proposer sans mots-clés explicites ; heuristique peut renvoyer fallback pm"
+    },
+    {
+      "id": "autoconsult",
+      "objective": "lancer une autoconsultation équipe et synthétiser les gaps",
+      "expected_roles_any_of": ["pm"],
+      "notes": ""
+    },
+    {
+      "id": "soe_m3",
+      "objective": "audit SOE M3 login zone godot prime",
+      "expected_roles_any_of": ["dev_game", "dev_godot"],
+      "notes": ""
+    },
+    {
+      "id": "storage_ops",
+      "objective": "vérifie l'infra proxmox et l'espace disque VM",
+      "expected_roles": ["ops"],
+      "notes": ""
+    },
+    {
+      "id": "qa_only",
+      "objective": "lance un smoke test QA healthz",
+      "expected_roles": ["qa"],
+      "notes": ""
+    },
+    {
+      "id": "mixed_demo_day",
+      "objective": "prépare la démo : smoke LAN, brief PM, sonde joueurs IA",
+      "expected_roles_any_of": ["qa", "pm", "player_ia"],
+      "notes": "multi-rôles"
+    }
+  ]
+}

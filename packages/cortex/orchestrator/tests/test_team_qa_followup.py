@@ -120,3 +120,13 @@ def test_approval_token_devops_fallback(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("LBG_DEVOPS_APPROVAL_TOKEN", "devops-secret")
     assert team_roles.approval_token_valid("devops-secret") is True
     assert team_roles.approval_token_valid("wrong") is False
+
+
+def test_approval_token_hard_deny_without_expected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LBG_TEAM_APPROVAL_TOKEN", raising=False)
+    monkeypatch.delenv("LBG_DEVOPS_APPROVAL_TOKEN", raising=False)
+    monkeypatch.delenv("LBG_JOBS_APPROVAL_TOKEN", raising=False)
+    monkeypatch.setenv("LBG_TEAM_APPROVAL_SOFT", "0")
+    assert team_roles.approval_token_valid("anything") is False
+    monkeypatch.setenv("LBG_TEAM_APPROVAL_SOFT", "1")
+    assert team_roles.approval_token_valid("anything") is True

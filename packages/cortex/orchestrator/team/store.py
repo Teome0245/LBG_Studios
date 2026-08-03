@@ -29,6 +29,21 @@ CREATE TABLE IF NOT EXISTS team_tasks (
 );
 CREATE INDEX IF NOT EXISTS idx_team_tasks_status ON team_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_role ON team_tasks(role);
+CREATE TABLE IF NOT EXISTS team_messages (
+    id TEXT PRIMARY KEY,
+    from_agent TEXT NOT NULL,
+    to_agent TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    task_id TEXT NOT NULL DEFAULT '',
+    actor_id TEXT NOT NULL DEFAULT 'system:team',
+    created_ts REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_team_messages_task ON team_messages(task_id);
+CREATE INDEX IF NOT EXISTS idx_team_messages_kind ON team_messages(kind);
+CREATE INDEX IF NOT EXISTS idx_team_messages_from ON team_messages(from_agent);
+CREATE INDEX IF NOT EXISTS idx_team_messages_to ON team_messages(to_agent);
+CREATE INDEX IF NOT EXISTS idx_team_messages_ts ON team_messages(created_ts);
 """
 
 
@@ -40,8 +55,25 @@ def team_enabled() -> bool:
     return os.environ.get("LBG_TEAM_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
+def plan_llm_enabled() -> bool:
+    """Vague 2 — off par défaut (heuristique seule en Vague 1)."""
+    return os.environ.get("LBG_TEAM_PLAN_LLM", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def reset_for_tests() -> None:
     """Vide la base en mémoire / fichier de test."""
+    global _conn
+    if _conn is not None:
+        try:
+            _conn.close()
+        except Exception:
+            pass
+        _conn = None
     path = db_path()
     if path and path != ":memory:" and os.path.isfile(path):
         try:
@@ -73,6 +105,11 @@ def _get_conn() -> sqlite3.Connection:
         _conn.executescript(_SCHEMA)
         _conn.commit()
     return _conn
+
+
+def get_connection() -> sqlite3.Connection:
+    """Connexion SQLite partagée (tâches + messages ADR 0019)."""
+    return _get_conn()
 
 
 def _row_to_task(row: sqlite3.Row) -> TeamTask:

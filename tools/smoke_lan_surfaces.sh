@@ -161,6 +161,19 @@ REMOTE
   else
     echo "INFO  Cockpit Desktop réel skip (pas de SSH BatchMode vers 140)"
   fi
+
+  # 6 Team ADR 0019 — plan + messages (orch 140 ou local)
+  SMOKE_TEAM="${ROOT}/packages/cortex/infra/scripts/smoke_team_plan_bus.sh"
+  if [[ -f "$SMOKE_TEAM" ]]; then
+    export LBG_ORCHESTRATOR_URL="${LBG_ORCHESTRATOR_URL:-http://192.168.0.140:8010}"
+    if bash "$SMOKE_TEAM"; then
+      echo "OK  Team plan+bus smoke_team_plan_bus.sh"
+      OK=$((OK + 1))
+    else
+      echo "WARN  Team plan+bus (orch down ou ADR 0019 non déployé)"
+      WARN=$((WARN + 1))
+    fi
+  fi
 fi
 
 echo

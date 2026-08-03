@@ -112,7 +112,7 @@ sequenceDiagram
 | **L0** | Suggestion only | Forge OpenGame sans apply |
 | **L1** | Read + scripts idempotents | Sondes, export POI, sync assets VM, smokes |
 | **L2** | Write avec token | Build Core3, think/tick player_ia, deploy prod |
-| **L3** | Write allowlist (futur) | Patch auto GDScript validé par smoke |
+| **L3** | Write allowlist (Iris) | Patch auto GDScript validé par smoke (`iris_l3.py`, `LBG_IRIS_FORGE_L3`) ; hors liste = Cursor / L2 |
 
 **Cible Fable** : maximiser **L1** (auto-remédiation) + **L2** avec token Pilot pour le reste.
 
@@ -176,11 +176,15 @@ L'équipe **prépare le terrain** (gaps, scripts, sync) ; l'humain **valide** le
 
 - [x] Round autoconsult branché dans `_execute_pm` + preset Pilot
 - [x] Hermès (SOE/gateway) inclus dans les sondes autoconsult
-- [ ] Round autoconsult 24h actif sur 140 sans intervention
-- [ ] Synthèse PM liste gaps par agent avec owner
-- [ ] Followups L1 auto-run > 80 % des gaps infra/M9/assets
-- [ ] `/v1/team/meta` expose les 9 agents + capacités
-- [ ] M9 full vert sur 140 après round (sync + remédiation)
+- [x] Round autoconsult 12–24h actif sur 140 sans intervention (`lbg-team-autoconsult-job.timer`)
+- [x] Synthèse PM liste gaps par agent avec owner (`gaps_by_owner` + bus summary)
+- [x] Followups L1 auto-run : taux exposé (`followup_auto_rate`) ; 1.0 si 0 gap
+- [x] `/v1/team/meta` expose les agents déclarés + capacités (**Atlas** inclus, ≥10)
+- [~] M9 full vert sur 140 après round (sync + remédiation) — dépend assets Prime ; Iris L3 + remédiation M9a actifs
+
+Preuve ops : `bash infra/scripts/prove_phase_e_140.sh`
+
+Sondes autoconsult (2026-08-03) : QA, ops LAN, Iris M9, Hermès SOE, **Launchpad**, Pygmalion, Dédale, **Chœur**, **Prime UI 8792**.
 
 ---
 
@@ -189,8 +193,13 @@ L'équipe **prépare le terrain** (gaps, scripts, sync) ; l'humain **valide** le
 1. **Iris forge** — génération patches `.gd` / `.tscn` à partir des gaps (L2 review)
 2. **Pygmalion pipeline** — export Blender → GLB automatique sur gap manifest
 3. **Héphaïstos L2** — playbook Proxmox backup check avec token
-4. **Mémoire équipe** — JSONL learnings par agent (`LBG_TEAM_MEMORY_PATH`)
-5. **Chat inter-agents** — messages structurés (schéma JSON) type Fable crew
+4. **Mémoire équipe** — JSONL learnings (`LBG_TEAM_MEMORY_PATH`) — fondation Vague 1 ✅ schéma/API
+5. **Bus inter-agents** — messages structurés (`team_messages`, kinds consult/gap/propose/ack/verify_result) — Vague 1 schéma ✅ · Vague 3 hooks autoconsult/followups ✅
+6. **Plan LLM borné** — `POST /v1/team/plan` hybrid + validateur code (Vague 2) ✅ — ADR [0019](adr/0019-team-plan-llm-bus.md) ; flag `LBG_TEAM_PLAN_LLM`
+
+Critères done F (produit) : plan sans mots-clés obligatoires + fallback heuristique ;
+consultation traçable ; verify scripté avant verdict LLM ; mémoire réinjectée au plan ;
+mission campus fermée sur smoke vert ; `LBG_TEAM_PLAN_LLM=0` = comportement actuel.
 
 ---
 

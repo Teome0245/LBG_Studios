@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer — prune mémoire équipe Team (7j)
+
+[Timer]
+OnBootSec=45min
+OnUnitActiveSec=7d
+Persistent=true
+
+[Install]
+WantedBy=timers.target
