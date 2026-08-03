@@ -12,7 +12,9 @@ extends Node2D
 @onready var _dialogue_panel: DialoguePortraitPanel = $UI/ModalLayer/DialoguePortraitPanel
 @onready var _login_panel: Control = $UI/LoginPanel
 @onready var _ws: Node = get_node_or_null("%LbgWsClient")
-var _dialogue_bridge: DialogueBridge
+# preload (pas class_name) : évite casse du parse main.gd si le cache .godot est incomplet.
+const _DialogueBridgeScript = preload("res://scripts/dialogue_bridge.gd")
+var _dialogue_bridge: Node = null
 
 const CAM_SPEED:     float   = 400.0
 const CAM_ZOOM_STEP: float   = 0.15
@@ -73,12 +75,13 @@ func _ready() -> void:
 
 
 func _ensure_dialogue_bridge() -> void:
-	if _dialogue_bridge != null:
+	if _dialogue_bridge != null and is_instance_valid(_dialogue_bridge):
 		return
-	_dialogue_bridge = DialogueBridge.new()
+	_dialogue_bridge = _DialogueBridgeScript.new()
 	_dialogue_bridge.name = "DialogueBridge"
 	add_child(_dialogue_bridge)
-	_dialogue_bridge.reply_ready.connect(_on_dialogue_bridge_reply)
+	if _dialogue_bridge.has_signal("reply_ready"):
+		_dialogue_bridge.reply_ready.connect(_on_dialogue_bridge_reply)
 
 
 func _log_build_info() -> void:
@@ -613,6 +616,7 @@ func _cycle_dialogue_expression() -> void:
 func _open_npc_dialogue(entity: Entity) -> void:
 	if entity == null or _dialogue_panel == null:
 		return
+	_ensure_dialogue_bridge()
 	var speaker := entity.label_text if entity.label_text != "" else "PNJ"
 	var anchor := NpcAnchorResolver.resolve(entity.entity_key, entity.label_text)
 	var role := str(anchor.get("role", ""))
@@ -628,22 +632,29 @@ func _open_npc_dialogue(entity: Entity) -> void:
 		entity.entity_key
 	)
 	_hotbar_feedback("Interaction %s" % speaker)
-	if _dialogue_bridge == null or not _dialogue_bridge.is_enabled():
-		_dialogue_panel.set_body_text(_npc_dialogue_stub(role, speaker))
+	if _dialogue_bridge == null or not bool(_dialogue_bridge.call("is_enabled")):
+		_dialogue_panel.set_body_text(
+			"%s\n\n(pont dialogue désactivé — stub)" % _npc_dialogue_stub(role, speaker)
+		)
 		return
-	if _dialogue_bridge.is_busy():
+	if bool(_dialogue_bridge.call("is_busy")):
 		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
 		return
-	_dialogue_bridge.touch_npc(speaker, world_npc_id)
-	_dialogue_bridge.update_session({"last_npc": speaker})
-	var ok := _dialogue_bridge.request_npc_reply(
-		"",
-		world_npc_id,
-		speaker,
-		"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
+	_dialogue_bridge.call("touch_npc", speaker, world_npc_id)
+	_dialogue_bridge.call("update_session", {"last_npc": speaker})
+	var ok: bool = bool(
+		_dialogue_bridge.call(
+			"request_npc_reply",
+			"",
+			world_npc_id,
+			speaker,
+			"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
+		)
 	)
 	if not ok:
-		_dialogue_panel.set_body_text(_npc_dialogue_stub(role, speaker))
+		_dialogue_panel.set_body_text(
+			"Impossible de joindre le Pilot (HTTP). Stub : %s" % _npc_dialogue_stub(role, speaker)
+		)
 
 
 func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> void:
@@ -730,7 +741,9 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 		_set_selected_entity(picked.object_id)
 		if picked.is_interactable():
 			_open_npc_dialogue(picked)
-		elif _dialogue_panel and _dialogue_panel.visible and not picked.is_interactable():
+		elif str(picked.kind) == "player":
+			_open_player_inspect(picked)
+		elif _dialogue_panel and _dialogue_panel.visible:
 			_dialogue_panel.hide_portrait()
 		return
 	_set_selected_entity(0)
@@ -750,6 +763,31 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 		if zones:
 			core3 = zones.clamp_move(me.core3_pos, core3)
 	pc.request_move_to(core3.x, core3.z)
+
+
+func _open_player_inspect(entity: Entity) -> void:
+	"""Portrait d'inspection joueur (pas de dialogue LLM — ADR 0004)."""
+	if entity == null or _dialogue_panel == null:
+		return
+	var speaker := entity.label_text if entity.label_text != "" else "Voyageur"
+	var is_self := false
+	var pc: PlayerController = get_node_or_null("PlayerController") as PlayerController
+	if pc and pc.get_player_id() == entity.object_id:
+		is_self = true
+	var body := "%s — personnage joueur." % speaker
+	if is_self:
+		body = "%s — ton personnage (toi)." % speaker
+	elif _local_character_name != "" and speaker.to_lower() == _local_character_name.to_lower():
+		body = "%s — ton personnage (toi)." % speaker
+	_dialogue_demo_expression_index = 0
+	_dialogue_panel.show_portrait(
+		speaker,
+		"player",
+		"neutral",
+		body,
+		entity.entity_key if entity.entity_key != "" else "player:human"
+	)
+	_hotbar_feedback("Portrait %s" % speaker)
 
 # ---------------------------------------------------------------------------
 # UI debug

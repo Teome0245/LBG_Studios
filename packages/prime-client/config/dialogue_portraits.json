@@ -45,8 +45,17 @@
       "name_match": [
         "voyageur",
         "humain",
-        "you"
+        "you",
+        "gally",
+        "teome",
+        "nix",
+        "lia",
+        "mira"
       ],
+      "portrait_base": "player_human"
+    },
+    {
+      "kind": "player",
       "portrait_base": "player_human"
     },
     {

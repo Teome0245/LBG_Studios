@@ -45,4 +45,15 @@ rsync -a --delete \
   "$SRC/" "$DST/"
 
 echo "OK rsync → $DST"
+
+# Régénère le cache class_name Godot (sinon scripts typés cassent au parse).
+rm -rf "$DST/.godot"
+DST_WIN="$(wslpath -w "$DST")"
+powershell.exe -NoProfile -Command \
+  "\$g='J:\mmmorpg\Godot_v4.6.1-stable_win64\Godot_v4.6.1-stable_win64_console.exe'; \$p='$DST_WIN'; if (Test-Path \$g) { & \$g --headless --path \$p --import --quit-after 30 | Out-Null; 'OK godot import' } else { 'WARN Godot absent' }" \
+  || echo "WARN: import Godot échoué — ouvrir le projet une fois" >&2
+if [[ -f "$DST/.godot/global_script_class_cache.cfg" ]]; then
+  echo "OK .godot cache régénéré"
+fi
+
 echo "Relance via LBG Launchpad (profil Prime) ou Godot --path J:\\swgemu\\clients\\prime-client"
