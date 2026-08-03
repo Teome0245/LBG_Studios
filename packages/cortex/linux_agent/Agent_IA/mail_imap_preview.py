@@ -71,6 +71,7 @@ def run_mail_imap_preview(
     max_messages: int,
     max_body_chars: int,
     max_scan: int,
+    insecure_ssl: bool = False,
 ) -> tuple[list[dict[str, Any]], str | None]:
     """
     Connecte en IMAP, parcourt les derniers messages de l'INBOX (borné),
@@ -99,7 +100,8 @@ def run_mail_imap_preview(
     if max_scan > 500:
         max_scan = 500
 
-    ctx = ssl.create_default_context()
+    # Lab LAN (NAS / IP) : certificat souvent non aligné sur l'IP → INSECURE_SSL=1.
+    ctx = ssl._create_unverified_context() if insecure_ssl else ssl.create_default_context()
     try:
         if use_ssl:
             M = imaplib.IMAP4_SSL(host, port, ssl_context=ctx)

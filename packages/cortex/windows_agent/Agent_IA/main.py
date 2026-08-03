@@ -315,7 +315,7 @@ def _mail_imap_parse_action_win(action: dict) -> tuple[str, str, int, int, int, 
     return fc_s, sc_s, max_m, max_b, max_sc, None
 
 
-def _mail_imap_credentials_win() -> tuple[str, int, str, str, bool]:
+def _mail_imap_credentials_win() -> tuple[str, int, str, str, bool, bool]:
     host = _get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_HOST").strip()
     pr = _get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_PORT").strip() or "993"
     try:
@@ -325,7 +325,8 @@ def _mail_imap_credentials_win() -> tuple[str, int, str, str, bool]:
     user = _get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_USER").strip()
     password = _get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_PASSWORD").strip()
     use_ssl = not _truthy(_get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_NO_SSL"))
-    return host, port, user, password, use_ssl
+    insecure_ssl = _truthy(_get_desktop_cfg("LBG_DESKTOP_MAIL_IMAP_INSECURE_SSL"))
+    return host, port, user, password, use_ssl, insecure_ssl
 
 
 def _path_is_allowed(path_str: str) -> bool:
@@ -1197,7 +1198,7 @@ async def invoke(payload: InvokeRequest):
             out = {**base, "ok": False, "outcome": "bad_request", "error": perr}
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
-        host, port, user, password, use_ssl = _mail_imap_credentials_win()
+        host, port, user, password, use_ssl, insecure_ssl = _mail_imap_credentials_win()
         if not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
             out = {
                 **base,
@@ -1251,6 +1252,7 @@ async def invoke(payload: InvokeRequest):
             max_messages=max_m,
             max_body_chars=max_b,
             max_scan=max_sc,
+            insecure_ssl=insecure_ssl,
         )
         if ierr:
             out = {

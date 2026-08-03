@@ -310,7 +310,7 @@ def mail_imap_enabled() -> bool:
     return truthy(get_cfg("LBG_LINUX_MAIL_ENABLED"))
 
 
-def mail_imap_credentials() -> tuple[str, int, str, str, bool]:
+def mail_imap_credentials() -> tuple[str, int, str, str, bool, bool]:
     host = get_cfg("LBG_LINUX_MAIL_IMAP_HOST").strip()
     pr = (get_cfg("LBG_LINUX_MAIL_IMAP_PORT").strip() or "993")
     try:
@@ -320,7 +320,8 @@ def mail_imap_credentials() -> tuple[str, int, str, str, bool]:
     user = get_cfg("LBG_LINUX_MAIL_IMAP_USER").strip()
     password = get_cfg("LBG_LINUX_MAIL_IMAP_PASSWORD").strip()
     use_ssl = not truthy(get_cfg("LBG_LINUX_MAIL_IMAP_NO_SSL").strip())
-    return host, port, user, password, use_ssl
+    insecure_ssl = truthy(get_cfg("LBG_LINUX_MAIL_IMAP_INSECURE_SSL").strip())
+    return host, port, user, password, use_ssl, insecure_ssl
 
 
 def _mail_imap_parse_int_local(action: dict[str, Any], key: str, default: int, lo: int, hi: int) -> int:

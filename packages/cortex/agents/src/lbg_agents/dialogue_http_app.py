@@ -179,7 +179,15 @@ def invoke(p: InvokeIn) -> dict[str, object]:
 
     from lbg_agents.status_router import try_factual_status_for_dialogue
 
-    if isinstance(p.context, dict) and p.context.get("_skip_factual_status") is not True:
+    # Persona MMO (ADR 0004) : ne pas détourner le chat PNJ vers le statut projet / infra.
+    skip_factual = False
+    if isinstance(p.context, dict):
+        if p.context.get("_skip_factual_status") is True:
+            skip_factual = True
+        elif dialogue_llm.resolve_lyra_engagement(p.context) == "mmo_persona":
+            skip_factual = True
+
+    if not skip_factual:
         factual = try_factual_status_for_dialogue(
             actor_id=p.actor_id,
             text=player,

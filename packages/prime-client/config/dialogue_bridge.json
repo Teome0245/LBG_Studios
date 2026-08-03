@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "pilot_base_url": "http://192.168.0.140:8000",
+  "invoke_path": "/v1/pilot/agent-dialogue/invoke",
+  "timeout_sec": 60,
+  "fallback_stub_on_error": true,
+  "greeting_text": "Bonjour, parle-moi de cet endroit."
+}

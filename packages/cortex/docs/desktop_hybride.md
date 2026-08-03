@@ -135,8 +135,9 @@ Retourne un **JSON** avec en-têtes + `body_preview` pour les messages récents 
 
 - `LBG_DESKTOP_MAIL_IMAP_HOST`, `LBG_DESKTOP_MAIL_IMAP_USER`, `LBG_DESKTOP_MAIL_IMAP_PASSWORD`
 - `LBG_DESKTOP_MAIL_IMAP_PORT` (défaut 993), option `LBG_DESKTOP_MAIL_IMAP_NO_SSL=1` pour lab sans TLS (déconseillé)
+- Lab NAS / certificat non aligné sur l’IP : `LBG_DESKTOP_MAIL_IMAP_INSECURE_SSL=1` (TLS sans vérif hostname — LAN privé uniquement)
 
-Équivalents Linux : `LBG_LINUX_MAIL_*`.
+Équivalents Linux : `LBG_LINUX_MAIL_*` (+ `LBG_LINUX_MAIL_IMAP_INSECURE_SSL`).
 
 Payload :
 

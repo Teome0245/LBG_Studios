@@ -12,6 +12,7 @@ extends Node2D
 @onready var _dialogue_panel: DialoguePortraitPanel = $UI/ModalLayer/DialoguePortraitPanel
 @onready var _login_panel: Control = $UI/LoginPanel
 @onready var _ws: Node = get_node_or_null("%LbgWsClient")
+var _dialogue_bridge: DialogueBridge
 
 const CAM_SPEED:     float   = 400.0
 const CAM_ZOOM_STEP: float   = 0.15
@@ -63,11 +64,21 @@ func _ready() -> void:
 	call_deferred("_focus_lost_heaven_hub")
 	if hotbar:
 		hotbar.slot_activated.connect(_on_hotbar_slot)
+	_ensure_dialogue_bridge()
 	_ensure_ws_client()
 	_wire_login_ws()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
+
+
+func _ensure_dialogue_bridge() -> void:
+	if _dialogue_bridge != null:
+		return
+	_dialogue_bridge = DialogueBridge.new()
+	_dialogue_bridge.name = "DialogueBridge"
+	add_child(_dialogue_bridge)
+	_dialogue_bridge.reply_ready.connect(_on_dialogue_bridge_reply)
 
 
 func _log_build_info() -> void:
@@ -605,16 +616,48 @@ func _open_npc_dialogue(entity: Entity) -> void:
 	var speaker := entity.label_text if entity.label_text != "" else "PNJ"
 	var anchor := NpcAnchorResolver.resolve(entity.entity_key, entity.label_text)
 	var role := str(anchor.get("role", ""))
-	var body := _npc_dialogue_stub(role, speaker)
+	var world_npc_id := NpcAnchorResolver.normalize_pilot_id(entity.entity_key)
+	if world_npc_id.is_empty():
+		world_npc_id = "npc:unknown"
 	_dialogue_demo_expression_index = 0
 	_dialogue_panel.show_portrait(
 		speaker,
 		entity.kind,
 		"neutral",
-		body,
+		"…",
 		entity.entity_key
 	)
 	_hotbar_feedback("Interaction %s" % speaker)
+	if _dialogue_bridge == null or not _dialogue_bridge.is_enabled():
+		_dialogue_panel.set_body_text(_npc_dialogue_stub(role, speaker))
+		return
+	if _dialogue_bridge.is_busy():
+		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
+		return
+	_dialogue_bridge.touch_npc(speaker, world_npc_id)
+	_dialogue_bridge.update_session({"last_npc": speaker})
+	var ok := _dialogue_bridge.request_npc_reply(
+		"",
+		world_npc_id,
+		speaker,
+		"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
+	)
+	if not ok:
+		_dialogue_panel.set_body_text(_npc_dialogue_stub(role, speaker))
+
+
+func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> void:
+	if _dialogue_panel == null or not _dialogue_panel.visible:
+		return
+	if ok and not reply.is_empty():
+		_dialogue_panel.set_body_text(reply)
+		var eng := str(meta.get("lyra_engagement_resolved", ""))
+		if eng != "":
+			_hotbar_feedback("Persona %s" % eng)
+		return
+	_dialogue_panel.set_body_text(
+		"Le pont dialogue est indisponible (%s). Réessaie plus tard." % str(meta.get("status", "?"))
+	)
 
 func _npc_dialogue_stub(role: String, speaker: String) -> String:
 	match role:

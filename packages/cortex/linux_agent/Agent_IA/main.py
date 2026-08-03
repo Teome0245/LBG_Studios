@@ -163,7 +163,7 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             out = {**base, "ok": False, "outcome": "bad_request", "error": perr}
             core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
             return out
-        host, port, user, password, use_ssl = core.mail_imap_credentials()
+        host, port, user, password, use_ssl, insecure_ssl = core.mail_imap_credentials()
         if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
             out = {
                 **base,
@@ -217,6 +217,7 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             max_messages=max_m,
             max_body_chars=max_b,
             max_scan=max_sc,
+            insecure_ssl=insecure_ssl,
         )
         if ierr:
             out = {

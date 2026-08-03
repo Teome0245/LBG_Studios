@@ -177,7 +177,7 @@ def _mail_imap_parse_action(
     return fc_s, sc_s, max_m, max_b, max_sc, None
 
 
-def _mail_imap_credentials_desktop() -> tuple[str, int, str, str, bool]:
+def _mail_imap_credentials_desktop() -> tuple[str, int, str, str, bool, bool]:
     host = os.environ.get("LBG_DESKTOP_MAIL_IMAP_HOST", "").strip()
     pr = os.environ.get("LBG_DESKTOP_MAIL_IMAP_PORT", "993").strip()
     try:
@@ -187,7 +187,8 @@ def _mail_imap_credentials_desktop() -> tuple[str, int, str, str, bool]:
     user = os.environ.get("LBG_DESKTOP_MAIL_IMAP_USER", "").strip()
     password = os.environ.get("LBG_DESKTOP_MAIL_IMAP_PASSWORD", "").strip()
     use_ssl = not _truthy(os.environ.get("LBG_DESKTOP_MAIL_IMAP_NO_SSL", "").strip())
-    return host, port, user, password, use_ssl
+    insecure_ssl = _truthy(os.environ.get("LBG_DESKTOP_MAIL_IMAP_INSECURE_SSL", "").strip())
+    return host, port, user, password, use_ssl, insecure_ssl
 
 
 def _desktop_search_engine() -> str:
@@ -441,7 +442,7 @@ def run_desktop_action(
             return out
         fc_ok = fc_s or ""
         sc_ok = sc_s or ""
-        host, port, user, password, use_ssl = _mail_imap_credentials_desktop()
+        host, port, user, password, use_ssl, insecure_ssl = _mail_imap_credentials_desktop()
         gate = _gate_or_dry_run(context=context, dry_run=dry_run)
         if gate is not None:
             out = {
@@ -496,6 +497,7 @@ def run_desktop_action(
             max_messages=max_m,
             max_body_chars=max_b,
             max_scan=max_sc,
+            insecure_ssl=insecure_ssl,
         )
         if ierr:
             out = {

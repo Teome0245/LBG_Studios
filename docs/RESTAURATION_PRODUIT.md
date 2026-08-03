@@ -20,8 +20,8 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | `open_url` réel (allowlist host) | **vert** | 2026-08-03 : `https://example.org` OK sur worker |
 | `search_web_open` | **vert** | 2026-08-03 : DDG réel OK (`LBG_DESKTOP_WEB_SEARCH=1`) |
 | `notepad_append` (proxy dictée) | **vert** | 2026-08-03 : `C:\Users\Public\lbg_rang1_notes.txt` |
-| Mail IMAP lecture | **jaune** | Désactivé (`LBG_DESKTOP_MAIL_ENABLED` off) — secrets IMAP à configurer |
-| Dictée micro → STT → Notepad | **jaune** | Append texte OK ; micro/STT pas branché |
+| Mail IMAP lecture | **vert** | 2026-08-03 : `mail_imap_preview` OK (`.51`, user `sdesharches`, INBOX ; port 143 `NO_SSL` en attendant restart worker TLS) |
+| Dictée micro → STT → Notepad | **jaune** | Append texte OK ; micro/STT **reporté** (pas urgent) |
 | `session_summary` poste ↔ Assistant | **vert** | 2026-08-03 : `export` + `mmo-bridge` HTTP OK (Pilot Cortex) |
 | Audit disque / selfcheck infra (SSH, healthz) | **vert** | Supervisé GIR (ex. « audit disque prime 246 ») |
 | Team ops (Héphaïstos) hors dry-run | **vert** | Dry-run Cockpit propagé + inject `devops_approval` à la création tâche (2026-07-31) |
@@ -34,7 +34,7 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | Serveur Prime 246 + comptes `:8792` | **vert** | Runtime ready (smoke LAN) |
 | Client Godot `prime-client` + Launchpad | **jaune** | Extract OK ; login manuel PC |
 | Sidecar joueurs IA `:8791` | **jaune** | Sondes Team `player_ia` ; pas focus courant |
-| Dialogue / Lyra *en jeu* (persona) | **jaune** | Lyra UI `:5174` = style LLM, pas exécuteur ; pont jeu à poursuivre |
+| Dialogue / Lyra *en jeu* (persona) | **jaune** | 2026-08-03 : pont Godot → Pilot `agent-dialogue` + `session_summary` (`DialogueBridge`) ; smoke `tools/smoke_rang2_persona_dialogue.sh` |
 | Bac Python `mmmorpg_server` / web `/mmo/` | **rouge** | Gelé volontairement |
 
 ## Rang 3 — Évolution monde / code par l’IA
@@ -64,5 +64,5 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 2. Smoke optionnel Desktop **réel** (Cockpit + inject) dans `smoke_lan_surfaces.sh --functional`.
 3. ~~Smoke Team Argus (`smoke_vm_lan.sh`)~~ — OK 2026-08-03 (Ollama `.110` LAN + soft-fail).
 4. ~~Parcours URL / web / notepad / session_summary~~ — OK 2026-08-03 (voir [`PLAN_RANG1_ASSISTANT.md`](PLAN_RANG1_ASSISTANT.md)).
-5. Restant rang 1 : **mail IMAP** (secrets) + **dictée micro/STT**.
-6. Puis rang 2 : pont `session_summary` → persona MMO en jeu (ADR 0004).
+5. ~~Mail IMAP~~ — OK 2026-08-03 (`sdesharches@192.168.0.51`) ; dictée STT reportée.
+6. Rang 2 démarré : pont `session_summary` → persona MMO (Godot `DialogueBridge` + smoke LAN).
