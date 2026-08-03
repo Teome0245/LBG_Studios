@@ -14,6 +14,7 @@ signal enter_world_requested(ws_url: String, character_id: int, session_token: S
 var _auth: Node = null
 var _chars: Array = []
 var _local_ws: Node = null
+var _handoff_watchdog: SceneTreeTimer = null
 
 
 func _ready() -> void:
@@ -115,6 +116,7 @@ func _on_select_failed(code: String, message: String) -> void:
 func _on_enter_zone_ok(ws_url: String, your_character_id: int) -> void:
 	_status.text = "En zone — ouverture WS…"
 	_btn_enter.disabled = true
+	_arm_handoff_watchdog()
 	var token := get_session_token()
 	if token.strip_edges().is_empty():
 		on_ws_failed("session_token vide — reconnecte (login HTTP)")
@@ -125,6 +127,27 @@ func _on_enter_zone_ok(ws_url: String, your_character_id: int) -> void:
 		main.call_deferred("_on_enter_world_requested", ws_url, your_character_id, token)
 	else:
 		call_deferred("_start_ws_handoff", ws_url, your_character_id, token)
+
+
+func _arm_handoff_watchdog() -> void:
+	# Si main.gd / cache .godot casse, le bouton reste grisé sans feedback — débloque après 30 s.
+	if _handoff_watchdog != null:
+		# SceneTreeTimer n'est pas annulable ; on ignore les tirages obsolètes via visible+disabled.
+		pass
+	var tree := get_tree()
+	if tree == null:
+		return
+	_handoff_watchdog = tree.create_timer(30.0)
+	_handoff_watchdog.timeout.connect(_on_handoff_watchdog_timeout)
+
+
+func _on_handoff_watchdog_timeout() -> void:
+	if not visible:
+		return
+	if _btn_enter and _btn_enter.disabled:
+		_btn_enter.disabled = false
+		_status.text = "WS timeout — réessaie Entrer en zone (ou relance Godot si scripts en erreur)"
+		push_warning("[LoginPanel] handoff WS timeout 30s")
 
 
 func _ensure_local_ws() -> Node:
