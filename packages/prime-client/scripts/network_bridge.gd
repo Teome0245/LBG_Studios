@@ -1,5 +1,6 @@
 # network_bridge.gd — Pont UDP local Python -> Godot (port 12345)
 extends Node
+const _Projection3D2D = preload("res://scripts/projection.gd")
 
 const BIND_PORT: int = 12345
 
@@ -9,7 +10,7 @@ const BIND_PORT: int = 12345
 @export var main_path:           NodePath = NodePath("..")
 
 var _udp:       PacketPeerUDP = PacketPeerUDP.new()
-var _em:        EntityManager = null
+var _em: Node = null
 var _snap:      Node          = null
 var _main:      Node          = null
 var _active:    bool          = false
@@ -17,7 +18,7 @@ var _demo_cleared: bool       = false
 var _live_packets: int        = 0
 
 func _ready() -> void:
-	_em   = get_node_or_null(entity_manager_path) as EntityManager
+	_em   = get_node_or_null(entity_manager_path)
 	_snap = get_node_or_null(snapshot_bridge_path)
 	_main = get_node_or_null(main_path)
 	var err: int = _udp.bind(BIND_PORT)
@@ -79,7 +80,7 @@ func _dispatch(text: String) -> void:
 					cn_oid, pos, Entity.COLOR_PLAYER_OFFICIAL,
 					_human_display_name(), "player", "player:human"
 				)
-			var pc: PlayerController = get_node_or_null("../PlayerController") as PlayerController
+			var pc: Node = get_node_or_null("../PlayerController")
 			if pc and cn_oid != 0:
 				pc.set_player_id(cn_oid)
 				pc.send_initial_position(pos.x, pos.y, pos.z)
@@ -123,7 +124,7 @@ func _resolve_oid(d: Dictionary) -> int:
 	return int(d.get("id", 0))
 
 func _pos_from_packet(d: Dictionary) -> Vector3:
-	return Projection3D2D.normalize_core3_pos(Vector3(
+	return _Projection3D2D.normalize_core3_pos(Vector3(
 		float(d.get("x", 0.0)),
 		float(d.get("y", 0.0)),
 		float(d.get("z", 0.0))

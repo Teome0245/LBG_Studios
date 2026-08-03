@@ -2,6 +2,11 @@
 extends Node2D
 class_name EntityManager
 
+const _EntityScript = preload("res://scripts/entity.gd")
+const _SpriteRegistry = preload("res://scripts/sprite_registry.gd")
+const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
+const COLOR_OBJECT := Color(0.7, 0.7, 0.7, 0.8)
+
 const ENTITY_SCENE := "res://scenes/entity.tscn"
 
 var _entities: Dictionary = {}
@@ -14,15 +19,15 @@ func _ready() -> void:
 		push_error("EntityManager: impossible de charger " + ENTITY_SCENE)
 
 func spawn(object_id: int, core3_pos: Vector3,
-		color: Color = Entity.COLOR_NPC,
+		color: Color = COLOR_NPC,
 		label: String = "",
 		kind: String = "object",
-		entity_key: String = "") -> Entity:
+		entity_key: String = "") -> Node:
 	if _entities.has(object_id):
 		return _entities[object_id]
 	if _entity_packed == null:
 		return null
-	var entity: Entity = _entity_packed.instantiate()
+	var entity: Node = _entity_packed.instantiate()
 	entity.object_id = object_id
 	entity.set_kind(kind)
 	if entity_key != "":
@@ -35,8 +40,8 @@ func spawn(object_id: int, core3_pos: Vector3,
 	entity.set_color(color)
 	if label != "":
 		entity.set_label(label)
-	var tex := SpriteRegistry.resolve_texture(kind, label, entity_key)
-	var tint := SpriteRegistry.resolve_tint(kind, label)
+	var tex: Texture2D = _SpriteRegistry.resolve_texture(kind, label, entity_key)
+	var tint: Color = _SpriteRegistry.resolve_tint(kind, label)
 	if tex:
 		entity.set_sprite_texture(tex, tint)
 	_entities[object_id] = entity
@@ -51,7 +56,7 @@ static func _jitter_for_oid(oid: int) -> Vector2:
 
 func move(object_id: int, core3_pos: Vector3) -> void:
 	if not _entities.has(object_id):
-		spawn(object_id, core3_pos, Entity.COLOR_OBJECT, "")
+		spawn(object_id, core3_pos, COLOR_OBJECT, "")
 		return
 	_entities[object_id].set_core3_position(core3_pos)
 
@@ -65,7 +70,7 @@ func clear() -> void:
 		entity.queue_free()
 	_entities.clear()
 
-func get_entity(object_id: int) -> Entity:
+func get_entity(object_id: int) -> Node:
 	return _entities.get(object_id, null)
 
 func count() -> int:
@@ -74,26 +79,26 @@ func count() -> int:
 func get_all_entities() -> Array:
 	return _entities.values()
 
-func pick_interactable_at_screen(mouse_pos: Vector2) -> Entity:
+func pick_interactable_at_screen(mouse_pos: Vector2) -> Node:
 	return _pick_at_screen(mouse_pos, true)
 
 
-func pick_entity_at_screen(mouse_pos: Vector2) -> Entity:
+func pick_entity_at_screen(mouse_pos: Vector2) -> Node:
 	return _pick_at_screen(mouse_pos, false)
 
 
-func _pick_at_screen(mouse_pos: Vector2, npc_only: bool) -> Entity:
-	var best: Entity = null
+func _pick_at_screen(mouse_pos: Vector2, npc_only: bool) -> Node:
+	var best: Node = null
 	var best_dist := 1.0e12
 	for entity_v in _entities.values():
-		var entity := entity_v as Entity
+		var entity: Node = entity_v as Node
 		if entity == null:
 			continue
 		if npc_only and not entity.is_interactable():
 			continue
 		if not npc_only and entity.kind != "npc" and entity.kind != "player":
 			continue
-		var d := entity.screen_anchor().distance_squared_to(mouse_pos)
+		var d: float = entity.screen_anchor().distance_squared_to(mouse_pos)
 		if not entity.hit_test_screen(mouse_pos):
 			continue
 		if d < best_dist:

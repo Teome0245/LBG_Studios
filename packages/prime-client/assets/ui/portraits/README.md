@@ -7,27 +7,19 @@ Ce dossier contient les **portraits de dialogue** affichés dans la fenêtre typ
 ```text
 assets/ui/portraits/
   player_human/
-    neutral.png
-    happy.png
-    determined.png
-    talk_1.png
-    talk_2.png
+    neutral.png …
   npc_guide/
-    neutral.png
-    happy.png
-    determined.png
-    talk_1.png
-    talk_2.png
   npc_bartender/
-    neutral.png
-    happy.png
-    talk_1.png
-    talk_2.png
+  npc_merchant/
+  npc_civilian/
+  npc_trainer/
 ```
 
 ## Notes
 
 - Les clés doivent rester alignées avec `config/dialogue_portraits.json`
-- Format conseillé : PNG
+- Format conseillé : PNG (pas de `.svg` — TextureRect Godot fragile)
 - Fond transparent ou neutre
 - Même personnage, même costume, même lumière entre les expressions
+- Interim OK : copier bartender→merchant/civilian tant que Pygmalion n’a pas généré les vrais
+- Génération : `Infographiste_IA/scripts/generate_dialogue_portraits_mvp.sh` puis `deploy_dialogue_portraits_to_prime.sh` (cible LBG_Studios)

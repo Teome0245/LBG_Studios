@@ -17,6 +17,7 @@ from team.lost_heaven_code_workflow import (
 )
 from team.m11_login_workflow import execute_m11_login_workflow, resolve_m11_login_workflow
 from team.models import TeamTask
+from team.ui_portraits_workflow import execute_ui_portraits_workflow
 
 Dispatcher = Callable[..., dict[str, object]]
 
@@ -46,6 +47,9 @@ _TRACK_ALIASES = {
     "m11_login": "m11_login",
     "m11_ui": "m11_ui",
     "themis_contract": "themis_contract",
+    "ui_portraits": "ui_portraits",
+    "dialogue_portraits": "ui_portraits",
+    "portraits": "ui_portraits",
     "full": "full",
 }
 
@@ -95,6 +99,8 @@ def _detect_track(task: TeamTask, persona: str) -> str:
         return "m9a"
     if re.search(r"\bm9\b", text):
         return "m9_full"
+    if re.search(r"\b(portrait|portraits|dialogue_portrait|garr\s*vek|npc_merchant)\b", text):
+        return "ui_portraits"
     return "iris_full"
 
 
@@ -140,6 +146,20 @@ def execute_godot_dev_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str
         out["persona"] = delegated["godot_dev_persona"]
         out["godot_dev_track"] = delegated["godot_dev_track"]
         out["kind"] = "godot_dev_workflow"
+        return out
+
+    # Portraits UI dialogue (Garr Vek / merchant PNG) — avant fallback M9
+    if persona == "iris" and (
+        track == "ui_portraits"
+        or ctx.get("portrait_ui")
+        or ctx.get("dialogue_portraits")
+        or re.search(r"\b(portrait|portraits|dialogue_portrait|garr\s*vek|npc_merchant)\b", (task.objective or "").lower())
+    ):
+        out = execute_ui_portraits_workflow(ctx)
+        out["persona"] = "iris"
+        out["godot_dev_track"] = "ui_portraits"
+        out["kind"] = "godot_dev_workflow"
+        out.setdefault("track", "ui_portraits")
         return out
 
     # Délégation M9 / SOE aux workflows existants

@@ -1,6 +1,8 @@
 # npc_anchor_resolver.gd — Résout ancres PNJ Lost Heaven (data-driven)
 class_name NpcAnchorResolver
 
+const _Crc32Util = preload("res://scripts/crc32_util.gd")
+
 const ANCHORS_PATH := "res://assets/maps/lost_heaven_npc_anchors.json"
 const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 
@@ -66,7 +68,7 @@ static func normalize_pilot_id(raw_id: String) -> String:
 
 static func seed_u32(pilot_id: String) -> int:
 	var key := "%s|%s" % [pilot_id, _salt]
-	return int(Crc32Util.entity_oid(key) & 0x7fff_ffff)
+	return int(_Crc32Util.entity_oid(key) & 0x7fff_ffff)
 
 static func resolve(entity_key: String, label: String = "") -> Dictionary:
 	ensure_loaded()

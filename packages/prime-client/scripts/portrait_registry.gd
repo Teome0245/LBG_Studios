@@ -2,6 +2,8 @@
 extends RefCounted
 class_name PortraitRegistry
 
+const _NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
+
 const MANIFEST_PATH := "res://config/dialogue_portraits.json"
 
 static var _manifest: Dictionary = {}
@@ -46,7 +48,7 @@ static func _fallback_key(kind: String) -> String:
 static func _resolve_role(entity_key: String, entity_name: String) -> String:
 	if entity_key == "" and entity_name == "":
 		return ""
-	var anchor := NpcAnchorResolver.resolve(entity_key, entity_name)
+	var anchor := _NpcAnchorResolver.resolve(entity_key, entity_name)
 	return str(anchor.get("role", ""))
 
 static func _resolve_portrait_key(kind: String, entity_name: String, role: String, expression: String) -> String:
@@ -63,6 +65,25 @@ static func _resolve_portrait_base(kind: String, entity_name: String, role: Stri
 	var rules: Array = _manifest.get("rules", [])
 	var name_l := entity_name.to_lower().strip_edges()
 	var role_l := role.to_lower().strip_edges()
+	# Joueurs / bots : toujours portrait humain (évite fallback NPC).
+	if kind == "player":
+		for rule_v in rules:
+			if not rule_v is Dictionary:
+				continue
+			var rule: Dictionary = rule_v
+			if str(rule.get("kind", "")) != "player":
+				continue
+			var matches: Variant = rule.get("name_match", [])
+			if matches is Array and not (matches as Array).is_empty():
+				var hit := false
+				for frag_v in matches:
+					if name_l.contains(str(frag_v).to_lower()):
+						hit = true
+						break
+				if not hit:
+					continue
+			return str(rule.get("portrait_base", "player_human"))
+		return "player_human"
 	for rule_v in rules:
 		if not rule_v is Dictionary:
 			continue
@@ -83,7 +104,8 @@ static func _resolve_portrait_base(kind: String, entity_name: String, role: Stri
 		if matches is Array and not (matches as Array).is_empty():
 			var hit := false
 			for frag_v in matches:
-				if name_l.contains(str(frag_v).to_lower()):
+				var frag := str(frag_v).to_lower()
+				if name_l.contains(frag):
 					hit = true
 					break
 			if not hit:

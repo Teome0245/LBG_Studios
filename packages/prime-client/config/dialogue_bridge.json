@@ -5,6 +5,7 @@
   "timeout_sec": 60,
   "fallback_stub_on_error": true,
   "greeting_text": "Bonjour — parle-moi de Lost Heaven et de Scrapaltai.",
+  "followup_placeholder": "Répondre au PNJ…",
   "planet_display": "Scrapaltai",
   "hub_city": "Lost Heaven",
   "world_hint": "Planète Scrapaltai, ville hub Lost Heaven — avant-poste désertique (bazar, shuttleport, quartiers). Ne jamais inventer d'autre nom de ville ou de planète (pas de Willowdale, Brindlemark, etc.)."

@@ -24,15 +24,15 @@
     "npc_guide_determined": "res://assets/ui/portraits/npc_guide/determined.png",
     "npc_guide_talk_1": "res://assets/ui/portraits/npc_guide/talk_1.png",
     "npc_guide_talk_2": "res://assets/ui/portraits/npc_guide/talk_2.png",
-    "npc_merchant_neutral": "res://assets/sprites/units/npc_merchant.svg",
-    "npc_merchant_happy": "res://assets/sprites/units/npc_merchant.svg",
-    "npc_trainer_neutral": "res://assets/sprites/units/npc_trainer.svg",
-    "npc_trainer_angry": "res://assets/sprites/units/npc_trainer.svg",
-    "npc_trainer_determined": "res://assets/sprites/units/npc_trainer.svg",
-    "npc_civilian_neutral": "res://assets/sprites/units/npc_civilian.svg",
-    "npc_civilian_happy": "res://assets/sprites/units/npc_civilian.svg",
-    "npc_civilian_sad": "res://assets/sprites/units/npc_civilian.svg",
-    "npc_default_neutral": "res://assets/sprites/units/npc_civilian.svg"
+    "npc_merchant_neutral": "res://assets/ui/portraits/npc_merchant/neutral.png",
+    "npc_merchant_happy": "res://assets/ui/portraits/npc_merchant/happy.png",
+    "npc_trainer_neutral": "res://assets/ui/portraits/npc_trainer/neutral.png",
+    "npc_trainer_angry": "res://assets/ui/portraits/npc_trainer/angry.png",
+    "npc_trainer_determined": "res://assets/ui/portraits/npc_trainer/determined.png",
+    "npc_civilian_neutral": "res://assets/ui/portraits/npc_civilian/neutral.png",
+    "npc_civilian_happy": "res://assets/ui/portraits/npc_civilian/happy.png",
+    "npc_civilian_sad": "res://assets/ui/portraits/npc_civilian/sad.png",
+    "npc_default_neutral": "res://assets/ui/portraits/npc_civilian/neutral.png"
   },
   "fallbacks": {
     "default_expression": "neutral",
@@ -50,7 +50,8 @@
         "teome",
         "nix",
         "lia",
-        "mira"
+        "mira",
+        "bot"
       ],
       "portrait_base": "player_human"
     },

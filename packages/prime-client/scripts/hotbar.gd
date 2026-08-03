@@ -1,6 +1,7 @@
 # hotbar.gd — Barre d'actions HUD (icônes flat + badge touche)
 extends PanelContainer
 class_name Hotbar
+const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
 
 signal slot_activated(index: int)
 
@@ -38,7 +39,7 @@ func _build_slots() -> void:
 		btn.text = ""
 		btn.expand_icon = true
 		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var icon_tex := UiIconRegistry.tex(UiIconRegistry.hotbar_icon(i))
+		var icon_tex := _UiIconRegistry.tex(_UiIconRegistry.hotbar_icon(i))
 		if icon_tex:
 			btn.icon = icon_tex
 		btn.tooltip_text = "%d — %s" % [(i + 1) % 10, _tooltips[i] if i < _tooltips.size() else ""]

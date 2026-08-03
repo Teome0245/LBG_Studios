@@ -9,6 +9,7 @@ signal busy_changed(busy: bool)
 const CONFIG_PATH := "res://config/dialogue_bridge.json"
 const MAP_CFG_PATH := "res://assets/maps/tatooine_map_config.json"
 const SESSION_PATH := "user://session_summary.json"
+const HISTORY_PATH := "user://dialogue_history.json"
 const SESSION_KEYS: Array[String] = [
 	"tracked_quest",
 	"last_npc",
@@ -17,12 +18,17 @@ const SESSION_KEYS: Array[String] = [
 	"quest_snapshot",
 	"memory_hint",
 ]
+const MAX_HISTORY := 12
 
 var _http: HTTPRequest
 var _busy: bool = false
 var _cfg: Dictionary = {}
 var _session: Dictionary = {}
 var _req_id: int = 0
+var _history: Array = []
+var _history_npc_id: String = ""
+var _pending_player_text: String = ""
+var _pending_npc_name: String = ""
 
 func _ready() -> void:
 	_http = HTTPRequest.new()
@@ -31,6 +37,7 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_http_done)
 	_load_config()
 	_load_session()
+	_load_history()
 
 
 func is_enabled() -> bool:
@@ -43,6 +50,18 @@ func is_busy() -> bool:
 
 func get_session_summary() -> Dictionary:
 	return _session.duplicate(true)
+
+
+func get_history_for_npc(world_npc_id: String) -> Array:
+	if world_npc_id != _history_npc_id:
+		return []
+	return _history.duplicate(true)
+
+
+func clear_history() -> void:
+	_history.clear()
+	_history_npc_id = ""
+	_save_history()
 
 
 func update_session(patch: Dictionary) -> void:
@@ -64,14 +83,14 @@ func update_session(patch: Dictionary) -> void:
 
 
 func touch_npc(npc_name: String, world_npc_id: String = "") -> void:
-	var patch := {"last_npc": npc_name}
-	if not world_npc_id.is_empty() and not _session.has("tracked_quest"):
-		pass
-	update_session(patch)
+	update_session({"last_npc": npc_name})
 	if not world_npc_id.is_empty():
-		# world_npc_id n'est pas dans session_summary ; stocké uniquement pour debug local
 		_session["_last_world_npc_id"] = world_npc_id
 		_save_session()
+		if world_npc_id != _history_npc_id:
+			_history.clear()
+			_history_npc_id = world_npc_id
+			_save_history()
 
 
 func fallback_stub_on_error() -> bool:
@@ -93,11 +112,16 @@ func request_npc_reply(
 	var path := str(_cfg.get("invoke_path", "/v1/pilot/agent-dialogue/invoke"))
 	var url := "%s%s" % [base, path]
 	var text := player_text.strip_edges()
+	# Texte vide = ouverture / relance (greeting) ; les tours suivants passent le texte joueur.
+	# L'historique part dans context.history pour la cohérence multi-tours.
 	if text.is_empty():
 		text = str(_cfg.get("greeting_text", "Bonjour."))
+	if world_npc_id != _history_npc_id:
+		_history.clear()
+		_history_npc_id = world_npc_id
 	var ss := _sanitize_session_for_wire()
 	if not npc_name.is_empty():
-		ss["last_npc"] = npc_name if str(ss.get("last_npc", "")).is_empty() else str(ss.get("last_npc"))
+		ss["last_npc"] = npc_name
 	var world := _world_context_for_wire()
 	var context := {
 		"world_npc_id": world_npc_id,
@@ -109,12 +133,15 @@ func request_npc_reply(
 		"hub_city": str(world.get("hub_city", "Lost Heaven")),
 		"scene": str(world.get("scene", "Lost Heaven")),
 		"world_hint": str(world.get("world_hint", "")),
+		"history": _history_for_wire(),
 	}
 	var body := {
 		"actor_id": actor_id,
 		"text": text,
 		"context": context,
 	}
+	_pending_player_text = text
+	_pending_npc_name = npc_name
 	var payload := JSON.stringify(body)
 	var headers := PackedStringArray(["Content-Type: application/json", "Accept: application/json"])
 	_busy = true
@@ -125,9 +152,43 @@ func request_npc_reply(
 	if err != OK:
 		_busy = false
 		busy_changed.emit(false)
+		_pending_player_text = ""
 		reply_ready.emit(false, "", {"error": "http_request_failed", "code": err, "req_id": my_id})
 		return false
 	return true
+
+
+func _history_for_wire() -> Array:
+	var out: Array = []
+	for item in _history:
+		if not item is Dictionary:
+			continue
+		var role := str((item as Dictionary).get("role", "")).strip_edges()
+		var content := str((item as Dictionary).get("content", "")).strip_edges()
+		if role.is_empty() or content.is_empty():
+			continue
+		if content.length() > 500:
+			content = content.substr(0, 500)
+		out.append({"role": role, "content": content})
+	return out
+
+
+func _append_turn(player_text: String, assistant_text: String) -> void:
+	if not player_text.strip_edges().is_empty():
+		_history.append({"role": "user", "content": player_text.strip_edges()})
+	if not assistant_text.strip_edges().is_empty():
+		_history.append({"role": "assistant", "content": assistant_text.strip_edges()})
+	while _history.size() > MAX_HISTORY:
+		_history.pop_front()
+	_save_history()
+	# session_summary : note courte bornée (pas de fuite poste)
+	var note := assistant_text.strip_edges()
+	if note.length() > 120:
+		note = note.substr(0, 117) + "…"
+	var patch := {"last_npc": _pending_npc_name}
+	if not note.is_empty():
+		patch["player_note"] = "Dernier échange : %s" % note
+	update_session(patch)
 
 
 func _world_context_for_wire() -> Dictionary:
@@ -184,7 +245,8 @@ func _load_config() -> void:
 		"invoke_path": "/v1/pilot/agent-dialogue/invoke",
 		"timeout_sec": 60,
 		"fallback_stub_on_error": true,
-		"greeting_text": "Bonjour, parle-moi de cet endroit.",
+		"greeting_text": "Bonjour — parle-moi de Lost Heaven et de Scrapaltai.",
+		"followup_placeholder": "Répondre au PNJ…",
 	}
 	if not FileAccess.file_exists(CONFIG_PATH):
 		return
@@ -211,7 +273,6 @@ func _load_session() -> void:
 
 func _save_session() -> void:
 	var wire := _sanitize_session_for_wire()
-	# conserver debug keys locales
 	if _session.has("_last_world_npc_id"):
 		wire["_last_world_npc_id"] = _session["_last_world_npc_id"]
 	var f := FileAccess.open(SESSION_PATH, FileAccess.WRITE)
@@ -221,17 +282,44 @@ func _save_session() -> void:
 	f.close()
 
 
+func _load_history() -> void:
+	_history = []
+	_history_npc_id = ""
+	if not FileAccess.file_exists(HISTORY_PATH):
+		return
+	var f := FileAccess.open(HISTORY_PATH, FileAccess.READ)
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	if not raw is Dictionary:
+		return
+	var d: Dictionary = raw
+	_history_npc_id = str(d.get("npc_id", ""))
+	var arr: Variant = d.get("turns", [])
+	if arr is Array:
+		_history = (arr as Array).duplicate(true)
+
+
+func _save_history() -> void:
+	var f := FileAccess.open(HISTORY_PATH, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify({"npc_id": _history_npc_id, "turns": _history_for_wire()}))
+	f.close()
+
+
 func _on_http_done(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	_busy = false
 	busy_changed.emit(false)
 	var meta := {"http_result": result, "status": response_code}
 	if result != HTTPRequest.RESULT_SUCCESS:
+		_pending_player_text = ""
 		reply_ready.emit(false, "", meta)
 		return
 	var text := body.get_string_from_utf8()
 	var raw: Variant = JSON.parse_string(text)
 	if not raw is Dictionary:
 		meta["error"] = "invalid_json"
+		_pending_player_text = ""
 		reply_ready.emit(false, "", meta)
 		return
 	var d: Dictionary = raw
@@ -247,4 +335,8 @@ func _on_http_done(result: int, response_code: int, _headers: PackedStringArray,
 	var ok := bool(d.get("ok", response_code >= 200 and response_code < 300)) and not reply.is_empty()
 	if not ok and d.has("detail"):
 		meta["detail"] = d.get("detail")
+	if ok:
+		_append_turn(_pending_player_text, reply)
+		meta["history_turns"] = _history.size()
+	_pending_player_text = ""
 	reply_ready.emit(ok, reply, meta)

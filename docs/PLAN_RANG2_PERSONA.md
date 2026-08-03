@@ -9,6 +9,8 @@
 | **2** | Skip `factual_status` en mode persona | Chat « quête » reste PNJ | **OK** — déployé sur `.140` (`lbg-agent-dialogue`) 2026-08-03 |
 | **3** | Godot `DialogueBridge` | Clic PNJ → Pilot `:8000` invoke | **OK** code (`scripts/dialogue_bridge.gd` + `main.gd`) |
 | **4** | Persistance `user://session_summary.json` | Clés ADR bornées | **OK** |
+| **4b** | Multi-tours + historique pont | `context.history` + MAJ `session_summary` après reply + LineEdit follow-up | **OK** (2026-08-03) |
+| **4c** | Sync J: + cache `.godot` + Launchpad | Chaque sync régénère `.godot` ; Launchpad refuse launch si cache incomplet | **OK** (`tools/sync_prime_client_to_j.sh`) |
 | **5** | Enrichissement quête serveur (gateway 246) | Merge autoritatif quête/PNJ | **à faire** (hors MVP) |
 | **6** | Wire `lbg-ws/2` `ia_context` | Équivalent protocole mmmorpg | **hors scope** tant que chemin HTTP suffit |
 

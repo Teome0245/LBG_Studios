@@ -1,6 +1,7 @@
 # inventory_panel.gd — Inventaire grille fixe (stub données)
 extends PanelContainer
 class_name InventoryPanel
+const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
 
 @export var panel_visible: bool = false
 @export var columns: int = 5
@@ -116,12 +117,12 @@ func _fill_stub() -> void:
 		slot.expand_icon = true
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if item.is_empty():
-			slot.icon = UiIconRegistry.tex("empty")
+			slot.icon = _UiIconRegistry.tex("empty")
 			slot.disabled = true
 			slot.tooltip_text = "Vide"
 		else:
-			var icon_key := str(item.get("icon", UiIconRegistry.item_icon(str(item.get("name", "")))))
-			slot.icon = UiIconRegistry.tex(icon_key)
+			var icon_key := str(item.get("icon", _UiIconRegistry.item_icon(str(item.get("name", "")))))
+			slot.icon = _UiIconRegistry.tex(icon_key)
 			var qty := int(item.get("qty", 1))
 			var item_name := str(item.get("name", ""))
 			slot.tooltip_text = "%s ×%d" % [item_name, qty]

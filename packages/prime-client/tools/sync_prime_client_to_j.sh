@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Sync complet prime-client (WSL) → J: + tampon build_info.json
+# Sync complet prime-client (WSL) → J: + tampon build_info.json + cache .godot
+# + alignement Launchpad (profil prime → J:\swgemu\clients\prime-client)
 set -euo pipefail
 
-SRC="${PRIME_SRC:-/home/sdesh/projects/new_mmo/prime-client}"
+SRC="${PRIME_SRC:-/home/sdesh/projects/LBG_Studios/packages/prime-client}"
 DST="${PRIME_DST:-/mnt/j/swgemu/clients/prime-client}"
+GODOT_WIN_EXE="${GODOT_WIN_EXE:-J:\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64_console.exe}"
 
 if [[ ! -d "$SRC" ]]; then
   echo "SRC absent: $SRC" >&2
@@ -36,8 +38,6 @@ with open(path, "w", encoding="utf-8") as f:
 print("OK build_info.json", out["synced_at"])
 PY
 
-export STAMP SRC SCHEMA
-
 rsync -a --delete \
   --exclude '.git/' \
   --exclude '.godot/' \
@@ -46,14 +46,59 @@ rsync -a --delete \
 
 echo "OK rsync → $DST"
 
-# Régénère le cache class_name Godot (sinon scripts typés cassent au parse).
+# Régénère le cache class_name Godot (sinon main.gd / entrée zone cassent).
 rm -rf "$DST/.godot"
 DST_WIN="$(wslpath -w "$DST")"
 powershell.exe -NoProfile -Command \
-  "\$g='J:\mmmorpg\Godot_v4.6.1-stable_win64\Godot_v4.6.1-stable_win64_console.exe'; \$p='$DST_WIN'; if (Test-Path \$g) { & \$g --headless --path \$p --import --quit-after 30 | Out-Null; 'OK godot import' } else { 'WARN Godot absent' }" \
-  || echo "WARN: import Godot échoué — ouvrir le projet une fois" >&2
-if [[ -f "$DST/.godot/global_script_class_cache.cfg" ]]; then
-  echo "OK .godot cache régénéré"
+  "\$g='${GODOT_WIN_EXE}'; \$p='${DST_WIN}'; if (-not (Test-Path \$g)) { Write-Output 'WARN Godot absent'; exit 0 }; & \$g --headless --path \$p --import --quit-after 40 | Out-Null; if (Test-Path (Join-Path \$p '.godot\\global_script_class_cache.cfg')) { 'OK godot import' } else { 'WARN cache .godot manquant'; exit 1 }" \
+  || { echo "WARN: import Godot échoué — ouvrir le projet une fois" >&2; }
+
+CACHE="$DST/.godot/global_script_class_cache.cfg"
+if [[ -f "$CACHE" ]] && grep -q 'EntityManager' "$CACHE" && grep -q 'LbgWsClient' "$CACHE"; then
+  echo "OK .godot cache (EntityManager + LbgWsClient)"
+else
+  echo "ERROR: cache .godot invalide après sync — ne lance pas Godot ainsi" >&2
+  exit 1
 fi
+
+# Alignement Launchpad : profil prime → dossier J: syncé
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+target = r"J:\swgemu\clients\prime-client"
+godot = r"J:\mmmorpg\Godot_v4.6.1-stable_win64\Godot_v4.6.1-stable_win64.exe"
+paths = [
+    Path("/mnt/j/swgemu/dist/launchpad.config.json"),
+    Path("/mnt/j/swgemu/dist/win-unpacked/launchpad.config.json"),
+    Path("/home/sdesh/projects/LBG_Studios/packages/launchpad/launchpad.config.json"),
+]
+for p in paths:
+    if not p.exists():
+        print("skip launchpad", p)
+        continue
+    data = json.loads(p.read_text(encoding="utf-8"))
+    changed = False
+    for prof in data.get("profiles", []):
+        if prof.get("id") != "prime":
+            continue
+        if prof.get("gameDir") != target:
+            prof["gameDir"] = target
+            changed = True
+        if prof.get("gameExe") != godot:
+            prof["gameExe"] = godot
+            changed = True
+        args = ["--path", target]
+        if prof.get("launchArgs") != args:
+            prof["launchArgs"] = args
+            changed = True
+        prof["clientKind"] = "godot"
+        prof["skipPatch"] = True
+    if changed:
+        p.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        print("OK launchpad retarget", p)
+    else:
+        print("OK launchpad déjà aligné", p)
+PY
 
 echo "Relance via LBG Launchpad (profil Prime) ou Godot --path J:\\swgemu\\clients\\prime-client"

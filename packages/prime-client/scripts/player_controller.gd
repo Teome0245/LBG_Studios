@@ -17,11 +17,11 @@ const _LastPos = preload("res://scripts/last_position_store.gd")
 
 var _udp:       PacketPeerUDP = PacketPeerUDP.new()
 var _camera:    Camera2D      = null
-var _em:        EntityManager = null
+var _em:        Node          = null
 var _player_id: int           = 0
 var _ws:        Node          = null
 var _move_accum: float        = 0.0
-var _zones:     ZoneLayers    = null
+var _zones:     Node          = null
 
 var _state: Dictionary = {
 	"fwd":   false,
@@ -46,7 +46,7 @@ func _ready() -> void:
 	_udp.set_dest_address(cmd_host, cmd_port)
 	_camera = get_node_or_null("../Camera2D")
 	_em     = get_node_or_null("../EntityManager")
-	_zones  = get_node_or_null("../WorldMap/ZoneLayers") as ZoneLayers
+	_zones  = get_node_or_null("../WorldMap/ZoneLayers")
 	if enabled:
 		print("[PlayerCtrl] Actif — UDP -> %s:%d" % [cmd_host, cmd_port])
 

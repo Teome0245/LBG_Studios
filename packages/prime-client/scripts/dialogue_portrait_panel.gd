@@ -2,17 +2,23 @@
 extends PanelContainer
 class_name DialoguePortraitPanel
 
+const _PortraitRegistry = preload("res://scripts/portrait_registry.gd")
+
+signal followup_submitted(text: String)
+
 @export var panel_visible: bool = false
 
 var _title: Label
 var _body: Label
 var _portrait: TextureRect
 var _hint: Label
+var _input: LineEdit
 var _current_speaker_key: String = ""
 var _current_kind: String = "npc"
 var _current_name: String = ""
 var _current_entity_key: String = ""
 var _current_expression: String = "neutral"
+var _chat_enabled: bool = false
 
 func _ready() -> void:
 	visible = panel_visible
@@ -92,11 +98,22 @@ func _ensure_ui() -> void:
 		_body.add_theme_color_override("font_color", Color(0.92, 0.9, 0.84, 1))
 		vbox.add_child(_body)
 
+	_input = vbox.get_node_or_null("FollowUp") as LineEdit
+	if _input == null:
+		_input = LineEdit.new()
+		_input.name = "FollowUp"
+		_input.placeholder_text = "Répondre au PNJ…"
+		_input.clear_button_enabled = true
+		_input.visible = false
+		_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_input.text_submitted.connect(_on_followup_submitted)
+		vbox.add_child(_input)
+
 	_hint = vbox.get_node_or_null("Hint") as Label
 	if _hint == null:
 		_hint = Label.new()
 		_hint.name = "Hint"
-		_hint.text = "P fermer · O expression suivante · hotbar chat = démo"
+		_hint.text = "P fermer · Entrée pour répondre · O expression"
 		_hint.add_theme_font_size_override("font_size", 10)
 		_hint.add_theme_color_override("font_color", Color(0.7, 0.62, 0.5, 0.95))
 		vbox.add_child(_hint)
@@ -106,12 +123,14 @@ func show_portrait(
 	kind: String = "npc",
 	expression: String = "neutral",
 	body_text: String = "",
-	entity_key: String = ""
+	entity_key: String = "",
+	chat_enabled: bool = false
 ) -> void:
 	_current_name = speaker_name
 	_current_kind = kind
 	_current_expression = expression
 	_current_entity_key = entity_key
+	_chat_enabled = chat_enabled and kind == "npc"
 	panel_visible = true
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -119,6 +138,10 @@ func show_portrait(
 		_title.text = speaker_name if speaker_name != "" else "Interaction"
 	if _body:
 		_body.text = body_text if body_text != "" else "..."
+	if _input:
+		_input.visible = _chat_enabled
+		_input.editable = _chat_enabled
+		_input.clear()
 	_apply_current_portrait()
 
 func set_expression(expression: String) -> void:
@@ -129,10 +152,25 @@ func set_body_text(body_text: String) -> void:
 	if _body:
 		_body.text = body_text
 
+func set_chat_busy(busy: bool) -> void:
+	if _input == null:
+		return
+	_input.editable = _chat_enabled and not busy
+	if _hint and _chat_enabled:
+		_hint.text = (
+			"Échange en cours…" if busy
+			else "P fermer · Entrée pour répondre · expression : %s" % _current_expression
+		)
+
 func hide_portrait() -> void:
 	panel_visible = false
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_chat_enabled = false
+	if _input:
+		_input.visible = false
+		_input.clear()
+		_input.release_focus()
 
 func toggle_demo(
 	speaker_name: String,
@@ -144,12 +182,20 @@ func toggle_demo(
 	if panel_visible:
 		hide_portrait()
 	else:
-		show_portrait(speaker_name, kind, expression, body_text, entity_key)
+		show_portrait(speaker_name, kind, expression, body_text, entity_key, false)
+
+func _on_followup_submitted(text: String) -> void:
+	var t := text.strip_edges()
+	if t.is_empty() or not _chat_enabled:
+		return
+	if _input:
+		_input.clear()
+	followup_submitted.emit(t)
 
 func _apply_current_portrait() -> void:
 	if _portrait == null:
 		return
-	var tex := PortraitRegistry.resolve_texture(
+	var tex := _PortraitRegistry.resolve_texture(
 		_current_kind,
 		_current_name,
 		_current_entity_key,
@@ -157,6 +203,7 @@ func _apply_current_portrait() -> void:
 	)
 	_portrait.texture = tex
 	if _hint:
-		_hint.text = (
-			"P fermer · O expression suivante · actuelle : %s" % _current_expression
-		)
+		if _chat_enabled:
+			_hint.text = "P fermer · Entrée pour répondre · expression : %s" % _current_expression
+		else:
+			_hint.text = "P fermer · O expression suivante · actuelle : %s" % _current_expression

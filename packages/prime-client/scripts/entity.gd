@@ -2,6 +2,11 @@
 extends Node2D
 class_name Entity
 
+const _SpriteRegistry = preload("res://scripts/sprite_registry.gd")
+const _NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
+const _Projection3D2D = preload("res://scripts/projection.gd")
+const _MapTextureLoader = preload("res://scripts/map_texture_loader.gd")
+
 var object_id:     int     = 0
 var entity_key:    String  = ""
 var core3_pos:     Vector3 = Vector3.ZERO
@@ -39,7 +44,7 @@ func set_entity_key(key: String) -> void:
 func set_core3_position(pos: Vector3) -> void:
 	var prev := core3_pos
 	core3_pos     = pos
-	height_offset = Projection3D2D.height_offset(pos.y)
+	height_offset = _Projection3D2D.height_offset(pos.y)
 	if not _use_visual_override:
 		_visual_home = Vector3(pos.x, pos.y, pos.z)
 	update_facing_from_move(prev, pos)
@@ -90,18 +95,34 @@ func set_label(text: String) -> void:
 	_refresh_appearance()
 	queue_redraw()
 
+
+## Nom complet pour UI dialogue / portraits (sans troncature nameplate 18 car.).
+func get_display_name() -> String:
+	var s: String = _label_raw.strip_edges() if _label_raw != "" else label_text.strip_edges()
+	if s.is_empty():
+		return "PNJ" if kind == "npc" else "Voyageur"
+	for sep in [" (PNJ", " (Bot", " (bot", " · ", " — ", " - "]:
+		var i := s.find(sep)
+		if i > 0:
+			s = s.substr(0, i).strip_edges()
+			break
+	if s.length() > 48:
+		s = s.substr(0, 45) + "…"
+	return s
+
+
 func _refresh_appearance() -> void:
 	if kind != "player" and kind != "npc":
 		return
 	var raw := _label_raw if _label_raw != "" else label_text
-	var tex := SpriteRegistry.resolve_texture(kind, raw, entity_key)
+	var tex: Texture2D = _SpriteRegistry.resolve_texture(kind, raw, entity_key)
 	if tex:
-		set_sprite_texture(tex, SpriteRegistry.resolve_tint(kind, raw))
+		set_sprite_texture(tex, _SpriteRegistry.resolve_tint(kind, raw))
 
 static func _short_label(raw: String) -> String:
-	var s := raw.strip_edges()
+	var s: String = raw.strip_edges()
 	# "Jax Moro · Fel'Rani (PNJ IA)" → "Jax Moro"
-	for sep in [" (PNJ", " · ", " - "]:
+	for sep in [" (PNJ", " (Bot", " (bot", " · ", " — ", " - "]:
 		var i := s.find(sep)
 		if i > 0:
 			s = s.substr(0, i).strip_edges()
@@ -134,7 +155,7 @@ func _rebind_anchor() -> void:
 		return
 	if entity_key == "" and label_text == "":
 		return
-	_anchor = NpcAnchorResolver.resolve(entity_key, _label_raw if _label_raw != "" else label_text)
+	_anchor = _NpcAnchorResolver.resolve(entity_key, _label_raw if _label_raw != "" else label_text)
 	if _anchor.is_empty():
 		return
 	_use_visual_override = bool(_anchor.get("apply_visual_override", false))
@@ -169,7 +190,7 @@ func _refresh_screen_pos() -> void:
 	var base := _visual_home if _use_visual_override else core3_pos
 	var world := base + _patrol_offset_m()
 	var bob_y := _bob_offset_px()
-	position = Projection3D2D.to_screen(world) + _display_jitter + Vector2(0.0, bob_y)
+	position = _Projection3D2D.to_screen(world) + _display_jitter + Vector2(0.0, bob_y)
 
 func _bob_offset_px() -> float:
 	if kind == "player":
@@ -238,7 +259,7 @@ func _apply_sprite_texture(tex: Texture2D, tint: Color = Color.WHITE) -> void:
 		sprite.visible = false
 		queue_redraw()
 		return
-	if MapTextureLoader.entity_marker_style() == "triangle" and (kind == "player" or kind == "npc"):
+	if _MapTextureLoader.entity_marker_style() == "triangle" and (kind == "player" or kind == "npc"):
 		_use_sprite = false
 		sprite.texture = null
 		sprite.visible = false
@@ -248,8 +269,8 @@ func _apply_sprite_texture(tex: Texture2D, tint: Color = Color.WHITE) -> void:
 	sprite.texture = tex
 	sprite.modulate = tint
 	sprite.visible = true
-	var target := SpriteRegistry.display_px()
-	var mul := SpriteRegistry.resolve_scale_multiplier(SpriteRegistry.last_sprite_key())
+	var target: float = float(_SpriteRegistry.display_px())
+	var mul: float = float(_SpriteRegistry.resolve_scale_multiplier(_SpriteRegistry.last_sprite_key()))
 	var w := float(tex.get_width())
 	var h := float(tex.get_height())
 	var dim := maxf(w, h)
@@ -266,9 +287,9 @@ func _update_sprite_offset() -> void:
 
 func _draw() -> void:
 	var draw_pos := Vector2(0.0, height_offset)
-	var token_px := SpriteRegistry.display_px()
-	var token_r := token_px * 0.38
-	var tri_style := MapTextureLoader.entity_marker_style() == "triangle"
+	var token_px: float = float(_SpriteRegistry.display_px())
+	var token_r: float = token_px * 0.38
+	var tri_style: bool = _MapTextureLoader.entity_marker_style() == "triangle"
 
 	if _use_sprite and not tri_style:
 		draw_colored_polygon(
@@ -297,7 +318,7 @@ func _draw() -> void:
 			1.0
 		)
 	if show_nameplates and label_text != "":
-		var label_y := -token_px * 0.52 if _use_sprite else -radius - 4.0
+		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 4.0
 		var col := Color(1, 1, 1, 0.92) if kind == "player" else Color(0.95, 0.88, 0.75, 0.82)
 		draw_string(
 			ThemeDB.fallback_font,
@@ -344,7 +365,7 @@ func hit_test_screen(mouse_pos: Vector2) -> bool:
 		return false
 	if kind != "npc" and kind != "player":
 		return false
-	var tri := MapTextureLoader.entity_marker_style() == "triangle"
-	var token_px := SpriteRegistry.display_px()
+	var tri: bool = _MapTextureLoader.entity_marker_style() == "triangle"
+	var token_px: float = float(_SpriteRegistry.display_px())
 	var radius_px := maxf(28.0, token_px * 0.85) if tri else maxf(18.0, token_px * 0.55)
 	return screen_anchor().distance_squared_to(mouse_pos) <= radius_px * radius_px
