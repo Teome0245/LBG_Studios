@@ -31,11 +31,14 @@ Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud
 
 Client **Godot** `prime-client` + Launchpad + serveur **Prime 246**.
 
+**Plan exécutoire** : [`docs/PLAN_MMO_O2.md`](docs/PLAN_MMO_O2.md) (rails produit P0–P5 + autonomie A1–A4).
+
 | Critère done | Mesure | État |
 |--------------|--------|------|
 | Client extrait | `packages/prime-client/` + `packages/launchpad` | OK |
 | Pas de Core3/DB dans Git | `.gitignore` + extract filtré | OK |
 | Smoke documenté | [`packages/prime-client/SMOKE.md`](packages/prime-client/SMOKE.md) + [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) ; patches + `:8792` ready | OK (doc + HTTP 2026-07-31) |
+| Login M11 + Launchpad → `J:` | Smoke M11 + validation humaine 2026-08-03 | OK (partiel M12) |
 | Pipeline assets | Lien `Infographiste_IA` dans registre | OK |
 
 ## Hors scope (volontaire)

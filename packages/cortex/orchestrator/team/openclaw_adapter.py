@@ -71,6 +71,24 @@ _BUILTIN_SKILLS: dict[str, dict[str, Any]] = {
         "timeout_s": 90,
         "owner": "hermes",
     },
+    "ops_godot_m11_login": {
+        "script": "infra/scripts/smoke_godot_m11_login_lan.sh",
+        "description": "Smoke M11 login HTTP gateway",
+        "timeout_s": 60,
+        "owner": "hermes",
+    },
+    "ops_godot_m12_ws": {
+        "script": "infra/scripts/smoke_godot_m12_ws_lan.sh",
+        "description": "Smoke M12 WS login_result → zone_state",
+        "timeout_s": 90,
+        "owner": "hermes",
+    },
+    "ops_godot_owners": {
+        "script": "infra/scripts/smoke_godot_owners.sh",
+        "description": "Bundle smokes owner Godot (M11+M12+M9)",
+        "timeout_s": 180,
+        "owner": "argus",
+    },
 }
 
 

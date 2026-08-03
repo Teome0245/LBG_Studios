@@ -81,20 +81,40 @@ def execute_godot_validation_workflow(task: TeamTask) -> dict[str, object]:
     if task.context.get("godot_validation_mirror", True):
         probes.append(_run_smoke_script("smoke_godot_sidecar_mirror_lan.sh"))
 
+    from team.owner_smokes import run_owner_smokes
+
+    owner_bundle = str(task.context.get("owner_smoke_bundle") or "godot_login").strip()
+    owner_smokes = (
+        run_owner_smokes(bundle=owner_bundle) if task.context.get("run_owner_smokes", True) else None
+    )
+    if isinstance(owner_smokes, dict):
+        for r in owner_smokes.get("results") or []:
+            if isinstance(r, dict):
+                probes.append(
+                    {
+                        "track": f"owner_{r.get('owner')}",
+                        "ok": bool(r.get("ok")) if not r.get("skipped") else True,
+                        "skipped": bool(r.get("skipped")),
+                        "exit_code": r.get("exit_code"),
+                    }
+                )
+
     required = [p for p in probes if isinstance(p, dict) and not p.get("skipped")]
     ok = all(p.get("ok") for p in required) if required else bool(supervisor.get("ok"))
+    if isinstance(owner_smokes, dict) and owner_smokes.get("ok") is False:
+        ok = False
 
     prime_path = os.environ.get(
         "LBG_GODOT_PRIME_CLIENT_PATH",
-        "/home/sdesh/projects/new_mmo/prime-client",
+        "/home/sdesh/projects/LBG_Studios/packages/prime-client",
     )
     lbg_path = _repo_root() / "lbg_client_godot"
 
     checklist = [
         f"Godot 2D Prime : godot4 --path {prime_path}",
-        "Vérifier bots Lia/Nix sur la carte (miroir sidecar ou SOE M3)",
-        f"Godot 3D LBG (optionnel) : godot4 --path {lbg_path}",
-        "Si tout vert ci-dessus → approuver forge ou lancer build ZB-0 L2",
+        "Launchpad → J:\\swgemu\\clients\\prime-client (pas new_mmo)",
+        "Vérifier bots Lia/Nix + login Teome (M11/M12)",
+        "Si tout vert → approuver forge ou ZB L2",
     ]
 
     human_summary = format_validation_summary(
@@ -106,14 +126,16 @@ def execute_godot_validation_workflow(task: TeamTask) -> dict[str, object]:
     return {
         "kind": "godot_validation_workflow",
         "ok": ok,
+        "smoke_ok": ok,
         "supervisor": supervisor,
         "probes": probes,
+        "owner_smokes": owner_smokes,
         "human_summary": human_summary,
         "subproject": "client_godot",
         "launch_commands": {
             "prime_2d": f"godot4 --path {prime_path}",
             "lbg_3d": f"godot4 --path {lbg_path}",
-            "sidecar_mirror": "bash client-prime-lbg/run_sidecar_mirror.sh",
+            "sidecar_mirror": "bash packages/cortex/infra/scripts/smoke_godot_sidecar_mirror_lan.sh",
         },
     }
 

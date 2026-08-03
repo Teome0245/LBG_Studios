@@ -36,6 +36,7 @@ def create_and_run_team_task(
     objective: str,
     actor_id: str,
     context: dict[str, Any] | None = None,
+    run: bool = True,
 ) -> dict[str, Any]:
     base = orchestrator_url()
     created = api_json(
@@ -53,6 +54,8 @@ def create_and_run_team_task(
     task_id = created.get("id") if isinstance(created, dict) else None
     if not task_id:
         raise ValueError(f"réponse création tâche invalide : {created!r}")
+    if not run:
+        return {"task_id": task_id, "created": created, "ran": None}
     ran = api_json("POST", f"{base}/v1/team/tasks/{task_id}/run", {})
     return {"task_id": task_id, "created": created, "ran": ran}
 

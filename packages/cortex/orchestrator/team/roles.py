@@ -250,6 +250,42 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
 
 
 def _execute_qa(task: TeamTask) -> dict[str, object]:
+    bundle = str(task.context.get("owner_smoke_bundle") or "").strip()
+    if bundle:
+        from team.owner_smokes import run_owner_smokes
+
+        owner_out = run_owner_smokes(bundle=bundle)
+        health_ok = True
+        # healthz léger en plus du bundle
+        checks: list[dict[str, object]] = []
+        for url in _qa_health_targets()[:2]:
+            ctx = {
+                "devops_action": {"kind": "http_get", "url": url},
+                "devops_dry_run": True,
+            }
+            out = _dispatch(
+                "agent.devops",
+                actor_id=task.actor_id,
+                text=f"QA healthz {url}",
+                context=ctx,
+            )
+            ok = bool(out.get("ok", False))
+            if not ok:
+                res = out.get("result")
+                if isinstance(res, dict) and res.get("ok") is True:
+                    ok = True
+            checks.append({"url": url, "ok": ok})
+            health_ok = health_ok and ok
+        all_ok = bool(owner_out.get("ok")) and health_ok
+        return {
+            "kind": "qa_owner_smokes",
+            "ok": all_ok,
+            "smoke_ok": bool(owner_out.get("ok")),
+            "owner_smokes": owner_out,
+            "health_checks": checks,
+            "bundle": bundle,
+        }
+
     if resolve_godot_validation_workflow(task):
         return execute_godot_validation_workflow(task)
     if task.context.get("godot_supervisor") or str(task.context.get("godot_mode", "")).strip().lower() in (

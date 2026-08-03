@@ -26,8 +26,10 @@ C’est **normal** (miroir), mais la file et le café méritent un conducteur qu
 4. Avant Vague 4, la mission restait `open`/`driving` **pour toujours** (même si tout est vert).
 5. **Maintenant** : quand toutes les tâches de la mission sont terminales :
    - QA présent et `result.ok` → statut `closed` (smoke vert)
-   - QA rouge ou tâches `failed` → `closed_failed`
+   - **A2** (`LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL=1`, défaut) : QA/owner smoke rouge → **pas closable** (mission reste ouverte)
+   - sinon failed sans block → `closed_failed`
    - encore des `queued`/`running` → pas de clôture
+   - missions Godot / `owner_smoke_bundle` : QA + `owner_smokes.ok` requis (voir `docs/PLAN_MMO_O2.md`)
 6. Mode `mission_close` dans `decide_action` → `act` appelle `maybe_close_mission`.
 7. Manuel : bouton **Clôturer** (double-clic = `force`).
 

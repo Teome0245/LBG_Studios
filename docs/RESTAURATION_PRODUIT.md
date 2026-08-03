@@ -32,7 +32,7 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | Fonction | État | Où / note |
 |----------|------|-----------|
 | Serveur Prime 246 + comptes `:8792` | **vert** | Runtime ready (smoke LAN) |
-| Client Godot `prime-client` + Launchpad | **jaune→vert partiel** | M11 HTTP smoke OK ; handoff WS code+sync J: (2026-08-03) ; validation Launchpad manuelle restante |
+| Client Godot `prime-client` + Launchpad | **vert** (login) | M11+WS Launchpad OK via `J:\…\prime-client` (2026-08-03) ; suite M12/M10 → [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) |
 | Sidecar joueurs IA `:8791` | **jaune** | Sondes Team `player_ia` ; pas focus courant |
 | Dialogue / Lyra *en jeu* (persona) | **jaune** | Multi-tours (`history` + LineEdit) + `session_summary` ; lore Scrapaltai/Lost Heaven ; smoke `tools/smoke_rang2_persona_dialogue.sh` |
 | Bac Python `mmmorpg_server` / web `/mmo/` | **rouge** | Gelé volontairement |
@@ -58,12 +58,19 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 
 ---
 
-## Prochaine traction (rang 1 d’abord)
+## Prochaine traction
+
+**O2 / MMO** (priorité jeu après login OK) — voir [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) :
+
+1. A1+A2 autonomie (playbook jalon + smokes owner anti-clôture).
+2. P1 M12 durci (smoke WS + move).
+3. P2 M10 craft B2B ; P3 persona ; A3 scoring.
+
+**Rang 1** (déjà largement vert) :
 
 1. ~~Exercer Team ops avec dry-run décoché~~ — OK (healthz réel 2026-07-31).
 2. Smoke optionnel Desktop **réel** (Cockpit + inject) dans `smoke_lan_surfaces.sh --functional`.
-3. ~~Smoke Team Argus (`smoke_vm_lan.sh`)~~ — OK 2026-08-03 (Ollama `.110` LAN + soft-fail).
-4. ~~Parcours URL / web / notepad / session_summary~~ — OK 2026-08-03 (voir [`PLAN_RANG1_ASSISTANT.md`](PLAN_RANG1_ASSISTANT.md)).
-5. ~~Mail IMAP~~ — OK 2026-08-03 (`sdesharches@192.168.0.51`) ; dictée STT reportée.
-6. Rang 2 : pont persona + multi-tours + sync `.godot`/Launchpad (voir [`PLAN_RANG2_PERSONA.md`](PLAN_RANG2_PERSONA.md)).
-7. Plus tard : enrichissement quête gateway 246 ; dictée STT.
+3. ~~Smoke Team Argus (`smoke_vm_lan.sh`)~~ — OK 2026-08-03.
+4. ~~Parcours URL / web / notepad / session_summary~~ — OK 2026-08-03 ([`PLAN_RANG1_ASSISTANT.md`](PLAN_RANG1_ASSISTANT.md)).
+5. ~~Mail IMAP~~ — OK 2026-08-03 ; dictée STT reportée.
+6. Rang 2 : [`PLAN_RANG2_PERSONA.md`](PLAN_RANG2_PERSONA.md).

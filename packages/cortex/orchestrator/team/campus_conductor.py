@@ -82,6 +82,18 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
         "utility_key": "qa_smoke",
     },
     {
+        "agent_ids": ("studio_qa_argus",),
+        "role": "qa",
+        "objective": "Owner smokes Godot login M11+M12 (coffee fill — PLAN_MMO_O2 A2)",
+        "context": {
+            "_campus_coffee_fill": True,
+            "presence_agent_id": "studio_qa_argus",
+            "owner_smoke_bundle": "godot_login",
+            "mmo_jalon": True,
+        },
+        "utility_key": "qa_godot_owners",
+    },
+    {
         "agent_ids": ("studio_ops_hephaistos",),
         "role": "ops",
         "objective": "Sonde santé orchestrateur et backend (read-only, coffee fill)",
@@ -252,14 +264,38 @@ def _task_result_ok(task: TeamTask) -> bool | None:
     return True
 
 
+def block_close_on_smoke_fail() -> bool:
+    """A2 — smoke QA/owner rouge : ne pas auto-clôturer (reste ouverte pour reprise)."""
+    return os.environ.get("LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def _mission_requires_owner_smoke(mission: dict[str, Any], tasks: list[TeamTask]) -> bool:
+    if mission.get("require_owner_smoke") or mission.get("_require_owner_smoke"):
+        return True
+    for t in tasks:
+        ctx = t.context if isinstance(t.context, dict) else {}
+        if ctx.get("owner_smoke_bundle") or ctx.get("mmo_jalon") or ctx.get("_require_owner_smoke"):
+            return True
+        if t.role in ("dev_godot",) or str(ctx.get("godot_dev_persona") or ""):
+            return True
+    return False
+
+
 def evaluate_mission_closure(mission: dict[str, Any] | None = None) -> dict[str, Any]:
     """Évalue si la mission Lyra peut être clôturée.
 
-    Règles (Vague 4) :
+    Règles (Vague 4 + A2 PLAN_MMO_O2) :
     - toutes les tâches de la mission sont terminales (done|failed|cancelled)
     - smoke vert : si la mission contient du QA, tous les QA done avec result.ok≠false
+    - mission Godot/jalon : QA obligatoire et smoke_ok True
+    - smoke rouge + LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL=1 → pas closable
     - sinon (pas de QA) : clôture succès si aucune failed
-    - s'il reste des failed → closable avec outcome closed_failed
+    - s'il reste des failed → closable avec outcome closed_failed (sauf block smoke)
     """
     m = dict(mission or last_mission())
     mid = str(m.get("id") or "")
@@ -308,11 +344,16 @@ def evaluate_mission_closure(mission: dict[str, Any] | None = None) -> dict[str,
         }
 
     qa_tasks = [t for t in tasks if t.role == "qa"]
+    need_owner = _mission_requires_owner_smoke(m, tasks)
     smoke_ok: bool | None
     smoke_note: str
     if not qa_tasks:
-        smoke_ok = None
-        smoke_note = "no_qa_in_mission"
+        if need_owner:
+            smoke_ok = False
+            smoke_note = "owner_smoke_required_no_qa"
+        else:
+            smoke_ok = None
+            smoke_note = "no_qa_in_mission"
     else:
         bad = [t for t in qa_tasks if _task_result_ok(t) is False]
         if bad:
@@ -321,6 +362,44 @@ def evaluate_mission_closure(mission: dict[str, Any] | None = None) -> dict[str,
         else:
             smoke_ok = True
             smoke_note = "qa_green"
+            if need_owner:
+                # Exiger au moins un résultat owner_smokes.ok si le bundle était demandé.
+                owner_seen = False
+                owner_bad = False
+                for t in qa_tasks:
+                    res = t.result if isinstance(t.result, dict) else {}
+                    os_block = res.get("owner_smokes")
+                    if isinstance(os_block, dict):
+                        owner_seen = True
+                        if os_block.get("ok") is False:
+                            owner_bad = True
+                    elif res.get("smoke_ok") is False:
+                        owner_bad = True
+                        owner_seen = True
+                if owner_bad:
+                    smoke_ok = False
+                    smoke_note = "owner_smoke_red"
+                elif not owner_seen:
+                    # QA vert générique sans owner bundle — acceptable si pas de bundle explicite
+                    # sur une tâche ; sinon note soft.
+                    explicit = any(
+                        isinstance(t.context, dict) and t.context.get("owner_smoke_bundle")
+                        for t in qa_tasks
+                    )
+                    if explicit:
+                        smoke_ok = False
+                        smoke_note = "owner_smoke_missing_in_qa_result"
+
+    if smoke_ok is False and block_close_on_smoke_fail():
+        return {
+            "closable": False,
+            "reason": f"smoke_owner_red:{smoke_note}",
+            "mission_id": mid,
+            "task_stats": stats,
+            "smoke_ok": False,
+            "smoke_note": smoke_note,
+            "blocked_on_smoke": True,
+        }
 
     if failed or smoke_ok is False:
         return {
@@ -612,7 +691,7 @@ def _coffee_utility_ok(role: str, utility_key: str) -> tuple[bool, str]:
         ctx = t.context or {}
         if ctx.get("_campus_coffee_fill") or ctx.get("_campus_mission_id"):
             return False, f"recent_success:{utility_key}"
-        if role == "qa" and utility_key == "qa_smoke":
+        if role == "qa" and utility_key in ("qa_smoke", "qa_godot_owners"):
             return False, "recent_qa_ok"
     return True, "ok"
 

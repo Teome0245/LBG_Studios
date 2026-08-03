@@ -119,7 +119,8 @@ Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle obs
 
 1. **Fait** — Conductor V0–V2 (drain, coffee fill, act selon état, mission NL, UI Pilot) ; Cursor PR ; présence Petri.
 2. **Vague 0–4 + L3 Iris** — ADR 0019 : plan LLM, bus, mémoire, hooks, clôture mission, prune ; Iris L3 allowlist (`LBG_IRIS_FORGE_L3`).
-3. **Ensuite** — scoring playbooks ; élargissement allowlist Iris avec smoke.
+3. **Ensuite** — scoring playbooks (A3) ; élargissement allowlist Iris avec smoke ; voir [`docs/PLAN_MMO_O2.md`](../../../docs/PLAN_MMO_O2.md).
+4. **A1+A2 livrés 2026-08-03** — playbook `spawn_team_mmo_jalon_job` + owner smokes + anti-clôture si rouge.
 4. **Plus tard (périphérie)** — Slack optionnel ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
 5. **Lab only** — Adapter CrewAI hors chemin critique.
 

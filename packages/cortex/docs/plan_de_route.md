@@ -1,6 +1,10 @@
-# Plan de route (LBG_IA_MMO)
+# Plan de route (LBG_IA_MMO → LBG_Studios)
 
 Document de suivi : **priorités**, **livrables cibles** et **règle de mise à jour**. À relire et à ajuster à chaque jalon significatif.
+
+> **Jeu O2 (Godot / Prime)** — source de vérité exécutoire :  
+> [`docs/PLAN_MMO_O2.md`](../../../docs/PLAN_MMO_O2.md) (rails P0–P5 + autonomie A1–A4).  
+> La section *Étape actuelle* / Historique bots ci‑dessous reste utile en archive, mais **ne pilote plus** le fil client M11–M12.
 
 ## Ordre de priorité (résumé)
 

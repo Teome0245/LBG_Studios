@@ -6,30 +6,39 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const LAUNCHPAD_VERSION = '2.1.0';
+const LAUNCHPAD_VERSION = '2.1.1';
 const STATUS_API_TIMEOUT_MS = 12000;
 const STATUS_API_FAIL_THRESHOLD = 2;
 const PRECU_HOST_LAN = '192.168.0.245';
 const PRIME_HOST_LAN = '192.168.0.246';
 
-/** Chemins Windows — Godot 4.6 + prime-client (WSL = source de vérité si dispo). */
+/** Chemins Windows — Godot 4.6 + prime-client (J: syncé = runtime ; WSL = source). */
 const DEFAULT_GODOT_EXE = 'J:\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64.exe';
-const WSL_PRIME_CLIENT_DIR =
-  '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\new_mmo\\prime-client';
 const J_PRIME_CLIENT_DIR = 'J:\\swgemu\\clients\\prime-client';
+const WSL_LBG_STUDIOS_PRIME =
+  '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\LBG_Studios\\packages\\prime-client';
+const WSL_NEW_MMO_PRIME =
+  '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\new_mmo\\prime-client';
 
 function resolvePrimeClientDir() {
   const fromEnv = (process.env.LBG_PRIME_CLIENT_DIR || '').trim();
   if (fromEnv && fs.existsSync(fromEnv)) {
-    return fromEnv;
+    // Interdire le legacy new_mmo même via env
+    if (/new_mmo/i.test(fromEnv)) {
+      console.warn('[Launchpad] LBG_PRIME_CLIENT_DIR pointe new_mmo — ignore, utilise J:');
+    } else {
+      return fromEnv;
+    }
   }
   if (process.platform === 'win32') {
-    if (fs.existsSync(WSL_PRIME_CLIENT_DIR)) {
-      return WSL_PRIME_CLIENT_DIR;
-    }
-    if (fs.existsSync(J_PRIME_CLIENT_DIR)) {
+    // Préférer le client syncé J: (cache .godot régénéré par sync_prime_client_to_j.sh)
+    if (fs.existsSync(path.join(J_PRIME_CLIENT_DIR, 'project.godot'))) {
       return J_PRIME_CLIENT_DIR;
     }
+    if (fs.existsSync(path.join(WSL_LBG_STUDIOS_PRIME, 'project.godot'))) {
+      return WSL_LBG_STUDIOS_PRIME;
+    }
+    // new_mmo = legacy cassé (class_name) — ne plus l’utiliser
   }
   return J_PRIME_CLIENT_DIR;
 }
@@ -74,7 +83,8 @@ function defaultProfiles() {
       patchChannel: 'prime',
       skipPatch: true,
       godotPatchEnabled: true,
-      godotFullscreen: true,
+      // Fenêtré = même mode que l’éditeur Godot (fullscreen masquait les timeouts WS).
+      godotFullscreen: false,
       launchArgs: ['--path', DEFAULT_PRIME_CLIENT_DIR],
       servers: [
         { id: 'prime', label: 'LBG MMO Serveur Prime', ip: PRIME_HOST_LAN, loginPort: 44553 },
@@ -143,7 +153,7 @@ function migrateLegacyConfig(legacy) {
         patchChannel: 'prime',
         skipPatch: true,
         godotPatchEnabled: true,
-        godotFullscreen: true,
+        godotFullscreen: false,
         launchArgs: ['--path', DEFAULT_PRIME_CLIENT_DIR],
         servers: [primeServer],
       },
@@ -158,9 +168,10 @@ function isGodotProfile(profile) {
   return exe.includes('godot') || exe.endsWith('primeclient.exe') || exe.endsWith('prime-client.exe');
 }
 
-/** Migre un profil Prime encore pointé sur lbgemu.exe → Godot prime-client. */
+/** Migre un profil Prime encore pointé sur lbgemu.exe / new_mmo → client J: syncé. */
 function migratePrimeClientPath(cfg) {
   const dir = resolvePrimeClientDir();
+  const expectedArgs = ['--path', dir];
   let changed = false;
   for (const profile of cfg.profiles || []) {
     if (profile.id !== 'prime') continue;
@@ -170,6 +181,18 @@ function migratePrimeClientPath(cfg) {
     }
     if (profile.gameExe && !fs.existsSync(profile.gameExe)) {
       profile.gameExe = DEFAULT_GODOT_EXE;
+      changed = true;
+    }
+    const args = Array.isArray(profile.launchArgs) ? profile.launchArgs : [];
+    const argsOk =
+      args.length === expectedArgs.length &&
+      args.every((a, i) => String(a) === expectedArgs[i]);
+    if (!argsOk) {
+      profile.launchArgs = expectedArgs.slice();
+      changed = true;
+    }
+    if (profile.clientKind !== 'godot') {
+      profile.clientKind = 'godot';
       changed = true;
     }
   }
@@ -193,7 +216,7 @@ function migratePrimeToGodot(cfg) {
     profile.patchChannel = '';
     profile.skipPatch = true;
     if (profile.godotFullscreen == null) {
-      profile.godotFullscreen = true;
+      profile.godotFullscreen = false;
     }
     changed = true;
   }
@@ -222,11 +245,27 @@ function ensureGodotFullscreenDefault(cfg) {
     if (profile.id !== 'prime' || !isGodotProfile(profile)) continue;
     if (profile.godotFullscreen != null) continue;
     const args = Array.isArray(profile.launchArgs) ? profile.launchArgs : [];
+    // Défaut fenêtré (aligné éditeur) — l’utilisateur peut forcer fullscreen dans la config.
     profile.godotFullscreen = args.some((a) => String(a).trim() === '--fullscreen');
-    if (!profile.godotFullscreen) {
-      profile.godotFullscreen = true;
-    }
     changed = true;
+  }
+  return changed;
+}
+
+/** Si un vieux Launchpad / config pointe encore new_mmo → forcer J: à chaque load. */
+function banLegacyNewMmoPrimePath(cfg) {
+  const dir = resolvePrimeClientDir();
+  let changed = false;
+  for (const profile of cfg.profiles || []) {
+    if (profile.id !== 'prime') continue;
+    const gd = String(profile.gameDir || '');
+    if (/new_mmo/i.test(gd) || /\\new_mmo\\/i.test(gd)) {
+      console.warn('[Launchpad] gameDir legacy new_mmo détecté →', dir);
+      profile.gameDir = dir;
+      profile.launchArgs = ['--path', dir];
+      profile.clientKind = 'godot';
+      changed = true;
+    }
   }
   return changed;
 }
@@ -291,6 +330,7 @@ function normalizeConfig(raw) {
     migratePrecuHost246(normalized);
     migratePrimeToGodot(normalized);
     migratePrimeClientPath(normalized);
+    banLegacyNewMmoPrimePath(normalized);
     ensureGodotFullscreenDefault(normalized);
     ensureGodotPatchDefaults(normalized);
     return normalized;
@@ -324,6 +364,7 @@ function loadConfig() {
       const migratedHost = migratePrecuHost246(normalized);
       const migratedGodot = migratePrimeToGodot(normalized);
       const migratedPath = migratePrimeClientPath(normalized);
+      const bannedLegacy = banLegacyNewMmoPrimePath(normalized);
       const migratedFs = ensureGodotFullscreenDefault(normalized);
       const migratedPatch = ensureGodotPatchDefaults(normalized);
       if (
@@ -332,6 +373,7 @@ function loadConfig() {
         migratedHost ||
         migratedGodot ||
         migratedPath ||
+        bannedLegacy ||
         migratedFs ||
         migratedPatch
       ) {
@@ -851,6 +893,40 @@ ipcMain.on('launch-game', (event, keepOpen) => {
         message: `Projet Godot introuvable : ${projectFile}\nCopiez prime-client vers ce dossier ou changez « Dossier jeu ».`,
       });
       return;
+    }
+    if (/new_mmo/i.test(String(profile.gameDir || ''))) {
+      event.reply('launch-status', {
+        error: true,
+        message:
+          `Dossier legacy new_mmo interdit : ${profile.gameDir}\n` +
+          `Utilise J:\\swgemu\\clients\\prime-client (sync_prime_client_to_j.sh).`,
+      });
+      return;
+    }
+    const classCache = path.join(profile.gameDir, '.godot', 'global_script_class_cache.cfg');
+    if (!fs.existsSync(classCache)) {
+      event.reply('launch-status', {
+        error: true,
+        message:
+          `Cache Godot manquant (.godot) dans ${profile.gameDir}\n` +
+          `Lance depuis WSL : bash packages/prime-client/tools/sync_prime_client_to_j.sh\n` +
+          `(sinon « Entrer en zone » / main.gd cassent).`,
+      });
+      return;
+    }
+    try {
+      const cacheTxt = fs.readFileSync(classCache, 'utf8');
+      if (!cacheTxt.includes('EntityManager') || !cacheTxt.includes('LbgWsClient')) {
+        event.reply('launch-status', {
+          error: true,
+          message:
+            `Cache Godot incomplet dans ${profile.gameDir}\n` +
+            `Relance : bash packages/prime-client/tools/sync_prime_client_to_j.sh`,
+        });
+        return;
+      }
+    } catch (_) {
+      /* ignore read errors — Godot tentera quand même */
     }
   } else if (!fs.existsSync(cfgPath)) {
     event.reply('launch-status', {
