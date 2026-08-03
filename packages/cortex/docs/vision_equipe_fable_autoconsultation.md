@@ -180,7 +180,7 @@ L'équipe **prépare le terrain** (gaps, scripts, sync) ; l'humain **valide** le
 - [x] Synthèse PM liste gaps par agent avec owner (`gaps_by_owner` + bus summary)
 - [x] Followups L1 auto-run : taux exposé (`followup_auto_rate`) ; 1.0 si 0 gap
 - [x] `/v1/team/meta` expose les agents déclarés + capacités (**Atlas** inclus, ≥10)
-- [~] M9 full vert sur 140 après round (sync + remédiation) — dépend assets Prime ; Iris L3 + remédiation M9a actifs
+- [x] M9 full vert sur 140 après remédiation + smokes M9b/M9c (`audit_m9_full_readiness` ok, 2026-08-03)
 
 Preuve ops : `bash infra/scripts/prove_phase_e_140.sh`
 
