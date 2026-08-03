@@ -39,10 +39,14 @@ bash packages/prime-client/tools/sync_prime_client_to_j.sh
 3. Attendu : statut LoginPanel `WS connexion…` → `login_result` → monde ; logs `[LbgWs] state=`
 4. Si figé >28s : fermer Godot, relancer Launchpad (cache `.godot` régénéré par `sync_prime_client_to_j.sh`)
 
-Smoke HTTP seul (sans Godot) :
+Smoke HTTP / WS (sans Godot) :
 
 ```bash
 bash packages/cortex/infra/scripts/smoke_godot_m11_login_lan.sh
+# M12 durci : login → WS → zone_state → move (±1.5 m)
+bash packages/cortex/infra/scripts/smoke_godot_m12_ws_lan.sh
+# Bundle owners M11+M12 (+ M9 si godot_client)
+bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 ```
 
 ## Doc

@@ -38,7 +38,7 @@ Client **Godot** `prime-client` + Launchpad + serveur **Prime 246**.
 | Client extrait | `packages/prime-client/` + `packages/launchpad` | OK |
 | Pas de Core3/DB dans Git | `.gitignore` + extract filtré | OK |
 | Smoke documenté | [`packages/prime-client/SMOKE.md`](packages/prime-client/SMOKE.md) + [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) ; patches + `:8792` ready | OK (doc + HTTP 2026-07-31) |
-| Login M11 + Launchpad → `J:` | Smoke M11 + validation humaine 2026-08-03 | OK (partiel M12) |
+| Login M11 + Launchpad → `J:` | Smoke M11 + M12 (WS+move) + validation humaine 2026-08-03 | OK |
 | Pipeline assets | Lien `Infographiste_IA` dans registre | OK |
 
 ## Hors scope (volontaire)

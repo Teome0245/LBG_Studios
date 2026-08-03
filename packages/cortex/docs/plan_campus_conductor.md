@@ -63,7 +63,14 @@ LBG_TEAM_CAMPUS_CONDUCTOR_MAX_STARTS=2
 
 ## Hors scope
 
-- Scoring LLM des playbooks
+- Scoring **LLM** des playbooks (A3 = heuristique mémoire + taux succès, pas LLM)
+
+## A3 — Scoring playbooks (coffee-fill)
+
+Module : `orchestrator/team/playbook_scores.py`  
+- Score ∈ [0,1] par `utility_key` (historique tâches + boost mémoire `kind=coffee_fill`)  
+- Coffee-fill ordonne les playbooks par score ; skip si score < `LBG_TEAM_PLAYBOOK_SCORE_MIN` (assez d’échantillons)  
+- Flags : `LBG_TEAM_PLAYBOOK_SCORING=1`, `LBG_TEAM_PLAYBOOK_SCORE_WINDOW_S`, `LBG_TEAM_PLAYBOOK_SCORE_MIN`
 
 ## Persistance multi-reboot (Vague 4+)
 

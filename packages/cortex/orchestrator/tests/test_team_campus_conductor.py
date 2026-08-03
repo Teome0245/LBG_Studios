@@ -133,6 +133,7 @@ def test_campus_coffee_fill_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_MIN", "2")
     monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_MAX_SPAWN", "1")
     monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_COOLDOWN_S", "60")
+    monkeypatch.setenv("LBG_TEAM_PLAYBOOK_SCORING", "1")
     campus_conductor._last_coffee_spawn_ts = 0.0
 
     def fake_idle(_snap=None):
@@ -156,7 +157,8 @@ def test_campus_coffee_fill_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     assert props, body
     assert props[0].get("kind") == "coffee_fill"
     assert props[0].get("role") in ("qa", "ops", "pm", "admin_infra")
-
+    assert "playbook_score" in props[0]
+    assert props[0].get("context", {}).get("utility_key")
 
 def test_campus_act_observe(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(

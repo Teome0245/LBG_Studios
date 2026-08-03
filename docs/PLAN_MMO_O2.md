@@ -28,7 +28,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | # | Jalon | Done quand | Owner | État |
 |---|--------|------------|--------|------|
 | **P0** | Doc pivot | Ce fichier + liens OBJECTIVES / RESTAURATION | Thémis | **fait** 2026-08-03 |
-| **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone | Hermès + Argus | **en cours** (login Launchpad OK) |
+| **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone→move | Hermès + Argus | **fait** 2026-08-03 (smoke + move ±1.5 m) |
 | **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 | Iris + Dédale | partiel (panel live) |
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables | Chœur | jaune (Rang 2) |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
@@ -41,7 +41,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | M9 carte/minimap | **fait** client |
 | M10 talents/craft UI | **partiel** |
 | M11 login LBG | **fait** (Launchpad + éditeur) |
-| M12 `lbg-ws/2` live | **en cours** — smoke HTTP/WS vert ; polish move/ZB |
+| M12 `lbg-ws/2` live | **fait** smoke login→WS→zone_state→move ; polish ZB optionnel |
 
 ---
 
@@ -51,7 +51,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |---|--------|----------|----------|
 | **A1** | Mission → code → preuve | Playbook `mmo_jalon_client` : plan/tâches Hermès+Argus → smoke owner → clôture | Approve write hors allowlist / merge PR |
 | **A2** | Verify après act | Smokes owner (login M11, WS M12, M9, LAN) ; **pas de clôture succès si rouge** | Force manuel rare |
-| **A3** | Scoring playbooks | Mémoire + score → coffee-fill (ensuite) | Lecture |
+| **A3** | Scoring playbooks | Mémoire + score → coffee-fill (`team/playbook_scores.py`) | Lecture |
 | **A4** | Frontière L1/L2 | Tableau ci-dessous | Toujours L2 sur write sensible |
 
 ### Frontière L1 / L2 (A4)
@@ -70,9 +70,10 @@ Flag clôture : `LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL=1` (défaut) — smo
 
 ## Ordre d’exécution
 
-1. **P0** (doc) → **A1 + A2** (boucle)  
-2. **P1** (M12 smoke = premier playbook jalon)  
-3. **A3** scoring · **P2** M10 · **A4** tenu à jour dans ce fichier  
+1. **P0** (doc) → **A1 + A2** (boucle) — **fait**  
+2. **P1** (M12 smoke login→WS→zone→move) — **fait** 2026-08-03  
+3. **A3** scoring — **fait** (`playbook_scores` + coffee-fill)  
+4. **P2** M10 · **A4** tenu à jour dans ce fichier · **P3** persona  
 
 ## Commandes
 

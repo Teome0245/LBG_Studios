@@ -78,7 +78,7 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
         "agent_ids": ("studio_qa_argus",),
         "role": "qa",
         "objective": "Smoke LAN read-only — healthz + systemd (coffee fill Conductor)",
-        "context": {"_campus_coffee_fill": True, "presence_agent_id": "studio_qa_argus"},
+        "context": {"_campus_coffee_fill": True, "presence_agent_id": "studio_qa_argus", "utility_key": "qa_smoke"},
         "utility_key": "qa_smoke",
     },
     {
@@ -90,6 +90,7 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
             "presence_agent_id": "studio_qa_argus",
             "owner_smoke_bundle": "godot_login",
             "mmo_jalon": True,
+            "utility_key": "qa_godot_owners",
         },
         "utility_key": "qa_godot_owners",
     },
@@ -97,7 +98,7 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
         "agent_ids": ("studio_ops_hephaistos",),
         "role": "ops",
         "objective": "Sonde santé orchestrateur et backend (read-only, coffee fill)",
-        "context": {"_campus_coffee_fill": True, "presence_agent_id": "studio_ops_hephaistos"},
+        "context": {"_campus_coffee_fill": True, "presence_agent_id": "studio_ops_hephaistos", "utility_key": "ops_probe"},
         "utility_key": "ops_probe",
     },
     {
@@ -108,6 +109,7 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
             "_campus_coffee_fill": True,
             "presence_agent_id": "studio_pm_themis",
             "reunification_brief": False,
+            "utility_key": "pm_brief",
         },
         "utility_key": "pm_brief",
     },
@@ -115,7 +117,7 @@ _COFFEE_PLAYBOOKS: list[dict[str, Any]] = [
         "agent_ids": ("admin_infra", "studio_admin_atlas"),
         "role": "admin_infra",
         "objective": "Audit rapide infra LLM locale / dual host (coffee fill)",
-        "context": {"_campus_coffee_fill": True, "presence_agent_id": "admin_infra"},
+        "context": {"_campus_coffee_fill": True, "presence_agent_id": "admin_infra", "utility_key": "admin_audit"},
         "utility_key": "admin_audit",
     },
 ]
@@ -715,10 +717,17 @@ def _coffee_spawn_proposals(
     if len(coffee_ids) < coffee_min():
         return []
 
+    from team import playbook_scores
+
+    # A3 : ordonner les playbooks par score (mémoire + historique)
+    ranked = playbook_scores.rank_playbooks(list(_COFFEE_PLAYBOOKS))
+
     proposals: list[dict[str, Any]] = []
-    for pb in _COFFEE_PLAYBOOKS:
+    for pb, score_info in ranked:
         if len(proposals) >= min(coffee_max_spawn(), slots_left):
             break
+        if not score_info.get("eligible", True):
+            continue
         match_id = next((aid for aid in pb["agent_ids"] if aid in coffee_ids and aid not in reserved_agents), None)
         if not match_id:
             continue
@@ -728,17 +737,23 @@ def _coffee_spawn_proposals(
             continue
         if _recent_coffee_fill_for_role(role):
             continue
-        util_ok, util_why = _coffee_utility_ok(role, str(pb.get("utility_key") or role))
+        util_key = str(pb.get("utility_key") or role)
+        util_ok, util_why = _coffee_utility_ok(role, util_key)
         if not util_ok:
             continue
+        ctx = dict(pb["context"])
+        ctx["utility_key"] = util_key
         proposals.append(
             {
                 "kind": "coffee_fill",
                 "agent_id": match_id,
                 "role": role,
                 "objective": pb["objective"],
-                "context": dict(pb["context"]),
+                "context": ctx,
                 "utility": util_why,
+                "utility_key": util_key,
+                "playbook_score": score_info.get("score"),
+                "playbook_score_why": score_info.get("why"),
             }
         )
     return proposals
@@ -935,6 +950,7 @@ def conduct(*, dry_run: bool = False, max_starts_override: int | None = None) ->
             "cooldown_s": coffee_cooldown_s(),
             "utility_s": coffee_utility_s(),
             "coffee_idle": sum(1 for n in idle_notes if n.get("reason") == "coffee_available"),
+            "playbook_scoring": True,
         },
         "started": started,
         "skipped": skipped[:40],
@@ -1108,6 +1124,34 @@ def _run_task_safe(task_id: str) -> None:
             )
         except Exception:
             return
+    finally:
+        _maybe_record_coffee_score(task_id)
+
+
+def _maybe_record_coffee_score(task_id: str) -> None:
+    """A3 — enregistre le résultat coffee fill dans la mémoire (best-effort)."""
+    try:
+        task = team_store.get_task(task_id)
+        if task is None:
+            return
+        ctx = task.context if isinstance(task.context, dict) else {}
+        if not ctx.get("_campus_coffee_fill"):
+            return
+        from team import playbook_scores
+
+        uk = str(ctx.get("utility_key") or "").strip()
+        if not uk:
+            return
+        res = task.result if isinstance(task.result, dict) else {}
+        ok = bool(res.get("ok")) if "ok" in res else str(task.status) == "done"
+        playbook_scores.record_coffee_outcome(
+            utility_key=uk,
+            ok=ok,
+            role=str(task.role or ""),
+            task_id=task_id,
+        )
+    except Exception:
+        return
 
 
 def status() -> dict[str, Any]:
@@ -1138,6 +1182,7 @@ def status() -> dict[str, Any]:
             "cooldown_s": coffee_cooldown_s(),
             "utility_s": coffee_utility_s(),
             "coffee_idle": sum(1 for n in idle if n.get("reason") == "coffee_available"),
+            "playbook_scoring": True,
         },
         "idle_notes": idle,
         "failed_agents": [

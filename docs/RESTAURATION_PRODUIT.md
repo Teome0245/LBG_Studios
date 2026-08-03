@@ -63,8 +63,8 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 **O2 / MMO** (priorité jeu après login OK) — voir [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) :
 
 1. A1+A2 autonomie (playbook jalon + smokes owner anti-clôture).
-2. P1 M12 durci (smoke WS + move).
-3. P2 M10 craft B2B ; P3 persona ; A3 scoring.
+2. ~~P1 M12 durci (smoke WS + move)~~ — fait 2026-08-03.
+3. P2 M10 craft B2B ; P3 persona (A3 scoring livré).
 
 **Rang 1** (déjà largement vert) :
 
