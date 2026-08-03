@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installe les timers playbooks ops équipe (stockage + Ollama) sur VM core 140.
+# Installe les timers playbooks ops équipe (stockage + Ollama + HW) sur VM core 140.
 #
 # Usage :
 #   bash infra/scripts/install_team_ops_jobs_vm.sh
@@ -18,24 +18,26 @@ scp -q \
   "${ROOT_DIR}/infra/systemd/lbg-team-ops-storage-job.timer" \
   "${ROOT_DIR}/infra/systemd/lbg-team-ops-ollama-job.service" \
   "${ROOT_DIR}/infra/systemd/lbg-team-ops-ollama-job.timer" \
+  "${ROOT_DIR}/infra/systemd/lbg-team-ops-hw-job.service" \
+  "${ROOT_DIR}/infra/systemd/lbg-team-ops-hw-job.timer" \
   "${VM_USER}@${VM_HOST}:/tmp/"
 
 ssh "${VM_USER}@${VM_HOST}" "bash -s" <<'EOF'
 set -euo pipefail
-sudo mkdir -p /var/lib/lbg/team_ops_storage /var/lib/lbg/team_ops_ollama
-sudo chown lbg:lbg /var/lib/lbg/team_ops_storage /var/lib/lbg/team_ops_ollama
-for u in lbg-team-ops-storage-job lbg-team-ops-ollama-job; do
+sudo mkdir -p /var/lib/lbg/team_ops_storage /var/lib/lbg/team_ops_ollama /var/lib/lbg/team_ops_hw
+sudo chown lbg:lbg /var/lib/lbg/team_ops_storage /var/lib/lbg/team_ops_ollama /var/lib/lbg/team_ops_hw
+for u in lbg-team-ops-storage-job lbg-team-ops-ollama-job lbg-team-ops-hw-job; do
   sudo cp "/tmp/${u}.service" "/tmp/${u}.timer" /etc/systemd/system/
 done
 sudo systemctl daemon-reload
-sudo systemctl enable lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer
-sudo systemctl start lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer
-systemctl is-active lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer
+sudo systemctl enable lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer lbg-team-ops-hw-job.timer
+sudo systemctl start lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer lbg-team-ops-hw-job.timer
+systemctl is-active lbg-team-ops-storage-job.timer lbg-team-ops-ollama-job.timer lbg-team-ops-hw-job.timer
 systemctl list-timers 'lbg-team-ops-*' --no-pager
 EOF
 
 echo ""
 echo "OK — tâches visibles sur http://192.168.0.110:8080/#/team"
-echo "  actor: system:team_ops_storage | system:team_ops_ollama"
+echo "  actor: system:team_ops_storage | system:team_ops_ollama | system:team_ops_hw"
 echo "Test manuel :"
-echo "  ssh ${VM_USER}@${VM_HOST} 'sudo systemctl start lbg-team-ops-ollama-job.service && journalctl -u lbg-team-ops-ollama-job -n 20 --no-pager'"
+echo "  ssh ${VM_USER}@${VM_HOST} 'sudo systemctl start lbg-team-ops-hw-job.service && journalctl -u lbg-team-ops-hw-job -n 20 --no-pager'"

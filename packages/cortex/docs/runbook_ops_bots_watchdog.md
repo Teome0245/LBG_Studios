@@ -78,6 +78,26 @@ bash infra/scripts/install_infra_watchdog_vm.sh
 bash infra/scripts/install_storage_watchdog_job_vm.sh
 ```
 
+
+## 2b. Sonde matériel Proxmox — Héphaïstos (`lbg-team-ops-hw-job`)
+
+Héphaïstos (rôle `ops`) surveille BMC/IPMI, PERC/SMART et coretemp sur **192.168.0.200** (NUC) et **192.168.0.201** (R720) toutes les 12 h.
+
+```bash
+bash infra/scripts/install_team_ops_jobs_vm.sh
+# test manuel
+ssh lbg@192.168.0.140 'sudo systemctl start lbg-team-ops-hw-job.service && journalctl -u lbg-team-ops-hw-job -n 30 --no-pager'
+```
+
+| Variable | Défaut | Rôle |
+|----------|--------|------|
+| `LBG_PROXMOX_HW_SSH_HOSTS` | `192.168.0.200,192.168.0.201` | Hyperviseurs SSH |
+| `LBG_TEAM_OPS_HW_JOB_ENABLED` | `1` | Active le playbook |
+| `LBG_TEAM_OPS_HW_JOB_ACTOR_ID` | `system:team_ops_hw` | Acteur équipe |
+| `LBG_TEAM_OPS_HW_JOB_STATE` | `/var/lib/lbg/team_ops_hw/state.json` | Cooldown |
+
+Voir [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md).
+
 ## 3. Validation rapide
 
 ```bash

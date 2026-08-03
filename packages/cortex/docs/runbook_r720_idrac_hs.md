@@ -4,6 +4,15 @@
 **Sonde** : `bash infra/scripts/diagnose_r720_hw_lan.sh`  
 **Contexte** : l’iDRAC est soudée à la carte mère. Hors bande (KVM IP, réseau dédié, régulation ventilos) peut être morte tout en laissant l’OS et le PERC opérationnels.
 
+
+## Surveillance automatique (Héphaïstos)
+
+Le rôle équipe **ops** (Héphaïstos) sonde périodiquement le matériel des hyperviseurs `192.168.0.200` (NUC) et `192.168.0.201` (R720) via le timer `lbg-team-ops-hw-job` (VM core 140).
+
+- Module : `lbg_agents.proxmox_hw_probe` / playbook `spawn_team_ops_hw_job`
+- `ops_kind=proxmox_hw` → résultat `ops_hw` (BMC morte = `degraded`, cooldown 24 h)
+- Install : `bash infra/scripts/install_team_ops_jobs_vm.sh`
+- Env : `LBG_PROXMOX_HW_SSH_HOSTS=192.168.0.200,192.168.0.201`
 ## Symptômes typiques
 
 | Signe | Interprétation |
@@ -80,13 +89,21 @@ done
 EOF
 ```
 
-**Avec perccli** (recommandé pour rebuild / VD) :
+**Avec perccli** (installé sur 201 — `perccli` / `perccli64`) :
 
 ```bash
-# Installer PercCLI Broadcom/LSI (paquet Dell/Broadcom) puis :
-perccli /c0 show
-perccli /c0/eall/sall show
-perccli /c0/eall/sall show status
+ssh root@192.168.0.201 'perccli64 /c0 show; perccli64 /c0/eall/sall show; perccli64 /c0/eall/sall show status'
+```
+
+Réinstall / autre hôte (Debian/Proxmox) :
+
+```bash
+curl -fL -A 'Mozilla/5.0' -o /tmp/PERCCLI.tar.gz \
+  'https://dl.dell.com/FOLDER07815522M/1/PERCCLI_7.1910.00_A12_Linux.tar.gz'
+tar -xzf /tmp/PERCCLI.tar.gz -C /tmp
+dpkg -i /tmp/PERCCLI_7.1910.00_A12_Linux/perccli_007.1910.0000.0000_all.deb
+ln -sfn /opt/MegaRAID/perccli/perccli64 /usr/local/sbin/perccli64
+ln -sfn /opt/MegaRAID/perccli/perccli64 /usr/local/sbin/perccli
 ```
 
 ### 4. Thermique CPU (seul levier fiable sans BMC)
@@ -128,9 +145,12 @@ OMSA (`omreport`) et `racadm` s’appuient souvent sur l’iDRAC. Si BMC morte :
 | OS boot | SSD Crucial `sdb` CT500BX100 — SMART PASSED |
 | Backup | iSCSI Synology `sdc` — health OK |
 | CPU package | ~43–45 °C sous load ~16 (Ollama 110 + VMs 140/245/246) |
-| perccli / OMSA / racadm | **Absents** sur l’hôte |
+| perccli | **Installé** 2026-08-03 — `007.1910.0000.0000` (`perccli` → `/opt/MegaRAID/perccli/perccli64`) |
+| OMSA / racadm | Absents |
 
-**Verdict** : hyperviseur **exploitable** ; supervision chassis/fans/PSU **perdue** ; priorité ops = installer **perccli**, surveiller SMART (surtout PD 3 et 4), planifier **carte mère / R720 de secours** si ventilos max / bruit / conso deviennent un problème.
+**PERC (post-install)** : H710 Mini SN `44O00V8`, FW `3.130.05-2086`, **RAID6** Optimal 929.5 Go (`VD1`), 6 PD Online, **BBU Optimal** 33 °C.
+
+**Verdict** : hyperviseur **exploitable** ; supervision chassis/fans/PSU **perdue** ; priorité ops = surveiller SMART (surtout PD 3 et 4), planifier **carte mère / R720 de secours** si ventilos max / bruit / conso deviennent un problème.
 
 ## Liens
 
