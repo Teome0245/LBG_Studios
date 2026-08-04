@@ -156,9 +156,9 @@
     },
     {
       "id": "anchor:pilot_imperial",
-      "match": { "pilot_id": "npc:core3_pilot_imperial_c" },
+      "match": { "pilot_id": "npc:core3_pilot_imperial_a" },
       "building_id": "poi:lost_heaven_starport",
-      "role": "pilot",
+      "role": "pilot_trainer",
       "poi_slot": "pad",
       "offset_m": { "x": 10.0, "z": -8.0 },
       "apply_visual_override": true,

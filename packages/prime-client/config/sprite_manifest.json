@@ -70,7 +70,8 @@
       "kind": "npc",
       "role_match": [
         "combat_trainer", "medic_trainer", "scout_trainer",
-        "artisan_trainer", "politician_trainer", "entertainer_trainer"
+        "artisan_trainer", "politician_trainer", "entertainer_trainer",
+        "pilot_trainer"
       ],
       "sprite": "npc_trainer"
     },

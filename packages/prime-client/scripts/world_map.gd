@@ -182,6 +182,9 @@ func _draw() -> void:
 	draw_line(Vector2(0.0, -world_px), Vector2(0.0, world_px), Color(0.3, 0.3, 0.6, 0.8), 1.5)
 
 func set_planet(name: String, new_half_size: float = HALF_SIZE_DEFAULT) -> void:
+	# Évite reload (et spam SVG) à chaque tick zone_state.
+	if name == planet_name and absf(new_half_size - half_size) < 0.01:
+		return
 	planet_name = name
 	half_size = new_half_size
 	_has_texture = false

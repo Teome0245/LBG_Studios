@@ -5,7 +5,8 @@
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
 sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
-**Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).
+**Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).  
+**Lore / âme jeu** : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md) · [`world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) · [`world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) · [`world/BOITE_IDEES_GAMEPLAY.md`](world/BOITE_IDEES_GAMEPLAY.md) · garant runtime **Chœur du monde**.
 
 **Règle** : dépôt **legacy / archive / étagère** = pas de nouvelle feature produit ; correctifs OK.
 
@@ -23,9 +24,11 @@ Serveurs jeu (runtime, hors Git) :
 
 | Hôte | Rôle | Accès |
 |------|------|-------|
-| **`192.168.0.246:8792`** | **Prime** — état serveur + comptes Core3 | http://192.168.0.246:8792/ |
-| **`192.168.0.245:8792`** | **PreCU / ops** — état + comptes | http://192.168.0.245:8792/ |
+| **`192.168.0.246:8792`** | **Prime** — monde LBG produit (écriture / features) | http://192.168.0.246:8792/ |
+| **`192.168.0.245:8792`** | **PreCU** — **référence SWG Pre-CU** (lecture seule ; ne pas modifier) | http://192.168.0.245:8792/ |
 | **`192.168.0.246:8080`** | Patches Prime | http://192.168.0.246:8080/patches/prime/manifest.json |
+
+**Règle 245** : modèle le plus proche de l’original Pre-CU pour consulter arbres / craft / datatables. Toute feature LBG = **246** + monorepo. Voir Bible **V4**.
 
 ## Actif — remotes liés (hors Git monorepo)
 

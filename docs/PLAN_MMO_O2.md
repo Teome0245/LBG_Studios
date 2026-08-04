@@ -12,6 +12,10 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | Doc | Rôle désormais |
 |-----|----------------|
 | **Ce fichier** | Priorités O2 + rails autonomie |
+| [`docs/world/BIBLE_MMO.md`](world/BIBLE_MMO.md) | **Vérités du monde** + anti-dérive lore · garant runtime = Chœur (V50) |
+| [`docs/world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) | Rôles canon PNJ |
+| [`docs/world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) | Équivalence arbres Pre-CU → LBG |
+| `packages/cortex/content/m10/m10_skills_catalog.json` | Catalogue talents/craft (schema 3, professions) |
 | `RESTAURATION_PRODUIT.md` | Checklist vert/jaune/rouge |
 | `OBJECTIVES.md` | Cadre O1/O2 |
 | `packages/prime-client/docs/CLIENT_ONLY_GODOT.md` | Vision joueur Godot-only |
@@ -29,8 +33,8 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |---|--------|------------|--------|------|
 | **P0** | Doc pivot | Ce fichier + liens OBJECTIVES / RESTAURATION | Thémis | **fait** 2026-08-03 |
 | **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone→move | Hermès + Argus | **fait** 2026-08-03 (smoke + move ±1.5 m) |
-| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 | Iris + Dédale | **en cours** — catalog live + smoke M10 ; craft_combine ADR ouvert |
-| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables | Chœur | jaune (Rang 2) |
+| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **en cours** — catalog live ; **craft_combine + inventory HTTP** sur 246 (runtime mémoire `m10_craft_runtime`, 2026-08-04) ; inventaire Core3 réel = suite |
+| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | jaune (Rang 2) |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
 

@@ -20,11 +20,13 @@
     {
       "id": "poi:lost_heaven_cantina",
       "kind": "cantina",
-      "label": "Cantina",
+      "label": "La Perle de Scrapaltai",
+      "display_name": "La Perle de Scrapaltai",
       "x": 4939.0,
       "z": -802.0,
       "size_m": 32.0,
-      "essential": false
+      "essential": false,
+      "lore_ref": "docs/world/BIBLE_MMO.md#V13"
     },
     {
       "id": "poi:lost_heaven_bank",

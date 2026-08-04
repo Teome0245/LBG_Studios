@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "planet": "Scrapaltai",
+  "hub": "lost_heaven",
+  "bible_ref": "docs/world/BOITE_IDEES_GAMEPLAY.md#6",
+  "source": "LBG_IA_MMORPG/Boite à idées/20260429_mmmorpg_bestiaire..txt",
+  "notes": "P0 désert autour de Lost Heaven. Djinn Mineur exclu (fantasy / couche D).",
+  "creatures": [
+    {
+      "id": "beast:scorpion_titan",
+      "name": "Scorpion-Titan",
+      "biome": "desert",
+      "size": "grand",
+      "behavior": "embuscade",
+      "ai_goals": ["proteger_nids"],
+      "danger_level": 4,
+      "loot": [
+        {"id": "venin", "name": "Venin", "craft_trees": ["medicine"]},
+        {"id": "carapace", "name": "Carapace", "craft_trees": ["crafting"]}
+      ],
+      "mmo_role": "elite"
+    },
+    {
+      "id": "beast:serpent_sable",
+      "name": "Serpent de Sable",
+      "biome": "desert",
+      "size": "tres_grand",
+      "behavior": "sous_sable",
+      "ai_goals": ["patrouiller_dunes"],
+      "danger_level": 5,
+      "loot": [
+        {"id": "ecailles_dorees", "name": "Écailles dorées", "craft_trees": ["crafting", "social"]}
+      ],
+      "mmo_role": "boss"
+    },
+    {
+      "id": "beast:chacal_dore",
+      "name": "Chacal Doré",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "meute",
+      "ai_goals": ["voler_nourriture"],
+      "danger_level": 2,
+      "loot": [
+        {"id": "fourrure_doree", "name": "Fourrure dorée", "craft_trees": ["crafting"]}
+      ],
+      "mmo_role": "pack"
+    },
+    {
+      "id": "beast:scarabee_obsidien",
+      "name": "Scarabée Obsidien",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "blinde",
+      "ai_goals": ["chercher_mineraux"],
+      "danger_level": 2,
+      "loot": [
+        {"id": "obsidienne", "name": "Obsidienne", "craft_trees": ["crafting", "gathering"]}
+      ],
+      "mmo_role": "tank"
+    },
+    {
+      "id": "beast:marcheur_dunes",
+      "name": "Marcheur des Dunes",
+      "biome": "desert",
+      "size": "enorme",
+      "behavior": "lent_massif",
+      "ai_goals": ["traverser_desert"],
+      "danger_level": 4,
+      "loot": [
+        {"id": "os_geants", "name": "Os géants", "craft_trees": ["crafting"]}
+      ],
+      "mmo_role": "tank"
+    },
+    {
+      "id": "beast:fennec_mirage",
+      "name": "Fennec Mirage",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "fuite_illusion",
+      "ai_goals": ["fuir_predateurs"],
+      "danger_level": 1,
+      "loot": [
+        {"id": "poussiere_mirage", "name": "Poussière mirage", "craft_trees": ["medicine", "scene"]}
+      ],
+      "mmo_role": "rare",
+      "notes": "Illusion = camouflage / tromperie sensorielle, pas magie arcanique."
+    }
+  ],
+  "excluded": [
+    {
+      "name": "Djinn Mineur",
+      "reason": "couche D fantasy (caster / poussiere_arcanique)"
+    }
+  ]
+}

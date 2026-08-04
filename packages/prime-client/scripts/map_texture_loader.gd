@@ -56,6 +56,9 @@ static func entity_marker_style() -> String:
 	return str(world_render_cfg().get("entity_markers", "triangle")).strip_edges()
 
 static func load_texture(usage: String = "world") -> Texture2D:
+	# Fond jeu = planet_backdrop procédural ; ne pas tenter tatooine.svg (import often invalid).
+	if usage == "world" and not show_planet_texture():
+		return null
 	var path := resolve_path(usage)
 	if path == "":
 		return null

@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "hub": "lost_heaven",
+  "planet": "Scrapaltai",
+  "bible_ref": "docs/world/BOITE_IDEES_GAMEPLAY.md#4",
+  "notes": "Templates quêtes LBG — remplacent stubs fantasy (loups/bandits). Givers = inventaire PNJ.",
+  "templates": [
+    {
+      "id": "lh_survey_dunes",
+      "title": "Relevé hors palissade",
+      "template": "survey",
+      "keywords": ["survey", "prospection", "prospecteur", "gisement", "dunes", "sable", "minerai", "obsidienne"],
+      "giver_roles": ["scout_trainer", "quest_giver"],
+      "giver_ids": ["npc:core3_scout_trainer_c", "npc:core3_daan_oth", "npc:quest_giver_mos_relief2"],
+      "default_giver": "Yara Nis",
+      "objective": "Relever un gisement hors de la palissade de Lost Heaven et rapporter un échantillon (obsidienne ou ferraille).",
+      "rewards": {
+        "credits": 25,
+        "xp": {"xp_prospection": 40},
+        "items": [{"id": "scrap_metal", "qty": 2}]
+      },
+      "next_steps": [
+        "Accepter la mission au bureau ou auprès du scout.",
+        "Sortir par la porte et prospecter.",
+        "Revenir avec l'échantillon."
+      ]
+    },
+    {
+      "id": "lh_delivery_starport",
+      "title": "Colis du port shuttle",
+      "template": "delivery",
+      "keywords": ["livraison", "colis", "starport", "port", "shuttle", "livrer", "paquet"],
+      "giver_roles": ["guide", "quest_giver"],
+      "giver_ids": ["npc:guide_quartier", "npc:core3_guide_quartier", "npc:core3_daan_oth"],
+      "default_giver": "Guide de quartier",
+      "objective": "Livrer un colis du port shuttle au marché de Lost Heaven.",
+      "rewards": {
+        "credits": 15,
+        "xp": {"xp_quartier": 20},
+        "items": []
+      },
+      "next_steps": [
+        "Récupérer le colis au starport.",
+        "Le porter au marché sans l'ouvrir.",
+        "Confirmer la livraison."
+      ]
+    },
+    {
+      "id": "lh_repair_perle",
+      "title": "Réparation à La Perle",
+      "template": "repair",
+      "keywords": ["réparation", "reparation", "kit", "panne", "perle", "cantina", "jax", "bricole"],
+      "giver_roles": ["bartender", "artisan_trainer"],
+      "giver_ids": ["npc:core3_barman_jax", "npc:core3_artisan_trainer_c"],
+      "default_giver": "Jax Moro",
+      "objective": "Fabriquer ou apporter un Kit de réparation pour le comptoir de La Perle de Scrapaltai.",
+      "rewards": {
+        "credits": 20,
+        "xp": {"xp_artisanat": 35},
+        "items": [{"id": "ration_compacte", "qty": 1}]
+      },
+      "next_steps": [
+        "Accepter auprès de Jax ou Kell Asa.",
+        "Craft kit_reparation (Artisan de rue).",
+        "Remettre le kit à La Perle."
+      ]
+    },
+    {
+      "id": "lh_rumor_perle",
+      "title": "Rumeur de La Perle",
+      "template": "rumor",
+      "keywords": ["rumeur", "bruit", "cantina", "perle", "on dit", "info", "nouvelle"],
+      "giver_roles": ["patron", "rumormonger"],
+      "giver_ids": ["npc:habitue_cantina", "npc:rumeuriste", "npc:core3_rumeuriste"],
+      "default_giver": "Habitué",
+      "objective": "Recueillir une rumeur à La Perle et la vérifier auprès du scribe (mairie).",
+      "rewards": {
+        "credits": 10,
+        "xp": {"xp_quartier": 15},
+        "items": []
+      },
+      "next_steps": [
+        "Écouter à La Perle.",
+        "Aller aux archives / scribe.",
+        "Confirmer ou infirmer la rumeur."
+      ]
+    },
+    {
+      "id": "lh_show_perle",
+      "title": "Soirée à La Perle",
+      "template": "spectacle",
+      "keywords": ["spectacle", "danse", "show", "artiste", "scène", "scene", "tip", "pourboire"],
+      "giver_roles": ["performer", "entertainer_trainer"],
+      "giver_ids": ["npc:artiste_scene", "npc:core3_talen_ress", "npc:entertainer_trainer_relief2"],
+      "default_giver": "Artiste de scène",
+      "objective": "Assister au spectacle à La Perle de Scrapaltai (et tipper si le cœur t'en dit).",
+      "rewards": {
+        "credits": 5,
+        "xp": {"xp_scene": 25},
+        "items": []
+      },
+      "next_steps": [
+        "Aller à La Perle.",
+        "Regarder le show.",
+        "Parler à l'artiste ou à Talen pour la suite formation."
+      ]
+    },
+    {
+      "id": "lh_hunt_chacal",
+      "title": "Meute aux portes",
+      "template": "hunt",
+      "keywords": ["chacal", "meute", "faune", "bête", "bete", "chasse", "scorpion", "serpent", "loup", "loups", "wolf", "bandit", "bandits"],
+      "giver_roles": ["sergeant", "quest_giver", "scout_trainer"],
+      "giver_ids": ["npc:sergent_rue", "npc:core3_daan_oth", "npc:core3_scout_trainer_c"],
+      "default_giver": "Sergent de rue",
+      "objective": "Repousser ou prélever sur la faune désert (Chacal Doré / Scarabée) hors palissade — pas de loups fantasy.",
+      "rewards": {
+        "credits": 30,
+        "xp": {"xp_prospection": 30},
+        "items": [{"id": "fourrure_doree", "qty": 1}]
+      },
+      "next_steps": [
+        "Prendre la mission à la porte ou au bureau.",
+        "Sortir hors palissade.",
+        "Rapporter fourrure ou carapace."
+      ],
+      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D."
+    },
+    {
+      "id": "lh_med_venin",
+      "title": "Antidote de camp",
+      "template": "medicine",
+      "keywords": ["venin", "antidote", "médecine", "medecine", "soin", "clinique", "piqûre", "piqure", "scorpion"],
+      "giver_roles": ["medic_trainer"],
+      "giver_ids": ["npc:core3_medic_trainer_c"],
+      "default_giver": "Odo Merr",
+      "objective": "Apporter du venin de Scorpion-Titan ou craft un Bandage antivenin pour la clinique.",
+      "rewards": {
+        "credits": 22,
+        "xp": {"xp_medecine": 40},
+        "items": [{"id": "bandage_antivenin", "qty": 1}]
+      },
+      "next_steps": [
+        "Parler à Odo Merr à la clinique.",
+        "Obtenir venin (loot) ou craft bandage_antivenin.",
+        "Remettre à la clinique."
+      ]
+    },
+    {
+      "id": "lh_escort_gate_clinic",
+      "title": "Escorte vers la clinique",
+      "template": "escort",
+      "keywords": ["escorte", "escort", "protéger", "proteger", "accompagner", "convoi", "blessé", "blesse"],
+      "giver_roles": ["sergeant", "guide", "quest_giver"],
+      "giver_ids": ["npc:sergent_rue", "npc:core3_sergent_rue", "npc:guide_quartier", "npc:core3_daan_oth"],
+      "default_giver": "Sergent de rue",
+      "objective": "Escorter un civil de la porte de Lost Heaven jusqu'à la clinique (Odo Merr).",
+      "rewards": {
+        "credits": 28,
+        "xp": {"xp_quartier": 25, "xp_prospection": 10},
+        "items": []
+      },
+      "next_steps": [
+        "Accepter à la porte ou au bureau des missions.",
+        "Accompagner le civil jusqu'à la clinique.",
+        "Confirmer l'arrivée auprès d'Odo Merr."
+      ]
+    },
+    {
+      "id": "lh_enquete_marche",
+      "title": "Disparition au marché",
+      "template": "enquete",
+      "keywords": ["enquête", "enquete", "disparition", "vol", "indice", "témoin", "temoin", "mystère", "mystere"],
+      "giver_roles": ["quest_giver", "archivist", "rumormonger"],
+      "giver_ids": ["npc:core3_daan_oth", "npc:scribe", "npc:core3_scribe", "npc:rumeuriste"],
+      "default_giver": "Daan Oth",
+      "objective": "Enquêter sur une disparition au marché : interroger le rumeuriste, vérifier aux archives (scribe), rapporter à Daan Oth.",
+      "rewards": {
+        "credits": 35,
+        "xp": {"xp_quartier": 40},
+        "items": [{"id": "scrap_metal", "qty": 1}]
+      },
+      "next_steps": [
+        "Prendre la mission au bureau.",
+        "Parler au rumeuriste puis au scribe.",
+        "Conclure auprès de Daan Oth."
+      ]
+    },
+    {
+      "id": "lh_aide_generale",
+      "title": "Coup de main à Lost Heaven",
+      "template": "aide",
+      "keywords": ["aide", "quête", "quete", "mission", "travail", "besoin"],
+      "giver_roles": ["quest_giver", "guide"],
+      "giver_ids": ["npc:core3_daan_oth", "npc:guide_quartier"],
+      "default_giver": "Daan Oth",
+      "objective": "Aider un civil de Lost Heaven : livraison courte, message au scribe, ou coup de main à La Perle.",
+      "rewards": {
+        "credits": 12,
+        "xp": {"xp_quartier": 15},
+        "items": []
+      },
+      "next_steps": [
+        "Accepter au bureau des missions.",
+        "Accomplir la tâche locale.",
+        "Revenir voir Daan Oth."
+      ],
+      "fallback": true
+    }
+  ]
+}
