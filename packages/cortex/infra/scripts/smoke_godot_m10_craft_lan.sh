@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Smoke M10 — talents/craft B2B sidecar :8791 (catalog skills + schematics).
+# Smoke M10 — talents/craft B2B sidecar :8791 (catalog + craft_combine optionnel).
 #
 # Critères P2 minimal (PLAN_MMO_O2) :
 #   healthz OK ; GET /v1/catalog/skills → skills[] et schematics[] non vides ; fallback≠true
+#   Si LBG_M10_SMOKE_CRAFT=1 (défaut auto si /v1/craft/combine existe) :
+#     reset inventaire → POST craft ration_compacte → inventaire contient output
 #
 # Usage :
 #   bash infra/scripts/smoke_godot_m10_craft_lan.sh
+#   LBG_SIDECAR_HTTP=http://127.0.0.1:8791 bash …   # stub local
 #   LBG_SIDECAR_HTTP=http://192.168.0.246:8791 bash …
 set -euo pipefail
 
@@ -13,6 +16,9 @@ SIDECAR="${LBG_SIDECAR_HTTP:-http://192.168.0.246:8791}"
 SIDECAR="${SIDECAR%/}"
 MIN_SKILLS="${LBG_M10_MIN_SKILLS:-1}"
 MIN_SCHEM="${LBG_M10_MIN_SCHEMATICS:-1}"
+PLAYER="${LBG_M10_STUB_PLAYER:-local}"
+SCHEMATIC="${LBG_M10_SMOKE_SCHEMATIC:-ration_compacte}"
+SMOKE_CRAFT="${LBG_M10_SMOKE_CRAFT:-auto}"
 
 echo "=== Smoke M10 craft catalog (sidecar) ==="
 echo "sidecar: ${SIDECAR}"
@@ -75,3 +81,67 @@ if ! curl -sfS --max-time 10 "${SIDECAR}/v1/catalog/schematics" -o /dev/null; th
   exit 8
 fi
 echo "OK M10 — /v1/catalog/schematics joignable"
+
+# --- craft_combine (stub local ou sidecar étendu) ---
+craft_probe="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
+  -X POST "${SIDECAR}/v1/craft/combine" \
+  -H 'Content-Type: application/json' \
+  -d '{"player":"__probe__","schematic_id":"__none__"}' || true)"
+
+do_craft=0
+if [[ "${SMOKE_CRAFT}" == "1" || "${SMOKE_CRAFT}" == "true" ]]; then
+  do_craft=1
+elif [[ "${SMOKE_CRAFT}" == "auto" ]]; then
+  if [[ "${craft_probe}" == "400" || "${craft_probe}" == "200" ]]; then
+    do_craft=1
+  fi
+fi
+
+if [[ "${do_craft}" != "1" ]]; then
+  echo "SKIP M10 craft_combine (endpoint absent ou LBG_M10_SMOKE_CRAFT=0) probe_http=${craft_probe}"
+  echo "OK M10 smoke (catalog only)"
+  exit 0
+fi
+
+echo "=== Smoke M10 craft_combine ==="
+curl -sfS --max-time 10 -X POST "${SIDECAR}/v1/inventory/reset" \
+  -H 'Content-Type: application/json' \
+  -d "{\"player\":\"${PLAYER}\"}" >/dev/null || {
+  echo "FAIL: POST /v1/inventory/reset" >&2
+  exit 9
+}
+
+craft_out="$(mktemp)"
+trap 'rm -f "${tmp}" "${craft_out}"' EXIT
+http_c="$(curl -sS -o "${craft_out}" -w '%{http_code}' --max-time 10 \
+  -X POST "${SIDECAR}/v1/craft/combine" \
+  -H 'Content-Type: application/json' \
+  -d "{\"player\":\"${PLAYER}\",\"schematic_id\":\"${SCHEMATIC}\"}" || true)"
+
+PLAYER="${PLAYER}" SCHEMATIC="${SCHEMATIC}" HTTP_C="${http_c}" \
+python3 - "${craft_out}" <<'PY'
+import json, os, sys
+
+path = sys.argv[1]
+http_c = os.environ.get("HTTP_C", "")
+schem = os.environ.get("SCHEMATIC", "ration_compacte")
+with open(path, encoding="utf-8") as fh:
+    try:
+        d = json.load(fh)
+    except Exception as exc:
+        print(f"FAIL: craft JSON {exc}", file=sys.stderr)
+        sys.exit(10)
+if not isinstance(d, dict) or not d.get("ok"):
+    print(f"FAIL: craft ok≠true http={http_c} body={d!r}", file=sys.stderr)
+    sys.exit(11)
+crafted = d.get("crafted") or {}
+cid = str(crafted.get("id") or "")
+inv = d.get("inventory") or []
+ids = {str(x.get("id")) for x in inv if isinstance(x, dict)}
+if schem not in ids and cid not in ids:
+    print(f"FAIL: output {schem!r} absent inventaire ids={sorted(ids)}", file=sys.stderr)
+    sys.exit(13)
+print(f"OK M10 craft_combine — {schem} → inventaire (http={http_c})")
+PY
+
+echo "OK M10 smoke (catalog + craft)"

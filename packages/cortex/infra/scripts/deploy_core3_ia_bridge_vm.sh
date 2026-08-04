@@ -89,8 +89,19 @@ scp -q "${ROOT_DIR}/content/core3/core3_species_slot_map.json" \
   "${ROOT_DIR}/content/core3/lia_perform_catalog.json" \
   "${ROOT_DIR}/content/core3/lia_orchestrator_persona.json" \
   "${ROOT_DIR}/content/core3/core3_behavior_profiles.json" \
-  "${ROOT_DIR}/content/core3/m10_skills_catalog.json" \
   "${VM_USER}@${VM_HOST}:/tmp/"
+
+# Catalogue M10 : canon Studios (schema 3+) prioritaire, sinon legacy content/core3/
+M10_CATALOG="${ROOT_DIR}/content/m10/m10_skills_catalog.json"
+if [[ ! -f "${M10_CATALOG}" ]]; then
+  M10_CATALOG="${ROOT_DIR}/content/core3/m10_skills_catalog.json"
+fi
+if [[ -f "${M10_CATALOG}" ]]; then
+  scp -q "${M10_CATALOG}" "${VM_USER}@${VM_HOST}:/tmp/m10_skills_catalog.json"
+  echo "M10 catalog → /tmp : ${M10_CATALOG}"
+else
+  echo "WARN: m10_skills_catalog.json introuvable (content/m10 ni content/core3)" >&2
+fi
 
 scp -q "${ROOT_DIR}/tools/core3_ia_sidecar/core3_ia_sidecar.py" \
   "${VM_USER}@${VM_HOST}:/tmp/core3_ia_sidecar.py"

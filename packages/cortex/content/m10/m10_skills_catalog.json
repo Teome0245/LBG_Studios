@@ -1,0 +1,386 @@
+{
+  "schema_version": 3,
+  "track": "m10_talents_craft",
+  "canon": "LBG_Studios/packages/cortex/content/m10/m10_skills_catalog.json",
+  "legacy_mirror": "LBG_IA_MMORPG/LBG_IA_MMO/content/core3/m10_skills_catalog.json",
+  "bible_ref": "docs/world/BIBLE_MMO.md#V30",
+  "precursor_ref": "docs/world/ARBRES_TALENTS_PRECU.md",
+  "guarantor": {
+    "agent_id": "studio_player_ia_choeur",
+    "display_name": "Chœur du monde",
+    "role": "player_ia",
+    "duty": "Garant runtime des arbres LBG≈Pre-CU et des Vérités monde (smoke bots + écart catalogue/Bible)"
+  },
+  "loop": "skills → schematics → resources → craft → experiment → economy",
+  "structure": {
+    "model": "precu_novice_4x4_master",
+    "note": "Équivalence structurelle SWG Pre-CU ; noms et surface = LBG. Miroir precu_skill_id pour Core3 skills.iff."
+  },
+  "professions": [
+    {
+      "id": "artisan",
+      "name": "Artisan de rue",
+      "precu_root": "crafting_artisan",
+      "tree": "crafting",
+      "priority": "P0",
+      "trainer_roles": ["artisan_trainer"],
+      "xp": "xp_artisanat",
+      "boxes": {
+        "novice": "artisan_novice",
+        "branches": [
+          {"id": "outils", "boxes": ["artisan_outils_01", "artisan_outils_02", "artisan_outils_03", "artisan_outils_04"]},
+          {"id": "conso", "boxes": ["artisan_conso_01", "artisan_conso_02", "artisan_conso_03", "artisan_conso_04"]},
+          {"id": "pieces", "boxes": ["artisan_pieces_01", "artisan_pieces_02", "artisan_pieces_03", "artisan_pieces_04"]},
+          {"id": "survey", "boxes": ["artisan_survey_01", "artisan_survey_02", "artisan_survey_03", "artisan_survey_04"]}
+        ],
+        "master": "artisan_master"
+      },
+      "precu_skill_ids": {
+        "novice": "crafting_artisan_novice",
+        "master": "crafting_artisan_master"
+      }
+    },
+    {
+      "id": "prospecteur",
+      "name": "Prospecteur",
+      "precu_root": "outdoors_scout",
+      "tree": "gathering",
+      "priority": "P0",
+      "trainer_roles": ["scout_trainer"],
+      "xp": "xp_prospection",
+      "boxes": {
+        "novice": "prospecteur_novice",
+        "branches": [
+          {"id": "survey", "boxes": ["prospecteur_survey_01", "prospecteur_survey_02", "prospecteur_survey_03", "prospecteur_survey_04"]},
+          {"id": "piste", "boxes": ["prospecteur_piste_01", "prospecteur_piste_02", "prospecteur_piste_03", "prospecteur_piste_04"]},
+          {"id": "camp", "boxes": ["prospecteur_camp_01", "prospecteur_camp_02", "prospecteur_camp_03", "prospecteur_camp_04"]},
+          {"id": "faune", "boxes": ["prospecteur_faune_01", "prospecteur_faune_02", "prospecteur_faune_03", "prospecteur_faune_04"]}
+        ],
+        "master": "prospecteur_master"
+      },
+      "precu_skill_ids": {
+        "novice": "outdoors_scout_novice",
+        "master": "outdoors_scout_master"
+      }
+    },
+    {
+      "id": "medecin",
+      "name": "Médecine de camp",
+      "precu_root": "science_medic",
+      "tree": "medicine",
+      "priority": "P1",
+      "trainer_roles": ["medic_trainer"],
+      "xp": "xp_medecine",
+      "boxes": {
+        "novice": "medecin_novice",
+        "branches": [
+          {"id": "soin", "boxes": ["medecin_soin_01", "medecin_soin_02", "medecin_soin_03", "medecin_soin_04"]},
+          {"id": "kits", "boxes": ["medecin_kits_01", "medecin_kits_02", "medecin_kits_03", "medecin_kits_04"]},
+          {"id": "terrain", "boxes": ["medecin_terrain_01", "medecin_terrain_02", "medecin_terrain_03", "medecin_terrain_04"]},
+          {"id": "toxines", "boxes": ["medecin_toxines_01", "medecin_toxines_02", "medecin_toxines_03", "medecin_toxines_04"]}
+        ],
+        "master": "medecin_master"
+      },
+      "precu_skill_ids": {
+        "novice": "science_medic_novice",
+        "master": "science_medic_master"
+      }
+    },
+    {
+      "id": "scene",
+      "name": "Scène",
+      "precu_root": "social_entertainer",
+      "tree": "scene",
+      "priority": "P1",
+      "trainer_roles": ["entertainer_trainer"],
+      "xp": "xp_scene",
+      "boxes": {
+        "novice": "scene_novice",
+        "branches": [
+          {"id": "danse", "boxes": ["scene_danse_01", "scene_danse_02", "scene_danse_03", "scene_danse_04"]},
+          {"id": "musique", "boxes": ["scene_musique_01", "scene_musique_02", "scene_musique_03", "scene_musique_04"]},
+          {"id": "soin_morale", "boxes": ["scene_soin_01", "scene_soin_02", "scene_soin_03", "scene_soin_04"]},
+          {"id": "spectacle", "boxes": ["scene_spectacle_01", "scene_spectacle_02", "scene_spectacle_03", "scene_spectacle_04"]}
+        ],
+        "master": "scene_master"
+      },
+      "precu_skill_ids": {
+        "novice": "social_entertainer_novice",
+        "danse_01": "social_entertainer_dance_01",
+        "danse_02": "social_entertainer_dance_02",
+        "danse_03": "social_entertainer_dance_03",
+        "danse_04": "social_entertainer_dance_04",
+        "soin_01": "social_entertainer_healing_01",
+        "soin_02": "social_entertainer_healing_02",
+        "master": "social_entertainer_master"
+      },
+      "notes": "Trainer canon = Talen Ress / triplon entertainer — pas Kisreudi (Bible V21–V22)."
+    },
+    {
+      "id": "poing",
+      "name": "Poing",
+      "precu_root": "combat_brawler",
+      "tree": "brawler",
+      "priority": "P2",
+      "ui_panel": "deferred",
+      "trainer_roles": ["combat_trainer"],
+      "xp": "xp_poing",
+      "precu_skill_ids": {
+        "novice": "combat_brawler_novice",
+        "master": "combat_brawler_master"
+      }
+    },
+    {
+      "id": "visee",
+      "name": "Visée",
+      "precu_root": "combat_marksman",
+      "tree": "marksman",
+      "priority": "P2",
+      "ui_panel": "deferred",
+      "trainer_roles": ["combat_trainer"],
+      "xp": "xp_visee",
+      "precu_skill_ids": {
+        "novice": "combat_marksman_novice",
+        "master": "combat_marksman_master"
+      }
+    },
+    {
+      "id": "citoyen",
+      "name": "Citoyen de quartier",
+      "precu_root": "social_politician",
+      "tree": "social",
+      "priority": "P1",
+      "trainer_roles": ["politician_trainer"],
+      "xp": "xp_quartier",
+      "boxes": {
+        "novice": "citoyen_novice",
+        "branches": [
+          {"id": "badge", "boxes": ["citoyen_badge_01", "citoyen_badge_02", "citoyen_badge_03", "citoyen_badge_04"]},
+          {"id": "reseau", "boxes": ["citoyen_reseau_01", "citoyen_reseau_02", "citoyen_reseau_03", "citoyen_reseau_04"]},
+          {"id": "mairie", "boxes": ["citoyen_mairie_01", "citoyen_mairie_02", "citoyen_mairie_03", "citoyen_mairie_04"]},
+          {"id": "rumeur", "boxes": ["citoyen_rumeur_01", "citoyen_rumeur_02", "citoyen_rumeur_03", "citoyen_rumeur_04"]}
+        ],
+        "master": "citoyen_notable"
+      }
+    },
+    {
+      "id": "shuttle",
+      "name": "Pilotage shuttle",
+      "precu_root": "pilot_neutral",
+      "tree": "pilot",
+      "priority": "P1",
+      "trainer_roles": ["pilot"],
+      "xp": "xp_pilotage",
+      "boxes": {
+        "novice": "shuttle_novice",
+        "branches": [
+          {"id": "apron", "boxes": ["shuttle_apron_01", "shuttle_apron_02", "shuttle_apron_03", "shuttle_apron_04"]},
+          {"id": "nav", "boxes": ["shuttle_nav_01", "shuttle_nav_02", "shuttle_nav_03", "shuttle_nav_04"]},
+          {"id": "cargo", "boxes": ["shuttle_cargo_01", "shuttle_cargo_02", "shuttle_cargo_03", "shuttle_cargo_04"]},
+          {"id": "escorte", "boxes": ["shuttle_escorte_01", "shuttle_escorte_02", "shuttle_escorte_03", "shuttle_escorte_04"]}
+        ],
+        "master": "shuttle_as"
+      },
+      "notes": "Apron Lost Heaven d'abord ; full JTL plus tard."
+    }
+  ],
+  "trees": [
+    {"id": "gathering", "name": "Prospection", "profession_id": "prospecteur", "blurb": "Repérer et extraire ressources du désert et des épaves.", "trainer_roles": ["scout_trainer"]},
+    {"id": "crafting", "name": "Artisanat", "profession_id": "artisan", "blurb": "Assembler outils, kits et pièces au banc de rue ou à l'atelier.", "trainer_roles": ["artisan_trainer"]},
+    {"id": "medicine", "name": "Médecine", "profession_id": "medecin", "blurb": "Soins de camp, kits de terrain, stabilisation.", "trainer_roles": ["medic_trainer"]},
+    {"id": "scene", "name": "Scène", "profession_id": "scene", "blurb": "Danse, musique, spectacle et réconfort moral.", "trainer_roles": ["entertainer_trainer"]},
+    {"id": "pilot", "name": "Pilotage", "profession_id": "shuttle", "blurb": "Conduite shuttle / apron Lost Heaven.", "trainer_roles": ["pilot"]},
+    {"id": "social", "name": "Social / quartier", "profession_id": "citoyen", "blurb": "Présence civile, badges, réseaux de Lost Heaven.", "trainer_roles": ["politician_trainer"]},
+    {"id": "brawler", "name": "Poing", "profession_id": "poing", "blurb": "Combat mêlée (hors vitrine M10 courte).", "trainer_roles": ["combat_trainer"], "ui_panel": "deferred"},
+    {"id": "marksman", "name": "Visée", "profession_id": "visee", "blurb": "Combat distance (hors vitrine M10 courte).", "trainer_roles": ["combat_trainer"], "ui_panel": "deferred"}
+  ],
+  "skills": [
+    {
+      "id": "prospecteur_r1",
+      "name": "Prospecteur · rang 1",
+      "tree": "gathering",
+      "profession_id": "prospecteur",
+      "box": "prospecteur_novice",
+      "rank": 1,
+      "precu_skill_id": "outdoors_scout_novice",
+      "grants": ["survey_basic"],
+      "unlocks_schematics": [],
+      "ui_vitrine": true
+    },
+    {
+      "id": "artisan_rue_r1",
+      "name": "Artisan de rue · rang 1",
+      "tree": "crafting",
+      "profession_id": "artisan",
+      "box": "artisan_novice",
+      "rank": 1,
+      "precu_skill_id": "crafting_artisan_novice",
+      "grants": ["craft_combine_basic"],
+      "unlocks_schematics": [
+        "kit_reparation",
+        "ration_compacte",
+        "plaque_carapace",
+        "lame_obsidienne"
+      ],
+      "ui_vitrine": true
+    },
+    {
+      "id": "medecine_camp_r1",
+      "name": "Médecine de camp · rang 1",
+      "tree": "medicine",
+      "profession_id": "medecin",
+      "box": "medecin_novice",
+      "rank": 1,
+      "precu_skill_id": "science_medic_novice",
+      "grants": ["heal_field_basic"],
+      "unlocks_schematics": ["bandage_antivenin"],
+      "ui_vitrine": true
+    },
+    {
+      "id": "pilotage_shuttle_r1",
+      "name": "Pilotage shuttle · rang 1",
+      "tree": "pilot",
+      "profession_id": "shuttle",
+      "box": "shuttle_novice",
+      "rank": 1,
+      "grants": ["shuttle_apron"],
+      "unlocks_schematics": [],
+      "ui_vitrine": true
+    },
+    {
+      "id": "scene_danse_r1",
+      "name": "Scène · danse rang 1",
+      "tree": "scene",
+      "profession_id": "scene",
+      "box": "scene_danse_01",
+      "rank": 1,
+      "precu_skill_id": "social_entertainer_dance_01",
+      "grants": ["dance_basic"],
+      "unlocks_schematics": [],
+      "ui_vitrine": false,
+      "status": "draft"
+    },
+    {
+      "id": "quartier_r1",
+      "name": "Citoyen de quartier · rang 1",
+      "tree": "social",
+      "profession_id": "citoyen",
+      "box": "citoyen_novice",
+      "rank": 1,
+      "grants": ["badge_claim"],
+      "unlocks_schematics": ["badge_quartier"],
+      "status": "draft"
+    }
+  ],
+  "schematics": [
+    {
+      "id": "kit_reparation",
+      "name": "Kit de réparation",
+      "category": "tool",
+      "requires_skill": "artisan_rue_r1",
+      "requires_box": "artisan_novice",
+      "inputs": [
+        {"id": "scrap_metal", "qty": 2},
+        {"id": "binding_tape", "qty": 1}
+      ],
+      "output": {"id": "kit_reparation", "qty": 1}
+    },
+    {
+      "id": "ration_compacte",
+      "name": "Ration compacte",
+      "category": "consumable",
+      "requires_skill": "artisan_rue_r1",
+      "requires_box": "artisan_novice",
+      "inputs": [
+        {"id": "dried_grain", "qty": 2},
+        {"id": "water_capsule", "qty": 1}
+      ],
+      "output": {"id": "ration_compacte", "qty": 1}
+    },
+    {
+      "id": "badge_quartier",
+      "name": "Badge de quartier",
+      "category": "misc",
+      "requires_skill": "quartier_r1",
+      "requires_box": "citoyen_novice",
+      "inputs": [
+        {"id": "blank_plate", "qty": 1},
+        {"id": "ink_stamp", "qty": 1}
+      ],
+      "output": {"id": "badge_quartier", "qty": 1},
+      "status": "draft"
+    },
+    {
+      "id": "bandage_antivenin",
+      "name": "Bandage antivenin",
+      "category": "consumable",
+      "requires_skill": "medecine_camp_r1",
+      "requires_box": "medecin_novice",
+      "inputs": [
+        {"id": "venin", "qty": 1},
+        {"id": "binding_tape", "qty": 1}
+      ],
+      "output": {"id": "bandage_antivenin", "qty": 1},
+      "source_loot": ["beast:scorpion_titan"],
+      "notes": "Loot désert → médecine de camp"
+    },
+    {
+      "id": "plaque_carapace",
+      "name": "Plaque de carapace",
+      "category": "component",
+      "requires_skill": "artisan_rue_r1",
+      "requires_box": "artisan_novice",
+      "inputs": [
+        {"id": "carapace", "qty": 1},
+        {"id": "scrap_metal", "qty": 1}
+      ],
+      "output": {"id": "plaque_carapace", "qty": 1},
+      "source_loot": ["beast:scorpion_titan"],
+      "notes": "Composant blindage / outil renforcé"
+    },
+    {
+      "id": "lame_obsidienne",
+      "name": "Lame d'obsidienne",
+      "category": "tool",
+      "requires_skill": "artisan_rue_r1",
+      "requires_box": "artisan_novice",
+      "inputs": [
+        {"id": "obsidienne", "qty": 1},
+        {"id": "scrap_metal", "qty": 1}
+      ],
+      "output": {"id": "lame_obsidienne", "qty": 1},
+      "source_loot": ["beast:scarabee_obsidien"],
+      "notes": "Outil de coupe / survey fin"
+    },
+    {
+      "id": "filtre_mirage",
+      "name": "Filtre mirage",
+      "category": "misc",
+      "requires_skill": "medecine_camp_r1",
+      "requires_box": "medecin_novice",
+      "inputs": [
+        {"id": "poussiere_mirage", "qty": 1},
+        {"id": "water_capsule", "qty": 1}
+      ],
+      "output": {"id": "filtre_mirage", "qty": 1},
+      "source_loot": ["beast:fennec_mirage"],
+      "status": "draft",
+      "notes": "Stabilisant sensoriel — pas magie"
+    }
+  ],
+  "resources_stub": [
+    {"id": "scrap_metal", "name": "Ferraille", "source": "gathering"},
+    {"id": "binding_tape", "name": "Ruban de liaison", "source": "vendor"},
+    {"id": "dried_grain", "name": "Grain séché", "source": "vendor"},
+    {"id": "water_capsule", "name": "Capsule d'eau", "source": "vendor"},
+    {"id": "blank_plate", "name": "Plaque vierge", "source": "vendor"},
+    {"id": "ink_stamp", "name": "Tampon d'encre", "source": "vendor"},
+    {"id": "venin", "name": "Venin", "source": "beast:scorpion_titan"},
+    {"id": "carapace", "name": "Carapace", "source": "beast:scorpion_titan"},
+    {"id": "ecailles_dorees", "name": "Écailles dorées", "source": "beast:serpent_sable"},
+    {"id": "fourrure_doree", "name": "Fourrure dorée", "source": "beast:chacal_dore"},
+    {"id": "obsidienne", "name": "Obsidienne", "source": "beast:scarabee_obsidien"},
+    {"id": "os_geants", "name": "Os géants", "source": "beast:marcheur_dunes"},
+    {"id": "poussiere_mirage", "name": "Poussière mirage", "source": "beast:fennec_mirage"}
+  ]
+}

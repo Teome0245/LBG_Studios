@@ -1,8 +1,13 @@
-# inventory_panel.gd — Inventaire grille fixe (stub données)
+# inventory_panel.gd — Inventaire grille (sidecar M10 ou stub local)
 extends PanelContainer
 class_name InventoryPanel
 const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
 
+const SIDECAR_DEFAULT := "http://192.168.0.246:8791"
+const PLAYER_DEFAULT := "local"
+
+@export var sidecar_base_url: String = SIDECAR_DEFAULT
+@export var player_id: String = PLAYER_DEFAULT
 @export var panel_visible: bool = false
 @export var columns: int = 5
 @export var rows: int = 4
@@ -12,18 +17,14 @@ var _grid: GridContainer
 var _title: Label
 var _hint: Label
 var _weight: Label
+var _http: HTTPRequest
+var _items: Array = []
 
 const STUB_ITEMS: Array[Dictionary] = [
-	{"name": "Caisse", "icon": "crate", "qty": 1},
-	{"name": "Ration", "icon": "ration", "qty": 3},
-	{"name": "Kit", "icon": "kit", "qty": 1},
-	{"name": "Cuivre", "icon": "copper", "qty": 12},
-	{"name": "Vis", "icon": "screw", "qty": 24},
-	{}, {},
-	{"name": "Badge", "icon": "badge", "qty": 1},
-	{}, {},
-	{},
-	{"name": "Carte", "icon": "card", "qty": 1},
+	{"id": "scrap_metal", "name": "Ferraille", "icon": "copper", "qty": 4},
+	{"id": "binding_tape", "name": "Ruban de liaison", "icon": "screw", "qty": 2},
+	{"id": "dried_grain", "name": "Grain séché", "icon": "ration", "qty": 4},
+	{"id": "water_capsule", "name": "Capsule d'eau", "icon": "kit", "qty": 2},
 ]
 
 func _ready() -> void:
@@ -31,7 +32,11 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE if not panel_visible else Control.MOUSE_FILTER_STOP
 	_apply_modal_style()
 	_ensure_ui()
-	_fill_stub()
+	_http = HTTPRequest.new()
+	add_child(_http)
+	_http.request_completed.connect(_on_http_done)
+	_fill_from_items(STUB_ITEMS)
+	call_deferred("refresh_inventory")
 
 func _apply_modal_style() -> void:
 	var sb := StyleBoxFlat.new()
@@ -79,7 +84,7 @@ func _ensure_ui() -> void:
 	if _weight == null:
 		_weight = Label.new()
 		_weight.name = "Weight"
-		_weight.text = "7 / 40"
+		_weight.text = "— / 40"
 		_weight.add_theme_font_size_override("font_size", 11)
 		_weight.add_theme_color_override("font_color", Color(0.7, 0.75, 0.7, 0.9))
 		head.add_child(_weight)
@@ -89,7 +94,7 @@ func _ensure_ui() -> void:
 		_hint = Label.new()
 		_hint.name = "Hint"
 		root.add_child(_hint)
-	_hint.text = "I fermer · clic objet = aperçu (stub)"
+	_hint.text = "I fermer · sync M10 inventaire"
 	_hint.add_theme_font_size_override("font_size", 10)
 	_hint.add_theme_color_override("font_color", Color(0.65, 0.6, 0.52, 0.85))
 
@@ -103,12 +108,55 @@ func _ensure_ui() -> void:
 	_grid.add_theme_constant_override("v_separation", 5)
 	_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
-func _fill_stub() -> void:
+func set_items(items: Array) -> void:
+	_fill_from_items(items)
+
+func apply_craft_result(result: Dictionary) -> void:
+	if typeof(result.get("inventory")) == TYPE_ARRAY:
+		_fill_from_items(result.get("inventory"))
+		var crafted = result.get("crafted", {})
+		if typeof(crafted) == TYPE_DICTIONARY and _hint:
+			_hint.text = "Craft OK — %s ×%d" % [
+				str(crafted.get("name", crafted.get("id", "?"))),
+				int(crafted.get("qty", 1)),
+			]
+	else:
+		refresh_inventory()
+
+func refresh_inventory() -> void:
+	var url := "%s/v1/inventory?player=%s" % [sidecar_base_url.rstrip("/"), player_id.uri_encode()]
+	if _http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_http.cancel_request()
+	var err := _http.request(url, [], HTTPClient.METHOD_GET)
+	if err != OK and _hint:
+		_hint.text = "inventaire hors ligne (stub local)"
+
+func _on_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or code < 200 or code >= 300:
+		if _hint:
+			_hint.text = "inventaire hors ligne (%s) · stub" % str(code)
+		return
+	var parsed = JSON.parse_string(body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var inv = parsed.get("inventory", [])
+	if typeof(inv) == TYPE_ARRAY:
+		_fill_from_items(inv)
+		if _hint:
+			_hint.text = "I fermer · sync M10 (%d stacks)" % inv.size()
+
+func _fill_from_items(items: Array) -> void:
+	_items = items.duplicate()
+	if _grid == null:
+		return
 	for c in _grid.get_children():
 		c.queue_free()
 	var total := columns * rows
+	var used := 0
 	for i in range(total):
-		var item: Dictionary = STUB_ITEMS[i] if i < STUB_ITEMS.size() else {}
+		var item: Dictionary = {}
+		if i < _items.size() and typeof(_items[i]) == TYPE_DICTIONARY:
+			item = _items[i]
 		var slot := Button.new()
 		slot.custom_minimum_size = Vector2(slot_px, slot_px)
 		slot.focus_mode = Control.FOCUS_NONE
@@ -116,15 +164,16 @@ func _fill_stub() -> void:
 		slot.text = ""
 		slot.expand_icon = true
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		if item.is_empty():
+		if item.is_empty() or int(item.get("qty", 0)) <= 0:
 			slot.icon = _UiIconRegistry.tex("empty")
 			slot.disabled = true
 			slot.tooltip_text = "Vide"
 		else:
+			used += 1
 			var icon_key := str(item.get("icon", _UiIconRegistry.item_icon(str(item.get("name", "")))))
 			slot.icon = _UiIconRegistry.tex(icon_key)
 			var qty := int(item.get("qty", 1))
-			var item_name := str(item.get("name", ""))
+			var item_name := str(item.get("name", item.get("id", "")))
 			slot.tooltip_text = "%s ×%d" % [item_name, qty]
 			slot.disabled = false
 			var slot_idx := i
@@ -142,12 +191,16 @@ func _fill_stub() -> void:
 				qty_lbl.offset_bottom = -2.0
 				slot.add_child(qty_lbl)
 		_grid.add_child(slot)
+	if _weight:
+		_weight.text = "%d / %d" % [used, total]
 
 func _on_item_slot(_index: int, item_name: String, qty: int) -> void:
 	if _hint:
-		_hint.text = "%s ×%d — utilisation serveur à brancher (stub)" % [item_name, qty]
+		_hint.text = "%s ×%d" % [item_name, qty]
 
 func toggle() -> void:
 	panel_visible = not panel_visible
 	visible = panel_visible
 	mouse_filter = Control.MOUSE_FILTER_STOP if panel_visible else Control.MOUSE_FILTER_IGNORE
+	if panel_visible:
+		refresh_inventory()

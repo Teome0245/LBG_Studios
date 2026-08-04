@@ -79,12 +79,28 @@ func _ready() -> void:
 	call_deferred("_focus_lost_heaven_hub")
 	if hotbar:
 		hotbar.slot_activated.connect(_on_hotbar_slot)
+	_wire_m10_craft_inventory()
 	_ensure_dialogue_bridge()
 	_ensure_ws_client()
 	_wire_login_ws()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
+
+
+func _wire_m10_craft_inventory() -> void:
+	if _talents_panel == null or inventory_panel == null:
+		return
+	if _talents_panel.has_signal("craft_completed"):
+		if not _talents_panel.craft_completed.is_connected(_on_m10_craft_completed):
+			_talents_panel.craft_completed.connect(_on_m10_craft_completed)
+
+
+func _on_m10_craft_completed(result: Dictionary) -> void:
+	if inventory_panel and inventory_panel.has_method("apply_craft_result"):
+		inventory_panel.apply_craft_result(result)
+	elif inventory_panel and inventory_panel.has_method("refresh_inventory"):
+		inventory_panel.refresh_inventory()
 
 
 func _ensure_dialogue_bridge() -> void:
@@ -321,10 +337,13 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 	_snapshot_live = true
 	var zone := str(payload.get("zone", payload.get("map", _planet_name)))
 	if zone != "":
+		var z_norm := zone.to_lower()
+		var changed := z_norm != _planet_name.to_lower()
 		_planet_name = zone
-		var wm: Node = get_node_or_null("WorldMap")
-		if wm:
-			wm.set_planet(zone.to_lower())
+		if changed:
+			var wm: Node = get_node_or_null("WorldMap")
+			if wm:
+				wm.set_planet(z_norm)
 
 	var your_id := int(payload.get("your_character_id", 0))
 	if your_id == 0 and _ws and "your_character_id" in _ws:
