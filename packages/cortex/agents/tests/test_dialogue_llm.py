@@ -190,6 +190,58 @@ def test_resolve_route_default_env_auto(monkeypatch: pytest.MonkeyPatch) -> None
     assert route.get("route_decision") == "auto"
 
 
+def test_failover_eligible_on_http_429_runtime_error() -> None:
+    from lbg_agents import dialogue_llm as mod
+
+    exc = RuntimeError(
+        'HTTP 429: {"error": {"message":"Rate limit reached for model '
+        "'llama-3.1-8b-instant' ... tokens per minute (TPM)"
+    )
+    assert mod._http_status_from_exc(exc) == 429
+    assert mod._is_failover_eligible_error(exc) is True
+    assert mod._is_failover_eligible_error(RuntimeError("HTTP 400: bad request")) is False
+
+
+def test_complete_with_llm_failovers_429_fast_to_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    from lbg_agents import dialogue_llm as mod
+
+    monkeypatch.setenv("LBG_DIALOGUE_FAILOVER", "1")
+    monkeypatch.setenv("LBG_DIALOGUE_FAILOVER_ORDER", "fast,local")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_ENABLED", "1")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_BASE_URL", "https://api.groq.com/openai/v1")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "llama-3.1-8b-instant")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_API_KEY", "secret")
+    monkeypatch.setenv("LBG_DIALOGUE_LLM_BASE_URL", "http://127.0.0.1:11434/v1")
+    monkeypatch.setenv("LBG_DIALOGUE_LLM_MODEL", "gemma4:26b")
+    monkeypatch.delenv("LBG_DIALOGUE_LLM_DISABLED", raising=False)
+
+    calls: list[str] = []
+
+    def _fake_complete(route: dict) -> str:
+        calls.append(str(route.get("target")))
+        if route.get("target") == "fast":
+            raise RuntimeError("HTTP 429: Rate limit reached tokens per minute")
+        return "Réponse locale OK."
+
+    last_exc: BaseException | None = None
+    out = None
+    for tier in mod._failover_tier_sequence():
+        tr = mod._tier_route(tier)
+        assert tr is not None
+        r = {**tr, "route_decision": "failover", "failover_tier": tier}
+        try:
+            out = _fake_complete(r)
+            break
+        except Exception as e:
+            last_exc = e
+            if mod._is_failover_eligible_error(e):
+                continue
+            raise
+    assert out == "Réponse locale OK."
+    assert calls == ["fast", "local"]
+    assert last_exc is not None
+
+
 def test_build_system_prompt_includes_scene() -> None:
     s = build_system_prompt(
         "Marc",
@@ -255,14 +307,15 @@ def test_build_system_prompt_local_assistant_skips_mmo_incarnation() -> None:
 def test_build_system_prompt_uses_mmo_profile_when_world_npc() -> None:
     s = build_system_prompt("Aerin", {"dialogue_profile": "chaleureux", "world_npc_id": "npc:innkeeper"})
     assert "Tu es Aerin chaleureux." in s
-    assert "MMORPG multivers" in s
+    assert "MMORPG spatial" in s or "Scrapaltai" in s
+    assert "Willowdale" in s  # cité interdite citée dans les garde-fous
 
 
 def test_build_system_prompt_mmo_hal_and_test_profiles() -> None:
     s_hal = build_system_prompt("Gloin", {"dialogue_profile": "hal", "world_npc_id": "npc:smith"})
     assert "Gloin" in s_hal
     assert "HAL 9000" in s_hal
-    assert "MMORPG multivers" in s_hal
+    assert "MMORPG spatial" in s_hal or "Scrapaltai" in s_hal
 
     s_test = build_system_prompt("Lyse", {"dialogue_profile": "test", "world_npc_id": "npc:dummy"})
     assert "Lyse" in s_test
@@ -427,9 +480,10 @@ def test_build_system_prompt_includes_race_and_bestiary_refs() -> None:
             "_creature_refs": ["creature:luporeve", "creature:inexistant"],
         },
     )
-    assert "Race du personnage" in s
-    assert "Humain" in s
-    assert "Luporêve" in s
+    # Avec data races/bestiaire : display names ; sinon fallback ids (Studios sans content legacy).
+    assert "Race du personnage" in s or "Race (référence)" in s
+    assert "Humain" in s or "race:human" in s
+    assert "Luporêve" in s or "creature:luporeve" in s
     assert "bestiaire" in s.lower() or "Créatures mentionnées" in s
 
 

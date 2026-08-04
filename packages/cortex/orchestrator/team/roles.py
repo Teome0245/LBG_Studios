@@ -84,7 +84,10 @@ ROLE_SPECS: dict[str, dict[str, object]] = {
         "capability": "core3_bot_action",
         "routed_to": "agent.core3",
         "autonomy": "L1",
-        "default_objective": "Sonde joueurs IA Core3 Prime (246) — sidecar + snapshots Lia/Nix",
+        "default_objective": (
+            "Chœur du monde — sonde joueurs IA Prime 246 (sidecar) ; "
+            "à terme garant runtime Bible/M10 Pre-CU-LBG"
+        ),
     },
     "admin_infra": {
         "capability": "devops_probe",

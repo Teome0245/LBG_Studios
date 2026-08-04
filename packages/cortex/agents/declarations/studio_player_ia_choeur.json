@@ -4,11 +4,32 @@
   "display_name": "Chœur du monde",
   "role": "player_ia",
   "persona": "choeur",
-  "description": "Joueurs IA Core3 Prime — Lia, Nix, Mira sur sidecar 246",
+  "description": "Garant runtime du monde Prime : joueurs IA (Lia, Nix, Mira) sur sidecar 246 + écarts Bible / inventaire PNJ / arbres Pre-CU-LBG.",
+  "bible_ref": "docs/world/BIBLE_MMO.md#V50",
+  "talents_ref": "docs/world/ARBRES_TALENTS_PRECU.md",
   "capabilities": [
-    {"id": "probe_sidecar", "mode": "probe", "autonomy": "L1"},
-    {"id": "think_tick", "mode": "think_tick", "autonomy": "L2"}
+    {"id": "probe_sidecar", "mode": "probe", "autonomy": "L1", "note": "Santé bots + snapshots"},
+    {"id": "think_tick", "mode": "think_tick", "autonomy": "L2", "note": "Tick autonomie bots (approval)"},
+    {
+      "id": "world_truth_guard",
+      "mode": "guard",
+      "autonomy": "L1",
+      "status": "target",
+      "note": "Cible : smoke écart vs BIBLE_MMO + m10_skills_catalog + INVENTAIRE_PNJ"
+    },
+    {
+      "id": "talent_loop_smoke",
+      "mode": "smoke",
+      "autonomy": "L1",
+      "status": "target",
+      "note": "Cible : jouer une box Pre-CU-LBG (survey→craft ou danse) et rapporter ok/écart"
+    }
   ],
-  "constraints": ["think_requires_approval", "no_ssh_proxmox"],
+  "constraints": [
+    "think_requires_approval",
+    "no_ssh_proxmox",
+    "ne_pas_contredire_docs_world_BIBLE",
+    "progression_bots_selon_catalogue_m10_pas_invention"
+  ],
   "owner_timer": "lbg-team-player-ia-job"
 }

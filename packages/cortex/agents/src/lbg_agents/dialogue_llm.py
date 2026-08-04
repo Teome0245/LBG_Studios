@@ -21,7 +21,7 @@ Multi‑LLM / suivi : ``dialogue_target=auto`` (ou défaut env ``LBG_DIALOGUE_TA
 
 - ``LBG_DIALOGUE_STRIP_REASONING`` — si ``0`` : ne retire pas les préfaces « Thinking Process » / analyse numérotée (défaut : actif).
 
-Failover (optionnel) : ``LBG_DIALOGUE_FAILOVER=1`` réessaie les paliers listés dans ``LBG_DIALOGUE_FAILOVER_ORDER`` (sinon même ordre que ``LBG_DIALOGUE_AUTO_ORDER``) lorsque l’appel échoue par timeout, erreur réseau, ou HTTP **≥500**. Si ``context["dialogue_target"]`` vaut explicitement ``local``, ``fast`` ou ``remote``, le failover est désactivé (un seul palier). Utile : Ollama ``local`` (gros modèle) puis ``fast`` (ex. petit modèle ou Groq).
+Failover (optionnel) : ``LBG_DIALOGUE_FAILOVER=1`` réessaie les paliers listés dans ``LBG_DIALOGUE_FAILOVER_ORDER`` (sinon même ordre que ``LBG_DIALOGUE_AUTO_ORDER``) lorsque l’appel échoue par timeout, erreur réseau, HTTP **429** (rate limit), ou HTTP **≥500**. Si ``context["dialogue_target"]`` vaut explicitement ``local``, ``fast`` ou ``remote``, le failover est désactivé (un seul palier). Utile : Groq ``fast`` rate-limité → Ollama ``local``.
 
 Profils MMO : pour un PNJ (``world_npc_id`` défini), ``dialogue_profile`` sélectionne un libellé dans ``MMO_PROFILE_TEMPLATES`` (mêmes clés que l’assistant : ``chaleureux``, ``hal``, …) puis ajoute ``BASE_GUARDRAILS_MMO``. Si ``dialogue_profile`` est absent, le champ ``tone`` du registre PNJ (``npc_registry.json``) est utilisé lorsqu’il correspond à une clé valide ou à un **alias** (`REGISTRY_TONE_ALIASES`, ex. ``pragmatique`` → ``professionnel``).
 """
@@ -334,7 +334,7 @@ def _tier_route(tier: str) -> dict[str, str] | None:
 
 
 def _failover_from_env_enabled() -> bool:
-    """Si vrai : enchaîner les paliers (local/fast/remote) après erreurs « transitoires » (timeout, 5xx, réseau)."""
+    """Si vrai : enchaîner les paliers (local/fast/remote) après erreurs « transitoires » (timeout, 429, 5xx, réseau)."""
     return _is_truthy(os.environ.get("LBG_DIALOGUE_FAILOVER", "0"))
 
 
@@ -361,18 +361,39 @@ def _context_explicit_dialogue_target(context: dict[str, Any]) -> str | None:
     return None
 
 
+def _http_status_from_exc(exc: BaseException) -> int | None:
+    """Extrait un code HTTP depuis httpx ou un RuntimeError ``HTTP 429: …`` (chemin `_complete_llm`)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        try:
+            return int(exc.response.status_code)
+        except Exception:
+            return None
+    msg = str(exc)
+    if msg.startswith("HTTP ") or "HTTP " in msg[:20]:
+        # Formats : "HTTP 429: …" | "HTTP 429 (openai chat/completions): …"
+        try:
+            after = msg.split("HTTP ", 1)[1]
+            code_s = after.split(":", 1)[0].split("(", 1)[0].strip()
+            return int(code_s)
+        except (IndexError, ValueError):
+            return None
+    return None
+
+
 def _is_failover_eligible_error(exc: BaseException) -> bool:
     if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.ReadError)):
         return True
-    if isinstance(exc, httpx.HTTPStatusError):
-        try:
-            return int(exc.response.status_code) >= 500
-        except Exception:
+    status = _http_status_from_exc(exc)
+    if status is not None:
+        if status == 429 or status >= 500:
             return True
+        return False
     msg = str(exc).lower()
     if "timed out" in msg or "timeout" in msg:
         return True
     if "connection refused" in msg or "connection reset" in msg:
+        return True
+    if "rate limit" in msg or "tokens per minute" in msg:
         return True
     return False
 

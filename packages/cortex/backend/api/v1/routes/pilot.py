@@ -669,6 +669,7 @@ async def pilot_proxy_agent_dialogue_invoke(body: AgentDialogueInvokeBody) -> di
     Proxy same-origin vers `POST {LBG_AGENT_DIALOGUE_URL}/invoke` (LLM dialogue + meta).
 
     Utile pour le Pilot (ex. proposition `DESKTOP_JSON` → édition humaine → `/v1/pilot/route`).
+    Rang2 §5 MVP : enrichit ``session_summary`` depuis sidecar ``/v1/quest-state`` si manquant.
     """
     base = os.environ.get("LBG_AGENT_DIALOGUE_URL", "").strip().rstrip("/")
     if not base:
@@ -677,7 +678,14 @@ async def pilot_proxy_agent_dialogue_invoke(body: AgentDialogueInvokeBody) -> di
             detail={"error": "bad_request", "hint": "LBG_AGENT_DIALOGUE_URL non défini"},
         )
     url = f"{base}/invoke"
-    payload = {"actor_id": body.actor_id, "text": body.text, "context": body.context}
+    context = dict(body.context) if isinstance(body.context, dict) else {}
+    try:
+        from backend.services.session_quest_enrich import merge_quest_into_session_summary
+
+        context = merge_quest_into_session_summary(context, actor_id=body.actor_id)
+    except Exception:
+        pass
+    payload = {"actor_id": body.actor_id, "text": body.text, "context": context}
     try:
         async with httpx.AsyncClient(timeout=_pilot_agent_dialogue_invoke_timeout_s()) as client:
             r = await client.post(url, json=payload)

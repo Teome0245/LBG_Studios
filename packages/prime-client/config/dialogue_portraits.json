@@ -32,7 +32,16 @@
     "npc_civilian_neutral": "res://assets/ui/portraits/npc_civilian/neutral.png",
     "npc_civilian_happy": "res://assets/ui/portraits/npc_civilian/happy.png",
     "npc_civilian_sad": "res://assets/ui/portraits/npc_civilian/sad.png",
-    "npc_default_neutral": "res://assets/ui/portraits/npc_civilian/neutral.png"
+    "npc_default_neutral": "res://assets/ui/portraits/npc_civilian/neutral.png",
+    "npc_civilian_determined": "res://assets/ui/portraits/npc_civilian/determined.png",
+    "npc_civilian_talk_1": "res://assets/ui/portraits/npc_civilian/talk_1.png",
+    "npc_civilian_talk_2": "res://assets/ui/portraits/npc_civilian/talk_2.png",
+    "npc_merchant_determined": "res://assets/ui/portraits/npc_merchant/determined.png",
+    "npc_merchant_talk_1": "res://assets/ui/portraits/npc_merchant/talk_1.png",
+    "npc_merchant_talk_2": "res://assets/ui/portraits/npc_merchant/talk_2.png",
+    "npc_trainer_happy": "res://assets/ui/portraits/npc_trainer/happy.png",
+    "npc_trainer_talk_1": "res://assets/ui/portraits/npc_trainer/talk_1.png",
+    "npc_trainer_talk_2": "res://assets/ui/portraits/npc_trainer/talk_2.png"
   },
   "fallbacks": {
     "default_expression": "neutral",
@@ -98,7 +107,8 @@
         "scout_trainer",
         "artisan_trainer",
         "politician_trainer",
-        "entertainer_trainer"
+        "entertainer_trainer",
+        "pilot_trainer"
       ],
       "portrait_base": "npc_trainer"
     },
