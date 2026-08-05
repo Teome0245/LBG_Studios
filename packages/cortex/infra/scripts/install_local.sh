@@ -11,7 +11,7 @@ python3 -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/pip" install -e "${ROOT_DIR}/companion_bot"
 "${VENV_DIR}/bin/pip" install -e "${ROOT_DIR}/agents[dialogue_http_service]"
 "${VENV_DIR}/bin/pip" install -e "${ROOT_DIR}/backend"
-"${VENV_DIR}/bin/pip" install -e "${ROOT_DIR}/orchestrator"
+"${VENV_DIR}/bin/pip" install -e "${ROOT_DIR}/orchestrator[cursor]"
 if [ "${LBG_SKIP_MMO_SERVER:-0}" = "1" ]; then
   echo "Skip mmo_server (LBG_SKIP_MMO_SERVER=1 — déploiement core sans slice MMO sur cet hôte)"
 else
