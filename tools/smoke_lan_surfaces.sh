@@ -137,7 +137,7 @@ PY
 PILOT=$(sudo grep -E '^LBG_PILOT_API_TOKEN=' /etc/lbg-project-03.env | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")
 curl -sS --max-time 60 -o /tmp/lbg_fn_vghd.json -w "%{http_code}" -X POST http://127.0.0.1:9800/v1/pilot/tasks/run \
   -H "Authorization: Bearer $PILOT" -H 'Content-Type: application/json' \
-  -d '{"goal":"lance notepad sur mon pc","context":{"desktop_dry_run":false}}' > /tmp/lbg_fn_vghd.code
+  -d '{"goal":"ouvre vghd sur mon poste","context":{"desktop_dry_run":false}}' > /tmp/lbg_fn_vghd.code
 code=$(cat /tmp/lbg_fn_vghd.code)
 python3 - <<'PY'
 import json

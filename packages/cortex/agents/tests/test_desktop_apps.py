@@ -37,6 +37,13 @@ def test_enrich_office_learn_default_on(monkeypatch: pytest.MonkeyPatch) -> None
     assert act.get("learn") is True
 
 
+def test_enrich_vghd_learn_default_on(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LBG_DESKTOP_OPEN_APP_LEARN", raising=False)
+    act = enrich_open_app_action({"kind": "open_app", "app": "vghd"})
+    assert act["app"] == "vghd"
+    assert act.get("learn") is True
+
+
 def test_learn_default_off(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_DESKTOP_OPEN_APP_LEARN", "0")
     # Office/custom restent à learn=true (hors PATH) même si auto-learn global off.
