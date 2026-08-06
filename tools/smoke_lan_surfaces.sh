@@ -47,6 +47,22 @@ check_http "PreCU api/servers" "http://192.168.0.245:8792/api/servers"
 check_http "Patches manifest" "http://192.168.0.246:8080/patches/prime/manifest.json"
 check_http "MCP healthz" "http://192.168.0.100:8766/healthz"
 
+SMOKE_CURSOR="${ROOT}/packages/cortex/infra/scripts/smoke_cursor_agent_lan.sh"
+if [[ -f "$SMOKE_CURSOR" ]]; then
+  if bash "$SMOKE_CURSOR" "http://192.168.0.140:8010"; then
+    echo "OK  Cursor Cloud Agent ready"
+    OK=$((OK + 1))
+  else
+    rc=$?
+    if [[ "$rc" -eq 2 ]]; then
+      echo "WARN  Cursor Cloud Agent — clé/sdk pas prêts (tools/push_cursor_secrets_140.sh)"
+    else
+      echo "WARN  Cursor Cloud Agent health injoignable"
+    fi
+    WARN=$((WARN + 1))
+  fi
+fi
+
 echo
 echo "=== Détail serveurs jeu ==="
 python3 - <<'PY'

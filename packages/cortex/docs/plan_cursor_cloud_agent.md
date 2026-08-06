@@ -42,18 +42,36 @@ Pilot / Lyra / Team (dev_game|dev_godot)
   - `POST /v1/team/cursor/launch` (`dry_run=true` par défaut)
 - Tâche Team : `role=dev_game` + `context.cursor_cloud_agent=true`
 
-```bash
-# secrets (140)
-export CURSOR_API_KEY=cursor_...
-export LBG_CURSOR_AGENT_ENABLED=1
-export LBG_CURSOR_AGENT_REPOS=Teome0245/new_mmo
-# pip dans le venv orchestrateur
-/opt/LBG_IA_MMO/.venv/bin/pip install 'cursor-sdk>=0.1'
+## Sync clé sur 140 (LAN)
 
+Depuis le monorepo, sur le poste avec accès SSH à **192.168.0.140** :
+
+```bash
+# 1) User API Key Cursor (cursor.com → Settings → API Keys)
+export CURSOR_API_KEY=cursor_...
+
+# 2) Patch /etc/lbg-ia-mmo.env + pip cursor-sdk + restart orchestrateur + smoke
+bash tools/push_cursor_secrets_140.sh
+```
+
+Alternative : ajouter `CURSOR_API_KEY=...` dans `packages/cortex/infra/secrets/lbg.env` puis relancer le script (sans `export`).
+
+Smoke seul (avant/après sync) :
+
+```bash
+bash packages/cortex/infra/scripts/smoke_cursor_agent_lan.sh
+# ready=false attendu tant que la clé n'est pas sur 140 ; ready=true après push OK
+```
+
+Vérification manuelle :
+
+```bash
 curl -s http://192.168.0.140:8010/v1/team/cursor/health
 curl -s -X POST http://192.168.0.140:8010/v1/team/cursor/launch \
   -H 'Content-Type: application/json' \
-  -d '{"prompt":"Documenter X","repository":"Teome0245/new_mmo","dry_run":true}'
+  -d '{"prompt":"Documenter X","repository":"Teome0245/LBG_Studios","dry_run":true}'
 ```
 
-Garde-fous : OFF par défaut, allowlist repos, `approval_required` sur lancement réel.
+`install_local.sh` installe `orchestrator[cursor]` (cursor-sdk) sur le venv core.
+
+Garde-fous : OFF par défaut dans le code (`LBG_CURSOR_AGENT_ENABLED=0` si absent) ; allowlist repos ; `approval_required` sur lancement réel.
