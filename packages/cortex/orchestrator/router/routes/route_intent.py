@@ -3,6 +3,7 @@ import os
 import time
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
+from lbg_agents.desktop_apps import open_app_action_from_goal
 from lbg_agents.dispatch import invoke_after_route
 
 from introspection.deterministic_classifier import DeterministicIntentClassifier
@@ -52,7 +53,13 @@ def _dialogue_context_for_route(context: dict[str, object]) -> dict[str, object]
 def route_intent(payload: RouteRequest) -> RouteResponse:
     t0 = time.perf_counter()
     svc_metrics.inc("orchestrator_route_requests_total")
-    ctx = payload.context if isinstance(payload.context, dict) else {}
+    ctx = dict(payload.context) if isinstance(payload.context, dict) else {}
+    # Parité P03 : « lance vghd sur mon pc » → desktop_control via open_app inféré
+    # (le classifieur texte seul ne renvoie jamais desktop_control).
+    if not isinstance(ctx.get("desktop_action"), dict):
+        inferred_open_app = open_app_action_from_goal(payload.text)
+        if inferred_open_app is not None:
+            ctx["desktop_action"] = inferred_open_app
     npc_name = ctx.get("npc_name")
     trace_id = ctx.get("_trace_id")
     trace_id = trace_id if isinstance(trace_id, str) and trace_id.strip() else None
@@ -102,7 +109,7 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
                 intent, confidence = ("npc_dialogue", 0.9)
     cap = capability_registry.get(intent) or capability_registry.get("unknown")
     assert cap is not None
-    ctx_for_agent = _dialogue_context_for_route(ctx) if cap.routed_to == "agent.dialogue" else payload.context
+    ctx_for_agent = _dialogue_context_for_route(ctx) if cap.routed_to == "agent.dialogue" else ctx
     policy = evaluate_action_policy(cap, ctx)
     if not policy.allowed:
         elapsed_ms = int((time.perf_counter() - t0) * 1000)

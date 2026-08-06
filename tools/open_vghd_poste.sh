@@ -72,14 +72,21 @@ tmp_body="$(mktemp)"
 tmp_payload="$(mktemp)"
 trap 'rm -f "${tmp_body}" "${tmp_payload}"' EXIT
 
-export GOAL DRY_RUN APPROVAL
+export GOAL DRY_RUN APPROVAL ROOT="${ROOT}"
 python3 - <<'PY' >"${tmp_payload}"
-import json, os
+import json, os, sys
+
+root = os.environ.get("ROOT", ".")
+sys.path.insert(0, os.path.join(root, "packages", "cortex", "agents", "src"))
+from lbg_agents.desktop_apps import open_app_action_from_goal
 
 goal = os.environ.get("GOAL", "ouvre vghd sur mon poste")
 dry = os.environ.get("DRY_RUN", "0") == "1"
 approval = (os.environ.get("APPROVAL") or "").strip()
-ctx: dict = {"desktop_dry_run": dry}
+action = open_app_action_from_goal(goal)
+if action is None:
+    raise SystemExit("Impossible d'inférer desktop_action depuis le goal")
+ctx: dict = {"desktop_dry_run": dry, "desktop_action": action}
 if not dry and approval:
     ctx["desktop_approval"] = approval
 print(json.dumps({"actor_id": "ops:open_vghd", "text": goal, "context": ctx}, ensure_ascii=False))
@@ -111,7 +118,16 @@ except json.JSONDecodeError:
     raise SystemExit(1)
 
 print(json.dumps(d, ensure_ascii=False, indent=2)[:4000])
-err = " ".join(str(d.get(k) or "") for k in ("error", "reply", "detail")).lower()
+if http_code != "200":
+    raise SystemExit(1)
+
+intent = d.get("intent")
+out = d.get("output") if isinstance(d.get("output"), dict) else {}
+if intent != "desktop_control":
+    print(f"\n→ Mauvais routage : intent={intent!r} (attendu desktop_control)", file=sys.stderr)
+    raise SystemExit(3)
+
+err = " ".join(str(out.get(k) or d.get(k) or "") for k in ("error", "reply", "detail")).lower()
 if "approval" in err and "token" in err:
     print(
         "\n→ Jeton desktop manquant : export LBG_DESKTOP_APPROVAL=… "
@@ -120,14 +136,14 @@ if "approval" in err and "token" in err:
     )
     raise SystemExit(2)
 
-if http_code != "200":
-    raise SystemExit(1)
-
-remote = d.get("remote") if isinstance(d.get("remote"), dict) else {}
-outcome = remote.get("outcome") or d.get("outcome")
-ok = d.get("ok") is True or remote.get("ok") is True
-if ok or outcome in ("ok", "dry_run"):
+policy = out.get("policy") if isinstance(out.get("policy"), dict) else {}
+decision = policy.get("decision")
+outcome = out.get("outcome")
+ok = out.get("ok") is True
+if ok or outcome in ("ok", "dry_run") or decision in ("dry_run", "approved_action"):
     raise SystemExit(0)
+if decision == "approval_required":
+    raise SystemExit(2)
 raise SystemExit(1)
 PY
 
