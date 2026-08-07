@@ -1,33 +1,43 @@
 # UI web — gestion des comptes Core3
 
-Module : `LBG_IA_MMO/tools/core3_account_admin/`
+Module : `packages/cortex/tools/core3_account_admin/`
 
-## Accès (VM LAN 245)
+## Surfaces (après split)
 
-Après déploiement :
+| UI | Rôle | Pastille `/api/servers` | Comptes MariaDB |
+|----|------|-------------------------|-----------------|
+| **http://192.168.0.245:8792/** | PreCU / nostalgie SWG | **swgemu** (`core3-swgemu`) seul | PreCU local |
+| **http://192.168.0.246:8792/** | Prime / produit LBG | **prime** (`core3-clean`) seul | Prime local |
+
+Plus de bandeau croisé (245 ne sonde plus clean/Prime ; 246 ne sonde plus swgemu). Override ops : `CORE3_STATUS_SHOW_ALL=1` ou JSON `CORE3_STATUS_INSTANCES`.
+
+## Accès (VM LAN 245 — PreCU)
 
 ```bash
-bash LBG_IA_MMO/infra/scripts/start_core3_account_admin_vm.sh
+bash packages/cortex/infra/scripts/start_core3_account_admin_vm.sh
 ```
 
-- URL : **http://192.168.0.245:8792/**
 - Token par défaut du script : `lbg-core3-admin-change-me` (surcharge : `CORE3_ADMIN_TOKEN=…`)
-- **État des serveurs Core3** (bandeau en haut, rafraîchi toutes les 15 s) : `GET /api/servers` — **PreCu** (`core3-swgemu`, sonde locale 245) et **Prime** (`core3-clean`, sonde SSH 246). Chaque pastille affiche **IP client** (`client_ip`), statut (*En ligne* / *Démarrage* / *Hors ligne*), port login et PID.
+- **État serveur** : `GET /api/servers` — pastille PreCU uniquement.
+
+## Accès (VM LAN 246 — Prime)
+
+```bash
+bash packages/cortex/infra/scripts/start_core3_account_admin_prime_vm.sh
+```
 
 ## Démarrage automatique au reboot (systemd)
 
-Sur la VM, l’UI peut être gérée par systemd pour être relancée automatiquement après reboot :
-
 ```bash
 ssh lbg@192.168.0.245 'systemctl status lbg-core3-account-admin.service --no-pager'
-ssh lbg@192.168.0.245 'systemctl is-enabled lbg-core3-account-admin.service'
+ssh lbg@192.168.0.246 'systemctl status lbg-core3-account-admin.service --no-pager'
 ```
 
 À retenir :
 
 - Le port `:8792` peut être occupé si l’UI a été lancée en `nohup`. Dans ce cas, tuer l’ancien process (`pkill -f core3_account_admin.py`) puis redémarrer le service systemd.
 - Secrets : `/etc/lbg-core3-account-admin.env` (`CORE3_DB_PASS`, `CORE3_ADMIN_TOKEN`). Sans token, l’écoute `0.0.0.0:8792` est refusée.
-- Après split VM : PreCU sondé en `127.0.0.1` (client `192.168.0.245`), Prime via SSH `192.168.0.246` (client `192.168.0.246`). Clé SSH 245→246 installée par `start_core3_account_admin_vm.sh`.
+- `CORE3_LOCAL_SERVER_ID=precu` (245) ou `prime` (246) pilote pastilles + bases exposées.
 
 ## Alignement Core3
 

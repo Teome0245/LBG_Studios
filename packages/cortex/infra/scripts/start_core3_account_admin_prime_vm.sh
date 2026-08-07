@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Déploie l'UI comptes Core3 sur la VM Prime (246), port 8792.
+# Surface produit : pastille core3-clean seule (pas PreCU/swgemu).
 # Même token que l'UI PreCU (245) par défaut.
 #
 # Usage :
@@ -10,7 +11,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TOOL="${ROOT}/tools/core3_account_admin"
 VM_HOST="${LBG_ACCOUNT_ADMIN_PRIME_VM_HOST:-192.168.0.246}"
-PRECU_HOST="${LBG_PRECU_VM_HOST:-192.168.0.245}"
 VM_USER="${LBG_NEW_MMO_VM_USER:-lbg}"
 REMOTE_DIR="/home/lbg/tools/core3_account_admin"
 TOKEN="${CORE3_ADMIN_TOKEN:-lbg-core3-admin-change-me}"
@@ -26,10 +26,6 @@ rsync -az --delete \
 
 scp -q "${ROOT}/infra/systemd/lbg-core3-account-admin-prime.service" \
   "${VM_USER}@${VM_HOST}:/tmp/lbg-core3-account-admin-prime.service"
-scp -q "${ROOT}/infra/snippets/core3-mysql-precu-245-allow-prime-admin.sql" \
-  "${VM_USER}@${PRECU_HOST}:/tmp/" 2>/dev/null || true
-
-ssh "${VM_USER}@${PRECU_HOST}" "sudo mysql < /tmp/core3-mysql-precu-245-allow-prime-admin.sql" 2>/dev/null || true
 
 ssh "${VM_USER}@${VM_HOST}" "bash -s" <<EOF
 set -euo pipefail
@@ -43,7 +39,9 @@ cd "${REMOTE_DIR}"
 sudo tee /etc/lbg-core3-account-admin.env >/dev/null <<ENV
 CORE3_DB_PASS=${DB_PASS}
 CORE3_ADMIN_TOKEN=${TOKEN}
-CORE3_PRECU_DB_PASS=${DB_PASS}
+CORE3_LOCAL_SERVER_ID=prime
+CORE3_PRECU_DB_ENABLED=0
+CORE3_PRIME_DB_ENABLED=0
 ENV
 sudo cp /tmp/lbg-core3-account-admin-prime.service /etc/systemd/system/lbg-core3-account-admin.service
 sudo systemctl daemon-reload
@@ -53,5 +51,5 @@ sleep 1
 systemctl is-active lbg-core3-account-admin.service
 EOF
 
-echo "UI Prime : http://${VM_HOST}:8792/"
+echo "UI Prime : http://${VM_HOST}:8792/ (core3-clean seul)"
 echo "Token    : ${TOKEN}"

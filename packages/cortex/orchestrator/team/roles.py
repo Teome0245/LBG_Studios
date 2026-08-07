@@ -193,6 +193,10 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         ok = outcome != "critical"
         return {"kind": "ops_storage", "storage": storage, "outcome": outcome, "ok": ok}
 
+    # ops_kind storage sans payload pré-calculé → devops_probe proxmox_storage
+    if ops_kind == "proxmox_storage" and not isinstance(ctx.get("devops_action"), dict):
+        ctx["devops_action"] = {"kind": "proxmox_storage"}
+
     hw = ctx.get("proxmox_hw")
     if ops_kind == "proxmox_hw" and isinstance(hw, dict):
         outcome = str(hw.get("outcome") or "ok")
@@ -413,24 +417,88 @@ _EXECUTORS: dict[str, Callable[[TeamTask], dict[str, object]]] = {
 }
 
 
+def _objective_is_proxmox_storage(text: str) -> bool:
+    """Mission Héphaïstos ciblée stockage Proxmox / disk Prime (pas smoke générique)."""
+    t = (text or "").lower()
+    storage_cue = any(
+        k in t
+        for k in (
+            "local-lvm",
+            "thin pool",
+            "thin_pool",
+            "proxmox",
+            "stockage",
+            "storage",
+            "disk",
+            "disque",
+            "io-error",
+        )
+    )
+    target_cue = any(
+        k in t
+        for k in (
+            "prime",
+            "246",
+            "hephaistos",
+            "héphaïstos",
+            "infra lan",
+            "infra_lan",
+            "surveill",
+            "supervis",
+            "sond",
+            "alerte",
+            "remediat",
+            "remédiation",
+            "attention",
+            "point sur",
+        )
+    )
+    return storage_cue and target_cue
+
+
 def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> list[dict[str, object]]:
     """Propose des tâches à partir d'un objectif NL (heuristique phase A)."""
     text = (objective or "").lower()
     proposals: list[dict[str, object]] = []
 
-    def _add(role: str, obj: str) -> None:
+    def _add(role: str, obj: str, *, context: dict[str, object] | None = None) -> None:
         spec = ROLE_SPECS[role]
-        proposals.append(
-            {
-                "role": role,
-                "objective": obj,
-                "priority": "normal",
-                "approval_required": False,
-                "actor_id": actor_id,
-                "capability": spec["capability"],
-                **{k: v for k, v in role_display(role).items() if k in ("alias", "title", "label")},
-            }
+        row: dict[str, object] = {
+            "role": role,
+            "objective": obj,
+            "priority": "normal",
+            "approval_required": False,
+            "actor_id": actor_id,
+            "capability": spec["capability"],
+            **{k: v for k, v in role_display(role).items() if k in ("alias", "title", "label")},
+        }
+        if context:
+            row["context"] = context
+        proposals.append(row)
+
+    # --- Stockage Proxmox / disk Prime : ops dédié (évite qa smoke + player_ia « prime ») ---
+    if _objective_is_proxmox_storage(text):
+        _add(
+            "ops",
+            "Héphaïstos — sonde Proxmox thin local-lvm + statut disk / io-error Prime 246 (read-only)",
+            context={
+                "ops_kind": "proxmox_storage",
+                "devops_action": {"kind": "proxmox_storage"},
+                "devops_dry_run": True,
+                "presence_agent_id": "studio_ops_hephaistos",
+            },
         )
+        _add(
+            "ops",
+            "Héphaïstos — plan remédiation stockage si alerte thin/Prime (consultatif)",
+            context={
+                "ops_kind": "proxmox_storage",
+                "devops_action": {"kind": "storage_remediation_plan"},
+                "devops_dry_run": True,
+                "presence_agent_id": "studio_ops_hephaistos",
+            },
+        )
+        return proposals
 
     if any(k in text for k in ("infra", "proxmox", "vm", "ollama", "ops", "sonde", "disque")):
         obj = objective if "ops" in text else str(ROLE_SPECS["ops"]["default_objective"])
@@ -743,10 +811,13 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
     if task.status == "running":
         return task
 
-    if task.approval_required and task.status != "review":
-        if not approval_token_valid(approval_token or task.stored_approval_token):
-            team_store.update_task(task_id, status="review")
-            _trace_log({"event": "approval_required", "task_id": task_id, "role": task.role})
+    if task.approval_required:
+        token = approval_token or task.stored_approval_token
+        if not approval_token_valid(token):
+            # Bloqué tant qu'un humain n'a pas Approuvé (token stocké) ou fourni le jeton au run.
+            if task.status != "review":
+                team_store.update_task(task_id, status="review")
+                _trace_log({"event": "approval_required", "task_id": task_id, "role": task.role})
             return team_store.get_task(task_id)
 
     trace_id = task.trace_id or str(uuid.uuid4())
@@ -881,17 +952,21 @@ def approve_task(task_id: str, token: str) -> TeamTask | None:
     task = team_store.get_task(task_id)
     if task is None:
         return None
+    if task.status in ("done", "cancelled", "running"):
+        return task
     if not approval_token_valid(token):
         team_store.update_task(
             task_id,
             result={**task.result, "approval_error": "token invalide"},
         )
         return team_store.get_task(task_id)
+    # Après approbation : reste en file exécutable (queued) avec jeton stocké.
+    # Ne jamais repasser une tâche terminée en queued (régression UI « bloqué »).
     team_store.update_task(
         task_id,
         status="queued",
         stored_approval_token=token,
-        context_patch={"approved": True},
+        context_patch={"approved": True, "approval_error": None},
     )
     _trace_log({"event": "approved", "task_id": task_id})
     return team_store.get_task(task_id)

@@ -1347,6 +1347,36 @@
     }
     .office-card .host a { color: #8ecfba; text-decoration: none; }
     .office-card .host a:hover { text-decoration: underline; }
+    .office-card-approval {
+      margin-top: 0.42rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.28rem;
+      align-items: center;
+    }
+    .office-card-approval input[type="text"] {
+      margin: 0;
+      min-width: 8rem;
+      max-width: 12rem;
+      padding: 0.2rem 0.35rem;
+      font-size: 0.68rem;
+      border-radius: 5px;
+      border: 1px solid #3a5560;
+      background: rgba(8, 16, 18, 0.92);
+      color: #e7f2f4;
+    }
+    .office-card-approval button {
+      margin: 0;
+      padding: 0.18rem 0.4rem;
+      font-size: 0.64rem;
+      line-height: 1.2;
+    }
+    .office-l2-tag {
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      color: #e6b84d;
+      font-weight: 600;
+    }
     .office-status {
       align-self: start;
       text-transform: uppercase;
@@ -1516,6 +1546,67 @@
     .office-side .side-meta { font-size: 0.7rem; color: #6d858e; }
     .office-side .side-meta a { color: #8ecfba; }
     .office-classic-wrap[hidden], .office-map-wrap[hidden] { display: none !important; }
+
+    .office-validation-desk {
+      margin: 0 0 0.85rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid rgba(230, 184, 77, 0.45);
+      background: linear-gradient(135deg, rgba(48, 38, 12, 0.55), rgba(20, 28, 32, 0.75));
+    }
+    .office-validation-desk[hidden] { display: none !important; }
+    .office-validation-desk h3 {
+      margin: 0 0 0.45rem;
+      font-size: 0.92rem;
+      color: #f0d48a;
+      letter-spacing: 0.02em;
+    }
+    .office-validation-desk .desk-empty {
+      margin: 0;
+      font-size: 0.78rem;
+      color: #8a9aa0;
+    }
+    .office-validation-list {
+      display: grid;
+      gap: 0.55rem;
+    }
+    .office-validation-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.45rem 0.75rem;
+      align-items: start;
+      padding: 0.55rem 0.65rem;
+      border-radius: 8px;
+      background: rgba(14, 20, 24, 0.55);
+      border: 1px solid rgba(230, 184, 77, 0.22);
+    }
+    .office-validation-item .vi-title {
+      font-size: 0.82rem;
+      color: #e8f2f4;
+      font-weight: 600;
+    }
+    .office-validation-item .vi-meta {
+      font-size: 0.72rem;
+      color: #9bb0b8;
+      margin-top: 0.2rem;
+    }
+    .office-validation-item .vi-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .office-validation-item input[type="text"] {
+      width: 9.5rem;
+      max-width: 100%;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.4rem;
+    }
+    .office-validation-item button {
+      font-size: 0.72rem;
+      padding: 0.28rem 0.5rem;
+    }
 
     .office-banner { display: none; }
   </style>
@@ -2446,11 +2537,24 @@
             <span class="side-status" id="office-side-status">idle</span>
             <p class="side-action" id="office-side-action">—</p>
             <p class="side-meta" id="office-side-meta">—</p>
+            <div id="office-side-approval" style="margin-top:0.6rem; padding-top:0.55rem; border-top:1px dashed #2f4550;" hidden>
+              <p id="office-side-approval-text" class="muted" style="margin:0 0 0.45rem 0; font-size:0.75rem;">Validation humaine requise.</p>
+              <input type="text" id="office-side-approval-token" placeholder="token approbation" style="margin:0 0 0.45rem 0; width:100%;" />
+              <p style="display:flex; gap:0.4rem; margin:0;">
+                <button type="button" id="office-side-btn-approve" style="margin:0;">Approuver</button>
+                <button type="button" id="office-side-btn-run" style="margin:0;">Exécuter</button>
+              </p>
+            </div>
           </div>
         </aside>
       </div>
     </div>
     <div class="office-classic-wrap" id="office-classic-wrap" hidden>
+      <aside class="office-validation-desk" id="office-validation-desk" aria-label="Bureau des validations">
+        <h3>Bureau des validations <span class="muted" id="office-validation-count" style="font-weight:500;"></span></h3>
+        <p class="desk-empty" id="office-validation-empty">Aucune validation L2 en attente.</p>
+        <div class="office-validation-list" id="office-validation-list" hidden></div>
+      </aside>
       <div class="office-campus">
         <svg class="office-paths" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <path d="M18 28 H50 V52 H82" fill="none" stroke="#5a8f7a" stroke-width="0.6" stroke-dasharray="2 1.5" />
@@ -2812,9 +2916,43 @@
 
     /**
      * URL du backend FastAPI (lbg-backend) servant /v1/pilot/* .
-     * Sur front LAN (110:8080 + Nginx proxy /v1/), préférer la même origine (pas de CORS, pas de blocage réseau vers 140).
+     * Sur front LAN (Nginx proxy /v1/ sur :8080 ou :80), préférer la même origine
+     * (pas de CORS, pas de blocage réseau cross-port vers :8000).
      * Surcharge optionnelle : définir window.__LBG_PILOT_DEFAULT_API_BASE__ avant ce script.
      */
+    function pilotIsNginxPilotOrigin() {
+      try {
+        const port = String(window.location.port || "");
+        return port === "8080" || port === "80" || port === "";
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function pilotMigrateApiBaseToSameOrigin(stored) {
+      try {
+        const vs = String(stored || "").trim().replace(/\/$/, "");
+        const originNorm = String(window.location.origin || "").replace(/\/$/, "");
+        if (!vs || !originNorm || !pilotIsNginxPilotOrigin()) return vs;
+        const u = new URL(vs);
+        const o = new URL(originNorm);
+        if (u.hostname === o.hostname && u.port === "8000" && o.port === "8080") {
+          return originNorm;
+        }
+        if (
+          u.hostname === "192.168.0.140" &&
+          u.port === "8000" &&
+          o.hostname === "192.168.0.110" &&
+          (o.port === "8080" || o.port === "80")
+        ) {
+          return originNorm;
+        }
+        return vs;
+      } catch (_) {
+        return String(stored || "").trim();
+      }
+    }
+
     function pilotInferDefaultApiBase() {
       try {
         if (
@@ -2828,10 +2966,8 @@
         }
       } catch (_) {}
       try {
-        const h = String(window.location.hostname || "");
-        const port = String(window.location.port || "");
         const originNorm = String(window.location.origin || "").replace(/\/$/, "");
-        if (h === "192.168.0.110" && (port === "8080" || port === "80") && originNorm) {
+        if (originNorm && pilotIsNginxPilotOrigin()) {
           return originNorm;
         }
       } catch (_) {}
@@ -2845,8 +2981,17 @@
 
     function getBase() {
       const el = document.getElementById("api-base");
-      const fromInput = el && el.value ? String(el.value).trim() : "";
-      if (fromInput) return fromInput.replace(/\/$/, "");
+      let fromInput = el && el.value ? String(el.value).trim() : "";
+      if (fromInput) {
+        fromInput = pilotMigrateApiBaseToSameOrigin(fromInput);
+        if (el && fromInput !== String(el.value || "").trim()) {
+          el.value = fromInput;
+          try {
+            localStorage.setItem(STORAGE_KEY, fromInput);
+          } catch (_) {}
+        }
+        return fromInput.replace(/\/$/, "");
+      }
       return pilotInferDefaultApiBase();
     }
 
@@ -2864,20 +3009,12 @@
         const el = document.getElementById("api-base");
         if (!el) return;
         if (v != null && String(v).trim() !== "") {
-          let vs = String(v).trim();
-          const originNorm = String(window.location.origin || "").replace(/\/$/, "");
-          try {
-            const h = String(window.location.hostname || "");
-            const port = String(window.location.port || "");
-            if (h === "192.168.0.110" && (port === "8080" || port === "80") && originNorm) {
-              if (vs === "http://192.168.0.140:8000" || vs === originNorm) {
-                vs = originNorm;
-                try {
-                  localStorage.setItem(STORAGE_KEY, vs);
-                } catch (_) {}
-              }
-            }
-          } catch (_) {}
+          let vs = pilotMigrateApiBaseToSameOrigin(String(v).trim());
+          if (vs !== String(v).trim()) {
+            try {
+              localStorage.setItem(STORAGE_KEY, vs);
+            } catch (_) {}
+          }
           el.value = vs;
           return;
         }
@@ -6436,6 +6573,7 @@
     let __officeView = "map";
     let __officeMapReady = false;
     let __officeSelectedId = null;
+    let __officeSelectedTaskId = null;
 
     function officeParseView() {
       const raw = (location.hash || "").replace(/^#/, "");
@@ -6502,6 +6640,7 @@
     function officeSelectAgent(agent) {
       if (!agent) return;
       __officeSelectedId = agent.agent_id;
+      __officeSelectedTaskId = agent.task_id ? String(agent.task_id) : null;
       const empty = document.getElementById("office-side-empty");
       const body = document.getElementById("office-side-body");
       const title = document.getElementById("office-side-title");
@@ -6526,6 +6665,211 @@
               "#" + officeEsc(tid.slice(0, 8)) + "</a>"
             : "");
       }
+      officeRefreshApprovalPanel(__officeSelectedTaskId, agent).catch(function () {});
+    }
+
+    function officeTaskNeedsHumanValidation(task) {
+      if (!task || typeof task !== "object") return false;
+      const status = String(task.status || "").toLowerCase();
+      if (status === "review") return true;
+      const approvalRequired = task.approval_required === true;
+      return approvalRequired && (status === "queued" || status === "waiting_approval");
+    }
+
+    function officeAgentNeedsValidation(agent) {
+      if (!agent || typeof agent !== "object") return false;
+      if (!agent.task_id) return false;
+      if (agent.awaiting_human_approval === true || agent.awaiting_run === true) return true;
+      const st = String(agent.status || "").toLowerCase();
+      if (st === "review") return true;
+      return agent.approval_required === true && (st === "idle" || st === "queued" || st === "waiting_approval");
+    }
+
+    function officeAgentAwaitingHumanApproval(agent) {
+      if (!agent || typeof agent !== "object") return false;
+      if (agent.awaiting_human_approval === true) return true;
+      if (agent.awaiting_run === true) return false;
+      return officeAgentNeedsValidation(agent);
+    }
+
+    function officeAgentAwaitingRun(agent) {
+      if (!agent || typeof agent !== "object") return false;
+      return agent.awaiting_run === true || officeAgentNeedsValidation(agent);
+    }
+
+    function officeCollectPendingValidations() {
+      const seen = new Set();
+      const rows = [];
+      __officeAgents.forEach(function (a) {
+        if (!officeAgentNeedsValidation(a)) return;
+        const tid = String(a.task_id || "");
+        if (!tid || seen.has(tid)) return;
+        seen.add(tid);
+        rows.push({
+          task_id: tid,
+          label: a.display_name || a.role || "agent",
+          role: a.role || "",
+          action: a.current_action || "Validation L2",
+          location: a.location || "",
+          awaiting_run: a.awaiting_run === true,
+          awaiting_human_approval: officeAgentAwaitingHumanApproval(a),
+        });
+      });
+      return rows;
+    }
+
+    function officeRenderValidationDesk() {
+      const listEl = document.getElementById("office-validation-list");
+      const emptyEl = document.getElementById("office-validation-empty");
+      const countEl = document.getElementById("office-validation-count");
+      const desk = document.getElementById("office-validation-desk");
+      if (!listEl || !emptyEl || !desk) return;
+      const rows = officeCollectPendingValidations();
+      if (countEl) countEl.textContent = rows.length ? "(" + rows.length + ")" : "";
+      if (!rows.length) {
+        emptyEl.hidden = false;
+        listEl.hidden = true;
+        listEl.innerHTML = "";
+        return;
+      }
+      emptyEl.hidden = true;
+      listEl.hidden = false;
+      listEl.innerHTML = rows.map(function (r) {
+        const tid = r.task_id;
+        const short = tid.slice(0, 8);
+        const tag = r.awaiting_run ? "Prêt — Exécuter" : "Token L2 requis";
+        return (
+          '<div class="office-validation-item" data-office-desk-task="' + officeEsc(tid) + '">' +
+            "<div>" +
+              '<div class="vi-title">' + officeEsc(r.label) + " — " + officeEsc(r.action) + "</div>" +
+              '<div class="vi-meta">' +
+                officeEsc(tag) + " · " + officeEsc(r.role || "") +
+                (r.location ? " · " + officeEsc(r.location) : "") +
+                ' · <a href="' + officeEsc(teamTaskHref(tid)) + '">#' + officeEsc(short) + "</a>" +
+              "</div>" +
+            "</div>" +
+            '<div class="vi-actions">' +
+              (r.awaiting_human_approval
+                ? '<input type="text" data-office-token-for="' + officeEsc(tid) + '" placeholder="token L2" />' +
+                  '<button type="button" data-office-approve-task="' + officeEsc(tid) + '">Approuver</button>'
+                : "") +
+              '<button type="button" data-office-run-task="' + officeEsc(tid) + '">Exécuter</button>' +
+            "</div>" +
+          "</div>"
+        );
+      }).join("");
+      listEl.querySelectorAll("[data-office-approve-task]").forEach(function (btn) {
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const taskId = btn.getAttribute("data-office-approve-task") || "";
+          const tokenEl = listEl.querySelector('input[data-office-token-for="' + cssEscape(taskId) + '"]');
+          const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+          officeApproveTaskById(taskId, token).catch(function () {});
+        });
+      });
+      listEl.querySelectorAll("[data-office-run-task]").forEach(function (btn) {
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const taskId = btn.getAttribute("data-office-run-task") || "";
+          const tokenEl = listEl.querySelector('input[data-office-token-for="' + cssEscape(taskId) + '"]');
+          const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+          officeRunTaskById(taskId, token).catch(function () {});
+        });
+      });
+    }
+
+    async function officeRefreshApprovalPanel(taskId, agent) {
+      const panel = document.getElementById("office-side-approval");
+      const text = document.getElementById("office-side-approval-text");
+      if (!panel || !text) return;
+      if (!taskId) {
+        panel.hidden = true;
+        return;
+      }
+      if (agent && officeAgentNeedsValidation(agent)) {
+        panel.hidden = false;
+        const ready = agent.awaiting_run === true;
+        text.textContent = ready
+          ? "Approuvée — clique Exécuter (" + (agent.display_name || agent.role || "agent") + ")"
+          : "Validation humaine requise — " +
+            (agent.display_name || agent.role || "agent") +
+            " · statut review";
+        const tokenEl = document.getElementById("office-side-approval-token");
+        const btnApprove = document.getElementById("office-side-btn-approve");
+        if (tokenEl) tokenEl.hidden = ready;
+        if (btnApprove) btnApprove.hidden = ready;
+        return;
+      }
+      const out = await jobsGet(getBase() + "/v1/pilot/team/tasks/" + encodeURIComponent(taskId));
+      const task = out.json || {};
+      if (!task.id || !officeTaskNeedsHumanValidation(task)) {
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      text.textContent =
+        "Validation humaine requise — " +
+        (task.role_label || task.role || "agent") +
+        " · statut " +
+        (task.status || "?");
+    }
+
+    async function officeApproveTaskById(taskId, token) {
+      if (!taskId) return;
+      if (!token) {
+        officeSetConn("Token d'approbation requis.");
+        return;
+      }
+      officeSetConn("Approbation en cours…");
+      const out = await postJson(
+        getBase() + "/v1/pilot/team/tasks/" + encodeURIComponent(taskId) + "/approve",
+        { token: token },
+        30000
+      );
+      if (!teamResponseOk(out)) {
+        officeSetConn("Approbation KO: " + teamApiError(out));
+        return;
+      }
+      officeSetConn("Tâche approuvée. Tu peux exécuter.");
+      try { await officeFetchSnapshot(); } catch (_) {}
+      await officeRefreshApprovalPanel(taskId);
+    }
+
+    async function officeRunTaskById(taskId, token) {
+      if (!taskId) return;
+      const body = token ? { approval_token: token } : {};
+      officeSetConn("Exécution en cours…");
+      const out = await postJson(
+        getBase() + "/v1/pilot/team/tasks/" + encodeURIComponent(taskId) + "/run",
+        body,
+        300000
+      );
+      if (!teamResponseOk(out)) {
+        officeSetConn("Exécution KO: " + teamApiError(out));
+        return;
+      }
+      const st = String((out.json || {}).status || "?");
+      officeSetConn("Tâche: " + st);
+      try { await officeFetchSnapshot(); } catch (_) {}
+      await officeRefreshApprovalPanel(taskId);
+    }
+
+    async function officeApproveSelectedTask() {
+      const taskId = __officeSelectedTaskId;
+      if (!taskId) return;
+      const tokenEl = document.getElementById("office-side-approval-token");
+      const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+      await officeApproveTaskById(taskId, token);
+    }
+
+    async function officeRunSelectedTask() {
+      const taskId = __officeSelectedTaskId;
+      if (!taskId) return;
+      const tokenEl = document.getElementById("office-side-approval-token");
+      const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+      await officeRunTaskById(taskId, token);
     }
 
     const OFFICE_ZONE_META = {
@@ -6541,6 +6885,10 @@
       return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
         return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
       });
+    }
+
+    function cssEscape(s) {
+      return String(s == null ? "" : s).replace(/["\\]/g, "\\$&");
     }
 
     function officeInitials(name) {
@@ -6585,6 +6933,27 @@
               const tidFull = a.task_id ? String(a.task_id) : "";
               const href = tidFull ? teamTaskHref(tidFull) : "#/team/office";
               const tid = tidFull ? tidFull.slice(0, 8) : "";
+              const needVal = officeAgentNeedsValidation(a);
+              const needApprove = officeAgentAwaitingHumanApproval(a);
+              const needRun = officeAgentAwaitingRun(a);
+              const approvalHtml = needVal
+                ? (
+                    '<div class="office-card-approval">' +
+                      '<span class="office-l2-tag">' +
+                        (a.awaiting_run ? "PRÊT — EXÉCUTER" : "TOKEN L2 REQUIS") +
+                      "</span>" +
+                      (needApprove
+                        ? '<input type="text" data-office-token-for="' + officeEsc(tidFull) + '" placeholder="token approbation" />'
+                        : "") +
+                      (needApprove
+                        ? '<button type="button" data-office-approve-task="' + officeEsc(tidFull) + '">Approuver</button>'
+                        : "") +
+                      (needRun
+                        ? '<button type="button" data-office-run-task="' + officeEsc(tidFull) + '">Exécuter</button>'
+                        : "") +
+                    "</div>"
+                  )
+                : "";
               return (
                 '<article class="office-card ' + officeEsc(st) + (anim ? " " + anim : "") +
                   '" data-agent-id="' + officeEsc(a.agent_id) + '">' +
@@ -6602,6 +6971,7 @@
                         officeEsc(tid) + "</a>")
                       : "") +
                     "</div>" +
+                    approvalHtml +
                   "</div>" +
                   '<span class="office-status">' + officeEsc(st) + "</span>" +
                 "</article>"
@@ -6622,7 +6992,40 @@
           "</section>"
         );
       }).join("");
+      floor.querySelectorAll("[data-agent-id]").forEach(function (card) {
+        card.addEventListener("click", function (ev) {
+          const target = ev.target;
+          if (target && target.closest && target.closest("[data-office-approve-task],[data-office-run-task],input[data-office-token-for]")) {
+            return;
+          }
+          const agentId = card.getAttribute("data-agent-id");
+          if (!agentId) return;
+          const agent = __officeAgents.get(agentId);
+          if (agent) officeSelectAgent(agent);
+        });
+      });
+      floor.querySelectorAll("[data-office-approve-task]").forEach(function (btn) {
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const taskId = btn.getAttribute("data-office-approve-task") || "";
+          const tokenEl = floor.querySelector('input[data-office-token-for="' + cssEscape(taskId) + '"]');
+          const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+          officeApproveTaskById(taskId, token).catch(function () {});
+        });
+      });
+      floor.querySelectorAll("[data-office-run-task]").forEach(function (btn) {
+        btn.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const taskId = btn.getAttribute("data-office-run-task") || "";
+          const tokenEl = floor.querySelector('input[data-office-token-for="' + cssEscape(taskId) + '"]');
+          const token = tokenEl && tokenEl.value ? String(tokenEl.value).trim() : "";
+          officeRunTaskById(taskId, token).catch(function () {});
+        });
+      });
       Object.keys(__officeAnim).forEach(function (k) { delete __officeAnim[k]; });
+      officeRenderValidationDesk();
     }
 
     function officeUpsert(p, opts) {
@@ -6779,6 +7182,20 @@
         btnClose.addEventListener("dblclick", function (ev) {
           ev.preventDefault();
           officeLyraCloseMission(true).catch(function () {});
+        });
+      }
+      const btnApprove = document.getElementById("office-side-btn-approve");
+      const btnRun = document.getElementById("office-side-btn-run");
+      if (btnApprove && !btnApprove._officeBound) {
+        btnApprove._officeBound = true;
+        btnApprove.addEventListener("click", function () {
+          officeApproveSelectedTask().catch(function () {});
+        });
+      }
+      if (btnRun && !btnRun._officeBound) {
+        btnRun._officeBound = true;
+        btnRun.addEventListener("click", function () {
+          officeRunSelectedTask().catch(function () {});
         });
       }
       officeApplyView(__officeView);

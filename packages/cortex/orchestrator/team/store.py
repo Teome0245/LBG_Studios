@@ -165,6 +165,8 @@ def create_task(
     if trace_id:
         ctx.setdefault("trace_id", trace_id)
     need_approval = approval_required if approval_required is not None else False
+    # L2 sans jeton → status review dès la création (bureau des validations / presence).
+    initial_status = "review" if (need_approval and not approval_token) else "queued"
     conn = _get_conn()
     conn.execute(
         """
@@ -172,12 +174,13 @@ def create_task(
             id, role, objective, status, priority, approval_required,
             actor_id, context_json, result_json, trace_id,
             created_ts, updated_ts, stored_approval_token
-        ) VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, '{}', ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?, ?, ?)
         """,
         (
             task_id,
             role,
             objective,
+            initial_status,
             priority,
             1 if need_approval else 0,
             actor_id,

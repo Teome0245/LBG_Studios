@@ -112,14 +112,44 @@ def sanitize_action(text: str | None, *, max_len: int = 120) -> str:
     return raw
 
 
-def map_task_status(status: str) -> str:
+def map_task_status(status: str, *, approval_required: bool = False, approved: bool = False) -> str:
     if status == "running":
         return "busy"
     if status == "review":
         return "review"
     if status == "failed":
         return "failed"
+    # L2 pas encore approuvée : visible « review » sur le bureau.
+    if approval_required and status in ("queued", "waiting_approval") and not approved:
+        return "review"
+    # L2 approuvée, en attente d'Exécuter : reste review (pastille) mais flag awaiting_run côté payload.
+    if approval_required and status in ("queued", "waiting_approval") and approved:
+        return "review"
     return "idle"
+
+
+def task_is_approved(task: TeamTask) -> bool:
+    if task.stored_approval_token:
+        return True
+    ctx = task.context or {}
+    return bool(ctx.get("approved"))
+
+
+def task_awaits_human_approval(task: TeamTask) -> bool:
+    if not task.approval_required:
+        return False
+    if task.status not in ("queued", "review", "waiting_approval"):
+        return False
+    return not task_is_approved(task)
+
+
+def task_awaits_run(task: TeamTask) -> bool:
+    """Approuvée (jeton stocké) mais pas encore exécutée."""
+    if not task.approval_required:
+        return False
+    if task.status not in ("queued", "review"):
+        return False
+    return task_is_approved(task)
 
 
 def _roster() -> list[dict[str, Any]]:
@@ -258,7 +288,12 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
 
 def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dict[str, Any]:
     agent_id = resolve_presence_agent_id(task)
-    status = map_task_status(task.status)
+    approved = task_is_approved(task)
+    status = map_task_status(
+        task.status,
+        approval_required=bool(task.approval_required),
+        approved=approved,
+    )
     location = infer_zone(task, agent_id=agent_id)
     if status == "idle":
         if task.status in ("done", "cancelled"):
@@ -270,6 +305,12 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
     action = sanitize_action(task.objective if status != "idle" else "En attente")
     if status == "idle" and task.status == "queued":
         action = sanitize_action(f"En file — {task.objective}")
+    awaits_approval = task_awaits_human_approval(task)
+    awaits_run = task_awaits_run(task)
+    if awaits_approval:
+        action = sanitize_action(f"Validation L2 — {task.objective}")
+    elif awaits_run:
+        action = sanitize_action(f"Prêt à exécuter — {task.objective}")
     payload: dict[str, Any] = {
         "schema": SCHEMA,
         "agent_id": agent_id,
@@ -284,6 +325,9 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
         "trace_id": (task.trace_id or str(uuid.uuid4())[:12])[:128],
         "event": event,
         "timestamp": int(time.time()),
+        "approval_required": bool(task.approval_required),
+        "awaiting_human_approval": awaits_approval,
+        "awaiting_run": awaits_run,
     }
     return payload
 
@@ -458,11 +502,23 @@ def history(*, limit: int = 50) -> list[dict[str, Any]]:
 def rebuild_from_tasks(tasks: list[TeamTask]) -> None:
     """Recalcule l'état depuis les tâches actives (boot / snapshot froid)."""
     now = time.time()
-    # Priorité : running > review > queued > failed récent
-    rank = {"running": 0, "review": 1, "queued": 2, "failed": 3}
+    # Priorité : running > review/L2-queued > queued > failed récent
+    def _rank(task: TeamTask) -> int:
+        if task.status == "running":
+            return 0
+        if task.status == "review" or (
+            bool(task.approval_required) and task.status in ("queued", "waiting_approval")
+        ):
+            return 1
+        if task.status == "queued":
+            return 2
+        if task.status == "failed":
+            return 3
+        return 9
+
     active_by_agent: dict[str, TeamTask] = {}
     for task in tasks:
-        if task.status not in ("running", "review", "failed", "queued"):
+        if task.status not in ("running", "review", "failed", "queued", "waiting_approval"):
             continue
         if task.status == "failed" and _failed_ttl > 0 and (now - float(task.updated_ts or 0)) > _failed_ttl:
             continue
@@ -471,8 +527,8 @@ def rebuild_from_tasks(tasks: list[TeamTask]) -> None:
         if prev is None:
             active_by_agent[aid] = task
             continue
-        pr = rank.get(prev.status, 9)
-        tr = rank.get(task.status, 9)
+        pr = _rank(prev)
+        tr = _rank(task)
         if tr < pr or (tr == pr and task.updated_ts >= prev.updated_ts):
             active_by_agent[aid] = task
     with _lock:
