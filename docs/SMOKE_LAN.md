@@ -35,7 +35,7 @@ Pilot Accueil / menus : liens vers toutes ces surfaces (Studio · Campus · Ops 
 | Cockpit UI + `/v1/pilot/cockpit/snapshot` | OK (`ok: true`) |
 | Orch UI `/`, `/lyra`, `/agents/map` | OK |
 | Orch API `/health` | OK |
-| Prime / PreCU `:8792` + `/api/servers` | OK — **Prime & PreCU `ready`** |
+| Prime / PreCU `:8792` + `/api/servers` | OK — **245 = swgemu seul · 246 = prime seul** (`ready`) |
 | Patches manifest | OK |
 | MCP `:8766/healthz` | OK |
 | Traefik `/` et Orch `:3000/` | 404 racine (attendu si pas de page) |
@@ -46,7 +46,8 @@ Pilot Accueil / menus : liens vers toutes ces surfaces (Studio · Campus · Ops 
 |---|----------|---------|------------|
 | 1 | **Desktop** dry-run | `POST /v1/pilot/route` + `desktop_action.open_url` + `desktop_dry_run:true` | OK |
 | 2 | **Orch** Lyra / carte | Pages 200 + `/health` expose jauges Lyra | OK |
-| 3 | **Jeu** | `/api/servers` ready (Prime + PreCU) | OK |
+| 3 | **Jeu** | `:8792` isolé — 245 `swgemu` · 246 `prime` (`ready`) | OK |
+| 7 | **Cursor Cloud Agent** | `smoke_cursor_agent_lan.sh` (WARN si clé absente) | INFO |
 | 4 | **Assistant** | `POST /v1/pilot/action-proposal` HTTP 200 | OK (endpoint) — proposition peut rester `null` si texte non mappé ; worker Desktop `agent-desktop/healthz` OK |
 
 Worker Desktop Windows et login Godot restent **manuels** sur le PC Teome (hors CI LAN).

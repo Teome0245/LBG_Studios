@@ -1032,6 +1032,25 @@
     .assistant-session-kv dt { color: #94a3b8; display: inline; }
     .assistant-session-kv dd { display: inline; margin: 0 0 0 0.25rem; color: #e2e8f0; }
     /* Bureau Team (Peau / presence) — campus LAN */
+    .team-validations-banner {
+      margin: 0 0 0.85rem 0;
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid rgba(230, 184, 77, 0.45);
+      background: rgba(48, 38, 12, 0.35);
+      font-size: 0.88rem;
+    }
+    .team-validations-banner strong { color: #e6b84d; }
+    .team-validations-banner .review-count {
+      display: inline-block;
+      margin-left: 0.35rem;
+      padding: 0.05rem 0.45rem;
+      border-radius: 999px;
+      background: #e6b84d;
+      color: #0e1518;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
     body[data-pilot-route="team_office"] .pilot-shell-tools {
       opacity: 0.55;
       transform: scale(0.92);
@@ -2244,6 +2263,12 @@
   <div id="pilot-page-team" class="pilot-page" hidden>
     <header>
       <h1>Équipe virtuelle <span class="muted" style="font-size:0.9rem;">(phase A — ops / qa / pm)</span></h1>
+      <div class="team-validations-banner" id="team-validations-banner" role="status">
+        <strong>Bureau des validations</strong> — approbation L2 :
+        token → <em>Approuver</em> → <em>Exécuter</em>.
+        Présence <code>review</code> sur le <a href="#/team/office">campus Team</a>.
+        <span id="team-review-count" class="review-count" hidden>0 en review</span>
+      </div>
       <p class="muted">
         File de tâches par rôle sur l'orchestrateur <strong>140</strong>. Alias : Héphaïstos, Argus, Thémis, Dédale, Chœur du monde — voir <code>/v1/team/meta</code>.
         Endpoints proxifiés sous <code>/v1/pilot/team/*</code>.
@@ -7231,6 +7256,7 @@
         return;
       }
       const tasks = data.tasks || [];
+      teamUpdateReviewBanner(tasks);
       if (!tasks.length) { list.textContent = "Aucune tâche."; return; }
       list.innerHTML = tasks.map(function (t) {
         const active = t.id === __teamSelectedId ? " jobs-card--active" : "";
@@ -7321,6 +7347,7 @@
       }
       await teamLoadMessages(t);
       if (res) res.textContent = JSON.stringify(t.result || {}, null, 2);
+      teamUpdateActionButtons(t);
       __teamLastForgePatch = null;
       const forgeBtn = document.getElementById("btn-team-forge-assistant");
       const forgeHint = document.getElementById("team-forge-hint");
@@ -7462,11 +7489,52 @@
       teamHint(proposals.length + " proposition(s) · source " + source + ".", false);
     }
 
+    function teamUpdateActionButtons(task) {
+      const st = String((task && task.status) || "");
+      const needsL2 = !!(task && task.approval_required);
+      const terminal = st === "done" || st === "cancelled";
+      const running = st === "running";
+      const waitingReview = st === "review" || (needsL2 && st === "queued" && !(task && task.context && task.context.approved));
+      const bRun = document.getElementById("btn-team-run");
+      const bApprove = document.getElementById("btn-team-approve");
+      const bCancel = document.getElementById("btn-team-cancel");
+      const tok = document.getElementById("team-approve-token");
+      if (bApprove) {
+        bApprove.disabled = terminal || running || (!waitingReview && st !== "review");
+        bApprove.title = terminal ? "Tâche terminale — approbation inutile" : "";
+      }
+      if (bRun) {
+        bRun.disabled = terminal || running;
+        bRun.title = needsL2 && waitingReview ? "Approuver avec token avant d'exécuter" : "";
+      }
+      if (bCancel) bCancel.disabled = terminal;
+      if (tok) tok.required = needsL2 && !terminal;
+    }
+
+    function teamUpdateReviewBanner(tasks) {
+      const badge = document.getElementById("team-review-count");
+      if (!badge) return;
+      const n = (tasks || []).filter(function (t) { return t.status === "review"; }).length;
+      if (n > 0) {
+        badge.hidden = false;
+        badge.textContent = n + " en review";
+      } else {
+        badge.hidden = true;
+        badge.textContent = "0 en review";
+      }
+    }
+
     async function teamRun() {
       if (!__teamSelectedId) return;
       const tok = (document.getElementById("team-approve-token") || {}).value || "";
       const createTok = (document.getElementById("team-create-token") || {}).value || "";
       const token = tok.trim() || createTok.trim();
+      const detailOut = await jobsGet(getBase() + "/v1/pilot/team/tasks/" + encodeURIComponent(__teamSelectedId));
+      const cur = detailOut.json || {};
+      if (cur.approval_required && !token && !(cur.context && cur.context.approved)) {
+        teamHint("Token requis pour Exécuter (approbation L2).", true);
+        return;
+      }
       const body = token ? { approval_token: token } : {};
       teamHint("Exécution…");
       const out = await postJson(

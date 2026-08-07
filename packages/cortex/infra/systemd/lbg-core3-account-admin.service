@@ -8,6 +8,7 @@ Type=simple
 User=lbg
 Group=lbg
 WorkingDirectory=/home/lbg/tools/core3_account_admin
+Environment=CORE3_LOCAL_SERVER_ID=precu
 Environment=CORE3_DB_HOST=127.0.0.1
 Environment=CORE3_DB_USER=swgemu
 Environment=CORE3_DB_NAME=swgemu

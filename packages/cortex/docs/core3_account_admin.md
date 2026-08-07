@@ -1,18 +1,22 @@
 # UI web — gestion des comptes Core3
 
-Module : `LBG_IA_MMO/tools/core3_account_admin/`
+Module : `packages/cortex/tools/core3_account_admin/`
 
-## Accès (VM LAN 245)
+## Accès (VM LAN)
 
 Après déploiement :
 
 ```bash
-bash LBG_IA_MMO/infra/scripts/start_core3_account_admin_vm.sh
+# PreCU 245 — pastille swgemu seule
+bash packages/cortex/infra/scripts/start_core3_account_admin_vm.sh
+
+# Prime 246 — pastille prime (core3-clean) seule
+bash packages/cortex/infra/scripts/start_core3_account_admin_prime_vm.sh
 ```
 
-- URL : **http://192.168.0.245:8792/**
-- Token par défaut du script : `lbg-core3-admin-change-me` (surcharge : `CORE3_ADMIN_TOKEN=…`)
-- **État des serveurs Core3** (bandeau en haut, rafraîchi toutes les 15 s) : `GET /api/servers` — **PreCu** (`core3-swgemu`, sonde locale 245) et **Prime** (`core3-clean`, sonde SSH 246). Chaque pastille affiche **IP client** (`client_ip`), statut (*En ligne* / *Démarrage* / *Hors ligne*), port login et PID.
+- URL PreCU : **http://192.168.0.245:8792/** · Prime : **http://192.168.0.246:8792/**
+- Token par défaut des scripts : `lbg-core3-admin-change-me` (surcharge : `CORE3_ADMIN_TOKEN=…`)
+- **État des serveurs Core3** (bandeau en haut, rafraîchi toutes les 15 s) : `GET /api/servers` — **une pastille par VM** (`CORE3_LOCAL_SERVER_ID`) : PreCU (`core3-swgemu`, 245) ou Prime (`core3-clean`, 246). Chaque pastille affiche **IP client** (`client_ip`), statut (*En ligne* / *Démarrage* / *Hors ligne*), port login et PID. La gestion comptes MariaDB distante reste optionnelle (`CORE3_PRIME_DB_*` / `CORE3_PRECU_DB_*`).
 
 ## Démarrage automatique au reboot (systemd)
 

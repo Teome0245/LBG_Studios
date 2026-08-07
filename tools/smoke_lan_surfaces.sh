@@ -93,24 +93,44 @@ PY
     KO=$((KO + 1))
   fi
 
-  # 3 Jeu ready (already checked; assert both ready)
+  # 3 Jeu ready — surfaces :8792 isolées (245 swgemu · 246 prime)
   if python3 - <<'PY'
 import json, urllib.request
 ok=True
-for host in ("246","245"):
+for host, want in (("245", "swgemu"), ("246", "prime")):
     data=json.load(urllib.request.urlopen(f"http://192.168.0.{host}:8792/api/servers", timeout=8))
-    if not any(s.get("id")=="prime" and s.get("ready") for s in data):
+    ids=[s.get("id") for s in data]
+    if len(ids) != 1 or ids[0] != want:
         ok=False
-    if not any(s.get("id")=="swgemu" and s.get("ready") for s in data):
+    if not any(s.get("id")==want and s.get("ready") for s in data):
         ok=False
 raise SystemExit(0 if ok else 1)
 PY
   then
-    echo "OK  Jeu Prime+PreCU ready (via both :8792)"
+    echo "OK  Jeu ready (245 swgemu · 246 prime, surfaces isolées)"
     OK=$((OK + 1))
   else
-    echo "KO  Jeu servers not fully ready"
+    echo "KO  Jeu servers not fully ready (isolated :8792)"
     KO=$((KO + 1))
+  fi
+
+  # 7 Cursor Cloud Agent health (orch 140 — ready=false OK avant sync clé)
+  SMOKE_CURSOR="${ROOT}/packages/cortex/infra/scripts/smoke_cursor_agent_lan.sh"
+  if [[ -f "$SMOKE_CURSOR" ]]; then
+    export LBG_ORCHESTRATOR_URL="${LBG_ORCHESTRATOR_URL:-http://192.168.0.140:8010}"
+    if bash "$SMOKE_CURSOR"; then
+      echo "OK  Cursor Cloud Agent health (ready)"
+      OK=$((OK + 1))
+    else
+      rc=$?
+      if [[ "$rc" -eq 2 ]]; then
+        echo "WARN  Cursor Cloud Agent health (endpoint OK, ready=false — sync clé : tools/push_cursor_secrets_140.sh)"
+        WARN=$((WARN + 1))
+      else
+        echo "KO  Cursor Cloud Agent health"
+        KO=$((KO + 1))
+      fi
+    fi
   fi
 
   # 4 Assistant action-proposal (Forge Prime hint)
