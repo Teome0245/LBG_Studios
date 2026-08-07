@@ -196,6 +196,27 @@ def test_team_approval_gate() -> None:
         monkeypatch_token.undo()
 
 
+def test_team_approve_does_not_regress_done() -> None:
+    monkeypatch_token = pytest.MonkeyPatch()
+    monkeypatch_token.setenv("LBG_TEAM_APPROVAL_TOKEN", "secret-team")
+    try:
+        client = TestClient(app)
+        created = client.post(
+            "/v1/team/tasks",
+            json={"role": "qa", "objective": "smoke ok", "actor_id": "u:done"},
+        ).json()
+        done = client.post(f"/v1/team/tasks/{created['id']}/run").json()
+        assert done["status"] == "done"
+
+        after = client.post(
+            f"/v1/team/tasks/{created['id']}/approve",
+            json={"token": "secret-team"},
+        ).json()
+        assert after["status"] == "done"
+    finally:
+        monkeypatch_token.undo()
+
+
 def test_team_cancel() -> None:
     client = TestClient(app)
     created = client.post(

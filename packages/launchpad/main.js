@@ -97,6 +97,10 @@ function defaultConfig() {
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
     statusApiUrl: 'http://192.168.0.245:8792/api/servers',
+    statusApiUrls: [
+      'http://192.168.0.245:8792/api/servers',
+      'http://192.168.0.246:8792/api/servers',
+    ],
     patchServerUrl: 'http://192.168.0.246:8080',
     patchServerUrlNas: 'http://192.168.0.245:8080',
     diskSpaceWarningGb: 40,
@@ -129,6 +133,9 @@ function migrateLegacyConfig(legacy) {
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
     statusApiUrl: legacy.statusApiUrl || defaultConfig().statusApiUrl,
+    statusApiUrls: Array.isArray(legacy.statusApiUrls) && legacy.statusApiUrls.length
+      ? legacy.statusApiUrls
+      : defaultConfig().statusApiUrls,
     patchServerUrl: legacy.patchServerUrl || defaultConfig().patchServerUrl,
     patchServerUrlNas: legacy.patchServerUrlNas || '',
     diskSpaceWarningGb: legacy.diskSpaceWarningGb ?? 40,
@@ -684,9 +691,24 @@ function mapStatusApiRows(rows) {
 
 async function checkServerStatus() {
   if (!mainWindow) return;
+  const urls = Array.isArray(config.statusApiUrls) && config.statusApiUrls.length
+    ? config.statusApiUrls
+    : [config.statusApiUrl].filter(Boolean);
   try {
-    const rows = await httpGetJson(config.statusApiUrl, STATUS_API_TIMEOUT_MS);
-    const mapped = mapStatusApiRows(rows);
+    const chunks = await Promise.all(
+      urls.map((url) => httpGetJson(url, STATUS_API_TIMEOUT_MS)),
+    );
+    const merged = [];
+    const seen = new Set();
+    for (const rows of chunks) {
+      for (const row of Array.isArray(rows) ? rows : []) {
+        const id = row.id === 'swgemu' ? 'precu' : row.id === 'prime' ? 'prime' : row.id;
+        if (seen.has(id)) continue;
+        seen.add(id);
+        merged.push(row);
+      }
+    }
+    const mapped = mapStatusApiRows(merged);
     lastGoodServerStatus = mapped;
     statusApiFailStreak = 0;
     mainWindow.webContents.send('servers-status', { source: 'api', servers: mapped });

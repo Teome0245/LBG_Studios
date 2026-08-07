@@ -44,13 +44,14 @@
 | Action | Statut |
 |--------|--------|
 | UI admin `:8792` sur 245 (systemd + `/etc/lbg-core3-account-admin.env`) | **OK** — `active` |
-| API `/api/servers` : IP client + statut + port | **OK** — PreCU `192.168.0.245:44453`, Prime `192.168.0.246:44553` |
+| UI admin `:8792` sur 246 (Prime isolé) | **OK** — `start_core3_account_admin_prime_vm.sh` |
+| API `/api/servers` : une pastille par VM | **OK** — 245 `swgemu` · 246 `prime` |
 | Launchpad `launchpad.config.json` v2.0.3 (source + `dist/win-unpacked`) | **OK** |
 | `qemu-guest-agent` sur 246 | **OK** — `active` (remontée IP Proxmox) |
 | Reboot complet 246 | **OK** — Prime `READY` après ~2 min |
 | RAM 246 post-reboot | **7,8 Go** visibles dans la VM — si +4 Go attendus côté Proxmox, vérifier la taille mémoire dans l’hyperviseur puis redémarrer à nouveau |
 | Services IA sur **246** (sidecar `:8791`, bots Lia/Nix) | **OK** — `lbg-core3-ia-sidecar`, `lbg-core3-ia-bot-client`, `lbg-core3-ia-bot-client-nix` actifs |
-| UI admin comptes `:8792` | Reste sur **245** (MariaDB locale) — pas sur 246 |
+| UI admin comptes `:8792` | **245** PreCU (swgemu) + **246** Prime (core3-clean) — surfaces isolées |
 
 ### Correctifs infra
 

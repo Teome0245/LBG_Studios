@@ -878,6 +878,8 @@ def approve_task(task_id: str, token: str) -> TeamTask | None:
     task = team_store.get_task(task_id)
     if task is None:
         return None
+    if task.status in ("done", "cancelled", "running"):
+        return task
     if not approval_token_valid(token):
         team_store.update_task(
             task_id,
