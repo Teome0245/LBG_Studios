@@ -60,6 +60,17 @@ LBG_NEW_MMO_ROOT=/home/sdesh/projects/new_mmo
 
 **2026-07-21** : `LBG_TEAM_GODOT_SOE_M3=0` appliqué sur VM **140** — LoginServer `:44553` injoignable / chemin produit = **lbg-ws/2** (pas `soe_handshake`). Les followups « SOE KO » ne doivent plus spammer Element.
 
+**2026-08-05** : garde-fous anti-bruit followups (`team/followup_guard.py`) — cooldown signature, profondeur max, pas de cascade depuis tâches `_godot_followup` / `_m9_followup`, auto-run **PM seulement** par défaut (dev opt-in).
+
+```bash
+LBG_TEAM_FOLLOWUP_COOLDOWN_S=3600      # même signature → 1 vague / h
+LBG_TEAM_FOLLOWUP_MAX_DEPTH=2          # pas de chaîne parent > 2
+LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN_PM=1  # Thémis L1 auto (défaut)
+LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN_DEV=0 # Dédale/player_ia en file, pas auto-run (défaut)
+LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_PM=1
+LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_DEV=0
+```
+
 **2026-07-22** : gateway Godot M11/M12 **migré sur Prime `192.168.0.246`** (HTTP `:8765` + WS `:50000`). Ancien hôte **245** = PreCU / sandbox uniquement — ne plus pointer `LbgAuthClient` / smokes vers 245.
 ---
 

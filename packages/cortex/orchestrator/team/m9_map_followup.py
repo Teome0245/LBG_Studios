@@ -6,6 +6,7 @@ import os
 import time
 from typing import Any
 
+from team import followup_guard
 from team import store as team_store
 from team.models import TeamTask
 
@@ -18,12 +19,29 @@ def followup_actor_id() -> str:
     return os.environ.get("LBG_TEAM_M9_FOLLOWUP_ACTOR_ID", "system:team_m9_followup").strip()
 
 
-def auto_run_followup_enabled() -> bool:
-    return os.environ.get("LBG_TEAM_M9_FOLLOWUP_AUTO_RUN", "1").strip().lower() in ("1", "true", "yes", "on")
+def auto_run_pm_enabled() -> bool:
+    legacy = os.environ.get("LBG_TEAM_M9_FOLLOWUP_AUTO_RUN", "1").strip().lower()
+    if legacy in ("0", "false", "no", "off"):
+        return False
+    return os.environ.get("LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_PM", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def auto_run_dev_enabled() -> bool:
+    return os.environ.get("LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_DEV", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
 
 
 def auto_run_followup_tasks(task_ids: list[str]) -> list[dict[str, object]]:
-    if not auto_run_followup_enabled():
+    if not auto_run_pm_enabled() and not auto_run_dev_enabled():
         return []
     from team import roles as team_roles
 
@@ -32,7 +50,13 @@ def auto_run_followup_tasks(task_ids: list[str]) -> list[dict[str, object]]:
         task = team_store.get_task(tid)
         if task is None or task.status != "queued":
             continue
-        if task.role not in ("pm", "dev_godot", "dev_game", "ops"):
+        if task.role == "pm":
+            if not auto_run_pm_enabled():
+                continue
+        elif task.role in ("dev_godot", "dev_game", "ops"):
+            if not auto_run_dev_enabled():
+                continue
+        else:
             continue
         ran = team_roles.run_task(tid)
         if ran is not None:
@@ -87,6 +111,25 @@ def maybe_spawn_after_m9_failure(task: TeamTask) -> list[str]:
     track = str(result.get("track") or task.context.get("m9_track") or "m9_full")
     gaps = _collect_gaps(result)
     next_track = _next_track(track, gaps)
+    signature = followup_guard.m9_signature(result, track=track)
+    suppress = followup_guard.should_suppress_spawn(
+        task,
+        family="m9",
+        signature=signature,
+        roles=("dev_godot", "dev_game"),
+    )
+    if suppress:
+        team_store.update_task(
+            task.id,
+            context_patch={
+                "_m9_followup_spawned": True,
+                "_m9_followup_suppressed": suppress,
+                "_m9_followup_signature": signature,
+                "_m9_followup_ts": time.time(),
+            },
+        )
+        return []
+
     parent_ref = {"parent_task_id": task.id, "parent_trace_id": task.trace_id}
     created_ids: list[str] = []
 
@@ -122,6 +165,7 @@ def maybe_spawn_after_m9_failure(task: TeamTask) -> list[str]:
             "subproject": "godot_iris",
             "dev_godot_focus": True,
             "m9_failure_gaps": gaps[:8],
+            **followup_guard.followup_context_extras(family="m9", signature=signature),
         },
     )
     created_ids.append(dev.id)
@@ -156,11 +200,13 @@ def maybe_spawn_after_m9_failure(task: TeamTask) -> list[str]:
         )
         created_ids.append(ops.id)
 
+    followup_guard.record_spawn("m9", signature, parent_task_id=task.id)
     team_store.update_task(
         task.id,
         context_patch={
             "_m9_followup_spawned": True,
             "_m9_followup_task_ids": created_ids,
+            "_m9_followup_signature": signature,
             "_m9_followup_ts": time.time(),
         },
     )
