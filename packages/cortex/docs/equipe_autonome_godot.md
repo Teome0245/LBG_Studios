@@ -82,6 +82,12 @@ bash infra/scripts/diag_godot_supervisor.sh --json
 
 # Via API orchestrateur 140 depuis poste dev
 LBG_ORCHESTRATOR_URL=http://192.168.0.140:8010 bash infra/scripts/diag_godot_supervisor.sh --remote
+
+# SSH direct 140 (recommandé — env LAN + accès sidecar 246)
+bash infra/scripts/diag_godot_supervisor.sh --ssh
+
+# One-liner copier-coller (sans script local)
+ssh -o ConnectTimeout=8 lbg@192.168.0.140 'set -a; . /etc/lbg-ia-mmo.env; set +a; cd /opt/LBG_IA_MMO/orchestrator && PYTHONPATH=. /opt/LBG_IA_MMO/.venv/bin/python3 -c "import json,os; os.environ.setdefault(\"LBG_TEAM_GODOT_SOE_M3\",\"0\"); os.environ.setdefault(\"LBG_TEAM_GODOT_SOE_M5\",\"0\"); os.environ.setdefault(\"LBG_TEAM_GODOT_GATEWAY_SMOKE\",\"0\"); from team.godot_supervisor import execute_godot_supervisor; from team.models import TeamTask; t=TeamTask(id=\"diag\",role=\"qa\",objective=\"diag\",status=\"running\",priority=\"normal\",approval_required=False,actor_id=\"system:diag_godot_supervisor\",context={\"godot_mode\":\"full\"}); o=execute_godot_supervisor(t); print(o.get(\"human_summary\") or json.dumps(o,ensure_ascii=False,indent=2))"'
 ```
 
 Pistes **bloquantes** par défaut (`LBG_TEAM_GODOT_SUPERVISOR_BLOCKING`) : `sidecar_m1`, `godot_mirror_m1`, `lbg_ws2_readiness`.  
