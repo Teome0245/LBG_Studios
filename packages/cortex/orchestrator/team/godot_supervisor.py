@@ -11,6 +11,7 @@ from typing import Any
 
 import httpx
 
+from team.godot_supervisor_report import build_supervisor_report
 from team.godot_soe_probe import probe_soe_m3_login, probe_soe_m3_zone, probe_soe_m5_play, soe_m3_enabled, soe_m5_enabled
 from team.lbg_ws2_audit import audit_zb0_readiness
 from team.models import TeamTask
@@ -188,15 +189,20 @@ def execute_godot_supervisor(task: TeamTask) -> dict[str, object]:
     required = [t for t in tracks if not t.get("skipped")]
     sidecar_tracks = [t for t in required if t.get("track") in ("sidecar_m1", "godot_mirror_m1")]
     sidecar_ok = all(t.get("ok") for t in sidecar_tracks) if sidecar_tracks else True
-    other_ok = all(t.get("ok") for t in required if t.get("track") not in ("sidecar_m1", "godot_mirror_m1"))
-    all_ok = sidecar_ok and other_ok
+
+    report = build_supervisor_report(tracks=tracks, sidecar_ok=sidecar_ok, mode=mode)
 
     return {
         "kind": "godot_supervisor",
-        "ok": all_ok,
+        "ok": report["ok"],
         "mode": mode,
         "tracks": tracks,
         "sidecar_ok": sidecar_ok,
+        "blocking_failed": report["blocking_failed"],
+        "advisory_failed": report["advisory_failed"],
+        "human_summary": report["human_summary"],
+        "blockers": report["blockers"],
+        "deliverables": report["deliverables"],
         "ts": time.time(),
         "subproject": "client_godot",
     }

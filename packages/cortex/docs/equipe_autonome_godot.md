@@ -71,6 +71,22 @@ LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_PM=1
 LBG_TEAM_M9_FOLLOWUP_AUTO_RUN_DEV=0
 ```
 
+**Diagnostic Argus (superviseur Godot)** — gaps sidecar / miroir / lbg-ws/2 :
+
+```bash
+# Sur VM 140 (orchestrateur + env LAN)
+bash infra/scripts/diag_godot_supervisor.sh
+
+# JSON pour lbg_bot / scripts
+bash infra/scripts/diag_godot_supervisor.sh --json
+
+# Via API orchestrateur 140 depuis poste dev
+LBG_ORCHESTRATOR_URL=http://192.168.0.140:8010 bash infra/scripts/diag_godot_supervisor.sh --remote
+```
+
+Pistes **bloquantes** par défaut (`LBG_TEAM_GODOT_SUPERVISOR_BLOCKING`) : `sidecar_m1`, `godot_mirror_m1`, `lbg_ws2_readiness`.  
+ZB-0 et Infographiste = **advisory** (visible dans `human_summary`, ne déclenchent plus followup Dédale seuls).
+
 **2026-07-22** : gateway Godot M11/M12 **migré sur Prime `192.168.0.246`** (HTTP `:8765` + WS `:50000`). Ancien hôte **245** = PreCU / sandbox uniquement — ne plus pointer `LbgAuthClient` / smokes vers 245.
 ---
 

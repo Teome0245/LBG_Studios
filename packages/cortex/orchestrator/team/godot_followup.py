@@ -81,6 +81,22 @@ def maybe_spawn_after_godot_failure(task: TeamTask) -> list[str]:
     if result.get("kind") not in ("godot_supervisor", "godot_client_workflow", "godot_client_tracks_workflow"):
         return []
 
+    # Superviseur : followup seulement si piste(s) bloquante(s) KO (pas zb0/infographiste seuls)
+    if result.get("kind") == "godot_supervisor":
+        blocking_failed = result.get("blocking_failed")
+        if isinstance(blocking_failed, list) and len(blocking_failed) == 0:
+            team_store.update_task(
+                task.id,
+                context_patch={
+                    "_godot_followup_spawned": True,
+                    "_godot_followup_suppressed": "advisory_only",
+                    "_godot_followup_ts": time.time(),
+                },
+            )
+            return []
+        if result.get("ok") is True:
+            return []
+
     dev_track = str(result.get("track") or task.context.get("godot_track") or "client_live")
     signature = followup_guard.godot_signature(result, track=dev_track)
     suppress = followup_guard.should_suppress_spawn(task, family="godot", signature=signature)
