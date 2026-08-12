@@ -1,5 +1,14 @@
 # Plan — Capability Cursor Cloud Agent (exécutant code / PR)
 
+**Statut : FAIT** (validé LAN 2026-08-09)
+
+| Check | Résultat |
+|-------|----------|
+| `GET .140:8010/v1/team/cursor/health` | `ready=true` (enabled + clé + sdk + allowlist) |
+| `POST …/v1/team/cursor/launch` dry-run | `ok=true` |
+| Smoke `infra/scripts/smoke_cursor_agent_lan.sh` | exit 0 |
+| Orch UI `cursor:` → Cloud Agent (sans PR) | `source=cursor`, timeline `cursor_cloud` ok |
+
 ## Failed Team — deux couches
 
 | Couche | Rôle |

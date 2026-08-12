@@ -1,0 +1,20 @@
+[Unit]
+Description=LBG LAN executor — poll Team WSL tasks (CT / VM, remplace WSL poste .10)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=LBG_ORCHESTRATOR_URL=http://192.168.0.140:8010
+Environment=LBG_WSL_POLL_INTERVAL_S=30
+Environment=LBG_WSL_EXECUTOR_ID=lbg-executor-ct
+WorkingDirectory=/opt/LBG_IA_MMO
+ExecStart=/opt/LBG_IA_MMO/infra/scripts/lbg_wsl_executor.sh --loop
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

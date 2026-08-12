@@ -32,6 +32,19 @@ func _ready() -> void:
 	_load_map_texture()
 	_apply_scale()
 	_apply_world_render()
+	set_process(MapTextureLoader.use_procedural_backdrop())
+
+func _process(_delta: float) -> void:
+	_sync_backdrop_to_camera()
+
+func _sync_backdrop_to_camera() -> void:
+	if _backdrop == null:
+		return
+	var cam := get_parent().get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		return
+	# Le fond procédural est centré sur (0,0) monde — le faire suivre la caméra.
+	_backdrop.global_position = cam.global_position
 
 func _setup_backdrop() -> void:
 	if not MapTextureLoader.use_procedural_backdrop():
@@ -116,10 +129,14 @@ func _load_map_texture() -> void:
 		_has_texture = true
 		print("[WorldMap] texture %s" % MapTextureLoader.resolve_path("world"))
 		return
-	print("[WorldMap] Pas d'image — grille. Lance: python3 tools/map_export/export_tatooine_for_godot.py")
+	if MapTextureLoader.use_procedural_backdrop():
+		show_grid = false
+		print("[WorldMap] fond procédural (planet_backdrop) — pas de grille debug")
+	else:
+		print("[WorldMap] Pas d'image — grille fallback. Lance: python3 tools/map_export/export_tatooine_for_godot.py")
+		show_grid = true
 	if _sprite:
 		_sprite.visible = false
-	show_grid = true
 	queue_redraw()
 
 func _texture_core3_rect(cfg: Dictionary) -> Rect2:
@@ -167,7 +184,7 @@ func _apply_scale() -> void:
 	)
 
 func _draw() -> void:
-	if _has_texture or not show_grid:
+	if _has_texture or not show_grid or MapTextureLoader.use_procedural_backdrop():
 		return
 	var world_px: float = half_size * Projection3D2D.SCALE
 	var grid_step: float = 512.0 * Projection3D2D.SCALE

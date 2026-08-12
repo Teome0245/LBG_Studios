@@ -10,6 +10,10 @@ import httpx
 # Rôles REASON dont le modèle doit être présent sur le nœud light (111).
 _LIGHT_ROLES = frozenset({"reason_router", "reason_json", "reason_fast"})
 
+# Rôles legacy / advisory — n'échouent pas l'audit ops (warning seulement).
+_ADVISORY_ROLES = frozenset({"companion"})
+_LEGACY_MODEL_PREFIXES = ("phi4-mini", "gemma3:4b")
+
 
 def ollama_base_url() -> str:
     """Nœud heavy (110) — défaut historique."""
@@ -204,7 +208,6 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
     heavy_url = (base_url or ollama_base_url()).rstrip("/")
     light_url = light_ollama_base_url()
     config = _configured_models()
-    gaps: list[str] = []
     missing: list[dict[str, str]] = []
 
     heavy = _audit_one_host(heavy_url, tier="heavy")
@@ -213,10 +216,13 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
     heavy_names: set[str] = set(heavy.get("names") or [])
     light_names: set[str] = set(light.get("names") or [])
 
+    warnings: list[str] = []
+    blocking_gaps: list[str] = []
+
     if heavy.get("error"):
-        gaps.append(f"heavy injoignable ({heavy_url}): {heavy['error']}")
+        blocking_gaps.append(f"heavy injoignable ({heavy_url}): {heavy['error']}")
     if light.get("error"):
-        gaps.append(f"light injoignable ({light_url}): {light['error']}")
+        blocking_gaps.append(f"light injoignable ({light_url}): {light['error']}")
 
     for role, model in config.items():
         if not model:
@@ -228,9 +234,17 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
             pool, label = light_names, "111-light"
         else:
             pool, label = heavy_names, "110-heavy"
-        if not _model_available(model, pool):
-            gaps.append(f"{role}: {model} absent sur {label}")
-            missing.append({"role": role, "model": model, "base_url": role_url, "host": label})
+        if _model_available(model, pool):
+            continue
+        entry = f"{role}: {model} absent sur {label}"
+        missing.append({"role": role, "model": model, "base_url": role_url, "host": label})
+        is_legacy = any(model.startswith(p) or p in model for p in _LEGACY_MODEL_PREFIXES)
+        if role in _ADVISORY_ROLES or is_legacy:
+            warnings.append(f"{entry} (advisory)")
+            continue
+        blocking_gaps.append(entry)
+
+    gaps = blocking_gaps + warnings
 
     failover = os.environ.get("LBG_REASON_LIGHT_FAILOVER_HEAVY", "1").strip().lower() in (
         "1",
@@ -239,12 +253,19 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
         "on",
     )
     ok = bool(heavy.get("ok")) and len(heavy_names) > 0
-    heavy_blocking = [g for g in gaps if "110-heavy" in g or g.startswith("heavy injoignable")]
+    heavy_blocking = [g for g in blocking_gaps if "110-heavy" in g or g.startswith("heavy injoignable")]
     if heavy_blocking:
         ok = False
-    # Light KO ou modèle light manquant : OK soft si failover vers heavy.
-    if any("111-light" in g or g.startswith("light injoignable") for g in gaps):
+    # Light KO ou modèle light manquant : OK soft si failover heavy (gemma4:e2b sur 110).
+    light_blocking = [
+        g for g in blocking_gaps if "111-light" in g or g.startswith("light injoignable")
+    ]
+    if light_blocking:
         if failover and heavy.get("ok") and len(heavy_names) > 0 and not heavy_blocking:
+            for g in light_blocking:
+                warnings.append(f"{g} (failover heavy actif)")
+            blocking_gaps = [g for g in blocking_gaps if g not in light_blocking]
+            gaps = blocking_gaps + warnings
             ok = True
         else:
             ok = False
@@ -268,6 +289,8 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
         "light": {k: v for k, v in light.items() if k != "installed"} | {"installed": light.get("installed")},
         "configured": config,
         "gaps": gaps,
+        "blocking_gaps": blocking_gaps,
+        "warnings": warnings,
         "missing_models": missing,
         "recommendations": recs,
         "host_role": "dual_llm_110_heavy_111_light",

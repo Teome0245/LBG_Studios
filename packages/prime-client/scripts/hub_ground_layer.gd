@@ -6,6 +6,7 @@ const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 const PROPS_PATH := "res://assets/maps/lost_heaven_props.json"
 
 @export var visible_ground: bool = true
+@export var draw_emprise_fill: bool = false
 @export var padding_m: float = 48.0
 @export var hub_fill_alpha: float = 0.18
 
@@ -93,17 +94,18 @@ func _draw() -> void:
 	var tl := Projection3D2D.to_screen(Vector3(float(b["min_x"]), 0.0, float(b["min_z"])))
 	var br := Projection3D2D.to_screen(Vector3(float(b["max_x"]), 0.0, float(b["max_z"])))
 	var rect := Rect2(tl, br - tl)
-	# Teinte légère — laisser voir la texture planète (satellite) en dessous
-	draw_rect(rect, Color(0.36, 0.28, 0.18, hub_fill_alpha))
-	draw_rect(rect, Color(0.72, 0.52, 0.28, clampf(hub_fill_alpha + 0.22, 0.0, 0.65)), false, 2.0)
-	# Plaza centrale plus claire
+	if draw_emprise_fill and hub_fill_alpha > 0.001:
+		# Teinte légère — laisser voir la texture planète (satellite) en dessous
+		draw_rect(rect, Color(0.36, 0.28, 0.18, hub_fill_alpha))
+		draw_rect(rect, Color(0.72, 0.52, 0.28, clampf(hub_fill_alpha + 0.22, 0.0, 0.65)), false, 2.0)
+		_draw_desert_grain(rect)
+	# Plaza centrale (repère discret, pas l'emprise rectangulaire)
 	if _plaza_points.size() >= 3:
-		draw_colored_polygon(_plaza_points, Color(0.70, 0.54, 0.34, 0.62))
-		draw_polyline(_plaza_points, Color(0.92, 0.72, 0.38, 0.75), 2.2, true)
+		draw_colored_polygon(_plaza_points, Color(0.70, 0.54, 0.34, 0.22))
+		draw_polyline(_plaza_points, Color(0.92, 0.72, 0.38, 0.45), 1.6, true)
 	var center := Projection3D2D.to_screen(Vector3(_anchor.x, 0.0, _anchor.y))
 	draw_circle(center, 7.0, Color(0.95, 0.75, 0.35, 0.95))
 	draw_arc(center, 16.0, 0.0, TAU, 28, Color(0.95, 0.75, 0.35, 0.5), 1.8)
-	_draw_desert_grain(rect)
 
 func _draw_desert_grain(rect: Rect2) -> void:
 	var rng := RandomNumberGenerator.new()

@@ -18,7 +18,8 @@
 ## Contrôles
 
 - **H** — recentrer caméra hub (4749, -737)
-- **Ctrl+H** — toggle sol + bâtiments + props
+- **Ctrl+H** — toggle sol + bâtiments + props hub (art LH)
+- **Ctrl+C** — toggle collisions / palissade debug (zone_layers)
 - **L** — nameplates entités (off par défaut)
 - **F9** — panneau debug
 

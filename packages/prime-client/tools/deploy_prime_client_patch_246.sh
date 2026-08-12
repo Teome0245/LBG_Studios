@@ -91,3 +91,10 @@ echo ""
 echo "Reference publique :"
 echo "  ${BASE}/patches/${CHANNEL}/manifest.json"
 echo "Launchpad : patchServerUrl=${BASE}  patchChannel=${CHANNEL}"
+
+# Bootstrap install nouveau PC (script PS1 + installer-manifest)
+if [[ "${SKIP_BOOTSTRAP_PUBLISH:-0}" != "1" ]]; then
+  echo ""
+  echo "==> Publication bootstrap install"
+  bash "${ROOT}/tools/publish_client_bootstrap_246.sh" || echo "WARN: bootstrap publish échoué (optionnel)"
+fi

@@ -53,6 +53,8 @@ def _already_handled(task: TeamTask) -> bool:
         return True
     if ctx.get("_godot_followup_spawned") or ctx.get("_m9_followup_spawned"):
         return True
+    if ctx.get("_godot_followup") or ctx.get("_m9_followup"):
+        return True
     if ctx.get("_failure_followup") or ctx.get("_failure_retry"):
         return True
     return False

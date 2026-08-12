@@ -110,6 +110,26 @@ def test_route_intent_project_pm_context_flag() -> None:
     assert data["routed_to"] == "agent.pm"
 
 
+def test_route_intent_infers_desktop_open_app_from_text() -> None:
+    """Texte libre « ouvre vghd sur mon poste » doit router desktop_control (pas dialogue/unknown)."""
+    client = TestClient(app)
+    r = client.post(
+        "/v1/route",
+        json={
+            "actor_id": "ops:1",
+            "text": "ouvre vghd sur mon poste",
+            "context": {"desktop_dry_run": True},
+        },
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["intent"] == "desktop_control"
+    assert data["routed_to"] == "agent.desktop"
+    out = data["output"]
+    assert out["capability"] == "desktop_control"
+    assert out["policy"]["decision"] == "dry_run"
+
+
 def test_route_intent_desktop_action_forces_desktop_control() -> None:
     client = TestClient(app)
     r = client.post(

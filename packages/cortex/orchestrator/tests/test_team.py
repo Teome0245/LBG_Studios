@@ -34,6 +34,23 @@ def test_team_plan_proposes_roles() -> None:
     assert "pm" in roles
 
 
+def test_plan_from_objective_proxmox_storage_focused() -> None:
+    """Disk/Proxmox/Prime → ops proxmox_storage, sans smoke QA ni player_ia parasites."""
+    props = team_roles.plan_from_objective(
+        "@hephaistos — point Infra LAN / Proxmox : vérifier disk Prime (.246) et pool thin local-lvm",
+        actor_id="u:heph",
+    )
+    roles = [p["role"] for p in props]
+    assert roles == ["ops", "ops"]
+    kinds = [
+        ((p.get("context") or {}).get("devops_action") or {}).get("kind")
+        for p in props
+    ]
+    assert "proxmox_storage" in kinds
+    assert "storage_remediation_plan" in kinds
+    assert all((p.get("context") or {}).get("ops_kind") == "proxmox_storage" for p in props)
+
+
 def test_team_create_list_get() -> None:
     client = TestClient(app)
     r = client.post(

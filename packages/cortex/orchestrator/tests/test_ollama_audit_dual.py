@@ -55,13 +55,47 @@ def test_audit_ollama_lan_dual(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out["gaps"] == []
 
 
-def test_audit_detects_missing_light_model(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_audit_companion_legacy_is_advisory(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LBG_REASON_LIGHT_BASE_URL", "http://192.168.0.111:11434")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://192.168.0.110:11434")
+    monkeypatch.setenv("LBG_COMPANION_LLM_MODEL", "phi4-mini:latest")
+    monkeypatch.delenv("LBG_REASON_MODEL_FAST", raising=False)
+    for k in (
+        "LBG_REASON_MODEL_ROUTER",
+        "LBG_REASON_MODEL_JSON",
+        "LBG_REASON_MODEL_CODE",
+        "LBG_REASON_MODEL_FORGE",
+        "LBG_REASON_MODEL_PM",
+        "LBG_REASON_LOCAL_MODEL",
+        "LBG_DIALOGUE_LLM_MODEL",
+        "LBG_DIALOGUE_FAST_MODEL",
+        "LBG_JOBS_PLANNER_LLM_MODEL",
+    ):
+        monkeypatch.delenv(k, raising=False)
+
+    def fake_fetch(base: str, *, timeout: float = 10.0) -> dict:
+        if "111" in base:
+            return {"installed": [{"name": "qwen2.5:3b", "size_gb": 1.9}], "names": {"qwen2.5:3b"}}
+        return {
+            "installed": [{"name": "gemma4:e2b", "size_gb": 7.0}],
+            "names": {"gemma4:e2b"},
+        }
+
+    monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
+    out = oa.audit_ollama_lan()
+    assert out["ok"] is True
+    assert any("companion" in w for w in out.get("warnings") or [])
+    assert not any("companion" in g for g in out.get("blocking_gaps") or [])
+
+
+def test_audit_detects_missing_light_model_failover_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_REASON_LIGHT_BASE_URL", "http://192.168.0.111:11434")
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://192.168.0.110:11434")
     monkeypatch.setenv("LBG_REASON_MODEL_ROUTER", "qwen2.5:3b")
+    monkeypatch.setenv("LBG_REASON_MODEL_FAST", "gemma4:e2b")
+    monkeypatch.setenv("LBG_REASON_LIGHT_FAILOVER_HEAVY", "1")
     for k in (
         "LBG_REASON_MODEL_JSON",
-        "LBG_REASON_MODEL_FAST",
         "LBG_REASON_MODEL_CODE",
         "LBG_REASON_MODEL_FORGE",
         "LBG_REASON_MODEL_PM",
@@ -80,4 +114,5 @@ def test_audit_detects_missing_light_model(monkeypatch: pytest.MonkeyPatch) -> N
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
     out = oa.audit_ollama_lan()
-    assert any("reason_router" in g and "111-light" in g for g in out["gaps"])
+    assert out["ok"] is True
+    assert any("reason_router" in w for w in out.get("warnings") or [])

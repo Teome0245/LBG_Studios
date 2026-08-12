@@ -6,6 +6,7 @@ import os
 import time
 from typing import Any
 
+from team import followup_guard
 from team import store as team_store
 from team.models import TeamTask
 
@@ -23,8 +24,21 @@ def followup_actor_id() -> str:
     return os.environ.get("LBG_TEAM_GODOT_FOLLOWUP_ACTOR_ID", "system:team_godot_followup").strip()
 
 
-def auto_run_followup_enabled() -> bool:
-    return os.environ.get("LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN", "1").strip().lower() in (
+def auto_run_pm_enabled() -> bool:
+    """PM L1 auto-run (défaut). Dev/player_ia : opt-in via LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN_DEV."""
+    legacy = os.environ.get("LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN", "1").strip().lower()
+    if legacy in ("0", "false", "no", "off"):
+        return False
+    return os.environ.get("LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN_PM", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def auto_run_dev_enabled() -> bool:
+    return os.environ.get("LBG_TEAM_GODOT_FOLLOWUP_AUTO_RUN_DEV", "0").strip().lower() in (
         "1",
         "true",
         "yes",
@@ -33,7 +47,7 @@ def auto_run_followup_enabled() -> bool:
 
 
 def auto_run_followup_tasks(task_ids: list[str]) -> list[dict[str, object]]:
-    if not auto_run_followup_enabled():
+    if not auto_run_pm_enabled() and not auto_run_dev_enabled():
         return []
     from team import roles as team_roles
 
@@ -42,7 +56,13 @@ def auto_run_followup_tasks(task_ids: list[str]) -> list[dict[str, object]]:
         task = team_store.get_task(tid)
         if task is None or task.status != "queued":
             continue
-        if task.role not in ("pm", "dev_game", "player_ia"):
+        if task.role == "pm":
+            if not auto_run_pm_enabled():
+                continue
+        elif task.role in ("dev_game", "player_ia"):
+            if not auto_run_dev_enabled():
+                continue
+        else:
             continue
         ran = team_roles.run_task(tid)
         if ran is not None:
@@ -59,6 +79,37 @@ def maybe_spawn_after_godot_failure(task: TeamTask) -> list[str]:
         return []
     result = task.result if isinstance(task.result, dict) else {}
     if result.get("kind") not in ("godot_supervisor", "godot_client_workflow", "godot_client_tracks_workflow"):
+        return []
+
+    # Superviseur : followup seulement si piste(s) bloquante(s) KO (pas zb0/infographiste seuls)
+    if result.get("kind") == "godot_supervisor":
+        blocking_failed = result.get("blocking_failed")
+        if isinstance(blocking_failed, list) and len(blocking_failed) == 0:
+            team_store.update_task(
+                task.id,
+                context_patch={
+                    "_godot_followup_spawned": True,
+                    "_godot_followup_suppressed": "advisory_only",
+                    "_godot_followup_ts": time.time(),
+                },
+            )
+            return []
+        if result.get("ok") is True:
+            return []
+
+    dev_track = str(result.get("track") or task.context.get("godot_track") or "client_live")
+    signature = followup_guard.godot_signature(result, track=dev_track)
+    suppress = followup_guard.should_suppress_spawn(task, family="godot", signature=signature)
+    if suppress:
+        team_store.update_task(
+            task.id,
+            context_patch={
+                "_godot_followup_spawned": True,
+                "_godot_followup_suppressed": suppress,
+                "_godot_followup_signature": signature,
+                "_godot_followup_ts": time.time(),
+            },
+        )
         return []
 
     tracks = result.get("tracks") if isinstance(result.get("tracks"), list) else []
@@ -131,7 +182,10 @@ def maybe_spawn_after_godot_failure(task: TeamTask) -> list[str]:
         objective=dev_obj,
         actor_id=followup_actor_id(),
         priority="high",
-        context=dev_ctx,
+        context={
+            **dev_ctx,
+            **followup_guard.followup_context_extras(family="godot", signature=signature),
+        },
     )
     created_ids.append(dev.id)
 
@@ -145,11 +199,13 @@ def maybe_spawn_after_godot_failure(task: TeamTask) -> list[str]:
         )
         created_ids.append(pia.id)
 
+    followup_guard.record_spawn("godot", signature, parent_task_id=task.id)
     team_store.update_task(
         task.id,
         context_patch={
             "_godot_followup_spawned": True,
             "_godot_followup_task_ids": created_ids,
+            "_godot_followup_signature": signature,
             "_godot_followup_ts": time.time(),
         },
     )

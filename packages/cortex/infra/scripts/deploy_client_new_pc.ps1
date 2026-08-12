@@ -1,11 +1,11 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Déploie LBG Launchpad + clients PreCu/Prime sur un PC Windows vierge.
+  [DEPRECATED] Utiliser packages/prime-client/tools/install_lbg_prime_client.ps1
 
-.DESCRIPTION
-  Copie le launchpad, les installations jeu (robocopy), ajuste launchpad.config.json
-  et applique les patches HTTP (manifest MD5) depuis la VM 245.
+  Ancien déploiement PreCu + prime-lbg (retail). Le client Prime actuel est Godot prime-client.
+  Voir packages/prime-client/docs/INSTALL_NEW_PC.md
+#>
 
 .PARAMETER TargetRoot
   Racine cible (ex. J:\swgemu ou D:\Games\swgemu).

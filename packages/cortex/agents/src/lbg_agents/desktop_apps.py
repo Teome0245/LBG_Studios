@@ -34,7 +34,7 @@ _OPEN_APP_STOP_TOKENS = frozenset(
 _OFFICE_APPS = frozenset({"word", "winword", "msword", "excel", "outlook", "powerpoint"})
 
 # Jeux / apps hors PATH : learn + chemin explicite (objectif ou LBG_DESKTOP_APP_MAP_JSON).
-_CUSTOM_EXE_APPS = frozenset({"swgemu", "word", "winword", "msword"})
+_CUSTOM_EXE_APPS = frozenset({"swgemu", "word", "winword", "msword", "vghd"})
 
 _APP_ALIASES: dict[str, str] = {
     "msword": "word",

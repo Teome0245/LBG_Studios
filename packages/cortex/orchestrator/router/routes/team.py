@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 from dataclasses import asdict
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Header, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
 from team import memory as team_memory
@@ -527,3 +527,121 @@ def team_cursor_launch(payload: CursorLaunchBody) -> dict[str, object]:
         "health": cursor.health(),
         "note": "approval L2 requise avant run si approval_required",
     }
+
+
+def _require_wsl_token(x_lbg_wsl_token: str | None = Header(default=None, alias="X-LBG-WSL-TOKEN")) -> None:
+    from team import wsl_executor
+
+    if not wsl_executor.enabled():
+        raise HTTPException(status_code=503, detail="wsl executor désactivé")
+    if not wsl_executor.check_token(x_lbg_wsl_token):
+        raise HTTPException(status_code=401, detail="token WSL invalide ou manquant")
+
+
+class WslEnqueueBody(BaseModel):
+    wsl_skill: str = Field(..., min_length=1)
+    objective: str = Field(..., min_length=1)
+    actor_id: str = "pilot:wsl"
+    priority: str = "normal"
+    role: str | None = None
+    args: list[str] = Field(default_factory=list)
+    context: dict[str, object] = Field(default_factory=dict)
+
+
+class WslPollBody(BaseModel):
+    executor_id: str = Field(..., min_length=1)
+
+
+class WslCompleteBody(BaseModel):
+    ok: bool = True
+    exit_code: int | None = None
+    stdout_tail: str = ""
+    stderr_tail: str = ""
+    result: dict[str, object] = Field(default_factory=dict)
+    executor_id: str = ""
+
+
+@router.get("/team/wsl/health")
+def team_wsl_health(
+    x_lbg_wsl_token: str | None = Header(default=None, alias="X-LBG-WSL-TOKEN"),
+) -> dict[str, object]:
+    _require_wsl_token(x_lbg_wsl_token)
+    from team import wsl_executor
+
+    out = wsl_executor.health()
+    out["skills"] = wsl_executor.list_skills()
+    return out  # type: ignore[return-value]
+
+
+@router.post("/team/wsl/tasks")
+def team_wsl_enqueue(
+    payload: WslEnqueueBody,
+    x_lbg_wsl_token: str | None = Header(default=None, alias="X-LBG-WSL-TOKEN"),
+) -> dict[str, object]:
+    """Enqueue une tâche à exécuter sur le poste WSL (pull)."""
+    _require_wsl_token(x_lbg_wsl_token)
+    from team import wsl_executor
+
+    if not wsl_executor.skill_allowed(payload.wsl_skill):
+        raise HTTPException(status_code=400, detail=f"wsl_skill hors allowlist: {payload.wsl_skill}")
+    try:
+        task = wsl_executor.enqueue_wsl_task(
+            wsl_skill=payload.wsl_skill,
+            objective=payload.objective,
+            actor_id=payload.actor_id,
+            priority=payload.priority,
+            role=payload.role,
+            args=payload.args or None,
+            extra_context=payload.context or None,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"ok": True, "task": enrich_task_view(asdict(task))}
+
+
+@router.post("/team/wsl/poll")
+def team_wsl_poll(
+    payload: WslPollBody,
+    x_lbg_wsl_token: str | None = Header(default=None, alias="X-LBG-WSL-TOKEN"),
+) -> dict[str, object]:
+    """Claim atomique de la prochaine tâche WSL (queued → running)."""
+    _require_wsl_token(x_lbg_wsl_token)
+    from team import wsl_executor
+
+    task = wsl_executor.claim_next_wsl_task(executor_id=payload.executor_id)
+    if task is None:
+        return {"ok": True, "task": None}
+    meta = wsl_executor.WSL_SKILLS.get(str((task.context or {}).get("wsl_skill") or ""), {})
+    return {
+        "ok": True,
+        "task": enrich_task_view(asdict(task)),
+        "skill_meta": {
+            "script": meta.get("script"),
+            "cwd": meta.get("cwd", "cortex"),
+            "default_args": meta.get("default_args") or [],
+        },
+    }
+
+
+@router.post("/team/wsl/tasks/{task_id}/complete")
+def team_wsl_complete(
+    task_id: str,
+    payload: WslCompleteBody,
+    x_lbg_wsl_token: str | None = Header(default=None, alias="X-LBG-WSL-TOKEN"),
+) -> dict[str, object]:
+    """Rapport de fin d'exécution WSL → done/failed."""
+    _require_wsl_token(x_lbg_wsl_token)
+    from team import wsl_executor
+
+    task = wsl_executor.complete_wsl_task(
+        task_id,
+        ok=payload.ok,
+        exit_code=payload.exit_code,
+        stdout_tail=payload.stdout_tail,
+        stderr_tail=payload.stderr_tail,
+        result=payload.result,
+        executor_id=payload.executor_id,
+    )
+    if task is None:
+        raise HTTPException(status_code=404, detail="tâche WSL introuvable ou non complétable")
+    return {"ok": True, "task": enrich_task_view(asdict(task))}
