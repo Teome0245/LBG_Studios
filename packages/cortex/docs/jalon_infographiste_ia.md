@@ -88,7 +88,7 @@ LBG_INFOGRAPHISTE_LORA_TRAIN_ENABLED=0   # 1 sur poste GPU
 ```bash
 LBG_TEAM_INFOGRAPHISTE_JOB_ENABLED=1
 LBG_TEAM_INFOGRAPHISTE_JOB_ACTOR_ID=system:team_infographiste
-LBG_INFOGRAPHISTE_GODOT_ROOT=/opt/LBG_IA_MMO/lbg_client_godot  # optionnel
+LBG_INFOGRAPHISTE_GODOT_ROOT=/opt/LBG_Studios/packages/prime-client  # défaut : resolve_prime_client_root()
 ```
 
 Install timer :

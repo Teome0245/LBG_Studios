@@ -15,10 +15,25 @@ def _repo_root() -> Path:
 
 
 def godot_client_root() -> Path:
+    """Root client pour sondes Infographiste — prime-client (pas lbg_client_godot gelé)."""
     raw = os.environ.get("LBG_INFOGRAPHISTE_GODOT_ROOT", "").strip()
     if raw:
         return Path(raw)
-    return _repo_root() / "lbg_client_godot"
+    try:
+        from team.prime_client_paths import resolve_prime_client_root
+
+        return resolve_prime_client_root()
+    except Exception:
+        # Fallbacks Studios puis legacy gelé
+        for cand in (
+            _repo_root().parent / "prime-client",
+            Path("/opt/LBG_Studios/packages/prime-client"),
+            Path("/home/sdesh/projects/LBG_Studios/packages/prime-client"),
+            _repo_root() / "lbg_client_godot",
+        ):
+            if cand.is_dir():
+                return cand
+        return _repo_root().parent / "prime-client"
 
 
 def _collect_manifest_glb_paths(manifest: dict[str, Any]) -> list[str]:

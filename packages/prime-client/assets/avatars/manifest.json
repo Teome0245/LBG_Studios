@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "client": "prime-client",
+  "note": "Phase 2D overhead — GLB 3D optionnels (Infographiste). Sprites sous assets/sprites/.",
+  "species": {},
+  "mobile_template": {},
+  "pilot_id": {
+    "lia": "res://assets/sprites/lia.png",
+    "nix": "res://assets/sprites/nix.png",
+    "mira": "res://assets/sprites/mira.png"
+  },
+  "assets": []
+}
