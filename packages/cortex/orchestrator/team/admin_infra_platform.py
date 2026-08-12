@@ -1,9 +1,10 @@
-"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/245/246)."""
+"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/245/246)."""
 
 from __future__ import annotations
 
 import json
 import os
+import socket
 import urllib.error
 import urllib.request
 from typing import Any
@@ -18,7 +19,7 @@ def _host_ip(env_key: str, default: str) -> str:
 
 def admin_infra_perimeter() -> list[str]:
     """Hôtes obligatoires Atlas (front legacy .112 hors périmètre critique)."""
-    return ["110", "111", "140", "245", "246"]
+    return ["110", "111", "140", "141", "245", "246"]
 
 
 def platform_host_specs() -> list[dict[str, Any]]:
@@ -33,12 +34,14 @@ def platform_host_specs() -> list[dict[str, Any]]:
     )
     ip112 = _host_ip("LBG_LAN_HOST_FRONT_LEGACY", "192.168.0.112")
     ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
+    ip141 = _host_ip("LBG_LAN_HOST_EXECUTOR", "192.168.0.141")
     ip245 = _host_ip("LBG_LAN_HOST_PRECU", _host_ip("LBG_LAN_HOST_MMO_SERVER", "192.168.0.245"))
     ip246 = _host_ip("LBG_LAN_HOST_CORE3_PRIME", _host_ip("LBG_LAN_HOST_MMO", "192.168.0.246"))
 
     sidecar = os.environ.get("LBG_CORE3_SIDECAR_URL", f"http://{ip246}:8791").strip().rstrip("/")
     gateway_http = os.environ.get("LBG_TEAM_GODOT_GATEWAY_HOST", ip246).strip().split(":")[0]
     gateway_health = f"http://{gateway_http}:8765/health"
+    orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
 
     probe_front_legacy = os.environ.get("LBG_ATLAS_PROBE_FRONT_LEGACY", "1").strip().lower() in (
         "1",
@@ -84,12 +87,28 @@ def platform_host_specs() -> list[dict[str, Any]]:
             "probes": [
                 {
                     "kind": "http",
-                    "url": os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").rstrip("/") + "/healthz",
+                    "url": orch_url + "/healthz",
                 },
                 {
                     "kind": "http",
                     "url": os.environ.get("LBG_PILOT_URL", f"http://{ip140}:8080").rstrip("/") + "/",
                 },
+                {
+                    "kind": "team_wsl_health",
+                    "url": orch_url + "/v1/team/wsl/health",
+                },
+            ],
+        },
+        {
+            "id": "executor_141",
+            "label": "LAN executor CT (poll Team WSL — remplace poste .10)",
+            "host": ip141,
+            "perimeter_id": "141",
+            "role": "lan_executor",
+            "required": True,
+            "probes": [
+                {"kind": "tcp", "port": 22},
+                {"kind": "team_wsl_bridge", "url": orch_url + "/v1/team/wsl/health"},
             ],
         },
         {
@@ -133,6 +152,42 @@ def platform_host_specs() -> list[dict[str, Any]]:
         )
 
     return specs
+
+
+def _probe_tcp(host: str, port: int, *, timeout: float = 3.0) -> dict[str, Any]:
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return {"host": host, "port": port, "ok": True, "kind": "tcp"}
+    except OSError as exc:
+        return {"host": host, "port": port, "ok": False, "kind": "tcp", "error": str(exc)[:160]}
+
+
+def _probe_team_wsl_health(url: str, *, timeout: float = 4.0) -> dict[str, Any]:
+    probe = _probe_http(url, timeout=timeout)
+    if not probe.get("ok"):
+        return {**probe, "kind": "team_wsl_health", "enabled": False, "skills": 0}
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        enabled = bool(data.get("enabled", True))
+        skills = data.get("skills_allowlist") or []
+        return {
+            **probe,
+            "kind": "team_wsl_health",
+            "enabled": enabled,
+            "skills": len(skills) if isinstance(skills, list) else 0,
+            "pending": data.get("pending"),
+            "ok": enabled and bool(skills),
+        }
+    except (json.JSONDecodeError, OSError, urllib.error.URLError, TimeoutError) as exc:
+        return {**probe, "kind": "team_wsl_health", "ok": False, "parse_error": str(exc)[:120]}
+
+
+def _probe_team_wsl_bridge(url: str, *, timeout: float = 4.0) -> dict[str, Any]:
+    """Pont WSL actif côté orchestrateur (complète la sonde TCP SSH du CT executor)."""
+    probe = _probe_team_wsl_health(url, timeout=timeout)
+    probe["kind"] = "team_wsl_bridge"
+    return probe
 
 
 def _probe_http(url: str, *, timeout: float = 4.0) -> dict[str, Any]:
@@ -182,8 +237,15 @@ def audit_platform_host(spec: dict[str, Any]) -> dict[str, Any]:
             continue
         url = str(probe.get("url") or "")
         kind = str(probe.get("kind") or "http")
+        host = str(spec.get("host") or "")
         if kind == "ollama_tags":
             probes_out.append(_probe_ollama_tags(url))
+        elif kind == "tcp":
+            probes_out.append(_probe_tcp(host, int(probe.get("port") or 22)))
+        elif kind == "team_wsl_health":
+            probes_out.append(_probe_team_wsl_health(url))
+        elif kind == "team_wsl_bridge":
+            probes_out.append(_probe_team_wsl_bridge(url))
         else:
             probes_out.append({**_probe_http(url), "kind": kind})
     ok = all(bool(p.get("ok")) for p in probes_out) if probes_out else False
@@ -225,6 +287,10 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         )
     if not any(h.get("id") == "llm_heavy_110" and h.get("ok") for h in hosts):
         recommendations.append("110 heavy KO — vérifier CT 110 ollama-110 sur Proxmox 201.")
+    if not any(h.get("id") == "executor_141" and h.get("ok") for h in hosts):
+        recommendations.append(
+            "141 executor : vérifier CT lbg-executor (SSH :22) et service lbg-lan-executor (poll Team WSL)."
+        )
     if not any(h.get("id") == "precu_245" and h.get("ok") for h in hosts):
         recommendations.append("245 PreCU : vérifier lbg-mmo / healthz :8050 (sandbox parallèle).")
     if not any(h.get("id") == "prime_246" and h.get("ok") for h in hosts):
@@ -232,12 +298,16 @@ def audit_admin_infra_platform() -> dict[str, Any]:
     if host_ok < hosts_total:
         recommendations.append("Périmètre Atlas incomplet — corriger les sondes critiques avant bench long.")
 
+    ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
+    orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
     topology = {
         "llm_heavy": "192.168.0.110:11434 (CT ollama, code/pm/forge/26b)",
         "llm_light": "192.168.0.111:11434 (NUC CT, Clean qwen2.5:3b / Fast llama3.2:3b)",
         "pilot": "192.168.0.140:8080 (Nginx Pilot canonique — proxy API locale)",
+        "lan_executor": "192.168.0.141 (CT lbg-executor — poll /v1/team/wsl/poll, remplace WSL .10)",
         "front_legacy": "192.168.0.112 (Traefik/:3000/:80 slim — Pilot Nginx optionnel)",
         "routing": "LBG_REASON_LIGHT_BASE_URL → 111 ; LBG_REASON_LOCAL_BASE_URL → 110",
+        "wsl_bridge": f"{orch_url}/v1/team/wsl/health",
     }
 
     return {

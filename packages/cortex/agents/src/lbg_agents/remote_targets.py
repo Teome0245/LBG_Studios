@@ -30,6 +30,9 @@ _ALIASES: dict[str, str] = {
     "core3": "mmo",
     "swg": "mmo",
     "246": "mmo",
+    "linux-141": "executor",
+    "executor": "executor",
+    "141": "executor",
 }
 
 # Rôle -> (variable d'env hôte, IP par défaut LAN).
@@ -38,6 +41,7 @@ _ROLE_ENV: dict[str, tuple[str, str]] = {
     "front": ("LBG_LAN_HOST_FRONT", "192.168.0.110"),
     "mmo": ("LBG_LAN_HOST_MMO", "192.168.0.246"),
     "precu": ("LBG_LAN_HOST_PRECU", "192.168.0.245"),
+    "executor": ("LBG_LAN_HOST_EXECUTOR", "192.168.0.141"),
 }
 
 

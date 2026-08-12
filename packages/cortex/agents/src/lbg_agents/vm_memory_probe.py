@@ -22,6 +22,7 @@ _DEFAULT_HOSTS: list[tuple[str, str]] = [
     ("precu", "245"),
     ("front", "110"),
     ("core", "140"),
+    ("executor", "141"),
 ]
 
 

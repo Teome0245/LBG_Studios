@@ -1,4 +1,4 @@
-"""Tests périmètre Atlas admin_infra (110/111/140/245/246 + front legacy optionnel)."""
+"""Tests périmètre Atlas admin_infra (110/111/140/141/245/246 + front legacy optionnel)."""
 
 from __future__ import annotations
 
@@ -11,9 +11,9 @@ from team.admin_infra_platform import (
 
 
 def test_perimeter_includes_111_light() -> None:
-    assert admin_infra_perimeter() == ["110", "111", "140", "245", "246"]
+    assert admin_infra_perimeter() == ["110", "111", "140", "141", "245", "246"]
     ids = {s["perimeter_id"] for s in platform_host_specs()}
-    assert {"110", "111", "140", "245", "246"}.issubset(ids)
+    assert {"110", "111", "140", "141", "245", "246"}.issubset(ids)
 
 
 def test_platform_specs_dual_llm_labels(monkeypatch) -> None:
@@ -44,6 +44,25 @@ def test_audit_platform_host_marks_ko_on_probe_failure(monkeypatch) -> None:
     assert out["perimeter_id"] == "245"
 
 
+def test_audit_platform_host_tcp_probe(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "team.admin_infra_platform._probe_tcp",
+        lambda host, port, **kw: {"host": host, "port": port, "ok": port == 22, "kind": "tcp"},
+    )
+    spec = {
+        "id": "executor_141",
+        "label": "LAN executor",
+        "host": "192.168.0.141",
+        "perimeter_id": "141",
+        "role": "lan_executor",
+        "required": True,
+        "probes": [{"kind": "tcp", "port": 22}],
+    }
+    out = audit_platform_host(spec)
+    assert out["ok"] is True
+    assert out["perimeter_id"] == "141"
+
+
 def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
     monkeypatch.setenv("LBG_ATLAS_PROBE_FRONT_LEGACY", "0")
     monkeypatch.setattr(
@@ -61,14 +80,15 @@ def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
             "id": spec["id"],
             "perimeter_id": spec["perimeter_id"],
             "required": spec.get("required", True),
-            "ok": spec["perimeter_id"] in ("110", "111", "140", "246"),
+            "ok": spec["perimeter_id"] in ("110", "111", "140", "141", "246"),
             "probes": [],
         },
     )
     out = audit_admin_infra_platform()
     assert out["track"] == "admin_infra_platform"
-    assert out["hosts_total"] == 5
+    assert out["hosts_total"] == 6
     assert "111" in out["perimeter"]
+    assert "141" in out["perimeter"]
     assert "245" in out["perimeter"]
     assert any("245" in g for g in out.get("gaps") or [])
     assert out["topology"]["llm_light"].startswith("192.168.0.111")

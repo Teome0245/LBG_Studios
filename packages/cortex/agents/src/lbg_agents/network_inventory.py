@@ -52,6 +52,7 @@ _ROLE_SUGGESTIONS: dict[str, tuple[str, ...]] = {
     "front": ("devops_probe", "npc_dialogue", "network_inventory"),
     "mmo": ("devops_probe", "core3_bot_action", "network_inventory"),
     "precu": ("devops_probe", "network_inventory"),
+    "executor": ("devops_probe", "network_inventory"),
     "desktop": ("desktop_control", "devops_probe"),
     "ad": ("desktop_control", "devops_probe"),
     "mail": ("devops_probe",),
