@@ -172,7 +172,10 @@ team: mission Smoke O2 après changement client — enqueue wsl smoke_godot_owne
 Sur un CT Debian (ex. `.141`) :
 
 ```bash
-# Depuis poste dev — rsync scripts + install systemd
+# Création CT Proxmox (R720, CTID=141) + bootstrap user lbg
+bash packages/cortex/infra/scripts/create_lbg_executor_ct_proxmox.sh
+
+# Install executor (rsync scripts + systemd)
 LBG_EXECUTOR_HOST=192.168.0.141 bash packages/cortex/infra/scripts/install_lbg_executor_ct.sh --remote
 
 # Ou sur la cible après clone/rsync monorepo dans /opt/LBG_IA_MMO

@@ -46,20 +46,27 @@ _install_local() {
 
 if [[ "${REMOTE}" -eq 1 ]]; then
   [[ -n "${HOST}" ]] || { echo "LBG_EXECUTOR_HOST requis" >&2; exit 2; }
+  MONO_ROOT="$(cd "${ROOT_DIR}/../.." && pwd)"
   echo "=== Rsync executor → ${USER}@${HOST} ==="
-  ssh -o BatchMode=yes "${USER}@${HOST}" "sudo mkdir -p /opt/LBG_IA_MMO/infra/scripts /opt/LBG_IA_MMO/infra/systemd"
+  ssh -o BatchMode=yes "${USER}@${HOST}" "sudo mkdir -p /opt/LBG_Studios/packages/cortex/infra/scripts /opt/LBG_Studios/packages/cortex/infra/systemd /opt/LBG_Studios/tools && sudo chown -R ${USER}:${USER} /opt/LBG_Studios"
   rsync -az \
+    "${ROOT_DIR}/infra/scripts/install_lbg_executor_ct.sh" \
     "${ROOT_DIR}/infra/scripts/lbg_wsl_executor.sh" \
     "${ROOT_DIR}/infra/scripts/diag_godot_supervisor_wsl.sh" \
+    "${ROOT_DIR}/infra/scripts/diag_godot_supervisor.sh" \
     "${ROOT_DIR}/infra/scripts/smoke_wsl_executor_lan.sh" \
     "${ROOT_DIR}/infra/scripts/smoke_godot_m11_login_lan.sh" \
     "${ROOT_DIR}/infra/scripts/smoke_godot_m12_ws_lan.sh" \
     "${ROOT_DIR}/infra/scripts/smoke_godot_owners.sh" \
     "${ROOT_DIR}/infra/scripts/smoke_cursor_agent_lan.sh" \
-    "${USER}@${HOST}:/opt/LBG_IA_MMO/infra/scripts/"
+    "${USER}@${HOST}:/opt/LBG_Studios/packages/cortex/infra/scripts/"
   rsync -az "${ROOT_DIR}/infra/systemd/lbg-lan-executor.service" \
-    "${USER}@${HOST}:/opt/LBG_IA_MMO/infra/systemd/"
-  ssh -o BatchMode=yes "${USER}@${HOST}" "cd /opt/LBG_IA_MMO && sudo bash infra/scripts/install_lbg_executor_ct.sh"
+    "${USER}@${HOST}:/opt/LBG_Studios/packages/cortex/infra/systemd/"
+  if [[ -f "${MONO_ROOT}/tools/smoke_lan_surfaces.sh" ]]; then
+    rsync -az "${MONO_ROOT}/tools/smoke_lan_surfaces.sh" \
+      "${USER}@${HOST}:/opt/LBG_Studios/tools/"
+  fi
+  ssh -o BatchMode=yes "${USER}@${HOST}" "cd /opt/LBG_Studios/packages/cortex && sudo bash infra/scripts/install_lbg_executor_ct.sh"
 else
   _install_local
 fi

@@ -11,8 +11,8 @@ EnvironmentFile=-/etc/lbg-ia-mmo.env
 Environment=LBG_ORCHESTRATOR_URL=http://192.168.0.140:8010
 Environment=LBG_WSL_POLL_INTERVAL_S=30
 Environment=LBG_WSL_EXECUTOR_ID=lbg-executor-ct
-WorkingDirectory=/opt/LBG_IA_MMO
-ExecStart=/opt/LBG_IA_MMO/infra/scripts/lbg_wsl_executor.sh --loop
+WorkingDirectory=/opt/LBG_Studios/packages/cortex
+ExecStart=/opt/LBG_Studios/packages/cortex/infra/scripts/lbg_wsl_executor.sh --loop
 Restart=always
 RestartSec=15
 
