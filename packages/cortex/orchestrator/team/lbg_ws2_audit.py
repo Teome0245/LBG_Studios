@@ -245,9 +245,19 @@ def audit_zb1_readiness(*, probe_live_feed: bool = True) -> dict[str, Any]:
     live_probe: dict[str, Any] | None = None
     if probe_live_feed:
         remote_host = os.environ.get("LBG_ZONE_BRIDGE_PROBE_HOST", "").strip()
+        if not remote_host:
+            # Sur orchestrateur .140 le JSON vit sur Prime — sonder via SSH par défaut
+            remote_host = (
+                os.environ.get("LBG_LAN_HOST_CORE3_PRIME", "").strip()
+                or os.environ.get("LBG_LAN_HOST_MMO", "").strip()
+                or "192.168.0.246"
+            )
+        if remote_host in ("0", "local", "none", "off"):
+            remote_host = ""
         if remote_host:
             live_probe = _probe_zone_bridge_feed_ssh(remote_host)
             checks["live_feed_ok"] = bool(live_probe.get("ok"))
+            checks["live_probe_host"] = remote_host
             if not live_probe.get("ok"):
                 gaps.extend(live_probe.get("gaps") or ["feed live JSON absent sur Prime (SSH)"])
         elif checks.get("gateway_zone_bridge_feed"):

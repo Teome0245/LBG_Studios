@@ -57,11 +57,14 @@ bash tools/smoke_lan_surfaces.sh --functional
 
 ## Suivi Team
 
-| Étape | Rôle | Statut 2026-08-12 |
+| Étape | Rôle | Statut 2026-08-13 |
 |-------|------|-------------------|
-| O2-1 lbg-ws/2 schémas | Hermès / audit | **vert** (`lbg_ws2_readiness`) |
-| O2-2 Infographiste manifests | Pygmalion | **vert** (prime-client) |
+| O2-1 lbg-ws/2 schémas | Hermès / audit | **vert** |
+| O2-2 Infographiste manifests | Pygmalion | **vert** |
 | O2-3 Brief playtest | PM + ce doc | **checklist prête** |
 | O2-4 Re-supervise | Argus | **vert** (0 advisory) |
-| ZB-1 feed live JSON Prime | Core3 compile | **code OK**, feed runtime à activer |
-| Session humaine hub | Teome | **à faire** |
+| ZB-1 feed live JSON Prime | Core3 | **vert** (tick frais, 3 entities, SSH `.246`) |
+| Smoke M11 + M12 | Argus / owners | **vert** (`BUNDLE=godot_login`) |
+| Smoke M9 minimap | Iris | **KO** — chemins legacy `new_mmo` (hors critère hub login) |
+| Smoke M10 craft | Iris | **vert** |
+| Session humaine hub | Teome | **à faire** (Launchpad) |
