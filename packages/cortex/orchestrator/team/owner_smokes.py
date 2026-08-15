@@ -55,6 +55,13 @@ def run_owner_smoke(owner: str, *, timeout_s: int | None = None) -> dict[str, An
             to = int(os.environ.get("LBG_TEAM_OWNER_SMOKE_TIMEOUT_S", "90"))
         except ValueError:
             to = 90
+    env = os.environ.copy()
+    try:
+        from team.prime_client_paths import resolve_prime_client_root
+
+        env.setdefault("LBG_PRIME_CLIENT_ROOT", str(resolve_prime_client_root()))
+    except Exception:
+        pass
     try:
         proc = subprocess.run(
             ["bash", str(script)],
@@ -63,7 +70,7 @@ def run_owner_smoke(owner: str, *, timeout_s: int | None = None) -> dict[str, An
             text=True,
             timeout=to,
             check=False,
-            env=os.environ.copy(),
+            env=env,
         )
         return {
             "owner": owner,

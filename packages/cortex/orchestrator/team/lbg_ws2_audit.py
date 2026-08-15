@@ -305,6 +305,165 @@ def audit_zb1_readiness(*, probe_live_feed: bool = True) -> dict[str, Any]:
     }
 
 
+def _zb2_inject_paths() -> list[Path]:
+    root = _new_mmo_root()
+    return [
+        root / "lbg-mmo/server-core3/server/lbg/LbgZoneBridgeInject.h",
+        root / "lbg-mmo/server-core3/server/lbg/LbgZoneBridgeInject.cpp",
+    ]
+
+
+def _probe_zb2_runtime_ssh(host: str) -> dict[str, Any]:
+    """Sonde runtime ZB-2 sur Prime : pending.jsonl + symbole inject + gateway inject on."""
+    import subprocess
+
+    user = os.environ.get("LBG_ZONE_BRIDGE_PROBE_USER", "lbg").strip()
+    pending = os.environ.get(
+        "LBG_GATEWAY_PENDING_FILE",
+        "/opt/lbg-new-mmo-clean/MMOCoreORB/bin/ia_bridge/pending.jsonl",
+    )
+    checks: dict[str, Any] = {"remote": True, "host": host, "pending_path": pending}
+    remote = f"{user}@{host}"
+    ssh_base = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", remote]
+
+    def _ssh(args: list[str], *, timeout: float = 25.0) -> tuple[int, str]:
+        try:
+            proc = subprocess.run(
+                [*ssh_base, *args],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return 1, str(exc)
+
+    rc, _ = _ssh(["test", "-f", pending])
+    checks["pending_exists"] = rc == 0
+
+    # Une seule commande remote (évite sh -c mangled via SSH argv)
+    rc, out = _ssh(
+        [
+            f"grep -a -q pollPendingInjectMoves /opt/lbg-new-mmo-clean/MMOCoreORB/bin/core3-clean "
+            f"|| grep -a -q pollPendingInjectMoves /opt/lbg-new-mmo-clean/MMOCoreORB/bin/core3"
+        ],
+        timeout=30.0,
+    )
+    checks["inject_symbol"] = rc == 0
+
+    rc, out = _ssh(["test", "-f", "/home/lbg/lbg-gateway/pending_bridge.py"])
+    checks["gateway_pending_bridge"] = rc == 0
+
+    rc, out = _ssh(["systemctl", "is-active", "lbg-gateway"])
+    checks["gateway_active"] = "active" in out
+
+    rc, out = _ssh(
+        ["grep", "-E", "^LBG_GATEWAY_INJECT_MOVE=", "/home/lbg/lbg-gateway/gateway.env"]
+    )
+    inject_line = ""
+    for line in out.splitlines():
+        if "LBG_GATEWAY_INJECT_MOVE=" in line:
+            inject_line = line.split("=", 1)[-1].strip().strip('"').strip("'")
+    checks["inject_move_env"] = inject_line
+    checks["inject_enabled"] = inject_line.lower() in ("1", "true", "yes", "on")
+
+    gaps: list[str] = []
+    if not checks.get("pending_exists"):
+        gaps.append("pending.jsonl absent sur Prime")
+    if not checks.get("inject_symbol"):
+        gaps.append("symbole pollPendingInjectMoves absent du binaire Core3")
+    if not checks.get("inject_enabled"):
+        gaps.append("LBG_GATEWAY_INJECT_MOVE off sur gateway Prime")
+    if not checks.get("gateway_pending_bridge"):
+        gaps.append("pending_bridge.py absent sur gateway Prime")
+    ok = len(gaps) == 0
+    return {"track": "zb2_runtime", "ok": ok, "checks": checks, "gaps": gaps}
+
+
+def audit_zb2_readiness(*, probe_runtime: bool = True) -> dict[str, Any]:
+    """Audit ZB-2 — Inject C++ + pending_bridge gateway + runtime Prime optionnel."""
+    gaps: list[str] = []
+    checks: dict[str, Any] = {}
+    zb1 = audit_zb1_readiness(probe_live_feed=False)
+    checks["zb1_code_ok"] = bool(zb1.get("code_ok"))
+
+    inject_paths = _zb2_inject_paths()
+    checks["zb2_inject_h"] = inject_paths[0].is_file()
+    checks["zb2_inject_cpp"] = inject_paths[1].is_file() if len(inject_paths) > 1 else False
+
+    tick_task = _new_mmo_root() / "lbg-mmo/server-core3/server/lbg/LbgZoneBridgeTickTask.h"
+    if tick_task.is_file():
+        tt = tick_task.read_text(encoding="utf-8", errors="ignore")
+        checks["zb2_tick_polls_inject"] = "pollPendingInjectMoves" in tt
+    else:
+        checks["zb2_tick_polls_inject"] = False
+
+    pending_mod = _repo_root() / "services/lbg_gateway/pending_bridge.py"
+    checks["gateway_pending_bridge"] = pending_mod.is_file()
+    if pending_mod.is_file():
+        text = pending_mod.read_text(encoding="utf-8", errors="ignore")
+        checks["pending_inject_move_to"] = "def inject_move_to" in text
+        checks["pending_inject_enabled"] = "def inject_enabled" in text
+    else:
+        checks["pending_inject_move_to"] = False
+        checks["pending_inject_enabled"] = False
+
+    if not checks.get("zb2_inject_cpp"):
+        gaps.append("LbgZoneBridgeInject.cpp absent (ZB-2)")
+    if not checks.get("zb2_tick_polls_inject"):
+        gaps.append("LbgZoneBridgeTickTask n'appelle pas pollPendingInjectMoves")
+    if not checks.get("gateway_pending_bridge"):
+        gaps.append("services/lbg_gateway/pending_bridge.py manquant")
+
+    runtime: dict[str, Any] | None = None
+    if probe_runtime:
+        remote_host = (
+            os.environ.get("LBG_ZONE_BRIDGE_PROBE_HOST", "").strip()
+            or os.environ.get("LBG_LAN_HOST_CORE3_PRIME", "").strip()
+            or os.environ.get("LBG_LAN_HOST_MMO", "").strip()
+            or "192.168.0.246"
+        )
+        if remote_host not in ("0", "local", "none", "off"):
+            runtime = _probe_zb2_runtime_ssh(remote_host)
+            checks["runtime_ok"] = bool(runtime.get("ok"))
+            if not runtime.get("ok"):
+                gaps.extend(runtime.get("gaps") or ["runtime ZB-2 KO sur Prime"])
+        else:
+            checks["runtime_ok"] = None
+
+    code_ok = (
+        bool(checks.get("zb2_inject_cpp"))
+        and bool(checks.get("zb2_tick_polls_inject"))
+        and bool(checks.get("gateway_pending_bridge"))
+        and bool(checks.get("pending_inject_move_to"))
+    )
+    ok = bool(checks.get("zb1_code_ok")) and code_ok
+    if probe_runtime and runtime is not None:
+        ok = ok and bool(runtime.get("ok"))
+        checks["runtime"] = runtime.get("checks")
+
+    next_actions: list[str] = []
+    if not checks.get("zb1_code_ok"):
+        next_actions.append("Finaliser ZB-1 avant ZB-2")
+    elif not code_ok:
+        next_actions.append("Porter pending_bridge + LbgZoneBridgeInject (pollPendingInjectMoves)")
+    elif runtime and not runtime.get("ok"):
+        next_actions.append("Activer LBG_GATEWAY_INJECT_MOVE=1 et rebuild Core3 avec Inject")
+    else:
+        next_actions.append("ZB-3 : session policy / move indoor (cell) si besoin")
+
+    return {
+        "track": "zb2_readiness",
+        "ok": ok,
+        "code_ok": code_ok,
+        "checks": checks,
+        "gaps": gaps,
+        "runtime_probe": runtime,
+        "next_actions": next_actions[:4],
+        "zb1": {"code_ok": zb1.get("code_ok"), "ok": zb1.get("ok")},
+    }
+
+
 def audit_lbg_ws2_readiness() -> dict[str, Any]:
     root = _repo_root()
     gaps: list[str] = []

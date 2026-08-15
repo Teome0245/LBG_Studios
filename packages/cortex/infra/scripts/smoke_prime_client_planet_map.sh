@@ -2,8 +2,21 @@
 # Smoke M9c — carte planétaire M + waypoints Prime Client.
 set -euo pipefail
 
-PRIME_ROOT="${LBG_PRIME_CLIENT_ROOT:-${LBG_NEW_MMO_ROOT:+${LBG_NEW_MMO_ROOT}/prime-client}}"
-PRIME_ROOT="${PRIME_ROOT:-/home/sdesh/projects/new_mmo/prime-client}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STUDIOS_PRIME="$(cd "${SCRIPT_DIR}/../../../prime-client" 2>/dev/null && pwd || true)"
+STUDIOS_PRIME="${STUDIOS_PRIME:-/home/sdesh/projects/LBG_Studios/packages/prime-client}"
+
+if [[ -n "${LBG_PRIME_CLIENT_ROOT:-}" && -d "${LBG_PRIME_CLIENT_ROOT}" ]]; then
+  PRIME_ROOT="${LBG_PRIME_CLIENT_ROOT}"
+elif [[ -d "${STUDIOS_PRIME}" ]]; then
+  PRIME_ROOT="${STUDIOS_PRIME}"
+elif [[ -n "${LBG_NEW_MMO_ROOT:-}" && -d "${LBG_NEW_MMO_ROOT}/prime-client" ]]; then
+  PRIME_ROOT="${LBG_NEW_MMO_ROOT}/prime-client"
+else
+  PRIME_ROOT="${STUDIOS_PRIME}"
+fi
+
+echo "=== Smoke M9c planet map (${PRIME_ROOT}) ==="
 
 fail=0
 check() {

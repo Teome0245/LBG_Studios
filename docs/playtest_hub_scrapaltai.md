@@ -64,7 +64,9 @@ bash tools/smoke_lan_surfaces.sh --functional
 | O2-3 Brief playtest | PM + ce doc | **checklist prête** |
 | O2-4 Re-supervise | Argus | **vert** (0 advisory) |
 | ZB-1 feed live JSON Prime | Core3 | **vert** (tick frais, 3 entities, SSH `.246`) |
+| ZB-2 inject move | Gateway + Core3 | **vert** (`INJECT_MOVE=1`, `pending.jsonl`, symbole Inject) |
 | Smoke M11 + M12 | Argus / owners | **vert** (`BUNDLE=godot_login`) |
-| Smoke M9 minimap | Iris | **KO** — chemins legacy `new_mmo` (hors critère hub login) |
+| Smoke M9 minimap | Iris | **vert** (root Studios `packages/prime-client`) |
 | Smoke M10 craft | Iris | **vert** |
-| Session humaine hub | Teome | **à faire** (Launchpad) |
+| Bundle `godot_client` | owners | **vert** (M11+M12+M9+M10) |
+| Session humaine hub | Teome | **OK** (2026-08-15) |
