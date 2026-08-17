@@ -74,12 +74,12 @@ func _draw_path(p: Dictionary) -> void:
 func _path_color(kind: String, alpha: float) -> Color:
 	match kind:
 		"plaza":
-			return Color(0.72, 0.54, 0.34, alpha + 0.1)
+			return Color(0.72, 0.54, 0.34, alpha + 0.06)
 		"alley":
-			return Color(0.42, 0.32, 0.22, alpha)
+			return Color(0.48, 0.38, 0.28, alpha * 0.85)
 		"fence":
 			return Color(0.48, 0.38, 0.28, alpha + 0.15)
-	return Color(0.55, 0.42, 0.28, alpha)
+	return Color(0.55, 0.42, 0.28, alpha * 0.9)
 
 func _draw_fence(screen: PackedVector2Array, closed: bool, fill: Color, core3_pts: Array) -> void:
 	var n := screen.size()
@@ -171,8 +171,14 @@ func _draw_gate_arch(g: Dictionary, fill: Color) -> void:
 	var hw := float(g.get("width_m", 16.0)) * 0.5
 	var scr := Projection3D2D.to_screen(Vector3(gx, 0.0, gz))
 	var w_px := hw * Projection3D2D.SCALE * 2.0
-	draw_line(scr + Vector2(-w_px * 0.5, 0), scr + Vector2(w_px * 0.5, 0), Color(0.75, 0.55, 0.28, 0.9), 3.0)
-	draw_arc(scr + Vector2(0, -6), w_px * 0.45, PI, 0.0, 12, Color(0.8, 0.6, 0.32, 0.85), 2.5)
+	var axis := str(g.get("axis", "z")).to_lower()
+	if axis == "x":
+		# Porte E–O : montant vertical
+		draw_line(scr + Vector2(0, -w_px * 0.5), scr + Vector2(0, w_px * 0.5), Color(0.75, 0.55, 0.28, 0.9), 3.0)
+		draw_arc(scr + Vector2(6, 0), w_px * 0.35, -PI * 0.5, PI * 0.5, 12, Color(0.8, 0.6, 0.32, 0.85), 2.5)
+	else:
+		draw_line(scr + Vector2(-w_px * 0.5, 0), scr + Vector2(w_px * 0.5, 0), Color(0.75, 0.55, 0.28, 0.9), 3.0)
+		draw_arc(scr + Vector2(0, -6), w_px * 0.45, PI, 0.0, 12, Color(0.8, 0.6, 0.32, 0.85), 2.5)
 
 func _stroke_polyline(screen: PackedVector2Array, width_px: float, fill: Color, closed: bool) -> void:
 	var n := screen.size()

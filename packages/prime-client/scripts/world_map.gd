@@ -65,12 +65,21 @@ func _setup_backdrop() -> void:
 func _apply_world_render() -> void:
 	var city := MapTextureLoader.position_map_city()
 	var retail := get_node_or_null("RetailLayoutLayer") as RetailLayoutLayer
+	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", 1.0))
 	if retail and city != "":
 		retail.set_city(city)
-		retail.set_visible_layout(true)
-	if _hub_buildings and city != "":
-		_hub_buildings.visible_buildings = false
-		_hub_buildings.show_labels = false
+		# Gabarit ME = référence spatiale (Ctrl+Shift+R) — pas le rendu hub par défaut.
+		retail.set_visible_layout(false)
+		retail.size_multiplier = mul
+	if _hub_buildings:
+		_hub_buildings.size_multiplier = mul
+		if city != "":
+			_hub_buildings.visible_buildings = true
+			_hub_buildings.show_labels = true
+	if _hub_ground and city != "":
+		_hub_ground.set_visible_ground(true)
+	if _hub_props and city != "":
+		_hub_props.set_visible_props(true)
 	if _sprite:
 		var show_tex := MapTextureLoader.show_planet_texture()
 		if not show_tex:

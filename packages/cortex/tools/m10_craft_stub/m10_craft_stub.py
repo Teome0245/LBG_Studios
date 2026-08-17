@@ -21,6 +21,7 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
 import m10_craft_runtime as runtime  # noqa: E402
+import quest_hub_runtime as quests  # noqa: E402
 
 HOST = os.environ.get("LBG_M10_STUB_HOST", "127.0.0.1")
 PORT = int(os.environ.get("LBG_M10_STUB_PORT", "8791"))
@@ -111,6 +112,16 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, runtime.player_skills_payload(player))
             return
 
+        if path == "/v1/quests/board":
+            giver = (qs.get("giver") or qs.get("giver_id") or [quests.DEFAULT_GIVER])[0]
+            player = (qs.get("player") or [quests.DEFAULT_PLAYER])[0]
+            self._send(200, quests.board_payload(giver_id=str(giver), player=str(player)))
+            return
+
+        if path == "/v1/quests/status":
+            self._send(200, quests.status_payload(player))
+            return
+
         self._send(404, {"ok": False, "error": "not_found", "path": path})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -130,7 +141,59 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/v1/inventory/reset":
             state = runtime.reset_player(player)
-            self._send(200, {"ok": True, **state})
+            qstate = quests.reset_player(player)
+            self._send(200, {"ok": True, **state, "quests": qstate})
+            return
+
+        if path == "/v1/quests/accept":
+            qid = str(body.get("quest_id") or body.get("id") or "")
+            if not qid:
+                self._send(400, {"ok": False, "error": "quest_id_required"})
+                return
+            giver = str(body.get("giver_id") or body.get("giver") or quests.DEFAULT_GIVER)
+            result = quests.accept_quest(player, qid, giver_id=giver)
+            self._send(200 if result.get("ok") else 400, result)
+            return
+
+        if path == "/v1/quests/complete":
+            qid = str(body.get("quest_id") or body.get("id") or "")
+            if not qid:
+                self._send(400, {"ok": False, "error": "quest_id_required"})
+                return
+            result = quests.complete_quest(player, qid)
+            self._send(200 if result.get("ok") else 400, result)
+            return
+
+        if path == "/v1/quests/progress":
+            qid = str(body.get("quest_id") or body.get("id") or "")
+            if not qid:
+                self._send(400, {"ok": False, "error": "quest_id_required"})
+                return
+            step = body.get("step_id")
+            poi = body.get("poi_id") or body.get("poi")
+            x = body.get("x")
+            z = body.get("z")
+            result = quests.progress_quest(
+                player,
+                qid,
+                step_id=str(step) if step else None,
+                poi_id=str(poi) if poi else None,
+                x=float(x) if x is not None else None,
+                z=float(z) if z is not None else None,
+            )
+            self._send(200 if result.get("ok") else 400, result)
+            return
+
+        if path == "/v1/quests/reset":
+            self._send(200, {"ok": True, **quests.reset_player(player)})
+            return
+
+        if path == "/v1/quests/tip":
+            qid = str(body.get("quest_id") or "lh_show_perle")
+            amount = body.get("amount")
+            amt = int(amount) if amount is not None else None
+            result = quests.tip_scene(player, qid, amount=amt)
+            self._send(200 if result.get("ok") else 400, result)
             return
 
         self._send(404, {"ok": False, "error": "not_found", "path": path})
@@ -140,10 +203,15 @@ def main() -> None:
     if not runtime.catalog_path().is_file():
         raise SystemExit(f"Catalogue introuvable: {runtime.catalog_path()}")
     runtime.load_catalog()
+    if quests.templates_path().is_file():
+        quests.load_templates()
+    else:
+        print(f"[m10_stub] WARN quests templates absent: {quests.templates_path()}")
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(
         f"[m10_stub] listening http://{HOST}:{PORT} "
-        f"catalog={runtime.catalog_path()} schema={runtime.ensure_catalog().get('schema_version')}"
+        f"catalog={runtime.catalog_path()} schema={runtime.ensure_catalog().get('schema_version')} "
+        f"quests={quests.templates_path()}"
     )
     try:
         server.serve_forever()

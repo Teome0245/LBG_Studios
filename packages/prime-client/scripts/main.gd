@@ -9,6 +9,8 @@ extends Node2D
 @onready var hotbar:         Node         = $UI/HudLayer/Hotbar
 @onready var inventory_panel: Node = $UI/ModalLayer/InventoryPanel
 @onready var _talents_panel: Node = $UI/ModalLayer/TalentsCraftPanel
+@onready var _mission_board: Node = $UI/ModalLayer/MissionBoardPanel
+@onready var _game_menu: Node = $UI/ModalLayer/GameMenuPanel
 @onready var _dialogue_panel: Node = $UI/ModalLayer/DialoguePortraitPanel
 @onready var _login_panel: Control = $UI/LoginPanel
 @onready var _ws: Node = get_node_or_null("%LbgWsClient")
@@ -74,12 +76,14 @@ const HUMAN_CFG := "res://config/human_player.json"
 const _LastPos = preload("res://scripts/last_position_store.gd")
 
 func _ready() -> void:
+	add_to_group("prime_main")
 	# Demo M2 : SnapshotBridge charge demo_entities.json si pas de snapshots
 	get_tree().create_timer(0.35).timeout.connect(_maybe_demo_spawn)
 	call_deferred("_focus_lost_heaven_hub")
 	if hotbar:
 		hotbar.slot_activated.connect(_on_hotbar_slot)
 	_wire_m10_craft_inventory()
+	_wire_mission_board()
 	_ensure_dialogue_bridge()
 	_ensure_ws_client()
 	_wire_login_ws()
@@ -96,11 +100,42 @@ func _wire_m10_craft_inventory() -> void:
 			_talents_panel.craft_completed.connect(_on_m10_craft_completed)
 
 
-func _on_m10_craft_completed(result: Dictionary) -> void:
-	if inventory_panel and inventory_panel.has_method("apply_craft_result"):
-		inventory_panel.apply_craft_result(result)
-	elif inventory_panel and inventory_panel.has_method("refresh_inventory"):
+func _wire_mission_board() -> void:
+	if _mission_board == null:
+		return
+	if _mission_board.has_signal("quest_completed"):
+		if not _mission_board.quest_completed.is_connected(_on_mission_completed):
+			_mission_board.quest_completed.connect(_on_mission_completed)
+	if _mission_board.has_signal("quest_accepted"):
+		if not _mission_board.quest_accepted.is_connected(_on_mission_accepted):
+			_mission_board.quest_accepted.connect(_on_mission_accepted)
+
+
+func _on_mission_accepted(result: Dictionary) -> void:
+	var title := str((result.get("accepted") or {}).get("title", "mission"))
+	_hotbar_feedback("Mission acceptée — %s" % title)
+
+
+func _on_mission_completed(result: Dictionary) -> void:
+	var title := str(result.get("title", "mission"))
+	var cr := int((result.get("reward_applied") or {}).get("credits_gained", 0))
+	_hotbar_feedback("Mission OK — %s (+%d Cr)" % [title, cr])
+	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
 		inventory_panel.refresh_inventory()
+
+
+func _on_m10_craft_completed(result: Dictionary) -> void:
+	# Ouvre l'inventaire pour voir le résultat (B2B craft → bags).
+	if inventory_panel:
+		if inventory_panel.has_method("toggle") and not bool(inventory_panel.get("visible")):
+			inventory_panel.toggle()
+		elif "visible" in inventory_panel:
+			inventory_panel.visible = true
+		if inventory_panel.has_method("apply_craft_result"):
+			inventory_panel.apply_craft_result(result)
+		elif inventory_panel.has_method("refresh_inventory"):
+			inventory_panel.refresh_inventory()
+	_hotbar_feedback("Craft OK — inventaire mis à jour")
 
 
 func _ensure_dialogue_bridge() -> void:
@@ -216,6 +251,10 @@ func _dismiss_modals_for_login() -> void:
 		inventory_panel.toggle()
 	if _talents_panel and _talents_panel.get("visible") and _talents_panel.has_method("toggle"):
 		_talents_panel.toggle()
+	if _mission_board and _mission_board.get("visible") and _mission_board.has_method("toggle"):
+		_mission_board.toggle()
+	if _game_menu and _game_menu.get("visible") and _game_menu.has_method("close_menu"):
+		_game_menu.close_menu()
 	if _dialogue_panel and _dialogue_panel.get("visible") and _dialogue_panel.has_method("hide_portrait"):
 		_dialogue_panel.hide_portrait()
 	var retail: Node = get_node_or_null("WorldMap/RetailLayoutLayer")
@@ -496,7 +535,10 @@ func _hub_world_bounds() -> Dictionary:
 		var b: Dictionary = item
 		var cx := float(b.get("x", 0.0))
 		var cz := float(b.get("z", 0.0))
-		var half := float(b.get("size_m", 32.0)) * 0.5 + pad * 0.35
+		var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", 1.0))
+		if mul <= 0.0:
+			mul = 1.0
+		var half := float(b.get("size_m", 32.0)) * 0.5 * mul + pad * 0.35
 		min_x = minf(min_x, cx - half)
 		max_x = maxf(max_x, cx + half)
 		min_z = minf(min_z, cz - half)
@@ -574,6 +616,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_talents()
 			KEY_I:
 				_toggle_inventory()
+			KEY_J:
+				_toggle_missions()
 			KEY_P:
 				_toggle_dialogue_demo()
 			KEY_O:
@@ -588,10 +632,20 @@ func _unhandled_input(event: InputEvent) -> void:
 				show_debug_hud = not show_debug_hud
 				_apply_debug_hud()
 			KEY_ESCAPE:
-				if _login_panel and _login_panel.visible and _is_connected:
+				if _game_menu and _game_menu.get("visible") and _game_menu.has_method("close_menu"):
+					_game_menu.close_menu()
+				elif _mission_board and _mission_board.get("visible") and _mission_board.has_method("toggle"):
+					_mission_board.toggle()
+				elif _talents_panel and _talents_panel.get("visible") and _talents_panel.has_method("toggle"):
+					_talents_panel.toggle()
+				elif inventory_panel and inventory_panel.get("visible") and inventory_panel.has_method("toggle"):
+					inventory_panel.toggle()
+				elif _login_panel and _login_panel.visible and _is_connected:
 					_login_panel.visible = false
 				elif _login_panel and not _login_panel.visible and not _is_connected:
 					_login_panel.visible = true
+				elif _game_menu and _game_menu.has_method("toggle"):
+					_game_menu.toggle()
 				else:
 					get_tree().quit()
 			KEY_F10:
@@ -607,16 +661,23 @@ func _apply_debug_hud() -> void:
 func _toggle_talents() -> void:
 	if _talents_panel == null:
 		return
-	if inventory_panel and inventory_panel.visible:
-		inventory_panel.toggle()
+	# Inventaire + craft peuvent coexister (M10 craft lit l'inventaire).
 	_talents_panel.toggle()
 
 func _toggle_inventory() -> void:
 	if inventory_panel == null:
 		return
-	if _talents_panel and _talents_panel.visible:
-		_talents_panel.toggle()
 	inventory_panel.toggle()
+
+func _toggle_missions() -> void:
+	if _mission_board == null:
+		return
+	_mission_board.toggle()
+
+func _toggle_game_menu() -> void:
+	if _game_menu == null:
+		return
+	_game_menu.toggle()
 
 func _on_hotbar_slot(index: int) -> void:
 	match index:
@@ -639,13 +700,14 @@ func _on_hotbar_slot(index: int) -> void:
 		6: # Inventaire
 			_toggle_inventory()
 			_hotbar_feedback("Inventaire")
-		7:
+		7: # Chat / dialogue
 			_toggle_dialogue_demo()
-			_hotbar_feedback("Portrait dialogue démo")
-		8:
+			_hotbar_feedback("Dialogue")
+		8: # Monture (stub)
 			_hotbar_feedback("Monture — à brancher")
-		9:
-			_hotbar_feedback("Menu — à brancher")
+		9: # Menu
+			_toggle_game_menu()
+			_hotbar_feedback("Menu")
 		_:
 			_hotbar_feedback("Slot %d" % index)
 

@@ -11,112 +11,233 @@
       "id": "poi:lost_heaven_starport",
       "kind": "starport_shuttle",
       "label": "Port shuttle",
-      "x": 4809.0,
-      "z": -802.0,
-      "size_m": 47.6,
+      "x": 4832.8,
+      "z": -819.8,
+      "size_m": 142.8,
       "essential": true,
-      "size_from_gabarit_me": true
+      "size_from_gabarit_me": true,
+      "size_baked_from": 47.6,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "west",
+        "width_m": 20.0,
+        "depth_m": 28.6,
+        "apron_m": 11.4
+      }
     },
     {
       "id": "poi:lost_heaven_cantina",
       "kind": "cantina",
       "label": "La Perle de Scrapaltai",
       "display_name": "La Perle de Scrapaltai",
-      "x": 4939.0,
-      "z": -802.0,
-      "size_m": 32.0,
+      "x": 5028.3,
+      "z": -784.1,
+      "size_m": 96.0,
       "essential": false,
-      "lore_ref": "docs/world/BIBLE_MMO.md#V13"
+      "lore_ref": "docs/world/BIBLE_MMO.md#V13",
+      "size_baked_from": 32.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "west",
+        "width_m": 13.4,
+        "depth_m": 19.2,
+        "apron_m": 7.7
+      }
     },
     {
       "id": "poi:lost_heaven_bank",
       "kind": "bank",
       "label": "Banque",
-      "x": 4679.0,
-      "z": -802.0,
-      "size_m": 40.0,
-      "essential": true
+      "x": 4633.4,
+      "z": -791.1,
+      "size_m": 120.0,
+      "essential": true,
+      "size_baked_from": 40.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "east",
+        "width_m": 16.8,
+        "depth_m": 24.0,
+        "apron_m": 9.6
+      }
     },
     {
       "id": "poi:lost_heaven_inn",
       "kind": "inn",
       "label": "Auberge",
-      "x": 4809.0,
-      "z": -672.0,
-      "size_m": 32.0,
-      "essential": false
+      "x": 4811.3,
+      "z": -594.2,
+      "size_m": 96.0,
+      "essential": false,
+      "size_baked_from": 32.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "south",
+        "width_m": 13.4,
+        "depth_m": 19.2,
+        "apron_m": 7.7
+      }
     },
     {
       "id": "poi:lost_heaven_market",
       "kind": "shops",
       "label": "Marché / commerces",
-      "x": 4809.0,
-      "z": -932.0,
-      "size_m": 48.0,
-      "essential": true
+      "x": 4859.3,
+      "z": -1008.3,
+      "size_m": 144.0,
+      "essential": true,
+      "size_baked_from": 48.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "north",
+        "width_m": 20.2,
+        "depth_m": 28.8,
+        "apron_m": 11.5
+      }
     },
     {
       "id": "poi:lost_heaven_training_hall",
       "kind": "trainers_combat",
       "label": "Hall d'entraînement",
-      "x": 4939.0,
-      "z": -672.0,
-      "size_m": 36.0,
-      "essential": false
+      "x": 5036.9,
+      "z": -636.2,
+      "size_m": 108.0,
+      "essential": false,
+      "size_baked_from": 36.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "west",
+        "width_m": 15.1,
+        "depth_m": 21.6,
+        "apron_m": 8.6
+      }
     },
     {
       "id": "poi:lost_heaven_clinic",
       "kind": "clinic",
       "label": "Clinique",
-      "x": 4679.0,
-      "z": -672.0,
-      "size_m": 28.0,
-      "essential": false
+      "x": 4620.8,
+      "z": -610.6,
+      "size_m": 84.0,
+      "essential": false,
+      "size_baked_from": 28.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "south",
+        "width_m": 11.8,
+        "depth_m": 16.8,
+        "apron_m": 6.7
+      }
     },
     {
       "id": "poi:lost_heaven_mission_post",
       "kind": "mission_terminal",
       "label": "Bureau des missions",
-      "x": 4939.0,
-      "z": -932.0,
-      "size_m": 24.0,
-      "essential": false
+      "x": 5028.3,
+      "z": -1008.8,
+      "size_m": 72.0,
+      "essential": false,
+      "size_baked_from": 24.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "west",
+        "width_m": 10.1,
+        "depth_m": 14.4,
+        "apron_m": 6.0
+      }
     },
     {
       "id": "poi:lost_heaven_town_hall",
       "kind": "town_hall",
       "label": "Mairie",
-      "x": 4679.0,
-      "z": -932.0,
-      "size_m": 40.0,
-      "essential": false
+      "x": 4622.3,
+      "z": -999.8,
+      "size_m": 120.0,
+      "essential": false,
+      "size_baked_from": 40.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "north",
+        "width_m": 16.8,
+        "depth_m": 24.0,
+        "apron_m": 9.6
+      }
     },
     {
       "id": "poi:lost_heaven_artisan_hall",
       "kind": "trainer_artisan",
       "label": "Atelier artisan",
-      "x": 5069.0,
-      "z": -802.0,
-      "size_m": 28.0,
-      "essential": false
+      "x": 5199.3,
+      "z": -769.5,
+      "size_m": 84.0,
+      "essential": false,
+      "size_baked_from": 28.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "west",
+        "width_m": 11.8,
+        "depth_m": 16.8,
+        "apron_m": 6.7
+      }
     },
     {
       "id": "poi:lost_heaven_housing_npc",
       "kind": "npc_housing_block",
       "label": "Logements PNJ",
-      "x": 4549.0,
-      "z": -802.0,
-      "size_m": 24.0,
-      "essential": false
+      "x": 4465.6,
+      "z": -822.8,
+      "size_m": 72.0,
+      "essential": false,
+      "size_baked_from": 24.0,
+      "footprint_source": "visual_mul_3_baked_2026-08-14",
+      "layout_spread": 1.3500000000000003,
+      "layout_organic": true,
+      "door": {
+        "face": "east",
+        "width_m": 10.1,
+        "depth_m": 14.4,
+        "apron_m": 6.0
+      }
     },
     {
       "id": "poi:lost_heaven_gate",
       "kind": "city_gate",
-      "label": "Porte / palissade",
-      "x": 4809.0,
-      "z": -1062.0,
-      "size_m": 64.0,
-      "essential": false
+      "label": "Porte est — désert",
+      "x": 5813.6,
+      "z": -982.5,
+      "size_m": 48.0,
+      "essential": false,
+      "role": "sortie_desert"
+    },
+    {
+      "id": "poi:lost_heaven_gate_west",
+      "kind": "city_gate",
+      "label": "Porte ouest — Zalem",
+      "x": 3688.9,
+      "z": -675.9,
+      "size_m": 48.0,
+      "essential": false,
+      "role": "route_vers_zalem"
     }
   ],
   "gabarit_mos_eisley": {
@@ -130,5 +251,34 @@
       "z": -737.0
     },
     "buildings_resized": 1
+  },
+  "layout": {
+    "updated_at": "2026-08-14",
+    "cluster_center": {
+      "x": 4749.0,
+      "z": -802.0
+    },
+    "spread": 1.3500000000000003,
+    "street_min_m": 28.0,
+    "size_bake_mul": 3.0,
+    "note": "size_m = emprise collision+rendu ; building_size_multiplier doit rester 1.0 ; layout organique medium",
+    "organic": {
+      "updated_at": "2026-08-14",
+      "style": "medium_village",
+      "amp_m": {
+        "x": 42.0,
+        "z": 38.0
+      },
+      "street_min_m": 26.0,
+      "note": "POI désalignés ; size_m et mul=1.0 inchangés"
+    },
+    "doors": {
+      "updated_at": "2026-08-14",
+      "plaza_aim": {
+        "x": 4749.0,
+        "z": -780.0
+      },
+      "note": "Ouvertures matérialisées (rendu + collision vestibule)"
+    }
   }
 }

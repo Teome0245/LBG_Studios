@@ -149,9 +149,20 @@
     {
       "id": "poi:lost_heaven_gate",
       "kind": "city_gate",
-      "label": "Porte / palissade",
-      "x": 4809.0,
-      "z": -1062.0,
+      "label": "Porte est — désert",
+      "x": 5155.0,
+      "z": -900.0,
+      "detail": true,
+      "essential": false,
+      "active": true,
+      "group": "lost_heaven"
+    },
+    {
+      "id": "poi:lost_heaven_gate_west",
+      "kind": "city_gate",
+      "label": "Porte ouest — Zalem",
+      "x": 4450.0,
+      "z": -760.0,
       "detail": true,
       "essential": false,
       "active": true,

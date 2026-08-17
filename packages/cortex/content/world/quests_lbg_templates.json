@@ -19,10 +19,14 @@
         "xp": {"xp_prospection": 40},
         "items": [{"id": "scrap_metal", "qty": 2}]
       },
+      "progress": [
+        {"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "sample", "label": "Revenir au bureau / Daan", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
       "next_steps": [
         "Accepter la mission au bureau ou auprès du scout.",
-        "Sortir par la porte et prospecter.",
-        "Revenir avec l'échantillon."
+        "Sortir par la porte est et prospecter.",
+        "Revenir au bureau avec l'échantillon."
       ]
     },
     {
@@ -39,10 +43,14 @@
         "xp": {"xp_quartier": 20},
         "items": []
       },
+      "progress": [
+        {"id": "pickup", "label": "Récupérer le colis au starport", "poi": "poi:lost_heaven_starport", "radius_m": 55},
+        {"id": "deliver", "label": "Déposer au marché", "poi": "poi:lost_heaven_market", "radius_m": 55}
+      ],
       "next_steps": [
         "Récupérer le colis au starport.",
         "Le porter au marché sans l'ouvrir.",
-        "Confirmer la livraison."
+        "Confirmer la livraison au board."
       ]
     },
     {
@@ -59,9 +67,13 @@
         "xp": {"xp_artisanat": 35},
         "items": [{"id": "ration_compacte", "qty": 1}]
       },
+      "progress": [
+        {"id": "kit", "label": "Passer à l'atelier artisan", "poi": "poi:lost_heaven_artisan_hall", "radius_m": 55},
+        {"id": "deliver", "label": "Remettre le kit à La Perle", "poi": "poi:lost_heaven_cantina", "radius_m": 50}
+      ],
       "next_steps": [
         "Accepter auprès de Jax ou Kell Asa.",
-        "Craft kit_reparation (Artisan de rue).",
+        "Craft kit_reparation (Artisan de rue) — ou proxy atelier.",
         "Remettre le kit à La Perle."
       ]
     },
@@ -79,6 +91,10 @@
         "xp": {"xp_quartier": 15},
         "items": []
       },
+      "progress": [
+        {"id": "listen", "label": "Écouter à La Perle", "poi": "poi:lost_heaven_cantina", "radius_m": 50},
+        {"id": "verify", "label": "Vérifier à la mairie / scribe", "poi": "poi:lost_heaven_town_hall", "radius_m": 55}
+      ],
       "next_steps": [
         "Écouter à La Perle.",
         "Aller aux archives / scribe.",
@@ -90,8 +106,8 @@
       "title": "Soirée à La Perle",
       "template": "spectacle",
       "keywords": ["spectacle", "danse", "show", "artiste", "scène", "scene", "tip", "pourboire"],
-      "giver_roles": ["performer", "entertainer_trainer"],
-      "giver_ids": ["npc:artiste_scene", "npc:core3_talen_ress", "npc:entertainer_trainer_relief2"],
+      "giver_roles": ["performer", "entertainer_trainer", "quest_giver"],
+      "giver_ids": ["npc:artiste_scene", "npc:core3_talen_ress", "npc:entertainer_trainer_relief2", "npc:core3_daan_oth"],
       "default_giver": "Artiste de scène",
       "objective": "Assister au spectacle à La Perle de Scrapaltai (et tipper si le cœur t'en dit).",
       "rewards": {
@@ -99,11 +115,21 @@
         "xp": {"xp_scene": 25},
         "items": []
       },
+      "progress": [
+        {"id": "arrive", "label": "Entrer à La Perle", "poi": "poi:lost_heaven_cantina", "radius_m": 50}
+      ],
       "next_steps": [
         "Aller à La Perle.",
-        "Regarder le show.",
-        "Parler à l'artiste ou à Talen pour la suite formation."
-      ]
+        "Assister au show (étape auto près de la cantina).",
+        "Option : tipper l'artiste (Tip Scène).",
+        "Terminer au board."
+      ],
+      "scene": {
+        "venue": "poi:lost_heaven_cantina",
+        "tip_credits_min": 1,
+        "tip_credits_max": 5,
+        "tip_xp_scene": 5
+      }
     },
     {
       "id": "lh_hunt_chacal",
@@ -119,12 +145,16 @@
         "xp": {"xp_prospection": 30},
         "items": [{"id": "fourrure_doree", "qty": 1}]
       },
+      "progress": [
+        {"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "report", "label": "Rapporter au bureau des missions", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
       "next_steps": [
         "Prendre la mission à la porte ou au bureau.",
         "Sortir hors palissade.",
         "Rapporter fourrure ou carapace."
       ],
-      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D."
+      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat réel = suite."
     },
     {
       "id": "lh_med_venin",
@@ -140,6 +170,11 @@
         "xp": {"xp_medecine": 40},
         "items": [{"id": "bandage_antivenin", "qty": 1}]
       },
+      "progress": [
+        {"id": "brief", "label": "Passer à la clinique", "poi": "poi:lost_heaven_clinic", "radius_m": 55},
+        {"id": "fetch", "label": "Sortir chercher le venin (porte est)", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "return", "label": "Remettre à la clinique", "poi": "poi:lost_heaven_clinic", "radius_m": 55}
+      ],
       "next_steps": [
         "Parler à Odo Merr à la clinique.",
         "Obtenir venin (loot) ou craft bandage_antivenin.",
@@ -160,6 +195,10 @@
         "xp": {"xp_quartier": 25, "xp_prospection": 10},
         "items": []
       },
+      "progress": [
+        {"id": "pickup", "label": "Retrouver le civil à la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "dropoff", "label": "Escorter jusqu'à la clinique", "poi": "poi:lost_heaven_clinic", "radius_m": 55}
+      ],
       "next_steps": [
         "Accepter à la porte ou au bureau des missions.",
         "Accompagner le civil jusqu'à la clinique.",
@@ -180,6 +219,11 @@
         "xp": {"xp_quartier": 40},
         "items": [{"id": "scrap_metal", "qty": 1}]
       },
+      "progress": [
+        {"id": "market", "label": "Interroger au marché", "poi": "poi:lost_heaven_market", "radius_m": 55},
+        {"id": "archives", "label": "Vérifier à la mairie / scribe", "poi": "poi:lost_heaven_town_hall", "radius_m": 55},
+        {"id": "report", "label": "Rapporter à Daan Oth", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
       "next_steps": [
         "Prendre la mission au bureau.",
         "Parler au rumeuriste puis au scribe.",
@@ -200,6 +244,11 @@
         "xp": {"xp_quartier": 15},
         "items": []
       },
+      "progress": [
+        {"id": "brief", "label": "Prendre le brief au bureau", "poi": "poi:lost_heaven_mission_post", "radius_m": 50},
+        {"id": "errand", "label": "Coup de main à La Perle", "poi": "poi:lost_heaven_cantina", "radius_m": 50},
+        {"id": "return", "label": "Revenir voir Daan Oth", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
       "next_steps": [
         "Accepter au bureau des missions.",
         "Accomplir la tâche locale.",

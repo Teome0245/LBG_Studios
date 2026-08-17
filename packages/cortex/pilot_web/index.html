@@ -1611,6 +1611,7 @@
     .office-banner { display: none; }
   </style>
   <link rel="stylesheet" href="orchestrator_avatar/orchestrator_avatar.css" />
+  <link rel="stylesheet" href="face_rig/face_rig.css" />
 </head>
 <body>
   <div class="pilot-shell-bar">
@@ -2013,9 +2014,11 @@
               <div id="orch-avatar-bubble" class="orch-avatar-bubble" hidden></div>
               <div id="orch-avatar-canvas" class="orch-avatar-canvas-host" role="img" aria-label="Avatar 3D féminin expressif"></div>
             </div>
+            <div id="face-rig-host" class="face-rig-host" aria-label="Visage 2D calques (Pilot + MMO)"></div>
+            <p class="face-rig-caption">Face rig 2D — fallback CSS ; sheets Infographiste dès dispo · <code>docs/face_rig_pilot_mmo.md</code></p>
             <div class="orch-avatar-meta">
               <strong>Pygmalion</strong> — avatar féminin riggé (Three.js, <code>base_female</code> d’<code>avatar_app</code>).
-              <p class="orch-avatar-credit">Postures procédurales selon l’humeur · bulle = dernière phrase.</p>
+              <p class="orch-avatar-credit">Postures procédurales selon l’humeur · bulle = dernière phrase · face 2D synchronisée.</p>
             </div>
           </div>
           <p class="assistant-muted" id="assistant-orch-mood-hint">Chargement…</p>
@@ -5684,6 +5687,26 @@
           OrchestratorAvatar.setMood(mood);
         }
       } catch (_) {}
+      try {
+        if (window.FaceRig && FaceRig.ready) {
+          FaceRig.setMood(mood);
+        }
+      } catch (_) {}
+    }
+
+    function faceRigInit() {
+      if (!window.FaceRig) {
+        if (!faceRigInit._retries) faceRigInit._retries = 0;
+        if (faceRigInit._retries < 40) {
+          faceRigInit._retries += 1;
+          window.setTimeout(faceRigInit, 150);
+        }
+        return;
+      }
+      if (FaceRig.ready) return;
+      const host = document.getElementById("face-rig-host");
+      if (!host) return;
+      FaceRig.init("face-rig-host", { characterId: "lyra_assistant" });
     }
 
     function orchestratorAvatarInit() {
@@ -6129,6 +6152,9 @@
           try {
             if (window.OrchestratorAvatar && OrchestratorAvatar.ready) OrchestratorAvatar.say(replyNorm);
           } catch (_) {}
+          try {
+            if (window.FaceRig && FaceRig.ready) FaceRig.say(replyNorm);
+          } catch (_) {}
           return;
         }
       }
@@ -6186,6 +6212,9 @@
       assistantUiHint("Réponse reçue", false);
       try {
         if (window.OrchestratorAvatar && OrchestratorAvatar.ready) OrchestratorAvatar.say(replyNorm);
+      } catch (_) {}
+      try {
+        if (window.FaceRig && FaceRig.ready) FaceRig.say(replyNorm);
       } catch (_) {}
     }
 
@@ -8849,6 +8878,7 @@
         } catch (_) {}
         try {
           orchestratorAvatarInit();
+          faceRigInit();
           assistantOrchMoodRefresh();
           __assistantOrchMoodPoll = window.setInterval(assistantOrchMoodRefresh, 5000);
         } catch (_) {}
@@ -11241,9 +11271,13 @@
   <script src="orchestrator_avatar/vendor/GLTFLoader.js"></script>
     <script src="office_map/office_map.js"></script>
 <script src="orchestrator_avatar/orchestrator_avatar.js"></script>
+<script src="face_rig/face_rig.js"></script>
   <script>
     try {
       if (typeof orchestratorAvatarInit === "function") orchestratorAvatarInit();
+    } catch (_) {}
+    try {
+      if (typeof faceRigInit === "function") faceRigInit();
     } catch (_) {}
   </script>
 </body>

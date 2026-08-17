@@ -87,6 +87,10 @@ func _load_hub_building_blocks() -> void:
 	f.close()
 	if not raw is Dictionary:
 		return
+	# Même formule que HubBuildingsLayer : size_m (Core3) × building_size_multiplier.
+	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", 1.0))
+	if mul <= 0.0:
+		mul = 1.0
 	for item: Variant in (raw as Dictionary).get("buildings", []):
 		if not item is Dictionary:
 			continue
@@ -96,14 +100,60 @@ func _load_hub_building_blocks() -> void:
 			continue
 		var cx := float(b.get("x", 0.0))
 		var cz := float(b.get("z", 0.0))
-		var half := float(b.get("size_m", 32.0)) * 0.5
-		_building_blocks.append({
+		var size_m := float(b.get("size_m", 32.0))
+		var half := size_m * 0.5 * mul
+		var block := {
 			"id": str(b.get("id", b.get("kind", "building"))),
+			"cx": cx,
+			"cz": cz,
+			"half": half,
 			"min_x": cx - half,
 			"max_x": cx + half,
 			"min_z": cz - half,
 			"max_z": cz + half,
-		})
+		}
+		if b.get("door") is Dictionary:
+			block["door"] = _door_corridor(b["door"] as Dictionary, cx, cz, half)
+		_building_blocks.append(block)
+
+## Vestibule + tablier walkable (même géométrie que HubBuildingsLayer).
+func _door_corridor(door: Dictionary, cx: float, cz: float, half: float) -> Dictionary:
+	var face := str(door.get("face", "south")).to_lower()
+	var hw := float(door.get("width_m", 12.0)) * 0.5
+	var depth := float(door.get("depth_m", 14.0))
+	var apron := float(door.get("apron_m", 8.0))
+	var min_x: float
+	var max_x: float
+	var min_z: float
+	var max_z: float
+	match face:
+		"north":
+			min_x = cx - hw
+			max_x = cx + hw
+			min_z = cz + half - depth
+			max_z = cz + half + apron
+		"south":
+			min_x = cx - hw
+			max_x = cx + hw
+			min_z = cz - half - apron
+			max_z = cz - half + depth
+		"east":
+			min_x = cx + half - depth
+			max_x = cx + half + apron
+			min_z = cz - hw
+			max_z = cz + hw
+		_:
+			min_x = cx - half - apron
+			max_x = cx - half + depth
+			min_z = cz - hw
+			max_z = cz + hw
+	return {"face": face, "min_x": min_x, "max_x": max_x, "min_z": min_z, "max_z": max_z}
+
+func _in_door_corridor(box: Dictionary, x: float, z: float) -> bool:
+	if not box.has("door") or not box["door"] is Dictionary:
+		return false
+	var d: Dictionary = box["door"]
+	return x >= float(d["min_x"]) and x <= float(d["max_x"]) and z >= float(d["min_z"]) and z <= float(d["max_z"])
 
 func _inside_hub_area(x: float, z: float) -> bool:
 	if _fence_ring.size() < 3:
@@ -122,10 +172,18 @@ func _in_gate_corridor(x: float, z: float) -> bool:
 		var gx := float(d.get("x", 0.0))
 		var gz := float(d.get("z", 0.0))
 		var hw := float(g.get("width_m", 16.0)) * 0.5
-		var north := float(g.get("depth_north_m", g.get("depth_m", 32.0)))
-		var south := float(g.get("depth_south_m", g.get("depth_m", 32.0)))
-		if absf(x - gx) <= hw and z <= gz + north and z >= gz - south:
-			return true
+		var axis := str(g.get("axis", "z")).to_lower()
+		if axis == "x":
+			# Ouverture E–O : width le long de Z, profondeur le long de X.
+			var east := float(g.get("depth_east_m", g.get("depth_m", 32.0)))
+			var west := float(g.get("depth_west_m", g.get("depth_m", 32.0)))
+			if absf(z - gz) <= hw and x <= gx + east and x >= gx - west:
+				return true
+		else:
+			var north := float(g.get("depth_north_m", g.get("depth_m", 32.0)))
+			var south := float(g.get("depth_south_m", g.get("depth_m", 32.0)))
+			if absf(x - gx) <= hw and z <= gz + north and z >= gz - south:
+				return true
 	return false
 
 func _fence_segment_open(seg_index: int) -> bool:
@@ -177,6 +235,8 @@ func allows_core3(x: float, z: float) -> bool:
 				continue
 			var box: Dictionary = block
 			if x >= float(box["min_x"]) and x <= float(box["max_x"]) and z >= float(box["min_z"]) and z <= float(box["max_z"]):
+				if _in_door_corridor(box, x, z):
+					continue
 				return false
 	return true
 
@@ -265,11 +325,20 @@ func _draw() -> void:
 			var gx := float(d.get("x", 0.0))
 			var gz := float(d.get("z", 0.0))
 			var hw := float(g.get("width_m", 16.0)) * 0.5
-			var north := float(g.get("depth_north_m", g.get("depth_m", 32.0)))
-			var south := float(g.get("depth_south_m", g.get("depth_m", 32.0)))
-			var tl := Projection3D2D.to_screen(Vector3(gx - hw, 0.0, gz - south))
-			var br := Projection3D2D.to_screen(Vector3(gx + hw, 0.0, gz + north))
-			var rect := Rect2(tl, br - tl)
+			var axis := str(g.get("axis", "z")).to_lower()
+			var tl: Vector2
+			var br: Vector2
+			if axis == "x":
+				var east := float(g.get("depth_east_m", g.get("depth_m", 32.0)))
+				var west := float(g.get("depth_west_m", g.get("depth_m", 32.0)))
+				tl = Projection3D2D.to_screen(Vector3(gx - west, 0.0, gz - hw))
+				br = Projection3D2D.to_screen(Vector3(gx + east, 0.0, gz + hw))
+			else:
+				var north := float(g.get("depth_north_m", g.get("depth_m", 32.0)))
+				var south := float(g.get("depth_south_m", g.get("depth_m", 32.0)))
+				tl = Projection3D2D.to_screen(Vector3(gx - hw, 0.0, gz - south))
+				br = Projection3D2D.to_screen(Vector3(gx + hw, 0.0, gz + north))
+			var rect := Rect2(tl, br - tl).abs()
 			draw_rect(rect, Color(0.95, 0.75, 0.25, 0.08))
 			draw_rect(rect, Color(0.95, 0.8, 0.35, 0.55), false, 1.0)
 		for block: Variant in _building_blocks:
@@ -281,6 +350,13 @@ func _draw() -> void:
 			var rect := Rect2(tl, br - tl)
 			draw_rect(rect, Color(0.9, 0.25, 0.15, 0.12))
 			draw_rect(rect, Color(0.95, 0.4, 0.2, 0.55), false, 1.0)
+			if box.has("door") and box["door"] is Dictionary:
+				var d: Dictionary = box["door"]
+				var dtl := Projection3D2D.to_screen(Vector3(float(d["min_x"]), 0.0, float(d["max_z"])))
+				var dbr := Projection3D2D.to_screen(Vector3(float(d["max_x"]), 0.0, float(d["min_z"])))
+				var drect := Rect2(dtl, dbr - dtl).abs()
+				draw_rect(drect, Color(0.35, 0.85, 0.55, 0.18))
+				draw_rect(drect, Color(0.45, 0.95, 0.65, 0.75), false, 1.2)
 
 func _draw_poly(item: Variant, fill: Color, outline: Color, filled: bool = true) -> void:
 	if not item is Dictionary:

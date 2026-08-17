@@ -185,5 +185,6 @@ Ordre de pose recommandé (chaque ligne = futur `poi_id` dans `world_poi`) :
 - [ADR 0007 — Prime + Tatooine](0007-core3-prime-ia-tatooine.md)
 - [ADR 0008 — World Editor](0008-world-editor-world-poi.md)
 - [`docs/core3_ia_npc_rollout.md`](../core3_ia_npc_rollout.md)
+- [`docs/GEOGRAPHIE_SCRAPALTAI.md`](../GEOGRAPHIE_SCRAPALTAI.md) — carte, calques Godot, migration PNJ
 - Core3 vanilla : `tatooine_regions.lua`, `tatooine_mos_eisley.lua`, `PlayerManagerImplementation::loadStartingLocations()`
 - Install locale : `/mnt/j/swgemu/StarWarsGalaxies/`, `MOD_LBG/`

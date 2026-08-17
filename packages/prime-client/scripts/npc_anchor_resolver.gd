@@ -37,6 +37,7 @@ static func _load_buildings() -> void:
 			_buildings[str(b.get("id", ""))] = {
 				"x": float(b.get("x", 0.0)),
 				"z": float(b.get("z", 0.0)),
+				"size_m": float(b.get("size_m", 32.0)),
 			}
 
 static func _load_anchors() -> void:
@@ -99,15 +100,30 @@ static func _enrich(anchor: Dictionary, pilot_id: String) -> Dictionary:
 	var bid := str(anchor.get("building_id", ""))
 	var bx := 0.0
 	var bz := 0.0
+	var half := 16.0
 	if _buildings.has(bid):
 		bx = float(_buildings[bid].get("x", 0.0))
 		bz = float(_buildings[bid].get("z", 0.0))
+		half = float(_buildings[bid].get("size_m", 32.0)) * 0.5
 	var off: Variant = anchor.get("offset_m", {})
 	var ox := 0.0
 	var oz := 0.0
 	if off is Dictionary:
 		ox = float((off as Dictionary).get("x", 0.0))
 		oz = float((off as Dictionary).get("z", 0.0))
+	# Slots extérieurs : rester hors emprise collision (même AABB que ZoneLayers).
+	var slot := str(anchor.get("poi_slot", "")).to_lower()
+	var outdoor := slot in ["door", "patio", "yard", "street", "gate", "apron", "plaza", "steps", "pad"]
+	if outdoor and half > 0.0:
+		var margin := 4.0
+		var need := half + margin
+		var mag := sqrt(ox * ox + oz * oz)
+		if mag < 0.01:
+			oz = need
+		elif mag < need:
+			var s := need / mag
+			ox *= s
+			oz *= s
 	out["_home_x"] = bx + ox
 	out["_home_z"] = bz + oz
 	out["_pilot_id"] = pilot_id

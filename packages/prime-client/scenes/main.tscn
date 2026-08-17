@@ -19,6 +19,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hotbar.tscn" id="13_hotbar"]
 [ext_resource type="PackedScene" path="res://scenes/ui/inventory_panel.tscn" id="14_inv"]
 [ext_resource type="PackedScene" path="res://scenes/ui/talents_craft_panel.tscn" id="15_tal"]
+[ext_resource type="PackedScene" path="res://scenes/ui/mission_board_panel.tscn" id="15_missions"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_menu_panel.tscn" id="15_menu"]
 [ext_resource type="Theme" path="res://themes/prime_ui.tres" id="16_theme"]
 [ext_resource type="PackedScene" path="res://scenes/ui/login_panel.tscn" id="17_login"]
 [ext_resource type="Script" path="res://scripts/LbgWsClient.gd" id="18_ws"]
@@ -47,21 +49,21 @@ z_index = -7
 script = ExtResource("9_ws")
 
 [node name="HubGroundLayer" type="Node2D" parent="WorldMap"]
-z_index = -7
+z_index = -8
 script = ExtResource("10_ground")
+
+[node name="HubPropsLayer" type="Node2D" parent="WorldMap"]
+z_index = -7
+script = ExtResource("10_props")
 
 [node name="HubBuildingsLayer" type="Node2D" parent="WorldMap"]
 z_index = -6
 script = ExtResource("10_hub")
 
-[node name="HubPropsLayer" type="Node2D" parent="WorldMap"]
-z_index = -5
-script = ExtResource("10_props")
-
 [node name="RetailLayoutLayer" type="Node2D" parent="WorldMap"]
 z_index = -4
 script = ExtResource("10_retail")
-visible_layout = true
+visible_layout = false
 city_id = "lost_heaven"
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=213625031]
@@ -156,6 +158,10 @@ theme = ExtResource("16_theme")
 [node name="TalentsCraftPanel" parent="UI/ModalLayer" instance=ExtResource("15_tal")]
 
 [node name="InventoryPanel" parent="UI/ModalLayer" instance=ExtResource("14_inv")]
+
+[node name="MissionBoardPanel" parent="UI/ModalLayer" instance=ExtResource("15_missions")]
+
+[node name="GameMenuPanel" parent="UI/ModalLayer" instance=ExtResource("15_menu")]
 
 [node name="PlanetMapPanel" parent="UI/ModalLayer" instance=ExtResource("12_pmap")]
 visible = false

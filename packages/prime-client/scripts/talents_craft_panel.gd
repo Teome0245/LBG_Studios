@@ -20,6 +20,7 @@ var _pending: String = ""  # catalog | craft
 
 var _title: Label
 var _status_label: Label
+var _recipe_label: Label
 var _skills_list: ItemList
 var _schematics_list: ItemList
 var _refresh_btn: Button
@@ -88,7 +89,7 @@ func _ensure_ui() -> void:
 	if _skills_list == null:
 		_skills_list = ItemList.new()
 		_skills_list.name = "SkillsList"
-		_skills_list.custom_minimum_size = Vector2(0, 110)
+		_skills_list.custom_minimum_size = Vector2(0, 100)
 		_skills_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		root.add_child(_skills_list)
 	var schem_lbl := root.get_node_or_null("SchematicsLabel") as Label
@@ -101,9 +102,20 @@ func _ensure_ui() -> void:
 	if _schematics_list == null:
 		_schematics_list = ItemList.new()
 		_schematics_list.name = "SchematicsList"
-		_schematics_list.custom_minimum_size = Vector2(0, 110)
+		_schematics_list.custom_minimum_size = Vector2(0, 100)
 		_schematics_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		root.add_child(_schematics_list)
+	if not _schematics_list.item_selected.is_connected(_on_schematic_selected):
+		_schematics_list.item_selected.connect(_on_schematic_selected)
+	_recipe_label = root.get_node_or_null("Recipe") as Label
+	if _recipe_label == null:
+		_recipe_label = Label.new()
+		_recipe_label.name = "Recipe"
+		_recipe_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_recipe_label.add_theme_font_size_override("font_size", 11)
+		_recipe_label.add_theme_color_override("font_color", Color(0.82, 0.78, 0.68, 0.95))
+		_recipe_label.text = "Sélectionne un schematic · T craft · I inventaire"
+		root.add_child(_recipe_label)
 	_paint_lists()
 
 
@@ -216,14 +228,66 @@ func _on_craft_http_done(result: int, code: int, _headers: PackedStringArray, bo
 		_paint_status()
 		return
 	if not bool(parsed.get("ok", false)):
-		_status = "craft échec: %s" % str(parsed.get("error", code))
+		_status = _craft_error_text(parsed, code)
 		_paint_status()
 		return
 	var crafted = parsed.get("crafted", {})
 	var cname := str(crafted.get("name", crafted.get("id", "?"))) if typeof(crafted) == TYPE_DICTIONARY else "?"
-	_status = "craft OK — %s" % cname
+	var cqty := int(crafted.get("qty", 1)) if typeof(crafted) == TYPE_DICTIONARY else 1
+	_status = "craft OK — %s ×%d" % [cname, cqty]
 	_paint_status()
 	craft_completed.emit(parsed)
+
+func _craft_error_text(parsed: Dictionary, code: int) -> String:
+	var err := str(parsed.get("error", code))
+	match err:
+		"missing_inputs":
+			return "manque %s (%s/%s)" % [
+				str(parsed.get("item_id", "?")),
+				str(parsed.get("have", 0)),
+				str(parsed.get("need", "?")),
+			]
+		"missing_skill":
+			return "skill requis: %s" % str(parsed.get("requires_skill", "?"))
+		"unknown_schematic":
+			return "schematic inconnu"
+		"schematic_draft":
+			return "schematic draft (non craftable)"
+		_:
+			return "craft échec: %s" % err
+
+func _on_schematic_selected(index: int) -> void:
+	_update_recipe_label(index)
+
+func _update_recipe_label(index: int = -1) -> void:
+	if _recipe_label == null:
+		return
+	if index < 0:
+		if _schematics_list:
+			var sel := _schematics_list.get_selected_items()
+			index = sel[0] if not sel.is_empty() else -1
+	if index < 0 or index >= _schematics.size():
+		_recipe_label.text = "Sélectionne un schematic · Craft consomme l'inventaire M10"
+		return
+	var sc = _schematics[index]
+	if typeof(sc) != TYPE_DICTIONARY:
+		_recipe_label.text = str(sc)
+		return
+	var parts: PackedStringArray = PackedStringArray()
+	var inputs = sc.get("inputs", [])
+	if typeof(inputs) == TYPE_ARRAY:
+		for inp in inputs:
+			if typeof(inp) == TYPE_DICTIONARY:
+				parts.append("%s×%s" % [str(inp.get("id", "?")), str(inp.get("qty", 1))])
+	var out = sc.get("output", {})
+	var out_s := "?"
+	if typeof(out) == TYPE_DICTIONARY:
+		out_s = "%s×%s" % [str(out.get("id", sc.get("id", "?"))), str(out.get("qty", 1))]
+	var req := str(sc.get("requires_skill", ""))
+	var line := "Recette: %s → %s" % [", ".join(parts) if parts.size() > 0 else "(sans inputs)", out_s]
+	if req != "":
+		line += " · skill %s" % req
+	_recipe_label.text = line
 
 func _apply_local_mock(code: Variant) -> void:
 	_status = "hors ligne (%s) · mock local" % str(code)
@@ -235,8 +299,22 @@ func _apply_local_mock(code: Variant) -> void:
 		{"id": "pilotage_shuttle_r1", "name": "Pilotage shuttle · rang 1", "tree": "pilot", "rank": 1},
 	]
 	_schematics = [
-		{"id": "kit_reparation", "name": "Kit de réparation", "category": "tool", "requires_skill": "artisan_rue_r1"},
-		{"id": "ration_compacte", "name": "Ration compacte", "category": "consumable", "requires_skill": "artisan_rue_r1"},
+		{
+			"id": "kit_reparation",
+			"name": "Kit de réparation",
+			"category": "tool",
+			"requires_skill": "artisan_rue_r1",
+			"inputs": [{"id": "scrap_metal", "qty": 2}, {"id": "binding_tape", "qty": 1}],
+			"output": {"id": "kit_reparation", "qty": 1},
+		},
+		{
+			"id": "ration_compacte",
+			"name": "Ration compacte",
+			"category": "consumable",
+			"requires_skill": "artisan_rue_r1",
+			"inputs": [{"id": "dried_grain", "qty": 2}, {"id": "water_capsule", "qty": 1}],
+			"output": {"id": "ration_compacte", "qty": 1},
+		},
 	]
 
 func _paint_status() -> void:
@@ -246,7 +324,7 @@ func _paint_status() -> void:
 			_status_label.add_theme_color_override("font_color", Color(0.95, 0.7, 0.35, 1))
 		elif _status.begins_with("live") or _status.begins_with("craft OK"):
 			_status_label.add_theme_color_override("font_color", Color(0.55, 0.9, 0.65, 1))
-		elif _status.begins_with("craft échec") or _status.begins_with("craft réseau") or _status.begins_with("craft indisponible"):
+		elif _status.begins_with("craft échec") or _status.begins_with("craft réseau") or _status.begins_with("craft indisponible") or _status.begins_with("manque") or _status.begins_with("skill requis"):
 			_status_label.add_theme_color_override("font_color", Color(0.95, 0.45, 0.4, 1))
 		else:
 			_status_label.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9, 1))
@@ -273,3 +351,4 @@ func _paint_lists() -> void:
 			if typeof(sc) == TYPE_DICTIONARY and str(sc.get("requires_skill", "")) != "":
 				slabel = "%s  ← %s" % [slabel, str(sc.get("requires_skill"))]
 			_schematics_list.add_item(slabel)
+	_update_recipe_label()

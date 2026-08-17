@@ -164,24 +164,12 @@ def connect_player(
 
 
 def _post_connect_lines(player: Core3IaPlayer) -> list[str]:
-    """Placement initial : Mos Eisley exterieur (Lia progresse entertainer/artisan librement)."""
-    if player.id == "lia":
-        return [
-            "move_to|Lia|tatooine|3528|-4804|5|mos_eisley",
-        ]
-    if player.id == "nix":
-        return [
-            "move_to|Nix|tatooine|4749|-837|32|mos_eisley",
-        ]
-    if player.id == "mira":
-        return [
-            "move_to|Mira|tatooine|3520|-4810|5|mos_eisley",
-        ]
-    if player.id == "kael":
-        return [
-            "move_to|Kael|tatooine|3465|-4682|5|training_yard",
-        ]
-    return []
+    """Placement initial : Lost Heaven outdoor (hub Scrapaltai)."""
+    from lbg_agents.core3_places import bot_spawn
+
+    x, y, z = bot_spawn(player.id)
+    name = player.firstname
+    return [f"move_to|{name}|tatooine|{x:g}|{y:g}|{z:g}|lost_heaven"]
 
 
 def enqueue_lines(lines: list[str], *, player: Core3IaPlayer) -> dict[str, Any]:

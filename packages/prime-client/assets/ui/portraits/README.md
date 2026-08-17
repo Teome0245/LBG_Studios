@@ -23,3 +23,4 @@ assets/ui/portraits/
 - Même personnage, même costume, même lumière entre les expressions
 - Interim OK : copier bartender→merchant/civilian tant que Pygmalion n’a pas généré les vrais
 - Génération : `Infographiste_IA/scripts/generate_dialogue_portraits_mvp.sh` puis `deploy_dialogue_portraits_to_prime.sh` (cible LBG_Studios)
+- **Face rig 2D** (Pilot live + bake optionnel vers ces PNG) : `Infographiste_IA/pipelines/face_parts/BRIEF_lyra_face_rig.md` · contrat `packages/cortex/docs/face_rig_pilot_mmo.md`

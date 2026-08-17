@@ -143,12 +143,14 @@ def deterministic_economy_action(
 
     if step == "forage":
         if _snapshot_flag(snap, "in_interior"):
+            from lbg_agents.core3_places import outdoor_hub
+
             out = enqueue(
                 player,
                 action="move_to",
-                message="mos_eisley_outdoor",
+                message="lost_heaven_outdoor",
                 snapshot=snap,
-                target_xyz=(3520.0, -4810.0, 5.0),
+                target_xyz=outdoor_hub(),
             )
             out["reason"] = "economy_exit_for_forage"
             return out

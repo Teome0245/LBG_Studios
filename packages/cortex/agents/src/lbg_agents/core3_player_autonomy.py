@@ -373,6 +373,16 @@ def deterministic_proactive_action(
     if decay is not None:
         return decay
 
+    # Missions hub Lost Heaven (même runtime que prime-client J) — prioritaire
+    try:
+        from lbg_agents.quest_hub_bot_autonomy import deterministic_hub_quest_action
+
+        hub = deterministic_hub_quest_action(player, snapshot=snap, enqueue=enqueue_direct_action)
+        if hub is not None:
+            return hub
+    except Exception:
+        pass
+
     if idx % 5 == 0:
         quest = deterministic_quest_action(player, snapshot=snap, enqueue=enqueue_direct_action)
         if quest is not None:
@@ -388,14 +398,16 @@ def deterministic_proactive_action(
     in_interior = _snapshot_flag(snap, "in_interior")
     inv_blocked = _snapshot_flag(snap, "inventory_full") or _snapshot_flag(snap, "inventory_near_full")
 
+    from lbg_agents.core3_places import bot_spawn, outdoor_hub
+
     if player.id == "nix":
         if in_interior:
             out = enqueue_direct_action(
                 player,
                 action="move_to",
-                message="mos_eisley",
+                message="lost_heaven",
                 snapshot=snap,
-                target_xyz=(4749.0, -837.0, 32.0),
+                target_xyz=outdoor_hub(),
             )
             out["reason"] = "proactive_exit_interior"
             return out
@@ -412,9 +424,9 @@ def deterministic_proactive_action(
             out = enqueue_direct_action(
                 player,
                 action="move_to",
-                message="mos_eisley",
+                message="lost_heaven",
                 snapshot=snap,
-                target_xyz=(3520.0, -4810.0, 5.0),
+                target_xyz=bot_spawn("mira"),
             )
             out["reason"] = "proactive_exit_interior_gather"
             return out
@@ -431,9 +443,9 @@ def deterministic_proactive_action(
             out = enqueue_direct_action(
                 player,
                 action="move_to",
-                message="mos_eisley_training_yard",
+                message="lost_heaven",
                 snapshot=snap,
-                target_xyz=(3465.0, -4682.0, 5.0),
+                target_xyz=bot_spawn("kael"),
             )
             out["reason"] = "proactive_exit_interior_train"
             return out
@@ -520,6 +532,18 @@ def player_autonomy_tick(player_id: str, *, via: str | None = None) -> dict[str,
         commit_inbound_event(player.id, social_event)
         mark_reactive_handled(player.id)
     elif proactive_suppressed(player.id):
+        # Missions hub : toujours autorisées (visibilité joueur) même pendant cooldown social
+        try:
+            from lbg_agents.quest_hub_bot_autonomy import deterministic_hub_quest_action
+
+            hub = deterministic_hub_quest_action(player, snapshot=snap, enqueue=enqueue_direct_action)
+            if hub is not None:
+                hub["snapshot"] = snap
+                hub["prompt"] = ""
+                hub["social_event"] = None
+                return hub
+        except Exception:
+            pass
         return {
             "ok": True,
             "outcome": "skipped_proactive_cooldown",

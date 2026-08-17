@@ -371,8 +371,9 @@ def deterministic_proactive_action(*, snapshot: dict[str, Any] | None = None) ->
             out["reason"] = f"proactive_scene_{sid}"
             out["incarnation"] = True
             return out
-        out = _post_sidecar_enqueue(action="housing_enter", message="cantina", snapshot=snap)
-        out["reason"] = f"proactive_scene_{sid}_to_cantina"
+        # Joueuse libre : danse en cantina si deja sur place, sinon geste outdoor.
+        out = _post_sidecar_enqueue(action="perform", message="wave", snapshot=snap)
+        out["reason"] = f"proactive_scene_{sid}_outdoor"
         out["incarnation"] = True
         return out
 
@@ -422,10 +423,7 @@ def deterministic_proactive_action(*, snapshot: dict[str, Any] | None = None) ->
             out["reason"] = "proactive_commerce_barman"
             out["incarnation"] = True
             return out
-        out = _post_sidecar_enqueue(action="housing_enter", message="cantina", snapshot=snap)
-        out["reason"] = "proactive_commerce_to_cantina"
-        out["incarnation"] = True
-        return out
+        return None
 
     # social_greet, presence → LLM via build_proactive_prompt
     if proactive_tick_index() % 5 == 0:

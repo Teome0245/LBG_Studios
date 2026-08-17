@@ -116,7 +116,7 @@ def suggest_entertainer_action(
             return {"action": "perform", "message": f"dance:{pick}"}
         return {"action": "perform", "message": "dance"}
 
-    return {"action": "housing_enter", "message": "cantina"}
+    return {"action": "perform", "message": "wave"}
 
 
 def macro_hint_for_prompt() -> str:

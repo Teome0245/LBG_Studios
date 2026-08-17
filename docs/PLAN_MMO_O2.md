@@ -33,7 +33,9 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |---|--------|------------|--------|------|
 | **P0** | Doc pivot | Ce fichier + liens OBJECTIVES / RESTAURATION | Thémis | **fait** 2026-08-03 |
 | **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone→move | Hermès + Argus | **fait** 2026-08-03 (smoke + move ±1.5 m) |
-| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **en cours** — catalog live ; **craft_combine + inventory HTTP** sur 246 (runtime mémoire `m10_craft_runtime`, 2026-08-04) ; inventaire Core3 réel = suite |
+| **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **vert smoke 2026-08-15** (catalog + `craft_combine` + inventaire HTTP mémoire sur 246) ; UI recette/erreurs/sync inventaire ; **inventaire Core3 réel = suite** |
+| **P2b** | Missions hub | Board Daan Oth ↔ `:8791` accept/complete stub + UI Godot **J** | Iris + Dédale | **vert smoke 2026-08-15** ; **objectifs terrain POI** (progress sur toutes templates hub + HUD objectif hors J) **fait** ; Core3 journal = suite |
+| **P2c** | Scène cantina | Show La Perle + tip stub (après missions) | Iris | **MVP stub 2026-08-15** — `lh_show_perle` au board + `POST /v1/quests/tip` + bouton Tip Scène ; show live / formation Talen = suite |
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | jaune (Rang 2) |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
@@ -43,7 +45,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | Jalon | État |
 |-------|------|
 | M9 carte/minimap | **fait** client |
-| M10 talents/craft UI | **en cours** — panel live `:8791` + smoke catalog ; experiment Core3 ouvert |
+| M10 talents/craft UI | **B2B smoke vert** — panel live `:8791` + recette + sync inventaire ; inventaire Core3 réel ouvert |
 | M11 login LBG | **fait** (Launchpad + éditeur) |
 | M12 `lbg-ws/2` live | **fait** smoke login→WS→zone_state→move ; polish ZB optionnel |
 
@@ -89,6 +91,7 @@ bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 bash packages/cortex/infra/scripts/smoke_godot_m11_login_lan.sh
 bash packages/cortex/infra/scripts/smoke_godot_m12_ws_lan.sh
 bash packages/cortex/infra/scripts/smoke_godot_m10_craft_lan.sh
+bash packages/cortex/infra/scripts/smoke_godot_quest_hub_lan.sh
 BUNDLE=godot_craft bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 
 # Playbook jalon client (A1) — spawn tâches Team

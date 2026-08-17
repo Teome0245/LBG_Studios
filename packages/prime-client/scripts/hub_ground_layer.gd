@@ -70,7 +70,10 @@ func _building_bounds() -> Dictionary:
 		var b: Dictionary = item
 		var cx := float(b.get("x", 0.0))
 		var cz := float(b.get("z", 0.0))
-		var half := float(b.get("size_m", 32.0)) * 0.5 + padding_m * 0.25
+		var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", 1.0))
+		if mul <= 0.0:
+			mul = 1.0
+		var half := float(b.get("size_m", 32.0)) * 0.5 * mul + padding_m * 0.25
 		min_x = minf(min_x, cx - half)
 		max_x = maxf(max_x, cx + half)
 		min_z = minf(min_z, cz - half)

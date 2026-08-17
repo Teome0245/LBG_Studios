@@ -49,8 +49,9 @@
 
 | ID | Vérité |
 |----|--------|
-| **V10** | **Scrapaltai** = planète hub affichée (désert / avant-poste). |
-| **V11** | **Lost Heaven** = seule ville hub joueur actuelle (spawn, POI, trainers). |
+| **V10** | **Scrapaltai** = planète désertique hub (Ø ~10 465 km). Carte : [`SCRAPALTAI_CARTE_PLANETE.md`](../../packages/cortex/docs/SCRAPALTAI_CARTE_PLANETE.md). |
+| **V10b** | **Zalem** = capitale planétaire Scrapaltai (métropole verticale, pentagone central carte). **Non jouable v1** — lore / shuttles futurs. Ton : cité de ferraille en hauteur (réf. structurelle Gunnm, univers LBG propre). |
+| **V11** | **Lost Heaven** = **petite ville** avant-poste — seul hub **gameplay** (spawn, POI, trainers). Cadran col **8** / row **3** sur la carte planète. **Pas la capitale.** |
 | **V12** | POI hub figés côté client : starport, cantina, banque, auberge, marché, hall d’entraînement, clinique, bureau des missions, mairie, atelier artisan, logements PNJ, porte. |
 | **V13** | La cantina hub de Lost Heaven s’appelle **« La Perle de Scrapaltai »** (`poi:lost_heaven_cantina`). Canon depuis 2026-08-03 (T2). |
 

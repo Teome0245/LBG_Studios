@@ -50,7 +50,7 @@ Même cellule, mais **pas** le poste barman : Lia est un joueur, pas un PNJ derr
 | x / y / z | `7.26` / `0.35` / `0.91` |
 | cell | `1082877` |
 
-Constantes Lua : `IA_BRIDGE_CANTINA_LIA_GUEST_*` (`housing_enter`, `contain_cantina` si encore sur le poste bar).
+Constantes Lua : `IA_BRIDGE_CANTINA_LIA_GUEST_*` (`housing_enter` volontaire). `containLiaInCantina()` corrige uniquement la posture si Lia est déjà en cantina derrière le bar — pas de confinement.
 
 ---
 

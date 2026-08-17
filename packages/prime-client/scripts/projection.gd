@@ -6,7 +6,8 @@ const SCALE: float = 0.5   # 1 unite Core3 = 0.5 pixel
 
 # ~2 m au sol ; même repère que size_m des bâtiments (mètres Core3).
 const ENTITY_HEIGHT_M: float = 2.0
-const ENTITY_READABILITY: float = 12.0
+# Jetons lisibles mais plus petits que les emprises bâtiment (mul ~3).
+const ENTITY_READABILITY: float = 8.0
 
 static func entity_token_px() -> float:
 	return ENTITY_HEIGHT_M * SCALE * ENTITY_READABILITY

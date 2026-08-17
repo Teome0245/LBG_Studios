@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "hub": "lost_heaven",
+  "concept_art": "lost_heaven_town_concept.png",
+  "concept_art_annotated": "docs/assets/lost_heaven_town_concept_annote.png",
+  "decision": "adapter_topology_to_art",
+  "decision_notes": "On garde les POI LBG (coords Core3) ; on fait évoluer forme (ovale, 2 portes, plaza) vers le concept. Toits médiévaux = art only — rendu jeu reste scrap/désert.",
+  "core3_anchor": {
+    "x": 4749.0,
+    "z": -737.0
+  },
+  "art_compass": "north_up",
+  "map_align": {
+    "inset_left": 0.08,
+    "inset_top": 0.06,
+    "inset_right": 0.08,
+    "inset_bottom": 0.08,
+    "note": "zone utile = enceinte ovale, hors fond beige"
+  },
+  "gates": [
+    {
+      "id": "gate:west_zalem",
+      "art_label": "Porte ouest (tours jumelles)",
+      "role": "route_vers_zalem",
+      "map_uv": {
+        "u": 0.1,
+        "v": 0.58
+      },
+      "core3": {
+        "x": 3688.9,
+        "z": -675.9
+      },
+      "status": "active"
+    },
+    {
+      "id": "gate:east_wilds",
+      "art_label": "Porte est",
+      "role": "sortie_desert",
+      "map_uv": {
+        "u": 0.92,
+        "v": 0.4
+      },
+      "core3": {
+        "x": 5813.6,
+        "z": -982.5
+      },
+      "legacy_id": "gate:south_main",
+      "status": "active"
+    }
+  ],
+  "districts": [
+    {
+      "id": "district:plaza",
+      "label": "Plaza centrale (triangle art)",
+      "map_uv": {
+        "u": 0.5,
+        "v": 0.48
+      },
+      "poi_ids": [],
+      "core3": {
+        "x": 4749.0,
+        "z": -737.0
+      }
+    },
+    {
+      "id": "district:west_civic",
+      "label": "Grand bâtiment ouest",
+      "map_uv": {
+        "u": 0.28,
+        "v": 0.52
+      },
+      "poi_ids": [
+        "poi:lost_heaven_bank",
+        "poi:lost_heaven_town_hall"
+      ],
+      "note": "Banque + mairie — bloc civique près porte ouest"
+    },
+    {
+      "id": "district:nw_housing",
+      "label": "Quartier ouest",
+      "map_uv": {
+        "u": 0.22,
+        "v": 0.62
+      },
+      "poi_ids": [
+        "poi:lost_heaven_housing_npc"
+      ]
+    },
+    {
+      "id": "district:north_services",
+      "label": "Nord plaza — services",
+      "map_uv": {
+        "u": 0.52,
+        "v": 0.68
+      },
+      "poi_ids": [
+        "poi:lost_heaven_inn",
+        "poi:lost_heaven_clinic",
+        "poi:lost_heaven_training_hall"
+      ]
+    },
+    {
+      "id": "district:south_market",
+      "label": "Sud plaza — marché",
+      "map_uv": {
+        "u": 0.52,
+        "v": 0.32
+      },
+      "poi_ids": [
+        "poi:lost_heaven_market",
+        "poi:lost_heaven_mission_post"
+      ]
+    },
+    {
+      "id": "district:east_entertainment",
+      "label": "Est — cantina / artisan",
+      "map_uv": {
+        "u": 0.72,
+        "v": 0.48
+      },
+      "poi_ids": [
+        "poi:lost_heaven_cantina",
+        "poi:lost_heaven_artisan_hall"
+      ]
+    },
+    {
+      "id": "district:se_starport",
+      "label": "Sud-est — port shuttle",
+      "map_uv": {
+        "u": 0.68,
+        "v": 0.38
+      },
+      "poi_ids": [
+        "poi:lost_heaven_starport"
+      ]
+    }
+  ],
+  "poi_map_uv": [
+    {
+      "id": "poi:lost_heaven_starport",
+      "map_uv": {
+        "u": 0.66,
+        "v": 0.4
+      }
+    },
+    {
+      "id": "poi:lost_heaven_cantina",
+      "map_uv": {
+        "u": 0.74,
+        "v": 0.5
+      }
+    },
+    {
+      "id": "poi:lost_heaven_bank",
+      "map_uv": {
+        "u": 0.3,
+        "v": 0.5
+      }
+    },
+    {
+      "id": "poi:lost_heaven_inn",
+      "map_uv": {
+        "u": 0.55,
+        "v": 0.7
+      }
+    },
+    {
+      "id": "poi:lost_heaven_market",
+      "map_uv": {
+        "u": 0.5,
+        "v": 0.3
+      }
+    },
+    {
+      "id": "poi:lost_heaven_training_hall",
+      "map_uv": {
+        "u": 0.62,
+        "v": 0.68
+      }
+    },
+    {
+      "id": "poi:lost_heaven_clinic",
+      "map_uv": {
+        "u": 0.42,
+        "v": 0.68
+      }
+    },
+    {
+      "id": "poi:lost_heaven_mission_post",
+      "map_uv": {
+        "u": 0.6,
+        "v": 0.28
+      }
+    },
+    {
+      "id": "poi:lost_heaven_town_hall",
+      "map_uv": {
+        "u": 0.26,
+        "v": 0.42
+      }
+    },
+    {
+      "id": "poi:lost_heaven_artisan_hall",
+      "map_uv": {
+        "u": 0.8,
+        "v": 0.48
+      }
+    },
+    {
+      "id": "poi:lost_heaven_housing_npc",
+      "map_uv": {
+        "u": 0.18,
+        "v": 0.55
+      }
+    },
+    {
+      "id": "poi:lost_heaven_gate",
+      "map_uv": {
+        "u": 0.92,
+        "v": 0.4
+      },
+      "note": "redirige vers porte est (wilds)"
+    }
+  ],
+  "proposed_fence_oval": {
+    "id": "path:lh_perimeter_fence",
+    "kind": "fence",
+    "label": "Palissade ovale active (P2)",
+    "closed": true,
+    "status": "active",
+    "points": [
+      {
+        "x": 4749.0,
+        "z": -615.0
+      },
+      {
+        "x": 4840.9,
+        "z": -623.0
+      },
+      {
+        "x": 4926.5,
+        "z": -646.5
+      },
+      {
+        "x": 5000.0,
+        "z": -683.8
+      },
+      {
+        "x": 5056.4,
+        "z": -732.5
+      },
+      {
+        "x": 5091.9,
+        "z": -789.2
+      },
+      {
+        "x": 5105.0,
+        "z": -860.0
+      },
+      {
+        "x": 5235.0,
+        "z": -860.0
+      },
+      {
+        "x": 5235.0,
+        "z": -940.0
+      },
+      {
+        "x": 5105.0,
+        "z": -940.0
+      },
+      {
+        "x": 5056.4,
+        "z": -967.5
+      },
+      {
+        "x": 5000.0,
+        "z": -1016.2
+      },
+      {
+        "x": 4926.5,
+        "z": -1053.5
+      },
+      {
+        "x": 4840.9,
+        "z": -1077.0
+      },
+      {
+        "x": 4749.0,
+        "z": -1085.0
+      },
+      {
+        "x": 4657.1,
+        "z": -1077.0
+      },
+      {
+        "x": 4571.5,
+        "z": -1053.5
+      },
+      {
+        "x": 4498.0,
+        "z": -1016.2
+      },
+      {
+        "x": 4441.6,
+        "z": -967.5
+      },
+      {
+        "x": 4406.1,
+        "z": -910.8
+      },
+      {
+        "x": 4394.0,
+        "z": -850.0
+      },
+      {
+        "x": 4395.0,
+        "z": -800.0
+      },
+      {
+        "x": 4265.0,
+        "z": -800.0
+      },
+      {
+        "x": 4265.0,
+        "z": -720.0
+      },
+      {
+        "x": 4395.0,
+        "z": -720.0
+      },
+      {
+        "x": 4498.0,
+        "z": -683.8
+      },
+      {
+        "x": 4571.5,
+        "z": -646.5
+      },
+      {
+        "x": 4657.1,
+        "z": -623.0
+      }
+    ],
+    "open_segment_indices": {
+      "gate:east_wilds": 7,
+      "gate:west_zalem": 22
+    }
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "label": "Référence art + mapping JSON",
+      "status": "done"
+    },
+    {
+      "id": "P1",
+      "label": "Deux portes (ouest Zalem + est wilds) dans lost_heaven_props.json",
+      "status": "done",
+      "done_at": "2026-08-13"
+    },
+    {
+      "id": "P2",
+      "label": "Palissade ovale + chemins courbes (anneau)",
+      "status": "done",
+      "done_at": "2026-08-13"
+    },
+    {
+      "id": "P3",
+      "label": "Mini-carte / overlay Godot (texture concept + map_uv)",
+      "status": "planned"
+    }
+  ]
+}

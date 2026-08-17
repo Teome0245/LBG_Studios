@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "planet_id": "scrapaltai",
+  "display_name": "Scrapaltai",
+  "reference_image": "scrapaltai_carte_planete_reference.png",
+  "physical": {
+    "diameter_km": 10465,
+    "surface_km2": 344000000,
+    "scale_bar_km": 5000,
+    "tone": "désert rouille · canyons · bassins salés · réseau routes rouges"
+  },
+  "grid": {
+    "columns": 12,
+    "rows": 4,
+    "origin": "bottom_left",
+    "column_index_from": "left",
+    "row_index_from": "bottom",
+    "map_align": {
+      "inset_left": 0.07,
+      "inset_top": 0.11,
+      "inset_right": 0.07,
+      "inset_bottom": 0.20,
+      "note": "Exclut bordure steampunk + légende bas (diamètre/surface) + graduations"
+    },
+    "latitude_bands": [
+      { "row": 1, "label": "60°S → 30°S", "note": "hémisphère sud profond" },
+      { "row": 2, "label": "30°S → 0°", "note": "approche équateur sud — Lost Heaven (map_uv)" },
+      { "row": 3, "label": "0° → 30°N", "note": "bande équatoriale nord — Zalem (map_uv)" },
+      { "row": 4, "label": "30°N → 60°N", "note": "hauts plateaux nord" }
+    ],
+    "notes": "Grille alignée sur la carte steampunk de référence (12 cadrans × 4 bandes lat.). Les libellés longitude sur l’art ne sont pas des coords géodésiques — repère visuel uniquement."
+  },
+  "macro_regions": [
+    {
+      "id": "region:great_rift_west",
+      "label": "Grand Rift occidental",
+      "grid_cols": [1, 2, 3, 4],
+      "grid_rows": [2, 3, 4],
+      "feature": "canyon branché (type Valles) — routes rouges le long des parois"
+    },
+    {
+      "id": "region:zalem_heart",
+      "label": "Cœur de Zalem",
+      "grid_cols": [5, 6, 7],
+      "grid_rows": [2, 3],
+      "feature": "carrefour planétaire — pentagone multicolore, capitale verticale"
+    },
+    {
+      "id": "region:crater_basin_ne",
+      "label": "Bassin du lac NE",
+      "grid_cols": [9, 10, 11, 12],
+      "grid_rows": [3, 4],
+      "feature": "impact / caldeira — grand lac bleu, crêtes concentriques"
+    },
+    {
+      "id": "region:dune_sea_east",
+      "label": "Mer de dunes est",
+      "grid_cols": [7, 8, 9],
+      "grid_rows": [2, 3],
+      "feature": "désert ouvert — avant-postes, route secondaire vers le bassin NE"
+    }
+  ],
+  "settlements": [
+    {
+      "id": "city:zalem",
+      "label": "Zalem",
+      "role": "capital",
+      "scale": "metropolis",
+      "grid": { "col": 6, "row": 3 },
+      "map_uv": { "u": 0.488, "v": 0.515 },
+      "status": "lore_canon",
+      "lore_notes": "Métropole verticale au nœud des routes rouges — cité de ferraille / scrap en hauteur. Hommage structurel Gunnm, ton LBG space western.",
+      "notes": "Capitale planétaire — pentagone central carte. Pas jouable v1."
+    },
+    {
+      "id": "city:lost_heaven",
+      "label": "Lost Heaven",
+      "role": "hub_joueur",
+      "scale": "small_town",
+      "grid": { "col": 8, "row": 2 },
+      "map_uv": { "u": 0.655, "v": 0.31 },
+      "status": "active_gameplay",
+      "region_id": "region:dune_sea_east",
+      "environment": "avant-poste désertique bord sud-est du bassin NE — route rouge vers Zalem",
+      "core3_playable_shard": {
+        "zone_id": "tatooine",
+        "anchor": { "x": 4749, "y": -737, "z": 32 },
+        "half_size_m": 6500,
+        "note": "Shard Core3 13×13 km = zoom gameplay local, pas la planète entière"
+      }
+    }
+  ],
+  "deprecated_legacy": [
+    {
+      "id": "city:mos_eisley",
+      "label": "Mos Eisley (legacy SWG)",
+      "grid": { "col": 7, "row": 2 },
+      "status": "deprecated",
+      "note": "Vanilla moteur — même shard Core3 que LH (~4 km) ; hors lore LBG"
+    }
+  ],
+  "transport": {
+    "red_lines": "artères inter-villes (capitale ↔ bassins ↔ rift)",
+    "yellow_lines": "routes locales / pistes secondaires"
+  }
+}

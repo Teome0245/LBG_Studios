@@ -12,7 +12,8 @@
   },
   "north_up": true,
   "world_texture": "res://assets/maps/tatooine.svg",
-  "planet_map_texture": "res://assets/maps/tatooine.png",
+  "planet_map_texture": "res://assets/maps/scrapaltai_planet.jpg",
+  "planet_lore_map": "res://assets/maps/scrapaltai_planet_map.json",
   "texture_core3_bounds": {
     "min_x": -6500.0,
     "max_x": 6500.0,
@@ -24,7 +25,9 @@
     "tatooine.svg": "Planète entière ±6500 Core3 (World Editor / PreCU 245) — fond jeu",
     "tatooine_planet_precu.svg": "Copie référence import 245",
     "tatooine_satellite.webp": "Placeholder 640² — ne plus utiliser en world_texture",
-    "tatooine.png": "Carte Ctrl+M (POI / routes)"
+    "tatooine.png": "Ancienne carte Ctrl+M (shard PreCU) — remplacée par scrapaltai_planet.jpg",
+    "scrapaltai_planet.jpg": "Carte lore Scrapaltai Ctrl+M (Zalem + Lost Heaven)",
+    "scrapaltai_planet_map.json": "Grille 12×4 + settlements planète"
   },
   "projection_scale": 0.5,
   "flip_texture_y": false,
@@ -34,6 +37,8 @@
     "position_map_city": "lost_heaven",
     "position_map_json": "res://assets/maps/retail/tatooine/lost_heaven_retail_layout.json",
     "position_map_source": "retail_gabarit_mos_eisley_shifted",
+    "position_map_is_spatial_reference": true,
+    "building_size_multiplier": 1.0,
     "entity_markers": "triangle",
     "server_npcs": {
       "enabled": true,
@@ -44,6 +49,6 @@
       "http_export_path": "/v1/world/npcs_near"
     }
   },
-  "notes": "Carte positionnement = lost_heaven_retail_layout (Ctrl+Shift+R toggle). Fond = planet_backdrop.gd.",
+  "notes": "Ctrl+M = carte lore Scrapaltai (scrapaltai_planet.jpg + scrapaltai_planet_map.json). Overlay verts = lost_heaven_retail_layout (Ctrl+Shift+R). Fond jeu = planet_backdrop.gd.",
   "imported_at": "2026-07-27T13:27:16.236287+00:00"
 }

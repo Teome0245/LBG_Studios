@@ -1,0 +1,147 @@
+{
+  "character_id": "lyra_assistant",
+  "version": 5,
+  "cell_px": 256,
+  "fallback": false,
+  "source": "procedural_pil",
+  "layout": {
+    "hide_base": true,
+    "use_bands": false
+  },
+  "layers": {
+    "eyes": {
+      "file": "eyes.png",
+      "cols": 5,
+      "rows": 2,
+      "frames": {
+        "idle": [
+          0,
+          0
+        ],
+        "blink": [
+          1,
+          0
+        ],
+        "happy": [
+          2,
+          0
+        ],
+        "sad": [
+          3,
+          0
+        ],
+        "angry": [
+          4,
+          0
+        ],
+        "surprised": [
+          0,
+          1
+        ],
+        "look_left": [
+          1,
+          1
+        ],
+        "look_right": [
+          2,
+          1
+        ],
+        "wink": [
+          3,
+          1
+        ],
+        "tired": [
+          4,
+          1
+        ]
+      }
+    },
+    "mouth": {
+      "file": "mouth.png",
+      "cols": 4,
+      "rows": 2,
+      "frames": {
+        "closed": [
+          0,
+          0
+        ],
+        "smile": [
+          1,
+          0
+        ],
+        "frown": [
+          2,
+          0
+        ],
+        "talk_1": [
+          3,
+          0
+        ],
+        "talk_2": [
+          0,
+          1
+        ],
+        "talk_3": [
+          1,
+          1
+        ],
+        "open_wide": [
+          2,
+          1
+        ],
+        "smirk": [
+          3,
+          1
+        ]
+      }
+    },
+    "base": {
+      "file": "base.png",
+      "cols": 1,
+      "rows": 1,
+      "frames": {
+        "default": [
+          0,
+          0
+        ]
+      },
+      "hidden": true
+    }
+  },
+  "emotions": {
+    "neutral": {
+      "eyes": "idle",
+      "mouth": "closed"
+    },
+    "happy": {
+      "eyes": "happy",
+      "mouth": "smile"
+    },
+    "sad": {
+      "eyes": "sad",
+      "mouth": "frown"
+    },
+    "angry": {
+      "eyes": "angry",
+      "mouth": "frown"
+    },
+    "surprised": {
+      "eyes": "surprised",
+      "mouth": "open_wide"
+    },
+    "talking": {
+      "eyes": "idle",
+      "mouth_cycle": [
+        "talk_1",
+        "talk_2",
+        "talk_3"
+      ]
+    }
+  },
+  "consumers": [
+    "pilot_face_rig",
+    "prime_dialogue_bake",
+    "orch_ui_5174"
+  ],
+  "note": "Yeux ancrés haut / bouche bas dans chaque cellule. Remplacer après LoRA face_expressions."
+}

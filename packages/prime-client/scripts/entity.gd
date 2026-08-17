@@ -331,9 +331,9 @@ func _draw() -> void:
 		)
 
 func _draw_marker_triangle(center: Vector2, col: Color, is_player: bool) -> void:
-	var tip := Vector2(0.0, -7.0)
-	var p1 := Vector2(-5.0, 4.0)
-	var p2 := Vector2(5.0, 4.0)
+	var tip := Vector2(0.0, -5.5)
+	var p1 := Vector2(-4.0, 3.2)
+	var p2 := Vector2(4.0, 3.2)
 	tip = tip.rotated(facing_angle) + center
 	p1 = p1.rotated(facing_angle) + center
 	p2 = p2.rotated(facing_angle) + center

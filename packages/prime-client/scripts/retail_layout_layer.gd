@@ -11,6 +11,9 @@ const RETAIL_DIR := "res://assets/maps/retail/tatooine/"
 @export var show_server_npcs: bool = true
 @export var show_terminals: bool = true
 @export var max_labels: int = 96
+## Même facteur que HubBuildingsLayer : les jetons entité sont × ENTITY_READABILITY,
+## donc size_m brut (SCALE seul) rend les emprises trop petites vs joueurs/PNJ.
+@export var size_multiplier: float = 1.0
 
 var _buildings: Array = []
 var _npcs_layout: Array = []
@@ -18,6 +21,9 @@ var _npcs_server: Dictionary = {}
 var _markers: Array = []
 
 func _ready() -> void:
+	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", size_multiplier))
+	if mul > 0.0:
+		size_multiplier = mul
 	reload()
 
 func reload() -> void:
@@ -151,7 +157,7 @@ func _draw_building(b: Dictionary, fill: Color = Color(0.25, 0.95, 0.35, 0.42)) 
 	var cx := float(b.get("x", 0.0))
 	var cz := float(b.get("z", 0.0))
 	var size_m := float(b.get("size_m", 24.0))
-	var half := size_m * 0.5 * Projection3D2D.SCALE
+	var half := size_m * 0.5 * Projection3D2D.SCALE * size_multiplier
 	var center := Projection3D2D.to_screen(Vector3(cx, float(b.get("y", 0.0)), cz))
 	var rect := Rect2(center - Vector2(half, half), Vector2(half * 2.0, half * 2.0))
 	draw_rect(rect, fill)

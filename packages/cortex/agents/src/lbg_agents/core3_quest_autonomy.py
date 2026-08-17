@@ -196,12 +196,14 @@ def deterministic_quest_action(
                 in_int = snap.get("in_interior")
                 in_interior = in_int in {True, 1, "1", "true", "True"}
                 if in_interior:
+                    from lbg_agents.core3_places import outdoor_hub
+
                     out = enqueue(
                         player,
                         action="move_to",
-                        message="mos_eisley_outdoor",
+                        message="lost_heaven_outdoor",
                         snapshot=snap,
-                        target_xyz=(3520.0, -4810.0, 5.0),
+                        target_xyz=outdoor_hub(),
                     )
                     out["reason"] = "quest_gather_exit_interior"
                     return out
