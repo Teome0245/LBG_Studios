@@ -1,14 +1,30 @@
 # Topologie LAN — répartition cible (point 1 / phase A)
 
-Document **vivant** : à mettre à jour si les IPs ou les rôles changent. Lié à **`plan_fusion_lbg_ia.md`**.
+Document **vivant** : à mettre à jour si les IPs ou les rôles changent.  
+**Canon août 2026** : [`docs/REGISTRE.md`](../../docs/REGISTRE.md) · LLM [`local_llm_route_matrix.md`](local_llm_route_matrix.md).
 
 ## Décision actuelle (réseau privé)
 
 | IP | Rôle principal | Notes |
 |----|------------------|--------|
-| **`192.168.0.140`** | **Orchestrateur LBG** (monorepo : `lbg-orchestrator`, etc.) + **stack LBG_IA** (orchestrateur « produit » : Vue / Docker / `RouterIA`, Postgres selon déploiement) | Point d’entrée **logique** pour l’IA et l’UI produit ; **`deploy_vm.sh`** déploie **ce monorepo** vers cette machine par défaut (`LBG_VM_HOST`). |
-| **`192.168.0.245`** | **Serveur MMO** : **`mmmorpg`** (WebSocket, jeu) + idéalement **`mmo_server`** HTTP (Lyra PNJ, `/v1/world/lyra`, persistance `WorldState`) | Séparer le **monde jeu** et la **slice Lyra** réseau du reste ; les services **140** appellent **245** via URLs (voir ci‑dessous). |
-| **`192.168.0.110`** | **LLM local** (Ollama) + **Frontend Unifié** (Nginx :8080) | Héberge l'interface **Lyra** (racine) et le **Client MMO** (`/mmo/`). |
+| **`192.168.0.140`** | **Core Studio** : Pilot `:8080`, backend `:8000`, orchestrateur `:8010`, agents | Point d’entrée UI + Team. Deploy rsync → `/opt/LBG_IA_MMO`. |
+| **`192.168.0.110`** | **Ollama heavy** `:11434` | `qwen3.8:27b` + `gemma4:e2b`. **Plus** le Pilot Nginx. |
+| **`192.168.0.111`** | **Ollama light** `:11434` | `qwen2.5:3b` / `llama3.2:3b` |
+| **`192.168.0.141`** | **CT executor** | poll `/v1/team/wsl/*` |
+| **`192.168.0.246`** | **Prime** (monde produit) | `:8792` comptes · sidecar IA `:8791` |
+| **`192.168.0.245`** | **PreCU** (référence lecture seule) | `:8792` — ne pas y écrire de features LBG |
+| **`192.168.0.100`** | Cockpit / Orch UI | `:8093` · `:5174` · `:3000` |
+
+> Le client web legacy `/mmo/` et `mmmorpg_server` / `mmo_server` sont **gelés**. Le tableau historique ci-dessous (245 = sandbox Python) ne s’applique plus au produit.
+
+---
+
+## Décision historique (pré-recentrage — à ne pas suivre pour du neuf)
+
+| IP | Ancien rôle documenté |
+|----|------------------------|
+| **`192.168.0.245`** | `mmmorpg` WS + `mmo_server` HTTP (sandbox Python **gelé**) |
+| **`192.168.0.110`** | Frontend unifié Nginx + `/mmo/` (**Pilot a migré sur 140**) |
 
 ---
 

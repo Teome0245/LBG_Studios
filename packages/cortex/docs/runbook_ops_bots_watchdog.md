@@ -66,7 +66,7 @@ Variables utiles :
 | `PROXMOX_HOST` / `PROXMOX_TOKEN` | Sonde cluster (read-only) ; `LBG_PROXMOX_HOSTS` pour multi-PVE |
 | `bash infra/scripts/probe_proxmox_lan.sh` | Audit API + SSH fuseau hyperviseur (sans toucher aux VM) |
 | `bash infra/scripts/check_proxmox_storage_lan.sh` | Pool thin `local-lvm` — prévention **io-error** VM 246 |
-| `lbg-storage-watchdog-job.timer` | VM 140 — crée jobs Pilot si pool ≥ 85 % ([`#/jobs`](http://192.168.0.110:8080/#/jobs)) |
+| `lbg-storage-watchdog-job.timer` | VM 140 — crée jobs Pilot si pool ≥ 85 % ([`#/jobs`](http://192.168.0.140:8080/#/jobs)) |
 | `bash infra/scripts/install_storage_watchdog_job_vm.sh` | Installe le timer stockage → jobs |
 | `bash infra/scripts/prime_disk_hygiene_vm.sh` | Nettoyage build Antigravity sur Prime après compile |
 | `LBG_VM_MEMORY_EXCLUDE_PRIME` | `1` = ne pas alerter sur 246 |

@@ -37,12 +37,12 @@ def model_for_category(category: str, explicit_model: str | None = None) -> str:
     if cat == "json_actions_structurees":
         return os.environ.get("LBG_REASON_MODEL_JSON", "").strip() or "gemma4:e2b"
     if cat == "code":
-        return os.environ.get("LBG_REASON_MODEL_CODE", "").strip() or "gemma4:26b"
+        return os.environ.get("LBG_REASON_MODEL_CODE", "").strip() or "qwen3.8:27b"
     if cat == "raisonnement":
         return (
             os.environ.get("LBG_REASON_MODEL_PM", "").strip()
             or os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip()
-            or "gemma4:26b"
+            or "qwen3.8:27b"
         )
     return os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip() or "gemma4:e2b"
 

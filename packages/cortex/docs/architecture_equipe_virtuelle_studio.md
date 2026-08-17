@@ -25,8 +25,9 @@ Modèle : **rôles + file de tâches + garde-fous** (complète le moteur jobs Ja
 | Hôte | IP | Rôle |
 |------|-----|------|
 | Proxmox | `192.168.0.201` | Hyperviseur R720 (`lbgr720`), backups — cible Ops (SSH RO) ; iDRAC HS → [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md) |
-| LBG-IA | `192.168.0.110` | Pilot `:8080`, Ollama `:11434`, nginx |
-| LBG-IA-MMORPG | `192.168.0.140` | Orchestrateur `:8010`, backend `:8000`, agents, **méta-orchestrateur** |
+| LBG-IA | `192.168.0.110` | Ollama heavy `:11434` (Pilot a migré sur `.140:8080`) |
+| LBG-IA-MMORPG | `192.168.0.140` | Pilot `:8080`, orchestrateur `:8010`, backend `:8000`, agents, **méta-orchestrateur** |
+| lbg-executor | `192.168.0.141` | CT poll Team WSL — [`pont_cloud_local.md`](pont_cloud_local.md) |
 | ServeurSWG | `192.168.0.245` | PreCU / legacy (sandbox Python gelé) |
 | Prime | `192.168.0.246` | **Core3 Prime prod** — sidecar IA `:8791`, joueurs IA |
 | Poste dev | `192.168.0.10` | Cursor, Claude Code, agent desktop `:5005` |
@@ -35,7 +36,7 @@ Modèle : **rôles + file de tâches + garde-fous** (complète le moteur jobs Ja
 ```mermaid
 flowchart LR
   PC["10 — Poste dev"]
-  V110["110 — Pilot + Ollama"]
+  V110["110 — Ollama heavy"]
   V140["140 — Orchestrateur + team"]
   V246["246 — Core3 Prime + IA"]
   V245["245 — legacy PreCU"]
@@ -59,7 +60,7 @@ flowchart LR
 | Action policy | `services/action_policy.py` | Garde-fous write |
 | Agents HTTP | `lbg_agents/dispatch.py` | Workers dialogue, devops, pm… |
 | Proactive | `services/proactive.py` | Analyses planifiées |
-| Multi-LLM | `agents/dialogue_llm.py`, `lbg.env` | Groq → gemma4:26b failover |
+| Multi-LLM | `agents/dialogue_llm.py`, `lbg.env` | Groq → `qwen3.8:27b` failover |
 | Storage watchdog | jobs Pilot `system:storage_watchdog` | Proto rôle `ops` |
 | Smokes LAN | `infra/scripts/smoke_*_lan.sh` | Proto rôle `qa` |
 

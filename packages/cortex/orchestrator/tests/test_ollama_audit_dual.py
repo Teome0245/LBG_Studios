@@ -42,8 +42,9 @@ def test_audit_ollama_lan_dual(monkeypatch: pytest.MonkeyPatch) -> None:
             "installed": [
                 {"name": "gemma4:e2b", "size_gb": 7.2},
                 {"name": "gemma4:26b", "size_gb": 17.0},
+                {"name": "qwen3.8:27b", "size_gb": 18.0},
             ],
-            "names": {"gemma4:e2b", "gemma4:26b"},
+            "names": {"gemma4:e2b", "gemma4:26b", "qwen3.8:27b"},
         }
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
@@ -77,8 +78,11 @@ def test_audit_companion_legacy_is_advisory(monkeypatch: pytest.MonkeyPatch) -> 
         if "111" in base:
             return {"installed": [{"name": "qwen2.5:3b", "size_gb": 1.9}], "names": {"qwen2.5:3b"}}
         return {
-            "installed": [{"name": "gemma4:e2b", "size_gb": 7.0}],
-            "names": {"gemma4:e2b"},
+            "installed": [
+                {"name": "gemma4:e2b", "size_gb": 7.0},
+                {"name": "qwen3.8:27b", "size_gb": 18.0},
+            ],
+            "names": {"gemma4:e2b", "qwen3.8:27b"},
         }
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
@@ -110,7 +114,7 @@ def test_audit_detects_missing_light_model_failover_ok(monkeypatch: pytest.Monke
     def fake_fetch(base: str, *, timeout: float = 10.0) -> dict:
         if "111" in base:
             return {"installed": [], "names": set()}
-        return {"installed": [{"name": "gemma4:e2b", "size_gb": 7.0}], "names": {"gemma4:e2b"}}
+        return {"installed": [{"name": "gemma4:e2b", "size_gb": 7.0}, {"name": "qwen3.8:27b", "size_gb": 18.0}], "names": {"gemma4:e2b", "qwen3.8:27b"}}
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
     out = oa.audit_ollama_lan()

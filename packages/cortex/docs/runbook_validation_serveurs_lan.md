@@ -176,7 +176,8 @@ Attendu :
 Ouvrir l’UI `pilot_web` (selon ton reverse-proxy / setup) :
 
 - côté backend : `http://192.168.0.140:8000/pilot/`
-- côté front (Interface Unifiée) : `http://192.168.0.110:8080/` (Lyra) ou `http://192.168.0.110:8080/mmo/` (MMO)
+- côté Pilot Nginx : `http://192.168.0.140:8080/pilot/` (canonique)
+- Cockpit / Orch UI : `.100:8093` / `.100:5174` — **pas** le client web legacy `/mmo/`
 
 Dans **WS (test client minimal)** :
 

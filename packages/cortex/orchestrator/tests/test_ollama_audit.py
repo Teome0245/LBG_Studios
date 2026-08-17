@@ -46,5 +46,6 @@ def test_reason_forge_profile_default(monkeypatch: pytest.MonkeyPatch) -> None:
     assert reason_local_model(profile="router") == "qwen2.5:3b"
     assert reason_local_model(profile="json") == "qwen2.5:3b"
     assert reason_local_model(profile="fast") == "llama3.2:3b"
-    assert reason_local_model(profile="code") == "gemma4:26b"
-    assert reason_local_model(profile="pm") == "gemma4:26b"
+    assert reason_local_model(profile="code") == "qwen3.8:27b"
+    assert reason_local_model(profile="pm") == "qwen3.8:27b"
+    assert reason_local_model(profile="dialogue") == "qwen3.8:27b"

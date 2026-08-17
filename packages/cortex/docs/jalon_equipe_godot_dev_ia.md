@@ -47,7 +47,8 @@ bash infra/scripts/install_team_m9_map_job_vm.sh
 LBG_TEAM_GODOT_DEV_JOB_ENABLED=1
 LBG_TEAM_M9_AUTO_REMEDIATE=1
 LBG_TEAM_M9_FOLLOWUP_ENABLED=1
-LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/new_mmo/prime-client
+# 140 : /opt/new_mmo/prime-client  ·  WSL : .../LBG_Studios/packages/prime-client
+LBG_PRIME_CLIENT_ROOT=/opt/new_mmo/prime-client
 ```
 
 ## Followup M9

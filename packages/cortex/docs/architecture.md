@@ -1,5 +1,10 @@
 # Architecture (vue d'ensemble)
 
+**Canon produit** : [`docs/REGISTRE.md`](../../docs/REGISTRE.md) — Studio = `packages/cortex` (Pilot **`.140:8080`**) ; jeu = `packages/prime-client` → Prime **`.246`**.  
+Client web `/mmo/`, `mmo_server`, `mmmorpg_server` = **gelés** (ne pas réintroduire). LLM local : [`local_llm_route_matrix.md`](local_llm_route_matrix.md).
+
+Les sections ci-dessous décrivent encore la stack historique extraite ; les suivre seulement pour du code existant, pas pour une nouvelle feature.
+
 ## Objectif
 
 Construire un framework complet permettant :

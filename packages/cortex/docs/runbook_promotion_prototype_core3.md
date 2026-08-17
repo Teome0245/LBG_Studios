@@ -52,7 +52,7 @@ Selon la nature du prototype :
 |------|-------------|---------------|
 | Gameplay Lua Core3 | `content/core3/lua/` | Compat screenplay, pas de conflit `ia_bridge` |
 | Pont IA / snapshots | `tools/core3_ia_sidecar/`, `ia_bridge/` | Endpoints existants inchangés ou versionnés |
-| Client Godot Prime | `new_mmo/prime-client/` ou `lbg_client_godot/` | Schémas WS / snapshots |
+| Client Godot Prime | `packages/prime-client/` (runtime 140 : `/opt/new_mmo/prime-client`) | Schémas WS / snapshots |
 | Infra / deploy | `infra/scripts/`, systemd | Rollback possible |
 | Doc seule | `docs/` | Liens plan de route |
 

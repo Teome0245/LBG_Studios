@@ -22,7 +22,7 @@ L'Infographiste n'est pas un rôle API séparé : c'est une **piste dev_game** a
 ## Ce que fait la Team
 
 ### Sonde L1 (`infographiste_probe`)
-- Lit `lbg_client_godot/assets/avatars/manifest.json` (+ world si présent)
+- Lit `packages/prime-client` manifests avatars/world (plus `lbg_client_godot`)
 - Compte les `.glb` attendus vs présents sur disque
 - Vérifie `docs/pipeline_assets_swg_godot.md`
 - **OK structurel** même si 0 GLB (phase en cours)

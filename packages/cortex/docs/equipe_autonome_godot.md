@@ -116,8 +116,8 @@ Plan NL exemple : *« supervise godot et lbg-ws/2 sur Prime »* → propose qa +
 
 ## Pistes parallèles
 
-### M1 — Prime 2D (`new_mmo/prime-client`)
-- Miroir : `client-prime-lbg/run_sidecar_mirror.sh`
+### M1 — Prime 2D (`packages/prime-client`)
+- Runtime 140 : `/opt/new_mmo/prime-client`
 - Smoke : `infra/scripts/smoke_godot_sidecar_mirror_lan.sh`
 
 ### lbg-ws/2 — Gateway preview (`services/lbg_gateway/`)

@@ -1,11 +1,11 @@
 # Jalon M9 — Scrapaltai 2D planète + carte / minimap style SWG
 
-**Date** : 2026-07-12  
-**Statut** : **livré (client)** — sondes M9a/b/c vertes (2026-07-19) · validation humaine Pilot en cours  
+**Date** : 2026-08-17 (chemins Studios)  
+**Statut** : **livré (client)** — sondes M9a/b/c vertes · playtest humain OK (août 2026)  
 **Owner PM** : Thémis (`pm`)  
 **Owners techniques** : Dédale (`dev_game` / Prime Client 2D), Pygmalion (`infographiste_ia` / art 2D)
 
-**Client cible** : `new_mmo/prime-client` (Godot 4.6 top-down) — **pas** `lbg_client_godot` (3D en pause).
+**Client cible** : `packages/prime-client` (Godot 4.6 top-down). Runtime 140 : `LBG_PRIME_CLIENT_ROOT=/opt/new_mmo/prime-client`. **Pas** `lbg_client_godot`.
 
 **Références** : [ADR 0009 Scrapaltai](adr/0009-scrapaltai-lost-heaven.md), [clients_2d_3d.md](clients_2d_3d.md), jalon M4 (carte existante).
 
@@ -91,7 +91,7 @@ flowchart TB
 # Export carte depuis World Editor
 python3 tools/map_export/export_scrapaltai_for_godot.py \
   --editor-root tools/world_editor \
-  --out /home/sdesh/projects/new_mmo/prime-client/assets/maps
+  --out /home/sdesh/projects/LBG_Studios/packages/prime-client/assets/maps
 
 # Sync POI serveur
 bash infra/scripts/sync_scrapaltai_poi_godot.sh
@@ -99,7 +99,7 @@ bash infra/scripts/sync_scrapaltai_poi_godot.sh
 
 **Smoke M9a** :
 ```bash
-godot4 --path /home/sdesh/projects/new_mmo/prime-client
+godot4 --path /home/sdesh/projects/LBG_Studios/packages/prime-client
 # Ctrl+P POI visibles ; focus LH ; texture Scrapaltai (pas grille seule)
 ```
 
@@ -193,12 +193,12 @@ Plan NL : *« audit m9 scrapaltai minimap »*, *« jalon m9 carte swg »*
 | `sync_prime_client_assets_vm.sh` | ops | Rsync maps/minimap vers `/opt/new_mmo/prime-client` sur 140 |
 | `smoke_prime_client_minimap.sh` | qa | Vérifie fichiers M9b |
 
-Variables :
+Variables (poste WSL) :
 ```bash
 LBG_TEAM_M9_AUTO_REMEDIATE=1
 LBG_TEAM_M9_FOLLOWUP_ENABLED=1
 LBG_TEAM_M9_FOLLOWUP_AUTO_RUN=1
-LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/new_mmo/prime-client
+LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/LBG_Studios/packages/prime-client
 ```
 
 ---
@@ -207,8 +207,11 @@ LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/new_mmo/prime-client
 
 ```bash
 LBG_TEAM_M9_MAP_JOB_ENABLED=1
-LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/new_mmo/prime-client
-LBG_NEW_MMO_ROOT=/home/sdesh/projects/new_mmo
+# VM 140 (actuel) :
+LBG_PRIME_CLIENT_ROOT=/opt/new_mmo/prime-client
+LBG_NEW_MMO_ROOT=/opt/new_mmo
+# Poste WSL (source Git) :
+# LBG_PRIME_CLIENT_ROOT=/home/sdesh/projects/LBG_Studios/packages/prime-client
 LBG_WORLD_EDITOR_ROOT=/opt/LBG_IA_MMO/tools/world_editor
 LBG_SCRAPALTAI_POI=/opt/LBG_IA_MMO/content/core3/world_poi/scrapaltai.json
 ```
@@ -270,7 +273,7 @@ LBG_SCRAPALTAI_POI=/opt/LBG_IA_MMO/content/core3/world_poi/scrapaltai.json
 
 ## Liens
 
-- Prime Client : `new_mmo/prime-client/README.md`
+- Prime Client : `packages/prime-client/README.md`
 - World Editor : `tools/world_editor/README_scrapaltai_editor.md`
 - Équipe autonome : `docs/equipe_autonome_godot.md`
 - Jalon client live : `docs/jalon_godot_client_live_team.md`

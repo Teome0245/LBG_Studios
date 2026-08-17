@@ -7,13 +7,13 @@
 
 ## Cible
 
-Le client **Godot 2D Prime** (`new_mmo/prime-client`) affiche les bots IA (Lia, Nix, Mira…) alimentés par le **sidecar HTTP** sur **VM 246:8791**, sans dupliquer la logique orchestrateur.
+Le client **Godot 2D Prime** (`packages/prime-client`) affiche les bots IA (Lia, Nix, Mira…) alimentés par le **sidecar HTTP** sur **VM 246:8791**, sans dupliquer la logique orchestrateur.
 
 | Couche | Artefact | VM / chemin |
 |--------|----------|-------------|
 | Sidecar IA | `tools/core3_ia_sidecar/` | **246** `:8791` |
-| Miroir client | `new_mmo/client-prime-lbg/sidecar_mirror.py` | poste dev / WSL |
-| Viewer Godot | `new_mmo/prime-client/` | Godot 4.6 |
+| Viewer Godot | `packages/prime-client/` | Godot 4.6 (source Git) |
+| Runtime 140 | `LBG_PRIME_CLIENT_ROOT` | `/opt/new_mmo/prime-client` |
 | Orchestrateur | `player_ia_probe`, équipe `#/team` | **140** |
 
 > Le sidecar n’est **pas** le protocole joueur SOE. C’est l’API **IA ↔ Core3** (snapshots, think, enqueue). Le client Godot consomme les **snapshots** ; le gameplay live passe par SOE UDP (`soe_handshake.py`).
@@ -34,9 +34,8 @@ Attendu : `healthz` OK, snapshots `online: true` pour Lia/Nix.
 ### 2. Miroir sidecar → cache Godot
 
 ```bash
-cd /home/sdesh/projects/new_mmo/client-prime-lbg
-bash run_sidecar_mirror.sh
-# ou une fois : bash run_sidecar_mirror.sh --once
+cd /home/sdesh/projects/LBG_Studios/packages/prime-client
+# miroir sidecar : scripts Cortex `infra/scripts/smoke_godot_sidecar_mirror_lan.sh`
 ```
 
 Écrit :
@@ -46,7 +45,7 @@ bash run_sidecar_mirror.sh
 ### 3. Godot
 
 ```bash
-godot4 --path /home/sdesh/projects/new_mmo/prime-client
+godot4 --path /home/sdesh/projects/LBG_Studios/packages/prime-client
 ```
 
 Le `SnapshotBridge` poll `cache/zone_feed.json` (config `config/snapshot_paths.json`).
@@ -54,7 +53,7 @@ Le `SnapshotBridge` poll `cache/zone_feed.json` (config `config/snapshot_paths.j
 ### 4. Validation orchestrateur (optionnel)
 
 ```bash
-bash LBG_IA_MMO/infra/scripts/smoke_godot_sidecar_mirror_lan.sh
+bash packages/cortex/infra/scripts/smoke_godot_sidecar_mirror_lan.sh
 # ou tâche équipe #/team → Sonde joueurs IA
 ```
 

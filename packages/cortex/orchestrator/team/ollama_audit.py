@@ -148,6 +148,7 @@ def _recommendations(
 
     has_e2b = any("e2b" in n for n in heavy_names)
     has_26b = any("26b" in n for n in heavy_names)
+    has_qwen38 = any("qwen3.8" in n for n in heavy_names)
     has_light = len(light_names) > 0
 
     if gaps:
@@ -167,8 +168,10 @@ def _recommendations(
     if has_e2b:
         recs.append("Forge/Iris : LBG_REASON_MODEL_FORGE=gemma4:e2b (heavy 110 CT).")
         recs.append("Failover light→heavy : LBG_REASON_LIGHT_FAILOVER_HEAVY=1 + gemma4:e2b.")
-    if has_26b:
-        recs.append("Code/PM : gemma4:26b sur heavy 110 (latence CPU acceptable hors dialogue).")
+    if has_qwen38:
+        recs.append("Code/PM/dialogue : qwen3.8:27b sur heavy 110 (bench août 2026 > gemma4:26b).")
+    elif has_26b:
+        recs.append("Code/PM : gemma4:26b encore présent — migrer vers qwen3.8:27b si matrice à jour.")
 
     if not os.environ.get("LBG_REASON_LIGHT_BASE_URL", "").strip():
         recs.append("Poser LBG_REASON_LIGHT_BASE_URL=http://192.168.0.111:11434 sur 140.")

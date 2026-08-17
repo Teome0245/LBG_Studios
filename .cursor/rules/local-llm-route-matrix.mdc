@@ -1,0 +1,14 @@
+---
+description: Matrice LLM locale 110 heavy / 111 light
+alwaysApply: true
+---
+
+# Matrice LLM locale
+
+Source exécutable : `packages/cortex/orchestrator/team/reason_llm.py` → `reason_route_matrix()`.
+Source lisible : `packages/cortex/docs/local_llm_route_matrix.md`.
+
+- **`.110` heavy** : `qwen3.8:27b` (code / PM / dialogue), `gemma4:e2b` (forge / failover).
+- **`.111` light** : `qwen2.5:3b` (router/json), `llama3.2:3b` (fast).
+- Qwen : `think: false` (`LBG_REASON_OLLAMA_THINK` / `LBG_DIALOGUE_LLM_OLLAMA_THINK`).
+- Ne pas réintroduire `gemma3:4b` sur 111. Ne pas charger deux modèles ~18 Go ensemble sur 110.

@@ -1,6 +1,6 @@
 # Matrice de routage LLM locale (source de vérité)
 
-**Date** : 2026-07-31  
+**Date** : 2026-08-16  
 **Statut** : canonique — inventaire validé 110 / 111  
 **Code** : `orchestrator/team/reason_llm.py` → `reason_route_matrix()`  
 **Audit** : `orchestrator/team/ollama_audit.py` (Atlas / admin_infra)
@@ -18,13 +18,15 @@ Une seule matrice pour **Cursor**, **Team (Atlas, Thémis, …)** et **Pilot** :
 
 **Ne pas réintroduire `gemma3:4b` sur 111** — écarté après validation (moins adapté que le duo Fast/Clean).
 
+**Heavy code/PM/dialogue** : `qwen3.8:27b` (bench août 2026 sur `.110`, `think: false`) remplace `gemma4:26b`.
+
 ---
 
 ## Inventaire validé
 
 | Hôte | Rôle | Modèles installés |
 |------|------|-------------------|
-| **110** heavy | code / PM / forge / dialogue | `gemma4:e2b`, `gemma4:26b`, `gemma4-claude` |
+| **110** heavy | code / PM / forge / dialogue | `gemma4:e2b`, `qwen3.8:27b` (+ `gemma4:26b` legacy optionnel) |
 | **111** light (NUC) | délestage latence | **`qwen2.5:3b`** (Clean), **`llama3.2:3b`** (Fast) |
 
 ## Profils REASON
@@ -36,11 +38,13 @@ Une seule matrice pour **Cursor**, **Team (Atlas, Thémis, …)** et **Pilot** :
 | `fast` | `LBG_REASON_MODEL_FAST` | `llama3.2:3b` | 111 |
 | `forge` | `LBG_REASON_MODEL_FORGE` | `gemma4:e2b` | 110 |
 | `default` | `LBG_REASON_LOCAL_MODEL` | `gemma4:e2b` | 110 |
-| `code` | `LBG_REASON_MODEL_CODE` | `gemma4:26b` | 110 |
-| `pm` | `LBG_REASON_MODEL_PM` | `gemma4:26b` | 110 |
-| `dialogue` | `LBG_REASON_MODEL_DIALOGUE` | `gemma4:26b` | 110 |
+| `code` | `LBG_REASON_MODEL_CODE` | `qwen3.8:27b` | 110 |
+| `pm` | `LBG_REASON_MODEL_PM` | `qwen3.8:27b` | 110 |
+| `dialogue` | `LBG_REASON_MODEL_DIALOGUE` | `qwen3.8:27b` | 110 |
 
 Failover light → heavy : `LBG_REASON_LIGHT_FAILOVER_HEAVY=1` + `LBG_REASON_LIGHT_FAILOVER_MODEL=gemma4:e2b`.
+
+Ollama thinking (Qwen) : `LBG_REASON_OLLAMA_THINK=false` (défaut) et `LBG_DIALOGUE_LLM_OLLAMA_THINK=false`.
 
 ---
 
@@ -48,7 +52,7 @@ Failover light → heavy : `LBG_REASON_LIGHT_FAILOVER_HEAVY=1` + `LBG_REASON_LIG
 
 | Canal | Mécanisme |
 |-------|-----------|
-| Cursor | règle `.cursor/rules/local-llm-route-matrix.mdc` (`alwaysApply`) |
+| Cursor | règle `.cursor/rules/local-llm-route-matrix.mdc` (`alwaysApply`) si présente |
 | Team / Atlas | run `admin_infra` → champ `route_matrix` + mémoire `team/atlas` |
 | Env exemple | `infra/secrets/lbg.env.example` |
 | Audit LAN | `bash infra/scripts/audit_ollama_110_lan.sh` |

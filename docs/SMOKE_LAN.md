@@ -27,6 +27,8 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 
 Pilot Accueil / menus : liens vers toutes ces surfaces (Studio · Campus · Ops · Jeu · Projet).
 
+Ollama / executor (hors smoke HTTP UI) : **`.110:11434`** heavy · **`.111:11434`** light · **`.141`** CT executor — voir [`REGISTRE.md`](REGISTRE.md).
+
 ## Résultat 2026-07-31 (HTTP)
 
 | Check | État |

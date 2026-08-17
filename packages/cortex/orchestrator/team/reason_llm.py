@@ -46,14 +46,14 @@ def reason_route_matrix() -> dict[str, dict[str, str]]:
         },
         "code": {
             "env": "LBG_REASON_MODEL_CODE",
-            "default": "gemma4:26b",
+            "default": "qwen3.8:27b",
             "tier": "local",
             "usage": "code_et_patchs",
             "host_class": "heavy",
         },
         "pm": {
             "env": "LBG_REASON_MODEL_PM",
-            "default": "gemma4:26b",
+            "default": "qwen3.8:27b",
             "tier": "local",
             "usage": "synthese_et_arbitrage",
             "host_class": "heavy",
@@ -67,7 +67,7 @@ def reason_route_matrix() -> dict[str, dict[str, str]]:
         },
         "dialogue": {
             "env": "LBG_REASON_MODEL_DIALOGUE",
-            "default": "gemma4:26b",
+            "default": "qwen3.8:27b",
             "tier": "local",
             "usage": "dialogue_secondaire",
             "host_class": "heavy",
@@ -137,7 +137,7 @@ def reason_local_base_url(*, profile: str = "default") -> str:
 
 
 def reason_local_model(*, profile: str = "default") -> str:
-    """Profils : light 111 (fast=llama3.2, clean/json/router=qwen2.5) vs heavy 110 (e2b / 26b)."""
+    """Profils : light 111 (fast=llama3.2, clean/json/router=qwen2.5) vs heavy 110 (e2b / qwen3.8:27b)."""
     resolved = _resolve_profile(profile)
     matrix = reason_route_matrix()
     slot = matrix.get(resolved)
@@ -151,7 +151,7 @@ def reason_local_model(*, profile: str = "default") -> str:
     if resolved in ("forge", "fast"):
         return os.environ.get("LBG_REASON_MODEL_FORGE", "").strip() or "gemma4:e2b"
     if resolved in ("pm", "dialogue"):
-        return os.environ.get("LBG_REASON_MODEL_PM", "").strip() or "gemma4:26b"
+        return os.environ.get("LBG_REASON_MODEL_PM", "").strip() or "qwen3.8:27b"
     return (
         os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip()
         or os.environ.get("LBG_REASON_MODEL", "").strip()
@@ -336,6 +336,16 @@ def _call_route(
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        # Qwen3.8 / modèles « thinking » : sans think=false, content peut rester vide (CPU brûlé).
+        looks_ollama = ":11434" in base or "ollama" in base.lower()
+        if looks_ollama:
+            think_on = os.environ.get("LBG_REASON_OLLAMA_THINK", "false").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+                "on",
+            )
+            payload["think"] = think_on
 
     with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
         resp = client.post(url, headers=headers, json=payload)

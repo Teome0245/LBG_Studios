@@ -168,7 +168,7 @@ Sur **192.168.0.140**, le timer `lbg-storage-watchdog-job` (toutes les **10 min*
 
 1. Sonde SSH Proxmox **201** — pool `pve/data`, statut VM 246
 2. Si pool ≥ **85 %** (warn) ou ≥ **95 %** (critical) → crée un job orchestrateur
-3. Job visible dans Pilot : [http://192.168.0.110:8080/#/jobs](http://192.168.0.110:8080/#/jobs) (filtrer `system:storage_watchdog`)
+3. Job visible dans Pilot : [http://192.168.0.140:8080/#/jobs](http://192.168.0.140:8080/#/jobs) (filtrer `system:storage_watchdog`)
 
 Installation :
 

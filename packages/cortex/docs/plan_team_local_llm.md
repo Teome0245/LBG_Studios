@@ -1,5 +1,7 @@
 # Plan opérationnel Team — LLM locaux
 
+**Canon** : [`local_llm_route_matrix.md`](local_llm_route_matrix.md) — heavy `.110` = `qwen3.8:27b` (code/PM/dialogue) + `gemma4:e2b` (forge) ; light `.111` = 3B.
+
 ## Décisions de cadrage
 
 - Priorités à améliorer : `raisonnement`, `code`, `routage agentique`, `JSON/actions structurées`

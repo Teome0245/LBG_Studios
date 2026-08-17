@@ -17,16 +17,21 @@ curl -sS -X POST "${BASE}/api/pull" \
   -d "{\"name\":\"${MODEL}\"}" \
   | python3 -c "
 import json,sys
+err=False
 for line in sys.stdin:
     line=line.strip()
     if not line: continue
     try:
         d=json.loads(line)
-        st=d.get('status') or ''
-        if st: print(st)
     except json.JSONDecodeError:
-        print(line[:200])
+        print(line[:200]); continue
+    if d.get('error'):
+        print('ERROR:', d['error'], file=sys.stderr); err=True; continue
+    st=d.get('status') or ''
+    if st: print(st)
+sys.exit(1 if err else 0)
 "
+
 
 echo "=== tags ==="
 curl -sS "${BASE}/api/tags" | python3 -c "

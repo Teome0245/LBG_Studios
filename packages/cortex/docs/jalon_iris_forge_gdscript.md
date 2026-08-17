@@ -56,7 +56,7 @@ Les followups Iris spawnés avec `iris_forge: true` après round Thémis.
 LBG_IRIS_FORGE_ENABLED=1
 LBG_IRIS_FORGE_AUTO_APPLY=0
 LBG_IRIS_FORGE_STAGING_DIR=   # optionnel ; défaut prime-client/.iris_forge/staging
-LBG_PRIME_CLIENT_ROOT=/opt/new_mmo/prime-client
+LBG_PRIME_CLIENT_ROOT=/opt/new_mmo/prime-client  # 140 ; WSL = packages/prime-client
 ```
 
 ---

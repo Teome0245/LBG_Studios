@@ -2,7 +2,7 @@
 
 **Statut** : **livré code** (HTTP M11 smoke vert · handoff WS M12 LoginPanel→LbgWsClient·`set_process` · sync J: 2026-08-03) — validation humaine Launchpad recommandée  
 **Owner** : Hermès (`dev_godot`) · UI : Iris · Contrat : Thémis  
-**ADR** : [`0016-prime-axe-lbg-talents-artisanat.md`](../../../../new_mmo/lbg-mmo/docs/adr/0016-prime-axe-lbg-talents-artisanat.md)
+**ADR** : axe talents / artisanat — Bible [`docs/world/BIBLE_MMO.md`](../../../docs/world/BIBLE_MMO.md) (ADR 0016 historique dans legacy `new_mmo`)
 
 ---
 
@@ -101,5 +101,5 @@ Références : [`core3_zone_bridge_spec.md`](core3_zone_bridge_spec.md) §2 · [
 ## Références
 
 - [`HANDOFF_SPAWN_M11_M12.md`](HANDOFF_SPAWN_M11_M12.md) — handoff ponctuel (pas un preset)
-- [`CLIENT_ONLY_GODOT.md`](../../../../new_mmo/prime-client/docs/CLIENT_ONLY_GODOT.md)
-- [`HUMAN_PLAYER.md`](../../../../new_mmo/prime-client/docs/HUMAN_PLAYER.md)
+- [`CLIENT_ONLY_GODOT.md`](../../prime-client/docs/CLIENT_ONLY_GODOT.md)
+- [`HUMAN_PLAYER.md`](../../prime-client/docs/HUMAN_PLAYER.md)

@@ -4,7 +4,7 @@
 
 ## Contexte
 
-- Client : `new_mmo/prime-client`
+- Client : `packages/prime-client` (runtime 140 : `/opt/new_mmo/prime-client`)
 - Gateway : `192.168.0.246` — HTTP `:8765`, WS `:50000`
 - Lost Heaven : sortie sud OK, carte retail + triangles PNJ serveur (cyan) branchés côté client
 
