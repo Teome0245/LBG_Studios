@@ -5,11 +5,23 @@ Structure statique servie par le **backend** sous `/pilot/` :
 | Fichier | Rôle |
 |---------|------|
 | `index.html` | Shell HTML + navigation |
+| `src/main.js` | Entrée Vite (chunks + Three.js npm) |
 | `pilot.css` | Styles Pilot (dashboard, assistant, bureau…) |
-| `pilot.js` | Logique UI (routing hash, chat, jobs, team…) |
-| `face_rig/` | Face rig 2D Lyra (module extrait) |
-| `orchestrator_avatar/` | Avatar 3D Three.js |
+| `face_rig/` | Face rig 2D Lyra |
+| `orchestrator_avatar/` | Avatar 3D (GLB + CSS) |
 | `office_map/` | Carte bureau équipe |
+| `dist/` | Bundle prod (`npm run build`) — servi si présent |
+
+**Build / serving**
+
+```bash
+cd packages/cortex/pilot_web
+npm install
+npm run build          # → dist/ (minifié, base /pilot/)
+```
+
+Le backend monte `dist/` automatiquement si `dist/index.html` existe (`LBG_PILOT_STATIC=auto`).  
+Forcer les sources (dev ESM / import map) : `LBG_PILOT_STATIC=source`. Dev HMR : `npm run dev` (port 4173, proxy `/v1` → `:8000`).
 
 Page statique servie par le **backend** sous `/pilot/` pour :
 

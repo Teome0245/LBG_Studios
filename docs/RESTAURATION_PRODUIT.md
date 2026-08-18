@@ -1,6 +1,6 @@
 # Restauration produit — étoile du nord
 
-**Date** : 2026-08-03  
+**Date** : 2026-08-18  
 **But** : ne pas perdre l’objectif d’origine pendant le recentrage O0/O1.
 
 Vision (note 2026-04-28) : IA incarnée sur **PC/infra** → même famille au **cœur du MMO** → **évolution contrôlée** du monde / code.
@@ -55,6 +55,9 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 | Smoke `tools/smoke_lan_surfaces.sh` | **vert** |
 | Smoke Team `smoke_vm_lan.sh` (Argus) | **vert** (2026-08-03 : Ollama sondé sur `.110`, soft-fail) |
 | Pas de réintro client web legacy `/mmo/` | **vert** |
+| Pilot Vite (modules ES, Three npm, bundle `dist/`) | **vert** (2026-08-18 ; servir `dist/` si présent, sinon sources) |
+| Orchestrateur local sans `hybrid_proactive_agent` legacy | **vert** (stub Cortex 2026-08-18) |
+| LLM local Qwen 27b (`.110`) + light `.111` | **vert** |
 
 ---
 

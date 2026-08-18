@@ -33,7 +33,7 @@ async def pilot_proxy_agent_dialogue_healthz() -> OkEnvelope:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/agent-dialogue/npc-registry", tags=["pilot"])
+@router.get("/agent-dialogue/npc-registry", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_agent_dialogue_npc_registry(npc_id: str | None = None) -> dict[str, object]:
     """
     Proxy same-origin vers `GET agent-dialogue /npc-registry`.
@@ -56,7 +56,7 @@ async def pilot_proxy_agent_dialogue_npc_registry(npc_id: str | None = None) -> 
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/agent-dialogue/world-content", tags=["pilot"])
+@router.get("/agent-dialogue/world-content", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_agent_dialogue_world_content() -> dict[str, object]:
     """
     Proxy same-origin vers `GET agent-dialogue /world-content` (inventaire races + bestiaire).
@@ -79,7 +79,7 @@ async def pilot_proxy_agent_dialogue_world_content() -> dict[str, object]:
 
 
 
-@router.post("/agent-dialogue/invoke", tags=["pilot"])
+@router.post("/agent-dialogue/invoke", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_agent_dialogue_invoke(body: AgentDialogueInvokeBody) -> dict[str, object]:
     """
     Proxy same-origin vers `POST {LBG_AGENT_DIALOGUE_URL}/invoke` (LLM dialogue + meta).
@@ -222,7 +222,7 @@ async def pilot_proxy_mmo_server_healthz() -> OkEnvelope:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/mmo-server/world-lyra", tags=["pilot"])
+@router.get("/mmo-server/world-lyra", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_mmo_server_world_lyra(npc_id: str) -> dict[str, object]:
     """Proxy same-origin vers `GET /v1/world/lyra` sur `mmo_server`."""
     base = get_settings().lbg_mmo_server_url.strip().rstrip("/")

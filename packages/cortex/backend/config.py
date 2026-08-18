@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     lbg_lan_host_precu: str = Field(default="192.168.0.245", validation_alias="LBG_LAN_HOST_PRECU")
     lbg_lan_host_mmo: str = Field(default="192.168.0.246", validation_alias="LBG_LAN_HOST_MMO")
     lbg_lan_host_front: str = Field(default="192.168.0.110", validation_alias="LBG_LAN_HOST_FRONT")
+    lbg_pilot_static: str = Field(default="auto", validation_alias="LBG_PILOT_STATIC")
 
     def cors_origins_list(self) -> list[str]:
         raw = self.lbg_cors_origins.strip()

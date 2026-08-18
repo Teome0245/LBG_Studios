@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from ._common import httpx, orchestrator_base
 from ._models import (
+    OkEnvelope,
     TeamApproveBody,
     TeamCreateBody,
     TeamMemoryBody,
@@ -16,7 +17,7 @@ from ._models import (
 
 router = APIRouter()
 
-@router.get("/team/meta", tags=["pilot"])
+@router.get("/team/meta", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_meta() -> dict[str, object]:
     """Proxy vers `GET orchestrator /v1/team/meta` (alias rôles + sous-projets)."""
     try:
@@ -30,7 +31,7 @@ async def pilot_team_meta() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/plan", tags=["pilot"])
+@router.post("/team/plan", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_plan(payload: TeamPlanBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/team/plan` (LLM possible → timeout long)."""
     try:
@@ -45,7 +46,7 @@ async def pilot_team_plan(payload: TeamPlanBody) -> dict[str, object]:
 
 
 
-@router.get("/team/messages", tags=["pilot"])
+@router.get("/team/messages", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_messages_list(
     task_id: str | None = None,
     kind: str | None = None,
@@ -74,7 +75,7 @@ async def pilot_team_messages_list(
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/messages", tags=["pilot"])
+@router.post("/team/messages", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_messages_create(payload: TeamMessageBody) -> dict[str, object]:
     """Proxy → `POST /v1/team/messages`."""
     try:
@@ -91,7 +92,7 @@ async def pilot_team_messages_create(payload: TeamMessageBody) -> dict[str, obje
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/memory", tags=["pilot"])
+@router.get("/team/memory", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_memory_list(
     agent_id: str | None = None,
     kind: str | None = None,
@@ -117,7 +118,7 @@ async def pilot_team_memory_list(
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/memory", tags=["pilot"])
+@router.post("/team/memory", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_memory_append(payload: TeamMemoryBody) -> dict[str, object]:
     """Proxy → `POST /v1/team/memory`."""
     try:
@@ -134,7 +135,7 @@ async def pilot_team_memory_append(payload: TeamMemoryBody) -> dict[str, object]
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/tasks", tags=["pilot"])
+@router.post("/team/tasks", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_create(payload: TeamCreateBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/team/tasks`."""
     try:
@@ -148,7 +149,7 @@ async def pilot_team_create(payload: TeamCreateBody) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/tasks", tags=["pilot"])
+@router.get("/team/tasks", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_list(
     role: str | None = None,
     status: str | None = None,
@@ -174,7 +175,7 @@ async def pilot_team_list(
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/tasks/{task_id}", tags=["pilot"])
+@router.get("/team/tasks/{task_id}", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_get(task_id: str) -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/team/tasks/{id}`."""
     try:
@@ -188,7 +189,7 @@ async def pilot_team_get(task_id: str) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/tasks/{task_id}/approve", tags=["pilot"])
+@router.post("/team/tasks/{task_id}/approve", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_approve(task_id: str, payload: TeamApproveBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/team/tasks/{id}/approve`."""
     try:
@@ -205,7 +206,7 @@ async def pilot_team_approve(task_id: str, payload: TeamApproveBody) -> dict[str
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/tasks/{task_id}/run", tags=["pilot"])
+@router.post("/team/tasks/{task_id}/run", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_run(task_id: str, payload: TeamRunBody | None = None) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/team/tasks/{id}/run`."""
     body = payload.model_dump() if payload else {}
@@ -223,7 +224,7 @@ async def pilot_team_run(task_id: str, payload: TeamRunBody | None = None) -> di
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/tasks/{task_id}/cancel", tags=["pilot"])
+@router.post("/team/tasks/{task_id}/cancel", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_cancel(task_id: str) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/team/tasks/{id}/cancel`."""
     try:
@@ -237,7 +238,7 @@ async def pilot_team_cancel(task_id: str) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/presence/snapshot", tags=["pilot"])
+@router.get("/team/presence/snapshot", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_presence_snapshot() -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/team/presence/snapshot`."""
     try:
@@ -251,7 +252,7 @@ async def pilot_team_presence_snapshot() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/presence/history", tags=["pilot"])
+@router.get("/team/presence/history", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_presence_history(limit: int = 50) -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/team/presence/history`."""
     try:
@@ -268,7 +269,7 @@ async def pilot_team_presence_history(limit: int = 50) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/campus/status", tags=["pilot"])
+@router.get("/team/campus/status", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_status() -> dict[str, object]:
     """Proxy → `GET /v1/team/campus/status` (Lyra)."""
     try:
@@ -282,7 +283,7 @@ async def pilot_team_campus_status() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/campus/act", tags=["pilot"])
+@router.post("/team/campus/act", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_act(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/act`."""
     body = payload if isinstance(payload, dict) else {}
@@ -297,7 +298,7 @@ async def pilot_team_campus_act(payload: dict[str, object] | None = None) -> dic
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/campus/mission", tags=["pilot"])
+@router.post("/team/campus/mission", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_mission(payload: dict[str, object]) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/mission`."""
     try:
@@ -311,7 +312,7 @@ async def pilot_team_campus_mission(payload: dict[str, object]) -> dict[str, obj
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/campus/mission/close", tags=["pilot"])
+@router.post("/team/campus/mission/close", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_mission_close(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/mission/close`."""
     body = payload if isinstance(payload, dict) else {}
@@ -326,7 +327,7 @@ async def pilot_team_campus_mission_close(payload: dict[str, object] | None = No
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/team/campus/mission/closure", tags=["pilot"])
+@router.get("/team/campus/mission/closure", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_mission_closure() -> dict[str, object]:
     """Proxy → `GET /v1/team/campus/mission/closure`."""
     try:
@@ -340,7 +341,7 @@ async def pilot_team_campus_mission_closure() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/memory/prune", tags=["pilot"])
+@router.post("/team/memory/prune", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_memory_prune(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/memory/prune`."""
     body = payload if isinstance(payload, dict) else {}
@@ -355,7 +356,7 @@ async def pilot_team_memory_prune(payload: dict[str, object] | None = None) -> d
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/team/campus/conduct", tags=["pilot"])
+@router.post("/team/campus/conduct", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_conduct(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/conduct`."""
     body = payload if isinstance(payload, dict) else {}

@@ -10,11 +10,11 @@ from config import get_settings
 from services.mmmorpg_commit import try_commit_dialogue
 
 from ._common import httpx, require_internal_token
-from ._models import AidRequest
+from ._models import AidRequest, OkEnvelope
 
 router = APIRouter()
 
-@router.post("/reputation", tags=["pilot"])
+@router.post("/reputation", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_commit_reputation(
     payload: dict[str, object],
     x_lbg_service_token: str | None = Header(default=None, alias="X-LBG-Service-Token"),
@@ -66,7 +66,7 @@ async def pilot_commit_reputation(
     return {"ok": True, "trace_id": trace_id, "commit_result": commit_result}
 
 
-@router.post("/player-inventory", tags=["pilot"])
+@router.post("/player-inventory", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_commit_player_inventory(
     payload: dict[str, object],
     x_lbg_service_token: str | None = Header(default=None, alias="X-LBG-Service-Token"),
@@ -133,7 +133,7 @@ async def pilot_commit_player_inventory(
     return {"ok": True, "trace_id": trace_id, "commit_result": commit_result}
 
 
-@router.post("/aid", tags=["pilot"])
+@router.post("/aid", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_apply_aid_to_world(
     payload: AidRequest,
     x_lbg_service_token: str | None = Header(default=None, alias="X-LBG-Service-Token"),

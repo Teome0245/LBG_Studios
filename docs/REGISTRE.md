@@ -1,6 +1,6 @@
 # Registre LBG Studios
 
-**Date** : 2026-08-17 (LAN + LLM Qwen + executor `.141`)  
+**Date** : 2026-08-18 (Pilot Vite + stub orchestrateur + Qwen 27b + executor `.141`)  
 **Source de vérité** : ce fichier.
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
@@ -144,3 +144,15 @@ flowchart LR
   LP --> P246
   PC --> P246
 ```
+
+---
+
+## Jalons récents (O1 / O2)
+
+| Date | Jalon | Où |
+|------|--------|-----|
+| 2026-08-18 | Pilot : modules ES + Vite, Three.js npm (`three@0.128`), import map uvicorn | `packages/cortex/pilot_web` |
+| 2026-08-18 | Orchestrateur démarrable sans legacy : stub local `hybrid_proactive_agent` | `packages/cortex/orchestrator` |
+| 2026-08-18 | Backend : `pydantic-settings`, `response_model` Pilot, `trace_id` E2E | `packages/cortex/backend` |
+| 2026-08-18 | O2 : pipeline assets Prime + persistance inventaire/quêtes via bridge Core3 | `packages/prime-client` |
+| 2026-08-17 | LLM local Qwen `qwen3.8:27b` (`.110` heavy) + `qwen2.5:3b` (`.111`) | matrice `packages/cortex/docs/local_llm_route_matrix.md` |

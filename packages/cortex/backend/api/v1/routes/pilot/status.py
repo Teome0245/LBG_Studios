@@ -10,10 +10,11 @@ from fastapi import APIRouter
 from config import get_settings
 
 from ._common import LOG, httpx, lbg_ia_backend_base_url, pilot_lbg_ia_http_timeout_s
+from ._models import LbgIaStatusResponse, OkEnvelope, PilotStatusResponse
 
 router = APIRouter()
 
-@router.get("/ollama/tags", tags=["pilot"])
+@router.get("/ollama/tags", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_ollama_tags() -> dict[str, object]:
     """
     Proxy same-origin vers l'instance Ollama (normalement VM 110 sur le port 11434).
@@ -34,8 +35,7 @@ async def pilot_proxy_ollama_tags() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/status", tags=["pilot"])
-
+@router.get("/status", tags=["pilot"], response_model=PilotStatusResponse)
 async def pilot_aggregate_status() -> dict[str, object]:
     """
     Santé agrégée pour l’UI de pilotage : évite au navigateur d’appeler
@@ -345,7 +345,7 @@ async def pilot_aggregate_status() -> dict[str, object]:
     return res
 
 
-@router.get("/lbg-ia/status", tags=["pilot"])
+@router.get("/lbg-ia/status", tags=["pilot"], response_model=LbgIaStatusResponse)
 async def pilot_lbg_ia_orchestrator_status() -> dict[str, object]:
     """
     Agrège `GET /metrics` + `GET /monitor/agents` du backend FastAPI **projet LBG_IA** (même réseau/VM).

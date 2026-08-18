@@ -31,6 +31,8 @@ class AssistantSessionExportBody(BaseModel):
 
 
 class OkEnvelope(BaseModel):
+    """Enveloppe proxy (champs extra conservés — healthz / orchestrateur / team)."""
+
     model_config = ConfigDict(extra="allow")
 
     ok: bool = True
@@ -39,6 +41,37 @@ class OkEnvelope(BaseModel):
     body: str | None = None
     skipped: bool | None = None
     payload: object | None = None
+    disabled: bool | None = None
+    trace_id: str | None = None
+    attempted: bool | None = None
+
+
+class PilotStatusResponse(BaseModel):
+    """Santé agrégée `GET /v1/pilot/status` (sondes LAN + agents)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    backend: str
+    orchestrator: str
+    orchestrator_url: str
+    orchestrator_detail: str | None = None
+    agent_dialogue: str
+    agent_quests: str
+    agent_combat: str
+    agent_pm: str
+    agent_desktop: str | None = None
+    mmo_server: str
+
+
+class LbgIaStatusResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    ok: bool
+    disabled: bool | None = None
+    detail: str | None = None
+    upstream_base: str | None = None
+    metrics: dict[str, object] | None = None
+    agents_monitor: dict[str, object] | None = None
 
 
 class PilotRouteResponse(BaseModel):

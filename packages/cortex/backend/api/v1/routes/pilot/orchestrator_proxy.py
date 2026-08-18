@@ -10,11 +10,11 @@ from fastapi.responses import StreamingResponse
 from config import get_settings
 
 from ._common import httpx, orchestrator_base
-from ._models import ActionProposalBody, JobApproveBody, JobCreateBody
+from ._models import ActionProposalBody, JobApproveBody, JobCreateBody, OkEnvelope
 
 router = APIRouter()
 
-@router.get("/capabilities", tags=["pilot"])
+@router.get("/capabilities", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_capabilities() -> dict[str, object]:
     """Proxy vers l’orchestrator : liste des capabilities (même origine que /pilot/)."""
     orch_url = get_settings().orchestrator_base()
@@ -32,7 +32,7 @@ async def pilot_capabilities() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/action-proposal", tags=["pilot"])
+@router.post("/action-proposal", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_action_proposal(payload: ActionProposalBody) -> dict[str, object]:
     """Proxy same-origin vers l’orchestrator : proposition d'action sans exécution."""
     orch_url = get_settings().orchestrator_base()
@@ -49,7 +49,7 @@ async def pilot_action_proposal(payload: ActionProposalBody) -> dict[str, object
 
 
 
-@router.get("/orchestrator/brain/status", tags=["pilot"])
+@router.get("/orchestrator/brain/status", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_orchestrator_brain_status() -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/brain/status` (évite CORS)."""
     orch_url = get_settings().orchestrator_base()
@@ -64,7 +64,7 @@ async def pilot_proxy_orchestrator_brain_status() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/orchestrator/proactive/status", tags=["pilot"])
+@router.get("/orchestrator/proactive/status", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_orchestrator_proactive_status() -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/proactive/status` (humeur / tension)."""
     orch_url = get_settings().orchestrator_base()
@@ -79,7 +79,7 @@ async def pilot_proxy_orchestrator_proactive_status() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/orchestrator/brain/toggle", tags=["pilot"])
+@router.post("/orchestrator/brain/toggle", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_orchestrator_brain_toggle(payload: dict[str, object]) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/brain/toggle`."""
     orch_url = get_settings().orchestrator_base()
@@ -99,7 +99,7 @@ async def pilot_proxy_orchestrator_brain_toggle(payload: dict[str, object]) -> d
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/orchestrator/brain/approve", tags=["pilot"])
+@router.post("/orchestrator/brain/approve", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_orchestrator_brain_approve(payload: dict[str, object]) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/brain/approve`."""
     orch_url = get_settings().orchestrator_base()
@@ -120,7 +120,7 @@ async def pilot_proxy_orchestrator_brain_approve(payload: dict[str, object]) -> 
 
 
 
-@router.post("/jobs", tags=["pilot"])
+@router.post("/jobs", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_create(payload: JobCreateBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/jobs` (créer un job autonome)."""
     try:
@@ -134,7 +134,7 @@ async def pilot_jobs_create(payload: JobCreateBody) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/jobs", tags=["pilot"])
+@router.get("/jobs", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_list(actor_id: str | None = None) -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/jobs` (liste, filtre optionnel `actor_id`)."""
     try:
@@ -148,7 +148,7 @@ async def pilot_jobs_list(actor_id: str | None = None) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/jobs/{job_id}", tags=["pilot"])
+@router.get("/jobs/{job_id}", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_get(job_id: str) -> dict[str, object]:
     """Proxy same-origin vers `GET orchestrator /v1/jobs/{id}` (état complet)."""
     try:
@@ -162,7 +162,7 @@ async def pilot_jobs_get(job_id: str) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/jobs/{job_id}/approve", tags=["pilot"])
+@router.post("/jobs/{job_id}/approve", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_approve(job_id: str, payload: JobApproveBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/jobs/{id}/approve`."""
     try:
@@ -176,7 +176,7 @@ async def pilot_jobs_approve(job_id: str, payload: JobApproveBody) -> dict[str, 
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/jobs/{job_id}/cancel", tags=["pilot"])
+@router.post("/jobs/{job_id}/cancel", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_cancel(job_id: str) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/jobs/{id}/cancel`."""
     try:
@@ -190,7 +190,7 @@ async def pilot_jobs_cancel(job_id: str) -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.post("/jobs/{job_id}/advance", tags=["pilot"])
+@router.post("/jobs/{job_id}/advance", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_advance(job_id: str) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/jobs/{id}/advance` (avancer d'une étape)."""
     try:
