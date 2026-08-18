@@ -122,6 +122,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, quests.status_payload(player))
             return
 
+        if path == "/v1/quest-state":
+            wanted = (qs.get("player") or [""])[0]
+            self._send(200, quests.quest_state_payload(str(wanted or "")))
+            return
+
         self._send(404, {"ok": False, "error": "not_found", "path": path})
 
     def do_POST(self) -> None:  # noqa: N802

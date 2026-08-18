@@ -1,7 +1,7 @@
 """Runtime missions hub Lost Heaven (board / accept / complete).
 
-État mémoire process — même contrat que m10_craft_runtime (P2 stub).
-Récompenses items via m10_craft_runtime ; crédits en champ player.
+Journal persistant côté ``ia_bridge``: quêtes actives/complétées, rotation board,
+crédits et événements JSONL compatibles avec les consumers existants.
 """
 from __future__ import annotations
 
@@ -11,6 +11,15 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
+
+from core3_bridge_state import (
+    append_jsonl,
+    bridge_dir,
+    load_json_doc,
+    quest_events_path,
+    quest_state_store_path,
+    save_json_doc,
+)
 
 _ROOT = Path(__file__).resolve().parents[1]
 _CANDIDATES = [
@@ -75,9 +84,61 @@ def seed_player(player: str) -> dict[str, Any]:
     }
 
 
+def _normalize_player_state(player: str, raw: Any) -> dict[str, Any]:
+    seeded = seed_player(player)
+    if not isinstance(raw, dict):
+        return seeded
+    out = dict(seeded)
+    out["player"] = str(raw.get("player") or player)
+    out["credits"] = int(raw.get("credits") or seeded["credits"])
+    for key in ("active", "completed", "generated_offers"):
+        if isinstance(raw.get(key), list):
+            out[key] = deepcopy(raw[key])
+    if isinstance(raw.get("generated_by_id"), dict):
+        out["generated_by_id"] = deepcopy(raw["generated_by_id"])
+    out["board_rotation"] = int(raw.get("board_rotation") or 0)
+    if isinstance(raw.get("scene_tips"), list):
+        out["scene_tips"] = deepcopy(raw["scene_tips"])
+    return out
+
+
+def _load_players_from_bridge() -> dict[str, dict[str, Any]]:
+    doc = load_json_doc(quest_state_store_path())
+    rows = doc.get("players")
+    out: dict[str, dict[str, Any]] = {}
+    if isinstance(rows, dict):
+        for player, state in rows.items():
+            out[str(player)] = _normalize_player_state(str(player), state)
+    return out
+
+
+def _save_players_to_bridge() -> None:
+    save_json_doc(
+        quest_state_store_path(),
+        {
+            "kind": "core3_quest_bridge",
+            "bridge_dir": str(bridge_dir()),
+            "players": _players,
+        },
+    )
+
+
+def _event(player: str, quest_id: str, ev_type: str, **extra: Any) -> dict[str, Any]:
+    row = {"player": player, "quest_id": quest_id, "type": ev_type}
+    row.update(extra)
+    return row
+
+
+def _append_event(player: str, quest_id: str, ev_type: str, **extra: Any) -> None:
+    append_jsonl(quest_events_path(), _event(player, quest_id, ev_type, **extra))
+
+
 def ensure_player(player: str) -> dict[str, Any]:
+    if not _players:
+        _players.update(_load_players_from_bridge())
     if player not in _players:
         _players[player] = seed_player(player)
+        _save_players_to_bridge()
     st = _players[player]
     st.setdefault("generated_offers", [])
     st.setdefault("generated_by_id", {})
@@ -88,6 +149,8 @@ def ensure_player(player: str) -> dict[str, Any]:
 def reset_player(player: str) -> dict[str, Any]:
     with _lock:
         _players[player] = seed_player(player)
+        _save_players_to_bridge()
+        _append_event(player, "", "reset")
         return deepcopy(_players[player])
 
 
@@ -273,7 +336,53 @@ def board_payload(
 def status_payload(player: str) -> dict[str, Any]:
     with _lock:
         st = deepcopy(ensure_player(player))
-    return {"ok": True, **st, "source": "quest_hub_runtime"}
+    return {
+        "ok": True,
+        **st,
+        "source": "core3_bridge_quests",
+        "persisted": True,
+        "bridge_dir": str(bridge_dir()),
+    }
+
+
+def _quest_state_rows_for_player(st: dict[str, Any], player: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for active in st.get("active") or []:
+        if not isinstance(active, dict):
+            continue
+        rows.append(
+            _event(
+                str(st.get("player") or player),
+                str(active.get("id") or ""),
+                "accept",
+                title=str(active.get("title") or ""),
+                status=str(active.get("status") or "active"),
+            )
+        )
+    for qid in st.get("completed") or []:
+        rows.append(_event(str(st.get("player") or player), str(qid), "turnin"))
+    return rows
+
+
+def quest_state_payload(player: str | None = None) -> dict[str, Any]:
+    with _lock:
+        if not _players:
+            _players.update(_load_players_from_bridge())
+        if player:
+            st = ensure_player(player)
+            rows = _quest_state_rows_for_player(st, player)
+        else:
+            rows = []
+            for p in sorted(_players):
+                rows.extend(_quest_state_rows_for_player(ensure_player(p), p))
+    return {
+        "ok": True,
+        "quest_states": rows,
+        "player": player or "",
+        "source": "core3_bridge_quests",
+        "persisted": True,
+        "bridge_dir": str(bridge_dir()),
+    }
 
 
 def accept_quest(player: str, quest_id: str, *, giver_id: str | None = None) -> dict[str, Any]:
@@ -336,13 +445,15 @@ def accept_quest(player: str, quest_id: str, *, giver_id: str | None = None) -> 
         st["active"].append(entry)
         gens = st.get("generated_offers") or []
         st["generated_offers"] = [g for g in gens if str(g.get("id")) != quest_id]
+        _save_players_to_bridge()
+        _append_event(player, quest_id, "accept", giver_id=str(entry.get("giver_id") or ""))
         out = {
             "ok": True,
             "player": player,
             "accepted": entry,
             "active": deepcopy(st["active"]),
             "credits": st["credits"],
-            "source": "quest_hub_runtime",
+            "source": "core3_bridge_quests",
         }
         if redirected_from:
             out["redirected_from"] = redirected_from
@@ -414,6 +525,8 @@ def progress_quest(
             }
         target["done"] = True
         ready = all(isinstance(s, dict) and s.get("done") for s in steps)
+        _save_players_to_bridge()
+        _append_event(player, quest_id, "progress", step_id=str(target.get("id") or ""), poi=str(target.get("poi") or ""))
         return {
             "ok": True,
             "quest_id": quest_id,
@@ -422,7 +535,7 @@ def progress_quest(
             "progress_steps": deepcopy(steps),
             "ready_to_turn_in": ready,
             "active": deepcopy(st["active"]),
-            "source": "quest_hub_runtime",
+            "source": "core3_bridge_quests",
         }
 
 
@@ -436,6 +549,7 @@ def _apply_rewards(player: str, rewards: dict[str, Any]) -> dict[str, Any]:
             st["credits"] = int(st.get("credits") or 0) + credits
             applied["credits_gained"] = credits
         applied["credits"] = st["credits"]
+        _save_players_to_bridge()
     items = (rewards or {}).get("items") or []
     if isinstance(items, list) and items:
         try:
@@ -454,6 +568,7 @@ def _apply_rewards(player: str, rewards: dict[str, Any]) -> dict[str, Any]:
                         continue
                     m10._inv_add(inv, iid, qty)  # noqa: SLF001
                     applied["items"].append({"id": iid, "qty": qty})
+                m10._save_players_to_bridge()  # noqa: SLF001
             applied["inventory"] = deepcopy(m10.ensure_player(player)["inventory"])
         except Exception as exc:
             applied["inventory_error"] = str(exc)[:160]
@@ -488,6 +603,8 @@ def complete_quest(player: str, quest_id: str) -> dict[str, Any]:
             st["completed"].append(quest_id)
         rewards = deepcopy(entry.get("rewards") or tpl.get("rewards") or {})
         followup = _spawn_followup_unlocked(st, quest_id)
+        _save_players_to_bridge()
+        _append_event(player, quest_id, "turnin")
     reward_result = _apply_rewards(player, rewards)
     with _lock:
         st = ensure_player(player)
@@ -501,7 +618,7 @@ def complete_quest(player: str, quest_id: str) -> dict[str, Any]:
             "active": deepcopy(st["active"]),
             "completed": list(st["completed"]),
             "credits": st["credits"],
-            "source": "quest_hub_runtime",
+            "source": "core3_bridge_quests",
         }
         if followup:
             payload["new_offer"] = {
@@ -530,6 +647,8 @@ def tip_scene(player: str, quest_id: str = "lh_show_perle", *, amount: int | Non
         st["credits"] = have - tip
         tips = st.setdefault("scene_tips", [])
         tips.append({"quest_id": quest_id or "lh_show_perle", "amount": tip})
+        _save_players_to_bridge()
+        _append_event(player, quest_id or "lh_show_perle", "tip", amount=tip)
         return {
             "ok": True,
             "player": player,
@@ -538,5 +657,5 @@ def tip_scene(player: str, quest_id: str = "lh_show_perle", *, amount: int | Non
             "venue": scene.get("venue") or "poi:lost_heaven_cantina",
             "message": "Tu glisses quelques crédits à l'artiste. La Perle murmure son approbation.",
             "xp_scene": int(scene.get("tip_xp_scene") or 5),
-            "source": "quest_hub_runtime",
+            "source": "core3_bridge_quests",
         }

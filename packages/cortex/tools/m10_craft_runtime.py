@@ -1,6 +1,7 @@
 """Runtime inventaire + craft_combine M10 (stub local et sidecar 246).
 
-État en mémoire process — boucle P2 sans Core3 réel.
+Persistance bridge partagée: l'inventaire joueur est sauvegardé dans
+``ia_bridge/inventory_players.json`` pour survivre aux redémarrages du sidecar.
 """
 from __future__ import annotations
 
@@ -10,6 +11,8 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
+
+from core3_bridge_state import bridge_dir, inventory_state_path, load_json_doc, save_json_doc
 
 _ROOT = Path(__file__).resolve().parents[1]  # packages/cortex (Studios) ou …/tools parent
 _CANDIDATES = [
@@ -81,29 +84,74 @@ def seed_player(player: str) -> dict[str, Any]:
     }
 
 
+def _normalize_player_state(player: str, raw: Any) -> dict[str, Any]:
+    seeded = seed_player(player)
+    if not isinstance(raw, dict):
+        return seeded
+    inv = raw.get("inventory")
+    skills = raw.get("skills")
+    return {
+        "player": str(raw.get("player") or player),
+        "skills": [str(x) for x in skills if isinstance(x, str) and str(x).strip()] if isinstance(skills, list) else seeded["skills"],
+        "inventory": [dict(x) for x in inv if isinstance(x, dict)] if isinstance(inv, list) else seeded["inventory"],
+    }
+
+
+def _load_players_from_bridge() -> dict[str, dict[str, Any]]:
+    doc = load_json_doc(inventory_state_path())
+    rows = doc.get("players")
+    out: dict[str, dict[str, Any]] = {}
+    if isinstance(rows, dict):
+        for player, state in rows.items():
+            out[str(player)] = _normalize_player_state(str(player), state)
+    return out
+
+
+def _save_players_to_bridge() -> None:
+    save_json_doc(
+        inventory_state_path(),
+        {
+            "kind": "core3_inventory_bridge",
+            "bridge_dir": str(bridge_dir()),
+            "players": _players,
+        },
+    )
+
+
 def ensure_player(player: str) -> dict[str, Any]:
+    if not _players:
+        _players.update(_load_players_from_bridge())
     if player not in _players:
         _players[player] = seed_player(player)
+        _save_players_to_bridge()
     return _players[player]
 
 
 def reset_player(player: str) -> dict[str, Any]:
     with _lock:
         _players[player] = seed_player(player)
+        _save_players_to_bridge()
         return deepcopy(_players[player])
 
 
 def inventory_payload(player: str) -> dict[str, Any]:
     with _lock:
         state = deepcopy(ensure_player(player))
-    return {"ok": True, **state}
+    return {"ok": True, **state, "source": "core3_bridge_inventory", "persisted": True, "bridge_dir": str(bridge_dir())}
 
 
 def player_skills_payload(player: str) -> dict[str, Any]:
     with _lock:
         state = ensure_player(player)
         skills = list(state["skills"])
-    return {"ok": True, "player": player, "skills": skills}
+    return {
+        "ok": True,
+        "player": player,
+        "skills": skills,
+        "source": "core3_bridge_inventory",
+        "persisted": True,
+        "bridge_dir": str(bridge_dir()),
+    }
 
 
 def _inv_qty(inv: list[dict[str, Any]], item_id: str) -> int:
@@ -198,6 +246,7 @@ def craft_combine(player: str, schematic_id: str) -> dict[str, Any]:
         oid = str(out["id"])
         oqty = int(out.get("qty") or 1)
         _inv_add(inv, oid, oqty, name=str(schem.get("name") or oid))
+        _save_players_to_bridge()
         return {
             "ok": True,
             "player": player,
@@ -205,5 +254,7 @@ def craft_combine(player: str, schematic_id: str) -> dict[str, Any]:
             "crafted": {"id": oid, "name": schem.get("name"), "qty": oqty},
             "inventory": deepcopy(inv),
             "skills": list(state["skills"]),
-            "source": "m10_craft_runtime",
+            "source": "core3_bridge_inventory",
+            "persisted": True,
+            "bridge_dir": str(bridge_dir()),
         }

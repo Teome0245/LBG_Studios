@@ -105,6 +105,12 @@ fi
 
 scp -q "${ROOT_DIR}/tools/core3_ia_sidecar/core3_ia_sidecar.py" \
   "${VM_USER}@${VM_HOST}:/tmp/core3_ia_sidecar.py"
+scp -q "${ROOT_DIR}/tools/m10_craft_runtime.py" \
+  "${ROOT_DIR}/tools/quest_hub_runtime.py" \
+  "${ROOT_DIR}/tools/core3_bridge_state.py" \
+  "${ROOT_DIR}/tools/m10_craft_stub/m10_craft_stub.py" \
+  "${ROOT_DIR}/infra/scripts/run_m10_craft_stub.sh" \
+  "${VM_USER}@${VM_HOST}:/tmp/"
 scp -q "${ROOT_DIR}/infra/scripts/post_prime_ia_bots.sh" \
   "${ROOT_DIR}/infra/scripts/run_core3_ia_bot_client_vm.sh" \
   "${ROOT_DIR}/infra/scripts/lbg_world_export_agent.sh" \
@@ -135,9 +141,15 @@ fi
 
 ssh "${VM_USER}@${VM_HOST}" "bash -s" <<EOF
 set -euo pipefail
-sudo mkdir -p ${REMOTE_TOOLS} ${CLEAN_BIN}/ia_bridge ${CLEAN_BIN}/ia_bridge/world_poi /opt/LBG_IA_MMO/content/core3/world_poi /opt/LBG_IA_MMO/content/core3/locations /opt/LBG_IA_MMO/tools/world_editor
+sudo mkdir -p ${REMOTE_TOOLS} ${CLEAN_BIN}/ia_bridge ${CLEAN_BIN}/ia_bridge/world_poi /opt/LBG_IA_MMO/content/core3/world_poi /opt/LBG_IA_MMO/content/core3/locations /opt/LBG_IA_MMO/tools/world_editor /opt/LBG_IA_MMO/tools/m10_craft_stub
 sudo cp /tmp/core3_ia_sidecar.py ${REMOTE_TOOLS}/core3_ia_sidecar.py
 sudo chmod +x ${REMOTE_TOOLS}/core3_ia_sidecar.py
+sudo cp /tmp/m10_craft_runtime.py /opt/LBG_IA_MMO/tools/m10_craft_runtime.py
+sudo cp /tmp/quest_hub_runtime.py /opt/LBG_IA_MMO/tools/quest_hub_runtime.py
+sudo cp /tmp/core3_bridge_state.py /opt/LBG_IA_MMO/tools/core3_bridge_state.py
+sudo cp /tmp/m10_craft_stub.py /opt/LBG_IA_MMO/tools/m10_craft_stub/m10_craft_stub.py
+sudo cp /tmp/run_m10_craft_stub.sh /opt/LBG_IA_MMO/infra/scripts/run_m10_craft_stub.sh
+sudo chmod +x /opt/LBG_IA_MMO/infra/scripts/run_m10_craft_stub.sh
 sudo cp /tmp/core3_species_slot_map.json /opt/LBG_IA_MMO/content/core3/core3_species_slot_map.json
 sudo cp /tmp/core3_npc_pilots.json /opt/LBG_IA_MMO/content/core3/core3_npc_pilots.json
 sudo cp /tmp/core3_npc_pilot_bodies.json /opt/LBG_IA_MMO/content/core3/core3_npc_pilot_bodies.json
@@ -162,6 +174,9 @@ sudo cp /tmp/m10_skills_catalog.json ${CLEAN_BIN}/ia_bridge/m10_skills_catalog.j
 sudo touch ${CLEAN_BIN}/ia_bridge/pending.jsonl
 sudo touch ${CLEAN_BIN}/ia_bridge/player_snapshot.json
 sudo touch ${CLEAN_BIN}/ia_bridge/npc_snapshots.json
+sudo touch ${CLEAN_BIN}/ia_bridge/inventory_players.json
+sudo touch ${CLEAN_BIN}/ia_bridge/quest_players.json
+sudo touch ${CLEAN_BIN}/ia_bridge/quest_state.jsonl
 sudo touch ${CLEAN_BIN}/ia_bridge/world_editor_session.json
 sudo touch ${CLEAN_BIN}/ia_bridge/world_editor_export.queue
 sudo touch ${CLEAN_BIN}/ia_bridge/world_editor_export.processed
