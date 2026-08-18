@@ -1,3 +1,6 @@
+import "./modules/office_map_module.js";
+import "./modules/orchestrator_avatar_module.js";
+import "./modules/face_rig_module.js";
 import { register as register_0 } from "./chunks/pilot_core.js";
 import { register as register_1 } from "./chunks/pilot_chat.js";
 import { register as register_2 } from "./chunks/pilot_assistant.js";
@@ -19,3 +22,11 @@ register_6();
 register_7();
 register_8();
 register_9();
+
+
+if (typeof globalThis.orchestratorAvatarInit === "function") {
+  try { globalThis.orchestratorAvatarInit(); } catch (_) {}
+}
+if (typeof globalThis.faceRigInit === "function") {
+  try { globalThis.faceRigInit(); } catch (_) {}
+}
