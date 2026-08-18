@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -7,20 +6,13 @@ from fastapi.staticfiles import StaticFiles
 
 from api.health import router as health_router
 from api.v1.router import router as v1_router
-
-
-def _parse_cors_origins() -> list[str]:
-    """Liste d'origines autorisées (pilot servi depuis une autre machine, ex. VM 110). Variable LBG_CORS_ORIGINS : URLs séparées par des virgules."""
-    raw = os.environ.get("LBG_CORS_ORIGINS", "").strip()
-    if not raw:
-        return []
-    return [x.strip() for x in raw.split(",") if x.strip()]
+from config import get_settings
 
 
 def create_app() -> FastAPI:
     application = FastAPI(title="LBG_IA_MMO Backend", version="0.1.0")
 
-    cors_origins = _parse_cors_origins()
+    cors_origins = get_settings().cors_origins_list()
     if cors_origins:
         application.add_middleware(
             CORSMiddleware,

@@ -1,4 +1,9 @@
-"""Mémoire LBG Studios Agents (LBG_SA) — namespaces JSONL ancrés sur LBG_TEAM_DB_PATH."""
+"""Mémoire LBG Studios Agents (LBG_SA) — namespaces JSONL ancrés sur LBG_TEAM_DB_PATH.
+
+Si ``hybrid_proactive_agent`` n'est pas installé, le store fonctionne en mode
+dégradé : ``append_learning`` est un no-op et ``recall`` / ``context_hints``
+retournent des résultats vides.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,12 @@ import re
 from pathlib import Path
 from typing import Any
 
-from hybrid_proactive_agent import LongTermMemoryStore, MemoryEntry
+try:
+    from hybrid_proactive_agent import LongTermMemoryStore, MemoryEntry
+
+    _HPA_AVAILABLE = True
+except ImportError:
+    _HPA_AVAILABLE = False
 
 _NAMESPACE_RE = re.compile(r"^[a-z][a-z0-9_/\-]{0,63}$")
 _store_cache: dict[str, LbgSaMemoryStore] = {}
@@ -23,6 +33,8 @@ def _env_first(*keys: str, default: str = "") -> str:
 
 
 def lbg_sa_memory_enabled() -> bool:
+    if not _HPA_AVAILABLE:
+        return False
     raw = _env_first(
         "LBG_STUDIOS_AGENTS_MEMORY_ENABLED",
         "LBG_SA_MEMORY_ENABLED",
@@ -31,7 +43,6 @@ def lbg_sa_memory_enabled() -> bool:
     return raw.lower() in ("1", "true", "yes", "on")
 
 
-# Alias historique du nom de fonction (imports internes).
 studios_agents_memory_enabled = lbg_sa_memory_enabled
 
 
@@ -78,8 +89,11 @@ class LbgSaMemoryStore:
         except ValueError:
             default_max = 500
         self._max = max_entries if max_entries is not None else max(50, min(default_max, 5000))
-        path = _namespace_file(self.namespace) if lbg_sa_memory_enabled() else None
-        self._inner = LongTermMemoryStore(path=path, max_entries=self._max)
+        if _HPA_AVAILABLE:
+            path = _namespace_file(self.namespace) if lbg_sa_memory_enabled() else None
+            self._inner = LongTermMemoryStore(path=path, max_entries=self._max)
+        else:
+            self._inner = None
 
     def append_learning(
         self,
@@ -89,7 +103,7 @@ class LbgSaMemoryStore:
         payload: dict[str, Any] | None = None,
         source_task_id: str = "",
     ) -> None:
-        if not lbg_sa_memory_enabled():
+        if not lbg_sa_memory_enabled() or self._inner is None:
             return
         text = (summary or "").strip()
         if not text:
@@ -105,10 +119,14 @@ class LbgSaMemoryStore:
         entry = MemoryEntry(summary=text[:2000], tags=merged_tags[:24], payload=body)
         self._inner.append(entry)
 
-    def recall(self, query: str, *, limit: int = 5) -> list[MemoryEntry]:
+    def recall(self, query: str, *, limit: int = 5) -> list[Any]:
+        if self._inner is None:
+            return []
         return self._inner.recall(query, limit=limit)
 
     def context_hints(self, query: str, *, limit: int = 3) -> str:
+        if self._inner is None:
+            return ""
         return self._inner.context_hints(query, limit=limit)
 
     def path(self) -> Path | None:

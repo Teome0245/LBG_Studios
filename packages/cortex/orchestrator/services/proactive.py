@@ -3,11 +3,15 @@ Couche proactive : greffe ``hybrid_proactive_agent`` + daemon optionnel.
 
 - Enrichit ``POST /v1/route`` avec ``proactive_hints`` / ``proactive_action``.
 - Boucle daemon (opt-in) : ``tick_silence`` → initiative → job autonome read-only si autorisé.
+
+Si ``hybrid_proactive_agent`` n'est pas installé le module se charge sans erreur
+et toutes les fonctions publiques fonctionnent en mode dégradé (no-op / stubs).
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import os
 import socket
 import threading
@@ -16,11 +20,18 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from hybrid_proactive_agent import HybridProactiveEngine, integration_hints
-from hybrid_proactive_agent.engine import ActionKind, ProactiveAction
+try:
+    from hybrid_proactive_agent import HybridProactiveEngine, integration_hints
+    from hybrid_proactive_agent.engine import ActionKind, ProactiveAction
+
+    _HPA_AVAILABLE = True
+except ImportError:
+    _HPA_AVAILABLE = False
 
 from services import jobs as svc_jobs
 from services.lia_jobs import LIA_ACTOR_ID, lia_core3_context_patch, lia_tick_prompt_from_objective
+
+LOG = logging.getLogger("orchestrator.proactive")
 
 # --------------------------------------------------------------------------- #
 # Config
@@ -32,7 +43,7 @@ def _truthy(raw: str) -> bool:
 
 
 def proactive_enabled() -> bool:
-    return _truthy(os.environ.get("LBG_PROACTIVE_ENABLED", "0"))
+    return _HPA_AVAILABLE and _truthy(os.environ.get("LBG_PROACTIVE_ENABLED", "0"))
 
 
 def proactive_interval_s() -> float:
@@ -106,7 +117,7 @@ def _lia_autonomy_thread_active() -> bool:
 
 @dataclass
 class ProactiveRuntime:
-    engine: HybridProactiveEngine = field(default_factory=HybridProactiveEngine)
+    engine: Any = field(default=None)
     last_user_ts: float = field(default_factory=time.time)
     last_auto_job_ts: float = 0.0
     last_tick_ts: float = field(default_factory=time.time)
@@ -114,6 +125,10 @@ class ProactiveRuntime:
     auto_jobs_spawned: int = 0
     last_action: dict[str, Any] | None = None
     last_job_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.engine is None and _HPA_AVAILABLE:
+            self.engine = HybridProactiveEngine()
 
 
 _lock = threading.Lock()
@@ -136,6 +151,8 @@ def _atomic_write_json(path: str, payload: dict[str, Any]) -> None:
 
 
 def _load_state() -> None:
+    if not _HPA_AVAILABLE or _runtime.engine is None:
+        return
     path = proactive_state_path()
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -155,6 +172,8 @@ def _load_state() -> None:
 
 
 def _persist_state() -> None:
+    if not _HPA_AVAILABLE or _runtime.engine is None:
+        return
     with _lock:
         payload = {
             "engine_state": _runtime.engine.state.model_dump(),
@@ -233,7 +252,7 @@ def observe_turn(
     context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Appelé après un tour utilisateur (route). Retourne hints + action optionnelle."""
-    if not proactive_enabled():
+    if not proactive_enabled() or _runtime.engine is None:
         return {}
     ctx = context if isinstance(context, dict) else {}
     decide_ctx = _build_decide_context(
@@ -276,7 +295,9 @@ def enrich_route_output(
         out_body["proactive_action"] = action
 
 
-def _should_spawn_job(action: ProactiveAction) -> bool:
+def _should_spawn_job(action: Any) -> bool:
+    if not _HPA_AVAILABLE:
+        return False
     if not proactive_auto_jobs() or not svc_jobs.runner_enabled():
         return False
     if action.mode != "autonome" and action.kind not in (ActionKind.autonomous_nudge, ActionKind.plan):
@@ -284,9 +305,10 @@ def _should_spawn_job(action: ProactiveAction) -> bool:
     with _lock:
         if time.time() - _runtime.last_auto_job_ts < proactive_min_job_interval_s():
             return False
+        if _runtime.engine is None:
+            return False
         if _runtime.engine.state.tension < proactive_tension_job_threshold():
             return False
-        # Pas de job proactive si un job système tourne déjà
         active_ids = {proactive_actor_id(), LIA_ACTOR_ID}
         for aid in active_ids:
             for job in svc_jobs.list_jobs(actor_id=aid)[:8]:
@@ -295,10 +317,10 @@ def _should_spawn_job(action: ProactiveAction) -> bool:
     return True
 
 
-def _pick_proactive_objective(action: ProactiveAction) -> tuple[str, str, dict[str, Any]]:
+def _pick_proactive_objective(action: Any) -> tuple[str, str, dict[str, Any]]:
     """Retourne (objectif, actor_id job, contexte base)."""
     infra_objective = _default_objective()
-    if action.kind == ActionKind.plan:
+    if _HPA_AVAILABLE and action.kind == ActionKind.plan:
         infra_objective = (
             "Auto checkup infrastructure LBG et cartographie réseau LAN (read-only, instantané T)."
         )
@@ -327,7 +349,7 @@ def _pick_proactive_objective(action: ProactiveAction) -> tuple[str, str, dict[s
     return infra_objective, actor, ctx
 
 
-def _spawn_proactive_job(action: ProactiveAction) -> str | None:
+def _spawn_proactive_job(action: Any) -> str | None:
     objective, actor, ctx = _pick_proactive_objective(action)
     job = svc_jobs.create_job(
         actor_id=actor,
@@ -339,7 +361,8 @@ def _spawn_proactive_job(action: ProactiveAction) -> str | None:
         _runtime.last_auto_job_ts = time.time()
         _runtime.auto_jobs_spawned += 1
         _runtime.last_job_id = job.id
-        _runtime.engine.cooldown_decay()
+        if _runtime.engine is not None:
+            _runtime.engine.cooldown_decay()
     _persist_state()
     print(
         json.dumps(
@@ -357,7 +380,7 @@ def _spawn_proactive_job(action: ProactiveAction) -> str | None:
 
 
 def _tick_once() -> None:
-    if not proactive_enabled():
+    if not proactive_enabled() or _runtime.engine is None:
         return
     interval = proactive_interval_s()
     with _lock:
@@ -403,6 +426,25 @@ def _loop() -> None:
 
 
 def get_status() -> dict[str, Any]:
+    if not _HPA_AVAILABLE or _runtime.engine is None:
+        return {
+            "enabled": False,
+            "degraded": True,
+            "degraded_reason": "hybrid_proactive_agent non installé",
+            "auto_jobs": False,
+            "interval_s": proactive_interval_s(),
+            "ticks": 0,
+            "mode": "degraded",
+            "tension": 0.0,
+            "curiosite": 0.0,
+            "silence_seconds_est": 0.0,
+            "auto_jobs_spawned": 0,
+            "last_job_id": None,
+            "last_action": None,
+            "lia_jobs": False,
+            "lia_autonomy_thread": False,
+            "infra_signals": {},
+        }
     with _lock:
         st = _runtime.engine.state
         return {

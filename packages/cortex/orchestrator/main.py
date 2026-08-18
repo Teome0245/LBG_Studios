@@ -5,7 +5,10 @@ from api.health import router as health_router
 from services import brain as svc_brain
 from services import lia_autonomy as svc_lia_autonomy
 from services import jobs as svc_jobs
-from services import proactive as svc_proactive
+try:
+    from services import proactive as svc_proactive
+except ImportError:
+    svc_proactive = None  # type: ignore[assignment]
 
 app = FastAPI(title="LBG_IA_MMO Orchestrator", version="0.1.0")
 app.include_router(health_router)
@@ -19,7 +22,8 @@ def _startup() -> None:
     svc_brain.ensure_started()
     svc_lia_autonomy.ensure_started()
     svc_jobs.ensure_started()
-    svc_proactive.ensure_started()
+    if svc_proactive is not None:
+        svc_proactive.ensure_started()
     try:
         from team import presence as team_presence
         from team import store as team_store
