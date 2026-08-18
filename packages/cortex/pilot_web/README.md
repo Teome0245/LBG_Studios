@@ -1,5 +1,16 @@
 # pilot_web (UI minimale)
 
+Structure statique servie par le **backend** sous `/pilot/` :
+
+| Fichier | Rôle |
+|---------|------|
+| `index.html` | Shell HTML + navigation |
+| `pilot.css` | Styles Pilot (dashboard, assistant, bureau…) |
+| `pilot.js` | Logique UI (routing hash, chat, jobs, team…) |
+| `face_rig/` | Face rig 2D Lyra (module extrait) |
+| `orchestrator_avatar/` | Avatar 3D Three.js |
+| `office_map/` | Carte bureau équipe |
+
 Page statique servie par le **backend** sous `/pilot/` pour :
 
 - afficher la santé agrégée (`GET /v1/pilot/status`) ;
