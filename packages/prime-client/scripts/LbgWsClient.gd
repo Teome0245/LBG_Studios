@@ -13,6 +13,7 @@ signal login_result(success: bool, reason: String)
 signal error_message(message: String)
 signal connecting(ws_url: String)
 signal handoff_progress(phase: String, detail: String)
+signal reconnecting(attempt: int, delay_s: float)
 
 @export var proto: String = "lbg-ws/2"
 @export var auto_enter_world: bool = true
@@ -20,6 +21,11 @@ signal handoff_progress(phase: String, detail: String)
 @export var post_login_ws_action: String = "enter_world"
 @export var connect_timeout_s: float = 12.0
 @export var response_timeout_s: float = 25.0
+@export var auto_reconnect: bool = true
+@export var reconnect_base_delay_s: float = 1.0
+@export var reconnect_max_delay_s: float = 30.0
+## 0 = tentatives illimitées tant que la session était en jeu.
+@export var reconnect_max_attempts: int = 0
 
 var _peer: WebSocketPeer = WebSocketPeer.new()
 var _url: String = ""
@@ -35,6 +41,12 @@ var _last_state: int = -1
 var _open_elapsed: float = 0.0
 var your_character_id: int = 0
 
+var _user_disconnect: bool = false
+var _was_in_world: bool = false
+var _reconnect_attempts: int = 0
+var _reconnect_countdown: float = -1.0
+var _reconnect_scheduled: bool = false
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -45,35 +57,25 @@ func is_open() -> bool:
 	return _active and _peer.get_ready_state() == WebSocketPeer.STATE_OPEN
 
 
+func is_reconnecting() -> bool:
+	return _reconnect_scheduled or _reconnect_countdown >= 0.0
+
+
 func connect_session(ws_url: String, session_token: String, character_id: int, zone: String = "tatooine") -> int:
-	disconnect_session()
-	_url = ws_url.strip_edges()
-	_session_token = session_token
-	_character_id = character_id
-	_zone = zone if not zone.is_empty() else "tatooine"
-	_ready_sent = false
-	_entered = false
-	_connect_elapsed = 0.0
-	_open_elapsed = 0.0
-	_last_state = -1
-	your_character_id = character_id
-	if _url.is_empty() or _session_token.is_empty():
-		var why := "ws_url vide" if _url.is_empty() else "session_token vide"
-		handoff_progress.emit("error", why)
-		disconnected.emit(why)
-		return ERR_INVALID_PARAMETER
-	var err := _peer.connect_to_url(_url)
-	if err != OK:
-		disconnected.emit("connect_to_url err %s" % err)
-		return err
-	_active = true
-	set_process(true)
-	connecting.emit(_url)
-	print("[LbgWs] connecting %s char=%d" % [_url, character_id])
-	return OK
+	_cancel_reconnect()
+	_user_disconnect = false
+	_was_in_world = false
+	_reconnect_attempts = 0
+	_active = false
+	if _peer.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+		_peer.close()
+	return _start_connect(ws_url, session_token, character_id, zone, false)
 
 
 func disconnect_session() -> void:
+	_user_disconnect = true
+	_was_in_world = false
+	_cancel_reconnect()
 	_active = false
 	_ready_sent = false
 	_entered = false
@@ -83,6 +85,7 @@ func disconnect_session() -> void:
 	if _peer.get_ready_state() != WebSocketPeer.STATE_CLOSED:
 		_peer.close()
 	_peer = WebSocketPeer.new()
+	set_process(false)
 
 
 func send_move(pos: Vector3, heading: float = 0.0, cell: int = 0) -> void:
@@ -103,6 +106,74 @@ func send_raw(payload: Dictionary) -> void:
 	if not is_open():
 		return
 	_send(payload)
+
+
+func _cancel_reconnect() -> void:
+	_reconnect_countdown = -1.0
+	_reconnect_scheduled = false
+
+
+func _start_connect(ws_url: String, session_token: String, character_id: int, zone: String, is_retry: bool) -> int:
+	_url = ws_url.strip_edges()
+	_session_token = session_token
+	_character_id = character_id
+	_zone = zone if not zone.is_empty() else "tatooine"
+	_ready_sent = false
+	_entered = false
+	_connect_elapsed = 0.0
+	_open_elapsed = 0.0
+	_last_state = -1
+	your_character_id = character_id
+	if _url.is_empty() or _session_token.is_empty():
+		var why := "ws_url vide" if _url.is_empty() else "session_token vide"
+		handoff_progress.emit("error", why)
+		disconnected.emit(why)
+		return ERR_INVALID_PARAMETER
+	_peer = WebSocketPeer.new()
+	var err := _peer.connect_to_url(_url)
+	if err != OK:
+		if is_retry and _was_in_world and auto_reconnect:
+			_schedule_reconnect("connect_to_url err %s" % err)
+		else:
+			disconnected.emit("connect_to_url err %s" % err)
+		return err
+	_active = true
+	set_process(true)
+	if is_retry:
+		print("[LbgWs] reconnect attempt %d %s char=%d" % [_reconnect_attempts, _url, character_id])
+	else:
+		print("[LbgWs] connecting %s char=%d" % [_url, character_id])
+	connecting.emit(_url)
+	return OK
+
+
+func _schedule_reconnect(reason: String) -> void:
+	if _user_disconnect or not auto_reconnect or not _was_in_world:
+		set_process(false)
+		disconnected.emit(reason)
+		return
+	if reconnect_max_attempts > 0 and _reconnect_attempts >= reconnect_max_attempts:
+		set_process(false)
+		disconnected.emit("%s (reconnect max %d)" % [reason, reconnect_max_attempts])
+		return
+	_reconnect_attempts += 1
+	var exp := pow(2.0, float(_reconnect_attempts - 1))
+	var delay := minf(reconnect_base_delay_s * exp, reconnect_max_delay_s)
+	_active = false
+	_ready_sent = false
+	_entered = false
+	_connect_elapsed = 0.0
+	_open_elapsed = 0.0
+	_last_state = -1
+	if _peer.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+		_peer.close()
+	_peer = WebSocketPeer.new()
+	_reconnect_countdown = delay
+	_reconnect_scheduled = true
+	set_process(true)
+	reconnecting.emit(_reconnect_attempts, delay)
+	handoff_progress.emit("reconnect", "dans %.0fs (#%d)" % [delay, _reconnect_attempts])
+	print("[LbgWs] reconnect in %.1fs attempt=%d — %s" % [delay, _reconnect_attempts, reason])
 
 
 func _ws_state_name(state: int) -> String:
@@ -137,6 +208,13 @@ func _send_login_if_needed() -> void:
 
 
 func _process(delta: float) -> void:
+	if _reconnect_countdown >= 0.0:
+		_reconnect_countdown -= delta
+		if _reconnect_countdown <= 0.0:
+			_reconnect_countdown = -1.0
+			_reconnect_scheduled = false
+			_start_connect(_url, _session_token, _character_id, _zone, true)
+		return
 	if not _active:
 		return
 	_peer.poll()
@@ -144,7 +222,6 @@ func _process(delta: float) -> void:
 	if state != _last_state:
 		_last_state = state
 		print("[LbgWs] state=%s url=%s" % [_ws_state_name(state), _url])
-		# Login immédiatement à l’ouverture TCP (avant emit state → UI).
 		if state == WebSocketPeer.STATE_OPEN:
 			_send_login_if_needed()
 		handoff_progress.emit("state", _ws_state_name(state))
@@ -154,14 +231,22 @@ func _process(delta: float) -> void:
 			_active = false
 			_peer.close()
 			var hint := " (pare-feu Windows ? test: Test-NetConnection 192.168.0.246 -Port 50000)"
-			disconnected.emit("timeout TCP %ss %s%s" % [int(connect_timeout_s), _url, hint])
+			var msg := "timeout TCP %ss %s%s" % [int(connect_timeout_s), _url, hint]
+			if _was_in_world and auto_reconnect:
+				_schedule_reconnect(msg)
+			else:
+				disconnected.emit(msg)
 			return
 	elif state == WebSocketPeer.STATE_OPEN and not _entered:
 		_open_elapsed += delta
 		if response_timeout_s > 0.0 and _open_elapsed >= response_timeout_s:
 			_active = false
 			_peer.close()
-			disconnected.emit("timeout réponse gateway %ss après OPEN" % int(response_timeout_s))
+			var msg := "timeout réponse gateway %ss après OPEN" % int(response_timeout_s)
+			if _was_in_world and auto_reconnect:
+				_schedule_reconnect(msg)
+			else:
+				disconnected.emit(msg)
 			return
 	if state == WebSocketPeer.STATE_OPEN:
 		_send_login_if_needed()
@@ -175,14 +260,18 @@ func _process(delta: float) -> void:
 	elif state == WebSocketPeer.STATE_CLOSING:
 		pass
 	elif state == WebSocketPeer.STATE_CLOSED:
-		if _active:
-			_active = false
-			var code := _peer.get_close_code()
-			var reason := _peer.get_close_reason()
-			if reason.is_empty():
-				disconnected.emit("closed code=%s" % code)
-			else:
-				disconnected.emit("closed code=%s %s" % [code, reason])
+		if not _active:
+			return
+		_active = false
+		var code := _peer.get_close_code()
+		var reason := _peer.get_close_reason()
+		var msg := "closed code=%s" % code
+		if not reason.is_empty():
+			msg = "closed code=%s %s" % [code, reason]
+		if _was_in_world and auto_reconnect:
+			_schedule_reconnect(msg)
+		else:
+			disconnected.emit(msg)
 
 
 func _send(payload: Dictionary) -> void:
@@ -204,7 +293,10 @@ func _dispatch(text: String) -> void:
 			var reason := str(d.get("reason", ""))
 			login_result.emit(ok, reason)
 			if not ok:
+				_was_in_world = false
+				_cancel_reconnect()
 				error_message.emit("login_result: %s" % (reason if reason else "auth_failed"))
+				disconnected.emit("login_result: %s" % (reason if reason else "auth_failed"))
 				return
 			handoff_progress.emit("auth", "OK — enter_world…")
 			_open_elapsed = 0.0
@@ -223,6 +315,9 @@ func _dispatch(text: String) -> void:
 			var zone := str(d.get("zone", d.get("map", _zone)))
 			if not _entered:
 				_entered = true
+				_was_in_world = true
+				_reconnect_attempts = 0
+				_cancel_reconnect()
 				connected.emit(your_character_id, zone)
 			zone_state_received.emit(d)
 		"characters_list":

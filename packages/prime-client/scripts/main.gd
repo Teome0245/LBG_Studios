@@ -228,6 +228,8 @@ func _wire_ws_signals_only() -> void:
 		_ws.login_result.connect(_on_ws_login_result)
 	if _ws.has_signal("handoff_progress") and not _ws.handoff_progress.is_connected(_on_ws_handoff_progress):
 		_ws.handoff_progress.connect(_on_ws_handoff_progress)
+	if _ws.has_signal("reconnecting") and not _ws.reconnecting.is_connected(_on_ws_reconnecting):
+		_ws.reconnecting.connect(_on_ws_reconnecting)
 
 
 func _wire_login_ws() -> void:
@@ -313,8 +315,19 @@ func _on_ws_handoff_progress(phase: String, detail: String) -> void:
 		_set_login_status("WS %s — %s" % [detail, host])
 	elif phase == "auth":
 		_set_login_status("WS %s" % detail)
+	elif phase == "reconnect":
+		_set_login_status("WS %s" % detail)
 	elif phase == "error":
 		_on_ws_error(detail)
+
+
+func _on_ws_reconnecting(attempt: int, delay_s: float) -> void:
+	_ws_live = false
+	msg := "Reconnexion WS dans %.0fs (#%d)…" % [delay_s, attempt]
+	_set_login_status(msg)
+	if state_label:
+		state_label.text = "WS RECON…"
+	print("[Main] %s" % msg)
 
 
 func _on_ws_connected(your_character_id: int, zone: String) -> void:
@@ -334,6 +347,13 @@ func _on_ws_connected(your_character_id: int, zone: String) -> void:
 
 
 func _on_ws_disconnected(reason: String) -> void:
+	if _ws != null and _ws.has_method("is_reconnecting") and bool(_ws.is_reconnecting()):
+		_ws_handoff_busy = false
+		_ws_live = false
+		if state_label:
+			state_label.text = "WS RECON…"
+		print("[Main] WS drop — reconnexion auto: %s" % reason)
+		return
 	_ws_handoff_busy = false
 	_ws_live = false
 	print("[Main] WS disconnected: %s" % reason)

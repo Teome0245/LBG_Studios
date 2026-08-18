@@ -167,10 +167,16 @@ func _wire_ws_signals(ws: Node) -> void:
 		ws.handoff_progress.connect(_on_local_handoff_progress)
 	if ws.has_signal("connecting") and not ws.connecting.is_connected(_on_local_connecting):
 		ws.connecting.connect(_on_local_connecting)
+	if ws.has_signal("reconnecting") and not ws.reconnecting.is_connected(_on_local_reconnecting):
+		ws.reconnecting.connect(_on_local_reconnecting)
 
 
 func _on_local_connecting(ws_url: String) -> void:
 	_status.text = "WS connexion %s…" % ws_url
+
+
+func _on_local_reconnecting(attempt: int, delay_s: float) -> void:
+	_status.text = "Reconnexion WS dans %.0fs (#%d)…" % [delay_s, attempt]
 
 
 func _on_local_handoff_progress(phase: String, detail: String) -> void:
@@ -284,6 +290,9 @@ func _on_local_ws_connected(character_id: int, zone: String) -> void:
 
 
 func _on_local_ws_disconnected(reason: String) -> void:
+	if _local_ws != null and _local_ws.has_method("is_reconnecting") and bool(_local_ws.is_reconnecting()):
+		_status.text = "Reconnexion WS…"
+		return
 	if _handoff_active or visible:
 		on_ws_failed(reason)
 
