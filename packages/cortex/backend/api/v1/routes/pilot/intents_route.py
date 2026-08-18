@@ -25,6 +25,11 @@ from ._common import (
 
 router = APIRouter()
 
+
+def _trace_from_request(request: Request) -> str:
+    return getattr(request.state, "trace_id", None) or uuid.uuid4().hex
+
+
 async def pilot_route_impl(*, payload: IntentRequest, trace_id: str) -> dict[str, object]:
     t0 = time.perf_counter()
     svc_metrics.inc("pilot_route_requests_total")
@@ -49,8 +54,6 @@ async def pilot_route_impl(*, payload: IntentRequest, trace_id: str) -> dict[str
         if isinstance(meta, dict) and meta:
             out["lyra_meta"] = meta
 
-    # Phase 2 (réconciliation) : commit optionnel vers le serveur WS via HTTP interne.
-    # Si l'agent propose un commit (`output.commit`), on tente de l'appliquer et on expose `commit_result`.
     try:
         commit = result.output.get("commit") if isinstance(result.output, dict) else None
         if isinstance(commit, dict):
@@ -66,18 +69,19 @@ async def pilot_route_impl(*, payload: IntentRequest, trace_id: str) -> dict[str
                 if commit_result is not None:
                     out["commit_result"] = commit_result
     except Exception:
-        # Best-effort : ne jamais casser /pilot/route
         pass
 
     return out
-@router.post("/route", tags=["pilot"])
-async def pilot_route_intent_timed(payload: IntentRequest) -> dict[str, object]:
-    """
-    Route une intention via l’orchestrator et renvoie aussi une mesure simple de latence.
 
-    But : instrumenter l’UI `/pilot/` sans changer le contrat public `/v1/intents/route`.
+
+@router.post("/route", tags=["pilot"])
+async def pilot_route_intent_timed(request: Request, payload: IntentRequest) -> dict[str, object]:
     """
-    trace_id = uuid.uuid4().hex
+    Route une intention via l'orchestrator et renvoie aussi une mesure simple de latence.
+
+    But : instrumenter l'UI `/pilot/` sans changer le contrat public `/v1/intents/route`.
+    """
+    trace_id = _trace_from_request(request)
     return await pilot_route_impl(payload=payload, trace_id=trace_id)
 
 
@@ -98,7 +102,7 @@ async def pilot_route_internal_service(
         LOG.warning("pilot.internal_route rate_limited (remote=%s)", remote)
         raise HTTPException(status_code=429, detail={"error": "rate_limited", "hint": "slow down"})
 
-    trace_id = (x_lbg_trace_id or "").strip() or uuid.uuid4().hex
+    trace_id = (x_lbg_trace_id or "").strip() or _trace_from_request(request)
     world_npc_id = payload.context.get("world_npc_id") if isinstance(payload.context, dict) else None
     actor_id = getattr(payload, "actor_id", None)
     LOG.info(

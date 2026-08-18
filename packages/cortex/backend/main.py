@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -7,10 +8,23 @@ from fastapi.staticfiles import StaticFiles
 from api.health import router as health_router
 from api.v1.router import router as v1_router
 from config import get_settings
+from middleware import TraceIdMiddleware
+
+LOG = logging.getLogger("backend")
+
+
+def _configure_logging() -> None:
+    fmt = "%(asctime)s %(levelname)-5s %(name)s: %(message)s"
+    logging.basicConfig(level=logging.INFO, format=fmt, force=True)
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 
 def create_app() -> FastAPI:
+    _configure_logging()
+
     application = FastAPI(title="LBG_IA_MMO Backend", version="0.1.0")
+
+    application.add_middleware(TraceIdMiddleware)
 
     cors_origins = get_settings().cors_origins_list()
     if cors_origins:

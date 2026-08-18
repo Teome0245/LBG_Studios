@@ -35,7 +35,7 @@ select = ["E", "F", "I", "UP"]
 ignore = ["E501"]
 
 [tool.setuptools]
-py-modules = ["main", "config"]
+py-modules = ["main", "config", "middleware"]
 
 [tool.setuptools.packages.find]
 include = ["api*", "models*", "services*"]
