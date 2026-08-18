@@ -1295,8 +1295,14 @@
   </div>
   </div>
 
-  <script src="orchestrator_avatar/vendor/three.min.js"></script>
-  <script src="orchestrator_avatar/vendor/GLTFLoader.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/pilot/node_modules/three/build/three.module.js",
+      "three/examples/jsm/loaders/GLTFLoader.js": "/pilot/node_modules/three/examples/jsm/loaders/GLTFLoader.js"
+    }
+  }
+  </script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

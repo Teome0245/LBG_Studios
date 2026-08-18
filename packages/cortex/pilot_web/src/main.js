@@ -1,3 +1,4 @@
+import "./modules/three_setup.js";
 import "./modules/office_map_module.js";
 import "./modules/orchestrator_avatar_module.js";
 import "./modules/face_rig_module.js";
