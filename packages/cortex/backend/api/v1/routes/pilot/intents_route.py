@@ -22,6 +22,7 @@ from ._common import (
     mmmorpg_player_id_from_pilot,
     require_internal_token,
 )
+from ._models import PilotRouteResponse
 
 router = APIRouter()
 
@@ -74,24 +75,24 @@ async def pilot_route_impl(*, payload: IntentRequest, trace_id: str) -> dict[str
     return out
 
 
-@router.post("/route", tags=["pilot"])
-async def pilot_route_intent_timed(request: Request, payload: IntentRequest) -> dict[str, object]:
+@router.post("/route", tags=["pilot"], response_model=PilotRouteResponse)
+async def pilot_route_intent_timed(request: Request, payload: IntentRequest) -> PilotRouteResponse:
     """
     Route une intention via l'orchestrator et renvoie aussi une mesure simple de latence.
 
     But : instrumenter l'UI `/pilot/` sans changer le contrat public `/v1/intents/route`.
     """
     trace_id = _trace_from_request(request)
-    return await pilot_route_impl(payload=payload, trace_id=trace_id)
+    return PilotRouteResponse.model_validate(await pilot_route_impl(payload=payload, trace_id=trace_id))
 
 
-@router.post("/internal/route", tags=["pilot"])
+@router.post("/internal/route", tags=["pilot"], response_model=PilotRouteResponse)
 async def pilot_route_internal_service(
     request: Request,
     payload: IntentRequest,
     x_lbg_service_token: str | None = Header(default=None, alias="X-LBG-Service-Token"),
     x_lbg_trace_id: str | None = Header(default=None, alias="X-LBG-Trace-Id"),
-) -> dict[str, object]:
+) -> PilotRouteResponse:
     """
     Endpoint service→service pour le pont `mmmorpg_server` → backend.
     Protégé par token optionnel + rate-limit best-effort.
@@ -119,4 +120,4 @@ async def pilot_route_internal_service(
         LOG.info("pilot.internal_route ok (trace_id=%s elapsed_ms=%s)", trace_id, elapsed_ms)
     else:
         LOG.warning("pilot.internal_route error (trace_id=%s elapsed_ms=%s)", trace_id, elapsed_ms)
-    return out
+    return PilotRouteResponse.model_validate(out)

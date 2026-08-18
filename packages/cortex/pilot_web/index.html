@@ -1295,28 +1295,11 @@
   </div>
   </div>
 
-  <script src="pilot_core.js"></script>
-  <script src="pilot_chat.js"></script>
-  <script src="pilot_assistant.js"></script>
-  <script src="pilot_team.js"></script>
-  <script src="pilot_jobs.js"></script>
-  <script src="pilot_router.js"></script>
-  <script src="pilot_pm.js"></script>
-  <script src="pilot_lyra.js"></script>
-  <script src="pilot_desktop.js"></script>
-  <script src="pilot_init.js"></script>
   <script src="orchestrator_avatar/vendor/three.min.js"></script>
   <script src="orchestrator_avatar/vendor/GLTFLoader.js"></script>
   <script src="office_map/office_map.js"></script>
   <script src="orchestrator_avatar/orchestrator_avatar.js"></script>
   <script src="face_rig/face_rig.js"></script>
-  <script>
-    try {
-      if (typeof orchestratorAvatarInit === "function") orchestratorAvatarInit();
-    } catch (_) {}
-    try {
-      if (typeof faceRigInit === "function") faceRigInit();
-    } catch (_) {}
-  </script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

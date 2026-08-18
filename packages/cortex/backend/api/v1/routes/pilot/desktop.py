@@ -6,12 +6,12 @@ from fastapi import APIRouter
 
 from services.session_summary_export import build_assistant_session_export, build_mmo_bridge_context
 
-from ._models import AssistantSessionExportBody
+from ._models import AssistantSessionBridgeResponse, AssistantSessionExportBody, AssistantSessionExportResponse
 
 router = APIRouter()
 
-@router.post("/assistant/session-summary/export", tags=["pilot"])
-async def pilot_assistant_session_summary_export(body: AssistantSessionExportBody) -> dict[str, object]:
+@router.post("/assistant/session-summary/export", tags=["pilot"], response_model=AssistantSessionExportResponse)
+async def pilot_assistant_session_summary_export(body: AssistantSessionExportBody) -> AssistantSessionExportResponse:
     """
     Valide et tronque un résumé volontaire (notes, historique court, session_summary MMO).
     Ne stocke rien côté serveur — complète l’export 100 % navigateur du Pilot `#/assistant`.
@@ -26,11 +26,11 @@ async def pilot_assistant_session_summary_export(body: AssistantSessionExportBod
     if body.mmo_bridge is not None:
         payload["mmo_bridge"] = body.mmo_bridge
     export = build_assistant_session_export(payload)
-    return {"ok": True, "export": export}
+    return AssistantSessionExportResponse(ok=True, export=export)
 
 
-@router.post("/assistant/session-summary/mmo-bridge", tags=["pilot"])
-async def pilot_assistant_session_summary_mmo_bridge(body: AssistantSessionExportBody) -> dict[str, object]:
+@router.post("/assistant/session-summary/mmo-bridge", tags=["pilot"], response_model=AssistantSessionBridgeResponse)
+async def pilot_assistant_session_summary_mmo_bridge(body: AssistantSessionExportBody) -> AssistantSessionBridgeResponse:
     """
     Valide un résumé volontaire et retourne un context_patch prêt pour chat/route (pont MMO).
     Ne persiste rien côté serveur.
@@ -46,9 +46,9 @@ async def pilot_assistant_session_summary_mmo_bridge(body: AssistantSessionExpor
         payload["mmo_bridge"] = body.mmo_bridge
     export = build_assistant_session_export(payload)
     context_patch = build_mmo_bridge_context(export)
-    return {
-        "ok": True,
-        "export": export,
-        "context_patch": context_patch,
-        "hint": "Fusionnez context_patch dans le contexte assistant ou route Pilot.",
-    }
+    return AssistantSessionBridgeResponse(
+        ok=True,
+        export=export,
+        context_patch=context_patch,
+        hint="Fusionnez context_patch dans le contexte assistant ou route Pilot.",
+    )

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AgentDialogueInvokeBody(BaseModel):
@@ -28,6 +28,39 @@ class AssistantSessionExportBody(BaseModel):
     history: list[dict[str, object]] | None = None
     session_summary: dict[str, object] | None = None
     mmo_bridge: dict[str, object] | None = None
+
+
+class OkEnvelope(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    ok: bool = True
+    error: str | None = None
+    detail: str | None = None
+    body: str | None = None
+    skipped: bool | None = None
+    payload: object | None = None
+
+
+class PilotRouteResponse(BaseModel):
+    ok: bool
+    trace_id: str
+    elapsed_ms: int
+    error: str | None = None
+    result: dict[str, object] | None = None
+    lyra_meta: dict[str, object] | None = None
+    commit_result: dict[str, object] | None = None
+
+
+class AssistantSessionExportResponse(BaseModel):
+    ok: bool = True
+    export: dict[str, object]
+
+
+class AssistantSessionBridgeResponse(BaseModel):
+    ok: bool = True
+    export: dict[str, object]
+    context_patch: dict[str, object]
+    hint: str
 
 
 class AidRequest(BaseModel):

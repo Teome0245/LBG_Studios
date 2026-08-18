@@ -7,12 +7,12 @@ from fastapi import APIRouter, HTTPException
 from config import get_settings
 
 from ._common import httpx, pilot_agent_dialogue_invoke_timeout_s
-from ._models import AgentDialogueInvokeBody
+from ._models import AgentDialogueInvokeBody, OkEnvelope
 
 router = APIRouter()
 
-@router.get("/agent-dialogue/healthz", tags=["pilot"])
-async def pilot_proxy_agent_dialogue_healthz() -> dict[str, object]:
+@router.get("/agent-dialogue/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_agent_dialogue_healthz() -> OkEnvelope:
     """
     Proxy same-origin vers l’agent dialogue : évite d’exposer 8020 au navigateur (CORS / firewall).
     """
@@ -122,8 +122,8 @@ async def pilot_proxy_agent_dialogue_invoke(body: AgentDialogueInvokeBody) -> di
     return data if isinstance(data, dict) else {"payload": data}
 
 
-@router.get("/agent-quests/healthz", tags=["pilot"])
-async def pilot_proxy_agent_quests_healthz() -> dict[str, object]:
+@router.get("/agent-quests/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_agent_quests_healthz() -> OkEnvelope:
     """Proxy same-origin vers l’agent quests (port 8030 typiquement)."""
     base = get_settings().lbg_agent_quests_url.strip().rstrip("/")
     if not base:
@@ -142,8 +142,8 @@ async def pilot_proxy_agent_quests_healthz() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/agent-combat/healthz", tags=["pilot"])
-async def pilot_proxy_agent_combat_healthz() -> dict[str, object]:
+@router.get("/agent-combat/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_agent_combat_healthz() -> OkEnvelope:
     """Proxy same-origin vers l'agent combat (port 8040 typiquement)."""
     base = get_settings().lbg_agent_combat_url.strip().rstrip("/")
     if not base:
@@ -162,8 +162,8 @@ async def pilot_proxy_agent_combat_healthz() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/agent-pm/healthz", tags=["pilot"])
-async def pilot_proxy_agent_pm_healthz() -> dict[str, object]:
+@router.get("/agent-pm/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_agent_pm_healthz() -> OkEnvelope:
     """Proxy same-origin vers l’agent chef de projet (port 8055 typiquement)."""
     base = get_settings().lbg_agent_pm_url.strip().rstrip("/")
     if not base:
@@ -182,8 +182,8 @@ async def pilot_proxy_agent_pm_healthz() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/agent-desktop/healthz", tags=["pilot"])
-async def pilot_proxy_agent_desktop_healthz() -> dict[str, object]:
+@router.get("/agent-desktop/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_agent_desktop_healthz() -> OkEnvelope:
     """Proxy same-origin vers l’agent desktop Windows (hybride)."""
     base = get_settings().lbg_agent_desktop_url.strip().rstrip("/")
     if not base:
@@ -202,8 +202,8 @@ async def pilot_proxy_agent_desktop_healthz() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
-@router.get("/mmo-server/healthz", tags=["pilot"])
-async def pilot_proxy_mmo_server_healthz() -> dict[str, object]:
+@router.get("/mmo-server/healthz", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_mmo_server_healthz() -> OkEnvelope:
     """Proxy same-origin vers le serveur MMO HTTP (tick monde + /v1/world/lyra)."""
     base = get_settings().lbg_mmo_server_url.strip().rstrip("/")
     if not base:
