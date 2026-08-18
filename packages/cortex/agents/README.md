@@ -503,6 +503,27 @@ sudo systemctl start lbg-team-ops-ollama-job.service   # test manuel
 
 Tests : `pytest tests/test_spawn_team_ops_jobs.py -q`
 
+### Équipe virtuelle — sprint évolution 7j (`spawn_team_evolution_sprint_job`)
+
+Playbook **stratégique** (phase G) : timer systemd sur le **core 140** qui crée une tâche **`pm`** Thémis (`context.evolution_sprint`). Audit full → plan → **L1 auto-run** / L2 file Pilot. Complète l’autoconsult 12 h (santé), ne la remplace pas.
+
+Doc : [`docs/team_evolution_sprint.md`](../docs/team_evolution_sprint.md).
+
+| Variable | Effet |
+|----------|--------|
+| `LBG_TEAM_EVOLUTION_JOB_ENABLED` | `1` par défaut ; `0` désactive le spawn timer |
+| `LBG_TEAM_EVOLUTION_L1_AUTO_RUN` | `1` = exécuter les followups L1 |
+| `LBG_TEAM_EVOLUTION_JOB_COOLDOWN_S` | Anti double-tir (défaut **518400** = 6 j) vs timer 7 j |
+| `LBG_TEAM_EVOLUTION_ROUND_TIMEOUT_S` | Timeout HTTP `POST …/run` (défaut 840 s) |
+| `LBG_TEAM_EVOLUTION_JOB_STATE` | JSON cooldown (défaut `/var/lib/lbg/team_evolution/state.json`) |
+
+```bash
+bash infra/scripts/install_team_evolution_sprint_job_vm.sh
+bash infra/scripts/run_team_evolution_sprint.sh   # manuel, bypass cooldown
+```
+
+Tests : `pytest tests/test_spawn_team_evolution_sprint_job.py -q`
+
 ## Évolution
 
 Ajouter d’autres URLs ou une découverte par registry ; garder `invoke_after_route` comme point d’entrée unique.

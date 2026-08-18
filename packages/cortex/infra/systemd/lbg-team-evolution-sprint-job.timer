@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer — sprint évolution équipe (Thémis 7j)
+
+[Timer]
+OnBootSec=2h
+OnUnitActiveSec=7d
+Persistent=true
+
+[Install]
+WantedBy=timers.target

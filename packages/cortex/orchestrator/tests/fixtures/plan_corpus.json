@@ -70,6 +70,12 @@
       "notes": ""
     },
     {
+      "id": "evolution_sprint",
+      "objective": "lancer un sprint évolution et amélioration continue",
+      "expected_roles_any_of": ["pm"],
+      "notes": "Sprint 7j audit full + L1 auto"
+    },
+    {
       "id": "soe_m3",
       "objective": "audit SOE M3 login zone godot prime",
       "expected_roles_any_of": ["dev_game", "dev_godot"],

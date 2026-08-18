@@ -31,6 +31,7 @@ ALLOWED_PLAN_CONTEXT_KEYS: frozenset[str] = frozenset(
         "m9_track",
         "autoconsult",
         "autoconsult_round",
+        "evolution_sprint",
         "reunification_brief",
         "lbg_sa_plan",
         "core3_build",

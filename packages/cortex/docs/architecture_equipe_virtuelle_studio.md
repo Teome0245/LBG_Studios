@@ -195,4 +195,5 @@ Token : `LBG_TEAM_APPROVAL_TOKEN` (aligné tokens Pilot / opengame).
 - `docs/plan_de_route.md`
 - `docs/plan_bot_compagnon_autonome.md`
 - `docs/assistant_core_plan.md`
+- `docs/team_evolution_sprint.md` — sprint 7j Thémis (L1 auto / L2 Pilot)
 - `agents/README.md`

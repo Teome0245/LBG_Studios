@@ -22,6 +22,7 @@ Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud
 | Code Cortex extrait | `packages/cortex/` | OK |
 | Pilot LAN | Deploy `tools/deploy_cortex_140.sh` → 140:8080 | OK |
 | Team / healthz | `GET /v1/pilot/status` backend+orchestrator ok | OK |
+| Sprint évolution 7j | Timer `lbg-team-evolution-sprint-job` sur 140 ; L1 auto / L2 Pilot | OK (2026-08-18) |
 | Accueil Pilot | Cartes Studio/Campus/Ops/Jeu/Projet + liens LAN (Cockpit, Orch UI, `:8792`) | OK |
 | Freeze soft | `LEGACY.md` sur LBG_IA_MMORPG / new_mmo | OK |
 | Smoke LAN surfaces | [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) + `tools/smoke_lan_surfaces.sh` | OK (2026-07-31) |

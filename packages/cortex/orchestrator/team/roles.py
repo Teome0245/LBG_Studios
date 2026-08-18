@@ -33,6 +33,7 @@ from team.godot_supervisor import execute_godot_supervisor
 from team.godot_validation_workflow import execute_godot_validation_workflow, resolve_godot_validation_workflow
 from team.infographiste_lora_workflow import execute_infographiste_lora_workflow, resolve_infographiste_lora_workflow
 from team.sprites_2d_workflow import execute_sprites_2d_workflow, resolve_sprites_2d_workflow
+from team.face_parts_workflow import execute_face_parts_workflow, resolve_face_parts_workflow
 from team.infographiste_workflow import execute_infographiste_workflow, resolve_infographiste_workflow
 from team.player_ia_exec import execute_player_ia
 from team.admin_infra_workflow import execute_admin_infra_workflow
@@ -43,6 +44,10 @@ from team.failure_followup import (
 )
 from team.cursor_agent_workflow import run_cursor_cloud_from_task
 from team.autoconsult_workflow import execute_autoconsult_workflow, resolve_autoconsult_workflow
+from team.evolution_sprint_workflow import (
+    execute_evolution_sprint_workflow,
+    resolve_evolution_sprint_workflow,
+)
 from team.role_aliases import role_display
 
 Dispatcher = Callable[..., dict[str, object]]
@@ -333,6 +338,8 @@ def _execute_qa(task: TeamTask) -> dict[str, object]:
 
 
 def _execute_pm(task: TeamTask) -> dict[str, object]:
+    if resolve_evolution_sprint_workflow(task):
+        return execute_evolution_sprint_workflow(task, _dispatch)
     if resolve_autoconsult_workflow(task):
         return execute_autoconsult_workflow(task, _dispatch)
 
@@ -383,6 +390,8 @@ def _execute_dev_game(task: TeamTask) -> dict[str, object]:
         return run_cursor_cloud_from_task(task)
     if resolve_infographiste_lora_workflow(task):
         return execute_infographiste_lora_workflow(task, _dispatch)
+    if resolve_face_parts_workflow(task):
+        return execute_face_parts_workflow(task, _dispatch)
     if resolve_sprites_2d_workflow(task):
         return execute_sprites_2d_workflow(task, _dispatch)
     if resolve_infographiste_workflow(task):
@@ -563,6 +572,24 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
+    if any(k in text for k in ("face_rig", "import_face_parts", "calques visage", "lyra face", "face parts")):
+        proposals.append(
+            {
+                "role": "dev_game",
+                "objective": objective if "face" in text or "calque" in text else "Import face_parts Lyra (Gemini chroma → sheets)",
+                "priority": "normal",
+                "approval_required": False,
+                "actor_id": actor_id,
+                "capability": ROLE_SPECS["dev_game"]["capability"],
+                "context": {
+                    "infographiste_ia": True,
+                    "subproject": "infographiste_ia",
+                    "face_parts": True,
+                    "desktop_dry_run": True,
+                },
+                **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
+            }
+        )
     if any(k in text for k in ("infographiste", "infograph", "glb", "blender", "pipeline assets", "assets 3d")):
         igo = objective if "infograph" in text or "glb" in text else "Audit pipeline assets GLB — manifest Godot et prochain export Blender"
         proposals.append(
@@ -679,6 +706,33 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 "capability": ROLE_SPECS["dev_game"]["capability"],
                 "context": {"m9_track": "m9_full", "subproject": "prime_client_2d"},
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
+            }
+        )
+    if any(
+        k in text
+        for k in (
+            "evolution_sprint",
+            "sprint évolution",
+            "sprint evolution",
+            "audit évolution",
+            "amélioration continue",
+            "amelioration continue",
+            "évolution continue",
+            "evolution continue",
+        )
+    ):
+        proposals.append(
+            {
+                "role": "pm",
+                "objective": objective
+                if "évolution" in text or "evolution" in text
+                else "Sprint évolution 7j — audit full + plan + L1 auto",
+                "priority": "high",
+                "approval_required": False,
+                "actor_id": actor_id,
+                "capability": ROLE_SPECS["pm"]["capability"],
+                "context": {"evolution_sprint": True, "reunification_brief": True},
+                **{k: v for k, v in role_display("pm").items() if k in ("alias", "title", "label")},
             }
         )
     if any(k in text for k in ("autoconsult", "autoconsultation", "round fable", "round équipe", "round equipe")):

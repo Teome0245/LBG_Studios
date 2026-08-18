@@ -32,7 +32,7 @@
 
 | Persona | Backend principal | Module |
 |---------|-------------------|--------|
-| Thémis (pm) | REASON | autoconsult + brief PM |
+| Thémis (pm) | REASON | autoconsult + brief PM + sprint évolution 7j |
 | Iris (dev_godot) | REASON + templates | `iris_gdscript_forge`, `iris_llm_forge` |
 | Hermès (dev_godot) | REASON + EXEC | forge réseau + smoke sidecar |
 | Héphaïstos (ops) | EXEC | `openclaw_adapter` |
@@ -86,6 +86,7 @@ Intégration ops : `LBG_TEAM_OPS_USE_OPENCLAW=1` dans `_execute_ops`.
 | Besoin | Sans poste 10 |
 |--------|----------------|
 | Round autoconsult | Timer 12 h sur 140 |
+| Sprint évolution | Timer 7 j — L1 auto / L2 Pilot |
 | Forge GDScript | Iris + Ollama 110 / API REASON |
 | Apply patches | Smoke OK + `LBG_IRIS_FORGE_AUTO_APPLY=1` |
 | Code complexe Core3 | L2 Pilot token ou session dev différée |
@@ -131,5 +132,6 @@ LBG_TEAM_AUTOCONSULT_JOB_COOLDOWN_S=43200
 ## Liens
 
 - [vision_equipe_fable_autoconsultation.md](vision_equipe_fable_autoconsultation.md)
+- [team_evolution_sprint.md](team_evolution_sprint.md)
 - [jalon_iris_forge_gdscript.md](jalon_iris_forge_gdscript.md)
 - [architecture_equipe_virtuelle_studio.md](architecture_equipe_virtuelle_studio.md)

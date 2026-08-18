@@ -33,7 +33,7 @@ LBG_SA_MODULES: tuple[LbgSaModule, ...] = (
         host_allowlist=("140",),
         mmo_safe=False,
         status="active",
-        docs=("docs/vision_equipe_fable_autoconsultation.md",),
+        docs=("docs/vision_equipe_fable_autoconsultation.md", "docs/team_evolution_sprint.md"),
         paths=("orchestrator/team/",),
     ),
     LbgSaModule(

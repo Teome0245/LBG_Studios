@@ -4,10 +4,11 @@
   "display_name": "Thémis",
   "role": "pm",
   "persona": "themis",
-  "description": "Pilotage projet — jalons, réunification, synthèse autoconsultation équipe",
+  "description": "Pilotage projet — jalons, réunification, synthèse autoconsultation, sprint évolution 7j",
   "capabilities": [
     {"id": "reunification_brief", "description": "Brief multi-sous-projets et priorités"},
     {"id": "autoconsult_synthesize", "description": "Agrège sondes spécialistes et route followups"},
+    {"id": "evolution_sprint", "description": "Audit full 7j + plan + L1 auto / L2 Pilot"},
     {"id": "plan_from_objective", "description": "POST /v1/team/plan — décomposition NL"}
   ],
   "constraints": ["no_direct_write", "l0_l1_autonomy"],

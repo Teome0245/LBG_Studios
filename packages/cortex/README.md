@@ -11,5 +11,7 @@ Extrait chirurgical de `LBG_IA_MMORPG/LBG_IA_MMO` (sans `pilot_web/mmo`, sans sa
 | `infra/` | systemd, nginx, deploy |
 | `windows_agent/` / `linux_agent/` | Desktop hybride |
 
+Timers Team sur `.140` : autoconsult 12 h · **sprint évolution 7 j** ([`docs/team_evolution_sprint.md`](docs/team_evolution_sprint.md)) — L1 auto, L2 file Pilot.
+
 Sync : `bash tools/sync_from_legacy.sh cortex`  
 Deploy Pilot : `bash tools/deploy_cortex_140.sh`

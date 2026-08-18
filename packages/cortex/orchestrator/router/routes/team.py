@@ -157,12 +157,14 @@ def team_meta() -> TeamMetaResponse:
     }
     from team import plan_llm as team_plan_llm
     from team import campus_conductor
+    from team import evolution_sprint_workflow as evo_sprint
 
     extras: dict[str, object] = {
         "last_plan": team_plan_llm.last_plan_trace(),
         "mission": campus_conductor.last_mission(),
         "mission_persist_path": campus_conductor.mission_persist_path(),
         "memory_path": str(team_memory.memory_path()),
+        "last_evolution_sprint": evo_sprint.last_sprint(),
     }
     return TeamMetaResponse(
         roles=roles,

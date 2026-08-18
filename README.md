@@ -9,7 +9,8 @@
 
 Voir [`OBJECTIVES.md`](OBJECTIVES.md), [`docs/REGISTRE.md`](docs/REGISTRE.md) (repos, chemins, LAN), restauration produit [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
 Smoke LAN (Pilot, Cockpit, Orch UI, Core3 `:8792`) : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — `bash tools/smoke_lan_surfaces.sh [--functional]`.  
-LLM local (110/111) : [`packages/cortex/docs/local_llm_route_matrix.md`](packages/cortex/docs/local_llm_route_matrix.md).
+LLM local (110/111) : [`packages/cortex/docs/local_llm_route_matrix.md`](packages/cortex/docs/local_llm_route_matrix.md).  
+Sprint évolution 7 j (Team / Thémis, L1 auto / L2 Pilot) : [`packages/cortex/docs/team_evolution_sprint.md`](packages/cortex/docs/team_evolution_sprint.md).
 
 ## Démarrer
 

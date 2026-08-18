@@ -203,9 +203,32 @@ mission campus fermée sur smoke vert ; `LBG_TEAM_PLAN_LLM=0` = comportement act
 
 ---
 
+## 10. Phase G — sprint évolution 7j
+
+Audit **stratégique** (pas seulement santé) : infra + capacités + LLM + jeu, plan, **L1 auto**, L2 file Pilot.
+
+| ID | Livrable | Statut |
+|----|----------|--------|
+| G-1 | Workflow `evolution_sprint_workflow.py` | ✅ |
+| G-2 | Timer `lbg-team-evolution-sprint-job` (7j) | ✅ |
+| G-3 | L1 auto-run + L2 `approval_required` | ✅ |
+| G-4 | Preset Pilot **Sprint évolution** | ✅ |
+| G-5 | Trace `GET /v1/team/meta` → `last_evolution_sprint` | ✅ |
+
+Install :
+
+```bash
+bash infra/scripts/install_team_evolution_sprint_job_vm.sh
+```
+
+Doc : [team_evolution_sprint.md](team_evolution_sprint.md).
+
+---
+
 ## Liens
 
 - [equipe_autonome_godot.md](equipe_autonome_godot.md)
 - [jalon_equipe_godot_dev_ia.md](jalon_equipe_godot_dev_ia.md)
 - [jalon_m9_scrapaltai_map_minimap.md](jalon_m9_scrapaltai_map_minimap.md)
 - [jalon_infographiste_ia.md](jalon_infographiste_ia.md)
+- [team_evolution_sprint.md](team_evolution_sprint.md)

@@ -43,7 +43,8 @@ Légende : **vert** = utilisable aujourd’hui · **jaune** = partiel / à solid
 |----------|------|-----------|
 | Forge OpenGame (staging) | **jaune** | Proposition / dry-run ; pas merge tronc |
 | Auto-patch / rebuild DevOps aveugle | **rouge** | Hors scope tant que rang 1 pas assez fiable |
-| Équipe Fable autoconsult 24/7 | **jaune** | Roster + presets ; autonomie L1 partielle |
+| Équipe Fable autoconsult 12 h | **vert** | Timer `lbg-team-autoconsult-job` sur 140 |
+| Sprint évolution 7j (Thémis) | **vert** | Timer `lbg-team-evolution-sprint-job` ; L1 auto / L2 Pilot ; [`team_evolution_sprint.md`](../packages/cortex/docs/team_evolution_sprint.md) |
 
 ## Cadre O0 / O1 (remise en forme)
 

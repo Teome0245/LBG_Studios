@@ -30,6 +30,7 @@
     let __teamIrisForge = false;
 
     let __teamAutoconsult = false;
+    let __teamEvolutionSprint = false;
 
     /* ===================== Bureau Team (presence) ===================== */
     let __officeWs = null;
@@ -803,6 +804,7 @@
       pm: "Brief jalons et prochaines tâches projet",
       pm_reunif: "Brief réunification sous-projets — jalons, statuts et prochaines actions (Thémis)",
       autoconsult: "Round autoconsultation Fable — Thémis + sondes Iris/Hermès/Pygmalion/Argus/Héphaïstos",
+      evolution_sprint: "Sprint évolution 7j — audit full infra/Team/LLM/jeu + plan + L1 auto",
       godot_supervise: "Supervise client Godot — sidecar 246, miroir M1, readiness lbg-ws/2",
       godot_lbg_ws2: "Audit lbg-ws/2 gateway Godot Prime — gaps et proposition forge",
       infographiste_ia: "Audit pipeline assets Infographiste IA — manifest GLB Godot et prochain export Blender",
@@ -834,6 +836,7 @@
       probe_ia: { role: "player_ia", player_ia_mode: "probe", objectiveKey: "player_ia_probe", autoRun: true },
       brief_reunif: { role: "pm", objectiveKey: "pm_reunif", reunification: true, autoRun: true },
       autoconsult: { role: "pm", objectiveKey: "autoconsult", autoconsult: true, autoRun: true },
+      evolution_sprint: { role: "pm", objectiveKey: "evolution_sprint", evolutionSprint: true, autoRun: true },
       godot_supervise: { role: "qa", objectiveKey: "godot_supervise", godotSupervisor: true, autoRun: true },
       godot_lbg_ws2: { role: "dev_game", objectiveKey: "godot_lbg_ws2", godotTrack: true, autoRun: true },
       infographiste_ia: { role: "dev_game", objectiveKey: "infographiste_ia", infographiste: true, autoRun: true },
@@ -939,6 +942,7 @@
       __teamObjectiveCustom = false;
       __teamReunificationBrief = !!preset.reunification;
       __teamAutoconsult = !!preset.autoconsult;
+      __teamEvolutionSprint = !!preset.evolutionSprint;
       __teamGodotSupervisor = !!preset.godotSupervisor;
       __teamGodotTrack = !!preset.godotTrack;
       __teamInfographiste = !!preset.infographiste;
@@ -1020,6 +1024,11 @@
       }
       if (__teamAutoconsult || /autoconsult/i.test(objective)) {
         ctx.autoconsult_round = true;
+        ctx.reunification_brief = true;
+        ctx.pm_include_plan = true;
+      }
+      if (__teamEvolutionSprint || /sprint.?évolution|sprint.?evolution|evolution_sprint|amélioration continue/i.test(objective)) {
+        ctx.evolution_sprint = true;
         ctx.reunification_brief = true;
         ctx.pm_include_plan = true;
       }
@@ -1446,6 +1455,7 @@
         __teamObjectiveCustom = false;
         __teamReunificationBrief = false;
         __teamAutoconsult = false;
+        __teamEvolutionSprint = false;
         __teamGodotSupervisor = false;
         __teamGodotTrack = false;
         __teamInfographiste = false;
