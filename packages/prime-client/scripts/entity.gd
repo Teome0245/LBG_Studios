@@ -259,7 +259,7 @@ func _apply_sprite_texture(tex: Texture2D, tint: Color = Color.WHITE) -> void:
 		sprite.visible = false
 		queue_redraw()
 		return
-	if _MapTextureLoader.entity_marker_style() == "triangle" and (kind == "player" or kind == "npc"):
+	if _MapTextureLoader.debug_triangle_markers_enabled() and (kind == "player" or kind == "npc"):
 		_use_sprite = false
 		sprite.texture = null
 		sprite.visible = false
@@ -289,7 +289,7 @@ func _draw() -> void:
 	var draw_pos := Vector2(0.0, height_offset)
 	var token_px: float = float(_SpriteRegistry.display_px())
 	var token_r: float = token_px * 0.38
-	var tri_style: bool = _MapTextureLoader.entity_marker_style() == "triangle"
+	var tri_style: bool = _MapTextureLoader.debug_triangle_markers_enabled()
 
 	if _use_sprite and not tri_style:
 		draw_colored_polygon(
@@ -365,7 +365,7 @@ func hit_test_screen(mouse_pos: Vector2) -> bool:
 		return false
 	if kind != "npc" and kind != "player":
 		return false
-	var tri: bool = _MapTextureLoader.entity_marker_style() == "triangle"
+	var tri: bool = _MapTextureLoader.debug_triangle_markers_enabled()
 	var token_px: float = float(_SpriteRegistry.display_px())
 	var radius_px := maxf(28.0, token_px * 0.85) if tri else maxf(18.0, token_px * 0.55)
 	return screen_anchor().distance_squared_to(mouse_pos) <= radius_px * radius_px

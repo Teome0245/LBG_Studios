@@ -233,6 +233,8 @@ def execute_m9_map_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, o
         "failed_count": len(failed),
         "human_summary": human_summary,
         "remediation": remediation,
+        "consults_with": ["Pygmalion", "Argus", "Héphaïstos"],
+        "owner_smoke_bundle": "godot_m9",
         "iris_forge": iris_forge_result if isinstance(iris_forge_result, dict) else (iris_forge_result.to_dict() if iris_forge_result else None),
         "iris_llm_forge": iris_llm_forge_result,
     }

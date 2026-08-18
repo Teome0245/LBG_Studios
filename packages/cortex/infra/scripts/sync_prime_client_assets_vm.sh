@@ -3,8 +3,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SRC="${LBG_PRIME_CLIENT_ROOT:-${LBG_NEW_MMO_ROOT:+${LBG_NEW_MMO_ROOT}/prime-client}}"
-SRC="${SRC:-/home/sdesh/projects/new_mmo/prime-client}"
+SRC="${LBG_PRIME_CLIENT_ROOT:-${ROOT_DIR}/../prime-client}"
+if [[ ! -d "${SRC}" ]]; then
+  echo "ERROR: prime-client source introuvable: ${SRC}" >&2
+  echo "Définir LBG_PRIME_CLIENT_ROOT si la racine diffère." >&2
+  exit 2
+fi
 VM_HOST="${LBG_CORE_VM_HOST:-192.168.0.140}"
 VM_USER="${LBG_CORE_VM_USER:-lbg}"
 REMOTE="${LBG_PRIME_CLIENT_REMOTE:-/opt/new_mmo/prime-client}"

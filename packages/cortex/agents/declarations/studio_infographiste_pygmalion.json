@@ -10,6 +10,8 @@
     {"id": "scan_inspiration_styles", "probe": "inspiration_probe", "description": "Classifier images inspiration par profil LoRA"},
     {"id": "lora_pipeline", "workflow": "infographiste_lora_workflow", "description": "Vision par lots → Kohya → train mmorpg_insp / lbg_sprite2d"},
     {"id": "sprites_2d_pipeline", "workflow": "sprites_2d_workflow", "description": "Deploy sprites 2D Prime via WSL + sync core"},
+    {"id": "dialogue_portraits_pipeline", "workflow": "ui_portraits_workflow", "description": "Déployer portraits PNG Prime et garder le manifest aligné"},
+    {"id": "maps_tiles_handoff", "workflow": "m9_map_workflow", "description": "Clarifier le handoff maps/tiles/POI vers prime-client"},
     {"id": "generate_comfyui", "module": "comfyui_media", "description": "Génération image ComfyUI (MEDIA)"},
     {"id": "svg_planet_texture", "description": "Enrichir tatooine.svg Scrapaltai"},
     {"id": "glb_manifest", "path": "config/sprite_manifest.json"}
@@ -18,5 +20,5 @@
   "subproject": "infographiste_ia",
   "owner_timer": "lbg-team-infographiste-job",
   "owner_timers": ["lbg-team-infographiste-job", "lbg-team-infographiste-lora-job", "lbg-team-infographiste-sprites-job"],
-  "consults_with": ["godot_dev_iris"]
+  "consults_with": ["godot_dev_iris", "qa_argus", "player_ia_choeur"]
 }

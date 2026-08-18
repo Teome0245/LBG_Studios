@@ -83,7 +83,7 @@ def _sync_sprites_from_wsl() -> dict[str, Any]:
     identity = _train_ssh_identity()
     local_sprites = os.environ.get(
         "LBG_PRIME_CLIENT_LOCAL_SPRITES",
-        "/home/sdesh/projects/new_mmo/prime-client/assets/sprites/units",
+        str(_prime_client_root() / "assets" / "sprites" / "units"),
     ).strip()
     dest = _prime_client_root() / "assets" / "sprites" / "units"
     dest.mkdir(parents=True, exist_ok=True)

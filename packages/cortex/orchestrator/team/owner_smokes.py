@@ -14,6 +14,7 @@ OWNER_BUNDLES: dict[str, tuple[str, ...]] = {
     "godot_m9": ("iris_m9",),
     "godot_m10": ("iris_m10",),
     "godot_craft": ("iris_m10",),
+    "godot_assets": ("iris_m9", "iris_m10"),
     "lan_qa": ("argus_lan",),
 }
 

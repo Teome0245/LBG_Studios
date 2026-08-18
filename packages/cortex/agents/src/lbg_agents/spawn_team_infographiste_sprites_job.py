@@ -57,6 +57,9 @@ def sprites_context() -> dict[str, Any]:
         "sprites_2d_deploy": True,
         "infographiste_ia": True,
         "subproject": "infographiste_ia",
+        "owner_smoke_bundle": "godot_m9",
+        "run_owner_smokes": True,
+        "consult_roles": ["dev_godot", "qa"],
         "_team_sprites_2d_spawn": True,
     }
 

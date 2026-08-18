@@ -39,7 +39,7 @@
     "position_map_source": "retail_gabarit_mos_eisley_shifted",
     "position_map_is_spatial_reference": true,
     "building_size_multiplier": 1.0,
-    "entity_markers": "triangle",
+    "entity_markers": "runtime_sprite",
     "server_npcs": {
       "enabled": true,
       "anchor_x": 4749.0,

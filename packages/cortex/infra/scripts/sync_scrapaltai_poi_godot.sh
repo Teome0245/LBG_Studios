@@ -3,8 +3,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-PRIME_ROOT="${LBG_PRIME_CLIENT_ROOT:-${LBG_NEW_MMO_ROOT:+${LBG_NEW_MMO_ROOT}/prime-client}}"
-PRIME_ROOT="${PRIME_ROOT:-/home/sdesh/projects/new_mmo/prime-client}"
+PRIME_ROOT="${LBG_PRIME_CLIENT_ROOT:-${ROOT_DIR}/../prime-client}"
+if [[ ! -d "${PRIME_ROOT}" ]]; then
+  echo "ERROR: prime-client root introuvable: ${PRIME_ROOT}" >&2
+  echo "Définir LBG_PRIME_CLIENT_ROOT si la racine diffère." >&2
+  exit 2
+fi
 EDITOR_ROOT="${LBG_WORLD_EDITOR_ROOT:-${ROOT_DIR}/tools/world_editor}"
 POI_ONLY="${LBG_SCRAPALTAI_SYNC_POI_ONLY:-1}"
 

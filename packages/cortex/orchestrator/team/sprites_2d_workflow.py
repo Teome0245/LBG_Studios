@@ -48,6 +48,8 @@ def execute_sprites_2d_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[st
         "deploy": deploy,
         "subproject": "infographiste_ia",
         "persona": "Pygmalion",
+        "consults_with": ["Iris", "Argus"],
+        "owner_smoke_bundle": "godot_m9",
     }
 
 

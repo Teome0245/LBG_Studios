@@ -127,6 +127,18 @@ def remediate_ui_portraits(
             if not dst.is_file():
                 shutil.copy2(src, dst)
                 copied.append(src.name)
+        alias_from = {
+            "sad.png": "neutral.png",
+            "angry.png": "determined.png",
+            "talk_1.png": "neutral.png",
+            "talk_2.png": "happy.png",
+        }
+        for alias, fallback_name in alias_from.items():
+            dst = dst_dir / alias
+            src = dst_dir / fallback_name
+            if not dst.is_file() and src.is_file():
+                shutil.copy2(src, dst)
+                copied.append(alias)
         actions.append({"role": role, "source": src_name, "copied": copied, "dir": str(dst_dir)})
 
     manifest = _manifest_path(root)
@@ -184,8 +196,10 @@ def execute_ui_portraits_workflow(ctx: Mapping[str, Any] | None = None) -> dict[
         "probe": probe,
         "remediation": rem,
         "prime_client_root": str(resolve_prime_client_root(ctx)),
+        "persona": "Pygmalion",
+        "consults_with": ["Iris", "Argus"],
         "human_summary": (
-            "Iris — portraits UI dialogue\n\n"
+            "Pygmalion + Iris — portraits UI dialogue\n\n"
             f"Root: {resolve_prime_client_root(ctx)}\n"
             f"Probe ok={probe.get('ok')} gaps={probe.get('gaps')}\n"
         ),

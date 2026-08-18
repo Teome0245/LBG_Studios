@@ -65,6 +65,12 @@ _BUILTIN_SKILLS: dict[str, dict[str, Any]] = {
         "timeout_s": 60,
         "owner": "iris",
     },
+    "ops_smoke_visual_modes": {
+        "script": "infra/scripts/smoke_prime_client_visual_modes.sh",
+        "description": "Smoke rendu runtime sprites/portraits Prime Client",
+        "timeout_s": 45,
+        "owner": "pygmalion",
+    },
     "ops_godot_sidecar_mirror": {
         "script": "infra/scripts/smoke_godot_sidecar_mirror_lan.sh",
         "description": "Smoke sidecar 246 + miroir Godot",

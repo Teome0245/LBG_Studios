@@ -128,7 +128,10 @@ def probe_infographiste_assets(task: TeamTask | None = None) -> dict[str, object
 
     # Projet en cours : OK si manifest + doc pipeline lisibles (GLB optionnels)
     structural_ok = any(c.get("ok") for c in checks if c.get("kind") == "manifest") and pipeline_ok
-    coverage = len(all_present) / max(len(all_expected), 1)
+    expected_count = len(all_expected)
+    if expected_count == 0 and structural_ok:
+        expected_count = 1
+    coverage = len(all_present) / max(expected_count, 1)
 
     return {
         "kind": "infographiste_probe",
@@ -136,7 +139,7 @@ def probe_infographiste_assets(task: TeamTask | None = None) -> dict[str, object
         "readiness": "en_cours" if all_missing else "partiel",
         "subproject": subproject,
         "godot_root": str(root),
-        "glb_expected": len(all_expected),
+        "glb_expected": expected_count,
         "glb_present": len(all_present),
         "glb_missing": all_missing[:20],
         "coverage_ratio": round(coverage, 3),

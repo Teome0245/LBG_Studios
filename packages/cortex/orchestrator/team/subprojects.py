@@ -137,7 +137,8 @@ SUBPROJECTS: list[dict[str, object]] = [
         "owner_role": "dev_game",
         "persona": "Pygmalion",
         "paths": [
-            "lbg_client_godot/assets/",
+            "packages/prime-client/assets/",
+            "packages/prime-client/config/",
             "docs/pipeline_assets_swg_godot.md",
         ],
         "docs": [
