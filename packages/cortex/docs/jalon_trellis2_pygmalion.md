@@ -13,7 +13,15 @@
 | Intégration | Scripts PS manuels | **Worker HTTP + Team Pygmalion** |
 | GPU | 1050 Ti (4 Go) | **≥ 24 Go** (officiel) / 16 Go+ low-VRAM communautaire |
 
-Pygmalion garde ComfyUI 2D sur `.10` ; le mesh tourne sur un **worker GPU séparé**.
+Pygmalion garde ComfyUI 2D sur `.10` ; le mesh tourne sur un **backend configurable**.
+
+## Backends
+
+| Backend | Var `LBG_MESH_GEN_BACKEND` | Coût | GPU | Notes |
+|---------|---------------------------|------|-----|-------|
+| **HuggingFace Space** | `huggingface` (défaut) | **0 €** | Aucun (distant) | Space Gradio Microsoft, 512³ max, gratuit |
+| Worker self-hosted | `trellis2` | Électricité | RTX 3090+ | `trellis2_worker.py` dans Infographiste_IA |
+| API tierce | `api` | Variable | Aucun | 3D AI Studio, EmpirioLabs, etc. |
 
 ## Architecture
 
@@ -23,7 +31,10 @@ Pilot preset « Mesh 3D »
 infographiste_workflow (140)
     ├─ infographiste_probe → gaps GLB
     ├─ comfyui_media → PNG concept (2D, .10:8188)
-    └─ mesh_media → GLB PBR (worker :8190)
+    └─ mesh_media → GLB PBR
+           ├─ backend=huggingface → Space Gradio (0€)
+           ├─ backend=trellis2   → Worker GPU :8190
+           └─ backend=api        → API tierce
            ↓
     simplify_mesh (~8k tris) → NAS exports_3d/
 ```
