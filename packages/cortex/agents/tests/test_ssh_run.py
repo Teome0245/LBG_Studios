@@ -16,6 +16,11 @@ def test_resolve_host_aliases() -> None:
     assert resolve_host("mmo") == "192.168.0.246"
     assert resolve_host("core") == "192.168.0.140"
     assert resolve_host("front") == "192.168.0.110"
+    assert resolve_host("executor") == "192.168.0.141"
+    assert resolve_host("linux-141") == "192.168.0.141"
+    assert resolve_host("hands") == "192.168.0.142"
+    assert resolve_host("lbg-hands") == "192.168.0.142"
+    assert resolve_host("142") == "192.168.0.142"
     assert resolve_host("inconnu") is None
 
 

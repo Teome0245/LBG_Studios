@@ -47,3 +47,17 @@ class TestComputerUseGuards(unittest.TestCase):
         self.assertFalse(j.get("ok"))
         self.assertEqual(j.get("outcome"), "approval_denied")
 
+    def test_import_face_parts_disabled_by_default(self) -> None:
+        os.environ.pop("LBG_DESKTOP_FACE_PARTS_ENABLED", None)
+        os.environ["LBG_DESKTOP_DRY_RUN"] = "1"
+        j = self._invoke({"kind": "import_face_parts", "character_id": "lyra_assistant"})
+        self.assertFalse(j.get("ok"))
+        self.assertEqual(j.get("outcome"), "feature_disabled")
+
+    def test_comfyui_ensure_disabled_by_default(self) -> None:
+        os.environ.pop("LBG_DESKTOP_COMFYUI_ENABLED", None)
+        os.environ["LBG_DESKTOP_DRY_RUN"] = "1"
+        j = self._invoke({"kind": "comfyui_ensure"})
+        self.assertFalse(j.get("ok"))
+        self.assertEqual(j.get("outcome"), "feature_disabled")
+

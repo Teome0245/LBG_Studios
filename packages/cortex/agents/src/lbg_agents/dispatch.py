@@ -375,7 +375,14 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
     # Mode hybride : exécution attendue sur un worker Windows.
     if base:
         try:
-            with httpx.Client(timeout=15.0) as client:
+            long_kinds = {
+                "import_face_parts",
+                "comfyui_ensure",
+                "comfyui_restart",
+                "comfyui_queue",
+                "comfyui_patch_and_queue",
+            }
+            with httpx.Client(timeout=120.0 if str((raw or {}).get("kind") or "") in long_kinds else 15.0) as client:
                 r = client.post(f"{base}/invoke", json={"actor_id": actor_id, "text": text, "context": ctx})
             if r.status_code >= 400:
                 return _with_desktop_hint({

@@ -1,0 +1,117 @@
+{
+  "kind": "core3_inventory_bridge",
+  "bridge_dir": "/home/sdesh/projects/LBG_Studios/packages/cortex/content/core3/ia_bridge",
+  "players": {
+    "__probe__": {
+      "player": "__probe__",
+      "skills": [
+        "prospecteur_r1",
+        "artisan_rue_r1",
+        "medecine_camp_r1",
+        "pilotage_shuttle_r1"
+      ],
+      "inventory": [
+        {
+          "id": "scrap_metal",
+          "name": "Ferraille",
+          "qty": 4,
+          "icon": "copper"
+        },
+        {
+          "id": "binding_tape",
+          "name": "Ruban de liaison",
+          "qty": 2,
+          "icon": "screw"
+        },
+        {
+          "id": "dried_grain",
+          "name": "Grain séché",
+          "qty": 4,
+          "icon": "ration"
+        },
+        {
+          "id": "water_capsule",
+          "name": "Capsule d'eau",
+          "qty": 2,
+          "icon": "kit"
+        }
+      ]
+    },
+    "local": {
+      "player": "local",
+      "skills": [
+        "prospecteur_r1",
+        "artisan_rue_r1",
+        "medecine_camp_r1",
+        "pilotage_shuttle_r1"
+      ],
+      "inventory": [
+        {
+          "id": "scrap_metal",
+          "name": "Ferraille",
+          "qty": 4,
+          "icon": "copper"
+        },
+        {
+          "id": "binding_tape",
+          "name": "Ruban de liaison",
+          "qty": 2,
+          "icon": "screw"
+        },
+        {
+          "id": "dried_grain",
+          "name": "Grain séché",
+          "qty": 2,
+          "icon": "ration"
+        },
+        {
+          "id": "water_capsule",
+          "name": "Capsule d'eau",
+          "qty": 1,
+          "icon": "kit"
+        },
+        {
+          "id": "ration_compacte",
+          "name": "Ration compacte",
+          "qty": 1,
+          "icon": "ration"
+        }
+      ]
+    },
+    "test": {
+      "player": "test",
+      "skills": [
+        "prospecteur_r1",
+        "artisan_rue_r1",
+        "medecine_camp_r1",
+        "pilotage_shuttle_r1"
+      ],
+      "inventory": [
+        {
+          "id": "scrap_metal",
+          "name": "Ferraille",
+          "qty": 4,
+          "icon": "copper"
+        },
+        {
+          "id": "binding_tape",
+          "name": "Ruban de liaison",
+          "qty": 2,
+          "icon": "screw"
+        },
+        {
+          "id": "dried_grain",
+          "name": "Grain séché",
+          "qty": 4,
+          "icon": "ration"
+        },
+        {
+          "id": "water_capsule",
+          "name": "Capsule d'eau",
+          "qty": 2,
+          "icon": "kit"
+        }
+      ]
+    }
+  }
+}

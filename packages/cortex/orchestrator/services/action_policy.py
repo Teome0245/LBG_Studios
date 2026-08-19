@@ -51,6 +51,10 @@ _DESKTOP_KINDS = {
     "comfyui_patch_and_queue",
     "comfyui_history",
     "comfyui_view",
+    "comfyui_status",
+    "comfyui_ensure",
+    "comfyui_restart",
+    "import_face_parts",
 }
 
 

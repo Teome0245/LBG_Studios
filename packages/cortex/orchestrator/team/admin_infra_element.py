@@ -1,4 +1,4 @@
-"""Alertes Element Atlas — périmètre hôtes KO (110/111/140/141/245/246)."""
+"""Alertes Element Atlas — périmètre hôtes KO (110/111/140/141/142/245/246)."""
 
 from __future__ import annotations
 

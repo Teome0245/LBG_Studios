@@ -19,7 +19,7 @@ from lbg_agents.remote_targets import canonical_role, resolve_host
 _DISCOVERY_PORTS = (22, 80, 443, 445)
 # Phase 2 : fingerprint sur hôtes répondants.
 _DETAIL_PORTS = (
-    22, 80, 443, 445, 3389, 5000, 5001, 548, 8006, 902, 8080, 11434, 5005, 6000, 8010, 8050, 8773, 7733,
+    22, 80, 443, 445, 3389, 5000, 5001, 548, 8006, 902, 8080, 11434, 5005, 6000, 6001, 8010, 8050, 8773, 7733,
     44453, 44462, 44463,
 )
 _PORT_HINTS: dict[int, str] = {
@@ -37,6 +37,7 @@ _PORT_HINTS: dict[int, str] = {
     11434: "ollama",
     5005: "agent-windows",
     6000: "agent-linux",
+    6001: "agent-linux-hands",
     8010: "orchestrator",
     8050: "mmo-http",
     8773: "mmmorpg-internal",
@@ -53,6 +54,7 @@ _ROLE_SUGGESTIONS: dict[str, tuple[str, ...]] = {
     "mmo": ("devops_probe", "core3_bot_action", "network_inventory"),
     "precu": ("devops_probe", "network_inventory"),
     "executor": ("devops_probe", "network_inventory"),
+    "hands": ("desktop_control", "devops_probe", "network_inventory"),
     "desktop": ("desktop_control", "devops_probe"),
     "ad": ("desktop_control", "devops_probe"),
     "mail": ("devops_probe",),
@@ -74,6 +76,7 @@ _HINT_SUGGESTIONS: dict[str, tuple[str, ...]] = {
 _PORT_SUGGESTIONS: dict[int, tuple[str, ...]] = {
     5005: ("desktop_control",),
     6000: ("devops_probe",),
+    6001: ("desktop_control", "devops_probe"),
     8010: ("devops_probe", "project_pm"),
     8020: ("npc_dialogue",),
     8050: ("devops_probe", "core3_bot_action"),
@@ -89,6 +92,7 @@ _PORT_SUGGESTIONS: dict[int, tuple[str, ...]] = {
 
 _URL_ENV_LABELS: dict[str, tuple[str, str]] = {
     "LBG_AGENT_DESKTOP_URL": ("desktop", "pc-windows"),
+    "LBG_AGENT_HANDS_URL": ("hands", "lbg-hands"),
     "AGENT_WINDOWS_URL": ("desktop", "pc-windows"),
     "AGENT_WINDOWS_SRV_AD_URL": ("ad", "serveur-ad"),
     "AGENT_LINUX_MAIL_URL": ("mail", "serveur-mail"),
@@ -424,7 +428,14 @@ def _known_from_env_urls() -> list[dict[str, Any]]:
 def _topology_probes() -> list[dict[str, Any]]:
     """Sondes HTTP ciblées sur la topologie LBG (core/front/mmo/desktop)."""
     rows: list[dict[str, Any]] = []
-    for server_id, role_label in (("core", "core"), ("front", "front"), ("mmo", "mmo"), ("precu", "precu")):
+    for server_id, role_label in (
+        ("core", "core"),
+        ("front", "front"),
+        ("mmo", "mmo"),
+        ("precu", "precu"),
+        ("executor", "executor"),
+        ("hands", "hands"),
+    ):
         host = resolve_host(server_id)
         if not host:
             continue
@@ -447,6 +458,8 @@ def _topology_probes() -> list[dict[str, Any]]:
         "front": [(8080, "/", "pilot-nginx"), (11434, "/api/tags", "ollama")],
         "mmo": [(8050, "/healthz", "mmo-server"), (7733, "/", "mmmorpg-ws")],
         "precu": [],
+        "executor": [],
+        "hands": [(6001, "/healthz", "linux-agent")],
     }
     for row in rows:
         host = row["host"]

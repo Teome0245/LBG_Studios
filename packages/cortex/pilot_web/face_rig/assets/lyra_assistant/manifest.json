@@ -1,9 +1,9 @@
 {
   "character_id": "lyra_assistant",
-  "version": 5,
+  "version": 6,
   "cell_px": 256,
   "fallback": false,
-  "source": "procedural_pil",
+  "source": "expressions_patches",
   "layout": {
     "hide_base": true,
     "use_bands": false
@@ -143,5 +143,5 @@
     "prime_dialogue_bake",
     "orch_ui_5174"
   ],
-  "note": "Yeux ancrés haut / bouche bas dans chaque cellule. Remplacer après LoRA face_expressions."
+  "note": "Patches Expressions découpés (444 yeux / 70 bouches). Pas SD."
 }

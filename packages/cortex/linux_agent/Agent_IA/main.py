@@ -9,6 +9,7 @@ from mail_imap_preview import run_mail_imap_preview
 from pydantic import BaseModel, Field
 
 import core
+from face_parts_import_action import run_import_face_parts
 
 app = FastAPI(title="lbg-linux-agent-ia", version="0.1.0")
 
@@ -43,6 +44,7 @@ def healthz() -> dict[str, object]:
             "web_search_enabled": core.web_search_enabled(),
             "search_engine": core.linux_search_engine(),
             "mail_imap_enabled": core.mail_imap_enabled(),
+            "face_parts_enabled": core.get_cfg("LBG_LINUX_FACE_PARTS_ENABLED").strip().lower() in {"1", "true", "yes", "on"},
         },
     }
 
@@ -399,6 +401,16 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             out = {**base, "ok": False, "outcome": "error", "error": str(e), "app": app_id, "args": args_list}
             core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
             return out
+
+    if kind == "import_face_parts":
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        result = run_import_face_parts(action=action, get_cfg=core.get_cfg, dry_run=dry_run)
+        out = {**base, **result, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
 
     out = {**base, "ok": False, "outcome": "unknown_kind", "error": "Action inconnue", "kind": kind}
     core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})

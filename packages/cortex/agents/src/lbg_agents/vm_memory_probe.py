@@ -23,6 +23,7 @@ _DEFAULT_HOSTS: list[tuple[str, str]] = [
     ("front", "110"),
     ("core", "140"),
     ("executor", "141"),
+    ("hands", "142"),
 ]
 
 

@@ -23,6 +23,11 @@ _ALIASES: dict[str, str] = {
     "active-directory": "ad",
     "windows-ad": "ad",
     "default": "default",
+    "hands": "hands",
+    "lbg-hands": "hands",
+    "linux-hands": "hands",
+    "linux_agent": "hands",
+    "ct-142": "hands",
 }
 
 
@@ -136,6 +141,12 @@ def _targets_from_legacy_env() -> list[DesktopTarget]:
         env_key="AGENT_WINDOWS_SRV_AD_URL",
         aliases=("ad", "srv-ad", "serveur-ad", "active-directory"),
     )
+    _add(
+        tid="hands",
+        label="lbg-hands",
+        env_key="LBG_AGENT_HANDS_URL",
+        aliases=("hands", "lbg-hands", "linux-hands", "linux_agent", "ct-142"),
+    )
 
     # Si default manquant mais pc présent, default = pc
     if not any(t.target_id == "default" for t in rows):
@@ -185,6 +196,10 @@ def infer_desktop_target_from_text(text: str) -> str | None:
         return "pc"
     if re.search(r"\b192\.168\.0\.10\b", text):
         return "pc"
+    if re.search(r"\b(lbg[-_]?hands|linux[-_]?agent|ct[- ]?142|sur les mains)\b", norm):
+        return "hands"
+    if re.search(r"\b192\.168\.0\.142\b", text):
+        return "hands"
     return None
 
 

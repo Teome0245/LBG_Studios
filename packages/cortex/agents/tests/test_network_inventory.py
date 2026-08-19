@@ -89,3 +89,15 @@ def test_network_inventory_known_devices_json(monkeypatch) -> None:
     precu = next(d for d in out["devices"] if d["host"] == "192.168.0.246")
     assert precu.get("label") == "precu-vm"
     assert precu.get("server_id") == "precu"
+
+
+def test_network_inventory_includes_hands_topology(monkeypatch) -> None:
+    monkeypatch.setenv("LBG_NETWORK_SCAN_ENABLED", "0")
+    monkeypatch.setenv("LBG_AGENT_HANDS_URL", "http://192.168.0.142:6001")
+    monkeypatch.delenv("LBG_NETWORK_KNOWN_DEVICES", raising=False)
+    with patch("lbg_agents.network_inventory._tcp_reachable", return_value=True):
+        with patch("lbg_agents.network_inventory._http_probe", return_value={"ok": True, "status_code": 200}):
+            out = run_network_inventory(actor_id="ops:1", text="inventaire", context={})
+    hands = next(d for d in out["devices"] if d["host"] == "192.168.0.142")
+    assert hands.get("role") in {"hands", "known"}
+    assert "desktop_control" in (hands.get("action_suggestions") or [])

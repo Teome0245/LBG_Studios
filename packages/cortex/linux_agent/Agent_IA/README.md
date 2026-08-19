@@ -70,6 +70,10 @@ Apprentissage contrôlé (optionnel) :
 - résolution via `which` (`shutil.which`)
 - persist dans `linux.env` (mapping + allowlist)
 
+### `import_face_parts`
+
+Même contrat que le worker Windows (`kind: import_face_parts`). Activer `LBG_LINUX_FACE_PARTS_ENABLED=1` et pointer `LBG_LINUX_FACE_PARTS_INBOX` vers un montage OneDrive/NFS. Copier `face_parts_import_action.py` à côté de `main.py`.
+
 ## Lancer localement
 
 ```bash

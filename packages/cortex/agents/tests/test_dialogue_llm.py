@@ -673,6 +673,22 @@ def test_sanitize_desktop_open_app_args() -> None:
     assert out["learn"] is True
 
 
+def test_sanitize_desktop_import_face_parts() -> None:
+    out = _sanitize_desktop_action_proposal(
+        {"kind": "import_face_parts", "character_id": "lyra_assistant", "deploy": True}
+    )
+    assert out == {
+        "kind": "import_face_parts",
+        "character_id": "lyra_assistant",
+        "deploy": True,
+    }
+
+
+def test_sanitize_desktop_comfyui_ensure() -> None:
+    assert _sanitize_desktop_action_proposal({"kind": "comfyui_ensure"}) == {"kind": "comfyui_ensure"}
+    assert _sanitize_desktop_action_proposal({"kind": "comfyui_restart"}) == {"kind": "comfyui_restart"}
+
+
 def test_postprocess_llm_content_desktop_before_world(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_DIALOGUE_DESKTOP_PLAN", "1")
     monkeypatch.setenv("LBG_DIALOGUE_WORLD_ACTIONS", "1")

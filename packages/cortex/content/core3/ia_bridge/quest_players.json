@@ -1,0 +1,132 @@
+{
+  "kind": "core3_quest_bridge",
+  "bridge_dir": "/home/sdesh/projects/LBG_Studios/packages/cortex/content/core3/ia_bridge",
+  "players": {
+    "local": {
+      "player": "local",
+      "credits": 65,
+      "active": [],
+      "completed": [
+        "lh_delivery_starport"
+      ],
+      "generated_offers": [
+        {
+          "id": "lh_delivery_starport__r1",
+          "title": "Colis du port shuttle (nouvelle)",
+          "template": "delivery",
+          "keywords": [
+            "livraison",
+            "colis",
+            "starport",
+            "port",
+            "shuttle",
+            "livrer",
+            "paquet"
+          ],
+          "giver_roles": [
+            "guide",
+            "quest_giver"
+          ],
+          "giver_ids": [
+            "npc:guide_quartier",
+            "npc:core3_guide_quartier",
+            "npc:core3_daan_oth"
+          ],
+          "default_giver": "Guide de quartier",
+          "objective": "Livrer un colis du port shuttle au marché de Lost Heaven.",
+          "rewards": {
+            "credits": 15,
+            "xp": {
+              "xp_quartier": 20
+            },
+            "items": []
+          },
+          "progress": [
+            {
+              "id": "pickup",
+              "label": "Récupérer le colis au starport",
+              "poi": "poi:lost_heaven_starport",
+              "radius_m": 55
+            },
+            {
+              "id": "deliver",
+              "label": "Déposer au marché",
+              "poi": "poi:lost_heaven_market",
+              "radius_m": 55
+            }
+          ],
+          "next_steps": [
+            "Récupérer le colis au starport.",
+            "Le porter au marché sans l'ouvrir.",
+            "Confirmer la livraison au board."
+          ],
+          "generated": true
+        }
+      ],
+      "generated_by_id": {
+        "lh_delivery_starport__r1": {
+          "id": "lh_delivery_starport__r1",
+          "title": "Colis du port shuttle (nouvelle)",
+          "template": "delivery",
+          "keywords": [
+            "livraison",
+            "colis",
+            "starport",
+            "port",
+            "shuttle",
+            "livrer",
+            "paquet"
+          ],
+          "giver_roles": [
+            "guide",
+            "quest_giver"
+          ],
+          "giver_ids": [
+            "npc:guide_quartier",
+            "npc:core3_guide_quartier",
+            "npc:core3_daan_oth"
+          ],
+          "default_giver": "Guide de quartier",
+          "objective": "Livrer un colis du port shuttle au marché de Lost Heaven.",
+          "rewards": {
+            "credits": 15,
+            "xp": {
+              "xp_quartier": 20
+            },
+            "items": []
+          },
+          "progress": [
+            {
+              "id": "pickup",
+              "label": "Récupérer le colis au starport",
+              "poi": "poi:lost_heaven_starport",
+              "radius_m": 55
+            },
+            {
+              "id": "deliver",
+              "label": "Déposer au marché",
+              "poi": "poi:lost_heaven_market",
+              "radius_m": 55
+            }
+          ],
+          "next_steps": [
+            "Récupérer le colis au starport.",
+            "Le porter au marché sans l'ouvrir.",
+            "Confirmer la livraison au board."
+          ],
+          "generated": true
+        }
+      },
+      "board_rotation": 1
+    },
+    "test": {
+      "player": "test",
+      "credits": 50,
+      "active": [],
+      "completed": [],
+      "generated_offers": [],
+      "generated_by_id": {},
+      "board_rotation": 0
+    }
+  }
+}

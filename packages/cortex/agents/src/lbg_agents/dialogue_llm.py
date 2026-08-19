@@ -1122,7 +1122,10 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             'DESKTOP_JSON: {"kind":"mail_imap_preview","from_contains":"intel"}',
             'DESKTOP_JSON: {"kind":"notepad_append","path":"C:\\\\Users\\\\Public\\\\lbg_note.txt","text":"ligne\\n"}',
             'DESKTOP_JSON: {"kind":"open_app","app":"notepad","args":[],"learn":false}',
-            "Contraintes : kind parmi open_url, search_web_open, mail_imap_preview, notepad_append, open_app.",
+            'DESKTOP_JSON: {"kind":"import_face_parts","character_id":"lyra_assistant","deploy":false}',
+            'DESKTOP_JSON: {"kind":"comfyui_ensure"}',
+            'DESKTOP_JSON: {"kind":"comfyui_restart"}',
+            "Contraintes : kind parmi open_url, search_web_open, mail_imap_preview, notepad_append, open_app, import_face_parts, comfyui_status, comfyui_ensure, comfyui_restart.",
             "open_url : champ url (http/https).",
             "search_web_open : champ query (string) ; nécessite LBG_DESKTOP_WEB_SEARCH=1 côté worker.",
             "mail_imap_preview : from_contains et/ou subject_contains (filtres sous-chaîne), optionnel max_messages (1–10), max_body_chars (0–4000), max_scan (10–500) ; nécessite LBG_DESKTOP_MAIL_ENABLED=1 et config IMAP sur le worker.",
@@ -1469,6 +1472,25 @@ def _sanitize_desktop_action_proposal(action: dict[str, Any] | None) -> dict[str
         if learn is True:
             out["learn"] = True
         return out
+
+    if kind == "import_face_parts":
+        cid = action.get("character_id")
+        character_id = cid.strip() if isinstance(cid, str) and cid.strip() else "lyra_assistant"
+        if len(character_id) > 64:
+            character_id = character_id[:64]
+        inbox = action.get("inbox")
+        out_fp: dict[str, Any] = {"kind": "import_face_parts", "character_id": character_id}
+        if isinstance(inbox, str) and inbox.strip():
+            ib = inbox.strip()
+            if len(ib) > 1024:
+                ib = ib[:1024]
+            out_fp["inbox"] = ib
+        if action.get("deploy") is True:
+            out_fp["deploy"] = True
+        return out_fp
+
+    if kind in {"comfyui_status", "comfyui_ensure", "comfyui_restart"}:
+        return {"kind": kind}
 
     return None
 

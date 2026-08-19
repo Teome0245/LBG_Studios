@@ -66,7 +66,9 @@ Serveurs jeu (runtime, hors Git) :
 | **`.111`** | Ollama **light** | `:11434` — `qwen2.5:3b` + `llama3.2:3b` |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
-| **`.200` / `.201`** | Proxmox | `.201` = R720 (CT 110 / 141) |
+| **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
+| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142) · `.201` = R720 (CT 110 / 141) |
+| **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` |
 | **`.246`** | Prime | monde produit `:8792` + sidecar IA |
 
@@ -121,6 +123,7 @@ flowchart LR
     H111["Ollama 111 light"]
     H140["Core 140"]
     H141["Executor 141"]
+    H142["Hands 142"]
   end
   subgraph game["Serveurs jeu"]
     P246["Prime 246:8792"]
@@ -142,6 +145,7 @@ flowchart LR
   H140 --> H110
   H140 --> H111
   H140 --> H141
+  H140 --> H142
   LP --> P246
   PC --> P246
 ```

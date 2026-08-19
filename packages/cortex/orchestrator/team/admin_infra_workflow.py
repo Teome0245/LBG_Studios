@@ -162,7 +162,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
                 "llm_heavy": "192.168.0.110",
                 "llm_light": "192.168.0.111",
                 "lan_executor": "192.168.0.141",
-                "front_legacy": "192.168.0.112",
+                "lan_hands": "192.168.0.142",
             },
             "responsibilities": [
                 "capacite",

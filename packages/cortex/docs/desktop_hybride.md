@@ -346,10 +346,54 @@ Actions `desktop_action.kind` :
 - `comfyui_patch_and_queue`
 - `comfyui_history`
 - `comfyui_view`
+- `comfyui_status` (probe)
+- `comfyui_ensure` (démarre si down)
+- `comfyui_restart` (stop `:8188` + relance `--listen 0.0.0.0 --port 8188 --lowvram`)
+
+`LBG_COMFYUI_AUTO_ENSURE=1` : si ComfyUI est down, `comfyui_queue` / `patch_and_queue` le relance avant d’envoyer le prompt.
+
+**Démarrage sans fenêtre** (recommandé sur le poste `.10`) :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_comfyui.ps1
+```
+
+Logs : `C:\Agent_IA\logs\comfyui_agent.log` · redémarrage : `restart_comfyui.cmd` · debug console : `run_comfyui.cmd`.
+
+Les actions `comfyui_ensure` / `comfyui_restart` (via `/invoke`) utilisent le même lanceur hidden.
 
 Sécurité :
 - activer `LBG_DESKTOP_COMFYUI_ENABLED=1`
 - approval requis (`context.desktop_approval`)
+
+### `import_face_parts` (calques Gemini → sheets Lyra)
+
+Action **opt-in** : le worker (Windows poste, ou Linux VM) lance `Infographiste_IA/scripts/import_face_parts.py`.
+
+```json
+{
+  "desktop_action": {
+    "kind": "import_face_parts",
+    "character_id": "lyra_assistant",
+    "deploy": false
+  }
+}
+```
+
+Config worker (`desktop.env`) :
+
+```
+LBG_DESKTOP_FACE_PARTS_ENABLED=1
+LBG_DESKTOP_FACE_PARTS_INBOX=N:\LBG_Cloud_Drive\OneDrive - sdesharches\Photos\0 - A trier\Pictures\Inspiration pour MMORPG\Expressions
+```
+
+- Dry-run par défaut (liste les frames détectées, n’écrit pas les PNG).
+- Exécution réelle : `desktop_approval` + `deploy: true` pour copier vers Pilot / archive Orch (pas de rebuild Docker auto).
+- Team : job `dev_game` + `context.face_parts=true` → Pygmalion dispatch `agent.desktop`.
+
+Inbox : fichiers `eyes_<frame>.jpg`, `mouth_<frame>.jpg`, ou `mapping.json`. Deux `Gemini_Generated_*.jpg` sans mapping → idle + closed.
+
+**VM Linux + navigateur** : ne **pas** installer ça sur **`.200`** (hyperviseur NUC). Invité proposé **`.142`** (`lbg-hands`) sur ce NUC — [`hands_ct_142.md`](hands_ct_142.md). `N:` = raccourci SMB vers NAS **`.51`**, pas OneDrive ; le NAS n’est pas une dépendance runtime.
 
 ### Pipeline texture SWG : DDS → ComfyUI → DDS (Murrik re-skin)
 
@@ -568,10 +612,26 @@ Le worker écrit un audit (une ligne JSON par action) :
 
 ### 1) Lancer le worker sur Windows
 
-Sur ton poste, le module `windows_agent/Agent_IA` est copié dans `C:\Agent_IA` puis lancé avec :
+Sur ton poste, le module `windows_agent/Agent_IA` est copié dans `C:\Agent_IA` puis lancé **sans fenêtre** (recommandé) :
 
 ```powershell
-C:\Agent_IA\run_agent.cmd
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_agent.ps1
+```
+
+ComfyUI (même poste, `:8188`) :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_comfyui.ps1
+```
+
+Mode console debug : `run_agent.cmd` / `run_comfyui.cmd`.
+
+Tâches planifiées (logon + 08:00/20:00) : `C:\Agent_IA\install_agent_ia_scheduled_tasks.ps1`.
+
+Sync repo → poste :
+
+```bash
+bash packages/cortex/infra/scripts/sync_windows_agent.sh
 ```
 
 ### 2) Configurer la VM core

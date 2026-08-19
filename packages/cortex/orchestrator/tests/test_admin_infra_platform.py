@@ -1,4 +1,4 @@
-"""Tests périmètre Atlas admin_infra (110/111/140/141/245/246 + front legacy optionnel)."""
+"""Tests périmètre Atlas admin_infra (110/111/140/141/142/245/246). .112 décommissionné."""
 
 from __future__ import annotations
 
@@ -11,18 +11,28 @@ from team.admin_infra_platform import (
 
 
 def test_perimeter_includes_111_light() -> None:
-    assert admin_infra_perimeter() == ["110", "111", "140", "141", "245", "246"]
+    assert admin_infra_perimeter() == ["110", "111", "140", "141", "142", "245", "246"]
     ids = {s["perimeter_id"] for s in platform_host_specs()}
-    assert {"110", "111", "140", "141", "245", "246"}.issubset(ids)
+    assert {"110", "111", "140", "141", "142", "245", "246"}.issubset(ids)
+    assert "112" not in ids
 
 
 def test_platform_specs_dual_llm_labels(monkeypatch) -> None:
-    monkeypatch.setenv("LBG_ATLAS_PROBE_FRONT_LEGACY", "1")
+    monkeypatch.delenv("LBG_ATLAS_PROBE_FRONT_LEGACY", raising=False)
     specs = {s["id"]: s for s in platform_host_specs()}
     assert specs["llm_heavy_110"]["ollama_tier"] == "heavy"
     assert specs["llm_light_111"]["ollama_tier"] == "light"
-    assert specs["front_legacy_112"]["required"] is False
+    assert "front_legacy_112" not in specs
+    assert specs["hands_142"]["required"] is True
+    assert any(p.get("url", "").endswith(":6001/healthz") for p in specs["hands_142"]["probes"])
     assert any(p["url"].endswith(":11434/api/tags") for p in specs["llm_light_111"]["probes"])
+
+
+def test_front_legacy_112_opt_in_only(monkeypatch) -> None:
+    monkeypatch.setenv("LBG_ATLAS_PROBE_FRONT_LEGACY", "1")
+    specs = {s["id"]: s for s in platform_host_specs()}
+    assert specs["front_legacy_112"]["required"] is False
+    assert specs["front_legacy_112"]["host"] == "192.168.0.112"
 
 
 def test_audit_platform_host_marks_ko_on_probe_failure(monkeypatch) -> None:
@@ -80,15 +90,16 @@ def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
             "id": spec["id"],
             "perimeter_id": spec["perimeter_id"],
             "required": spec.get("required", True),
-            "ok": spec["perimeter_id"] in ("110", "111", "140", "141", "246"),
+            "ok": spec["perimeter_id"] in ("110", "111", "140", "141", "142", "246"),
             "probes": [],
         },
     )
     out = audit_admin_infra_platform()
     assert out["track"] == "admin_infra_platform"
-    assert out["hosts_total"] == 6
+    assert out["hosts_total"] == 7
     assert "111" in out["perimeter"]
     assert "141" in out["perimeter"]
+    assert "142" in out["perimeter"]
     assert "245" in out["perimeter"]
     assert any("245" in g for g in out.get("gaps") or [])
     assert out["topology"]["llm_light"].startswith("192.168.0.111")

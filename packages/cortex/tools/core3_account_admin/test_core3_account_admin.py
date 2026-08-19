@@ -62,6 +62,27 @@ def test_default_instances_prime_only(monkeypatch):
     assert ids == ["prime"]
 
 
+def test_client_install_info_prime(monkeypatch):
+    monkeypatch.setenv("CORE3_LOCAL_SERVER_ID", "prime")
+    monkeypatch.delenv("CORE3_CLIENT_PATCH_URL", raising=False)
+    from core3_account_admin import client_install_info
+
+    info = client_install_info()
+    assert info["mode"] == "prime"
+    assert info["visible"] is True
+    assert "install_lbg_prime_client.ps1" in info["powershell_oneliner"]
+    assert any("Launchpad" in l["label"] for l in info["links"])
+
+
+def test_client_install_info_precu_redirect(monkeypatch):
+    monkeypatch.setenv("CORE3_LOCAL_SERVER_ID", "precu")
+    from core3_account_admin import client_install_info
+
+    info = client_install_info()
+    assert info["mode"] == "redirect"
+    assert "246" in info["redirect_url"]
+
+
 def test_default_instances_show_all(monkeypatch):
     monkeypatch.setenv("CORE3_LOCAL_SERVER_ID", "precu")
     monkeypatch.setenv("CORE3_STATUS_SHOW_ALL", "1")

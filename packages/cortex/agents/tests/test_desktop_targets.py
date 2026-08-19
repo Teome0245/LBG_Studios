@@ -86,3 +86,27 @@ def test_dispatch_routes_to_ad_url(monkeypatch) -> None:
     assert seen == ["http://192.168.0.100:5005/invoke"]
     assert out.get("desktop_target") == "ad"
     assert out.get("desktop_target_host") == "192.168.0.100"
+
+
+def test_resolve_hands_from_legacy_env(monkeypatch) -> None:
+    monkeypatch.delenv("LBG_DESKTOP_TARGETS", raising=False)
+    monkeypatch.setenv("LBG_AGENT_DESKTOP_URL", "http://192.168.0.10:5005")
+    monkeypatch.setenv("LBG_AGENT_HANDS_URL", "http://192.168.0.142:6001")
+    monkeypatch.delenv("AGENT_WINDOWS_URL", raising=False)
+    monkeypatch.delenv("AGENT_WINDOWS_SRV_AD_URL", raising=False)
+    out = resolve_desktop_target({"desktop_target": "hands"}, "")
+    assert out is not None
+    assert out.target_id == "hands"
+    assert out.url == "http://192.168.0.142:6001"
+    assert infer_desktop_target_from_text("import_face_parts sur lbg-hands") == "hands"
+
+
+def test_resolve_hands_from_targets_json(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "LBG_DESKTOP_TARGETS",
+        '[{"id":"pc","host":"192.168.0.10","url":"http://192.168.0.10:5005"},'
+        '{"id":"hands","host":"192.168.0.142","url":"http://192.168.0.142:6001","aliases":["lbg-hands"]}]',
+    )
+    out = resolve_desktop_target({"desktop_target": "hands"}, "")
+    assert out is not None
+    assert out.url == "http://192.168.0.142:6001"

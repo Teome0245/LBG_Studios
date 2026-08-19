@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus, urlparse
 
+from lbg_agents.face_parts_import_action import run_import_face_parts
 from lbg_agents.mail_imap_preview import run_mail_imap_preview
 
 
@@ -586,6 +587,21 @@ def run_desktop_action(
             out = {**base, "ok": False, "outcome": "error", "error": f"{type(e).__name__}: {e}", "path": path}
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
+
+    if kind == "import_face_parts":
+        gate = _gate_or_dry_run(context=context, dry_run=dry_run)
+        if gate is not None:
+            out = {**base, "ok": False, "outcome": gate.outcome, "error": gate.detail, "kind": kind}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        result = run_import_face_parts(
+            action=action,
+            get_cfg=lambda k: os.environ.get(k, ""),
+            dry_run=dry_run,
+        )
+        out = {**base, **result, "kind": kind}
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
 
     out = {
         **base,

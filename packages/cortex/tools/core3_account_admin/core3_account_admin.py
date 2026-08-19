@@ -702,6 +702,76 @@ def delete_account(server_id: str, account_id: int) -> None:
                     cur.execute(sql, (account_id,))
 
 
+def client_patch_base_url() -> str:
+    """URL de base du serveur de patches client (Launchpad / prime-client)."""
+    override = env("CORE3_CLIENT_PATCH_URL", "")
+    if override:
+        return override.rstrip("/")
+    port = env("CORE3_CLIENT_PATCH_PORT", "8080")
+    if local_server_id() == "prime":
+        host = env("CORE3_PRIME_CLIENT_IP", "192.168.0.246")
+    else:
+        host = env("CORE3_PRECU_CLIENT_IP", "192.168.0.245")
+    return f"http://{host}:{port}"
+
+
+def client_install_info() -> dict[str, Any]:
+    """Liens + procédure installation client (public, sans auth)."""
+    sid = local_server_id()
+    base = client_patch_base_url()
+    prime_ui = f"http://{env('CORE3_PRIME_CLIENT_IP', '192.168.0.246')}:8792/"
+    if sid != "prime":
+        return {
+            "visible": True,
+            "mode": "redirect",
+            "title": "Installation client Prime (Godot)",
+            "message": (
+                "Cette page gère les comptes PreCU. "
+                "Pour installer le client Godot Prime (Launchpad + patches), "
+                "utilisez l’UI Prime."
+            ),
+            "redirect_url": prime_ui,
+            "redirect_label": "Ouvrir Prime 246 — installation client",
+        }
+
+    ps1_url = f"{base}/bootstrap/install_lbg_prime_client.ps1"
+    oneliner = (
+        f"irm {ps1_url} -OutFile $env:TEMP\\install_lbg_prime_client.ps1; "
+        r"powershell -ExecutionPolicy Bypass -File $env:TEMP\install_lbg_prime_client.ps1 -TargetRoot D:\LBG"
+    )
+    links = [
+        {"label": "Script install (PowerShell)", "url": ps1_url},
+        {"label": "install.cmd", "url": f"{base}/bootstrap/install.cmd"},
+        {"label": "Manifest installateur", "url": f"{base}/releases/installer-manifest.json"},
+        {"label": "Patches prime-client", "url": f"{base}/patches/prime/manifest.json"},
+        {"label": "build_info (version)", "url": f"{base}/patches/prime/build_info.json"},
+        {"label": "Launchpad (zip)", "url": f"{base}/releases/launchpad/LBG-Launchpad-win.zip"},
+        {"label": "Godot 4.6.1 (zip, optionnel)", "url": f"{base}/releases/godot/Godot_v4.6.1-stable_win64.zip"},
+        {"label": "Doc INSTALL_NEW_PC", "url": f"{base}/patches/prime/docs/INSTALL_NEW_PC.md"},
+    ]
+    steps = [
+        "PC Windows sur le LAN (accès 192.168.0.246 — ports 8080, 8765, 50000, 8791).",
+        "Ouvrir PowerShell et exécuter la commande ci-dessous (ou install.cmd).",
+        "Attendre la fin : téléchargement prime-client, import cache .godot, Launchpad, smoke réseau.",
+        "Lancer D:\\LBG\\dist\\win-unpacked\\LBG Launchpad.exe → profil Prime → Vérifier MAJ → Jouer.",
+        "Créer un compte ci-dessus si besoin → login → choisir un perso → Entrer en zone (CONNECTED).",
+    ]
+    return {
+        "visible": True,
+        "mode": "prime",
+        "title": "Installation client Prime (Godot + Launchpad)",
+        "patch_base": base,
+        "default_target": "D:\\LBG",
+        "links": links,
+        "steps": steps,
+        "powershell_oneliner": oneliner,
+        "notes": [
+            "Ne pas copier le dossier à la main sans import .godot — utiliser le script ou Launchpad MAJ.",
+            "Si Godot zip absent sur le serveur : -GodotExe avec un Godot 4.6.1 déjà installé.",
+        ],
+    }
+
+
 PAGE_HTML = """<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -753,6 +823,18 @@ PAGE_HTML = """<!DOCTYPE html>
     .server-pill.offline .dot { background:var(--danger); border-color:rgba(248,113,113,.4); box-shadow:0 0 6px rgba(248,113,113,.35); }
     .server-pill .meta { color:var(--muted); font-size:.72rem; }
     footer { text-align:center; color:var(--muted); font-size:.75rem; padding:1rem; }
+    .install-section { margin-bottom:1rem; border-color:#1e3a5f; }
+    .install-section h2 { color:var(--accent); }
+    .install-links { display:flex; flex-wrap:wrap; gap:.45rem .6rem; margin:.6rem 0; }
+    .install-links a { font-size:.82rem; padding:.3rem .55rem; background:#111827; border-radius:6px; border:1px solid #334155; color:var(--accent); text-decoration:none; }
+    .install-links a:hover { border-color:var(--accent); }
+    .install-steps { margin:.5rem 0 0; padding-left:1.2rem; color:var(--muted); font-size:.85rem; }
+    .install-steps li { margin:.35rem 0; }
+    .install-code { background:#0b1220; border:1px solid #334155; border-radius:6px; padding:.65rem .75rem; font-family:ui-monospace,monospace; font-size:.76rem; overflow-x:auto; margin-top:.5rem; white-space:pre-wrap; word-break:break-all; color:#cbd5e1; }
+    .install-notes { margin:.65rem 0 0; font-size:.78rem; color:var(--muted); }
+    .install-notes li { margin:.2rem 0; }
+    .install-redirect { font-size:.9rem; color:var(--muted); margin:.5rem 0; }
+    .install-redirect a { color:var(--accent); font-weight:600; }
   </style>
 </head>
 <body>
@@ -771,6 +853,10 @@ PAGE_HTML = """<!DOCTYPE html>
       <span style="color:var(--muted);font-size:.8rem">Obligatoire pour charger les comptes (en-tête X-Admin-Token).</span>
     </div>
     <div id="flash"></div>
+    <section class="install-section" id="clientInstall">
+      <h2>Installation client</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin:0">Chargement…</p>
+    </section>
     <div class="grid">
       <section>
         <h2>Comptes</h2>
@@ -854,6 +940,38 @@ PAGE_HTML = """<!DOCTYPE html>
       fillAdminSelect("editAdmin", 0);
       fillServerSelect("newServer", DB_SERVERS[0] ? DB_SERVERS[0].id : "precu");
       fillLevelsHelp();
+    }
+
+    async function loadClientInstall() {
+      const sec = document.getElementById("clientInstall");
+      try {
+        const info = await fetch("/api/client-install").then(r => r.json());
+        if (!info.visible) {
+          sec.style.display = "none";
+          return;
+        }
+        if (info.mode === "redirect") {
+          sec.innerHTML = `
+            <h2>${escapeHtml(info.title)}</h2>
+            <p class="install-redirect">${escapeHtml(info.message)}</p>
+            <p><a href="${escapeHtml(info.redirect_url)}" target="_blank" rel="noopener">${escapeHtml(info.redirect_label)}</a></p>`;
+          return;
+        }
+        const links = (info.links || []).map(l =>
+          `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.label)}</a>`
+        ).join("");
+        const steps = (info.steps || []).map(s => `<li>${escapeHtml(s)}</li>`).join("");
+        const notes = (info.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join("");
+        sec.innerHTML = `
+          <h2>${escapeHtml(info.title)}</h2>
+          <p style="color:var(--muted);font-size:.85rem;margin:.35rem 0 0">Dossier cible : <strong>${escapeHtml(info.default_target || "D:\\\\LBG")}</strong> · patches : <a href="${escapeHtml(info.patch_base)}" target="_blank" rel="noopener">${escapeHtml(info.patch_base)}</a></p>
+          <div class="install-links">${links}</div>
+          <ol class="install-steps">${steps}</ol>
+          <div class="install-code">${escapeHtml(info.powershell_oneliner || "")}</div>
+          ${notes ? `<ul class="install-notes">${notes}</ul>` : ""}`;
+      } catch (e) {
+        sec.innerHTML = `<h2>Installation client</h2><p style="color:var(--danger);font-size:.85rem">Indisponible : ${escapeHtml(e.message)}</p>`;
+      }
     }
 
     function token() {
@@ -1014,6 +1132,7 @@ PAGE_HTML = """<!DOCTYPE html>
       if (e.key === "Enter") { saveToken(); refresh().catch(err => flash(err.message, false)); }
     });
     refreshServers();
+    loadClientInstall();
     setInterval(refreshServers, 15000);
     initLevels().then(() => {
       if (token()) refresh().catch(e => flash(e.message, false));
@@ -1091,6 +1210,8 @@ class AdminHandler(BaseHTTPRequestHandler):
                 return json_response(self, 200, fetch_core3_server_status())
             except Exception as exc:
                 return json_response(self, 500, {"error": str(exc)})
+        if path == "/api/client-install":
+            return json_response(self, 200, client_install_info())
         if not self._authorized():
             return self._reject_auth()
         try:

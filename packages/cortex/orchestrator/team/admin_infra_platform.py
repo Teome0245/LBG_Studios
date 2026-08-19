@@ -1,4 +1,4 @@
-"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/245/246)."""
+"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/142/245/246)."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ def _host_ip(env_key: str, default: str) -> str:
 
 def admin_infra_perimeter() -> list[str]:
     """Hôtes obligatoires Atlas (front legacy .112 hors périmètre critique)."""
-    return ["110", "111", "140", "141", "245", "246"]
+    return ["110", "111", "140", "141", "142", "245", "246"]
 
 
 def platform_host_specs() -> list[dict[str, Any]]:
@@ -32,9 +32,16 @@ def platform_host_specs() -> list[dict[str, Any]]:
         .split(":")[0]
         or "192.168.0.111",
     )
-    ip112 = _host_ip("LBG_LAN_HOST_FRONT_LEGACY", "192.168.0.112")
     ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
     ip141 = _host_ip("LBG_LAN_HOST_EXECUTOR", "192.168.0.141")
+    ip142 = _host_ip(
+        "LBG_LAN_HOST_HANDS",
+        os.environ.get("LBG_AGENT_HANDS_URL", "http://192.168.0.142:6001")
+        .replace("http://", "")
+        .replace("https://", "")
+        .split(":")[0]
+        or "192.168.0.142",
+    )
     ip245 = _host_ip("LBG_LAN_HOST_PRECU", _host_ip("LBG_LAN_HOST_MMO_SERVER", "192.168.0.245"))
     ip246 = _host_ip("LBG_LAN_HOST_CORE3_PRIME", _host_ip("LBG_LAN_HOST_MMO", "192.168.0.246"))
 
@@ -43,7 +50,8 @@ def platform_host_specs() -> list[dict[str, Any]]:
     gateway_health = f"http://{gateway_http}:8765/health"
     orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
 
-    probe_front_legacy = os.environ.get("LBG_ATLAS_PROBE_FRONT_LEGACY", "1").strip().lower() in (
+    # .112 décommissionné — sonde uniquement si LBG_ATLAS_PROBE_FRONT_LEGACY=1 (rollback).
+    probe_front_legacy = os.environ.get("LBG_ATLAS_PROBE_FRONT_LEGACY", "0").strip().lower() in (
         "1",
         "true",
         "yes",
@@ -112,6 +120,22 @@ def platform_host_specs() -> list[dict[str, Any]]:
             ],
         },
         {
+            "id": "hands_142",
+            "label": "LAN hands CT (linux_agent :6001 — import_face_parts / fichiers)",
+            "host": ip142,
+            "perimeter_id": "142",
+            "role": "lan_hands",
+            "required": True,
+            "probes": [
+                {"kind": "tcp", "port": 22},
+                {
+                    "kind": "http",
+                    "url": os.environ.get("LBG_AGENT_HANDS_URL", f"http://{ip142}:6001").rstrip("/")
+                    + "/healthz",
+                },
+            ],
+        },
+        {
             "id": "precu_245",
             "label": "PreCU sandbox / MMO HTTP",
             "host": ip245,
@@ -137,10 +161,11 @@ def platform_host_specs() -> list[dict[str, Any]]:
     ]
 
     if probe_front_legacy:
+        ip112 = _host_ip("LBG_LAN_HOST_FRONT_LEGACY", "192.168.0.112")
         specs.append(
             {
                 "id": "front_legacy_112",
-                "label": "Front legacy Pilot/Nginx (ex-VM 110)",
+                "label": "Front legacy .112 (décommissionné — opt-in)",
                 "host": ip112,
                 "perimeter_id": "112",
                 "role": "front_legacy",
@@ -291,6 +316,10 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         recommendations.append(
             "141 executor : vérifier CT lbg-executor (SSH :22) et service lbg-lan-executor (poll Team WSL)."
         )
+    if not any(h.get("id") == "hands_142" and h.get("ok") for h in hosts):
+        recommendations.append(
+            "142 hands : vérifier CT lbg-hands sur Proxmox 200 (SSH :22) et lbg-linux-agent :6001/healthz."
+        )
     if not any(h.get("id") == "precu_245" and h.get("ok") for h in hosts):
         recommendations.append("245 PreCU : vérifier lbg-mmo / healthz :8050 (sandbox parallèle).")
     if not any(h.get("id") == "prime_246" and h.get("ok") for h in hosts):
@@ -305,7 +334,8 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         "llm_light": "192.168.0.111:11434 (NUC CT, Clean qwen2.5:3b / Fast llama3.2:3b)",
         "pilot": "192.168.0.140:8080 (Nginx Pilot canonique — proxy API locale)",
         "lan_executor": "192.168.0.141 (CT lbg-executor — poll /v1/team/wsl/poll, remplace WSL .10)",
-        "front_legacy": "192.168.0.112 (Traefik/:3000/:80 slim — Pilot Nginx optionnel)",
+        "lan_hands": "192.168.0.142 (CT lbg-hands — linux_agent :6001, inbox /var/lib/lbg-hands/inbox)",
+        "front_legacy": "décommissionné (.112 retiré — Pilot Nginx = .140:8080)",
         "routing": "LBG_REASON_LIGHT_BASE_URL → 111 ; LBG_REASON_LOCAL_BASE_URL → 110",
         "wsl_bridge": f"{orch_url}/v1/team/wsl/health",
     }

@@ -301,6 +301,5 @@ def audit_ollama_lan(*, base_url: str | None = None) -> dict[str, Any]:
         "topology": {
             "heavy": heavy_url,
             "light": light_url,
-            "front_legacy": "http://192.168.0.112:8080",
         },
     }

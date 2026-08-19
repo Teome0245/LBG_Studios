@@ -29,6 +29,9 @@ from pydantic import BaseModel, Field
 
 from mail_imap_preview import run_mail_imap_preview
 
+from face_parts_import_action import run_import_face_parts
+from comfyui_lifecycle import probe_comfyui, run_comfyui_lifecycle
+
 # Safe loading of timezone to avoid crashes on Windows if tzdata is missing
 _LOCAL_TZ = None
 if ZoneInfo is not None:
@@ -1060,6 +1063,7 @@ async def healthz():
             "web_search_enabled": _desktop_web_search_enabled(),
             "search_engine": _desktop_search_engine_name(),
             "mail_imap_enabled": _desktop_mail_imap_enabled(),
+            "face_parts_enabled": _truthy(_get_desktop_cfg("LBG_DESKTOP_FACE_PARTS_ENABLED")),
         },
         "computer_use": {
             "enabled_env": _get_desktop_cfg("LBG_DESKTOP_COMPUTER_USE_ENABLED").strip() or None,
@@ -1071,6 +1075,9 @@ async def healthz():
         "comfyui": {
             "enabled_env": _get_desktop_cfg("LBG_DESKTOP_COMFYUI_ENABLED").strip() or None,
             "base_url": _desktop_comfyui_base_url(),
+            "root": (_get_desktop_cfg("LBG_COMFYUI_ROOT") or "").strip() or r"C:\Users\sdesh\ComfyUI",
+            "auto_ensure": _truthy((_get_desktop_cfg("LBG_COMFYUI_AUTO_ENSURE") or "1").strip()),
+            "reachable": bool(probe_comfyui(_desktop_comfyui_base_url(), timeout_s=0.8).get("ok")),
         },
     }
 
@@ -1324,7 +1331,15 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
 
-    if kind in {"comfyui_queue", "comfyui_history", "comfyui_view", "comfyui_patch_and_queue"}:
+    if kind in {
+        "comfyui_queue",
+        "comfyui_history",
+        "comfyui_view",
+        "comfyui_patch_and_queue",
+        "comfyui_status",
+        "comfyui_ensure",
+        "comfyui_restart",
+    }:
         # Sécurité : feature flag + approval requis (actions réelles / données locales)
         if not _desktop_comfyui_enabled():
             out = {
@@ -1337,7 +1352,8 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
 
-        if not _desktop_approval_ok(ctx):
+        needs_approval = kind != "comfyui_status"
+        if needs_approval and not _desktop_approval_ok(ctx):
             out = {
                 **base,
                 "ok": False,
@@ -1350,6 +1366,43 @@ async def invoke(payload: InvokeRequest):
 
         base_url = _desktop_comfyui_base_url()
         timeout_s = _bounded_float((_get_desktop_cfg("LBG_COMFYUI_TIMEOUT_S") or "").strip() or "120", lo=1.0, hi=600.0) or 120.0
+
+        if kind in {"comfyui_status", "comfyui_ensure", "comfyui_restart"}:
+            life = run_comfyui_lifecycle(
+                kind=kind,
+                get_cfg=_get_desktop_cfg,
+                base_url=base_url,
+                dry_run=dry_run,
+            )
+            out = {**base, **life, "comfyui_base_url": base_url}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+
+        auto_ensure = _truthy((_get_desktop_cfg("LBG_COMFYUI_AUTO_ENSURE") or "1").strip())
+        if (
+            auto_ensure
+            and kind in {"comfyui_queue", "comfyui_patch_and_queue"}
+            and not dry_run
+            and not probe_comfyui(base_url, timeout_s=1.0).get("ok")
+        ):
+            life = run_comfyui_lifecycle(
+                kind="comfyui_ensure",
+                get_cfg=_get_desktop_cfg,
+                base_url=base_url,
+                dry_run=False,
+            )
+            if not life.get("ok") and life.get("outcome") != "already_running":
+                out = {
+                    **base,
+                    "ok": False,
+                    "outcome": "error",
+                    "kind": kind,
+                    "error": life.get("error") or "ComfyUI down, ensure failed",
+                    "ensure": life,
+                    "comfyui_base_url": base_url,
+                }
+                _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+                return out
 
         if kind == "comfyui_queue":
             workflow = action.get("workflow")
@@ -1829,6 +1882,16 @@ async def invoke(payload: InvokeRequest):
             out = {**base, "ok": False, "outcome": "error", "error": str(e), "app": app_id, "args": args_list}
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
+
+    if kind == "import_face_parts":
+        if not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        result = run_import_face_parts(action=action, get_cfg=_get_desktop_cfg, dry_run=dry_run)
+        out = {**base, **result, "kind": kind}
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
 
     out = {**base, "ok": False, "outcome": "unknown_kind", "error": "Action desktop inconnue", "kind": kind}
     _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})

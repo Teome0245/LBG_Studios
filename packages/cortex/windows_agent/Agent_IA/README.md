@@ -13,8 +13,22 @@ Déploiement attendu : `C:\Agent_IA\`
 3) Lancer :
 
 ```powershell
+# Sans fenêtre (recommandé) — logs : C:\Agent_IA\logs\agent_ia.log
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_agent.ps1
+
+# Console visible (debug)
 C:\Agent_IA\run_agent.cmd
 ```
+
+Démarrage auto (logon) + redémarrage 08:00 / 20:00 :
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_agent_ia_scheduled_tasks.ps1
+```
+
+- `start_agent.ps1` / `restart_agent.ps1` — arrière-plan, pas de cmd au premier plan
+- `start_agent.cmd` / `restart_agent.cmd` — wrappers vers les `.ps1`
+- `run_agent.cmd` — mode console (debug uniquement)
 
 ## Endpoints
 
@@ -131,6 +145,27 @@ Actions :
 - `comfyui_view` : récupère un fichier depuis `/view`
   - `filename` (requis), `subfolder` (optionnel), `type` (optionnel, défaut `output`)
   - `return` : `path|base64|none` (défaut `path`) ; écrit dans `LBG_COMFYUI_DOWNLOAD_DIR` si `path`
+- `comfyui_status` : probe `GET /system_stats` (pas d’approval)
+- `comfyui_ensure` : démarre ComfyUI s’il est down (hidden, voir ci-dessous)
+- `comfyui_restart` : stop process `:8188` puis relance
+
+`desktop.env` : `LBG_COMFYUI_ROOT`, `LBG_COMFYUI_PYTHON`, `LBG_COMFYUI_ARGS`, `LBG_COMFYUI_AUTO_ENSURE=1` (ensure automatique avant `comfyui_queue` si down).
+
+### ComfyUI — démarrage sans fenêtre
+
+Comme Agent_IA, ComfyUI peut tourner en arrière-plan (logs fichier, pas de cmd au premier plan) :
+
+```powershell
+# Recommandé — logs : C:\Agent_IA\logs\comfyui_agent.log
+powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_comfyui.ps1
+
+# Console visible (debug)
+C:\Agent_IA\run_comfyui.cmd
+```
+
+- `start_comfyui.ps1` / `restart_comfyui.ps1` — arrière-plan
+- `start_comfyui.cmd` / `restart_comfyui.cmd` — wrappers vers les `.ps1`
+- `comfyui_ensure` / `comfyui_restart` (via `/invoke`) appellent le même lanceur hidden
 
 ### `run_steps` (macro)
 
@@ -163,4 +198,20 @@ Exemple :
   }
 }
 ```
+
+## `import_face_parts`
+
+Opt-in. Sync aussi `face_parts_import_action.py` vers `C:\Agent_IA\`.
+
+```json
+{
+  "desktop_action": {
+    "kind": "import_face_parts",
+    "character_id": "lyra_assistant",
+    "deploy": false
+  }
+}
+```
+
+`desktop.env` : `LBG_DESKTOP_FACE_PARTS_ENABLED=1` + `LBG_DESKTOP_FACE_PARTS_INBOX` (dossier Expressions / Gemini).
 
