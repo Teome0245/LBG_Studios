@@ -503,6 +503,20 @@ sudo systemctl start lbg-team-ops-ollama-job.service   # test manuel
 
 Tests : `pytest tests/test_spawn_team_ops_jobs.py -q`
 
+### Équipe virtuelle — mesh 3D TRELLIS.2 (`mesh_media` / worker Infographiste_IA)
+
+Image→GLB PBR via worker GPU (complète ComfyUI 2D). **Off par défaut** (`LBG_MESH_GEN_ENABLED=0`).
+
+Doc : [`docs/jalon_trellis2_pygmalion.md`](../docs/jalon_trellis2_pygmalion.md) · worker : `Infographiste_IA/scripts/trellis2_worker.py`
+
+| Variable | Effet |
+|----------|--------|
+| `LBG_MESH_GEN_ENABLED` | `1` = chaîne ComfyUI → mesh dans `infographiste_workflow` |
+| `LBG_MESH_GEN_BASE_URL` | Worker HTTP (défaut `:8190`) |
+| `LBG_MESH_GEN_RESOLUTION` | `512` L1 ; `1024+` L2 recommandé |
+
+Contexte Team : `pygmalion_mesh=true` ou preset Pilot **Mesh 3D**.
+
 ### Équipe virtuelle — sprint évolution 7j (`spawn_team_evolution_sprint_job`)
 
 Playbook **stratégique** (phase G) : timer systemd sur le **core 140** qui crée une tâche **`pm`** Thémis (`context.evolution_sprint`). Audit full → plan → **L1 auto-run** / L2 file Pilot. Complète l’autoconsult 12 h (santé), ne la remplace pas.

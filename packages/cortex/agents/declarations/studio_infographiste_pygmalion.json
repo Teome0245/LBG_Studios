@@ -13,6 +13,7 @@
     {"id": "dialogue_portraits_pipeline", "workflow": "ui_portraits_workflow", "description": "Déployer portraits PNG Prime et garder le manifest aligné"},
     {"id": "maps_tiles_handoff", "workflow": "m9_map_workflow", "description": "Clarifier le handoff maps/tiles/POI vers prime-client"},
     {"id": "generate_comfyui", "module": "comfyui_media", "description": "Génération image ComfyUI (MEDIA)"},
+    {"id": "mesh_3d_pipeline", "module": "mesh_media", "description": "Image→GLB PBR via TRELLIS.2 (worker GPU, L2 par défaut)"},
     {"id": "svg_planet_texture", "description": "Enrichir tatooine.svg Scrapaltai"},
     {"id": "glb_manifest", "path": "config/sprite_manifest.json"}
   ],

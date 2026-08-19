@@ -19,6 +19,7 @@
     let __teamGodotSupervisor = false;
     let __teamGodotTrack = false;
     let __teamInfographiste = false;
+    let __teamPygmalionMesh = false;
     let __teamGodotTrackKey = "";
     let __teamCore3Build = false;
     let __teamCore3BuildExecute = false;
@@ -808,6 +809,7 @@
       godot_supervise: "Supervise client Godot — sidecar 246, miroir M1, readiness lbg-ws/2",
       godot_lbg_ws2: "Audit lbg-ws/2 gateway Godot Prime — gaps et proposition forge",
       infographiste_ia: "Audit pipeline assets Infographiste IA — manifest GLB Godot et prochain export Blender",
+      mesh_3d: "Pygmalion — ComfyUI concept 2D + mesh TRELLIS.2 (worker GPU, L2 si activé)",
       soe_m3: "Audit SOE M3 — login + zone UDP Godot Prime (soe_handshake)",
       soe_m5: "Audit SOE M5 — play ZQSD prime_controller sur Prime",
       zb0_audit: "Audit ZB-0 LbgZoneBridge C++ — header et hook ZoneServer",
@@ -840,6 +842,7 @@
       godot_supervise: { role: "qa", objectiveKey: "godot_supervise", godotSupervisor: true, autoRun: true },
       godot_lbg_ws2: { role: "dev_game", objectiveKey: "godot_lbg_ws2", godotTrack: true, autoRun: true },
       infographiste_ia: { role: "dev_game", objectiveKey: "infographiste_ia", infographiste: true, autoRun: true },
+      mesh_3d: { role: "dev_game", objectiveKey: "mesh_3d", infographiste: true, pygmalionMesh: true, autoRun: true },
       soe_m3: { role: "dev_game", objectiveKey: "soe_m3", godotTrackKey: "soe_m3", autoRun: true },
       soe_m5: { role: "dev_game", objectiveKey: "soe_m5", godotTrackKey: "soe_m5", autoRun: true },
       zb0_audit: { role: "dev_game", objectiveKey: "zb0_audit", godotTrackKey: "zb0", autoRun: true },
@@ -946,6 +949,7 @@
       __teamGodotSupervisor = !!preset.godotSupervisor;
       __teamGodotTrack = !!preset.godotTrack;
       __teamInfographiste = !!preset.infographiste;
+      __teamPygmalionMesh = !!preset.pygmalionMesh;
       __teamGodotTrackKey = preset.godotTrackKey ? String(preset.godotTrackKey) : "";
       __teamCore3Build = !!preset.core3Build;
       __teamCore3BuildExecute = !!preset.core3BuildExecute;
@@ -1077,6 +1081,13 @@
         ctx.infographiste_ia = true;
         ctx.subproject = "infographiste_ia";
         ctx.dev_game_focus = true;
+      }
+      if (__teamPygmalionMesh || /trellis|mesh.?3d|image.?to.?3d/i.test(objective)) {
+        ctx.pygmalion_mesh = true;
+        ctx.mesh_3d = true;
+        ctx.pygmalion_generate = true;
+        ctx.infographiste_ia = true;
+        ctx.subproject = "infographiste_ia";
       }
       const payload = {
         role: role,
@@ -1459,6 +1470,7 @@
         __teamGodotSupervisor = false;
         __teamGodotTrack = false;
         __teamInfographiste = false;
+        __teamPygmalionMesh = false;
         __teamGodotTrackKey = "";
         __teamCore3Build = false;
         __teamCore3BuildExecute = false;

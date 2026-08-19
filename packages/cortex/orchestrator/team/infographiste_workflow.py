@@ -10,6 +10,7 @@ from services.action_proposal import propose_action_from_text
 from team.infographiste_probe import probe_infographiste_assets
 from team.inspiration_scan import probe_inspiration_dataset
 from team.comfyui_media import comfyui_enabled, generate_asset_for_gap, probe_comfyui
+from team.mesh_media import mesh_from_comfyui_images, mesh_gen_enabled, probe_mesh_worker
 from team.models import TeamTask
 
 Dispatcher = Callable[..., dict[str, object]]
@@ -22,7 +23,7 @@ def _is_infographiste_track(task: TeamTask) -> bool:
     text = (task.objective or "").lower()
     return bool(
         re.search(
-            r"\b(infographiste|infograph|pipeline.?assets|\.glb|blender|textures? 3d|assets? 3d|swg.?godot|lora|inspiration|classif)\b",
+            r"\b(infographiste|infograph|pipeline.?assets|\.glb|blender|textures? 3d|assets? 3d|swg.?godot|lora|inspiration|classif|trellis|image.?to.?3d|mesh.?3d)\b",
             text,
         )
     )
@@ -92,11 +93,25 @@ def execute_infographiste_workflow(task: TeamTask, dispatch: Dispatcher) -> dict
         ok = False
 
     media_result = None
-    if (not ok or ctx.get("pygmalion_generate")) and comfyui_enabled():
+    mesh_result = None
+    want_mesh = bool(
+        ctx.get("pygmalion_mesh")
+        or ctx.get("mesh_3d")
+        or re.search(r"\b(trellis|image.?to.?3d|mesh.?3d|glb.?manquant)\b", text)
+    )
+    if (not ok or ctx.get("pygmalion_generate") or want_mesh) and comfyui_enabled():
         gap_label = missing[0] if missing else (task.objective or "mmo asset")
         media_result = generate_asset_for_gap(str(gap_label))
         if media_result.get("ok"):
             ctx["comfyui_images"] = media_result.get("images")
+            images = media_result.get("images")
+            if want_mesh and mesh_gen_enabled() and isinstance(images, list) and images:
+                mesh_result = mesh_from_comfyui_images(
+                    [str(p) for p in images],
+                    gap_label=str(gap_label),
+                )
+                if mesh_result.get("ok"):
+                    ctx["mesh_glb"] = mesh_result.get("glb_path") or mesh_result.get("glb")
 
     return {
         "kind": "infographiste_workflow",
@@ -109,6 +124,8 @@ def execute_infographiste_workflow(task: TeamTask, dispatch: Dispatcher) -> dict
         "persona": "Pygmalion",
         "comfyui_probe": probe_comfyui() if comfyui_enabled() else None,
         "comfyui_generation": media_result,
+        "mesh_probe": probe_mesh_worker() if mesh_gen_enabled() else None,
+        "mesh_generation": mesh_result,
     }
 
 

@@ -28,6 +28,8 @@ ALLOWED_PLAN_CONTEXT_KEYS: frozenset[str] = frozenset(
         "godot_dev_track",
         "godot_validation",
         "infographiste_ia",
+        "pygmalion_mesh",
+        "mesh_3d",
         "m9_track",
         "autoconsult",
         "autoconsult_round",

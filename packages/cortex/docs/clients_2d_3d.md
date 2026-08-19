@@ -12,7 +12,7 @@
 | **Gelé** | Prime Client 3D (`lbg_client_godot`) | Legacy `LBG_IA_MMORPG` — reprise plus tard |
 | **Piste future** | Hybride type **Warcraft 3** | À définir |
 
-> Pipeline **Infographiste_IA** → sprites / assets vers **Prime Client 2D**.
+> Pipeline **Infographiste_IA** → sprites / assets 2D vers **Prime Client** ; mesh 3D via [TRELLIS.2](https://microsoft.github.io/TRELLIS.2/) (R&D, [`jalon_trellis2_pygmalion.md`](jalon_trellis2_pygmalion.md)).
 
 ## Vue d’ensemble
 

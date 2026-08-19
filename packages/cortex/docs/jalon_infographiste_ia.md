@@ -101,8 +101,9 @@ bash infra/scripts/install_team_infographiste_job_vm.sh
 ## Prochaines étapes (humain / forge)
 
 1. **Sprites 2D top-down** — Infographiste_IA → Prime Client (`pipelines/2d/`, `deploy_sprites_to_prime.sh`)
-2. Premier export `human_male_base.glb` (Blender) — pause 3D
-3. Cantina bloc GLB — pause 3D
+2. **Mesh 3D TRELLIS.2** — worker GPU + `mesh_media.py` ([`jalon_trellis2_pygmalion.md`](jalon_trellis2_pygmalion.md)) ; **off par défaut**
+3. Premier export `human_male_base.glb` (Blender ou TRELLIS) — pause 3D
+4. Cantina bloc GLB — pause 3D
 
 ---
 
@@ -111,3 +112,4 @@ bash infra/scripts/install_team_infographiste_job_vm.sh
 - [`pipeline_assets_swg_godot.md`](pipeline_assets_swg_godot.md)
 - [`equipe_autonome_godot.md`](equipe_autonome_godot.md)
 - [`runbook_promotion_prototype_core3.md`](runbook_promotion_prototype_core3.md)
+- [`jalon_trellis2_pygmalion.md`](jalon_trellis2_pygmalion.md) — image→GLB PBR (TRELLIS.2)

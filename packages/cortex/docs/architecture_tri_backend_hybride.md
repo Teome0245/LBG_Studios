@@ -116,6 +116,10 @@ bash infra/scripts/install_openclaw_lbg_vm140.sh
 # MEDIA — ComfyUI
 LBG_COMFYUI_BASE_URL=http://192.168.0.10:8188
 
+# MEDIA mesh — TRELLIS.2 (worker GPU, off par défaut)
+# LBG_MESH_GEN_ENABLED=0
+# LBG_MESH_GEN_BASE_URL=http://192.168.0.10:8190
+
 # Iris forge LLM
 LBG_IRIS_FORGE_LLM=1
 LBG_IRIS_FORGE_SMOKE_REQUIRED=1
