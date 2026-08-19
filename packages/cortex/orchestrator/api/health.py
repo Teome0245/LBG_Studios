@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Header, HTTPException, Response
 
 from services import metrics as svc_metrics
@@ -8,6 +10,18 @@ router = APIRouter(tags=["health"])
 @router.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@router.get("/v1/llm/probe")
+def llm_probe() -> dict[str, Any]:
+    """Probe les modèles LLM cloud et retourne l'état + recommandation."""
+    try:
+        from team.llm_model_probe import probe_all_cloud, auto_fix_env
+        results = probe_all_cloud()
+        summary = auto_fix_env(results)
+        return {"ok": True, **summary}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
 
 
 @router.get("/metrics")

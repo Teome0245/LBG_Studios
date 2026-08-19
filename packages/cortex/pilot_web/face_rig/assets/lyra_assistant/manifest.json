@@ -1,147 +1,46 @@
 {
   "character_id": "lyra_assistant",
-  "version": 6,
+  "version": 13,
   "cell_px": 256,
   "fallback": false,
-  "source": "expressions_patches",
+  "source": "hybrid_copilot_eyes_codegen_mouths",
+  "mode": "full_face",
   "layout": {
     "hide_base": true,
     "use_bands": false
   },
   "layers": {
-    "eyes": {
-      "file": "eyes.png",
+    "face": {
+      "file": "face.png",
       "cols": 5,
-      "rows": 2,
+      "rows": 3,
       "frames": {
-        "idle": [
-          0,
-          0
-        ],
-        "blink": [
-          1,
-          0
-        ],
-        "happy": [
-          2,
-          0
-        ],
-        "sad": [
-          3,
-          0
-        ],
-        "angry": [
-          4,
-          0
-        ],
-        "surprised": [
-          0,
-          1
-        ],
-        "look_left": [
-          1,
-          1
-        ],
-        "look_right": [
-          2,
-          1
-        ],
-        "wink": [
-          3,
-          1
-        ],
-        "tired": [
-          4,
-          1
-        ]
+        "neutral": [0, 0],
+        "happy": [1, 0],
+        "sad": [2, 0],
+        "angry": [3, 0],
+        "surprised": [4, 0],
+        "talk_1": [0, 1],
+        "talk_2": [1, 1],
+        "talk_3": [2, 1],
+        "wink": [3, 1],
+        "blink": [4, 1],
+        "tired": [0, 2],
+        "squint": [1, 2],
+        "angry_talk": [2, 2],
+        "happy_talk": [3, 2],
+        "sad_talk": [4, 2]
       }
-    },
-    "mouth": {
-      "file": "mouth.png",
-      "cols": 4,
-      "rows": 2,
-      "frames": {
-        "closed": [
-          0,
-          0
-        ],
-        "smile": [
-          1,
-          0
-        ],
-        "frown": [
-          2,
-          0
-        ],
-        "talk_1": [
-          3,
-          0
-        ],
-        "talk_2": [
-          0,
-          1
-        ],
-        "talk_3": [
-          1,
-          1
-        ],
-        "open_wide": [
-          2,
-          1
-        ],
-        "smirk": [
-          3,
-          1
-        ]
-      }
-    },
-    "base": {
-      "file": "base.png",
-      "cols": 1,
-      "rows": 1,
-      "frames": {
-        "default": [
-          0,
-          0
-        ]
-      },
-      "hidden": true
     }
   },
   "emotions": {
-    "neutral": {
-      "eyes": "idle",
-      "mouth": "closed"
-    },
-    "happy": {
-      "eyes": "happy",
-      "mouth": "smile"
-    },
-    "sad": {
-      "eyes": "sad",
-      "mouth": "frown"
-    },
-    "angry": {
-      "eyes": "angry",
-      "mouth": "frown"
-    },
-    "surprised": {
-      "eyes": "surprised",
-      "mouth": "open_wide"
-    },
-    "talking": {
-      "eyes": "idle",
-      "mouth_cycle": [
-        "talk_1",
-        "talk_2",
-        "talk_3"
-      ]
-    }
+    "neutral": { "face": "neutral" },
+    "happy": { "face": "happy" },
+    "sad": { "face": "sad" },
+    "angry": { "face": "angry" },
+    "surprised": { "face": "surprised" },
+    "talking": { "face_cycle": ["talk_1", "talk_2", "talk_3"] }
   },
-  "consumers": [
-    "pilot_face_rig",
-    "prime_dialogue_bake",
-    "orch_ui_5174"
-  ],
-  "note": "Patches Expressions découpés (444 yeux / 70 bouches). Pas SD."
+  "consumers": ["pilot_face_rig", "prime_dialogue_bake", "orch_ui_5174"],
+  "note": "v13 layered assembly: Copilot_20260819 base+hair+eyes + CodeGen mouths. Offsets: eye(y0.40,x-28) mouth(y0.70,x-15) hair(y-40,x-3,scale1.08). Pipeline ready for better source sheets."
 }

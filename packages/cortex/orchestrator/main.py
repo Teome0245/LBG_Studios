@@ -61,3 +61,32 @@ async def _presence_bind_loop() -> None:
     except Exception:
         pass
 
+
+@app.on_event("startup")
+async def _llm_model_probe_loop() -> None:
+    """Probe les modèles LLM cloud au démarrage puis toutes les 10 min.
+
+    Si un modèle configuré n'est plus disponible, applique auto_fix_env
+    pour basculer sur le meilleur modèle disponible (runtime uniquement).
+    """
+    import asyncio
+    import logging
+
+    logger = logging.getLogger("lbg.llm_model_probe")
+
+    async def _probe_cycle() -> None:
+        await asyncio.sleep(5)  # laisser le temps au startup
+        while True:
+            try:
+                from team.llm_model_probe import auto_fix_env
+                summary = auto_fix_env()
+                if summary.get("patched"):
+                    logger.warning("LLM model auto-fix applied: %s", summary["changes"])
+                else:
+                    logger.debug("LLM model probe OK — no changes needed")
+            except Exception as exc:
+                logger.debug("LLM model probe error: %s", exc)
+            await asyncio.sleep(600)  # 10 min
+
+    asyncio.create_task(_probe_cycle())
+

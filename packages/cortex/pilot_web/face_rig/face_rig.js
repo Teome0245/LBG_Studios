@@ -37,11 +37,15 @@
   let ready = false;
   let useSheets = false;
 
+  const _bustV = Date.now();
   function assetUrl(file) {
     try {
-      return new URL(file, assetBase).href;
+      const u = new URL(file, assetBase);
+      if (file.endsWith(".png")) u.searchParams.set("v", _bustV);
+      return u.href;
     } catch (_) {
-      return assetBase + file;
+      const sep = file.endsWith(".png") ? "?v=" + _bustV : "";
+      return assetBase + file + sep;
     }
   }
 
@@ -81,13 +85,21 @@
 
   function scheduleBlink() {
     if (blinkTimer) global.clearTimeout(blinkTimer);
-    const delay = 2200 + Math.floor(Math.random() * 2800);
+    var delay = 2200 + Math.floor(Math.random() * 2800);
     blinkTimer = global.setTimeout(function () {
-      applyEyes("blink");
+      if (fullFaceMode) {
+        applyFace("blink");
+      } else {
+        applyEyes("blink");
+      }
       global.setTimeout(function () {
-        const emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
-        const conf = emo[currentExpression] || emo.neutral || DEFAULT_EMOTIONS.neutral;
-        applyEyes((conf && conf.eyes) || "idle");
+        var emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
+        var conf = emo[currentExpression] || emo.neutral || DEFAULT_EMOTIONS.neutral;
+        if (fullFaceMode) {
+          applyFace((conf && conf.face) || "neutral");
+        } else {
+          applyEyes((conf && conf.eyes) || "idle");
+        }
         scheduleBlink();
       }, 120);
     }, delay);
@@ -132,18 +144,37 @@
     stageEl.setAttribute("data-mouth", frameKey || "closed");
   }
 
-  function applyEmotion(expression) {
-    const emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
-    const conf = emo[expression] || emo.neutral || DEFAULT_EMOTIONS.neutral;
-    currentExpression = expression;
-    if (stageEl) stageEl.setAttribute("data-expression", expression);
-    applyEyes((conf && conf.eyes) || "idle");
-    if (conf && Array.isArray(conf.mouth_cycle) && conf.mouth_cycle.length) {
-      // leave mouth to talk cycle
-    } else {
-      applyMouth((conf && conf.mouth) || "closed");
+  function applyFace(frameKey) {
+    if (useSheets && fullFaceMode) {
+      setLayerFrame("face", frameKey);
+      return;
     }
   }
+
+  function applyEmotion(expression) {
+    var emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
+    var conf = emo[expression] || emo.neutral || DEFAULT_EMOTIONS.neutral;
+    currentExpression = expression;
+    if (stageEl) stageEl.setAttribute("data-expression", expression);
+    if (fullFaceMode) {
+      if (conf && conf.face) {
+        applyFace(conf.face);
+      } else if (conf && Array.isArray(conf.face_cycle) && conf.face_cycle.length) {
+        // leave face to talk cycle
+      } else {
+        applyFace("neutral");
+      }
+    } else {
+      applyEyes((conf && conf.eyes) || "idle");
+      if (conf && Array.isArray(conf.mouth_cycle) && conf.mouth_cycle.length) {
+        // leave mouth to talk cycle
+      } else {
+        applyMouth((conf && conf.mouth) || "closed");
+      }
+    }
+  }
+
+  let fullFaceMode = false;
 
   function buildDom(host) {
     host.innerHTML = "";
@@ -154,6 +185,7 @@
     stageEl.setAttribute("aria-label", "Visage expressif Lyra");
     stageEl.innerHTML =
       '<div class="face-rig-base"></div>' +
+      '<div class="face-rig-layer face-rig-face" data-layer="face"></div>' +
       '<div class="face-rig-layer face-rig-eyes" data-layer="eyes">' +
       '<span class="face-rig-eye face-rig-eye--l"></span>' +
       '<span class="face-rig-eye face-rig-eye--r"></span>' +
@@ -161,6 +193,7 @@
       '<div class="face-rig-layer face-rig-mouth" data-layer="mouth"></div>';
     host.appendChild(stageEl);
     layerEls = {
+      face: stageEl.querySelector('[data-layer="face"]'),
       eyes: stageEl.querySelector('[data-layer="eyes"]'),
       mouth: stageEl.querySelector('[data-layer="mouth"]'),
       base: stageEl.querySelector(".face-rig-base"),
@@ -169,17 +202,22 @@
 
   function enableSheetsIfPossible() {
     if (!manifest || !manifest.layers) return;
-    const eyes = manifest.layers.eyes;
-    const mouth = manifest.layers.mouth;
-    if (!eyes || !eyes.file || !mouth || !mouth.file) return;
+    fullFaceMode = !!(manifest.mode === "full_face" && manifest.layers.face && manifest.layers.face.file);
+    if (!fullFaceMode) {
+      var eyes = manifest.layers.eyes;
+      var mouth = manifest.layers.mouth;
+      if (!eyes || !eyes.file || !mouth || !mouth.file) return;
+    }
     useSheets = true;
     if (stageEl) {
       stageEl.classList.remove("face-rig-stage--fallback");
       stageEl.classList.add("face-rig-stage--sheets");
+      if (fullFaceMode) stageEl.classList.add("face-rig-stage--full-face");
     }
-    ["base", "eyes", "mouth"].forEach(function (name) {
-      const layer = manifest.layers[name];
-      const el = layerEls[name];
+    var layerNames = fullFaceMode ? ["base", "face"] : ["base", "eyes", "mouth"];
+    layerNames.forEach(function (name) {
+      var layer = manifest.layers[name];
+      var el = layerEls[name];
       if (!layer || !el || !layer.file) return;
       if (layer.hidden || (manifest.layout && manifest.layout.hide_base && name === "base")) {
         el.style.display = "none";
@@ -189,32 +227,35 @@
       el.style.backgroundImage = "url(" + assetUrl(layer.file) + ")";
       el.style.backgroundRepeat = "no-repeat";
     });
-    // Layout bandes optionnel (sinon ancrage dans le PNG, plein stage)
-    const layout = manifest.layout || {};
-    const useBands = !!(layout && layout.use_bands);
-    ["eyes", "mouth"].forEach(function (name) {
-      const el = layerEls[name];
-      const conf = layout[name];
-      if (!el) return;
-      if (useBands && conf) {
-        el.style.inset = "auto";
-        if (conf.top) el.style.top = conf.top;
-        if (conf.left) el.style.left = conf.left;
-        if (conf.right) el.style.right = conf.right;
-        if (conf.height) el.style.height = conf.height;
-      } else {
-        el.style.inset = "0";
-        el.style.top = "";
-        el.style.height = "";
-        el.style.left = "";
-        el.style.right = "";
-      }
-    });
-    if (layerEls.eyes) {
-      const eyesInner = layerEls.eyes.querySelectorAll(".face-rig-eye");
-      eyesInner.forEach(function (n) {
-        n.style.display = "none";
+    if (fullFaceMode) {
+      if (layerEls.eyes) layerEls.eyes.style.display = "none";
+      if (layerEls.mouth) layerEls.mouth.style.display = "none";
+    } else {
+      if (layerEls.face) layerEls.face.style.display = "none";
+      var layout = manifest.layout || {};
+      var useBands = !!(layout && layout.use_bands);
+      ["eyes", "mouth"].forEach(function (name) {
+        var el = layerEls[name];
+        var conf = layout[name];
+        if (!el) return;
+        if (useBands && conf) {
+          el.style.inset = "auto";
+          if (conf.top) el.style.top = conf.top;
+          if (conf.left) el.style.left = conf.left;
+          if (conf.right) el.style.right = conf.right;
+          if (conf.height) el.style.height = conf.height;
+        } else {
+          el.style.inset = "0";
+          el.style.top = "";
+          el.style.height = "";
+          el.style.left = "";
+          el.style.right = "";
+        }
       });
+      if (layerEls.eyes) {
+        var eyesInner = layerEls.eyes.querySelectorAll(".face-rig-eye");
+        eyesInner.forEach(function (n) { n.style.display = "none"; });
+      }
     }
   }
 
@@ -277,20 +318,29 @@
       global.clearInterval(talkCycleTimer);
       talkCycleTimer = null;
     }
-    const emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
-    const talkConf = emo.talking || DEFAULT_EMOTIONS.talking;
-    const cycle = (talkConf && talkConf.mouth_cycle) || ["talk_1", "talk_2"];
+    var emo = (manifest && manifest.emotions) || DEFAULT_EMOTIONS;
+    var talkConf = emo.talking || DEFAULT_EMOTIONS.talking;
     if (onOrMs === false || onOrMs === 0) {
       applyEmotion(currentExpression === "talking" ? "neutral" : currentExpression);
       return;
     }
-    applyEyes((talkConf && talkConf.eyes) || "idle");
-    let i = 0;
-    applyMouth(cycle[0]);
-    talkCycleTimer = global.setInterval(function () {
-      i = (i + 1) % cycle.length;
-      applyMouth(cycle[i]);
-    }, 140);
+    var i = 0;
+    if (fullFaceMode) {
+      var faceCycle = (talkConf && talkConf.face_cycle) || ["talk_1", "talk_2", "talk_3"];
+      applyFace(faceCycle[0]);
+      talkCycleTimer = global.setInterval(function () {
+        i = (i + 1) % faceCycle.length;
+        applyFace(faceCycle[i]);
+      }, 140);
+    } else {
+      var cycle = (talkConf && talkConf.mouth_cycle) || ["talk_1", "talk_2"];
+      applyEyes((talkConf && talkConf.eyes) || "idle");
+      applyMouth(cycle[0]);
+      talkCycleTimer = global.setInterval(function () {
+        i = (i + 1) % cycle.length;
+        applyMouth(cycle[i]);
+      }, 140);
+    }
     if (typeof onOrMs === "number" && onOrMs > 0) {
       talkTimer = global.setTimeout(function () {
         setTalking(false);
@@ -308,6 +358,7 @@
     clearTimers();
     ready = false;
     useSheets = false;
+    fullFaceMode = false;
     if (hostEl) hostEl.innerHTML = "";
     hostEl = null;
     stageEl = null;

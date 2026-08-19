@@ -54,6 +54,21 @@
   height: auto;
   transform: none;
 }
+.face-rig-stage--full-face .face-rig-face.face-rig-sheet {
+  display: block;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: auto;
+  border-radius: inherit;
+}
+.face-rig-stage--full-face .face-rig-eyes,
+.face-rig-stage--full-face .face-rig-mouth,
+.face-rig-stage--full-face .face-rig-base {
+  display: none !important;
+}
 
 .face-rig-base {
   position: absolute;
