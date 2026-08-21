@@ -8,7 +8,15 @@
   "capabilities": [
     {"id": "smoke_lan", "script": "infra/scripts/smoke_vm_lan.sh"},
     {"id": "godot_validation", "workflow": "godot_validation_workflow"},
-    {"id": "qa_followup", "description": "Spawn PM + ops + dev sur échec smoke"}
+    {"id": "qa_followup", "description": "Spawn PM + ops + dev sur échec smoke"},
+    {
+      "id": "task_outcome_judge",
+      "description": "LLM-as-a-Judge / golden dataset — note qualité après smokes (outcome_judge)"
+    },
+    {
+      "id": "agent_prompt_mutate",
+      "description": "Forge mutation prompts V1→V2 (staging + golden + candidat L2, jamais declarations/ auto)"
+    }
   ],
   "constraints": ["read_only", "l1_autonomy"],
   "owner_timer": "lbg-team-qa-smoke-job"

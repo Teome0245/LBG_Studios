@@ -232,3 +232,4 @@ Doc : [team_evolution_sprint.md](team_evolution_sprint.md).
 - [jalon_m9_scrapaltai_map_minimap.md](jalon_m9_scrapaltai_map_minimap.md)
 - [jalon_infographiste_ia.md](jalon_infographiste_ia.md)
 - [team_evolution_sprint.md](team_evolution_sprint.md)
+- [plan_meta_autonomie_l3.md](plan_meta_autonomie_l3.md) — Miroir, leçons, forge V1→V2, Feature Proposer (greffe L3)

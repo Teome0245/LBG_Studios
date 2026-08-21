@@ -148,6 +148,11 @@ def team_meta() -> TeamMetaResponse:
         .lower()
         in ("1", "true", "yes", "on"),
         "iris_l3": __import__("team.iris_l3", fromlist=["l3_status"]).l3_status(),
+        "outcome_judge": __import__("team.outcome_judge", fromlist=["meta_status"]).meta_status(),
+        "lessons_learned": __import__("team.lessons_learned", fromlist=["meta_status"]).meta_status(),
+        "agent_mutator": __import__("team.agent_mutator", fromlist=["meta_status"]).meta_status(),
+        "feature_proposer": __import__("team.feature_proposer", fromlist=["meta_status"]).meta_status(),
+        "prompt_overrides": __import__("team.prompt_overrides", fromlist=["meta_status"]).meta_status(),
         "write_paths": {
             "godot_l3_allowlist": "Iris L3 — smoke OK + LBG_IRIS_FORGE_L3=1",
             "godot_complex": "Cursor Cloud Agent / humain (L2 token) — write principal hors allowlist",
@@ -158,6 +163,11 @@ def team_meta() -> TeamMetaResponse:
     from team import plan_llm as team_plan_llm
     from team import campus_conductor
     from team import evolution_sprint_workflow as evo_sprint
+    from team import outcome_judge as team_outcome_judge
+    from team import lessons_learned as team_lessons
+    from team import agent_mutator as team_mutator
+    from team import feature_proposer as team_feature_proposer
+    from team import post_judge as team_post_judge
 
     extras: dict[str, object] = {
         "last_plan": team_plan_llm.last_plan_trace(),
@@ -165,6 +175,12 @@ def team_meta() -> TeamMetaResponse:
         "mission_persist_path": campus_conductor.mission_persist_path(),
         "memory_path": str(team_memory.memory_path()),
         "last_evolution_sprint": evo_sprint.last_sprint(),
+        "last_judge": team_outcome_judge.last_judge_trace(),
+        "last_post_judge": team_post_judge.last_post_judge_trace(),
+        "last_mutation": team_mutator.last_mutation_trace(),
+        "last_proposal": team_feature_proposer.last_proposal_trace(),
+        "lessons_count": team_lessons.lessons_count(),
+        "golden_cases": len(team_outcome_judge.list_golden_cases()),
     }
     return TeamMetaResponse(
         roles=roles,

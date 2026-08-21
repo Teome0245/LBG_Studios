@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "rubrics": {
+    "default": ["exactitude", "concision", "respect_regles", "cout"]
+  },
+  "cases": [
+    {
+      "id": "godot_signal_connect",
+      "domain": "godot",
+      "role": "dev_godot",
+      "prompt": "Explique comment connecter un signal button.pressed à une méthode _on_pressed en GDScript 4.x, en 5 lignes max.",
+      "expected_keywords": ["connect", "pressed", "_on_pressed"],
+      "rubric_id": "default",
+      "notes": "Iris — signaux Godot"
+    },
+    {
+      "id": "godot_minimap_allowlist",
+      "domain": "godot",
+      "role": "dev_godot",
+      "prompt": "Quels chemins Iris L3 peuvent être appliqués auto après smoke vert ? Cite 2 exemples sous prime-client.",
+      "expected_keywords": ["minimap", "scripts/"],
+      "rubric_id": "default",
+      "notes": "Allowlist L3"
+    },
+    {
+      "id": "ops_healthz",
+      "domain": "infra",
+      "role": "ops",
+      "prompt": "Sur le LAN LBG, quel endpoint HTTP simple vérifie que le backend Cortex répond ?",
+      "expected_keywords": ["healthz", "/healthz"],
+      "rubric_id": "default",
+      "notes": "Héphaïstos"
+    },
+    {
+      "id": "qa_smoke_owner",
+      "domain": "qa",
+      "role": "qa",
+      "prompt": "En autonomie A2, peut-on clôturer une mission Team en succès si le smoke owner est rouge ?",
+      "expected_keywords": ["non", "pas", "rouge", "ouverte"],
+      "rubric_id": "default",
+      "notes": "Anti-clôture smoke fail"
+    },
+    {
+      "id": "pm_l2_write",
+      "domain": "pm",
+      "role": "pm",
+      "prompt": "Un write hors allowlist Iris nécessite-t-il un token L2 Pilot ?",
+      "expected_keywords": ["oui", "L2", "token", "approb"],
+      "rubric_id": "default",
+      "notes": "Thémis / A4"
+    },
+    {
+      "id": "lore_bible_guard",
+      "domain": "lore",
+      "role": "player_ia",
+      "prompt": "Avant de proposer une mécanique MMO nouvelle, quel document de vérité monde doit être respecté ?",
+      "expected_keywords": ["Bible", "BIBLE_MMO"],
+      "rubric_id": "default",
+      "notes": "Chœur"
+    },
+    {
+      "id": "llm_matrix_no_gemma3",
+      "domain": "infra",
+      "role": "admin_infra",
+      "prompt": "Sur l'hôte light .111, quel modèle ne doit pas être réintroduit ?",
+      "expected_keywords": ["gemma3", "4b"],
+      "rubric_id": "default",
+      "notes": "Atlas / matrice LLM"
+    },
+    {
+      "id": "cursor_pr_l2",
+      "domain": "dev",
+      "role": "dev_game",
+      "prompt": "Qui merge une PR Cursor Cloud Agent créée par la Team ?",
+      "expected_keywords": ["humain", "Pilot", "L2", "merge"],
+      "rubric_id": "default",
+      "notes": "Garde-fou merge"
+    }
+  ]
+}

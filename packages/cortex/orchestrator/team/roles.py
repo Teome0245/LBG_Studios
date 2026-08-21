@@ -155,6 +155,17 @@ def _backend_url() -> str:
     return os.environ.get("LBG_BACKEND_SELF_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
+def _inject_devops_approval(ctx: dict[str, object]) -> dict[str, object]:
+    """Pour sondes Team L1 (healthz) : injecte le jeton d'approbation DevOps si présent."""
+    if ctx.get("devops_approval"):
+        return ctx
+    tok = os.environ.get("LBG_DEVOPS_APPROVAL_TOKEN", "").strip()
+    if tok:
+        ctx = dict(ctx)
+        ctx["devops_approval"] = tok
+    return ctx
+
+
 def _qa_health_targets() -> list[str]:
     raw = os.environ.get(
         "LBG_TEAM_QA_HEALTH_URLS",
@@ -208,6 +219,19 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         ok = outcome != "critical"
         return {"kind": "ops_hw", "proxmox_hw": hw, "outcome": outcome, "ok": ok}
 
+    guest_lock = ctx.get("proxmox_guest_lock")
+    if ops_kind == "proxmox_guest_lock" and isinstance(guest_lock, dict):
+        outcome = str(guest_lock.get("outcome") or "ok")
+        ok = outcome != "critical"
+        return {
+            "kind": "ops_guest_lock",
+            "proxmox_guest_lock": guest_lock,
+            "outcome": outcome,
+            "ok": ok,
+        }
+    if ops_kind == "proxmox_guest_lock" and not isinstance(ctx.get("devops_action"), dict):
+        ctx["devops_action"] = {"kind": "proxmox_guest_lock"}
+
     if ctx.get("m9_ops_sync") or ops_kind == "m9_prime_sync":
         if os.environ.get("LBG_TEAM_OPS_USE_OPENCLAW", "1").strip().lower() in ("1", "true", "yes", "on"):
             from team.openclaw_adapter import run_ops_playbook
@@ -250,19 +274,110 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
     action = ctx.get("devops_action")
     if not isinstance(action, dict):
         action = {"kind": "http_get", "url": f"{orch}/healthz"}
-    ctx["devops_action"] = action
-    ctx.setdefault("devops_dry_run", True)
-    out = _dispatch(
-        "agent.devops",
-        actor_id=task.actor_id,
-        text=task.objective,
-        context=ctx,
+
+    # Sonde multi-URL (:8010 + :8000) — http_get n'accepte qu'un `url` string.
+    urls: list[str] = []
+    raw_urls = action.get("urls")
+    if isinstance(raw_urls, list):
+        urls = [str(u).strip() for u in raw_urls if str(u).strip()]
+    single = action.get("url")
+    if isinstance(single, str) and single.strip():
+        urls = [single.strip()] + [u for u in urls if u != single.strip()]
+    if ops_kind == "health_probe" and not urls:
+        urls = [
+            f"{_orchestrator_url()}/healthz",
+            f"{_backend_url()}/healthz",
+        ]
+    if not urls:
+        urls = [f"{orch}/healthz"]
+
+    # Healthz réels sauf dry-run explicite.
+    live_probe = ops_kind == "health_probe" or bool(
+        re.search(r"(?i):8010|:8000|healthz|sonde", task.objective or "")
     )
-    return {"kind": "ops_probe", "output": out, "ok": bool(out.get("ok", True))}
+    if live_probe and "devops_dry_run" not in task.context:
+        ctx["devops_dry_run"] = False
+    else:
+        ctx.setdefault("devops_dry_run", True)
+
+    if len(urls) == 1:
+        ctx["devops_action"] = {"kind": "http_get", "url": urls[0]}
+        if not ctx.get("devops_dry_run"):
+            ctx = _inject_devops_approval(ctx)
+        out = _dispatch(
+            "agent.devops",
+            actor_id=task.actor_id,
+            text=task.objective,
+            context=ctx,
+        )
+        ok = bool(out.get("ok", True))
+        res = out.get("result")
+        if isinstance(res, dict) and res.get("ok") is False:
+            ok = False
+        if isinstance(out.get("error"), str) and out["error"]:
+            ok = False
+        return {
+            "kind": "ops_probe",
+            "output": out,
+            "ok": ok,
+            "human_summary": f"Sonde {urls[0]} → {'ok' if ok else 'KO'}",
+        }
+
+    checks: list[dict[str, object]] = []
+    all_ok = True
+    for url in urls:
+        sub = dict(ctx)
+        sub["devops_action"] = {"kind": "http_get", "url": url}
+        if not sub.get("devops_dry_run"):
+            sub = _inject_devops_approval(sub)
+        out = _dispatch(
+            "agent.devops",
+            actor_id=task.actor_id,
+            text=f"Sonde {url}",
+            context=sub,
+        )
+        ok = bool(out.get("ok", False))
+        res = out.get("result")
+        if isinstance(res, dict) and res.get("ok") is True:
+            ok = True
+        if isinstance(res, dict) and res.get("ok") is False:
+            ok = False
+        if isinstance(out.get("error"), str) and out["error"]:
+            ok = False
+        checks.append({"url": url, "ok": ok, "output": out})
+        all_ok = all_ok and ok
+    summary = "; ".join(f"{c['url']}={'ok' if c['ok'] else 'KO'}" for c in checks)
+    return {
+        "kind": "ops_health_probe",
+        "checks": checks,
+        "ok": all_ok,
+        "human_summary": f"Sondes healthz — {summary}",
+    }
+
+
+def _qa_health_dry_run() -> bool:
+    return os.environ.get("LBG_TEAM_QA_HEALTH_DRY_RUN", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
 
 
 def _execute_qa(task: TeamTask) -> dict[str, object]:
+    ctx0 = task.context or {}
+    wf = str(ctx0.get("workflow") or "").strip().lower()
+    if (
+        ctx0.get("agent_mutation")
+        or ctx0.get("agent_mutation_review")
+        or wf in ("agent_mutator", "agent_mutator_review")
+    ):
+        from team.agent_mutator import execute_mutator_from_task
+
+        return execute_mutator_from_task(task)
+
     bundle = str(task.context.get("owner_smoke_bundle") or "").strip()
+    health_dry = _qa_health_dry_run()
     if bundle:
         from team.owner_smokes import run_owner_smokes
 
@@ -273,8 +388,10 @@ def _execute_qa(task: TeamTask) -> dict[str, object]:
         for url in _qa_health_targets()[:2]:
             ctx = {
                 "devops_action": {"kind": "http_get", "url": url},
-                "devops_dry_run": True,
+                "devops_dry_run": health_dry,
             }
+            if not health_dry:
+                ctx = _inject_devops_approval(ctx)
             out = _dispatch(
                 "agent.devops",
                 actor_id=task.actor_id,
@@ -314,8 +431,10 @@ def _execute_qa(task: TeamTask) -> dict[str, object]:
     for url in _qa_health_targets():
         ctx = {
             "devops_action": {"kind": "http_get", "url": url},
-            "devops_dry_run": True,
+            "devops_dry_run": health_dry,
         }
+        if not health_dry:
+            ctx = _inject_devops_approval(ctx)
         out = _dispatch(
             "agent.devops",
             actor_id=task.actor_id,
@@ -323,10 +442,11 @@ def _execute_qa(task: TeamTask) -> dict[str, object]:
             context=ctx,
         )
         ok = bool(out.get("ok", False))
-        if not ok:
-            res = out.get("result")
-            if isinstance(res, dict) and res.get("ok") is True:
-                ok = True
+        res = out.get("result")
+        if isinstance(res, dict) and res.get("ok") is True:
+            ok = True
+        if isinstance(res, dict) and res.get("ok") is False:
+            ok = False
         checks.append({"url": url, "ok": ok, "output": out})
         all_ok = all_ok and ok
 
@@ -334,10 +454,128 @@ def _execute_qa(task: TeamTask) -> dict[str, object]:
     if smoke.get("skipped") is not True:
         all_ok = all_ok and bool(smoke.get("ok"))
 
-    return {"kind": "qa_smoke", "health_checks": checks, "smoke_script": smoke, "ok": all_ok}
+    summary = "; ".join(
+        f"{c['url']}={'ok' if c['ok'] else 'KO'}" for c in checks
+    )
+    return {
+        "kind": "qa_smoke",
+        "health_checks": checks,
+        "smoke_script": smoke,
+        "ok": all_ok,
+        "human_summary": f"Smoke QA healthz — {summary}"
+        + ("" if smoke.get("skipped") else f" · script={'ok' if smoke.get('ok') else 'KO'}"),
+    }
+
+
+def _failure_triage_topics(objective: str) -> list[str]:
+    text = (objective or "").lower()
+    topics: list[str] = []
+    mapping = (
+        ("scrapaltai", ("scrapaltai", "m9a", "m9 ")),
+        ("infographiste", ("infographiste", "infograph", "glb", "lora")),
+        ("player_ia", ("player_ia", "joueurs ia", "sidecar", "lia", "nix")),
+    )
+    for label, keys in mapping:
+        if any(k in text for k in keys):
+            topics.append(label)
+    return topics
+
+
+def _execute_failure_triage(task: TeamTask) -> dict[str, object]:
+    """Thémis — liste les failed récents et propose relance / abandon."""
+    topics = _failure_triage_topics(task.objective)
+    failed = team_store.list_tasks(status="failed", limit=80)
+    items: list[dict[str, object]] = []
+    for t in failed:
+        blob = f"{t.objective} {t.role} {json.dumps(t.result or {}, ensure_ascii=False)[:400]}".lower()
+        if topics and not any(top.replace("_", " ") in blob or top in blob for top in topics):
+            # player_ia / scrapaltai / infographiste
+            hit = False
+            for top in topics:
+                keys = {
+                    "scrapaltai": ("scrapaltai", "m9a", "m9"),
+                    "infographiste": ("infographiste", "glb", "lora", "pipeline assets"),
+                    "player_ia": ("player_ia", "joueur", "sidecar", "lia", "nix"),
+                }.get(top, (top,))
+                if any(k in blob for k in keys):
+                    hit = True
+                    break
+            if not hit:
+                continue
+        err = ""
+        if isinstance(t.result, dict):
+            err = str(t.result.get("error") or t.result.get("human_summary") or "")[:180]
+        # Heuristique : doublons / même objectif → abandonner ; sinon relancer
+        same = sum(
+            1
+            for o in failed
+            if o.objective == t.objective and o.role == t.role
+        )
+        action = "abandonner" if same >= 3 else "relancer"
+        reason = (
+            f"{same} échecs identiques — abandonner pour éviter de gonfler la file"
+            if action == "abandonner"
+            else "échec isolé ou rare — relancer une fois après correctif ciblé"
+        )
+        items.append(
+            {
+                "task_id": t.id,
+                "role": t.role,
+                "objective": (t.objective or "")[:120],
+                "error": err,
+                "action": action,
+                "reason": reason,
+                "duplicates": same,
+            }
+        )
+        if len(items) >= 15:
+            break
+
+    # Regrouper par action pour le résumé
+    to_retry = [i for i in items if i["action"] == "relancer"]
+    to_drop = [i for i in items if i["action"] == "abandonner"]
+    lines = [
+        f"Triage failed ({len(items)} match"
+        + (f" topics={','.join(topics)}" if topics else "")
+        + ")",
+        f"- relancer : {len(to_retry)}",
+        f"- abandonner : {len(to_drop)}",
+    ]
+    for i in items[:8]:
+        lines.append(
+            f"- [{i['action']}] {i['role']} `{str(i['task_id'])[:8]}` — {i['objective']}"
+        )
+    return {
+        "kind": "failure_triage",
+        "ok": True,
+        "topics": topics,
+        "items": items,
+        "retry_ids": [str(i["task_id"]) for i in to_retry],
+        "abandon_ids": [str(i["task_id"]) for i in to_drop],
+        "human_summary": "\n".join(lines),
+    }
 
 
 def _execute_pm(task: TeamTask) -> dict[str, object]:
+    ctx0 = task.context or {}
+    wf = str(ctx0.get("workflow") or "").strip().lower()
+    if (
+        ctx0.get("agent_mutation")
+        or ctx0.get("agent_mutation_review")
+        or wf in ("agent_mutator", "agent_mutator_review")
+    ):
+        from team.agent_mutator import execute_mutator_from_task
+
+        return execute_mutator_from_task(task)
+    if (
+        ctx0.get("feature_proposal")
+        or ctx0.get("feature_proposal_review")
+        or wf in ("feature_proposer", "feature_proposal_review")
+    ):
+        from team.feature_proposer import execute_proposer_from_task
+
+        return execute_proposer_from_task(task)
+
     if resolve_evolution_sprint_workflow(task):
         return execute_evolution_sprint_workflow(task, _dispatch)
     if resolve_autoconsult_workflow(task):
@@ -350,6 +588,12 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
         return execute_m11_contract_workflow(task, _dispatch)
 
     ctx = dict(task.context)
+    if ctx.get("failure_triage") or re.search(
+        r"(?i)\btriage\b.{0,40}\bfailed\b|\bfailed\b.{0,40}\b(relancer|abandonner)\b",
+        task.objective or "",
+    ):
+        return _execute_failure_triage(task)
+
     ctx.setdefault("pm_focus", True)
     ctx.setdefault("project_pm", {"include_plan": True, "include_structure": True})
     reunification = bool(
@@ -465,10 +709,105 @@ def _objective_is_proxmox_storage(text: str) -> bool:
     return storage_cue and target_cue
 
 
+def _plan_from_at_mentions(
+    objective: str, *, actor_id: str
+) -> list[dict[str, object]] | None:
+    """Si ≥2 @handles Team connus, une tâche par segment (objectifs NL respectés)."""
+    raw = objective or ""
+    handle_to_role: dict[str, str] = {
+        "argus": "qa",
+        "hephaistos": "ops",
+        "themis": "pm",
+        "dedale": "dev_game",
+        "vulcan": "dev_game",
+        "iris": "dev_godot",
+        "hermes": "dev_godot",
+        "pygmalion": "dev_game",
+        "choeur": "player_ia",
+        "lia": "player_ia",
+        "nix": "player_ia",
+    }
+    hits: list[tuple[str, str, str]] = []
+    for m in re.finditer(r"@([a-zA-Z0-9_-]+)\s*([^@]*)", raw):
+        handle = m.group(1).lower()
+        role = handle_to_role.get(handle)
+        if not role or role not in ROLE_SPECS:
+            continue
+        seg = m.group(2).strip()
+        seg = re.sub(r"(?i);?\s*max\s+\d+\s*t[aâ]ches?.*$", "", seg).strip(" \t;,—–-")
+        seg = re.sub(r"(?i);?\s*pas\s+de\s+double\s*\S*.*$", "", seg).strip(" \t;,—–-")
+        hits.append((handle, role, seg))
+
+    if len(hits) < 2:
+        return None
+
+    out: list[dict[str, object]] = []
+    for handle, role, seg in hits:
+        default = str(ROLE_SPECS[role]["default_objective"])
+        obj = seg if len(seg) >= 8 else default
+        if handle == "themis" and re.search(r"(?i)\btriage\b|\bfailed\b", obj):
+            ctx: dict[str, object] = {
+                "failure_triage": True,
+                "reunification_brief": True,
+                "pm_include_plan": True,
+            }
+        elif handle == "argus":
+            ctx = {}
+            if re.search(r"(?i)smoke|healthz|systemd", obj):
+                ctx["smoke_lan"] = True
+        elif handle == "hephaistos":
+            ctx = {}
+            if re.search(r"(?i):8010|:8000|healthz|sonde", obj):
+                ctx["ops_kind"] = "health_probe"
+                ctx["devops_dry_run"] = False
+                ctx["devops_action"] = {
+                    "kind": "http_get",
+                    "urls": [
+                        "http://127.0.0.1:8010/healthz",
+                        "http://127.0.0.1:8000/healthz",
+                    ],
+                }
+            else:
+                ctx["devops_dry_run"] = True
+        else:
+            ctx = {}
+        if handle == "pygmalion":
+            ctx = {"infographiste_ia": True, "subproject": "infographiste_ia"}
+        if handle == "iris":
+            ctx = {
+                "godot_dev_persona": "iris",
+                "godot_dev_track": "m9_full",
+                "subproject": "godot_iris",
+            }
+        row: dict[str, object] = {
+            "role": role,
+            "objective": obj,
+            "priority": "normal",
+            "approval_required": False,
+            "actor_id": actor_id,
+            "capability": ROLE_SPECS[role]["capability"],
+            **{k: v for k, v in role_display(role).items() if k in ("alias", "title", "label")},
+        }
+        if ctx:
+            row["context"] = ctx
+        out.append(row)
+    return out
+
+
 def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> list[dict[str, object]]:
     """Propose des tâches à partir d'un objectif NL (heuristique phase A)."""
     text = (objective or "").lower()
     proposals: list[dict[str, object]] = []
+    suppress_m9 = bool(
+        re.search(r"(?i)pas\s+de\s+double\s*m9|pas\s+de\s+m9a|sans\s+m9a", objective or "")
+    )
+    # Scrapaltai cité seulement dans un triage d'échecs → pas d'audit M9a/Iris.
+    triage_failed_only = bool(
+        re.search(
+            r"(?i)triage.{0,80}failed|failed.{0,40}(scrapaltai|infographiste|player_ia)",
+            objective or "",
+        )
+    )
 
     def _add(role: str, obj: str, *, context: dict[str, object] | None = None) -> None:
         spec = ROLE_SPECS[role]
@@ -484,6 +823,10 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
         if context:
             row["context"] = context
         proposals.append(row)
+
+    mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
+    if mentioned is not None:
+        return mentioned
 
     # --- Stockage Proxmox / disk Prime : ops dédié (évite qa smoke + player_ia « prime ») ---
     if _objective_is_proxmox_storage(text):
@@ -515,13 +858,21 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     if any(k in text for k in ("qa", "smoke", "test", "valide", "vérif", "verif", "lan")):
         obj = objective if "qa" in text else str(ROLE_SPECS["qa"]["default_objective"])
         _add("qa", obj)
-    if any(k in text for k in ("pm", "jalon", "roadmap", "plan", "projet", "tâche", "tache", "réunification", "reunification", "sous-projet")):
-        obj = objective if "pm" in text or "réunification" in text or "reunification" in text else str(ROLE_SPECS["pm"]["default_objective"])
-        _add("pm", obj)
+    if any(k in text for k in ("pm", "jalon", "roadmap", "plan", "projet", "tâche", "tache", "réunification", "reunification", "sous-projet", "triage")):
+        if "triage" in text and ("failed" in text or "échec" in text or "echec" in text):
+            obj = objective if "triage" in text else "Triage des tâches failed — relancer ou abandonner"
+            _add("pm", obj, context={"failure_triage": True, "reunification_brief": True})
+        else:
+            obj = objective if "pm" in text or "réunification" in text or "reunification" in text else str(ROLE_SPECS["pm"]["default_objective"])
+            _add("pm", obj)
     if any(k in text for k in ("dev", "game", "gameplay", "bug", "correctif", "mmo", "core3")):
         obj = objective if any(k in text for k in ("dev", "bug", "game")) else str(ROLE_SPECS["dev_game"]["default_objective"])
         _add("dev_game", obj)
-    if any(k in text for k in ("joueur", "joueurs", "lia", "nix", "bot", "player_ia", "prime", "246")):
+    # « player_ia » dans une liste de failed à trier ≠ spawn Chœur
+    if (
+        not triage_failed_only
+        and any(k in text for k in ("joueur", "joueurs", "lia", "nix", "bot", "player_ia", "prime", "246"))
+    ):
         obj = objective if "joueur" in text or "lia" in text else str(ROLE_SPECS["player_ia"]["default_objective"])
         _add("player_ia", obj)
     if any(
@@ -590,7 +941,10 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("infographiste", "infograph", "glb", "blender", "pipeline assets", "assets 3d")):
+    if (
+        not triage_failed_only
+        and any(k in text for k in ("infographiste", "infograph", "glb", "blender", "pipeline assets", "assets 3d"))
+    ):
         igo = objective if "infograph" in text or "glb" in text else "Audit pipeline assets GLB — manifest Godot et prochain export Blender"
         proposals.append(
             {
@@ -656,7 +1010,7 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("m9c", "carte m", "planet map", "waypoint", "locations tree")):
+    if not suppress_m9 and not triage_failed_only and any(k in text for k in ("m9c", "carte m", "planet map", "waypoint", "locations tree")):
         proposals.append(
             {
                 "role": "dev_game",
@@ -669,7 +1023,7 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("m9b", "minimap", "mini map", "mini-map")):
+    if not suppress_m9 and not triage_failed_only and any(k in text for k in ("m9b", "minimap", "mini map", "mini-map")):
         proposals.append(
             {
                 "role": "dev_game",
@@ -682,7 +1036,7 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("m9a", "scrapaltai", "planète scrapaltai", "planete scrapaltai")):
+    if not suppress_m9 and not triage_failed_only and any(k in text for k in ("m9a", "scrapaltai", "planète scrapaltai", "planete scrapaltai")):
         proposals.append(
             {
                 "role": "dev_game",
@@ -695,7 +1049,7 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("jalon m9", "m9 map", "m9 scrapaltai", "map minimap")):
+    if not suppress_m9 and not triage_failed_only and any(k in text for k in ("jalon m9", "m9 map", "m9 scrapaltai", "map minimap")):
         proposals.append(
             {
                 "role": "dev_game",
@@ -796,7 +1150,11 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 **{k: v for k, v in role_display("qa").items() if k in ("alias", "title", "label")},
             }
         )
-    if any(k in text for k in ("iris", "m9", "minimap", "carte m", "scrapaltai", "waypoint", "godot 2d")):
+    if (
+        not suppress_m9
+        and not triage_failed_only
+        and any(k in text for k in ("iris", "m9", "minimap", "carte m", "scrapaltai", "waypoint", "godot 2d"))
+    ):
         proposals.append(
             {
                 "role": "dev_godot",
@@ -875,8 +1233,33 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
             return team_store.get_task(task_id)
 
     trace_id = task.trace_id or str(uuid.uuid4())
-    team_store.update_task(task_id, status="running", context_patch={"trace_id": trace_id})
-    _trace_log({"event": "run_start", "task_id": task_id, "role": task.role, "trace_id": trace_id})
+    context_patch: dict[str, object] = {"trace_id": trace_id}
+    lessons_slice: list = []
+    try:
+        from team import lessons_learned as team_lessons
+
+        lessons_slice = team_lessons.lessons_slice_for_task(
+            role=str(task.role),
+            objective=task.objective or "",
+        )
+        if lessons_slice:
+            context_patch["lessons_slice"] = lessons_slice
+    except Exception:
+        lessons_slice = []
+    team_store.update_task(task_id, status="running", context_patch=context_patch)
+    # update_task charge sa propre copie : réaligner l'objet passé à l'exécuteur.
+    refreshed = team_store.get_task(task_id)
+    if refreshed is not None:
+        task = refreshed
+    _trace_log(
+        {
+            "event": "run_start",
+            "task_id": task_id,
+            "role": task.role,
+            "trace_id": trace_id,
+            "lessons_injected": len(lessons_slice) if isinstance(lessons_slice, list) else 0,
+        }
+    )
 
     executor = _EXECUTORS.get(task.role)
     if executor is None:
@@ -891,6 +1274,20 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
         result = executor(task)
         ok = bool(result.get("ok", True))
         status = "done" if ok else "failed"
+        try:
+            from team.post_judge import maybe_judge_task_outcome
+
+            judged = maybe_judge_task_outcome(task, result if isinstance(result, dict) else {})
+            if judged and isinstance(result, dict):
+                result = dict(result)
+                result["post_judge"] = {
+                    "score": judged.get("score"),
+                    "pass": judged.get("pass"),
+                    "mode": judged.get("mode"),
+                    "reasons": (judged.get("reasons") or [])[:4],
+                }
+        except Exception:
+            pass
         team_store.update_task(task_id, status=status, result=result)
         _trace_log({"event": "run_end", "task_id": task_id, "role": task.role, "ok": ok, "trace_id": trace_id})
         if task.role == "qa" and status == "failed":

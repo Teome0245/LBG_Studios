@@ -1123,6 +1123,40 @@
         if (r.role && r.default_objective) map[r.role] = String(r.default_objective);
       });
       __teamMetaRoles = map;
+      try {
+        const feats = (out.json && out.json.features) || {};
+        const traces = feats.traces || {};
+        const el = document.getElementById("team-meta-metrics");
+        if (el) {
+          const nLessons = traces.lessons_count != null ? traces.lessons_count : "—";
+          const nGolden = traces.golden_cases != null ? traces.golden_cases : "—";
+          const last = traces.last_judge || {};
+          const score =
+            last && last.score != null ? Number(last.score).toFixed(2) : "—";
+          const passed = last && last.pass != null ? (last.pass ? "pass" : "fail") : "—";
+          const lastM = traces.last_mutation || {};
+          const mut =
+            lastM && lastM.candidate_ready
+              ? " · mutation candidat"
+              : lastM && lastM.run_id
+                ? " · mutation ok"
+                : "";
+          const lastP = traces.last_proposal || {};
+          const prop = lastP && lastP.slug ? " · proposal " + lastP.slug : "";
+          el.textContent =
+            "Miroir / leçons : " +
+            nLessons +
+            " leçon(s) · golden " +
+            nGolden +
+            " · dernier juge score=" +
+            score +
+            " (" +
+            passed +
+            ")" +
+            mut +
+            prop;
+        }
+      } catch (_) {}
       teamSyncFormUi();
     }
 
@@ -1495,6 +1529,102 @@
       if (bForge) bForge.addEventListener("click", function () { teamForgeToAssistant(); });
       teamSyncFormUi();
       teamLoadMeta().catch(function () {});
+    }
+
+    /* ===================== Métriques Team (#/team/metrics) ===================== */
+    let __teamMetricsBound = false;
+
+    function teamMetricsFmt(obj) {
+      try {
+        return JSON.stringify(obj == null ? {} : obj, null, 2);
+      } catch (_) {
+        return String(obj);
+      }
+    }
+
+    async function teamMetricsRefresh() {
+      const out = await jobsGet(getBase() + "/v1/pilot/team/meta");
+      const feats = (out.json && out.json.features) || {};
+      const traces = feats.traces || {};
+      const judgeEl = document.getElementById("metrics-judge");
+      const lessonsEl = document.getElementById("metrics-lessons");
+      const mutEl = document.getElementById("metrics-mutation");
+      const propEl = document.getElementById("metrics-proposal");
+      const rawEl = document.getElementById("metrics-raw");
+      if (judgeEl) {
+        const j = traces.last_judge || (feats.outcome_judge && feats.outcome_judge.last_judge) || {};
+        judgeEl.textContent =
+          "golden_cases: " +
+          (traces.golden_cases != null ? traces.golden_cases : "—") +
+          "\nlast_judge.score: " +
+          (j.score != null ? j.score : "—") +
+          "\npass: " +
+          (j.pass != null ? j.pass : "—") +
+          "\nmode: " +
+          (j.mode || "—") +
+          "\ntask: " +
+          (j.task_id || "—");
+      }
+      if (lessonsEl) {
+        const L = feats.lessons_learned || {};
+        lessonsEl.textContent =
+          "count: " +
+          (traces.lessons_count != null ? traces.lessons_count : L.count != null ? L.count : "—") +
+          "\nenabled: " +
+          (L.enabled != null ? L.enabled : "—") +
+          "\npath: " +
+          (L.path || "—");
+      }
+      if (mutEl) {
+        const m = traces.last_mutation || {};
+        mutEl.textContent =
+          "run_id: " +
+          (m.run_id || "—") +
+          "\ncandidate: " +
+          (m.candidate_ready != null ? m.candidate_ready : "—") +
+          "\nwinner: " +
+          ((m.winner && m.winner.id) || "—") +
+          "\nΔscore: " +
+          ((m.winner && m.winner.score_delta) || "—") +
+          "\nsmoke_task: " +
+          (m.smoke_task_id || "—") +
+          "\nl2: " +
+          (m.l2_task_id || "—");
+      }
+      if (propEl) {
+        const p = traces.last_proposal || {};
+        propEl.textContent =
+          "slug: " +
+          (p.slug || "—") +
+          "\ntitle: " +
+          (p.title || "—") +
+          "\nbible_ok: " +
+          (p.bible_ok != null ? p.bible_ok : "—") +
+          "\nsmoke_task: " +
+          (p.smoke_task_id || "—") +
+          "\nl2: " +
+          (p.l2_task_id || "—") +
+          "\nbranch: " +
+          ((p.branch && p.branch.branch) || "—");
+      }
+      if (rawEl) {
+        rawEl.textContent = teamMetricsFmt({
+          traces: traces,
+          outcome_judge: feats.outcome_judge,
+          lessons_learned: feats.lessons_learned,
+          agent_mutator: feats.agent_mutator,
+          feature_proposer: feats.feature_proposer,
+        });
+      }
+    }
+
+    function teamMetricsBindPage() {
+      if (!__teamMetricsBound) {
+        __teamMetricsBound = true;
+        const btn = document.getElementById("btn-metrics-refresh");
+        if (btn) btn.addEventListener("click", function () { teamMetricsRefresh().catch(function () {}); });
+      }
+      teamMetricsRefresh().catch(function () {});
     }
 
     /* ===================== Jobs autonomes ("type Cowork") ===================== */

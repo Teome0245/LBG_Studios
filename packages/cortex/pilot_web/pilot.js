@@ -1723,15 +1723,15 @@
       const t = String(text || "").trim();
       if (!t) return false;
       if (
-        /où\s+(?:en|on)\s+(?:est|êtes|es-t-on)|ou\s+en\s+est|on\s+en\s+est\s+où|quel\s+(?:est\s+)?(?:le\s+)?(?:statut|état|avancement)|point\s+sur|état\s+(?:du|de)|avancement\s+(?:du|de)/i.test(
+        /où\s+(?:en|on)\s+(?:est|êtes|es-t-on)|ou\s+en\s+est|on\s+en\s+est\s+où|quel\s+(?:est\s+)?(?:le\s+)?(?:statut|état|avancement)|point\s+sur|état\s+(?:du|de)|avancement\s+(?:du|de)|compte\s+rendu|actions?\s+en\s+cours/i.test(
           t
         )
       ) {
         return true;
       }
       return (
-        /\b(?:statut|état|avancement|où)\b/i.test(t) &&
-        /\b(?:lora|godot|tri|images?|sprites?|devops|équipe|zb-?1|pygmalion|infra|kohya)\b/i.test(t)
+        /\b(?:statut|état|avancement|où|compte\s+rendu|actions?\s+en\s+cours)\b/i.test(t) &&
+        /\b(?:lora|godot|tri|images?|sprites?|devops|équipe|equipe|team|zb-?1|pygmalion|infra|kohya|campus)\b/i.test(t)
       );
     }
 
@@ -1740,22 +1740,117 @@
       const out = res && res.output;
       if (!out || typeof out !== "object") return "";
       const remote = out.remote;
-      if (remote && typeof remote.reply === "string" && remote.reply.trim()) return remote.reply.trim();
+      if (remote && typeof remote === "object") {
+        if (typeof remote.reply === "string" && remote.reply.trim()) return remote.reply.trim();
+        if (Array.isArray(remote.lines) && remote.lines.length) {
+          return remote.lines.map(String).join("\n").trim();
+        }
+      }
       if (typeof out.reply === "string" && out.reply.trim()) return out.reply.trim();
       return "";
     }
 
-    function assistantSetFactualRouteBadge(routeJson) {
+    function assistantRouteIntentMeta(routeJson) {
+      const res = routeJson && routeJson.result ? routeJson.result : {};
+      const out = res.output && typeof res.output === "object" ? res.output : {};
+      const remote = out.remote && typeof out.remote === "object" ? out.remote : {};
+      const rmeta = remote.meta && typeof remote.meta === "object" ? remote.meta : {};
+      return {
+        intent: res.intent || "",
+        routed_to: res.routed_to || "",
+        capability: out.capability || "",
+        agent: out.agent || "",
+        handler: out.handler || "",
+        voice: out.voice && typeof out.voice === "object" ? out.voice : null,
+        remote_meta: rmeta,
+      };
+    }
+
+    function assistantShouldLlmFallbackAfterRoute(routeJson, reply, prefs) {
+      if (!prefs || prefs.route_first_llm_fallback === false) return false;
+      if (!routeJson || routeJson.ok === false) return true;
+      const meta = assistantRouteIntentMeta(routeJson);
+      if (!reply || !String(reply).trim()) return true;
+      if (meta.intent === "unknown") return true;
+      if (meta.intent === "npc_dialogue" && meta.agent === "minimal_stub") return true;
+      return false;
+    }
+
+    function assistantSetRouteBadge(routeJson) {
       const el = document.getElementById("assistant-dialogue-badge");
       if (!el) return;
-      const intent = routeJson && routeJson.result ? routeJson.result.intent : "";
+      const meta = assistantRouteIntentMeta(routeJson);
+      const rmeta = meta.remote_meta || {};
+      const voice = meta.voice || {};
+      const skill = voice.skill || meta.intent || meta.capability || "route";
       el.hidden = false;
-      el.className = "assistant-route-badge assistant-route-badge--factual";
-      el.textContent = "FAIT";
-      el.title =
-        "Réponse factuelle (sondes locales) — intent=" +
-        String(intent || "status") +
-        " — pas de LLM dialogue.";
+      el.className = "assistant-route-badge";
+      if (meta.intent === "assistant_chat" || voice.first_contact) {
+        el.textContent = "Accueil";
+        el.classList.add("assistant-route-badge--factual");
+        el.title = "Intro LBG-IA — premier contact.";
+      } else if (rmeta.factual_status === true || meta.agent === "lbg_ia_voice" || meta.agent === "team_status") {
+        el.textContent = String(skill).slice(0, 18);
+        el.classList.add("assistant-route-badge--factual");
+        el.title =
+          "Compétence LBG-IA : " + String(skill) + " (intent=" + meta.intent + ") — routé sans LLM dialogue.";
+      } else if (meta.intent === "npc_dialogue" || meta.routed_to === "agent.dialogue") {
+        if (rmeta.llm === false) {
+          el.textContent = "hors LLM";
+          el.classList.add("assistant-route-badge--off");
+          el.title = "Dialogue routé — LLM désactivé ou stub.";
+        } else if (rmeta.stub === true) {
+          el.textContent = "stub";
+          el.classList.add("assistant-route-badge--stub");
+          el.title = "Dialogue routé — réponse de secours.";
+        } else {
+          el.textContent = "LLM";
+          el.classList.add("assistant-route-badge--llm");
+          el.title = "Dialogue routé via orchestrateur → agent dialogue.";
+        }
+      } else {
+        el.textContent = String(skill).slice(0, 18);
+        el.classList.add("assistant-route-badge--factual");
+        el.title =
+          "Routé : " + meta.intent + " → " + (meta.routed_to || meta.capability || "—");
+      }
+    }
+
+    function assistantSetFactualRouteBadge(routeJson) {
+      assistantSetRouteBadge(routeJson);
+    }
+
+    function assistantCommitChatTurn(ctx, ctxEl, text, replyNorm) {
+      if (!Array.isArray(ctx.history)) ctx.history = [];
+      ctx.history = ctx.history.concat([
+        { role: "user", content: text },
+        { role: "assistant", content: replyNorm },
+      ]);
+      if (ctx.history.length > 24) ctx.history = ctx.history.slice(-24);
+      ctx._lbg_ia_greeted = true;
+      if (ctxEl) ctxEl.value = JSON.stringify(ctx, null, 2);
+      assistantHistoryAdd({ kind: "chat_user", text: text.slice(0, 8000) });
+      assistantHistoryAdd({ kind: "chat_assistant", text: replyNorm.slice(0, 8000) });
+    }
+
+    function assistantAvatarSay(replyNorm) {
+      try {
+        if (window.OrchestratorAvatar && OrchestratorAvatar.ready) OrchestratorAvatar.say(replyNorm);
+      } catch (_) {}
+      try {
+        if (window.FaceRig && FaceRig.ready) FaceRig.say(replyNorm);
+      } catch (_) {}
+    }
+
+    function assistantRenderRouteJson(routeOut, rawEl, prettyEl) {
+      if (rawEl) rawEl.textContent = routeOut.json ? JSON.stringify(routeOut.json, null, 2) : "";
+      if (prettyEl) {
+        try {
+          prettyEl.innerHTML = routeOut.json ? renderPretty(routeOut.json) : "";
+        } catch (_) {
+          prettyEl.innerHTML = "";
+        }
+      }
     }
 
     function assistantClearDialogueRouteBadge() {
@@ -1819,6 +1914,8 @@
         auto_simulate_after_propose: true,
         auto_real_after_sim_ok: true,
         dialogue_desktop_plan: false,
+        route_first: true,
+        route_first_llm_fallback: true,
       };
     }
 
@@ -1839,6 +1936,8 @@
           auto_simulate_after_propose: parsed.auto_simulate_after_propose !== false,
           auto_real_after_sim_ok: parsed.auto_real_after_sim_ok !== false,
           dialogue_desktop_plan: parsed.dialogue_desktop_plan === true,
+          route_first: parsed.route_first !== false,
+          route_first_llm_fallback: parsed.route_first_llm_fallback !== false,
         };
       } catch (_) {
         return defaults;
@@ -1853,12 +1952,16 @@
       const autoSimEl = document.getElementById("assistant-pref-auto-sim-after-propose");
       const autoRealEl = document.getElementById("assistant-pref-auto-real-after-sim");
       const deskPlanEl = document.getElementById("assistant-pref-dialogue-desktop-plan");
+      const routeFirstEl = document.getElementById("assistant-pref-route-first");
+      const routeLlmEl = document.getElementById("assistant-pref-route-llm-fallback");
       if (pathEl) pathEl.value = prefs.notepad_path;
       if (dryEl) dryEl.checked = prefs.dry_run_default !== false;
       if (execTgl) execTgl.checked = prefs.exec_real === true;
       if (autoSimEl) autoSimEl.checked = prefs.auto_simulate_after_propose !== false;
       if (autoRealEl) autoRealEl.checked = prefs.auto_real_after_sim_ok !== false;
       if (deskPlanEl) deskPlanEl.checked = prefs.dialogue_desktop_plan === true;
+      if (routeFirstEl) routeFirstEl.checked = prefs.route_first !== false;
+      if (routeLlmEl) routeLlmEl.checked = prefs.route_first_llm_fallback !== false;
       assistantStyleExecButtonForMode();
     }
 
@@ -1870,6 +1973,8 @@
       const autoSimEl = document.getElementById("assistant-pref-auto-sim-after-propose");
       const autoRealEl = document.getElementById("assistant-pref-auto-real-after-sim");
       const deskPlanEl = document.getElementById("assistant-pref-dialogue-desktop-plan");
+      const routeFirstEl = document.getElementById("assistant-pref-route-first");
+      const routeLlmEl = document.getElementById("assistant-pref-route-llm-fallback");
       const path = pathEl && pathEl.value ? String(pathEl.value).trim() : "";
       return {
         notepad_path: path || defaults.notepad_path,
@@ -1878,6 +1983,8 @@
         auto_simulate_after_propose: !(autoSimEl && autoSimEl.checked === false),
         auto_real_after_sim_ok: !(autoRealEl && autoRealEl.checked === false),
         dialogue_desktop_plan: !!(deskPlanEl && deskPlanEl.checked),
+        route_first: !(routeFirstEl && routeFirstEl.checked === false),
+        route_first_llm_fallback: !(routeLlmEl && routeLlmEl.checked === false),
       };
     }
 
@@ -2164,9 +2271,10 @@
           '<circle cx="8" cy="7" r="1.2" fill="#5eead4"/>' +
           '<circle cx="15" cy="16" r="1" fill="#64748b"/>' +
           "</svg>" +
-          "<strong>Bienvenue</strong><br>" +
-          "Style bulles simple comme l’UI LBG IA : <strong>Dialoguer</strong> (LLM, historique dans le JSON) ou <strong>Proposer une action</strong>. " +
-          "Aucune exécution réelle sans « Exécuter ».</div>";
+          "<strong>Bienvenue — LBG-IA</strong><br>" +
+          "Pose une question en langage naturel : je route vers la bonne compétence " +
+          "(équipe, projet, Godot, infra…) et je réponds factuellement. " +
+          "<strong>Dialoguer</strong> pour le LLM, <strong>Proposer une action</strong> pour exécuter avec garde-fous.</div>";
         return;
       }
       const parts = [];
@@ -3219,43 +3327,34 @@
       }
       payloadCtx.lyra = assistantBuildLyraContextForDialogue();
       const payload = { actor_id: actorId, text: text, context: payloadCtx };
+      const prefs = assistantReadPrefsFromUi();
 
-      if (assistantLooksLikeStatusQuery(text)) {
-        const routePayload = {
-          actor_id: actorId,
-          text: text,
-          context: Object.assign({}, payloadCtx, { _force_factual_status: true }),
-        };
-        var routeOut = await postJson(base + "/v1/pilot/route", routePayload);
-        const factualReply = extractPilotRouteReply(routeOut.json);
-        if (routeOut.status === 200 && factualReply) {
-          if (rawEl) rawEl.textContent = routeOut.json ? JSON.stringify(routeOut.json, null, 2) : "";
-          if (prettyEl) {
-            try {
-              prettyEl.innerHTML = routeOut.json ? renderPretty(routeOut.json) : "";
-            } catch (_) {
-              prettyEl.innerHTML = "";
-            }
+      if (prefs.route_first !== false && payloadCtx._skip_route_first !== true) {
+        var routeOut;
+        try {
+          routeOut = await postJson(base + "/v1/pilot/route", {
+            actor_id: actorId,
+            text: text,
+            context: payloadCtx,
+          });
+        } catch (e) {
+          assistantUiHint("Routeur : " + e, true);
+          routeOut = null;
+        }
+        if (routeOut) {
+          const routeReply = extractPilotRouteReply(routeOut.json);
+          const useRoute =
+            routeOut.status === 200 &&
+            routeReply &&
+            !assistantShouldLlmFallbackAfterRoute(routeOut.json, routeReply, prefs);
+          if (useRoute) {
+            assistantRenderRouteJson(routeOut, rawEl, prettyEl);
+            assistantCommitChatTurn(ctx, ctxEl, text, routeReply);
+            assistantSetRouteBadge(routeOut.json);
+            assistantUiHint("Routé via orchestrateur (compétence LBG-IA)", false);
+            assistantAvatarSay(routeReply);
+            return;
           }
-          const replyNorm = factualReply;
-          if (!Array.isArray(ctx.history)) ctx.history = [];
-          ctx.history = ctx.history.concat([
-            { role: "user", content: text },
-            { role: "assistant", content: replyNorm },
-          ]);
-          if (ctx.history.length > 24) ctx.history = ctx.history.slice(-24);
-          if (ctxEl) ctxEl.value = JSON.stringify(ctx, null, 2);
-          assistantHistoryAdd({ kind: "chat_user", text: text.slice(0, 8000) });
-          assistantHistoryAdd({ kind: "chat_assistant", text: replyNorm.slice(0, 8000) });
-          assistantSetFactualRouteBadge(routeOut.json);
-          assistantUiHint("Statut factuel (route orchestrateur)", false);
-          try {
-            if (window.OrchestratorAvatar && OrchestratorAvatar.ready) OrchestratorAvatar.say(replyNorm);
-          } catch (_) {}
-          try {
-            if (window.FaceRig && FaceRig.ready) FaceRig.say(replyNorm);
-          } catch (_) {}
-          return;
         }
       }
 
@@ -3292,30 +3391,17 @@
         else if (Array.isArray(out.json.lines)) reply = out.json.lines.join("\n");
       }
       const replyNorm = String(reply || "").trim() || "(réponse vide)";
-      if (!Array.isArray(ctx.history)) ctx.history = [];
       ctx.lyra_engagement = "local_assistant";
       delete ctx.world_npc_id;
       delete ctx._desktop_plan;
       delete ctx._require_desktop_json;
-      ctx.history = ctx.history.concat([
-        { role: "user", content: text },
-        { role: "assistant", content: replyNorm },
-      ]);
-      if (ctx.history.length > 24) ctx.history = ctx.history.slice(-24);
-      if (ctxEl) ctxEl.value = JSON.stringify(ctx, null, 2);
-      assistantHistoryAdd({ kind: "chat_user", text: text.slice(0, 8000) });
-      assistantHistoryAdd({ kind: "chat_assistant", text: replyNorm.slice(0, 8000) });
+      assistantCommitChatTurn(ctx, ctxEl, text, replyNorm);
       try {
         assistantNudgeLyraFromPolicy("safe_read", "proposal");
       } catch (_) {}
       assistantSetDialogueRouteBadge(out);
-      assistantUiHint("Réponse reçue", false);
-      try {
-        if (window.OrchestratorAvatar && OrchestratorAvatar.ready) OrchestratorAvatar.say(replyNorm);
-      } catch (_) {}
-      try {
-        if (window.FaceRig && FaceRig.ready) FaceRig.say(replyNorm);
-      } catch (_) {}
+      assistantUiHint("LLM dialogue (repli ou conversation libre)", false);
+      assistantAvatarSay(replyNorm);
     }
 
     async function assistantPropose() {
@@ -3635,6 +3721,7 @@
       if (seg === "assistant") return "assistant";
       if (seg === "jobs") return "jobs";
       if (seg === "team" && parts[1] === "office") return "team_office";
+      if (seg === "team" && parts[1] === "metrics") return "team_metrics";
       if (seg === "team") return "team";
       if (seg === "ops") return "ops";
       if (seg === "pm") return "pm";
@@ -4757,6 +4844,29 @@
         if (r.role && r.default_objective) map[r.role] = String(r.default_objective);
       });
       __teamMetaRoles = map;
+      try {
+        const feats = (out.json && out.json.features) || {};
+        const traces = feats.traces || {};
+        const el = document.getElementById("team-meta-metrics");
+        if (el) {
+          const nLessons = traces.lessons_count != null ? traces.lessons_count : "—";
+          const nGolden = traces.golden_cases != null ? traces.golden_cases : "—";
+          const last = traces.last_judge || {};
+          const score =
+            last && last.score != null ? Number(last.score).toFixed(2) : "—";
+          const passed = last && last.pass != null ? (last.pass ? "pass" : "fail") : "—";
+          el.textContent =
+            "Miroir / leçons : " +
+            nLessons +
+            " leçon(s) · golden " +
+            nGolden +
+            " · dernier juge score=" +
+            score +
+            " (" +
+            passed +
+            ")";
+        }
+      } catch (_) {}
       teamSyncFormUi();
     }
 

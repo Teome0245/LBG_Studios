@@ -52,10 +52,24 @@ infra/secrets/*.env
 .idea/
 *.swp
 
+# WSL / mount résiduel (ne pas versionner)
+wsl.localhost/
+**/wsl.localhost/
+
+# Face rig — composites de build (garder face.png / sheets + manifest)
+packages/cortex/pilot_web/face_rig/assets/**/_composites/
+packages/cortex/pilot_web/face_rig/assets/**/_composites_v*/
+packages/cortex/pilot_web/face_rig/assets/**/*_backup.png
+
 # Logs / traces
 *.log
 team_trace.jsonl
 **/__pycache__/
+
+# Méta-autonomie — artefacts runtime staging / overrides appliqués
+packages/cortex/orchestrator/team/staging/agent_mutator/*/
+packages/cortex/orchestrator/team/staging/feature_proposer/*/
+packages/cortex/orchestrator/team/data/prompt_overrides/*.txt
 
 # Exception Pilot avatar (léger)
 !packages/cortex/pilot_web/orchestrator_avatar/models/*.glb

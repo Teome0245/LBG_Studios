@@ -112,6 +112,14 @@ def _roles_catalog() -> list[dict[str, str]]:
 
 
 def _system_prompt() -> str:
+    try:
+        from team.prompt_overrides import load_override
+
+        ov = load_override("plan_llm")
+        if ov:
+            return ov
+    except Exception:
+        pass
     catalog = json.dumps(_roles_catalog(), ensure_ascii=False)
     keys = ", ".join(sorted(ALLOWED_PLAN_CONTEXT_KEYS))
     return (
@@ -134,6 +142,15 @@ def _user_prompt(objective: str, *, memory_snippets: list[dict[str, Any]] | None
     if memory_snippets:
         parts.append("Learnings récents (mémoire équipe) :")
         parts.append(json.dumps(memory_snippets[:6], ensure_ascii=False))
+    try:
+        from team import lessons_learned
+
+        lessons = lessons_learned.lessons_slice_for_task(role="pm", objective=objective, limit=4)
+        if lessons:
+            parts.append("Leçons réflexives (ne pas répéter) :")
+            parts.append(json.dumps(lessons, ensure_ascii=False))
+    except Exception:
+        pass
     parts.append("Propose les tâches JSON.")
     return "\n".join(parts)
 

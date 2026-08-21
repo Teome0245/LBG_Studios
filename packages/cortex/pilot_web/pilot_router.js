@@ -11,6 +11,7 @@
       const jobsPage = document.getElementById("pilot-page-jobs");
       const teamPage = document.getElementById("pilot-page-team");
       const teamOfficePage = document.getElementById("pilot-page-team-office");
+      const teamMetricsPage = document.getElementById("pilot-page-team-metrics");
       const pm = document.getElementById("pilot-page-pm");
       const ly = document.getElementById("pilot-page-lyra");
       const de = document.getElementById("pilot-page-desktop");
@@ -20,6 +21,7 @@
       if (jobsPage) jobsPage.hidden = r !== "jobs";
       if (teamPage) teamPage.hidden = r !== "team";
       if (teamOfficePage) teamOfficePage.hidden = r !== "team_office";
+      if (teamMetricsPage) teamMetricsPage.hidden = r !== "team_metrics";
       if (pm) pm.hidden = r !== "pm";
       if (ly) ly.hidden = r !== "lyra";
       if (de) de.hidden = r !== "desktop";
@@ -37,6 +39,9 @@
             if (deepTask) return teamSelect(deepTask, { skipHash: true });
           }).catch(function () {});
         } catch (_) {}
+      }
+      if (r === "team_metrics") {
+        try { teamMetricsBindPage(); } catch (_) {}
       }
       if (r === "team_office") {
         try { officeBindPage(); } catch (_) {}
@@ -102,6 +107,7 @@
         let active = false;
         if (route === "home") active = r === "home";
         else if (route === "team_office") active = r === "team_office";
+        else if (route === "team_metrics") active = r === "team_metrics";
         else if (route) active = r === route;
         a.classList.toggle("pilot-nav-active", !!active);
       });
@@ -111,6 +117,7 @@
         jobs: "studio",
         team: "campus",
         team_office: "campus",
+        team_metrics: "campus",
         ops: "ops",
         desktop: "ops",
         pm: "projet",

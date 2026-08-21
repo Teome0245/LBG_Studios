@@ -14,10 +14,19 @@ Une fois par **7 jours**, Thémis fait un **audit full** (infra, Team, LLM, jeu,
 
 Ce n’est **pas** l’autoconsult : l’autoconsult vérifie que ça tourne ; le sprint cherche à **faire mieux**.
 
+## Méta (2026-08-21)
+
+Si `LBG_TEAM_EVOLUTION_META=1` (défaut), le sprint spawn aussi :
+
+1. **Mutator** (`agent_mutation`) — golden + candidat prompt → revue L2 → apply `prompt_overrides/`
+2. **Feature Proposer** — RFC staging + smoke Argus + revue L2
+
+Détail : [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md).
+
 ## Boucle
 
 ```
-Timer 7j → Audit → Diagnose → Plan → L1 auto / L2 Pilot → Verify → Mémoire
+Timer 7j → Audit → Diagnose → Plan → L1 auto / L2 Pilot (+ méta) → Verify → Mémoire
 ```
 
 | Cadence | Quoi |
@@ -97,14 +106,21 @@ Variables : `infra/secrets/lbg.env.example` (`LBG_TEAM_EVOLUTION_*`).
 ```bash
 cd packages/cortex
 python -m pytest orchestrator/tests/test_team_evolution_sprint.py \
+  orchestrator/tests/test_loop_close_abc.py \
+  orchestrator/tests/test_agent_mutator.py \
+  orchestrator/tests/test_feature_proposer.py \
+  orchestrator/tests/test_outcome_judge.py \
+  orchestrator/tests/test_verify_chain.py \
   agents/tests/test_spawn_team_evolution_sprint_job.py -q
 ```
 
 ## Fichiers
 
 - `orchestrator/team/evolution_sprint_workflow.py`
+- `orchestrator/team/agent_mutator.py`, `feature_proposer.py`, `outcome_judge.py`, `post_judge.py`, `verify_chain.py`
 - `agents/src/lbg_agents/spawn_team_evolution_sprint_job.py`
 - `infra/systemd/lbg-team-evolution-sprint-job.{service,timer}`
 - `infra/scripts/install_team_evolution_sprint_job_vm.sh`
 - `infra/scripts/run_team_evolution_sprint.sh`
-- Preset Pilot : `pilot_web/index.html` + `pilot_web/pilot_team.js`
+- Preset Pilot : `pilot_web/index.html` + `pilot_web/pilot_team.js` + `#/team/metrics`
+- Plan : [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md)

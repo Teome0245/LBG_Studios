@@ -121,8 +121,10 @@ Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle obs
 2. **Vague 0–4 + L3 Iris** — ADR 0019 : plan LLM, bus, mémoire, hooks, clôture mission, prune ; Iris L3 allowlist (`LBG_IRIS_FORGE_L3`).
 3. **A3 livré 2026-08-03** — `team/playbook_scores.py` (score coffee-fill) ; élargissement allowlist Iris avec smoke ; voir [`docs/PLAN_MMO_O2.md`](../../../docs/PLAN_MMO_O2.md).
 4. **A1+A2+P1 livrés 2026-08-03** — playbook jalon + owner smokes + M12 move + anti-clôture si rouge.
-4. **Plus tard (périphérie)** — Slack optionnel ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
-5. **Lab only** — Adapter CrewAI hors chemin critique.
+4. **Cible — Miroir / leçons / forge mutation / Feature Proposer** — extension L3 + méta-apprentissage (greffe Team, pas second OS) : [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md).
+5. **Fait 2026-08-21** — boucle fermée A–C : sprint → mutator/proposer → post-judge → apply L2 `prompt_overrides` ; Pilot `#/team/metrics`.
+6. **Plus tard (périphérie)** — Slack optionnel ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
+7. **Lab only** — Adapter CrewAI hors chemin critique.
 
 ## 8. Commandes utiles
 

@@ -78,11 +78,14 @@ def test_evolution_sprint_collects_probes(monkeypatch: pytest.MonkeyPatch) -> No
     assert len(out["probes"]) == 15
     assert out.get("l1_auto_rate") == 1.0
     assert out["gaps_count"] == 0
-    assert out["l1_task_ids"] == []
+    # Méta mutator + feature proposer (L1) même sans gaps
+    assert len(out.get("meta_task_ids") or []) == 2
+    assert len(out["l1_task_ids"]) == 2
     from team.evolution_sprint_workflow import last_sprint
 
     persisted = last_sprint()
     assert persisted.get("task_id") == stored.id
+    assert len(persisted.get("meta_task_ids") or []) == 2
 
 
 def test_evolution_l1_spawns_on_gap_and_l2_on_forbidden_model(

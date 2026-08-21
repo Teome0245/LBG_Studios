@@ -30,6 +30,7 @@
         <div class="pilot-nav-menu">
           <a href="#/team" data-nav-route="team">File tâches</a>
           <a href="#/team/office" data-nav-route="team_office">Bureau</a>
+          <a href="#/team/metrics" data-nav-route="team_metrics">Métriques</a>
           <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer" title="Carte agents — Orchestrateur UI .100:5174">Carte agents</a>
         </div>
       </details>
@@ -341,7 +342,7 @@
           <textarea id="assistant-text" class="assistant-input-main" rows="3" placeholder="Ex. regarde si j’ai un mail de Intel, ou collez une intention libre…"></textarea>
 
           <div class="assistant-actions-primary">
-            <button type="button" id="btn-assistant-converse" class="assistant-btn-converse" title="Réponse texte multi-tours (POST /v1/pilot/agent-dialogue/invoke)">Dialoguer</button>
+            <button type="button" id="btn-assistant-converse" class="assistant-btn-converse" title="Routeur LBG-IA puis LLM dialogue si besoin (POST /v1/pilot/route → agent-dialogue)">Dialoguer</button>
             <button type="button" id="btn-assistant-propose" class="assistant-btn-primary" title="Ctrl+Entrée">Proposer une action</button>
             <div class="assistant-exec-row" title="Mode mémorisé localement avec les autres préférences Assistant">
               <span class="assistant-exec-mode-label">dry-run</span>
@@ -447,6 +448,14 @@
 
         <div class="assistant-card">
           <h2>Options</h2>
+          <label class="assistant-check">
+            <input type="checkbox" id="assistant-pref-route-first" checked />
+            <span><strong>Routeur d’abord</strong> — chaque message passe par <code>/v1/pilot/route</code> (compétences LBG-IA) avant le LLM dialogue</span>
+          </label>
+          <label class="assistant-check">
+            <input type="checkbox" id="assistant-pref-route-llm-fallback" checked />
+            <span>Si aucune compétence ne correspond (<code>unknown</code>), enchaîner avec le LLM dialogue (conversation libre)</span>
+          </label>
           <label class="assistant-check">
             <input type="checkbox" id="assistant-pref-dry-run" checked />
             <span>Dry-run par défaut (poste / forge)</span>
@@ -740,7 +749,9 @@
         File de tâches par rôle sur l'orchestrateur <strong>140</strong>. Alias : Héphaïstos, Argus, Thémis, Dédale, Chœur du monde — voir <code>/v1/team/meta</code>.
         Endpoints proxifiés sous <code>/v1/pilot/team/*</code>.
         <a href="#/team/office">Ouvrir le bureau virtuel →</a>
+        · <a href="#/team/metrics">Métriques Miroir →</a>
       </p>
+      <p id="team-meta-metrics" class="muted" style="font-size:0.82rem; margin:0.35rem 0 0 0;">Miroir / leçons : —</p>
     </header>
     <div class="dashboard" style="grid-template-columns: minmax(20rem, 1fr) minmax(24rem, 1.6fr);">
       <div class="col">
@@ -893,6 +904,41 @@
         </section>
       </div>
     </div>
+  </div>
+
+  <div id="pilot-page-team-metrics" class="pilot-page" hidden>
+    <header>
+      <h1>Métriques Team <span class="muted" style="font-size:0.9rem;">(Miroir / mutation / propositions)</span></h1>
+      <p class="muted">
+        Lecture de <code>GET /v1/pilot/team/meta</code> — traces judge, leçons, mutator, feature proposer.
+        <a href="#/team">← file tâches</a> · <a href="#/team/office">bureau</a>
+      </p>
+    </header>
+    <div class="dashboard" style="grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.85rem;">
+      <section>
+        <div class="panel-title"><h2>Miroir</h2></div>
+        <pre id="metrics-judge" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:6rem;">—</pre>
+      </section>
+      <section>
+        <div class="panel-title"><h2>Leçons</h2></div>
+        <pre id="metrics-lessons" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:6rem;">—</pre>
+      </section>
+      <section>
+        <div class="panel-title"><h2>Mutation</h2></div>
+        <pre id="metrics-mutation" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:6rem;">—</pre>
+      </section>
+      <section>
+        <div class="panel-title"><h2>Feature Proposer</h2></div>
+        <pre id="metrics-proposal" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:6rem;">—</pre>
+      </section>
+    </div>
+    <section style="margin-top:0.85rem;">
+      <div class="panel-title" style="display:flex; align-items:center; gap:0.75rem;">
+        <h2 style="margin:0;">Traces brutes</h2>
+        <button type="button" id="btn-metrics-refresh" class="preset">Rafraîchir</button>
+      </div>
+      <pre id="metrics-raw" class="muted" style="font-size:0.78rem; max-height:22rem; overflow:auto;">—</pre>
+    </section>
   </div>
 
   <div id="pilot-page-team-office" class="pilot-page" hidden>
@@ -1300,11 +1346,11 @@
   <script type="importmap">
   {
     "imports": {
-      "three": "/pilot/node_modules/three/build/three.module.js",
-      "three/examples/jsm/loaders/GLTFLoader.js": "/pilot/node_modules/three/examples/jsm/loaders/GLTFLoader.js"
+      "three": "./node_modules/three/build/three.module.js",
+      "three/examples/jsm/loaders/GLTFLoader.js": "./node_modules/three/examples/jsm/loaders/GLTFLoader.js"
     }
   }
   </script>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="src/main.js?v=20260821-office"></script>
 </body>
 </html>

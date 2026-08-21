@@ -92,8 +92,10 @@ def persist_sprint(report: dict[str, Any]) -> None:
         "ok": report.get("ok"),
         "gaps_count": report.get("gaps_count"),
         "opportunities_count": report.get("opportunities_count"),
+        "opportunities": (report.get("opportunities") or [])[:12],
         "l1_task_ids": report.get("l1_task_ids") or [],
         "l2_task_ids": report.get("l2_task_ids") or [],
+        "meta_task_ids": report.get("meta_task_ids") or [],
         "l1_auto_rate": report.get("l1_auto_rate"),
         "human_summary": report.get("human_summary"),
     }
@@ -434,6 +436,70 @@ def _spawn_finding(
     return t.id
 
 
+def meta_evolution_enabled() -> bool:
+    return os.environ.get("LBG_TEAM_EVOLUTION_META", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def _spawn_meta_evolution_tasks(task: TeamTask) -> tuple[list[str], list[str]]:
+    """Spawn mutator + feature proposer (L1) ; leurs propres L2 review restent séparés."""
+    if not meta_evolution_enabled():
+        return [], []
+    actor = os.environ.get("LBG_TEAM_EVOLUTION_FOLLOWUP_ACTOR_ID", "system:team_evolution").strip()
+    l1: list[str] = []
+    l2: list[str] = []
+    try:
+        mut = team_store.create_task(
+            role="qa",
+            objective="Évolution méta — forge mutation prompt outcome_judge (golden + candidat L2)",
+            actor_id=actor,
+            priority="normal",
+            approval_required=False,
+            context={
+                "parent_task_id": task.id,
+                "evolution_sprint": True,
+                "agent_mutation": True,
+                "workflow": "agent_mutator",
+                "mutation_target": "outcome_judge",
+                "spawn_l2": True,
+            },
+        )
+        l1.append(mut.id)
+    except Exception:
+        pass
+    try:
+        prop = team_store.create_task(
+            role="pm",
+            objective="Évolution méta — Feature Proposer (RFC + auto-evolution + revue L2)",
+            actor_id=actor,
+            priority="normal",
+            approval_required=False,
+            context={
+                "parent_task_id": task.id,
+                "evolution_sprint": True,
+                "feature_proposal": True,
+                "workflow": "feature_proposer",
+                "spawn_l2": True,
+                "create_branch": True,
+                "dry_run_git": True,  # safe default in sprint ; override via env later
+            },
+        )
+        l1.append(prop.id)
+    except Exception:
+        pass
+    if l1:
+        bus_hooks.emit_ack_spawn(
+            parent_task_id=task.id,
+            child_task_ids=l1,
+            actor_id=actor,
+        )
+    return l1, l2
+
+
 def _spawn_actions(
     task: TeamTask,
     gaps: list[dict[str, Any]],
@@ -572,7 +638,9 @@ def execute_evolution_sprint_workflow(task: TeamTask, dispatch: Dispatcher) -> d
         },
     )
 
-    l1_ids, l2_ids = _spawn_actions(task, gaps, opportunities)
+    gap_l1_ids, l2_ids = _spawn_actions(task, gaps, opportunities)
+    meta_ids, _meta_l2 = _spawn_meta_evolution_tasks(task)
+    l1_ids = list(gap_l1_ids) + list(meta_ids)
     ran_l1: list[dict[str, object]] = []
     if l1_ids and l1_auto_run():
         from team import roles as team_roles
@@ -583,12 +651,21 @@ def execute_evolution_sprint_workflow(task: TeamTask, dispatch: Dispatcher) -> d
                 result = team_roles.run_task(fid)
                 if result:
                     ran_l1.append({"task_id": fid, "role": result.role, "status": result.status})
+                    # Collecter L2 enfants spawnés par mutator/proposer
+                    res = result.result if isinstance(result.result, dict) else {}
+                    child_l2 = res.get("l2_task_id")
+                    if child_l2 and child_l2 not in l2_ids:
+                        l2_ids.append(str(child_l2))
 
-    if not l1_ids:
+    if l1_auto_run():
+        if not l1_ids:
+            l1_auto_rate = 1.0 if not gaps else 0.0
+        else:
+            done_n = sum(1 for r in ran_l1 if r.get("status") in ("done", "failed", "blocked"))
+            l1_auto_rate = done_n / max(len(l1_ids), 1)
+    elif not gap_l1_ids:
+        # Méta spawnée mais auto-run off : ne pas pénaliser un sprint sans gaps
         l1_auto_rate = 1.0 if not gaps else 0.0
-    elif l1_auto_run():
-        done_n = sum(1 for r in ran_l1 if r.get("status") in ("done", "failed", "blocked"))
-        l1_auto_rate = done_n / max(len(l1_ids), 1)
     else:
         l1_auto_rate = 0.0
 
@@ -613,6 +690,7 @@ def execute_evolution_sprint_workflow(task: TeamTask, dispatch: Dispatcher) -> d
         extra_checklist=[
             f"L1 appliqués auto: {len(ran_l1)}/{len(l1_ids)}",
             f"L2 en file Pilot: {len(l2_ids)}",
+            f"Méta (mutator/proposer): {len(meta_ids)}",
             f"Opportunités: {len(opportunities)}",
             "Doc docs/team_evolution_sprint.md",
         ],
@@ -655,6 +733,7 @@ def execute_evolution_sprint_workflow(task: TeamTask, dispatch: Dispatcher) -> d
         "brief": brief,
         "l1_task_ids": l1_ids,
         "l2_task_ids": l2_ids,
+        "meta_task_ids": meta_ids,
         "followup_task_ids": l1_ids + l2_ids,
         "l1_ran": ran_l1,
         "l1_auto_rate": l1_auto_rate,

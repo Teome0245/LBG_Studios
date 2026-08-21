@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "lessons": [
+    {
+      "id": "lesson_smoke_block_close",
+      "date": "2026-08-03",
+      "agent_role": "qa",
+      "context": "mission Team + smoke owner",
+      "failure_or_success": "success",
+      "pattern": "Ne jamais clôturer une mission en succès si le smoke QA/owner est rouge (A2).",
+      "do_not_repeat": "Force close success on red smoke",
+      "refs": [
+        "docs/PLAN_MMO_O2.md",
+        "LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL"
+      ]
+    },
+    {
+      "id": "lesson_iris_l3_allowlist",
+      "date": "2026-08-03",
+      "agent_role": "dev_godot",
+      "context": "Iris forge apply",
+      "failure_or_success": "success",
+      "pattern": "Apply auto uniquement chemins allowlist + smoke vert + LBG_IRIS_FORGE_L3=1 ; hors liste = L2/Cursor.",
+      "do_not_repeat": "Write libre hors allowlist en L1/L3",
+      "refs": [
+        "orchestrator/team/iris_l3.py",
+        "ADR 0019"
+      ]
+    },
+    {
+      "id": "lesson_no_second_os",
+      "date": "2026-08-03",
+      "agent_role": "pm",
+      "context": "architecture Team",
+      "failure_or_success": "success",
+      "pattern": "Greffer capacités (Judge, leçons, forge) sur Cortex Team ; ne pas substituer par CrewAI/Manus/OpenHands sur le chemin critique LAN.",
+      "do_not_repeat": "Second orchestrateur opaque",
+      "refs": [
+        "packages/cortex/docs/lbg_agentic_os.md"
+      ]
+    },
+    {
+      "id": "lesson_36eda91e28",
+      "date": "2026-08-21",
+      "agent_role": "ops",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "cb72538b-b166-45b8-888b-8fec6a97476d",
+        "outcome_judge"
+      ]
+    },
+    {
+      "id": "lesson_dc2817955a",
+      "date": "2026-08-21",
+      "agent_role": "ops",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "4e732aa7-340e-4846-9b30-c9ac6b2655dc",
+        "outcome_judge"
+      ]
+    },
+    {
+      "id": "lesson_8d04282446",
+      "date": "2026-08-21",
+      "agent_role": "ops",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "5122d619-05dd-41d6-a09b-b5c3bb817466",
+        "outcome_judge"
+      ]
+    }
+  ]
+}
