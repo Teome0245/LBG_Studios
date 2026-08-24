@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Migration phase 1 : posts PNJ catalogue ME → Lost Heaven (outdoor cell=0).
+"""Migration phase 1–2 : posts PNJ catalogue ME → Lost Heaven (outdoor cell=0).
+
+Phase 1 : cantina, trainers, quest giver.
+Phase 2 : triplons pilotes starport (imperial / alliance / freelance).
 
 Conserve les roster_id (compat ia_bridge_screenplay.lua). Met a jour service_post,
 binding.post/home et leisure_patrol outdoor autour du hub LH.
@@ -109,6 +112,36 @@ LH_POSTS: dict[str, dict[str, Any]] = {
         "location_id": "loc:lost_heaven_hub",
         "description": "Donneur de quete — plaza Lost Heaven (migration ME)",
     },
+    "roster:mos_pilot_imperial": {
+        "x": 4819,
+        "y": -810,
+        "z": 32,
+        "heading": 90,
+        "cell": 0,
+        "location_id": "loc:mos_eisley_starport_pilot",
+        "description": "Starport LH — triplon pilote imperial (ex lounge ME)",
+        "leisure_patrol": "starport",
+    },
+    "roster:mos_pilot_alliance": {
+        "x": 4801,
+        "y": -814,
+        "z": 32,
+        "heading": 90,
+        "cell": 0,
+        "location_id": "loc:mos_eisley_starport_pilot",
+        "description": "Starport LH — triplon pilote alliance (ex lounge ME)",
+        "leisure_patrol": "starport",
+    },
+    "roster:mos_pilot_freelance": {
+        "x": 4825,
+        "y": -798,
+        "z": 32,
+        "heading": 90,
+        "cell": 0,
+        "location_id": "loc:mos_eisley_starport_pilot",
+        "description": "Starport LH — triplon pilote freelance (ex lounge ME)",
+        "leisure_patrol": "starport",
+    },
 }
 
 LH_LEISURE_PATROL = [
@@ -117,6 +150,17 @@ LH_LEISURE_PATROL = [
     {"x": 4939, "y": -802, "z": 32},
     {"x": 4809, "y": -932, "z": 32},
 ]
+
+LH_STARPORT_PATROL = [
+    {"x": 4809, "y": -802, "z": 32},
+    {"x": 4819, "y": -810, "z": 32},
+    {"x": 4825, "y": -798, "z": 32},
+    {"x": 4749, "y": -537, "z": 32},
+]
+
+LH_LEISURE_BY_KEY = {
+    "starport": LH_STARPORT_PATROL,
+}
 
 
 def _post_dict(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -128,7 +172,11 @@ def _apply_post(target: dict[str, Any], post: dict[str, Any]) -> None:
         target[key] = val
 
 
-def _migrate_binding(binding: dict[str, Any], post: dict[str, Any]) -> None:
+def _migrate_binding(
+    binding: dict[str, Any],
+    post: dict[str, Any],
+    leisure: list[dict[str, Any]] | None = None,
+) -> None:
     if not isinstance(binding, dict):
         return
     for key in ("post", "home"):
@@ -137,7 +185,7 @@ def _migrate_binding(binding: dict[str, Any], post: dict[str, Any]) -> None:
     if "cantina" in binding:
         binding.pop("cantina", None)
     if "leisure_patrol" in binding:
-        binding["leisure_patrol"] = copy.deepcopy(LH_LEISURE_PATROL)
+        binding["leisure_patrol"] = copy.deepcopy(leisure or LH_LEISURE_PATROL)
 
 
 def migrate_catalog(doc: dict[str, Any]) -> list[str]:
@@ -153,6 +201,13 @@ def migrate_catalog(doc: dict[str, Any]) -> list[str]:
         if not cfg:
             continue
         post = _post_dict(cfg)
+        leisure_key = cfg.get("leisure_patrol")
+        if isinstance(leisure_key, str):
+            leisure = LH_LEISURE_BY_KEY.get(leisure_key, LH_LEISURE_PATROL)
+        elif isinstance(leisure_key, list):
+            leisure = leisure_key
+        else:
+            leisure = LH_LEISURE_PATROL
         if roster.get("service_post"):
             _apply_post(roster["service_post"], post)
         if cfg.get("description"):
@@ -164,15 +219,16 @@ def migrate_catalog(doc: dict[str, Any]) -> list[str]:
                 continue
             binding = slot.get("binding")
             if isinstance(binding, dict):
-                _migrate_binding(binding, post)
+                _migrate_binding(binding, post, leisure)
         changes.append(rid)
     meta = doc.setdefault("migration_meta", {})
     if isinstance(meta, dict):
         meta["me_to_lh_outdoor"] = {
-            "phase": 1,
+            "phase": 2,
             "applied": True,
             "rosters": changes,
             "hub_anchor": {"x": 4749, "y": -737, "z": 32},
+            "starport_anchor": {"x": 4809, "y": -802, "z": 32},
         }
     return changes
 

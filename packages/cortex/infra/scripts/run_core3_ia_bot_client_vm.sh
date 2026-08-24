@@ -136,20 +136,8 @@ if [[ "${LOGIN_ONLY}" == "1" ]]; then
   extra+=(--login-only)
 fi
 
-# Après zone-in : cantina Lia (évite relog manuel quand Prime a redémarré).
-if [[ "${LOGIN_ONLY}" == "0" && "${BOT_CHAR}" == "Lia" ]]; then
-  (
-    sleep 40
-    for _ in $(seq 1 24); do
-      if tail -40 "${BIN_DIR}/log/core3client.log" 2>/dev/null | grep -q "Staying connected"; then
-        printf '%s\n' 'housing_enter|Lia|tatooine|0|0|0|cantina' >> "${BIN_DIR}/ia_bridge/pending.jsonl"
-        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) post_zone: housing_enter cantina" >> "${BIN_DIR}/log/ia_bot_bootstrap.log"
-        break
-      fi
-      sleep 10
-    done
-  ) &
-fi
+# Après zone-in : ne plus forcer Lia en cantina / training (ça la fige en intérieur).
+# Recentrage Lost Heaven = marche outdoor, pas housing_enter.
 
 exec ./core3client \
   --env "${ENV_FILE}" \

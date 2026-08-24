@@ -8,6 +8,13 @@
   "show_entities": true,
   "show_essential_poi_only": true,
   "click_pan_camera": true,
+  "show_coordinates": true,
+  "coord_strip_px": 22,
+  "coordinates": {
+    "compact": true,
+    "show_altitude": true,
+    "notes": "Affichage : E/O=Core3 X, N/S=Core3 Z, ↑m=Core3 Y (alt.). * = hauteur cellule/intérieur."
+  },
   "toggle_key": "M",
   "require_ctrl_for_toggle": false,
   "notes": "M9b — minimap locale style SWG (nord haut, zone ~420 m autour du centre caméra/joueur)"

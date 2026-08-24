@@ -1,14 +1,14 @@
 {
   "ts": 0,
-  "origin": { "x": 3510.0, "z": -4800.0 },
+  "origin": { "x": 4749.0, "z": -737.0 },
   "entities": [
     {
       "id": "player:SWG_Client",
       "kind": "player",
       "name": "SWG_Client",
-      "x": 3500.0,
+      "x": 4749.0,
       "y": 0.0,
-      "z": -4800.0,
+      "z": -737.0,
       "online": true,
       "zone": "tatooine"
     },
@@ -16,9 +16,9 @@
       "id": "player:Bot_IA",
       "kind": "player",
       "name": "Bot_IA",
-      "x": 3510.0,
+      "x": 4755.0,
       "y": 0.0,
-      "z": -4795.0,
+      "z": -732.0,
       "online": true,
       "zone": "tatooine"
     },
@@ -26,9 +26,9 @@
       "id": "npc:Guard",
       "kind": "npc",
       "name": "NPC_Guard",
-      "x": 3525.0,
+      "x": 4738.0,
       "y": 8.0,
-      "z": -4810.0,
+      "z": -745.0,
       "online": true,
       "zone": "tatooine"
     }

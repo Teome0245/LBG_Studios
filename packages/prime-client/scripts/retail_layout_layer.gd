@@ -24,6 +24,12 @@ func _ready() -> void:
 	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", size_multiplier))
 	if mul > 0.0:
 		size_multiplier = mul
+	var city := MapTextureLoader.position_map_city()
+	if city != "" and city != "mos_eisley":
+		city_id = city
+	elif city_id == "mos_eisley":
+		city_id = "lost_heaven"
+	visible_layout = false
 	reload()
 
 func reload() -> void:
@@ -118,7 +124,10 @@ func _resolve_layout_path() -> String:
 	return RETAIL_DIR + "%s_retail_layout.json" % city_id
 
 func set_city(city: String) -> void:
-	city_id = city
+	if city.strip_edges() == "" or city == "mos_eisley":
+		city_id = "lost_heaven"
+	else:
+		city_id = city
 	reload()
 
 func set_visible_layout(on: bool) -> void:
@@ -156,6 +165,8 @@ func _draw() -> void:
 func _draw_building(b: Dictionary, fill: Color = Color(0.25, 0.95, 0.35, 0.42)) -> void:
 	var cx := float(b.get("x", 0.0))
 	var cz := float(b.get("z", 0.0))
+	if not HubFocus.should_draw_world_overlay(cx, cz):
+		return
 	var size_m := float(b.get("size_m", 24.0))
 	var half := size_m * 0.5 * Projection3D2D.SCALE * size_multiplier
 	var center := Projection3D2D.to_screen(Vector3(cx, float(b.get("y", 0.0)), cz))
@@ -166,6 +177,8 @@ func _draw_building(b: Dictionary, fill: Color = Color(0.25, 0.95, 0.35, 0.42)) 
 func _draw_npc_triangle(n: Dictionary, fill: Color) -> void:
 	var cx := float(n.get("x", 0.0))
 	var cz := float(n.get("z", 0.0))
+	if not HubFocus.should_draw_world_overlay(cx, cz):
+		return
 	var center := Projection3D2D.to_screen(Vector3(cx, float(n.get("y", 0.0)), cz))
 	var heading := float(n.get("heading_deg", 0.0)) * (PI / 180.0)
 	var fwd := Vector2(sin(heading), -cos(heading))

@@ -53,9 +53,9 @@ static func use_procedural_backdrop() -> bool:
 	return str(wr.get("backdrop", "procedural_canyon")) != "none"
 
 static func entity_marker_style() -> String:
-	var style := str(world_render_cfg().get("entity_markers", "runtime_sprite")).strip_edges()
+	var style := str(world_render_cfg().get("entity_markers", "triangle")).strip_edges()
 	if style == "":
-		return "runtime_sprite"
+		return "triangle"
 	return style
 
 static func debug_triangle_markers_enabled() -> bool:

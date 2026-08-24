@@ -14,8 +14,10 @@ signal error_message(message: String)
 signal connecting(ws_url: String)
 signal handoff_progress(phase: String, detail: String)
 signal reconnecting(attempt: int, delay_s: float)
+signal echo_state_changed(payload: Dictionary)
 
 @export var proto: String = "lbg-ws/2"
+@export var echo_ws_stub: bool = true
 @export var auto_enter_world: bool = true
 ## Après login_result : `enter_world` si HTTP M11 a déjà fait select+enter_zone (défaut).
 @export var post_login_ws_action: String = "enter_world"
@@ -106,6 +108,29 @@ func send_raw(payload: Dictionary) -> void:
 	if not is_open():
 		return
 	_send(payload)
+
+
+func send_echo_message(payload: Dictionary) -> void:
+	var msg_type := str(payload.get("type", ""))
+	if echo_ws_stub or not is_open():
+		print("[LbgWs] echo stub >> %s" % msg_type)
+		_emit_echo_stub(msg_type, payload)
+		return
+	print("[LbgWs] >> echo %s" % msg_type)
+	_send(payload)
+
+
+func _emit_echo_stub(msg_type: String, payload: Dictionary) -> void:
+	var out := {"type": "echo_state", "message": "stub: %s" % msg_type}
+	match msg_type:
+		"invoke_echo":
+			out["echo_character_id"] = str(payload.get("character_id", ""))
+		"dismiss_echo":
+			out["echo_character_id"] = ""
+			out["echo_character_name"] = ""
+		"switch_active":
+			out["switched"] = true
+	echo_state_changed.emit(out)
 
 
 func _cancel_reconnect() -> void:
@@ -326,6 +351,8 @@ func _dispatch(text: String) -> void:
 			error_message.emit(str(d.get("message", "error")))
 		"chat":
 			pass
+		"echo_state":
+			echo_state_changed.emit(d)
 		_:
 			pass
 

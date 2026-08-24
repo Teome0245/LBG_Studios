@@ -83,6 +83,7 @@ def main() -> int:
     bi_text = json.dumps(build_info, indent=2, ensure_ascii=False) + "\n"
     assets_bi.write_text(bi_text, encoding="utf-8")
     (out_dir / "build_info.json").write_text(bi_text, encoding="utf-8")
+    (ROOT / "assets" / "build_info.json").write_text(bi_text, encoding="utf-8")
 
     # Remplacer / ajouter hash build_info dans le manifeste
     bi_hash = md5_file(assets_bi)

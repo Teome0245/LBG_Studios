@@ -39,9 +39,10 @@ for pid in bots:
         results[pid] = {"ok": False, "error": str(e)}
         continue
     x, y, z = bot_spawn(pid)
+    # pending : x est | y nord | z hauteur (Lua switch_zone mappe vers Core3 x, height, north)
     lines = [
         f"switch_zone|{player.firstname}|tatooine|{x:g}|{y:g}|{z:g}|lost_heaven",
-        f"move_to|{player.firstname}|tatooine|{x:g}|{y:g}|{z:g}|lost_heaven",
+        f"move_to|{player.firstname}|tatooine|{x:g}|{y:g}|{z:g}|hub_walk_home",
     ]
     outs = []
     for line in lines:

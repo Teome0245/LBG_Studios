@@ -114,18 +114,26 @@ ipcRenderer.on('path-settings-saved', (event, result) => {
 
 ipcRenderer.on('active-profile', (event, profile) => {
   applyPathFields(profile);
+  if (profile?.profileId) {
+    activeProfileId = profile.profileId;
+    renderServerStatuses(lastStatusRows);
+  }
 });
 
 ipcRenderer.on('config', (event, cfg) => {
   servers = cfg.servers || [];
   selectedServerId =
     localStorage.getItem('selectedServerId') || cfg.defaultServerId || servers[0]?.id;
+  activeProfileId = cfg.defaultProfileId || 'prime';
   serverSelect.innerHTML = servers
     .map((s) => `<option value="${s.id}">${s.label}</option>`)
     .join('');
   serverSelect.value = selectedServerId;
   ipcRenderer.send('select-server', selectedServerId);
   applyPathFields(cfg);
+  if (cfg.defaultProfileId) {
+    activeProfileId = cfg.defaultProfileId;
+  }
   renderDiskWarning(cfg.diskSpace);
 });
 
@@ -155,14 +163,28 @@ function playLabel() {
   return 'JOUER';
 }
 
+function profileServerIds(profileId) {
+  const profile = (config.profiles || []).find((p) => p.id === profileId);
+  if (!profile || !Array.isArray(profile.servers)) return [];
+  return profile.servers.map((s) => s.id);
+}
+
+function rowsForUi(rows) {
+  const ids = profileServerIds(activeProfileId);
+  if (!ids.length) return rows;
+  const filtered = rows.filter((r) => ids.includes(r.id));
+  return filtered.length ? filtered : rows;
+}
+
 function renderServerStatuses(rows) {
   lastStatusRows = rows;
+  const visible = rowsForUi(rows);
   const box = document.getElementById('servers-status');
-  if (!rows.length) {
+  if (!visible.length) {
     box.innerHTML = '<span class="muted">État serveurs inconnu</span>';
     return;
   }
-  box.innerHTML = rows
+  box.innerHTML = visible
     .map((s) => {
       const cls = s.ready ? 'online' : s.online ? 'starting' : 'offline';
       const label = s.ready ? 'En ligne' : s.online ? 'Démarrage' : 'Hors ligne';

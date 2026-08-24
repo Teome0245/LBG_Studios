@@ -1,5 +1,6 @@
 # projection.gd — Projection Core3 -> Godot 2D
-# Core3: X=Est, Z=Nord (+Z)  →  Godot2D: X=droite, Y=bas (nord = haut écran = Y négatif)
+# Stockage Core3 : X=Est/Ouest, Y=hauteur (altitude), Z=Nord/Sud (+Z=nord).
+# Affichage HUD (format_hud_*) : E/O · N/S · ↑alt — voir altitude_local_m().
 class_name Projection3D2D
 
 const SCALE: float = 0.5   # 1 unite Core3 = 0.5 pixel
@@ -50,3 +51,75 @@ static func from_screen(screen_pos: Vector2) -> Vector3:
 		0.0,
 		-screen_pos.y / SCALE,
 	)
+
+## Altitude locale (m) — extérieur : au-dessus du plan sol Tatooine ; intérieur : Y cellule.
+## Future : soustraire ici une DTM relief (canyon, plateaux) ou plan d'étage explicite.
+static func altitude_local_m(core3_y: float) -> float:
+	if core3_y < OUTDOOR_Y_THRESHOLD:
+		return core3_y - TATOOINE_FLOOR_Y
+	return core3_y
+
+static func is_outdoor_altitude(core3_y: float) -> bool:
+	return core3_y < OUTDOOR_Y_THRESHOLD
+
+## Affichage HUD : X=E/O (Core3 X), Y=N/S (Core3 Z), Z=altitude (Core3 Y).
+static func format_hud_coordinates(pos: Vector3, compact: bool = true) -> String:
+	var p := normalize_core3_pos(pos)
+	var ew := _axis_ew_label(p.x)
+	var ns := _axis_ns_label(p.z)
+	var alt_m := altitude_local_m(p.y)
+	var alt := _format_altitude_label(p.y, alt_m, compact)
+	if compact:
+		return "%s %s %s" % [ew, ns, alt]
+	var ew_full: String
+	if p.x >= 0.0:
+		ew_full = "Est %.0f" % absf(p.x)
+	else:
+		ew_full = "Ouest %.0f" % absf(p.x)
+	var ns_full: String
+	if p.z >= 0.0:
+		ns_full = "Nord %.0f" % absf(p.z)
+	else:
+		ns_full = "Sud %.0f" % absf(p.z)
+	var alt_full := "Alt %.0f m" % alt_m
+	if not is_outdoor_altitude(p.y):
+		alt_full += " (local)"
+	return "%s · %s · %s" % [ew_full, ns_full, alt_full]
+
+static func format_hud_plan(pos: Vector3, compact: bool = true) -> String:
+	var p := normalize_core3_pos(pos)
+	if compact:
+		return "%s %s" % [_axis_ew_label(p.x), _axis_ns_label(p.z)]
+	var ew_full: String
+	if p.x >= 0.0:
+		ew_full = "Est %.0f" % absf(p.x)
+	else:
+		ew_full = "Ouest %.0f" % absf(p.x)
+	var ns_full: String
+	if p.z >= 0.0:
+		ns_full = "Nord %.0f" % absf(p.z)
+	else:
+		ns_full = "Sud %.0f" % absf(p.z)
+	return "%s · %s" % [ew_full, ns_full]
+
+static func _axis_ew_label(x: float) -> String:
+	var v := int(roundf(absf(x)))
+	if x >= 0.0:
+		return "E%d" % v
+	return "O%d" % v
+
+static func _axis_ns_label(z: float) -> String:
+	var v := int(roundf(absf(z)))
+	if z >= 0.0:
+		return "N%d" % v
+	return "S%d" % v
+
+static func _format_altitude_label(core3_y: float, local_m: float, compact: bool) -> String:
+	var v := int(roundf(local_m))
+	if compact:
+		if is_outdoor_altitude(core3_y):
+			return "↑%dm" % v
+		return "↑%dm*" % v
+	if is_outdoor_altitude(core3_y):
+		return "Alt %d m" % v
+	return "Alt %d m (local)" % v

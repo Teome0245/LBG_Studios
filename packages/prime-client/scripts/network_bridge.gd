@@ -60,7 +60,7 @@ func _dispatch(text: String) -> void:
 				var sid := str(d.get("sid", ""))
 				var pos := _pos_from_packet(d)
 				if not _HubFocus.should_show_entity(pos, kind, label, sid):
-					if _em.has_method("get_entity") and _em.get_entity(oid) != null:
+					if _em.get_entity(oid) != null:
 						_em.despawn(oid)
 				else:
 					_em.spawn(oid, pos, _parse_color(str(d.get("c", "npc"))), label, kind, sid)

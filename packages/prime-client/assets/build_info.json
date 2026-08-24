@@ -1,11 +1,8 @@
 {
   "client_id": "prime-client",
-  "synced_at": "2026-08-24T10:45:11Z",
+  "synced_at": "2026-08-24T13:45:45Z",
   "sync_source": "/home/sdesh/projects/LBG_Studios/packages/prime-client",
-  "expected_launch_path_windows": "J:\\swgemu\\clients\\prime-client",
+  "expected_launch_path_windows": "J:\\\\swgemu\\\\clients\\\\prime-client",
   "launchpad_profile": "prime",
-  "map_config_schema": 3,
-  "file_count": 250,
-  "patch_channel": "prime",
-  "patch_host_hint": "192.168.0.246:8080"
+  "map_config_schema": 3
 }

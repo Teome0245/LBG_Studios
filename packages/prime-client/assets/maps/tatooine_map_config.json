@@ -39,7 +39,7 @@
     "position_map_source": "retail_gabarit_mos_eisley_shifted",
     "position_map_is_spatial_reference": true,
     "building_size_multiplier": 1.0,
-    "entity_markers": "runtime_sprite",
+    "entity_markers": "triangle",
     "server_npcs": {
       "enabled": true,
       "anchor_x": 4749.0,
@@ -47,6 +47,22 @@
       "radius_m": 800.0,
       "merge_ws_zone_state": true,
       "http_export_path": "/v1/world/npcs_near"
+    },
+    "hub_focus": {
+      "enabled": true,
+      "anchor_x": 4749.0,
+      "anchor_z": -737.0,
+      "radius_m": 980.0,
+      "suppress_deprecated_cities": true,
+      "deprecated_cities": [
+        {"id": "mos_eisley", "x": 3520.0, "z": -4800.0, "radius_m": 680.0},
+        {"id": "anchorhead", "x": -100.0, "z": -5400.0, "radius_m": 520.0},
+        {"id": "bestine", "x": -4000.0, "z": -6000.0, "radius_m": 520.0}
+      ]
+    },
+    "zone_debug": {
+      "show_water": false,
+      "show_collision": false
     }
   },
   "notes": "Ctrl+M = carte lore Scrapaltai (scrapaltai_planet.jpg + scrapaltai_planet_map.json). Overlay verts = lost_heaven_retail_layout (Ctrl+Shift+R). Fond jeu = planet_backdrop.gd.",
