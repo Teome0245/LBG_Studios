@@ -204,6 +204,7 @@ func _ensure_echo_hammat() -> void:
 		add_child(_echo_controller)
 	if _ws != null:
 		_echo_controller.bind_ws_client(_ws)
+	_echo_controller.bind_world(entity_manager, get_node_or_null("PlayerController"))
 	if _echo_panel != null and _echo_panel.has_method("bind_controller"):
 		_echo_panel.bind_controller(_echo_controller)
 	if _echo_controller.has_signal("state_changed"):
@@ -707,6 +708,8 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		return
 	if your_id > 0 and oid == your_id:
 		return
+	if _echo_controller and oid == int(_echo_controller.echo_object_id()):
+		return
 	var name := str(ent.get("name", ""))
 	var kind := str(ent.get("kind", "npc"))
 	var name_l := name.strip_edges().to_lower()
@@ -746,6 +749,8 @@ func _cull_stray_entities(your_id: int = 0) -> void:
 		if entity == null:
 			continue
 		if your_id > 0 and int(entity.object_id) == your_id:
+			continue
+		if _echo_controller and int(entity.object_id) == int(_echo_controller.echo_object_id()):
 			continue
 		if not _HubFocus.should_show_entity(entity.core3_pos, str(entity.kind)):
 			entity_manager.despawn(int(entity.object_id))
@@ -1362,6 +1367,10 @@ func _despawn_local_player_ghosts(your_id: int) -> void:
 		if e == null:
 			continue
 		if int(e.object_id) == your_id:
+			continue
+		if _echo_controller and e.object_id == int(_echo_controller.echo_object_id()):
+			continue
+		if str(e.entity_key).begins_with("player:echo"):
 			continue
 		if str(e.kind) != "player":
 			continue
