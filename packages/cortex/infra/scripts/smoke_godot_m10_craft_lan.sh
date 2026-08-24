@@ -82,6 +82,26 @@ if ! curl -sfS --max-time 10 "${SIDECAR}/v1/catalog/schematics" -o /dev/null; th
 fi
 echo "OK M10 — /v1/catalog/schematics joignable"
 
+inv_tmp="$(mktemp)"
+if curl -sfS --max-time 10 "${SIDECAR}/v1/inventory?player=${PLAYER}" -o "${inv_tmp}"; then
+  python3 - "${inv_tmp}" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+inv = d.get("inventory") if isinstance(d, dict) else None
+src = d.get("source") if isinstance(d, dict) else None
+live = d.get("core3_live") if isinstance(d, dict) else None
+n = len(inv) if isinstance(inv, list) else -1
+print(f"OK M10 inventory — stacks={n} source={src} core3_live={live}")
+if not isinstance(d, dict) or not d.get("ok"):
+    raise SystemExit("FAIL: GET /v1/inventory ok≠true")
+PY
+else
+  echo "FAIL: GET /v1/inventory" >&2
+  rm -f "${inv_tmp}"
+  exit 8
+fi
+rm -f "${inv_tmp}"
+
 # --- craft_combine (stub local ou sidecar étendu) ---
 craft_probe="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 \
   -X POST "${SIDECAR}/v1/craft/combine" \

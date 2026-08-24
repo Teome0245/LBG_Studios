@@ -40,6 +40,19 @@ def inventory_state_path() -> Path:
     return _state_path("inventory_players.json")
 
 
+def player_items_path() -> Path:
+    """Dump Lua Core3 (`IaBridgeScreenPlay:publishPlayerInventoryItems`)."""
+    raw = os.environ.get("LBG_CORE3_PLAYER_ITEMS_JSON", "").strip()
+    if raw:
+        return Path(raw)
+    return _state_path("player_inventory_items.json")
+
+
+def clear_state_cache() -> None:
+    with _LOCK:
+        _CACHE.clear()
+
+
 def quest_state_store_path() -> Path:
     return _state_path("quest_players.json")
 

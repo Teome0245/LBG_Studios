@@ -12,7 +12,13 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from core3_bridge_state import bridge_dir, inventory_state_path, load_json_doc, save_json_doc
+from core3_bridge_state import (
+    bridge_dir,
+    inventory_state_path,
+    load_json_doc,
+    player_items_path,
+    save_json_doc,
+)
 
 _ROOT = Path(__file__).resolve().parents[1]  # packages/cortex (Studios) ou …/tools parent
 _CANDIDATES = [
@@ -134,21 +140,140 @@ def reset_player(player: str) -> dict[str, Any]:
         return deepcopy(_players[player])
 
 
+def _inventory_aliases(player: str) -> list[str]:
+    raw = str(player or "").strip()
+    names: list[str] = []
+    seen: set[str] = set()
+
+    def _add(name: str) -> None:
+        key = name.strip()
+        if not key:
+            return
+        low = key.lower()
+        if low in seen:
+            return
+        seen.add(low)
+        names.append(key)
+
+    _add(raw)
+    bot = os.environ.get("CORE3_IA_BOT_CHARACTER", "").strip()
+    if raw.lower() in {"", "local", "player", "me"}:
+        _add(bot)
+        _add("Lia")
+        _add("Teome")
+    return names
+
+
+def _normalize_core3_item(row: dict[str, Any]) -> dict[str, Any] | None:
+    iid = str(row.get("id") or "").strip()
+    if not iid:
+        return None
+    try:
+        qty = int(row.get("qty") or 0)
+    except (TypeError, ValueError):
+        qty = 0
+    if qty <= 0:
+        return None
+    return {
+        "id": iid,
+        "name": str(row.get("name") or iid),
+        "qty": qty,
+        "icon": str(row.get("icon") or "misc"),
+        "template": str(row.get("template") or ""),
+    }
+
+
+def _core3_live_overlay(player: str) -> dict[str, Any] | None:
+    """Sac Core3 si le dump Lua marque le perso *online* ; sinon None (JSON local)."""
+    if os.environ.get("LBG_INVENTORY_CORE3", "1").strip().lower() in {"0", "false", "no"}:
+        return None
+    doc = load_json_doc(player_items_path())
+    rows = doc.get("players")
+    if not isinstance(rows, dict) or not rows:
+        return None
+    by_low = {str(k).lower(): (str(k), v) for k, v in rows.items()}
+    for alias in _inventory_aliases(player):
+        hit = by_low.get(alias.lower())
+        if hit is None:
+            continue
+        _key, raw = hit
+        if not isinstance(raw, dict) or raw.get("online") is not True:
+            continue
+        items_in = raw.get("inventory")
+        items: list[dict[str, Any]] = []
+        if isinstance(items_in, list):
+            for row in items_in:
+                if isinstance(row, dict):
+                    norm = _normalize_core3_item(row)
+                    if norm is not None:
+                        items.append(norm)
+        skills_in = raw.get("skills")
+        skills = [str(x) for x in skills_in if isinstance(x, str) and x.strip()] if isinstance(skills_in, list) else []
+        try:
+            count = int(raw.get("inventory_count") or len(items))
+        except (TypeError, ValueError):
+            count = len(items)
+        return {
+            "core3_player": _key,
+            "inventory": items,
+            "skills": skills,
+            "inventory_count": count,
+            "zone": str(raw.get("zone") or ""),
+            "dump": str(player_items_path()),
+            "dump_source": str(doc.get("source") or "core3_lua_inventory_v1"),
+        }
+    return None
+
+
 def inventory_payload(player: str) -> dict[str, Any]:
+    overlay = _core3_live_overlay(player)
     with _lock:
         state = deepcopy(ensure_player(player))
-    return {"ok": True, **state, "source": "core3_bridge_inventory", "persisted": True, "bridge_dir": str(bridge_dir())}
+    if overlay is None:
+        return {
+            "ok": True,
+            **state,
+            "source": "core3_bridge_inventory",
+            "core3_live": False,
+            "persisted": True,
+            "bridge_dir": str(bridge_dir()),
+        }
+    skills = overlay["skills"] or list(state.get("skills") or [])
+    return {
+        "ok": True,
+        "player": player,
+        "core3_player": overlay["core3_player"],
+        "skills": skills,
+        "inventory": overlay["inventory"],
+        "inventory_count": overlay["inventory_count"],
+        "zone": overlay["zone"],
+        "source": "core3_lua_inventory",
+        "core3_live": True,
+        "dump": overlay["dump"],
+        "dump_source": overlay["dump_source"],
+        "persisted": True,
+        "bridge_dir": str(bridge_dir()),
+    }
 
 
 def player_skills_payload(player: str) -> dict[str, Any]:
+    overlay = _core3_live_overlay(player)
     with _lock:
         state = ensure_player(player)
         skills = list(state["skills"])
+    if overlay is not None and overlay["skills"]:
+        skills = list(overlay["skills"])
+        source = "core3_lua_inventory"
+        live = True
+    else:
+        source = "core3_bridge_inventory"
+        live = False
     return {
         "ok": True,
         "player": player,
         "skills": skills,
-        "source": "core3_bridge_inventory",
+        "source": source,
+        "core3_live": live,
         "persisted": True,
         "bridge_dir": str(bridge_dir()),
     }

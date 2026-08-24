@@ -143,7 +143,11 @@ func _on_http_done(result: int, code: int, _headers: PackedStringArray, body: Pa
 	if typeof(inv) == TYPE_ARRAY:
 		_fill_from_items(inv)
 		if _hint:
-			_hint.text = "I fermer · sync M10 (%d stacks)" % inv.size()
+			var src := str(parsed.get("source", "m10"))
+			if bool(parsed.get("core3_live", false)):
+				_hint.text = "I fermer · Core3 live (%d stacks)" % inv.size()
+			else:
+				_hint.text = "I fermer · sync %s (%d stacks)" % [src, inv.size()]
 
 func _fill_from_items(items: Array) -> void:
 	_items = items.duplicate()
