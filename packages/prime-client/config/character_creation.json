@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "cortex_http_base": "http://192.168.0.140:8000",
+  "use_mock_fallback": true,
+  "max_characters_per_account": 6,
+  "modes": [
+    {"id": "archetype", "label": "Archétype", "hint": "Six directions — choisis archétype, race et palette."},
+    {"id": "empreinte", "label": "Empreinte", "hint": "Copier un PNJ connu — forme similaire, variation ±10%."},
+    {"id": "chaos", "label": "Chaos", "hint": "Cristallisation libre — race et stats aléatoires."}
+  ],
+  "races": [
+    {"id": "race:human", "label": "Humain"},
+    {"id": "race:fel_rani", "label": "Fel'Rani"},
+    {"id": "race:varkoon", "label": "Varkoon"},
+    {"id": "race:mechari", "label": "Mechari"},
+    {"id": "race:tinkling", "label": "Tinkling"},
+    {"id": "race:mogrul", "label": "Mogrul"}
+  ],
+  "archetypes": [
+    {"id": "forgeur", "label": "Le Forgeur", "identity": "Bâtisseur, réparateur, créateur", "suggested_races": ["race:tinkling", "race:mechari"]},
+    {"id": "traqueur", "label": "Le Traqueur", "identity": "Éclaireur, survivant, pisteur", "suggested_races": ["race:fel_rani", "race:varkoon"]},
+    {"id": "soigneur", "label": "Le Soigneur", "identity": "Guérisseur, herboriste, chimiste", "suggested_races": ["race:mogrul", "race:human"]},
+    {"id": "voix", "label": "La Voix", "identity": "Performer, négociateur, espion social", "suggested_races": ["race:human", "race:fel_rani"]},
+    {"id": "poing", "label": "Le Poing", "identity": "Combattant corps-à-corps, garde", "suggested_races": ["race:varkoon", "race:mogrul"]},
+    {"id": "oeil", "label": "L'Œil", "identity": "Tireur, sniper, observateur", "suggested_races": ["race:fel_rani", "race:mechari"]}
+  ],
+  "empreintes": [
+    {"pnj_id": "npc:core3_barman_jax", "label": "Jax Moro", "race": "Humain", "archetype": "voix"},
+    {"pnj_id": "npc:core3_kisreudi", "label": "Kisreudi Teste", "race": "Fel'Rani", "archetype": "soigneur"},
+    {"pnj_id": "npc:core3_artisan_trainer_c", "label": "Kell Asa", "race": "Tinkling", "archetype": "forgeur"},
+    {"pnj_id": "npc:core3_talen_ress", "label": "Talen Ress", "race": "Humain", "archetype": "voix"},
+    {"pnj_id": "npc:core3_daan_oth", "label": "Daan Oth", "race": "Humain", "archetype": "traqueur"},
+    {"pnj_id": "npc:core3_medic_trainer_c", "label": "Odo Merr", "race": "Mogrul", "archetype": "soigneur"}
+  ],
+  "color_presets": [
+    {"id": "desert_sand", "skin": "#8B6914", "eyes": "#00CED1", "accent": "#FF6B35"},
+    {"id": "night_ember", "skin": "#4A2F14", "eyes": "#FFD700", "accent": "#CC5500"},
+    {"id": "steel_dawn", "skin": "#A9A9A9", "eyes": "#00BFFF", "accent": "#4682B4"},
+    {"id": "forest_moss", "skin": "#6B8E23", "eyes": "#7FFF00", "accent": "#556B2F"}
+  ]
+}

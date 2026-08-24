@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "source": "docs/design/character_creation.md",
+    "upstream": "LBG_IA_MMORPG/LBG_IA_MMO/content/world/races.json",
+    "note": "Sous-ensemble V1 jouable pour la création de personnage"
+  },
+  "races": [
+    {
+      "id": "race:human",
+      "display_name": "Humain",
+      "playable_v1": true,
+      "size_cm": {"min": 155, "max": 200},
+      "body_type": "variable",
+      "planet": "Terre1",
+      "core3_silhouette": "human",
+      "stat_bonus": {"force": 5, "agilite": 5, "intelligence": 5, "endurance": 5, "esprit": 5},
+      "lore_one_liner": "La majorité civile des bourgs et routes commerciales.",
+      "color_palette": {
+        "skin": ["#F5D6B8", "#D4A574", "#8B6914", "#4A2F14"],
+        "eyes": ["#4A3728", "#2E5090", "#3B7A28", "#8B7355"],
+        "accent": ["#CC9966", "#886644", "#AA7744"]
+      }
+    },
+    {
+      "id": "race:fel_rani",
+      "display_name": "Fel'Rani",
+      "playable_v1": true,
+      "size_cm": {"min": 140, "max": 180},
+      "body_type": "agile",
+      "planet": "Arvandor",
+      "core3_silhouette": "human",
+      "stat_bonus": {"force": -5, "agilite": 15, "intelligence": 5, "endurance": -5, "esprit": 5},
+      "lore_one_liner": "Prédateurs discrets, éclaireurs et pisteurs des sous-bois.",
+      "color_palette": {
+        "skin": ["#D4A060", "#B87333", "#8B6914", "#5C4033"],
+        "eyes": ["#FFD700", "#00CED1", "#7FFF00", "#FF6347"],
+        "accent": ["#FF6B35", "#CC5500", "#884400"]
+      }
+    },
+    {
+      "id": "race:varkoon",
+      "display_name": "Varkoon",
+      "playable_v1": true,
+      "size_cm": {"min": 150, "max": 190},
+      "body_type": "robuste",
+      "planet": "Arvandor",
+      "core3_silhouette": "wookiee",
+      "stat_bonus": {"force": 10, "agilite": -5, "intelligence": -5, "endurance": 15, "esprit": -5},
+      "lore_one_liner": "Gardiens des pistes froides, chasseurs loyaux et tenaces.",
+      "color_palette": {
+        "skin": ["#8B7355", "#A0522D", "#6B4226", "#3B2414"],
+        "eyes": ["#DAA520", "#CD853F", "#FF8C00"],
+        "accent": ["#556B2F", "#8B4513", "#2F4F4F"]
+      }
+    },
+    {
+      "id": "race:mechari",
+      "display_name": "Mechari",
+      "playable_v1": true,
+      "size_cm": {"min": 160, "max": 190},
+      "body_type": "metallique",
+      "planet": "Mecha_Prime",
+      "core3_silhouette": "moncal",
+      "stat_bonus": {"force": 5, "agilite": 0, "intelligence": 10, "endurance": 5, "esprit": -10},
+      "lore_one_liner": "Techniciens-soldats, efficaces là où la logique prime.",
+      "color_palette": {
+        "skin": ["#708090", "#A9A9A9", "#C0C0C0", "#4A4A4A"],
+        "eyes": ["#00BFFF", "#00FF7F", "#FF4500", "#FFFFFF"],
+        "accent": ["#4682B4", "#FF6347", "#32CD32"]
+      }
+    },
+    {
+      "id": "race:tinkling",
+      "display_name": "Tinkling",
+      "playable_v1": true,
+      "size_cm": {"min": 30, "max": 50},
+      "body_type": "leger",
+      "planet": "Mecha_Prime",
+      "core3_silhouette": "sullustan",
+      "stat_bonus": {"force": -15, "agilite": 10, "intelligence": 15, "endurance": -10, "esprit": 10},
+      "lore_one_liner": "Partout où il faut réparer des prototypes à la chaîne.",
+      "color_palette": {
+        "skin": ["#9ACD32", "#6B8E23", "#BDB76B", "#8FBC8F"],
+        "eyes": ["#FFD700", "#FF4500", "#00CED1"],
+        "accent": ["#B8860B", "#CD853F", "#DAA520"]
+      }
+    },
+    {
+      "id": "race:mogrul",
+      "display_name": "Mogrul",
+      "playable_v1": true,
+      "size_cm": {"min": 90, "max": 120},
+      "body_type": "robuste",
+      "planet": "Aetherion",
+      "core3_silhouette": "ithorian",
+      "stat_bonus": {"force": 15, "agilite": -10, "intelligence": 0, "endurance": 10, "esprit": 5},
+      "lore_one_liner": "Taillés pour l'effort, ils tiennent les galeries et les hauts-cols.",
+      "color_palette": {
+        "skin": ["#696969", "#808080", "#A9A9A9", "#556B2F"],
+        "eyes": ["#FFD700", "#FF6347", "#8B0000"],
+        "accent": ["#8B4513", "#A0522D", "#CD853F"]
+      }
+    }
+  ]
+}

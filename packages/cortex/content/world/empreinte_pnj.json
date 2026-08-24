@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "source": "docs/design/character_creation.md + docs/world/INVENTAIRE_PNJ.md",
+    "note": "PNJ notoires dont un Amas peut copier l'empreinte. Premier perso = accès direct."
+  },
+  "empreintes": [
+    {
+      "pnj_id": "npc:core3_barman_jax",
+      "display_name": "Jax Moro",
+      "race_id": "race:human",
+      "implied_archetype": "voix",
+      "base_stats": {"force": 45, "agilite": 55, "intelligence": 60, "hp": 100, "endurance": 65, "esprit": 60},
+      "size_cm": 178,
+      "lore_brief": "L'Amas a vibré près du comptoir de La Perle. L'odeur du Cactus Noir l'a attiré.",
+      "first_character_available": true
+    },
+    {
+      "pnj_id": "npc:core3_kisreudi",
+      "display_name": "Kisreudi Teste",
+      "race_id": "race:fel_rani",
+      "implied_archetype": "soigneur",
+      "base_stats": {"force": 35, "agilite": 70, "intelligence": 80, "hp": 100, "endurance": 45, "esprit": 65},
+      "size_cm": 165,
+      "lore_brief": "L'Amas s'est condensé dans le laboratoire, attiré par la chaleur des fioles.",
+      "first_character_available": true
+    },
+    {
+      "pnj_id": "npc:core3_artisan_trainer_c",
+      "display_name": "Kell Asa",
+      "race_id": "race:tinkling",
+      "implied_archetype": "forgeur",
+      "base_stats": {"force": 50, "agilite": 55, "intelligence": 75, "hp": 100, "endurance": 55, "esprit": 50},
+      "size_cm": 42,
+      "lore_brief": "L'Amas a roulé sur l'établi et Kell a failli le souder à un châssis.",
+      "first_character_available": true
+    },
+    {
+      "pnj_id": "npc:core3_talen_ress",
+      "display_name": "Talen Ress",
+      "race_id": "race:human",
+      "implied_archetype": "voix",
+      "base_stats": {"force": 30, "agilite": 65, "intelligence": 55, "hp": 100, "endurance": 50, "esprit": 75},
+      "size_cm": 172,
+      "lore_brief": "L'Amas a dansé. Talen dit qu'il avait un bon tempo, pour de l'énergie brute.",
+      "first_character_available": true
+    },
+    {
+      "pnj_id": "npc:core3_daan_oth",
+      "display_name": "Daan Oth",
+      "race_id": "race:human",
+      "implied_archetype": "traqueur",
+      "base_stats": {"force": 55, "agilite": 70, "intelligence": 60, "hp": 100, "endurance": 65, "esprit": 45},
+      "size_cm": 182,
+      "lore_brief": "L'Amas s'est matérialisé devant le panneau de missions. Coincidence, sûrement.",
+      "first_character_available": true
+    },
+    {
+      "pnj_id": "npc:core3_medic_trainer_c",
+      "display_name": "Odo Merr",
+      "race_id": "race:mogrul",
+      "implied_archetype": "soigneur",
+      "base_stats": {"force": 60, "agilite": 35, "intelligence": 70, "hp": 100, "endurance": 70, "esprit": 60},
+      "size_cm": 108,
+      "lore_brief": "L'Amas a palpité comme un cœur malade. Odo l'a stabilisé sans lever les yeux.",
+      "first_character_available": true
+    }
+  ]
+}

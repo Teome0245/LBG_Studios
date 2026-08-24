@@ -9,20 +9,25 @@ signal enter_world_requested(ws_url: String, character_id: int, session_token: S
 @onready var _char_list: ItemList = %CharacterList
 @onready var _status: Label = %StatusLabel
 @onready var _btn_login: Button = %LoginButton
+@onready var _btn_create: Button = %CreateButton
 @onready var _btn_enter: Button = %EnterButton
 @onready var _subtitle: Label = $Center/Panel/VBox/Subtitle
 
 var _auth: Node = null
 var _chars: Array = []
+var _local_char_id_seq: int = 9000
 var _local_ws: Node = null
 var _handoff_watchdog: SceneTreeTimer = null
 var _handoff_active: bool = false
+var _creation_panel: Control = null
 
 
 func _ready() -> void:
 	_btn_enter.disabled = true
+	_btn_create.disabled = true
 	_apply_planet_subtitle()
 	_btn_login.pressed.connect(_on_login_pressed)
+	_btn_create.pressed.connect(_on_create_pressed)
 	_btn_enter.pressed.connect(_on_enter_pressed)
 	_auth = get_node_or_null("LbgAuthClient")
 	if _auth == null:
@@ -35,6 +40,32 @@ func _ready() -> void:
 	_auth.select_failed.connect(_on_select_failed)
 	_auth.enter_zone_ok.connect(_on_enter_zone_ok)
 	_auth.enter_zone_failed.connect(_on_enter_zone_failed)
+	call_deferred("_wire_creation_panel")
+
+
+func _get_creation_panel() -> Control:
+	if _creation_panel != null and is_instance_valid(_creation_panel):
+		return _creation_panel
+	var main := _find_main()
+	if main:
+		_creation_panel = main.get_node_or_null("UI/ModalLayer/CharacterCreationPanel") as Control
+	return _creation_panel
+
+
+func _wire_creation_panel() -> void:
+	var panel := _get_creation_panel()
+	if panel == null:
+		push_warning("[LoginPanel] CharacterCreationPanel introuvable (UI/ModalLayer)")
+		return
+	if panel.has_signal("creation_completed"):
+		if not panel.creation_completed.is_connected(_on_character_created):
+			panel.creation_completed.connect(_on_character_created)
+	if panel.has_signal("creation_cancelled"):
+		if not panel.creation_cancelled.is_connected(_on_character_creation_cancelled):
+			panel.creation_cancelled.connect(_on_character_creation_cancelled)
+	if panel.has_signal("creation_completed_in_game"):
+		if not panel.creation_completed_in_game.is_connected(_on_character_created_in_game):
+			panel.creation_completed_in_game.connect(_on_character_created_in_game)
 
 
 func _apply_planet_subtitle() -> void:
@@ -71,6 +102,22 @@ func get_selected_character_name() -> String:
 	return str(c.get("name", ""))
 
 
+func get_account_roster() -> Array:
+	return _chars.duplicate()
+
+
+func get_selected_character_meta() -> Dictionary:
+	if _char_list == null or _chars.is_empty():
+		return {}
+	var idx: PackedInt32Array = _char_list.get_selected_items()
+	if idx.is_empty():
+		return {}
+	var i: int = int(idx[0])
+	if i < 0 or i >= _chars.size():
+		return {}
+	return _chars[i]
+
+
 func _on_login_pressed() -> void:
 	_status.text = "Connexion…"
 	_btn_login.disabled = true
@@ -79,6 +126,7 @@ func _on_login_pressed() -> void:
 
 func _on_login_ok(_session_token: String, characters: Array) -> void:
 	_btn_login.disabled = false
+	_btn_create.disabled = false
 	_chars = characters
 	_char_list.clear()
 	for c in characters:
@@ -88,11 +136,92 @@ func _on_login_ok(_session_token: String, characters: Array) -> void:
 	if _char_list.item_count > 0:
 		_char_list.select(0)
 		_btn_enter.disabled = false
+	else:
+		_status.text = "Aucun Amas — crée ton premier éclat"
+		call_deferred("_on_create_pressed")
 
 
 func _on_login_failed(code: String, message: String) -> void:
 	_btn_login.disabled = false
 	_status.text = "%s: %s" % [code, message]
+
+
+func _on_create_pressed() -> void:
+	var panel := _get_creation_panel()
+	if panel == null:
+		_status.text = "Création indisponible"
+		return
+	if panel.has_method("open_panel"):
+		panel.call("open_panel")
+	else:
+		panel.visible = true
+
+
+func _on_character_created(result: Dictionary) -> void:
+	var numeric_id := int(result.get("_mock_numeric_id", 0))
+	if numeric_id < 1:
+		numeric_id = _local_char_id_seq
+		_local_char_id_seq += 1
+	var entry := {
+		"id": numeric_id,
+		"name": str(result.get("name", "Amas")),
+		"character_id": str(result.get("character_id", "")),
+		"race": str(result.get("race_display", result.get("race", ""))),
+		"archetype": str(result.get("archetype_starter", "")),
+		"lore_brief": str(result.get("lore_brief", "")),
+		"noyau_id": str(result.get("noyau_id", "")),
+		"particule_seed": str(result.get("particule_seed", "")),
+	}
+	_chars.append(entry)
+	_char_list.add_item("%s — %s" % [entry["name"], entry["race"]])
+	_char_list.select(_char_list.item_count - 1)
+	_btn_enter.disabled = false
+	_status.text = "Amas éveillé — %s" % entry["name"]
+
+
+func _on_character_created_in_game(result: Dictionary) -> void:
+	var numeric_id := int(result.get("_mock_numeric_id", 0))
+	if numeric_id < 1:
+		numeric_id = _local_char_id_seq
+		_local_char_id_seq += 1
+	var entry := {
+		"id": numeric_id,
+		"name": str(result.get("name", "Amas")),
+		"character_id": str(result.get("character_id", "")),
+		"race": str(result.get("race_display", result.get("race", ""))),
+		"archetype": str(result.get("archetype_starter", "")),
+		"noyau_id": str(result.get("noyau_id", "")),
+		"particule_seed": str(result.get("particule_seed", "")),
+	}
+	add_character_to_roster(entry)
+	if str(entry.get("noyau_id", "")) != "":
+		for i in range(_chars.size()):
+			_chars[i]["noyau_id"] = entry["noyau_id"]
+			_chars[i]["particule_seed"] = entry.get("particule_seed", "")
+	var main := get_tree().get_first_node_in_group("prime_main")
+	if main and main.has_method("_on_second_character_created_in_game"):
+		main.call("_on_second_character_created_in_game", entry)
+
+
+func _on_character_creation_cancelled() -> void:
+	_status.text = "Création annulée"
+
+
+func open_character_creation_in_game() -> void:
+	var panel := _get_creation_panel()
+	if panel == null:
+		push_warning("[LoginPanel] création in-game indisponible")
+		return
+	if panel.has_method("open_panel"):
+		panel.call("open_panel", true)
+	else:
+		panel.visible = true
+
+
+func add_character_to_roster(entry: Dictionary) -> void:
+	_chars.append(entry)
+	if _char_list:
+		_char_list.add_item("%s — %s" % [entry.get("name", "?"), entry.get("race", "")])
 
 
 func _on_enter_pressed() -> void:
@@ -320,7 +449,11 @@ func _on_local_zone_state(payload: Dictionary) -> void:
 			your_id = int(_local_ws.your_character_id)
 		var zone := str(payload.get("zone", payload.get("map", "tatooine")))
 		# Même sans id : si on reçoit zone_state pendant handoff, considérer succès.
-		on_ws_connected(your_id if your_id > 0 else 1, zone if zone != "" else "tatooine")
+		var cid := your_id if your_id > 0 else 1
+		var z := zone if zone != "" else "tatooine"
+		on_ws_connected(cid, z)
+		if main and main.has_method("_on_world_entered"):
+			main.call("_on_world_entered", cid, z)
 
 
 func _on_enter_zone_failed(code: String, message: String) -> void:

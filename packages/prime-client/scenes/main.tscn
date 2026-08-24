@@ -21,6 +21,9 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/talents_craft_panel.tscn" id="15_tal"]
 [ext_resource type="PackedScene" path="res://scenes/ui/mission_board_panel.tscn" id="15_missions"]
 [ext_resource type="PackedScene" path="res://scenes/ui/game_menu_panel.tscn" id="15_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/echo_hammat_panel.tscn" id="15_echo"]
+[ext_resource type="PackedScene" path="res://scenes/ui/initiation_quest_panel.tscn" id="15_init"]
+[ext_resource type="PackedScene" uid="uid://chammatpanel01" path="res://scenes/ui/character_creation_panel.tscn" id="15_hammat"]
 [ext_resource type="Theme" path="res://themes/prime_ui.tres" id="16_theme"]
 [ext_resource type="PackedScene" path="res://scenes/ui/login_panel.tscn" id="17_login"]
 [ext_resource type="Script" path="res://scripts/LbgWsClient.gd" id="18_ws"]
@@ -42,10 +45,13 @@ script = ExtResource("7_poi")
 
 [node name="ZoneLayers" type="Node2D" parent="WorldMap"]
 z_index = -8
+show_water = false
+show_collision = false
 script = ExtResource("8_zones")
 
 [node name="WsObjectsLayer" type="Node2D" parent="WorldMap"]
 z_index = -7
+visible_objects = false
 script = ExtResource("9_ws")
 
 [node name="HubGroundLayer" type="Node2D" parent="WorldMap"]
@@ -162,6 +168,15 @@ theme = ExtResource("16_theme")
 [node name="MissionBoardPanel" parent="UI/ModalLayer" instance=ExtResource("15_missions")]
 
 [node name="GameMenuPanel" parent="UI/ModalLayer" instance=ExtResource("15_menu")]
+
+[node name="EchoHammatPanel" parent="UI/ModalLayer" instance=ExtResource("15_echo")]
+visible = false
+
+[node name="InitiationQuestPanel" parent="UI/ModalLayer" instance=ExtResource("15_init")]
+visible = false
+
+[node name="CharacterCreationPanel" parent="UI/ModalLayer" instance=ExtResource("15_hammat")]
+visible = false
 
 [node name="PlanetMapPanel" parent="UI/ModalLayer" instance=ExtResource("12_pmap")]
 visible = false

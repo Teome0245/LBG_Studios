@@ -154,7 +154,7 @@
         "Sortir hors palissade.",
         "Rapporter fourrure ou carapace."
       ],
-      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat réel = suite."
+      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat sandbox = Pilot #/hunt (hunt_yard)."
     },
     {
       "id": "lh_med_venin",
@@ -255,6 +255,39 @@
         "Revenir voir Daan Oth."
       ],
       "fallback": true
+    },
+    {
+      "id": "lh_init_particule_echo",
+      "title": "L'Éclat qui se divise",
+      "template": "initiation",
+      "keywords": ["initiation", "particule", "amas", "écho", "echo", "noyau", "premier perso", "guide"],
+      "giver_roles": ["guide_eclos"],
+      "giver_ids": ["npc:ryn_solh_guide_eclos"],
+      "default_giver": "Ryn Solh",
+      "objective": "Découvrir ta Particule d'origine, créer un second éclat in-game, et invoquer ton premier écho Amas.",
+      "rewards": {
+        "credits": 0,
+        "xp": {"xp_quartier": 10},
+        "items": []
+      },
+      "progress": [
+        {"id": "accueil", "label": "Écouter Ryn Solh au Champ des Amas", "poi": "poi:lost_heaven_gate", "radius_m": 120},
+        {"id": "particule", "label": "Observer la Particule d'origine", "poi": "poi:lost_heaven_gate", "radius_m": 120},
+        {"id": "second_eclat", "label": "Cristalliser un second personnage (in-game)", "poi": "poi:lost_heaven_gate", "radius_m": 120},
+        {"id": "invocation", "label": "Invoquer ton écho (H)", "poi": "poi:lost_heaven_gate", "radius_m": 120},
+        {"id": "complete", "label": "Terminer l'initiation", "poi": "poi:lost_heaven_gate", "radius_m": 120}
+      ],
+      "next_steps": [
+        "Parler à Ryn Solh après l'éveil.",
+        "Observer ta Particule (Noyau Amas).",
+        "Créer un 2e personnage sans déco — menu Amas in-game.",
+        "Invoquer l'écho et tester switch / renvoi.",
+        "Terminer — accès libre au monde."
+      ],
+      "notes": "Quête auto au 1er perso du compte. Prime-client : initiation_quest_controller.gd (local V1).",
+      "initiation": true,
+      "requires_max_characters": 1,
+      "unlocks": ["echo_amas", "in_game_amas_create"]
     }
   ]
 }

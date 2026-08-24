@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "quest_id": "lh_init_particule_echo",
+  "title": "L'Éclat qui se divise",
+  "giver": "Ryn Solh",
+  "giver_id": "npc:ryn_solh_guide_eclos",
+  "location": "champ_des_amas_est",
+  "auto_start": true,
+  "requires_roster_max": 1,
+  "storage_key": "initiation_particule_echo_done",
+  "steps": [
+    {
+      "id": "accueil",
+      "speaker": "Ryn Solh",
+      "text": "Encore un. Le désert continue de rêver.\n\nTu es debout dans le Champ des Amas. Ce que tu vois dans le sable — ce grain lumineux — ce n'est pas un reflet. C'est ta Particule d'origine.",
+      "action": "continue"
+    },
+    {
+      "id": "particule",
+      "speaker": "Ryn Solh",
+      "text": "Chaque Amas la porte. Tous tes futurs éclats partageront la même Particule — quelle que soit la race ou l'archétype que tu choisis ensuite.\n\nObserve-la. Elle pulse quand quelque chose t'appelle.",
+      "action": "show_particule",
+      "highlight": "particule_seed"
+    },
+    {
+      "id": "pouvoir",
+      "speaker": "Ryn Solh",
+      "text": "Un Amas mature peut se diviser — pas en deux consciences, en un corps actif et un écho qui suit.\n\nDeux entités max. Un seul contrôle à la fois. C'est le pouvoir d'invocation.",
+      "action": "continue"
+    },
+    {
+      "id": "second_eclat",
+      "speaker": "Ryn Solh",
+      "text": "Pour l'expérimenter, il te faut un second éclat — une autre cristallisation du même Noyau.\n\nTu peux le faire ici, maintenant. Pas besoin de quitter le monde.",
+      "action": "create_second_character",
+      "button_label": "Cristalliser mon second éclat…"
+    },
+    {
+      "id": "invocation",
+      "speaker": "Ryn Solh",
+      "text": "Bien. Deux faces, une Particule.\n\nInvoque ton écho — touche H ou le menu Écho Amas. Puis essaie le switch. Renvoie-le quand tu voudras en changer.",
+      "action": "open_echo_panel",
+      "button_label": "Ouvrir l'invocation (H)",
+      "requires_roster_min": 2
+    },
+    {
+      "id": "complete",
+      "speaker": "Ryn Solh",
+      "text": "Le Noyau sait. Toi aussi, maintenant.\n\nVa voir Lost Heaven quand tu seras prêt — Daan Oth a toujours du travail. Et n'oublie pas : jamais plus de deux éclats en même temps.",
+      "action": "complete",
+      "button_label": "Terminer l'initiation"
+    }
+  ],
+  "rewards": {
+    "credits": 0,
+    "xp": {"xp_quartier": 10},
+    "unlock": ["echo_hammat", "in_game_character_create"]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "source": "docs/design/character_creation.md",
+    "note": "6 archétypes de départ — pas des classes, juste le point d'entrée"
+  },
+  "archetypes": [
+    {
+      "id": "archetype:forgeur",
+      "display_name": "Le Forgeur",
+      "identity": "Bâtisseur, réparateur, créateur",
+      "starter_tree": "artisan",
+      "base_stats": {"force": 65, "agilite": 40, "intelligence": 70, "hp": 100, "endurance": 60, "esprit": 45},
+      "suggested_races": ["race:tinkling", "race:mechari"],
+      "lore_brief": "L'Amas s'est condensé autour d'un fragment d'outil. Tes mains savent déjà."
+    },
+    {
+      "id": "archetype:traqueur",
+      "display_name": "Le Traqueur",
+      "identity": "Éclaireur, survivant, pisteur",
+      "starter_tree": "prospecteur",
+      "base_stats": {"force": 50, "agilite": 75, "intelligence": 55, "hp": 100, "endurance": 70, "esprit": 40},
+      "suggested_races": ["race:fel_rani", "race:varkoon"],
+      "lore_brief": "L'Amas a pulsé au rythme du vent. Tu sens le sable avant qu'il ne bouge."
+    },
+    {
+      "id": "archetype:soigneur",
+      "display_name": "Le Soigneur",
+      "identity": "Guérisseur, herboriste, chimiste",
+      "starter_tree": "medecine",
+      "base_stats": {"force": 35, "agilite": 45, "intelligence": 75, "hp": 100, "endurance": 50, "esprit": 70},
+      "suggested_races": ["race:mogrul", "race:human"],
+      "lore_brief": "L'Amas a brillé d'une lumière tiède. Ce qui est brisé t'appelle."
+    },
+    {
+      "id": "archetype:voix",
+      "display_name": "La Voix",
+      "identity": "Performer, négociateur, espion social",
+      "starter_tree": "scene",
+      "base_stats": {"force": 30, "agilite": 65, "intelligence": 60, "hp": 100, "endurance": 55, "esprit": 65},
+      "suggested_races": ["race:human", "race:fel_rani"],
+      "lore_brief": "L'Amas a chanté. Pas un son — une vibration que les autres ont ressentie."
+    },
+    {
+      "id": "archetype:poing",
+      "display_name": "Le Poing",
+      "identity": "Combattant corps-à-corps, garde",
+      "starter_tree": "poing",
+      "base_stats": {"force": 80, "agilite": 45, "intelligence": 30, "hp": 100, "endurance": 75, "esprit": 35},
+      "suggested_races": ["race:varkoon", "race:mogrul"],
+      "lore_brief": "L'Amas a frappé le sol en se formant. La poussière ne s'est pas encore posée."
+    },
+    {
+      "id": "archetype:oeil",
+      "display_name": "L'Œil",
+      "identity": "Tireur, sniper, observateur",
+      "starter_tree": "visee",
+      "base_stats": {"force": 40, "agilite": 80, "intelligence": 65, "hp": 100, "endurance": 55, "esprit": 40},
+      "suggested_races": ["race:fel_rani", "race:mechari"],
+      "lore_brief": "L'Amas a ouvert un œil avant même d'avoir un visage. Il voyait déjà tout."
+    }
+  ]
+}

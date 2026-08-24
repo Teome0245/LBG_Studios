@@ -65,6 +65,9 @@ func _ensure_ui() -> void:
 	_missions_btn = _mk_btn(root, "Missions", "Bureau des missions (J)")
 	_talents_btn = _mk_btn(root, "Talents", "Talents / craft (T)")
 	_inventory_btn = _mk_btn(root, "Inventory", "Inventaire (I)")
+	_mk_btn(root, "Echo", "Écho Amas (H)")
+	_mk_btn(root, "Initiation", "Initiation Particule")
+	_mk_btn(root, "CreateHammat", "Nouvel Amas…")
 	_quit_btn = _mk_btn(root, "Quit", "Quitter le client")
 	if not _resume_btn.pressed.is_connected(_on_resume):
 		_resume_btn.pressed.connect(_on_resume)
@@ -74,6 +77,15 @@ func _ensure_ui() -> void:
 		_talents_btn.pressed.connect(_on_talents)
 	if not _inventory_btn.pressed.is_connected(_on_inventory):
 		_inventory_btn.pressed.connect(_on_inventory)
+	var echo_btn := root.get_node_or_null("Echo") as Button
+	if echo_btn and not echo_btn.pressed.is_connected(_on_echo):
+		echo_btn.pressed.connect(_on_echo)
+	var init_btn := root.get_node_or_null("Initiation") as Button
+	if init_btn and not init_btn.pressed.is_connected(_on_initiation):
+		init_btn.pressed.connect(_on_initiation)
+	var create_btn := root.get_node_or_null("CreateHammat") as Button
+	if create_btn and not create_btn.pressed.is_connected(_on_create_hammat):
+		create_btn.pressed.connect(_on_create_hammat)
 	if not _quit_btn.pressed.is_connected(_on_quit):
 		_quit_btn.pressed.connect(_on_quit)
 
@@ -108,6 +120,27 @@ func _on_inventory() -> void:
 	var main := get_tree().get_first_node_in_group("prime_main")
 	if main and main.has_method("_toggle_inventory"):
 		main.call("_toggle_inventory")
+
+func _on_echo() -> void:
+	close_menu()
+	var main := get_tree().get_first_node_in_group("prime_main")
+	if main and main.has_method("_toggle_echo_hammat"):
+		main.call("_toggle_echo_hammat")
+
+
+func _on_initiation() -> void:
+	close_menu()
+	var main := get_tree().get_first_node_in_group("prime_main")
+	if main and main.has_method("open_initiation_quest"):
+		main.call("open_initiation_quest")
+
+
+func _on_create_hammat() -> void:
+	close_menu()
+	var main := get_tree().get_first_node_in_group("prime_main")
+	if main and main.has_method("open_character_creation"):
+		main.call("open_character_creation", true)
+
 
 func _on_quit() -> void:
 	logout_pressed.emit()
