@@ -72,6 +72,7 @@ func open_panel(in_game: bool = false) -> void:
 	_populate_color_presets()
 	_show_phase(Phase.EMERGENCE)
 	_status.text = ""
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = true
 
 
@@ -285,7 +286,7 @@ func _on_next_pressed() -> void:
 					creation_completed_in_game.emit(_pending_result)
 				else:
 					creation_completed.emit(_pending_result)
-				visible = false
+				_hide_panel()
 
 
 func _submit_creation(name: String) -> void:
@@ -347,6 +348,14 @@ func _on_create_failed(code: String, message: String) -> void:
 	_status.text = "%s: %s" % [code, message]
 
 
-func _on_cancel_pressed() -> void:
+func _hide_panel() -> void:
 	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vp := get_viewport()
+	if vp:
+		vp.gui_release_focus()
+
+
+func _on_cancel_pressed() -> void:
+	_hide_panel()
 	creation_cancelled.emit()

@@ -64,6 +64,7 @@ var _dialogue_npc_role: String = ""
 var _echo_controller: Node = null
 var _initiation_controller: Node = null
 var _world_entry_done: bool = false
+var _possessed_id: int = 0
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
 const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
@@ -372,6 +373,21 @@ func _on_second_character_created_in_game(entry: Dictionary) -> void:
 		_initiation_controller.on_second_character_created()
 	if _initiation_panel and _initiation_panel.has_method("_paint_step"):
 		_initiation_panel.call("_paint_step")
+	_restore_local_control()
+
+
+func _restore_local_control() -> void:
+	var vp := get_viewport()
+	if vp:
+		vp.gui_release_focus()
+	var pid := _possessed_id
+	var pc: Node = get_node_or_null("PlayerController")
+	if pid <= 0 and pc and pc.has_method("get_player_id"):
+		pid = int(pc.get_player_id())
+	if pid <= 0 and _ws != null and "your_character_id" in _ws:
+		pid = int(_ws.your_character_id)
+	if pid > 0:
+		_possess_local_player(pid, _planet_name, true)
 
 
 ## Appelé par LoginPanel : attache le WS déjà connecté (LoginPanel pilote le handshake).
@@ -543,6 +559,8 @@ func _on_world_entered(your_character_id: int, zone: String) -> void:
 		_login_panel.visible = false
 	_ensure_echo_hammat()
 	_sync_echo_roster()
+	if your_character_id > 0:
+		call_deferred("_possess_local_player", your_character_id, zone, false)
 	get_tree().create_timer(1.2).timeout.connect(_maybe_start_initiation_quest)
 	if state_label:
 		state_label.text = "WS OK"
@@ -559,6 +577,7 @@ func _on_ws_disconnected(reason: String) -> void:
 	_ws_handoff_busy = false
 	_ws_live = false
 	_world_entry_done = false
+	_possessed_id = 0
 	print("[Main] WS disconnected: %s" % reason)
 	if state_label:
 		state_label.text = "WS OFF"
@@ -670,8 +689,7 @@ func _on_ws_zone_state(payload: Dictionary) -> void:
 			pc.set_player_id(your_id)
 			if first_spawn and pc.has_method("send_initial_position"):
 				pc.send_initial_position(pos.x, pos.y, pos.z)
-		if not _is_connected:
-			on_player_connected(your_id, zone if zone != "" else "tatooine")
+		_possess_local_player(your_id, zone if zone != "" else "tatooine", first_spawn)
 
 	for rid in payload.get("removed_entity_ids", []):
 		var oid := _LbgWsClientScript.resolve_oid(rid)
@@ -847,7 +865,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F3:
 				_focus_bot("Mira")
 			KEY_H:
-				_focus_lost_heaven_hub()
+				_toggle_echo_hammat()
 			KEY_R:
 				_focus_lost_heaven_hub()
 			KEY_F:
@@ -862,8 +880,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_missions()
 			KEY_P:
 				_toggle_dialogue_demo()
-			KEY_H:
-				_toggle_echo_hammat()
 			KEY_O:
 				_cycle_dialogue_expression()
 			KEY_L:
@@ -1287,40 +1303,51 @@ func _focus_first_bot() -> void:
 
 # M5 — Joueur connecté (reçu via NetworkBridge "cn")
 func on_player_connected(obj_id: int, planet: String) -> void:
-	_planet_name  = planet
+	_possess_local_player(obj_id, planet, true)
+	if not _world_entry_done:
+		_on_world_entered(obj_id, planet)
+	print("[Main] Joueur humain 0x%016x connecté sur %s (name=%s)" % [obj_id, planet, _local_character_name])
+
+
+func _possess_local_player(obj_id: int, planet: String, force_camera: bool = false) -> void:
+	if obj_id <= 0:
+		return
+	var first := _possessed_id != obj_id
+	_possessed_id = obj_id
+	_is_connected = true
+	_play_mode = true
 	camera_free_pan = false
 	_ws_handoff_busy = false
-	var cfg := _load_human_cfg()
+	if planet != "":
+		_planet_name = planet
 	var pc: Node = get_node_or_null("PlayerController")
 	if pc:
 		pc.enabled = true
 		pc.set_player_id(obj_id)
-	# Couper le flux snapshot fichier (sinon Gally Core3 = 2e sprite + rebond visuel)
 	var sb := get_node_or_null("SnapshotBridge")
 	if sb and sb.has_method("set_paused"):
 		sb.call("set_paused", true)
-	_despawn_local_player_ghosts(obj_id)
+	if first:
+		_despawn_local_player_ghosts(obj_id)
 	var wm: Node = get_node_or_null("WorldMap")
 	if wm and planet != "":
 		wm.set_planet(planet.to_lower())
-	if bool(cfg.get("hide_npc_nameplates_on_play", true)):
+	var cfg := _load_human_cfg()
+	if first and bool(cfg.get("hide_npc_nameplates_on_play", true)):
 		_EntityScript.show_nameplates = false
 		for e in entity_manager.get_all_entities():
 			if e:
 				e.queue_redraw()
-	if bool(cfg.get("auto_focus_on_connect", true)):
+	if (first or force_camera) and bool(cfg.get("auto_focus_on_connect", true)):
 		var e: Node = entity_manager.get_entity(obj_id)
 		if e and camera:
 			camera.position = e.position
 			var zf := float(cfg.get("play_zoom", 2.2))
 			camera.zoom = Vector2(zf, zf)
 			_cam_target = e.position
-	if state_label:
+	if state_label and first:
 		state_label.text = "CONNECTED"
 	_update_info()
-	if not _world_entry_done:
-		_on_world_entered(obj_id, planet)
-	print("[Main] Joueur humain 0x%016x connecté sur %s (name=%s)" % [obj_id, planet, _local_character_name])
 
 
 func _despawn_local_player_ghosts(your_id: int) -> void:
