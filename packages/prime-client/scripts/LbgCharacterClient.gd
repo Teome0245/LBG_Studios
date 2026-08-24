@@ -37,7 +37,18 @@ func _load_config() -> void:
 
 func create_character(payload: Dictionary) -> void:
 	_pending_payload = payload.duplicate(true)
-	var body := JSON.stringify(payload)
+	# V1 : cristallisation locale immédiate. Cortex (.140) est best-effort, jamais bloquant.
+	if use_mock_fallback:
+		_mock_create(_pending_payload)
+		_try_http_best_effort()
+		return
+	_try_http_best_effort()
+
+
+func _try_http_best_effort() -> void:
+	if _http == null:
+		return
+	var body := JSON.stringify(_pending_payload)
 	var headers := [
 		"Content-Type: application/json",
 		"X-Account-Id: %s" % account_id,
@@ -48,9 +59,8 @@ func create_character(payload: Dictionary) -> void:
 		HTTPClient.METHOD_POST,
 		body
 	)
-	if err != OK:
-		_finish_unavailable("HTTPRequest error %s" % err)
-		return
+	if err != OK and not use_mock_fallback:
+		create_failed.emit("zone_unavailable", "HTTPRequest error %s" % err)
 
 
 func _mock_create(payload: Dictionary) -> void:
@@ -87,13 +97,18 @@ func _mock_create(payload: Dictionary) -> void:
 
 func _finish_unavailable(reason: String) -> void:
 	if use_mock_fallback:
-		print("[LbgCharacterClient] Cortex KO (%s) — mock local" % reason)
-		_mock_create(_pending_payload)
+		# Déjà cristallisé en local — ne pas spammer l'UI.
+		print("[LbgCharacterClient] Cortex KO (%s) — ignoré (mock déjà OK)" % reason)
 		return
 	create_failed.emit("zone_unavailable", reason)
 
 
 func _on_http_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if use_mock_fallback:
+		# L'UI a déjà le perso local ; une réponse Cortex 4xx ne doit pas l'annuler.
+		if result != HTTPRequest.RESULT_SUCCESS:
+			print("[LbgCharacterClient] Cortex réseau (%s) — mock déjà OK" % result)
+		return
 	var text := body.get_string_from_utf8()
 	var data: Variant = JSON.parse_string(text)
 	if typeof(data) != TYPE_DICTIONARY:

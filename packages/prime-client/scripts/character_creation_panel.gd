@@ -324,6 +324,25 @@ func _on_create_ok(result: Dictionary) -> void:
 
 
 func _on_create_failed(code: String, message: String) -> void:
+	# Filet : jamais coincé sur « réseau (2) » — cristallise localement.
+	var name := _name_edit.text.strip_edges()
+	if name.length() >= 2:
+		_pending_result = {
+			"character_id": "chr_local",
+			"name": name,
+			"race": "race:human",
+			"race_display": "Humain",
+			"archetype_starter": _choice_id if _choice_id else "traqueur",
+			"stats": {"force": 55, "agilite": 60, "intelligence": 50, "hp": 100, "endurance": 55, "esprit": 45},
+			"lore_brief": "Cristallisation locale — Cortex injoignable.",
+			"noyau_id": "noyau_local",
+			"particule_seed": "local0001",
+			"_mock_numeric_id": 9001,
+		}
+		_status.text = "Cristallisation locale (Cortex injoignable)"
+		_btn_next.disabled = false
+		_show_phase(Phase.AWAKENING)
+		return
 	_btn_next.disabled = false
 	_status.text = "%s: %s" % [code, message]
 
