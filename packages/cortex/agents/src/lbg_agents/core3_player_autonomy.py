@@ -309,7 +309,7 @@ def enqueue_direct_action(
             "http_status": resp.status_code,
             "player_id": player.id,
             "player": player.firstname,
-            "actor_id": player.actor_id,
+            "actor_id": getattr(player, "actor_id", "") or "",
             "action": action,
             "line": payload.get("line"),
             "sidecar": payload,
@@ -368,6 +368,16 @@ def deterministic_proactive_action(
     snap = snapshot if isinstance(snapshot, dict) else {}
     life = tick_player_lifecycle(player, activity=True, persist=True)
     idx = _tick_index()
+
+    # Rappel marche LH (optionnel, env LBG_HUB_WALK_HOME_ON_FAR) — avant le reste
+    try:
+        from lbg_agents.hub_walk_recenter import maybe_walk_home_proactive
+
+        home = maybe_walk_home_proactive(player, snapshot=snap, enqueue=enqueue_direct_action)
+        if home is not None:
+            return home
+    except Exception:
+        pass
 
     decay = deterministic_decay_action(player, enqueue=enqueue_direct_action)
     if decay is not None:

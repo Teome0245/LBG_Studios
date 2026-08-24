@@ -1352,10 +1352,30 @@ func _possess_local_player(obj_id: int, planet: String, force_camera: bool = fal
 			var zf := float(cfg.get("play_zoom", 2.2))
 			camera.zoom = Vector2(zf, zf)
 			_cam_target = e.position
+	# Trop loin du hub : marche vers la plaza (pas de téléport).
+	if first and bool(cfg.get("walk_home_on_far", true)):
+		_maybe_walk_local_to_hub(obj_id)
 	if state_label and first:
 		state_label.text = "CONNECTED"
 	_update_info()
 
+
+func _maybe_walk_local_to_hub(obj_id: int) -> void:
+	var e: Node = entity_manager.get_entity(obj_id)
+	if e == null:
+		return
+	var hub := LOST_HEAVEN_HUB
+	var dx: float = e.core3_pos.x - hub.x
+	var dz: float = e.core3_pos.z - hub.z
+	var far_m := 400.0
+	var cfg := _load_human_cfg()
+	far_m = float(cfg.get("walk_home_far_m", far_m))
+	if dx * dx + dz * dz < far_m * far_m:
+		return
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc and pc.has_method("request_move_to"):
+		pc.request_move_to(hub.x, hub.z)
+		print("[Main] marche vers Lost Heaven (%.0f, %.0f) — pas de téléport" % [hub.x, hub.z])
 
 func _despawn_local_player_ghosts(your_id: int) -> void:
 	## Retire les doublons "Vous (Godot)" / Gally snapshot à côté du sprite contrôlé.

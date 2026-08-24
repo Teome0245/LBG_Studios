@@ -22,7 +22,9 @@ Portes : champ `door` (face / width / depth / apron) — rendu + vestibule walka
 
 - **H** — recentrer caméra hub (4749, -737)
 - **Ctrl+H** — toggle sol + bâtiments + props hub (art LH)
-- **Ctrl+C** — toggle collisions / palissade debug (zone_layers)
+- **Ctrl+W** — toggle eau debug (polygones `tatooine_zones.json`, vide depuis migration LH)
+- **Ctrl+C** — toggle collisions / palissade debug (zone_layers + emprises LH)
+- **Ctrl+B** — toggle objets retail Mos Eisley (`mos_eisley_ws.json`, off par défaut)
 - **L** — nameplates entités (off par défaut)
 - **F9** — panneau debug
 

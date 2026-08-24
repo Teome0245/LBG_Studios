@@ -164,18 +164,23 @@ def connect_player(
 
 
 def _post_connect_lines(player: Core3IaPlayer) -> list[str]:
-    """Placement initial : Lost Heaven outdoor (hub Scrapaltai)."""
+    """Placement initial : Lost Heaven outdoor (hub Scrapaltai) — marche, pas téléport."""
     from lbg_agents.core3_places import bot_spawn
+    from lbg_agents.quest_hub_bot_autonomy import ensure_walk_mode
 
+    ensure_walk_mode()
     x, y, z = bot_spawn(player.id)
     name = player.firstname
-    return [f"move_to|{name}|tatooine|{x:g}|{y:g}|{z:g}|lost_heaven"]
+    return [f"move_to|{name}|tatooine|{x:g}|{y:g}|{z:g}|hub_walk_home"]
 
 
 def enqueue_lines(lines: list[str], *, player: Core3IaPlayer) -> dict[str, Any]:
     base = sidecar_base_url()
     if not base or not lines:
         return {"ok": True, "outcome": "noop", "n": 0}
+    from lbg_agents.quest_hub_bot_autonomy import ensure_walk_mode
+
+    ensure_walk_mode()
     snap = fetch_snapshot(player.firstname)
     enqueued = 0
     errors: list[str] = []
@@ -184,17 +189,24 @@ def enqueue_lines(lines: list[str], *, player: Core3IaPlayer) -> dict[str, Any]:
         if len(parts) < 7:
             continue
         action = parts[0]
-        message = parts[6] if action in {"housing_enter", "move_to"} else parts[6]
-        body = {
+        message = parts[6]
+        body: dict[str, Any] = {
             "action": action,
             "player": player.firstname,
-            "zone": str(snap.get("zone") or "tatooine"),
+            "zone": str(snap.get("zone") or parts[2] or "tatooine"),
             "x": float(snap.get("x") or 0),
             "y": float(snap.get("y") or 0),
             "z": float(snap.get("z") or 0),
             "message": message,
             "raw_line": line,
         }
+        if action == "move_to":
+            try:
+                body["x"] = float(parts[3])
+                body["y"] = float(parts[4])
+                body["z"] = float(parts[5])
+            except (IndexError, ValueError):
+                pass
         try:
             with httpx.Client(timeout=_timeout(20.0)) as client:
                 resp = client.post(f"{base}/v1/enqueue", json=body)

@@ -6,9 +6,9 @@ const ZONES_PATH := "res://assets/maps/tatooine_zones.json"
 const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 const PROPS_PATH := "res://assets/maps/lost_heaven_props.json"
 
-@export var show_water: bool = true
-@export var show_collision: bool = true
-@export var enforce_hub_fence: bool = true
+@export var enforce_hub_fence: bool = false
+@export var show_water: bool = false
+@export var show_collision: bool = false
 @export var enforce_building_blocks: bool = true
 
 var _water: Array = []
@@ -19,6 +19,10 @@ var _open_fence_segments: Dictionary = {}
 var _building_blocks: Array = []
 
 func _ready() -> void:
+	var zd: Variant = MapTextureLoader.world_render_cfg().get("zone_debug", null)
+	if zd is Dictionary:
+		show_water = bool((zd as Dictionary).get("show_water", show_water))
+		show_collision = bool((zd as Dictionary).get("show_collision", show_collision))
 	reload()
 
 func reload() -> void:
@@ -371,6 +375,8 @@ func _draw_poly(item: Variant, fill: Color, outline: Color, filled: bool = true)
 		var a: Array = p
 		var wx := float(a[0])
 		var wz := float(a[1])
+		if not HubFocus.should_draw_world_overlay(wx, wz):
+			return
 		pts.append(Projection3D2D.to_screen(Vector3(wx, 0.0, wz)))
 	if pts.size() < 3:
 		return
