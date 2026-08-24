@@ -18,7 +18,10 @@ from lbg_agents.proxmox_storage_probe import (
 def test_probe_warn_outcome(monkeypatch):
     monkeypatch.setenv("LBG_PROXMOX_THIN_WARN_PCT", "85")
     monkeypatch.setenv("LBG_PROXMOX_THIN_CRIT_PCT", "95")
-    stdout = "data_pct=89.55\nvg_free=16.00g\npvesm_local_lvm=89\nvm_prime_status=running\n"
+    stdout = (
+        "data_pct=89.55\nvg_free=16.00g\npvesm_local_lvm=89\nvm_prime_status=running\n"
+        "nas_backup_source=/dev/sdc1\nnas_backup_fstype=ext4\nroot_source=/dev/mapper/pve-root\n"
+    )
     with patch("lbg_agents.proxmox_storage_probe._ssh_proxmox_host", return_value=(True, stdout, "")):
         payload = probe_proxmox_storage_host("192.168.0.201")
     assert payload["ok"] is True
@@ -28,7 +31,10 @@ def test_probe_warn_outcome(monkeypatch):
 
 
 def test_probe_critical_io_error(monkeypatch):
-    stdout = "data_pct=99\nvg_free=0\npvesm_local_lvm=99\nvm_prime_status=running(io-error)\n"
+    stdout = (
+        "data_pct=99\nvg_free=0\npvesm_local_lvm=99\nvm_prime_status=running(io-error)\n"
+        "nas_backup_source=/dev/sdc1\nnas_backup_fstype=ext4\nroot_source=/dev/mapper/pve-root\n"
+    )
     with patch("lbg_agents.proxmox_storage_probe._ssh_proxmox_host", return_value=(True, stdout, "")):
         payload = probe_proxmox_storage_host("192.168.0.201")
     assert payload["outcome"] == "critical"
@@ -41,10 +47,29 @@ def test_probe_ssh_failure():
     assert payload["outcome"] == "critical"
 
 
+def test_probe_nas_backup_on_root_is_critical(monkeypatch):
+    stdout = (
+        "data_pct=20\nvg_free=10g\npvesm_local_lvm=20\nvm_prime_status=running\n"
+        "nas_backup_source=/dev/mapper/pve-root\nnas_backup_fstype=ext4\n"
+        "root_source=/dev/mapper/pve-root\n"
+    )
+    with patch("lbg_agents.proxmox_storage_probe._ssh_proxmox_host", return_value=(True, stdout, "")):
+        payload = probe_proxmox_storage_host("192.168.0.200")
+    assert payload["outcome"] == "critical"
+    assert any("nas-lun-backup on local root" in a for a in payload["alerts"])
+
+
 def test_multi_host_worst_outcome(monkeypatch):
     monkeypatch.setenv("LBG_PROXMOX_HOSTS", "192.168.0.201,192.168.0.202")
-    ok_stdout = "data_pct=70\nvg_free=10g\npvesm_local_lvm=70\nvm_prime_status=running\n"
-    warn_stdout = "data_pct=88\nvg_free=0\npvesm_local_lvm=88\nvm_prime_status=running\n"
+    ok_stdout = (
+        "data_pct=70\nvg_free=10g\npvesm_local_lvm=70\nvm_prime_status=running\n"
+        "nas_backup_source=192.168.0.201:/mnt/pve/nas-lun-backup\nnas_backup_fstype=nfs4\n"
+        "root_source=/dev/mapper/pve-root\n"
+    )
+    warn_stdout = (
+        "data_pct=88\nvg_free=0\npvesm_local_lvm=88\nvm_prime_status=running\n"
+        "nas_backup_source=/dev/sdc1\nnas_backup_fstype=ext4\nroot_source=/dev/mapper/pve-root\n"
+    )
 
     def fake_ssh(host, script, timeout_s=12.0):
         if host == "192.168.0.201":

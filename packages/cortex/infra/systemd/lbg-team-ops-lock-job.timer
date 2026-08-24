@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer — sonde locks / snapshots vzdump Proxmox → tâche équipe ops (warn/critical)
+
+[Timer]
+OnBootSec=30min
+OnUnitActiveSec=4h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

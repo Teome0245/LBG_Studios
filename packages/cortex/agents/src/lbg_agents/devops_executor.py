@@ -1093,6 +1093,29 @@ def run_devops_action(
             },
         }
 
+    if kind == "proxmox_guest_lock":
+        from lbg_agents.proxmox_guest_lock_probe import run_proxmox_guest_lock_probe
+
+        result = run_proxmox_guest_lock_probe(actor_id=actor_id, text=text)
+        return {
+            "agent": "devops_executor",
+            "handler": "devops",
+            "actor_id": actor_id,
+            "request_text": text,
+            "devops_action": dict(action),
+            "result": result,
+            "ok": bool(result.get("ok")),
+            "outcome": result.get("outcome"),
+            "reply": result.get("reply"),
+            "meta": {
+                "allowlist": True,
+                "sterile": True,
+                "dry_run": dry_run,
+                "dry_run_source": dr_src,
+                "execution_gated": gated,
+            },
+        }
+
     if kind == "storage_remediation_plan":
         from lbg_agents.infra_storage_remediation import build_storage_remediation_plan, format_storage_plan_reply
         from lbg_agents.proxmox_storage_probe import run_proxmox_storage_probe

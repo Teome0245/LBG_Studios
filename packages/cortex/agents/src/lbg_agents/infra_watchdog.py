@@ -94,6 +94,7 @@ def run_infra_watchdog(
             alerts.append("mem: sonde désactivée (SSH)")
 
     from lbg_agents.proxmox_storage_probe import run_proxmox_storage_probe
+    from lbg_agents.proxmox_guest_lock_probe import run_proxmox_guest_lock_probe
     from lbg_agents.infra_storage_remediation import build_storage_remediation_plan
 
     storage_block = run_proxmox_storage_probe(actor_id=actor_id, text="infra watchdog")
@@ -106,13 +107,22 @@ def run_infra_watchdog(
     if str(storage_inner.get("vm246_status") or "").find("io-error") >= 0:
         alerts.append("storage:vm246:io-error")
 
+    lock_block = run_proxmox_guest_lock_probe(actor_id=actor_id, text="infra watchdog")
+    lock_inner = lock_block.get("guest_lock") if isinstance(lock_block.get("guest_lock"), dict) else {}
+    sections.append("=== Locks / snapshots vzdump ===\n" + str(lock_block.get("reply", "")))
+    if not lock_block.get("ok"):
+        alerts.append(f"guest_lock: {lock_block.get('error', 'KO')}")
+    else:
+        alerts.extend(lock_block.get("alerts") or [])
+
     if exclude_prime:
         sections.append("=== Prime 246 ===\nexclu (LBG_INFRA_WATCHDOG_EXCLUDE_PRIME=1 — rebuild en cours)")
 
     prox_out = _normalize_outcome(str(proxmox_block.get("outcome")))
     mem_out = _normalize_outcome(str(mem_block.get("worst_status") or mem_block.get("outcome")))
     stor_out = _normalize_outcome(str(storage_inner.get("outcome") or storage_block.get("outcome")))
-    outcome = _worst(prox_out, mem_out, stor_out)
+    lock_out = _normalize_outcome(str(lock_inner.get("outcome") or lock_block.get("outcome")))
+    outcome = _worst(prox_out, mem_out, stor_out, lock_out)
 
     payload: dict[str, Any] = {
         "ok": True,
@@ -123,6 +133,7 @@ def run_infra_watchdog(
         "proxmox": proxmox_block,
         "memory": mem_block,
         "storage": storage_block,
+        "guest_lock": lock_block,
         "alerts": alerts,
         "reply": "\n\n".join(sections),
     }

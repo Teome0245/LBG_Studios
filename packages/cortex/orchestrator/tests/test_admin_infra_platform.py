@@ -85,6 +85,17 @@ def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
         },
     )
     monkeypatch.setattr(
+        "team.admin_infra_platform.audit_dialogue_fast_cloud",
+        lambda **kw: {
+            "ok": True,
+            "skipped": False,
+            "track": "dialogue_fast_groq",
+            "gaps": [],
+            "warnings": [],
+            "recommendations": [],
+        },
+    )
+    monkeypatch.setattr(
         "team.admin_infra_platform.audit_platform_host",
         lambda spec: {
             "id": spec["id"],

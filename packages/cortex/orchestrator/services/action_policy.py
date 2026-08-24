@@ -26,6 +26,7 @@ _DEVOPS_SAFE_READ_KINDS = {
     "selfcheck",
     "vm_memory_probe",
     "proxmox_status",
+    "proxmox_guest_lock",
     "infra_watchdog",
     "memory_remediation_plan",
     "remediation_plan",

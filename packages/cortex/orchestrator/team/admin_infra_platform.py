@@ -10,6 +10,7 @@ import urllib.request
 from typing import Any
 
 from team.ollama_audit import audit_ollama_lan
+from team.llm_model_probe import audit_dialogue_fast_cloud
 
 
 def _host_ip(env_key: str, default: str) -> str:
@@ -289,9 +290,10 @@ def audit_platform_host(spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def audit_admin_infra_platform() -> dict[str, Any]:
-    """Audit multi-hôtes Atlas — dual LLM 110/111 + runtime."""
+    """Audit multi-hôtes Atlas — dual LLM 110/111 + runtime + Groq dialogue fast."""
     hosts = [audit_platform_host(spec) for spec in platform_host_specs()]
     ollama = audit_ollama_lan()
+    dialogue_fast = audit_dialogue_fast_cloud(probe=True)
     required_hosts = [h for h in hosts if h.get("required", True)]
     host_ok = sum(1 for h in required_hosts if h.get("ok"))
     hosts_total = len(required_hosts)
@@ -304,8 +306,13 @@ def audit_admin_infra_platform() -> dict[str, Any]:
     if ollama.get("gaps"):
         for g in ollama["gaps"]:
             gaps.append(f"ollama-config: {g}")
+    for g in dialogue_fast.get("gaps") or []:
+        gaps.append(f"dialogue-fast-groq: {g}")
+    for w in dialogue_fast.get("warnings") or []:
+        gaps.append(f"dialogue-fast-groq-warning: {w}")
 
     recommendations: list[str] = list(ollama.get("recommendations") or [])
+    recommendations.extend(dialogue_fast.get("recommendations") or [])
     if not any(h.get("id") == "llm_light_111" and h.get("ok") for h in hosts):
         recommendations.append(
             "111 light KO — vérifier CT ollama-light sur Proxmox 200 ; router/json basculent en failover 110."
@@ -341,7 +348,9 @@ def audit_admin_infra_platform() -> dict[str, Any]:
     }
 
     return {
-        "ok": host_ok == hosts_total and bool(ollama.get("ok", False) or not ollama.get("error")),
+        "ok": host_ok == hosts_total
+        and bool(ollama.get("ok", False) or not ollama.get("error"))
+        and bool(dialogue_fast.get("ok", True) or dialogue_fast.get("skipped")),
         "track": "admin_infra_platform",
         "perimeter": admin_infra_perimeter(),
         "hosts_ok": host_ok,
@@ -349,6 +358,7 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         "hosts": hosts,
         "topology": topology,
         "ollama_primary": ollama,
+        "dialogue_fast_groq": dialogue_fast,
         "gaps": gaps,
         "recommendations": recommendations,
     }

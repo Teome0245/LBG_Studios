@@ -32,7 +32,7 @@ Modèle : **rôles + file de tâches + garde-fous** (complète le moteur jobs Ja
 | ServeurSWG | `192.168.0.245` | PreCU / legacy (sandbox Python gelé) |
 | Prime | `192.168.0.246` | **Core3 Prime prod** — sidecar IA `:8791`, joueurs IA |
 | Poste dev | `192.168.0.10` | Cursor, Claude Code, agent desktop `:5005` |
-| NAS | `192.168.0.51` | Sauvegardes iSCSI → `/mnt/sauvegardes` sur 201 |
+| NAS | `192.168.0.51` | LUN iSCSI `nas-lun-backup` monté sur **`.201`** ; **`.200`** y accède en **NFS** via `.201` — voir [`runbook_nas_lun_backup.md`](runbook_nas_lun_backup.md) |
 
 ```mermaid
 flowchart LR

@@ -10,6 +10,7 @@ from team.admin_infra_element import maybe_notify_perimeter_ko
 from team.admin_infra_platform import admin_infra_perimeter, audit_admin_infra_platform
 from team.models import TeamTask
 from team.ollama_audit import audit_ollama_lan
+from team.llm_model_probe import audit_dialogue_fast_cloud
 from team.reason_llm import reason_route_matrix
 
 Dispatcher = Callable[..., dict[str, object]]
@@ -87,6 +88,11 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
 
     platform = audit_admin_infra_platform()
     ollama = platform.get("ollama_primary") if isinstance(platform.get("ollama_primary"), dict) else audit_ollama_lan()
+    dialogue_fast = (
+        platform.get("dialogue_fast_groq")
+        if isinstance(platform.get("dialogue_fast_groq"), dict)
+        else audit_dialogue_fast_cloud(probe=True)
+    )
 
     brief_ctx = {
         **ctx,
@@ -108,6 +114,11 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
 
     recommendations = list(ollama.get("recommendations") or [])
     recommendations.extend(platform.get("recommendations") or [])
+    if not dialogue_fast.get("ok") and not dialogue_fast.get("skipped"):
+        recommendations.append(
+            "Route dialogue fast (Groq) KO — vérifier LBG_DIALOGUE_FAST_MODEL "
+            "(≠ LBG_DIALOGUE_LLM_MODEL seul), aligner GROQ_MODEL_*, puis push_secrets_vm.sh."
+        )
     recommendations.extend(
         [
             "Fixer un budget local par role (rapide / raisonnement / JSON).",
@@ -118,7 +129,8 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
 
     platform_ok = bool(platform.get("ok"))
     ollama_ok = bool(ollama.get("ok", False) or not ollama.get("error"))
-    workflow_ok = bool(brief.get("ok", True)) and (platform_ok or ollama_ok)
+    dialogue_fast_ok = bool(dialogue_fast.get("ok", True) or dialogue_fast.get("skipped"))
+    workflow_ok = bool(brief.get("ok", True)) and (platform_ok or ollama_ok) and dialogue_fast_ok
     # Learn avant Element : une alerte Matrix ne doit pas bloquer l'archive LBG_SA.
     memory_record = record_atlas_admin_infra_run(
         task.id,
@@ -139,6 +151,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
         "platform_audit": platform,
         "perimeter_element_alert": perimeter_alert,
         "ollama_audit": ollama,
+        "dialogue_fast_groq_audit": dialogue_fast,
         "workstreams": _workstreams(),
         "candidate_models": _candidate_models(),
         "bench_docs": [

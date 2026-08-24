@@ -54,8 +54,23 @@ def run_proxmox_status(
         if state and state not in {"running", "OK"}:
             alerts.append(f"{label}: état VM {state}")
 
+    locked_guests: list[dict[str, Any]] = []
+    for vm in (vms.get("vms") if isinstance(vms, dict) else None) or []:
+        if not isinstance(vm, dict):
+            continue
+        lock = vm.get("lock")
+        if not lock:
+            continue
+        locked_guests.append(vm)
+        alerts.append(
+            f"lock:vmid={vm.get('vmid')}({vm.get('name') or '?'}) "
+            f"node={vm.get('node')} type={vm.get('type')} → {lock}"
+        )
+
     status_level = "ok"
-    if alerts:
+    if locked_guests:
+        status_level = "critical"
+    elif alerts:
         status_level = "warn"
 
     lines = [
@@ -82,6 +97,13 @@ def run_proxmox_status(
         state = inner.get("status") if isinstance(inner, dict) else "?"
         lines.append(f"  {label}: vmid={vid} status={state} mem={mem_pct}% cpu={cpu_pct}%")
 
+    if locked_guests:
+        lines.append(
+            "Locks: "
+            + "; ".join(
+                f"{g.get('vmid')}/{g.get('name')}={g.get('lock')}" for g in locked_guests
+            )
+        )
     if alerts:
         lines.append("Alertes: " + "; ".join(alerts))
 
@@ -93,6 +115,7 @@ def run_proxmox_status(
         "probes": probes,
         "lan_vms": lan,
         "vms": vms,
+        "locked_guests": locked_guests,
         "alerts": alerts,
         "reply": "\n".join(lines),
     }

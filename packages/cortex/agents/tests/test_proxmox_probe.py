@@ -27,8 +27,35 @@ def test_warn_on_high_mem():
     }
     with patch("lbg_agents.proxmox_probe.proxmox_configured", return_value=True):
         with patch("lbg_agents.proxmox_probe.get_cluster_status", return_value={"ok": True, "host": "200", "version": "8", "vm_count": 4}):
-            with patch("lbg_agents.proxmox_probe.match_lan_vms", return_value=fake_lan):
-                with patch("lbg_agents.proxmox_probe.list_vms", return_value={"ok": True, "count": 4}):
-                    out = run_proxmox_status(actor_id="sysops", text="superviser proxmox", context={})
+            with patch("lbg_agents.proxmox_probe.probe_all_proxmox_hosts", return_value=[]):
+                with patch("lbg_agents.proxmox_probe.match_lan_vms", return_value=fake_lan):
+                    with patch("lbg_agents.proxmox_probe.list_vms", return_value={"ok": True, "count": 4, "vms": []}):
+                        out = run_proxmox_status(actor_id="sysops", text="superviser proxmox", context={})
     assert out["outcome"] == "warn"
     assert out["alerts"]
+
+
+def test_critical_on_guest_lock():
+    locked_vms = {
+        "ok": True,
+        "count": 1,
+        "vms": [
+            {
+                "vmid": 111,
+                "name": "ollama-light",
+                "node": "proxmox",
+                "type": "lxc",
+                "status": "running",
+                "lock": "snapshot-delete",
+            }
+        ],
+    }
+    with patch("lbg_agents.proxmox_probe.proxmox_configured", return_value=True):
+        with patch("lbg_agents.proxmox_probe.get_cluster_status", return_value={"ok": True, "host": "200", "version": "8", "vm_count": 1}):
+            with patch("lbg_agents.proxmox_probe.probe_all_proxmox_hosts", return_value=[]):
+                with patch("lbg_agents.proxmox_probe.match_lan_vms", return_value={"ok": True, "matched": {}}):
+                    with patch("lbg_agents.proxmox_probe.list_vms", return_value=locked_vms):
+                        out = run_proxmox_status(actor_id="sysops", text="locks", context={})
+    assert out["outcome"] == "critical"
+    assert out["locked_guests"]
+    assert any("snapshot-delete" in a for a in out["alerts"])

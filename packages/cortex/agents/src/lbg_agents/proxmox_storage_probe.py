@@ -125,10 +125,16 @@ data_pct=$(lvs -o data_percent --noheadings "$POOL" 2>/dev/null | tr -d ' ' | he
 vg_free=$(vgs -o vg_free --noheadings pve 2>/dev/null | tr -d ' ')
 pvesm=$(pvesm status 2>/dev/null | awk '/local-lvm/ {{gsub(/%/,"",$NF); print $NF}}' | head -1)
 qm_prime=$(qm status "$VMID" 2>/dev/null | awk '{{print $2}}' || echo unknown)
+nas_src=$(findmnt -n -o SOURCE --target /mnt/pve/nas-lun-backup 2>/dev/null || echo missing)
+nas_fstype=$(findmnt -n -o FSTYPE --target /mnt/pve/nas-lun-backup 2>/dev/null || echo missing)
+root_src=$(findmnt -n -o SOURCE --target / 2>/dev/null || echo missing)
 echo "data_pct=${{data_pct:-na}}"
 echo "vg_free=${{vg_free:-na}}"
 echo "pvesm_local_lvm=${{pvesm:-na}}"
 echo "vm_prime_status=${{qm_prime}}"
+echo "nas_backup_source=${{nas_src}}"
+echo "nas_backup_fstype=${{nas_fstype}}"
+echo "root_source=${{root_src}}"
 """
     ok, stdout, stderr = _ssh_proxmox_host(host, script)
     warn = thin_warn_pct()
@@ -150,6 +156,28 @@ echo "vm_prime_status=${{qm_prime}}"
     vm_status = str(kv.get("vm_prime_status", ""))
     outcome = _outcome_from_metrics(data_pct, vm_status, warn=warn, crit=crit)
 
+    nas_src = str(kv.get("nas_backup_source") or "missing")
+    nas_fstype = str(kv.get("nas_backup_fstype") or "missing").lower()
+    root_src = str(kv.get("root_source") or "missing")
+    alerts: list[str] = []
+    # Bug historique .200 : dir storage sans montage → dumps sur root local
+    nas_on_root = nas_src == root_src or nas_src.endswith("pve-root") or nas_src == "/"
+    nas_missing = nas_src in {"missing", ""} or nas_fstype in {"missing", ""}
+    if nas_missing or nas_on_root:
+        outcome = "critical"
+        alerts.append(
+            f"nas-lun-backup on local root (source={nas_src} fstype={nas_fstype}) "
+            "— expected NFS/iSCSI LUN, not pve-root"
+        )
+    elif nas_fstype.startswith("nfs") or nas_fstype in {"ext4", "xfs"}:
+        # nfs (.200) or local block LUN (.201) OK
+        pass
+    else:
+        outcome = "critical" if outcome == "ok" else outcome
+        if outcome == "ok":
+            outcome = "warn"
+        alerts.append(f"nas-lun-backup unexpected fstype={nas_fstype} source={nas_src}")
+
     return {
         "ok": True,
         "outcome": outcome,
@@ -162,6 +190,9 @@ echo "vm_prime_status=${{qm_prime}}"
         "pvesm_local_lvm_pct": kv.get("pvesm_local_lvm"),
         "vm246_status": vm_status,
         "vm_prime_status": vm_status,
+        "nas_backup_source": nas_src,
+        "nas_backup_fstype": nas_fstype,
+        "alerts": alerts,
         "thresholds": {"warn": warn, "critical": crit},
     }
 
@@ -199,6 +230,15 @@ def _aggregate_host_probes(hosts: list[dict[str, Any]]) -> dict[str, Any]:
     if any_io_error:
         outcome = "critical"
 
+    all_alerts: list[str] = []
+    for h in ok_hosts:
+        for a in h.get("alerts") or []:
+            all_alerts.append(f"{h.get('host')}:{a}")
+        if h.get("outcome") == "critical" and any(
+            "nas-lun-backup" in str(x) for x in (h.get("alerts") or [])
+        ):
+            outcome = "critical"
+
     return {
         "ok": True,
         "outcome": outcome,
@@ -211,6 +251,7 @@ def _aggregate_host_probes(hosts: list[dict[str, Any]]) -> dict[str, Any]:
         "vm246_status": worst.get("vm246_status"),
         "vm_prime_status": worst.get("vm_prime_status"),
         "prime_vmid": worst.get("prime_vmid"),
+        "alerts": all_alerts,
         "thresholds": {"warn": warn, "critical": crit},
         "hosts": hosts,
         "proxmox_hosts": [h.get("host") for h in hosts],
