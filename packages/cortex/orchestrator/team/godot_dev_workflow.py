@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+from pathlib import Path
 from typing import Callable
 
 from services.action_proposal import propose_action_from_text
@@ -42,6 +44,9 @@ _TRACK_ALIASES = {
     "zb0": "zb0",
     "zb1": "zb1",
     "client_live": "client_live",
+    "hunt_hub": "hunt_hub",
+    "hub_hunt": "hunt_hub",
+    "palissade": "hunt_hub",
     "iris_full": "iris_full",
     "hermes_full": "hermes_full",
     "m11_login": "m11_login",
@@ -52,6 +57,11 @@ _TRACK_ALIASES = {
     "portraits": "ui_portraits",
     "full": "full",
 }
+
+_HUNT_HUB_RE = re.compile(
+    r"(?i)\b(chasse|hunt|palissade|hub|lost\s*heaven|board|porte\s+est|"
+    r"mission\s*board|meute|chacal)\b"
+)
 
 
 def _normalize_persona(raw: str) -> str:
@@ -101,7 +111,56 @@ def _detect_track(task: TeamTask, persona: str) -> str:
         return "m9_full"
     if re.search(r"\b(portrait|portraits|dialogue_portrait|garr\s*vek|npc_merchant)\b", text):
         return "ui_portraits"
+    if persona == "iris" and _HUNT_HUB_RE.search(text):
+        return "hunt_hub"
     return "iris_full"
+
+
+def _prime_client_root() -> Path:
+    env = os.environ.get("LBG_PRIME_CLIENT_ROOT", "").strip()
+    if env:
+        return Path(env)
+    return Path(__file__).resolve().parents[3] / "prime-client"
+
+
+def audit_hunt_hub_readiness() -> dict[str, object]:
+    """Probe L1 : hub → palissade / board chasse (pas M9)."""
+    root = _prime_client_root()
+    gaps: list[str] = []
+    checks: dict[str, bool] = {}
+    board = root / "scripts" / "mission_board_panel.gd"
+    buildings = root / "assets" / "maps" / "lost_heaven_buildings.json"
+    checks["mission_board"] = board.is_file()
+    if not checks["mission_board"]:
+        gaps.append("scripts/mission_board_panel.gd absent")
+    else:
+        text = board.read_text(encoding="utf-8", errors="replace")
+        checks["board_hunt_or_palissade"] = ("lh_hunt_chacal" in text) or ("hors palissade" in text.lower())
+        if not checks["board_hunt_or_palissade"]:
+            gaps.append("board sans offre chasse / hors palissade")
+    checks["buildings"] = buildings.is_file()
+    if not checks["buildings"]:
+        gaps.append("lost_heaven_buildings.json absent")
+    else:
+        raw = buildings.read_text(encoding="utf-8", errors="replace")
+        checks["gate_poi"] = "poi:lost_heaven_gate" in raw
+        checks["hunt_poi"] = "poi:lh_hunt_chacal" in raw
+        if not checks["gate_poi"]:
+            gaps.append("poi:lost_heaven_gate manquant")
+        if not checks["hunt_poi"]:
+            gaps.append("poi:lh_hunt_chacal manquant (hors palissade)")
+    agents = Path(__file__).resolve().parents[2] / "agents" / "src" / "lbg_agents" / "hunt_yard.py"
+    checks["hunt_yard_module"] = agents.is_file()
+    if not checks["hunt_yard_module"]:
+        gaps.append("agents hunt_yard.py absent")
+    ok = len(gaps) == 0
+    return {
+        "track": "hunt_hub_readiness",
+        "ok": ok,
+        "checks": checks,
+        "gaps": gaps,
+        "summary": "hub → palissade / board chasse" if ok else f"{len(gaps)} gap(s) hunt_hub",
+    }
 
 
 def _iris_probes(track: str) -> list[dict[str, object]]:
@@ -113,7 +172,10 @@ def _iris_probes(track: str) -> list[dict[str, object]]:
         return [audit_m9c_readiness()]
     if track == "m9_full":
         return [audit_m9_full_readiness()]
-    return [audit_m9_full_readiness()]
+    if track == "hunt_hub":
+        return [audit_hunt_hub_readiness()]
+    # iris_full / client_live / etc. — plus de fallback M9 silencieux
+    return []
 
 
 def execute_godot_dev_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, object]:
@@ -225,8 +287,8 @@ def execute_godot_dev_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str
         probes=probes,
         forge_note=(proposal_payload or {}).get("summary") if proposal_payload else None,
         checklist=[
-            "Preset Iris M9 / Hermès SOE dans Pilot #/team",
-            "Doc docs/jalon_equipe_godot_dev_ia.md",
+            "Pilot #/hunt + board J (porte est / meute)" if track == "hunt_hub" else "Preset Iris M9 / Hermès SOE dans Pilot #/team",
+            "Doc docs/FOCUS_WAHOU.md" if track == "hunt_hub" else "Doc docs/jalon_equipe_godot_dev_ia.md",
         ],
     )
 

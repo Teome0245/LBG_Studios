@@ -774,9 +774,23 @@ def _plan_from_at_mentions(
         if handle == "pygmalion":
             ctx = {"infographiste_ia": True, "subproject": "infographiste_ia"}
         if handle == "iris":
+            track = "iris_full"
+            if re.search(r"(?i)\bm9[abc]?\b|scrapaltai|minimap|carte\s*m\b", obj):
+                track = "m9_full"
+                if re.search(r"(?i)\bm9c\b", obj):
+                    track = "m9c"
+                elif re.search(r"(?i)\bm9b\b", obj):
+                    track = "m9b"
+                elif re.search(r"(?i)\bm9a\b", obj):
+                    track = "m9a"
+            elif re.search(
+                r"(?i)\b(chasse|hunt|palissade|hub|lost\s*heaven|board|porte\s+est|meute|chacal)\b",
+                obj,
+            ):
+                track = "hunt_hub"
             ctx = {
                 "godot_dev_persona": "iris",
-                "godot_dev_track": "m9_full",
+                "godot_dev_track": track,
                 "subproject": "godot_iris",
             }
         row: dict[str, object] = {
@@ -1155,15 +1169,36 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
         and not triage_failed_only
         and any(k in text for k in ("iris", "m9", "minimap", "carte m", "scrapaltai", "waypoint", "godot 2d"))
     ):
+        iris_track = "m9_full"
+        if re.search(
+            r"(?i)\b(chasse|hunt|palissade|hub|lost\s*heaven|board|porte\s+est|meute|chacal)\b",
+            text,
+        ) and not re.search(r"(?i)\bm9[abc]?\b|scrapaltai|minimap|carte\s*m\b", text):
+            iris_track = "hunt_hub"
+            iris_obj = (
+                objective
+                if "iris" in text
+                else "Iris — hub Lost Heaven → palissade / board chasse"
+            )
+        else:
+            iris_obj = (
+                objective
+                if "iris" in text or "m9" in text
+                else "Iris — audit Godot 2D Prime Client (M9)"
+            )
         proposals.append(
             {
                 "role": "dev_godot",
-                "objective": objective if "iris" in text or "m9" in text else "Iris — audit Godot 2D Prime Client (M9)",
+                "objective": iris_obj,
                 "priority": "normal",
                 "approval_required": False,
                 "actor_id": actor_id,
                 "capability": ROLE_SPECS["dev_godot"]["capability"],
-                "context": {"godot_dev_persona": "iris", "godot_dev_track": "m9_full", "subproject": "godot_iris"},
+                "context": {
+                    "godot_dev_persona": "iris",
+                    "godot_dev_track": iris_track,
+                    "subproject": "godot_iris",
+                },
                 **{k: v for k, v in role_display("dev_godot").items() if k in ("alias", "title", "label")},
             }
         )

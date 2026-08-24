@@ -4,7 +4,8 @@
 
 **Étoile du nord produit** (origine, avant le recentrage packaging) :  
 IA incarnée sur **PC/infra** → persona au **cœur du MMO** → évolution **contrôlée** du monde.  
-Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).
+Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
+**Focus 2026-08-24** : [`docs/FOCUS_WAHOU.md`](docs/FOCUS_WAHOU.md) — archiver l’abouti, 30 s Lost Heaven.
 
 ## O0 — Cadre (ce repo)
 

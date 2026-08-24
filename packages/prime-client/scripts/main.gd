@@ -30,6 +30,7 @@ const _LbgWsClientScript = preload("res://scripts/LbgWsClient.gd")
 const _EchoHammatControllerScript = preload("res://scripts/echo_hammat_controller.gd")
 const _InitiationQuestControllerScript = preload("res://scripts/initiation_quest_controller.gd")
 const _EntityScript = preload("res://scripts/entity.gd")
+const _WaypointStore = preload("res://scripts/waypoint_store.gd")
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
@@ -563,8 +564,34 @@ func _on_world_entered(your_character_id: int, zone: String) -> void:
 	if your_character_id > 0:
 		call_deferred("_possess_local_player", your_character_id, zone, false)
 	get_tree().create_timer(1.2).timeout.connect(_maybe_start_initiation_quest)
+	get_tree().create_timer(1.8).timeout.connect(_prime_wahou_hunt_beat)
 	if state_label:
 		state_label.text = "WS OK"
+
+
+func _prime_wahou_hunt_beat() -> void:
+	"""30 premières secondes : board chasse + waypoint porte est (hors palissade)."""
+	if _mission_board and _mission_board.has_method("seed_hub_hunt_beat"):
+		var seeded: Variant = _mission_board.call("seed_hub_hunt_beat")
+		if typeof(seeded) == TYPE_DICTIONARY and bool((seeded as Dictionary).get("ok", false)):
+			var title := str((seeded as Dictionary).get("title", "Meute aux portes"))
+			_hotbar_feedback("J — %s · porte est hors palissade" % title)
+		else:
+			_hotbar_feedback("J — board chasse · porte est hors palissade")
+	else:
+		_hotbar_feedback("J — board chasse · porte est hors palissade")
+	_ensure_east_gate_hunt_waypoint()
+
+
+func _ensure_east_gate_hunt_waypoint() -> void:
+	const gate_x := 5813.6
+	const gate_z := -982.5
+	const label := "Porte est — chasse"
+	var existing: Array = _WaypointStore.load_all()
+	for item: Variant in existing:
+		if item is Dictionary and str((item as Dictionary).get("label", "")).findn("porte est") >= 0:
+			return
+	_WaypointStore.add_waypoint(label, gate_x, gate_z)
 
 
 func _on_ws_disconnected(reason: String) -> void:

@@ -147,6 +147,11 @@ sudo chmod +x ${REMOTE_TOOLS}/core3_ia_sidecar.py
 sudo cp /tmp/m10_craft_runtime.py /opt/LBG_IA_MMO/tools/m10_craft_runtime.py
 sudo cp /tmp/quest_hub_runtime.py /opt/LBG_IA_MMO/tools/quest_hub_runtime.py
 sudo cp /tmp/core3_bridge_state.py /opt/LBG_IA_MMO/tools/core3_bridge_state.py
+# Copie locale du dossier sidecar (PYTHONPATH / import relatif sinon garde l'ancien m10)
+sudo cp /tmp/m10_craft_runtime.py ${REMOTE_TOOLS}/m10_craft_runtime.py
+sudo cp /tmp/quest_hub_runtime.py ${REMOTE_TOOLS}/quest_hub_runtime.py
+sudo cp /tmp/core3_bridge_state.py ${REMOTE_TOOLS}/core3_bridge_state.py
+sudo rm -rf ${REMOTE_TOOLS}/__pycache__ /opt/LBG_IA_MMO/tools/__pycache__ 2>/dev/null || true
 sudo cp /tmp/m10_craft_stub.py /opt/LBG_IA_MMO/tools/m10_craft_stub/m10_craft_stub.py
 sudo cp /tmp/run_m10_craft_stub.sh /opt/LBG_IA_MMO/infra/scripts/run_m10_craft_stub.sh
 sudo chmod +x /opt/LBG_IA_MMO/infra/scripts/run_m10_craft_stub.sh

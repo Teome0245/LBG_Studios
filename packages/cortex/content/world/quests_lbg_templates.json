@@ -147,11 +147,12 @@
       },
       "progress": [
         {"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "meute", "label": "Approcher la meute hors palissade", "poi": "poi:lh_hunt_chacal", "radius_m": 90},
         {"id": "report", "label": "Rapporter au bureau des missions", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
       ],
       "next_steps": [
         "Prendre la mission à la porte ou au bureau.",
-        "Sortir hors palissade.",
+        "Sortir hors palissade vers la meute.",
         "Rapporter fourrure ou carapace."
       ],
       "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat sandbox = Pilot #/hunt (hunt_yard)."

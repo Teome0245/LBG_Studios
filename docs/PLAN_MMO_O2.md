@@ -1,7 +1,8 @@
 # Plan MMO O2 — pivot produit + autonomie
 
-**Date** : 2026-08-03  
+**Date** : 2026-08-03 · **MAJ focus** 2026-08-24  
 **Statut** : **canon exécutoire** (remplace la lecture « étape actuelle » de `plan_de_route.md` pour le jeu)  
+**Recentrage wahou** : [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md) — aboutis archivés, pari = 30 s Lost Heaven.  
 **Repo** : `LBG_Studios` uniquement — legacy `new_mmo` / `LBG_IA_MMORPG` = lecture
 
 ## Pourquoi ce fichier

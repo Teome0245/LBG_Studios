@@ -230,6 +230,17 @@
       "role": "sortie_desert"
     },
     {
+      "id": "poi:lh_hunt_chacal",
+      "kind": "hunt_yard",
+      "label": "Meute hors palissade",
+      "x": 5985.0,
+      "z": -1120.0,
+      "size_m": 56.0,
+      "essential": false,
+      "role": "chasse_hub",
+      "lore": "Chacal Doré — hors palissade, board J / Pilot #/hunt"
+    },
+    {
       "id": "poi:lost_heaven_gate_west",
       "kind": "city_gate",
       "label": "Porte ouest — Zalem",

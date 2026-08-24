@@ -387,12 +387,21 @@ func _post_act(path: String, payload: Dictionary, kind: String) -> void:
 		_http_act.cancel_request()
 	var err := _http_act.request(url, headers, HTTPClient.METHOD_POST, body)
 	if err != OK:
+		if kind == "accept":
+			_accept_local_mock()
+			return
 		_status = "%s req_%d" % [kind, err]
 		_paint_status()
 
 func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
-	if result != HTTPRequest.RESULT_SUCCESS:
+	if result != HTTPRequest.RESULT_SUCCESS or code < 200 or code >= 300:
+		if _pending == "accept":
+			_accept_local_mock()
+			return
+		if _pending == "progress":
+			_progress_local_mock()
+			return
 		_status = "réseau KO"
 		_paint_status()
 		return
@@ -450,6 +459,53 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 	# refresh board list state
 	call_deferred("refresh_board")
 
+
+func _accept_local_mock() -> void:
+	var qid := _selected_quest_id()
+	if qid == "" and not _quests.is_empty() and typeof(_quests[0]) == TYPE_DICTIONARY:
+		qid = str(_quests[0].get("id", ""))
+	var hunt := {}
+	for q in _quests:
+		if typeof(q) == TYPE_DICTIONARY and str(q.get("id", "")) == qid:
+			hunt = q
+			break
+	if hunt.is_empty():
+		_status = "accept hors ligne — aucune offre"
+		_paint_status()
+		return
+	var steps = hunt.get("progress", [])
+	var active := {
+		"id": str(hunt.get("id", qid)),
+		"title": str(hunt.get("title", "Mission")),
+		"status": "active",
+		"progress_steps": steps.duplicate(true) if typeof(steps) == TYPE_ARRAY else [],
+	}
+	_active = [active]
+	_reported_steps.clear()
+	_status = "acceptée (local) — %s" % str(active.get("title"))
+	_paint()
+	quest_accepted.emit({"ok": true, "accepted": active, "local_mock": true})
+
+
+func _progress_local_mock() -> void:
+	for a in _active:
+		if typeof(a) != TYPE_DICTIONARY:
+			continue
+		var steps = a.get("progress_steps", [])
+		if typeof(steps) != TYPE_ARRAY:
+			continue
+		for s in steps:
+			if typeof(s) != TYPE_DICTIONARY:
+				continue
+			if bool(s.get("done", false)):
+				continue
+			s["done"] = true
+			_status = "étape OK (local) — %s" % str(s.get("label", s.get("id", "?")))
+			_paint()
+			return
+	_status = "objectifs locaux OK"
+	_paint_status()
+
 func _selected_quest_id() -> String:
 	if _list == null:
 		return ""
@@ -501,21 +557,70 @@ func _apply_local_mock(code: Variant) -> void:
 	_status = "hors ligne (%s) · mock local" % str(code)
 	_quests = [
 		{
-			"id": "lh_delivery_starport",
-			"title": "Colis du port shuttle",
-			"objective": "Livrer un colis du port shuttle au marché de Lost Heaven.",
-			"next_steps": ["Récupérer le colis au starport.", "Le porter au marché.", "Confirmer."],
-			"rewards": {"credits": 15},
+			"id": "lh_hunt_chacal",
+			"title": "Meute aux portes",
+			"objective": "Repousser la meute hors palissade — porte est, puis dunes.",
+			"next_steps": ["Sortir par la porte est.", "Approcher la meute.", "Rapporter au bureau."],
+			"progress": [
+				{"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70.0},
+				{"id": "meute", "label": "Approcher la meute hors palissade", "poi": "poi:lh_hunt_chacal", "radius_m": 90.0},
+				{"id": "report", "label": "Rapporter au bureau des missions", "poi": "poi:lost_heaven_mission_post", "radius_m": 50.0},
+			],
+			"rewards": {"credits": 30},
 		},
 		{
 			"id": "lh_survey_dunes",
 			"title": "Relevé hors palissade",
 			"objective": "Relever un gisement hors palissade.",
 			"next_steps": ["Sortir par la porte.", "Prospecter.", "Revenir."],
+			"progress": [
+				{"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70.0},
+				{"id": "sample", "label": "Revenir au bureau / Daan", "poi": "poi:lost_heaven_mission_post", "radius_m": 50.0},
+			],
 			"rewards": {"credits": 25},
+		},
+		{
+			"id": "lh_delivery_starport",
+			"title": "Colis du port shuttle",
+			"objective": "Livrer un colis du port shuttle au marché de Lost Heaven.",
+			"next_steps": ["Récupérer le colis au starport.", "Le porter au marché.", "Confirmer."],
+			"rewards": {"credits": 15},
 		},
 	]
 	_paint()
+
+
+func seed_hub_hunt_beat() -> Dictionary:
+	"""30 s Lost Heaven : offre + objectif HUD vers porte est / meute (mock si besoin)."""
+	if _quests.is_empty():
+		_apply_local_mock("seed")
+	var hunt: Dictionary = {}
+	for q in _quests:
+		if typeof(q) == TYPE_DICTIONARY and str(q.get("id", "")) == "lh_hunt_chacal":
+			hunt = q
+			break
+	if hunt.is_empty() and not _quests.is_empty() and typeof(_quests[0]) == TYPE_DICTIONARY:
+		hunt = _quests[0]
+	if hunt.is_empty():
+		return {"ok": false, "reason": "no_hunt_offer"}
+	for a in _active:
+		if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) == str(hunt.get("id", "")):
+			_paint_objective_hud()
+			return {"ok": true, "already": true, "title": str(a.get("title", ""))}
+	var steps = hunt.get("progress", [])
+	var active := {
+		"id": str(hunt.get("id", "lh_hunt_chacal")),
+		"title": str(hunt.get("title", "Meute aux portes")),
+		"status": "active",
+		"progress_steps": steps.duplicate(true) if typeof(steps) == TYPE_ARRAY else [],
+	}
+	_active = [active]
+	_reported_steps.clear()
+	_status = "seed — %s (porte est)" % str(active.get("title"))
+	_paint()
+	quest_accepted.emit({"ok": true, "accepted": active, "seeded": true})
+	return {"ok": true, "seeded": true, "title": str(active.get("title"))}
+
 
 func _paint_status() -> void:
 	if _status_label:
