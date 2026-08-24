@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const LAUNCHPAD_VERSION = '2.1.1';
+const LAUNCHPAD_VERSION = '2.1.2';
 const STATUS_API_TIMEOUT_MS = 12000;
 const STATUS_API_FAIL_THRESHOLD = 2;
 const PRECU_HOST_LAN = '192.168.0.245';
@@ -682,40 +682,89 @@ function mapStatusApiRows(rows) {
   });
 }
 
+async function fetchPrimeGatewayHealth() {
+  const url = `http://${PRIME_HOST_LAN}:8765/health`;
+  try {
+    const data = await httpGetJson(url, 3500);
+    const ok = Boolean(data && data.ok);
+    return { online: ok, ready: ok, status: ok ? 'ready' : 'offline', source: 'gateway' };
+  } catch (err) {
+    return { online: false, ready: false, status: 'offline', source: 'gateway', error: err.message };
+  }
+}
+
+function mergePrimeGatewayRow(rows, gw) {
+  const list = Array.isArray(rows) ? [...rows] : [];
+  const server = getServer('prime') || {
+    id: 'prime',
+    label: 'LBG MMO Serveur Prime',
+    ip: PRIME_HOST_LAN,
+  };
+  const row = {
+    id: 'prime',
+    label: server.label || 'LBG MMO Serveur Prime',
+    host: PRIME_HOST_LAN,
+    online: Boolean(gw.online),
+    ready: Boolean(gw.ready),
+    status: gw.status || (gw.online ? 'ready' : 'offline'),
+    healthSource: gw.source || 'gateway',
+  };
+  const idx = list.findIndex((r) => r.id === 'prime');
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...row };
+  } else {
+    list.push(row);
+  }
+  return list;
+}
+
 async function checkServerStatus() {
   if (!mainWindow) return;
+  let mapped = null;
+  let apiError = null;
   try {
     const rows = await httpGetJson(config.statusApiUrl, STATUS_API_TIMEOUT_MS);
-    const mapped = mapStatusApiRows(rows);
-    lastGoodServerStatus = mapped;
+    mapped = mapStatusApiRows(rows);
     statusApiFailStreak = 0;
-    mainWindow.webContents.send('servers-status', { source: 'api', servers: mapped });
-    return;
   } catch (err) {
     console.warn('status API:', err.message);
+    apiError = err.message;
     statusApiFailStreak += 1;
     if (lastGoodServerStatus && statusApiFailStreak < STATUS_API_FAIL_THRESHOLD) {
-      mainWindow.webContents.send('servers-status', {
-        source: 'stale',
-        servers: lastGoodServerStatus,
-        stale: true,
-      });
-      return;
+      mapped = lastGoodServerStatus;
     }
   }
-  const fallbackServers = lastGoodServerStatus
-    ? lastGoodServerStatus
-    : flattenServers(config.profiles).map((s) => ({
-        ...s,
-        online: false,
-        ready: false,
-        status: 'offline',
-      }));
+  const gw = await fetchPrimeGatewayHealth();
+  if (mapped) {
+    mapped = mergePrimeGatewayRow(mapped, gw);
+    lastGoodServerStatus = mapped;
+    mainWindow.webContents.send('servers-status', {
+      source: apiError ? 'api+gateway' : 'api',
+      servers: mapped,
+      stale: Boolean(apiError),
+      primeGateway: gw,
+    });
+    return;
+  }
+  const fallbackServers = mergePrimeGatewayRow(
+    lastGoodServerStatus
+      ? lastGoodServerStatus
+      : flattenServers(config.profiles).map((s) => ({
+          ...s,
+          host: s.ip,
+          online: false,
+          ready: false,
+          status: 'offline',
+        })),
+    gw,
+  );
+  lastGoodServerStatus = fallbackServers;
   mainWindow.webContents.send('servers-status', {
-    source: lastGoodServerStatus ? 'stale-fallback' : 'fallback',
+    source: lastGoodServerStatus ? 'stale-fallback' : 'gateway-fallback',
     servers: fallbackServers,
     error: !lastGoodServerStatus,
     stale: Boolean(lastGoodServerStatus),
+    primeGateway: gw,
   });
 }
 
@@ -899,7 +948,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
         error: true,
         message:
           `Dossier legacy new_mmo interdit : ${profile.gameDir}\n` +
-          `Utilise J:\\swgemu\\clients\\prime-client (sync_prime_client_to_j.sh).`,
+          `Utilise J:\\swgemu\\clients\\prime-client — mets à jour via « Vérifier Mises à Jour ».`,
       });
       return;
     }
@@ -909,8 +958,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
         error: true,
         message:
           `Cache Godot manquant (.godot) dans ${profile.gameDir}\n` +
-          `Lance depuis WSL : bash packages/prime-client/tools/sync_prime_client_to_j.sh\n` +
-          `(sinon « Entrer en zone » / main.gd cassent).`,
+          `Clique « Vérifier Mises à Jour » (import Godot auto), puis relance.`,
       });
       return;
     }
@@ -921,7 +969,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
           error: true,
           message:
             `Cache Godot incomplet dans ${profile.gameDir}\n` +
-            `Relance : bash packages/prime-client/tools/sync_prime_client_to_j.sh`,
+            `Clique « Vérifier Mises à Jour », puis relance.`,
         });
         return;
       }
@@ -1032,6 +1080,49 @@ function downloadFile(url, dest, onProgress) {
   });
 }
 
+function resolveGodotConsoleExe(profile) {
+  const exe = resolveGameExe(profile);
+  const consoleExe = String(exe).replace(
+    /Godot_v4\.6\.1-stable_win64\.exe$/i,
+    'Godot_v4.6.1-stable_win64_console.exe'
+  );
+  if (consoleExe !== exe && fs.existsSync(consoleExe)) return consoleExe;
+  return exe;
+}
+
+/** Régénère le cache .godot après un patch (même rôle que sync_prime_client_to_j.sh). */
+function runGodotImport(profile) {
+  return new Promise((resolve) => {
+    const exe = resolveGodotConsoleExe(profile);
+    if (!exe || !fs.existsSync(exe)) {
+      resolve(false);
+      return;
+    }
+    const child = spawn(
+      exe,
+      ['--headless', '--path', profile.gameDir, '--import', '--quit-after', '40'],
+      { cwd: profile.gameDir, stdio: 'ignore', windowsHide: true }
+    );
+    const timer = setTimeout(() => {
+      try {
+        child.kill();
+      } catch (_) {
+        /* ignore */
+      }
+      resolve(false);
+    }, 90000);
+    child.on('error', () => {
+      clearTimeout(timer);
+      resolve(false);
+    });
+    child.on('exit', (code) => {
+      clearTimeout(timer);
+      const cache = path.join(profile.gameDir, '.godot', 'global_script_class_cache.cfg');
+      resolve(code === 0 || fs.existsSync(cache));
+    });
+  });
+}
+
 function readLocalBuildInfo(gameDir) {
   const p = path.join(gameDir, 'assets', 'build_info.json');
   if (!fs.existsSync(p)) return null;
@@ -1105,6 +1196,10 @@ async function checkGodotClientUpdates(profile) {
   const remoteStamp =
     remoteBuild?.synced_at || manifest.version || manifest.synced_at || '(manifeste sans date)';
   const sameStamp = localStamp !== '(aucun build_info.json local)' && localStamp === remoteStamp;
+  const remoteIsOlder =
+    localStamp !== '(aucun build_info.json local)' &&
+    remoteStamp !== '(manifeste sans date)' &&
+    localStamp > remoteStamp;
 
   const filesToUpdate = [];
   for (const file of manifest.files || []) {
@@ -1121,6 +1216,17 @@ async function checkGodotClientUpdates(profile) {
       message:
         `Prime à jour (${filesToUpdate.length} diff). Local ${localStamp} · référence ${remoteStamp}` +
         (sameStamp ? ' ✓' : ' (fichiers OK, tampon différent)'),
+    });
+    return;
+  }
+
+  if (remoteIsOlder) {
+    mainWindow.webContents.send('patch-status', {
+      status: 'ready',
+      message:
+        `Patch ignoré — référence ${remoteStamp} plus ancienne que le client local ${localStamp}. ` +
+        `${filesToUpdate.length} fichier(s) diffèrent. Publiez un manifeste à jour sur le serveur patch ` +
+        `(generate_prime_patch_manifest.py + deploy_prime_client_patch_246.sh) ou resynchronisez depuis WSL.`,
     });
     return;
   }
@@ -1166,8 +1272,15 @@ async function checkGodotClientUpdates(profile) {
     }
 
     mainWindow.webContents.send('patch-status', {
+      status: 'patching',
+      message: `Prime — import Godot (.godot) après ${filesToUpdate.length} fichier(s)…`,
+    });
+    const imported = await runGodotImport(profile);
+    mainWindow.webContents.send('patch-status', {
       status: 'ready',
-      message: `Prime mis à jour — ${filesToUpdate.length} fichier(s). Référence ${remoteStamp}.`,
+      message: imported
+        ? `Prime mis à jour — ${filesToUpdate.length} fichier(s). Référence ${remoteStamp}. Relance Godot.`
+        : `Prime fichiers OK (${filesToUpdate.length}) mais import Godot incomplet — ouvre une fois l’éditeur puis relance.`,
     });
   } catch (error) {
     mainWindow.webContents.send('patch-status', {

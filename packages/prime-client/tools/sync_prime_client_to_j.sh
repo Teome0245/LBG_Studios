@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# FALLBACK atelier — écrase J:\ (dangereux si Godot / Launchpad ouverts).
+# Canal joueur : deploy_prime_client_patch_246.sh puis Launchpad « Vérifier Mises à Jour ».
+#
 # Sync complet prime-client (WSL) → J: + tampon build_info.json + cache .godot
 # + alignement Launchpad (profil prime → J:\swgemu\clients\prime-client)
 set -euo pipefail
