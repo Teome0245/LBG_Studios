@@ -39,6 +39,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | jaune (Rang 2) |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
+| **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
 
 ### Jalons M9–M12 (rappel)
 

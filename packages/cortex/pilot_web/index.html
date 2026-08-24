@@ -45,6 +45,7 @@
       <details class="pilot-nav-group" data-nav-group="jeu">
         <summary>Jeu</summary>
         <div class="pilot-nav-menu">
+          <a href="#/hunt" data-nav-route="hunt">Cour de chasse</a>
           <a href="#/desktop?launch=godot">Godot</a>
           <a href="#/desktop?launch=launchpad">Launchpad</a>
           <a href="http://192.168.0.246:8792/" target="_blank" rel="noopener noreferrer" title="Prime — état &amp; comptes Core3">Prime 246</a>
@@ -116,8 +117,9 @@
           </div>
           <div class="pilot-home-card">
             <h3>Jeu Prime</h3>
-            <p>Client <strong>Godot</strong> + <strong>Launchpad</strong> → serveur <code>246</code>. État / comptes Core3 via <code>:8792</code>.</p>
+            <p>Client <strong>Godot</strong> + <strong>Launchpad</strong> → serveur <code>246</code>. Chœur IA : cour de chasse sandbox, puis monde Prime.</p>
             <div class="pilot-home-links">
+              <a href="#/hunt" title="Lia, Nix, Mira vs meute de Chacals (sandbox)">Cour de chasse</a>
               <a href="#/desktop?launch=godot" title="Préremplit open_app Godot + --path prime-client (action poste)">Godot</a>
               <a href="#/desktop?launch=launchpad" title="Préremplit open_app LBG Launchpad (action poste)">Launchpad</a>
               <a href="http://192.168.0.246:8792/" target="_blank" rel="noopener noreferrer" title="Prime 246 — état serveur &amp; comptes Core3">Prime 246</a>
@@ -177,6 +179,29 @@
         <pre id="home-orch-out" class="muted" style="max-height:16rem;">—</pre>
       </div>
     </div>
+  </div>
+
+  <div id="pilot-page-hunt" class="pilot-page" hidden>
+    <header>
+      <h1>Cour de chasse</h1>
+      <p class="muted">
+        Lia (tank), Nix (kiting), Mira (soins) contre une meute de Chacals Dorés — hors palissade Lost Heaven.
+        Réflexes déterministes, pas de LLM. Bac à sable Studio : pas encore le monde Prime 246.
+      </p>
+    </header>
+    <section class="hunt-yard">
+      <canvas id="hunt-canvas" width="720" height="460" aria-label="Cour de chasse"></canvas>
+      <div class="hunt-side">
+        <p id="hunt-hud" class="muted">—</p>
+        <p style="margin:0.6rem 0 0 0; display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button type="button" id="btn-hunt-play">Lancer</button>
+          <button type="button" id="btn-hunt-step">Pas à pas</button>
+          <button type="button" id="btn-hunt-reset">Nouvelle meute</button>
+        </p>
+        <p class="muted" id="hunt-hint" style="margin:0.45rem 0 0 0">—</p>
+        <pre id="hunt-log">—</pre>
+      </div>
+    </section>
   </div>
 
   <div id="pilot-page-pm" class="pilot-page" hidden>
@@ -1351,6 +1376,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20260821-office"></script>
+  <script type="module" src="src/main.js?v=20260824-hunt"></script>
 </body>
 </html>

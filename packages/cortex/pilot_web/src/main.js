@@ -1,7 +1,5 @@
+/* CSS via <link> dans index.html — pas d'import .css ici (ESM nginx sans Vite). */
 import "./modules/three_setup.js";
-import "../pilot.css";
-import "../orchestrator_avatar/orchestrator_avatar.css";
-import "../face_rig/face_rig.css";
 import "./modules/office_map_module.js";
 import "./modules/orchestrator_avatar_module.js";
 import "./modules/face_rig_module.js";
@@ -14,6 +12,7 @@ import { register as register_5 } from "./chunks/pilot_router.js";
 import { register as register_6 } from "./chunks/pilot_pm.js";
 import { register as register_7 } from "./chunks/pilot_lyra.js";
 import { register as register_8 } from "./chunks/pilot_desktop.js";
+import { installHuntYard } from "./modules/hunt_yard.js";
 import { register as register_9 } from "./chunks/pilot_init.js";
 
 register_0();
@@ -25,8 +24,8 @@ register_5();
 register_6();
 register_7();
 register_8();
+installHuntYard();
 register_9();
-
 
 if (typeof globalThis.orchestratorAvatarInit === "function") {
   try { globalThis.orchestratorAvatarInit(); } catch (_) {}

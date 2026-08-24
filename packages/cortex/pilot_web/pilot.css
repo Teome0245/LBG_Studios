@@ -1599,3 +1599,26 @@
     }
 
     .office-banner { display: none; }
+
+    .hunt-yard {
+      display: grid;
+      grid-template-columns: minmax(20rem, 1.6fr) minmax(16rem, 1fr);
+      gap: 1rem;
+      align-items: start;
+    }
+    #hunt-canvas {
+      width: 100%;
+      max-width: 46rem;
+      height: auto;
+      display: block;
+      border: 1px solid #6b5344;
+      background: #c4a574;
+    }
+    .hunt-side pre {
+      max-height: 18rem;
+      font-size: 0.8rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 860px) {
+      .hunt-yard { grid-template-columns: 1fr; }
+    }
