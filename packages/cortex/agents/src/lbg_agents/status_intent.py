@@ -29,7 +29,11 @@ _STATUS_QUERY_RE = re.compile(
     r"etat\s+(?:du|de\s+la|des)|"
     r"avancement\s+(?:du|de\s+la|des)|"
     r"progression\s+(?:du|de\s+la|des)|"
-    r"où\s+(?:en|on)\s+(?:va|vont)"
+    r"où\s+(?:en|on)\s+(?:va|vont)|"
+    r"compte\s+rendu|"
+    r"actions?\s+en\s+cours|"
+    r"que\s+(?:font|fait|se\s+passe)|"
+    r"qu['\u2019]est-ce\s+qui\s+(?:tourne|avance|se\s+passe)"
     r")",
     re.IGNORECASE,
 )
@@ -69,8 +73,10 @@ _DOMAIN_INFRA_RE = re.compile(
 
 _DOMAIN_TEAM_RE = re.compile(
     r"\b("
-    r"équipe|equipe|team\s+virtuelle|tâches?\s+team|actor\s*system|"
-    r"pygmalion\s+(?:team|équipe)|#/team|fil\s+team"
+    r"équipe|equipe|team|team\s+virtuelle|tâches?\s+team|actor\s*system|"
+    r"pygmalion\s+(?:team|équipe)|#/team|fil\s+team|campus|conductor|"
+    r"agents?\s+(?:virtuel|studio)|fil\s+d(?:e\s+)?attente|"
+    r"tâches?\s+(?:en\s+cours|actives?)"
     r")\b",
     re.IGNORECASE,
 )

@@ -25,6 +25,7 @@ def test_audit_live_or_skip(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_audit_skips_cloud_dialogue_fast(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ollama audit ignore dialogue_fast cloud — voir audit_dialogue_fast_cloud (Atlas)."""
     monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "llama-3.1-8b-instant")
     monkeypatch.setenv("LBG_DIALOGUE_FAST_BASE_URL", "https://api.groq.com/openai/v1")
     monkeypatch.setenv("LBG_COMPANION_LLM_MODEL", "gemma4:e2b")

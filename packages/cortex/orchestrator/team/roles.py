@@ -1219,6 +1219,14 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
     if task is None:
         return None
     if task.status in ("done", "cancelled"):
+        # Ré-émettre pour lever les pastilles Pilot « PRÊT — EXÉCUTER » fantômes.
+        try:
+            from team import presence as team_presence
+
+            team_presence.emit_from_task(task, event="status_changed")
+            team_presence.reconcile_with_store()
+        except Exception:
+            pass
         return task
     if task.status == "running":
         return task

@@ -39,7 +39,8 @@ class OkEnvelope(BaseModel):
     error: str | None = None
     detail: str | None = None
     body: str | None = None
-    skipped: bool | None = None
+    # Campus mission renvoie skipped=[] (liste) ; d'autres routes un bool — rester souple
+    skipped: object | None = None
     payload: object | None = None
     disabled: bool | None = None
     trace_id: str | None = None

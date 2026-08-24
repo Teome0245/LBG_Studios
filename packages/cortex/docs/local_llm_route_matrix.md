@@ -56,5 +56,6 @@ Ollama thinking (Qwen) : `LBG_REASON_OLLAMA_THINK=false` (défaut) et `LBG_DIALO
 | Team / Atlas | run `admin_infra` → champ `route_matrix` + mémoire `team/atlas` |
 | Env exemple | `infra/secrets/lbg.env.example` |
 | Audit LAN | `bash infra/scripts/audit_ollama_110_lan.sh` |
+| Dialogue fast Groq | Atlas `admin_infra` → `dialogue_fast_groq` ; sonde `/v1/llm/probe` (priorité `LBG_DIALOGUE_FAST_MODEL`) |
 
-Toute évolution de modèles **doit** mettre à jour : `reason_route_matrix()`, ce fichier, `lbg.env.example`, et l’env prod 140.
+Toute évolution de modèles **doit** mettre à jour : `reason_route_matrix()`, ce fichier, `lbg.env.example`, **`LBG_DIALOGUE_FAST_MODEL`** (+ `GROQ_MODEL_*` si Groq), et l’env prod 140 via `push_secrets_vm.sh`.

@@ -10,3 +10,10 @@ Avatar expressif **2D** pour `#/assistant` : yeux + bouche (+ base) pilotés par
 ## API
 
 `FaceRig.init(hostId, opts)` · `setMood(mood)` · `setExpression(expr)` · `setTalking(ms|bool)` · `say(text)` · `destroy()`
+
+## Couplage LBG-IA / Pilot
+
+- `lbg_ia_voice` (backend) enveloppe le texte (persona / footer compétence) — **pas** de TTS phonèmes.
+- Pilot Assistant appelle déjà `FaceRig.say(reply)` sur les réponses routeur → animation bouche proportionnelle à la longueur du texte (`setTalking(ms)`).
+- Humeur : `FaceRig.setMood(mood)` depuis le panneau orchestrateur (`assistantOrchMoodRefresh`).
+- Dossiers `_composites_v*` = artefacts de build Infographiste (gitignorés) ; runtime = `face.png` / sheets + `manifest.json`.

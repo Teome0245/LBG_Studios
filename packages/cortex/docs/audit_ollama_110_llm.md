@@ -38,7 +38,7 @@ Appels Qwen : **`think: false`** sinon réponses vides / CPU brûlé.
 | Cas d'usage | Variable | Modèle |
 |-------------|----------|--------|
 | Dialogue PNJ (local) | `LBG_DIALOGUE_LLM_MODEL` | `qwen3.8:27b` |
-| Dialogue rapide (cloud) | `LBG_DIALOGUE_FAST_*` | Groq (failover → local) |
+| Dialogue rapide (cloud) | `LBG_DIALOGUE_FAST_MODEL` (+ `GROQ_MODEL_*`) | Groq ex. `qwen/qwen3.6-27b` — contrôlé par Atlas (`dialogue_fast_groq`) |
 | Forge GDScript Iris | `LBG_REASON_MODEL_FORGE` | `gemma4:e2b` |
 | Code | `LBG_REASON_MODEL_CODE` | `qwen3.8:27b` |
 | Brief PM / synthèse | `LBG_REASON_MODEL_PM` | `qwen3.8:27b` |

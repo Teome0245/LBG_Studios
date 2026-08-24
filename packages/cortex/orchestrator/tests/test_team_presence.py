@@ -40,6 +40,57 @@ def test_presence_l2_queued_shows_review():
     assert matches[0].get("awaiting_run") is False
 
 
+def test_presence_reconcile_clears_done_ghost(monkeypatch):
+    """Pastille PRÊT fantôme si la tâche est déjà done en store."""
+    ghost = TeamTask(
+        id="ghost-done-l2",
+        role="pm",
+        objective="Revue L2 — Feature proposal fantôme",
+        status="queued",
+        approval_required=True,
+        stored_approval_token="tok",
+        context={"approved": True, "feature_proposal_review": True},
+    )
+    team_presence.emit_from_task(ghost, event="status_changed")
+    matches0 = [
+        a
+        for a in team_presence.snapshot(mode="live")["agents"]
+        if a.get("task_id") == "ghost-done-l2"
+    ]
+    assert matches0 and matches0[0].get("awaiting_run") is True
+
+    done = TeamTask(
+        id="ghost-done-l2",
+        role="pm",
+        objective="Revue L2 — Feature proposal fantôme",
+        status="done",
+        approval_required=True,
+        context={"approved": True},
+        result={"ok": True, "kind": "feature_proposal_review"},
+    )
+
+    import team.store as ts
+
+    monkeypatch.setattr(ts, "get_task", lambda tid: done if tid == "ghost-done-l2" else None)
+
+    n = team_presence.reconcile_with_store()
+    assert n >= 1
+    matches = [
+        a
+        for a in team_presence.snapshot(mode="live")["agents"]
+        if a.get("task_id") == "ghost-done-l2"
+    ]
+    assert not matches
+    themis = [
+        a
+        for a in team_presence.snapshot(mode="live")["agents"]
+        if a.get("agent_id") == "studio_pm_themis" or a.get("display_name") == "Thémis"
+    ]
+    assert themis
+    assert themis[0]["status"] == "idle"
+    assert themis[0].get("awaiting_run") in (False, None)
+
+
 
 def test_sanitize_action_truncates_and_redacts():
     long = "x" * 200

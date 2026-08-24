@@ -467,8 +467,91 @@ def recover_stale_failed() -> int:
         return 0
 
 
+def _idle_cleared_from_payload(payload: dict[str, Any], *, reason: str = "En attente") -> dict[str, Any]:
+    """Passe un agent en idle sans tâche (pastille L2 fantôme / done)."""
+    idle = dict(payload)
+    idle["status"] = "idle"
+    idle["current_action"] = reason
+    idle["location"] = "zone_coffee"
+    idle["target_destination"] = None
+    idle["task_id"] = None
+    idle["awaiting_run"] = False
+    idle["awaiting_human_approval"] = False
+    idle["approval_required"] = False
+    idle["event"] = "status_changed"
+    idle["timestamp"] = int(time.time())
+    return idle
+
+
+def _reconcile_terminal_tasks_locked() -> list[dict[str, Any]]:
+    """Corrige les pastilles REVIEW/PRÊT dont la tâche SQLite est déjà done/cancelled.
+
+    Cas typique : run L2 via API (ou race approve→run) sans fan-out presence à jour —
+    le bureau Pilot reste sur « Exécuter » alors que la tâche est terminée.
+    """
+    try:
+        from team import store as team_store
+    except Exception:
+        return []
+    changed: list[dict[str, Any]] = []
+    now = time.time()
+    for aid, payload in list(_agents.items()):
+        tid = str(payload.get("task_id") or "").strip()
+        if not tid:
+            continue
+        st_ui = str(payload.get("status") or "")
+        awaits = bool(payload.get("awaiting_run") or payload.get("awaiting_human_approval"))
+        if st_ui not in ("review", "busy", "failed") and not awaits:
+            continue
+        try:
+            task = team_store.get_task(tid)
+        except Exception:
+            continue
+        if task is None:
+            # Pas en store (fixture / race) — ne pas effacer la pastille.
+            continue
+        if task.status in ("done", "cancelled"):
+            idle = _idle_cleared_from_payload(
+                payload,
+                reason="Terminé" if task.status == "done" else "En attente",
+            )
+            _agents[aid] = idle
+            _last_status[aid] = "idle"
+            _last_emit_ts[aid] = now
+            changed.append(idle)
+            continue
+        # Désalignement : re-sync depuis la tâche réelle
+        fresh = _presence_from_task(task, event="status_changed")
+        if (
+            fresh.get("status") != payload.get("status")
+            or bool(fresh.get("awaiting_run")) != bool(payload.get("awaiting_run"))
+            or bool(fresh.get("awaiting_human_approval"))
+            != bool(payload.get("awaiting_human_approval"))
+        ):
+            _agents[aid] = fresh
+            _last_status[aid] = str(fresh.get("status") or "idle")
+            _last_emit_ts[aid] = now
+            changed.append(fresh)
+    return changed
+
+
+def reconcile_with_store() -> int:
+    """Réconcilie présence in-memory ↔ store (snapshot / timer / after run)."""
+    if not _enabled:
+        return 0
+    try:
+        with _lock:
+            changed = _reconcile_terminal_tasks_locked()
+        for payload in changed:
+            _schedule_broadcast({"type": "presence", "payload": payload})
+        return len(changed)
+    except Exception:
+        return 0
+
+
 def snapshot(*, mode: str = "live") -> dict[str, Any]:
     recover_stale_failed()
+    reconcile_with_store()
     with _lock:
         known = dict(_agents)
     agents: list[dict[str, Any]] = []

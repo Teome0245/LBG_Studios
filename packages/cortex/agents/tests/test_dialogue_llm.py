@@ -50,6 +50,37 @@ def test_strip_reasoning_disabled_returns_raw(monkeypatch: pytest.MonkeyPatch) -
     assert _strip_model_reasoning_noise(raw) == raw
 
 
+def test_strip_qwen_constraint_check_leak(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Régression Prime Client : fuite Groq Qwen « Check Constraints / French? Yes. »."""
+    monkeypatch.delenv("LBG_DIALOGUE_STRIP_REASONING", raising=False)
+    raw = "4. **Check Constraints against Draft:** .\nFrench? Yes."
+    out = _strip_model_reasoning_noise(raw)
+    assert out == ""
+
+
+def test_groq_reasoning_payload_extras_qwen() -> None:
+    from lbg_agents.dialogue_llm import _groq_reasoning_payload_extras
+
+    extras = _groq_reasoning_payload_extras(
+        model="qwen/qwen3.6-27b",
+        base_url="https://api.groq.com/openai/v1",
+    )
+    assert extras["reasoning_effort"] == "none"
+    assert extras["reasoning_format"] == "hidden"
+    assert _groq_reasoning_payload_extras(model="gemma4:26b", base_url="http://192.168.0.110:11434/v1") == {}
+
+
+def test_choice_assistant_skips_reasoning_fallback_for_mmo() -> None:
+    ch = {
+        "message": {
+            "content": "",
+            "reasoning": "4. **Check Constraints:** French? Yes.",
+        }
+    }
+    assert _choice_assistant_text(ch, allow_reasoning_fallback=False) == ""
+    assert "Constraints" in _choice_assistant_text(ch, allow_reasoning_fallback=True)
+
+
 def test_enforce_short_reply_soft_cap_prefers_sentence_end(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_DIALOGUE_MAX_WORDS", "14")
     monkeypatch.setenv("LBG_DIALOGUE_MAX_SENTENCES", "8")

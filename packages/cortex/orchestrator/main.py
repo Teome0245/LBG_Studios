@@ -54,6 +54,7 @@ async def _presence_bind_loop() -> None:
                 await asyncio.sleep(30)
                 try:
                     team_presence.recover_stale_failed()
+                    team_presence.reconcile_with_store()
                 except Exception:
                     pass
 

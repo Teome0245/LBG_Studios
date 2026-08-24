@@ -328,7 +328,13 @@
         return;
       }
       const st = String((out.json || {}).status || "?");
-      officeSetConn("Tâche: " + st);
+      const res = (out.json || {}).result || {};
+      const summary = String(res.human_summary || "").trim();
+      if (st === "done" && summary) {
+        officeSetConn("Déjà faite / OK — " + summary.slice(0, 160));
+      } else {
+        officeSetConn("Tâche: " + st);
+      }
       try { await officeFetchSnapshot(); } catch (_) {}
       await officeRefreshApprovalPanel(taskId);
     }

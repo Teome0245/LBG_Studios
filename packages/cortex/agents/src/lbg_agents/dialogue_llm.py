@@ -1160,6 +1160,7 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             "Tu réponds en français. 1 à 3 phrases (pas de liste), idéalement moins de 55 mots.",
             "Pas de raisonnement interne affiché : interdit « Thinking Process », interdit les étapes numérotées du type « 1. **Analyze** » en anglais.",
             "Ne dis pas que tu es une intelligence artificielle ni un modèle de langage.",
+            "N'invente JAMAIS un statut Team/Campus/tâches/infra : sans données factuelles dans le contexte, dis que tu n'as pas de mesure live.",
             "Ce canal **texte seul** ne contrôle pas le poste : **interdit** de prétendre avoir lancé, relancé ou arrêté une application, un service, ou « vérifié des droits » sur la machine — tu n’as aucun retour d’exécution ici.",
             "Pour une action réelle sur le PC, indique que ça se fait via le flux **Proposer / exécuter** (desktop agent / worker, dry-run puis approval) ; tu peux proposer des étapes manuelles génériques sans inventer le résultat d’une commande.",
             "Si l’utilisateur signale une erreur de contexte (mauvais personnage, mauvais métier), reconnais l’erreur, rappelle que tu es l’assistant sur le poste, et propose de repartir sur une base correcte.",
@@ -1730,6 +1731,78 @@ def _require_action_json(*, context: dict[str, Any]) -> bool:
     return _world_actions_enabled(context=context) and bool(context.get("_require_action_json") is True)
 
 
+def _looks_like_reasoning_noise(t: str) -> bool:
+    """Heuristique : le texte ressemble à du chain-of-thought / contrôle interne, pas à une réplique."""
+    s = (t or "").strip()
+    if not s:
+        return False
+    head = s[:900].lower()
+    if any(
+        k in head
+        for k in (
+            "thinking process",
+            "chain of thought",
+            "chain-of-thought",
+            "chain-of-thought reasoning",
+            "check constraints",
+            "analyze the request",
+            "analyze user input",
+        )
+    ):
+        return True
+    if re.match(r"^\d+\.\s*\*\*", s):
+        return True
+    if re.search(r"(?is)^(?:french|english|français)\?\s*(yes|oui|no|non)\.?\s*$", s):
+        return True
+    return False
+
+
+def _is_meta_only_reply(t: str) -> bool:
+    """Réponse trop courte / méta après filtrage — pas une réplique joueur utilisable."""
+    s = (t or "").strip()
+    if not s:
+        return True
+    if re.search(r"(?is)^(?:french|english|français)\?\s*(yes|oui|no|non)\.?\s*$", s):
+        return True
+    if _looks_like_reasoning_noise(s) and len(s) < 220:
+        return True
+    return False
+
+
+def _strip_numbered_reasoning_steps(t: str) -> str:
+    _step_head = re.compile(
+        r"(?is)^\d+\.\s*\*\*(.+?)\*\*\s*.+?\.\s+(?=\d+\.\s*)",
+        re.DOTALL,
+    )
+    out = (t or "").strip()
+    for _ in range(24):
+        m = _step_head.match(out)
+        if not m:
+            break
+        out = out[m.end() :].lstrip()
+    out = re.sub(r"(?is)^\d+\.\s*\*\*(.+?)\*\*\s*\.?\s*", "", out).strip()
+    out = re.sub(r"(?is)^\d+\.\s*", "", out).strip()
+    return out
+
+
+def _groq_reasoning_payload_extras(*, model: str, base_url: str) -> dict[str, Any]:
+    """Désactive le raisonnement Qwen sur Groq (répliques PNJ — route fast/remote)."""
+    if "groq.com" not in (base_url or "").lower():
+        return {}
+    if "qwen" not in (model or "").lower():
+        return {}
+    effort = os.environ.get("LBG_DIALOGUE_GROQ_REASONING_EFFORT", "none").strip().lower()
+    if effort not in ("none", "default"):
+        effort = "none"
+    fmt = os.environ.get("LBG_DIALOGUE_GROQ_REASONING_FORMAT", "hidden").strip().lower()
+    if fmt not in ("hidden", "parsed", "raw"):
+        fmt = "hidden"
+    extras: dict[str, Any] = {"reasoning_format": fmt}
+    if effort == "none":
+        extras["reasoning_effort"] = "none"
+    return extras
+
+
 def _strip_model_reasoning_noise(s: str) -> str:
     """
     Retire les préfasces « chain-of-thought » que certains modèles (ex. Gemma via Ollama) laissent
@@ -1746,16 +1819,7 @@ def _strip_model_reasoning_noise(s: str) -> str:
     t = re.sub(r"(?is)<(?:redacted_)?thinking>.*?</(?:redacted_)?thinking>\s*", "", t)
     t = re.sub(r"(?is)<(?:redacted_)?reasoning>.*?</(?:redacted_)?reasoning>\s*", "", t)
     t = t.strip()
-    head = t[:900].lower()
-    if not any(
-        k in head
-        for k in (
-            "thinking process",
-            "chain of thought",
-            "chain-of-thought",
-            "chain-of-thought reasoning",
-        )
-    ):
+    if not _looks_like_reasoning_noise(t):
         return t
     # Réponse explicite après un séparateur (si le modèle suit parfois les consignes)
     low = t.lower()
@@ -1763,7 +1827,7 @@ def _strip_model_reasoning_noise(s: str) -> str:
         j = low.find(marker)
         if j != -1:
             after = t[j + len(marker) :].strip()
-            if len(after) > 3:
+            if len(after) > 3 and not _is_meta_only_reply(after):
                 return after
     if "\n\n" in t:
         parts = [p.strip() for p in t.split("\n\n") if p.strip()]
@@ -1771,20 +1835,14 @@ def _strip_model_reasoning_noise(s: str) -> str:
             first_l = parts[0].lower()
             if "thinking process" in first_l or re.match(r"^\d+\.\s*\*\*", parts[0]):
                 tail = parts[-1]
-                if len(tail) > 5 and "thinking process" not in tail.lower():
+                if len(tail) > 5 and not _is_meta_only_reply(tail):
                     return tail
     t = re.sub(r"(?is)^(?:\*\*)?thinking\s+process(?:\*\*)?\s*:\s*", "", t).strip()
-    # Étapes du type : 1. **Label:** ... texte. 2. — le gras peut contenir «:**» (Gemma / modèles verbaux)
-    _step_head = re.compile(
-        r"(?is)^\d+\.\s*\*\*(.+?)\*\*\s*.+?\.\s+(?=\d+\.\s*)",
-        re.DOTALL,
-    )
-    for _ in range(24):
-        m = _step_head.match(t)
-        if not m:
-            break
-        t = t[m.end() :].lstrip()
-    t = re.sub(r"(?is)^\d+\.\s*", "", t).strip()
+    t = _strip_numbered_reasoning_steps(t)
+    if _is_meta_only_reply(t):
+        if "thinking process" in original.lower() and re.search(r"(?i)\bbonjour\b", original):
+            return "Bonjour ! Je vais bien, merci. Et vous ?"
+        return ""
     if not t:
         if "thinking process" in original.lower() and re.search(r"(?i)\bbonjour\b", original):
             return "Bonjour ! Je vais bien, merci. Et vous ?"
@@ -1881,7 +1939,7 @@ def _coerce_openai_message_content(raw: object) -> str:
     return ""
 
 
-def _assistant_message_text(msg: dict[str, Any]) -> str:
+def _assistant_message_text(msg: dict[str, Any], *, allow_reasoning_fallback: bool = True) -> str:
     """
     Texte utile d’un message ``assistant`` : ``content`` canonique, puis champs alternatifs
     (pensements / raisonnement exposés par certains serveurs quand ``content`` est vide).
@@ -1889,6 +1947,8 @@ def _assistant_message_text(msg: dict[str, Any]) -> str:
     primary = _coerce_openai_message_content(msg.get("content")).strip()
     if primary:
         return primary
+    if not allow_reasoning_fallback:
+        return ""
     for key in ("reasoning_content", "reasoning", "thinking"):
         alt = msg.get(key)
         if isinstance(alt, str) and alt.strip():
@@ -1896,11 +1956,11 @@ def _assistant_message_text(msg: dict[str, Any]) -> str:
     return ""
 
 
-def _choice_assistant_text(choice: dict[str, Any]) -> str:
+def _choice_assistant_text(choice: dict[str, Any], *, allow_reasoning_fallback: bool = True) -> str:
     """Extrait le texte assistant d’un élément ``choices[]`` (chat completions)."""
     msg = choice.get("message")
     if isinstance(msg, dict):
-        t = _assistant_message_text(msg)
+        t = _assistant_message_text(msg, allow_reasoning_fallback=allow_reasoning_fallback)
         if t:
             return t
     legacy = choice.get("text")
@@ -2026,6 +2086,7 @@ def run_dialogue_turn(
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        payload.update(_groq_reasoning_payload_extras(model=selected_model, base_url=b))
         if not _world_actions_enabled(context=context) and not _desktop_plan_enabled(context=context):
             payload["stop"] = ["\n\n"]
         # GLM-5.2 : injection des paramètres de Thinking Mode.
@@ -2055,10 +2116,11 @@ def run_dialogue_turn(
             except Exception:
                 ct = 0
             usage_out = {"prompt_tokens": max(0, pt), "completion_tokens": max(0, ct)}
+            is_mmo = isinstance(context.get("world_npc_id"), str) and bool(str(context.get("world_npc_id")).strip())
             for ch in choices:
                 if not isinstance(ch, dict):
                     continue
-                extracted = _choice_assistant_text(ch)
+                extracted = _choice_assistant_text(ch, allow_reasoning_fallback=not is_mmo)
                 if extracted.strip():
                     return extracted.strip(), usage_out
             raise RuntimeError("Réponse LLM vide")
@@ -2117,6 +2179,8 @@ def run_dialogue_turn(
 
         def _finalize_ok(raw_llm: str, usage: dict[str, int]) -> str:
             reply, _ = _postprocess_llm_content(raw=raw_llm, context=context, player_text=player_text)
+            if not (reply or "").strip():
+                raise RuntimeError("Réponse LLM vide après filtrage raisonnement")
             if ck:
                 _cache_set(ck, reply)
             latency_ms = int((time.perf_counter() - t_llm0) * 1000)

@@ -52,6 +52,21 @@ def test_generic_project_status() -> None:
     assert intent == "project_status"
 
 
+def test_team_status_compte_rendu_actions() -> None:
+    text = "tu pourrais me faire un compte rendu complet des actions en cours de la Team ?"
+    assert is_operational_status_query(text)
+    intent, conf = classify_status_intent(text)
+    assert intent == "team_status"
+    assert conf >= 0.85
+    assert should_answer_with_factual_status(text)
+
+
+def test_team_status_standalone_team() -> None:
+    intent, conf = classify_status_intent("que fait la team en ce moment ?")
+    assert intent == "team_status"
+    assert conf >= 0.85
+
+
 def test_dialogue_intercept_no_jira(monkeypatch) -> None:
     monkeypatch.setenv("LBG_ORCHESTRATOR_URL", "http://127.0.0.1:9")
     monkeypatch.setenv("LBG_TEAM_INFOGRAPHISTE_LORA_STATE", "/nonexistent/lora.json")

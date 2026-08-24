@@ -152,6 +152,10 @@ def _dialogue(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, An
         if not isinstance(data, dict):
             data = {"payload": data}
         out: dict[str, Any] = {"agent": "http_dialogue", "remote": data}
+        if isinstance(data.get("reply"), str) and data["reply"].strip():
+            out["reply"] = data["reply"].strip()
+        elif isinstance(data.get("lines"), list) and data["lines"]:
+            out["reply"] = "\n".join(str(x) for x in data["lines"] if x)
         if isinstance(data.get("commit"), dict):
             out["commit"] = data["commit"]
         meta = data.get("meta")
@@ -462,7 +466,18 @@ def _opengame(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, An
 
 
 def _fallback(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
-    return _echo("fallback", actor_id, text, context)
+    from lbg_agents.lbg_ia_voice import unknown_capability_reply
+
+    reply = unknown_capability_reply(text)
+    stub = _echo("fallback", actor_id, text, context)
+    return {
+        **stub,
+        "agent": "lbg_ia_voice",
+        "handler": "fallback",
+        "ok": True,
+        "reply": reply,
+        "remote": {"reply": reply, "source": "lbg_ia_unknown_capability"},
+    }
 
 
 def _world(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:

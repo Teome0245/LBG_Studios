@@ -84,6 +84,15 @@ def try_factual_status_for_dialogue(
     if not reply.strip():
         return None
     intent = str(result.get("status_intent") or result.get("handler") or "factual_status")
+    from lbg_agents.lbg_ia_voice import wrap_operational_reply
+
+    reply = wrap_operational_reply(
+        reply,
+        intent=intent,
+        routed_to=f"agent.{intent}",
+        text=text,
+        context=context,
+    )
     return {
         "ok": True,
         "reply": reply,

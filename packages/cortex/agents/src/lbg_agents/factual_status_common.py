@@ -23,6 +23,11 @@ def fetch_json(url: str, *, timeout: float = 4.0) -> dict[str, Any] | list[Any] 
         return None
 
 
+def fetch_campus_status() -> dict[str, Any] | None:
+    payload = fetch_json(f"{orchestrator_base()}/v1/team/campus/status")
+    return payload if isinstance(payload, dict) else None
+
+
 def fetch_team_tasks(*, limit: int = 12, actor_id: str | None = None, role: str | None = None) -> list[dict[str, Any]]:
     base = orchestrator_base()
     params = [f"limit={max(1, min(limit, 50))}"]

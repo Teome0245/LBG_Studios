@@ -66,6 +66,28 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
 
     route_meta: dict[str, object] = {}
 
+    from services.lbg_ia_voice import apply_voice_to_agent_output, try_greeting_response
+
+    greeting_out = try_greeting_response(
+        actor_id=payload.actor_id,
+        text=payload.text,
+        context=ctx,
+    )
+    if greeting_out is not None:
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        svc_metrics.inc("orchestrator_route_success_total")
+        out_body: dict[str, object] = {
+            "capability": "assistant_chat",
+            "policy": {"allowed": True, "decision": "safe_read", "reason": "first_contact"},
+            **greeting_out,
+        }
+        return RouteResponse(
+            intent="assistant_chat",
+            confidence=1.0,
+            routed_to="agent.lbg_ia_voice",
+            output=out_body,
+        )
+
     # Sonde DevOps : priorité absolue (valider le fil de transmission même avec npc_name / autre bruit).
     if isinstance(ctx.get("devops_action"), dict):
         intent, confidence = ("devops_probe", 1.0)
@@ -207,6 +229,14 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
     out_body: dict[str, object] = {"capability": cap.name, "policy": policy.model_dump(), **agent_out}
     if route_meta:
         out_body["orchestrator_route_meta"] = route_meta
+    if cap.routed_to != "agent.dialogue":
+        out_body = apply_voice_to_agent_output(
+            out_body,
+            intent=intent,
+            routed_to=cap.routed_to,
+            text=payload.text,
+            context=ctx,
+        )
     print(
         json.dumps(
             {
