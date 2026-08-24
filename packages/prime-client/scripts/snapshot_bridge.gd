@@ -179,6 +179,10 @@ func _apply_payload(payload: Dictionary) -> void:
 			float(e.get("z", 0.0))
 		)
 		var pos := Projection3D2D.normalize_core3_pos(raw)
+		if not HubFocus.should_show_entity(pos, kind, label, eid):
+			if _em.get_entity(oid) != null:
+				_em.despawn(oid)
+			continue
 		if _em.get_entity(oid) == null:
 			_em.spawn(oid, pos, col, label, kind, eid)
 		else:

@@ -80,6 +80,15 @@ func _apply_world_render() -> void:
 		_hub_ground.set_visible_ground(true)
 	if _hub_props and city != "":
 		_hub_props.set_visible_props(true)
+	var zones := get_node_or_null("ZoneLayers") as ZoneLayers
+	if zones:
+		var zd: Variant = MapTextureLoader.world_render_cfg().get("zone_debug", null)
+		if zd is Dictionary:
+			zones.show_water = bool((zd as Dictionary).get("show_water", false))
+			zones.show_collision = bool((zd as Dictionary).get("show_collision", false))
+			zones.queue_redraw()
+	if _ws_layer:
+		_ws_layer.set_visible_objects(false)
 	if _sprite:
 		var show_tex := MapTextureLoader.show_planet_texture()
 		if not show_tex:

@@ -1,6 +1,7 @@
 # network_bridge.gd — Pont UDP local Python -> Godot (port 12345)
 extends Node
 const _Projection3D2D = preload("res://scripts/projection.gd")
+const _HubFocus = preload("res://scripts/hub_focus.gd")
 
 const BIND_PORT: int = 12345
 
@@ -57,7 +58,12 @@ func _dispatch(text: String) -> void:
 				var kind := str(d.get("kind", "object"))
 				var label := str(d.get("l", ""))
 				var sid := str(d.get("sid", ""))
-				_em.spawn(oid, _pos_from_packet(d), _parse_color(str(d.get("c", "npc"))), label, kind, sid)
+				var pos := _pos_from_packet(d)
+				if not _HubFocus.should_show_entity(pos, kind, label, sid):
+					if _em.has_method("get_entity") and _em.get_entity(oid) != null:
+						_em.despawn(oid)
+				else:
+					_em.spawn(oid, pos, _parse_color(str(d.get("c", "npc"))), label, kind, sid)
 		"dp":
 			if _em:
 				_em.despawn(oid)

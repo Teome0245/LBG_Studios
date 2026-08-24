@@ -726,7 +726,11 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		pos = Vector3(float(a[0]), float(a[1]), float(a[2]))
 	else:
 		pos = Vector3(float(ent.get("x", 0)), float(ent.get("y", 0)), float(ent.get("z", 0)))
-	if kind == "npc" and not _HubFocus.should_show_entity(pos, kind):
+	if kind == "npc" and not _HubFocus.should_show_entity(pos, kind, name, str(ent.get("id", ""))):
+		if entity_manager.get_entity(oid) != null:
+			entity_manager.despawn(oid)
+		return
+	if _HubFocus.is_clutter(kind, name, str(ent.get("id", ""))):
 		if entity_manager.get_entity(oid) != null:
 			entity_manager.despawn(oid)
 		return
@@ -742,8 +746,6 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 
 
 func _cull_stray_entities(your_id: int = 0) -> void:
-	if not _HubFocus.enabled():
-		return
 	for entity_v in entity_manager.get_all_entities():
 		var entity: Node = entity_v as Node
 		if entity == null:
@@ -752,7 +754,7 @@ func _cull_stray_entities(your_id: int = 0) -> void:
 			continue
 		if _echo_controller and int(entity.object_id) == int(_echo_controller.echo_object_id()):
 			continue
-		if not _HubFocus.should_show_entity(entity.core3_pos, str(entity.kind)):
+		if not _HubFocus.should_show_entity(entity.core3_pos, str(entity.kind), str(entity.label_text), str(entity.entity_key)):
 			entity_manager.despawn(int(entity.object_id))
 
 func _focus_lost_heaven_hub() -> void:

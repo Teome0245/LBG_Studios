@@ -4,6 +4,7 @@ class_name EntityManager
 
 const _EntityScript = preload("res://scripts/entity.gd")
 const _SpriteRegistry = preload("res://scripts/sprite_registry.gd")
+const _HubFocus = preload("res://scripts/hub_focus.gd")
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
 const COLOR_OBJECT := Color(0.7, 0.7, 0.7, 0.8)
 
@@ -25,6 +26,8 @@ func spawn(object_id: int, core3_pos: Vector3,
 		entity_key: String = "") -> Node:
 	if _entities.has(object_id):
 		return _entities[object_id]
+	if _HubFocus.is_clutter(kind, label, entity_key):
+		return null
 	if _entity_packed == null:
 		return null
 	var entity: Node = _entity_packed.instantiate()
@@ -56,7 +59,7 @@ static func _jitter_for_oid(oid: int) -> Vector2:
 
 func move(object_id: int, core3_pos: Vector3) -> void:
 	if not _entities.has(object_id):
-		spawn(object_id, core3_pos, COLOR_OBJECT, "")
+		# Ne pas auto-créer un point gris (mv UDP avant sp).
 		return
 	_entities[object_id].set_core3_position(core3_pos)
 

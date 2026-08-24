@@ -17,8 +17,13 @@ var _show_entities: bool = true
 var _essential_poi_only: bool = true
 var _click_pan: bool = true
 var _visible_hud: bool = true
+var _show_coords: bool = true
+var _show_altitude: bool = true
+var _coord_compact: bool = true
+var _coord_strip_h: float = 22.0
 
 var _half_size: float = 6500.0
+var _coord_label: Label = null
 var _planet_texture: Texture2D
 var _pois: Array = []
 var _camera: Camera2D
@@ -32,9 +37,29 @@ func _ready() -> void:
 	_load_pois()
 	_load_planet_texture()
 	_resolve_refs()
-	custom_minimum_size = Vector2(_size_px, _size_px)
-	size = Vector2(_size_px, _size_px)
+	_setup_coord_label()
+	_apply_layout_size()
 	queue_redraw()
+
+func _setup_coord_label() -> void:
+	if _coord_label != null:
+		return
+	_coord_label = Label.new()
+	_coord_label.name = "CoordLabel"
+	_coord_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_coord_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_coord_label.add_theme_font_size_override("font_size", 11)
+	_coord_label.add_theme_color_override("font_color", Color(0.82, 0.88, 0.96, 0.98))
+	add_child(_coord_label)
+
+func _apply_layout_size() -> void:
+	var total_h := _size_px + (_coord_strip_h if _show_coords else 0.0)
+	custom_minimum_size = Vector2(_size_px, total_h)
+	size = custom_minimum_size
+	if _coord_label:
+		_coord_label.visible = _show_coords
+		_coord_label.position = Vector2(0.0, _size_px + 1.0)
+		_coord_label.size = Vector2(_size_px, _coord_strip_h - 1.0)
 
 func _resolve_refs() -> void:
 	_camera = get_node_or_null(camera_path) as Camera2D
@@ -56,6 +81,14 @@ func _load_config() -> void:
 	_show_entities = bool(cfg.get("show_entities", _show_entities))
 	_essential_poi_only = bool(cfg.get("show_essential_poi_only", _essential_poi_only))
 	_click_pan = bool(cfg.get("click_pan_camera", _click_pan))
+	_show_coords = bool(cfg.get("show_coordinates", _show_coords))
+	_coord_strip_h = float(cfg.get("coord_strip_px", _coord_strip_h))
+	var coords_cfg: Variant = cfg.get("coordinates", null)
+	if coords_cfg is Dictionary:
+		var cc: Dictionary = coords_cfg
+		_show_altitude = bool(cc.get("show_altitude", _show_altitude))
+		_coord_compact = bool(cc.get("compact", _coord_compact))
+	_apply_layout_size()
 
 func _load_map_meta() -> void:
 	if not FileAccess.file_exists(MAP_CONFIG_PATH):
@@ -108,13 +141,25 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var local := get_local_mouse_position()
+		if local.y > _size_px:
+			return
 		var core3 := _minimap_to_core3(local)
 		_camera.position = Projection3D2D.to_screen(core3)
 		accept_event()
 
 func _process(_delta: float) -> void:
-	if _visible_hud:
-		queue_redraw()
+	if not _visible_hud:
+		return
+	var center := _center_core3()
+	if _show_coords and _coord_label:
+		_coord_label.text = _format_coords(center)
+	queue_redraw()
+
+func _format_coords(core3: Vector3) -> String:
+	var pos := Projection3D2D.normalize_core3_pos(core3)
+	if not _show_altitude:
+		return Projection3D2D.format_hud_plan(pos, _coord_compact)
+	return Projection3D2D.format_hud_coordinates(pos, _coord_compact)
 
 func _center_core3() -> Vector3:
 	if _player_controller and _player_controller.enabled and _player_controller.get_player_id() > 0:
@@ -122,7 +167,7 @@ func _center_core3() -> Vector3:
 		if _entity_manager:
 			var e := _entity_manager.get_entity(oid)
 			if e:
-				return e.core3_pos
+				return Projection3D2D.normalize_core3_pos(e.core3_pos)
 	if _camera:
 		return Projection3D2D.from_screen(_camera.position)
 	return Vector3.ZERO
@@ -145,9 +190,13 @@ func _minimap_to_core3(local: Vector2) -> Vector3:
 func _draw() -> void:
 	if not _visible_hud:
 		return
-	var rect := Rect2(Vector2.ZERO, Vector2(_size_px, _size_px))
-	draw_rect(rect, Color(0.04, 0.05, 0.09, 0.82))
-	draw_rect(rect, Color(0.35, 0.55, 0.85, 0.55), false, 2.0)
+	var map_rect := Rect2(Vector2.ZERO, Vector2(_size_px, _size_px))
+	draw_rect(map_rect, Color(0.04, 0.05, 0.09, 0.82))
+	draw_rect(map_rect, Color(0.35, 0.55, 0.85, 0.55), false, 2.0)
+	if _show_coords and _coord_strip_h > 0.0:
+		var strip := Rect2(0.0, _size_px, _size_px, _coord_strip_h)
+		draw_rect(strip, Color(0.03, 0.04, 0.07, 0.92))
+		draw_line(Vector2(0.0, _size_px), Vector2(_size_px, _size_px), Color(0.35, 0.55, 0.85, 0.45), 1.0)
 
 	var center := _center_core3()
 	_draw_map_region(center)
@@ -212,6 +261,8 @@ func _draw_entities(center: Vector3) -> void:
 		if entity == null:
 			continue
 		var pos: Vector3 = entity.core3_pos
+		if not HubFocus.should_show_entity(pos, str(entity.kind), str(entity.label_text), str(entity.entity_key)):
+			continue
 		if absf(pos.x - center.x) > _view_radius_m or absf(pos.z - center.z) > _view_radius_m:
 			continue
 		var mp := _world_to_minimap(pos, center)

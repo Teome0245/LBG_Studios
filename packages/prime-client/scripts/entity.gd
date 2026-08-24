@@ -6,6 +6,7 @@ const _SpriteRegistry = preload("res://scripts/sprite_registry.gd")
 const _NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
 const _Projection3D2D = preload("res://scripts/projection.gd")
 const _MapTextureLoader = preload("res://scripts/map_texture_loader.gd")
+const _HubFocus = preload("res://scripts/hub_focus.gd")
 
 var object_id:     int     = 0
 var entity_key:    String  = ""
@@ -286,6 +287,8 @@ func _update_sprite_offset() -> void:
 		sprite.position.y = height_offset
 
 func _draw() -> void:
+	if kind != "player" and _is_clutter_visual():
+		return
 	var draw_pos := Vector2(0.0, height_offset)
 	var token_px: float = float(_SpriteRegistry.display_px())
 	var token_r: float = token_px * 0.38
@@ -347,6 +350,11 @@ func _ellipse_points(center: Vector2, rx: float, ry: float, segments: int) -> Pa
 		var a := (float(i) / float(segments)) * TAU
 		pts.append(center + Vector2(cos(a) * rx, sin(a) * ry))
 	return pts
+
+func _is_clutter_visual() -> bool:
+	var raw := _label_raw if _label_raw != "" else label_text
+	return _HubFocus.is_clutter(kind, raw, entity_key)
+
 
 func is_interactable() -> bool:
 	return kind == "npc"

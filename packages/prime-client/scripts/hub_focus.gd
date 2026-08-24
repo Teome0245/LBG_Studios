@@ -50,14 +50,35 @@ static func in_hub_radius(x: float, z: float) -> bool:
 	var dz := z - a.y
 	return dx * dx + dz * dz <= r * r
 
-static func should_show_entity(core3: Vector3, kind: String) -> bool:
-	if not enabled():
-		return true
+static func should_show_entity(core3: Vector3, kind: String, name: String = "", entity_key: String = "") -> bool:
 	if kind == "player":
+		return true
+	if is_clutter(kind, name, entity_key):
+		return false
+	if not enabled():
 		return true
 	if in_deprecated_city(core3.x, core3.z):
 		return false
 	return in_hub_radius(core3.x, core3.z)
+
+
+## Navettes / tangibles Core3 (points gris « shuttle fly to tatooine »).
+static func is_clutter(kind: String, name: String = "", entity_key: String = "") -> bool:
+	var k := kind.strip_edges().to_lower()
+	if k in ["object", "tangible", "vehicle", "building", "static", "waypoint", "cell"]:
+		return true
+	var blob := ("%s %s" % [name, entity_key]).to_lower()
+	if blob.strip_edges() == "":
+		return k != "npc" and k != "player"
+	for frag in [
+		"shuttle", "tatooine", "ticket collector", "ticket_collector",
+		"starport", "player_shuttle", "transport_shuttle", "fly to",
+		"mos eisley", "mos espa", "anchorhead", "bestine",
+		"waypoint", "shared_shuttle", "shuttleport",
+	]:
+		if blob.contains(frag):
+			return true
+	return false
 
 static func should_draw_world_overlay(x: float, z: float) -> bool:
 	if not enabled():
