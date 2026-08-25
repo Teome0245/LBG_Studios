@@ -13,11 +13,11 @@ set -euo pipefail
 #   LBG_PILOT_API_TOKEN        Bearer (Cockpit / Réglages) — optionnel si inject serveur
 #   LBG_PILOT_INTERNAL_TOKEN   header X-LBG-Service-Token — optionnel
 #   LBG_DESKTOP_APPROVAL       jeton desktop (aligné C:\Agent_IA\desktop.env)
-#   LBG_OPEN_VGHD_GOAL         défaut « ouvre vghd sur mon poste »
+#   LBG_OPEN_VGHD_GOAL         défaut « relance vghd sur mon pc »
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PILOT_URL="${LBG_PILOT_URL:-http://192.168.0.140:8080}"
-GOAL="${LBG_OPEN_VGHD_GOAL:-ouvre vghd sur mon poste}"
+GOAL="${LBG_OPEN_VGHD_GOAL:-relance vghd sur mon pc}"
 DRY_RUN=0
 
 for arg in "$@"; do

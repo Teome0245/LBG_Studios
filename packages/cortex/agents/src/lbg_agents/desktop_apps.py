@@ -18,7 +18,9 @@ import re
 from typing import Any
 
 _OPEN_APP_VERB_RE = re.compile(
-    r"\b(?:ouvrir|ouvre|ouvrez|lancer|lance|lancez|demarrer|démarrer|demarre|démarre|demarrez|démarrez|start|launch|open|exécute|execute|exécuter|executer)\b",
+    r"\b(?:ouvrir|ouvre|ouvrez|lancer|lance|lancez|relancer|relance|relancez|"
+    r"demarrer|démarrer|demarre|démarre|demarrez|démarrez|redemarrer|redémarrer|redemarre|redémarre|"
+    r"start|launch|open|relaunch|restart|exécute|execute|exécuter|executer)\b",
     re.IGNORECASE,
 )
 

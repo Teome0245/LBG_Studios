@@ -409,7 +409,9 @@ def _propose_mmo_dev_plan(raw: str, normalized: str, context: dict[str, object])
 
 
 _OPEN_APP_VERB_RE = re.compile(
-    r"\b(?:ouvrir|ouvre|ouvrez|lancer|lance|lancez|demarrer|démarrer|demarrez|démarrez|start|launch|open)\b",
+    r"\b(?:ouvrir|ouvre|ouvrez|lancer|lance|lancez|relancer|relance|relancez|"
+    r"demarrer|démarrer|demarre|démarre|demarrez|démarrez|redemarrer|redémarrer|redemarre|redémarre|"
+    r"start|launch|open|relaunch|restart|exécute|execute|exécuter|executer)\b",
     re.IGNORECASE,
 )
 

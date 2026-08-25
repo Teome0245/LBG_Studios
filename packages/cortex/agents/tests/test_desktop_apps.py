@@ -20,6 +20,16 @@ def test_infer_vghd() -> None:
     assert act and act["kind"] == "open_app" and act["app"] == "vghd"
 
 
+def test_infer_vghd_relance() -> None:
+    act = open_app_action_from_goal("relance vghd sur mon pc")
+    assert act and act["kind"] == "open_app" and act["app"] == "vghd" and act.get("learn") is True
+
+
+def test_infer_vghd_relancer() -> None:
+    act = open_app_action_from_goal("relancer vghd sur mon poste")
+    assert act and act["app"] == "vghd"
+
+
 def test_infer_none_without_verb() -> None:
     assert default_desktop_action_from_text("quelle heure est-il ?") is None
 
