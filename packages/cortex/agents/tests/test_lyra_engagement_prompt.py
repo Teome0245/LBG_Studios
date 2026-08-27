@@ -38,7 +38,9 @@ def test_build_prompt_includes_mmo_engagement_paragraph() -> None:
     assert "q-help" in p
     assert "Lost Heaven" in p
     assert "Scrapaltai" in p
-    assert "médiéval-fantasy" not in p.lower()
+    # Garde-fou anti-fantasy (présent comme négation, pas comme cadre actif).
+    assert "pas** un médiéval-fantasy" in p.lower() or "pas un médiéval-fantasy" in p.lower()
+    assert "Maturité joueur **C**" in p
 
 
 def test_build_prompt_respects_client_world_setting() -> None:
@@ -55,8 +57,9 @@ def test_build_prompt_respects_client_world_setting() -> None:
     assert "Scrapaltai" in p
     assert "Lost Heaven" in p
     assert "place bazar" in p
-    assert "Willowdale" not in p
-
+    # Ne pas prendre Willowdale comme hub actif (le nom peut figurer en exemple négatif).
+    assert "Ville / hub : Willowdale" not in p
+    assert "Planète : Willowdale" not in p
 
 def test_build_prompt_includes_quest_snapshot() -> None:
     p = dialogue_llm.build_system_prompt(

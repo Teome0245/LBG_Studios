@@ -21,6 +21,10 @@ Multi‑LLM / suivi : ``dialogue_target=auto`` (ou défaut env ``LBG_DIALOGUE_TA
 
 - ``LBG_DIALOGUE_STRIP_REASONING`` — si ``0`` : ne retire pas les préfaces « Thinking Process » / analyse numérotée (défaut : actif).
 
+Maturité contenu (Bible V60–V65) : ``context["maturity_cap"]`` (ou ``player.maturity_cap`` /
+``session_summary.maturity_cap``) ∈ ``A|B|C``. Défaut ``LBG_DIALOGUE_MATURITY_DEFAULT`` ou ``C``.
+Le system prompt PNJ reçoit le bloc palier ; ``filter_by_maturity`` retire le matériel tagué au-dessus du cap.
+
 Failover (optionnel) : ``LBG_DIALOGUE_FAILOVER=1`` réessaie les paliers listés dans ``LBG_DIALOGUE_FAILOVER_ORDER`` (sinon même ordre que ``LBG_DIALOGUE_AUTO_ORDER``) lorsque l’appel échoue par timeout, erreur réseau, HTTP **429** (rate limit), ou HTTP **≥500**. Si ``context["dialogue_target"]`` vaut explicitement ``local``, ``fast`` ou ``remote``, le failover est désactivé (un seul palier). Utile : Groq ``fast`` rate-limité → Ollama ``local``.
 
 Profils MMO : pour un PNJ (``world_npc_id`` défini), ``dialogue_profile`` sélectionne un libellé dans ``MMO_PROFILE_TEMPLATES`` (mêmes clés que l’assistant : ``chaleureux``, ``hal``, …) puis ajoute ``BASE_GUARDRAILS_MMO``. Si ``dialogue_profile`` est absent, le champ ``tone`` du registre PNJ (``npc_registry.json``) est utilisé lorsqu’il correspond à une clé valide ou à un **alias** (`REGISTRY_TONE_ALIASES`, ex. ``pragmatique`` → ``professionnel``).
@@ -64,6 +68,146 @@ BASE_GUARDRAILS_MMO = (
     "Tu écris **uniquement** la réplique en voix du personnage : pas de « Thinking Process », "
     "pas d’étapes numérotées, pas d’analyse métier en anglais."
 )
+
+# Maturité contenu (Bible V60–V65) : canon monde = C ; A/B = filtres de présentation joueur.
+MATURITY_LEVELS: tuple[str, ...] = ("A", "B", "C")
+MATURITY_RANK: dict[str, int] = {"A": 0, "B": 1, "C": 2}
+DEFAULT_MATURITY_CAP = "C"
+
+_MATURITY_PROMPT_BLOCKS: dict[str, str] = {
+    "C": (
+        "Maturité joueur **C** (canon large) : violence, crime, horreur narrative, insultes in-world "
+        "et thèmes adultes fictionnels sont autorisés si cohérents avec le rôle. "
+        "Interdit absolu : exploitation sexuelle de mineurs, contenus illégaux hors fiction, doxxing / harm IRL."
+    ),
+    "B": (
+        "Maturité joueur **B** (filtre teen) : pas de nudité ni sexe explicite ; violence non clinique "
+        "(pas de gore détaillé) ; sexualité → ellipse / sous-entendu ; insultes soft. "
+        "Le sombre (corruption, mort, trafic évoqué) reste OK. Variante soft si une scène serait trop crue."
+    ),
+    "A": (
+        "Maturité joueur **A** (bienveillance max, empile B) : ton plutôt bienveillant ; violence minimalisée "
+        "(conséquence, pas spectacle) ; pas d’horreur sadique ; flirt très léger max ; pas d’insulte lourde "
+        "envers le joueur. Si l’arc est sombre, garde l’objectif mais **adoucis** la formulation "
+        "(fade-to-black / rumeur atténuée) — ne refuse pas la quête."
+    ),
+}
+
+
+def normalize_maturity_cap(raw: object | None) -> str:
+    """Normalise un palier A|B|C (accepte a/b/c, aliases soft/teen/mature)."""
+    if raw is None:
+        return ""
+    s = str(raw).strip().upper()
+    if not s:
+        return ""
+    aliases = {
+        "SOFT": "A",
+        "KID": "A",
+        "KIDS": "A",
+        "CHILD": "A",
+        "TEEN": "B",
+        "PG13": "B",
+        "PG-13": "B",
+        "MATURE": "C",
+        "ADULT": "C",
+        "FULL": "C",
+    }
+    if s in aliases:
+        return aliases[s]
+    if s in MATURITY_RANK:
+        return s
+    for part in s.replace(":", " ").replace("=", " ").replace(",", " ").split():
+        if part in MATURITY_RANK:
+            return part
+    return ""
+
+
+def default_maturity_cap() -> str:
+    env = normalize_maturity_cap(os.environ.get("LBG_DIALOGUE_MATURITY_DEFAULT"))
+    return env if env else DEFAULT_MATURITY_CAP
+
+
+def resolve_maturity_cap(context: dict[str, Any] | None) -> str:
+    """Lit ``maturity_cap`` (contexte, player, session_summary) — défaut env / C (V61)."""
+    ctx = context if isinstance(context, dict) else {}
+    candidates: list[object] = [
+        ctx.get("maturity_cap"),
+        ctx.get("content_maturity"),
+        ctx.get("maturity"),
+    ]
+    player = ctx.get("player")
+    if isinstance(player, dict):
+        candidates.extend(
+            [
+                player.get("maturity_cap"),
+                player.get("content_maturity"),
+                player.get("maturity"),
+            ]
+        )
+    ss = ctx.get("session_summary")
+    if isinstance(ss, dict):
+        candidates.extend(
+            [
+                ss.get("maturity_cap"),
+                ss.get("content_maturity"),
+                ss.get("maturity"),
+            ]
+        )
+    for c in candidates:
+        got = normalize_maturity_cap(c)
+        if got:
+            return got
+    return default_maturity_cap()
+
+
+def maturity_rank(level: str | None) -> int:
+    return MATURITY_RANK.get(normalize_maturity_cap(level) or DEFAULT_MATURITY_CAP, 2)
+
+
+def maturity_allows(item_maturity: object | None, cap: str | None) -> bool:
+    """True si le tag de l’item est ≤ au plafond joueur (A ⊂ B ⊂ C).
+
+    Contenu **non tagué** : toujours autorisé (pas de restriction surprise).
+    """
+    raw = normalize_maturity_cap(item_maturity)
+    if not raw:
+        return True
+    return maturity_rank(raw) <= maturity_rank(cap)
+
+
+def filter_by_maturity(
+    items: list[Any] | tuple[Any, ...] | None,
+    cap: str | None,
+    *,
+    tag_key: str = "maturity",
+) -> list[Any]:
+    """Filtre une liste d’objets tagués ``maturity`` (V64). Chaînes / items sans tag : conservés."""
+    if not items:
+        return []
+    out: list[Any] = []
+    for it in items:
+        if isinstance(it, dict):
+            tag = it.get(tag_key)
+            if tag is None:
+                tag = it.get("maturity_cap")
+            if maturity_allows(tag, cap):
+                out.append(it)
+            continue
+        out.append(it)
+    return out
+
+
+def format_maturity_guardrails(cap: str | None) -> str:
+    """Bloc system-prompt pour le palier actif (Bible V60–V65)."""
+    level = normalize_maturity_cap(cap) or default_maturity_cap()
+    body = _MATURITY_PROMPT_BLOCKS.get(level) or _MATURITY_PROMPT_BLOCKS[DEFAULT_MATURITY_CAP]
+    return (
+        f"{body}\n"
+        "Le monde canon reste large : tu adaptes la **formulation** au palier, "
+        "tu n’inventes pas un autre Lost Heaven ni tu ne supprimes un arc."
+    )
+
 
 DEFAULT_WORLD_SETTING = (
     "Cadre monde (canon LBG, ADR 0009) : planète affichée **Scrapaltai** "
@@ -536,7 +680,7 @@ def _cache_key(*, speaker: str, player_text: str, context: dict[str, Any]) -> st
     # Optionnel : inclure certains champs de contexte dans la clé (évite les hits quand l'état change).
     raw_keys = os.environ.get(
         "LBG_DIALOGUE_CACHE_CONTEXT_KEYS",
-        "world_npc_id,quest_state,encounter_state,world_flags,_active_quest_id,_creature_refs,_desktop_plan,lyra_engagement,session_summary",
+        "world_npc_id,quest_state,encounter_state,world_flags,_active_quest_id,_creature_refs,_desktop_plan,lyra_engagement,session_summary,maturity_cap",
     )
     keys = [k.strip() for k in raw_keys.split(",") if k.strip()]
     picked: dict[str, object] = {}
@@ -1187,6 +1331,7 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
         "Pas de raisonnement interne affiché : interdit « Thinking Process », interdit les étapes numérotées du type « 1. **Analyze** » en anglais ; écris seulement ce que le personnage dit.",
         "Ne dis pas que tu es une intelligence artificielle ni un modèle de langage.",
         f"Profil actif: {profile}.",
+        format_maturity_guardrails(resolve_maturity_cap(context)),
     ]
     eng = eng_early
     if eng == "mmo_persona":
@@ -1214,12 +1359,33 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             "Si le joueur contredit le « Résumé session » (faits du monde ou quête) ou se contredit par rapport à ce qu'il vient d'affirmer dans l'historique, "
             "réagis en une courte phrase, **dans ton rôle** (doute poli, relance, taquinerie) — sans vocabulaire moderne hors cadre ni accusation violente."
         )
+    cap = resolve_maturity_cap(context)
+    # Indices tagués optionnels (V64) : listes ``maturity_hints`` / ``quest_hints``.
+    for list_key, label in (
+        ("maturity_hints", "Indices (filtrés maturité)"),
+        ("quest_hints", "Quêtes / objectifs (filtrés maturité)"),
+    ):
+        raw_list = context.get(list_key)
+        if isinstance(raw_list, (list, tuple)):
+            kept = filter_by_maturity(list(raw_list), cap)
+            for it in kept:
+                if isinstance(it, dict):
+                    text = it.get("text") or it.get("hint") or it.get("summary")
+                    if isinstance(text, str) and text.strip():
+                        lines.append(f"{label}: {text.strip()}")
+                elif isinstance(it, str) and it.strip():
+                    lines.append(f"{label}: {it.strip()}")
     for key, label in (
         ("quest_hint", "Quête ou objectif"),
     ):
         v = context.get(key)
         if isinstance(v, str) and v.strip():
             lines.append(f"{label}: {v.strip()}")
+        elif isinstance(v, dict):
+            if maturity_allows(v.get("maturity") or v.get("maturity_cap"), cap):
+                text = v.get("text") or v.get("hint") or v.get("summary")
+                if isinstance(text, str) and text.strip():
+                    lines.append(f"{label}: {text.strip()}")
     lyra_line = _format_lyra_for_prompt(context.get("lyra"))
     if lyra_line:
         lines.append(lyra_line)

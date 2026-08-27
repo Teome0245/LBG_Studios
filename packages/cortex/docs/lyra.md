@@ -64,6 +64,8 @@ Règles :
 
 **LLM** : `dialogue_llm.build_system_prompt` ajoute au **system prompt** un résumé lisible des jauges (`faim`/`soif`/`fatigue` en ~%, optionnel `stress`/`patience`) et une consigne pour que le PNJ **reflète** l’état sans citer de pourcentages au joueur.
 
+**Maturité contenu (V60–V65)** : le prompt PNJ inclut un bloc selon `context.maturity_cap` (`A`|`B`|`C`, défaut `C` / `LBG_DIALOGUE_MATURITY_DEFAULT`). Les listes taguées `quest_hints` / `maturity_hints` sont filtrées au plafond. Détail : [`maturity_content.md`](maturity_content.md).
+
 ### Boucle monde (MMO) → `context.lyra`
 
 - Variable **`LBG_MMO_SERVER_URL`** : URL du serveur MMO HTTP (ex. local `http://127.0.0.1:8050`, LAN `http://192.168.0.245:8050` ; unité systemd `lbg-mmo-server`).
