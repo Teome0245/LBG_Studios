@@ -71,7 +71,8 @@ def test_team_run_godot_supervisor(monkeypatch: pytest.MonkeyPatch) -> None:
             "checks": [],
         }
 
-    monkeypatch.setattr("team.godot_supervisor.probe_player_ia", fake_probe)
+    monkeypatch.setattr("team.player_ia_exec.probe_player_ia", fake_probe)
+    monkeypatch.setattr("team.godot_supervisor.execute_player_ia", lambda task: fake_probe(task))
     monkeypatch.setenv("LBG_TEAM_GODOT_GATEWAY_SMOKE", "0")
 
     client = TestClient(app)

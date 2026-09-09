@@ -14,6 +14,10 @@ from team.human_summary import format_validation_summary
 from team.lbg_ws2_audit import audit_zb0_readiness
 from team.models import TeamTask
 
+# Tracks déjà couverts par le rapport superviseur (blocking vs advisory).
+# Ne pas re-hard-fail la validation sur un advisory (ex. assets Infographiste).
+_ADVISORY_VALIDATION_TRACKS = frozenset({"infographiste_assets"})
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -100,7 +104,21 @@ def execute_godot_validation_workflow(task: TeamTask) -> dict[str, object]:
                 )
 
     required = [p for p in probes if isinstance(p, dict) and not p.get("skipped")]
-    ok = all(p.get("ok") for p in required) if required else bool(supervisor.get("ok"))
+    supervisor_tracks = {
+        str(t.get("track") or "")
+        for t in (supervisor.get("tracks") or [])
+        if isinstance(t, dict)
+    }
+    # Aligner sur le superviseur (blocking/advisory) : ne pas échouer sur
+    # infographiste_assets si seul KO ; les smokes/owner hors superviseur restent bloquants.
+    ok = bool(supervisor.get("ok"))
+    for p in required:
+        name = str(p.get("track") or "")
+        if name in supervisor_tracks or name in _ADVISORY_VALIDATION_TRACKS:
+            continue
+        if not p.get("ok"):
+            ok = False
+            break
     if isinstance(owner_smokes, dict) and owner_smokes.get("ok") is False:
         ok = False
 

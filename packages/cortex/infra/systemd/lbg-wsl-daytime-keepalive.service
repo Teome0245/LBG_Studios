@@ -1,0 +1,10 @@
+[Unit]
+Description=LBG — avis keepalive WSL .10 (ne pas couper en journée)
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+ExecStart=/opt/LBG_IA_MMO/infra/scripts/wsl_daytime_keepalive_notice.sh

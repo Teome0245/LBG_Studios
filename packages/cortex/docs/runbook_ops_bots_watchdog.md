@@ -98,6 +98,61 @@ ssh lbg@192.168.0.140 'sudo systemctl start lbg-team-ops-hw-job.service && journ
 
 Voir [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md).
 
+## 2c. Sonde guest mur INFRA LAN — Héphaïstos (`lbg-team-ops-guest-job`)
+
+Surveille **disk % / load / RAM** sur les hôtes du mur Cockpit :
+
+| Label | Hôte |
+|-------|------|
+| Front web | `192.168.0.100` |
+| Core | `192.168.0.140` |
+| Core3 SWG | `192.168.0.245` |
+| Prime monde | `192.168.0.246` |
+
+Seuils par défaut (alignés barre orange du mur) : disk warn **70 %** / crit **85 %** ; load ratio (load1/nproc) warn **1.0** / crit **2.0**.
+
+Si warn/critical → tâche équipe **`ops`** avec `ops_kind=guest_metrics` + **plan d'actions** consultatif (Docker prune .100, hygiene Prime, top CPU, etc.). Pas d'auto-exec.
+
+```bash
+bash infra/scripts/install_team_ops_jobs_vm.sh
+# test manuel
+ssh lbg@192.168.0.140 'sudo systemctl start lbg-team-ops-guest-job.service && journalctl -u lbg-team-ops-guest-job -n 40 --no-pager'
+```
+
+| Variable | Défaut | Rôle |
+|----------|--------|------|
+| `LBG_TEAM_OPS_GUEST_JOB_ENABLED` | `1` | Active le playbook |
+| `LBG_GUEST_DISK_WARN_PCT` / `CRIT` | `70` / `85` | Seuils disque guest |
+| `LBG_GUEST_LOAD_WARN_RATIO` / `CRIT` | `1.0` / `2.0` | load1 / nproc |
+| `LBG_GUEST_METRICS_HOSTS` | (mur 100/140/245/246) | Override `id:host:label,...` |
+| `LBG_TEAM_OPS_GUEST_JOB_ACTOR_ID` | `system:team_ops_guest` | Acteur équipe |
+| `LBG_GUEST_LOAD_CAN_CRIT` | `0` | Load guest = warn (pas crit digest) sauf `1` |
+
+Prérequis : SSH BatchMode `lbg@140` → `lbg@{100,245,246}` (140 = local).
+
+Modules : `lbg_agents.guest_metrics_probe`, `infra_guest_remediation`, `spawn_team_ops_guest_job`.
+
+## 2d. Soft-fail digests Team (Chœur / Argus / sprint)
+
+Baseline documentée dans [`team_evolution_sprint.md`](team_evolution_sprint.md) § Soft-fail.
+
+Contrôles rapides :
+
+```bash
+# Cœur L1 = Lia+Nix (Mira flap OK)
+curl -s "http://192.168.0.246:8791/v1/player-snapshot?player=Lia" | head -c 200
+curl -s "http://192.168.0.246:8791/v1/player-snapshot?player=Nix" | head -c 200
+
+# OID Mira (doit être > 0 sur le JSON utilisé par core3client)
+python3 -c "import json; p='/opt/lbg-new-mmo-clean/MMOCoreORB/bin/ia_bridge/mira_bot_session.json'; print(json.load(open(p)).get('characterOid'))"
+```
+
+Reconnect :
+
+```bash
+ssh lbg@192.168.0.140 'bash /opt/LBG_IA_MMO/infra/scripts/ensure_ia_bots_online_vm.sh'
+```
+
 ## 3. Validation rapide
 
 ```bash

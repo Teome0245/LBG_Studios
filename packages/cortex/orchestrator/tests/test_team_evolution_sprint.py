@@ -142,3 +142,62 @@ def test_pm_role_routes_to_evolution(monkeypatch: pytest.MonkeyPatch) -> None:
     assert result is not None
     assert result.status == "done"
     assert called.get("task_id") == task.id
+
+
+def test_team_load_probe_filters_stale_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
+    now = 1_700_000_000.0
+    monkeypatch.setattr(evo_mod.time, "time", lambda: now)
+    monkeypatch.setenv("LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H", "24")
+
+    stale = TeamTask(
+        id="old1",
+        role="dev_game",
+        objective="gameplay bug",
+        status="failed",
+        updated_ts=now - 48 * 3600,
+    )
+    noise = TeamTask(
+        id="lora1",
+        role="dev_game",
+        objective="Pipeline LoRA Pygmalion",
+        status="failed",
+        updated_ts=now - 3600,
+        context={"lora_pipeline": True},
+    )
+    fresh = TeamTask(
+        id="g1",
+        role="dev_game",
+        objective="combat loop fail",
+        status="failed",
+        updated_ts=now - 3600,
+    )
+    fresh2 = TeamTask(
+        id="g2",
+        role="dev_game",
+        objective="quest fail",
+        status="failed",
+        updated_ts=now - 1800,
+    )
+
+    def fake_list(*, status: str, limit: int = 30, role: str | None = None):  # noqa: ANN001
+        if status == "failed":
+            return [stale, noise, fresh, fresh2]
+        return []
+
+    monkeypatch.setattr(evo_mod.team_store, "list_tasks", fake_list)
+    out = evo_mod._team_load_probe()
+    assert out["skipped_stale"] == 1
+    assert out["skipped_noise"] == 1
+    assert out["failed_actionable"] == 2
+    assert out["ok"] is False
+    assert any("dev_game: 2" in g for g in out["gaps"])
+
+    # Sans les 2 fresh → ok (stale+noise ignorés)
+    monkeypatch.setattr(
+        evo_mod.team_store,
+        "list_tasks",
+        lambda **kw: [stale, noise] if kw.get("status") == "failed" else [],
+    )
+    out2 = evo_mod._team_load_probe()
+    assert out2["ok"] is True
+    assert out2["gaps"] == []

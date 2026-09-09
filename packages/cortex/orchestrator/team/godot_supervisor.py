@@ -15,7 +15,8 @@ from team.godot_supervisor_report import build_supervisor_report
 from team.godot_soe_probe import probe_soe_m3_login, probe_soe_m3_zone, probe_soe_m5_play, soe_m3_enabled, soe_m5_enabled
 from team.lbg_ws2_audit import audit_zb0_readiness
 from team.models import TeamTask
-from team.player_ia_probe import managed_bot_ids, probe_player_ia, required_bot_ids, sidecar_base_url
+from team.player_ia_exec import execute_player_ia
+from team.player_ia_probe import managed_bot_ids, required_bot_ids, sidecar_base_url
 
 
 def supervisor_enabled() -> bool:
@@ -57,15 +58,18 @@ def _check_sidecar_track() -> dict[str, Any]:
         priority="normal",
         approval_required=False,
         actor_id="system:godot_supervisor",
-        context={},
+        context={"player_ia_mode": "probe"},
     )
-    out = probe_player_ia(fake_task)
+    # Via exec : soft-fail humanité / truth-guard si Lia+Nix online (Mira flap OK).
+    out = execute_player_ia(fake_task)
     return {
         "track": "sidecar_m1",
         "ok": bool(out.get("ok")),
         "sidecar": out.get("sidecar"),
         "online_count": out.get("online_count"),
         "checks": out.get("checks"),
+        "humanity_advisory": bool(out.get("humanity_advisory")),
+        "truth_guard_advisory": bool(out.get("truth_guard_advisory")),
     }
 
 

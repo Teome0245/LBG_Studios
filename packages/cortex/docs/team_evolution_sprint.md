@@ -1,6 +1,6 @@
 # Sprint d'évolution 7j — Team / Thémis
 
-**Date** : 2026-08-18  
+**Date** : 2026-09-09 (baseline soft-fail digests)  
 **Statut** : **actif sur `.140`** (O1 Studio)  
 **Complète** : [vision_equipe_fable_autoconsultation.md](vision_equipe_fable_autoconsultation.md) (santé 12 h)
 
@@ -43,8 +43,24 @@ Timer 7j → Audit → Diagnose → Plan → L1 auto / L2 Pilot (+ méta) → Ve
 | LLM | Matrice `reason_route_matrix()` vs env ; modèle interdit (`gemma3:4b`) → L2 |
 | Capacités Team | Roster déclarations + timers manquants (rapport) |
 | Modules LBG_SA | `planned` vs `active` (rapport, pas de spawn hebdo) |
-| Charge Team | tâches `failed` 7j, file `review` |
+| Charge Team | failed **frais** (~24 h) hors bruit LoRA/WSL/guest ; file `review` |
 | Sous-projets | gelés / étagère (rapport) |
+
+## Soft-fail digests (baseline 2026-09)
+
+Objectif : éviter les cascades Slack/CR rouges sur du bruit (humanité idle, Mira flap, vieux failed, assets Infographiste).
+
+| Règle | Détail |
+|-------|--------|
+| Cœur bots L1 | `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS=lia,nix` — Mira optionnelle |
+| Chœur / sidecar Argus | via `execute_player_ia` : humanité + truth-guard **advisory** si Lia+Nix online |
+| Validation Godot | `infographiste_assets` **advisory** (aligné superviseur blocking) |
+| `team_load` sprint | gaps = failed ≤ `LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H` (défaut = autoconsult **24 h**) + filtre bruit Pygmalion/WSL/guest |
+| Autoconsult Dédale | ignore failed > `LBG_TEAM_AUTOCONSULT_FAILED_MAX_AGE_H` + pipelines Infographiste |
+| WSL | quiet hours 22h–7h (`wsl_schedule`) — LoRA/sprites skip nuit |
+| Guest load | warn par défaut (`LBG_GUEST_LOAD_CAN_CRIT=0`) |
+
+OID Mira : sessions sous `/opt/lbg-new-mmo-clean/.../mira_bot_session.json` — ne pas laisser `characterOid: 0` sur le chemin content (`/opt/LBG_IA_MMO/content/...`).
 
 ## Autonomie
 
@@ -100,6 +116,9 @@ Variables : `infra/secrets/lbg.env.example` (`LBG_TEAM_EVOLUTION_*`).
 | `LBG_TEAM_EVOLUTION_PLATFORM_AUDIT` | `1` | Sonde Atlas multi-hôtes |
 | `LBG_TEAM_EVOLUTION_JOB_COOLDOWN_S` | `518400` (6 j) | Anti double-tir vs timer 7 j |
 | `LBG_TEAM_EVOLUTION_ROUND_TIMEOUT_S` | `840` | Timeout HTTP `POST …/run` |
+| `LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H` | (hérite autoconsult `24`) | Âge max failed → gaps `team_load` ; `0` = fenêtre 7 j |
+| `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS` | `lia,nix` | Bots cœur connectivité L1 |
+| `LBG_TEAM_AUTOCONSULT_FAILED_MAX_AGE_H` | `24` | Failed recyclés Dédale |
 
 ## Tests
 

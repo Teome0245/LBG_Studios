@@ -1,0 +1,24 @@
+[Unit]
+Description=LBG équipe virtuelle — sonde guest mur INFRA LAN → tâche ops (L1)
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_TEAM_OPS_GUEST_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_OPS_GUEST_JOB_STATE=/var/lib/lbg/team_ops_guest/state.json
+Environment=LBG_TEAM_OPS_GUEST_JOB_ACTOR_ID=system:team_ops_guest
+# Seuils alignés mur Cockpit (orange ~70 %)
+Environment=LBG_GUEST_DISK_WARN_PCT=70
+Environment=LBG_GUEST_DISK_CRIT_PCT=85
+Environment=LBG_GUEST_LOAD_WARN_RATIO=1.0
+Environment=LBG_GUEST_LOAD_CRIT_RATIO=2.0
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_team_ops_guest_job
+
+[Install]
+WantedBy=multi-user.target

@@ -100,15 +100,31 @@ def _ops_probe() -> dict[str, Any]:
 
 def _choeur_probe() -> dict[str, Any]:
     """Chœur — sonde sidecar joueurs IA (:8791)."""
-    from team.player_ia_probe import probe_player_ia
+    from team.player_ia_exec import execute_player_ia
+    from team.models import TeamTask
 
-    out = probe_player_ia(None)
+    # Via exec : soft-fail humanité / truth-guard si Lia+Nix online.
+    fake = TeamTask(
+        id="autoconsult-choeur-probe",
+        role="player_ia",
+        objective="autoconsult choeur probe",
+        status="queued",
+        actor_id="system:team_autoconsult",
+        context={"player_ia_mode": "probe"},
+    )
+    out = execute_player_ia(fake)
     gaps: list[str] = []
+    checks = [c for c in (out.get("checks") or []) if isinstance(c, dict)]
+    health_ok = any(c.get("kind") == "sidecar_healthz" and c.get("ok") for c in checks)
     if not out.get("ok"):
-        err = out.get("error") or out.get("hint") or "sidecar KO"
+        # Ne pas dire « sidecar KO » si healthz répond : souvent bots offline (409).
+        default_err = "bots offline (snapshots 409)" if health_ok else "sidecar KO"
+        err = out.get("error") or out.get("hint") or default_err
+        if str(err) == "sidecar KO" and health_ok:
+            err = default_err
         gaps.append(str(err))
-        for c in out.get("checks") or []:
-            if isinstance(c, dict) and not c.get("ok"):
+        for c in checks:
+            if c.get("ok") is False and c.get("kind") not in {"player_humanity", "world_truth_guard", "world_truth_guard_check"}:
                 gaps.append(f"{c.get('kind')}: {c.get('error') or c.get('status')}")
     return {
         "track": "choeur_player_ia",
@@ -218,18 +234,63 @@ def _hermes_probe() -> dict[str, Any]:
         return {"track": "hermes_soe", "ok": False, "gaps": [str(exc)], "error": str(exc)}
 
 
+def _failed_max_age_s() -> float:
+    """Âge max des failed recyclés en gaps Dédale (défaut 24 h). ``0`` = pas de filtre."""
+    raw = os.environ.get("LBG_TEAM_AUTOCONSULT_FAILED_MAX_AGE_H", "24").strip()
+    try:
+        hours = float(raw)
+    except ValueError:
+        hours = 24.0
+    if hours <= 0:
+        return 0.0
+    return max(1.0, hours) * 3600.0
+
+
+def _task_age_s(task: TeamTask, *, now: float | None = None) -> float:
+    ts = float(task.updated_ts or task.created_ts or 0.0)
+    if ts <= 0:
+        return 0.0
+    return max(0.0, (now if now is not None else time.time()) - ts)
+
+
 def _dedale_probe() -> dict[str, Any]:
-    """Dédale — lecture des échecs récents gameplay / forge (L1, sans write)."""
-    recent = team_store.list_tasks(role="dev_game", status="failed", limit=5)
+    """Dédale — échecs récents gameplay / forge (hors pipelines Pygmalion/WSL)."""
+    recent = team_store.list_tasks(role="dev_game", status="failed", limit=12)
     gaps: list[str] = []
+    skipped_stale = 0
+    max_age = _failed_max_age_s()
+    now = time.time()
+    skip_markers = (
+        "lora",
+        "sprite",
+        "infographiste",
+        "pygmalion",
+        "kohya",
+        "wsl",
+        "glb godot",
+        "pipeline assets",
+    )
     for t in recent:
+        if max_age > 0 and _task_age_s(t, now=now) > max_age:
+            skipped_stale += 1
+            continue
         obj = (t.objective or "")[:120]
+        blob = f"{obj} {t.context.get('subproject', '')} {t.actor_id or ''}".lower()
+        # Les échecs Infographiste/WSL restent chez Pygmalion — ne pas les recycler en gaps Dédale.
+        if any(m in blob for m in skip_markers) or t.context.get("lora_pipeline") or t.context.get(
+            "sprites_2d_pipeline"
+        ) or t.context.get("infographiste_ia"):
+            continue
+        if t.context.get("subproject") in {"infographiste_ia"}:
+            continue
         gaps.append(f"tâche failed {t.id[:8]}: {obj}")
     return {
         "track": "dedale_gameplay",
         "ok": len(gaps) == 0,
         "gaps": gaps[:5],
         "failed_count": len(gaps),
+        "skipped_stale": skipped_stale,
+        "failed_max_age_h": round(max_age / 3600.0, 2) if max_age > 0 else 0,
     }
 
 

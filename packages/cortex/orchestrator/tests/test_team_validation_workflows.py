@@ -85,3 +85,42 @@ def test_godot_validation_workflow_mocked(monkeypatch: pytest.MonkeyPatch) -> No
     assert res["kind"] == "godot_validation_workflow"
     assert "godot4 --path" in res.get("human_summary", "")
     assert res.get("launch_commands")
+
+
+def test_godot_validation_ignores_advisory_infographiste(monkeypatch: pytest.MonkeyPatch) -> None:
+    from team.godot_validation_workflow import execute_godot_validation_workflow
+    from team.models import TeamTask
+
+    monkeypatch.setattr(
+        "team.godot_validation_workflow.execute_godot_supervisor",
+        lambda task: {
+            "kind": "godot_supervisor",
+            "ok": True,
+            "tracks": [
+                {"track": "sidecar_m1", "ok": True},
+                {"track": "infographiste_assets", "ok": False},
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        "team.godot_validation_workflow._run_smoke_script",
+        lambda name, extra_env=None: {"track": "smoke_ok", "ok": True},
+    )
+    monkeypatch.setattr(
+        "team.godot_validation_workflow.audit_zb0_readiness",
+        lambda: {"track": "zb0_readiness", "ok": True},
+    )
+    monkeypatch.setattr(
+        "team.owner_smokes.run_owner_smokes",
+        lambda bundle="godot_login": {"ok": True, "results": []},
+    )
+    monkeypatch.setenv("LBG_TEAM_GODOT_SOE_M3", "0")
+    out = execute_godot_validation_workflow(
+        TeamTask(
+            id="gv1",
+            role="qa",
+            objective="Valider Godot",
+            context={"godot_validation": True, "run_owner_smokes": True},
+        )
+    )
+    assert out["ok"] is True

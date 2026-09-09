@@ -17,6 +17,7 @@ from lbg_agents.team_job_spawn import (
     task_run_summary,
     truthy,
 )
+from lbg_agents.wsl_schedule import should_skip_wsl_dependent_job
 
 
 def job_enabled() -> bool:
@@ -75,6 +76,17 @@ def run_spawn(*, persist: bool = True) -> dict[str, Any]:
         "task_status": None,
         "task_ok": None,
     }
+
+    gate = should_skip_wsl_dependent_job()
+    if gate.get("skip"):
+        result["outcome"] = str(gate.get("outcome") or "wsl_skip")
+        result["reply"] = str(gate.get("reply") or "WSL skip")
+        result["wsl_gate"] = gate
+        if persist:
+            st["last_check_ts"] = time.time()
+            st["last_wsl_gate"] = result["outcome"]
+            save_json_state(state_path(), st)
+        return result
 
     if cooldown_active(st, cooldown_s=cooldown_s()):
         result["outcome"] = "cooldown"

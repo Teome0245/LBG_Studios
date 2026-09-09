@@ -89,7 +89,7 @@ def test_godot_supervisor_includes_infographiste_track(monkeypatch: pytest.Monke
     def fake_probe(task):  # noqa: ANN001
         return {"kind": "player_ia_probe", "ok": True, "online_count": 2, "checks": []}
 
-    monkeypatch.setattr("team.godot_supervisor.probe_player_ia", fake_probe)
+    monkeypatch.setattr("team.godot_supervisor.execute_player_ia", lambda task: fake_probe(task))
     monkeypatch.setenv("LBG_TEAM_GODOT_GATEWAY_SMOKE", "0")
 
     client = TestClient(app)

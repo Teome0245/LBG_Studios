@@ -244,27 +244,97 @@ def _modules_probe() -> dict[str, Any]:
     }
 
 
+def _team_load_failed_max_age_s() -> float:
+    """Âge max des failed comptés en gaps charge Team (défaut = autoconsult 24 h).
+
+    ``LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H`` override ; ``0`` = fenêtre 7 j entière.
+    """
+    raw = os.environ.get("LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H", "").strip()
+    if not raw:
+        return autoconsult._failed_max_age_s()
+    try:
+        hours = float(raw)
+    except ValueError:
+        return autoconsult._failed_max_age_s()
+    if hours <= 0:
+        return 0.0
+    return max(1.0, hours) * 3600.0
+
+
+_TEAM_LOAD_NOISE = (
+    "lora",
+    "sprite",
+    "infographiste",
+    "pygmalion",
+    "kohya",
+    "wsl",
+    "glb godot",
+    "pipeline assets",
+    "sonde guest",
+    "guest mur",
+)
+
+
+def _team_load_is_noise(task: TeamTask) -> bool:
+    blob = (
+        f"{task.objective or ''} {task.context.get('subproject', '')} "
+        f"{task.actor_id or ''} {task.role}"
+    ).lower()
+    if any(m in blob for m in _TEAM_LOAD_NOISE):
+        return True
+    if task.context.get("lora_pipeline") or task.context.get("sprites_2d_pipeline"):
+        return True
+    if task.context.get("infographiste_ia") or task.context.get("subproject") == "infographiste_ia":
+        return True
+    return False
+
+
 def _team_load_probe() -> dict[str, Any]:
-    failed = team_store.list_tasks(status="failed", limit=30)
+    failed = team_store.list_tasks(status="failed", limit=50)
     review = team_store.list_tasks(status="review", limit=20)
-    cutoff = time.time() - 7 * 86400
-    recent_failed = [t for t in failed if float(t.updated_ts or 0) >= cutoff]
-    by_role: dict[str, int] = {}
+    now = time.time()
+    cutoff_7d = now - 7 * 86400
+    max_age = _team_load_failed_max_age_s()
+    recent_failed = [t for t in failed if float(t.updated_ts or 0) >= cutoff_7d]
+    # Gaps = failed « frais » (24 h) hors bruit Pygmalion/WSL/guest — évite Argus L1 sur stock 7 j.
+    actionable: list[TeamTask] = []
+    skipped_stale = 0
+    skipped_noise = 0
     for t in recent_failed:
+        age = now - float(t.updated_ts or 0)
+        if max_age > 0 and age > max_age:
+            skipped_stale += 1
+            continue
+        if _team_load_is_noise(t):
+            skipped_noise += 1
+            continue
+        actionable.append(t)
+    by_role: dict[str, int] = {}
+    for t in actionable:
         by_role[t.role] = by_role.get(t.role, 0) + 1
     gaps: list[str] = []
+    window_label = "7j" if max_age <= 0 else f"{int(max_age // 3600)}h"
     for role, n in sorted(by_role.items(), key=lambda kv: -kv[1]):
         if n >= 2:
-            gaps.append(f"{role}: {n} tâches failed (7j)")
+            gaps.append(f"{role}: {n} tâches failed ({window_label})")
     opportunities: list[str] = []
     if review:
         opportunities.append(f"{len(review)} tâche(s) L2 en review — file Pilot")
+    if skipped_stale or skipped_noise:
+        opportunities.append(
+            f"team_load filtré: {skipped_stale} stale + {skipped_noise} bruit "
+            f"(failed_7d={len(recent_failed)}, actionable={len(actionable)})"
+        )
     return {
         "track": "team_load",
         "ok": len(gaps) == 0,
         "gaps": gaps,
         "opportunities": opportunities,
         "failed_7d": len(recent_failed),
+        "failed_actionable": len(actionable),
+        "skipped_stale": skipped_stale,
+        "skipped_noise": skipped_noise,
+        "failed_max_age_h": round(max_age / 3600.0, 2) if max_age > 0 else 0,
         "review_n": len(review),
         "failed_by_role": by_role,
     }

@@ -18,6 +18,7 @@ def test_lora_context_flags() -> None:
 def test_spawn_creates_lora_pipeline_task(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("LBG_TEAM_INFOGRAPHISTE_LORA_JOB_STATE", str(tmp_path / "state.json"))
     monkeypatch.setenv("LBG_ORCHESTRATOR_URL", "http://127.0.0.1:8010")
+    monkeypatch.setenv("LBG_WSL_FORCE", "1")
 
     def fake_create(**kwargs):
         assert kwargs["role"] == "dev_game"
@@ -41,6 +42,29 @@ def test_spawn_creates_lora_pipeline_task(monkeypatch, tmp_path) -> None:
 def test_spawn_respects_cooldown(monkeypatch, tmp_path) -> None:
     state_file = tmp_path / "state.json"
     monkeypatch.setenv("LBG_TEAM_INFOGRAPHISTE_LORA_JOB_STATE", str(state_file))
+    monkeypatch.setenv("LBG_WSL_FORCE", "1")
     state_file.write_text(json.dumps({"last_spawn_ts": time.time()}) + "\n", encoding="utf-8")
     out = run_spawn()
     assert out["outcome"] == "cooldown"
+
+
+def test_spawn_skips_wsl_quiet_hours(monkeypatch, tmp_path) -> None:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    from unittest.mock import patch
+
+    state_file = tmp_path / "state.json"
+    monkeypatch.setenv("LBG_TEAM_INFOGRAPHISTE_LORA_JOB_STATE", str(state_file))
+    monkeypatch.delenv("LBG_WSL_FORCE", raising=False)
+    night = datetime(2026, 9, 5, 23, 0, tzinfo=ZoneInfo("Europe/Paris"))
+    with patch("lbg_agents.spawn_team_infographiste_lora_job.should_skip_wsl_dependent_job") as gate:
+        gate.return_value = {
+            "skip": True,
+            "outcome": "wsl_quiet_hours",
+            "reply": "nuit",
+        }
+        # also ensure real module would see night if called
+        with patch("lbg_agents.wsl_schedule.now_local", return_value=night):
+            out = run_spawn()
+    assert out["spawned"] is False
+    assert out["outcome"] == "wsl_quiet_hours"

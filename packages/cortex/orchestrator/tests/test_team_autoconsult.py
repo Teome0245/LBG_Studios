@@ -54,6 +54,42 @@ def test_resolve_autoconsult_from_context() -> None:
     assert resolve_autoconsult_workflow(task) is True
 
 
+def test_dedale_probe_skips_stale_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    import time as _time
+
+    from team.autoconsult_workflow import _dedale_probe
+
+    now = _time.time()
+    stale = TeamTask(
+        id="e345e754-aaaa-bbbb-cccc-dddddddddddd",
+        role="dev_game",
+        objective="Audit SOE M3 — login + zone UDP Godot Prime (soe_handshake)",
+        status="failed",
+        actor_id="system:old",
+        context={"subproject": "client_godot"},
+        created_ts=now - 72 * 3600,
+        updated_ts=now - 48 * 3600,
+    )
+    fresh = TeamTask(
+        id="aabbccdd-1111-2222-3333-444444444444",
+        role="dev_game",
+        objective="Audit ZB-2 inject move pending",
+        status="failed",
+        actor_id="system:new",
+        context={"subproject": "client_godot"},
+        created_ts=now - 3600,
+        updated_ts=now - 1800,
+    )
+    monkeypatch.setenv("LBG_TEAM_AUTOCONSULT_FAILED_MAX_AGE_H", "24")
+    monkeypatch.setattr("team.autoconsult_workflow.team_store.list_tasks", lambda **kwargs: [stale, fresh])
+    out = _dedale_probe()
+    assert out["ok"] is False
+    assert out["skipped_stale"] == 1
+    assert out["failed_count"] == 1
+    assert "aabbccdd" in out["gaps"][0]
+    assert "e345e754" not in out["gaps"][0]
+
+
 def test_team_plan_includes_autoconsult() -> None:
     proposals = team_roles.plan_from_objective("round autoconsultation équipe fable", actor_id="u:plan")
     pm = [p for p in proposals if p["role"] == "pm"]
