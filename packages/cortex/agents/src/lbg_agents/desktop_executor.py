@@ -35,12 +35,14 @@ def _truthy(raw: str) -> bool:
 
 def desktop_dry_run(context: dict[str, Any] | None = None) -> bool:
     """
-    Si `LBG_DESKTOP_DRY_RUN` est actif, il est prioritaire sur le contexte.
-    Sinon, `context.desktop_dry_run: true` force le dry-run pour cet appel.
+    Dry-run si `LBG_DESKTOP_DRY_RUN` est truthy (force global), ou si
+    `context.desktop_dry_run` est True (par requête).
+
+    `LBG_DESKTOP_DRY_RUN=0` / false ne doit pas bloquer un dry-run explicite du contexte.
     """
     env = os.environ.get("LBG_DESKTOP_DRY_RUN", "").strip()
-    if env:
-        return _truthy(env)
+    if env and _truthy(env):
+        return True
     if isinstance(context, dict) and context.get("desktop_dry_run") is True:
         return True
     return False

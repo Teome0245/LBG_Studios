@@ -1,0 +1,19 @@
+{
+  "ia-core_happy": "256/ia-core_happy.png",
+  "ia-core_neutral": "256/ia-core_neutral.png",
+  "ia-core_sad": "256/ia-core_sad.png",
+
+  "agent-local_happy": "256/agent-local_happy.png",
+  "agent-local_neutral": "256/agent-local_neutral.png",
+  "agent-local_sad": "256/agent-local_sad.png",
+
+  "agent-i_happy": "256/agent-i_happy.png",
+  "agent-i_sad": "256/agent-i_sad.png",
+
+  "orchestrateur_happy": "256/orchestrateur_happy.png",
+  "orchestrateur_neutral": "256/orchestrateur_neutral.png",
+  "orchestrateur_sad": "256/orchestrateur_sad.png",
+
+  "perception-lyra_brain-v1": "256/perception-lyra_brain-v1.png",
+  "perception-lyra_brain-v2": "256/perception-lyra_brain-v2.png"
+}

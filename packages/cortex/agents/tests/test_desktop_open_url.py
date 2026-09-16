@@ -32,3 +32,14 @@ def test_open_url_dry_run_with_host_allowlist(monkeypatch: pytest.MonkeyPatch) -
     assert out.get("ok") is True
     assert out.get("outcome") == "dry_run"
     assert out.get("url") == "https://example.org/foo"
+
+
+def test_context_dry_run_wins_over_env_zero(monkeypatch: pytest.MonkeyPatch) -> None:
+    """LBG_DESKTOP_DRY_RUN=0 ne doit pas bloquer context.desktop_dry_run (Agir / Pilot)."""
+    from lbg_agents.desktop_executor import desktop_dry_run
+
+    monkeypatch.setenv("LBG_DESKTOP_DRY_RUN", "0")
+    assert desktop_dry_run({"desktop_dry_run": True}) is True
+    assert desktop_dry_run({}) is False
+    monkeypatch.setenv("LBG_DESKTOP_DRY_RUN", "1")
+    assert desktop_dry_run({}) is True

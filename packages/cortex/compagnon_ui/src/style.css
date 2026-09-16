@@ -1,0 +1,98 @@
+@import "tailwindcss" source(none);
+
+/* Correction des chemins @source relatifs au fichier src/style.css */
+@source "../index.html";
+@source "./App.vue";
+@source "./main.js";
+@source "./pages/*.vue";
+@source "./components/ChatFlow.vue";
+@source "./components/ChatBreadcrumbs.vue";
+@source "./components/ChatHeader.vue";
+@source "./components/ChatInput.vue";
+@source "./components/NewAgentStub.vue";
+@source "./components/Sidebar.vue";
+@source "./components/ProviderBadge.vue";
+@source "./components/lyra/**/*.vue";
+
+/* Styles de secours critiques (au cas où Tailwind ne compilerait toujours pas) */
+svg { width: 40px !important; height: 40px !important; }
+.sidebar-svg { width: 24px !important; height: 24px !important; }
+aside { width: 256px !important; min-width: 256px !important; flex-basis: 256px !important; }
+
+:root {
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --accent-emerald: #10b981;
+  --accent-blue: #3b82f6;
+}
+
+@layer base {
+  html, body, #app {
+    @apply h-full w-full overflow-hidden;
+    background: #020617;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+      linear-gradient(rgba(2, 6, 23, 0.4), rgba(2, 6, 23, 0.4)),
+      url('/assets/icons/background/090129141306_58.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+  }
+
+  h1, h2, h3, .font-outfit {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-slate-950/40 backdrop-blur-xl border border-white/20 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/30 transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-all transform active:scale-95 shadow-lg shadow-emerald-900/20 active:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-medium transition-all border border-white/5;
+  }
+
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  }
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}

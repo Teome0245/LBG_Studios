@@ -98,8 +98,8 @@ def truthy(raw: str) -> bool:
 
 def linux_dry_run(context: dict[str, Any] | None = None) -> bool:
     env = get_cfg("LBG_LINUX_DRY_RUN").strip()
-    if env:
-        return truthy(env)
+    if env and truthy(env):
+        return True
     return bool(isinstance(context, dict) and context.get("desktop_dry_run") is True)
 
 

@@ -1,0 +1,28 @@
+{
+  "compagnonUrl": "http://192.168.0.100:5174/",
+  "window": {
+    "width": 1180,
+    "height": 780,
+    "minWidth": 720,
+    "minHeight": 520
+  },
+  "overlay": {
+    "enabled": true,
+    "width": 168,
+    "height": 200,
+    "marginRight": 16,
+    "marginBottom": 72,
+    "alwaysOnTop": true
+  },
+  "tray": {
+    "tooltip": "LBG Compagnon"
+  },
+  "initiative": {
+    "enabled": true,
+    "pollIntervalMs": 60000,
+    "maxPerHour": 3,
+    "minIntervalSec": 600,
+    "minSilenceSec": 90,
+    "proactiveUrl": "http://192.168.0.100:5174/api/pilot/orchestrator/proactive/status"
+  }
+}

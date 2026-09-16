@@ -150,9 +150,17 @@ def _truthy(raw: str) -> bool:
 
 
 def _desktop_dry_run(context: dict | None = None) -> bool:
+    """
+    Dry-run si :
+    - `LBG_DESKTOP_DRY_RUN` est truthy (force global), OU
+    - `context.desktop_dry_run` est True (par requête, ex. Agir / Pilot).
+
+    Important : `LBG_DESKTOP_DRY_RUN=0` ne doit PAS écraser un dry-run explicite du contexte
+    (sinon propose→dry-run échoue avec « Approval token requis »).
+    """
     env = _get_desktop_cfg("LBG_DESKTOP_DRY_RUN").strip()
-    if env:
-        return _truthy(env)
+    if env and _truthy(env):
+        return True
     if isinstance(context, dict) and context.get("desktop_dry_run") is True:
         return True
     return False
@@ -925,6 +933,148 @@ def _editor_cmd_for(choice: str) -> list[str] | None:
     return None
 
 
+def _popen_no_console(cmd: list[str], **kwargs: object) -> subprocess.Popen:
+    """Lance un process sans flash de fenêtre console (Windows)."""
+    popen_kw: dict = {
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+        **kwargs,
+    }
+    if os.name == "nt":
+        # CREATE_NO_WINDOW : pas de console DOS ; les GUI s'affichent toujours.
+        create_no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        popen_kw["creationflags"] = int(popen_kw.get("creationflags", 0) or 0) | create_no_window
+        # cwd = dossier de l'exe (DLL Qt / sidecars à côté)
+        if not popen_kw.get("cwd") and cmd:
+            exe = Path(str(cmd[0]))
+            if exe.is_file():
+                popen_kw["cwd"] = str(exe.parent)
+    return subprocess.Popen(cmd, **popen_kw)
+
+
+def _app_deps_root() -> Path:
+    raw = (_get_desktop_cfg("LBG_DESKTOP_APP_DEPS_DIR") or "").strip()
+    if raw:
+        return Path(raw)
+    return Path(r"C:\Agent_IA\app_deps")
+
+
+# Fichiers critiques souvent effacés par l'updater VGHD après reboot.
+_APP_SIDECAR_FILES: dict[str, tuple[str, ...]] = {
+    "vghd": ("Qt5Sql.dll",),
+}
+
+
+def _ensure_app_sidecars(app_id: str, exe_path: str) -> dict[str, object]:
+    """
+    Restaure depuis C:\\Agent_IA\\app_deps\\<app> (ou qt_fetch) les DLL manquantes à côté de l'exe.
+    Retourne un petit rapport (restored / missing / ok).
+    """
+    report: dict[str, object] = {"checked": False, "restored": [], "missing": [], "backup_dir": None}
+    if os.name != "nt":
+        return report
+    names = _APP_SIDECAR_FILES.get(app_id)
+    if not names:
+        return report
+    exe = Path(exe_path)
+    if not exe.is_file():
+        return report
+    dest_dir = exe.parent
+    backup_dir = _app_deps_root() / app_id
+    report["checked"] = True
+    report["backup_dir"] = str(backup_dir)
+
+    def _seed_from_qt_fetch(name: str) -> Path | None:
+        """Repli : DLL Qt officielle téléchargée via aqt (5.15.2 msvc)."""
+        root = _app_deps_root() / "qt_fetch"
+        if not root.is_dir():
+            return None
+        for p in root.rglob(name):
+            if p.is_file() and "bin" in p.parts:
+                return p
+        return None
+
+    restored: list[str] = []
+    missing: list[str] = []
+    for name in names:
+        dest = dest_dir / name
+        if dest.is_file():
+            continue
+        src = backup_dir / name
+        if not src.is_file():
+            seeded = _seed_from_qt_fetch(name)
+            if seeded is not None:
+                try:
+                    backup_dir.mkdir(parents=True, exist_ok=True)
+                    (backup_dir / name).write_bytes(seeded.read_bytes())
+                    src = backup_dir / name
+                except Exception:
+                    src = seeded
+        if src.is_file():
+            try:
+                dest.write_bytes(src.read_bytes())
+                restored.append(name)
+            except Exception as exc:
+                missing.append(f"{name} (restore_failed: {exc})")
+        else:
+            missing.append(name)
+    src_plugins = backup_dir / "sqldrivers"
+    if not src_plugins.is_dir():
+        # seed sqldrivers from qt_fetch plugins
+        for p in (_app_deps_root() / "qt_fetch").rglob("qsqlite.dll") if (_app_deps_root() / "qt_fetch").is_dir() else []:
+            try:
+                import shutil
+
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(p.parent, src_plugins, dirs_exist_ok=True)
+            except Exception:
+                pass
+            break
+    dest_plugins = dest_dir / "sqldrivers"
+    if src_plugins.is_dir() and not dest_plugins.is_dir():
+        try:
+            import shutil
+
+            shutil.copytree(src_plugins, dest_plugins)
+            restored.append("sqldrivers/")
+        except Exception as exc:
+            missing.append(f"sqldrivers/ (restore_failed: {exc})")
+    report["restored"] = restored
+    report["missing"] = missing
+    return report
+
+
+def _disable_vghd_updater(bin_dir: Path) -> str | None:
+    updater = bin_dir / "updater.exe"
+    disabled = bin_dir / "updater.exe.disabled_by_lbg"
+    if updater.is_file() and not disabled.is_file():
+        try:
+            updater.rename(disabled)
+            return "disabled"
+        except Exception as exc:
+            return f"disable_failed:{exc}"
+    if disabled.is_file():
+        return "already_disabled"
+    return None
+
+
+def _resolve_mapped_exe(app_id: str, action: dict) -> str | None:
+    cmd_override = action.get("command") or action.get("exe")
+    if isinstance(cmd_override, str) and cmd_override.strip():
+        return cmd_override.strip().replace("/", "\\")
+    map_raw = _get_desktop_cfg("LBG_DESKTOP_APP_MAP_JSON").strip()
+    try:
+        mapping = json.loads(map_raw) if map_raw else {}
+    except Exception:
+        mapping = {}
+    cmd = mapping.get(app_id) if isinstance(mapping, dict) else None
+    if isinstance(cmd, str) and cmd.strip():
+        return cmd.strip()
+    if isinstance(cmd, list) and cmd and isinstance(cmd[0], str) and cmd[0].strip():
+        return cmd[0].strip()
+    return None
+
+
 def _open_file_in_editor(path: Path) -> None:
     if os.name != "nt":
         return
@@ -934,7 +1084,7 @@ def _open_file_in_editor(path: Path) -> None:
         if cmd is None or choice == "default":
             os.startfile(str(path))  # type: ignore[attr-defined]
         else:
-            subprocess.Popen([*cmd, str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            _popen_no_console([*cmd, str(path)])
     except Exception:
         try:
             os.startfile(str(path))  # type: ignore[attr-defined]
@@ -1737,6 +1887,65 @@ async def invoke(payload: InvokeRequest):
     if kind in {"observe_screen", "click_xy", "move_xy", "drag_xy", "type_text", "hotkey", "scroll", "wait_ms"}:
         return _handle_computer_use_action(kind=kind, action=action, ctx=ctx, base=base, trace_id=trace_id, dry_run=dry_run)
 
+    if kind == "repair_app_deps":
+        """
+        Restaure les sidecars manquants (ex. Qt5Sql.dll pour vghd) + coupe l'updater VGHD.
+        Champs: app (id logique, ex. vghd)
+        """
+        app_id = action.get("app")
+        if not isinstance(app_id, str) or not app_id.strip():
+            out = {**base, "ok": False, "outcome": "bad_request", "error": "Champ `app` requis"}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        app_id = app_id.strip().lower()
+        if app_id not in _APP_SIDECAR_FILES:
+            out = {
+                **base,
+                "ok": False,
+                "outcome": "unsupported_app",
+                "error": f"Aucune sidecar connue pour app={app_id}",
+                "app": app_id,
+            }
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        if not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "app": app_id}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        exe_path = _resolve_mapped_exe(app_id, action)
+        if not exe_path or not Path(exe_path).is_file():
+            out = {
+                **base,
+                "ok": False,
+                "outcome": "bad_request",
+                "error": "Exe introuvable (LBG_DESKTOP_APP_MAP_JSON)",
+                "app": app_id,
+                "exe": exe_path,
+            }
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        if dry_run:
+            out = {**base, "ok": True, "outcome": "dry_run", "app": app_id, "exe": exe_path, "kind": kind}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        sidecar = _ensure_app_sidecars(app_id, exe_path)
+        updater = _disable_vghd_updater(Path(exe_path).parent) if app_id == "vghd" else None
+        missing = list(sidecar.get("missing") or [])
+        ok = len(missing) == 0
+        out = {
+            **base,
+            "ok": ok,
+            "outcome": "ok" if ok else "missing_dependency",
+            "app": app_id,
+            "exe": exe_path,
+            "kind": kind,
+            "sidecar": sidecar,
+            "updater": updater,
+            "error": None if ok else f"Deps toujours manquantes: {', '.join(map(str, missing))}",
+        }
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
+
     if kind == "open_app":
         """
         Lance une application allowlistée (générique).
@@ -1818,9 +2027,38 @@ async def invoke(payload: InvokeRequest):
                 # fallback: essayer l'id comme exécutable
                 cmd_list = [app_id]
 
+        # Préflight sidecars (ex. Qt5Sql.dll VGHD) + cwd = dossier exe
+        sidecar_report: dict[str, object] = {}
+        if cmd_list and isinstance(cmd_list[0], str):
+            sidecar_report = _ensure_app_sidecars(app_id, cmd_list[0])
+            if sidecar_report.get("missing"):
+                out = {
+                    **base,
+                    "ok": False,
+                    "outcome": "missing_dependency",
+                    "error": (
+                        f"Dependances manquantes a cote de l'exe: {', '.join(map(str, sidecar_report['missing']))}. "
+                        "Reinstaller VGHD une fois puis: powershell -File C:\\Agent_IA\\backup_vghd_deps.ps1"
+                    ),
+                    "app": app_id,
+                    "args": args_list,
+                    "sidecar": sidecar_report,
+                    "hint": "L'updater VGHD efface souvent Qt5Sql.dll apres reboot — backup LBG restaure automatiquement ensuite.",
+                }
+                _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+                return out
+
         try:
-            subprocess.Popen([*cmd_list, *args_list], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            out = {**base, "ok": True, "outcome": "ok", "app": app_id, "args": args_list}
+            _popen_no_console([*cmd_list, *args_list])
+            out = {
+                **base,
+                "ok": True,
+                "outcome": "ok",
+                "app": app_id,
+                "args": args_list,
+            }
+            if sidecar_report.get("restored"):
+                out["sidecar"] = sidecar_report
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
         except Exception as e:
@@ -1841,7 +2079,7 @@ async def invoke(payload: InvokeRequest):
                     okp, errp = _persist_learned_app_mapping(app_id, resolved.strip())
                     if okp:
                         try:
-                            subprocess.Popen([resolved.strip(), *args_list], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                            _popen_no_console([resolved.strip(), *args_list])
                             out = {
                                 **base,
                                 "ok": True,
@@ -1914,7 +2152,7 @@ async def execute_action(request: ActionRequest):
             detected_path = path_in_action.group(0)
             logger.info(f"[AUTO] Chemin détecté dans action : {detected_path}")
             try:
-                subprocess.Popen([detected_path])
+                _popen_no_console([detected_path])
                 return {
                     "status": "success",
                     "result": {"status": "ok", "message": "Programme lancé via chemin détecté dans action.", "path": detected_path},
@@ -1926,7 +2164,7 @@ async def execute_action(request: ActionRequest):
             explicit_path = params["path"]
             logger.info(f"[AUTO] Chemin explicite fourni : {explicit_path}")
             try:
-                subprocess.Popen([explicit_path])
+                _popen_no_console([explicit_path])
                 return {
                     "status": "success",
                     "result": {"status": "ok", "message": "Programme lancé via chemin explicite.", "path": explicit_path},
@@ -1939,7 +2177,7 @@ async def execute_action(request: ActionRequest):
         if resolved:
             logger.info(f"[AUTO] Programme détecté automatiquement : {program_name} -> {resolved}")
             try:
-                subprocess.Popen([resolved])
+                _popen_no_console([resolved])
                 return {
                     "status": "success",
                     "result": {"status": "ok", "message": f"Programme '{program_name}' lancé automatiquement.", "path": resolved},

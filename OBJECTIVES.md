@@ -5,7 +5,8 @@
 **Étoile du nord produit** (origine, avant le recentrage packaging) :  
 IA incarnée sur **PC/infra** → persona au **cœur du MMO** → évolution **contrôlée** du monde.  
 Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
-**Focus 2026-08-24** : [`docs/FOCUS_WAHOU.md`](docs/FOCUS_WAHOU.md) — archiver l’abouti, 30 s Lost Heaven.
+**Focus 2026-09-16** : [`docs/FOCUS_COMPAGNON.md`](docs/FOCUS_COMPAGNON.md) — Compagnon Studio (type Jarvis) via Pilot `#/assistant`.  
+*(Archivé jeu)* [`docs/FOCUS_WAHOU.md`](docs/FOCUS_WAHOU.md) — 30 s Lost Heaven.
 
 ## O0 — Cadre (ce repo)
 
@@ -16,7 +17,7 @@ Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](doc
 
 ## O1 — Studio (prioritaire)
 
-Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud Agent, desktop hybride — **sans** client web legacy `/mmo/`.
+Cortex opérationnel recentré : **Compagnon Studio** (Pilot `#/assistant`), Team, Campus/Lyra, desktop hybride — **sans** client web legacy `/mmo/`.
 
 | Critère done | Mesure | État |
 |--------------|--------|------|
@@ -26,6 +27,7 @@ Cortex opérationnel recentré : Pilot, orchestrateur, Campus/Lyra, Cursor Cloud
 | Sprint évolution 7j | Timer `lbg-team-evolution-sprint-job` sur 140 ; L1 auto / L2 Pilot | OK (2026-08-18) |
 | Méta-autonomie L3 (Miroir→apply) | Judge, leçons, mutator, Feature Proposer, post-judge, `#/team/metrics` — [`packages/cortex/docs/plan_meta_autonomie_l3.md`](packages/cortex/docs/plan_meta_autonomie_l3.md) | OK (2026-08-21) |
 | Accueil Pilot | Cartes Studio/Campus/Ops/Jeu/Projet + liens LAN (Cockpit, Orch UI, `:8792`) | OK |
+| Compagnon Studio (presence) | Entrée = `.100:5174` (`compagnon_ui`) ; Desktop Electron = `packages/compagnon-desktop` ; [`docs/FOCUS_COMPAGNON.md`](docs/FOCUS_COMPAGNON.md) | OK (D0–D3 2026-09-16) |
 | Freeze soft | `LEGACY.md` sur LBG_IA_MMORPG / new_mmo | OK |
 | Smoke LAN surfaces | [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) + `tools/smoke_lan_surfaces.sh` | OK (2026-07-31) |
 | Fil produit d’origine | [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md) | OK (checklist) |

@@ -1,0 +1,44 @@
+{
+  "name": "lbg-compagnon-desktop",
+  "version": "0.1.0",
+  "description": "LBG Compagnon — app bureau (tray + chat + avatar)",
+  "main": "main.js",
+  "author": "LBG Studios",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "node ./scripts/ensure-electron.js",
+    "build:win": "electron-builder --win dir",
+    "build:win:portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.lbgstudios.compagnon",
+    "productName": "LBG Compagnon",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "config.json",
+      "overlay/**/*",
+      "assets/**/*",
+      "scripts/**/*"
+    ],
+    "extraFiles": [
+      {
+        "from": "config.json",
+        "to": "."
+      }
+    ],
+    "win": {
+      "target": ["dir", "portable"],
+      "icon": "assets/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}
