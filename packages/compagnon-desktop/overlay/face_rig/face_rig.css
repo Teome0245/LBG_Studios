@@ -167,6 +167,61 @@
   transform: rotate(-8deg) translateX(8%);
 }
 
+.face-rig-stage--alive {
+  animation: face-idle-sway 4.5s ease-in-out infinite;
+}
+.face-rig-stage.face-pulse-ok {
+  animation: face-pulse-ok 0.9s ease;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.45), inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+.face-rig-stage.face-pulse-warn {
+  animation: face-pulse-warn 0.9s ease;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+.face-rig-stage.face-pulse-alert {
+  animation: face-pulse-alert 0.9s ease;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.55), inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+@keyframes face-idle-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(0.6deg);
+  }
+}
+@keyframes face-pulse-ok {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+}
+@keyframes face-pulse-warn {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.05) rotate(-1deg);
+  }
+  70% {
+    transform: scale(1.03) rotate(1deg);
+  }
+}
+@keyframes face-pulse-alert {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
 .face-rig-caption {
   margin: 0.25rem 0 0;
   font-size: 0.72rem;

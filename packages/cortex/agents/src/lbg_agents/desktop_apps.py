@@ -1,7 +1,8 @@
-"""Alias et aides pour ``open_app`` (worker desktop hybride).
+"""Alias et aides pour ``open_app`` / ``repair_app_deps`` (worker desktop hybride).
 
 Rapatrié de LBG_Project_03 (`lbg_agents/desktop_apps.py` + `desktop_dispatch`) :
 - inférence ``open_app`` depuis un texte libre (« lance vghd sur mon pc »),
+- inférence ``repair_app_deps`` (« répare vghd », « fix Qt5Sql »),
 - normalisation d'alias d'apps (notepad→notepadpp, swg→swgemu, msword→word…),
 - extraction d'un chemin ``.exe`` Windows fourni dans l'objectif,
 - ``learn:true`` par défaut (allowlist auto-apprise sur le worker) — `LBG_DESKTOP_OPEN_APP_LEARN`,
@@ -30,10 +31,7 @@ _OPEN_APP_STOP_TOKENS = frozenset(
     }
 )
 
-# Apps Office / bureautique : souvent hors PATH → learn + chemin complet sur le PC.
 _OFFICE_APPS = frozenset({"word", "winword", "msword", "excel", "outlook", "powerpoint"})
-
-# Jeux / apps hors PATH : learn + chemin explicite (objectif ou LBG_DESKTOP_APP_MAP_JSON).
 _CUSTOM_EXE_APPS = frozenset({"swgemu", "word", "winword", "msword", "vghd"})
 
 _APP_ALIASES: dict[str, str] = {
@@ -63,6 +61,11 @@ _ERROR_HINTS: list[tuple[re.Pattern[str], str]] = [
         "Ou indiquer le chemin dans l'objectif entre parenthèses, ou learn:true + LBG_DESKTOP_LEARN_ENABLED=1.",
     ),
     (
+        re.compile(r"missing_dependency|Qt5Sql|Dependances manquantes|dépendances manquantes", re.I),
+        "Deps VGHD manquantes : demander à la team « répare vghd » "
+        "(desktop_action kind=repair_app_deps) ou vérifier C:\\Agent_IA\\app_deps\\vghd\\Qt5Sql.dll.",
+    ),
+    (
         re.compile(r"allowlist|non autoris", re.I),
         "Allowlist worker : réessayez avec learn (auto) — sur le PC activer "
         "LBG_DESKTOP_LEARN_ENABLED=1 dans C:\\Agent_IA\\desktop.env puis relancer le worker, "
@@ -74,13 +77,30 @@ _ERROR_HINTS: list[tuple[re.Pattern[str], str]] = [
     ),
 ]
 
+_REPAIR_APP_RE = re.compile(
+    r"\b(?:r[eé]pare[rz]?|r[eé]parer|fix|repair|restaure[rz]?|restauration)\b",
+    re.IGNORECASE,
+)
+
+
+def repair_app_deps_action_from_goal(goal: str) -> dict[str, Any] | None:
+    """Infère ``repair_app_deps`` (ex. « répare vghd », « fix Qt5Sql ») ou ``None``."""
+    raw = (goal or "").strip()
+    if not raw:
+        return None
+    low = raw.lower()
+    mentions_vghd = bool(re.search(r"\bvghd\b", low))
+    mentions_sql = "qt5sql" in low or "qt5 sql" in low
+    mentions_deps = bool(re.search(r"\b(?:deps?|d[eé]pendance|sidecar|dll)\b", low))
+    if not (_REPAIR_APP_RE.search(raw) or (mentions_sql and mentions_vghd)):
+        return None
+    if mentions_vghd or mentions_sql or mentions_deps:
+        return {"kind": "repair_app_deps", "app": "vghd"}
+    return None
+
 
 def default_desktop_action_from_text(text: str) -> dict[str, Any] | None:
-    """Infère une action ``open_app`` depuis un texte libre, ou ``None`` si rien de sûr.
-
-    Aligné sur ``action_proposal._propose_open_app`` : verbe d'ouverture + token suivant,
-    coupé sur ``sur|on|avec|pour|dans`` et nettoyé de « application/appli/prog/programme ».
-    """
+    """Infère une action ``open_app`` depuis un texte libre, ou ``None`` si rien de sûr."""
     raw = (text or "").strip()
     if not raw:
         return None
@@ -118,9 +138,13 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
         first = first[:80]
     if not re.match(r"^[A-Za-z0-9_.\-]+$", first):
         return None
+    # « vghd.exe » → « vghd » (allowlist / APP_MAP utilisent l'id logique)
+    first = re.sub(r"\.(exe|bat|cmd|com)$", "", first, flags=re.IGNORECASE)
+    if not first:
+        return None
     if first.lower() in _OPEN_APP_STOP_TOKENS:
         return None
-    return first
+    return first.lower()
 
 
 def extract_exe_path_from_goal(goal: str) -> str | None:
@@ -209,3 +233,11 @@ def hint_for_desktop_error(message: str) -> str | None:
         if pat.search(msg):
             return hint
     return None
+
+
+def desktop_action_from_goal(goal: str, *, learn: bool | None = None) -> dict[str, Any] | None:
+    """Infère repair_app_deps en priorité, sinon open_app."""
+    repair = repair_app_deps_action_from_goal(goal)
+    if repair is not None:
+        return repair
+    return open_app_action_from_goal(goal, learn=learn)

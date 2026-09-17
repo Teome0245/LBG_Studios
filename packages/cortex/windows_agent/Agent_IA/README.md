@@ -10,25 +10,39 @@ Déploiement attendu : `C:\Agent_IA\`
 
 1) Copier le module sur Windows dans `C:\Agent_IA\`
 2) Créer `C:\Agent_IA\desktop.env` (voir `desktop.env.example`)
-3) Lancer :
+3) Lancer **dans ta session bureau** (pas admin SYSTEM) :
 
 ```powershell
-# Sans fenêtre (recommandé) — logs : C:\Agent_IA\logs\agent_ia.log
+# Sans fenêtre (recommandé) — logs : C:\Agent_IA\logs\agent_ia*.log
 powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Agent_IA\start_agent.ps1
 
 # Console visible (debug)
 C:\Agent_IA\run_agent.cmd
 ```
 
-Démarrage auto (logon) + redémarrage 08:00 / 20:00 :
+Si l’agent tourne déjà sous **Système / Session 0** (apps ouvertes invisibles) :
+
+```powershell
+# Une fois en PowerShell **Admin** (désactive aussi le service AgentLocalV0 qui respawn Session 0) :
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_session0_admin.ps1
+
+# Ou sans Admin si :5005 n’est pas verrouillé par SYSTEM :
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_agent_to_user_session.ps1
+```
+
+Cause fréquente de régression : service Windows **`AgentLocalV0`** (`start_agent.bat` en SYSTEM) — à laisser **Disabled**.
+
+Démarrage auto (logon) + redémarrage 08:00 / 20:00 — **toujours en compte utilisateur Interactive** :
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_agent_ia_scheduled_tasks.ps1
 ```
 
-- `start_agent.ps1` / `restart_agent.ps1` — arrière-plan, pas de cmd au premier plan
-- `start_agent.cmd` / `restart_agent.cmd` — wrappers vers les `.ps1`
-- `run_agent.cmd` — mode console (debug uniquement)
+- `start_agent.ps1` / `restart_agent.ps1` — arrière-plan, **sans** fenêtre cmd (pas de `cmd.exe`)
+- `start_agent.vbs` / `restart_agent.vbs` — même chose **sans flash** (double-clic OK)
+- `start_agent.cmd` / `restart_agent.cmd` — wrappers → VBS (quitte tout de suite)
+- Refuse de démarrer depuis Session 0 ; remplace un listener hors session courante
+- `run_agent.cmd` — **debug console uniquement** (fenêtre volontairement ouverte)
 
 ## Endpoints
 

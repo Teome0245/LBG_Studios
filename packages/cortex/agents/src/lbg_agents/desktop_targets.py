@@ -28,6 +28,11 @@ _ALIASES: dict[str, str] = {
     "linux-hands": "hands",
     "linux_agent": "hands",
     "ct-142": "hands",
+    "omarchy": "omarchy",
+    "lbg-omarchy": "omarchy",
+    "linux-omarchy": "omarchy",
+    "ct-143": "omarchy",
+    "143": "omarchy",
 }
 
 
@@ -147,6 +152,12 @@ def _targets_from_legacy_env() -> list[DesktopTarget]:
         env_key="LBG_AGENT_HANDS_URL",
         aliases=("hands", "lbg-hands", "linux-hands", "linux_agent", "ct-142"),
     )
+    _add(
+        tid="omarchy",
+        label="lbg-omarchy",
+        env_key="LBG_AGENT_OMARCHY_URL",
+        aliases=("omarchy", "lbg-omarchy", "linux-omarchy", "ct-143", "143"),
+    )
 
     # Si default manquant mais pc présent, default = pc
     if not any(t.target_id == "default" for t in rows):
@@ -200,6 +211,10 @@ def infer_desktop_target_from_text(text: str) -> str | None:
         return "hands"
     if re.search(r"\b192\.168\.0\.142\b", text):
         return "hands"
+    if re.search(r"\b(omarchy|lbg[-_]?omarchy|ct[- ]?143|sur omarchy|sur le lab linux)\b", norm):
+        return "omarchy"
+    if re.search(r"\b192\.168\.0\.143\b", text):
+        return "omarchy"
     return None
 
 

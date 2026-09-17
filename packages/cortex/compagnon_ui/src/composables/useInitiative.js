@@ -1,15 +1,16 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   INITIATIVE_DEFAULTS,
   shouldOfferFromStatus,
   markInitiativeShown,
   formatDiscussReply,
 } from '@/lib/initiativeQuota'
+import { presenceInitiative } from '@/lib/presence'
 
 const current = ref(null)
 const lastError = ref('')
-/** Dernier status brut (pour Discuter → propositions concrètes). */
 const lastStatus = ref(null)
+const proposing = ref(false)
 let timer = null
 let started = false
 
@@ -33,9 +34,12 @@ async function tick() {
       id: offer.id,
       message: offer.message,
       kind: offer.kind,
+      intents: offer.intents || [],
+      primary: offer.primary || null,
       at: Date.now(),
     }
     markInitiativeShown(offer.id)
+    presenceInitiative(offer.message)
   } catch (e) {
     lastError.value = e?.message || String(e)
   }
@@ -45,7 +49,6 @@ function dismiss() {
   current.value = null
 }
 
-/** Texte de discussion locale (pas de POST /ask). */
 function discussText() {
   return formatDiscussReply(lastStatus.value || {})
 }
@@ -58,21 +61,17 @@ export function useInitiative() {
     timer = setInterval(tick, INITIATIVE_DEFAULTS.pollIntervalMs)
   })
 
-  onUnmounted(() => {
-    // singleton — ne pas clear si d'autres consumers (App only)
-  })
-
   return {
     current,
     lastError,
     lastStatus,
+    proposing,
     dismiss,
     discussText,
     refresh: tick,
   }
 }
 
-/** Arrêt explicite (tests / HMR). */
 export function stopInitiativePolling() {
   if (timer) clearInterval(timer)
   timer = null

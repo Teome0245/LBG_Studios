@@ -1,17 +1,31 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useChat } from '../composables/useChat.js'
 import { useApi } from '../composables/useApi.js'
 import { useLayout } from '../composables/useLayout.js'
 import { hasTeamMention, resolveAgentForPrompt } from '../lib/teamMentions.js'
 import { proposeAction } from '@/lib/agir'
+import {
+  isRealizeRequest,
+  suggestionsFromHistory,
+  isDesktopish,
+} from '@/lib/realizeSuggestions'
+import {
+  startActivity,
+  activityLog,
+  activityPhase,
+  endActivity,
+} from '@/composables/useActivity'
+import PilotageBar from './PilotageBar.vue'
+import PilotagePalette from './PilotagePalette.vue'
 
 const AGENT_KEY = 'lbg_orch_input_agent'
 const MODEL_KEY = 'lbg_orch_input_model'
 const PROFILE_KEY = 'lbg_orch_input_profile'
 
 const input = ref('')
-const { addUserMessage, addMessage, loadConversations, draftPrompt, mentionInsert } = useChat()
+const { addUserMessage, addMessage, loadConversations, draftPrompt, mentionInsert, messages } =
+  useChat()
 const { sendPrompt } = useApi()
 const { chatInputOffsetClass } = useLayout()
 const loading = ref(false)
@@ -72,6 +86,19 @@ watch(draftPrompt, (v) => {
   }
 })
 
+function onSendDraftEvent() {
+  setTimeout(() => {
+    if (input.value.trim()) send()
+  }, 40)
+}
+
+onMounted(() => {
+  window.addEventListener('compagnon:send-draft', onSendDraftEvent)
+})
+onUnmounted(() => {
+  window.removeEventListener('compagnon:send-draft', onSendDraftEvent)
+})
+
 watch(mentionInsert, (v) => {
   if (!v) return
   const token = String(v).trim()
@@ -97,8 +124,38 @@ const send = async () => {
   }
   addUserMessage(userMsg)
   input.value = ''
-  loading.value = true
 
+  // Interaction : « réalise les points » → agir / enchaîner, pas un nouveau pavé
+  if (isRealizeRequest(userMsg)) {
+    const suggestions = suggestionsFromHistory(messages.value)
+    if (suggestions.length) {
+      loading.value = true
+      startActivity('Enchaîner points suggérés', ['realize', 'agir', 'ask'])
+      activityLog(`Points trouvés · ${suggestions.length}`)
+      try {
+        await realizeSuggestions(suggestions, agent)
+        activityPhase('planning')
+        endActivity('done', 'OK · enchaînement terminé')
+        loadConversations()
+      } catch (e) {
+        console.error('realize', e)
+        endActivity('error', String(e?.message || e))
+        addMessage({
+          role: 'assistant',
+          content: `Je n’ai pas pu enchaîner : ${e?.message || e}`,
+          source: 'error',
+        })
+      } finally {
+        loading.value = false
+      }
+      return
+    }
+  }
+
+  loading.value = true
+  startActivity('Compagnon · réponse', ['ask', agent !== 'auto' ? agent : 'auto'].filter(Boolean))
+  activityLog(`POST /ask · agent=${agent} · profile=${selectedProfile.value}`)
+  activityPhase('running', 'Appel modèle…')
   try {
     const backendResponse = await sendPrompt(userMsg, {
       agent,
@@ -106,12 +163,100 @@ const send = async () => {
       profile: selectedProfile.value,
       mode: 'auto',
     })
+    const lat = backendResponse?.latency
+    activityLog(
+      `OK · ${backendResponse?.source || 'assistant'}${lat != null ? ` · ${Number(lat).toFixed(2)}s` : ''}${
+        backendResponse?.model ? ` · ${backendResponse.model}` : ''
+      }`,
+      'ok'
+    )
+    if (backendResponse?.actionProposal) {
+      activityLog('Carte Agir jointe', 'ok')
+    }
+    activityPhase('planning')
     addMessage(backendResponse)
+    endActivity('done')
     loadConversations()
   } catch (e) {
     console.error('Error sending message:', e)
+    endActivity('error', String(e?.message || e))
   } finally {
     loading.value = false
+  }
+}
+
+/** Transforme les suggestions du fil en cartes Agir ou en vrai tour de chat. */
+async function realizeSuggestions(suggestions, agent) {
+  const desktop = suggestions.filter(isDesktopish)
+  const discuss = suggestions.filter((s) => !isDesktopish(s))
+
+  activityLog(`Desktop · ${desktop.length} · discuss · ${discuss.length}`)
+
+  addMessage({
+    role: 'assistant',
+    content:
+      desktop.length || discuss.length
+        ? `OK — j’enchaîne sur ${suggestions.length} point(s) du fil (pas un nouveau rapport). Dry-run / Réel pour le poste ; le reste part en question concrète.`
+        : 'Je ne trouve pas de points actionnables dans le fil.',
+    source: 'agir',
+  })
+
+  for (const text of desktop.slice(0, 3)) {
+    proposing.value = true
+    activityLog(`Agir propose · ${text.slice(0, 80)}`)
+    try {
+      const { proposal, reason } = await proposeAction(text)
+      if (!proposal) {
+        activityLog(`skip · ${reason || 'non reconnu'}`, 'warn')
+        addMessage({
+          role: 'assistant',
+          content: `« ${text} » — ${reason || 'pas d’action poste reconnue.'}`,
+          source: 'agir',
+        })
+      } else {
+        activityLog(`carte · ${proposal.capability || proposal.summary || 'ok'}`, 'ok')
+        addMessage({
+          role: 'assistant',
+          content: proposal.summary || text,
+          source: 'agir',
+          actionProposal: proposal,
+          actionSourceText: text,
+        })
+      }
+    } finally {
+      proposing.value = false
+    }
+  }
+
+  if (discuss.length) {
+    const first = discuss[0]
+    activityLog(`Ask · ${first.slice(0, 100)}`)
+    activityPhase('running', 'Suite du fil…')
+    addUserMessage(first)
+    const backendResponse = await sendPrompt(first, {
+      agent,
+      model: selectedModel.value,
+      profile: selectedProfile.value,
+      mode: 'auto',
+    })
+    activityLog(`OK point 1/${discuss.length}`, 'ok')
+    addMessage(backendResponse)
+
+    if (discuss.length > 1) {
+      activityLog(`Chips restantes · ${discuss.length - 1}`)
+      addMessage({
+        role: 'assistant',
+        content: `Autres points (${discuss.length - 1}) — clique pour enchaîner :`,
+        source: 'agir',
+        followup: {
+          steps: discuss.slice(1).map((reply) => ({
+            env: 'go',
+            label: reply.length > 48 ? `${reply.slice(0, 46)}…` : reply,
+            reply,
+          })),
+        },
+      })
+    }
   }
 }
 
@@ -122,9 +267,13 @@ const propose = async () => {
   addUserMessage(userMsg)
   input.value = ''
   proposing.value = true
+  startActivity('Agir · proposition', ['agir', 'pilot'])
+  activityLog(`POST /action-proposal · ${userMsg.slice(0, 100)}`)
   try {
     const { proposal, reason } = await proposeAction(userMsg)
     if (!proposal) {
+      activityLog(reason || 'aucune action', 'warn')
+      endActivity('error', 'Pas de proposal')
       addMessage({
         role: 'assistant',
         content: reason || 'Aucune action sûre reconnue. Reformule (ex. « ouvre Notepad », « cherche Cursor AI »).',
@@ -133,6 +282,8 @@ const propose = async () => {
       })
       return
     }
+    activityLog(`${proposal.capability || 'ok'} · ${proposal.summary || ''}`.slice(0, 160), 'ok')
+    endActivity('done', 'Carte Agir prête — Dry-run puis Réel')
     addMessage({
       role: 'assistant',
       content: proposal.summary || 'Proposition prête — dry-run puis réel si OK.',
@@ -141,6 +292,7 @@ const propose = async () => {
       actionSourceText: userMsg,
     })
   } catch (e) {
+    endActivity('error', String(e?.message || e))
     addMessage({
       role: 'assistant',
       content: `Proposition impossible : ${e?.message || e}`,
@@ -150,6 +302,13 @@ const propose = async () => {
     proposing.value = false
   }
 }
+
+/** Pilotage bar · ask → envoi direct (comme une commande). */
+function onPilotageAsk(prompt) {
+  if (!prompt || loading.value || proposing.value) return
+  input.value = String(prompt)
+  send()
+}
 </script>
 
 <template>
@@ -158,6 +317,9 @@ const propose = async () => {
     :class="offsetClass"
   >
     <div class="w-full max-w-4xl glass-card rounded-3xl p-2.5 shadow-2xl border-white/20 flex flex-col gap-2">
+      <PilotageBar @ask="onPilotageAsk" />
+      <PilotagePalette @ask="onPilotageAsk" />
+
       <div class="flex flex-wrap items-center gap-2 px-2 pt-0.5">
         <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
           Agent

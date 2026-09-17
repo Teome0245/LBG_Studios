@@ -8,6 +8,17 @@ import {
   summarizeRouteResult,
   routeLooksSuccessful,
 } from '@/lib/agir'
+import { presenceAgirResult } from '@/lib/presence'
+import {
+  startActivity,
+  activityLog,
+  activityPhase,
+  endActivity,
+} from '@/composables/useActivity'
+import { nextPilotageAfterAgir } from '@/lib/pilotageActions'
+import { proposeAction } from '@/lib/agir'
+import { useChat } from '@/composables/useChat'
+import { PILOT_LINKS } from '@/lib/pilotLinks'
 
 const props = defineProps({
   proposal: { type: Object, required: true },
@@ -20,6 +31,17 @@ const lastResult = ref(null)
 const lastError = ref('')
 const showJson = ref(false)
 const tokenInput = ref(null)
+const nextBusy = ref('')
+const { addUserMessage, addMessage, queuePrompt } = useChat()
+
+const nextSteps = computed(() => {
+  if (!lastResult.value) return []
+  return nextPilotageAfterAgir({
+    capability: props.proposal?.capability,
+    ok: lastResult.value.ok,
+    mode: lastResult.value.mode,
+  })
+})
 
 const capability = computed(() => props.proposal?.capability || '—')
 const summary = computed(() => props.proposal?.summary || 'Action proposée')
@@ -49,6 +71,10 @@ async function run(mode) {
     persistToken()
   }
   busy.value = mode
+  const label = mode === 'dry_run' ? 'Dry-run' : 'Réel'
+  startActivity(`Agir · ${label}`, ['route', props.proposal?.capability || 'desktop'].filter(Boolean))
+  activityLog(`${label} · ${props.proposal?.summary || props.proposal?.capability || 'action'}`.slice(0, 160))
+  activityPhase('running', mode === 'dry_run' ? 'Simulation…' : 'Exécution…')
   try {
     const json = await runRouteFromProposal(props.proposal, mode, {
       text: props.sourceText,
@@ -60,11 +86,61 @@ async function run(mode) {
       text: summarizeRouteResult(json, mode),
       raw: json,
     }
+    activityLog(lastResult.value.text, lastResult.value.ok ? 'ok' : 'warn')
+    endActivity(lastResult.value.ok ? 'done' : 'error')
+    presenceAgirResult(lastResult.value.ok, lastResult.value.text)
   } catch (e) {
     lastError.value = e?.message || String(e)
     lastResult.value = null
+    endActivity('error', lastError.value)
   } finally {
     busy.value = ''
+  }
+}
+
+async function runNext(step) {
+  if (!step || nextBusy.value) return
+  if (step.kind === 'link' && step.href) {
+    window.open(step.href, '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (step.kind === 'ask' && step.prompt) {
+    queuePrompt(step.prompt)
+    try {
+      window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
+    } catch {
+      /* ignore */
+    }
+    return
+  }
+  if (step.kind !== 'agir' || !step.sourceText) return
+  nextBusy.value = step.id
+  addUserMessage(`Agir · ${step.label}`)
+  try {
+    const { proposal, reason } = await proposeAction(step.sourceText)
+    if (!proposal) {
+      addMessage({
+        role: 'assistant',
+        content: reason || 'Aucune action sûre.',
+        source: 'agir',
+      })
+    } else {
+      addMessage({
+        role: 'assistant',
+        content: proposal.summary || step.label,
+        source: 'agir',
+        actionProposal: proposal,
+        actionSourceText: step.sourceText,
+      })
+    }
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: String(e?.message || e),
+      source: 'error',
+    })
+  } finally {
+    nextBusy.value = ''
   }
 }
 </script>
@@ -144,5 +220,27 @@ async function run(mode) {
       class="text-[11px] font-mono"
       :class="lastResult.ok ? 'text-emerald-400' : 'text-amber-300'"
     >{{ lastResult.text }}</p>
+
+    <div v-if="nextSteps.length" class="pt-1 border-t border-white/10 space-y-1.5">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Suite — pilotage</p>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="s in nextSteps"
+          :key="s.id"
+          type="button"
+          class="text-[11px] px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-40"
+          :disabled="!!nextBusy || !!busy"
+          @click="runNext(s)"
+        >
+          {{ nextBusy === s.id ? '…' : s.label }}
+        </button>
+        <a
+          class="text-[11px] px-2.5 py-1 rounded-lg border border-white/15 text-slate-400 hover:text-slate-200"
+          :href="PILOT_LINKS.jobs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Pilot Jobs ↗</a>
+      </div>
+    </div>
   </div>
 </template>

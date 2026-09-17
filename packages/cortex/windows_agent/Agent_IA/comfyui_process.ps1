@@ -99,15 +99,19 @@ function Start-ComfyuiHidden {
     $ts = Get-Date -Format "s"
     Add-Content -Path $LogPath -Value "[$ts] start hidden py=$($conf.python) root=$($conf.root) args=$($conf.args)"
 
-    $pyArg = if ($conf.python -match '\s') { "`"$($conf.python)`"" } else { $conf.python }
-    $cmdLine = "$pyArg main.py $($conf.args) >> `"$LogPath`" 2>&1"
-    $proc = Start-Process -FilePath "cmd.exe" `
-        -ArgumentList @("/c", $cmdLine) `
+    # Pas de cmd.exe : evite le flash DOS. Redirect stdout/stderr vers fichiers.
+    $outLog = Join-Path $script:LogDir "comfyui.out.log"
+    $errLog = Join-Path $script:LogDir "comfyui.err.log"
+    $argTokens = @("main.py") + ($conf.args -split "\s+" | Where-Object { $_ })
+    $proc = Start-Process -FilePath $conf.python `
+        -ArgumentList $argTokens `
         -WorkingDirectory $conf.root `
         -WindowStyle Hidden `
+        -RedirectStandardOutput $outLog `
+        -RedirectStandardError $errLog `
         -PassThru
 
-    Add-Content -Path $LogPath -Value ("[{0}] started pid={1}" -f (Get-Date -Format "s"), $proc.Id)
+    Add-Content -Path $LogPath -Value ("[{0}] started pid={1} (no cmd window)" -f (Get-Date -Format "s"), $proc.Id)
     return @{
         ok     = $true
         pid    = $proc.Id

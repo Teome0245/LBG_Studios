@@ -16,44 +16,143 @@
         height: 100%;
         overflow: hidden;
         background: transparent;
-        -webkit-app-region: drag;
         font-family: "Segoe UI", system-ui, sans-serif;
         user-select: none;
       }
-      .wrap {
+      .stage {
+        position: relative;
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: flex-end;
-        height: 100%;
-        padding: 8px;
+        padding: 6px 8px 10px;
         box-sizing: border-box;
-        gap: 6px;
+        gap: 4px;
+        -webkit-app-region: drag;
       }
-      #face-host {
-        width: 132px;
-        height: 132px;
-        border-radius: 22px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(2, 6, 23, 0.72);
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      /* Bulle type desktop-pet */
+      .bubble {
+        display: none;
+        max-width: 168px;
+        margin-bottom: 4px;
+        padding: 8px 10px;
+        border-radius: 14px 14px 14px 4px;
+        background: rgba(2, 6, 23, 0.92);
+        border: 1px solid rgba(94, 234, 212, 0.45);
+        color: #e2e8f0;
+        font-size: 11px;
+        line-height: 1.35;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
         -webkit-app-region: no-drag;
+        animation: pop-in 0.28s ease;
+      }
+      .bubble.visible {
+        display: block;
+      }
+      .bubble-msg {
+        margin: 0 0 6px;
+      }
+      .bubble-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .bubble-actions button {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: none;
         cursor: pointer;
       }
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.04em;
+      .bubble-actions .agir {
+        background: #10b981;
+        color: #022c22;
+      }
+      .bubble-actions .later {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+      }
+      #face-wrap {
+        position: relative;
+        width: 128px;
+        height: 128px;
+        -webkit-app-region: no-drag;
+        cursor: pointer;
+        animation: idle-bob 3.2s ease-in-out infinite;
+      }
+      #face-wrap.alert {
+        animation: alert-pulse 0.9s ease-in-out 3;
+      }
+      #face-host {
+        width: 128px;
+        height: 128px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid rgba(94, 234, 212, 0.35);
+        background: radial-gradient(circle at 40% 30%, rgba(45, 212, 191, 0.15), rgba(2, 6, 23, 0.85));
+        box-shadow:
+          0 0 0 4px rgba(15, 23, 42, 0.35),
+          0 12px 32px rgba(0, 0, 0, 0.55);
+      }
+      .status {
+        font-size: 10px;
+        font-weight: 650;
+        letter-spacing: 0.03em;
         color: #99f6e4;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+        max-width: 150px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      @keyframes idle-bob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+      @keyframes alert-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+      @keyframes pop-in {
+        from {
+          opacity: 0;
+          transform: translateY(6px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <div id="face-host" title="Ouvrir le Compagnon"></div>
-      <div class="label">Compagnon</div>
+    <div class="stage">
+      <div id="bubble" class="bubble" aria-live="polite">
+        <p id="bubble-msg" class="bubble-msg"></p>
+        <div class="bubble-actions">
+          <button type="button" class="agir" id="btn-agir">Agir</button>
+          <button type="button" class="later" id="btn-later">Plus tard</button>
+        </div>
+      </div>
+      <div id="face-wrap" title="Ouvrir le Compagnon">
+        <div id="face-host"></div>
+      </div>
+      <div id="status" class="status">Compagnon</div>
     </div>
     <script src="./face_rig/face_rig.js"></script>
     <script src="./overlay.js"></script>

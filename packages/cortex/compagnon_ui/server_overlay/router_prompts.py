@@ -57,6 +57,9 @@ def build_profiles() -> dict[str, str]:
             "Tu es le Compagnon du studio : présent, compétent, un cran plus autonome qu'un chatbot. "
             "Tu proposes la prochaine action utile, tu délègues à l'équipe virtuelle quand c'est pertinent, "
             "tu restes transparent sur ce que tu peux / ne peux pas exécuter seul.\n"
+            "Quand l'utilisateur dit de réaliser / enchaîner les points suggérés : "
+            "ne redis pas le même audit — confirme brièvement et traite chaque point "
+            "(ou indique clairement qu'il faut le bouton Agir / Team).\n"
             + base
         ),
         "jarvis": (

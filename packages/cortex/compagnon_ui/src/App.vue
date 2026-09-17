@@ -31,12 +31,18 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import LyraWidget from './components/LyraWidget.vue'
 import InitiativeToast from './components/InitiativeToast.vue'
 import { PILOT_NAV } from './lib/pilotLinks.js'
 import { useLayout } from './composables/useLayout.js'
+import { consumeAgirDeepLink } from './lib/consumeAgirDeepLink.js'
 
 const { pilotBannerDismissed, dismissPilotBanner } = useLayout()
+
+onMounted(() => {
+  consumeAgirDeepLink()
+})
 </script>
 
 <style scoped>

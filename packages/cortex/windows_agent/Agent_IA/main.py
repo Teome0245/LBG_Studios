@@ -1967,15 +1967,23 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
         app_id = app_id.strip()
+        # « vghd.exe » → « vghd » pour match allowlist / APP_MAP
+        if app_id.lower().endswith((".exe", ".bat", ".cmd", ".com")):
+            app_id = app_id.rsplit(".", 1)[0]
+        app_id = app_id.strip().lower() if app_id else app_id
         allow_raw = _get_desktop_cfg("LBG_DESKTOP_APP_ALLOWLIST").strip()
         allow = _split_csv(allow_raw) if allow_raw else []
+        # allowlist entries are often lowercase ids
+        allow_l = [a.lower() for a in allow]
 
         # Apprentissage contrôlé : on peut autoriser une app inconnue via une allowlist dédiée,
         # sans l'ajouter à la liste d'exécution "normale" à l'avance.
         learn_allow = _desktop_env_learn_allowlist()
-        learn_can_bypass = want_learn and _desktop_env_learn_enabled() and (not learn_allow or app_id in learn_allow)
+        learn_can_bypass = want_learn and _desktop_env_learn_enabled() and (
+            not learn_allow or app_id in [x.lower() for x in learn_allow]
+        )
 
-        if app_id not in allow and not learn_can_bypass:
+        if app_id not in allow_l and not learn_can_bypass:
             out = {
                 **base,
                 "ok": False,

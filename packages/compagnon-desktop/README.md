@@ -58,11 +58,13 @@ Sortie : `dist/` (portable Electron Builder).
 - Menu : ouvrir, overlay, navigateur, quitter  
 - Fermer la fenêtre = **masquer** (reste dans le tray)
 
-## Avatar
+## Avatar (Desktop Pet)
 
-Petite fenêtre transparente bas-droite (`overlay/`) — clic → ouvre le chat.
+Petite fenêtre transparente bas-droite (`overlay/`) — bulle « Je vois » + **Agir**
+(deep-link `?agir=` → carte Dry-run/Réel). Clic avatar → chat. Jamais d’auto-exec.
 
 ## Initiatives (D3)
 
 Poll `proactive/status` via le proxy `:5174`. Si nouvelle initiative et quota OK :
-notif Windows + pulse mood overlay. Clic notif → ouvre le chat. Aucune action poste auto.
+notif Windows + bulle overlay avec **intent Agir-ready**. Clic notif / Agir →
+chat avec proposal préremplie. Aucune action poste auto.

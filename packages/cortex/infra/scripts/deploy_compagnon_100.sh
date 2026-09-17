@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CORTEX_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 UI_ROOT="${CORTEX_ROOT}/compagnon_ui"
 OVERLAY="${UI_ROOT}/server_overlay/router_prompts.py"
+DESKTOP_DISPATCH="${UI_ROOT}/server_overlay/desktop_dispatch.py"
 
 REMOTE_USER="${LBG_ORCH_CT100_USER:-root}"
 REMOTE_HOST="${LBG_ORCH_CT100_HOST:-192.168.0.100}"
@@ -37,6 +38,12 @@ if [[ -f "${OVERLAY}" ]]; then
   echo "==> Overlay profils Compagnon → backend router_prompts.py"
   rsync -az "${OVERLAY}" \
     "${REMOTE}:${REMOTE_DIR}/backend/src/services/router_prompts.py"
+fi
+
+if [[ -f "${DESKTOP_DISPATCH}" ]]; then
+  echo "==> Overlay desktop_dispatch → backend"
+  rsync -az "${DESKTOP_DISPATCH}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/services/desktop_dispatch.py"
 fi
 
 echo "==> Rebuild Docker frontend (+ backend si overlay)"

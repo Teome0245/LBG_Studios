@@ -1,20 +1,25 @@
 /**
- * Quota strict pour notifications d'initiative (D3).
- * Jamais d'auto-exécution — affichage seul.
+ * Quota strict + intents Agir-ready pour initiatives (D3+).
+ * Jamais d'auto-exécution — toast / pet portent une action concrète.
  */
 
 const STORAGE_KEY = 'lbg_compagnon_initiative_quota_v1'
 
 /** @typedef {{ ts: number, id: string }[]} ShownLog */
 
+/**
+ * @typedef {{
+ *   id: string,
+ *   label: string,
+ *   sourceText: string,
+ *   hint?: string,
+ * }} AgirIntent
+ */
+
 export const INITIATIVE_DEFAULTS = {
-  /** Max toasts affichés / fenêtre glissante */
   maxPerHour: 3,
-  /** Secondes mini entre deux toasts */
   minIntervalSec: 600,
-  /** Poll proactive status */
   pollIntervalMs: 60_000,
-  /** Silence estimé mini (API) avant de proposer une initiative */
   minSilenceSec: 90,
 }
 
@@ -56,72 +61,106 @@ export function fingerprintFromStatus(status) {
   }
   const infra = status.infra_signals && typeof status.infra_signals === 'object' ? status.infra_signals : null
   if (infra?.ad_agent_down) return 'infra:ad_agent_down'
+  if (infra?.orchestrator_reachable === false) return 'infra:orch_down'
   return ''
 }
 
-export function messageFromStatus(status) {
-  const act = status?.last_action
-  if (act && typeof act === 'object' && act.message) return String(act.message)
-  const infra = status?.infra_signals
-  if (infra?.ad_agent_down) {
-    return 'Agent AD injoignable — je peux proposer un diagnostic (sans exécuter).'
-  }
-  if (typeof status?.tension === 'number' && status.tension >= 0.85) {
-    return 'Tension orchestration élevée — une initiative est disponible (validation L2).'
-  }
-  return 'Initiative Compagnon disponible.'
-}
-
 /**
- * Propositions concrètes L2 (texte seul — jamais d'exec).
+ * Intents Agir concrets (texte → action-proposal).
  * @param {Record<string, unknown>} status
- * @returns {string[]}
+ * @returns {AgirIntent[]}
  */
-export function concreteProposalsFromStatus(status) {
+export function agirIntentsFromStatus(status) {
+  /** @type {AgirIntent[]} */
   const out = []
   const infra = status?.infra_signals && typeof status.infra_signals === 'object' ? status.infra_signals : {}
   const tension = Number(status?.tension)
-  const curiosite = Number(status?.curiosite)
   const job = typeof status?.last_job_id === 'string' ? status.last_job_id : ''
 
   if (infra.ad_agent_down) {
-    out.push('Vérifier l’agent AD (`.111` / devops) — sonde read-only via Pilot Desktop ou Agir dry-run.')
+    out.push({
+      id: 'probe_ad',
+      label: 'Sonde AD (dry-run)',
+      sourceText: 'fais un diagnostic infra selfcheck de l agent AD sur le LAN',
+      hint: 'devops_probe · lecture seule',
+    })
   }
   if (infra.orchestrator_reachable === false) {
-    out.push('Orchestrateur injoignable — contrôler `.100` / `.140` avant toute action.')
-  }
-  if (infra.mmo_sidecar_reachable === false) {
-    out.push('Sidecar MMO down — hors scope Compagnon immédiat ; noter pour ops Core3.')
+    out.push({
+      id: 'probe_orch',
+      label: 'Sonde orchestrateur',
+      sourceText: 'fais un diagnostic HTTP health de l orchestrateur Cortex',
+      hint: 'devops_probe',
+    })
   }
   if (Number.isFinite(tension) && tension >= 0.85) {
-    out.push(
-      'Tension haute : passer en mode conversation (pas d’auto-job), relire le dernier job Team, puis Agir seulement si une action claire.'
-    )
+    out.push({
+      id: 'open_jobs',
+      label: 'Ouvrir Pilot Jobs',
+      sourceText: 'ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs',
+      hint: 'desktop · .10',
+    })
   }
-  if (Number.isFinite(curiosite) && curiosite >= 0.85 && out.length < 3) {
-    out.push('Curiosité haute : me demander un résumé d’infra (Pilot status) plutôt qu’une action poste.')
+  if (job && !out.some((x) => x.id === 'open_jobs')) {
+    out.push({
+      id: 'open_jobs_job',
+      label: 'Revue job L2',
+      sourceText: 'ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs',
+      hint: `job ${job.slice(0, 8)}…`,
+    })
   }
-  if (job) {
-    out.push(`Dernier job proactif : \`${job.slice(0, 12)}…\` — ouvrir Pilot → Jobs pour revue L2.`)
+  if (infra.mmo_sidecar_reachable === false) {
+    out.push({
+      id: 'note_mmo',
+      label: 'Ouvrir notes sidecar',
+      sourceText: 'ouvre notepadpp sur mon pc',
+      hint: 'desktop · noter l alerte MMO',
+    })
   }
   if (!out.length) {
-    out.push('Rien d’urgent détecté : on peut ignorer, ou me demander l’état Studio (sans lancer d’app).')
+    out.push({
+      id: 'status_check',
+      label: 'État Studio (dry-run)',
+      sourceText: 'fais un diagnostic infra selfcheck LAN',
+      hint: 'lecture seule',
+    })
   }
-  return out.slice(0, 4)
+  return out.slice(0, 3)
 }
 
-/** Réponse locale pour le bouton Discuter (évite le routeur desktop Orch). */
+export function messageFromStatus(status) {
+  const infra = status?.infra_signals
+  if (infra?.ad_agent_down) {
+    return 'Je vois l’agent AD injoignable — je peux lancer une sonde (dry-run).'
+  }
+  if (infra?.orchestrator_reachable === false) {
+    return 'Orchestrateur injoignable — je propose une sonde health.'
+  }
+  if (typeof status?.tension === 'number' && status.tension >= 0.85) {
+    return 'Tension orch élevée — je propose d’ouvrir Pilot Jobs pour revue L2.'
+  }
+  const act = status?.last_action
+  if (act && typeof act === 'object' && act.message) {
+    return `Signal : ${String(act.message)} — action concrète ci-dessous.`
+  }
+  return 'Petite initiative — une action possible ci-dessous.'
+}
+
+/** @deprecated texte ; préférer agirIntentsFromStatus */
+export function concreteProposalsFromStatus(status) {
+  return agirIntentsFromStatus(status).map((i) => `${i.label}${i.hint ? ` (${i.hint})` : ''}`)
+}
+
 export function formatDiscussReply(status) {
   const headline = messageFromStatus(status)
-  const proposals = concreteProposalsFromStatus(status)
+  const intents = agirIntentsFromStatus(status)
   const lines = [
-    `Initiative (proposition seule, rien n’est exécuté) :`,
-    `« ${headline} »`,
+    `Je vois ça : « ${headline} »`,
     '',
-    'Concrètement, je te propose :',
-    ...proposals.map((p, i) => `${i + 1}. ${p}`),
+    'Actions concrètes (pas encore exécutées) :',
+    ...intents.map((p, i) => `${i + 1}. ${p.label}${p.hint ? ` — ${p.hint}` : ''}`),
     '',
-    'Pour une action poste : bouton Agir → Dry-run → Réel (jeton). Sinon on continue à parler.',
+    'Clique Agir sur le toast, ou le bouton Agir avec le texte de l’action → Dry-run → Réel.',
   ]
   return lines.join('\n')
 }
@@ -170,11 +209,13 @@ export function shouldOfferFromStatus(status, opts = {}) {
   if (!id) return { offer: false, reason: 'no_signal' }
   const gate = canShowInitiative(id, opts)
   if (!gate.ok) return { offer: false, reason: gate.reason, id }
+  const intents = agirIntentsFromStatus(status)
   return {
     offer: true,
     id,
     message: messageFromStatus(status),
     kind: (status.last_action && status.last_action.kind) || 'initiative',
-    proposals: concreteProposalsFromStatus(status),
+    intents,
+    primary: intents[0] || null,
   }
 }

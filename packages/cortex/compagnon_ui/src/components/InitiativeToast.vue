@@ -1,13 +1,16 @@
 <script setup>
+import { ref } from 'vue'
 import { useInitiative } from '@/composables/useInitiative'
 import { useChat } from '@/composables/useChat'
+import { proposeAction } from '@/lib/agir'
 
-const { current, dismiss, discussText } = useInitiative()
+const { current, dismiss, discussText, proposing } = useInitiative()
 const { addUserMessage, addMessage } = useChat()
+const busyId = ref('')
 
 function discuss() {
   const msg = current.value?.message || 'initiative'
-  addUserMessage(`À propos de ton initiative : « ${msg} » — que proposes-tu (sans exécuter) ?`)
+  addUserMessage(`À propos de ton initiative : « ${msg} »`)
   addMessage({
     role: 'assistant',
     content: discussText(),
@@ -15,6 +18,43 @@ function discuss() {
     state: 'orchestrateur-happy',
   })
   dismiss()
+}
+
+/** Prépare une carte Agir (proposal réelle) sans exécuter. */
+async function runAgir(intent) {
+  if (!intent?.sourceText || proposing.value) return
+  busyId.value = intent.id || 'agir'
+  proposing.value = true
+  const text = intent.sourceText
+  addUserMessage(`Agir · ${intent.label || text}`)
+  try {
+    const { proposal, reason } = await proposeAction(text)
+    if (!proposal) {
+      addMessage({
+        role: 'assistant',
+        content: reason || 'Aucune action sûre reconnue pour cette initiative.',
+        source: 'agir',
+      })
+    } else {
+      addMessage({
+        role: 'assistant',
+        content: proposal.summary || intent.label || 'Proposition prête — Dry-run puis Réel.',
+        source: 'agir',
+        actionProposal: proposal,
+        actionSourceText: text,
+      })
+    }
+    dismiss()
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: `Proposition impossible : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    proposing.value = false
+    busyId.value = ''
+  }
 }
 </script>
 
@@ -27,13 +67,28 @@ function discuss() {
       aria-live="polite"
     >
       <div class="initiative-head">
-        <span class="initiative-label">Initiative</span>
+        <span class="initiative-label">Je vois</span>
         <span v-if="current.kind" class="initiative-kind">{{ current.kind }}</span>
       </div>
       <p class="initiative-msg">{{ current.message }}</p>
-      <p class="initiative-hint">Proposition seule — aucune action auto (quota strict).</p>
+
+      <div v-if="current.intents?.length" class="initiative-intents">
+        <button
+          v-for="it in current.intents"
+          :key="it.id"
+          type="button"
+          class="btn-agir"
+          :disabled="!!busyId"
+          @click="runAgir(it)"
+        >
+          <span class="btn-agir-title">{{ busyId === it.id ? '…' : it.label }}</span>
+          <span v-if="it.hint" class="btn-agir-hint">{{ it.hint }}</span>
+        </button>
+      </div>
+
+      <p class="initiative-hint">Agir = propose → Dry-run → Réel · jamais d’auto-exec.</p>
       <div class="initiative-actions">
-        <button type="button" class="btn-primary" @click="discuss">Discuter</button>
+        <button type="button" class="btn-ghost" @click="discuss">Expliquer</button>
         <button type="button" class="btn-ghost" @click="dismiss">Ignorer</button>
       </div>
     </div>
@@ -82,8 +137,43 @@ function discuss() {
   line-height: 1.4;
   color: #f1f5f9;
 }
+.initiative-intents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+.btn-agir {
+  text-align: left;
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: rgb(16 185 129 / 0.15);
+  color: #ecfdf5;
+  cursor: pointer;
+}
+.btn-agir:hover:not(:disabled) {
+  background: rgb(16 185 129 / 0.28);
+}
+.btn-agir:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn-agir-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.btn-agir-hint {
+  display: block;
+  font-size: 0.6rem;
+  color: #94a3b8;
+  margin-top: 0.1rem;
+  font-family: ui-monospace, monospace;
+}
 .initiative-hint {
-  margin: 0.4rem 0 0;
+  margin: 0.45rem 0 0;
   font-size: 0.65rem;
   color: #64748b;
 }
@@ -91,20 +181,7 @@ function discuss() {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-.btn-primary {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.35rem 0.7rem;
-  border-radius: 0.6rem;
-  background: rgb(16 185 129 / 0.9);
-  color: #020617;
-  border: none;
-  cursor: pointer;
-}
-.btn-primary:hover {
-  background: #34d399;
+  margin-top: 0.55rem;
 }
 .btn-ghost {
   font-size: 0.7rem;

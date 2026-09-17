@@ -21,8 +21,8 @@ const DEFAULT_CONFIG = {
   window: { width: 1180, height: 780, minWidth: 720, minHeight: 520 },
   overlay: {
     enabled: true,
-    width: 168,
-    height: 200,
+    width: 188,
+    height: 280,
     marginRight: 16,
     marginBottom: 72,
     alwaysOnTop: true,
@@ -213,6 +213,28 @@ function showChat() {
   }
 }
 
+/** Ouvre le chat avec une carte Agir préremplie (deep-link ?agir=). */
+function showChatWithAgir(payload) {
+  const text = String((payload && payload.sourceText) || "").trim();
+  const label = String((payload && payload.label) || "Initiative").trim();
+  createMainWindow();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (text) {
+    try {
+      const u = new URL(compagnonUrl());
+      u.searchParams.set("stay", "1");
+      u.searchParams.set("agir", text);
+      u.searchParams.set("agir_label", label);
+      mainWindow.loadURL(u.toString()).catch(() => {});
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
 function toggleChat() {
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()) {
     mainWindow.hide();
@@ -304,17 +326,109 @@ function initiativeFingerprint(status) {
     const msg = String(act.message || "").slice(0, 120);
     if (kind || msg) return `act:${kind}|${msg}`;
   }
-  if (status.infra_signals && status.infra_signals.ad_agent_down) return "infra:ad_agent_down";
+  const infra = status.infra_signals && typeof status.infra_signals === "object" ? status.infra_signals : null;
+  if (infra && infra.ad_agent_down) return "infra:ad_agent_down";
+  if (infra && infra.orchestrator_reachable === false) return "infra:orch_down";
   return "";
 }
 
-function initiativeMessage(status) {
-  const act = status.last_action;
-  if (act && act.message) return String(act.message);
-  if (status.infra_signals && status.infra_signals.ad_agent_down) {
-    return "Agent AD injoignable — ouvrir Compagnon pour en parler.";
+/** Miroir UI `agirIntentsFromStatus` — toast/pet = Agir-ready, pas du vague. */
+function agirIntentsFromStatus(status) {
+  const out = [];
+  const infra =
+    status && status.infra_signals && typeof status.infra_signals === "object"
+      ? status.infra_signals
+      : {};
+  const tension = Number(status && status.tension);
+  const job = typeof (status && status.last_job_id) === "string" ? status.last_job_id : "";
+
+  if (infra.ad_agent_down) {
+    out.push({
+      id: "probe_ad",
+      label: "Sonde AD (dry-run)",
+      sourceText: "fais un diagnostic infra selfcheck de l agent AD sur le LAN",
+      hint: "devops_probe · lecture seule",
+    });
   }
-  return "Initiative Compagnon disponible.";
+  if (infra.orchestrator_reachable === false) {
+    out.push({
+      id: "probe_orch",
+      label: "Sonde orchestrateur",
+      sourceText: "fais un diagnostic HTTP health de l orchestrateur Cortex",
+      hint: "devops_probe",
+    });
+  }
+  if (Number.isFinite(tension) && tension >= 0.85) {
+    out.push({
+      id: "open_jobs",
+      label: "Ouvrir Pilot Jobs",
+      sourceText: "ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs",
+      hint: "desktop · .10",
+    });
+  }
+  if (job && !out.some((x) => x.id === "open_jobs")) {
+    out.push({
+      id: "open_jobs_job",
+      label: "Revue job L2",
+      sourceText: "ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs",
+      hint: `job ${job.slice(0, 8)}…`,
+    });
+  }
+  if (infra.mmo_sidecar_reachable === false) {
+    out.push({
+      id: "note_mmo",
+      label: "Ouvrir notes sidecar",
+      sourceText: "ouvre notepadpp sur mon pc",
+      hint: "desktop · noter l alerte MMO",
+    });
+  }
+  if (!out.length) {
+    out.push({
+      id: "status_check",
+      label: "État Studio (dry-run)",
+      sourceText: "fais un diagnostic infra selfcheck LAN",
+      hint: "lecture seule",
+    });
+  }
+  return out.slice(0, 3);
+}
+
+function initiativeMessage(status) {
+  const infra = status && status.infra_signals;
+  if (infra && infra.ad_agent_down) {
+    return "Je vois l’agent AD injoignable — je peux lancer une sonde (dry-run).";
+  }
+  if (infra && infra.orchestrator_reachable === false) {
+    return "Orchestrateur injoignable — je propose une sonde health.";
+  }
+  if (typeof (status && status.tension) === "number" && status.tension >= 0.85) {
+    return "Tension orch élevée — j’ouvre Pilot Jobs pour revue L2 ?";
+  }
+  const act = status && status.last_action;
+  if (act && typeof act === "object" && act.message) {
+    return `Signal : ${String(act.message)} — action concrète ci-dessous.`;
+  }
+  return "Petite initiative — une action possible ci-dessous.";
+}
+
+function buildInitiativePayload(status, id) {
+  const intents = agirIntentsFromStatus(status);
+  const primary = intents[0] || null;
+  return {
+    id,
+    message: initiativeMessage(status),
+    kind: (status.last_action && status.last_action.kind) || "initiative",
+    intents,
+    primary,
+    sourceText: primary ? primary.sourceText : "",
+    label: primary ? primary.label : "Initiative",
+  };
+}
+
+function sendOverlayInitiative(payload) {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:initiative", payload);
+  }
 }
 
 function canNotifyInitiative(id, cfg) {
@@ -338,12 +452,16 @@ function notifyInitiative(status) {
   if (!canNotifyInitiative(id, cfg)) return;
   if (id === lastNotifiedId) return;
 
-  const body = initiativeMessage(status);
+  const payload = buildInitiativePayload(status, id);
+  const body = `${payload.message}${
+    payload.primary ? ` → ${payload.primary.label}` : ""
+  }`;
   initiativeShown.push({ ts: Date.now(), id });
   lastNotifiedId = id;
 
-  setOverlayMood({ tone: "alert", label: "Initiative" });
-  setTimeout(() => setOverlayMood({ tone: "serene", label: "Serein" }), 8000);
+  setOverlayMood({ tone: "tense", label: "Initiative" });
+  sendOverlayInitiative(payload);
+  setTimeout(() => setOverlayMood({ tone: "serene", label: "Serein" }), 12_000);
 
   if (Notification.isSupported()) {
     const n = new Notification({
@@ -351,7 +469,7 @@ function notifyInitiative(status) {
       body: body.slice(0, 180),
       silent: false,
     });
-    n.on("click", () => showChat());
+    n.on("click", () => showChatWithAgir(payload));
     n.show();
   } else if (tray) {
     tray.displayBalloon({
@@ -395,6 +513,15 @@ ipcMain.handle("compagnon:get-config", () => ({
 }));
 
 ipcMain.on("compagnon:open-chat", () => showChat());
+
+ipcMain.on("compagnon:open-chat-agir", (_e, payload) => {
+  const p = payload || {};
+  const primary = p.primary || null;
+  showChatWithAgir({
+    sourceText: p.sourceText || (primary && primary.sourceText) || "",
+    label: p.label || (primary && primary.label) || "Initiative",
+  });
+});
 
 ipcMain.on("compagnon:overlay-mood", (_e, mood) => {
   setOverlayMood(mood);

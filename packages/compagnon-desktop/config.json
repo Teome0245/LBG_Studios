@@ -8,8 +8,8 @@
   },
   "overlay": {
     "enabled": true,
-    "width": 168,
-    "height": 200,
+    "width": 188,
+    "height": 280,
     "marginRight": 16,
     "marginBottom": 72,
     "alwaysOnTop": true

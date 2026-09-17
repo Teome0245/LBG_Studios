@@ -211,7 +211,17 @@ if ($NoStart) {
 }
 
 Write-Host "==> start Electron"
-$node = (Get-Command node.exe -ErrorAction Stop).Source
-& $node (Join-Path $root "node_modules\electron\cli.js") $root
-$code = $LASTEXITCODE
-if ($code -ne 0) { throw "Electron exit $code" }
+# ELECTRON_RUN_AS_NODE=1 (souvent posé par outils) casse require('electron') → ipcMain undefined
+Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+$env:ELECTRON_RUN_AS_NODE = $null
+$electronExe = Join-Path $root "node_modules\electron\dist\electron.exe"
+if (-not (Test-Path -LiteralPath $electronExe)) {
+  $node = (Get-Command node.exe -ErrorAction Stop).Source
+  $electronExe = & $node -e "process.chdir(process.argv[1]); process.stdout.write(require('electron'))" $root
+}
+if (-not $electronExe -or -not (Test-Path -LiteralPath $electronExe)) {
+  throw "electron.exe introuvable sous $root"
+}
+$p = Start-Process -FilePath $electronExe -ArgumentList "`"$root`"" -WorkingDirectory $root -PassThru
+Write-Host "OK  Electron pid=$($p.Id) ($electronExe)"
+

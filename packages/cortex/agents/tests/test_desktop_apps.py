@@ -6,18 +6,39 @@ import pytest
 
 from lbg_agents.desktop_apps import (
     default_desktop_action_from_text,
+    desktop_action_from_goal,
     enrich_open_app_action,
     extract_exe_path_from_goal,
     hint_for_desktop_error,
     normalize_desktop_app,
     open_app_action_from_goal,
     open_app_args_from_goal,
+    repair_app_deps_action_from_goal,
 )
 
 
 def test_infer_vghd() -> None:
     act = default_desktop_action_from_text("tu peux lancer vghd sur mon pc ?")
     assert act and act["kind"] == "open_app" and act["app"] == "vghd"
+
+
+def test_infer_vghd_exe_suffix() -> None:
+    """« ouvrir vghd.exe » doit mapper sur l’id logique vghd (pas lancer vghd.exe nu)."""
+    act = default_desktop_action_from_text("tu peux ouvrir vghd.exe")
+    assert act and act["kind"] == "open_app" and act["app"] == "vghd"
+
+
+def test_repair_vghd_from_goal() -> None:
+    act = repair_app_deps_action_from_goal("répare vghd sur mon poste")
+    assert act == {"kind": "repair_app_deps", "app": "vghd"}
+    act2 = desktop_action_from_goal("fix qt5sql vghd")
+    assert act2 and act2["kind"] == "repair_app_deps"
+    assert desktop_action_from_goal("ouvre vghd")["kind"] == "open_app"
+
+
+def test_hint_missing_qt5sql() -> None:
+    h = hint_for_desktop_error("missing_dependency Qt5Sql.dll")
+    assert h and "répare vghd" in h
 
 
 def test_infer_none_without_verb() -> None:

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from shared_registry import capability_registry
 
-from lbg_agents.desktop_apps import enrich_open_app_action, extract_exe_path_from_goal
+from lbg_agents.desktop_apps import enrich_open_app_action, extract_exe_path_from_goal, repair_app_deps_action_from_goal
 from lbg_agents.desktop_targets import infer_desktop_target_from_text
 
 from services.lia_jobs import (
@@ -61,6 +61,7 @@ def propose_action_from_text(text: str, context: dict[str, object] | None = None
         or _propose_job_synthesis(normalized)
         or _propose_vm_memory_probe(normalized)
         or _propose_proxmox_status(normalized)
+        or _propose_repair_app_deps(raw, normalized)
         or _propose_open_app(raw, normalized)
         or _propose_team_dev_game_forge(raw, normalized, ctx)
         or _propose_mmo_dev_plan(raw, normalized, ctx)
@@ -466,9 +467,26 @@ def _sanitize_open_app_slug(raw_tail: str) -> str | None:
         first = first[:80]
     if not re.match(r"^[A-Za-z0-9_.\-]+$", first):
         return None
+    first = re.sub(r"\.(exe|bat|cmd|com)$", "", first, flags=re.IGNORECASE)
+    if not first:
+        return None
     if first.lower() in _OPEN_APP_STOP_TOKENS:
         return None
-    return first
+    return first.lower()
+
+
+def _propose_repair_app_deps(raw: str, normalized: str) -> ActionProposal | None:
+    """Réparation deps locales (VGHD Qt5Sql) via worker desktop."""
+    action = repair_app_deps_action_from_goal(raw)
+    if action is None:
+        return None
+    app_label = action.get("app", "vghd")
+    return _desktop_proposal(
+        action=action,
+        summary=f"Réparer les dépendances de « {app_label} » sur le poste (Qt5Sql / sidecars).",
+        confidence=0.9,
+        text=raw,
+    )
 
 
 def _propose_open_app(raw: str, normalized: str) -> ActionProposal | None:

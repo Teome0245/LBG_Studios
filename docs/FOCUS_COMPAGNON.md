@@ -1,6 +1,6 @@
 # Focus — Compagnon Studio (type Jarvis)
 
-**Date** : 2026-09-16 (maj surface)  
+**Date** : 2026-09-17 (pilotage + handoff sonde AD)  
 **Priorité** : **O1 Studio** — agents / UI / autonomie bornée.  
 **Hors scope immédiat** : intégration persona dans le MMO (Rang 2).
 
@@ -83,6 +83,21 @@ Phasage réaliste :
    - Quota client : max 3/h, min 10 min entre toasts, silence ≥ 90 s — **jamais d’auto-exec**  
    - Electron : notif OS + pulse overlay (`packages/compagnon-desktop`)
    - Discuter = réponse locale (pas de faux `open_app`)
+7. **Pilotage** — barre + palette Ctrl+K + encart activité + suites Agir — **OK** (2026-09-17)  
+   - `PilotageBar` / `PilotagePalette` / `ActivityEncart` / `pilotageActions.js`  
+   - Après Dry-run/Réel : chips « Suite — pilotage » sur `ActionCard`  
+   - Deploy : `bash packages/cortex/infra/scripts/deploy_compagnon_100.sh`
+
+## Bug ouvert — sonde AD en boucle
+
+Toast « Je vois `autonomous_nudge` / Sonde AD » revient trop souvent.
+
+**Handoff Antigravity** (prompt complet + preuves) :  
+[`handoff_antigravity_sonde_ad.md`](handoff_antigravity_sonde_ad.md)
+
+Résumé causes :
+1. `_infra_signals()` sonde `AGENT_WINDOWS_SRV_AD_URL` défaut **`.100:5005`** alors que l’agent desktop est sur **`.10:5005`** → `ad_agent_down` sticky faux-positif.
+2. Fingerprint initiative basé sur `last_job_id` volatile alors que le message reste « AD injoignable ».
 
 ## Ne pas rouvir
 

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { http } from '@/api/http'
+import { presenceTalk } from '@/lib/presence'
 
 const STORAGE_KEY = 'lbg_orch_conversation_id'
 
@@ -113,6 +114,12 @@ export function useChat() {
       actionSourceText: actionSourceText || '',
       state,
     })
+
+    if (role === 'assistant' && content) {
+      const mood =
+        source === 'error' ? 'tense' : actionProposal ? 'curious' : source === 'agir' ? 'curious' : 'serene'
+      presenceTalk(String(content).slice(0, 160), mood)
+    }
   }
 
   const addUserMessage = (content) => {

@@ -5,6 +5,7 @@ import ApprovalCard from './ApprovalCard.vue'
 import ActionCard from './ActionCard.vue'
 import FollowupChips from './FollowupChips.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
+import ActivityEncart from './ActivityEncart.vue'
 
 const { messages, loadHistory } = useChat()
 const scrollRef = ref(null)
@@ -244,6 +245,10 @@ function displayContent(msg) {
             {{ msg.role === 'user' ? 'Utilisateur' : aiLabel(msg) }}
           </span>
         </div>
+      </div>
+
+      <div class="px-2">
+        <ActivityEncart />
       </div>
     </div>
   </div>

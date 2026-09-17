@@ -5,9 +5,12 @@
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
 sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
-**Focus wahou** : [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md).  
+**Focus compagnon** : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) (O1 Studio).  
+**Handoff sonde AD (Antigravity)** : [`handoff_antigravity_sonde_ad.md`](handoff_antigravity_sonde_ad.md).  
+**Focus wahou (jeu, archivé)** : [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md).  
 **Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).  
 **LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).  
+**Canal ops** : Slack + Element backup — [`packages/cortex/docs/ops_notify_slack.md`](../packages/cortex/docs/ops_notify_slack.md) · ADR 0021.  
 **Sprint évolution 7j** (Team, L1 auto / L2 Pilot) : [`packages/cortex/docs/team_evolution_sprint.md`](../packages/cortex/docs/team_evolution_sprint.md).  
 **Pont Cloud↔LAN** : [`packages/cortex/docs/pont_cloud_local.md`](../packages/cortex/docs/pont_cloud_local.md).  
 **Lore / âme jeu** : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md) · [`world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) · [`world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) · [`world/BOITE_IDEES_GAMEPLAY.md`](world/BOITE_IDEES_GAMEPLAY.md) · maturité A/B/C ([`maturity_content.md`](../packages/cortex/docs/maturity_content.md), V60–V65) · garant runtime **Chœur du monde**.
@@ -62,13 +65,14 @@ Serveurs jeu (runtime, hors Git) :
 | IP | Rôle | Notes |
 |----|------|-------|
 | **`.10`** | Poste Teome | Cursor, ComfyUI, pilotage humain — plus l’executor LAN |
-| **`.100`** | Cockpit / Orch UI | `:8093` Cockpit · `:5174` SPA · `:3000` API |
+| **`.100`** | Cockpit / Orch UI / Simple Chat | `:8093` Cockpit · `:3000` API · `:5174` SPA chat · `:3080` Open WebUI lab |
 | **`.110`** | Ollama **heavy** | `:11434` CPU — `qwen3.8:27b` (code/PM/dialogue) + `gemma4:e2b` (forge) |
 | **`.111`** | Ollama **light** | `:11434` — `qwen2.5:3b` + `llama3.2:3b` |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
-| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142) · `.201` = R720 (CT 110 / 141) |
+| **`.143`** | VM `lbg-omarchy` | NUC `.200` — lab Omarchy (Arch/Hyprland) ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) |
+| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142 / VM 143) · `.201` = R720 (CT 110 / 141) |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` |
 | **`.246`** | Prime | monde produit `:8792` + sidecar IA |
@@ -81,7 +85,8 @@ LLM : `think: false` (Qwen). Ne pas cohabiter deux 18 Go sur `.110` (24 Go RAM).
 |--------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
 | **Cockpit P03** (runtime) | Ops infra LAN — http://192.168.0.100:8093/pilot/#/cockpit (sources `_shelf/LBG_Project_03`) |
-| **Orchestrateur UI** (runtime) | SPA Vue — http://192.168.0.100:5174/ · `/lyra` · `/agents/map` (sources `_archive/LBG_IA`, API `:3000`) |
+| **Orchestrateur UI / Compagnon** | SPA Vue chat produit — http://192.168.0.100:5174/ ; sources **`packages/cortex/compagnon_ui`** ; deploy `packages/cortex/infra/scripts/deploy_compagnon_100.sh` ; API `:3000` |
+| **Compagnon Desktop** | Electron tray + avatar — `packages/compagnon-desktop` (poste `.10`) |
 
 ## Étagère
 
@@ -95,7 +100,7 @@ LLM : `think: false` (Qwen). Ne pas cohabiter deux 18 Go sur `.110` (24 Go RAM).
 |-------|--------|
 | `_archive/avatar_app` | Bac avatars web Three.js — gelé |
 | `_archive/mmmorpg` | Pivot Core3 / sandbox WS gelée |
-| `_archive/LBG_IA` | Sources SPA Orchestrateur Vue — **runtime actif** sur `.100:5174` (pas à jeter) |
+| `_archive/LBG_IA` | Sources SPA Orchestrateur Vue — runtime `:5174` en **redirect Pilot** (P3) ; API `:3000` active |
 | `../LBG_IA_MMORPG` | **Upstream legacy** Cortex (avant extraction) |
 | `../new_mmo` | **Upstream legacy** jeu (Core3 + historiques) |
 
@@ -117,7 +122,7 @@ flowchart LR
   subgraph linked["Liés"]
     INFO["Infographiste_IA"]
     CK["Cockpit .100:8093"]
-    ORCH["Orch UI .100:5174"]
+    ORCH["Orch 5174 → Pilot"]
   end
   subgraph lan["LAN runtime"]
     H110["Ollama 110 heavy"]

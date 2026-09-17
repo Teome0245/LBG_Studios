@@ -9,16 +9,43 @@
 
     <div class="flex-1 px-4 py-3 space-y-4 text-xs overflow-y-auto">
 
-      <!-- Face rig 2D (Pilot/MMO shared assets) -->
+      <!-- Face rig 2D — présence type desktop-pet -->
       <div
         id="lyra-face-host"
         ref="faceHost"
         class="face-rig-host mx-auto"
+        :class="{ 'ring-2 ring-amber-400/50 rounded-full': !!initiative }"
         aria-label="Visage expressif Lyra"
       />
       <p class="text-[10px] text-slate-500 text-center leading-snug">
-        Face 2D · humeur = jauges live · sheets Infographiste dès dispo
+        Présence CSS (sheets collage gelés) · résultat Agir = bulle pet
       </p>
+
+      <div
+        v-if="initiative"
+        class="rounded-xl border border-teal-400/35 bg-slate-950/80 p-2.5 space-y-2"
+      >
+        <p class="text-[10px] font-bold uppercase tracking-widest text-teal-300">Je vois</p>
+        <p class="text-[11px] text-slate-200 leading-snug">{{ initiative.message }}</p>
+        <button
+          v-if="initiative.primary"
+          type="button"
+          class="w-full text-left rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-50"
+          :disabled="proposing"
+          @click="runInitiativeAgir"
+        >
+          {{ proposing ? '…' : initiative.primary.label }}
+          <span
+            v-if="initiative.primary.hint"
+            class="block text-[9px] font-normal font-mono text-slate-500 mt-0.5"
+          >{{ initiative.primary.hint }}</span>
+        </button>
+        <button
+          type="button"
+          class="text-[10px] text-slate-500 hover:text-slate-300"
+          @click="dismiss"
+        >Ignorer</button>
+      </div>
 
       <!-- Jauges Lyra -->
       <div v-for="(value, key) in gauges" :key="key">
@@ -56,12 +83,52 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { http } from '@/api/http'
+import { useInitiative } from '@/composables/useInitiative'
+import { useChat } from '@/composables/useChat'
+import { proposeAction } from '@/lib/agir'
 
 const gauges = ref({})
 const version = ref("")
 const latency = ref(0)
 const uptime = ref("")
 const faceHost = ref(null)
+
+const { current: initiative, dismiss, proposing } = useInitiative()
+const { addUserMessage, addMessage } = useChat()
+
+async function runInitiativeAgir() {
+  const intent = initiative.value?.primary
+  if (!intent?.sourceText || proposing.value) return
+  proposing.value = true
+  addUserMessage(`Agir · ${intent.label || intent.sourceText}`)
+  try {
+    const { proposal, reason } = await proposeAction(intent.sourceText)
+    if (!proposal) {
+      addMessage({
+        role: 'assistant',
+        content: reason || 'Aucune action sûre reconnue.',
+        source: 'agir',
+      })
+    } else {
+      addMessage({
+        role: 'assistant',
+        content: proposal.summary || intent.label || 'Proposition prête — Dry-run puis Réel.',
+        source: 'agir',
+        actionProposal: proposal,
+        actionSourceText: intent.sourceText,
+      })
+    }
+    dismiss()
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: `Proposition impossible : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    proposing.value = false
+  }
+}
 
 let pollTimer = null
 let faceReady = false
@@ -121,17 +188,30 @@ async function initFace() {
   await ensureFaceAssets()
   await nextTick()
   if (!window.FaceRig || !faceHost.value) return
-  if (!FaceRig.ready) {
-    await FaceRig.init(faceHost.value, { characterId: 'lyra_assistant' })
+  try {
+    // Instance dédiée au panneau (ne vole pas le pet)
+    if (typeof FaceRig.create === 'function') {
+      const inst = FaceRig.create()
+      await inst.init(faceHost.value, { characterId: 'lyra_assistant' })
+      faceReady = !!inst.ready
+      window.__lyraPanelFace = inst
+    } else if (!FaceRig.ready) {
+      await FaceRig.init(faceHost.value, { characterId: 'lyra_assistant' })
+      faceReady = !!FaceRig.ready
+    } else {
+      faceReady = true
+    }
+  } catch (_) {
+    faceReady = false
   }
-  faceReady = !!FaceRig.ready
 }
 
 function syncFace(g) {
-  if (!faceReady || !window.FaceRig) return
+  const face = window.__lyraPanelFace || (window.FaceRig?.ready ? window.FaceRig : null)
+  if (!faceReady || !face) return
   try {
-    FaceRig.setMood(moodFromGauges(g))
-    FaceRig.setExpression(expressionFromGauges(g))
+    face.setMood(moodFromGauges(g))
+    face.setExpression(expressionFromGauges(g))
   } catch (_) {}
 }
 

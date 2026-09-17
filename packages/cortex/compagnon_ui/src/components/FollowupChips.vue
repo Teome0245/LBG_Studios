@@ -7,9 +7,17 @@ defineProps({
 
 const { queuePrompt } = useChat()
 
+/** Enchaîne tout de suite (remplit + demande d’envoi via draft auto-send). */
 function onStep(step) {
   const reply = step?.reply || step?.hint
-  if (reply) queuePrompt(reply)
+  if (!reply) return
+  queuePrompt(reply)
+  // Signal pour auto-envoi (ChatInput écoute)
+  try {
+    window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
+  } catch {
+    /* ignore */
+  }
 }
 </script>
 
@@ -22,11 +30,11 @@ function onStep(step) {
       v-for="(step, i) in followup.steps"
       :key="i"
       type="button"
-      class="text-[11px] px-2.5 py-1 rounded-lg border border-white/15 bg-white/5 text-slate-300 hover:border-emerald-500/40 hover:text-emerald-200 transition-colors"
+      class="text-[11px] px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 transition-colors"
       :title="step.reply"
       @click="onStep(step)"
     >
-      <span class="opacity-50 mr-1 uppercase text-[9px]">{{ step.env || 'lan' }}</span>
+      <span class="opacity-60 mr-1 uppercase text-[9px]">{{ step.env || 'go' }}</span>
       {{ step.label || step.reply }}
     </button>
   </div>
