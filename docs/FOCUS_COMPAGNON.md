@@ -1,6 +1,6 @@
 # Focus — Compagnon Studio (type Jarvis)
 
-**Date** : 2026-09-17 (pilotage + handoff sonde AD)  
+**Date** : 2026-09-17 (pilotage + handoffs Antigravity)  
 **Priorité** : **O1 Studio** — agents / UI / autonomie bornée.  
 **Hors scope immédiat** : intégration persona dans le MMO (Rang 2).
 
@@ -98,6 +98,12 @@ Toast « Je vois `autonomous_nudge` / Sonde AD » revient trop souvent.
 Résumé causes :
 1. `_infra_signals()` sonde `AGENT_WINDOWS_SRV_AD_URL` défaut **`.100:5005`** alors que l’agent desktop est sur **`.10:5005`** → `ad_agent_down` sticky faux-positif.
 2. Fingerprint initiative basé sur `last_job_id` volatile alors que le message reste « AD injoignable ».
+
+## Handoff — polish visuel Compagnon
+
+Antigravity : améliorer présence / hiérarchie / tokens UI sans cloner Pilot.
+
+**Prompt** : [`handoff_antigravity_visuel_compagnon.md`](handoff_antigravity_visuel_compagnon.md)
 
 ## Ne pas rouvir
 

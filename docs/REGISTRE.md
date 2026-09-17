@@ -7,6 +7,7 @@
 sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
 **Focus compagnon** : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) (O1 Studio).  
 **Handoff sonde AD (Antigravity)** : [`handoff_antigravity_sonde_ad.md`](handoff_antigravity_sonde_ad.md).  
+**Handoff visuel Compagnon (Antigravity)** : [`handoff_antigravity_visuel_compagnon.md`](handoff_antigravity_visuel_compagnon.md).  
 **Focus wahou (jeu, archivé)** : [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md).  
 **Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).  
 **LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).  
