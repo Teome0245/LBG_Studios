@@ -35,12 +35,12 @@ const nextBusy = ref('')
 const { addUserMessage, addMessage, queuePrompt } = useChat()
 
 const nextSteps = computed(() => {
-  if (!lastResult.value) return []
+  if (!lastResult.value?.ok) return []
   return nextPilotageAfterAgir({
     capability: props.proposal?.capability,
-    ok: lastResult.value.ok,
+    ok: true,
     mode: lastResult.value.mode,
-  })
+  }).slice(0, 2)
 })
 
 const capability = computed(() => props.proposal?.capability || '—')
@@ -50,9 +50,16 @@ const requiresReview = computed(() => Boolean(props.proposal?.requires_review))
 const routedTo = computed(() => props.proposal?.routed_to || '')
 const actionKind = computed(() => props.proposal?.action?.kind || '')
 const tokenReady = computed(() => Boolean(String(token.value || '').trim()) || hasApprovalToken())
+const tokenMismatch = computed(() =>
+  Boolean(lastResult.value && !lastResult.value.ok && /Jeton incorrect/i.test(lastResult.value.text || ''))
+)
 
 function persistToken() {
   saveApprovalToken(token.value.trim())
+  if (tokenMismatch.value) {
+    lastResult.value = null
+    lastError.value = ''
+  }
 }
 
 async function run(mode) {
@@ -170,19 +177,31 @@ async function runNext(step) {
       <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
         Jeton desktop / devops
         <span
-          v-if="tokenReady"
+          v-if="tokenReady && !tokenMismatch"
           class="ml-1.5 normal-case tracking-normal text-emerald-400 font-medium"
         >· mémorisé</span>
+        <span
+          v-else-if="tokenMismatch"
+          class="ml-1.5 normal-case tracking-normal text-rose-400 font-medium"
+        >· ne match pas .10</span>
       </label>
       <input
         ref="tokenInput"
         v-model="token"
         type="password"
         autocomplete="off"
-        placeholder="Coller une fois (synchronisé avec Pilot)"
-        class="w-full max-w-sm rounded-xl border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50"
+        placeholder="Coller LBG_DESKTOP_APPROVAL_TOKEN (C:\\Agent_IA\\desktop.env)"
+        class="w-full max-w-sm rounded-xl border bg-slate-950/80 px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none"
+        :class="tokenMismatch ? 'border-rose-500/50 focus:border-rose-400/60' : 'border-white/10 focus:border-cyan-500/50'"
         @change="persistToken"
+        @input="persistToken"
       />
+      <p v-if="tokenMismatch" class="mt-1.5 text-[11px] text-rose-300/90 leading-snug max-w-md">
+        Le jeton du navigateur ≠ celui de l’agent Windows.
+        Ouvre <code class="font-mono text-rose-200/90">C:\Agent_IA\desktop.env</code>,
+        copie la valeur de <code class="font-mono text-rose-200/90">LBG_DESKTOP_APPROVAL_TOKEN</code>,
+        colle-la ici, puis réessaie <strong>Réel</strong>.
+      </p>
     </div>
 
     <!-- Actions -->
