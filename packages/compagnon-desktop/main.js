@@ -121,6 +121,8 @@ function createMainWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      // Évite de resservir un shell :5174 périmé (Actions rapides fantômes)
+      partition: "persist:compagnon-chat",
     },
   });
 
@@ -138,17 +140,40 @@ function createMainWindow() {
     mainWindow = null;
   });
 
-  mainWindow.loadURL(compagnonUrl()).catch((err) => {
-    console.error("[compagnon] loadURL", err);
-    const fallback = `data:text/html;charset=utf-8,${encodeURIComponent(
-      `<!doctype html><html><body style="font-family:sans-serif;background:#020617;color:#e2e8f0;padding:2rem">
+  const ses = mainWindow.webContents.session;
+  Promise.resolve()
+    .then(() =>
+      ses.clearCache().catch(() => {})
+    )
+    .then(() =>
+      ses
+        .clearStorageData({
+          storages: [
+            "serviceworkers",
+            "cachestorage",
+            "shadercache",
+            "websql",
+          ],
+        })
+        .catch(() => {})
+    )
+    .finally(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      const base = compagnonUrl();
+      const bust = `desktop=1&_=${Date.now()}`;
+      const url = base.includes("?") ? `${base}&${bust}` : `${base}?${bust}`;
+      mainWindow.loadURL(url).catch((err) => {
+        console.error("[compagnon] loadURL", err);
+        const fallback = `data:text/html;charset=utf-8,${encodeURIComponent(
+          `<!doctype html><html><body style="font-family:sans-serif;background:#020617;color:#e2e8f0;padding:2rem">
       <h1>Compagnon injoignable</h1>
       <p>URL : ${compagnonUrl()}</p>
       <p>Verifier le CT .100:5174 puis Relancer.</p>
       </body></html>`
-    )}`;
-    mainWindow.loadURL(fallback);
-  });
+        )}`;
+        mainWindow.loadURL(fallback);
+      });
+    });
 
   return mainWindow;
 }
@@ -533,10 +558,23 @@ if (!gotLock) {
 } else {
   app.on("second-instance", () => showChat());
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     loadConfig();
     if (process.platform === "win32") {
       app.setAppUserModelId("lbg.compagnon.desktop");
+    }
+    // Purge cache Chromium Electron (indépendant du navigateur) — shell :5174 frais
+    try {
+      const { session } = require("electron");
+      const s = session.fromPartition("persist:compagnon-chat");
+      await s.clearCache().catch(() => {});
+      await s
+        .clearStorageData({
+          storages: ["serviceworkers", "cachestorage", "shadercache"],
+        })
+        .catch(() => {});
+    } catch (_) {
+      /* ignore */
     }
     buildTray();
     createOverlayWindow();
