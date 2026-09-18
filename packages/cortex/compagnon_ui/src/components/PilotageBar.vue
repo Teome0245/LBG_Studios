@@ -70,25 +70,20 @@ function onClick(action) {
 
 <template>
   <div class="flex flex-wrap items-center gap-1.5 px-2 py-1 border-b border-white/5" role="toolbar" aria-label="Pilotage studio">
-    <span class="text-[9px] font-bold tracking-widest uppercase text-slate-400 mr-1 select-none">
-      Actions rapides
+    <span class="text-[9px] font-bold tracking-widest uppercase text-slate-500 mr-0.5 select-none">
+      Pilotage
     </span>
 
     <button
       v-for="a in PILOTAGE_BAR"
       :key="a.id"
       type="button"
-      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/30 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-      :class="{
-        'hover:border-teal-400/40': a.kind === 'link',
-        'hover:border-amber-400/40': a.kind === 'ask'
-      }"
+      class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/30 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
       :disabled="!!busy"
       :title="a.hint || a.label"
       @click="onClick(a)"
     >
-      <span class="text-[11px] font-semibold">{{ busy === a.id ? '…' : a.label }}</span>
-      <span v-if="a.hint" class="text-[9px] font-mono text-slate-400 opacity-75 hidden md:inline">{{ a.hint }}</span>
+      {{ busy === a.id ? '…' : a.label }}
     </button>
 
     <div class="flex-1"></div>
@@ -99,8 +94,8 @@ function onClick(action) {
       title="Ouvrir la palette de commandes (Ctrl+K)"
       @click="$emit('ask', '')"
     >
-      <span>Palette</span>
-      <kbd class="text-[9px] bg-white/5 px-1 py-0.2 rounded border border-white/10">⌘K</kbd>
+      <span>Plus</span>
+      <kbd class="text-[9px] bg-white/5 px-1 rounded border border-white/10">⌘K</kbd>
     </button>
   </div>
 </template>

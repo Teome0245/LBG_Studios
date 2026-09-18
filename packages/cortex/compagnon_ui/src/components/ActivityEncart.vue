@@ -15,12 +15,12 @@ const quickNext = computed(() => {
   const tools = (current.value.tools || []).join(' ')
   if (tools.includes('desktop') || tools.includes('agir')) {
     return PILOTAGE_BAR.filter((a) =>
-      ['probe_ad', 'open_jobs', 'open_desktop', 'team_status'].includes(a.id)
-    ).slice(0, 3)
+      ['open_jobs', 'notepad', 'team_status'].includes(a.id)
+    ).slice(0, 2)
   }
   return PILOTAGE_BAR.filter((a) =>
-    ['probe_lan', 'team_status', 'open_jobs'].includes(a.id)
-  ).slice(0, 3)
+    ['probe_lan', 'team_status'].includes(a.id)
+  ).slice(0, 2)
 })
 
 function lineClass(level) {

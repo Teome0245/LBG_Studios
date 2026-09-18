@@ -1,6 +1,6 @@
 /**
- * Pilotage Compagnon — actions de commande (comme un agent Cursor),
- * pas de décoration : chaque entrée mène à Agir, ask, ou Pilot.
+ * Pilotage Compagnon — actions de commande (comme un agent Cursor).
+ * Barre visible = peu d’entrées ; le reste vit dans Ctrl+K (PILOTAGE_CATALOG).
  */
 
 import { PILOT_LINKS } from '@/lib/pilotLinks'
@@ -17,15 +17,9 @@ import { PILOT_LINKS } from '@/lib/pilotLinks'
  * }} PilotageAction
  */
 
+/** Catalogue complet — palette Ctrl+K uniquement. */
 /** @type {PilotageAction[]} */
-export const PILOTAGE_BAR = [
-  {
-    id: 'probe_ad',
-    label: 'Sonde AD',
-    hint: 'devops · dry-run',
-    kind: 'agir',
-    sourceText: 'fais un diagnostic infra selfcheck de l agent AD sur le LAN',
-  },
+export const PILOTAGE_CATALOG = [
   {
     id: 'probe_lan',
     label: 'Selfcheck LAN',
@@ -41,13 +35,6 @@ export const PILOTAGE_BAR = [
     sourceText: 'ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs',
   },
   {
-    id: 'open_desktop',
-    label: 'Pilot Desktop',
-    hint: 'cockpit',
-    kind: 'link',
-    href: PILOT_LINKS.desktop,
-  },
-  {
     id: 'team_status',
     label: 'Team status',
     hint: 'ask',
@@ -55,11 +42,11 @@ export const PILOTAGE_BAR = [
     prompt: 'team: status orchestrateur et file Campus',
   },
   {
-    id: 'approvals',
-    label: 'Approbations L2',
-    hint: 'ask',
-    kind: 'ask',
-    prompt: 'liste les jobs / approbations L2 en attente et propose quoi faire',
+    id: 'notepad',
+    label: 'Notepad++',
+    hint: 'desktop',
+    kind: 'agir',
+    sourceText: 'ouvre notepadpp sur mon pc',
   },
   {
     id: 'open_vghd',
@@ -69,11 +56,25 @@ export const PILOTAGE_BAR = [
     sourceText: 'ouvre vghd sur mon pc',
   },
   {
-    id: 'notepad',
-    label: 'Notepad++',
-    hint: 'desktop',
+    id: 'probe_ad',
+    label: 'Sonde agent desktop',
+    hint: 'devops · dry-run',
     kind: 'agir',
-    sourceText: 'ouvre notepadpp sur mon pc',
+    sourceText: 'fais un diagnostic infra selfcheck de l agent desktop sur le LAN',
+  },
+  {
+    id: 'approvals',
+    label: 'Approbations L2',
+    hint: 'ask',
+    kind: 'ask',
+    prompt: 'liste les jobs / approbations L2 en attente et propose quoi faire',
+  },
+  {
+    id: 'open_desktop',
+    label: 'Pilot Desktop',
+    hint: 'cockpit',
+    kind: 'link',
+    href: PILOT_LINKS.desktop,
   },
   {
     id: 'pilot_team',
@@ -90,6 +91,12 @@ export const PILOTAGE_BAR = [
     href: PILOT_LINKS.jobs,
   },
 ]
+
+/** Barre sous l’input — max 4 + palette (évite le mur de boutons). */
+/** @type {PilotageAction[]} */
+export const PILOTAGE_BAR = PILOTAGE_CATALOG.filter((a) =>
+  ['probe_lan', 'open_jobs', 'team_status', 'notepad'].includes(a.id)
+)
 
 /**
  * Suite de pilotage après un Agir (réel/dry-run) — impression « next moves ».
@@ -154,5 +161,5 @@ export function nextPilotageAfterAgir(ctx = {}) {
       }
     )
   }
-  return out.slice(0, 4)
+  return out.slice(0, 3)
 }

@@ -15,36 +15,13 @@
     </Transition>
 
     <Transition name="pet-pop">
-      <div
-        v-if="bubbleOpen && current"
-        class="pet-bubble pointer-events-auto"
-        role="status"
-        aria-live="polite"
-      >
-        <p class="pet-bubble-msg">{{ current.message }}</p>
-        <div v-if="current.primary" class="pet-bubble-actions">
-          <button
-            type="button"
-            class="pet-btn-agir"
-            :disabled="proposing"
-            @click="runPrimary"
-          >
-            {{ proposing ? '…' : current.primary.label }}
-          </button>
-          <button type="button" class="pet-btn-later" @click="dismissBubble">Plus tard</button>
-        </div>
-        <p v-if="current.primary?.hint" class="pet-hint">{{ current.primary.hint }}</p>
-      </div>
-    </Transition>
-
-    <Transition name="pet-pop">
       <div v-if="statusChip && !resultBanner" class="pet-chip pointer-events-none">{{ statusChip }}</div>
     </Transition>
 
     <button
       type="button"
       class="pet-avatar pointer-events-auto"
-      :class="{ alert: !!current && bubbleOpen, live: !!statusChip }"
+      :class="{ alert: !!current, live: !!statusChip }"
       :title="lyraMinimized ? 'Ouvrir Compagnon' : 'Présence Compagnon'"
       @click="onAvatarClick"
     >
@@ -58,16 +35,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useLayout } from '../composables/useLayout'
 import { useInitiative } from '../composables/useInitiative'
-import { useChat } from '../composables/useChat'
-import { proposeAction } from '@/lib/agir'
 import { onPresence } from '@/lib/presence'
 
 const { lyraMinimized, toggleLyra } = useLayout()
-const { current, dismiss, proposing } = useInitiative()
-const { addUserMessage, addMessage } = useChat()
+const { current } = useInitiative()
 
 const faceHost = ref(null)
-const bubbleOpen = ref(false)
 const statusChip = ref('')
 const resultBanner = ref(null)
 const gauges = ref({ energie: 50, chaleur: 50 })
@@ -86,63 +59,15 @@ const moodDot = computed(() => {
 })
 
 watch(current, (v) => {
-  bubbleOpen.value = !!v
+  // Pas de bulle doublon : InitiativeToast porte les actions ; le pet pulse seulement.
   if (faceInst?.ready) {
     faceInst.setMood(v ? 'tense' : 'serene')
     if (v) faceInst.pulse?.('alert')
   }
 })
 
-function dismissBubble() {
-  bubbleOpen.value = false
-  dismiss()
-  if (faceInst?.ready) faceInst.setMood('serene')
-}
-
-async function runPrimary() {
-  const intent = current.value?.primary
-  if (!intent?.sourceText || proposing.value) return
-  proposing.value = true
-  addUserMessage(`Agir · ${intent.label || intent.sourceText}`)
-  try {
-    const { proposal, reason } = await proposeAction(intent.sourceText)
-    if (!proposal) {
-      addMessage({
-        role: 'assistant',
-        content: reason || 'Aucune action sûre reconnue.',
-        source: 'agir',
-      })
-    } else {
-      addMessage({
-        role: 'assistant',
-        content: proposal.summary || intent.label || 'Proposition prête — Dry-run puis Réel.',
-        source: 'agir',
-        actionProposal: proposal,
-        actionSourceText: intent.sourceText,
-      })
-    }
-    dismissBubble()
-  } catch (e) {
-    addMessage({
-      role: 'assistant',
-      content: `Proposition impossible : ${e?.message || e}`,
-      source: 'error',
-    })
-  } finally {
-    proposing.value = false
-  }
-}
-
 function onAvatarClick() {
-  if (current.value && !bubbleOpen.value) {
-    bubbleOpen.value = true
-    return
-  }
-  if (current.value && bubbleOpen.value) {
-    runPrimary()
-    return
-  }
-  // Tickle : petit clin d’œil
+  // Tickle : petit clin d’œil — les initiatives restent sur InitiativeToast
   if (faceInst?.ready) {
     faceInst.setExpression?.('surprised')
     faceInst.say?.('hey')

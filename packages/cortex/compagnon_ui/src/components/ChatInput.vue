@@ -410,36 +410,42 @@ function onPilotageAsk(prompt) {
       <PilotageBar @ask="onPilotageAsk" />
       <PilotagePalette ref="paletteRef" @ask="onPilotageAsk" />
 
-      <!-- Sélecteurs compacts -->
-      <div class="flex flex-wrap items-center gap-2 px-1 pt-0.5 text-xs">
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-          Agent
-          <select
-            v-model="selectedAgent"
-            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-          >
-            <option v-for="o in agentOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-          Mode
-          <select
-            v-model="selectedModel"
-            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-          >
-            <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-          Persona
-          <select
-            v-model="selectedProfile"
-            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-          >
-            <option v-for="o in profileOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-          </select>
-        </label>
-      </div>
+      <!-- Sélecteurs compacts (repliés par défaut — moins de chrome) -->
+      <details class="px-1 group/settings">
+        <summary class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold cursor-pointer select-none list-none flex items-center gap-1.5 hover:text-slate-300 [&::-webkit-details-marker]:hidden">
+          <span>Réglages</span>
+          <span class="normal-case tracking-normal font-mono text-slate-600 group-open/settings:hidden">agent · mode · persona</span>
+        </summary>
+        <div class="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
+          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+            Agent
+            <select
+              v-model="selectedAgent"
+              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+            >
+              <option v-for="o in agentOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+            Mode
+            <select
+              v-model="selectedModel"
+              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+            >
+              <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+            Persona
+            <select
+              v-model="selectedProfile"
+              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+            >
+              <option v-for="o in profileOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+            </select>
+          </label>
+        </div>
+      </details>
 
       <!-- Aperçus images jointes -->
       <div v-if="pendingImages.length" class="flex flex-wrap items-center gap-2 px-1">

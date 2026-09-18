@@ -135,67 +135,51 @@ function triggerCtrlK() {
           Pour le cockpit technique lourd, retrouve Team et Jobs dans Pilot.
         </p>
 
-        <!-- Suggestions de démarrage rapide -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl text-left">
+        <!-- 3 pistes max — le reste = Ctrl+K (pas de doublon avec la barre) -->
+        <div class="flex flex-col sm:flex-row gap-2.5 w-full max-w-lg text-left">
           <button
             type="button"
-            class="glass-card p-3.5 rounded-2xl hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all flex items-start gap-3 text-left group"
+            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all flex items-start gap-3 text-left group"
             @click="onQuickPrompt('Fais un diagnostic infra selfcheck du LAN')"
           >
-            <div class="h-8 w-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0 group-hover:scale-105 transition-transform">
+            <div class="h-8 w-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">Sonde infrastructure LAN</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Vérifie l'état des services et agents</p>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">Selfcheck LAN</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">État studio & agents</p>
             </div>
           </button>
 
           <button
             type="button"
-            class="glass-card p-3.5 rounded-2xl hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all flex items-start gap-3 text-left group"
-            @click="onQuickPrompt('Ouvre notepadpp sur mon poste')"
-          >
-            <div class="h-8 w-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300 shrink-0 group-hover:scale-105 transition-transform">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-cyan-300 transition-colors">Action poste (.10)</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Agir : ouvrir une application sous validation</p>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            class="glass-card p-3.5 rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/10 transition-all flex items-start gap-3 text-left group"
+            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/10 transition-all flex items-start gap-3 text-left group"
             @click="onQuickPrompt('Résume nos priorités actuelles dans le projet LBG_Studios')"
           >
-            <div class="h-8 w-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:scale-105 transition-transform">
+            <div class="h-8 w-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">Concevoir & échanger</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Discuter de l'architecture ou des jalons</p>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">Échanger</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Priorités & conception</p>
             </div>
           </button>
 
           <button
             type="button"
-            class="glass-card p-3.5 rounded-2xl hover:border-violet-500/40 hover:bg-violet-500/10 transition-all flex items-start gap-3 text-left group"
+            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-teal-500/40 hover:bg-teal-500/10 transition-all flex items-start gap-3 text-left group"
             @click="triggerCtrlK"
           >
-            <div class="h-8 w-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 shrink-0 group-hover:scale-105 transition-transform">
+            <div class="h-8 w-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-300 shrink-0">
               <span class="text-[10px] font-mono font-bold">⌘K</span>
             </div>
             <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-violet-300 transition-colors">Palette de pilotage</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Accès rapide aux commandes et raccourcis</p>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-teal-300 transition-colors">Pilotage</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Toutes les commandes</p>
             </div>
           </button>
         </div>

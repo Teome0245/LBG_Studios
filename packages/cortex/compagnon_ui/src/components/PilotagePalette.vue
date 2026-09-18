@@ -4,7 +4,7 @@
  * sans quitter le fil, style surface agent Cursor.
  */
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { PILOTAGE_BAR } from '@/lib/pilotageActions'
+import { PILOTAGE_CATALOG } from '@/lib/pilotageActions'
 import { PILOT_NAV } from '@/lib/pilotLinks'
 import { proposeAction } from '@/lib/agir'
 import { useChat } from '@/composables/useChat'
@@ -43,7 +43,7 @@ const EXTRA = [
 const items = computed(() => {
   const q = query.value.trim().toLowerCase()
   const base = [
-    ...PILOTAGE_BAR,
+    ...PILOTAGE_CATALOG,
     ...EXTRA,
     ...PILOT_NAV.map((n) => ({
       id: `nav_${n.id}`,
