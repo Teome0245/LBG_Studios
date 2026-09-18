@@ -13,6 +13,7 @@ CORTEX_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 UI_ROOT="${CORTEX_ROOT}/compagnon_ui"
 OVERLAY="${UI_ROOT}/server_overlay/router_prompts.py"
 DESKTOP_DISPATCH="${UI_ROOT}/server_overlay/desktop_dispatch.py"
+DESKTOP_APPROVAL="${UI_ROOT}/server_overlay/desktop_approval.py"
 
 REMOTE_USER="${LBG_ORCH_CT100_USER:-root}"
 REMOTE_HOST="${LBG_ORCH_CT100_HOST:-192.168.0.100}"
@@ -46,6 +47,41 @@ if [[ -f "${DESKTOP_DISPATCH}" ]]; then
     "${REMOTE}:${REMOTE_DIR}/backend/src/services/desktop_dispatch.py"
 fi
 
+if [[ -f "${DESKTOP_APPROVAL}" ]]; then
+  echo "==> Overlay desktop_approval bootstrap → backend"
+  rsync -az "${DESKTOP_APPROVAL}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/routers/desktop_approval.py"
+  ssh "${REMOTE}" bash -s <<'PATCH'
+set -euo pipefail
+FACTORY=/opt/orchestrateur/backend/src/app/factory.py
+if [[ -f "$FACTORY" ]] && ! grep -q 'desktop_approval' "$FACTORY"; then
+  python3 - <<'PY'
+from pathlib import Path
+p = Path("/opt/orchestrateur/backend/src/app/factory.py")
+text = p.read_text()
+imp = "from src.routers.desktop_approval import router as desktop_approval_router\n"
+inc = "    app.include_router(desktop_approval_router)\n"
+if "desktop_approval_router" not in text:
+    # insert import after team_router import
+    needle = "from src.routers.team import router as team_router\n"
+    if needle in text:
+        text = text.replace(needle, needle + imp, 1)
+    else:
+        text = imp + text
+    needle2 = "    app.include_router(team_router)\n"
+    if needle2 in text:
+        text = text.replace(needle2, needle2 + inc, 1)
+    else:
+        text = text.replace("    app.include_router(core_router)\n", "    app.include_router(core_router)\n" + inc, 1)
+    p.write_text(text)
+    print("factory.py: desktop_approval router wired")
+else:
+    print("factory.py: already wired")
+PY
+fi
+PATCH
+fi
+
 echo "==> Rebuild Docker frontend (+ backend si overlay)"
 ssh "${REMOTE}" bash -s <<EOF
 set -euo pipefail
@@ -73,6 +109,9 @@ if [[ "$SMOKE" -eq 1 ]]; then
     -H 'Content-Type: application/json' \
     -d '{"actor_id":"ui:compagnon","text":"ouvre notepad","context":{}}' \
     | python3 -c "import sys,json; d=json.load(sys.stdin); p=d.get('proposal') or {}; print('agir', d.get('ok'), p.get('capability'), (p.get('summary') or '')[:80])"
+  echo "==> Smoke desktop-approval bootstrap"
+  curl -fsS "http://${REMOTE_HOST}:5174/api/desktop-approval" \
+    | python3 -c "import sys,json,hashlib; d=json.load(sys.stdin); t=d.get('token') or ''; print('token', d.get('ok'), 'len', len(t), 'sha', hashlib.sha256(t.encode()).hexdigest()[:12] if t else '-')"
 fi
 
 echo "OK  Compagnon http://${REMOTE_HOST}:5174/ · API :3000 · Pilot ops http://192.168.0.140:8080/pilot/"

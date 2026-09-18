@@ -42,6 +42,37 @@ export function hasApprovalToken() {
   return Boolean(loadApprovalToken().trim())
 }
 
+/**
+ * Récupère le jeton serveur LAN (:5174 → backend .100) et l’écrit en localStorage.
+ * Corrige les jetons navigateur périmés qui ne matchent plus ``C:\\Agent_IA\\desktop.env``.
+ * @param {{ force?: boolean }} [opts]
+ * @returns {Promise<string>}
+ */
+export async function bootstrapApprovalToken(opts = {}) {
+  const force = Boolean(opts.force)
+  if (!force) {
+    const existing = loadApprovalToken().trim()
+    // On resynchronise toujours depuis le serveur LAN quand dispo —
+    // un jeton local faux est la cause n°1 des « Jeton incorrect ».
+  }
+  try {
+    const res = await fetch('/api/desktop-approval', {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    })
+    if (!res.ok) return loadApprovalToken()
+    const json = await res.json()
+    const tok = typeof json?.token === 'string' ? json.token.trim() : ''
+    if (json?.ok && tok) {
+      saveApprovalToken(tok)
+      return tok
+    }
+  } catch {
+    /* offline / pas d’endpoint */
+  }
+  return loadApprovalToken()
+}
+
 /** @param {string} path ex. `/action-proposal` */
 function pilotUrl(path) {
   const p = path.startsWith('/') ? path : `/${path}`

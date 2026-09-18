@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   loadApprovalToken,
   saveApprovalToken,
   hasApprovalToken,
+  bootstrapApprovalToken,
   runRouteFromProposal,
   summarizeRouteResult,
   routeLooksSuccessful,
@@ -32,7 +33,16 @@ const lastError = ref('')
 const showJson = ref(false)
 const tokenInput = ref(null)
 const nextBusy = ref('')
+const tokenSynced = ref(false)
 const { addUserMessage, addMessage, queuePrompt } = useChat()
+
+onMounted(async () => {
+  const tok = await bootstrapApprovalToken({ force: true })
+  if (tok) {
+    token.value = tok
+    tokenSynced.value = true
+  }
+})
 
 const nextSteps = computed(() => {
   if (!lastResult.value?.ok) return []
@@ -65,6 +75,13 @@ function persistToken() {
 async function run(mode) {
   lastError.value = ''
   if (mode === 'real') {
+    // Resync serveur avant Réel — évite le localStorage périmé
+    try {
+      const synced = await bootstrapApprovalToken({ force: true })
+      if (synced) token.value = synced
+    } catch {
+      /* ignore */
+    }
     const t = String(token.value || '').trim()
     if (!t) {
       lastError.value = 'Jeton requis pour Réel — colle LBG_DESKTOP_APPROVAL_TOKEN (même valeur que Pilot Desktop).'
@@ -177,7 +194,11 @@ async function runNext(step) {
       <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
         Jeton desktop / devops
         <span
-          v-if="tokenReady && !tokenMismatch"
+          v-if="tokenSynced && tokenReady && !tokenMismatch"
+          class="ml-1.5 normal-case tracking-normal text-emerald-400 font-medium"
+        >· sync .10</span>
+        <span
+          v-else-if="tokenReady && !tokenMismatch"
           class="ml-1.5 normal-case tracking-normal text-emerald-400 font-medium"
         >· mémorisé</span>
         <span
