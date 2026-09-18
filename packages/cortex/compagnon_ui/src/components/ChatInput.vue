@@ -16,7 +16,6 @@ import {
   activityPhase,
   endActivity,
 } from '@/composables/useActivity'
-import PilotageBar from './PilotageBar.vue'
 import PilotagePalette from './PilotagePalette.vue'
 
 const AGENT_KEY = 'lbg_orch_input_agent'
@@ -407,45 +406,54 @@ function onPilotageAsk(prompt) {
     :class="offsetClass"
   >
     <div class="w-full max-w-4xl glass-card rounded-3xl p-3 shadow-2xl border border-white/15 flex flex-col gap-2 pointer-events-auto backdrop-blur-2xl">
-      <PilotageBar @ask="onPilotageAsk" />
       <PilotagePalette ref="paletteRef" @ask="onPilotageAsk" />
 
-      <!-- Sélecteurs compacts (repliés par défaut — moins de chrome) -->
-      <details class="px-1 group/settings">
-        <summary class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold cursor-pointer select-none list-none flex items-center gap-1.5 hover:text-slate-300 [&::-webkit-details-marker]:hidden">
-          <span>Réglages</span>
-          <span class="normal-case tracking-normal font-mono text-slate-600 group-open/settings:hidden">agent · mode · persona</span>
-        </summary>
-        <div class="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
-          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            Agent
-            <select
-              v-model="selectedAgent"
-              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-            >
-              <option v-for="o in agentOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-          </label>
-          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            Mode
-            <select
-              v-model="selectedModel"
-              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-            >
-              <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-          </label>
-          <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            Persona
-            <select
-              v-model="selectedProfile"
-              class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
-            >
-              <option v-for="o in profileOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-          </label>
-        </div>
-      </details>
+      <!-- Sélecteurs + ouverture palette (pas de barre d’actions rapides) -->
+      <div class="flex flex-wrap items-center gap-2 px-1">
+        <details class="group/settings flex-1 min-w-0">
+          <summary class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold cursor-pointer select-none list-none inline-flex items-center gap-1.5 hover:text-slate-300 [&::-webkit-details-marker]:hidden">
+            <span>Réglages</span>
+            <span class="normal-case tracking-normal font-mono text-slate-600 group-open/settings:hidden">agent · mode · persona</span>
+          </summary>
+          <div class="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
+            <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+              Agent
+              <select
+                v-model="selectedAgent"
+                class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              >
+                <option v-for="o in agentOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+              Mode
+              <select
+                v-model="selectedModel"
+                class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              >
+                <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+              Persona
+              <select
+                v-model="selectedProfile"
+                class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              >
+                <option v-for="o in profileOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+          </div>
+        </details>
+        <button
+          type="button"
+          class="text-[10px] font-mono text-slate-500 hover:text-teal-300 border border-transparent hover:border-white/10 rounded-md px-1.5 py-0.5 cursor-pointer transition-colors"
+          title="Palette de pilotage (Ctrl+K)"
+          @click="paletteRef?.openPalette()"
+        >
+          <kbd class="text-[9px]">Ctrl+K</kbd>
+        </button>
+      </div>
 
       <!-- Aperçus images jointes -->
       <div v-if="pendingImages.length" class="flex flex-wrap items-center gap-2 px-1">

@@ -130,59 +130,12 @@ function triggerCtrlK() {
         <h1 class="text-2xl sm:text-3xl font-extrabold font-outfit text-white tracking-tight mb-2">
           Compagnon Studio
         </h1>
-        <p class="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed mb-8">
+        <p class="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed mb-6">
           Présent pour dialoguer, concevoir et agir sur le poste sous ton contrôle (L2).
-          Pour le cockpit technique lourd, retrouve Team et Jobs dans Pilot.
         </p>
-
-        <!-- 3 pistes max — le reste = Ctrl+K (pas de doublon avec la barre) -->
-        <div class="flex flex-col sm:flex-row gap-2.5 w-full max-w-lg text-left">
-          <button
-            type="button"
-            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all flex items-start gap-3 text-left group"
-            @click="onQuickPrompt('Fais un diagnostic infra selfcheck du LAN')"
-          >
-            <div class="h-8 w-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">Selfcheck LAN</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">État studio & agents</p>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/10 transition-all flex items-start gap-3 text-left group"
-            @click="onQuickPrompt('Résume nos priorités actuelles dans le projet LBG_Studios')"
-          >
-            <div class="h-8 w-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">Échanger</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Priorités & conception</p>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            class="glass-card flex-1 p-3.5 rounded-2xl hover:border-teal-500/40 hover:bg-teal-500/10 transition-all flex items-start gap-3 text-left group"
-            @click="triggerCtrlK"
-          >
-            <div class="h-8 w-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-300 shrink-0">
-              <span class="text-[10px] font-mono font-bold">⌘K</span>
-            </div>
-            <div>
-              <p class="text-xs font-bold text-slate-100 group-hover:text-teal-300 transition-colors">Pilotage</p>
-              <p class="text-[11px] text-slate-400 mt-0.5">Toutes les commandes</p>
-            </div>
-          </button>
-        </div>
+        <p class="text-[11px] text-slate-500 font-mono">
+          Écris ci-dessous · <button type="button" class="text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline cursor-pointer" @click="triggerCtrlK">Ctrl+K</button> pour le pilotage · <span class="text-cyan-400/80">Agir</span> pour une action poste
+        </p>
       </div>
 
       <div
