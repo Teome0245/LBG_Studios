@@ -16,10 +16,6 @@ import {
   activityPhase,
   endActivity,
 } from '@/composables/useActivity'
-import { nextPilotageAfterAgir } from '@/lib/pilotageActions'
-import { proposeAction } from '@/lib/agir'
-import { useChat } from '@/composables/useChat'
-import { PILOT_LINKS } from '@/lib/pilotLinks'
 
 const props = defineProps({
   proposal: { type: Object, required: true },
@@ -32,9 +28,7 @@ const lastResult = ref(null)
 const lastError = ref('')
 const showJson = ref(false)
 const tokenInput = ref(null)
-const nextBusy = ref('')
 const tokenSynced = ref(false)
-const { addUserMessage, addMessage, queuePrompt } = useChat()
 
 onMounted(async () => {
   const tok = await bootstrapApprovalToken({ force: true })
@@ -42,15 +36,6 @@ onMounted(async () => {
     token.value = tok
     tokenSynced.value = true
   }
-})
-
-const nextSteps = computed(() => {
-  if (!lastResult.value?.ok) return []
-  return nextPilotageAfterAgir({
-    capability: props.proposal?.capability,
-    ok: true,
-    mode: lastResult.value.mode,
-  }).slice(0, 2)
 })
 
 const capability = computed(() => props.proposal?.capability || '—')
@@ -75,7 +60,6 @@ function persistToken() {
 async function run(mode) {
   lastError.value = ''
   if (mode === 'real') {
-    // Resync serveur avant Réel — évite le localStorage périmé
     try {
       const synced = await bootstrapApprovalToken({ force: true })
       if (synced) token.value = synced
@@ -119,52 +103,6 @@ async function run(mode) {
     endActivity('error', lastError.value)
   } finally {
     busy.value = ''
-  }
-}
-
-async function runNext(step) {
-  if (!step || nextBusy.value) return
-  if (step.kind === 'link' && step.href) {
-    window.open(step.href, '_blank', 'noopener,noreferrer')
-    return
-  }
-  if (step.kind === 'ask' && step.prompt) {
-    queuePrompt(step.prompt)
-    try {
-      window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
-    } catch {
-      /* ignore */
-    }
-    return
-  }
-  if (step.kind !== 'agir' || !step.sourceText) return
-  nextBusy.value = step.id
-  addUserMessage(`Agir · ${step.label}`)
-  try {
-    const { proposal, reason } = await proposeAction(step.sourceText)
-    if (!proposal) {
-      addMessage({
-        role: 'assistant',
-        content: reason || 'Aucune action sûre.',
-        source: 'agir',
-      })
-    } else {
-      addMessage({
-        role: 'assistant',
-        content: proposal.summary || step.label,
-        source: 'agir',
-        actionProposal: proposal,
-        actionSourceText: step.sourceText,
-      })
-    }
-  } catch (e) {
-    addMessage({
-      role: 'assistant',
-      content: String(e?.message || e),
-      source: 'error',
-    })
-  } finally {
-    nextBusy.value = ''
   }
 }
 </script>
@@ -269,31 +207,5 @@ async function runNext(step) {
       class="text-xs font-mono rounded-xl p-2.5 border"
       :class="lastResult.ok ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'"
     >{{ lastResult.text }}</p>
-
-    <!-- Suite après agir -->
-    <div v-if="nextSteps.length" class="pt-2 border-t border-white/10 space-y-2">
-      <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Suite suggérée</p>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="s in nextSteps"
-          :key="s.id"
-          type="button"
-          class="text-xs px-3 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
-          :disabled="!!nextBusy || !!busy"
-          @click="runNext(s)"
-        >
-          {{ nextBusy === s.id ? '…' : s.label }}
-        </button>
-        <a
-          class="text-xs px-3 py-1 rounded-xl border border-white/15 text-slate-300 hover:text-white hover:bg-white/5 transition-colors inline-flex items-center gap-1"
-          :href="PILOT_LINKS.jobs"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <span>Pilot Jobs</span>
-          <span class="text-[10px] opacity-60">↗</span>
-        </a>
-      </div>
-    </div>
   </div>
 </template>

@@ -3,11 +3,10 @@ import { nextTick, watch, ref, computed, onMounted } from 'vue'
 import { useChat } from '../composables/useChat'
 import ApprovalCard from './ApprovalCard.vue'
 import ActionCard from './ActionCard.vue'
-import FollowupChips from './FollowupChips.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
 
-const { messages, loadHistory, queuePrompt } = useChat()
+const { messages, loadHistory } = useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
 
@@ -93,16 +92,6 @@ function displayContent(msg) {
     return c.split('---\n**Suite — recolle une ligne dans le chat :**')[0].trimEnd()
   }
   return c
-}
-
-function onQuickPrompt(text) {
-  if (!text) return
-  queuePrompt(text)
-  try {
-    window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
-  } catch {
-    /* ignore */
-  }
 }
 
 function triggerCtrlK() {
@@ -257,11 +246,6 @@ function triggerCtrlK() {
               v-if="msg.role === 'assistant' && msg.actionProposal && viewFilter !== 'timeline'"
               :proposal="msg.actionProposal"
               :source-text="msg.actionSourceText || ''"
-            />
-
-            <FollowupChips
-              v-if="msg.role === 'assistant' && msg.followup?.steps?.length && viewFilter !== 'timeline'"
-              :followup="msg.followup"
             />
 
             <!-- Pied de message : modèle et latence discrets -->
