@@ -97,10 +97,10 @@ Phasage réaliste :
 
 ### Polish visuel & UX Compagnon (:5174)
 1. **Socle Tailwind v4 & Tokens** : `@source` explicites pour tous les composants, suppression du hack `svg 40px`, tokens studio sobres, arrière-plan sans 404.
-2. **Empty state 30s** : présence Compagnon chaleureuse, 4 suggestions interactives (Sonde LAN, Action poste Notepad, Dialogue, Palette ⌘K).
-3. **Hiérarchie & Pilotage** : présence en ligne prioritaire, métriques ops repliées par défaut, boutons Pilotage et carte d'entrée harmonisés.
-4. **Déconfliction spatiale** : toast d'initiative repositionné (`bottom: 6rem; right: 6.5rem`) sans conflit avec l'avatar LyraWidget ni la zone d'input.
-5. **Déploiement & Smokes** : deploy CT100 (`5174`) vert avec smoke chat (`/api/ask`) et smoke agir (`/api/pilot/action-proposal`).
+2. **Empty state 30s** : présence Compagnon ; **post-revue** = 3 pistes (Selfcheck / Échanger / ⌘K), pas 4.
+3. **Hiérarchie & Pilotage** : barre limitée à **4 actions + Plus ⌘K** (catalogue complet dans la palette) ; réglages agent/mode/persona repliés.
+4. **Toast unique** : InitiativeToast seul pour les actions ; le pet Lyra pulse sans bulle doublon.
+5. **Déploiement & Smokes** : deploy CT100 (`5174`) vert avec smoke chat + Agir.
 
 ## Ne pas rouvir
 
