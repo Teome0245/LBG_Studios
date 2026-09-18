@@ -2,6 +2,37 @@ import { ref } from 'vue'
 import { http } from '@/api/http'
 import { useChat } from './useChat.js'
 
+/** @param {string[]} images data URI ou base64 */
+async function sendVisionAsk(prompt, images, opts = {}) {
+  const res = await fetch('/api/pilot/vision-ask', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      prompt: prompt || '',
+      images,
+      profile: opts.profile || 'compagnon',
+      conversation_id: opts.conversationId || null,
+    }),
+  })
+  const text = await res.text()
+  let data = null
+  try {
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = null
+  }
+  if (!res.ok || !data) {
+    throw new Error((data && (data.detail || data.error)) || `HTTP ${res.status}`)
+  }
+  if (data.ok === false) {
+    const errContent = data.response?.content || data.error || 'Analyse image échouée'
+    return typeof data.response === 'object' && data.response
+      ? data.response
+      : { role: 'assistant', content: errContent, source: 'error' }
+  }
+  return data.response || data
+}
+
 export function useApi() {
   const loading = ref(false)
   const error = ref(null)
@@ -12,6 +43,14 @@ export function useApi() {
     error.value = null
 
     try {
+      const images = Array.isArray(opts.images) ? opts.images.filter(Boolean) : []
+      if (images.length) {
+        return await sendVisionAsk(prompt, images, {
+          profile: opts.profile || 'compagnon',
+          conversationId: conversationId.value,
+        })
+      }
+
       const payload = {
         prompt,
         mode: opts.mode || 'auto',
@@ -49,9 +88,5 @@ export function useApi() {
     }
   }
 
-  return {
-    loading,
-    error,
-    sendPrompt,
-  }
+  return { loading, error, sendPrompt }
 }

@@ -24,12 +24,85 @@ const MODEL_KEY = 'lbg_orch_input_model'
 const PROFILE_KEY = 'lbg_orch_input_profile'
 
 const input = ref('')
+const pendingImages = ref([])
+const fileInputRef = ref(null)
 const { addUserMessage, addMessage, loadConversations, draftPrompt, mentionInsert, messages } =
   useChat()
 const { sendPrompt } = useApi()
 const { chatInputOffsetClass } = useLayout()
 const loading = ref(false)
 const proposing = ref(false)
+
+const MAX_IMAGES = 3
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error || new Error('lecture fichier'))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function addImageFiles(fileList) {
+  const files = Array.from(fileList || []).filter((f) => f && f.type && f.type.startsWith('image/'))
+  for (const file of files) {
+    if (pendingImages.value.length >= MAX_IMAGES) break
+    if (file.size > MAX_IMAGE_BYTES) {
+      addMessage({
+        role: 'assistant',
+        content: `Image trop lourde (${file.name}) — max 4 Mo.`,
+        source: 'error',
+      })
+      continue
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      if (dataUrl) pendingImages.value = [...pendingImages.value, dataUrl]
+    } catch (e) {
+      addMessage({
+        role: 'assistant',
+        content: `Impossible de lire ${file.name} : ${e?.message || e}`,
+        source: 'error',
+      })
+    }
+  }
+}
+
+function onPickFiles(ev) {
+  const files = ev?.target?.files
+  if (files?.length) addImageFiles(files)
+  if (ev?.target) ev.target.value = ''
+}
+
+function onPaste(ev) {
+  const items = ev?.clipboardData?.items
+  if (!items) return
+  const files = []
+  for (const item of items) {
+    if (item.type?.startsWith('image/')) {
+      const f = item.getAsFile()
+      if (f) files.push(f)
+    }
+  }
+  if (files.length) {
+    ev.preventDefault()
+    addImageFiles(files)
+  }
+}
+
+function removePendingImage(idx) {
+  pendingImages.value = pendingImages.value.filter((_, i) => i !== idx)
+}
+
+function clearPendingImages() {
+  pendingImages.value = []
+}
+
+const canSend = () =>
+  Boolean(input.value.trim() || pendingImages.value.length) && !loading.value && !proposing.value
+
 
 function loadSel(key, fallback) {
   try {
@@ -115,18 +188,21 @@ watch(mentionInsert, (v) => {
 })
 
 const send = async () => {
-  if (!input.value.trim() || loading.value || proposing.value) return
+  if (!canSend()) return
 
   const userMsg = input.value
+  const images = [...pendingImages.value]
   const agent = resolveAgentForPrompt(selectedAgent.value, userMsg)
   if (agent === 'team' && selectedAgent.value === 'auto') {
     selectedAgent.value = 'team'
   }
-  addUserMessage(userMsg)
+  const displayText = userMsg.trim() || (images.length ? '(image jointe)' : '')
+  addUserMessage(displayText, { images })
   input.value = ''
+  clearPendingImages()
 
   // Interaction : « réalise les points » → agir / enchaîner, pas un nouveau pavé
-  if (isRealizeRequest(userMsg)) {
+  if (!images.length && isRealizeRequest(userMsg)) {
     const suggestions = suggestionsFromHistory(messages.value)
     if (suggestions.length) {
       loading.value = true
@@ -153,15 +229,23 @@ const send = async () => {
   }
 
   loading.value = true
-  startActivity('Compagnon · réponse', ['ask', agent !== 'auto' ? agent : 'auto'].filter(Boolean))
-  activityLog(`POST /ask · agent=${agent} · profile=${selectedProfile.value}`)
-  activityPhase('running', 'Appel modèle…')
+  startActivity(
+    images.length ? 'Compagnon · vision' : 'Compagnon · réponse',
+    [images.length ? 'vision' : 'ask', agent !== 'auto' ? agent : 'auto'].filter(Boolean)
+  )
+  activityLog(
+    images.length
+      ? `POST /vision-ask · ${images.length} image(s) · profile=${selectedProfile.value}`
+      : `POST /ask · agent=${agent} · profile=${selectedProfile.value}`
+  )
+  activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle…')
   try {
     const backendResponse = await sendPrompt(userMsg, {
       agent,
       model: selectedModel.value,
       profile: selectedProfile.value,
       mode: 'auto',
+      images,
     })
     const lat = backendResponse?.latency
     activityLog(
@@ -303,9 +387,15 @@ const propose = async () => {
   }
 }
 
-/** Pilotage bar · ask → envoi direct (comme une commande). */
+const paletteRef = ref(null)
+
+/** Pilotage bar · ask → envoi direct ou ouverture palette si vide. */
 function onPilotageAsk(prompt) {
-  if (!prompt || loading.value || proposing.value) return
+  if (!prompt) {
+    paletteRef.value?.openPalette()
+    return
+  }
+  if (loading.value || proposing.value) return
   input.value = String(prompt)
   send()
 }
@@ -313,73 +403,126 @@ function onPilotageAsk(prompt) {
 
 <template>
   <div
-    class="fixed bottom-0 right-0 p-4 sm:p-8 flex justify-center bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent z-10 transition-all duration-300"
+    class="fixed bottom-0 right-0 p-3 sm:p-6 flex justify-center bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent z-20 transition-all duration-300 pointer-events-none"
     :class="offsetClass"
   >
-    <div class="w-full max-w-4xl glass-card rounded-3xl p-2.5 shadow-2xl border-white/20 flex flex-col gap-2">
+    <div class="w-full max-w-4xl glass-card rounded-3xl p-3 shadow-2xl border border-white/15 flex flex-col gap-2 pointer-events-auto backdrop-blur-2xl">
       <PilotageBar @ask="onPilotageAsk" />
-      <PilotagePalette @ask="onPilotageAsk" />
+      <PilotagePalette ref="paletteRef" @ask="onPilotageAsk" />
 
-      <div class="flex flex-wrap items-center gap-2 px-2 pt-0.5">
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
+      <!-- Sélecteurs compacts -->
+      <div class="flex flex-wrap items-center gap-2 px-1 pt-0.5 text-xs">
+        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
           Agent
           <select
             v-model="selectedAgent"
-            class="bg-slate-900/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/40"
+            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
           >
             <option v-for="o in agentOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </label>
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
+        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
           Mode
           <select
             v-model="selectedModel"
-            class="bg-slate-900/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/40"
+            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
           >
             <option v-for="o in modelOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </label>
-        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
+        <label class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
           Persona
           <select
             v-model="selectedProfile"
-            class="bg-slate-900/80 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/40"
+            class="bg-slate-900/90 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500/50 cursor-pointer"
           >
             <option v-for="o in profileOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
         </label>
       </div>
 
-      <div class="flex items-end gap-2 sm:gap-3">
+      <!-- Aperçus images jointes -->
+      <div v-if="pendingImages.length" class="flex flex-wrap items-center gap-2 px-1">
+        <div
+          v-for="(src, idx) in pendingImages"
+          :key="idx"
+          class="relative"
+        >
+          <img
+            :src="src"
+            alt="À envoyer"
+            class="h-14 w-14 rounded-xl object-cover border border-white/15 shadow"
+          />
+          <button
+            type="button"
+            class="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-slate-900 border border-white/20 text-[10px] text-slate-200 hover:bg-rose-600/80 cursor-pointer"
+            title="Retirer"
+            @click="removePendingImage(idx)"
+          >×</button>
+        </div>
+        <button
+          type="button"
+          class="text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-300 cursor-pointer"
+          @click="clearPendingImages"
+        >Tout retirer</button>
+      </div>
+
+      <!-- Zone de texte et actions -->
+      <div class="flex items-end gap-2 sm:gap-3 bg-slate-950/40 rounded-2xl p-1.5 border border-white/5 focus-within:border-white/15 transition-colors">
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept="image/*"
+          multiple
+          class="hidden"
+          @change="onPickFiles"
+        />
+        <button
+          type="button"
+          title="Joindre une image (analyse vision)"
+          class="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 hover:border-emerald-500/40 disabled:opacity-30 transition-all cursor-pointer"
+          :disabled="loading || proposing || pendingImages.length >= MAX_IMAGES"
+          @click="fileInputRef?.click()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
         <textarea
           v-model="input"
           rows="1"
-          class="flex-1 bg-transparent border-none focus:ring-0 text-slate-100 placeholder-slate-500 text-sm py-3 px-4 resize-none overflow-hidden max-h-48 scrollbar-custom"
-          placeholder="Parle au Compagnon… ou Agir pour une action poste"
+          class="flex-1 bg-transparent border-none focus:ring-0 text-slate-100 placeholder-slate-500 text-sm py-2 px-3 resize-none overflow-hidden max-h-48 scrollbar-custom"
+          placeholder="Échanger… colle ou joins une image"
           @keydown.enter.exact.prevent="send"
+          @paste="onPaste"
           @input="$event.target.style.height = 'auto'; $event.target.style.height = $event.target.scrollHeight + 'px'"
         />
 
         <button
           type="button"
-          title="Proposer une action (dry-run / réel ensuite)"
+          title="Proposer une action sous validation (dry-run puis réel)"
           @click="propose"
           :disabled="!input.trim() || loading || proposing"
-          class="h-10 px-3 flex-shrink-0 flex items-center justify-center rounded-2xl border border-cyan-500/40 text-cyan-200 text-[11px] font-bold uppercase tracking-wider hover:bg-cyan-500/15 disabled:opacity-30 disabled:grayscale transition-all active:scale-95"
+          class="h-9 px-3 flex-shrink-0 flex items-center justify-center rounded-xl border border-cyan-500/40 text-cyan-300 text-[11px] font-bold uppercase tracking-wider hover:bg-cyan-500/15 disabled:opacity-30 disabled:grayscale transition-all active:scale-95 cursor-pointer"
         >
-          {{ proposing ? '…' : 'Agir' }}
+          <span v-if="!proposing">Agir</span>
+          <svg v-else class="animate-spin h-3.5 w-3.5 text-cyan-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
         </button>
 
         <button
           type="button"
           @click="send"
-          :disabled="!input.trim() || loading || proposing"
-          class="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-2xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 disabled:grayscale transition-all shadow-lg active:scale-90"
+          :disabled="!canSend()"
+          class="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:grayscale transition-all shadow-md active:scale-90 cursor-pointer"
+          title="Envoyer (Entrée)"
         >
-          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-900" viewBox="0 0 20 20" fill="currentColor">
+          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
           </svg>
-          <svg v-else class="animate-spin h-5 w-5 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg v-else class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>

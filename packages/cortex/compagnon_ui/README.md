@@ -35,3 +35,7 @@ Fenêtre app Edge/Chrome (`--app=`) vers `:5174` — épingler à la barre des t
 
 Profils envoyés à `POST /ask` : `compagnon` (défaut), `jarvis`, `mother`, `kit`, `hal`, …
 Côté API Orch : overlay `server_overlay/router_prompts.py` (greffe sur le backend `.100`).
+
+## Vision (analyse d'images)
+
+Joindre ou coller une image dans le chat → `POST /api/pilot/vision-ask` (Cortex Pilot `.140`) → Ollama `.110` (`LBG_VISION_LLM_MODEL`, défaut `llava:latest`). Max 3 images, 4 Mo chacune. Le 27B abliterated reste dispo en override mais est trop lent pour la vision CPU.

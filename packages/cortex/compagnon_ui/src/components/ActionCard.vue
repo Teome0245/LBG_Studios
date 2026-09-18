@@ -146,60 +146,69 @@ async function runNext(step) {
 </script>
 
 <template>
-  <div class="mt-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-3 space-y-3">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <p class="text-[11px] uppercase tracking-widest font-bold text-cyan-300">Agir · proposition</p>
+  <div class="mt-4 rounded-2xl border border-cyan-500/25 bg-slate-900/90 backdrop-blur-xl p-4 space-y-3.5 shadow-xl shadow-black/30">
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2.5">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+        <p class="text-[11px] uppercase tracking-widest font-bold text-cyan-300">Agir · proposition</p>
+      </div>
       <div class="flex flex-wrap gap-1.5 text-[10px] font-mono text-slate-400">
-        <span class="px-1.5 py-0.5 rounded border border-cyan-500/30 text-cyan-200/90">{{ capability }}</span>
-        <span v-if="actionKind" class="px-1.5 py-0.5 rounded border border-white/10">{{ actionKind }}</span>
-        <span v-if="risk" class="px-1.5 py-0.5 rounded border border-amber-500/30 text-amber-200/90">{{ risk }}</span>
+        <span class="px-2 py-0.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 text-cyan-200">{{ capability }}</span>
+        <span v-if="actionKind" class="px-2 py-0.5 rounded-md border border-white/10 bg-white/5">{{ actionKind }}</span>
+        <span v-if="risk" class="px-2 py-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 text-amber-200">{{ risk }}</span>
       </div>
     </div>
 
-    <p class="text-sm text-slate-100 leading-snug">{{ summary }}</p>
-    <p v-if="routedTo" class="text-[11px] text-slate-500 font-mono">→ {{ routedTo }}</p>
-    <p v-if="requiresReview" class="text-[11px] text-amber-300/90">
-      Revue L2 — Dry-run sans jeton ; Réel exige le jeton desktop.
+    <p class="text-sm text-slate-100 font-medium leading-relaxed">{{ summary }}</p>
+    <p v-if="routedTo" class="text-[11px] text-slate-400 font-mono">Cible : {{ routedTo }}</p>
+    <p v-if="requiresReview" class="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+      Validation L2 requise — Dry-run sans risque ; Réel exige le jeton desktop.
     </p>
 
-    <label class="block text-[10px] uppercase tracking-wider text-slate-500">
-      Token desktop / devops
-      <span
-        v-if="tokenReady"
-        class="ml-1.5 normal-case tracking-normal text-emerald-400/90 font-semibold"
-      >· enregistré</span>
+    <!-- Token -->
+    <div class="pt-1">
+      <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+        Jeton desktop / devops
+        <span
+          v-if="tokenReady"
+          class="ml-1.5 normal-case tracking-normal text-emerald-400 font-medium"
+        >· mémorisé</span>
+      </label>
       <input
         ref="tokenInput"
         v-model="token"
         type="password"
         autocomplete="off"
-        placeholder="coller une fois — mémorisé (et sync Pilot)"
-        class="mt-1 w-full max-w-xs rounded-lg border border-white/15 bg-slate-950/80 px-2.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/40"
+        placeholder="Coller une fois (synchronisé avec Pilot)"
+        class="w-full max-w-sm rounded-xl border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50"
         @change="persistToken"
       />
-    </label>
+    </div>
 
-    <div class="flex flex-wrap gap-2 items-center">
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-2 items-center pt-1">
       <button
         type="button"
-        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/15 disabled:opacity-40"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold border border-cyan-500/40 text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 disabled:opacity-40 transition-all cursor-pointer active:scale-95"
         :disabled="!!busy"
         @click="run('dry_run')"
       >
-        {{ busy === 'dry_run' ? '…' : 'Dry-run' }}
+        {{ busy === 'dry_run' ? 'Simulation…' : 'Dry-run (simulation)' }}
       </button>
+
       <button
         type="button"
-        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/90 text-slate-950 hover:bg-emerald-400 disabled:opacity-40"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40 transition-all cursor-pointer shadow-md active:scale-95"
         :disabled="!!busy"
         :title="tokenReady ? 'Exécution réelle' : 'Jeton requis'"
         @click="run('real')"
       >
-        {{ busy === 'real' ? '…' : 'Réel' }}
+        {{ busy === 'real' ? 'Exécution…' : 'Réel (exécuter)' }}
       </button>
+
       <button
         type="button"
-        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold border border-white/15 text-slate-400 hover:text-slate-200"
+        class="px-2.5 py-1.5 rounded-xl text-xs font-medium border border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors cursor-pointer"
         @click="showJson = !showJson"
       >
         {{ showJson ? 'Masquer JSON' : 'JSON' }}
@@ -208,38 +217,42 @@ async function runNext(step) {
 
     <pre
       v-if="showJson"
-      class="text-[10px] font-mono text-slate-400 bg-slate-950/60 rounded-xl p-2.5 overflow-x-auto max-h-48 border border-white/10"
+      class="text-[10px] font-mono text-slate-400 bg-slate-950/80 rounded-xl p-3 overflow-x-auto max-h-48 border border-white/10"
     >{{ JSON.stringify(proposal, null, 2) }}</pre>
 
     <p
       v-if="lastError"
-      class="text-[11px] font-mono text-red-400"
+      class="text-xs font-mono text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl p-2.5"
     >{{ lastError }}</p>
     <p
       v-else-if="lastResult"
-      class="text-[11px] font-mono"
-      :class="lastResult.ok ? 'text-emerald-400' : 'text-amber-300'"
+      class="text-xs font-mono rounded-xl p-2.5 border"
+      :class="lastResult.ok ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'"
     >{{ lastResult.text }}</p>
 
-    <div v-if="nextSteps.length" class="pt-1 border-t border-white/10 space-y-1.5">
-      <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Suite — pilotage</p>
-      <div class="flex flex-wrap gap-1.5">
+    <!-- Suite après agir -->
+    <div v-if="nextSteps.length" class="pt-2 border-t border-white/10 space-y-2">
+      <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400">Suite suggérée</p>
+      <div class="flex flex-wrap gap-2">
         <button
           v-for="s in nextSteps"
           :key="s.id"
           type="button"
-          class="text-[11px] px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20 disabled:opacity-40"
+          class="text-xs px-3 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20 transition-all cursor-pointer disabled:opacity-40"
           :disabled="!!nextBusy || !!busy"
           @click="runNext(s)"
         >
           {{ nextBusy === s.id ? '…' : s.label }}
         </button>
         <a
-          class="text-[11px] px-2.5 py-1 rounded-lg border border-white/15 text-slate-400 hover:text-slate-200"
+          class="text-xs px-3 py-1 rounded-xl border border-white/15 text-slate-300 hover:text-white hover:bg-white/5 transition-colors inline-flex items-center gap-1"
           :href="PILOT_LINKS.jobs"
           target="_blank"
           rel="noopener noreferrer"
-        >Pilot Jobs ↗</a>
+        >
+          <span>Pilot Jobs</span>
+          <span class="text-[10px] opacity-60">↗</span>
+        </a>
       </div>
     </div>
   </div>

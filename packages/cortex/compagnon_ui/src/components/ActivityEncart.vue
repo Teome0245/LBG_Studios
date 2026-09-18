@@ -24,9 +24,9 @@ const quickNext = computed(() => {
 })
 
 function lineClass(level) {
-  if (level === 'ok') return 'text-emerald-400/90'
-  if (level === 'warn') return 'text-amber-300/90'
-  if (level === 'err') return 'text-red-400/90'
+  if (level === 'ok') return 'text-emerald-400'
+  if (level === 'warn') return 'text-amber-300'
+  if (level === 'err') return 'text-rose-400'
   return 'text-slate-400'
 }
 
@@ -80,194 +80,88 @@ async function runQuick(a) {
 <template>
   <div
     v-if="current"
-    class="activity-encart"
+    class="my-3 max-w-2xl rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-3 shadow-lg shadow-black/40 text-xs animate-slide-up"
     :data-phase="current.phase"
   >
-    <button
-      type="button"
-      class="activity-head"
-      @click="toggleActivityOpen"
-    >
-      <span class="activity-chevron" :class="{ closed: !current.open }">▾</span>
-      <span class="activity-title">{{ current.title }}</span>
-      <span
-        v-for="t in current.tools"
-        :key="t"
-        class="activity-tool"
-      >{{ t }}</span>
-      <span class="activity-spacer" />
+    <!-- En-tête activité -->
+    <div class="flex items-center justify-between gap-2">
       <button
         type="button"
-        class="activity-menu"
-        title="Masquer"
-        @click.stop="clearActivity"
-      >···</button>
-    </button>
+        class="flex items-center gap-2 text-left cursor-pointer hover:text-white transition-colors min-w-0"
+        @click="toggleActivityOpen"
+      >
+        <span class="text-slate-500 font-mono text-[10px] transition-transform duration-150" :class="{ '-rotate-90': !current.open }">▾</span>
+        <span class="font-bold text-slate-200 truncate">{{ current.title }}</span>
+        <div class="hidden sm:flex items-center gap-1">
+          <span
+            v-for="t in current.tools"
+            :key="t"
+            class="text-[9px] font-mono text-slate-400 px-1.5 py-0.2 rounded border border-white/10 bg-white/5"
+          >{{ t }}</span>
+        </div>
+      </button>
 
-    <div v-if="current.open" class="activity-body">
-      <pre class="activity-log"><code
+      <button
+        type="button"
+        class="text-slate-500 hover:text-slate-300 px-1.5 py-0.5 rounded text-[11px] cursor-pointer"
+        title="Masquer"
+        @click="clearActivity"
+      >Masquer</button>
+    </div>
+
+    <!-- Journal de bord de l'activité -->
+    <div v-if="current.open" class="mt-2.5 rounded-xl border border-white/5 bg-slate-950/80 p-2.5 max-h-36 overflow-y-auto scrollbar-custom font-mono text-[11px] leading-relaxed">
+      <div
         v-for="(line, i) in current.lines"
         :key="i"
         :class="lineClass(line.level)"
-      >{{ line.text }}{{ '\n' }}</code></pre>
+        class="break-all whitespace-pre-wrap"
+      >
+        {{ line.text }}
+      </div>
     </div>
 
-    <p
-      class="activity-phase"
-      :class="{
-        'is-run': current.phase === 'running' || current.phase === 'planning',
-        'is-ok': current.phase === 'done',
-        'is-err': current.phase === 'error',
-      }"
-    >
-      <span v-if="current.phase === 'running' || current.phase === 'planning'" class="activity-pulse" />
-      {{ current.phaseLabel }}
-    </p>
+    <!-- Phase / état actif -->
+    <div class="mt-2 flex items-center justify-between gap-2 text-[11px]">
+      <div class="flex items-center gap-2">
+        <span
+          v-if="current.phase === 'running' || current.phase === 'planning'"
+          class="h-2 w-2 rounded-full bg-cyan-400 animate-pulse-soft"
+        />
+        <span
+          v-else-if="current.phase === 'done'"
+          class="h-2 w-2 rounded-full bg-emerald-400"
+        />
+        <span
+          v-else-if="current.phase === 'error'"
+          class="h-2 w-2 rounded-full bg-rose-400"
+        />
+        <span
+          class="font-medium"
+          :class="{
+            'text-cyan-300': current.phase === 'running' || current.phase === 'planning',
+            'text-emerald-400': current.phase === 'done',
+            'text-rose-400': current.phase === 'error',
+            'text-slate-400': !['running', 'planning', 'done', 'error'].includes(current.phase)
+          }"
+        >
+          {{ current.phaseLabel }}
+        </span>
+      </div>
 
-    <div v-if="quickNext.length" class="activity-next">
-      <button
-        v-for="a in quickNext"
-        :key="a.id"
-        type="button"
-        class="activity-next-btn"
-        :disabled="!!nextBusy"
-        @click="runQuick(a)"
-      >
-        {{ nextBusy === a.id ? '…' : a.label }}
-      </button>
+      <!-- Actions de suite (quickNext) -->
+      <div v-if="quickNext.length" class="flex items-center gap-1.5 flex-wrap">
+        <button
+          v-for="a in quickNext"
+          :key="a.id"
+          type="button"
+          class="px-2 py-0.5 rounded-lg text-[10px] font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all cursor-pointer disabled:opacity-40"
+          :disabled="!!nextBusy"
+          @click="runQuick(a)"
+        >
+          {{ nextBusy === a.id ? '…' : a.label }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.activity-encart {
-  margin: 0.75rem 0 0.25rem;
-  max-width: 40rem;
-}
-.activity-head {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0.15rem 0.1rem;
-  background: transparent;
-  border: none;
-  color: #cbd5e1;
-  cursor: pointer;
-  font-size: 0.78rem;
-  text-align: left;
-}
-.activity-chevron {
-  color: #64748b;
-  font-size: 0.7rem;
-  transition: transform 0.15s ease;
-}
-.activity-chevron.closed {
-  transform: rotate(-90deg);
-}
-.activity-title {
-  font-weight: 600;
-  color: #e2e8f0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.activity-tool {
-  font-size: 0.62rem;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.3rem;
-  padding: 0.05rem 0.3rem;
-}
-.activity-spacer {
-  flex: 1;
-}
-.activity-menu {
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-  padding: 0 0.25rem;
-}
-.activity-menu:hover {
-  color: #94a3b8;
-}
-.activity-body {
-  margin-top: 0.25rem;
-  border-radius: 0.65rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgb(15 23 42 / 0.72);
-  padding: 0.55rem 0.75rem;
-  max-height: 9.5rem;
-  overflow: auto;
-}
-.activity-log {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.68rem;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.activity-phase {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0.4rem 0 0;
-  font-size: 0.72rem;
-  color: #64748b;
-}
-.activity-phase.is-run {
-  color: #94a3b8;
-}
-.activity-phase.is-ok {
-  color: #34d399;
-}
-.activity-phase.is-err {
-  color: #f87171;
-}
-.activity-pulse {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-radius: 50%;
-  background: #38bdf8;
-  box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.5);
-  animation: act-pulse 1.2s ease-out infinite;
-}
-@keyframes act-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.45);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
-  }
-}
-.activity-next {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.45rem;
-}
-.activity-next-btn {
-  font-size: 0.68rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 0.45rem;
-  border: 1px solid rgba(45, 212, 191, 0.3);
-  background: rgb(45 212 191 / 0.08);
-  color: #99f6e4;
-  cursor: pointer;
-}
-.activity-next-btn:hover:not(:disabled) {
-  background: rgb(45 212 191 / 0.16);
-}
-.activity-next-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-</style>

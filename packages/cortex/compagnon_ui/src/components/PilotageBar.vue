@@ -69,87 +69,38 @@ function onClick(action) {
 </script>
 
 <template>
-  <div class="pilotage-bar" role="toolbar" aria-label="Pilotage studio">
-    <span class="pilotage-label">Pilotage</span>
+  <div class="flex flex-wrap items-center gap-1.5 px-2 py-1 border-b border-white/5" role="toolbar" aria-label="Pilotage studio">
+    <span class="text-[9px] font-bold tracking-widest uppercase text-slate-400 mr-1 select-none">
+      Actions rapides
+    </span>
+
     <button
       v-for="a in PILOTAGE_BAR"
       :key="a.id"
       type="button"
-      class="pilotage-btn"
-      :class="{ 'is-link': a.kind === 'link', 'is-ask': a.kind === 'ask' }"
+      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/30 transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+      :class="{
+        'hover:border-teal-400/40': a.kind === 'link',
+        'hover:border-amber-400/40': a.kind === 'ask'
+      }"
       :disabled="!!busy"
       :title="a.hint || a.label"
       @click="onClick(a)"
     >
-      <span class="pilotage-btn-title">{{ busy === a.id ? '…' : a.label }}</span>
-      <span v-if="a.hint" class="pilotage-btn-hint">{{ a.hint }}</span>
+      <span class="text-[11px] font-semibold">{{ busy === a.id ? '…' : a.label }}</span>
+      <span v-if="a.hint" class="text-[9px] font-mono text-slate-400 opacity-75 hidden md:inline">{{ a.hint }}</span>
     </button>
-    <span class="pilotage-hint-kbd" title="Palette de commandes">Ctrl+K</span>
+
+    <div class="flex-1"></div>
+
+    <button
+      type="button"
+      class="inline-flex items-center gap-1 text-[10px] font-mono text-slate-400 hover:text-slate-200 bg-slate-900/60 border border-white/10 rounded-md px-2 py-0.5 cursor-pointer hover:border-white/20 transition-colors"
+      title="Ouvrir la palette de commandes (Ctrl+K)"
+      @click="$emit('ask', '')"
+    >
+      <span>Palette</span>
+      <kbd class="text-[9px] bg-white/5 px-1 py-0.2 rounded border border-white/10">⌘K</kbd>
+    </button>
   </div>
 </template>
-
-<style scoped>
-.pilotage-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.35rem 0.35rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  margin-bottom: 0.15rem;
-}
-.pilotage-label {
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #5eead4;
-  margin-right: 0.25rem;
-}
-.pilotage-btn {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.05rem;
-  padding: 0.28rem 0.55rem;
-  border-radius: 0.55rem;
-  border: 1px solid rgba(45, 212, 191, 0.28);
-  background: rgb(15 23 42 / 0.65);
-  color: #e2e8f0;
-  cursor: pointer;
-  text-align: left;
-}
-.pilotage-btn:hover:not(:disabled) {
-  border-color: rgba(45, 212, 191, 0.55);
-  background: rgb(45 212 191 / 0.1);
-}
-.pilotage-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-.pilotage-btn.is-link {
-  border-color: rgba(148, 163, 184, 0.25);
-}
-.pilotage-btn.is-ask {
-  border-color: rgba(251, 191, 36, 0.3);
-}
-.pilotage-btn-title {
-  font-size: 0.68rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.pilotage-btn-hint {
-  font-size: 0.55rem;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-}
-.pilotage-hint-kbd {
-  margin-left: auto;
-  font-size: 0.55rem;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.3rem;
-  padding: 0.12rem 0.35rem;
-}
-</style>

@@ -7,7 +7,7 @@ import FollowupChips from './FollowupChips.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
 
-const { messages, loadHistory } = useChat()
+const { messages, loadHistory, queuePrompt } = useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
 
@@ -48,11 +48,12 @@ const visibleMessages = computed(() => {
 
 function aiLabel(msg) {
   const src = (msg.source || '').toLowerCase()
-  if (src === 'agir') return 'AI · Agir'
-  if (src === 'initiative') return 'AI · Initiative'
-  if (src.startsWith('team') || src.includes('campus')) return 'AI · Team'
-  if (src.includes('cursor')) return 'AI · Cursor'
-  if (src.includes('desktop')) return 'AI · Desktop'
+  if (src === 'agir') return 'Compagnon · Agir'
+  if (src === 'vision') return 'Compagnon · Vision'
+  if (src === 'initiative') return 'Compagnon · Initiative'
+  if (src.startsWith('team') || src.includes('campus')) return 'Team Ops'
+  if (src.includes('cursor')) return 'Cursor Agent'
+  if (src.includes('desktop')) return 'Agent Poste'
   if (src && src !== 'assistant' && src !== 'memory' && src !== 'user') return `AI · ${msg.source}`
   return 'Compagnon'
 }
@@ -82,7 +83,7 @@ const parseContent = (content) => {
 
 function stepStatusClass(status) {
   if (status === 'ok') return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10'
-  if (status === 'error') return 'text-red-400 border-red-500/30 bg-red-500/10'
+  if (status === 'error') return 'text-rose-400 border-rose-500/30 bg-rose-500/10'
   return 'text-slate-400 border-white/10 bg-white/5'
 }
 
@@ -93,25 +94,111 @@ function displayContent(msg) {
   }
   return c
 }
+
+function onQuickPrompt(text) {
+  if (!text) return
+  queuePrompt(text)
+  try {
+    window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
+  } catch {
+    /* ignore */
+  }
+}
+
+function triggerCtrlK() {
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+}
 </script>
 
 <template>
-  <div class="flex-1 overflow-y-auto scrollbar-custom p-6" ref="scrollRef">
-    <div class="max-w-4xl mx-auto space-y-10 pb-40">
+  <div class="flex-1 overflow-y-auto scrollbar-custom p-4 sm:p-6" ref="scrollRef">
+    <div class="max-w-4xl mx-auto space-y-6 pb-48">
 
-      <ChatBreadcrumbs v-model="viewFilter" :counts="crumbCounts" />
+      <ChatBreadcrumbs v-if="messages.length > 0" v-model="viewFilter" :counts="crumbCounts" />
 
-      <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-center py-20 opacity-50 font-outfit">
-        <div class="h-20 w-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-2xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-          </svg>
+      <!-- Empty state chaleureux : les 30 premières secondes sentent un compagnon -->
+      <div v-if="messages.length === 0" class="flex flex-col items-center justify-center text-center py-12 sm:py-20 animate-slide-up">
+        <div class="relative mb-5">
+          <div class="h-20 w-20 rounded-3xl bg-gradient-to-tr from-emerald-500/20 via-teal-500/15 to-sky-500/10 border border-white/15 flex items-center justify-center shadow-2xl overflow-hidden ring-1 ring-white/10">
+            <img src="/assets/icons/256/orchestrateur_happy.png" alt="Compagnon" class="w-16 h-16 object-contain" />
+          </div>
+          <span class="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-slate-900 border-2 border-slate-950 flex items-center justify-center">
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse-soft"></span>
+          </span>
         </div>
-        <h2 class="text-2xl font-bold text-white mb-2">Compagnon</h2>
-        <p class="text-sm max-w-md mx-auto">
-          Présent pour dialoguer, concevoir et agir sous ton contrôle.
-          Team, Jobs et Desktop restent dans Pilot quand tu veux le cockpit ops.
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold font-outfit text-white tracking-tight mb-2">
+          Compagnon Studio
+        </h1>
+        <p class="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed mb-8">
+          Présent pour dialoguer, concevoir et agir sur le poste sous ton contrôle (L2).
+          Pour le cockpit technique lourd, retrouve Team et Jobs dans Pilot.
         </p>
+
+        <!-- Suggestions de démarrage rapide -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl text-left">
+          <button
+            type="button"
+            class="glass-card p-3.5 rounded-2xl hover:border-emerald-500/40 hover:bg-emerald-500/10 transition-all flex items-start gap-3 text-left group"
+            @click="onQuickPrompt('Fais un diagnostic infra selfcheck du LAN')"
+          >
+            <div class="h-8 w-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0 group-hover:scale-105 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">Sonde infrastructure LAN</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Vérifie l'état des services et agents</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="glass-card p-3.5 rounded-2xl hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all flex items-start gap-3 text-left group"
+            @click="onQuickPrompt('Ouvre notepadpp sur mon poste')"
+          >
+            <div class="h-8 w-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300 shrink-0 group-hover:scale-105 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-cyan-300 transition-colors">Action poste (.10)</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Agir : ouvrir une application sous validation</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="glass-card p-3.5 rounded-2xl hover:border-amber-500/40 hover:bg-amber-500/10 transition-all flex items-start gap-3 text-left group"
+            @click="onQuickPrompt('Résume nos priorités actuelles dans le projet LBG_Studios')"
+          >
+            <div class="h-8 w-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0 group-hover:scale-105 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">Concevoir & échanger</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Discuter de l'architecture ou des jalons</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            class="glass-card p-3.5 rounded-2xl hover:border-violet-500/40 hover:bg-violet-500/10 transition-all flex items-start gap-3 text-left group"
+            @click="triggerCtrlK"
+          >
+            <div class="h-8 w-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 shrink-0 group-hover:scale-105 transition-transform">
+              <span class="text-[10px] font-mono font-bold">⌘K</span>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-100 group-hover:text-violet-300 transition-colors">Palette de pilotage</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Accès rapide aux commandes et raccourcis</p>
+            </div>
+          </button>
+        </div>
       </div>
 
       <div
@@ -121,36 +208,38 @@ function displayContent(msg) {
         Aucun message pour ce filtre.
       </div>
 
+      <!-- Fil de discussion -->
       <div
         v-for="(msg, index) in visibleMessages"
         :key="index"
         :class="[
-          'flex animate-slide-up w-full gap-4 px-2',
+          'flex animate-slide-up w-full gap-3.5 px-1',
           msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
         ]"
       >
-        <div class="h-10 w-10 rounded-xl flex-shrink-0 flex items-center justify-center border border-white/20 font-bold overflow-hidden shadow-lg bg-slate-900 ring-1 ring-white/10">
-          <img v-if="msg.role === 'user'" src="https://ui-avatars.com/api/?name=U&background=10b981&color=fff" alt="User" />
-          <img v-else src="/assets/icons/256/orchestrateur_happy.png" alt="AI" class="w-full h-full object-cover" />
+        <div class="h-9 w-9 rounded-2xl flex-shrink-0 flex items-center justify-center border border-white/15 overflow-hidden shadow-md bg-slate-900 ring-1 ring-white/10 mt-1">
+          <img v-if="msg.role === 'user'" src="https://ui-avatars.com/api/?name=U&background=047857&color=fff" alt="User" class="w-full h-full object-cover" />
+          <img v-else src="/assets/icons/256/orchestrateur_happy.png" alt="Compagnon" class="w-full h-full object-cover" />
         </div>
 
         <div
           :class="[
-            'flex flex-col gap-1.5 max-w-[85%] sm:max-w-[80%]',
+            'flex flex-col gap-1 max-w-[88%] sm:max-w-[82%]',
             msg.role === 'user' ? 'items-end' : 'items-start'
           ]"
         >
           <div
             :class="[
-              'text-base md:text-lg leading-relaxed p-5 rounded-3xl shadow-xl border backdrop-blur-md',
+              'text-[14px] sm:text-[15px] leading-relaxed p-4 sm:p-5 rounded-2xl shadow-lg border backdrop-blur-md',
               msg.role === 'user'
-                ? 'bg-emerald-500/20 border-emerald-500/40 text-slate-50 rounded-tr-none'
-                : 'bg-white/10 border-white/20 text-slate-50 rounded-tl-none'
+                ? 'bg-emerald-950/40 border-emerald-500/30 text-slate-100 rounded-tr-none shadow-emerald-950/20'
+                : 'glass-card text-slate-100 rounded-tl-none'
             ]"
           >
+            <!-- Timeline (pliée/synthétique) -->
             <div
               v-if="msg.role === 'assistant' && msg.timeline?.length"
-              class="mb-4 pb-4 border-b border-white/10"
+              class="mb-3.5 pb-3.5 border-b border-white/10"
               :class="viewFilter === 'timeline' ? 'ring-1 ring-cyan-500/20 rounded-xl p-2 -m-1' : ''"
             >
               <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">
@@ -163,47 +252,61 @@ function displayContent(msg) {
                   class="flex flex-wrap items-baseline gap-2 text-xs"
                 >
                   <span
-                    class="font-mono px-1.5 py-0.5 rounded border shrink-0"
+                    class="font-mono px-1.5 py-0.5 rounded border shrink-0 text-[10px]"
                     :class="stepStatusClass(step.status)"
                   >{{ step.kind }}</span>
                   <span class="text-slate-200 font-medium">{{ step.label }}</span>
                   <span v-if="step.detail" class="text-slate-500 break-all">{{ step.detail }}</span>
-                  <span v-if="step.ms != null" class="text-slate-600 font-mono">{{ Math.round(step.ms) }}ms</span>
+                  <span v-if="step.ms != null" class="text-slate-500 font-mono text-[10px]">{{ Math.round(step.ms) }}ms</span>
                 </li>
               </ol>
             </div>
 
+            <!-- Réflexion adoucie -->
             <div
               v-if="msg.role === 'assistant' && msg.reflection && viewFilter !== 'timeline'"
-              class="mb-3 text-[11px] text-slate-400 flex flex-wrap gap-2 items-center"
+              class="mb-3 text-[11px] text-slate-400 flex flex-wrap gap-2 items-center bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5"
             >
-              <span class="uppercase tracking-widest font-bold text-cyan-400/90">Réflexion</span>
+              <span class="uppercase tracking-widest font-bold text-cyan-400 text-[9px]">Réflexion</span>
               <span class="font-mono text-slate-300">{{ msg.reflection.action }}</span>
               <span class="text-slate-600">·</span>
-              <span>{{ msg.reflection.reason }}</span>
-              <span v-if="msg.reflection.source" class="font-mono text-slate-500">({{ msg.reflection.source }})</span>
+              <span class="text-slate-300">{{ msg.reflection.reason }}</span>
+              <span v-if="msg.reflection.source" class="font-mono text-slate-500 text-[10px]">({{ msg.reflection.source }})</span>
             </div>
 
+            <!-- Cursor Agent info -->
             <div
               v-if="msg.role === 'assistant' && msg.cursor?.agent_url && viewFilter !== 'timeline'"
-              class="mb-3 text-xs rounded-lg border border-violet-500/25 bg-violet-500/10 px-3 py-2"
+              class="mb-3 text-xs rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-2"
             >
-              <span class="text-violet-300 font-semibold">Cursor Agent</span>
-              <span class="text-slate-500 mx-1.5">·</span>
-              <span class="font-mono text-slate-400">{{ msg.cursor.status || '…' }}</span>
+              <div class="flex items-center gap-1.5 text-violet-300 font-semibold">
+                <span>Cursor Agent</span>
+                <span class="text-slate-500">·</span>
+                <span class="font-mono text-slate-400 text-xs">{{ msg.cursor.status || 'actif' }}</span>
+              </div>
               <a
                 :href="msg.cursor.agent_url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="block mt-1 text-violet-300 hover:text-violet-200 underline underline-offset-2 break-all"
+                class="block mt-1 text-violet-300 hover:text-violet-200 underline underline-offset-2 break-all text-xs"
               >{{ msg.cursor.agent_url }}</a>
             </div>
 
-            <div v-if="viewFilter !== 'timeline'" class="space-y-4">
+            <!-- Contenu textuel et multimédia -->
+            <div v-if="viewFilter !== 'timeline'" class="space-y-3">
+              <div v-if="msg.images?.length" class="flex flex-wrap gap-2 mb-1" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+                <img
+                  v-for="(src, ii) in msg.images"
+                  :key="ii"
+                  :src="src.startsWith('data:') ? src : `data:image/jpeg;base64,${src}`"
+                  alt="Pièce jointe"
+                  class="max-h-40 max-w-[220px] rounded-xl border border-white/15 object-cover shadow-md"
+                />
+              </div>
               <template v-for="(part, pIndex) in parseContent(displayContent(msg))" :key="pIndex">
-                <div v-if="part.type === 'text'" class="whitespace-pre-wrap">{{ part.value }}</div>
+                <div v-if="part.type === 'text'" class="whitespace-pre-wrap leading-relaxed">{{ part.value }}</div>
                 <div v-else-if="part.type === 'image'" class="my-2">
-                  <img :src="part.url" :alt="part.alt" class="max-w-full rounded-xl border border-white/10 shadow-lg hover:scale-[1.02] transition-transform cursor-zoom-in" />
+                  <img :src="part.url" :alt="part.alt" class="max-w-full rounded-xl border border-white/10 shadow-lg hover:scale-[1.01] transition-transform cursor-zoom-in" />
                 </div>
               </template>
             </div>
@@ -224,30 +327,31 @@ function displayContent(msg) {
               :followup="msg.followup"
             />
 
+            <!-- Pied de message : modèle et latence discrets -->
             <div
               v-if="msg.role === 'assistant' && viewFilter !== 'timeline' && (msg.model || msg.latency || msg.provider)"
-              class="mt-5 pt-4 border-t border-white/10 flex flex-wrap items-center gap-3"
+              class="mt-3.5 pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-2 text-[10px]"
             >
-              <div v-if="msg.model" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/10">
-                <span class="text-[10px] uppercase font-black text-emerald-400 tracking-widest">Model</span>
-                <span class="text-xs font-bold text-slate-100">{{ msg.model }}</span>
+              <div v-if="msg.model" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 font-mono">
+                <span class="uppercase font-bold text-emerald-400">Modèle</span>
+                <span>{{ msg.model }}</span>
               </div>
-              <div v-if="msg.provider" class="text-[10px] uppercase font-bold text-slate-500 tracking-widest">
+              <div v-if="msg.provider" class="text-slate-400 uppercase font-semibold">
                 {{ msg.provider }}
               </div>
-              <div v-if="msg.latency" class="text-xs text-slate-400 font-mono font-bold">
+              <div v-if="msg.latency" class="text-slate-500 font-mono">
                 {{ Number(msg.latency).toFixed(2) }}s
               </div>
             </div>
           </div>
 
-          <span class="text-[11px] text-slate-300 font-black tracking-widest uppercase mt-1 px-2">
-            {{ msg.role === 'user' ? 'Utilisateur' : aiLabel(msg) }}
+          <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase px-2 mt-0.5">
+            {{ msg.role === 'user' ? 'Vous' : aiLabel(msg) }}
           </span>
         </div>
       </div>
 
-      <div class="px-2">
+      <div class="px-1">
         <ActivityEncart />
       </div>
     </div>

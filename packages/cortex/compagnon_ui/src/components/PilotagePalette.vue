@@ -167,173 +167,78 @@ function run(action) {
     runAgir(action)
   }
 }
+
+defineExpose({ openPalette, closePalette })
 </script>
 
 <template>
   <Teleport to="body">
     <div
       v-if="open"
-      class="pal-backdrop"
+      class="fixed inset-0 z-[80] bg-slate-950/60 backdrop-blur-sm flex items-start justify-center p-4 sm:pt-24"
       @click.self="closePalette"
     >
       <div
-        class="pal-modal"
+        class="w-full max-w-xl rounded-2xl border border-white/15 bg-slate-900/95 shadow-2xl shadow-black/80 overflow-hidden backdrop-blur-xl animate-slide-up"
         role="dialog"
         aria-label="Pilotage studio"
       >
-        <div class="pal-input-row">
-          <span class="pal-kbd">⌘K</span>
+        <div class="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
+          <span class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded px-1.5 py-0.5">
+            ⌘K
+          </span>
           <input
             ref="inputEl"
             v-model="query"
             type="text"
-            class="pal-input"
-            placeholder="Pilotage — Agir, ask, Pilot…"
+            class="flex-1 bg-transparent border-none outline-none text-slate-100 placeholder-slate-500 text-sm focus:ring-0"
+            placeholder="Rechercher une action, question ou outil…"
             autocomplete="off"
             spellcheck="false"
           />
+          <button
+            type="button"
+            class="text-xs text-slate-400 hover:text-slate-200 px-1.5 py-0.5 rounded border border-white/10"
+            @click="closePalette"
+          >Esc</button>
         </div>
-        <ul class="pal-list" role="listbox">
+
+        <ul class="max-h-80 overflow-y-auto scrollbar-custom p-2 space-y-1" role="listbox">
           <li
             v-for="(a, i) in items"
             :key="a.id"
             role="option"
-            class="pal-item"
-            :class="{ active: i === active, busy: busy === a.id }"
+            class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl cursor-pointer text-slate-200 transition-all text-xs"
+            :class="i === active ? 'bg-emerald-500/15 text-emerald-200 border-l-2 border-emerald-400' : 'hover:bg-white/5'"
             :aria-selected="i === active"
             @mouseenter="active = i"
             @click="run(a)"
           >
-            <span class="pal-item-label">{{ busy === a.id ? '…' : a.label }}</span>
-            <span class="pal-item-meta">
-              <span class="pal-kind">{{ a.kind }}</span>
-              <span v-if="a.hint" class="pal-hint">{{ a.hint }}</span>
-            </span>
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="font-medium truncate">{{ busy === a.id ? '…' : a.label }}</span>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400 px-1.5 py-0.5 rounded border border-white/10 bg-white/5">
+                {{ a.kind }}
+              </span>
+              <span v-if="a.hint" class="text-[10px] font-mono text-slate-500">
+                {{ a.hint }}
+              </span>
+            </div>
           </li>
-          <li v-if="!items.length" class="pal-empty">Aucune commande</li>
+
+          <li v-if="!items.length" class="py-8 text-center text-slate-500 text-xs">
+            Aucune commande correspondante.
+          </li>
         </ul>
-        <p class="pal-foot">
-          <kbd>↑↓</kbd> naviguer · <kbd>↵</kbd> lancer · <kbd>esc</kbd> fermer
-        </p>
+
+        <div class="px-4 py-2 border-t border-white/10 text-[10px] text-slate-500 flex items-center justify-between bg-white/2">
+          <span><kbd class="font-mono bg-white/5 border border-white/10 px-1 py-0.5 rounded">↑↓</kbd> Naviguer</span>
+          <span><kbd class="font-mono bg-white/5 border border-white/10 px-1 py-0.5 rounded">↵</kbd> Valider</span>
+          <span><kbd class="font-mono bg-white/5 border border-white/10 px-1 py-0.5 rounded">Esc</kbd> Fermer</span>
+        </div>
       </div>
     </div>
   </Teleport>
 </template>
-
-<style scoped>
-.pal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgb(2 6 23 / 0.55);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12vh 1rem 2rem;
-}
-.pal-modal {
-  width: min(32rem, 100%);
-  border-radius: 0.85rem;
-  border: 1px solid rgba(45, 212, 191, 0.28);
-  background: rgb(15 23 42 / 0.96);
-  box-shadow: 0 24px 64px rgb(0 0 0 / 0.45);
-  overflow: hidden;
-}
-.pal-input-row {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.pal-kbd {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #5eead4;
-  border: 1px solid rgba(45, 212, 191, 0.35);
-  border-radius: 0.35rem;
-  padding: 0.15rem 0.35rem;
-  flex-shrink: 0;
-}
-.pal-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #f1f5f9;
-  font-size: 0.92rem;
-}
-.pal-input::placeholder {
-  color: #64748b;
-}
-.pal-list {
-  list-style: none;
-  margin: 0;
-  padding: 0.35rem;
-  max-height: 18rem;
-  overflow: auto;
-}
-.pal-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.65rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  color: #e2e8f0;
-}
-.pal-item.active,
-.pal-item:hover {
-  background: rgb(45 212 191 / 0.12);
-}
-.pal-item.busy {
-  opacity: 0.6;
-}
-.pal-item-label {
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-.pal-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 0;
-}
-.pal-kind {
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #5eead4;
-  border: 1px solid rgba(45, 212, 191, 0.3);
-  border-radius: 0.25rem;
-  padding: 0.05rem 0.3rem;
-}
-.pal-hint {
-  font-size: 0.62rem;
-  font-family: ui-monospace, monospace;
-  color: #64748b;
-}
-.pal-empty {
-  padding: 1rem;
-  text-align: center;
-  color: #64748b;
-  font-size: 0.8rem;
-}
-.pal-foot {
-  margin: 0;
-  padding: 0.45rem 0.85rem 0.65rem;
-  font-size: 0.62rem;
-  color: #64748b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-.pal-foot kbd {
-  font-family: ui-monospace, monospace;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.25rem;
-  padding: 0.05rem 0.25rem;
-  margin: 0 0.1rem;
-}
-</style>

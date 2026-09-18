@@ -88,22 +88,19 @@ Phasage réaliste :
    - Après Dry-run/Réel : chips « Suite — pilotage » sur `ActionCard`  
    - Deploy : `bash packages/cortex/infra/scripts/deploy_compagnon_100.sh`
 
-## Bug ouvert — sonde AD en boucle
+## Correctifs livrés (2026-09-18)
 
-Toast « Je vois `autonomous_nudge` / Sonde AD » revient trop souvent.
+### Sonde AD & boucle d'initiative résolues
+1. **Cible AD corrigée** : `_infra_signals()` cible désormais le vrai agent Windows `192.168.0.10:5005` (aligné dans `proactive.py`, `lbg.env.example` et `/etc/lbg-ia-mmo.env` sur 140). `ad_agent_reachable` passe à `true`, `ad_agent_down` éliminé.
+2. **Quota stabilisé** : le fingerprint d'initiative est aligné sur le signal/intent effectif (plus de faux positifs via `last_job_id` changeant).
+3. **Snooze persistant** : bouton « Ignorer » snooze le fingerprint pendant 4h (et 6h après Agir réussi). Tests unitaires verts (`initiativeQuota.test.js`).
 
-**Handoff Antigravity** (prompt complet + preuves) :  
-[`handoff_antigravity_sonde_ad.md`](handoff_antigravity_sonde_ad.md)
-
-Résumé causes :
-1. `_infra_signals()` sonde `AGENT_WINDOWS_SRV_AD_URL` défaut **`.100:5005`** alors que l’agent desktop est sur **`.10:5005`** → `ad_agent_down` sticky faux-positif.
-2. Fingerprint initiative basé sur `last_job_id` volatile alors que le message reste « AD injoignable ».
-
-## Handoff — polish visuel Compagnon
-
-Antigravity : améliorer présence / hiérarchie / tokens UI sans cloner Pilot.
-
-**Prompt** : [`handoff_antigravity_visuel_compagnon.md`](handoff_antigravity_visuel_compagnon.md)
+### Polish visuel & UX Compagnon (:5174)
+1. **Socle Tailwind v4 & Tokens** : `@source` explicites pour tous les composants, suppression du hack `svg 40px`, tokens studio sobres, arrière-plan sans 404.
+2. **Empty state 30s** : présence Compagnon chaleureuse, 4 suggestions interactives (Sonde LAN, Action poste Notepad, Dialogue, Palette ⌘K).
+3. **Hiérarchie & Pilotage** : présence en ligne prioritaire, métriques ops repliées par défaut, boutons Pilotage et carte d'entrée harmonisés.
+4. **Déconfliction spatiale** : toast d'initiative repositionné (`bottom: 6rem; right: 6.5rem`) sans conflit avec l'avatar LyraWidget ni la zone d'input.
+5. **Déploiement & Smokes** : deploy CT100 (`5174`) vert avec smoke chat (`/api/ask`) et smoke agir (`/api/pilot/action-proposal`).
 
 ## Ne pas rouvir
 

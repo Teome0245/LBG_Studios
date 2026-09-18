@@ -3,6 +3,7 @@ import {
   INITIATIVE_DEFAULTS,
   shouldOfferFromStatus,
   markInitiativeShown,
+  snoozeInitiative,
   formatDiscussReply,
 } from '@/lib/initiativeQuota'
 import { presenceInitiative } from '@/lib/presence'
@@ -45,7 +46,14 @@ async function tick() {
   }
 }
 
-function dismiss() {
+/**
+ * Ferme le toast et snooze explicitement le signal.
+ * @param {number} [snoozeHours=4]
+ */
+function dismiss(snoozeHours = 4) {
+  if (current.value?.id) {
+    snoozeInitiative(current.value.id, snoozeHours)
+  }
   current.value = null
 }
 

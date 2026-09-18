@@ -213,8 +213,11 @@ def _mmo_signals() -> dict[str, Any]:
 def _infra_signals() -> dict[str, Any]:
     """Signaux légers pour le moteur (pas de scan complet à chaque tick)."""
     core_host = os.environ.get("LBG_LAN_HOST_CORE", "192.168.0.140").split(":")[0]
-    ad_url = os.environ.get("AGENT_WINDOWS_SRV_AD_URL", "http://192.168.0.100:5005")
-    ad_host = ad_url.split("//")[-1].split(":")[0] if "//" in ad_url else "192.168.0.100"
+    # Préférer le vrai agent desktop Windows (.10:5005) si configuré, ou AGENT_WINDOWS_SRV_AD_URL si non legacy (.100)
+    ad_url = os.environ.get("AGENT_WINDOWS_URL") or os.environ.get("AGENT_WINDOWS_SRV_AD_URL") or "http://192.168.0.10:5005"
+    if "192.168.0.100:5005" in ad_url:
+        ad_url = os.environ.get("AGENT_WINDOWS_URL", "http://192.168.0.10:5005")
+    ad_host = ad_url.split("//")[-1].split(":")[0] if "//" in ad_url else "192.168.0.10"
     orch_ok = _tcp_open(core_host, 8010)
     ad_agent_ok = _tcp_open(ad_host, 5005)
     signals: dict[str, Any] = {
@@ -413,6 +416,20 @@ def _tick_once() -> None:
             ensure_ascii=False,
         )
     )
+    try:
+        from services import self_state as svc_self
+
+        if svc_self.self_state_enabled() and _runtime.engine is not None:
+            st = _runtime.engine.state
+            svc_self.sync_from_proactive(
+                {
+                    "tension": float(st.tension),
+                    "curiosite": float(st.curiosite),
+                    "mode": st.mode,
+                }
+            )
+    except Exception:
+        pass
 
 
 def _loop() -> None:

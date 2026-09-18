@@ -21,48 +21,112 @@ export const INITIATIVE_DEFAULTS = {
   minIntervalSec: 600,
   pollIntervalMs: 60_000,
   minSilenceSec: 90,
+  defaultSnoozeHours: 4,
 }
+
+let _memoryFallback = null
 
 function loadState() {
   try {
+    if (typeof localStorage === 'undefined') {
+      if (!_memoryFallback) _memoryFallback = { shown: [], snoozed: {} }
+      return _memoryFallback
+    }
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { shown: /** @type {ShownLog} */ ([]) }
+    if (!raw) return { shown: /** @type {ShownLog} */ ([]), snoozed: /** @type {Record<string, number>} */ ({}) }
     const parsed = JSON.parse(raw)
     return {
       shown: Array.isArray(parsed?.shown) ? parsed.shown : [],
+      snoozed: parsed?.snoozed && typeof parsed.snoozed === 'object' ? parsed.snoozed : {},
     }
   } catch {
-    return { shown: [] }
+    return { shown: [], snoozed: {} }
   }
 }
 
 function saveState(state) {
   try {
+    if (typeof localStorage === 'undefined') {
+      _memoryFallback = state
+      return
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
     /* ignore */
   }
 }
 
-function prune(shown, now = Date.now()) {
+function prune(shown, now = Date.now(), snoozed = {}) {
   const hourAgo = now - 60 * 60 * 1000
-  return shown.filter((x) => x && typeof x.ts === 'number' && x.ts >= hourAgo)
+  const cleanShown = (shown || []).filter((x) => x && typeof x.ts === 'number' && x.ts >= hourAgo)
+  const cleanSnoozed = {}
+  if (snoozed && typeof snoozed === 'object') {
+    for (const [k, exp] of Object.entries(snoozed)) {
+      if (typeof exp === 'number' && exp > now) {
+        cleanSnoozed[k] = exp
+      }
+    }
+  }
+  return { shown: cleanShown, snoozed: cleanSnoozed }
 }
 
+/**
+ * Fingerprint stable pour le signal utilisateur affiché.
+ * Priorité absolue aux alertes infra / messages spécifiques pour éviter
+ * qu'un last_job_id volatile ne change l'ID à chaque tick.
+ */
 export function fingerprintFromStatus(status) {
   if (!status || typeof status !== 'object') return ''
-  const job = typeof status.last_job_id === 'string' ? status.last_job_id.trim() : ''
-  if (job) return `job:${job}`
-  const act = status.last_action && typeof status.last_action === 'object' ? status.last_action : null
-  if (act) {
-    const kind = String(act.kind || '')
-    const msg = String(act.message || '').slice(0, 120)
-    if (kind || msg) return `act:${kind}|${msg}`
-  }
+
+  // 1. Alertes infra critiques prioritaires (stables, match avec messageFromStatus)
   const infra = status.infra_signals && typeof status.infra_signals === 'object' ? status.infra_signals : null
   if (infra?.ad_agent_down) return 'infra:ad_agent_down'
   if (infra?.orchestrator_reachable === false) return 'infra:orch_down'
+  if (infra?.mmo_sidecar_reachable === false) return 'infra:mmo_down'
+
+  // 2. Tension élevée (stable)
+  const tension = Number(status.tension)
+  if (Number.isFinite(tension) && tension >= 0.85) return 'tension:high'
+
+  // 3. Action spécifique proactive
+  const act = status.last_action && typeof status.last_action === 'object' ? status.last_action : null
+  if (act && act.message) {
+    const kind = String(act.kind || 'action')
+    const msg = String(act.message || '').slice(0, 60)
+    return `act:${kind}|${msg}`
+  }
+
+  // 4. Job L2 uniquement en dernier ressort
+  const job = typeof status.last_job_id === 'string' ? status.last_job_id.trim() : ''
+  if (job) return `job:${job}`
+
   return ''
+}
+
+/**
+ * Snooze explicite d'un fingerprint (ex. après Ignorer ou Agir réussi).
+ * @param {string} id
+ * @param {number} [durationHours=4]
+ */
+export function snoozeInitiative(id, durationHours = 4) {
+  if (!id) return
+  const now = Date.now()
+  const state = loadState()
+  const { shown, snoozed } = prune(state.shown, now, state.snoozed)
+  snoozed[id] = now + durationHours * 3600 * 1000
+  saveState({ shown, snoozed })
+}
+
+/**
+ * Vérifie si un fingerprint d'initiative est actuellement snoozé.
+ * @param {string} id
+ * @returns {boolean}
+ */
+export function isInitiativeSnoozed(id) {
+  if (!id) return false
+  const now = Date.now()
+  const state = loadState()
+  return typeof state.snoozed?.[id] === 'number' && state.snoozed[id] > now
 }
 
 /**
@@ -171,11 +235,14 @@ export function formatDiscussReply(status) {
  */
 export function canShowInitiative(id, opts = {}) {
   if (!id) return { ok: false, reason: 'empty' }
+  if (isInitiativeSnoozed(id)) return { ok: false, reason: 'snoozed' }
+
   const maxPerHour = opts.maxPerHour ?? INITIATIVE_DEFAULTS.maxPerHour
   const minIntervalSec = opts.minIntervalSec ?? INITIATIVE_DEFAULTS.minIntervalSec
   const now = Date.now()
   const state = loadState()
-  const shown = prune(state.shown, now)
+  const { shown } = prune(state.shown, now, state.snoozed)
+
   if (shown.some((x) => x.id === id)) return { ok: false, reason: 'already_shown' }
   if (shown.length >= maxPerHour) return { ok: false, reason: 'quota_hour' }
   const last = shown.reduce((a, b) => (a.ts > b.ts ? a : b), { ts: 0, id: '' })
@@ -190,9 +257,9 @@ export function markInitiativeShown(id) {
   if (!id) return
   const now = Date.now()
   const state = loadState()
-  const shown = prune(state.shown, now)
+  const { shown, snoozed } = prune(state.shown, now, state.snoozed)
   shown.push({ ts: now, id })
-  saveState({ shown })
+  saveState({ shown, snoozed })
 }
 
 /** @param {Record<string, unknown>} status */

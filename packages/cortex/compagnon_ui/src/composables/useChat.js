@@ -122,10 +122,12 @@ export function useChat() {
     }
   }
 
-  const addUserMessage = (content) => {
+  const addUserMessage = (content, extras = {}) => {
+    const images = Array.isArray(extras.images) ? extras.images.filter(Boolean) : []
     messages.value.push({
       role: 'user',
       content,
+      images,
       state: 'user',
     })
   }
