@@ -12,64 +12,78 @@ import httpx
 # Profils délestés vers le nœud léger (NUC / CT 111) si LBG_REASON_LIGHT_BASE_URL est défini.
 _LIGHT_PROFILES = frozenset({"router", "json", "fast"})
 
+# Heavy 110 — code/PM/dialogue ≤12B abliterated ; garde-fous maturité A/B/C.
+# Qualité code : gemma-4-abliterated:12b (plafond filtre HF ≤12B). Forge reste e2b.
+HEAVY_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:12b"
+FORGE_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:e2b"
+LIGHT_CLEAN_DEFAULT = "huihui_ai/qwen3.5-abliterated:2B"
+LIGHT_FAST_DEFAULT = "huihui_ai/qwen3.5-abliterated:0.8B"
+
 
 def reason_route_matrix() -> dict[str, dict[str, str]]:
     """Table de routage local prioritaire par usage."""
     return {
         "default": {
             "env": "LBG_REASON_LOCAL_MODEL",
-            "default": "gemma4:e2b",
+            "default": FORGE_REASON_DEFAULT,
             "tier": "local",
             "usage": "raisonnement_general",
             "host_class": "heavy",
         },
         "forge": {
             "env": "LBG_REASON_MODEL_FORGE",
-            "default": "gemma4:e2b",
+            "default": FORGE_REASON_DEFAULT,
             "tier": "local",
             "usage": "routage_rapide_et_generation_ciblee",
             "host_class": "heavy",
         },
         "router": {
             "env": "LBG_REASON_MODEL_ROUTER",
-            "default": "qwen2.5:3b",
+            "default": LIGHT_CLEAN_DEFAULT,
             "tier": "local",
             "usage": "routage_agentique_clean",
             "host_class": "light",
         },
         "json": {
             "env": "LBG_REASON_MODEL_JSON",
-            "default": "qwen2.5:3b",
+            "default": LIGHT_CLEAN_DEFAULT,
             "tier": "local",
             "usage": "json_actions_structurees_clean",
             "host_class": "light",
         },
         "code": {
             "env": "LBG_REASON_MODEL_CODE",
-            "default": "qwen3.8:27b",
+            "default": HEAVY_REASON_DEFAULT,
             "tier": "local",
             "usage": "code_et_patchs",
             "host_class": "heavy",
         },
         "pm": {
             "env": "LBG_REASON_MODEL_PM",
-            "default": "qwen3.8:27b",
+            "default": HEAVY_REASON_DEFAULT,
             "tier": "local",
             "usage": "synthese_et_arbitrage",
             "host_class": "heavy",
         },
         "fast": {
             "env": "LBG_REASON_MODEL_FAST",
-            "default": "llama3.2:3b",
+            "default": LIGHT_FAST_DEFAULT,
             "tier": "local",
             "usage": "triage_rapide_fast",
             "host_class": "light",
         },
         "dialogue": {
             "env": "LBG_REASON_MODEL_DIALOGUE",
-            "default": "qwen3.8:27b",
+            "default": HEAVY_REASON_DEFAULT,
             "tier": "local",
             "usage": "dialogue_secondaire",
+            "host_class": "heavy",
+        },
+        "uncensored": {
+            "env": "LBG_REASON_MODEL_UNCENSORED",
+            "default": HEAVY_REASON_DEFAULT,
+            "tier": "local",
+            "usage": "avis_complementaires_hors_cadre",
             "host_class": "heavy",
         },
     }
@@ -101,6 +115,10 @@ def _resolve_profile(profile: str) -> str:
         "clean": "json",
         "light_clean": "json",
         "light_fast": "fast",
+        "dialogue_uncensored": "uncensored",
+        "promethee": "uncensored",
+        "contrarian": "uncensored",
+        "abliterated": "uncensored",
     }
     return aliases.get(p, p)
 
@@ -137,7 +155,7 @@ def reason_local_base_url(*, profile: str = "default") -> str:
 
 
 def reason_local_model(*, profile: str = "default") -> str:
-    """Profils : light 111 (fast=llama3.2, clean/json/router=qwen2.5) vs heavy 110 (e2b / qwen3.8:27b)."""
+    """Profils : light 111 (fast=llama3.2, clean/json/router=qwen2.5) vs heavy 110 (e2b / abliterated 27b)."""
     resolved = _resolve_profile(profile)
     matrix = reason_route_matrix()
     slot = matrix.get(resolved)
@@ -145,18 +163,23 @@ def reason_local_model(*, profile: str = "default") -> str:
         configured = os.environ.get(slot["env"], "").strip()
         if configured:
             return configured
+        if resolved == "uncensored":
+            # Optionnel : 2e tag si posé ; sinon même heavy (option 1).
+            alt = os.environ.get("LBG_DIALOGUE_LLM_MODEL_UNCENSORED", "").strip()
+            if alt:
+                return alt
         if resolved in ("default", "code") and os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip():
             return os.environ["LBG_REASON_LOCAL_MODEL"].strip()
         return slot["default"]
     if resolved in ("forge", "fast"):
-        return os.environ.get("LBG_REASON_MODEL_FORGE", "").strip() or "gemma4:e2b"
+        return os.environ.get("LBG_REASON_MODEL_FORGE", "").strip() or FORGE_REASON_DEFAULT
     if resolved in ("pm", "dialogue"):
-        return os.environ.get("LBG_REASON_MODEL_PM", "").strip() or "qwen3.8:27b"
+        return os.environ.get("LBG_REASON_MODEL_PM", "").strip() or HEAVY_REASON_DEFAULT
     return (
         os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip()
         or os.environ.get("LBG_REASON_MODEL", "").strip()
         or os.environ.get("LBG_DIALOGUE_LLM_MODEL", "").strip()
-        or "gemma4:e2b"
+        or FORGE_REASON_DEFAULT
     )
 
 
@@ -187,6 +210,110 @@ def reason_cloud_api_key() -> str:
     )
 
 
+def reason_cloud_uncensored_enabled() -> bool:
+    return os.environ.get("LBG_REASON_CLOUD_UNCENSORED_ENABLED", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ) or os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def reason_cloud_uncensored_route() -> dict[str, str] | None:
+    """Cloud uncensored (OpenRouter Venice…) — fallback hors Groq filtré pour profils uncensored."""
+    if not reason_cloud_uncensored_enabled():
+        return None
+    base = (
+        os.environ.get("LBG_REASON_CLOUD_UNCENSORED_BASE_URL", "").strip()
+        or os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL", "").strip()
+        or "https://openrouter.ai/api/v1"
+    ).rstrip("/")
+    model = (
+        os.environ.get("LBG_REASON_CLOUD_UNCENSORED_MODEL", "").strip()
+        or os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL", "").strip()
+        or "cognitivecomputations/dolphin-mistral-24b-venice-edition"
+    )
+    key = (
+        os.environ.get("LBG_REASON_CLOUD_UNCENSORED_API_KEY", "").strip()
+        or os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY", "").strip()
+        or os.environ.get("OPENROUTER_API_KEY", "").strip()
+    )
+    if not (base and model and key):
+        return None
+    return {
+        "tier": "cloud_uncensored",
+        "base_url": base,
+        "model": model,
+        "api_key": key,
+        "host": "openrouter",
+    }
+
+
+def reason_ephemeral_enabled() -> bool:
+    """GPU cloud éphémère (Colab + tunnel) — PoC / laptop sans GPU, pas H24."""
+    return os.environ.get("LBG_REASON_EPHEMERAL_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def reason_ephemeral_base_url() -> str:
+    return os.environ.get("LBG_REASON_EPHEMERAL_BASE_URL", "").strip().rstrip("/")
+
+
+def reason_ephemeral_model() -> str:
+    # T4-friendly abliterated (même famille que heavy .110, pas le 27B).
+    return (
+        os.environ.get("LBG_REASON_EPHEMERAL_MODEL", "").strip()
+        or "huihui_ai/qwen3.5-abliterated:9b"
+    )
+
+
+def reason_ephemeral_api_key() -> str:
+    return os.environ.get("LBG_REASON_EPHEMERAL_API_KEY", "").strip()
+
+
+def reason_ephemeral_timeout_s() -> float:
+    return float(os.environ.get("LBG_REASON_EPHEMERAL_TIMEOUT_S", "45"))
+
+
+def reason_ephemeral_before_cloud() -> bool:
+    """Si true : local → ephemeral → cloud ; sinon local → cloud → ephemeral."""
+    return os.environ.get("LBG_REASON_EPHEMERAL_BEFORE_CLOUD", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def reason_ephemeral_route() -> dict[str, str] | None:
+    """Route OpenAI-compat vers Ollama Colab (tunnel). Requiert ENABLED + BASE_URL + API_KEY."""
+    if not reason_ephemeral_enabled():
+        return None
+    base = reason_ephemeral_base_url()
+    key = reason_ephemeral_api_key()
+    if not base or not key:
+        return None
+    timeout = reason_ephemeral_timeout_s()
+    timeout_s = str(int(timeout)) if timeout == int(timeout) else str(timeout)
+    return {
+        "tier": "ephemeral",
+        "base_url": base,
+        "model": reason_ephemeral_model(),
+        "api_key": key,
+        "host": "colab",
+        "timeout": timeout_s,
+    }
+
+
 # Compat anciennes vars
 def reason_base_url() -> str:
     return reason_local_base_url() or reason_cloud_base_url()
@@ -201,7 +328,7 @@ def reason_api_key() -> str:
 
 
 def reason_routes(*, prefer_cloud: bool = False, profile: str = "default") -> list[dict[str, str]]:
-    """Ordre : local (light 111 ou heavy 110) → failover heavy si light → cloud."""
+    """Ordre : local → failover heavy → ephemeral?/cloud? (ordre configurable)."""
     routes: list[dict[str, str]] = []
     resolved = _resolve_profile(profile)
     primary_url = reason_local_base_url(profile=resolved)
@@ -238,7 +365,7 @@ def reason_routes(*, prefer_cloud: bool = False, profile: str = "default") -> li
                 os.environ.get("LBG_REASON_LIGHT_FAILOVER_MODEL", "").strip()
                 or os.environ.get("LBG_REASON_MODEL_FORGE", "").strip()
                 or os.environ.get("LBG_REASON_LOCAL_MODEL", "").strip()
-                or "gemma4:e2b"
+                or FORGE_REASON_DEFAULT
             )
             routes.append(
                 {
@@ -250,20 +377,50 @@ def reason_routes(*, prefer_cloud: bool = False, profile: str = "default") -> li
                     "host": "heavy_failover",
                 }
             )
+
+    ephemeral = reason_ephemeral_route()
+    cloud_unc = reason_cloud_uncensored_route() if resolved == "uncensored" else None
     cloud_url = reason_cloud_base_url()
     cloud_key = reason_cloud_api_key()
+    cloud: dict[str, str] | None = None
     if cloud_url and cloud_key:
-        routes.append(
-            {
-                "tier": "cloud",
-                "base_url": cloud_url,
-                "model": reason_cloud_model(),
-                "api_key": cloud_key,
-            }
-        )
-    if prefer_cloud and cloud_url and cloud_key:
-        return [r for r in routes if r["tier"] == "cloud"] + [r for r in routes if r["tier"] == "local"]
+        cloud = {
+            "tier": "cloud",
+            "base_url": cloud_url,
+            "model": reason_cloud_model(),
+            "api_key": cloud_key,
+        }
+
+    # Uncensored : cloud Venice/Dolphin avant Groq filtré.
+    tail: list[dict[str, str]] = []
+    if cloud_unc:
+        tail.append(cloud_unc)
+    if ephemeral and cloud:
+        if reason_ephemeral_before_cloud():
+            tail.extend([ephemeral, cloud])
+        else:
+            tail.extend([cloud, ephemeral])
+    elif ephemeral:
+        tail.append(ephemeral)
+    elif cloud:
+        tail.append(cloud)
+    routes.extend(tail)
+
+    if prefer_cloud and cloud_unc:
+        rest = [r for r in routes if r.get("tier") != "cloud_uncensored"]
+        return [cloud_unc] + rest
+    if prefer_cloud and cloud:
+        rest = [r for r in routes if r["tier"] != "cloud"]
+        return [cloud] + rest
     return routes
+
+def _looks_ollama_route(route: dict[str, str], base: str) -> bool:
+    return (
+        ":11434" in base
+        or "ollama" in base.lower()
+        or route.get("tier") in ("local", "ephemeral")
+        or route.get("host", "").startswith(("light", "heavy", "colab"))
+    )
 
 
 def _chat_completions_url(base: str) -> str:
@@ -275,9 +432,23 @@ def _chat_completions_url(base: str) -> str:
     return f"{b}/v1/chat/completions"
 
 
+def _ollama_native_chat_url(base: str) -> str:
+    """Ollama /api/chat — think=false fiable (contrairement à /v1/chat/completions)."""
+    b = base.rstrip("/")
+    if b.endswith("/v1"):
+        b = b[:-3]
+    return f"{b}/api/chat"
+
+
 def _extract_text(data: Any) -> str:
     if not isinstance(data, dict):
         raise RuntimeError("Réponse LLM invalide")
+    # Ollama natif /api/chat
+    msg_top = data.get("message")
+    if isinstance(msg_top, dict):
+        content = msg_top.get("content")
+        if isinstance(content, str) and content.strip():
+            return content.strip()
     if "content" in data and isinstance(data["content"], list):
         parts: list[str] = []
         for block in data["content"]:
@@ -301,6 +472,15 @@ def _extract_text(data: Any) -> str:
     raise RuntimeError("Réponse LLM vide")
 
 
+def _ollama_think_enabled() -> bool:
+    return os.environ.get("LBG_REASON_OLLAMA_THINK", "false").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def _call_route(
     route: dict[str, str],
     *,
@@ -313,12 +493,18 @@ def _call_route(
     base = route["base_url"]
     model = route["model"]
     key = route.get("api_key") or ""
-    url = _chat_completions_url(base)
     headers: dict[str, str] = {"Content-Type": "application/json"}
     if key:
         headers["Authorization"] = f"Bearer {key}"
+    call_timeout = timeout
+    if route.get("timeout"):
+        try:
+            call_timeout = float(route["timeout"])
+        except ValueError:
+            pass
 
     if "api.anthropic.com" in base:
+        url = _chat_completions_url(base)
         payload: dict[str, Any] = {
             "model": model,
             "max_tokens": max_tokens,
@@ -326,7 +512,21 @@ def _call_route(
             "messages": [{"role": "user", "content": user}],
             "temperature": temperature,
         }
+    elif _looks_ollama_route(route, base):
+        # Natif : think=false remplit message.content ; /v1 laisse souvent content vide (reasoning).
+        url = _ollama_native_chat_url(base)
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "stream": False,
+            "think": _ollama_think_enabled(),
+            "options": {"temperature": temperature, "num_predict": max_tokens},
+        }
     else:
+        url = _chat_completions_url(base)
         payload = {
             "model": model,
             "messages": [
@@ -336,18 +536,8 @@ def _call_route(
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        # Qwen3.8 / modèles « thinking » : sans think=false, content peut rester vide (CPU brûlé).
-        looks_ollama = ":11434" in base or "ollama" in base.lower()
-        if looks_ollama:
-            think_on = os.environ.get("LBG_REASON_OLLAMA_THINK", "false").strip().lower() in (
-                "1",
-                "true",
-                "yes",
-                "on",
-            )
-            payload["think"] = think_on
 
-    with httpx.Client(timeout=httpx.Timeout(timeout)) as client:
+    with httpx.Client(timeout=httpx.Timeout(call_timeout)) as client:
         resp = client.post(url, headers=headers, json=payload)
         resp.raise_for_status()
         text = _extract_text(resp.json())

@@ -8,8 +8,8 @@ Document **vivant** : à mettre à jour si les IPs ou les rôles changent.
 | IP | Rôle principal | Notes |
 |----|------------------|--------|
 | **`192.168.0.140`** | **Core Studio** : Pilot `:8080`, backend `:8000`, orchestrateur `:8010`, agents | Point d’entrée UI + Team. Deploy rsync → `/opt/LBG_IA_MMO`. |
-| **`192.168.0.110`** | **Ollama heavy** `:11434` | `qwen3.8:27b` + `gemma4:e2b`. **Plus** le Pilot Nginx. |
-| **`192.168.0.111`** | **Ollama light** `:11434` | `qwen2.5:3b` / `llama3.2:3b` |
+| **`192.168.0.110`** | **Ollama heavy** `:11434` | `huihui_ai/gemma-4-abliterated:12b` + `huihui_ai/gemma-4-abliterated:e2b`. **Plus** le Pilot Nginx. |
+| **`192.168.0.111`** | **Ollama light** `:11434` | `huihui_ai/qwen3.5-abliterated:2B` / `huihui_ai/qwen3.5-abliterated:0.8B` |
 | **`192.168.0.141`** | **CT executor** | poll `/v1/team/wsl/*` |
 | **`192.168.0.142`** | **CT hands** | `linux_agent` `:6001` — [`hands_ct_142.md`](hands_ct_142.md) ; **pas** `.200` |
 | **`192.168.0.246`** | **Prime** (monde produit) | `:8792` comptes · sidecar IA `:8791` |

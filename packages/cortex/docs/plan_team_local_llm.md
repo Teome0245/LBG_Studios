@@ -1,6 +1,6 @@
 # Plan opérationnel Team — LLM locaux
 
-**Canon** : [`local_llm_route_matrix.md`](local_llm_route_matrix.md) — heavy `.110` = `qwen3.8:27b` (code/PM/dialogue) + `gemma4:e2b` (forge) ; light `.111` = 3B.
+**Canon** : [`local_llm_route_matrix.md`](local_llm_route_matrix.md) — heavy `.110` (**CPU**) = `huihui_ai/gemma-4-abliterated:12b` + `e2b` ; light `.111` = `qwen3.5-abliterated:2B` / `0.8B` ; Colab éphémère = `qwen3.5-abliterated:9b`.
 
 ## Décisions de cadrage
 
@@ -87,7 +87,7 @@ Tâches :
 - ajouter des checks périodiques : disponibilité Ollama, dérive latence, saturation mémoire, modèles manquants
 - exposer un mini tableau de bord texte ou JSON
 - documenter les actions de récupération : redémarrage, délestage, réduction de tiers
-- centraliser les anomalies dans les CR Team / Element si nécessaire
+- centraliser les anomalies dans les CR Team / Element (+ Slack dual-run, ADR 0021) si nécessaire
 
 Livrables :
 - rôle Team `admin_infra`
@@ -148,7 +148,7 @@ Critère de sortie :
 - ajouter le rôle `admin_infra`
 - installer le timer Atlas : `bash infra/scripts/install_team_admin_infra_job_vm.sh`
 - watchdog bench (seuil + retry KO + Element) : `bash infra/scripts/install_atlas_bench_watchdog_job_vm.sh`
-- alerte Element périmètre KO (110/140/245/246) : active par défaut sur run Atlas (`LBG_ADMIN_INFRA_PERIMETER_ALERT=1`)
+- alerte Element/Slack périmètre KO (110/140/245/246) : `ops_notify` (`LBG_ADMIN_INFRA_PERIMETER_ALERT=1`, backend `both`)
 - variables : `LBG_ATLAS_BENCH_MIN_OKS=3` (défaut), `LBG_ATLAS_BENCH_ALERT_DISABLE=0`
 - variables périmètre : `LBG_ADMIN_INFRA_PERIMETER_ALERT_COOLDOWN_S=3600` (anti-spam même signature)
 

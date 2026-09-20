@@ -1,6 +1,6 @@
 # Registre LBG Studios
 
-**Date** : 2026-08-18 (Pilot Vite + stub orchestrateur + Qwen 27b + executor `.141`)  
+**Date** : 2026-09-20 (LLM ≤12B abliterated · Compagnon LAB · Colab éphémère 9b)  
 **Source de vérité** : ce fichier.
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
@@ -10,7 +10,10 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 **Handoff visuel Compagnon (Antigravity)** : [`handoff_antigravity_visuel_compagnon.md`](handoff_antigravity_visuel_compagnon.md).  
 **Focus wahou (jeu, archivé)** : [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md).  
 **Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).  
-**LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).  
+**LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md) · règle Cursor `local-llm-route-matrix.mdc`.  
+**Compagnon LLM / morale LAB** : [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md).  
+**GPU éphémère Colab** : [`packages/cortex/docs/reason_ephemeral_colab.md`](../packages/cortex/docs/reason_ephemeral_colab.md) · notebooks `packages/cortex/tools/colab/`.  
+**LLM secours free** : [`packages/cortex/docs/reason_cloud_free_fallback.md`](../packages/cortex/docs/reason_cloud_free_fallback.md) · comparatif [`llm_cloud_free_vs_local.md`](../packages/cortex/docs/llm_cloud_free_vs_local.md).  
 **Canal ops** : Slack + Element backup — [`packages/cortex/docs/ops_notify_slack.md`](../packages/cortex/docs/ops_notify_slack.md) · ADR 0021.  
 **Sprint évolution 7j** (Team, L1 auto / L2 Pilot) : [`packages/cortex/docs/team_evolution_sprint.md`](../packages/cortex/docs/team_evolution_sprint.md).  
 **Pont Cloud↔LAN** : [`packages/cortex/docs/pont_cloud_local.md`](../packages/cortex/docs/pont_cloud_local.md).  
@@ -67,8 +70,8 @@ Serveurs jeu (runtime, hors Git) :
 |----|------|-------|
 | **`.10`** | Poste Teome | Cursor, ComfyUI, pilotage humain — plus l’executor LAN |
 | **`.100`** | Cockpit / Orch UI / Simple Chat | `:8093` Cockpit · `:3000` API · `:5174` SPA chat · `:3080` Open WebUI lab |
-| **`.110`** | Ollama **heavy** | `:11434` CPU — `qwen3.8:27b` (code/PM/dialogue) + `gemma4:e2b` (forge) |
-| **`.111`** | Ollama **light** | `:11434` — `qwen2.5:3b` + `llama3.2:3b` |
+| **`.110`** | Ollama **heavy** | `:11434` **CPU only** — `gemma-4-abliterated:12b` + `e2b` (+ `qwen3.5-abliterated:9b` disque) ; pas de 27B routé |
+| **`.111`** | Ollama **light** | `:11434` — `qwen3.5-abliterated:2B` (Clean / Compagnon LAB) + `0.8B` (Fast) |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
@@ -78,7 +81,7 @@ Serveurs jeu (runtime, hors Git) :
 | **`.245`** | PreCU | lecture seule `:8792` |
 | **`.246`** | Prime | monde produit `:8792` + sidecar IA |
 
-LLM : `think: false` (Qwen). Ne pas cohabiter deux 18 Go sur `.110` (24 Go RAM).
+LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).
 
 ## Actif — remotes liés (hors Git monorepo)
 
@@ -168,4 +171,4 @@ flowchart LR
 | 2026-08-18 | Orchestrateur démarrable sans legacy : stub local `hybrid_proactive_agent` | `packages/cortex/orchestrator` |
 | 2026-08-18 | Backend : `pydantic-settings`, `response_model` Pilot, `trace_id` E2E | `packages/cortex/backend` |
 | 2026-08-18 | O2 : pipeline assets Prime + persistance inventaire/quêtes via bridge Core3 | `packages/prime-client` |
-| 2026-08-17 | LLM local Qwen `qwen3.8:27b` (`.110` heavy) + `qwen2.5:3b` (`.111`) | matrice `packages/cortex/docs/local_llm_route_matrix.md` |
+| 2026-09-20 | LLM secours free (Groq/OpenRouter) + comparatif Colab/Kaggle + smoke notebooks | `docs/reason_cloud_free_fallback.md`, `docs/llm_cloud_free_vs_local.md` |

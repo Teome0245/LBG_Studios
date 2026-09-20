@@ -8,7 +8,8 @@ alwaysApply: true
 Source exécutable : `packages/cortex/orchestrator/team/reason_llm.py` → `reason_route_matrix()`.
 Source lisible : `packages/cortex/docs/local_llm_route_matrix.md`.
 
-- **`.110` heavy** : `qwen3.8:27b` (code / PM / dialogue), `gemma4:e2b` (forge / failover).
-- **`.111` light** : `qwen2.5:3b` (router/json), `llama3.2:3b` (fast).
+- **`.110` heavy (CPU only)** : `huihui_ai/gemma-4-abliterated:12b` (code/PM/dialogue), `huihui_ai/gemma-4-abliterated:e2b` (forge). Interactif : préférer 9b/2B. Pas de 27B routé.
+- **`.111` light** : `huihui_ai/qwen3.5-abliterated:2B` (router/json / Compagnon LAB), `huihui_ai/qwen3.5-abliterated:0.8B` (fast).
+- **Colab éphémère** : défaut `huihui_ai/qwen3.5-abliterated:9b` (`LBG_REASON_EPHEMERAL_*` / `LBG_COLAB_MODEL`).
 - Qwen : `think: false` (`LBG_REASON_OLLAMA_THINK` / `LBG_DIALOGUE_LLM_OLLAMA_THINK`).
-- Ne pas réintroduire `gemma3:4b` sur 111. Ne pas charger deux modèles ~18 Go ensemble sur 110.
+- Ne pas réintroduire `gemma3:4b` sur 111. Préférer tags Ollama `huihui_ai/*`.

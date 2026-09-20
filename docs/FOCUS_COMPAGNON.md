@@ -1,6 +1,6 @@
 # Focus — Compagnon Studio (type Jarvis)
 
-**Date** : 2026-09-17 (pilotage + handoffs Antigravity)  
+**Date** : 2026-09-20 (LLM LAB + matrice ≤12B)  
 **Priorité** : **O1 Studio** — agents / UI / autonomie bornée.  
 **Hors scope immédiat** : intégration persona dans le MMO (Rang 2).
 
@@ -28,9 +28,14 @@ Pas de second OS type CrewAI. Même backend (Orch API `:3000` + Cortex / Team).
 
 ## Persona
 
-Profils dialogue : `compagnon` (défaut), `jarvis`, `mother`, `kit`, `hal`  
-(`lbg_agents/dialogue_llm.py` → `ASSISTANT_PROFILES`).  
+Profils dialogue : `compagnon` (défaut), `compagnon_lab` / `lab`, `jarvis`, `mother`, `kit`, `hal`  
+(Orch overlays `compagnon_ui/server_overlay/router_prompts.py` + `lbg_agents/dialogue_llm.py`).  
 Voix d’accueil : `lbg_agents/lbg_ia_voice.py`.
+
+**LLM / morale** (infra LAN = LAB, non exposée) :  
+[`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md)  
+— `LBG_COMPAGNON_LAB=1` → local only, softener média off, modèle `huihui_ai/qwen3.5-abliterated:2B` (`.111`).  
+Prod-like : garde copyright = mise en garde + pistes légales (pas mur Groq, pas playbook pirate).
 
 À brancher aussi côté Orch UI (`/ask` + profil) pour que `:5174` parle la même langue.
 
@@ -83,10 +88,13 @@ Phasage réaliste :
    - Quota client : max 3/h, min 10 min entre toasts, silence ≥ 90 s — **jamais d’auto-exec**  
    - Electron : notif OS + pulse overlay (`packages/compagnon-desktop`)
    - Discuter = réponse locale (pas de faux `open_app`)
-7. **Pilotage** — barre + palette Ctrl+K + encart activité + suites Agir — **OK** (2026-09-17)  
-   - `PilotageBar` / `PilotagePalette` / `ActivityEncart` / `pilotageActions.js`  
-   - Après Dry-run/Réel : chips « Suite — pilotage » sur `ActionCard`  
+7. **Pilotage** — palette Ctrl+K + encart activité — **OK** (declutter 2026-09-18)  
+   - Ctrl+K / Agir / chat ; plus de barre d’actions rapides ni chips suite dans le fil  
    - Deploy : `bash packages/cortex/infra/scripts/deploy_compagnon_100.sh`
+8. **D4 Autonomie émergente** — **OK** (2026-09-18)  
+   - 1 objectif persistant : **Veiller Jobs L2** (`studioGoal.js`)  
+   - Feedback Agir / Ignorer → freine les signaux souvent ignorés (`learned_dismiss`)  
+   - Toast : 1 CTA + badge objectif ; empty state affiche l’objectif actif  
 
 ## Correctifs livrés (2026-09-18)
 
