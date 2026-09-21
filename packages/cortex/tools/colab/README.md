@@ -21,7 +21,9 @@ Doc : [`docs/reason_ephemeral_colab.md`](../../docs/reason_ephemeral_colab.md)
 
 1. Importer `lbg_reason_ephemeral.ipynb` (ou copie Drive)
 2. Runtime → **GPU T4**
-3. Tout exécuter → copier `export LBG_REASON_EPHEMERAL_*=…`
+3. **Redémarrer la session et tout exécuter** → copier le bloc sous les `====` (sortie cellule 5)
+4. WSL : `source packages/cortex/infra/secrets/lbg.ephemeral.env` (fichier local, non git)
+5. Option Studio `.140` : drop-in `infra/systemd/lbg-orchestrator.ephemeral-colab.conf.example` + `/etc/lbg-ephemeral.env` — voir doc
 
 ## Kaggle
 
@@ -35,7 +37,8 @@ Studio GPU → install Ollama + pull qwen3.5-abliterated:9b + cellules proxy/tun
 
 ## Modèle
 
-Défaut : `huihui_ai/qwen3.5-abliterated:9b` (`LBG_COLAB_MODEL`).
+Défaut notebook / `lbg.env.example` : `huihui_ai/qwen3.5-abliterated:9b` (`LBG_COLAB_MODEL`).  
+PoC validé aussi : `huihui_ai/qwen3-abliterated:8b-v2`.
 
 ## Smoke sans cloud GPU
 

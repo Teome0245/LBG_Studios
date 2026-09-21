@@ -1,6 +1,6 @@
 # Registre LBG Studios
 
-**Date** : 2026-09-20 (LLM ≤12B abliterated · Compagnon LAB · Colab éphémère 9b)  
+**Date** : 2026-09-21 (REASON ephemeral câblé `.140` · Colab Pinggy PoC)  
 **Source de vérité** : ce fichier.
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
@@ -172,3 +172,4 @@ flowchart LR
 | 2026-08-18 | Backend : `pydantic-settings`, `response_model` Pilot, `trace_id` E2E | `packages/cortex/backend` |
 | 2026-08-18 | O2 : pipeline assets Prime + persistance inventaire/quêtes via bridge Core3 | `packages/prime-client` |
 | 2026-09-20 | LLM secours free (Groq/OpenRouter) + comparatif Colab/Kaggle + smoke notebooks | `docs/reason_cloud_free_fallback.md`, `docs/llm_cloud_free_vs_local.md` |
+| 2026-09-21 | REASON ephemeral câblé sur `.140` (drop-in `/etc/lbg-ephemeral.env`) + doc PoC Colab/Pinggy | `docs/reason_ephemeral_colab.md`, `infra/systemd/lbg-orchestrator.ephemeral-colab.conf.example` |

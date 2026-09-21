@@ -1,0 +1,21 @@
+# Drop-in systemd — tier REASON ephemeral (Colab / Pinggy)
+# Doc : packages/cortex/docs/reason_ephemeral_colab.md
+#
+# Sur .140 (PoC session uniquement, PAS H24) :
+#   1. Écrire /etc/lbg-ephemeral.env (chmod 640, root:lbg) avec :
+#        LBG_REASON_EPHEMERAL_ENABLED=1
+#        LBG_REASON_EPHEMERAL_BASE_URL=https://….run.pinggy-free.link
+#        LBG_REASON_EPHEMERAL_API_KEY=<Bearer notebook>
+#        LBG_REASON_EPHEMERAL_MODEL=huihui_ai/qwen3-abliterated:8b-v2
+#        LBG_REASON_EPHEMERAL_TIMEOUT_S=45
+#        LBG_REASON_EPHEMERAL_BEFORE_CLOUD=1
+#   2. Copier ce fichier vers :
+#        /etc/systemd/system/lbg-orchestrator.service.d/ephemeral-colab.conf
+#   3. systemctl daemon-reload && systemctl restart lbg-orchestrator
+#   4. Vérifier : tr '\0' '\n' < /proc/$(pgrep -f 'uvicorn main:app.*8010')/environ | grep EPHEMERAL
+#
+# Couper le PoC : ENABLED=0 dans /etc/lbg-ephemeral.env puis restart,
+# ou supprimer le drop-in + daemon-reload + restart.
+
+[Service]
+EnvironmentFile=-/etc/lbg-ephemeral.env

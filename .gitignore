@@ -43,6 +43,9 @@ third_party/new_mmo/
 *.env.local
 infra/secrets/*.env
 !infra/secrets/*.env.example
+packages/cortex/infra/secrets/*.env
+!packages/cortex/infra/secrets/*.env.example
+**/lbg.ephemeral.env
 **/desktop.env
 **/linux.env
 
