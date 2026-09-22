@@ -32,20 +32,21 @@ def test_api_key_resolves_secret_ref(monkeypatch) -> None:
 
 def test_hybrid_prefers_deterministic_when_llm_low_conf(monkeypatch) -> None:
     monkeypatch.delenv("LBG_ORCHESTRATOR_INTENT_LLM", raising=False)
+    monkeypatch.delenv("LBG_ORCHESTRATOR_INTENT_LAYA", raising=False)
 
     def fake_llm(_t: str):
-        return ("npc_dialogue", 0.5, {"intent_source": "llm"})
+        return ("devops_probe", 0.5, {"intent_source": "llm"})
 
     monkeypatch.setenv("LBG_ORCHESTRATOR_INTENT_LLM_BASE_URL", "http://fake")
     monkeypatch.setenv("LBG_ORCHESTRATOR_INTENT_LLM", "1")
     with patch("introspection.llm_intent_classifier.classify_intent_llm", fake_llm):
         det = DeterministicIntentClassifier()
         intent, conf, meta = hybrid_classify(
-            "point d'avancement du produit",
+            "parler au forgeron",
             {},
             det.classify,
         )
-    assert intent == "project_pm"
+    assert intent == "npc_dialogue"
     assert meta.get("intent_source") == "deterministic"
 
 

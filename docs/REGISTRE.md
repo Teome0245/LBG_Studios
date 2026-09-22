@@ -1,6 +1,6 @@
 # Registre LBG Studios
 
-**Date** : 2026-09-21 (REASON ephemeral câblé `.140` · Colab Pinggy PoC)  
+**Date** : 2026-09-22 (Laya System One optionnel pour routage intent)  
 **Source de vérité** : ce fichier.
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
@@ -12,6 +12,7 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 **Smoke** : [`SMOKE_LAN.md`](SMOKE_LAN.md).  
 **LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md) · règle Cursor `local-llm-route-matrix.mdc`.  
 **Compagnon LLM / morale LAB** : [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md).  
+**System One Laya** (routage intent typé, optionnel) : [`packages/cortex/docs/laya_system_one.md`](../packages/cortex/docs/laya_system_one.md).  
 **GPU éphémère Colab** : [`packages/cortex/docs/reason_ephemeral_colab.md`](../packages/cortex/docs/reason_ephemeral_colab.md) · notebooks `packages/cortex/tools/colab/`.  
 **LLM secours free** : [`packages/cortex/docs/reason_cloud_free_fallback.md`](../packages/cortex/docs/reason_cloud_free_fallback.md) · comparatif [`llm_cloud_free_vs_local.md`](../packages/cortex/docs/llm_cloud_free_vs_local.md).  
 **Canal ops** : Slack + Element backup — [`packages/cortex/docs/ops_notify_slack.md`](../packages/cortex/docs/ops_notify_slack.md) · ADR 0021.  
@@ -173,3 +174,4 @@ flowchart LR
 | 2026-08-18 | O2 : pipeline assets Prime + persistance inventaire/quêtes via bridge Core3 | `packages/prime-client` |
 | 2026-09-20 | LLM secours free (Groq/OpenRouter) + comparatif Colab/Kaggle + smoke notebooks | `docs/reason_cloud_free_fallback.md`, `docs/llm_cloud_free_vs_local.md` |
 | 2026-09-21 | REASON ephemeral câblé sur `.140` (drop-in `/etc/lbg-ephemeral.env`) + doc PoC Colab/Pinggy | `docs/reason_ephemeral_colab.md`, `infra/systemd/lbg-orchestrator.ephemeral-colab.conf.example` |
+| 2026-09-22 | Laya System One (HTTP) : cascade intent + laya-serve `.111:8097` (LAB) | `docs/laya_system_one.md`, `services/laya_client.py` |

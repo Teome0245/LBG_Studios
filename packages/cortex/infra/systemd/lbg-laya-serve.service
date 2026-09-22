@@ -1,0 +1,26 @@
+[Unit]
+Description=LBG Laya System One (laya-serve, Jev-compatible)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/lbg-laya-serve
+EnvironmentFile=-/etc/lbg-laya-serve.env
+Environment=USE_TF=0
+Environment=HF_HOME=/opt/lbg-laya-serve/hf-cache
+Environment=TRANSFORMERS_CACHE=/opt/lbg-laya-serve/hf-cache
+Environment=LAYA_SERVE_BACKEND=laya
+Environment=LAYA_SERVE_PRELOAD=true
+Environment=LAYA_SERVE_DEVICE=cpu
+Environment=LAYA_SERVE_SERVING_MODEL=laya-english
+Environment=LAYA_SERVE_MAX_LOADED=2
+# Port dédié : 8095=web-enrich, 8096=petri → 8097=laya
+ExecStart=/opt/lbg-laya-serve/.venv/bin/uvicorn laya_serve.app:create_app --factory --host 0.0.0.0 --port 8097
+Restart=on-failure
+RestartSec=5
+# Premier preload HF / torch peut être long
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

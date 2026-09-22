@@ -67,7 +67,7 @@ def should_use_llm_intent(context: dict[str, Any]) -> bool:
     raw = context.get("_intent_classify")
     if isinstance(raw, str):
         s = raw.strip().lower()
-        if s == "deterministic":
+        if s in ("deterministic", "laya"):
             return False
         if s == "llm":
             return True
@@ -192,16 +192,54 @@ def hybrid_classify(
     deterministic_classify: Any,
 ) -> tuple[str, float, dict[str, Any]]:
     """
-    Appelle le classifieur déterministe puis, si autorisé, le LLM.
-    Si le déterministe a déjà une intention connue (non unknown), le LLM ne la remplace
-    que si sa propre confidence >= LBG_ORCHESTRATOR_INTENT_LLM_OVERRIDE_CONF.
+    Cascade : déterministe → Laya (System 1, optionnel) → LLM (optionnel).
+
+    - Intents *_status factuels : stop immédiat (pas de modèle).
+    - Laya : si activé ; n'override un det ≠ unknown que si confidence haute ;
+      si ``needs_llm`` élevé, on laisse passer au LLM.
+    - LLM : même règle d'override qu'avant (``LBG_ORCHESTRATOR_INTENT_LLM_OVERRIDE_CONF``).
     """
+    from introspection.laya_intent_classifier import (
+        classify_intent_laya,
+        laya_should_accept,
+        should_use_laya_intent,
+    )
+    from services.laya_client import laya_base_url
+
     det_intent, det_conf = deterministic_classify(text)
     meta_base: dict[str, Any] = {"intent_source": "deterministic"}
 
     if is_factual_status_intent(det_intent):
         return det_intent, det_conf, meta_base
 
+    # --- System 1 (Laya) ---
+    if should_use_laya_intent(context):
+        if not laya_base_url():
+            meta_base = {**meta_base, "intent_laya_skipped": "no_base_url"}
+        else:
+            laya = classify_intent_laya(text)
+            if laya is None:
+                meta_base = {**meta_base, "intent_laya_error": True}
+            else:
+                lint, lconf, meta_laya = laya
+                needs = meta_laya.get("laya_needs_llm")
+                needs_f = float(needs) if isinstance(needs, (int, float)) else None
+                if laya_should_accept(
+                    det_intent=det_intent,
+                    laya_intent=lint,
+                    laya_conf=lconf,
+                    needs_llm=needs_f,
+                ):
+                    return lint, lconf, meta_laya
+                meta_base = {
+                    **meta_base,
+                    "intent_laya_deferred": True,
+                    "laya_intent": lint,
+                    "laya_confidence": lconf,
+                    **{k: v for k, v in meta_laya.items() if k.startswith("laya_")},
+                }
+
+    # --- System 2 (LLM intent) ---
     if not should_use_llm_intent(context):
         return det_intent, det_conf, meta_base
     if not _base_url():
@@ -216,4 +254,4 @@ def hybrid_classify(
     if det_intent != "unknown" and lconf < thresh:
         return det_intent, det_conf, meta_base
 
-    return lintent, lconf, meta_llm
+    return lintent, lconf, {**meta_base, **meta_llm}
