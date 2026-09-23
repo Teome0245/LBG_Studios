@@ -44,6 +44,12 @@ _APP_ALIASES: dict[str, str] = {
     "swgemu.exe": "swgemu",
     "swg": "swgemu",
     "starwarsgalaxies": "swgemu",
+    # Studio éditeur (.143 Omarchy / .10) — Cline vit dans VS Code
+    "vscode": "code",
+    "vs-code": "code",
+    "code-oss": "code",
+    "vscodium": "code",
+    "cline": "code",
 }
 
 _WIN_EXE_PATH_RE = re.compile(

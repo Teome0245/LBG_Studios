@@ -86,6 +86,20 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'open_app',
   },
   {
+    id: 'omarchy_vscode',
+    label: 'VS Code + Cline (.143)',
+    hint: 'éditeur studio',
+    sourceText: 'ouvre code sur omarchy',
+    kind: 'open_app',
+  },
+  {
+    id: 'team_pilot',
+    label: 'Pilot Team',
+    hint: 'équipe virtuelle',
+    sourceText: 'ouvre http://192.168.0.140:8080/#/team dans le navigateur',
+    kind: 'open_url',
+  },
+  {
     id: 'omarchy_heal',
     label: 'Heal agent Omarchy',
     hint: '.143 · systemd user',
@@ -148,7 +162,18 @@ export function nextUsefulAgirSuggestions(done = {}, limit = 4) {
 /** Défauts initiative quand aucun signal infra critique (rotation horaire). */
 export function idleUsefulAgirIntents(limit = 3) {
   const pool = USEFUL_AGIR_ACTIONS.filter((a) =>
-    ['selfcheck', 'mail', 'vghd', 'inventory', 'jobs', 'session0', 'search', 'cockpit'].includes(a.id),
+    [
+      'selfcheck',
+      'mail',
+      'vghd',
+      'inventory',
+      'jobs',
+      'session0',
+      'search',
+      'cockpit',
+      'omarchy_vscode',
+      'team_pilot',
+    ].includes(a.id),
   )
   const hour = Math.floor(Date.now() / 3_600_000)
   const start = pool.length ? hour % pool.length : 0

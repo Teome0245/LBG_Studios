@@ -1,7 +1,20 @@
 # Sans Cursor — éditeur + Compagnon LBG
 
-**Date** : 2026-09-21  
-**But** : coder et piloter le studio **sans** Cursor IDE.
+**Date** : 2026-09-23  
+**But** : coder et piloter le studio **sans** Cursor IDE — avec **Compagnon**, la **Team** et Cline sur **`.143`**.
+
+Boucle complète : [`ecosystem_dev_143.md`](ecosystem_dev_143.md).
+
+---
+
+## 0. Qui développe
+
+| Acteur | Sur `.143` / lab |
+|--------|------------------|
+| **Compagnon** | Propose Agir · ouvre VS Code/Cline · initiatives Self |
+| **Team** | Plans / tâches L1 · smokes · leçons (Pilot `#/team`) |
+| **Humain** | L2, intention, review |
+| **Cline** | Plan 9b / Act 12b sur le monorepo |
 
 ---
 

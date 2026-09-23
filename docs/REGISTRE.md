@@ -76,7 +76,7 @@ Serveurs jeu (runtime, hors Git) :
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
-| **`.143`** | VM `lbg-omarchy` | NUC `.200` — lab Omarchy (Arch/Hyprland) ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) |
+| **`.143`** | VM `lbg-omarchy` | NUC `.200` — **éditeur studio** (VS Code + Cline) + Hyprland ; miroir git/SMB ; deploy lab via `deploy_*` ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
 | **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142 / VM 143) · `.201` = R720 (CT 110 / 141) |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` |
