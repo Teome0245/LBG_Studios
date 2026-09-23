@@ -138,3 +138,34 @@ def test_session_quest_enrich_prefers_status_and_inventory(monkeypatch: pytest.M
     assert "progress=1/2" in ss["quest_snapshot"]
     assert ss["player_note"] == "player:Lia inv:1"
     assert ss["session_mood"] == "credits:72"
+
+
+def test_hunt_meute_requires_victory() -> None:
+    quests.reset_player("Lia")
+    quests.load_templates()
+    quests.accept_quest("Lia", "lh_hunt_chacal")
+    assert quests.progress_quest("Lia", "lh_hunt_chacal", step_id="exit")["ok"] is True
+    blocked = quests.progress_quest("Lia", "lh_hunt_chacal", step_id="meute")
+    assert blocked["ok"] is False
+    assert blocked["error"] == "hunt_required"
+
+
+def test_claim_hunt_quest_after_victory() -> None:
+    from hunt_yard_bridge import session_reset, session_run  # noqa: E402
+
+    quests.reset_player("Lia")
+    quests.load_templates()
+    quests.accept_quest("Lia", "lh_hunt_chacal")
+    assert quests.progress_quest("Lia", "lh_hunt_chacal", step_id="exit")["ok"] is True
+    session_reset(seed=1)
+    run = session_run(max_ticks=120)
+    assert run.get("status") == "victory"
+    claim = quests.claim_hunt_quest_progress("Lia")
+    assert claim["ok"] is True
+    status = quests.status_payload("Lia")
+    active = status.get("active") or []
+    assert active
+    steps = active[0].get("progress_steps") or []
+    meute = next((s for s in steps if isinstance(s, dict) and s.get("id") == "meute"), None)
+    assert meute is not None
+    assert meute.get("done") is True

@@ -3,26 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LBG Studios — Pilot</title>
+  <title>LBG Studios — Compagnon</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="pilot.css" />
+  <link rel="stylesheet" href="pilot.css?v=20260825-orch-p4d" />
   <link rel="stylesheet" href="orchestrator_avatar/orchestrator_avatar.css" />
   <link rel="stylesheet" href="face_rig/face_rig.css" />
 </head>
 <body>
   <div class="pilot-shell-bar">
-    <div class="pilot-shell-brand"><strong>LBG Studios</strong> <span class="muted">pilot</span></div>
+    <div class="pilot-shell-brand"><strong>LBG Studios</strong> <span class="muted">compagnon</span></div>
     <nav class="pilot-nav" id="pilot-nav" aria-label="Navigation pilot">
+      <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="Compagnon — chat produit">Compagnon</a>
       <a href="#/" data-nav-route="home">Accueil</a>
       <details class="pilot-nav-group" data-nav-group="studio">
         <summary>Studio</summary>
         <div class="pilot-nav-menu">
-          <a href="#/chat" data-nav-route="chat">Chat</a>
-          <a href="#/assistant" data-nav-route="assistant">Assistant</a>
+          <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer">Compagnon 5174</a>
+          <a href="#/assistant" data-nav-route="assistant">Compagnon (Pilot)</a>
+          <a href="#/chat" data-nav-route="chat">Chat lab</a>
           <a href="#/jobs" data-nav-route="jobs">Jobs <span id="jobs-nav-badge" class="jobs-badge jobs-badge--waiting_approval" style="display:none; margin-left:0.25rem;">!</span></a>
-          <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="SPA Orchestrateur Vue — CT .100:5174">Orch UI</a>
+          <a href="#/providers" data-nav-route="providers" title="Catalogue LLM (proxy Orch)">Providers</a>
         </div>
       </details>
       <details class="pilot-nav-group" data-nav-group="campus">
@@ -31,7 +33,7 @@
           <a href="#/team" data-nav-route="team">File tâches</a>
           <a href="#/team/office" data-nav-route="team_office">Bureau</a>
           <a href="#/team/metrics" data-nav-route="team_metrics">Métriques</a>
-          <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer" title="Carte agents — Orchestrateur UI .100:5174">Carte agents</a>
+          <a href="#/agents/map" data-nav-route="agents_map" title="Carte agents (proxy Orch)">Carte agents</a>
         </div>
       </details>
       <details class="pilot-nav-group" data-nav-group="ops">
@@ -56,8 +58,8 @@
         <summary>Projet</summary>
         <div class="pilot-nav-menu">
           <a href="#/pm" data-nav-route="pm">Chef de projet</a>
-          <a href="#/lyra" data-nav-route="lyra">Lyra chat</a>
-          <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer" title="Lyra riche — Orchestrateur UI .100:5174">Lyra UI</a>
+          <a href="#/lyra" data-nav-route="lyra">Lyra</a>
+          <a href="#/providers" data-nav-route="providers">Providers</a>
         </div>
       </details>
     </nav>
@@ -71,21 +73,26 @@
     <header>
       <h1>Accueil</h1>
       <p class="muted">
-        Pilot découpé en <strong>5 zones</strong> (Studio · Campus · Ops · Jeu · Projet) + Accueil —
-        menus déroulants pour alléger la barre. Hash <code>#/…</code> inchangés ; liens LAN externes en nouvel onglet.
+        Point d’entrée produit : le <strong><a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer">Compagnon</a></strong>
+        sur <code>.100:5174</code> (dialogue, conception, présence). Pilot reste le cockpit ops (équipe, jobs, desktop).
+      </p>
+      <p style="margin:0.75rem 0 0;">
+        <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" class="pilot-home-cta" style="display:inline-block;padding:0.55rem 1rem;border-radius:8px;background:linear-gradient(135deg,#0d9488,#115e59);color:#ecfeff;text-decoration:none;font-weight:600;">
+          Ouvrir le Compagnon (.100:5174)
+        </a>
+        <a href="#/assistant" style="margin-left:0.75rem;font-size:0.9rem;">via Pilot →</a>
       </p>
     </header>
     <div class="pilot-home-grid">
       <div>
         <div class="pilot-home-cards">
           <div class="pilot-home-card">
-            <h3><a href="#/assistant" style="color:inherit;text-decoration:none;">Studio</a></h3>
-            <p>Travailler avec l’IA : chat, assistant Core, jobs autonomes.</p>
+            <h3><a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">Compagnon</a></h3>
+            <p>Présence type Jarvis sur <code>.100:5174</code> — parler, concevoir, agir sous validation.</p>
             <div class="pilot-home-links">
-              <a href="#/chat">Chat</a>
-              <a href="#/assistant">Assistant</a>
+              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer">Ouvrir 5174</a>
+              <a href="#/assistant">Via Pilot</a>
               <a href="#/jobs">Jobs</a>
-              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="SPA Orchestrateur — CT .100:5174">Orch UI</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -94,7 +101,7 @@
             <div class="pilot-home-links">
               <a href="#/team/office">Bureau</a>
               <a href="#/team">File tâches</a>
-              <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer" title="Carte agents Orchestrateur UI">Carte agents</a>
+              <a href="#/agents/map">Carte agents</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -108,11 +115,11 @@
           </div>
           <div class="pilot-home-card">
             <h3><a href="#/pm" style="color:inherit;text-decoration:none;">Projet</a></h3>
-            <p>Jalons PM et Lyra (Pilot + UI riche Orchestrateur).</p>
+            <p>Jalons PM, LyraEngine et catalogue LLM (surfaces Orch absorbées).</p>
             <div class="pilot-home-links">
               <a href="#/pm">Chef de projet</a>
-              <a href="#/lyra">Lyra Pilot</a>
-              <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer" title="Lyra jauges / presets — .100:5174">Lyra UI</a>
+              <a href="#/lyra">Lyra</a>
+              <a href="#/providers">Providers</a>
             </div>
           </div>
           <div class="pilot-home-card">
@@ -128,12 +135,12 @@
             </div>
           </div>
           <div class="pilot-home-card">
-            <h3><a href="http://192.168.0.100:5174/" style="color:inherit;text-decoration:none;" target="_blank" rel="noopener noreferrer">Orchestrateur UI</a></h3>
-            <p>SPA Vue sur <code>.100:5174</code> — surfaces qui marchent (pas à jeter).</p>
+            <h3>Chat produit (Orch)</h3>
+            <p>UI Vue <code>.100:5174</code> — chat unique. Le Compagnon Pilot reste la surface Studio canon.</p>
             <div class="pilot-home-links">
-              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer">Accueil</a>
-              <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer">Lyra</a>
-              <a href="http://192.168.0.100:5174/agents/map" target="_blank" rel="noopener noreferrer">Carte agents</a>
+              <a href="http://192.168.0.100:5174/" target="_blank" rel="noopener noreferrer" title="Compagnon — chat produit Orch">Compagnon 5174</a>
+              <a href="#/assistant" title="Même canal via Pilot (ops)">Via Pilot</a>
+              <a href="http://192.168.0.100:3080/" target="_blank" rel="noopener noreferrer">Lab OWUI 3080</a>
             </div>
           </div>
         </div>
@@ -204,6 +211,50 @@
     </section>
   </div>
 
+  <div id="pilot-page-agents-map" class="pilot-page" hidden>
+    <header>
+      <h1>Carte agents</h1>
+      <p class="muted">
+        Proxy <code>GET /v1/pilot/orch/agents/map</code> → Orch API <code>.100:3000</code>
+        (remplace <code>5174/agents/map</code>).
+      </p>
+    </header>
+    <section>
+      <p style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;margin:0 0 0.75rem 0">
+        <button type="button" id="btn-orch-agents-refresh">Rafraîchir</button>
+        <span class="muted" id="orch-agents-hint">—</span>
+      </p>
+      <div id="orch-agents-meta" class="orch-meta"></div>
+      <div id="orch-agents-list" class="orch-grid"></div>
+      <details style="margin-top:1rem">
+        <summary class="muted">JSON brut</summary>
+        <pre id="orch-agents-raw" class="muted" style="font-size:0.8rem;max-height:18rem;">—</pre>
+      </details>
+    </section>
+  </div>
+
+  <div id="pilot-page-providers" class="pilot-page" hidden>
+    <header>
+      <h1>Providers LLM</h1>
+      <p class="muted">
+        Proxy <code>GET /v1/pilot/orch/providers/catalog</code> → catalogue + audit Ollama dual.
+      </p>
+    </header>
+    <section>
+      <p style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;margin:0 0 0.75rem 0">
+        <button type="button" id="btn-orch-providers-refresh">Rafraîchir</button>
+        <span class="muted" id="orch-providers-hint">—</span>
+      </p>
+      <div id="orch-providers-meta" class="orch-meta"></div>
+      <div id="orch-providers-audit" class="lyra-card" style="margin-bottom:1rem;">—</div>
+      <div id="orch-providers-list" class="orch-grid"></div>
+      <details style="margin-top:1rem">
+        <summary class="muted">JSON brut</summary>
+        <pre id="orch-providers-raw" class="muted" style="font-size:0.8rem;max-height:18rem;">—</pre>
+      </details>
+    </section>
+  </div>
+
   <div id="pilot-page-pm" class="pilot-page" hidden>
     <header>
       <h1>Chef de projet</h1>
@@ -254,13 +305,26 @@
 
   <div id="pilot-page-lyra" class="pilot-page" hidden>
     <header>
-      <h1>Lyra (agents)</h1>
+      <h1>Lyra</h1>
       <p class="muted">
-        Bac Pilot via <code>POST /v1/pilot/route</code> (<code>context.lyra</code> → <code>result.output.lyra</code>).
-        UI riche (jauges, presets) : <a href="http://192.168.0.100:5174/lyra" target="_blank" rel="noopener noreferrer">Orchestrateur · /lyra</a>.
+        <strong>LyraEngine</strong> (jauges serveur Orch via <code>/v1/pilot/orch/lyra/*</code>)
+        + bac local Pilot <code>POST /v1/pilot/route</code> (<code>context.lyra</code>).
       </p>
     </header>
+    <section id="orch-lyra-engine" class="lyra-card" style="margin-bottom:1rem;">
+      <h2 style="margin:0 0 0.35rem 0;font-size:1.05rem">LyraEngine <span class="muted" style="font-weight:400">(Orch · .3000)</span></h2>
+      <p class="lyra-small" id="orch-lyra-meta">—</p>
+      <div class="lyra-controls" style="margin:0.35rem 0 0.65rem 0">
+        <button type="button" id="btn-orch-lyra-refresh">Rafraîchir</button>
+        <button type="button" id="btn-orch-lyra-reset">Reset engine</button>
+        <span class="muted" id="orch-lyra-hint">—</span>
+      </div>
+      <div id="orch-lyra-gauges"></div>
+      <p class="lyra-small" style="margin:0.75rem 0 0.25rem 0"><strong>Style</strong></p>
+      <p id="orch-lyra-style" class="muted" style="font-size:0.88rem;white-space:pre-wrap;">—</p>
+    </section>
     <section>
+      <h2 style="margin:0 0 0.5rem 0;font-size:1.05rem">Bac Pilot (route)</h2>
       <div class="lyra-grid">
         <div class="lyra-card">
           <h2 style="margin:0 0 0.5rem 0;font-size:1.05rem">Entrée (context.lyra)</h2>
@@ -340,36 +404,77 @@
     </section>
   </div>
 
-  <div id="pilot-page-assistant" class="pilot-page" hidden>
-    <div class="assistant-shell">
+  <div id="pilot-page-assistant" class="pilot-page" hidden data-assistant-mode="discuter">
+    <div class="assistant-channel-bar">
+      <span class="assistant-mode-indicator" id="assistant-mode-indicator" title="Routage automatique">auto · réflexion</span>
+      <p class="assistant-mode-lead" id="assistant-mode-lead">Un seul chat — le mode se choisit selon ton message.</p>
+      <label class="assistant-force-wrap" title="Surcharge optionnelle du routage auto">
+        <span class="muted">Forcer</span>
+        <select id="assistant-channel-force" class="assistant-input-compact">
+          <option value="auto" selected>Auto</option>
+          <option value="discuter">Réflexion</option>
+          <option value="piloter">Ops</option>
+        </select>
+      </label>
+      <a class="assistant-linkish" href="http://192.168.0.100:3080/" target="_blank" rel="noopener noreferrer" title="Lab Open WebUI">Lab 3080 ↗</a>
+    </div>
+
+    <div class="assistant-shell assistant-shell--unified">
+      <aside id="assistant-conv-sidebar" class="assistant-conv-sidebar" aria-label="Historique des discussions">
+        <div class="assistant-conv-head">
+          <h2>Discussions</h2>
+          <div class="assistant-conv-actions">
+            <button type="button" id="btn-assistant-conv-new" class="assistant-linkish" title="Nouvelle discussion">+ Nouveau</button>
+            <button type="button" id="btn-assistant-conv-refresh" class="assistant-linkish" title="Rafraîchir">↻</button>
+          </div>
+        </div>
+        <p class="assistant-muted" id="assistant-conv-hint">—</p>
+        <div id="assistant-conv-list" class="assistant-conv-list"></div>
+      </aside>
       <div class="assistant-main">
-        <div class="assistant-hero">
-          <span class="assistant-badge">LBG IA — Orchestrateur</span>
+        <div class="assistant-hero assistant-hero--compact">
+          <span class="assistant-badge" id="assistant-mode-badge">Canal · Discuter</span>
           <span id="assistant-orch-mood-chip" class="orch-mood-chip orch-mood-chip--off" title="Humeur live de l’orchestrateur (proactive + brain)" hidden>
             <span class="orch-mood-dot" aria-hidden="true"></span>
             <span class="orch-mood-chip-label">…</span>
           </span>
-          <h1><span class="assistant-hero-kicker">Assistant Core ·</span> Copilote local</h1>
-          <p class="assistant-lead">
-            <strong>Dialoguer</strong> : conversation texte avec l’agent (historique dans le contexte JSON).
-            <strong>Proposer une action</strong> : proposition structurée, puis exécution (dry-run ou réel selon le switch) avec jeton d’approbation si besoin.
-            Panneau latéral : <strong>humeur orchestrateur</strong>, capabilities, ADR, session.
-          </p>
+          <h1 class="assistant-title-compact">Compagnon</h1>
         </div>
 
         <div id="assistant-chat-stream" class="assistant-chat-stream" role="log" aria-live="polite" aria-relevant="additions"></div>
 
         <div class="assistant-composer">
-          <label class="assistant-label-min" for="assistant-actor">Identité (actor_id)</label>
-          <input type="text" id="assistant-actor" class="assistant-input-compact" value="ui:assistant" autocomplete="off" />
+          <div class="assistant-orch-row assistant-ops-only">
+            <label class="assistant-label-min" for="assistant-orch-agent">Agent</label>
+            <select id="assistant-orch-agent" class="assistant-input-compact">
+              <option value="auto">auto (RouterIA)</option>
+            </select>
+            <label class="assistant-label-min" for="assistant-orch-model">Modèle</label>
+            <select id="assistant-orch-model" class="assistant-input-compact">
+              <option value="auto">auto</option>
+            </select>
+            <label class="assistant-label-min" for="assistant-orch-profile">Profil</label>
+            <select id="assistant-orch-profile" class="assistant-input-compact">
+              <option value="compagnon" selected>compagnon</option>
+              <option value="jarvis">jarvis</option>
+              <option value="mother">mother</option>
+              <option value="kit">kit</option>
+              <option value="hal">hal</option>
+              <option value="chaleureux">chaleureux</option>
+              <option value="neutre">neutre</option>
+              <option value="technique">technique</option>
+              <option value="concis">concis</option>
+            </select>
+          </div>
+          <label class="assistant-label-min assistant-ops-only" for="assistant-actor">Identité (actor_id)</label>
+          <input type="text" id="assistant-actor" class="assistant-input-compact assistant-ops-only" value="ui:assistant" autocomplete="off" />
 
-          <label class="assistant-label-min" for="assistant-text">Votre message</label>
-          <textarea id="assistant-text" class="assistant-input-main" rows="3" placeholder="Ex. regarde si j’ai un mail de Intel, ou collez une intention libre…"></textarea>
+          <textarea id="assistant-text" class="assistant-input-main" rows="2" placeholder="Parle au Compagnon — Entrée pour envoyer…"></textarea>
 
           <div class="assistant-actions-primary">
-            <button type="button" id="btn-assistant-converse" class="assistant-btn-converse" title="Routeur LBG-IA puis LLM dialogue si besoin (POST /v1/pilot/route → agent-dialogue)">Dialoguer</button>
-            <button type="button" id="btn-assistant-propose" class="assistant-btn-primary" title="Ctrl+Entrée">Proposer une action</button>
-            <div class="assistant-exec-row" title="Mode mémorisé localement avec les autres préférences Assistant">
+            <button type="button" id="btn-assistant-converse" class="assistant-btn-converse" title="Envoyer dans le canal unique">Envoyer</button>
+            <button type="button" id="btn-assistant-propose" class="assistant-btn-primary assistant-ops-only" title="Ctrl+Entrée">Proposer une action</button>
+            <div class="assistant-exec-row assistant-ops-only" title="Mode mémorisé localement avec les autres préférences Assistant">
               <span class="assistant-exec-mode-label">dry-run</span>
               <label class="assistant-switch" for="assistant-exec-real-toggle">
                 <input type="checkbox" id="assistant-exec-real-toggle" autocomplete="off" />
@@ -381,22 +486,23 @@
             <span class="assistant-hint-inline" id="assistant-hint">—</span>
             <span id="assistant-dialogue-badge" class="assistant-route-badge" hidden></span>
           </div>
-          <p class="assistant-kbd-hint"><kbd>Entrée</kbd> Dialoguer · <kbd>Ctrl</kbd>+<kbd>Entrée</kbd> Proposer · <kbd>Maj</kbd>+<kbd>Entrée</kbd> saut de ligne</p>
-          <div class="assistant-actions-secondary">
+          <p class="assistant-kbd-hint"><kbd>Entrée</kbd> Envoyer · <kbd>Maj</kbd>+<kbd>Entrée</kbd> ligne · <span class="assistant-ops-only"><kbd>Ctrl</kbd>+<kbd>Entrée</kbd> Proposer</span></p>
+          <div class="assistant-actions-secondary assistant-ops-only">
             <button type="button" id="btn-assistant-apply-proposal" class="assistant-linkish">Appliquer la proposition → contexte JSON</button>
           </div>
 
-          <div class="assistant-label-min" style="margin-top:0.85rem">Dernière réponse (lisible)</div>
-          <div id="assistant-pretty" class="assistant-tech-strip"></div>
-          <pre id="assistant-raw" class="assistant-raw-collapsed">—</pre>
+          <div class="assistant-label-min assistant-ops-only" style="margin-top:0.85rem">Dernière réponse (lisible)</div>
+          <div id="assistant-pretty" class="assistant-tech-strip assistant-ops-only"></div>
+          <pre id="assistant-raw" class="assistant-raw-collapsed assistant-ops-only">—</pre>
         </div>
 
-        <details class="assistant-details" id="assistant-details-advanced">
+        <details class="assistant-details assistant-ops-only" id="assistant-details-advanced">
           <summary>Réglages techniques · JSON · contexte</summary>
           <div class="assistant-advanced-inner">
             <label for="assistant-context">Contexte (JSON)</label>
             <textarea id="assistant-context" rows="5" style="width:100%;box-sizing:border-box;font-size:0.82rem">{
-  "history": []
+  "history": [],
+  "dialogue_profile": "compagnon"
 }</textarea>
 
             <label for="assistant-action" style="margin-top:0.65rem">ActionProposal / action (JSON)</label>
@@ -416,7 +522,7 @@
         </details>
       </div>
 
-      <aside class="assistant-sidebar">
+      <aside class="assistant-sidebar assistant-ops-only">
         <div class="assistant-card assistant-lyra-card">
           <h2>État · Lyra (Pilot)</h2>
           <p class="assistant-muted">Jauges locales à cette vue — indication d’humeur pour guider vos choix (dry-run, prudence). Lors d’un <strong>Dialoguer</strong>, elles sont envoyées à l’agent sous <code>context.lyra</code> pour influencer le ton de la réponse. Non synchronisées au MMO.</p>
@@ -473,6 +579,10 @@
 
         <div class="assistant-card">
           <h2>Options</h2>
+          <label class="assistant-check">
+            <input type="checkbox" id="assistant-pref-legacy-route" />
+            Legacy Dialoguer (<code>/v1/pilot/route</code> au lieu d’Orch /ask)
+          </label>
           <label class="assistant-check">
             <input type="checkbox" id="assistant-pref-route-first" checked />
             <span><strong>Routeur d’abord</strong> — chaque message passe par <code>/v1/pilot/route</code> (compétences LBG-IA) avant le LLM dialogue</span>
@@ -1376,6 +1486,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20260824-hunt"></script>
+  <script type="module" src="src/main.js?v=20260825-orch-p4d"></script>
 </body>
 </html>

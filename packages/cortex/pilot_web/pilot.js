@@ -2271,10 +2271,11 @@
           '<circle cx="8" cy="7" r="1.2" fill="#5eead4"/>' +
           '<circle cx="15" cy="16" r="1" fill="#64748b"/>' +
           "</svg>" +
-          "<strong>Bienvenue — LBG-IA</strong><br>" +
+          "<strong>Bienvenue — Compagnon</strong><br>" +
+          "Je suis là pour dialoguer, concevoir et agir sous ton contrôle. " +
           "Pose une question en langage naturel : je route vers la bonne compétence " +
           "(équipe, projet, Godot, infra…) et je réponds factuellement. " +
-          "<strong>Dialoguer</strong> pour le LLM, <strong>Proposer une action</strong> pour exécuter avec garde-fous.</div>";
+          "<strong>Envoyer</strong> pour parler, <strong>Proposer une action</strong> (mode Ops) pour exécuter avec garde-fous.</div>";
         return;
       }
       const parts = [];
@@ -3895,10 +3896,12 @@
     function officeAgentNeedsValidation(agent) {
       if (!agent || typeof agent !== "object") return false;
       if (!agent.task_id) return false;
+      // Idle sans flag L2 actif = pas au bureau (évite fantômes approval_required).
       if (agent.awaiting_human_approval === true || agent.awaiting_run === true) return true;
       const st = String(agent.status || "").toLowerCase();
       if (st === "review") return true;
-      return agent.approval_required === true && (st === "idle" || st === "queued" || st === "waiting_approval");
+      if (st === "idle") return false;
+      return agent.approval_required === true && (st === "queued" || st === "waiting_approval");
     }
 
     function officeAgentAwaitingHumanApproval(agent) {

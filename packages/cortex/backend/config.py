@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     lbg_pilot_lbgia_backend_url: str = Field(default="", validation_alias="LBG_PILOT_LBGIA_BACKEND_URL")
     lbg_ia_backend_url: str = Field(default="", validation_alias="LBG_IA_BACKEND_URL")
     lbg_pilot_lbgia_http_timeout: str = Field(default="3", validation_alias="LBG_PILOT_LBGIA_HTTP_TIMEOUT")
+    # API Orch UI legacy (.100:3000) — proxies /v1/pilot/orch/* (plan_pilot_hub_orch_absorb)
+    lbg_orch_ui_api_url: str = Field(
+        default="http://192.168.0.100:3000",
+        validation_alias="LBG_ORCH_UI_API_URL",
+    )
+    lbg_orch_ui_ask_timeout: str = Field(default="120", validation_alias="LBG_ORCH_UI_ASK_TIMEOUT")
 
     lbg_lan_host_precu: str = Field(default="192.168.0.245", validation_alias="LBG_LAN_HOST_PRECU")
     lbg_lan_host_mmo: str = Field(default="192.168.0.246", validation_alias="LBG_LAN_HOST_MMO")
@@ -64,6 +70,20 @@ class Settings(BaseSettings):
             return max(0.8, min(15.0, float(raw)))
         except ValueError:
             return 3.0
+
+    def orch_ui_api_base(self) -> str | None:
+        """Base API Orch UI ; chaîne vide = proxies désactivés. Sinon défaut LAN .100:3000."""
+        raw = self.lbg_orch_ui_api_url.strip()
+        if raw == "":
+            return None
+        return raw.rstrip("/")
+
+    def orch_ui_ask_timeout_s(self) -> float:
+        raw = self.lbg_orch_ui_ask_timeout.strip()
+        try:
+            return max(15.0, min(600.0, float(raw)))
+        except ValueError:
+            return 120.0
 
 
 @lru_cache

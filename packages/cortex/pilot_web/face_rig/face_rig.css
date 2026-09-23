@@ -1,4 +1,6 @@
-/* Face Rig 2D — Pilot (#/assistant) */
+/* Face Rig — baseline validée (cœur navy/cyan, oreilles chat, contraste)
+ * Chat CSS (blink/look) + teinte androïde. Affinages figés tant que OK.
+ */
 
 .face-rig-host {
   width: 100%;
@@ -7,14 +9,22 @@
 }
 
 .face-rig-stage {
+  --face-black: #0b1220;
+  --face-navy: #243656;
+  --face-steel: #3d567a;
+  --face-mid: #2e4568;
+  --face-white: #e8fbff;
+  --face-cyan: #5eead4;
+  --face-cyan-hot: #7cf0ff;
+  --face-glow: rgba(34, 211, 238, 0.65);
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 1rem;
-  overflow: hidden;
-  border: 1px solid rgba(45, 212, 191, 0.35);
-  background: radial-gradient(ellipse at 50% 35%, #2a4a52 0%, #0f1c24 70%);
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.35);
+  overflow: visible;
+  border: 1px solid rgba(94, 234, 212, 0.22);
+  background: transparent;
+  box-shadow: none;
 }
 
 .face-rig-stage--sheets .face-rig-sheet {
@@ -24,162 +34,494 @@
   background-repeat: no-repeat;
   background-color: transparent;
   border: none;
-  /* background-size / position posés par face_rig.js (1 cellule) */
   image-rendering: auto;
 }
-.face-rig-stage--sheets .face-rig-base {
+.face-rig-stage--sheets .face-rig-base,
+.face-rig-stage--sheets .face-rig-ear,
+.face-rig-stage--sheets .face-rig-muzzle {
   display: none !important;
 }
 .face-rig-stage--sheets .face-rig-mouth:not(.face-rig-sheet),
 .face-rig-stage--sheets .face-rig-eyes:not(.face-rig-sheet) {
   display: none;
 }
-/* Calques plein stage : le dessin est déjà ancré (yeux haut / bouche bas) dans la cellule */
 .face-rig-stage--sheets .face-rig-eyes.face-rig-sheet {
   display: block;
   z-index: 2;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   height: auto;
 }
 .face-rig-stage--sheets .face-rig-mouth.face-rig-sheet {
   display: block;
   z-index: 3;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   height: auto;
   transform: none;
 }
-.face-rig-stage--full-face .face-rig-face.face-rig-sheet {
-  display: block;
-  z-index: 2;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: auto;
-  border-radius: inherit;
+
+/* Oreilles chat (étape appréciée) */
+.face-rig-ear {
+  position: absolute;
+  z-index: 0;
+  top: 4%;
+  height: 38%;
+  width: 26%;
+  background: linear-gradient(165deg, #35557e 0%, #1a2d4a 100%);
+  pointer-events: none;
+  box-shadow:
+    0 0 10px rgba(34, 211, 238, 0.35),
+    inset 0 0 0 1px rgba(103, 232, 249, 0.2);
 }
-.face-rig-stage--full-face .face-rig-eyes,
-.face-rig-stage--full-face .face-rig-mouth,
-.face-rig-stage--full-face .face-rig-base {
-  display: none !important;
+.face-rig-ear::before,
+.face-rig-ear::after {
+  content: "";
+  position: absolute;
+  bottom: 20%;
+  height: 9%;
+  width: 9%;
+  border-radius: 50%;
+  background: var(--face-black);
+  opacity: 0.85;
+}
+.face-rig-ear::after {
+  bottom: auto;
+  top: 18%;
+  height: 10%;
+  width: 42%;
+  border-radius: 40%;
+  background: var(--face-cyan-hot);
+  opacity: 0.85;
+  box-shadow: 0 0 6px var(--face-glow);
+}
+.face-rig-ear--l {
+  left: 4%;
+  border-radius: 70% 30% 0 0 / 100% 100% 0 0;
+  transform: rotate(-14deg);
+}
+.face-rig-ear--l::before {
+  right: 14%;
+  left: auto;
+}
+.face-rig-ear--l::after {
+  right: 12%;
+  left: auto;
+}
+.face-rig-ear--r {
+  right: 4%;
+  border-radius: 30% 70% 0 0 / 100% 100% 0 0;
+  transform: rotate(14deg);
+}
+.face-rig-ear--r::before {
+  left: 14%;
+  right: auto;
+}
+.face-rig-ear--r::after {
+  left: 12%;
+  right: auto;
 }
 
+/* Face en cœur : large aux joues, menton pointu — bas un peu allongé */
 .face-rig-base {
   position: absolute;
-  inset: 12% 18% 8%;
-  border-radius: 48% 48% 42% 42%;
-  background: linear-gradient(180deg, #e8b89a 0%, #d4a088 55%, #c4907a 100%);
-  box-shadow: inset 0 -8px 16px rgba(120, 60, 40, 0.18);
+  z-index: 1;
+  /* bas un cran plus long (14% → 9%) sans retomber en ovale */
+  inset: 16% 7% 9% 7%;
+  border-radius: 48% 48% 48% 48% / 42% 42% 58% 58%;
+  background:
+    radial-gradient(ellipse 72% 50% at 50% 28%, #5a7aa3 0%, transparent 58%),
+    linear-gradient(180deg, var(--face-steel) 0%, var(--face-mid) 45%, var(--face-navy) 100%);
+  box-shadow:
+    inset 0 -12px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(186, 230, 253, 0.22),
+    0 0 0 1.5px rgba(103, 232, 249, 0.35),
+    0 0 18px rgba(34, 211, 238, 0.35);
+  clip-path: polygon(
+    6% 16%,
+    18% 4%,
+    50% 0%,
+    82% 4%,
+    94% 16%,
+    100% 40%,
+    94% 62%,
+    78% 82%,
+    58% 96%,
+    50% 100%,
+    42% 96%,
+    22% 82%,
+    6% 62%,
+    0% 40%
+  );
+}
+/* Halo cyan — un peu plus bas (visage moins long) */
+.face-rig-base::before {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 26%;
+  right: 26%;
+  top: 8%;
+  height: 7%;
+  border-radius: 50%;
+  background: var(--face-cyan-hot);
+  box-shadow: 0 0 10px var(--face-glow);
+  opacity: 0.9;
+  z-index: 2;
+  pointer-events: none;
+}
+/* Blush joues (zone large du cœur) */
+.face-rig-base::after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  top: 42%;
+  height: 24%;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse 20% 55% at 14% 45%, rgba(251, 146, 180, 0.4) 0%, transparent 70%),
+    radial-gradient(ellipse 20% 55% at 86% 45%, rgba(251, 146, 180, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .face-rig-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 2;
 }
 
+/* Yeux taille d’origine + accents points (pas cils en aile) */
 .face-rig-eyes {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 18%;
-  top: 28%;
-  height: 28%;
+  display: block;
+  top: 0;
+  height: 100%;
+  left: 0;
+  right: 0;
+  z-index: 3;
+}
+.face-rig-eyes::before,
+.face-rig-eyes::after {
+  content: "";
+  position: absolute;
+  z-index: 6;
+  top: 34%;
+  width: 5%;
+  height: 5%;
+  border-radius: 50%;
+  background: var(--face-black);
+  opacity: 0.9;
+  box-shadow: 5px -1px 0 0 var(--face-black);
+  pointer-events: none;
+  transform: none;
+}
+.face-rig-eyes::before {
+  left: 26%;
+  top: 36%;
+}
+.face-rig-eyes::after {
+  right: 26%;
+  left: auto;
+  top: 36%;
+  box-shadow: -5px -1px 0 0 var(--face-black);
 }
 
 .face-rig-eye {
-  width: 18%;
-  aspect-ratio: 1;
+  position: absolute;
+  top: 40%;
+  height: 20%;
+  width: 24%;
+  background: var(--face-cyan-hot);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f8fafc 0%, #94a3b8 35%, #1e293b 70%);
-  border: 2px solid #0f172a;
-  box-shadow: inset 0 0 0 2px rgba(45, 212, 191, 0.25);
-  transition: transform 120ms ease, height 120ms ease, opacity 120ms ease;
+  overflow: hidden;
+  box-shadow:
+    0 0 12px var(--face-glow),
+    0 0 26px rgba(34, 211, 238, 0.55),
+    inset 0 -4px 8px rgba(8, 47, 73, 0.25),
+    inset 0 0 0 1px rgba(224, 255, 255, 0.35);
+  transition: none;
+}
+.face-rig-eye--l {
+  left: 18%;
+}
+.face-rig-eye--r {
+  right: 18%;
+}
+
+.face-rig-eye::before {
+  display: none;
+  content: none;
+}
+
+/* Paupière — blink CSS (timing chat) */
+.face-rig-eye::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  height: 0;
+  width: 100%;
+  border-radius: 0 0 50% 50% / 0 0 40% 40%;
+  background: var(--face-navy);
+  animation: face-cat-blink 4s infinite ease-in;
+}
+
+.face-rig-pupil {
+  position: absolute;
+  z-index: 2;
+  top: 28%;
+  height: 42%;
+  width: 26%;
+  background: var(--face-black);
+  border-radius: 50%;
+  animation: face-cat-look 4s infinite;
+}
+.face-rig-eye--l .face-rig-pupil {
+  right: 34%;
+}
+.face-rig-eye--r .face-rig-pupil {
+  left: 34%;
+}
+.face-rig-pupil::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  right: -8%;
+  height: 28%;
+  width: 42%;
+  border-radius: 50%;
+  background: var(--face-white);
+  opacity: 0.95;
+}
+
+.face-rig-muzzle {
+  position: absolute;
+  z-index: 3;
+  top: 64%;
+  left: 50%;
+  height: 4%;
+  width: 5%;
+  transform: translateX(-50%);
+  background: #020617;
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  opacity: 0.95;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
+  pointer-events: none;
 }
 
 .face-rig-mouth {
-  left: 35%;
-  right: 35%;
-  top: 68%;
-  height: 10%;
-  border-radius: 0 0 1rem 1rem;
-  border: 2px solid #7c2d12;
-  border-top: none;
-  background: #7c2d12;
-  transition: border-radius 100ms ease, height 100ms ease, transform 100ms ease;
+  left: 40%;
+  right: 40%;
+  top: 70%;
+  height: 5%;
+  z-index: 3;
+  background: transparent !important;
+  border: none;
+  border-radius: 0 0 50% 50%;
+  box-shadow: inset 0 -2.6px 0 0 #020617;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 0 rgba(186, 230, 253, 0.25));
+  transition: opacity 100ms ease, height 100ms ease, border-radius 100ms ease,
+    background 100ms ease, box-shadow 100ms ease;
 }
 
-/* Eyes states (fallback) */
-.face-rig-stage[data-eyes="blink"] .face-rig-eye {
-  height: 14%;
-  aspect-ratio: auto;
-  border-radius: 40%;
-  background: #0f172a;
-  box-shadow: none;
+@keyframes face-cat-blink {
+  0% {
+    height: 0;
+  }
+  90% {
+    height: 0;
+  }
+  92.5% {
+    height: 100%;
+  }
+  95% {
+    height: 0;
+  }
+  97.5% {
+    height: 100%;
+  }
+  100% {
+    height: 0;
+  }
 }
+
+@keyframes face-cat-look {
+  0% {
+    transform: translate(0);
+  }
+  5% {
+    transform: translate(45%, -20%);
+  }
+  10% {
+    transform: translate(45%, -20%);
+  }
+  15% {
+    transform: translate(-90%, -20%);
+  }
+  20% {
+    transform: translate(-90%, -20%);
+  }
+  25% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.face-rig-stage[data-eyes="blink"] .face-rig-eye::after {
+  height: 100%;
+  animation: none;
+}
+.face-rig-stage[data-eyes="blink"] .face-rig-pupil {
+  animation: none;
+}
+
 .face-rig-stage[data-eyes="happy"] .face-rig-eye {
-  border-radius: 50% 50% 40% 40%;
-  transform: scaleY(0.85);
+  background: transparent;
+  box-shadow: inset 0 -3px 0 0 var(--face-cyan-hot);
+  overflow: visible;
+  height: 16%;
+  top: 40%;
+  border-radius: 0;
 }
-.face-rig-stage[data-eyes="sad"] .face-rig-eye {
-  transform: translateY(10%) scaleY(1.05);
+.face-rig-stage[data-eyes="happy"] .face-rig-eye::after,
+.face-rig-stage[data-eyes="happy"] .face-rig-eye::before,
+.face-rig-stage[data-eyes="happy"] .face-rig-pupil {
+  display: none;
+  animation: none;
 }
-.face-rig-stage[data-eyes="angry"] .face-rig-eye {
-  transform: scaleY(0.75);
-  border-color: #450a0a;
+.face-rig-stage[data-eyes="happy"] .face-rig-eyes::before,
+.face-rig-stage[data-eyes="happy"] .face-rig-eyes::after {
+  display: none;
+}
+
+.face-rig-stage[data-eyes="sad"] .face-rig-pupil {
+  animation: none;
+  top: 42%;
+}
+.face-rig-stage[data-eyes="angry"] .face-rig-eye::after {
+  height: 38%;
+  animation: none;
 }
 .face-rig-stage[data-eyes="surprised"] .face-rig-eye {
-  transform: scale(1.15);
+  transform: scale(1.1);
 }
-.face-rig-stage[data-eyes="tired"] .face-rig-eye {
-  transform: scaleY(0.55);
-  opacity: 0.9;
+.face-rig-stage[data-eyes="tired"] .face-rig-eye::after {
+  height: 48%;
+  animation: none;
 }
-.face-rig-stage[data-eyes="wink"] .face-rig-eye--r {
-  height: 14%;
-  aspect-ratio: auto;
-  border-radius: 40%;
-  background: #0f172a;
+.face-rig-stage[data-eyes="wink"] .face-rig-eye--r::after {
+  height: 100%;
+  animation: none;
 }
 
-/* Mouth states (fallback) */
 .face-rig-stage[data-mouth="closed"] .face-rig-mouth {
-  height: 6%;
-  border-radius: 0.2rem;
-  background: #9a3412;
+  opacity: 0.95;
+  height: 5%;
+  box-shadow: inset 0 -2.6px 0 0 #020617;
+  background: transparent !important;
 }
 .face-rig-stage[data-mouth="smile"] .face-rig-mouth {
-  height: 12%;
-  border-radius: 0 0 1.2rem 1.2rem;
-  background: #9a3412;
+  opacity: 1;
+  height: 6%;
+  left: 38%;
+  right: 38%;
+  border-radius: 0 0 50% 50%;
+  box-shadow: inset 0 -2.8px 0 0 #020617;
+  background: transparent !important;
 }
 .face-rig-stage[data-mouth="frown"] .face-rig-mouth {
-  height: 10%;
-  border-radius: 1.2rem 1.2rem 0 0;
-  top: 72%;
-  background: #7c2d12;
+  opacity: 0.85;
+  height: 5%;
+  top: 70%;
+  box-shadow: inset 0 2.5px 0 0 #0f172a;
+  background: transparent !important;
+}
+.face-rig-stage[data-mouth="smirk"] .face-rig-mouth {
+  opacity: 0.8;
+  left: 48%;
+  right: 38%;
+  box-shadow: inset 0 -2px 0 0 #0f172a;
+  background: transparent !important;
 }
 .face-rig-stage[data-mouth="open_wide"] .face-rig-mouth,
 .face-rig-stage[data-mouth="talk_2"] .face-rig-mouth {
-  height: 16%;
-  border-radius: 40%;
-  background: #431407;
+  opacity: 1;
+  left: 44%;
+  right: 44%;
+  top: 71%;
+  height: 9%;
+  border-radius: 50%;
+  box-shadow: none;
+  background: #0f172a !important;
 }
 .face-rig-stage[data-mouth="talk_1"] .face-rig-mouth,
 .face-rig-stage[data-mouth="talk_3"] .face-rig-mouth {
-  height: 11%;
-  border-radius: 35%;
-  background: #7c2d12;
+  opacity: 1;
+  left: 45%;
+  right: 45%;
+  top: 72%;
+  height: 5%;
+  border-radius: 40%;
+  box-shadow: none;
+  background: #0f172a !important;
 }
-.face-rig-stage[data-mouth="smirk"] .face-rig-mouth {
-  height: 8%;
-  transform: rotate(-8deg) translateX(8%);
+
+.face-rig-stage--alive {
+  animation: face-idle-sway 4.5s ease-in-out infinite;
+}
+.face-rig-stage.face-pulse-ok {
+  animation: face-pulse-ok 0.9s ease;
+}
+.face-rig-stage.face-pulse-warn {
+  animation: face-pulse-warn 0.9s ease;
+}
+.face-rig-stage.face-pulse-alert {
+  animation: face-pulse-alert 0.9s ease;
+}
+@keyframes face-idle-sway {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes face-pulse-ok {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+}
+@keyframes face-pulse-warn {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.05) rotate(-1deg);
+  }
+  70% {
+    transform: scale(1.03) rotate(1deg);
+  }
+}
+@keyframes face-pulse-alert {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 .face-rig-caption {
@@ -187,4 +529,12 @@
   font-size: 0.72rem;
   color: #94a3b8;
   text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face-rig-eye::after,
+  .face-rig-pupil,
+  .face-rig-stage--alive {
+    animation: none !important;
+  }
 }

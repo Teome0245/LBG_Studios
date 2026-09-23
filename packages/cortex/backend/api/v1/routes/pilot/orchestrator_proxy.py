@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from config import get_settings
 
 from ._common import httpx, orchestrator_base
-from ._models import ActionProposalBody, JobApproveBody, JobCreateBody, OkEnvelope
+from ._models import ActionProposalBody, CompanionReviewBody, JobApproveBody, JobCreateBody, OkEnvelope
 
 router = APIRouter()
 
@@ -39,6 +39,25 @@ async def pilot_action_proposal(payload: ActionProposalBody) -> dict[str, object
     try:
         async with httpx.AsyncClient(timeout=8.0) as client:
             r = await client.post(f"{orch_url}/v1/action-proposal", json=payload.model_dump())
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/companion/review-proposal", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_companion_review_proposal(payload: CompanionReviewBody) -> dict[str, object]:
+    """Contre-pouvoir Compagnon — revue avant dry-run→réel (Prométhée-gate)."""
+    orch_url = get_settings().orchestrator_base()
+    try:
+        # LLM optionnel peut être lent — timeout large ; défaut déterministe ≈ instantané
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            r = await client.post(
+                f"{orch_url}/v1/companion/review-proposal",
+                json=payload.model_dump(),
+            )
         if r.status_code != 200:
             return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
         data = r.json()

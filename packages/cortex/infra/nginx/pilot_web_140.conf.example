@@ -71,6 +71,15 @@ server {
         proxy_pass http://127.0.0.1:8065/;
     }
 
+    # Compat : liens / docs historiques `…:8080/pilot/#/…`
+    # Sans ceci, `src/main.js` relatif → `/pilot/src/main.js` → fallback index.html (routeur mort).
+    location = /pilot {
+        return 301 /pilot/;
+    }
+    location ^~ /pilot/ {
+        rewrite ^/pilot/(.*)$ /$1 last;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }

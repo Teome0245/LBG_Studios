@@ -13,6 +13,9 @@ import { register as register_6 } from "./chunks/pilot_pm.js";
 import { register as register_7 } from "./chunks/pilot_lyra.js";
 import { register as register_8 } from "./chunks/pilot_desktop.js";
 import { installHuntYard } from "./modules/hunt_yard.js";
+import { installOrchSurfaces } from "./modules/orch_surfaces.js";
+import { installAssistantOrchChat } from "./modules/assistant_orch_chat.js";
+import { installAssistantChannelMode } from "./modules/assistant_channel_mode.js";
 import { register as register_9 } from "./chunks/pilot_init.js";
 
 register_0();
@@ -25,6 +28,9 @@ register_6();
 register_7();
 register_8();
 installHuntYard();
+installOrchSurfaces();
+installAssistantOrchChat();
+installAssistantChannelMode();
 register_9();
 
 if (typeof globalThis.orchestratorAvatarInit === "function") {

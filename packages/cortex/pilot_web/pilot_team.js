@@ -156,10 +156,12 @@
     function officeAgentNeedsValidation(agent) {
       if (!agent || typeof agent !== "object") return false;
       if (!agent.task_id) return false;
+      // Idle sans flag L2 actif = pas au bureau (évite fantômes approval_required).
       if (agent.awaiting_human_approval === true || agent.awaiting_run === true) return true;
       const st = String(agent.status || "").toLowerCase();
       if (st === "review") return true;
-      return agent.approval_required === true && (st === "idle" || st === "queued" || st === "waiting_approval");
+      if (st === "idle") return false;
+      return agent.approval_required === true && (st === "queued" || st === "waiting_approval");
     }
 
     function officeAgentAwaitingHumanApproval(agent) {

@@ -22,6 +22,8 @@ __all__ = [
     "internal_rate_limit_allow",
     "lbg_ia_backend_base_url",
     "mmmorpg_player_id_from_pilot",
+    "orch_ui_api_base",
+    "orch_ui_ask_timeout_s",
     "orchestrator_base",
     "pilot_agent_dialogue_invoke_timeout_s",
     "pilot_lbg_ia_http_timeout_s",
@@ -111,3 +113,11 @@ def pilot_lbg_ia_http_timeout_s() -> float:
 
 def orchestrator_base() -> str:
     return get_settings().orchestrator_base()
+
+
+def orch_ui_api_base() -> str | None:
+    return get_settings().orch_ui_api_base()
+
+
+def orch_ui_ask_timeout_s() -> float:
+    return get_settings().orch_ui_ask_timeout_s()

@@ -21,6 +21,16 @@ class ActionProposalBody(BaseModel):
     context: dict[str, object] = Field(default_factory=dict)
 
 
+class CompanionReviewBody(BaseModel):
+    """Corps pour `POST orchestrator /v1/companion/review-proposal`."""
+
+    actor_id: str = "ui:compagnon"
+    source_text: str = ""
+    proposal: dict[str, object] | None = None
+    force_llm: bool = False
+    context: dict[str, object] = Field(default_factory=dict)
+
+
 class AssistantSessionExportBody(BaseModel):
     """Corps pour export borné de résumé session (validation serveur, sans persistance)."""
 
@@ -162,3 +172,37 @@ class TeamMemoryBody(BaseModel):
     tags: list[str] = Field(default_factory=list)
     task_id: str = ""
     meta: dict[str, object] = Field(default_factory=dict)
+
+
+class OrchAskBody(BaseModel):
+    """Corps proxy `POST /v1/pilot/orch/ask` → Orch UI `POST /ask`."""
+
+    model_config = ConfigDict(extra="allow")
+
+    prompt: str = ""
+    mode: str = "auto"
+    profile: str = "chaleureux"
+    conversation_id: str | None = None
+    agent: str | None = None
+    model: str | None = None
+
+
+class VisionAskBody(BaseModel):
+    """Corps `POST /v1/pilot/vision-ask` — analyse d'images (Compagnon)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    prompt: str = ""
+    images: list[str] = Field(default_factory=list, min_length=1)
+    profile: str | None = "compagnon"
+    conversation_id: str | None = None
+
+
+class OrchLyraUpdateBody(BaseModel):
+    """Corps proxy `POST /v1/pilot/orch/lyra/update` → Orch `POST /lyra/update`."""
+
+    model_config = ConfigDict(extra="allow")
+
+    gauge: str | None = None
+    delta: int | None = None
+    reset: bool = False
