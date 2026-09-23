@@ -1,0 +1,26 @@
+{
+  "_comment": "Cline Plan — LBG .111 light / profil fast (triage). Copier dans UI Cline (Ollama) ou fusionner dans providers.json.",
+  "apiProvider": "ollama",
+  "ollamaBaseUrl": "http://192.168.0.111:11434",
+  "ollamaModelId": "huihui_ai/qwen3.5-abliterated:0.8B",
+  "openaiCompatible": {
+    "apiProvider": "openai-compatible",
+    "openAiBaseUrl": "http://192.168.0.111:11434/v1",
+    "openAiApiKey": "ollama",
+    "openAiModelId": "huihui_ai/qwen3.5-abliterated:0.8B",
+    "openAiModelInfo": {
+      "contextWindow": 8192,
+      "maxTokens": 2048,
+      "supportsImages": false,
+      "supportsComputerUse": true,
+      "inputPrice": 0,
+      "outputPrice": 0
+    }
+  },
+  "lbg": {
+    "host": "192.168.0.111",
+    "host_class": "light",
+    "reason_profiles": ["fast"],
+    "matrix_doc": "packages/cortex/docs/local_llm_route_matrix.md"
+  }
+}

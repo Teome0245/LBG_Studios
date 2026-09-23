@@ -1,0 +1,28 @@
+{
+  "_comment": "Cline Plan — LEGACY triage .111 / 2B (router|json). Pour plans utiles → providers.plan-110-9b.json.",
+  "apiProvider": "ollama",
+  "ollamaBaseUrl": "http://192.168.0.111:11434",
+  "ollamaModelId": "huihui_ai/qwen3.5-abliterated:2B",
+  "openaiCompatible": {
+    "apiProvider": "openai-compatible",
+    "openAiBaseUrl": "http://192.168.0.111:11434/v1",
+    "openAiApiKey": "ollama",
+    "openAiModelId": "huihui_ai/qwen3.5-abliterated:2B",
+    "openAiModelInfo": {
+      "contextWindow": 8192,
+      "maxTokens": 2048,
+      "supportsImages": false,
+      "supportsComputerUse": true,
+      "inputPrice": 0,
+      "outputPrice": 0
+    }
+  },
+  "lbg": {
+    "host": "192.168.0.111",
+    "host_class": "light",
+    "reason_profiles": ["router", "json"],
+    "matrix_doc": "packages/cortex/docs/local_llm_route_matrix.md",
+    "deprecated_for": "plan_utile",
+    "prefer": "docs/cline/providers.plan-110-9b.json"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "_comment": "Cline Plan — LBG .110 / qwen3.5:9b (plans utiles). Défaut recommandé ; 2B/0.8B = triage seulement.",
+  "apiProvider": "ollama",
+  "ollamaBaseUrl": "http://192.168.0.110:11434",
+  "ollamaModelId": "huihui_ai/qwen3.5-abliterated:9b",
+  "openaiCompatible": {
+    "apiProvider": "openai-compatible",
+    "openAiBaseUrl": "http://192.168.0.110:11434/v1",
+    "openAiApiKey": "ollama",
+    "openAiModelId": "huihui_ai/qwen3.5-abliterated:9b",
+    "openAiModelInfo": {
+      "contextWindow": 32768,
+      "maxTokens": 4096,
+      "supportsImages": false,
+      "supportsComputerUse": true,
+      "inputPrice": 0,
+      "outputPrice": 0
+    }
+  },
+  "lbg": {
+    "host": "192.168.0.110",
+    "host_class": "heavy",
+    "reason_profiles": ["pm", "default"],
+    "matrix_doc": "packages/cortex/docs/local_llm_route_matrix.md",
+    "note": "Pas le 12b Act : évite contention CPU ; override LBG_COMPAGNON_LAB_QUALITY_MODEL style → gemma-4:12b si Plan=Act qualité."
+  }
+}

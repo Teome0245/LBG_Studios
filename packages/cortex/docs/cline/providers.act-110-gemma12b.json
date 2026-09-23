@@ -1,0 +1,26 @@
+{
+  "_comment": "Cline Act — LBG .110 heavy / code|pm. Copier dans UI Cline (Ollama).",
+  "apiProvider": "ollama",
+  "ollamaBaseUrl": "http://192.168.0.110:11434",
+  "ollamaModelId": "huihui_ai/gemma-4-abliterated:12b",
+  "openaiCompatible": {
+    "apiProvider": "openai-compatible",
+    "openAiBaseUrl": "http://192.168.0.110:11434/v1",
+    "openAiApiKey": "ollama",
+    "openAiModelId": "huihui_ai/gemma-4-abliterated:12b",
+    "openAiModelInfo": {
+      "contextWindow": 32768,
+      "maxTokens": 8192,
+      "supportsImages": true,
+      "supportsComputerUse": true,
+      "inputPrice": 0,
+      "outputPrice": 0
+    }
+  },
+  "lbg": {
+    "host": "192.168.0.110",
+    "host_class": "heavy",
+    "reason_profiles": ["code", "pm", "dialogue", "uncensored"],
+    "matrix_doc": "packages/cortex/docs/local_llm_route_matrix.md"
+  }
+}

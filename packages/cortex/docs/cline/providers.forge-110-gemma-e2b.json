@@ -1,0 +1,27 @@
+{
+  "_comment": "Cline — LBG .110 forge / default / failover light→heavy. Ne pas charger en parallèle du 27b.",
+  "apiProvider": "ollama",
+  "ollamaBaseUrl": "http://192.168.0.110:11434",
+  "ollamaModelId": "huihui_ai/gemma-4-abliterated:e2b",
+  "openaiCompatible": {
+    "apiProvider": "openai-compatible",
+    "openAiBaseUrl": "http://192.168.0.110:11434/v1",
+    "openAiApiKey": "ollama",
+    "openAiModelId": "huihui_ai/gemma-4-abliterated:e2b",
+    "openAiModelInfo": {
+      "contextWindow": 32768,
+      "maxTokens": 4096,
+      "supportsImages": true,
+      "supportsComputerUse": true,
+      "inputPrice": 0,
+      "outputPrice": 0
+    }
+  },
+  "lbg": {
+    "host": "192.168.0.110",
+    "host_class": "heavy",
+    "reason_profiles": ["forge", "default"],
+    "matrix_doc": "packages/cortex/docs/local_llm_route_matrix.md",
+    "note": "Swap manuel si huihui 27b saturé ; OLLAMA_MAX_LOADED_MODELS=1 sur 110."
+  }
+}
