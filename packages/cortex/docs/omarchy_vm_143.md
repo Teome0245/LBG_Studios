@@ -106,6 +106,27 @@ Une **deploy key = un repo** (limite GitHub) → une clé + alias SSH par dépô
 Config : `~/.ssh/config` → `Host github-<alias>` · IdentityFile `~/.ssh/id_ed25519_gh_<alias>`.
 Test : `git -C ~/projects/<repo> ls-remote --heads origin`.
 
+### SSH lab (deploy `.100` / agents) depuis `.143`
+
+| | |
+|--|--|
+| Identité | `~/.ssh/id_ed25519` (= clé WSL `lbg@multi-vmn`, migrée 2026-09-23) |
+| Secrets | `lbg.env` → `LBG_INFOGRAPHISTE_LORA_TRAIN_SSH_IDENTITY=/home/lbg/.ssh/id_ed25519` |
+| Accès | `root@192.168.0.100` (pubkey déjà autorisée) |
+| Config | `Host 192.168.0.*` → IdentityFile `~/.ssh/id_ed25519` (aliases `github-*` séparés) |
+| Test | `ssh root@192.168.0.100` · `bash packages/cortex/infra/scripts/deploy_compagnon_100.sh --smoke` |
+
+Ne pas confondre avec `id_ed25519_gh_*` (GitHub only).
+
+### Trous restants / alignement
+
+| Cible | État |
+|-------|------|
+| Proxmox API | **OK** — token `root@pam!lbg-cursor` dans `secrets/lbg.env` (remplace `lbg-readonly` révoqué) |
+| `.10` SSH (compte admin) | OpenSSH lit `C:\ProgramData\ssh\administrators_authorized_keys` — lancer **une fois** en Admin : Bureau → `LBG_Fix_SSH_Admin_Keys.cmd` |
+| `.130` | hors ligne / no route — rien à aligner |
+
+
 ## Ce que c’est / n’est pas
 
 | Fait | Ne fait pas |
