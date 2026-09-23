@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import {
   INITIATIVE_DEFAULTS,
   shouldOfferFromStatus,
@@ -6,17 +6,22 @@ import {
   snoozeInitiative,
   formatDiscussReply,
   recordInitiativeFeedback,
+  canShowInitiative,
 } from '@/lib/initiativeQuota'
 import { getStudioGoal } from '@/lib/studioGoal'
 import { presenceInitiative } from '@/lib/presence'
+import { fetchSelfStatus, formatSelfLine, offerFromSelf } from '@/lib/selfPresence'
 
 const current = ref(null)
 const lastError = ref('')
 const lastStatus = ref(null)
+const lastSelf = ref(null)
 const proposing = ref(false)
 const studioGoal = ref(getStudioGoal())
 let timer = null
 let started = false
+
+const selfLine = computed(() => formatSelfLine(lastSelf.value))
 
 async function fetchStatus() {
   const res = await fetch('/api/pilot/orchestrator/proactive/status', {
@@ -26,26 +31,41 @@ async function fetchStatus() {
   return res.json()
 }
 
+function applyOffer(offer) {
+  if (!offer?.offer) return false
+  const gate = canShowInitiative(offer.id)
+  if (!gate.ok) return false
+  current.value = {
+    id: offer.id,
+    message: offer.message,
+    kind: offer.kind,
+    intents: offer.intents || [],
+    primary: offer.primary || offer.intents?.[0] || null,
+    goal: offer.goal || null,
+    at: Date.now(),
+    fromSelf: Boolean(offer.fromSelf),
+  }
+  markInitiativeShown(offer.id)
+  presenceInitiative(offer.message)
+  return true
+}
+
 async function tick() {
   try {
     studioGoal.value = getStudioGoal()
-    const status = await fetchStatus()
+    const [status, selfStatus] = await Promise.all([fetchStatus(), fetchSelfStatus()])
     lastStatus.value = status
+    lastSelf.value = selfStatus
     lastError.value = ''
     if (current.value) return
+
     const offer = shouldOfferFromStatus(status)
-    if (!offer.offer) return
-    current.value = {
-      id: offer.id,
-      message: offer.message,
-      kind: offer.kind,
-      intents: offer.intents || [],
-      primary: offer.primary || null,
-      goal: offer.goal || null,
-      at: Date.now(),
+    if (applyOffer(offer)) return
+
+    const selfOffer = offerFromSelf(selfStatus)
+    if (selfOffer.offer) {
+      applyOffer({ ...selfOffer, fromSelf: true, primary: selfOffer.intents?.[0] || null })
     }
-    markInitiativeShown(offer.id)
-    presenceInitiative(offer.message)
   } catch (e) {
     lastError.value = e?.message || String(e)
   }
@@ -67,8 +87,9 @@ function dismiss(snoozeHours = 4, feedback = 'dismiss') {
 function discussText() {
   const base = formatDiscussReply(lastStatus.value || {})
   const g = studioGoal.value?.goal
-  if (!g) return base
-  return `${base}\n\nObjectif actif : ${g.title} — ${g.description}`
+  const selfBit = selfLine.value ? `\n\nSelf : ${selfLine.value}` : ''
+  if (!g) return `${base}${selfBit}`
+  return `${base}\n\nObjectif actif : ${g.title} — ${g.description}${selfBit}`
 }
 
 export function useInitiative() {
@@ -83,6 +104,8 @@ export function useInitiative() {
     current,
     lastError,
     lastStatus,
+    lastSelf,
+    selfLine,
     proposing,
     studioGoal,
     dismiss,

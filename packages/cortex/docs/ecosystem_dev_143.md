@@ -56,12 +56,14 @@ Cible desktop : agent Omarchy `:5005` (alias `omarchy` / `.143`). Soft-confirm L
 
 ## Checklist « écosystème prêt à porter un sujet »
 
-- [ ] Dirty tree sauvé (lots M1) — pas de secrets dans git  
-- [ ] Compagnon déploie depuis `.143` (`deploy_compagnon_100.sh --smoke`)  
-- [ ] Orch Self joignable (`GET /v1/self/status`)  
-- [ ] Initiative toast (silence → `jobs:idle`) visible  
-- [ ] Team visible Pilot + au moins 1 tâche L1 drainée  
-- [ ] VS Code + Cline sur `.143` (Plan 9b / Act 12b) smoke OK  
+- [x] Dirty tree sauvé (lots M1) — pas de secrets dans git  
+- [x] Compagnon déploie depuis `.143` (`deploy_compagnon_100.sh --smoke`)  
+- [x] Orch Self joignable (`GET /v1/self/status`) + proxy Pilot slim (`/v1/pilot/orchestrator/self/status`)  
+- [x] Initiative toast (silence → `jobs:idle` **ou** Self drives / `pending_will`)  
+- [x] Bandeau **Self** sur `:5174` (curiosité / tension / intent)  
+- [x] Team L1 depuis toast Compagnon (`POST /api/pilot/team/tasks` + run)  
+- [x] Contre-pouvoir Agir (`companion/review-proposal` dans ActionCard)  
+- [ ] VS Code + Cline sur `.143` (Plan 9b / Act 12b) smoke OK (manuel)  
 - [ ] Doc sujet + leçon après merge  
 
 Quand cette liste tient, on peut confier un sujet O2 (Core3/Prime…) à la boucle — pas avant.

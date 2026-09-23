@@ -3,8 +3,9 @@ import { ref } from 'vue'
 import { useInitiative } from '@/composables/useInitiative'
 import { useChat } from '@/composables/useChat'
 import { proposeAction } from '@/lib/agir'
+import { spawnTeamL1, teamObjectiveFromInitiative } from '@/lib/teamSpawn'
 
-const { current, dismiss, discussText, proposing } = useInitiative()
+const { current, dismiss, discussText, proposing, selfLine } = useInitiative()
 const { addUserMessage, addMessage } = useChat()
 const busyId = ref('')
 
@@ -23,6 +24,10 @@ function discuss() {
 /** Prépare une carte Agir (proposal réelle) sans exécuter. */
 async function runAgir(intent) {
   if (!intent?.sourceText || proposing.value) return
+  if (intent.teamSpawn) {
+    await runTeam(intent)
+    return
+  }
   busyId.value = intent.id || 'agir'
   proposing.value = true
   const text = intent.sourceText
@@ -39,7 +44,7 @@ async function runAgir(intent) {
     } else {
       addMessage({
         role: 'assistant',
-        content: proposal.summary || intent.label || 'Proposition prête — Dry-run puis Réel.',
+        content: proposal.summary || intent.label || 'Proposition prête — Dry-run puis Réel (contre-pouvoir).',
         source: 'agir',
         actionProposal: proposal,
         actionSourceText: text,
@@ -50,6 +55,55 @@ async function runAgir(intent) {
     addMessage({
       role: 'assistant',
       content: `Proposition impossible : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    proposing.value = false
+    busyId.value = ''
+  }
+}
+
+/** Délègue une tâche Team L1 (create + run si possible). */
+async function runTeam(intent) {
+  if (proposing.value) return
+  busyId.value = intent?.id || 'team'
+  proposing.value = true
+  const objective = teamObjectiveFromInitiative(
+    current.value?.message,
+    intent?.teamObjective,
+  )
+  addUserMessage(`Team L1 · ${intent?.label || 'délégation'}`)
+  try {
+    const out = await spawnTeamL1({
+      objective,
+      role: intent?.teamRole || 'qa',
+      context: { initiative_id: current.value?.id || '' },
+      run: true,
+    })
+    if (!out.ok) {
+      addMessage({
+        role: 'assistant',
+        content: `Team L1 impossible : ${out.error || 'erreur'}`,
+        source: 'error',
+      })
+      dismiss(2, 'dismiss')
+    } else {
+      const runNote = out.run_error
+        ? ` Créée (${out.id}) — run : ${out.run_error} (file Team / Pilot).`
+        : ` Tâche ${out.id} · ${out.status || 'queued/run'}.`
+      addMessage({
+        role: 'assistant',
+        content:
+          `J’ai délégué à la Team (${out.role}) : « ${objective.slice(0, 160)} ».${runNote}` +
+          `\nSuivi : Pilot #/team — contre-pouvoir Agir reste pour le Réel desktop.`,
+        source: 'team',
+      })
+      dismiss(6, 'accept')
+    }
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: `Team L1 erreur : ${e?.message || e}`,
       source: 'error',
     })
   } finally {
@@ -81,13 +135,15 @@ async function runAgir(intent) {
       </div>
 
       <p class="initiative-msg">{{ current.message }}</p>
+      <p v-if="selfLine" class="initiative-self">{{ selfLine }}</p>
 
       <div v-if="current.intents?.length" class="initiative-intents">
         <button
-          v-for="it in current.intents.slice(0, 1)"
+          v-for="it in current.intents.slice(0, 2)"
           :key="it.id"
           type="button"
           class="btn-agir"
+          :class="{ 'btn-team': it.teamSpawn }"
           :disabled="!!busyId"
           @click="runAgir(it)"
         >
@@ -98,6 +154,12 @@ async function runAgir(intent) {
 
       <div class="initiative-actions">
         <button type="button" class="btn-ghost" @click="discuss">Détails</button>
+        <button
+          type="button"
+          class="btn-ghost"
+          :disabled="!!busyId"
+          @click="runTeam({ id: 'team_default', label: 'Team L1', teamSpawn: true })"
+        >Team L1</button>
         <button type="button" class="btn-ghost" @click="dismiss(4, 'dismiss')">Ignorer</button>
       </div>
     </div>
@@ -185,6 +247,12 @@ async function runAgir(intent) {
   line-height: 1.4;
   color: #f1f5f9;
 }
+.initiative-self {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.3;
+  color: #94a3b8;
+}
 .initiative-intents {
   display: flex;
   flex-direction: column;
@@ -209,6 +277,14 @@ async function runAgir(intent) {
 .btn-agir:disabled {
   opacity: 0.45;
   cursor: default;
+}
+.btn-agir.btn-team {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(14, 165, 233, 0.12);
+}
+.btn-agir.btn-team:hover:not(:disabled) {
+  background: rgba(14, 165, 233, 0.22);
+  border-color: rgba(56, 189, 248, 0.6);
 }
 .btn-agir-title {
   display: block;
