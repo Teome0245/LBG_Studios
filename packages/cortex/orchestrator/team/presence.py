@@ -38,6 +38,7 @@ DEFAULT_ZONE_BY_ROLE: dict[str, str] = {
     "dev_game": "zone_mmo_lab",
     "dev_godot": "zone_prime",
     "player_ia": "zone_prime",
+    "contrarian": "zone_llm",
 }
 
 # Zone préférée par persona / agent_id (registre)
@@ -54,6 +55,7 @@ DEFAULT_ZONE_BY_AGENT: dict[str, str] = {
     "godot_dev_hermes": "zone_prime",
     "studio_player_ia_choeur": "zone_prime",
     "studio_conductor_lyra": "zone_core",
+    "studio_contrarian_promethee": "zone_llm",
 }
 
 HOST_HINT_BY_ZONE: dict[str, str] = {
@@ -74,6 +76,7 @@ DEFAULT_AGENT_BY_ROLE: dict[str, str] = {
     "dev_game": "studio_dev_dedale",
     "dev_godot": "godot_dev_iris",
     "player_ia": "studio_player_ia_choeur",
+    "contrarian": "studio_contrarian_promethee",
 }
 
 _SECRET_RE = re.compile(
@@ -288,6 +291,28 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
 
 def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dict[str, Any]:
     agent_id = resolve_presence_agent_id(task)
+    # Tâche terminée : idle propre (pas de pastille L2 / task_id fantôme sur le bureau).
+    if task.status in ("done", "cancelled"):
+        location = "zone_coffee"
+        return {
+            "schema": SCHEMA,
+            "agent_id": agent_id,
+            "display_name": _display_for_agent(agent_id, task.role),
+            "status": "idle",
+            "current_action": "Terminé" if task.status == "done" else "En attente",
+            "location": location,
+            "target_destination": None,
+            "task_id": None,
+            "role": task.role,
+            "host_hint": HOST_HINT_BY_ZONE.get(location, "192.168.0.140"),
+            "trace_id": (task.trace_id or str(uuid.uuid4())[:12])[:128],
+            "event": event,
+            "timestamp": int(time.time()),
+            "approval_required": False,
+            "awaiting_human_approval": False,
+            "awaiting_run": False,
+        }
+
     approved = task_is_approved(task)
     status = map_task_status(
         task.status,
@@ -296,9 +321,7 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
     )
     location = infer_zone(task, agent_id=agent_id)
     if status == "idle":
-        if task.status in ("done", "cancelled"):
-            location = "zone_coffee"
-        elif task.status == "queued":
+        if task.status == "queued":
             location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
         else:
             location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
@@ -488,6 +511,8 @@ def _reconcile_terminal_tasks_locked() -> list[dict[str, Any]]:
 
     Cas typique : run L2 via API (ou race approve→run) sans fan-out presence à jour —
     le bureau Pilot reste sur « Exécuter » alors que la tâche est terminée.
+    Aussi : agent idle qui garde encore ``task_id`` d'une tâche terminée (fantôme
+    « Token L2 requis » via ``approval_required``).
     """
     try:
         from team import store as team_store
@@ -501,8 +526,8 @@ def _reconcile_terminal_tasks_locked() -> list[dict[str, Any]]:
             continue
         st_ui = str(payload.get("status") or "")
         awaits = bool(payload.get("awaiting_run") or payload.get("awaiting_human_approval"))
-        if st_ui not in ("review", "busy", "failed") and not awaits:
-            continue
+        appr_flag = bool(payload.get("approval_required"))
+        # Toujours vérifier si un task_id pointe vers une tâche terminée.
         try:
             task = team_store.get_task(tid)
         except Exception:
@@ -520,6 +545,8 @@ def _reconcile_terminal_tasks_locked() -> list[dict[str, Any]]:
             _last_emit_ts[aid] = now
             changed.append(idle)
             continue
+        if st_ui not in ("review", "busy", "failed") and not awaits and not appr_flag:
+            continue
         # Désalignement : re-sync depuis la tâche réelle
         fresh = _presence_from_task(task, event="status_changed")
         if (
@@ -527,6 +554,8 @@ def _reconcile_terminal_tasks_locked() -> list[dict[str, Any]]:
             or bool(fresh.get("awaiting_run")) != bool(payload.get("awaiting_run"))
             or bool(fresh.get("awaiting_human_approval"))
             != bool(payload.get("awaiting_human_approval"))
+            or bool(fresh.get("approval_required")) != bool(payload.get("approval_required"))
+            or fresh.get("task_id") != payload.get("task_id")
         ):
             _agents[aid] = fresh
             _last_status[aid] = str(fresh.get("status") or "idle")

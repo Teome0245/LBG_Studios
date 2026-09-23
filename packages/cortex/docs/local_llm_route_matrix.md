@@ -95,7 +95,7 @@ Ollama thinking (Qwen) : `LBG_REASON_OLLAMA_THINK=false` (défaut) et `LBG_DIALO
 | Canal | Mécanisme |
 |-------|-----------|
 | Cursor | règle `.cursor/rules/local-llm-route-matrix.mdc` (`alwaysApply`) si présente |
-| Cline (VS Code) | `docs/cline_local_llm.md` + snippets `docs/cline/providers.*.json` (Plan=111 / Act=110) |
+| Cline (VS Code) | `docs/cline_local_llm.md` + snippets `docs/cline/providers.*.json` (**Plan=110:9b** / Act=110:12b ; triage 111) |
 | Team / Atlas | run `admin_infra` → champ `route_matrix` + mémoire `team/atlas` |
 | Env exemple | `infra/secrets/lbg.env.example` |
 | Audit LAN | `bash infra/scripts/audit_ollama_110_lan.sh` |

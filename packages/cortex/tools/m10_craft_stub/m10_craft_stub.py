@@ -22,6 +22,7 @@ if str(TOOLS) not in sys.path:
 
 import m10_craft_runtime as runtime  # noqa: E402
 import quest_hub_runtime as quests  # noqa: E402
+from hunt_yard_bridge import session_reset, session_run, session_snapshot, session_tick  # noqa: E402
 
 HOST = os.environ.get("LBG_M10_STUB_HOST", "127.0.0.1")
 PORT = int(os.environ.get("LBG_M10_STUB_PORT", "8791"))
@@ -127,6 +128,10 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, quests.quest_state_payload(str(wanted or "")))
             return
 
+        if path == "/v1/hunt-yard":
+            self._send(200, {"ok": True, **session_snapshot()})
+            return
+
         self._send(404, {"ok": False, "error": "not_found", "path": path})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -198,6 +203,30 @@ class Handler(BaseHTTPRequestHandler):
             amount = body.get("amount")
             amt = int(amount) if amount is not None else None
             result = quests.tip_scene(player, qid, amount=amt)
+            self._send(200 if result.get("ok") else 400, result)
+            return
+
+        if path == "/v1/hunt-yard/reset":
+            seed = body.get("seed", 1)
+            result = session_reset(seed=int(seed) if seed is not None else 1)
+            self._send(200, {"ok": True, **result})
+            return
+
+        if path == "/v1/hunt-yard/tick":
+            ticks = body.get("ticks", 1)
+            result = session_tick(int(ticks) if ticks is not None else 1)
+            self._send(200, {"ok": True, **result})
+            return
+
+        if path == "/v1/hunt-yard/run":
+            max_ticks = body.get("max_ticks", 120)
+            result = session_run(max_ticks=int(max_ticks) if max_ticks is not None else 120)
+            self._send(200, {"ok": True, **result})
+            return
+
+        if path == "/v1/hunt-yard/claim-quest":
+            qid = str(body.get("quest_id") or quests.HUNT_QUEST_ID)
+            result = quests.claim_hunt_quest_progress(player, quest_id=qid)
             self._send(200 if result.get("ok") else 400, result)
             return
 

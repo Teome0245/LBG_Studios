@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SIDECAR="${LBG_CORE3_SIDECAR_URL:-http://192.168.0.246:8791}"
-BOTS="${BOTS:-mira,nix,lia}"
+BOTS="${BOTS:-lia,nix,mira,kael}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -38,10 +38,11 @@ for pid in bots:
     except Exception as e:
         results[pid] = {"ok": False, "error": str(e)}
         continue
-    x, y, z = bot_spawn(pid)
-    # pending : x est | y nord | z hauteur (Lua switch_zone mappe vers Core3 x, height, north)
+    x, y, z = bot_spawn(pid)  # east, north, height
+    # move_to pending: x=east y=north z=height (approachCoords remap)
+    # switch_zone pending: passe direct a switchZone(dest,x,y,z) = Core3 (x,height,north)
     lines = [
-        f"switch_zone|{player.firstname}|tatooine|{x:g}|{y:g}|{z:g}|lost_heaven",
+        f"switch_zone|{player.firstname}|tatooine|{x:g}|{z:g}|{y:g}|lost_heaven",
         f"move_to|{player.firstname}|tatooine|{x:g}|{y:g}|{z:g}|hub_walk_home",
     ]
     outs = []

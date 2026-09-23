@@ -23,6 +23,7 @@ def test_open_url_allowlist_denied_without_config(monkeypatch: pytest.MonkeyPatc
 def test_open_url_dry_run_with_host_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_DESKTOP_URL_HOST_ALLOWLIST", "example.org")
     monkeypatch.delenv("LBG_DESKTOP_DRY_RUN", raising=False)
+    monkeypatch.delenv("LBG_DESKTOP_URL_ALLOW_LAN", raising=False)
     out = run_desktop_action(
         actor_id="a",
         text="t",
@@ -32,6 +33,22 @@ def test_open_url_dry_run_with_host_allowlist(monkeypatch: pytest.MonkeyPatch) -
     assert out.get("ok") is True
     assert out.get("outcome") == "dry_run"
     assert out.get("url") == "https://example.org/foo"
+
+
+def test_open_url_lan_allow_and_normalize(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LBG_DESKTOP_URL_ALLOWLIST", raising=False)
+    monkeypatch.delenv("LBG_DESKTOP_URL_HOST_ALLOWLIST", raising=False)
+    monkeypatch.setenv("LBG_DESKTOP_URL_ALLOW_LAN", "1")
+    monkeypatch.delenv("LBG_DESKTOP_DRY_RUN", raising=False)
+    out = run_desktop_action(
+        actor_id="a",
+        text="t",
+        action={"kind": "open_url", "url": "192.168.0.140:8080"},
+        context={"desktop_dry_run": True},
+    )
+    assert out.get("ok") is True
+    assert out.get("outcome") == "dry_run"
+    assert out.get("url") == "http://192.168.0.140:8080"
 
 
 def test_context_dry_run_wins_over_env_zero(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -104,17 +104,53 @@ def linux_dry_run(context: dict[str, Any] | None = None) -> bool:
 
 
 def linux_requires_approval() -> bool:
+    mode = get_cfg("LBG_LINUX_APPROVAL_MODE").strip().lower() or get_cfg(
+        "LBG_DESKTOP_APPROVAL_MODE"
+    ).strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    soft = get_cfg("LBG_LINUX_SOFT_CONFIRM").strip().lower() or get_cfg(
+        "LBG_DESKTOP_SOFT_CONFIRM"
+    ).strip().lower()
+    if soft in ("1", "true", "yes", "on"):
+        return True
     return bool(get_cfg("LBG_LINUX_APPROVAL_TOKEN").strip())
 
 
+def linux_soft_confirm_enabled() -> bool:
+    mode = get_cfg("LBG_LINUX_APPROVAL_MODE").strip().lower() or get_cfg(
+        "LBG_DESKTOP_APPROVAL_MODE"
+    ).strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    soft = get_cfg("LBG_LINUX_SOFT_CONFIRM").strip().lower() or get_cfg(
+        "LBG_DESKTOP_SOFT_CONFIRM"
+    ).strip().lower()
+    return soft in ("1", "true", "yes", "on")
+
+
 def linux_approval_ok(context: dict[str, Any] | None = None) -> bool:
+    if not isinstance(context, dict):
+        context = {}
+    got = context.get("desktop_approval")
+    if linux_soft_confirm_enabled():
+        if context.get("desktop_confirm") is True:
+            return True
+        if isinstance(got, str) and got.strip().lower() in (
+            "confirmed",
+            "confirm",
+            "yes",
+            "1",
+            "ok",
+        ):
+            return True
     token = get_cfg("LBG_LINUX_APPROVAL_TOKEN").strip()
     if not token:
-        return True
-    if not isinstance(context, dict):
-        return False
-    got = context.get("desktop_approval")
-    return isinstance(got, str) and secrets.compare_digest(got, token)
+        return not linux_soft_confirm_enabled() or (
+            isinstance(got, str)
+            and got.strip().lower() in ("confirmed", "confirm", "yes", "1", "ok")
+        )
+    return isinstance(got, str) and bool(got) and secrets.compare_digest(got, token)
 
 
 def audit_write(line: dict[str, Any]) -> None:
@@ -303,7 +339,129 @@ def persist_learned_app(app_id: str, exe_path: str) -> tuple[bool, str | None]:
 
 
 def popen_quiet(argv: list[str]) -> None:
-    subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    env = graphical_environ()
+    subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+
+
+def graphical_environ() -> dict[str, str]:
+    """Env pour lancer une GUI depuis un service systemd --user (souvent sans DISPLAY)."""
+    env = dict(os.environ)
+    uid = os.getuid()
+    runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}"
+    env["XDG_RUNTIME_DIR"] = runtime
+    # Wayland (Hyprland / Omarchy)
+    if not env.get("WAYLAND_DISPLAY"):
+        for name in ("wayland-1", "wayland-0"):
+            sock = Path(runtime) / name
+            if sock.exists():
+                env["WAYLAND_DISPLAY"] = name
+                break
+    # X11 fallback (Xwayland)
+    if not env.get("DISPLAY"):
+        for disp in (":0", ":1"):
+            # socket path varies; set if wayland found (Xwayland often :0)
+            if env.get("WAYLAND_DISPLAY"):
+                env["DISPLAY"] = ":0"
+                break
+            if Path(f"/tmp/.X11-unix/X{disp.lstrip(':')}").exists():
+                env["DISPLAY"] = disp
+                break
+    # Hyprland signature (certains outils)
+    if not env.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        hypr = Path(runtime) / "hypr"
+        if hypr.is_dir():
+            try:
+                kids = sorted(hypr.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+                if kids:
+                    env["HYPRLAND_INSTANCE_SIGNATURE"] = kids[0].name
+            except OSError:
+                pass
+    return env
+
+
+def session_info() -> dict[str, object]:
+    """État session graphique — équivalent Linux du diagnostic Session 0 Windows."""
+    env = graphical_environ()
+    runtime = env.get("XDG_RUNTIME_DIR") or ""
+    wayland = env.get("WAYLAND_DISPLAY") or ""
+    display = env.get("DISPLAY") or ""
+    sock_ok = bool(wayland and Path(runtime, wayland).exists())
+    svc = "lbg-omarchy-agent.service"
+    active = False
+    try:
+        r = subprocess.run(
+            ["systemctl", "--user", "is-active", svc],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        active = (r.stdout or "").strip() == "active"
+    except Exception:
+        pass
+    gui_ok = sock_ok or bool(display)
+    return {
+        "host_role": "omarchy_linux",
+        "xdg_runtime_dir": runtime,
+        "wayland_display": wayland or None,
+        "display": display or None,
+        "wayland_socket_ok": sock_ok,
+        "gui_ready": gui_ok,
+        "gui_risk": not gui_ok,
+        "user_service": svc,
+        "user_service_active": active,
+        "heal_kind": "fix_session0",  # même kind AGIR, mapping Linux = heal service + env
+    }
+
+
+def heal_desktop_agent(*, dry_run: bool) -> dict[str, object]:
+    """Redémarre le worker user + vérifie la session graphique (poste .143)."""
+    svc = "lbg-omarchy-agent.service"
+    before = session_info()
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "task": svc,
+            "before": before,
+            "hint": "Réel: systemctl --user restart lbg-omarchy-agent + re-check Wayland",
+        }
+    try:
+        r = subprocess.run(
+            ["systemctl", "--user", "restart", svc],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        detail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()
+        if r.returncode != 0:
+            return {
+                "ok": False,
+                "outcome": "error",
+                "task": svc,
+                "error": f"restart rc={r.returncode}",
+                "detail": detail[:400],
+                "before": before,
+            }
+        # petite pause puis relecture (le process courant va mourir au restart —
+        # si on est DANS le service, ce code peut ne pas renvoyer ; l'orch verra coupure puis ok)
+        import time
+
+        time.sleep(1)
+        after = session_info()
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "task": svc,
+            "before": before,
+            "after": after,
+            "detail": detail[:200],
+            "reply": (
+                "Agent Omarchy redémarré. "
+                + ("GUI prête (Wayland)." if after.get("gui_ready") else "Attention: pas de socket Wayland — ouvrir une session Hyprland.")
+            ),
+        }
+    except Exception as e:
+        return {"ok": False, "outcome": "error", "task": svc, "error": f"{type(e).__name__}: {e}", "before": before}
 
 
 def mail_imap_enabled() -> bool:
@@ -353,7 +511,14 @@ def mail_imap_parse_action(action: dict[str, Any]) -> tuple[str, str, int, int, 
     if len(sc_s) > 120:
         sc_s = sc_s[:120]
     if not fc_s and not sc_s:
-        return "", "", 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis"
+        recent = action.get("recent") is True or str(action.get("recent") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if not recent:
+            return "", "", 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis (ou recent=true)"
     fold = action.get("folder")
     if isinstance(fold, str) and fold.strip() and fold.strip().upper() != "INBOX":
         return "", "", 0, 0, 0, "Dossier non supporté (MVP : INBOX seulement)"

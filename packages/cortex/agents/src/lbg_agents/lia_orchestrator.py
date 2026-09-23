@@ -674,6 +674,13 @@ def autonomy_tick() -> dict[str, Any]:
         commit_inbound_event("lia", social_event)
         mark_reactive_handled("lia")
     elif proactive_suppressed("lia"):
+        try:
+            from lbg_agents.lia_goals import bump_drive_remote, lia_goals_enabled
+
+            if lia_goals_enabled():
+                bump_drive_remote("social_hunger", 0.08)
+        except Exception:
+            pass
         return {
             "ok": True,
             "outcome": "skipped_proactive_cooldown",
@@ -688,14 +695,39 @@ def autonomy_tick() -> dict[str, Any]:
             "incarnation": True,
         }
     else:
-        direct = deterministic_proactive_action(snapshot=snap)
-        if direct is not None:
+        goal_out = None
+        try:
+            from lbg_agents.lia_goals import try_execute_active_goal
+
+            goal_out = try_execute_active_goal(snapshot=snap)
+        except Exception:
+            goal_out = None
+        if goal_out is not None:
             prompt = ""
-            result = direct
+            result = goal_out
+            maybe_apply_social_cooldown("lia", result)
         else:
-            prompt = build_proactive_prompt()
-            result = incarnate_player_think(prompt=prompt)
-        maybe_apply_social_cooldown("lia", result)
+            direct = deterministic_proactive_action(snapshot=snap)
+            if direct is not None:
+                prompt = ""
+                result = direct
+            else:
+                prompt = build_proactive_prompt()
+                try:
+                    from lbg_agents.lia_goals import (
+                        fetch_self_status,
+                        lessons_hint_from_self,
+                        lia_goals_enabled,
+                    )
+
+                    if lia_goals_enabled():
+                        hint = lessons_hint_from_self(fetch_self_status(ensure_goals=False))
+                        if hint:
+                            prompt = f"{prompt} {hint}"
+                except Exception:
+                    pass
+                result = incarnate_player_think(prompt=prompt)
+            maybe_apply_social_cooldown("lia", result)
     result["player"] = player
     result["prompt"] = prompt
     result["snapshot"] = snap

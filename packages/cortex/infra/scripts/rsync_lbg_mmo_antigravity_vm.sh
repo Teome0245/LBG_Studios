@@ -27,16 +27,22 @@ if [[ -n "${LBG_NEW_MMO_REPO:-}" ]]; then
   NEW_MMO_REPO="$(cd "${LBG_NEW_MMO_REPO}" && pwd)"
 else
   NEW_MMO_REPO=""
-  for _cand in "${ROOT_DIR}/../../new_mmo" "${ROOT_DIR}/../new_mmo"; do
-    if [[ -d "${_cand}/${REL}" ]]; then
+  for _cand in \
+    "${ROOT_DIR}/../../new_mmo" \
+    "${ROOT_DIR}/../new_mmo" \
+    "/home/sdesh/projects/new_mmo" \
+    "/opt/lbg-studios/../../new_mmo" \
+    "/opt/new_mmo"
+  do
+    if [[ -d "${_cand}/${REL}/server-core3" && -d "${_cand}/${REL}/MMOEngine" ]]; then
       NEW_MMO_REPO="$(cd "${_cand}" && pwd)"
       break
     fi
   done
 fi
 
-LOCAL_SRC="${NEW_MMO_REPO}/${REL}"
-CONF_SRC="${NEW_MMO_REPO}/${REL}/Core3/MMOCoreORB/bin/conf"
+LOCAL_SRC="${NEW_MMO_REPO:+${NEW_MMO_REPO}/${REL}}"
+CONF_SRC="${NEW_MMO_REPO:+${NEW_MMO_REPO}/${REL}/Core3/MMOCoreORB/bin/conf}"
 
 SSH_OPTS=(
   -o ControlMaster=auto
@@ -55,8 +61,21 @@ RSYNC_EXCLUDES=(
   --exclude '/.git/'
 )
 
-if [[ ! -d "${LOCAL_SRC}/server-core3" ]] || [[ ! -d "${LOCAL_SRC}/MMOEngine" ]]; then
-  echo "ERROR: ${LOCAL_SRC} incomplet (server-core3 ou MMOEngine manquant)." >&2
+_remote_tree_ok() {
+  ssh "${SSH_OPTS[@]}" "${VM_USER}@${VM_HOST}" \
+    "test -d '${REMOTE_DIR}/server-core3' && test -d '${REMOTE_DIR}/MMOEngine'"
+}
+
+if [[ -z "${NEW_MMO_REPO}" ]] \
+  || [[ ! -d "${LOCAL_SRC}/server-core3" ]] \
+  || [[ ! -d "${LOCAL_SRC}/MMOEngine" ]]; then
+  if _remote_tree_ok; then
+    echo "WARN: source locale incomplète (${LOCAL_SRC:-unset}) — skip sync, arbre remote OK :"
+    echo "      ${VM_USER}@${VM_HOST}:${REMOTE_DIR}"
+    exit 0
+  fi
+  echo "ERROR: ${LOCAL_SRC:-<unset>/lbg-mmo} incomplet (server-core3 ou MMOEngine manquant)," >&2
+  echo "       et remote ${REMOTE_DIR} incomplet aussi. Définir LBG_NEW_MMO_REPO." >&2
   exit 1
 fi
 

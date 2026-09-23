@@ -407,6 +407,10 @@ def _style_lora_meta(root: Path, style_id: str) -> dict[str, Any]:
         lora_cfg = (doc.get("styles") or {}).get(style_id, {}).get("lora") or {}
     except (OSError, json.JSONDecodeError, AttributeError):
         lora_cfg = {}
+    return _style_lora_meta_from_cfg(style_id, lora_cfg)
+
+
+def _style_lora_meta_from_cfg(style_id: str, lora_cfg: dict[str, Any]) -> dict[str, Any]:
     trigger = str(lora_cfg.get("trigger_word") or style_id)
     repeats = int(lora_cfg.get("repeats") or 10)
     output_name = str(lora_cfg.get("output_name") or f"{style_id}_lora.safetensors")
@@ -418,6 +422,11 @@ def _style_lora_meta(root: Path, style_id: str) -> dict[str, Any]:
         "kohya_folder": kohya_folder,
         "lora_name": output_name.replace(".safetensors", ""),
     }
+
+
+def _style_lora_meta_remote(style_id: str) -> dict[str, Any]:
+    """Métadonnées LoRA sans root local (train WSL uniquement)."""
+    return _style_lora_meta_from_cfg(style_id, {})
 
 
 def _wsl_ssh_host() -> str:
@@ -482,33 +491,10 @@ def build_wsl_lora_train_cmd(style_id: str, *, deploy: bool) -> str:
 def run_lora_train_style(style_id: str, *, deploy: bool = False) -> dict[str, Any]:
     """Entraîne un LoRA Kohya pour un style (poste GPU Windows/WSL)."""
     root = infographiste_ia_root()
-    if root is None:
-        return {"ok": False, "error": "Infographiste_IA introuvable", "style_id": style_id}
-
-    meta = _style_lora_meta(root, style_id)
     remote = lora_train_remote_enabled()
-    lora_path = root / "lora" / meta["output_name"]
-    if not remote and lora_path.is_file() and lora_path.stat().st_size > 0:
-        return {
-            "ok": True,
-            "skipped": True,
-            "reason": "lora_deja_present",
-            "style_id": style_id,
-            **meta,
-            "lora_path": str(lora_path),
-        }
+    meta = _style_lora_meta(root, style_id) if root is not None else _style_lora_meta_remote(style_id)
 
-    kohya_dir = root / "dataset" / "kohya_train_by_style" / meta["kohya_folder"] if root else None
-    if root and kohya_dir and not kohya_dir.is_dir():
-        return {
-            "ok": False,
-            "error": f"dataset Kohya absent: {kohya_dir}",
-            "style_id": style_id,
-            **meta,
-        }
-    if root is None and remote:
-        pass  # train entièrement sur WSL
-    elif root is None:
+    if root is None and not remote:
         return {
             "ok": False,
             "error": "Infographiste_IA introuvable et train remote désactivé",
@@ -516,8 +502,28 @@ def run_lora_train_style(style_id: str, *, deploy: bool = False) -> dict[str, An
             **meta,
         }
 
+    if root is not None:
+        lora_path = root / "lora" / meta["output_name"]
+        if not remote and lora_path.is_file() and lora_path.stat().st_size > 0:
+            return {
+                "ok": True,
+                "skipped": True,
+                "reason": "lora_deja_present",
+                "style_id": style_id,
+                **meta,
+                "lora_path": str(lora_path),
+            }
+        kohya_dir = root / "dataset" / "kohya_train_by_style" / meta["kohya_folder"]
+        if not kohya_dir.is_dir() and not remote:
+            return {
+                "ok": False,
+                "error": f"dataset Kohya absent: {kohya_dir}",
+                "style_id": style_id,
+                **meta,
+            }
+
     remote_tpl = os.environ.get("LBG_INFOGRAPHISTE_LORA_TRAIN_CMD", "").strip()
-    script = root / "scripts" / "train_lora_by_style.sh"
+    script = (root / "scripts" / "train_lora_by_style.sh") if root is not None else None
     train_mode = "unknown"
     if remote_tpl:
         cmd = remote_tpl.format(style_id=style_id, deploy="--deploy" if deploy else "")
@@ -529,7 +535,7 @@ def run_lora_train_style(style_id: str, *, deploy: bool = False) -> dict[str, An
         shell = True
         argv = cmd
         train_mode = "wsl_ssh"
-    elif script.is_file():
+    elif script is not None and script.is_file():
         cmd_list = ["bash", str(script), "--style", style_id]
         if deploy:
             cmd_list.append("--deploy")
@@ -549,7 +555,7 @@ def run_lora_train_style(style_id: str, *, deploy: bool = False) -> dict[str, An
     try:
         proc = subprocess.run(
             argv,
-            cwd=str(root),
+            cwd=str(root) if root is not None else None,
             capture_output=True,
             text=True,
             timeout=timeout,

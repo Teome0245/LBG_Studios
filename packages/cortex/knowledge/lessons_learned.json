@@ -12,7 +12,8 @@
       "refs": [
         "docs/PLAN_MMO_O2.md",
         "LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL"
-      ]
+      ],
+      "hit_count": 1
     },
     {
       "id": "lesson_iris_l3_allowlist",
@@ -25,7 +26,8 @@
       "refs": [
         "orchestrator/team/iris_l3.py",
         "ADR 0019"
-      ]
+      ],
+      "hit_count": 1
     },
     {
       "id": "lesson_no_second_os",
@@ -37,7 +39,8 @@
       "do_not_repeat": "Second orchestrateur opaque",
       "refs": [
         "packages/cortex/docs/lbg_agentic_os.md"
-      ]
+      ],
+      "hit_count": 1
     },
     {
       "id": "lesson_36eda91e28",
@@ -49,34 +52,78 @@
       "do_not_repeat": "Ignorer un score judge bas sans follow-up",
       "refs": [
         "cb72538b-b166-45b8-888b-8fec6a97476d",
-        "outcome_judge"
-      ]
-    },
-    {
-      "id": "lesson_dc2817955a",
-      "date": "2026-08-21",
-      "agent_role": "ops",
-      "context": "post_judge",
-      "failure_or_success": "failure",
-      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
-      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
-      "refs": [
         "4e732aa7-340e-4846-9b30-c9ac6b2655dc",
-        "outcome_judge"
-      ]
-    },
-    {
-      "id": "lesson_8d04282446",
-      "date": "2026-08-21",
-      "agent_role": "ops",
-      "context": "post_judge",
-      "failure_or_success": "failure",
-      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
-      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
-      "refs": [
         "5122d619-05dd-41d6-a09b-b5c3bb817466",
         "outcome_judge"
-      ]
+      ],
+      "hit_count": 3,
+      "last_seen": "2026-08-21",
+      "note": "Agency A.7 — fusion des 3 clones post_judge ops_storage"
+    },
+    {
+      "id": "lesson_0df2822e66",
+      "date": "2026-08-27",
+      "agent_role": "ops",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "42b3326d-28a9-4cd0-a3be-a67c39b6f8b9",
+        "outcome_judge",
+        "f1d866a2-cd12-48f7-ae5e-0032ed227cb9"
+      ],
+      "hit_count": 2,
+      "last_seen_ts": 1787839894.074793,
+      "last_seen": "2026-08-27"
+    },
+    {
+      "id": "lesson_09b9c339df",
+      "date": "2026-09-08",
+      "agent_role": "dev_game",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur core3_build_workflow: Plan build Core3 ZB-0",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "d83b7ebe-5671-446c-a8f9-4515c5622995",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1788891254.8863451,
+      "last_seen": "2026-09-08"
+    },
+    {
+      "id": "lesson_25b9c78b0c",
+      "date": "2026-09-08",
+      "agent_role": "qa",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur godot_validation_workflow: Valider client Godot",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "8c22b83b-1e62-4b94-9e98-6a331e94f366",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1788891255.348557,
+      "last_seen": "2026-09-08"
+    },
+    {
+      "id": "lesson_935125e340",
+      "date": "2026-09-08",
+      "agent_role": "qa",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur godot_supervisor: Supervise Godot",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "b24bcdce-5212-4e18-a7ad-8e071d01f533",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1788891255.4512117,
+      "last_seen": "2026-09-08"
     }
   ]
 }

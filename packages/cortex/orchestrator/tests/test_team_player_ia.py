@@ -23,13 +23,31 @@ class _Resp:
 def test_probe_player_ia_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_CORE3_SIDECAR_URL", "http://246.test:8791")
     monkeypatch.setenv("LBG_CORE3_IA_BOTS", "lia,nix")
+    monkeypatch.setenv("LBG_TEAM_PLAYER_IA_REQUIRED_BOTS", "lia,nix")
+    monkeypatch.setenv("LBG_TEAM_PLAYER_IA_TRUTH_GUARD", "0")
 
     def fake_get(url: str, params=None):  # noqa: ANN001
         if url.endswith("/healthz"):
             return _Resp(200, {"ok": True})
+        if url.endswith("/player-snapshots"):
+            return _Resp(
+                200,
+                {
+                    "ok": True,
+                    "online_count": 2,
+                    "online": ["Lia", "Nix"],
+                    "players": {
+                        "Lia": {"online": True, "zone": "tatooine"},
+                        "Nix": {"online": True, "zone": "tatooine"},
+                        "Teome": {"online": False, "zone": "tatooine"},
+                    },
+                },
+            )
         if "player-snapshot" in url:
             player = (params or {}).get("player", "").lower()
             return _Resp(200, {"ok": True, "snapshot": {"online": True, "player": player, "zone": "tatooine"}})
+        if url.endswith("/events") or "/events" in url:
+            return _Resp(200, {"ok": True, "events": [], "count": 0})
         raise AssertionError(url)
 
     mock_client = MagicMock()
@@ -41,6 +59,7 @@ def test_probe_player_ia_ok(monkeypatch: pytest.MonkeyPatch) -> None:
         out = probe_player_ia()
     assert out["ok"] is True
     assert out["online_count"] == 2
+    assert any(c.get("kind") == "other_players" for c in out["checks"])
 
 
 def test_probe_sidecar_down(monkeypatch: pytest.MonkeyPatch) -> None:

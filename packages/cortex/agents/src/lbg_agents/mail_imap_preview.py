@@ -79,8 +79,8 @@ def run_mail_imap_preview(
     """
     fc = _norm(from_contains)
     sc = _norm(subject_contains)
-    if not fc and not sc:
-        return [], "Au moins un filtre from_contains ou subject_contains requis"
+    # Filtres vides = aperçu des N derniers messages (appelant : recent=true / mails récents).
+    # Garde-fou volume : max_messages / max_scan restent bornés par l'appelant.
 
     host = host.strip()
     if not host or not user.strip():

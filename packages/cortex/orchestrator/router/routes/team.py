@@ -150,6 +150,8 @@ def team_meta() -> TeamMetaResponse:
         "iris_l3": __import__("team.iris_l3", fromlist=["l3_status"]).l3_status(),
         "outcome_judge": __import__("team.outcome_judge", fromlist=["meta_status"]).meta_status(),
         "lessons_learned": __import__("team.lessons_learned", fromlist=["meta_status"]).meta_status(),
+        "self_state": __import__("services.self_state", fromlist=["meta_status"]).meta_status(),
+        "lia_goals": __import__("team.goal_policy", fromlist=["meta_status"]).meta_status(),
         "agent_mutator": __import__("team.agent_mutator", fromlist=["meta_status"]).meta_status(),
         "feature_proposer": __import__("team.feature_proposer", fromlist=["meta_status"]).meta_status(),
         "prompt_overrides": __import__("team.prompt_overrides", fromlist=["meta_status"]).meta_status(),

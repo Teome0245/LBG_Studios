@@ -101,10 +101,10 @@ def _humanity_summary(probe: dict[str, object]) -> dict[str, object]:
 
 
 def _core_online_bots() -> frozenset[str]:
-    """Bots qui définissent la connectivité L1 (défaut Lia+Nix — Mira flap n'échoue pas)."""
+    """Bots qui définissent la connectivité L1 (défaut Lia+Nix+Mira+Kael)."""
     from team.player_ia_probe import required_bot_ids
 
-    return required_bot_ids() or frozenset({"lia", "nix"})
+    return required_bot_ids() or frozenset({"lia", "nix", "mira", "kael"})
 
 
 def _connectivity_ok(probe: dict[str, object]) -> bool:

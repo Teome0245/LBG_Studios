@@ -167,19 +167,58 @@ def _desktop_dry_run(context: dict | None = None) -> bool:
 
 
 def _desktop_requires_approval() -> bool:
+    # Mode confirm LAB : toujours exiger une confirmation explicite (sentinelle).
+    mode = (_get_desktop_cfg("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    if (_get_desktop_cfg("LBG_DESKTOP_SOFT_CONFIRM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return True
     return bool(_get_desktop_cfg("LBG_DESKTOP_APPROVAL_TOKEN").strip())
 
 
+def _desktop_soft_confirm_enabled() -> bool:
+    mode = (_get_desktop_cfg("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    return (_get_desktop_cfg("LBG_DESKTOP_SOFT_CONFIRM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def _desktop_approval_ok(context: dict | None = None) -> bool:
+    """OK si jeton secret match, ou (LAB) sentinelle ``confirmed`` / flag desktop_confirm."""
+    if not isinstance(context, dict):
+        context = {}
+    got = context.get("desktop_approval")
+    if _desktop_soft_confirm_enabled():
+        if context.get("desktop_confirm") is True:
+            return True
+        if isinstance(got, str) and got.strip().lower() in (
+            "confirmed",
+            "confirm",
+            "yes",
+            "1",
+            "ok",
+        ):
+            return True
     token = _get_desktop_cfg("LBG_DESKTOP_APPROVAL_TOKEN").strip()
     if not token:
+        # Pas de jeton configuré : en mode confirm la sentinelle suffit déjà ; sinon open
+        return not _desktop_soft_confirm_enabled() or (
+            isinstance(got, str)
+            and got.strip().lower() in ("confirmed", "confirm", "yes", "1", "ok")
+        )
+    if isinstance(got, str) and got and secrets.compare_digest(got, token):
         return True
-    if not isinstance(context, dict):
-        return False
-    got = context.get("desktop_approval")
-    if not isinstance(got, str):
-        return False
-    return secrets.compare_digest(got, token)
+    return False
 
 
 def _url_allowlist() -> list[str]:
@@ -209,10 +248,45 @@ def _host_matches(needle: str, rule: str) -> bool:
     return n.endswith("." + r)
 
 
+def _url_allow_lan_enabled() -> bool:
+    return _get_desktop_cfg("LBG_DESKTOP_URL_ALLOW_LAN").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _is_private_or_loopback_host(host: str) -> bool:
+    """True pour IP RFC1918 / loopback / link-local (pas de résolution DNS)."""
+    import ipaddress
+
+    try:
+        ip = ipaddress.ip_address((host or "").strip())
+    except ValueError:
+        return False
+    return bool(ip.is_private or ip.is_loopback or ip.is_link_local)
+
+
+def _normalize_open_url(url: str) -> str:
+    """Préfixe http:// si host/IP[:port][/path] sans schéma."""
+    u = (url or "").strip()
+    if not u:
+        return u
+    low = u.lower()
+    if low.startswith("http://") or low.startswith("https://"):
+        return u
+    if re.match(
+        r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3}|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)"
+        r"(?::\d{1,5})?(?:[/?#].*)?$",
+        u,
+    ):
+        return "http://" + u
+    return u
+
+
 def _url_allowed_by_host(url: str) -> bool:
     allow_hosts = _url_host_allowlist()
-    if not allow_hosts:
-        return False
     try:
         p = urlparse(url)
     except Exception:
@@ -221,6 +295,10 @@ def _url_allowed_by_host(url: str) -> bool:
         return False
     host = (p.hostname or "").strip().lower()
     if not host:
+        return False
+    if _url_allow_lan_enabled() and _is_private_or_loopback_host(host):
+        return True
+    if not allow_hosts:
         return False
     for rule in allow_hosts:
         if _host_matches(host, rule):
@@ -246,6 +324,56 @@ def _url_is_allowed(url: str) -> bool:
     if url in allow:
         return True
     return _url_allowed_by_host(url)
+
+
+def _default_browser_info_win() -> dict:
+    """Lit le ProgId HTTP / HTTPS du navigateur par défaut (HKCU UserChoice)."""
+    friendly = {
+        "ChromeHTML": "Google Chrome",
+        "MSEdgeHTM": "Microsoft Edge",
+        "FirefoxURL": "Mozilla Firefox",
+        "FirefoxURL-308046B0AF4A39CB": "Mozilla Firefox",
+        "BraveHTML": "Brave",
+        "OperaStable": "Opera",
+        "IE.HTTP": "Internet Explorer",
+    }
+    out: dict = {"prog_id": None, "name": None, "source": "registry"}
+    try:
+        import winreg  # type: ignore
+
+        for proto in ("http", "https"):
+            path = rf"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\{proto}\UserChoice"
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path) as key:
+                    prog_id, _ = winreg.QueryValueEx(key, "ProgId")
+                if isinstance(prog_id, str) and prog_id.strip():
+                    out["prog_id"] = prog_id.strip()
+                    # Match exact or prefix (FirefoxURL-…)
+                    name = friendly.get(prog_id)
+                    if not name:
+                        for k, v in friendly.items():
+                            if prog_id.startswith(k):
+                                name = v
+                                break
+                    out["name"] = name or prog_id
+                    out["protocol"] = proto
+                    break
+            except OSError:
+                continue
+    except Exception as e:
+        out["error"] = str(e)
+        out["source"] = "unavailable"
+    if not out.get("name"):
+        # Fallback webbrowser.get().name
+        try:
+            import webbrowser
+
+            b = webbrowser.get()
+            out["name"] = getattr(b, "name", None) or str(b)
+            out["source"] = out.get("source") or "webbrowser"
+        except Exception:
+            out["name"] = "inconnu"
+    return out
 
 
 def _desktop_web_search_enabled() -> bool:
@@ -316,7 +444,14 @@ def _mail_imap_parse_action_win(action: dict) -> tuple[str, str, int, int, int, 
     if len(sc_s) > 120:
         sc_s = sc_s[:120]
     if not fc_s and not sc_s:
-        return "", "", 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis"
+        recent = action.get("recent") is True or str(action.get("recent") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if not recent:
+            return "", "", 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis (ou recent=true)"
     fold = action.get("folder")
     if isinstance(fold, str) and fold.strip() and fold.strip().upper() != "INBOX":
         return "", "", 0, 0, 0, "Dossier non supporté (MVP : INBOX seulement)"
@@ -952,6 +1087,103 @@ def _popen_no_console(cmd: list[str], **kwargs: object) -> subprocess.Popen:
     return subprocess.Popen(cmd, **popen_kw)
 
 
+def _desktop_listener_session_info() -> dict[str, object]:
+    """Session Windows du process :5005. Session 0 = apps ouvertes mais invisibles."""
+    info: dict[str, object] = {
+        "port": 5005,
+        "listener_pid": None,
+        "listener_session_id": None,
+        "self_session_id": None,
+        "session0_risk": False,
+        "fix_task": "LBG-AgentIA-fix-session0",
+    }
+    try:
+        import ctypes
+
+        sid = ctypes.c_ulong()
+        if ctypes.windll.kernel32.ProcessIdToSessionId(int(os.getpid()), ctypes.byref(sid)):
+            info["self_session_id"] = int(sid.value)
+    except Exception:
+        pass
+    try:
+        import psutil  # type: ignore
+
+        for c in psutil.net_connections(kind="inet"):
+            if c.status == "LISTEN" and c.laddr and int(c.laddr.port) == 5005 and c.pid:
+                info["listener_pid"] = int(c.pid)
+                try:
+                    import ctypes
+
+                    sid2 = ctypes.c_ulong()
+                    if ctypes.windll.kernel32.ProcessIdToSessionId(int(c.pid), ctypes.byref(sid2)):
+                        info["listener_session_id"] = int(sid2.value)
+                except Exception:
+                    pass
+                break
+    except Exception:
+        pass
+    ls = info.get("listener_session_id")
+    ss = info.get("self_session_id")
+    if ls == 0 or ss == 0:
+        info["session0_risk"] = True
+    return info
+
+
+def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
+    """Déclenche la tâche élevée pré-installée (Compagnon AGIR → sans Cursor)."""
+    task = "LBG-AgentIA-fix-session0"
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "task": task,
+            "hint": "Réel: Start-ScheduledTask. Prérequis admin une fois: install_fix_session0_task.ps1",
+        }
+    try:
+        r = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                (
+                    f"$t=Get-ScheduledTask -TaskName '{task}' -ErrorAction SilentlyContinue; "
+                    "if(-not $t){ Write-Output 'MISSING_TASK'; exit 2 }; "
+                    f"Start-ScheduledTask -TaskName '{task}'; Start-Sleep 2; "
+                    f"Write-Output ('STATE=' + (Get-ScheduledTask -TaskName '{task}').State)"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=90,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        detail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()
+        if r.returncode == 2 or "MISSING_TASK" in detail:
+            return {
+                "ok": False,
+                "outcome": "configuration_error",
+                "task": task,
+                "error": (
+                    "Tâche absente — une fois en PowerShell Admin: "
+                    "powershell -File C:\\Agent_IA\\install_fix_session0_task.ps1"
+                ),
+                "detail": detail[:400],
+            }
+        if r.returncode != 0:
+            return {
+                "ok": False,
+                "outcome": "error",
+                "task": task,
+                "error": f"Start-ScheduledTask rc={r.returncode}",
+                "detail": detail[:400],
+            }
+        return {"ok": True, "outcome": "ok", "task": task, "detail": detail[:400]}
+    except Exception as e:
+        return {"ok": False, "outcome": "error", "task": task, "error": f"{type(e).__name__}: {e}"}
+
+
 def _app_deps_root() -> Path:
     raw = (_get_desktop_cfg("LBG_DESKTOP_APP_DEPS_DIR") or "").strip()
     if raw:
@@ -1215,6 +1447,7 @@ async def healthz():
             "mail_imap_enabled": _desktop_mail_imap_enabled(),
             "face_parts_enabled": _truthy(_get_desktop_cfg("LBG_DESKTOP_FACE_PARTS_ENABLED")),
         },
+        "session": _desktop_listener_session_info(),
         "computer_use": {
             "enabled_env": _get_desktop_cfg("LBG_DESKTOP_COMPUTER_USE_ENABLED").strip() or None,
             "observe_requires_approval_env": _get_desktop_cfg("LBG_DESKTOP_OBSERVE_REQUIRES_APPROVAL").strip() or None,
@@ -1252,13 +1485,61 @@ async def invoke(payload: InvokeRequest):
         return out
 
     kind = str(action.get("kind") or "").strip()
+    if kind == "default_browser_info":
+        # Lecture seule — pas d’approval pour l’info navigateur par défaut
+        try:
+            info = _default_browser_info_win()
+            out = {
+                **base,
+                "ok": True,
+                "outcome": "dry_run" if dry_run else "ok",
+                "default_browser": info,
+            }
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        except Exception as e:
+            out = {**base, "ok": False, "outcome": "error", "error": str(e)}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+
+    if kind == "agent_session_status":
+        sess = _desktop_listener_session_info()
+        out = {
+            **base,
+            "ok": True,
+            "outcome": "dry_run" if dry_run else "ok",
+            "session": sess,
+            "reply": (
+                f"Agent session={sess.get('self_session_id')} "
+                f"listener={sess.get('listener_session_id')} "
+                f"risk_session0={sess.get('session0_risk')}"
+            ),
+        }
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind == "fix_session0":
+        if not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis"}
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+        result = _run_fix_session0_task(dry_run=dry_run)
+        out = {**base, **result, "before": _desktop_listener_session_info()}
+        if result.get("ok") and not dry_run:
+            out["reply"] = (
+                "Remédiation Session 0 déclenchée (tâche élevée). "
+                "Attendre ~10s puis retester open_app / mails."
+            )
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
+
     if kind == "open_url":
         url = action.get("url")
         if not isinstance(url, str) or not url.strip():
             out = {**base, "ok": False, "outcome": "bad_request", "error": "Champ `url` requis"}
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
-        url = url.strip()
+        url = _normalize_open_url(url.strip())
         if not _url_is_allowed(url):
             allow_urls = _url_allowlist()
             allow_hosts = _url_host_allowlist()
@@ -1778,7 +2059,7 @@ async def invoke(payload: InvokeRequest):
                         break
                     else:
                         continue
-                url = url.strip()
+                url = _normalize_open_url(url.strip())
                 if not _url_is_allowed(url):
                     out_step = {**step_base, "ok": False, "outcome": "allowlist_denied", "error": "URL non autorisée", "url": url}
                     _audit_write({"event": "agents.desktop.step", "trace_id": trace_id, **out_step})

@@ -30,6 +30,8 @@ _CANDIDATES = [
 DEFAULT_TEMPLATES = next((p for p in _CANDIDATES if p.is_file()), _CANDIDATES[0])
 DEFAULT_PLAYER = os.environ.get("LBG_M10_STUB_PLAYER", "local")
 DEFAULT_GIVER = "npc:core3_daan_oth"
+HUNT_QUEST_ID = "lh_hunt_chacal"
+HUNT_STEP_ID = "meute"
 
 _lock = threading.Lock()
 _templates_doc: dict[str, Any] = {}
@@ -469,6 +471,7 @@ def progress_quest(
     poi_id: str | None = None,
     x: float | None = None,
     z: float | None = None,
+    hunt_victory: bool = False,
 ) -> dict[str, Any]:
     """Marque une étape faite (par step_id / poi). Optionnel: vérif distance si x/z fournis."""
     with _lock:
@@ -495,6 +498,15 @@ def progress_quest(
                 break
         if target is None:
             return {"ok": False, "error": "unknown_step", "step_id": step_id, "poi_id": poi_id}
+        target_step_id = str(target.get("id") or "")
+        if quest_id == HUNT_QUEST_ID and target_step_id == HUNT_STEP_ID and not hunt_victory:
+            return {
+                "ok": False,
+                "error": "hunt_required",
+                "quest_id": quest_id,
+                "step_id": target_step_id,
+                "hint": "Victoire cour de chasse requise — POST /v1/hunt-yard/claim-quest après combat",
+            }
         # Ordre strict : ne pas skip
         for s in steps:
             if s is target:
@@ -537,6 +549,39 @@ def progress_quest(
             "active": deepcopy(st["active"]),
             "source": "core3_bridge_quests",
         }
+
+
+def claim_hunt_quest_progress(player: str, *, quest_id: str = HUNT_QUEST_ID) -> dict[str, Any]:
+    """Valide l'étape « meute » après victoire hunt_yard (sidecar Prime)."""
+    try:
+        from hunt_yard_bridge import session_snapshot
+    except ImportError:
+        return {"ok": False, "error": "hunt_yard_unavailable"}
+    snap = session_snapshot()
+    if snap.get("status") != "victory":
+        out = {
+            "ok": False,
+            "error": "hunt_ongoing",
+            "hunt_status": snap.get("status"),
+            "tick": snap.get("tick"),
+            "hint": "Termine la cour de chasse (tick/run) avant de réclamer l'étape",
+        }
+        out.update({k: snap[k] for k in ("kills", "heals", "players") if k in snap})
+        return out
+    result = progress_quest(
+        player,
+        quest_id,
+        step_id=HUNT_STEP_ID,
+        hunt_victory=True,
+    )
+    if result.get("ok"):
+        result["hunt"] = {
+            "status": snap.get("status"),
+            "tick": snap.get("tick"),
+            "kills": snap.get("kills"),
+            "quest_id": quest_id,
+        }
+    return result
 
 
 def _apply_rewards(player: str, rewards: dict[str, Any]) -> dict[str, Any]:

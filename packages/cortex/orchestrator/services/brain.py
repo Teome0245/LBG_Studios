@@ -506,6 +506,21 @@ def _tick_once() -> None:
         _state.last_selfcheck = selfcheck_out
         _state.last_desktop_healthz = desktop_out
         _persist_state_locked()
+        brain_snap = {
+            "gauges": dict(_state.gauges or {}),
+            "intent": _state.intent,
+            "narrative": _state.narrative,
+            "last_tick_ts": _state.last_tick_ts,
+            "last_tick_ok": _state.last_tick_ok,
+            "last_error": _state.last_error,
+        }
+    try:
+        from services import self_state as svc_self
+
+        if svc_self.self_state_enabled():
+            svc_self.sync_from_brain(brain_snap)
+    except Exception:
+        pass
 
 
 def _loop() -> None:

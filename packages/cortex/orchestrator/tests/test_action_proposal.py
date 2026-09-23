@@ -51,6 +51,23 @@ def test_action_proposal_mail_preview_sender() -> None:
     assert proposal["context_patch"]["desktop_dry_run"] is True
 
 
+def test_action_proposal_mail_preview_plurals_fr() -> None:
+    """« mails » / « emails » au pluriel doivent matcher (bug Compagnon AGIR)."""
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={"actor_id": "user:1", "text": "regarde mes mails récents", "context": {}},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    proposal = body["proposal"]
+    assert proposal is not None, body.get("reason")
+    assert proposal["action"]["kind"] == "mail_imap_preview"
+    assert proposal["action"].get("recent") is True
+    assert "subject_contains" not in proposal["action"]
+    assert "from_contains" not in proposal["action"]
+
+
 def test_action_proposal_open_app_vghd_fr() -> None:
     client = TestClient(app)
     r = client.post(
@@ -259,18 +276,34 @@ def test_action_proposal_mmo_bridge_opengame_prototype() -> None:
     assert proposal["context_patch"].get("opengame_dry_run") is True
 
 
-def test_action_proposal_mmo_dev_requires_explicit_bridge() -> None:
+def test_action_proposal_useful_default_selfcheck() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={"actor_id": "user:1", "text": "propose une action utile", "context": {}},
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["capability"] == "devops_probe"
+    assert proposal["action"]["kind"] == "selfcheck"
+
+
+def test_action_proposal_open_url_jobs_summary() -> None:
     client = TestClient(app)
     r = client.post(
         "/v1/action-proposal",
         json={
             "actor_id": "user:1",
-            "text": "forge un prototype sandbox",
-            "context": {"session_summary": {"tracked_quest": "x"}},
+            "text": "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
+            "context": {},
         },
     )
     assert r.status_code == 200
-    assert r.json()["proposal"] is None
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["action"]["kind"] == "open_url"
+    assert "Jobs" in proposal["summary"] or "jobs" in proposal["summary"].lower()
 
 
 def test_action_proposal_team_dev_game_forge_qa_followup() -> None:

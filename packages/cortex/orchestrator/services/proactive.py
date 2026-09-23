@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
 import socket
 import threading
 import time
@@ -210,6 +211,46 @@ def _mmo_signals() -> dict[str, Any]:
     }
 
 
+def _disk_signals() -> dict[str, Any]:
+    """Capacité disque locale (hôte orch) — read-only, pas de scan réseau lourd."""
+    out: dict[str, Any] = {}
+    try:
+        usage = shutil.disk_usage("/")
+        total = max(1, int(usage.total))
+        used_pct = round(100.0 * float(usage.used) / float(total), 1)
+        out["disk_root_used_pct"] = used_pct
+        out["disk_root_free_gb"] = round(float(usage.free) / (1024**3), 2)
+        out["disk_root_total_gb"] = round(float(total) / (1024**3), 2)
+        warn = 80.0
+        crit = 90.0
+        try:
+            warn = float(os.environ.get("LBG_PROACTIVE_DISK_WARN_PCT", "80").strip() or "80")
+            crit = float(os.environ.get("LBG_PROACTIVE_DISK_CRIT_PCT", "90").strip() or "90")
+        except ValueError:
+            pass
+        if used_pct >= crit:
+            out["disk_critical"] = True
+        elif used_pct >= warn:
+            out["disk_high"] = True
+    except OSError:
+        out["disk_probe_error"] = True
+    return out
+
+
+def _jobs_backlog_signal() -> dict[str, Any]:
+    """Compte approximatif des jobs en attente d’approbation (L2)."""
+    try:
+        waiting = 0
+        for job in svc_jobs.list_jobs()[:40]:
+            if getattr(job, "status", "") == "waiting_approval":
+                waiting += 1
+        if waiting:
+            return {"jobs_waiting_approval": waiting}
+    except Exception:
+        pass
+    return {}
+
+
 def _infra_signals() -> dict[str, Any]:
     """Signaux légers pour le moteur (pas de scan complet à chaque tick)."""
     core_host = os.environ.get("LBG_LAN_HOST_CORE", "192.168.0.140").split(":")[0]
@@ -225,6 +266,8 @@ def _infra_signals() -> dict[str, Any]:
         "ad_agent_reachable": ad_agent_ok,
     }
     signals.update(_mmo_signals())
+    signals.update(_disk_signals())
+    signals.update(_jobs_backlog_signal())
     if not orch_ok:
         signals["missing_info"] = True
         signals["objectif_flou"] = True
@@ -320,24 +363,111 @@ def _should_spawn_job(action: Any) -> bool:
     return True
 
 
+def _disk_l2_job_steps(infra: dict[str, Any]) -> list[dict[str, Any]]:
+    """Étapes explicites : sonde L1 (auto) puis remédiation bloquée en L2."""
+    pct = infra.get("disk_root_used_pct", "?")
+    disk_meta = {
+        "used_pct": infra.get("disk_root_used_pct"),
+        "free_gb": infra.get("disk_root_free_gb"),
+        "critical": bool(infra.get("disk_critical")),
+    }
+    return [
+        {
+            "capability": "devops_probe",
+            "routed_to": "agent.devops",
+            "summary": f"Selfcheck stockage L1 (lecture) — root {pct}%",
+            "risk_level": "low",
+            "text": f"devops selfcheck stockage disque root {pct}% dry-run",
+            "action_context_key": "devops_action",
+            "action": {"kind": "selfcheck"},
+            "context_patch": {
+                "devops_dry_run": True,
+                "devops_action": {"kind": "selfcheck"},
+                "_proactive_disk": disk_meta,
+            },
+        },
+        {
+            "capability": "devops_probe",
+            "routed_to": "agent.devops",
+            "summary": f"Remédiation disque root {pct}% — APPROBATION L2 REQUISE (pas de purge auto)",
+            "risk_level": "high",
+            "text": f"appliquer remédiation stockage disque {pct}%",
+            "action_context_key": "devops_action",
+            "action": {"kind": "remediation_apply"},
+            "context_patch": {
+                "devops_dry_run": False,
+                "devops_action": {
+                    "kind": "remediation_apply",
+                    "scope": "disk_root",
+                    "plan_hint": (
+                        f"Disque root à {pct}% — revue humaine puis hygiène/extension. "
+                        "Aucune purge automatique."
+                    ),
+                },
+                "_proactive_disk_l2": True,
+                "_proactive_disk": disk_meta,
+                "_requires_human_l2": True,
+            },
+        },
+    ]
+
+
 def _pick_proactive_objective(action: Any) -> tuple[str, str, dict[str, Any]]:
     """Retourne (objectif, actor_id job, contexte base)."""
-    infra_objective = _default_objective()
-    if _HPA_AVAILABLE and action.kind == ActionKind.plan:
+    infra = _infra_signals()
+    causes = []
+    try:
+        if _runtime.engine is not None:
+            causes = list(getattr(_runtime.engine.state, "tension_causes", None) or [])
+    except Exception:
+        causes = []
+
+    disk_alert = bool(
+        infra.get("disk_critical")
+        or infra.get("disk_high")
+        or any(str(c).startswith("disk_") for c in causes)
+    )
+
+    if disk_alert:
+        pct = infra.get("disk_root_used_pct", "?")
+        level = "critique" if infra.get("disk_critical") else "élevé"
+        infra_objective = (
+            f"Alerte disque root {pct}% ({level}) — selfcheck L1 puis remédiation "
+            "en attente d’approbation L2 (Pilot Jobs). Pas de purge automatique."
+        )
+    elif "ad_agent_down" in causes or infra.get("ad_agent_down"):
+        infra_objective = (
+            "Selfcheck agent desktop Windows (.10:5005) read-only / dry-run — sonde L1."
+        )
+    elif _HPA_AVAILABLE and action.kind == ActionKind.plan:
         infra_objective = (
             "Auto checkup infrastructure LBG et cartographie réseau LAN (read-only, instantané T)."
         )
+    else:
+        infra_objective = _default_objective()
+
     ctx: dict[str, Any] = {
         "_trace_id": f"proactive-{uuid.uuid4().hex[:12]}",
         "_proactive_spawn": True,
         "devops_dry_run": True,
+        "devops_action": {"kind": "selfcheck"},
     }
+    if disk_alert:
+        ctx["_proactive_disk"] = {
+            "used_pct": infra.get("disk_root_used_pct"),
+            "free_gb": infra.get("disk_root_free_gb"),
+            "critical": bool(infra.get("disk_critical")),
+        }
+        ctx["_proactive_disk_l2"] = True
+        # La 2e étape (remediation_apply) n’est PAS en dry-run → waiting_approval
+        ctx["devops_dry_run"] = False
     actor = proactive_actor_id()
 
     use_lia = (
         proactive_lia_jobs_enabled()
         and not _lia_autonomy_thread_active()
         and _mmo_signals().get("mmo_sidecar_reachable")
+        and not disk_alert
     )
     if use_lia:
         with _lock:
@@ -354,12 +484,32 @@ def _pick_proactive_objective(action: Any) -> tuple[str, str, dict[str, Any]]:
 
 def _spawn_proactive_job(action: Any) -> str | None:
     objective, actor, ctx = _pick_proactive_objective(action)
-    job = svc_jobs.create_job(
-        actor_id=actor,
-        objective=objective,
-        context=ctx,
-        auto_start=True,
-    )
+    infra = _infra_signals()
+    disk_alert = bool(infra.get("disk_critical") or infra.get("disk_high") or ctx.get("_proactive_disk_l2"))
+
+    if disk_alert:
+        job = svc_jobs.create_job(
+            actor_id=actor,
+            objective=objective,
+            context=ctx,
+            steps=_disk_l2_job_steps(infra),
+            auto_start=True,
+        )
+        # Avancer jusqu’à waiting_approval (après selfcheck L1 si possible)
+        try:
+            advanced = svc_jobs.run_job_to_completion(job.id, max_steps=6)
+            if advanced is not None:
+                job = advanced
+        except Exception as e:
+            LOG.warning("proactive disk L2 run_job: %s", e)
+    else:
+        job = svc_jobs.create_job(
+            actor_id=actor,
+            objective=objective,
+            context=ctx,
+            auto_start=True,
+        )
+
     with _lock:
         _runtime.last_auto_job_ts = time.time()
         _runtime.auto_jobs_spawned += 1
@@ -375,6 +525,8 @@ def _spawn_proactive_job(action: Any) -> str | None:
                 "objective": objective[:200],
                 "action_kind": action.kind.value,
                 "mode": action.mode,
+                "status": getattr(job, "status", None),
+                "disk_l2": disk_alert,
             },
             ensure_ascii=False,
         )
@@ -393,6 +545,8 @@ def _tick_once() -> None:
         _runtime.ticks += 1
         _runtime.engine.tick_silence(dt if dt > 0 else interval)
         decide_ctx = _build_decide_context()
+        # Ancre la tension sur disque / AD / jobs (silence plafonné)
+        _runtime.engine.apply_signals(decide_ctx)
         action = _runtime.engine.decide(decide_ctx)
         _runtime.last_action = action.model_dump()
 
@@ -411,6 +565,7 @@ def _tick_once() -> None:
                 "mode": action.mode,
                 "kind": action.kind.value,
                 "tension": round(_runtime.engine.state.tension, 3),
+                "tension_causes": list(getattr(_runtime.engine.state, "tension_causes", None) or []),
                 "spawned_job": spawned,
             },
             ensure_ascii=False,
@@ -426,6 +581,7 @@ def _tick_once() -> None:
                     "tension": float(st.tension),
                     "curiosite": float(st.curiosite),
                     "mode": st.mode,
+                    "tension_causes": list(getattr(st, "tension_causes", None) or []),
                 }
             )
     except Exception:
@@ -455,6 +611,7 @@ def get_status() -> dict[str, Any]:
             "tension": 0.0,
             "curiosite": 0.0,
             "silence_seconds_est": 0.0,
+            "tension_causes": [],
             "auto_jobs_spawned": 0,
             "last_job_id": None,
             "last_action": None,
@@ -462,7 +619,13 @@ def get_status() -> dict[str, Any]:
             "lia_autonomy_thread": False,
             "infra_signals": {},
         }
+    infra = _infra_signals()
     with _lock:
+        # Recalcule à la lecture pour que l’UI voie les causes actuelles
+        try:
+            _runtime.engine.apply_signals(infra)
+        except Exception:
+            pass
         st = _runtime.engine.state
         return {
             "enabled": proactive_enabled(),
@@ -473,12 +636,13 @@ def get_status() -> dict[str, Any]:
             "tension": round(st.tension, 3),
             "curiosite": round(st.curiosite, 3),
             "silence_seconds_est": round(st.silence_seconds_est, 1),
+            "tension_causes": list(getattr(st, "tension_causes", None) or []),
             "auto_jobs_spawned": _runtime.auto_jobs_spawned,
             "last_job_id": _runtime.last_job_id,
             "last_action": _runtime.last_action,
             "lia_jobs": proactive_lia_jobs_enabled() and not _lia_autonomy_thread_active(),
             "lia_autonomy_thread": _lia_autonomy_thread_active(),
-            "infra_signals": _infra_signals(),
+            "infra_signals": infra,
         }
 
 

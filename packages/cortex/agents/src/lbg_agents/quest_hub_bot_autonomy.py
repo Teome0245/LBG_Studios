@@ -20,6 +20,7 @@ _DEFAULT_POI_XZ: dict[str, tuple[float, float]] = {
     "poi:lost_heaven_market": (4859.3, -1008.3),
     "poi:lost_heaven_mission_post": (5028.3, -1008.8),
     "poi:lost_heaven_gate": (5813.6, -982.5),
+    "poi:lh_hunt_chacal": (5985.0, -1120.0),
     "poi:lost_heaven_clinic": (4620.8, -610.6),
     "poi:lost_heaven_town_hall": (4622.3, -999.8),
     "poi:lost_heaven_artisan_hall": (5199.3, -769.5),
@@ -181,6 +182,20 @@ def _enqueue_move(
     now = time.monotonic()
     last = _last_move_at.get(key, 0.0)
     same_poi = _last_move_poi.get(key) == poi
+    # Déjà sur place (ex. return au même POI que errand) : ne pas spam move_to.
+    if dist is not None and dist <= max(2.0, min(8.0, _ARRIVE_M * 0.25)):
+        _last_move_poi[key] = poi
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "reason": "hub_quest_arrived",
+            "player": name,
+            "quest_id": quest_id,
+            "step_id": step_id,
+            "poi": poi,
+            "dist_m": round(dist, 1),
+            "movement": ensure_walk_mode(),
+        }
     if same_poi and (now - last) < _MOVE_REENQUEUE_S:
         out = {
             "ok": True,
@@ -260,6 +275,7 @@ def deterministic_hub_quest_action(
             return None
         # Trajets longs visibles en priorité
         prefer = (
+            "lh_hunt_chacal",
             "lh_escort_gate_clinic",
             "lh_delivery_starport",
             "lh_enquete_marche",
@@ -387,6 +403,66 @@ def deterministic_hub_quest_action(
             "poi": poi,
             "dist_m": round(dist, 1),
             "movement": ensure_walk_mode(),
+        }
+
+    if qid == "lh_hunt_chacal" and step_id == "meute":
+        snap_h = _http_json("GET", "/v1/hunt-yard")
+        if snap_h.get("status") != "victory":
+            _http_json("POST", "/v1/hunt-yard/reset", json_body={"seed": 1})
+            run = _http_json("POST", "/v1/hunt-yard/run", json_body={"max_ticks": 120})
+            if run.get("status") != "victory":
+                return {
+                    "ok": True,
+                    "reason": "hub_hunt_ongoing",
+                    "player": name,
+                    "quest_id": qid,
+                    "hunt_status": run.get("status"),
+                    "movement": ensure_walk_mode(),
+                }
+        prog = _http_json(
+            "POST",
+            "/v1/hunt-yard/claim-quest",
+            json_body={"player": name, "quest_id": qid},
+        )
+        if not prog.get("ok"):
+            return {
+                "ok": False,
+                "reason": "hub_hunt_claim_fail",
+                "player": name,
+                "quest_id": qid,
+                "sidecar": prog,
+            }
+        _mark_progress(name)
+        _last_move_poi.pop(name.lower(), None)
+        active2 = prog.get("active") if isinstance(prog.get("active"), list) else None
+        if active2:
+            entry2 = next((a for a in active2 if str(a.get("id")) == qid), entry)
+            steps2 = entry2.get("progress_steps") or []
+            nxt = next((s for s in steps2 if isinstance(s, dict) and not s.get("done")), None)
+            if nxt and nxt.get("poi"):
+                nxyz = _poi_xyz(str(nxt["poi"]))
+                if nxyz is not None:
+                    return _enqueue_move(
+                        enqueue,
+                        player,
+                        name,
+                        snap=snap,
+                        xyz=nxyz,
+                        poi=str(nxt["poi"]),
+                        message=f"hub_quest:{qid}:{nxt.get('id')}",
+                        reason="hub_quest_travel_next",
+                        quest_id=qid,
+                        step_id=str(nxt.get("id") or ""),
+                        dist=_dist_xz(snap, nxyz),
+                    )
+        return {
+            "ok": True,
+            "reason": "hub_hunt_claim",
+            "player": name,
+            "quest_id": qid,
+            "step_id": step_id,
+            "movement": ensure_walk_mode(),
+            "sidecar": prog,
         }
 
     prog = _http_json(

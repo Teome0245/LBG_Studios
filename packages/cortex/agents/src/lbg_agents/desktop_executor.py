@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import sys
 from dataclasses import dataclass
@@ -49,19 +50,55 @@ def desktop_dry_run(context: dict[str, Any] | None = None) -> bool:
 
 
 def desktop_requires_approval() -> bool:
+    mode = (os.environ.get("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    if (os.environ.get("LBG_DESKTOP_SOFT_CONFIRM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return True
     return bool(os.environ.get("LBG_DESKTOP_APPROVAL_TOKEN", "").strip())
 
 
+def desktop_soft_confirm_enabled() -> bool:
+    mode = (os.environ.get("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    return (os.environ.get("LBG_DESKTOP_SOFT_CONFIRM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def desktop_approval_ok(context: dict[str, Any] | None = None) -> bool:
+    if not isinstance(context, dict):
+        context = {}
+    got = context.get("desktop_approval")
+    if desktop_soft_confirm_enabled():
+        if context.get("desktop_confirm") is True:
+            return True
+        if isinstance(got, str) and got.strip().lower() in (
+            "confirmed",
+            "confirm",
+            "yes",
+            "1",
+            "ok",
+        ):
+            return True
     token = os.environ.get("LBG_DESKTOP_APPROVAL_TOKEN", "").strip()
     if not token:
+        return not desktop_soft_confirm_enabled() or (
+            isinstance(got, str)
+            and got.strip().lower() in ("confirmed", "confirm", "yes", "1", "ok")
+        )
+    if isinstance(got, str) and got and secrets.compare_digest(got, token):
         return True
-    if not isinstance(context, dict):
-        return False
-    got = context.get("desktop_approval")
-    if not isinstance(got, str):
-        return False
-    return secrets.compare_digest(got, token)
+    return False
 
 
 def _url_allowlist() -> list[str]:
@@ -85,6 +122,36 @@ def _url_host_allowlist() -> list[str]:
     return _split_csv(raw)
 
 
+def _url_allow_lan_enabled() -> bool:
+    return _truthy(os.environ.get("LBG_DESKTOP_URL_ALLOW_LAN", "").strip())
+
+
+def _is_private_or_loopback_host(host: str) -> bool:
+    import ipaddress
+
+    try:
+        ip = ipaddress.ip_address((host or "").strip())
+    except ValueError:
+        return False
+    return bool(ip.is_private or ip.is_loopback or ip.is_link_local)
+
+
+def _normalize_open_url(url: str) -> str:
+    u = (url or "").strip()
+    if not u:
+        return u
+    low = u.lower()
+    if low.startswith("http://") or low.startswith("https://"):
+        return u
+    if re.match(
+        r"^(?:localhost|(?:\d{1,3}\.){3}\d{1,3}|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)"
+        r"(?::\d{1,5})?(?:[/?#].*)?$",
+        u,
+    ):
+        return "http://" + u
+    return u
+
+
 def _host_matches(needle: str, rule: str) -> bool:
     n = (needle or "").strip().lower().rstrip(".")
     r = (rule or "").strip().lower().rstrip(".")
@@ -101,8 +168,6 @@ def _host_matches(needle: str, rule: str) -> bool:
 
 def _url_allowed_by_host(url: str) -> bool:
     allow_hosts = _url_host_allowlist()
-    if not allow_hosts:
-        return False
     try:
         p = urlparse(url)
     except Exception:
@@ -111,6 +176,10 @@ def _url_allowed_by_host(url: str) -> bool:
         return False
     host = (p.hostname or "").strip().lower()
     if not host:
+        return False
+    if _url_allow_lan_enabled() and _is_private_or_loopback_host(host):
+        return True
+    if not allow_hosts:
         return False
     for rule in allow_hosts:
         if _host_matches(host, rule):
@@ -169,8 +238,15 @@ def _mail_imap_parse_action(
         fc_s = fc_s[:80]
     if len(sc_s) > 120:
         sc_s = sc_s[:120]
-    if not fc_s and not sc_s:
-        return None, None, 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis"
+    recent = action.get("recent") is True or str(action.get("recent") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    # « mails récents » : pas de filtre from/subject, INBOX bornée (max_messages).
+    if not fc_s and not sc_s and not recent:
+        return None, None, 0, 0, 0, "Champs `from_contains` et/ou `subject_contains` requis (ou recent=true)"
     fold = action.get("folder")
     if isinstance(fold, str) and fold.strip() and fold.strip().upper() != "INBOX":
         return None, None, 0, 0, 0, "Dossier non supporté (MVP : INBOX seulement)"
@@ -332,13 +408,27 @@ def run_desktop_action(
         "meta": {"dry_run": dry_run, "execution_gated": desktop_requires_approval()},
     }
 
+    if kind == "default_browser_info":
+        info: dict = {"prog_id": None, "name": None, "source": "webbrowser"}
+        try:
+            import webbrowser
+
+            b = webbrowser.get()
+            info["name"] = getattr(b, "name", None) or str(b)
+        except Exception as e:
+            info["error"] = str(e)
+            info["name"] = "inconnu"
+        out = {**base, "ok": True, "outcome": "dry_run" if dry_run else "ok", "default_browser": info}
+        _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+        return out
+
     if kind == "open_url":
         url = action.get("url")
         if not isinstance(url, str) or not url.strip():
             out = {**base, "ok": False, "outcome": "bad_request", "error": "Champ `url` requis"}
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
-        url = url.strip()
+        url = _normalize_open_url(url.strip())
         if not _url_is_allowed(url):
             allow_hosts = _url_host_allowlist()
             out = {
@@ -349,7 +439,7 @@ def run_desktop_action(
                 "url": url,
                 "url_host_allowlist_count": len(allow_hosts),
                 "url_host_allowlist_preview": allow_hosts[:5],
-                "url_hint": "Configurer LBG_DESKTOP_URL_ALLOWLIST (URLs exactes) ou LBG_DESKTOP_URL_HOST_ALLOWLIST (domaines/hosts).",
+                "url_hint": "Configurer LBG_DESKTOP_URL_ALLOWLIST / LBG_DESKTOP_URL_HOST_ALLOWLIST, ou LBG_DESKTOP_URL_ALLOW_LAN=1 pour le LAN.",
             }
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out

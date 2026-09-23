@@ -41,6 +41,11 @@ DEFAULT_ROLE_ALIASES: dict[str, dict[str, str]] = {
         "title": "Responsable plateforme LLM locale",
         "tagline": "Capacité, déploiement, bench, stabilité, watchdogs, reprise auto, budgets matériels",
     },
+    "contrarian": {
+        "alias": "Prométhée",
+        "title": "Conseil hors cadre",
+        "tagline": "Avis complémentaires, alternatives non orthodoxes (LLM uncensored)",
+    },
 }
 
 # Personas sous-projets (affichage tâches — rôle technique inchangé)

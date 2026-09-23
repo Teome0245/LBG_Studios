@@ -23,7 +23,7 @@ La politique produit (`lbg_agentic_os.md` § 6.1) est claire :
 
 1. **Ne pas remplacer** Cortex / Team / Pilot / Conductor par DSH.
 2. **Autoriser l'usage sur le poste dev (.10)** comme outil coding exploratoire,
-   pointé vers Ollama **110** (`qwen3.8:27b`, `gemma4:e2b`).
+   pointé vers Ollama **110** (`huihui_ai/Qwen3.8-abliterated:27b`, `gemma4:e2b`).
 3. **Évaluer** une capability Team `dsh_headless` (L2, allowlist repos) sur le modèle
    Cursor Cloud Agent — si le test .10 s'avère utile.
 4. **S'inspirer** des patterns Cordis (capability seams, session log durable, waterfall events)
@@ -33,13 +33,13 @@ La politique produit (`lbg_agentic_os.md` § 6.1) est claire :
 
 ```bash
 # Option A : intégration Ollama native
-ollama launch dsh --model qwen3.8:27b
+ollama launch dsh --model huihui_ai/Qwen3.8-abliterated:27b
 
 # Option B : provider custom dans DSH settings
 #   Provider ID : ollama-lan
 #   API Protocol : openai-completions
 #   Base URL : http://192.168.0.110:11434/v1
-#   Models : qwen3.8:27b, gemma4:e2b
+#   Models : huihui_ai/Qwen3.8-abliterated:27b, gemma4:e2b
 ```
 
 Pas de clé API requise (Ollama local).

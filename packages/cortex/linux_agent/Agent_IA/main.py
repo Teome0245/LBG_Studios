@@ -46,6 +46,7 @@ def healthz() -> dict[str, object]:
             "mail_imap_enabled": core.mail_imap_enabled(),
             "face_parts_enabled": core.get_cfg("LBG_LINUX_FACE_PARTS_ENABLED").strip().lower() in {"1", "true", "yes", "on"},
         },
+        "session": core.session_info(),
     }
 
 
@@ -70,6 +71,32 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
         return out
 
     kind = str(action.get("kind") or "").strip()
+
+    if kind == "agent_session_status":
+        sess = core.session_info()
+        out = {
+            **base,
+            "ok": True,
+            "outcome": "dry_run" if dry_run else "ok",
+            "session": sess,
+            "reply": (
+                f"Omarchy gui_ready={sess.get('gui_ready')} wayland={sess.get('wayland_display')} "
+                f"svc={sess.get('user_service_active')}"
+            ),
+        }
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in ("fix_session0", "heal_desktop_agent"):
+        # Même kind que Windows Session 0 — ici = heal service + check Wayland.
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        result = core.heal_desktop_agent(dry_run=dry_run)
+        out = {**base, **result}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
 
     if kind == "open_url":
         url = action.get("url")

@@ -1116,6 +1116,58 @@ def run_devops_action(
             },
         }
 
+    if kind == "guest_metrics":
+        from lbg_agents.guest_metrics_probe import run_guest_metrics_probe
+
+        result = run_guest_metrics_probe(actor_id=actor_id, text=text)
+        return {
+            "agent": "devops_executor",
+            "handler": "devops",
+            "actor_id": actor_id,
+            "request_text": text,
+            "devops_action": dict(action),
+            "result": result,
+            "ok": bool(result.get("ok")),
+            "outcome": result.get("outcome"),
+            "reply": result.get("reply"),
+            "remediation_hints": (result.get("remediation_plan") or {}).get("hints") or [],
+            "meta": {
+                "allowlist": True,
+                "sterile": True,
+                "dry_run": True,
+                "dry_run_source": dr_src,
+                "execution_gated": gated,
+            },
+        }
+
+    if kind == "guest_remediation_plan":
+        from lbg_agents.infra_guest_remediation import build_guest_remediation_plan, format_guest_plan_reply
+        from lbg_agents.guest_metrics_probe import probe_guest_metrics_wall
+
+        prior = context.get("guest_metrics") if isinstance(context.get("guest_metrics"), dict) else None
+        if prior is None:
+            prior = probe_guest_metrics_wall()
+        plan = build_guest_remediation_plan(prior)
+        return {
+            "agent": "devops_executor",
+            "handler": "devops",
+            "actor_id": actor_id,
+            "request_text": text,
+            "devops_action": dict(action),
+            "result": {"guest_metrics": prior, "remediation_plan": plan},
+            "ok": True,
+            "outcome": plan.get("outcome"),
+            "reply": format_guest_plan_reply(plan),
+            "remediation_hints": plan.get("hints") or [],
+            "meta": {
+                "allowlist": True,
+                "sterile": True,
+                "dry_run": True,
+                "dry_run_source": dr_src,
+                "execution_gated": gated,
+            },
+        }
+
     if kind == "storage_remediation_plan":
         from lbg_agents.infra_storage_remediation import build_storage_remediation_plan, format_storage_plan_reply
         from lbg_agents.proxmox_storage_probe import run_proxmox_storage_probe

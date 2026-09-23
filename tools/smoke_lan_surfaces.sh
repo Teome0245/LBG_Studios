@@ -30,16 +30,38 @@ check_http() {
   fi
 }
 
+# Redirect Orch UI → Pilot (P3) : attend 3xx + Location vers pilot
+check_redirect() {
+  local name="$1" url="$2" needle="${3:-pilot}"
+  local code loc
+  code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 4 --max-time 15 "$url" 2>/tmp/lbg_smoke.err) || {
+    echo "KO  $name  curl_fail  $url  $(tr '\n' ' ' </tmp/lbg_smoke.err | head -c 80)"
+    KO=$((KO + 1))
+    return
+  }
+  loc=$(curl -sS -o /dev/null -w "%{redirect_url}" --connect-timeout 4 --max-time 15 "$url" 2>/dev/null || true)
+  if [[ "$code" =~ ^3 ]] && [[ "$loc" == *"$needle"* ]]; then
+    echo "OK  $name  HTTP $code → $loc"
+    OK=$((OK + 1))
+  else
+    echo "WARN  $name  HTTP $code loc=$loc  $url"
+    WARN=$((WARN + 1))
+  fi
+}
+
 echo "=== Surfaces LAN ==="
 check_http "Pilot UI" "$PILOT/pilot/"
 check_http "Pilot healthz" "$PILOT/healthz"
 check_http "Pilot status" "$PILOT/v1/pilot/status"
 check_http "Cockpit UI" "http://192.168.0.100:8093/pilot/"
 check_http "Cockpit snapshot" "http://192.168.0.100:8093/v1/pilot/cockpit/snapshot"
+# Orch UI 5174 = chat produit (redirect P3 retiré 2026-08-25)
 check_http "Orch UI /" "http://192.168.0.100:5174/"
 check_http "Orch UI /lyra" "http://192.168.0.100:5174/lyra"
 check_http "Orch UI /agents/map" "http://192.168.0.100:5174/agents/map"
+check_http "Pilot orch agents/map" "$PILOT/v1/pilot/orch/agents/map"
 check_http "Orch API /health" "http://192.168.0.100:3000/health"
+check_http "Simple Chat (Open WebUI)" "http://192.168.0.100:3080/"
 check_http "Prime 246:8792" "http://192.168.0.246:8792/"
 check_http "Prime api/servers" "http://192.168.0.246:8792/api/servers"
 check_http "PreCU 245:8792" "http://192.168.0.245:8792/"

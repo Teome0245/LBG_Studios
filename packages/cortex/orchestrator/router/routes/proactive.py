@@ -19,9 +19,12 @@ class ProactiveStatus(BaseModel):
     tension: float = 0.0
     curiosite: float = 0.0
     silence_seconds_est: float = 0.0
+    tension_causes: list[str] = Field(default_factory=list)
     auto_jobs_spawned: int = 0
     last_job_id: str | None = None
     last_action: dict[str, object] | None = None
+    lia_jobs: bool = False
+    lia_autonomy_thread: bool = False
     infra_signals: dict[str, object] = Field(default_factory=dict)
 
 

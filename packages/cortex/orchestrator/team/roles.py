@@ -37,6 +37,7 @@ from team.face_parts_workflow import execute_face_parts_workflow, resolve_face_p
 from team.infographiste_workflow import execute_infographiste_workflow, resolve_infographiste_workflow
 from team.player_ia_exec import execute_player_ia
 from team.admin_infra_workflow import execute_admin_infra_workflow
+from team.contrarian_workflow import execute_contrarian_workflow
 from team.qa_followup import auto_run_followup_tasks, maybe_spawn_after_qa_failure
 from team.failure_followup import (
     auto_run_followup_tasks as failure_auto_run_followup,
@@ -101,6 +102,15 @@ ROLE_SPECS: dict[str, dict[str, object]] = {
         "default_objective": (
             "Responsable plateforme LLM locale : capacite, deploiement, bench, stabilite, "
             "watchdogs, reprise auto, budgets materiels"
+        ),
+    },
+    "contrarian": {
+        "capability": "second_opinion",
+        "routed_to": "agent.pm",
+        "autonomy": "L0",
+        "default_objective": (
+            "Prométhée — avis complémentaires et alternatives hors cadre "
+            "(LLM uncensored, consultatif uniquement)"
         ),
     },
 }
@@ -218,6 +228,66 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         outcome = str(hw.get("outcome") or "ok")
         ok = outcome != "critical"
         return {"kind": "ops_hw", "proxmox_hw": hw, "outcome": outcome, "ok": ok}
+
+    guest_metrics = ctx.get("guest_metrics")
+    if ops_kind == "guest_metrics" and isinstance(guest_metrics, dict):
+        from lbg_agents.infra_guest_remediation import build_guest_remediation_plan, format_guest_plan_reply
+
+        plan = ctx.get("remediation_plan")
+        if not isinstance(plan, dict):
+            plan = build_guest_remediation_plan(guest_metrics)
+        outcome = str(guest_metrics.get("outcome") or "ok")
+        ok = outcome != "critical"
+        return {
+            "kind": "ops_guest_metrics",
+            "guest_metrics": guest_metrics,
+            "remediation_plan": plan,
+            "outcome": outcome,
+            "ok": ok,
+            "reply": format_guest_plan_reply(plan),
+            "suggested_actions": plan.get("suggested_actions") or [],
+        }
+    if ops_kind == "guest_metrics" and not isinstance(ctx.get("devops_action"), dict):
+        ctx["devops_action"] = {"kind": "guest_metrics"}
+
+    # Guest mur : dispatcher agent.devops (kind=guest_metrics) sans basculer en healthz.
+    if ops_kind == "guest_metrics" and isinstance(ctx.get("devops_action"), dict):
+        action = ctx.get("devops_action") or {}
+        if str(action.get("kind") or "").strip().lower() == "guest_metrics":
+            from lbg_agents.infra_guest_remediation import (
+                build_guest_remediation_plan,
+                format_guest_plan_reply,
+            )
+
+            ctx = dict(ctx)
+            ctx.setdefault("devops_dry_run", False)
+            ctx = _inject_devops_approval(ctx)
+            out = _dispatch(
+                "agent.devops",
+                actor_id=task.actor_id,
+                text=task.objective,
+                context=ctx,
+            )
+            res = out.get("result") if isinstance(out.get("result"), dict) else {}
+            wall = res.get("guest_metrics") if isinstance(res.get("guest_metrics"), dict) else res
+            if not isinstance(wall, dict) or "hosts" not in wall:
+                # run_guest_metrics_probe renvoie souvent le wall à la racine du result
+                wall = res if isinstance(res, dict) and "hosts" in res else {}
+            plan = build_guest_remediation_plan(wall if wall else None)
+            outcome = str((wall or {}).get("outcome") or "ok")
+            ok = bool(out.get("ok", True)) and outcome != "critical"
+            if isinstance(out.get("error"), str) and out["error"]:
+                ok = False
+            return {
+                "kind": "ops_guest_metrics",
+                "guest_metrics": wall,
+                "remediation_plan": plan,
+                "outcome": outcome,
+                "ok": ok,
+                "reply": format_guest_plan_reply(plan),
+                "suggested_actions": plan.get("suggested_actions") or [],
+                "output": out,
+            }
 
     guest_lock = ctx.get("proxmox_guest_lock")
     if ops_kind == "proxmox_guest_lock" and isinstance(guest_lock, dict):
@@ -659,6 +729,10 @@ def _execute_admin_infra(task: TeamTask) -> dict[str, object]:
     return execute_admin_infra_workflow(task, _dispatch)
 
 
+def _execute_contrarian(task: TeamTask) -> dict[str, object]:
+    return execute_contrarian_workflow(task, _dispatch)
+
+
 _EXECUTORS: dict[str, Callable[[TeamTask], dict[str, object]]] = {
     "ops": _execute_ops,
     "qa": _execute_qa,
@@ -667,12 +741,16 @@ _EXECUTORS: dict[str, Callable[[TeamTask], dict[str, object]]] = {
     "dev_godot": _execute_dev_godot,
     "player_ia": _execute_player_ia,
     "admin_infra": _execute_admin_infra,
+    "contrarian": _execute_contrarian,
 }
 
 
 def _objective_is_proxmox_storage(text: str) -> bool:
     """Mission Héphaïstos ciblée stockage Proxmox / disk Prime (pas smoke générique)."""
     t = (text or "").lower()
+    # Mur guest (df/load) → autre playbook
+    if _objective_is_guest_metrics(t):
+        return False
     storage_cue = any(
         k in t
         for k in (
@@ -707,6 +785,50 @@ def _objective_is_proxmox_storage(text: str) -> bool:
         )
     )
     return storage_cue and target_cue
+
+
+def _objective_is_guest_metrics(text: str) -> bool:
+    """Mission mur INFRA LAN — disk/load guest (100/140/245/246), pas thin Proxmox."""
+    t = (text or "").lower()
+    if "local-lvm" in t or "thin pool" in t or "thin_pool" in t or "io-error" in t:
+        return False
+    wall_cue = any(
+        k in t
+        for k in (
+            "mur infra",
+            "guest metrics",
+            "guest_metrics",
+            "disque guest",
+            "disk guest",
+            "front web",
+            "front-web",
+            ".100",
+            "192.168.0.100",
+            "loadavg",
+            "load average",
+            "charge cpu",
+            "disk/load",
+        )
+    )
+    action_cue = any(
+        k in t
+        for k in (
+            "surveill",
+            "supervis",
+            "sond",
+            "alerte",
+            "remediat",
+            "remédiation",
+            "hephaistos",
+            "héphaïstos",
+            "attention",
+            "point sur",
+            "disk",
+            "disque",
+            "load",
+        )
+    )
+    return wall_cue and action_cue
 
 
 def _plan_from_at_mentions(
@@ -842,6 +964,20 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     if mentioned is not None:
         return mentioned
 
+    # --- Mur INFRA LAN guest disk/load (100/140/245/246) ---
+    if _objective_is_guest_metrics(text):
+        _add(
+            "ops",
+            "Héphaïstos — sonde guest mur INFRA LAN (disk/load 100/140/245/246) + plan d'actions",
+            context={
+                "ops_kind": "guest_metrics",
+                "devops_action": {"kind": "guest_metrics"},
+                "devops_dry_run": True,
+                "presence_agent_id": "studio_ops_hephaistos",
+            },
+        )
+        return proposals
+
     # --- Stockage Proxmox / disk Prime : ops dédié (évite qa smoke + player_ia « prime ») ---
     if _objective_is_proxmox_storage(text):
         _add(
@@ -910,6 +1046,32 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
             ROLE_SPECS["admin_infra"]["default_objective"]
         )
         _add("admin_infra", obj)
+    if any(
+        k in text
+        for k in (
+            "contrarian",
+            "prométhée",
+            "promethee",
+            "hors cadre",
+            "hors-cadre",
+            "avis alternatif",
+            "second avis",
+            "second opinion",
+            "uncensored",
+            "devil advocate",
+            "avocat du diable",
+        )
+    ):
+        obj = (
+            objective
+            if any(k in text for k in ("contrarian", "prométhée", "promethee", "avis", "alternatif"))
+            else str(ROLE_SPECS["contrarian"]["default_objective"])
+        )
+        _add(
+            "contrarian",
+            obj,
+            context={"contrarian": True, "presence_agent_id": "studio_contrarian_promethee"},
+        )
     if any(k in text for k in ("godot", "lbg-ws", "lbg_ws", "prime-client", "gateway", "zone.bridge")):
         qa_obj = objective if "godot" in text or "lbg" in text else "Supervise client Godot + sidecar 246 + readiness lbg-ws/2"
         proposals.append(
@@ -1315,14 +1477,45 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
 
     try:
         result = executor(task)
+        if not isinstance(result, dict):
+            result = {"ok": False, "error": "executor_non_dict"}
+        else:
+            result = dict(result)
         ok = bool(result.get("ok", True))
         status = "done" if ok else "failed"
+        # Agency A.6 — trace consommation leçons injectées
+        try:
+            from team import lessons_learned as team_lessons
+
+            result["lessons_trace"] = team_lessons.lessons_trace_from_slice(
+                lessons_slice if isinstance(lessons_slice, list) else []
+            )
+        except Exception:
+            result["lessons_trace"] = {"injected_ids": [], "patterns_preview": [], "injected_count": 0}
+        # Agency A.1 — hard-fail → leçon (avant post_judge pour anti-double A.3)
+        if not ok:
+            try:
+                from team import lessons_learned as team_lessons
+
+                hf = team_lessons.record_hard_fail_lesson(
+                    task_id=task_id,
+                    role=str(task.role),
+                    objective=task.objective or "",
+                    result=result,
+                )
+                if hf:
+                    result["hard_fail_lesson"] = {
+                        "id": hf.get("id"),
+                        "deduped": bool(hf.get("deduped")),
+                        "hit_count": hf.get("hit_count"),
+                    }
+            except Exception:
+                pass
         try:
             from team.post_judge import maybe_judge_task_outcome
 
-            judged = maybe_judge_task_outcome(task, result if isinstance(result, dict) else {})
-            if judged and isinstance(result, dict):
-                result = dict(result)
+            judged = maybe_judge_task_outcome(task, result)
+            if judged:
                 result["post_judge"] = {
                     "score": judged.get("score"),
                     "pass": judged.get("pass"),
@@ -1332,7 +1525,18 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
         except Exception:
             pass
         team_store.update_task(task_id, status=status, result=result)
-        _trace_log({"event": "run_end", "task_id": task_id, "role": task.role, "ok": ok, "trace_id": trace_id})
+        _trace_log(
+            {
+                "event": "run_end",
+                "task_id": task_id,
+                "role": task.role,
+                "ok": ok,
+                "trace_id": trace_id,
+                "lessons_injected": (result.get("lessons_trace") or {}).get("injected_count")
+                if isinstance(result.get("lessons_trace"), dict)
+                else 0,
+            }
+        )
         if task.role == "qa" and status == "failed":
             refreshed = team_store.get_task(task_id)
             if refreshed is not None:
@@ -1423,7 +1627,28 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
                     )
                     failure_auto_run_followup(followups)
     except Exception as e:
-        team_store.update_task(task_id, status="failed", result={"error": str(e)})
+        err_result: dict[str, object] = {"ok": False, "error": str(e)}
+        try:
+            from team import lessons_learned as team_lessons
+
+            err_result["lessons_trace"] = team_lessons.lessons_trace_from_slice(
+                lessons_slice if isinstance(lessons_slice, list) else []
+            )
+            hf = team_lessons.record_hard_fail_lesson(
+                task_id=task_id,
+                role=str(task.role),
+                objective=task.objective or "",
+                result=err_result,
+            )
+            if hf:
+                err_result["hard_fail_lesson"] = {
+                    "id": hf.get("id"),
+                    "deduped": bool(hf.get("deduped")),
+                    "hit_count": hf.get("hit_count"),
+                }
+        except Exception:
+            pass
+        team_store.update_task(task_id, status="failed", result=err_result)
         _trace_log({"event": "run_error", "task_id": task_id, "error": str(e), "trace_id": trace_id})
         refreshed = team_store.get_task(task_id)
         if refreshed is not None:

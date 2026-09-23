@@ -20,6 +20,13 @@ _ALIASES: dict[str, str] = {
     "nginx": "front",
     "pilot": "front",
     "110": "front",
+    # CT web Cockpit / Orch UI (mur INFRA LAN) — distinct de Ollama .110
+    "linux-100": "web",
+    "web": "web",
+    "front-web": "web",
+    "front_web": "web",
+    "cockpit": "web",
+    "100": "web",
     "linux-245": "precu",
     "precu": "precu",
     "swgemu": "precu",
@@ -43,6 +50,7 @@ _ALIASES: dict[str, str] = {
 _ROLE_ENV: dict[str, tuple[str, str]] = {
     "core": ("LBG_LAN_HOST_CORE", "192.168.0.140"),
     "front": ("LBG_LAN_HOST_FRONT", "192.168.0.110"),
+    "web": ("LBG_LAN_HOST_WEB", "192.168.0.100"),
     "mmo": ("LBG_LAN_HOST_MMO", "192.168.0.246"),
     "precu": ("LBG_LAN_HOST_PRECU", "192.168.0.245"),
     "executor": ("LBG_LAN_HOST_EXECUTOR", "192.168.0.141"),

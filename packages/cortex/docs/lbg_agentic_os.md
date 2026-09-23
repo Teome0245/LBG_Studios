@@ -108,12 +108,12 @@ Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle obs
 
 | Capacité externe | Décision produit | Chez LBG |
 |------------------|------------------|----------|
-| Canaux messagerie grand public (WhatsApp, Telegram, Discord…) | **Pas utile pour l’instant** | **Element / Matrix** déjà en place ; **Slack** éventuel plus tard, hors chemin critique |
+| Canaux messagerie grand public (WhatsApp, Telegram, Discord…) | **Pas utile pour l’instant** | **Slack** = canal ops cible (MVP alerte) ; **Element / Matrix** = **backup** dual-run — ADR [`0021`](adr/0021-slack-canal-ops-element-backup.md) · `lbg_agents.ops_notify` |
 | Computer-use générique (souris / clavier / écran A→Z) | **Utile plus tard, pas urgent** | Desktop hybride = kinds structurés + approval (pas vision UI libre) |
 | Édition de repo libre (shell / workspace type OpenHands) | **Utile plus tard, pas urgent** | Iris L3 allowlist + Cursor Cloud Agent (L2 token) ; pas de shell libre sur 140 |
 | Skills / playbooks OpenClaw | Greffe OK (déjà amorcée) | `openclaw_adapter.py` + `infra/openclaw/skills/` — EXEC borné, pas runtime OpenClaw comme OS |
 
-**Garde-fou** : toute greffe future (computer-use, OpenHands, Slack) reste en **L2 / allowlist**, jamais en substitution du Conductor, du bus Team ni de la file SQLite.
+**Garde-fou** : toute greffe (computer-use, OpenHands, Slack HITL) reste en **L2 / allowlist**, jamais en substitution du Conductor, du bus Team ni de la file SQLite. Slack alerte-only = périphérie OK ; Element reste backup tant que `LBG_OPS_NOTIFY_BACKEND=both`.
 
 ## 7. Roadmap produit (courte)
 
@@ -123,7 +123,7 @@ Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle obs
 4. **A1+A2+P1 livrés 2026-08-03** — playbook jalon + owner smokes + M12 move + anti-clôture si rouge.
 4. **Cible — Miroir / leçons / forge mutation / Feature Proposer** — extension L3 + méta-apprentissage (greffe Team, pas second OS) : [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md).
 5. **Fait 2026-08-21** — boucle fermée A–C : sprint → mutator/proposer → post-judge → apply L2 `prompt_overrides` ; Pilot `#/team/metrics`.
-6. **Plus tard (périphérie)** — Slack optionnel ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
+6. **En cours (périphérie)** — Slack ops dual-run Element (ADR 0021, `ops_notify`) ; puis HITL boutons ; computer-use borné ; OpenHands / co-design repo en lab L2 — **sans** remplacer Team/Cortex.
 7. **Lab only** — Adapter CrewAI hors chemin critique.
 
 ## 8. Commandes utiles

@@ -55,6 +55,23 @@ Avec `maturity_cap: "A"`, seul le premier hint est injecté dans le system promp
 
 La clé de cache dialogue inclut `maturity_cap` (défaut `LBG_DIALOGUE_CACHE_CONTEXT_KEYS`).
 
+## LLM uncensored (option 1 + Prométhée)
+
+**Option 1 (canon)** : un seul modèle heavy `huihui_ai/gemma-4-abliterated:12b` pour dialogue / code / PM / Prométhée.  
+Les paliers **A/B** restent des **filtres de présentation** (`format_maturity_guardrails`) — pas un second pull.
+
+Dual-modèle (legacy, optionnel) si `LBG_DIALOGUE_LLM_MODEL_UNCENSORED` est défini :
+
+| Mode | Env | Effet |
+|------|-----|--------|
+| Option B | `LBG_DIALOGUE_UNCENSORED_ON_MATURITY_C=1` (défaut) | Cap **C** → 2e tag ; A/B → `LBG_DIALOGUE_LLM_MODEL` |
+| Option A | `LBG_DIALOGUE_UNCENSORED_ALWAYS=1` | Tout le local dialogue passe le 2e tag |
+| Force tour | `context.force_uncensored` / `dialogue_uncensored` | Bascule pour cet appel |
+
+Agent Team **Prométhée** (`role=contrarian`, `studio_contrarian_promethee`) : second avis / alternatives hors cadre via profil REASON `uncensored` (même 27b abliterated). L0 consultatif — pas d’écriture.
+
+Interdits inchangés (tous paliers + Prométhée) : CSAM, doxxing, harm IRL.
+
 ## Tests
 
 ```bash

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from router.routes.action_proposal import router as action_proposal_router
+from router.routes.companion_review import router as companion_review_router
 from router.routes.capabilities import router as capabilities_router
 from router.routes.brain import router as brain_router
 from router.routes.jobs import router as jobs_router
@@ -10,11 +11,14 @@ from router.routes.lia_incarnation import router as lia_incarnation_router
 from router.routes.core3_player_routes import router as core3_players_router
 from router.routes.team import router as team_router
 from router.routes.lbg_sa import router as lbg_sa_router
+from router.routes.self_state import router as self_state_router
 
 router = APIRouter()
 router.include_router(action_proposal_router)
+router.include_router(companion_review_router)
 router.include_router(capabilities_router)
 router.include_router(brain_router)
+router.include_router(self_state_router)
 router.include_router(jobs_router)
 router.include_router(proactive_router)
 router.include_router(route_intent_router)

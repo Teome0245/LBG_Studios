@@ -1,10 +1,9 @@
-"""Alertes Element Atlas — périmètre hôtes KO (110/111/140/141/142/245/246)."""
+"""Alertes ops Atlas — périmètre hôtes KO (Slack + Element backup, ADR 0021)."""
 
 from __future__ import annotations
 
 import json
 import os
-import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -39,19 +38,6 @@ def alert_cooldown_s() -> float:
         return max(300.0, float(os.environ.get("LBG_ADMIN_INFRA_PERIMETER_ALERT_COOLDOWN_S", "3600")))
     except ValueError:
         return 3600.0
-
-
-def load_env_file(path: Path) -> dict[str, str]:
-    out: dict[str, str] = {}
-    if not path.is_file():
-        return out
-    for line in path.read_text(encoding="utf-8").splitlines():
-        s = line.strip()
-        if not s or s.startswith("#") or "=" not in s:
-            continue
-        key, val = s.split("=", 1)
-        out[key.strip()] = val.strip().strip('"').strip("'")
-    return out
 
 
 def perimeter_has_ko(platform: dict[str, Any]) -> bool:
@@ -140,48 +126,14 @@ def should_send_perimeter_alert(platform: dict[str, Any], *, state: dict[str, An
 
 
 def send_element_message(message: str) -> dict[str, Any]:
-    p03_root = Path(os.environ.get("LBG_P03_ROOT", "/opt/lbg_project_03"))
-    p03_py = p03_root / ".venv/bin/python"
-    env_file = Path(os.environ.get("LBG_P03_ENV", "/etc/lbg-project-03.env"))
-    if not p03_py.is_file():
-        return {"ok": False, "error": f"p03 venv absent: {p03_py}"}
+    """Push ops (Slack + Element backup). ADR 0021 — ``ops_notify``."""
+    from lbg_agents.ops_notify import send_text
 
-    env = os.environ.copy()
-    env.update(load_env_file(env_file))
-    env["PYTHONPATH"] = str(p03_root)
-    code = (
-        "from lbg_agents.matrix_config import MatrixConfig\n"
-        "from lbg_agents.matrix_client import MatrixClient\n"
-        "import os, sys\n"
-        "msg = os.environ.get('ATLAS_ADMIN_INFRA_MSG', '')\n"
-        "cfg = MatrixConfig.from_env()\n"
-        "if not cfg.configured:\n"
-        "    print({'ok': False, 'error': 'matrix_not_configured'}); sys.exit(1)\n"
-        "out = MatrixClient(cfg.homeserver, access_token=cfg.access_token, user_id=cfg.user_id)"
-        ".send_text(cfg.room_id, msg)\n"
-        "print(out); sys.exit(0 if out.get('ok') else 1)\n"
-    )
-    proc = subprocess.run(
-        [str(p03_py), "-c", code],
-        env={**env, "ATLAS_ADMIN_INFRA_MSG": message[:5500]},
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
-    if proc.returncode != 0:
-        return {"ok": False, "stderr": (proc.stderr or "")[-500:], "stdout": (proc.stdout or "")[-500:]}
-    lines = [ln for ln in (proc.stdout or "").strip().splitlines() if ln.strip()]
-    if not lines:
-        return {"ok": True, "raw": ""}
-    try:
-        return json.loads(lines[-1])
-    except json.JSONDecodeError:
-        return {"ok": True, "raw": (proc.stdout or "")[-200:]}
+    return send_text(message, channel="ops")
 
 
 def maybe_notify_perimeter_ko(platform: dict[str, Any]) -> dict[str, Any]:
-    """Envoie Element si un hôte du périmètre est KO (avec cooldown / signature)."""
+    """Envoie ops (Slack + Element) si un hôte du périmètre est KO (cooldown / signature)."""
     if not alerts_enabled():
         return {"skipped": True, "reason": "LBG_ADMIN_INFRA_PERIMETER_ALERT=0"}
 
@@ -208,4 +160,9 @@ def maybe_notify_perimeter_ko(platform: dict[str, Any]) -> dict[str, Any]:
                 "hosts_total": platform.get("hosts_total"),
             }
         )
-    return {"ok": bool(out.get("ok")), "element": out, "signature": perimeter_ko_signature(platform)}
+    return {
+        "ok": bool(out.get("ok")),
+        "element": out,
+        "ops_notify": out,
+        "signature": perimeter_ko_signature(platform),
+    }

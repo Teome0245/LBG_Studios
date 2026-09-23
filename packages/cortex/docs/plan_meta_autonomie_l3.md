@@ -241,3 +241,4 @@ Les agents gagnent en pertinence **sans** réingénierie manuelle systématique 
 | Bible | `docs/world/BIBLE_MMO.md` |
 | OpenGame | `docs/adr/0003-opengame-forge-prototypes.md` |
 | Matrice LLM | `docs/local_llm_route_matrix.md` |
+| Agency Self v1 (leçons → drives → buts Lia, **Team**) | [`plan_self_agency_v1.md`](plan_self_agency_v1.md) |

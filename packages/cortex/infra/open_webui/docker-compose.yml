@@ -1,0 +1,32 @@
+# Lab « Simple Chat » — Open WebUI (P4 plan_pilot_hub_orch_absorb)
+# Hôte cible : .100 (front), port hôte 3080 → conteneur 8080
+# Ollama : .110 (heavy) + .111 (light) — pas de Team/Desktop/approvals ici.
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: lbg-open-webui
+    restart: unless-stopped
+    ports:
+      - "3080:8080"
+    environment:
+      # Ollama heavy (défaut) — matice locale LBG
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://192.168.0.110:11434}
+      # UI
+      - WEBUI_NAME=LBG Simple Chat
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-true}
+      # Pas d'auth obligatoire en lab LAN (à durcir si exposition WAN)
+      - WEBUI_AUTH=${WEBUI_AUTH:-false}
+    volumes:
+      - open_webui_data:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Accès LAN Ollama depuis le bridge Docker
+    networks:
+      - lbg-owui
+
+volumes:
+  open_webui_data:
+
+networks:
+  lbg-owui:
+    driver: bridge

@@ -1,6 +1,9 @@
 # Audit LLM local — VM 110 (Ollama H24)
 
-**Date** : 2026-08-16  
+> **Supersédé** : source de vérité = [`local_llm_route_matrix.md`](./local_llm_route_matrix.md) (≤12B abliterated).  
+> Ce fichier (2026-08-16) décrit l’ancienne matrice 26b/27b — ne plus s’y fier pour le routage.
+
+**Date** : 2026-08-16 (historique)  
 **Hôte** : `192.168.0.110` — Ollama heavy (CPU only). **Pilot canonique = `.140:8080`**, pas 110.
 
 ---
@@ -20,8 +23,9 @@
 
 | Modèle | Taille | Usage |
 |--------|--------|-------|
-| `qwen3.8:27b` | ~18 Go | **Code / PM / dialogue** (bench août 2026 > `gemma4:26b`) |
+| `huihui_ai/Qwen3.8-abliterated:27b` | ~18 Go | **Code / PM / dialogue / Prométhée** (option 1 — uncensored unique) |
 | `gemma4:e2b` | ~7 Go | **Forge Iris**, jobs planner, failover light→heavy |
+| `qwen3.8:27b` | ~18 Go | Legacy censored — ne plus router |
 | `gemma4:26b` | ~18 Go | Legacy — ne plus router (reste disque, pas résident) |
 | `gemma4-claude:latest` | ~18 Go | Variante 26b (alias) |
 
@@ -37,11 +41,13 @@ Appels Qwen : **`think: false`** sinon réponses vides / CPU brûlé.
 
 | Cas d'usage | Variable | Modèle |
 |-------------|----------|--------|
-| Dialogue PNJ (local) | `LBG_DIALOGUE_LLM_MODEL` | `qwen3.8:27b` |
+| Dialogue PNJ (local) | `LBG_DIALOGUE_LLM_MODEL` | `huihui_ai/Qwen3.8-abliterated:27b` |
+| Présentation soft A/B | `maturity_cap` + prompts | même modèle (pas de swap) |
+| Prométhée (contrarian) | `LBG_REASON_MODEL_UNCENSORED` | même tag heavy |
 | Dialogue rapide (cloud) | `LBG_DIALOGUE_FAST_MODEL` (+ `GROQ_MODEL_*`) | Groq ex. `qwen/qwen3.6-27b` — contrôlé par Atlas (`dialogue_fast_groq`) |
 | Forge GDScript Iris | `LBG_REASON_MODEL_FORGE` | `gemma4:e2b` |
-| Code | `LBG_REASON_MODEL_CODE` | `qwen3.8:27b` |
-| Brief PM / synthèse | `LBG_REASON_MODEL_PM` | `qwen3.8:27b` |
+| Code | `LBG_REASON_MODEL_CODE` | `huihui_ai/Qwen3.8-abliterated:27b` |
+| Brief PM / synthèse | `LBG_REASON_MODEL_PM` | `huihui_ai/Qwen3.8-abliterated:27b` |
 | Jobs Cowork planner | `LBG_JOBS_PLANNER_LLM_MODEL` | `gemma4:e2b` |
 
 ---
@@ -59,7 +65,7 @@ Ne pas charger **27b + e2b** simultanément — swap / OOM.
 
 Timeouts conseillés :
 - `gemma4:e2b` : 45–90 s (forge)
-- `qwen3.8:27b` : 180–300 s (dialogue / code CPU ~0.2 tok/s)
+- `huihui_ai/Qwen3.8-abliterated:27b` : 180–300 s (dialogue / code CPU ~0.2 tok/s)
 
 ---
 
@@ -76,6 +82,13 @@ Timer équipe : `lbg-team-ops-ollama-job` (toutes les 6 h) → tâche ops audit 
 
 ## Chaîne failover actuelle (lbg.env)
 
-1. **Dialogue auto** : Groq fast → `qwen3.8:27b` local
+1. **Dialogue auto** : Groq fast → abliterated 27b local
 2. **REASON forge** : `gemma4:e2b` local → cloud si `LBG_REASON_FAILOVER=1`
 3. **110** reste le socle H24 ; le poste **10** n'est pas requis pour l’inférence
+
+### Pull (110)
+
+```bash
+ollama pull huihui_ai/Qwen3.8-abliterated:27b
+# optionnel ensuite : ollama rm qwen3.8:27b
+```

@@ -34,7 +34,7 @@ from lbg_agents.project_status import run_project_status
 from lbg_agents.quests_stub import run_quests_stub
 from lbg_agents.world_stub import run_world_stub
 from lbg_agents.desktop_executor import run_desktop_action
-from lbg_agents.desktop_apps import hint_for_desktop_error, open_app_action_from_goal
+from lbg_agents.desktop_apps import desktop_action_from_goal, hint_for_desktop_error
 from lbg_agents.desktop_targets import resolve_desktop_target
 from lbg_agents.opengame_executor import run_opengame_action
 from lbg_agents.core3_bridge import run_core3_bridge
@@ -360,7 +360,7 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
         ctx["desktop_target"] = resolved.target_id
         ctx["desktop_target_host"] = resolved.host
     if not isinstance(raw, dict):
-        inferred = open_app_action_from_goal(text)
+        inferred = desktop_action_from_goal(text)
         if inferred is not None:
             raw = inferred
             ctx = {**context, "desktop_action": raw}
@@ -373,7 +373,7 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
                 "ok": False,
                 "outcome": "bad_request",
                 "error": "Aucune desktop_action dans context.",
-                "hint": 'Ex. « lance vlc sur mon pc » ou {"desktop_action": {"kind":"open_url","url":"https://example.org"}} ; search_web_open / mail_imap_preview si variables d’activation correspondantes',
+                "hint": 'Ex. « lance vlc sur mon pc » / « répare vghd » ou {"desktop_action": {"kind":"open_url","url":"https://example.org"}}',
             }
 
     # Mode hybride : exécution attendue sur un worker Windows.

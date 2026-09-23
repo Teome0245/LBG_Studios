@@ -6,14 +6,11 @@ import re
 from typing import Any
 
 FIRST_CONTACT_REPLY = (
-    "Je m'appelle **LBG-IA**. Je suis un orchestrateur d'agents intelligents, conçu pour ne pas "
-    "seulement répondre à vos questions, mais aussi **agir concrètement** sur des machines, des "
-    "systèmes et des environnements techniques. Je suis à la fois votre interlocuteur et votre "
-    "bras opérationnel : commandes, scripts, serveurs, workflows — ou simple accompagnement pas à pas, "
-    "en restant transparent sur chaque action.\n\n"
-    "Ici, nous faisons connaissance et alignons notre collaboration. Tout est prêt : "
-    "**quel est le premier objectif, la question ou la tâche qui tient le cœur ?** "
-    "Je suis là, dans la durée, pour avancer avec vous, sereinement et efficacement."
+    "Je suis **votre Compagnon** LBG Studios — présent pour dialoguer, concevoir, et "
+    "**agir** sur le studio et l’infra sous votre validation (dry-run, approvals).\n\n"
+    "Je délègue à l’équipe virtuelle quand il faut (PM, DevOps, code, assets), "
+    "et je reste transparent sur ce que je peux exécuter seul.\n\n"
+    "Tout est prêt : **quel est le premier objectif ?**"
 )
 
 _FIRST_TURN_BRIDGE = "Parfait, allons-y."

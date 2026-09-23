@@ -79,8 +79,7 @@ def run_mail_imap_preview(
     """
     fc = _norm(from_contains)
     sc = _norm(subject_contains)
-    if not fc and not sc:
-        return [], "Au moins un filtre from_contains ou subject_contains requis"
+    # Filtres vides = aperçu des N derniers (recent=true côté proposal / worker).
 
     host = host.strip()
     if not host or not user.strip():

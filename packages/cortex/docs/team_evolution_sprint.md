@@ -52,7 +52,7 @@ Objectif : éviter les cascades Slack/CR rouges sur du bruit (humanité idle, Mi
 
 | Règle | Détail |
 |-------|--------|
-| Cœur bots L1 | `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS=lia,nix` — Mira optionnelle |
+| Cœur bots L1 | `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS=lia,nix,mira,kael` — les 4 joueurs IA |
 | Chœur / sidecar Argus | via `execute_player_ia` : humanité + truth-guard **advisory** si Lia+Nix online |
 | Validation Godot | `infographiste_assets` **advisory** (aligné superviseur blocking) |
 | `team_load` sprint | gaps = failed ≤ `LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H` (défaut = autoconsult **24 h**) + filtre bruit Pygmalion/WSL/guest |
@@ -117,7 +117,7 @@ Variables : `infra/secrets/lbg.env.example` (`LBG_TEAM_EVOLUTION_*`).
 | `LBG_TEAM_EVOLUTION_JOB_COOLDOWN_S` | `518400` (6 j) | Anti double-tir vs timer 7 j |
 | `LBG_TEAM_EVOLUTION_ROUND_TIMEOUT_S` | `840` | Timeout HTTP `POST …/run` |
 | `LBG_TEAM_EVOLUTION_FAILED_MAX_AGE_H` | (hérite autoconsult `24`) | Âge max failed → gaps `team_load` ; `0` = fenêtre 7 j |
-| `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS` | `lia,nix` | Bots cœur connectivité L1 |
+| `LBG_TEAM_PLAYER_IA_REQUIRED_BOTS` | `lia,nix,mira,kael` | Bots cœur connectivité L1 |
 | `LBG_TEAM_AUTOCONSULT_FAILED_MAX_AGE_H` | `24` | Failed recyclés Dédale |
 
 ## Tests

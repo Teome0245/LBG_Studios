@@ -488,7 +488,7 @@ cd agents
 PYTHONPATH=src uv run --with pytest python -m pytest tests/test_spawn_team_qa_smoke_job.py -q
 ```
 
-### Équipe virtuelle — ops stockage + Ollama (`spawn_team_ops_*`)
+### Équipe virtuelle — ops stockage + Ollama + guest mur (`spawn_team_ops_*`)
 
 Playbooks **L1** (phase B) : timers sur **140** → tâches équipe **`ops`**.
 
@@ -496,13 +496,14 @@ Playbooks **L1** (phase B) : timers sur **140** → tâches équipe **`ops`**.
 |--------|---------------|------|
 | `spawn_team_ops_storage_job` | warn/critical Proxmox (cooldown 30 min / 15 min) | `ops` + contexte `proxmox_storage` |
 | `spawn_team_ops_ollama_job` | toutes les 6 h (cooldown 6 h) | `ops` + `GET /api/tags` sur 110 |
+| `spawn_team_ops_guest_job` | warn/critical disk/load mur INFRA LAN (1 h) | `ops` + `guest_metrics` + plan d'actions |
 
 ```bash
 bash infra/scripts/install_team_ops_jobs_vm.sh
-sudo systemctl start lbg-team-ops-ollama-job.service   # test manuel
+sudo systemctl start lbg-team-ops-guest-job.service   # test manuel mur
 ```
 
-Tests : `pytest tests/test_spawn_team_ops_jobs.py -q`
+Tests : `pytest tests/test_spawn_team_ops_jobs.py tests/test_guest_metrics_probe.py -q`
 
 ### Équipe virtuelle — mesh 3D TRELLIS.2 (`mesh_media` / worker Infographiste_IA)
 

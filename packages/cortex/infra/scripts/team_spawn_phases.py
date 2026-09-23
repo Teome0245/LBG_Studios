@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Helpers spawn équipe — phases dry → contrôle → réel + push Element."""
+"""Helpers spawn équipe — phases dry → contrôle → réel + push ops (Slack + Element)."""
 
 from __future__ import annotations
 
@@ -237,24 +237,20 @@ def format_phase_report(
 
 
 def push_element_text(message: str) -> dict[str, Any]:
-    """Envoie un message dans la room pilote si Matrix est configuré (ADR 0018)."""
-    p03_root = os.environ.get("LBG_PROJECT_03_ROOT", "/home/sdesh/projects/LBG_Project_03").strip()
-    if p03_root not in sys.path:
-        sys.path.insert(0, p03_root)
+    """Envoie un message ops (Slack + Element backup). ADR 0021."""
     try:
-        from lbg_agents.matrix_client import MatrixClient
-        from lbg_agents.matrix_config import MatrixConfig
-        from lbg_agents.whatsapp_format import truncate
-    except ImportError as exc:
-        return {"ok": False, "skipped": True, "error": f"import matrix: {exc}"}
+        from lbg_agents.ops_notify import send_text
+    except ImportError:
+        root = Path(__file__).resolve().parents[2]
+        agents_src = root / "agents" / "src"
+        if agents_src.is_dir() and str(agents_src) not in sys.path:
+            sys.path.insert(0, str(agents_src))
+        try:
+            from lbg_agents.ops_notify import send_text
+        except ImportError as exc:
+            return {"ok": False, "skipped": True, "error": f"import ops_notify: {exc}"}
 
-    cfg = MatrixConfig.from_env()
-    if not cfg.enabled or not cfg.configured:
-        return {"ok": False, "skipped": True, "error": "matrix_not_configured"}
-
-    client = MatrixClient(cfg.homeserver, access_token=cfg.access_token, user_id=cfg.user_id)
-    out = client.send_text(cfg.room_id, truncate(message, max_chars=5500))
-    return {"ok": bool(out.get("ok")), **out}
+    return send_text(message, channel="ops")
 
 
 def run_matrix_notify_watchdog() -> dict[str, Any]:

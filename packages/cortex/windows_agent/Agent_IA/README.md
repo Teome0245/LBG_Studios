@@ -26,10 +26,14 @@ Si l’agent tourne déjà sous **Système / Session 0** (apps ouvertes invisibl
 # Une fois en PowerShell **Admin** (désactive aussi le service AgentLocalV0 qui respawn Session 0) :
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_session0_admin.ps1
 
+# Pour que **Compagnon** puisse le refaire ensuite (AGIR → fix_session0), installer la tâche élevée **une fois** :
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_fix_session0_task.ps1
+
 # Ou sans Admin si :5005 n’est pas verrouillé par SYSTEM :
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_agent_to_user_session.ps1
 ```
 
+Ensuite depuis Compagnon : « répare session 0 » → Dry-run → Réel (jeton desktop).
 Cause fréquente de régression : service Windows **`AgentLocalV0`** (`start_agent.bat` en SYSTEM) — à laisser **Disabled**.
 
 Démarrage auto (logon) + redémarrage 08:00 / 20:00 — **toujours en compte utilisateur Interactive** :

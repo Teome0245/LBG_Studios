@@ -1,6 +1,10 @@
 # Plan merge Orch UI — `:5174` shell unique
 
-**Objectif** : une interface proche Cursor (historique gauche, chat centre, contexte droite), sans presets Pilot, en absorbant Assistant `.140` + Cockpit `.8093`.
+> **Supersédé (2026-08-25)** : direction inversée — hub = **Pilot**, Orch absorbé.  
+> Voir [`plan_pilot_hub_orch_absorb.md`](plan_pilot_hub_orch_absorb.md).  
+> Ce document reste archive utile (phases A–E déjà livrées côté Orch).
+
+**Objectif** *(historique)* : une interface proche Cursor (historique gauche, chat centre, contexte droite), sans presets Pilot, en absorbant Assistant `.140` + Cockpit `.8093`.
 
 ## Parallélisation
 

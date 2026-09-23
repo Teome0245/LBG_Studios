@@ -75,21 +75,34 @@ def build_wsl_sprites_deploy_cmd() -> str:
     )
 
 
+def _wsl_prime_sprites_dir() -> str:
+    """Chemin sprites côté WSL (poste GPU), pas le path 140."""
+    env = os.environ.get("LBG_PRIME_CLIENT_LOCAL_SPRITES", "").strip()
+    if env:
+        return env
+    return str(
+        Path(_wsl_project_dir()).resolve().parent
+        / "LBG_Studios"
+        / "packages"
+        / "prime-client"
+        / "assets"
+        / "sprites"
+        / "units"
+    )
+
+
 def _sync_sprites_from_wsl() -> dict[str, Any]:
     """Pull sprites depuis WSL vers le core (140)."""
     host = _wsl_ssh_host()
     port = _wsl_ssh_port()
     user = _wsl_ssh_user()
     identity = _train_ssh_identity()
-    local_sprites = os.environ.get(
-        "LBG_PRIME_CLIENT_LOCAL_SPRITES",
-        str(_prime_client_root() / "assets" / "sprites" / "units"),
-    ).strip()
+    remote_sprites = _wsl_prime_sprites_dir()
     dest = _prime_client_root() / "assets" / "sprites" / "units"
     dest.mkdir(parents=True, exist_ok=True)
-    remote = f"{user}@{host}:{local_sprites}/"
+    remote = f"{user}@{host}:{remote_sprites}/"
     cmd = (
-        f"rsync -a --delete -e "
+        f"rsync -a --exclude='*.import' -e "
         f"'ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "
         f"-i {shlex.quote(identity)} -p {port}' "
         f"{shlex.quote(remote)} {shlex.quote(str(dest))}/"
@@ -97,10 +110,11 @@ def _sync_sprites_from_wsl() -> dict[str, Any]:
     try:
         proc = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
     except (OSError, subprocess.TimeoutExpired) as e:
-        return {"ok": False, "error": str(e)}
+        return {"ok": False, "error": str(e), "remote": remote_sprites}
     return {
         "ok": proc.returncode == 0,
         "dest": str(dest),
+        "remote": remote_sprites,
         "stderr_tail": (proc.stderr or "")[-200:] if proc.returncode else None,
     }
 
@@ -127,7 +141,12 @@ def run_sprites_2d_deploy_step(*, sync_to_core: bool = True) -> dict[str, Any]:
         sync = _sync_sprites_from_wsl()
 
     probe = probe_sprites_2d_readiness()
-    ok = proc.returncode == 0 and (sync is None or bool(sync.get("ok")))
+    expected = int(probe.get("expected_count") or 0)
+    present = int(probe.get("present_count") or 0)
+    probe_complete = expected > 0 and present >= expected
+    # Deploy WSL OK + (rsync OK ou dest 140 déjà complet) — le rsync ne doit pas
+    # masquer un deploy réussi si les PNG attendus sont déjà sur le core.
+    ok = proc.returncode == 0 and (sync is None or bool(sync.get("ok")) or probe_complete)
     return {
         "ok": ok,
         "kind": "sprites_2d_deploy",

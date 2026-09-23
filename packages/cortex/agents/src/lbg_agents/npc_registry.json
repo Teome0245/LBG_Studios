@@ -474,10 +474,10 @@
     {
       "id": "npc:core3_pilot_alliance_a",
       "name": "Castor Reyl",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Mos Eisley — tatooine",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote alliance | Instructeur pilote alliance au starport Mos Eisley. Formation space bientot disponible. Eviter les accents.",
       "goals": [
@@ -488,15 +488,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_a"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "alliance"
     },
     {
       "id": "npc:core3_pilot_alliance_b",
       "name": "Kira Vann",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Mos Eisley — tatooine",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote alliance | Relève pilote alliance. Eviter les accents.",
       "goals": [
@@ -507,15 +508,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_b"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "alliance"
     },
     {
       "id": "npc:core3_pilot_alliance_c",
       "name": "Theo Nash",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Lost Heaven — port shuttle",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote alliance | Relève pilote alliance. Eviter les accents.",
       "goals": [
@@ -526,15 +528,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_c"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "alliance"
     },
     {
       "id": "npc:core3_pilot_freelance_a",
       "name": "Renn Sol",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Mos Eisley — tatooine",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote freelance | Instructeur pilote freelance au starport Mos Eisley. Formation space bientot disponible. Eviter les accents.",
       "goals": [
@@ -545,15 +548,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_a"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "freelance"
     },
     {
       "id": "npc:core3_pilot_freelance_b",
       "name": "Vex Mara",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Mos Eisley — tatooine",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote freelance | Relève pilote freelance. Eviter les accents.",
       "goals": [
@@ -564,15 +568,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_b"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "freelance"
     },
     {
       "id": "npc:core3_pilot_freelance_c",
       "name": "Dorn Pike",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Lost Heaven — port shuttle",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote freelance | Relève pilote freelance. Eviter les accents.",
       "goals": [
@@ -583,7 +588,8 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_c"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "freelance"
     },
     {
       "id": "npc:core3_pilot_imperial_a",
@@ -591,7 +597,7 @@
       "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Lost Heaven — Scrapaltai",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "Instructeur pilote au starport Lost Heaven (formation shuttle / space bientôt). Pas civil générique, pas guide de quartier. Éviter accents SWG / Mos Eisley.",
       "goals": [
@@ -604,15 +610,16 @@
         "pilot_id=npc:core3_pilot_imperial_a",
         "rôle=pilot_trainer (pas civil, pas guide)"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "imperial"
     },
     {
       "id": "npc:core3_pilot_imperial_b",
       "name": "Lina Thess",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Mos Eisley — tatooine",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote imperial | Relève pilote imperial. Eviter les accents.",
       "goals": [
@@ -623,15 +630,16 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_imperial_b"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "imperial"
     },
     {
       "id": "npc:core3_pilot_imperial_c",
       "name": "Mord Kael",
-      "role": "npc",
+      "role": "pilot_trainer",
       "race_id": "race:human",
       "zone": "Lost Heaven — port shuttle",
-      "faction": "Civils Lost Heaven",
+      "faction": "Aviation civile Lost Heaven",
       "tone": "professionnel",
       "summary": "citoyen Tatooine — Starport lounge — triplon pilote imperial | Relève pilote imperial. Eviter les accents.",
       "goals": [
@@ -642,7 +650,8 @@
         "reponses courtes",
         "pilot_id=npc:core3_pilot_imperial_c"
       ],
-      "core3_source": "core3_npc_catalog.json"
+      "core3_source": "core3_npc_catalog.json",
+      "pilot_track": "imperial"
     },
     {
       "id": "npc:core3_politician_trainer_a",

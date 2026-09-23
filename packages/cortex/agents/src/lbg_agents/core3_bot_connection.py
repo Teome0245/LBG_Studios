@@ -80,13 +80,18 @@ def prime_server_ready() -> bool:
 def snapshot_needs_force_reconnect(snap: dict[str, Any]) -> bool:
     """Client systemd actif mais absent du online-players.log (zombie)."""
     reason = str(snap.get("reason") or "").strip().lower()
-    return reason in {"not_in_online_log", "snapshot_stale", "player_offline"}
+    return reason in {
+        "not_in_online_log",
+        "snapshot_stale",
+        "player_offline",
+        # Sidecar mono-joueur : online=true pour Lia ne compte pas pour Nix/Mira/Kael.
+        "legacy_snapshot_for_other_player",
+        "player_mismatch",
+    }
 
 
 def is_player_online(firstname: str) -> bool:
     snap = fetch_snapshot(firstname)
-    if snap.get("online"):
-        return True
     if snapshot_needs_force_reconnect(snap):
         return False
     return bool(snap.get("online"))

@@ -89,7 +89,32 @@ def test_presence_reconcile_clears_done_ghost(monkeypatch):
     assert themis
     assert themis[0]["status"] == "idle"
     assert themis[0].get("awaiting_run") in (False, None)
+    assert themis[0].get("task_id") in (None, "")
+    assert themis[0].get("approval_required") in (False, None)
 
+
+def test_presence_done_clears_task_id():
+    """emit done ne doit plus laisser task_id / flags L2 (fantôme bureau)."""
+    done = TeamTask(
+        id="done-clear-l2",
+        role="pm",
+        objective="Revue L2 déjà faite",
+        status="done",
+        approval_required=True,
+        context={"approved": True},
+        result={"ok": True},
+    )
+    team_presence.emit_from_task(done, event="status_changed")
+    matches = [
+        a
+        for a in team_presence.snapshot(mode="live")["agents"]
+        if a.get("agent_id") == "studio_pm_themis" or a.get("display_name") == "Thémis"
+    ]
+    assert matches
+    assert matches[0].get("task_id") in (None, "")
+    assert matches[0].get("awaiting_run") in (False, None)
+    assert matches[0].get("approval_required") in (False, None)
+    assert matches[0]["status"] == "idle"
 
 
 def test_sanitize_action_truncates_and_redacts():

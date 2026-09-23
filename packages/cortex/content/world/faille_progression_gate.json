@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "id": "faille_progression_gate",
+  "world_ref": "docs/world/BIBLE_MMO.md#progression-faille-t9-tranche",
+  "status": "canon",
+  "visibility_rules": {
+    "no_waypoint_before_flag": "lore_indices_faille",
+    "no_traversal_before_flag": "faille_activation_protocol",
+    "rumor_intensity_before_flag": {
+      "max_level": "low",
+      "until_flag": "quests_hub_triple"
+    }
+  },
+  "required_professions": [
+    "prospecteur",
+    "artisan",
+    "medecin|scene",
+    "poing|visee",
+    "citoyen",
+    "shuttle"
+  ],
+  "events": [
+    {
+      "id": "E1",
+      "flag": "intro_deplacement_complete",
+      "order": 1,
+      "kind": "movement",
+      "condition": "Tutoriel deplacement termine + interaction POI N1/N3."
+    },
+    {
+      "id": "E2",
+      "flag": "talent_prospecteur_init",
+      "order": 2,
+      "kind": "talent",
+      "skill_any": ["prospecteur_r1"],
+      "condition": "1 action survey validee."
+    },
+    {
+      "id": "E3",
+      "flag": "talent_artisan_init",
+      "order": 3,
+      "kind": "talent_craft",
+      "skill_any": ["artisan_rue_r1"],
+      "craft_any": ["kit_reparation", "ration_compacte"],
+      "condition": "1 craft basique reussi."
+    },
+    {
+      "id": "E4",
+      "flag": "talent_medecine_ou_scene",
+      "order": 4,
+      "kind": "talent_social_or_support",
+      "paths_any": [
+        {
+          "skill_any": ["medecine_camp_r1"],
+          "action": "heal_field_basic"
+        },
+        {
+          "skill_any": ["scene_danse_r1"],
+          "action": "dance_basic"
+        }
+      ],
+      "condition": "Support medical ou social valide."
+    },
+    {
+      "id": "E5",
+      "flag": "combat_fondation",
+      "order": 5,
+      "kind": "combat",
+      "combat_any_style": ["poing", "visee"],
+      "wins_required": 3,
+      "condition": "3 combats basiques gagnes en zone hub elargie."
+    },
+    {
+      "id": "E6",
+      "flag": "citoyen_quartier_init",
+      "order": 6,
+      "kind": "social_civic",
+      "paths_any": [
+        {
+          "skill_any": ["quartier_r1"]
+        },
+        {
+          "item_any": ["badge_quartier"],
+          "interaction_role": "politician_trainer"
+        }
+      ],
+      "condition": "Validation civique de quartier."
+    },
+    {
+      "id": "E7",
+      "flag": "shuttle_apron_init",
+      "order": 7,
+      "kind": "pilot",
+      "skill_any": ["pilotage_shuttle_r1"],
+      "travels_required": 1,
+      "condition": "1 trajet local supervise (port shuttle)."
+    },
+    {
+      "id": "E8",
+      "flag": "quests_hub_triple",
+      "order": 8,
+      "kind": "quest_mix",
+      "quests_total": 3,
+      "must_include_tags": ["craft_or_gather", "combat"],
+      "condition": "3 quetes hub, dont 1 craft/recolte + 1 combat."
+    },
+    {
+      "id": "E9",
+      "flag": "faction_reputation_neutre_plus",
+      "order": 9,
+      "kind": "faction",
+      "factions_any": ["concorde", "franche", "vigie"],
+      "min_factions": 2,
+      "min_reputation_tier": "neutral_plus",
+      "condition": "Reputation non hostile sur au moins 2 factions."
+    },
+    {
+      "id": "E10",
+      "flag": "lore_indices_faille",
+      "order": 10,
+      "kind": "lore",
+      "clues_required": 3,
+      "clues_from": ["cantina_perle", "archives_scribe", "npc_expert"],
+      "condition": "3 indices narratifs recoupes."
+    },
+    {
+      "id": "E11",
+      "flag": "anomalie_observee",
+      "order": 11,
+      "kind": "anomaly",
+      "condition": "Observation d'une anomalie spatio-dimensionnelle controlee."
+    },
+    {
+      "id": "E12",
+      "flag": "faille_activation_protocol",
+      "order": 12,
+      "kind": "activation",
+      "requires_all_previous": true,
+      "condition": "Protocole final multi-metiers + autorisation narrative."
+    }
+  ],
+  "quest_hooks": {
+    "lh_delivery_starport": {
+      "requires_flags": [],
+      "grants_flags_on_accept": ["intro_deplacement_complete"]
+    },
+    "lh_survey_dunes": {
+      "requires_flags": ["intro_deplacement_complete"],
+      "grants_flags_on_accept": ["talent_prospecteur_init"]
+    },
+    "lh_repair_perle": {
+      "requires_flags": ["talent_prospecteur_init"],
+      "grants_flags_on_accept": ["talent_artisan_init"]
+    },
+    "lh_med_venin": {
+      "requires_flags": ["talent_artisan_init"],
+      "grants_flags_on_accept": ["talent_medecine_ou_scene"]
+    },
+    "lh_show_perle": {
+      "requires_flags": ["talent_artisan_init"],
+      "grants_flags_on_accept": ["talent_medecine_ou_scene"]
+    },
+    "lh_hunt_chacal": {
+      "requires_flags": ["talent_medecine_ou_scene"],
+      "grants_flags_on_accept": ["combat_fondation"]
+    },
+    "lh_rumor_perle": {
+      "requires_flags": ["combat_fondation"],
+      "grants_flags_on_accept": ["citoyen_quartier_init"]
+    },
+    "lh_escort_gate_clinic": {
+      "requires_flags": ["citoyen_quartier_init"],
+      "grants_flags_on_accept": ["shuttle_apron_init"]
+    },
+    "lh_enquete_marche": {
+      "requires_flags": ["shuttle_apron_init"],
+      "grants_flags_on_accept": ["quests_hub_triple"]
+    }
+  }
+}

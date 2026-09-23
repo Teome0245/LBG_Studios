@@ -167,29 +167,57 @@ def _probe_zone_bridge_feed_ssh(host: str) -> dict[str, Any]:
     except (OSError, subprocess.TimeoutExpired, ValueError):
         checks["file_exists"] = False
 
+    # Lecture stable côté remote : fichier réécrit ~20 Hz (tmp+rename).
+    # Un `cat` SSH unique tombe souvent sur une frame déchirée (UTF-8/JSON KO).
+    remote_src = (
+        "import json, pathlib, time\n"
+        f"p = pathlib.Path({json_path!r})\n"
+        "data = None\n"
+        "for _ in range(40):\n"
+        "    raw = p.read_bytes()\n"
+        "    if not raw:\n"
+        "        time.sleep(0.02)\n"
+        "        continue\n"
+        "    parsed = None\n"
+        "    for enc in ('utf-8', 'latin-1'):\n"
+        "        try:\n"
+        "            parsed = json.loads(raw.decode(enc))\n"
+        "            break\n"
+        "        except (UnicodeDecodeError, json.JSONDecodeError, ValueError):\n"
+        "            parsed = None\n"
+        "    if isinstance(parsed, dict) and parsed.get('type') == 'zone_state':\n"
+        "        data = parsed\n"
+        "        break\n"
+        "    time.sleep(0.02)\n"
+        "print(json.dumps(data if isinstance(data, dict) else {}))\n"
+    )
     data: dict[str, Any] | None = None
     try:
-        for _attempt in range(15):
-            proc = subprocess.run(
-                ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", f"{user}@{host}", "cat", json_path],
-                capture_output=True,
-                timeout=12.0,
-            )
-            if proc.returncode != 0 or not proc.stdout:
-                time.sleep(0.15)
-                continue
-            try:
-                text = proc.stdout.decode("utf-8")
-                parsed = json.loads(text)
-            except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
-                time.sleep(0.15)
-                continue
-            if isinstance(parsed, dict):
+        proc = subprocess.run(
+            [
+                "ssh",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=8",
+                f"{user}@{host}",
+                "python3",
+                "-",
+            ],
+            input=remote_src,
+            capture_output=True,
+            text=True,
+            timeout=20.0,
+        )
+        if proc.returncode == 0 and (proc.stdout or "").strip():
+            parsed = json.loads(proc.stdout.strip().splitlines()[-1])
+            if isinstance(parsed, dict) and parsed:
                 data = parsed
-                break
-            time.sleep(0.12)
-    except (OSError, subprocess.TimeoutExpired):
-        pass
+                checks["read_mode"] = "stable_remote"
+        elif proc.returncode != 0:
+            checks["read_stderr_tail"] = (proc.stderr or "")[-180:]
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError, ValueError) as exc:
+        checks["read_error"] = str(exc)[:160]
 
     ok = isinstance(data, dict) and data.get("type") == "zone_state"
     if isinstance(data, dict):

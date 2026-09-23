@@ -33,10 +33,16 @@ sleep 12
 
 sudo systemctl start lbg-core3-ia-bot-client.service
 sudo systemctl start lbg-core3-ia-bot-client-nix.service
-sleep 25
+sleep 8
 
-printf '%s\n' 'housing_enter|Lia|tatooine|0|0|0|cantina' >> ${BIN}/ia_bridge/pending.jsonl
-sleep 6
+# Éloigner de Mos Eisley (Max COV / send buffer overload) → plateau calme
+{
+  printf '%s\n' 'switch_zone|Lia|tatooine|3468|-4787|0|lost_heaven'
+  printf '%s\n' 'move_to|Lia|tatooine|3468|-4787|0|hub_walk_home'
+  printf '%s\n' 'switch_zone|Nix|tatooine|3480|-4800|0|lost_heaven'
+  printf '%s\n' 'move_to|Nix|tatooine|3480|-4800|0|hub_walk_home'
+} >> ${BIN}/ia_bridge/pending.jsonl
+sleep 20
 
 python3 <<'PY'
 import json
@@ -67,4 +73,4 @@ EOF
 
 echo ""
 echo "Verifie en jeu : Serveur Prime (port 44563), pas PreCu."
-echo "Nix attendu dehors ~3468, -4787 | Lia en cantina Mos Eisley."
+echo "Nix/Lia attendus hors COV Mos Eisley (~3468,-4787)."

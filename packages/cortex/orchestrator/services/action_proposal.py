@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import re
 from typing import Literal
 
@@ -19,7 +21,7 @@ from services.lia_jobs import (
 )
 
 
-ProposalSource = Literal["deterministic", "mmo_session_bridge", "team_dev_game"]
+ProposalSource = Literal["deterministic", "mmo_session_bridge", "team_dev_game", "llm_map"]
 
 
 class ActionProposal(BaseModel):
@@ -48,9 +50,25 @@ def propose_action_from_text(text: str, context: dict[str, object] | None = None
     if not normalized:
         return ActionProposalResult(reason="Texte vide.")
 
-    proposal = (
+    proposal = _propose_deterministic(raw, normalized, ctx)
+    if proposal is None:
+        # Réflexion LLM → phrase canonique re-passée au déterministe (pas d'exécution libre).
+        proposal = _propose_llm_assisted(raw, normalized, ctx)
+    if proposal is None:
+        return ActionProposalResult(
+            reason="Aucune action sûre reconnue ; rester en conversation ou demander une précision."
+        )
+    return ActionProposalResult(proposal=proposal)
+
+
+def _propose_deterministic(
+    raw: str, normalized: str, ctx: dict[str, object]
+) -> ActionProposal | None:
+    return (
         _propose_notepad(raw, normalized, ctx)
         or _propose_mail_preview(raw, normalized)
+        or _propose_agent_session_status(raw, normalized)
+        or _propose_fix_session0(raw, normalized)
         or _propose_core3_lia(raw, normalized)
         or _propose_capabilities_inventory(normalized)
         or _propose_network_inventory(normalized)
@@ -62,13 +80,212 @@ def propose_action_from_text(text: str, context: dict[str, object] | None = None
         or _propose_vm_memory_probe(normalized)
         or _propose_proxmox_status(normalized)
         or _propose_repair_app_deps(raw, normalized)
+        or _propose_open_url(raw, normalized)
+        or _propose_default_browser(raw, normalized)
         or _propose_open_app(raw, normalized)
         or _propose_team_dev_game_forge(raw, normalized, ctx)
         or _propose_mmo_dev_plan(raw, normalized, ctx)
+        or _propose_useful_default(normalized)
     )
-    if proposal is None:
-        return ActionProposalResult(reason="Aucune action sûre reconnue ; rester en conversation ou demander une précision.")
-    return ActionProposalResult(proposal=proposal)
+
+
+def _action_proposal_llm_enabled() -> bool:
+    return os.environ.get("LBG_ACTION_PROPOSAL_LLM", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+_LLM_MAP_SYSTEM = """Tu es le routeur d'actions du Compagnon LBG (ops studio / poste / LAN).
+Réponds UNIQUEMENT avec un objet JSON valide, une seule ligne, sans markdown ni texte autour :
+{"intent":"<id>","canonical_text":"<phrase FR>","why":"<raison courte>"}
+
+intent autorisés uniquement :
+mail_imap_preview | selfcheck | network_inventory | search_web_open | open_app | open_url | default_browser_info | jobs_l2 | fix_session0 | agent_session_status | none
+
+Exemples :
+- "regarde mon inbox" → {"intent":"mail_imap_preview","canonical_text":"regarde mes mails récents","why":"aperçu IMAP"}
+- "check le LAN" → {"intent":"selfcheck","canonical_text":"fais un diagnostic infra selfcheck LAN","why":"sonde read-only"}
+- "ouvre vghd" → {"intent":"open_app","canonical_text":"ouvre vghd sur mon pc","why":"lancer app"}
+- "jobs en attente" → {"intent":"jobs_l2","canonical_text":"ouvre http://192.168.0.140:8080/#/jobs dans le navigateur","why":"revue L2"}
+- "les apps ne s'ouvrent pas / session 0" → {"intent":"fix_session0","canonical_text":"répare session 0 de l agent desktop","why":"UI invisible"}
+
+Interdit : piraterie, torrents de contenus protégés, fraude → intent=none.
+Conversation pure sans action poste/LAN → intent=none.
+canonical_text doit être une phrase courte exécutable (pas la demande brute si elle est ambiguë).
+"""
+
+
+_INTENT_CANONICAL_FALLBACK: dict[str, str] = {
+    "mail_imap_preview": "regarde mes mails récents",
+    "selfcheck": "fais un diagnostic infra selfcheck LAN",
+    "network_inventory": "fais un inventaire réseau LAN cartographie des appareils",
+    "search_web_open": "cherche sur internet LBG Studios",
+    "open_app": "ouvre vghd sur mon pc",
+    "open_url": "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
+    "default_browser_info": "quel est mon navigateur par défaut",
+    "jobs_l2": "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
+    "fix_session0": "répare session 0 de l agent desktop",
+    "agent_session_status": "vérifie la session de l agent desktop",
+}
+
+
+def _extract_json_object(text: str) -> dict[str, object] | None:
+    raw = (text or "").strip()
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, dict) else None
+    except json.JSONDecodeError:
+        pass
+    m = re.search(r"\{[\s\S]*\}", raw)
+    if not m:
+        return None
+    try:
+        data = json.loads(m.group(0))
+        return data if isinstance(data, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
+def _propose_llm_assisted(
+    raw: str, normalized: str, ctx: dict[str, object]
+) -> ActionProposal | None:
+    """Mappe une intention libre vers une action allowlistée via LLM léger (.111 json)."""
+    if not _action_proposal_llm_enabled():
+        return None
+    if len(normalized) < 6:
+        return None
+    # Évite un 2e appel LLM si déjà une reformulation interne.
+    if ctx.get("_llm_map_skip"):
+        return None
+    try:
+        from team.reason_llm import complete_reason, reason_llm_enabled
+    except Exception:
+        return None
+    if not reason_llm_enabled():
+        return None
+
+    prev_timeout = os.environ.get("LBG_REASON_TIMEOUT_S")
+    prev_tokens = os.environ.get("LBG_REASON_MAX_TOKENS")
+    prev_failover_heavy = os.environ.get("LBG_REASON_LIGHT_FAILOVER_HEAVY")
+    prev_failover = os.environ.get("LBG_REASON_FAILOVER")
+    try:
+        # AGIR snappy : light .111 only (pas de failover heavy / cloud / colab).
+        os.environ["LBG_REASON_TIMEOUT_S"] = os.environ.get(
+            "LBG_ACTION_PROPOSAL_LLM_TIMEOUT_S", "10"
+        )
+        os.environ["LBG_REASON_MAX_TOKENS"] = os.environ.get(
+            "LBG_ACTION_PROPOSAL_LLM_MAX_TOKENS", "180"
+        )
+        os.environ["LBG_REASON_LIGHT_FAILOVER_HEAVY"] = "0"
+        os.environ["LBG_REASON_FAILOVER"] = "0"
+        out = complete_reason(
+            system=_LLM_MAP_SYSTEM,
+            user=f"Demande utilisateur : {raw[:500]}",
+            temperature=0.1,
+            prefer_cloud=False,
+            profile="json",
+        )
+    finally:
+        if prev_timeout is None:
+            os.environ.pop("LBG_REASON_TIMEOUT_S", None)
+        else:
+            os.environ["LBG_REASON_TIMEOUT_S"] = prev_timeout
+        if prev_tokens is None:
+            os.environ.pop("LBG_REASON_MAX_TOKENS", None)
+        else:
+            os.environ["LBG_REASON_MAX_TOKENS"] = prev_tokens
+        if prev_failover_heavy is None:
+            os.environ.pop("LBG_REASON_LIGHT_FAILOVER_HEAVY", None)
+        else:
+            os.environ["LBG_REASON_LIGHT_FAILOVER_HEAVY"] = prev_failover_heavy
+        if prev_failover is None:
+            os.environ.pop("LBG_REASON_FAILOVER", None)
+        else:
+            os.environ["LBG_REASON_FAILOVER"] = prev_failover
+
+    if not out.get("ok"):
+        return None
+    data = _extract_json_object(str(out.get("text") or ""))
+    if not data:
+        return None
+    intent = str(data.get("intent") or "").strip().lower()
+    if intent in ("", "none", "null", "conversation"):
+        return None
+    # Toujours préférer la phrase canonique connue (le petit modèle echo souvent la demande).
+    canonical = _INTENT_CANONICAL_FALLBACK.get(intent, "")
+    llm_can = str(data.get("canonical_text") or "").strip()
+    if llm_can and _normalize(llm_can) != normalized and intent not in _INTENT_CANONICAL_FALLBACK:
+        canonical = llm_can
+    elif intent in ("search_web_open", "open_app", "open_url") and llm_can and _normalize(llm_can) != normalized:
+        canonical = llm_can
+    if not canonical:
+        return None
+
+    mapped = _propose_deterministic(canonical, _normalize(canonical), {**ctx, "_llm_map_skip": True})
+    if mapped is None:
+        return None
+    # Préserver la cible desktop déduite du texte utilisateur (ex. « sur omarchy »).
+    src_target = infer_desktop_target_from_text(raw)
+    if src_target and not mapped.context_patch.get("desktop_target"):
+        mapped.context_patch = {**mapped.context_patch, "desktop_target": src_target}
+    why = str(data.get("why") or "").strip()
+    if why:
+        mapped.summary = f"{mapped.summary} (réflexion : {why[:160]})"
+    mapped.source = "llm_map"
+    mapped.confidence = min(0.85, max(0.55, float(mapped.confidence) * 0.92))
+    return mapped
+
+
+def _propose_agent_session_status(raw: str, normalized: str) -> ActionProposal | None:
+    if not re.search(
+        r"\b("
+        r"session\s+(?:de\s+l['']?)?agent|"
+        r"statut\s+agent\s+desktop|"
+        r"agent\s+(?:en\s+)?session|"
+        r"v[eé]rif(?:ie|ier)\s+(?:la\s+)?session|"
+        r"gui\s+ready|wayland|"
+        r"session\s+sur\s+omarchy"
+        r")\b",
+        normalized,
+    ):
+        return None
+    # Ne pas confondre avec remédiation Session 0
+    if re.search(r"\b(r[eé]pare?|fix|heal)\b", normalized) and re.search(
+        r"\b(session\s*0|session0)\b", normalized
+    ):
+        return None
+    return _desktop_proposal(
+        action={"kind": "agent_session_status"},
+        summary="Lire la session de l’agent desktop (Windows Session 0 / Omarchy Wayland).",
+        confidence=0.9,
+        text=raw,
+    )
+
+
+def _propose_fix_session0(raw: str, normalized: str) -> ActionProposal | None:
+    """Remédiation agent desktop — Windows Session 0 ou heal Omarchy .143."""
+    if not re.search(
+        r"\b(session\s*0|session0|agent\s+invisible|apps?\s+invisibles?|"
+        r"rien\s+(?:ne\s+)?s['']?ouvre|fen[eê]tres?\s+invisibles?|"
+        r"r[eé]pare?\s+(?:l['']?)?agent|fix\s+session|heal\s+(?:l['']?)?agent|"
+        r"omarchy\s+(?:down|ko|mort))\b",
+        normalized,
+    ):
+        return None
+    return _desktop_proposal(
+        action={"kind": "fix_session0"},
+        summary=(
+            "Remédier l’agent desktop : Session 0 (Windows .10) ou restart+GUI "
+            "(Omarchy .143) selon la cible."
+        ),
+        confidence=0.88,
+        text=raw,
+    )
 
 
 def _propose_notepad(raw: str, normalized: str, context: dict[str, object]) -> ActionProposal | None:
@@ -238,7 +455,10 @@ def _propose_web_search(raw: str, normalized: str) -> ActionProposal | None:
         r"\b(internet|recherche web|sur le web|site web|google|duckduckgo)\b", normalized
     ):
         return None
-    if re.search(r"\b(mail|email|e-mail|courriel|imap)\b", normalized):
+    if re.search(
+        r"\b(mails?|e-?mails?|courriels?|courriers?|inbox|imap|bo[iî]te(?:\s+mail)?)\b",
+        normalized,
+    ):
         return None
     query = _extract_after(raw, ("cherche sur internet", "recherche sur internet", "cherche", "recherche", "trouve"))
     query = re.sub(r"^\s*(le\s+)?site\s+(de|du|d'|des)?\s*", "", query, flags=re.IGNORECASE).strip()
@@ -252,18 +472,29 @@ def _propose_web_search(raw: str, normalized: str) -> ActionProposal | None:
 
 
 def _propose_mail_preview(raw: str, normalized: str) -> ActionProposal | None:
-    if not re.search(r"\b(mail|email|e-mail|courriel|imap)\b", normalized):
+    # Pluriels FR/EN + synonymes (inbox / courrier / boîte) — sinon AGIR échoue.
+    if not re.search(
+        r"\b(mails?|e-?mails?|courriels?|courriers?|inbox|imap|bo[iî]te(?:\s+mail)?)\b",
+        normalized,
+    ):
         return None
     sender = _extract_mail_filter(raw)
-    action: dict[str, object] = {"kind": "mail_imap_preview", "max_messages": 3, "max_body_chars": 800, "max_scan": 200}
+    action: dict[str, object] = {
+        "kind": "mail_imap_preview",
+        "max_messages": 3,
+        "max_body_chars": 800,
+        "max_scan": 200,
+    }
     if sender:
         action["from_contains"] = sender[:80]
     else:
-        action["subject_contains"] = raw[:120]
+        # Aperçu INBOX récent : le worker exigeait un filtre — mode recent_ok
+        # (max_messages borné) sans from/subject.
+        action["recent"] = True
     return _desktop_proposal(
         action=action,
         summary="Préparer un aperçu IMAP INBOX en lecture seule, borné et filtré.",
-        confidence=0.78 if sender else 0.62,
+        confidence=0.78 if sender else 0.72,
     )
 
 
@@ -475,6 +706,92 @@ def _sanitize_open_app_slug(raw_tail: str) -> str | None:
     return first.lower()
 
 
+def _extract_http_url(text: str) -> str | None:
+    m = re.search(r"https?://[^\s\"'<>\]\)]+", text or "", flags=re.IGNORECASE)
+    if not m:
+        return None
+    return m.group(0).rstrip(".,);]")
+
+
+def _propose_open_url(raw: str, normalized: str) -> ActionProposal | None:
+    """Ouvre une URL via le navigateur **par défaut** (open_url), pas Firefox forcé."""
+    url = _extract_http_url(raw)
+    if not url:
+        return None
+    if not re.search(
+        r"\b(ouvre|ouvrir|lance|lancer|navigateur|browser|url|onglet|page|lien|"
+        r"firefox|chrome|edge|brave|msedge)\b",
+        normalized,
+    ):
+        return None
+    # Forcer une app précise : « ouvre dans firefox » → open_app (sinon défaut)
+    if re.search(r"\b(avec|dans|via)\s+(firefox|chrome|msedge|edge|brave)\b", normalized):
+        if not re.search(r"\bnavigateur\s+par\s+d[eé]faut\b", normalized):
+            return None
+    host = url.split("//", 1)[-1].split("/", 1)[0]
+    path = ""
+    if "#" in url:
+        path = "#" + url.split("#", 1)[1][:48]
+    elif "/" in url.split("//", 1)[-1]:
+        path = "/" + url.split("//", 1)[-1].split("/", 1)[1][:48]
+    label = f"{host}{path}" if path else host
+    if "jobs" in url.lower():
+        tip = "Jobs L2 / approbations"
+    elif "cockpit" in url.lower():
+        tip = "mur infra Cockpit"
+    elif ":5174" in url:
+        tip = "Compagnon Orch"
+    else:
+        tip = "navigateur par défaut — pas Firefox forcé"
+    return _desktop_proposal(
+        action={"kind": "open_url", "url": url},
+        summary=f"Ouvrir « {label} » ({tip}).",
+        confidence=0.88,
+        text=raw,
+    )
+
+
+def _propose_useful_default(normalized: str) -> ActionProposal | None:
+    """Demande vague « propose une action utile » → selfcheck LAN (safe, concrète)."""
+    if not re.search(
+        r"\b(propose|suggestion|suggestions|agir|utile|utiles|que\s+faire|quoi\s+faire|"
+        r"autre\s+action|actions?\s+utiles?|que\s+peux[- ]?tu\s+faire)\b",
+        normalized,
+    ):
+        return None
+    cap = capability_registry.get("devops_probe")
+    assert cap is not None
+    return ActionProposal(
+        capability=cap.name,
+        routed_to=cap.routed_to,
+        action_context_key=cap.action_context_key or "devops_action",
+        action={"kind": "selfcheck"},
+        context_patch={"devops_action": {"kind": "selfcheck"}},
+        summary=(
+            "Selfcheck LAN read-only (action utile par défaut). "
+            "Autres pistes via Ctrl+K : mails, inventaire réseau, VGHD, Jobs L2, Cockpit."
+        ),
+        risk_level=cap.risk_level,
+        confidence=0.7,
+    )
+
+
+def _propose_default_browser(raw: str, normalized: str) -> ActionProposal | None:
+    """Lecture seule : quel est le navigateur HTTP par défaut sur Windows."""
+    if not re.search(
+        r"\b(navigateur\s+par\s+d[eé]faut|default\s+browser|quel\s+navigateur|"
+        r"navigateur\s+par\s+defaut|browser\s+par\s+d[eé]faut)\b",
+        normalized,
+    ):
+        return None
+    return _desktop_proposal(
+        action={"kind": "default_browser_info"},
+        summary="Lire le navigateur HTTP par défaut du poste (lecture seule, utile avant d’ouvrir une URL).",
+        confidence=0.9,
+        text=raw,
+    )
+
+
 def _propose_repair_app_deps(raw: str, normalized: str) -> ActionProposal | None:
     """Réparation deps locales (VGHD Qt5Sql) via worker desktop."""
     action = repair_app_deps_action_from_goal(raw)
@@ -624,6 +941,23 @@ def _propose_infra_selfcheck(normalized: str) -> ActionProposal | None:
             summary="Préparer un selfcheck DevOps read-only (formulation checkup/bilan).",
             risk_level=cap.risk_level,
             confidence=0.82,
+        )
+    # « le réseau / LAN a l'air bizarre → vérifier » (initiative ops sans jargon).
+    if re.search(r"\b(r[eé]seau|lan|infra|sondes?)\b", normalized) and re.search(
+        r"\b(v[eé]rif(?:ie|ier)|check|bizarre|probl[eè]me|souci|suspect|down|ko|tombe)\b",
+        normalized,
+    ):
+        cap = capability_registry.get("devops_probe")
+        assert cap is not None
+        return ActionProposal(
+            capability=cap.name,
+            routed_to=cap.routed_to,
+            action_context_key=cap.action_context_key or "devops_action",
+            action={"kind": "selfcheck"},
+            context_patch={"devops_action": {"kind": "selfcheck"}},
+            summary="Préparer un selfcheck LAN read-only (signal réseau / infra).",
+            risk_level=cap.risk_level,
+            confidence=0.74,
         )
     if not re.search(r"\b(selfcheck|devops|infra|healthz|santé|sante|état|etat|status|statut|backend|orchestrateur)\b", normalized):
         return None

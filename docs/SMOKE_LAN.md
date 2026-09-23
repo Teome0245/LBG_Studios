@@ -1,6 +1,6 @@
 # Smoke LAN — surfaces projet LBG Studios
 
-**Date contrôle** : 2026-07-31  
+**Date contrôle** : 2026-08-25  
 **Script** : [`tools/smoke_lan_surfaces.sh`](../tools/smoke_lan_surfaces.sh)
 
 Relance :
@@ -14,12 +14,15 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 
 | Zone | URL | Rôle |
 |------|-----|------|
-| **Pilot Studio** | http://192.168.0.140:8080/pilot/ | Cortex Pilot (O1) |
+| **Pilot Studio** (hub) | http://192.168.0.140:8080/pilot/ | Cortex Pilot (O1) — surfaces Orch absorbées |
+| | http://192.168.0.140:8080/pilot/#/assistant | Chat produit / ops |
+| | http://192.168.0.140:8080/pilot/#/lyra | LyraEngine |
+| | http://192.168.0.140:8080/pilot/#/agents/map | Carte agents |
+| | http://192.168.0.140:8080/pilot/#/providers | Catalogue LLM |
+| **Simple Chat** (lab) | http://192.168.0.100:3080/ | Open WebUI — chat LLM seul (pas Cursor) |
 | **Cockpit P03** | http://192.168.0.100:8093/pilot/#/cockpit | Mur infra / équipe |
-| **Orch UI** | http://192.168.0.100:5174/ | SPA Orchestrateur |
-| | http://192.168.0.100:5174/lyra | Lyra riche |
-| | http://192.168.0.100:5174/agents/map | Carte agents |
-| **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra |
+| **Orch UI** (chat produit) | http://192.168.0.100:5174/ | SPA Orchestrateur — chat unique (rétabli, plus de redirect forcé) |
+| **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra (proxies Pilot) |
 | **Prime comptes** | http://192.168.0.246:8792/ | État + comptes Core3 Prime |
 | **PreCU comptes** | http://192.168.0.245:8792/ | État + comptes PreCU |
 | **Patches** | http://192.168.0.246:8080/patches/prime/manifest.json | Client Prime |
@@ -29,13 +32,22 @@ Pilot Accueil / menus : liens vers toutes ces surfaces (Studio · Campus · Ops 
 
 Ollama / executor (hors smoke HTTP UI) : **`.110:11434`** heavy · **`.111:11434`** light · **`.141`** CT executor — voir [`REGISTRE.md`](REGISTRE.md).
 
-## Résultat 2026-07-31 (HTTP)
+## Résultat 2026-08-25 (HTTP) — cutover P3
+
+| Check | État |
+|-------|------|
+| Pilot `/pilot/`, `/healthz`, `/v1/pilot/status` | OK |
+| Orch UI `/`, `/lyra`, `/agents/map` | **302 → Pilot** |
+| Orch API `/health` + Pilot `/v1/pilot/orch/*` | OK |
+| Cockpit / Prime / PreCU / Patches / MCP | voir script |
+
+## Résultat 2026-07-31 (HTTP) — historique
 
 | Check | État |
 |-------|------|
 | Pilot `/pilot/`, `/healthz`, `/v1/pilot/status` | OK (backend + orchestrator + agents) |
 | Cockpit UI + `/v1/pilot/cockpit/snapshot` | OK (`ok: true`) |
-| Orch UI `/`, `/lyra`, `/agents/map` | OK |
+| Orch UI `/`, `/lyra`, `/agents/map` | OK (SPA live, avant P3) |
 | Orch API `/health` | OK |
 | Prime / PreCU `:8792` + `/api/servers` | OK — **Prime & PreCU `ready`** |
 | Patches manifest | OK |

@@ -35,6 +35,8 @@ cp -f "$SRC/requirements.txt" "$DST/requirements.txt"
 cp -f "$SRC/run_agent.cmd" "$DST/run_agent.cmd"
 cp -f "$SRC/start_agent.cmd" "$DST/start_agent.cmd"
 cp -f "$SRC/restart_agent.cmd" "$DST/restart_agent.cmd"
+cp -f "$SRC/start_agent.vbs" "$DST/start_agent.vbs"
+cp -f "$SRC/restart_agent.vbs" "$DST/restart_agent.vbs"
 cp -f "$SRC/start_comfyui.cmd" "$DST/start_comfyui.cmd"
 cp -f "$SRC/run_comfyui.cmd" "$DST/run_comfyui.cmd"
 cp -f "$SRC/restart_comfyui.cmd" "$DST/restart_comfyui.cmd"
@@ -45,7 +47,25 @@ cp -f "$SRC/agent_ia_process.ps1" "$DST/agent_ia_process.ps1"
 cp -f "$SRC/start_agent.ps1" "$DST/start_agent.ps1"
 cp -f "$SRC/restart_agent.ps1" "$DST/restart_agent.ps1"
 cp -f "$SRC/install_agent_ia_scheduled_tasks.ps1" "$DST/install_agent_ia_scheduled_tasks.ps1"
+cp -f "$SRC/fix_session0_admin.ps1" "$DST/fix_session0_admin.ps1"
+cp -f "$SRC/install_fix_session0_task.ps1" "$DST/install_fix_session0_task.ps1"
+cp -f "$SRC/fix_agent_to_user_session.ps1" "$DST/fix_agent_to_user_session.ps1"
+cp -f "$SRC/backup_vghd_deps.ps1" "$DST/backup_vghd_deps.ps1"
+cp -f "$SRC/repair_vghd_deps.ps1" "$DST/repair_vghd_deps.ps1"
 cp -f "$SRC/desktop.env.example" "$DST/desktop.env.example"
+
+# PowerShell 5.1 : UTF-8 avec BOM pour les .ps1 (sinon fleches/accents cassent le parse)
+if command -v powershell.exe >/dev/null 2>&1; then
+  powershell.exe -NoProfile -Command "
+    Get-ChildItem -Path 'C:\\Agent_IA' -Filter '*.ps1' -File | ForEach-Object {
+      \$t = [System.IO.File]::ReadAllText(\$_.FullName)
+      \$utf8Bom = New-Object System.Text.UTF8Encoding \$true
+      [System.IO.File]::WriteAllText(\$_.FullName, \$t, \$utf8Bom)
+    }
+    Write-Host 'OK UTF-8 BOM on *.ps1'
+  "
+fi
+
 
 # Ne pas écraser `desktop.env` utilisateur s’il existe déjà.
 if [ ! -f "$DST/desktop.env" ]; then

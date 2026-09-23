@@ -155,7 +155,7 @@
         "Sortir hors palissade vers la meute.",
         "Rapporter fourrure ou carapace."
       ],
-      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat sandbox = Pilot #/hunt (hunt_yard)."
+      "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat sandbox = Pilot #/hunt ou Prime (touche 1 au POI poi:lh_hunt_chacal, sidecar /v1/hunt-yard)."
     },
     {
       "id": "lh_med_venin",

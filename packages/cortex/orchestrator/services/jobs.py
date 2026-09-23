@@ -691,6 +691,8 @@ def _step_satisfies(step: JobStep, result: dict[str, Any]) -> tuple[bool, str | 
     kind = step.action.get("kind") if isinstance(step.action, dict) else None
     if kind == "open_app" and outcome and outcome not in ("ok", "dry_run"):
         return False, f"open_app outcome inattendu ({outcome})"
+    if kind == "repair_app_deps" and outcome and outcome not in ("ok", "dry_run"):
+        return False, f"repair_app_deps outcome inattendu ({outcome})"
     return True, None
 
 

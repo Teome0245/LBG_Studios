@@ -11,7 +11,7 @@ import httpx
 _LIGHT_ROLES = frozenset({"reason_router", "reason_json", "reason_fast"})
 
 # Rôles legacy / advisory — n'échouent pas l'audit ops (warning seulement).
-_ADVISORY_ROLES = frozenset({"companion"})
+_ADVISORY_ROLES = frozenset({"companion", "dialogue_local_uncensored", "reason_uncensored"})
 _LEGACY_MODEL_PREFIXES = ("phi4-mini", "gemma3:4b")
 
 
@@ -48,6 +48,7 @@ def _base_url_for_role(role: str) -> str:
         return light
     mapping = {
         "dialogue_local": "LBG_DIALOGUE_LLM_BASE_URL",
+        "dialogue_local_uncensored": "LBG_DIALOGUE_LLM_BASE_URL",
         "dialogue_fast": "LBG_DIALOGUE_FAST_BASE_URL",
         "reason_default": "LBG_REASON_LOCAL_BASE_URL",
         "reason_forge": "LBG_REASON_LOCAL_BASE_URL",
@@ -56,6 +57,7 @@ def _base_url_for_role(role: str) -> str:
         "reason_fast": "LBG_REASON_LIGHT_BASE_URL",
         "reason_code": "LBG_REASON_LOCAL_BASE_URL",
         "reason_pm": "LBG_REASON_LOCAL_BASE_URL",
+        "reason_uncensored": "LBG_REASON_LOCAL_BASE_URL",
         "jobs_planner": "LBG_JOBS_PLANNER_LLM_BASE_URL",
         "companion": "LBG_COMPANION_LLM_BASE_URL",
     }
@@ -83,6 +85,8 @@ def _configured_models() -> dict[str, str]:
 
     return {
         "dialogue_local": os.environ.get("LBG_DIALOGUE_LLM_MODEL", "").strip(),
+        "dialogue_local_uncensored": os.environ.get("LBG_DIALOGUE_LLM_MODEL_UNCENSORED", "").strip()
+        or os.environ.get("LBG_REASON_MODEL_UNCENSORED", "").strip(),
         "dialogue_fast": os.environ.get("LBG_DIALOGUE_FAST_MODEL", "").strip(),
         "reason_default": reason_local_model(profile="default"),
         "reason_forge": reason_local_model(profile="forge"),
@@ -91,6 +95,12 @@ def _configured_models() -> dict[str, str]:
         "reason_code": reason_local_model(profile="code"),
         "reason_pm": reason_local_model(profile="pm"),
         "reason_fast": reason_local_model(profile="fast"),
+        "reason_uncensored": reason_local_model(profile="uncensored")
+        if (
+            os.environ.get("LBG_REASON_MODEL_UNCENSORED", "").strip()
+            or os.environ.get("LBG_DIALOGUE_LLM_MODEL_UNCENSORED", "").strip()
+        )
+        else "",
         "jobs_planner": os.environ.get("LBG_JOBS_PLANNER_LLM_MODEL", "").strip(),
         "companion": os.environ.get("LBG_COMPANION_LLM_MODEL", "").strip(),
     }
@@ -148,7 +158,7 @@ def _recommendations(
 
     has_e2b = any("e2b" in n for n in heavy_names)
     has_26b = any("26b" in n for n in heavy_names)
-    has_qwen38 = any("qwen3.8" in n for n in heavy_names)
+    heavy_names_l = {n.lower() for n in heavy_names}
     has_light = len(light_names) > 0
 
     if gaps:
@@ -161,17 +171,69 @@ def _recommendations(
     else:
         recs.append(
             "Light 111 vide/injoignable — LBG_REASON_LIGHT_BASE_URL + pull "
-            "qwen2.5:3b (Clean) et llama3.2:3b (Fast) sur le NUC. "
+            "qwen3.5-abliterated:2B (Clean) et qwen3.5-abliterated:0.8B (Fast) sur le NUC. "
             "Ne pas réintroduire gemma3:4b (écarté). Voir docs/local_llm_route_matrix.md."
         )
 
     if has_e2b:
-        recs.append("Forge/Iris : LBG_REASON_MODEL_FORGE=gemma4:e2b (heavy 110 CT).")
-        recs.append("Failover light→heavy : LBG_REASON_LIGHT_FAILOVER_HEAVY=1 + gemma4:e2b.")
-    if has_qwen38:
-        recs.append("Code/PM/dialogue : qwen3.8:27b sur heavy 110 (bench août 2026 > gemma4:26b).")
+        recs.append(
+            "Forge/Iris : LBG_REASON_MODEL_FORGE=huihui_ai/gemma-4-abliterated:e2b (heavy 110)."
+        )
+        recs.append(
+            "Failover light→heavy : LBG_REASON_LIGHT_FAILOVER_HEAVY=1 + gemma-4-abliterated:e2b."
+        )
+    has_ablit_12 = any(
+        "gemma-4-abliterated" in n and "12b" in n for n in heavy_names_l
+    ) or any(
+        n.endswith(":12b") and "abliterated" in n and "gemma" in n for n in heavy_names_l
+    )
+    has_ablit_9 = any(
+        "qwen3.5-abliterated" in n and ("9b" in n or ":9b" in n) for n in heavy_names_l
+    )
+    has_ablit_27 = any(
+        "qwen3.8-abliterated" in n and "27b" in n for n in heavy_names_l
+    )
+    has_qwen38_plain = any(
+        "qwen3.8" in n and "abliterated" not in n for n in heavy_names_l
+    )
+    if has_ablit_12:
+        recs.append(
+            "Code/PM/dialogue : huihui_ai/gemma-4-abliterated:12b sur heavy 110 "
+            "(≤12B uncensored — garde-fous maturité A/B/C)."
+        )
+    elif has_ablit_9:
+        recs.append(
+            "qwen3.5-abliterated:9b encore présent — migrer code/PM/dialogue vers "
+            "huihui_ai/gemma-4-abliterated:12b (qualité code)."
+        )
+    elif has_ablit_27:
+        recs.append(
+            "Legacy 27b encore présent — migrer code/PM/dialogue vers "
+            "huihui_ai/gemma-4-abliterated:12b (matrice ≤12B)."
+        )
+    elif has_qwen38_plain:
+        recs.append(
+            "Code/PM/dialogue : qwen3.8:27b encore routé — migrer vers "
+            "huihui_ai/gemma-4-abliterated:12b."
+        )
     elif has_26b:
-        recs.append("Code/PM : gemma4:26b encore présent — migrer vers qwen3.8:27b si matrice à jour.")
+        recs.append(
+            "Code/PM : gemma4:26b encore présent — migrer vers "
+            "huihui_ai/gemma-4-abliterated:12b si matrice à jour."
+        )
+
+    unc = (config.get("dialogue_local_uncensored") or config.get("reason_uncensored") or "").strip()
+    if unc:
+        if _model_available(unc, heavy_names):
+            recs.append(
+                f"Uncensored / Prométhée : {unc} présent sur 110 "
+                "(maturity C + rôle contrarian)."
+            )
+        else:
+            recs.append(
+                f"Pull uncensored sur 110 : `ollama pull {unc}` "
+                "(LBG_DIALOGUE_LLM_MODEL_UNCENSORED / Prométhée)."
+            )
 
     if not os.environ.get("LBG_REASON_LIGHT_BASE_URL", "").strip():
         recs.append("Poser LBG_REASON_LIGHT_BASE_URL=http://192.168.0.111:11434 sur 140.")

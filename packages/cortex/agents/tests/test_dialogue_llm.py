@@ -116,6 +116,26 @@ def test_default_ollama_when_llm_not_disabled(monkeypatch: pytest.MonkeyPatch) -
     assert is_configured() is True
 
 
+def test_resolve_route_uncensored_cloud_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    from lbg_agents import dialogue_llm as mod
+
+    monkeypatch.setenv("LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED", "1")
+    monkeypatch.setenv("LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv(
+        "LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL",
+        "cognitivecomputations/dolphin-mistral-24b-venice-edition",
+    )
+    monkeypatch.setenv("LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY", "${OPENROUTER_API_KEY}")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test")
+
+    route = mod._resolve_route({"dialogue_target": "venice"})
+    assert route["target"] == "uncensored"
+    assert route["base_url"] == "https://openrouter.ai/api/v1"
+    assert "dolphin-mistral-24b-venice" in route["model"]
+    assert route["api_key"] == "sk-or-test"
+    assert route.get("route_decision") == "explicit"
+
+
 def test_resolve_route_fast_provider(monkeypatch: pytest.MonkeyPatch) -> None:
     from lbg_agents import dialogue_llm as mod
 
@@ -330,7 +350,7 @@ def test_build_system_prompt_local_assistant_skips_mmo_incarnation() -> None:
     )
     assert "personnage non-joueur (PNJ)" not in s
     assert "MMORPG médiéval-fantasy" not in s
-    assert "assistant LBG" in s
+    assert "Compagnon LBG" in s
     assert "ne contrôle pas le poste" in s.lower()
     assert "proposer" in s.lower() and "exécuter" in s.lower()
 

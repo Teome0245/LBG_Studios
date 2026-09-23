@@ -70,6 +70,17 @@ sudo tee /etc/logrotate.d/lbg-core3-\${ROLE} >/dev/null <<ROT
     copytruncate
     maxsize 40M
 }
+
+# Rotats déjà suffixés (.log.1, .log.2, …) — sinon zArchive grossit sans borne
+${BIN_LOG_DIR}/zArchive/*.log.[0-9]* {
+    daily
+    rotate 1
+    compress
+    delaycompress
+    missingok
+    notifempty
+    maxsize 20M
+}
 ROT
 
 if [[ -n "\${IA_BRIDGE_DIR}" && -d "\${IA_BRIDGE_DIR}" ]]; then

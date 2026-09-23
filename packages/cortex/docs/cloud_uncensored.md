@@ -1,21 +1,23 @@
 # Cloud uncensored (hors Groq)
 
-**Date** : 2026-09-20  
+**Date** : 2026-09-21  
 **Statut** : actif si `LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED=1`
 
 Groq (`LBG_DIALOGUE_FAST_*`) reste **filtré** (vitesse).  
-Le palier **`uncensored`** pointe un provider OpenAI-compat distinct — canon : [OpenRouter Venice / Dolphin](https://openrouter.ai/cognitivecomputations/dolphin-mistral-24b-venice-edition).
+Le palier **`uncensored`** pointe un provider OpenAI-compat distinct — canon actuel : **DeepInfra** Dolphin 70B (`cognitivecomputations/dolphin-2.9.1-llama-3-70b`).
 
 ## Variables
 
 | Env | Défaut |
 |-----|--------|
 | `LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED` | `0` |
-| `LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL` | `https://openrouter.ai/api/v1` |
-| `LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL` | `cognitivecomputations/dolphin-mistral-24b-venice-edition` |
-| `LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY` | `${OPENROUTER_API_KEY}` |
+| `LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL` | `https://api.deepinfra.com/v1/openai` |
+| `LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL` | `cognitivecomputations/dolphin-2.9.1-llama-3-70b` |
+| `LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY` | `${DEEPINFRA_API_KEY}` |
 
-REASON / Prométhée : même endpoint via `reason_cloud_uncensored_route()` si profil `uncensored` (réutilise les vars dialogue si `LBG_REASON_CLOUD_UNCENSORED_*` absentes).
+> DeepInfra exige un **solde > 0** (sinon HTTP 402). Recharger sur le dashboard DeepInfra.
+
+REASON / Prométhée : même endpoint via `reason_cloud_uncensored_route()` si profil `uncensored`.
 
 ## Usage
 
@@ -25,22 +27,15 @@ REASON / Prométhée : même endpoint via `reason_cloud_uncensored_route()` si p
 
 Aliases : `venice`, `cloud_uncensored`.
 
-Auto / failover recommandé :
-
 ```bash
 LBG_DIALOGUE_AUTO_ORDER="local,uncensored,fast,remote"
-LBG_DIALOGUE_FAILOVER_ORDER="local,uncensored,fast,remote"
 ```
-
-Maturité C / `force_uncensored` : la chaîne auto **saute Groq fast** et préfère `local` puis `uncensored`.
 
 ## Smoke
 
 ```bash
-curl -sS https://openrouter.ai/api/v1/chat/completions \
-  -H "Authorization: Bearer $OPENROUTER_API_KEY" \
-  -H "HTTP-Referer: https://github.com/lbg-ia-mmo" \
-  -H "X-Title: LBG-smoke" \
+curl -sS https://api.deepinfra.com/v1/openai/chat/completions \
+  -H "Authorization: Bearer $DEEPINFRA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"cognitivecomputations/dolphin-mistral-24b-venice-edition","messages":[{"role":"user","content":"ping: OK"}],"max_tokens":8}'
+  -d '{"model":"cognitivecomputations/dolphin-2.9.1-llama-3-70b","messages":[{"role":"user","content":"ping: OK"}],"max_tokens":8}'
 ```

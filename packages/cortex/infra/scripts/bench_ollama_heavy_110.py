@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Micro-bench heavy Ollama .110 : gemma4:26b vs qwen3.8:27b (CPU, court)."""
+"""Micro-bench heavy Ollama .110 : gemma4:26b vs Qwen3.8-abliterated:27b (CPU, court)."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,7 @@ import urllib.request
 from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
-MODELS = ("gemma4:26b", "qwen3.8:27b")
+MODELS = ("gemma4:26b", "huihui_ai/Qwen3.8-abliterated:27b")
 
 
 @dataclass

@@ -51,6 +51,19 @@ def test_plan_from_objective_proxmox_storage_focused() -> None:
     assert all((p.get("context") or {}).get("ops_kind") == "proxmox_storage" for p in props)
 
 
+def test_plan_from_objective_guest_mur_infra() -> None:
+    """Mur INFRA LAN disk/load guest → ops guest_metrics (pas thin Proxmox)."""
+    props = team_roles.plan_from_objective(
+        "Héphaïstos — sonde mur INFRA LAN Front web .100 disk 81% + plan remédiation",
+        actor_id="u:guest",
+    )
+    assert len(props) == 1
+    assert props[0]["role"] == "ops"
+    ctx = props[0].get("context") or {}
+    assert ctx.get("ops_kind") == "guest_metrics"
+    assert (ctx.get("devops_action") or {}).get("kind") == "guest_metrics"
+
+
 def test_team_create_list_get() -> None:
     client = TestClient(app)
     r = client.post(

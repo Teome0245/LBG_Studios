@@ -50,7 +50,7 @@ def _entry_from_slot(slot: dict, roster: dict, profiles: dict) -> dict | None:
     summary = f"{summary_role} — {roster.get('description', '')}"[:220]
     if hint:
         summary = f"{summary} | {hint}"
-    return {
+    entry = {
         "id": pid,
         "name": name,
         "role": role,
@@ -67,6 +67,23 @@ def _entry_from_slot(slot: dict, roster: dict, profiles: dict) -> dict | None:
         ],
         "core3_source": "core3_npc_catalog.json",
     }
+    # Pilotes space / Aviation civile — labels truth-guard Chœur
+    if "pilot_" in pid:
+        track = "civil"
+        for key in ("alliance", "freelance", "imperial"):
+            if f"_{key}_" in pid:
+                track = key
+                break
+        entry["role"] = "pilot_trainer"
+        entry["faction"] = "Aviation civile Lost Heaven"
+        entry["pilot_track"] = track
+        entry["summary"] = f"instructeur pilote {track} — {roster.get('description', '')}"[:220]
+        if hint:
+            entry["summary"] = f"{entry['summary']} | {hint}"
+        entry["zone"] = (
+            "Lost Heaven — Scrapaltai" if track == "imperial" or "lost" in loc.lower() else f"Mos Eisley — {loc}"
+        )
+    return entry
 
 
 def main() -> int:

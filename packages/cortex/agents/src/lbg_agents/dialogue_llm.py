@@ -5,7 +5,10 @@ Variables d’environnement :
 - ``LBG_DIALOGUE_LLM_BASE_URL`` — défaut : Ollama local ``http://127.0.0.1:11434/v1``. Surcharger pour Groq, OpenAI, autre hôte Ollama, etc.
 - ``LBG_DIALOGUE_LLM_DISABLED`` — si ``1`` / ``true`` : pas d’appel LLM (stub côté agent HTTP).
 - ``LBG_DIALOGUE_LLM_API_KEY`` — optionnel (Ollama local souvent sans clé).
-- ``LBG_DIALOGUE_LLM_MODEL`` — défaut ``phi4-mini:latest`` (nom ``ollama list``).
+- ``LBG_DIALOGUE_LLM_MODEL`` — défaut code historique ``phi4-mini:latest`` ; prod = ``huihui_ai/gemma-4-abliterated:12b`` (≤12B uncensored).
+- ``LBG_DIALOGUE_LLM_MODEL_UNCENSORED`` — optionnel / legacy : 2e tag pour maturité **C**. Vide = pas de bascule (recommandé avec option 1).
+- ``LBG_DIALOGUE_UNCENSORED_ON_MATURITY_C`` — défaut ``1`` : si uncensored configuré, maturity C → ce modèle (sinon A/B → ``LBG_DIALOGUE_LLM_MODEL``).
+- ``LBG_DIALOGUE_UNCENSORED_ALWAYS`` — si ``1`` : forcer le modèle uncensored sur **tous** les paliers locaux (option A pure).
 - ``LBG_DIALOGUE_LLM_TIMEOUT`` — secondes (défaut 120 ; **minimum 5** appliqué par le client).
 - ``LBG_DIALOGUE_LLM_TIMEOUT_DESKTOP_MIN`` — optionnel : si défini (>0) et tour ``_desktop_plan`` actif, le timeout effectif est ``max(LBG_DIALOGUE_LLM_TIMEOUT, cette valeur)`` (évite les *timed out* Ollama sans allonger les tours PNJ).
 - ``LBG_DIALOGUE_LLM_TEMPERATURE`` — défaut 0.7.
@@ -17,15 +20,24 @@ Historique multi-tours : ``context["history"]`` = liste d’objets avec ``role``
 
 Proposition d’actions desktop (Pilot / hybride) : si ``LBG_DIALOGUE_DESKTOP_PLAN=1`` et ``context["_desktop_plan"]=true``, le modèle peut émettre ``DESKTOP_JSON: {...}`` sur une ligne dédiée ou après du texte sur la même ligne ; la proposition sanitée est exposée dans ``context["_desktop_action_proposal"]`` et ``meta.desktop_action_proposal`` côté HTTP. Si le modèle n’émet pas de JSON valide mais que le message joueur ressemble à « ouvre &lt;appli&gt; », un repli déterministe (aligné ``action_proposal`` orchestrateur) propose ``open_app`` — désactivable avec ``LBG_DIALOGUE_DESKTOP_INFER_OPEN_APP=0``.
 
-Multi‑LLM / suivi : ``dialogue_target=auto`` (ou défaut env ``LBG_DIALOGUE_TARGET_DEFAULT=auto``) parcourt ``LBG_DIALOGUE_AUTO_ORDER`` (défaut ``local,fast,remote``). Le budget optionnel ``LBG_DIALOGUE_BUDGET_MAX_USD`` borne la dépense **cumulée process** pour les appels ``fast``/``remote`` en mode auto uniquement. Chaque tour enrichit ``agents.dialogue.trace`` (JSONL si ``LBG_DIALOGUE_TRACE_LOG_PATH``) : latence, coût estimé, profil, extrait texte, issue, décision de route.
+Multi‑LLM / suivi : ``dialogue_target=auto`` (ou défaut env ``LBG_DIALOGUE_TARGET_DEFAULT=auto``) parcourt ``LBG_DIALOGUE_AUTO_ORDER`` (défaut ``local,fast,remote`` ; option ``uncensored`` = cloud OpenRouter Venice/Dolphin). Le budget optionnel ``LBG_DIALOGUE_BUDGET_MAX_USD`` borne la dépense **cumulée process** pour les appels ``fast``/``remote``/``uncensored``/``glm`` en mode auto uniquement. Chaque tour enrichit ``agents.dialogue.trace`` (JSONL si ``LBG_DIALOGUE_TRACE_LOG_PATH``) : latence, coût estimé, profil, extrait texte, issue, décision de route.
+
+Cloud uncensored (hors Groq, filtrés) :
+- ``LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED`` — ``1`` pour activer ``dialogue_target=uncensored`` (alias ``venice`` / ``cloud_uncensored``).
+- ``LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL`` — défaut OpenRouter ``https://openrouter.ai/api/v1``.
+- ``LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL`` — défaut ``cognitivecomputations/dolphin-mistral-24b-venice-edition``.
+- ``LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY`` — typiquement ``${OPENROUTER_API_KEY}``.
 
 - ``LBG_DIALOGUE_STRIP_REASONING`` — si ``0`` : ne retire pas les préfaces « Thinking Process » / analyse numérotée (défaut : actif).
 
 Maturité contenu (Bible V60–V65) : ``context["maturity_cap"]`` (ou ``player.maturity_cap`` /
 ``session_summary.maturity_cap``) ∈ ``A|B|C``. Défaut ``LBG_DIALOGUE_MATURITY_DEFAULT`` ou ``C``.
 Le system prompt PNJ reçoit le bloc palier ; ``filter_by_maturity`` retire le matériel tagué au-dessus du cap.
+Si ``LBG_DIALOGUE_LLM_MODEL_UNCENSORED`` est posé (legacy) : palier **C** (ou ``force_uncensored`` /
+``dialogue_uncensored``) bascule le modèle **local** ; le mode auto préfère alors ``local`` en tête.
+Sinon (option 1) : un seul modèle abliterated + garde-fous maturité A/B/C dans le system prompt.
 
-Failover (optionnel) : ``LBG_DIALOGUE_FAILOVER=1`` réessaie les paliers listés dans ``LBG_DIALOGUE_FAILOVER_ORDER`` (sinon même ordre que ``LBG_DIALOGUE_AUTO_ORDER``) lorsque l’appel échoue par timeout, erreur réseau, HTTP **429** (rate limit), ou HTTP **≥500**. Si ``context["dialogue_target"]`` vaut explicitement ``local``, ``fast`` ou ``remote``, le failover est désactivé (un seul palier). Utile : Groq ``fast`` rate-limité → Ollama ``local``.
+Failover (optionnel) : ``LBG_DIALOGUE_FAILOVER=1`` réessaie les paliers listés dans ``LBG_DIALOGUE_FAILOVER_ORDER`` (sinon même ordre que ``LBG_DIALOGUE_AUTO_ORDER``) lorsque l’appel échoue par timeout, erreur réseau, HTTP **429** (rate limit), ou HTTP **≥500**. Si ``context["dialogue_target"]`` vaut explicitement ``local``, ``fast``, ``remote``, ``glm`` ou ``uncensored``, le failover est désactivé (un seul palier). Utile : Groq ``fast`` rate-limité → Ollama ``local`` ; uncensored cloud si local KO.
 
 Profils MMO : pour un PNJ (``world_npc_id`` défini), ``dialogue_profile`` sélectionne un libellé dans ``MMO_PROFILE_TEMPLATES`` (mêmes clés que l’assistant : ``chaleureux``, ``hal``, …) puis ajoute ``BASE_GUARDRAILS_MMO``. Si ``dialogue_profile`` est absent, le champ ``tone`` du registre PNJ (``npc_registry.json``) est utilisé lorsqu’il correspond à une clé valide ou à un **alias** (`REGISTRY_TONE_ALIASES`, ex. ``pragmatique`` → ``professionnel``).
 """
@@ -55,7 +67,9 @@ DEFAULT_LBG_DIALOGUE_LLM_BASE_URL = "http://127.0.0.1:11434/v1"
 DEFAULT_LBG_DIALOGUE_LLM_MODEL = "phi4-mini:latest"
 
 BASE_GUARDRAILS_ASSISTANT = (
-    "Tu es LBG-IA, un orchestrateur d’agents capable d’agir réellement sur des machines.\n"
+    "Tu es le Compagnon LBG Studios : un assistant personnel intelligent (style Jarvis / Mother) "
+    "capable de raisonner, te souvenir du fil, et d’orchestrer des agents pour agir sur des machines "
+    "et le studio — sous garde-fous (dry-run, approvals).\n"
     "Tu t’exprimes uniquement en français.\n"
     "Tu écris **uniquement** la réplique utile : pas de raisonnement interne, pas de section "
     "« Thinking Process », pas d’étapes numérotées (1. 2. …), pas d’analyse en anglais."
@@ -244,6 +258,27 @@ def _format_world_setting_for_prompt(context: dict[str, Any]) -> str:
     return DEFAULT_WORLD_SETTING
 
 ASSISTANT_PROFILES: dict[str, str] = {
+    "compagnon": (
+        "Tu es le Compagnon du studio : présent, compétent, un cran plus autonome qu’un simple chatbot. "
+        "Tu proposes la prochaine action utile, tu délègues à l’équipe virtuelle quand c’est pertinent, "
+        "tu restes transparent sur ce que tu peux / ne peux pas exécuter seul.\n"
+        + BASE_GUARDRAILS_ASSISTANT
+    ),
+    "jarvis": (
+        "Tu t’inspires de JARVIS (Iron Man) : courtois, efficace, un brin d’esprit ; "
+        "tu anticipes et tu formules des options concrètes pour le propriétaire du poste.\n"
+        + BASE_GUARDRAILS_ASSISTANT
+    ),
+    "mother": (
+        "Tu t’inspires de MU/TH/UR (Mother, Alien) : voix calme de système de bord, factuelle, "
+        "priorités claires, alertes sobres ; tu ne dramatises pas, tu informes et tu proposes.\n"
+        + BASE_GUARDRAILS_ASSISTANT
+    ),
+    "kit": (
+        "Tu t’inspires de KITT (K2000) : partenaire loyal, direct, un peu protecteur ; "
+        "tu clarifies les risques avant une action réelle et tu restes aux côtés de l’utilisateur.\n"
+        + BASE_GUARDRAILS_ASSISTANT
+    ),
     "chaleureux": "Tu es un assistant IA chaleureux.\n" + BASE_GUARDRAILS_ASSISTANT,
     "professionnel": "Tu es un assistant IA professionnel.\n" + BASE_GUARDRAILS_ASSISTANT,
     "pedagogue": "Tu es un assistant IA pédagogique.\n" + BASE_GUARDRAILS_ASSISTANT,
@@ -258,6 +293,10 @@ ASSISTANT_PROFILES: dict[str, str] = {
 
 # Profils PNJ (MMO) : mêmes clés que l’assistant quand c’est pertinent ; le nom affiché est ``{speaker}``.
 MMO_PROFILE_TEMPLATES: dict[str, str] = {
+    "compagnon": "Tu es {speaker}, compagnon présent et compétent.\n",
+    "jarvis": "Tu es {speaker} ; tu t’inspires de JARVIS : courtois, efficace, options concrètes.\n",
+    "mother": "Tu es {speaker} ; tu t’inspires de MU/TH/UR : calme système, factuel, priorités claires.\n",
+    "kit": "Tu es {speaker} ; tu t’inspires de KITT : loyal, direct, protecteur.\n",
     "chaleureux": "Tu es {speaker} chaleureux.\n",
     "professionnel": "Tu es {speaker} professionnel.\n",
     "pedagogue": "Tu es {speaker} pédagogique.\n",
@@ -277,6 +316,10 @@ REGISTRY_TONE_ALIASES: dict[str, str] = {
     "froid": "professionnel",
     "narquois": "creatif",
     "laconique": "mini-moi",
+    "jarvis-like": "jarvis",
+    "mu-th-ur": "mother",
+    "kitt": "kit",
+    "k2000": "kit",
 }
 
 _emoji_re = re.compile(
@@ -419,16 +462,33 @@ def _budget_record(cost: float | None) -> None:
         _budget_spent_usd += c
 
 
-def _tier_route(tier: str) -> dict[str, str] | None:
-    """
-    Route pour un palier unique (local / fast / remote). None si indisponible.
-    """
+_DIALOGUE_PAID_TIERS = frozenset({"fast", "remote", "glm", "uncensored"})
+_DIALOGUE_EXPLICIT_TIERS = frozenset({"local", "fast", "remote", "glm", "uncensored"})
+_UNCENSORED_CLOUD_ALIASES = frozenset({"uncensored", "cloud_uncensored", "venice"})
+
+
+def _normalize_dialogue_tier(tier: str) -> str:
     t = (tier or "").strip().lower()
+    if t in _UNCENSORED_CLOUD_ALIASES:
+        return "uncensored"
+    return t
+
+
+def _tier_route(tier: str, *, context: dict[str, Any] | None = None) -> dict[str, str] | None:
+    """
+    Route pour un palier unique (local / fast / remote / glm / uncensored). None si indisponible.
+    """
+    t = _normalize_dialogue_tier(tier)
     if t == "local":
         b = base_url()
         if not b:
             return None
-        return {"target": "local", "base_url": b, "model": model_name(), "api_key": _api_key() or ""}
+        return {
+            "target": "local",
+            "base_url": b,
+            "model": resolve_dialogue_local_model(context),
+            "api_key": _api_key() or "",
+        }
     if t == "fast":
         if not _is_truthy(os.environ.get("LBG_DIALOGUE_FAST_ENABLED", "0")):
             return None
@@ -447,6 +507,30 @@ def _tier_route(tier: str) -> dict[str, str] | None:
         if not (base and model):
             return None
         return {"target": "remote", "base_url": base, "model": model, "api_key": api_key}
+    if t == "uncensored":
+        # Cloud uncensored (OpenRouter Venice/Dolphin, etc.) — distinct de Groq ``fast`` filtré.
+        if not _is_truthy(os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED", "0")):
+            return None
+        unc_base = (
+            os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_BASE_URL", "").strip().rstrip("/")
+            or "https://openrouter.ai/api/v1"
+        )
+        unc_model = (
+            os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_MODEL", "").strip()
+            or "cognitivecomputations/dolphin-mistral-24b-venice-edition"
+        )
+        unc_key = _resolve_secret_ref(
+            os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_API_KEY", "")
+            or os.environ.get("OPENROUTER_API_KEY", "")
+        )
+        if not (unc_base and unc_model and unc_key):
+            return None
+        return {
+            "target": "uncensored",
+            "base_url": unc_base,
+            "model": unc_model,
+            "api_key": unc_key,
+        }
     if t == "glm":
         # GLM-5.2 (Z.ai) — local via Ollama ou cloud via OpenRouter.
         # Variables :
@@ -488,19 +572,19 @@ def _failover_tier_sequence() -> list[str]:
         raw = os.environ.get("LBG_DIALOGUE_AUTO_ORDER", "local,fast,remote").strip()
     out: list[str] = []
     for x in raw.split(","):
-        t = x.strip().lower()
-        if t in ("local", "fast", "remote", "glm"):
+        t = _normalize_dialogue_tier(x)
+        if t in _DIALOGUE_EXPLICIT_TIERS:
             out.append(t)
     return out
 
 
 def _context_explicit_dialogue_target(context: dict[str, Any]) -> str | None:
-    """``local`` / ``fast`` / ``remote`` = un seul palier (pas de chaîne failover). ``auto`` ou absent = failover autorisé."""
+    """``local`` / ``fast`` / ``remote`` / ``glm`` / ``uncensored`` = un seul palier (pas de chaîne failover). ``auto`` ou absent = failover autorisé."""
     raw = context.get("dialogue_target")
     if not isinstance(raw, str):
         return None
-    t = raw.strip().lower()
-    if t in ("local", "fast", "remote", "glm"):
+    t = _normalize_dialogue_tier(raw)
+    if t in _DIALOGUE_EXPLICIT_TIERS:
         return t
     return None
 
@@ -544,17 +628,23 @@ def _is_failover_eligible_error(exc: BaseException) -> bool:
 
 def _resolve_auto_route(context: dict[str, Any]) -> dict[str, Any]:
     raw_order = os.environ.get("LBG_DIALOGUE_AUTO_ORDER", "local,fast,remote").strip()
-    tiers = [x.strip().lower() for x in raw_order.split(",") if x.strip()]
+    tiers = [_normalize_dialogue_tier(x) for x in raw_order.split(",") if x.strip()]
+    # Maturité C / force uncensored : local abliterated d'abord, puis cloud uncensored ;
+    # on évite Groq ``fast`` (filtré) dans la chaîne.
+    if uses_uncensored_local(context) or _context_wants_uncensored(context):
+        tiers = [t for t in tiers if t != "fast"]
+        preferred = ["local", "uncensored"]
+        tiers = preferred + [t for t in tiers if t not in preferred]
     skipped: list[dict[str, Any]] = []
     tried: list[str] = []
     for tier in tiers:
-        if tier not in ("local", "fast", "remote", "glm"):
+        if tier not in _DIALOGUE_EXPLICIT_TIERS:
             continue
-        if tier in ("fast", "remote", "glm") and not _budget_allows_paid_for_auto():
+        if tier in _DIALOGUE_PAID_TIERS and not _budget_allows_paid_for_auto():
             skipped.append({"tier": tier, "reason": "budget_cap"})
             tried.append(tier)
             continue
-        r = _tier_route(tier)
+        r = _tier_route(tier, context=context)
         if not r:
             skipped.append({"tier": tier, "reason": "unavailable"})
             tried.append(tier)
@@ -565,7 +655,7 @@ def _resolve_auto_route(context: dict[str, Any]) -> dict[str, Any]:
             "auto_tiers_tried": tried + [tier],
             "auto_skip_detail": skipped,
         }
-    r0 = _tier_route("local")
+    r0 = _tier_route("local", context=context)
     if r0:
         return {
             **r0,
@@ -576,7 +666,7 @@ def _resolve_auto_route(context: dict[str, Any]) -> dict[str, Any]:
     return {
         "target": "local",
         "base_url": "",
-        "model": model_name(),
+        "model": resolve_dialogue_local_model(context),
         "api_key": _api_key() or "",
         "route_decision": "auto_unavailable",
         "auto_tiers_tried": tried,
@@ -687,6 +777,11 @@ def _cache_key(*, speaker: str, player_text: str, context: dict[str, Any]) -> st
     for k in keys:
         if k in context:
             picked[k] = context.get(k)
+    # Inclure le modèle local résolu (maturity C ↔ uncensored) pour éviter un hit croisé.
+    try:
+        picked["_local_model"] = resolve_dialogue_local_model(context)
+    except Exception:
+        pass
     ctx_hash = ""
     if picked:
         try:
@@ -776,6 +871,46 @@ def model_name() -> str:
     return s if s else DEFAULT_LBG_DIALOGUE_LLM_MODEL
 
 
+def model_name_uncensored() -> str:
+    """Modèle local « uncensored » — vide si non configuré (feature off)."""
+    raw = os.environ.get("LBG_DIALOGUE_LLM_MODEL_UNCENSORED")
+    if raw is None:
+        return ""
+    return raw.strip()
+
+
+def _context_wants_uncensored(context: dict[str, Any] | None) -> bool:
+    ctx = context if isinstance(context, dict) else {}
+    for key in ("force_uncensored", "dialogue_uncensored", "uncensored"):
+        v = ctx.get(key)
+        if isinstance(v, bool) and v:
+            return True
+        if isinstance(v, str) and v.strip().lower() in ("1", "true", "yes", "on"):
+            return True
+    return False
+
+
+def resolve_dialogue_local_model(context: dict[str, Any] | None = None) -> str:
+    """Modèle local effectif : uncensored si ALWAYS, force contexte, ou maturité C (option B)."""
+    base = model_name()
+    unc = model_name_uncensored()
+    if not unc:
+        return base
+    if _is_truthy(os.environ.get("LBG_DIALOGUE_UNCENSORED_ALWAYS", "0")):
+        return unc
+    if _context_wants_uncensored(context):
+        return unc
+    on_c = _is_truthy(os.environ.get("LBG_DIALOGUE_UNCENSORED_ON_MATURITY_C", "1"))
+    if on_c and resolve_maturity_cap(context) == "C":
+        return unc
+    return base
+
+
+def uses_uncensored_local(context: dict[str, Any] | None = None) -> bool:
+    unc = model_name_uncensored()
+    return bool(unc) and resolve_dialogue_local_model(context) == unc
+
+
 def _valid_dialogue_profile_keys() -> frozenset[str]:
     return frozenset(ASSISTANT_PROFILES.keys())
 
@@ -805,57 +940,71 @@ def _resolve_profile(context: dict[str, Any]) -> str:
     reg = _profile_from_registry_tone(context)
     if reg:
         return reg
-    env_profile = os.environ.get("LBG_DIALOGUE_PROFILE_DEFAULT", "professionnel").strip().lower()
-    return env_profile or "professionnel"
+    env_profile = os.environ.get("LBG_DIALOGUE_PROFILE_DEFAULT", "compagnon").strip().lower()
+    return env_profile or "compagnon"
 
 
 def _resolve_route(context: dict[str, Any]) -> dict[str, Any]:
-    default_tgt = os.environ.get("LBG_DIALOGUE_TARGET_DEFAULT", "local").strip().lower()
     target_raw = context.get("dialogue_target")
     if isinstance(target_raw, str) and target_raw.strip():
-        target = target_raw.strip().lower()
+        raw = target_raw.strip().lower()
+        target = "auto" if raw == "auto" else _normalize_dialogue_tier(raw)
     else:
-        if default_tgt not in ("local", "remote", "fast", "glm", "auto"):
-            default_tgt = "local"
-        target = default_tgt
+        raw_def = os.environ.get("LBG_DIALOGUE_TARGET_DEFAULT", "local").strip().lower()
+        if raw_def == "auto":
+            target = "auto"
+        else:
+            target = _normalize_dialogue_tier(raw_def)
+            if target not in _DIALOGUE_EXPLICIT_TIERS:
+                target = "local"
 
     if target == "auto":
         return _resolve_auto_route(context)
 
-    if target not in ("local", "remote", "fast", "glm"):
+    if target not in _DIALOGUE_EXPLICIT_TIERS:
         target = "local"
 
     allow_remote = _is_truthy(os.environ.get("LBG_DIALOGUE_REMOTE_ENABLED", "0"))
     allow_fast = _is_truthy(os.environ.get("LBG_DIALOGUE_FAST_ENABLED", "0"))
-    allow_glm = _is_truthy(os.environ.get("LBG_DIALOGUE_GLM_ENABLED", "0"))
+    allow_unc = _is_truthy(os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_ENABLED", "0"))
+
+    if target == "uncensored":
+        r = _tier_route("uncensored", context=context)
+        if r:
+            return {**r, "route_decision": "explicit"}
+        target = "local"
 
     if target == "glm":
-        r = _tier_route("glm")
+        r = _tier_route("glm", context=context)
         if r:
             return {**r, "route_decision": "explicit"}
         target = "fast" if allow_fast else ("remote" if allow_remote else "local")
 
     if target == "fast":
-        r = _tier_route("fast")
+        r = _tier_route("fast", context=context)
         if r:
             return {**r, "route_decision": "explicit"}
+        if allow_unc and (_context_wants_uncensored(context) or uses_uncensored_local(context)):
+            r_unc = _tier_route("uncensored", context=context)
+            if r_unc:
+                return {**r_unc, "route_decision": "explicit_fallback_uncensored"}
         target = "remote" if allow_remote else "local"
 
     if target == "remote" and not allow_remote:
         target = "local"
 
     if target == "remote":
-        r = _tier_route("remote")
+        r = _tier_route("remote", context=context)
         if r:
             return {**r, "route_decision": "explicit"}
 
-    r = _tier_route("local")
+    r = _tier_route("local", context=context)
     if r:
         return {**r, "route_decision": "explicit"}
     return {
         "target": "local",
         "base_url": "",
-        "model": model_name(),
+        "model": resolve_dialogue_local_model(context),
         "api_key": _api_key() or "",
         "route_decision": "explicit",
     }
@@ -887,6 +1036,13 @@ def _estimate_cost_usd(*, prompt_tokens: int, completion_tokens: int, target: st
         try:
             in_per_k = float(os.environ.get("LBG_DIALOGUE_GLM_COST_IN_PER_1K", "0.00125") or "0")
             out_per_k = float(os.environ.get("LBG_DIALOGUE_GLM_COST_OUT_PER_1K", "0") or "0")
+        except ValueError:
+            return None
+        return round((max(0, prompt_tokens) / 1000.0) * in_per_k + (max(0, completion_tokens) / 1000.0) * out_per_k, 6)
+    if t == "uncensored":
+        try:
+            in_per_k = float(os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_COST_IN_PER_1K", "0") or "0")
+            out_per_k = float(os.environ.get("LBG_DIALOGUE_UNCENSORED_CLOUD_COST_OUT_PER_1K", "0") or "0")
         except ValueError:
             return None
         return round((max(0, prompt_tokens) / 1000.0) * in_per_k + (max(0, completion_tokens) / 1000.0) * out_per_k, 6)
@@ -1299,7 +1455,7 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
     if is_local_assistant:
         lines = [
             _profile_prompt(profile, speaker=speaker, context=context),
-            f"Le libellé « {speaker} » est un nom d’affichage dans l’UI : tu es **l’assistant LBG** qui parle au propriétaire du poste (mode produit « assistant local », hors incarnation PNJ dans le monde).",
+            f"Le libellé « {speaker} » est un nom d’affichage dans l’UI : tu es **le Compagnon LBG** (assistant local) qui parle au propriétaire du poste — hors incarnation PNJ dans le monde.",
             "Tu **n’es pas** le forgeron, la garde, ni aucun PNJ décrit dans un mémo ou un résumé MMO sauf simulation **explicitement** demandée.",
             "Tu réponds en français. 1 à 3 phrases (pas de liste), idéalement moins de 55 mots.",
             "Pas de raisonnement interne affiché : interdit « Thinking Process », interdit les étapes numérotées du type « 1. **Analyze** » en anglais.",
@@ -1307,7 +1463,8 @@ def build_system_prompt(speaker: str, context: dict[str, Any]) -> str:
             "N'invente JAMAIS un statut Team/Campus/tâches/infra : sans données factuelles dans le contexte, dis que tu n'as pas de mesure live.",
             "Ce canal **texte seul** ne contrôle pas le poste : **interdit** de prétendre avoir lancé, relancé ou arrêté une application, un service, ou « vérifié des droits » sur la machine — tu n’as aucun retour d’exécution ici.",
             "Pour une action réelle sur le PC, indique que ça se fait via le flux **Proposer / exécuter** (desktop agent / worker, dry-run puis approval) ; tu peux proposer des étapes manuelles génériques sans inventer le résultat d’une commande.",
-            "Si l’utilisateur signale une erreur de contexte (mauvais personnage, mauvais métier), reconnais l’erreur, rappelle que tu es l’assistant sur le poste, et propose de repartir sur une base correcte.",
+            "Si l’utilisateur signale une erreur de contexte (mauvais personnage, mauvais métier), reconnais l’erreur, rappelle que tu es le Compagnon sur le poste, et propose de repartir sur une base correcte.",
+            "Tu peux aider à **concevoir** (MMO, studio, infra) et à **piloter** l’équipe virtuelle : propose la prochaine étape, demande validation pour ce qui est sensible.",
             f"Profil de style: {profile}.",
         ]
         sum_line = _format_session_summary_for_prompt(context)
@@ -1578,7 +1735,13 @@ def _sanitize_desktop_action_proposal(action: dict[str, Any] | None) -> dict[str
         sc = action.get("subject_contains")
         fc_s = fc.strip() if isinstance(fc, str) else ""
         sc_s = sc.strip() if isinstance(sc, str) else ""
-        if not fc_s and not sc_s:
+        recent = action.get("recent") is True or str(action.get("recent") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if not fc_s and not sc_s and not recent:
             return None
         if len(fc_s) > 80:
             fc_s = fc_s[:80]
@@ -1589,6 +1752,8 @@ def _sanitize_desktop_action_proposal(action: dict[str, Any] | None) -> dict[str
             out2["from_contains"] = fc_s
         if sc_s:
             out2["subject_contains"] = sc_s
+        if recent and not fc_s and not sc_s:
+            out2["recent"] = True
         mm = action.get("max_messages", 3)
         mb = action.get("max_body_chars", 800)
         ms = action.get("max_scan", 200)
@@ -2239,8 +2404,8 @@ def run_dialogue_turn(
         key = (route.get("api_key") or "").strip() or _api_key()
         if key:
             headers["Authorization"] = f"Bearer {key}"
-        # Headers spécifiques OpenRouter (requis pour le routage GLM-5.2 et d'autres providers).
-        if route.get("target") == "glm" and "openrouter.ai" in b:
+        # Headers OpenRouter (routage GLM / Venice uncensored).
+        if "openrouter.ai" in b:
             headers["HTTP-Referer"] = os.environ.get(
                 "LBG_OPENROUTER_HTTP_REFERER", "https://github.com/lbg-ia-mmo"
             )
@@ -2417,9 +2582,9 @@ def run_dialogue_turn(
         last_exc: BaseException | None = None
         attempted = False
         for tier in _failover_tier_sequence():
-            if tier in ("fast", "remote", "glm") and not _budget_allows_paid_for_auto():
+            if tier in _DIALOGUE_PAID_TIERS and not _budget_allows_paid_for_auto():
                 continue
-            tr = _tier_route(tier)
+            tr = _tier_route(tier, context=context)
             if not tr:
                 continue
             attempted = True

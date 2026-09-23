@@ -61,7 +61,7 @@ flowchart LR
 | Action policy | `services/action_policy.py` | Garde-fous write |
 | Agents HTTP | `lbg_agents/dispatch.py` | Workers dialogue, devops, pm… |
 | Proactive | `services/proactive.py` | Analyses planifiées |
-| Multi-LLM | `agents/dialogue_llm.py`, `lbg.env` | Groq → `qwen3.8:27b` failover |
+| Multi-LLM | `agents/dialogue_llm.py`, `lbg.env` | Groq → abliterated 27b failover |
 | Storage watchdog | jobs Pilot `system:storage_watchdog` | Proto rôle `ops` |
 | Smokes LAN | `infra/scripts/smoke_*_lan.sh` | Proto rôle `qa` |
 

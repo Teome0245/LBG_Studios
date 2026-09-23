@@ -39,6 +39,10 @@ _DESKTOP_KINDS = {
     "mail_imap_preview",
     "notepad_append",
     "open_app",
+    "repair_app_deps",
+    "default_browser_info",
+    "agent_session_status",
+    "fix_session0",
     "observe_screen",
     "click_xy",
     "move_xy",
@@ -56,6 +60,11 @@ _DESKTOP_KINDS = {
     "comfyui_ensure",
     "comfyui_restart",
     "import_face_parts",
+}
+_DESKTOP_SAFE_READ_KINDS = {
+    "default_browser_info",
+    "agent_session_status",
+    "mail_imap_preview",
 }
 
 
@@ -200,6 +209,15 @@ def _evaluate_desktop(
             "forbidden",
             False,
             "Action desktop inconnue ou non autorisée par la policy orchestrateur.",
+            action_kind=action_kind,
+            constraints=constraints,
+        )
+    if action_kind in _DESKTOP_SAFE_READ_KINDS:
+        return _result(
+            capability,
+            "safe_read",
+            True,
+            "Lecture seule poste (navigateur par défaut, etc.) — pas d’effet de bord.",
             action_kind=action_kind,
             constraints=constraints,
         )
