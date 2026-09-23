@@ -35,7 +35,8 @@ def _loop() -> None:
                 print(
                     json.dumps(
                         {"event": "orchestrator.lia_autonomy.tick", **{k: out.get(k) for k in (
-                            "ok", "outcome", "mode", "action", "player", "prompt", "incarnation", "connect"
+                            "ok", "outcome", "mode", "action", "player", "prompt",
+                            "incarnation", "connect", "error", "reason",
                         )}},
                         ensure_ascii=False,
                     )

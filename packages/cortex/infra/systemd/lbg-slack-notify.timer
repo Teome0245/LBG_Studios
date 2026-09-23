@@ -1,0 +1,11 @@
+[Unit]
+Description=LBG Slack notify L2 pending — timer 15 min
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=15min
+AccuracySec=30s
+Unit=lbg-slack-notify.service
+
+[Install]
+WantedBy=timers.target

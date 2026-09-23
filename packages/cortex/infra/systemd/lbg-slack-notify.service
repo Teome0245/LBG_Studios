@@ -1,0 +1,12 @@
+[Unit]
+Description=LBG Slack notify L2 pending (push #lbg-ops)
+After=network-online.target lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+WorkingDirectory=/opt/LBG_IA_MMO
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.slack_notify

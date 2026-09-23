@@ -1,0 +1,18 @@
+[Unit]
+Description=LBG Slack HITL poller (#lbg-ops approve/reject)
+After=network-online.target lbg-orchestrator.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+WorkingDirectory=/opt/LBG_IA_MMO
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.slack_hitl_poll
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=LBG Slack HITL Socket Mode (boutons Approve/Reject)
+After=network-online.target lbg-orchestrator.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+WorkingDirectory=/opt/LBG_IA_MMO
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.slack_hitl_socket
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
