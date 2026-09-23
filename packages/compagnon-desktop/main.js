@@ -121,8 +121,8 @@ function createMainWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      // Évite de resservir un shell :5174 périmé (Actions rapides fantômes)
-      partition: "persist:compagnon-chat",
+      // Nouvelle partition = cache Chromium neuf (évite Selfcheck/Team fantômes)
+      partition: "persist:compagnon-chat-v2",
     },
   });
 
@@ -387,16 +387,16 @@ function agirIntentsFromStatus(status) {
     out.push({
       id: "open_jobs",
       label: "Ouvrir Pilot Jobs",
-      sourceText: "ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs",
-      hint: "desktop · .10",
+      sourceText: "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
+      hint: "navigateur par défaut · .10",
     });
   }
   if (job && !out.some((x) => x.id === "open_jobs")) {
     out.push({
       id: "open_jobs_job",
       label: "Revue job L2",
-      sourceText: "ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs",
-      hint: `job ${job.slice(0, 8)}…`,
+      sourceText: "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
+      hint: `job ${String(job).slice(0, 8)}…`,
     });
   }
   if (infra.mmo_sidecar_reachable === false) {
@@ -563,16 +563,18 @@ if (!gotLock) {
     if (process.platform === "win32") {
       app.setAppUserModelId("lbg.compagnon.desktop");
     }
-    // Purge cache Chromium Electron (indépendant du navigateur) — shell :5174 frais
+    // Purge partitions Chromium (ancienne + courante) — plus de chips fantômes
     try {
       const { session } = require("electron");
-      const s = session.fromPartition("persist:compagnon-chat");
-      await s.clearCache().catch(() => {});
-      await s
-        .clearStorageData({
-          storages: ["serviceworkers", "cachestorage", "shadercache"],
-        })
-        .catch(() => {});
+      for (const name of ["persist:compagnon-chat", "persist:compagnon-chat-v2"]) {
+        const s = session.fromPartition(name);
+        await s.clearCache().catch(() => {});
+        await s
+          .clearStorageData({
+            storages: ["serviceworkers", "cachestorage", "shadercache"],
+          })
+          .catch(() => {});
+      }
     } catch (_) {
       /* ignore */
     }

@@ -70,7 +70,15 @@ export function useApi() {
 
       return data
     } catch (err) {
-      const message = err.response?.data?.detail || err.message || 'Erreur inconnue'
+      const status = err.response?.status
+      const timedOut = err.code === 'ECONNABORTED' || /timeout/i.test(String(err.message || ''))
+      const message =
+        err.response?.data?.detail ||
+        (timedOut
+          ? 'Délai dépassé (LLM local lent) — réessaie ; cascade locale 2B→e2b (pas de Groq en LAB). Ctrl+K Selfcheck.'
+          : status === 504
+            ? '504 Gateway Timeout — Ollama trop lent ; vérifie .111 (2B) chaud ou .110 e2b.'
+            : err.message || 'Erreur inconnue')
       error.value = message
 
       return {

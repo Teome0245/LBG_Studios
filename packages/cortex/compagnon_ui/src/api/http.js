@@ -13,6 +13,8 @@ export const apiBaseURL = resolveBaseURL()
 /** Instance axios partagée (base URL = env, ou '' en dev pour proxy Vite, ou `/api` en prod). */
 export const http = axios.create({
   baseURL: apiBaseURL,
+  // Local LLM (gemma) peut prendre 30–90s + failover Groq — au-delà nginx 600s
+  timeout: 180_000,
 })
 
 /** Préfixe les chemins comme axios pour `fetch`. */

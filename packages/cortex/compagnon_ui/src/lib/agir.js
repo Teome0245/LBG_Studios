@@ -7,6 +7,19 @@ const ACTOR = 'ui:compagnon'
 const TOKEN_KEY = 'lbg_orch_desktop_approval_token'
 /** Même clé que Pilot Desktop — reprise auto si déjà saisi côté ops */
 const PILOT_TOKEN_KEY = 'lbg_pilot_desktop_approval_v1'
+/** LAB soft-confirm — agents acceptent cette sentinelle */
+export const SOFT_CONFIRM_SENTINEL = 'confirmed'
+
+/** @type {'token'|'confirm'|''} */
+let _approvalMode = ''
+
+export function getApprovalMode() {
+  return _approvalMode || 'token'
+}
+
+export function isSoftConfirmMode() {
+  return getApprovalMode() === 'confirm'
+}
 
 export function loadApprovalToken() {
   try {
@@ -43,17 +56,15 @@ export function hasApprovalToken() {
 }
 
 /**
- * Récupère le jeton serveur LAN (:5174 → backend .100) et l’écrit en localStorage.
- * Corrige les jetons navigateur périmés qui ne matchent plus ``C:\\Agent_IA\\desktop.env``.
+ * Récupère le mode approval (+ jeton si mode token) depuis :5174.
  * @param {{ force?: boolean }} [opts]
- * @returns {Promise<string>}
+ * @returns {Promise<string>} token ou sentinelle soft-confirm
  */
 export async function bootstrapApprovalToken(opts = {}) {
   const force = Boolean(opts.force)
   if (!force) {
     const existing = loadApprovalToken().trim()
-    // On resynchronise toujours depuis le serveur LAN quand dispo —
-    // un jeton local faux est la cause n°1 des « Jeton incorrect ».
+    void existing
   }
   try {
     const res = await fetch('/api/desktop-approval', {
@@ -62,6 +73,11 @@ export async function bootstrapApprovalToken(opts = {}) {
     })
     if (!res.ok) return loadApprovalToken()
     const json = await res.json()
+    const mode = String(json?.mode || 'token').toLowerCase()
+    _approvalMode = mode === 'confirm' || mode === 'soft' || mode === 'lab' ? 'confirm' : 'token'
+    if (_approvalMode === 'confirm') {
+      return SOFT_CONFIRM_SENTINEL
+    }
     const tok = typeof json?.token === 'string' ? json.token.trim() : ''
     if (json?.ok && tok) {
       saveApprovalToken(tok)
@@ -124,6 +140,57 @@ export async function proposeAction(text, context = {}) {
 }
 
 /**
+ * Contre-pouvoir — revue avant dry-run→réel (Prométhée-gate, pas Lyra).
+ * @param {Record<string, unknown>|null} proposal
+ * @param {{ sourceText?: string, forceLlm?: boolean }} [opts]
+ * @returns {Promise<{
+ *   pass: boolean,
+ *   block_real: boolean,
+ *   auto_dry_run: boolean,
+ *   summary: string,
+ *   risks: string[],
+ *   alternatives: string[],
+ *   confidence: number,
+ *   source: string,
+ *   raw: object|null,
+ * }>}
+ */
+export async function reviewProposal(proposal, opts = {}) {
+  const out = await postPilot('/companion/review-proposal', {
+    actor_id: ACTOR,
+    source_text: String(opts.sourceText || '').trim(),
+    proposal: proposal && typeof proposal === 'object' ? proposal : null,
+    force_llm: Boolean(opts.forceLlm),
+  })
+  if (out.status !== 200 || !out.json || out.json.ok === false) {
+    // Fail-open soft : dry-run auto, réel non bloqué (jeton reste requis)
+    return {
+      pass: true,
+      block_real: false,
+      auto_dry_run: true,
+      summary: out.json?.error || `Revue indisponible (HTTP ${out.status})`,
+      risks: ['Contre-pouvoir offline — prudence humaine'],
+      alternatives: [],
+      confidence: 0,
+      source: 'fallback',
+      raw: out.json,
+    }
+  }
+  const r = out.json.review && typeof out.json.review === 'object' ? out.json.review : {}
+  return {
+    pass: r.pass !== false,
+    block_real: Boolean(r.block_real),
+    auto_dry_run: Boolean(r.auto_dry_run),
+    summary: String(r.summary || ''),
+    risks: Array.isArray(r.risks) ? r.risks.map(String) : [],
+    alternatives: Array.isArray(r.alternatives) ? r.alternatives.map(String) : [],
+    confidence: typeof r.confidence === 'number' ? r.confidence : 0,
+    source: String(r.source || 'unknown'),
+    raw: out.json,
+  }
+}
+
+/**
  * Construit le context Pilot à partir d'une proposal + mode.
  * @param {Record<string, unknown>} proposal
  * @param {'dry_run'|'real'} mode
@@ -153,7 +220,15 @@ export function contextFromProposal(proposal, mode, approvalToken = '', baseCont
     if (capability === 'desktop_control') delete ctx.desktop_dry_run
     if (capability === 'devops_probe') delete ctx.devops_dry_run
     if (capability === 'prototype_game') ctx.opengame_dry_run = false
-    if (token) {
+    const soft = isSoftConfirmMode() || token === SOFT_CONFIRM_SENTINEL
+    if (soft) {
+      ctx.desktop_confirm = true
+      const sentinel = SOFT_CONFIRM_SENTINEL
+      if (capability === 'desktop_control') ctx.desktop_approval = sentinel
+      else if (capability === 'devops_probe') ctx.devops_approval = sentinel
+      else if (capability === 'prototype_game') ctx.opengame_approval = sentinel
+      else ctx.desktop_approval = sentinel
+    } else if (token) {
       if (capability === 'desktop_control') ctx.desktop_approval = token
       else if (capability === 'devops_probe') ctx.devops_approval = token
       else if (capability === 'prototype_game') ctx.opengame_approval = token
@@ -164,13 +239,21 @@ export function contextFromProposal(proposal, mode, approvalToken = '', baseCont
 
 export function routeLooksSuccessful(routePayload) {
   if (!routePayload || routePayload.ok === false) return false
-  const out = routePayload.result && routePayload.result.output
+  const out =
+    (routePayload.result && routePayload.result.output) ||
+    routePayload.output ||
+    null
   if (!out) return false
   // Dry-run agent réussi même si certaines couches mettent ok=false ailleurs
   if (out.outcome === 'dry_run') return true
   if (out.ok === false) return false
   const pol = out.policy
   if (pol && pol.allowed === false) return false
+  // Erreurs métier agent (filtres mail, allowlist…) malgré policy approved
+  if (typeof out.error === 'string' && out.error.trim()) return false
+  if (out.outcome && ['bad_request', 'approval_denied', 'allowlist_denied', 'error', 'feature_disabled', 'configuration_error', 'missing_dependency'].includes(String(out.outcome))) {
+    return false
+  }
   return true
 }
 
@@ -201,8 +284,8 @@ export function summarizeRouteResult(routePayload, mode) {
   if (routePayload.ok === false) {
     return `Échec : ${routePayload.error || routePayload.detail || 'route KO'}`
   }
-  const result = routePayload.result || {}
-  const output = result.output || {}
+  const result = routePayload.result || routePayload
+  const output = result.output || routePayload.output || {}
   const policy = output.policy
   const decision = policy?.decision ? String(policy.decision) : ''
   const outcome = output.outcome ? String(output.outcome) : ''
@@ -213,16 +296,25 @@ export function summarizeRouteResult(routePayload, mode) {
     ''
   const ok = routeLooksSuccessful(routePayload)
   const label = mode === 'dry_run' ? 'Dry-run' : 'Réel'
-  const bits = [`${label} · ${ok ? 'ok' : 'à vérifier'}`]
-  if (result.routed_to) bits.push(String(result.routed_to))
-  if (outcome === 'dry_run') bits.push('dry_run')
+  const bits = [`${label} · ${ok ? 'ok' : 'échec'}`]
+  if (result.routed_to || routePayload.routed_to) {
+    bits.push(String(result.routed_to || routePayload.routed_to))
+  }
+  // Préférer l'outcome agent (réel) à la seule decision policy (approved_action trompeur).
+  if (outcome) bits.push(outcome)
   else if (decision) bits.push(decision)
   if (outcome === 'approval_denied' || /Approval token/i.test(String(output.error || ''))) {
-    bits.push('Jeton incorrect ou manquant (doit matcher LBG_DESKTOP_APPROVAL_TOKEN sur .10)')
-  } else if (reply) {
-    bits.push(String(reply).slice(0, 280))
+    bits.push(
+      isSoftConfirmMode()
+        ? 'Confirmation requise (coche « Je confirme »)'
+        : 'Jeton incorrect ou manquant (doit matcher LBG_DESKTOP_APPROVAL_TOKEN sur .10)',
+    )
   } else if (output.error) {
     bits.push(String(output.error).slice(0, 200))
+  } else if (reply) {
+    bits.push(String(reply).slice(0, 280))
   }
+  if (output.app) bits.push(`app=${output.app}`)
+  if (output.desktop_target_host) bits.push(`host=${output.desktop_target_host}`)
   return bits.join(' — ')
 }

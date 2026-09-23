@@ -102,6 +102,8 @@
 
     function scheduleBlink() {
       if (blinkTimer) global.clearTimeout(blinkTimer);
+      // Fallback CSS : blink + look-around gérés par keyframes (style chat)
+      if (!useSheets) return;
       if (!ready || idlePaused) return;
       const delay = 1800 + Math.floor(Math.random() * 2600);
       blinkTimer = global.setTimeout(function () {
@@ -121,15 +123,15 @@
 
     function scheduleIdleLook() {
       if (idleTimer) global.clearTimeout(idleTimer);
+      // Fallback CSS : regard géré par face-cat-look
+      if (!useSheets) return;
       if (!ready) return;
-      // Idle doux : pas de look_left/wink (sheets collage = diaporama absurde)
       const delay = 5000 + Math.floor(Math.random() * 5000);
       idleTimer = global.setTimeout(function () {
         if (!ready || idlePaused || talkCycleTimer) {
           scheduleIdleLook();
           return;
         }
-        // Micro-surprise rare, sinon rien (le blink suffit)
         if (Math.random() < 0.22) {
           applyEyes("surprised");
           global.setTimeout(function () {
@@ -202,11 +204,18 @@
       stageEl.setAttribute("role", "img");
       stageEl.setAttribute("aria-label", "Visage expressif Lyra");
       stageEl.innerHTML =
-        '<div class="face-rig-base"></div>' +
+        '<div class="face-rig-ear face-rig-ear--l" aria-hidden="true"></div>' +
+        '<div class="face-rig-ear face-rig-ear--r" aria-hidden="true"></div>' +
+        '<div class="face-rig-base" aria-hidden="true"></div>' +
         '<div class="face-rig-layer face-rig-eyes" data-layer="eyes">' +
-        '<span class="face-rig-eye face-rig-eye--l"></span>' +
-        '<span class="face-rig-eye face-rig-eye--r"></span>' +
+        '<span class="face-rig-eye face-rig-eye--l">' +
+        '<span class="face-rig-pupil"></span>' +
+        "</span>" +
+        '<span class="face-rig-eye face-rig-eye--r">' +
+        '<span class="face-rig-pupil"></span>' +
+        "</span>" +
         "</div>" +
+        '<div class="face-rig-muzzle" aria-hidden="true"></div>' +
         '<div class="face-rig-layer face-rig-mouth" data-layer="mouth"></div>';
       host.appendChild(stageEl);
       layerEls = {

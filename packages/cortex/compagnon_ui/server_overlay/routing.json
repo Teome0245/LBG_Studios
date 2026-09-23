@@ -5,6 +5,7 @@
       "name": "huihui_ai/qwen3.5-abliterated:2B"
     }
   },
+  "_comment": "Local only — pas de Groq. OLLAMA=.111 (2B). Qualité média/outillage → gemma-4:12b sur .110 (LBG_REASON_HEAVY_BASE_URL).",
   "tasks": {
     "general_qa": {
       "models": [
@@ -14,15 +15,19 @@
         },
         {
           "provider": "local",
+          "name": "huihui_ai/qwen3.5-abliterated:0.8B"
+        },
+        {
+          "provider": "local",
+          "name": "huihui_ai/gemma-4-abliterated:12b"
+        },
+        {
+          "provider": "local",
           "name": "huihui_ai/qwen3.5-abliterated:9b"
         },
         {
           "provider": "local",
           "name": "huihui_ai/gemma-4-abliterated:e2b"
-        },
-        {
-          "provider": "groq",
-          "name": "openai/gpt-oss-20b"
         }
       ]
     },
@@ -30,6 +35,10 @@
       "models": [
         {
           "provider": "local",
+          "name": "huihui_ai/gemma-4-abliterated:12b"
+        },
+        {
+          "provider": "local",
           "name": "huihui_ai/qwen3.5-abliterated:9b"
         },
         {
@@ -39,10 +48,6 @@
         {
           "provider": "local",
           "name": "huihui_ai/gemma-4-abliterated:e2b"
-        },
-        {
-          "provider": "groq",
-          "name": "openai/gpt-oss-20b"
         }
       ]
     },
@@ -50,15 +55,11 @@
       "models": [
         {
           "provider": "local",
-          "name": "huihui_ai/qwen3.5-abliterated:2B"
+          "name": "huihui_ai/qwen3.5-abliterated:0.8B"
         },
         {
           "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:e2b"
-        },
-        {
-          "provider": "groq",
-          "name": "openai/gpt-oss-20b"
+          "name": "huihui_ai/qwen3.5-abliterated:2B"
         }
       ]
     },
@@ -66,11 +67,11 @@
       "models": [
         {
           "provider": "local",
-          "name": "huihui_ai/qwen3.5-abliterated:2B"
+          "name": "huihui_ai/qwen3.5-abliterated:0.8B"
         },
         {
-          "provider": "groq",
-          "name": "openai/gpt-oss-20b"
+          "provider": "local",
+          "name": "huihui_ai/qwen3.5-abliterated:2B"
         }
       ]
     }

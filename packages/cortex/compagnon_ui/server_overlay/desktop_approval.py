@@ -1,9 +1,9 @@
-"""Bootstrap jeton desktop pour Compagnon (:5174) — LAN only.
+"""Bootstrap approval Compagnon (:5174) — LAN only.
 
-Le navigateur peut avoir un vieux jeton localStorage qui ne match plus
-``C:\\Agent_IA\\desktop.env``. Ce endpoint renvoie la valeur serveur
-(``LBG_DESKTOP_APPROVAL_TOKEN`` dans ``/opt/orchestrateur/.env``), déjà
-alignée avec l’agent Windows ``.10``.
+Modes :
+- ``token`` (défaut) : renvoie ``LBG_DESKTOP_APPROVAL_TOKEN`` pour sync localStorage
+- ``confirm`` (LAB) : pas de secret dans le navigateur — UI coche « Je confirme »
+  → context ``desktop_approval=confirmed`` accepté par agents soft-confirm
 """
 
 from __future__ import annotations
@@ -38,6 +38,22 @@ def _load_token() -> str:
     return ""
 
 
+def _approval_mode() -> str:
+    """confirm | token — LAB sécurisé LAN → confirm par défaut si COMPAGNON_LAB."""
+    raw = (os.environ.get("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if raw in ("confirm", "soft", "lab"):
+        return "confirm"
+    if raw in ("token", "secret"):
+        return "token"
+    soft = (os.environ.get("LBG_DESKTOP_SOFT_CONFIRM") or "").strip().lower()
+    if soft in ("1", "true", "yes", "on"):
+        return "confirm"
+    lab = (os.environ.get("LBG_COMPAGNON_LAB") or "").strip().lower()
+    if lab in ("1", "true", "yes", "on"):
+        return "confirm"
+    return "token"
+
+
 def _client_is_lan(request: Request) -> bool:
     host = (request.client.host if request.client else "") or ""
     if host in ("127.0.0.1", "::1", "localhost"):
@@ -46,7 +62,6 @@ def _client_is_lan(request: Request) -> bool:
         return True
     if host.startswith("10."):
         return True
-    # docker bridge
     if host.startswith("172."):
         return True
     return False
@@ -56,13 +71,29 @@ def _client_is_lan(request: Request) -> bool:
 async def desktop_approval_bootstrap(request: Request) -> JSONResponse:
     if not _client_is_lan(request):
         return JSONResponse({"ok": False, "error": "lan_only"}, status_code=403)
+    mode = _approval_mode()
+    if mode == "confirm":
+        return JSONResponse(
+            {
+                "ok": True,
+                "configured": True,
+                "mode": "confirm",
+                "token": "",
+                "sentinel": "confirmed",
+                "source": "lab_soft_confirm",
+                "hint": "LAB : confirmation UI (pas de jeton navigateur)",
+            }
+        )
     token = _load_token()
     if not token:
-        return JSONResponse({"ok": False, "configured": False, "token": ""})
+        return JSONResponse(
+            {"ok": False, "configured": False, "mode": "token", "token": ""}
+        )
     return JSONResponse(
         {
             "ok": True,
             "configured": True,
+            "mode": "token",
             "token": token,
             "source": "server_env",
             "hint": "Aligné avec LBG_DESKTOP_APPROVAL_TOKEN (agent .10)",

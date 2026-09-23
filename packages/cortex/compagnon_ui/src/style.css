@@ -9,13 +9,11 @@
 @source "./components/ChatBreadcrumbs.vue";
 @source "./components/ChatHeader.vue";
 @source "./components/ChatInput.vue";
-@source "./components/PilotageBar.vue";
 @source "./components/PilotagePalette.vue";
 @source "./components/ActivityEncart.vue";
 @source "./components/ActionCard.vue";
 @source "./components/InitiativeToast.vue";
 @source "./components/LyraWidget.vue";
-@source "./components/FollowupChips.vue";
 @source "./components/ApprovalCard.vue";
 @source "./components/HistorySidebar.vue";
 @source "./components/NavRail.vue";

@@ -4,6 +4,7 @@
  */
 
 import { PILOT_LINKS } from '@/lib/pilotLinks'
+import { USEFUL_AGIR_ACTIONS } from '@/lib/usefulAgirActions'
 
 /**
  * @typedef {{
@@ -20,40 +21,19 @@ import { PILOT_LINKS } from '@/lib/pilotLinks'
 /** Catalogue complet — palette Ctrl+K uniquement. */
 /** @type {PilotageAction[]} */
 export const PILOTAGE_CATALOG = [
-  {
-    id: 'probe_lan',
-    label: 'Selfcheck LAN',
-    hint: 'lecture seule',
-    kind: 'agir',
-    sourceText: 'fais un diagnostic infra selfcheck LAN',
-  },
-  {
-    id: 'open_jobs',
-    label: 'Jobs L2',
-    hint: 'desktop',
-    kind: 'agir',
-    sourceText: 'ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs',
-  },
+  ...USEFUL_AGIR_ACTIONS.map((a) => ({
+    id: a.id,
+    label: a.label,
+    hint: a.hint,
+    kind: /** @type {'agir'} */ ('agir'),
+    sourceText: a.sourceText,
+  })),
   {
     id: 'team_status',
     label: 'Team status',
     hint: 'ask',
     kind: 'ask',
     prompt: 'team: status orchestrateur et file Campus',
-  },
-  {
-    id: 'notepad',
-    label: 'Notepad++',
-    hint: 'desktop',
-    kind: 'agir',
-    sourceText: 'ouvre notepadpp sur mon pc',
-  },
-  {
-    id: 'open_vghd',
-    label: 'Ouvrir VGHD',
-    hint: 'desktop',
-    kind: 'agir',
-    sourceText: 'ouvre vghd sur mon pc',
   },
   {
     id: 'probe_ad',
@@ -68,6 +48,13 @@ export const PILOTAGE_CATALOG = [
     hint: 'ask',
     kind: 'ask',
     prompt: 'liste les jobs / approbations L2 en attente et propose quoi faire',
+  },
+  {
+    id: 'audit_ollama',
+    label: 'Audit Ollama LAN',
+    hint: 'ask',
+    kind: 'ask',
+    prompt: 'team: audit modèles Ollama .110 heavy et .111 light',
   },
   {
     id: 'open_desktop',
@@ -91,75 +78,3 @@ export const PILOTAGE_CATALOG = [
     href: PILOT_LINKS.jobs,
   },
 ]
-
-/** Barre sous l’input — max 4 + palette (évite le mur de boutons). */
-/** @type {PilotageAction[]} */
-export const PILOTAGE_BAR = PILOTAGE_CATALOG.filter((a) =>
-  ['probe_lan', 'open_jobs', 'team_status', 'notepad'].includes(a.id)
-)
-
-/**
- * Suite de pilotage après un Agir (réel/dry-run) — impression « next moves ».
- * @param {{ capability?: string, ok?: boolean, mode?: string }} ctx
- * @returns {PilotageAction[]}
- */
-export function nextPilotageAfterAgir(ctx = {}) {
-  const cap = String(ctx.capability || '')
-  const ok = ctx.ok !== false
-  /** @type {PilotageAction[]} */
-  const out = []
-
-  if (cap.includes('devops') || cap.includes('probe')) {
-    out.push({
-      id: 'next_jobs',
-      label: 'Voir Jobs L2',
-      kind: 'agir',
-      sourceText: 'ouvre firefox sur mon pc avec l url http://192.168.0.140:8080/#/jobs',
-      hint: 'revue',
-    })
-    out.push({
-      id: 'next_team',
-      label: 'Status Team',
-      kind: 'ask',
-      prompt: 'team: status',
-      hint: 'campus',
-    })
-  }
-  if (cap.includes('desktop')) {
-    out.push({
-      id: 'next_desktop_ui',
-      label: 'Ouvrir Pilot Desktop',
-      kind: 'link',
-      href: PILOT_LINKS.desktop,
-      hint: 'cockpit',
-    })
-    if (ok) {
-      out.push({
-        id: 'next_note',
-        label: 'Noter dans Notepad++',
-        kind: 'agir',
-        sourceText: 'ouvre notepadpp sur mon pc',
-        hint: 'desktop',
-      })
-    }
-  }
-  if (!out.length) {
-    out.push(
-      {
-        id: 'next_probe',
-        label: 'Selfcheck LAN',
-        kind: 'agir',
-        sourceText: 'fais un diagnostic infra selfcheck LAN',
-        hint: 'lecture',
-      },
-      {
-        id: 'next_jobs2',
-        label: 'Jobs',
-        kind: 'link',
-        href: PILOT_LINKS.jobs,
-        hint: 'pilot',
-      }
-    )
-  }
-  return out.slice(0, 3)
-}

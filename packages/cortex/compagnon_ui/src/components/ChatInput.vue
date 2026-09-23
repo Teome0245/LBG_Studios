@@ -359,7 +359,9 @@ const propose = async () => {
       endActivity('error', 'Pas de proposal')
       addMessage({
         role: 'assistant',
-        content: reason || 'Aucune action sûre reconnue. Reformule (ex. « ouvre Notepad », « cherche Cursor AI »).',
+        content:
+          (reason || 'Aucune action sûre reconnue.') +
+          '\n\nEssaie Ctrl+K : Selfcheck LAN, mails, inventaire réseau, VGHD, Jobs L2, Cockpit…',
         source: 'agir',
         state: 'orchestrateur-happy',
       })

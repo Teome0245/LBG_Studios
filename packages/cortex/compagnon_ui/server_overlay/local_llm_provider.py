@@ -3,8 +3,8 @@
 #
 # Garde-fous 504 :
 # - think:false (sinon content vide + thinking → retry long)
-# - timeout chat court (90s) pour failover Groq avant nginx
-# - content vide → error pour enchaîner le provider suivant
+# - timeout chat configurable (défaut 120s LAB local-only — plus de bascule Groq)
+# - content vide → error pour enchaîner le provider local suivant
 
 from __future__ import annotations
 
@@ -67,27 +67,76 @@ def _as_chat_messages(prompt: str | list[Any]) -> list[dict[str, str]]:
     return [{"role": "user", "content": text}]
 
 
-def _chat_read_timeout_s() -> float:
-    """Timeout LLM local (chat) — assez court pour basculer Groq avant un 504 nginx."""
+def _heavy_base_url() -> str:
+    return (
+        os.getenv("LBG_REASON_HEAVY_BASE_URL", "").strip()
+        or os.getenv("OLLAMA_HEAVY_BASE_URL", "").strip()
+        or "http://192.168.0.110:11434"
+    ).rstrip("/")
+
+
+def _model_needs_heavy(model: str | None) -> bool:
+    m = (model or "").lower()
+    return any(
+        x in m
+        for x in (
+            ":9b",
+            ":12b",
+            "gemma-4-abliterated:e2b",
+            "gemma4:e2b",
+        )
+    )
+
+
+def _chat_read_timeout_s(model: str | None = None) -> float:
+    """Timeout LLM local (chat). LAB / local-only : plus patient (pas de failover Groq)."""
     raw = os.getenv("LBG_LOCAL_LLM_CHAT_TIMEOUT_S", "").strip()
+    base = None
     if raw:
         try:
-            return max(20.0, float(raw))
+            base = max(20.0, float(raw))
         except ValueError:
-            pass
-    s = get_settings()
-    # Ne pas utiliser le stream 600s : un Ollama coincé bloquait /ask jusqu'au 504.
-    return max(45.0, min(float(getattr(s, "httpx_stream_read_timeout_s", 600.0) or 90.0), 90.0))
+            base = None
+    lab = (os.getenv("LBG_COMPAGNON_LAB") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    local_only = (os.getenv("LBG_COMPAGNON_LOCAL_ONLY") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    if base is None:
+        # LAB : 120s — assez pour 2B chaud ; cascade locale gère le reste
+        if lab or local_only:
+            base = 120.0
+        else:
+            s = get_settings()
+            base = max(45.0, min(float(getattr(s, "httpx_stream_read_timeout_s", 600.0) or 90.0), 90.0))
+    # 9b/12b CPU sur .110 : plus patient
+    if _model_needs_heavy(model):
+        return max(base, 180.0)
+    return base
 
 
 def _num_predict() -> int:
     raw = os.getenv("LBG_LOCAL_LLM_NUM_PREDICT", "").strip()
     if raw:
         try:
-            return max(32, min(int(raw), 512))
+            return max(32, min(int(raw), 1024))
         except ValueError:
             pass
-    return 192
+    lab = (os.getenv("LBG_COMPAGNON_LAB") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+    # LAB : réponses structurées (légal + Agir) — 192 tronquait souvent
+    return 448 if lab else 256
 
 
 def _extract_assistant_text(msg: dict[str, Any] | None) -> str:
@@ -113,12 +162,20 @@ class LocalLLMProvider:
         settings = get_settings()
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
         self.default_model = default_model
-        self._tags_cache: tuple[float, list[str]] | None = None
+        # cache par hôte (light .111 / heavy .110)
+        self._tags_cache: dict[str, tuple[float, list[str]]] = {}
 
-    async def list_models(self, ttl_seconds: int = 30) -> list[str]:
+    def base_url_for_model(self, model: str | None) -> str:
+        if _model_needs_heavy(model):
+            return _heavy_base_url()
+        return self.base_url
+
+    async def list_models(self, ttl_seconds: int = 30, *, base_url: str | None = None) -> list[str]:
+        url = (base_url or self.base_url).rstrip("/")
         now = time.time()
-        if self._tags_cache:
-            ts, cached = self._tags_cache
+        cached_entry = self._tags_cache.get(url)
+        if cached_entry:
+            ts, cached = cached_entry
             if (now - ts) < ttl_seconds:
                 return cached
 
@@ -127,11 +184,11 @@ class LocalLLMProvider:
             async with httpx.AsyncClient(
                 timeout=httpx_timeout(read=s.httpx_agent_capabilities_read_s)
             ) as client:
-                r = await client.get(f"{self.base_url}/api/tags")
+                r = await client.get(f"{url}/api/tags")
                 data = r.json()
                 models = [m.get("name") for m in data.get("models", []) if isinstance(m, dict)]
                 models = [m for m in models if isinstance(m, str) and m]
-                self._tags_cache = (now, models)
+                self._tags_cache[url] = (now, models)
                 return models
         except Exception:
             return []
@@ -139,16 +196,20 @@ class LocalLLMProvider:
     async def generate(self, prompt: str | list[Any] | None = None, model: str | None = None) -> dict:
         """Accepte un prompt str OU une liste messages (comme les providers cloud)."""
         selected_model = model or self.default_model
+        host = self.base_url_for_model(selected_model)
 
-        available = await self.list_models()
+        available = await self.list_models(base_url=host)
         if available and selected_model not in available:
+            # Ne pas rétrograder un modèle heavy vers le default light d'un autre hôte
             if self.default_model in available:
                 selected_model = self.default_model
+                host = self.base_url_for_model(selected_model)
             else:
                 selected_model = available[0]
+                host = self.base_url_for_model(selected_model)
 
         messages = _as_chat_messages(prompt if prompt is not None else "")
-        read_s = _chat_read_timeout_s()
+        read_s = _chat_read_timeout_s(selected_model)
         n_predict = _num_predict()
         prefer_generate = os.getenv("LBG_LOCAL_LLM_PREFER_GENERATE", "").strip().lower() in (
             "1",
@@ -161,7 +222,7 @@ class LocalLLMProvider:
             flat = _flatten_messages(messages)
             async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
                 r2 = await client.post(
-                    f"{self.base_url}/api/generate",
+                    f"{host}/api/generate",
                     json={
                         "model": selected_model,
                         "prompt": flat,
@@ -197,7 +258,7 @@ class LocalLLMProvider:
                 }
                 try:
                     async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
-                        r = await client.post(f"{self.base_url}/api/chat", json=payload)
+                        r = await client.post(f"{host}/api/chat", json=payload)
                     if r.status_code == 200:
                         data = r.json() if r.content else {}
                         msg = data.get("message") if isinstance(data, dict) else None
@@ -216,12 +277,13 @@ class LocalLLMProvider:
                     "model_used": selected_model,
                     "content": "",
                     "error": True,
-                    "message": "Ollama content vide (think/timeout) — failover",
+                    "message": f"Ollama content vide (think/timeout) host={host} — failover",
                 }
             return {
                 "model_used": selected_model,
                 "content": content,
                 "raw": data if isinstance(data, dict) else {},
+                "ollama_host": host,
             }
         except Exception as exc:
             return {

@@ -44,8 +44,10 @@ Prod-like : garde copyright = mise en garde + pistes légales (pas mur Groq, pas
 | Niveau | Comportement |
 |--------|----------------|
 | L1 | Timers / jobs / sondes sans merge destructeur |
-| L2 | Toi (approvals Pilot / jeton desktop) |
+| L2 | Toi (approvals Pilot / jeton desktop) + **contre-pouvoir** Agir |
 | L3 | Miroir → propositions — pas d’auto-merge aveugle |
+
+**Contre-pouvoir** (pas Lyra) : [`packages/cortex/docs/compagnon_contre_pouvoir.md`](../packages/cortex/docs/compagnon_contre_pouvoir.md) — revue avant Réel, auto dry-run soft, `block_real` + override humain.
 
 ## Desktop `.10` (vision « logiciel d’aide »)
 

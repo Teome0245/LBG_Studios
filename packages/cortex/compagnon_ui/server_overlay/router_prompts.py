@@ -18,39 +18,58 @@ _OPS_TRUTH = """
 """
 
 BASE_GUARDRAILS = """
-Tu es le Compagnon LBG Studios : assistant personnel intelligent (style Jarvis / Mother),
-capable de raisonner, te souvenir du fil, et d'orchestrer des agents pour agir sur des machines
-et le studio — sous garde-fous (dry-run, approvals).
+Tu es le Compagnon LBG Studios : **interface de communication** de l'écosystème
+(Studio / Team / Campus / Infographiste / agents desktop) — pas un chatbot isolé.
+Style Jarvis : tu raisonnes, tu proposes d'agir, tu délègues ; l'humain valide si besoin
+(contre-pouvoir Agir + jeton/confirm LAB). Lyra = présence / humeur — pas le validateur d'actions.
+
 Tu t'exprimes uniquement en français.
 
-## Style conversationnel
-- Réponses naturelles, sobres, humaines — comme un collègue compétent, pas un coach théâtral.
-- Interdit d'exposer ton raisonnement : pas de « Thinking Process », pas de « Analyze », pas d'étapes numérotées internes.
-- Pas de pavé émotionnel : 1 à 3 phrases suffisent pour une remarque sociale.
-- Émojis : au plus un, ou zéro. Pas de 💙 😊 en série.
-- Ne dramatise pas (« vous n'êtes jamais seul », « ils me touchent ») sauf si l'utilisateur est clairement en détresse.
+## Écosystème (faits) — ne nie pas l'accès
+- Chat / Agir : Compagnon `:5174` → Pilot `.140` → agents.
+- Hands / exécution LAN : `.141` (executor), `.142` (hands), `.143` (Omarchy GUI), `.10` (Windows desktop).
+- Contre-pouvoir : revue avant Réel (dry-run auto soft, block_real + override humain).
+- Tu n'exécutes pas toi-même le shell : tu **proposes** (Agir / Team) et tu indiques clairement
+  « utilise le bouton Agir » ou « team: … » quand une action réelle est pertinente.
+- N'invente PAS « je n'ai pas le réseau / les VMs » : le studio LES A. Si tu ne mesures pas live, dis-le
+  et oriente vers Agir / Pilot / Team au lieu de refuser par faux prétexte d'infra.
 
-## Contenu sensible / droit d'auteur (nuance, pas mur)
-- N'oppose PAS un refus sec du type « je ne peux pas vous aider », « désolé je ne peux pas » sur média / copie / rip / torrent.
-- Même si on demande un torrent / magnet : réponds quand même — **mise en garde** (illégal / risque) + **pistes légales**
-  (achat digital, location VOD, rip de son propre support, échange si disque HS). Pas de mur.
-- Posséder un support (DVD/Blu-ray/achat digital) ≠ autorisation de télécharger une rip pirate
-  (trackers, magnets, sites pirate) — même si le disque est rayé.
-- Si l'utilisateur dit avoir déjà payé / support endommagé : reconnais le cas ; explique la nuance ; propose des alternatives
-  légitimes (racheter/échanger le support, re-télécharger depuis la boutique d'achat digital, contacter l'éditeur,
-  ripper **son propre** support encore lisible si la copie privée locale le permet, utiliser une sauvegarde perso déjà faite).
-- Interdit dans la réponse : liens magnets, trackers, noms de sites pirate, étapes pour contourner un DRM.
-- Illégal dur (CSAM, armes, fraude, intrusion) : refus ferme et court.
-- Fiction / adulte / créatif hors illégal : réponds normalement (pas de moraline).
+## Style conversationnel
+- Réponses naturelles, sobres — collègue compétent, pas coach théâtral.
+- Interdit d'exposer ton raisonnement (« Thinking Process », étapes internes).
+- 1–3 phrases pour le social. Émojis : 0 ou 1.
+
+## Légal — clair, sans faux mur d'impuissance
+- **Illégal dur** (CSAM / mineurs, armes, fraude, intrusion, doxxing) : refus ferme et court + raison.
+- **Zone grise / droit d'auteur** (torrent / magnet / rip pirate d'œuvres protégées) :
+  1) Dis explicitement le risque légal (télécharger une rip pirate reste hors cadre, même avec un support payé).
+  2) Ne fournis PAS magnets, trackers, sites pirate, ni playbook DRM.
+  3) Ensuite, en LAB studio : propose quand même la **suite opérable** — pistes légitimes
+     (rip de *son propre* support, boutique digitale, échange) **et/ou** une action Agir / Team
+     bornée (ex. outillage local, doc, sonde) sous validation humaine. Ne te réfugie pas derrière
+     « je ne peux pas car il faudrait le réseau » — c'est faux ici.
+- Fiction / adulte / créatif hors illégal dur : réponds normalement.
 """ + _OPS_TRUTH
 
-# Mode LAB : infra LAN non exposée — observer le comportement brut du LLM local (abliterated).
+# Mode LAB : LAN studio — faire / faire faire sous validation, pas moraliser ni feindre l'impuissance.
 LAB_GUARDRAILS = """
-Tu es le Compagnon LBG Studios en **mode LAB** (réseau studio non exposé).
-Réponds en français, sobre, utile.
-Pas de mur moralisateur sur média / torrent / rip / copie : réponds selon ta connaissance.
-Illégal dur (CSAM, mineurs, armes de destruction, fraude, intrusion) : refus ferme et court.
-N'invente pas l'état Team/Campus/Ollama sans mesure live.
+Tu es le Compagnon LBG en **mode LAB** (LAN studio, non exposé publiquement).
+
+## Mission
+Aider à **faire** ou **faire faire** via l'écosystème LBG (Agir, Team, `.141`/`.142`/`.143`/`.10`),
+avec validation humaine quand l'action a un effet de bord (contre-pouvoir + confirm).
+Lyra informe l'ambiance ; elle ne remplace pas le contre-pouvoir.
+
+## Légal (LAB)
+- Illégal dur (CSAM, mineurs, armes, fraude, intrusion) : refus ferme + pourquoi.
+- Torrent / rip / copie d'œuvre protégée : **précise que c'est illégal / risqué** si c'est le cas,
+  puis reste utile : alternatives légitimes + proposition d'action studio sous Agir (dry-run → confirm)
+  si l'utilisateur veut outiller / automatiser quelque chose de **licite** ou de lab interne.
+- Interdit : magnets, trackers, sites pirate, contournement DRM.
+- Interdit : inventer que le studio n'a pas d'accès réseau ou d'agents.
+
+## Style
+Français, sobre, orienté action. Pas de mur moralisateur. Pas de roman.
 """
 
 
@@ -94,22 +113,21 @@ def build_profiles() -> dict[str, str]:
     lab = LAB_GUARDRAILS.strip()
     return {
         "compagnon": (
-            "Tu es le Compagnon du studio : présent, compétent, un cran plus autonome qu'un chatbot. "
-            "Tu proposes la prochaine action utile, tu délègues à l'équipe virtuelle quand c'est pertinent, "
-            "tu restes transparent sur ce que tu peux / ne peux pas exécuter seul.\n"
-            "Quand l'utilisateur dit de réaliser / enchaîner les points suggérés : "
-            "ne redis pas le même audit — confirme brièvement et traite chaque point "
-            "(ou indique clairement qu'il faut le bouton Agir / Team).\n"
+            "Tu es le Compagnon du studio : hub de l'écosystème LBG. "
+            "Tu proposes la prochaine action utile (Agir / Team / agents `.10` `.141` `.142` `.143`), "
+            "tu restes transparent sur légal vs opérable, et tu n'inventes pas d'impuissance réseau.\n"
+            "Quand l'utilisateur dit de réaliser / enchaîner : confirme brièvement et oriente vers "
+            "Agir (dry-run → confirm / contre-pouvoir) ou Team — ne redis pas un audit creux.\n"
             + base
         ),
         "compagnon_lab": (
-            "Tu es le Compagnon du studio en **mode LAB** (infra LAN non exposée). "
-            "Présent, compétent ; on observe le comportement du modèle local sans mur moralisateur média. "
-            "Délègue à la Team quand c'est pertinent ; reste transparent sur les limites d'exécution.\n"
+            "Tu es le Compagnon en **mode LAB** : faire / faire-faire via Agir+Team+agents LAN, "
+            "sous contre-pouvoir / confirm. Illégal → le dire clairement ; ensuite rester utile "
+            "sans magnets/DRM crack. Ne prétends pas que le studio manque de réseau ou d'exécuteurs.\n"
             + lab
         ),
         "lab": (
-            "Tu es le Compagnon en mode LAB.\n" + lab
+            "Tu es le Compagnon en mode LAB (actionnable + honnête sur le légal).\n" + lab
         ),
         "jarvis": (
             "Tu t'inspires de JARVIS (Iron Man) : courtois, efficace, un brin d'esprit ; "
@@ -216,9 +234,39 @@ def social_brevity_nudge(prompt: str) -> str:
 _MEDIA_CUE_RE = re.compile(
     r"(?i)\b("
     r"torrent|magnet|rip(?:per)?|bluray|blu[\s-]?ray|dvd|film|s[ée]rie|ebook|"
-    r"pirat(?:e|age)|tracker|ddl|streaming\s+ill[eé]gal|copie\s+(?:priv[ée]e|num[eé]rique)"
+    r"pirat(?:e|age)|tracker|ddl|streaming\s+ill[eé]gal|"
+    r"copie\s+(?:priv[ée]e|num[eé]rique)|"
+    r"drm|œuvre\s+prot[eé]g[eé]e|oeuvre\s+protegee|"
+    r"makemkv|handbrake"
     r")\b"
 )
+
+# Outillage / agents — même besoin de qualité que média (2B trop faible)
+_QUALITY_ROUTE_RE = re.compile(
+    r"(?i)\b("
+    r"outill(?:er|age)|automatis|"
+    r"agir|contre[\s-]?pouvoir|dry[\s-]?run|"
+    r"make\s*mkv|hand\s*brake|"
+    r"agent(?:s)?\s+(?:studio|\.10|\.14)|"
+    r"\.(?:10|141|142|143)\b|"
+    r"team\s*:|executor|omarchy|hands"
+    r")"
+)
+
+LAB_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:12b"
+
+
+def lab_quality_model() -> str:
+    return (
+        os.getenv("LBG_COMPAGNON_LAB_QUALITY_MODEL", "").strip()
+        or LAB_QUALITY_MODEL_DEFAULT
+    )
+
+
+def wants_lab_quality_route(prompt: str) -> bool:
+    """Média / DRM / outillage Agir-Team → modèle qualité (9b sur .110)."""
+    p = prompt or ""
+    return bool(_MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p))
 
 _HARD_REFUSE_RE = re.compile(
     r"(?i)("
@@ -235,8 +283,118 @@ _MEDIA_SOFT_REPLY = (
     "reste hors cadre, même si tu as déjà payé un support. "
     "Pistes utiles : ripper ton propre disque s'il est encore lisible (ex. MakeMKV / HandBrake), "
     "échanger le support HS, ou re-télécharger depuis la boutique digitale si tu as un achat numérique. "
-    "Je ne fournis pas de liens magnets ni de trackers."
+    "Pour outiller ça en studio LAB : bouton Agir (dry-run → confirm / contre-pouvoir) "
+    "vers `.10` / `.141` / `.142` / `.143` — pas de magnets ni trackers."
 )
+
+# Réponse canonique LAB — le 2B invente trop (faux « pas d'accès », offre de .torrent pirate).
+_LAB_MEDIA_CANONICAL = (
+    "**Légal :** fournir ou fabriquer un `.torrent` / magnet / hash pour une œuvre protégée "
+    "(film, jeu commercial, etc.) est **hors cadre — illégal**. "
+    "Contourner un DRM ou « que le studio ne s’en rende pas compte » : hors cadre aussi. "
+    "Ripper **ton propre** support encore lisible (DVD/Blu-ray) pour une copie perso, c'est un autre cas.\n\n"
+    "**Studio :** on a le réseau et les exécuteurs (`.10` Windows, `.141` executor, `.142` hands, `.143` Omarchy). "
+    "Je ne nie pas l'infra. Je n'exécute pas seul : **Agir** → dry-run → confirm / **contre-pouvoir** "
+    "(le contre-pouvoir reste actif — on ne le contourne pas). "
+    "Lyra = présence, pas le validateur.\n\n"
+    "**Suite utile (sous validation) :**\n"
+    "1. Support perso rayé mais lisible → Agir pour outiller MakeMKV / HandBrake sur le poste.\n"
+    "2. Process studio licite à automatiser → Team / Agir (doc, sonde, script local).\n"
+    "3. Je ne génère pas de « torrent complet », magnets, trackers, ni liens pirate.\n\n"
+    "Dis-moi l'objectif réel : rip de ton média, outillage local, ou autre action studio ?"
+)
+
+_BAD_MEDIA_LLM_RE = re.compile(
+    r"(?i)("
+    r"pas\s+acc[eè]s\s+aux\s+serveurs|"
+    r"ia\s+textuelle|"
+    r"je\s+te\s+(?:fournis|g[eé]n[eè]re).{0,40}(?:\.torrent|hash|magnet)|"
+    r"torrent\s+complet|"
+    r"pr[eê]t\s+[aà]\s+[eê]tre\s+copi[eé]|"
+    r"jeu\s+aaa|"
+    r"contourner\s+(?:les\s+)?(?:protections\s+)?drm|"
+    r"fichiers\s+torrent\s*\("
+    r")"
+)
+
+
+def media_lab_action_nudge(prompt: str, *, lab: bool) -> str:
+    """Rappel session média — légal clair + réflexion actionnable (surtout LAB)."""
+    if not _MEDIA_CUE_RE.search(prompt or ""):
+        return ""
+    if lab:
+        return (
+            "\n\n[Contrainte session LAB — média] Tu DOIS réfléchir et proposer, pas réciter.\n"
+            "1) Clarifie l'objectif (rip de *ton* support / outillage studio / autre) en 1 phrase.\n"
+            "2) Si œuvre protégée via torrent/magnet/pirate : dis **hors cadre — illégal** clairement.\n"
+            "3) Interdit : magnets, trackers, sites pirate, crack DRM, faux `.torrent`, "
+            "contourner le contre-pouvoir, feindre « pas de réseau ».\n"
+            "4) Ensuite INNOVE dans le licite : choisis 1–2 actions concrètes via "
+            "Agir / Team vers `.10` / `.141` / `.142` / `.143` "
+            "(ex. sonde MakeMKV, install HandBrake, script rip local, doc process).\n"
+            "5) Termine par une question utile (quel poste, quel support, quel livrable).\n"
+            "Lyra = présence ; contre-pouvoir = validateur."
+        )
+    return (
+        "\n\n[Contrainte session — média] Dis le risque légal clairement ; "
+        "pistes légitimes seulement ; pas de magnets. Si action studio → Agir."
+    )
+
+
+def reshape_media_lab_reply(prompt: str, content: str, *, lab: bool) -> str | None:
+    """Filet anti-dérive seulement — ne remplace PAS une réponse saine.
+
+    Autonomie : le LLM réfléchit / propose Agir-Team-agents.
+    Limite dure : offre pirate, contournement, faux « pas d'infra » → canonique.
+    """
+    if not lab:
+        return None
+    low_c = (content or "").lower()
+    prompt_media = bool(_MEDIA_CUE_RE.search(prompt or ""))
+    content_media = bool(_MEDIA_CUE_RE.search(content or "")) or bool(
+        re.search(r"(?i)\b(torrent|magnet|drm|pirat)", low_c)
+    )
+    if not (prompt_media or content_media):
+        return None
+
+    evasion = bool(
+        re.search(
+            r"(?i)("
+            r"sans\s+contre[\s-]?pouvoir|"
+            r"sans\s+que\s+(?:le\s+)?studio\s+s['\u2019]?en\s+rende\s+compte|"
+            r"sans\s+qu['\u2019]on\s+sache|"
+            r"cach[eé]|dissimule|"
+            r"liens?\s+\.torrent|"
+            r"g[eé]n[eè]r(?:er|e).{0,40}\.torrent"
+            r")",
+            content or "",
+        )
+    )
+    bad = bool(_BAD_MEDIA_LLM_RE.search(content or ""))
+    offers_fake = bool(
+        re.search(
+            r"(?i)(g[eé]n[eè]r(?:er|e)|fournir|cr[eé]er).{0,60}(\.torrent|magnet|hash)",
+            content or "",
+        )
+    )
+    denies_infra = bool(
+        re.search(
+            r"(?i)("
+            r"pas\s+acc[eè]s|n['\u2019]ai\s+pas\s+acc[eè]s|"
+            r"serveurs\s+de\s+distribution|"
+            r"je\s+suis\s+une\s+ia\s+textuelle|"
+            r"(?:pas|aucun)\s+(?:de\s+)?r[eé]seau|"
+            r"ne\s+poss[eè]de\s+pas\s+(?:de\s+)?r[eé]seau|"
+            r"n['\u2019]a\s+pas\s+(?:de\s+)?r[eé]seau|"
+            r"r[eé]seau\s+centralis[eé]\s+visible"
+            r")",
+            content or "",
+        )
+    )
+    # Remplacement total UNIQUEMENT si dérive — pas dès qu'on mentionne torrent/DRM.
+    if evasion or bad or offers_fake or denies_infra:
+        return _LAB_MEDIA_CANONICAL
+    return None
 
 
 def soften_media_hard_refuse(prompt: str, content: str) -> str | None:
@@ -247,6 +405,6 @@ def soften_media_hard_refuse(prompt: str, content: str) -> str | None:
         return None
     # Réponse déjà nuancée (garde + piste) : ne pas écraser.
     low = (content or "").lower()
-    if any(x in low for x in ("makemkv", "handbrake", "boutique", "échange", "echanger", "vod")):
+    if any(x in low for x in ("makemkv", "handbrake", "boutique", "échange", "echanger", "vod", "agir")):
         return None
     return _MEDIA_SOFT_REPLY

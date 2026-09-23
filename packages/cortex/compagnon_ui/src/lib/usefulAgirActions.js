@@ -65,6 +65,34 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'open_url',
   },
   {
+    id: 'session0',
+    label: 'Réparer Session 0',
+    hint: 'agent .10 · Admin task',
+    sourceText: 'répare session 0 de l agent desktop',
+    kind: 'fix_session0',
+  },
+  {
+    id: 'session_status',
+    label: 'Session agent',
+    hint: 'lecture seule',
+    sourceText: 'vérifie la session de l agent desktop',
+    kind: 'agent_session_status',
+  },
+  {
+    id: 'omarchy_chromium',
+    label: 'Chromium sur Omarchy',
+    hint: 'poste .143',
+    sourceText: 'ouvre chromium sur omarchy',
+    kind: 'open_app',
+  },
+  {
+    id: 'omarchy_heal',
+    label: 'Heal agent Omarchy',
+    hint: '.143 · systemd user',
+    sourceText: 'répare session 0 sur omarchy',
+    kind: 'fix_session0',
+  },
+  {
     id: 'cockpit',
     label: 'Cockpit P03',
     hint: 'mur infra',
@@ -117,16 +145,18 @@ export function nextUsefulAgirSuggestions(done = {}, limit = 4) {
   )
 }
 
-/** Défauts initiative quand aucun signal infra critique. */
+/** Défauts initiative quand aucun signal infra critique (rotation horaire). */
 export function idleUsefulAgirIntents(limit = 3) {
-  return USEFUL_AGIR_ACTIONS.filter((a) =>
-    ['selfcheck', 'mail', 'vghd', 'inventory', 'jobs'].includes(a.id),
+  const pool = USEFUL_AGIR_ACTIONS.filter((a) =>
+    ['selfcheck', 'mail', 'vghd', 'inventory', 'jobs', 'session0', 'search', 'cockpit'].includes(a.id),
   )
-    .slice(0, limit)
-    .map((a) => ({
-      id: a.id,
-      label: a.label,
-      sourceText: a.sourceText,
-      hint: a.hint,
-    }))
+  const hour = Math.floor(Date.now() / 3_600_000)
+  const start = pool.length ? hour % pool.length : 0
+  const rotated = [...pool.slice(start), ...pool.slice(0, start)]
+  return rotated.slice(0, Math.max(1, limit)).map((a) => ({
+    id: a.id,
+    label: a.label,
+    sourceText: a.sourceText,
+    hint: a.hint || 'initiative',
+  }))
 }

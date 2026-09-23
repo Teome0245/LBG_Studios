@@ -73,11 +73,21 @@ async def run_llm_chat_phase(
 
     base_profile = router.PROFILES.get(chat_profile, router.PROFILES["chaleureux"])
 
+    # Nudge média (légal + Agir) — le 2B oublie sinon le system long
+    try:
+        from src.services.router_prompts import media_lab_action_nudge
+
+        media_nudge = media_lab_action_nudge(prompt, lab=lab_mode)
+    except Exception:
+        media_nudge = ""
+
     if profile == "test" or lab_mode:
-        system_prompt = base_profile
+        system_prompt = base_profile + media_nudge
         history = []
     else:
-        system_prompt = base_profile + "\n" + router.lyra.get_style_modifier() + lyra_tone_extra
+        system_prompt = (
+            base_profile + "\n" + router.lyra.get_style_modifier() + lyra_tone_extra + media_nudge
+        )
         history = await get_history(limit=1)
 
     # Ancrage soft : injecter faits Ollama si la question touche au LAN LLM
@@ -165,22 +175,47 @@ async def run_llm_chat_phase(
             )
 
     if lab_mode:
-        # LAB : un seul modèle uncensored — éviter double timeout abliterated→gemma
+        # LAB : local only — chat léger = 2B (.111) ; média/outillage = 9b (.110)
+        from src.services.router_prompts import lab_quality_model, wants_lab_quality_route
+
+        quality = wants_lab_quality_route(prompt)
         preferred = (
-            os.getenv("LBG_COMPAGNON_LAB_MODEL", "").strip()
-            or "huihui_ai/qwen3.5-abliterated:2B"
+            lab_quality_model()
+            if quality
+            else (
+                os.getenv("LBG_COMPAGNON_LAB_MODEL", "").strip()
+                or "huihui_ai/qwen3.5-abliterated:2B"
+            )
         )
         before = list(sorted_models)
-        only = [e for e in sorted_models if e.get("provider") == "local" and e.get("name") == preferred]
-        if not only:
-            only = [e for e in sorted_models if e.get("provider") == "local"][:1]
-        sorted_models = only
+        local_only = [e for e in sorted_models if e.get("provider") == "local"]
+        if quality and not any(e.get("name") == preferred for e in local_only):
+            local_only = [{"provider": "local", "name": preferred}, *local_only]
+        # Préférer le modèle LAB en tête, puis le reste local
+        head = [e for e in local_only if e.get("name") == preferred]
+        tail = [e for e in local_only if e.get("name") != preferred]
+        sorted_models = (head + tail) or local_only[:1]
         logger.info(
-            "LAB mode: local-only single model %s (from %s → %s)",
+            "LAB mode: local-only cascade preferred=%s quality=%s (from %s → %s)",
             preferred,
+            quality,
             [(e.get("provider"), e.get("name")) for e in before],
             [(e.get("provider"), e.get("name")) for e in sorted_models],
         )
+    else:
+        # Hors LAB : option local-only (évite Groq censuré) via env
+        no_cloud = (os.getenv("LBG_COMPAGNON_LOCAL_ONLY") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        )
+        if no_cloud:
+            sorted_models = [e for e in sorted_models if e.get("provider") == "local"]
+            logger.info(
+                "LOCAL_ONLY: stripped cloud providers → %s",
+                [(e.get("provider"), e.get("name")) for e in sorted_models],
+            )
 
     if model:
         selected_model = model
@@ -244,8 +279,22 @@ async def run_llm_chat_phase(
             continue
 
         if isinstance(raw, dict) and raw.get("content") and not _auto_retry:
+            content_str = str(raw.get("content") or "")
+            try:
+                from src.services.router_prompts import reshape_media_lab_reply, lab_env_enabled
+
+                # Force reshape dès que LAB env est on (même si profile UI = compagnon)
+                reshaped = reshape_media_lab_reply(
+                    prompt, content_str, lab=bool(lab_mode or lab_env_enabled())
+                )
+                if reshaped:
+                    logger.info("Media LAB reply reshaped → canonical (anti-dérive 2B)")
+                    raw = {**raw, "content": reshaped}
+                    content_str = reshaped
+            except Exception:
+                pass
             if not lab_mode:
-                softened = soften_media_hard_refuse(prompt, str(raw.get("content") or ""))
+                softened = soften_media_hard_refuse(prompt, content_str)
                 if softened:
                     logger.info("Media hard-refuse softened (garde + pistes legales)")
                     raw = {**raw, "content": softened}

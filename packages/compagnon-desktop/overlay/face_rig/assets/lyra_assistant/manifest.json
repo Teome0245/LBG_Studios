@@ -21,5 +21,5 @@
     }
   },
   "consumers": ["pilot_face_rig", "orch_ui_5174", "compagnon_desktop"],
-  "note": "Sheets Infographiste incohérents (collage) → fallback CSS jusqu’à packs unifiés."
+  "note": "Baseline CSS validée : silhouette cœur, oreilles chat, contraste navy/cyan (blink/look)."
 }

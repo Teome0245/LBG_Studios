@@ -118,7 +118,7 @@ async function runInitiativeAgir() {
         actionSourceText: intent.sourceText,
       })
     }
-    dismiss()
+    dismiss(6, proposal ? 'accept' : 'dismiss')
   } catch (e) {
     addMessage({
       role: 'assistant',

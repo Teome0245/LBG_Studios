@@ -12,8 +12,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CORTEX_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 UI_ROOT="${CORTEX_ROOT}/compagnon_ui"
 OVERLAY="${UI_ROOT}/server_overlay/router_prompts.py"
+LLM_CHAT_OVERLAY="${UI_ROOT}/server_overlay/llm_chat_phase.py"
 DESKTOP_DISPATCH="${UI_ROOT}/server_overlay/desktop_dispatch.py"
 DESKTOP_APPROVAL="${UI_ROOT}/server_overlay/desktop_approval.py"
+ROUTING_OVERLAY="${UI_ROOT}/server_overlay/routing.json"
+LOCAL_LLM_OVERLAY="${UI_ROOT}/server_overlay/local_llm_provider.py"
 
 REMOTE_USER="${LBG_ORCH_CT100_USER:-root}"
 REMOTE_HOST="${LBG_ORCH_CT100_HOST:-192.168.0.100}"
@@ -39,6 +42,24 @@ if [[ -f "${OVERLAY}" ]]; then
   echo "==> Overlay profils Compagnon → backend router_prompts.py"
   rsync -az "${OVERLAY}" \
     "${REMOTE}:${REMOTE_DIR}/backend/src/services/router_prompts.py"
+fi
+
+if [[ -f "${LLM_CHAT_OVERLAY}" ]]; then
+  echo "==> Overlay llm_chat_phase (LAB local-only + nudges) → backend"
+  rsync -az "${LLM_CHAT_OVERLAY}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/services/llm_chat_phase.py"
+fi
+
+if [[ -f "${ROUTING_OVERLAY}" ]]; then
+  echo "==> Overlay routing LLM local → backend config/routing.json"
+  rsync -az "${ROUTING_OVERLAY}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/config/routing.json"
+fi
+
+if [[ -f "${LOCAL_LLM_OVERLAY}" ]]; then
+  echo "==> Overlay LocalLLMProvider (messages + gemma4:e2b) → backend"
+  rsync -az "${LOCAL_LLM_OVERLAY}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/providers/local_llm_provider.py"
 fi
 
 if [[ -f "${DESKTOP_DISPATCH}" ]]; then

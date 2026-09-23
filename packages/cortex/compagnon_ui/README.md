@@ -39,3 +39,8 @@ Côté API Orch : overlay `server_overlay/router_prompts.py` (greffe sur le back
 ## Vision (analyse d'images)
 
 Joindre ou coller une image dans le chat → `POST /api/pilot/vision-ask` (Cortex Pilot `.140`) → Ollama `.110` (`LBG_VISION_LLM_MODEL`, défaut `llava:latest`). Max 3 images, 4 Mo chacune. Le 27B abliterated reste dispo en override mais est trop lent pour la vision CPU.
+
+## Chat LLM (routage local)
+
+Overlay `server_overlay/routing.json` + `local_llm_provider.py` : priorise Ollama `.110`
+(`gemma4:e2b` fast/balanced, `huihui_ai/Qwen3.8-abliterated:27b` smart). Groq `gpt-oss-20b` reste en fallback cloud.

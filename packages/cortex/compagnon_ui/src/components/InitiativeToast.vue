@@ -17,7 +17,7 @@ function discuss() {
     source: 'initiative',
     state: 'orchestrateur-happy',
   })
-  dismiss(2) // snooze 2h après discussion
+  dismiss(2, 'dismiss')
 }
 
 /** Prépare une carte Agir (proposal réelle) sans exécuter. */
@@ -35,6 +35,7 @@ async function runAgir(intent) {
         content: reason || 'Aucune action sûre reconnue pour cette initiative.',
         source: 'agir',
       })
+      dismiss(2, 'dismiss')
     } else {
       addMessage({
         role: 'assistant',
@@ -43,8 +44,8 @@ async function runAgir(intent) {
         actionProposal: proposal,
         actionSourceText: text,
       })
+      dismiss(6, 'accept')
     }
-    dismiss(6) // snooze 6h après Agir réussi
   } catch (e) {
     addMessage({
       role: 'assistant',
@@ -69,12 +70,13 @@ async function runAgir(intent) {
       <div class="initiative-head">
         <span class="initiative-dot"></span>
         <span class="initiative-label">Suggestion</span>
-        <span v-if="current.kind" class="initiative-kind">{{ current.kind }}</span>
+        <span v-if="current.goal?.title" class="initiative-goal">{{ current.goal.title }}</span>
+        <span v-else-if="current.kind" class="initiative-kind">{{ current.kind }}</span>
         <button
           type="button"
           class="initiative-close"
           title="Ignorer (snooze 4h)"
-          @click="dismiss(4)"
+          @click="dismiss(4, 'dismiss')"
         >✕</button>
       </div>
 
@@ -82,7 +84,7 @@ async function runAgir(intent) {
 
       <div v-if="current.intents?.length" class="initiative-intents">
         <button
-          v-for="it in current.intents"
+          v-for="it in current.intents.slice(0, 1)"
           :key="it.id"
           type="button"
           class="btn-agir"
@@ -96,7 +98,7 @@ async function runAgir(intent) {
 
       <div class="initiative-actions">
         <button type="button" class="btn-ghost" @click="discuss">Détails</button>
-        <button type="button" class="btn-ghost" @click="dismiss(4)">Ignorer</button>
+        <button type="button" class="btn-ghost" @click="dismiss(4, 'dismiss')">Ignorer</button>
       </div>
     </div>
   </Transition>
@@ -144,7 +146,8 @@ async function runAgir(intent) {
   text-transform: uppercase;
   color: #38bdf8;
 }
-.initiative-kind {
+.initiative-kind,
+.initiative-goal {
   font-size: 0.6rem;
   font-family: ui-monospace, monospace;
   color: #94a3b8;
@@ -152,6 +155,14 @@ async function runAgir(intent) {
   border-radius: 0.35rem;
   padding: 0.05rem 0.35rem;
   background: rgba(255, 255, 255, 0.03);
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.initiative-goal {
+  color: #5eead4;
+  border-color: rgba(45, 212, 191, 0.25);
 }
 .initiative-close {
   margin-left: auto;

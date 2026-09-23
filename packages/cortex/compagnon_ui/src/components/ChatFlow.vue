@@ -5,10 +5,12 @@ import ApprovalCard from './ApprovalCard.vue'
 import ActionCard from './ActionCard.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
+import { getStudioGoal } from '@/lib/studioGoal'
 
 const { messages, loadHistory } = useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
+const studioGoalTitle = computed(() => getStudioGoal().goal?.title || 'Veiller Jobs L2')
 
 onMounted(() => {
   loadHistory()
@@ -124,6 +126,9 @@ function triggerCtrlK() {
         </p>
         <p class="text-[11px] text-slate-500 font-mono">
           Écris ci-dessous · <button type="button" class="text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline cursor-pointer" @click="triggerCtrlK">Ctrl+K</button> pour le pilotage · <span class="text-cyan-400/80">Agir</span> pour une action poste
+        </p>
+        <p class="mt-3 text-[11px] text-teal-400/70">
+          Objectif actif · {{ studioGoalTitle }}
         </p>
       </div>
 
