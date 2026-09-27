@@ -5,6 +5,7 @@
 **Étoile du nord produit** (origine, avant le recentrage packaging) :  
 IA incarnée sur **PC/infra** → persona au **cœur du MMO** → évolution **contrôlée** du monde.  
 Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
+**Priorités actuelles** : [`docs/PRIORITES_ACTUELLES.md`](docs/PRIORITES_ACTUELLES.md).  
 **Focus 2026-09-16** : [`docs/FOCUS_COMPAGNON.md`](docs/FOCUS_COMPAGNON.md) — Compagnon Studio (type Jarvis) via Pilot `#/assistant`.  
 *(Archivé jeu)* [`docs/FOCUS_WAHOU.md`](docs/FOCUS_WAHOU.md) — 30 s Lost Heaven.
 
