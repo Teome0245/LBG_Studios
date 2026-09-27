@@ -1,76 +1,83 @@
 # Priorités actuelles — LBG Studios
 
 **Date** : 2026-09-27  
-**Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — docs, Cursor et packages.  
-**Pas** les repos legacy (`LBG_IA_MMORPG`, `new_mmo`) pour les nouvelles features.
+**Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
+**Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
 Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
 
 ---
 
-## Ordre global
+## Ordre stratégique
 
 **O1 Studio d’abord, O2 Jeu ensuite.**
 
-**Étoile du nord produit** : IA incarnée sur PC/infra → persona au cœur du MMO → évolution contrôlée du monde  
-(checklist : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)).
+**Étoile du nord produit** : une IA incarnée sur PC/infra, puis persona au cœur du MMO, avec une évolution contrôlée du monde.  
+Checklist de restauration : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).
 
 ---
 
-## O1 — Studio (prioritaire)
+## O1 — Studio (priorité actuelle)
 
-Cortex recentré : **Compagnon Studio** (type Jarvis), Team, Campus/Lyra, desktop hybride — **sans** réintroduire le client web legacy `/mmo/` ni `mmo_server` / `mmmorpg_server`.
+Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team, méta-autonomie L3, smoke LAN, sprint d’évolution 7 jours (L1 auto / L2 Pilot).
 
-### Focus actuel (2026-09-16/17) — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)
+### Focus explicite (depuis sept. 2026) — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)
 
-Les **30 premières secondes** du chat produit doivent sentir un **compagnon**, pas un hub technique.
+**Compagnon Studio** (type Jarvis) :
 
-| Surface | Rôle |
-|---------|------|
-| **Présence conversationnelle** | `compagnon_ui` sur `.100:5174` (entrée produit) |
-| **Cockpit ops / L2** | Pilot sur `.140:8080` (`#/assistant`, équipe, jobs, approvals) |
-| **Desktop** | `packages/compagnon-desktop` sur poste `.10` (overlay / tray) |
+| Rôle | Surface |
+|------|---------|
+| Présence conversationnelle | `.100:5174` (`compagnon_ui`) |
+| Ops / Team / approvals L2 | Pilot `.140:8080/pilot/` |
+| Bureau Windows | `packages/compagnon-desktop` (tray, overlay, notifications) |
 
-**Autonomie bornée** : L1 auto · L2 toi (Pilot) · L3 Miroir → propositions sans merge aveugle (déjà largement en place côté méta-autonomie).
+Jalons **D0–D3** et pilotage (⌘K, Agir dry-run → réel) : **OK**.  
+Le doc du 2026-09-18 couvre surtout polish UX, sonde AD et quota d’initiative.
 
-Beaucoup de jalons O1 sont marqués OK dans [`OBJECTIVES.md`](../OBJECTIVES.md) (extrait Cortex, deploy Pilot LAN, sprint évolution 7j, L3, smoke LAN, compagnon D0–D3).  
-Le travail restant est surtout **continuité produit** : greffer/extraire le front Compagnon dans le monorepo, persona/voix unifiées, desktop `.10`.
+**Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
+Pilot reste le cockpit ops ; on n’absorbe **pas** Team/Jobs dans un clone de `:5174`.  
+Tant que le Compagnon n’est pas crédible sur `:5174`, le pari jeu « 30 s Lost Heaven » ([`FOCUS_WAHOU.md`](FOCUS_WAHOU.md), archivé) ne repasse pas en tête.
 
-**Règle dev** : toute nouvelle feature Studio → `packages/cortex`.  
-Matrice LLM locale 110/111 documentée dans les règles Cursor du repo.
+Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).
+
+**Règle dev** : nouvelle feature Studio → `packages/cortex`.
 
 ---
 
 ## O2 — Jeu (après O1)
 
-Godot `packages/prime-client` + Launchpad + serveur Prime `.246`.  
+`packages/prime-client` (Godot) + `packages/launchpad` → serveur Prime `.246`.  
 Plan exécuteur : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md).
 
-| Rails | État |
-|-------|------|
-| **P0–P2c, P5a** | Largement faits (smokes M11/M12, talents/craft, missions hub, cantina stub, cour de chasse sandbox) |
-| **P3** | Persona en jeu — jaune, Rang 2 — hors scope immédiat du focus Compagnon |
-| **P4** | Retrait pont SOE Python — ouvert |
-| **P5** | World Director en parallèle |
+Beaucoup de rails **P0–P2c** (login M11, M12 WS, talents/craft, missions hub, cantina stub) sont faits ou en smoke vert. En cours / ouvert :
 
-Le focus « wahou » 30 s Lost Heaven est **archivé** ([`FOCUS_WAHOU.md`](FOCUS_WAHOU.md)) au profit du Compagnon Studio.
+| Rail | État |
+|------|------|
+| **P3** | Persona en jeu — jaune, Rang 2 |
+| **P4** | Retrait du pont SOE Python côté joueur |
+| **P5** | World Director / bots en parallèle, sans bloquer P1–P4 |
 
-**Règle dev** : nouvelles features jeu après O1 vert → `packages/prime-client`.
+Lore et anti-dérive : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md), etc.
+
+**Règle dev** : nouvelle feature jeu (quand O1 est « vert » pour toi) → `packages/prime-client`.
 
 ---
 
 ## Hors scope volontaire
 
-- Fusion Infographiste dans le monorepo
-- Core3/DB dans Git
+- Fusion d’Infographiste dans le monorepo
+- Migration Core3 serveur dans Git
 - Suppression immédiate des repos legacy
-- Second OS type CrewAI
-- Réintégration du legacy gelé (`hybrid_proactive_agent`, etc.) dans l’extract Cloud
+- Réintroduction du stack MMO web legacy
 
 ---
 
-## En pratique sur ce monorepo
+## En pratique pour le dev
 
-**Priorité immédiate** = faire vivre le Compagnon (UI `:5174`, Pilot assistant, desktop) dans `packages/cortex`, avec smoke LAN ([`SMOKE_LAN.md`](SMOKE_LAN.md)) comme garde-fou.
+| Action | Où |
+|--------|-----|
+| Nouvelle feature Studio | `packages/cortex` |
+| Nouvelle feature jeu (O1 vert) | `packages/prime-client` |
+| Vérif LAN | `bash tools/smoke_lan_surfaces.sh --functional` — [`SMOKE_LAN.md`](SMOKE_LAN.md) |
 
-Le jeu avance surtout en maintenance / P3–P4 tant que le Studio tient le focus Compagnon.
+**En une phrase** : consolider le Compagnon sur `:5174` + Pilot/Team sur Cortex, puis P3–P4 MMO sur Prime Client, sans diluer l’effort dans le legacy ni rouvrir le MMO web.
