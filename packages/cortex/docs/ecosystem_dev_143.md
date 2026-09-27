@@ -1,8 +1,9 @@
 # Écosystème LBG — développement depuis `.143`
 
-**Date** : 2026-09-23  
+**Date** : 2026-09-27  
 **But** : que **Compagnon**, la **Team** et le **studio** portent le développement du monorepo — pas seulement Cursor humain.  
-**Poste éditeur** : Omarchy **`.143`** (VS Code + Cline + Continue) · secours WSL `.10`.
+**Poste éditeur** : Omarchy **`.143`** (VS Code + Cline + Continue) · secours WSL `.10`.  
+**Leçon M2/M3** : [`lecon_m2_m3_self_compagnon_2026-09-27.md`](lecon_m2_m3_self_compagnon_2026-09-27.md).
 
 Voir aussi : [`sans_cursor.md`](sans_cursor.md) · [`omarchy_vm_143.md`](omarchy_vm_143.md) · [`cline/SMOKE.md`](cline/SMOKE.md) · [`FOCUS_COMPAGNON.md`](../../../docs/FOCUS_COMPAGNON.md).
 
@@ -63,8 +64,9 @@ Cible desktop : agent Omarchy `:5005` (alias `omarchy` / `.143`). Soft-confirm L
 - [x] Bandeau **Self** sur `:5174` (curiosité / tension / intent)  
 - [x] Team L1 depuis toast Compagnon (`POST /api/pilot/team/tasks` + run)  
 - [x] Contre-pouvoir Agir (`companion/review-proposal` dans ActionCard)  
-- [ ] VS Code + Cline sur `.143` (Plan 9b / Act 12b) smoke OK (manuel)  
-- [ ] Doc sujet + leçon après merge  
+- [x] VS Code + Cline sur `.143` — ext. Cline OK ; smoke tags+chat Plan 9b / Act 12b (alias `:12b`→`:12b-qat` sur `.110`) ; UI Plan→Act reste un check manuel ponctuel  
+- [x] Doc sujet + leçon — [`lecon_m2_m3_self_compagnon_2026-09-27.md`](lecon_m2_m3_self_compagnon_2026-09-27.md)  
+
 
 Quand cette liste tient, on peut confier un sujet O2 (Core3/Prime…) à la boucle — pas avant.
 

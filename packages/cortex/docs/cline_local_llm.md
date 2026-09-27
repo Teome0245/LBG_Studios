@@ -11,7 +11,7 @@
 
 | Mode Cline | Rôle matrice | Hôte | Base URL | Model ID |
 |------------|--------------|------|----------|----------|
-| **Act** (défaut code) | `code` / `pm` / `uncensored` | **110** heavy | `http://192.168.0.110:11434` | `huihui_ai/gemma-4-abliterated:12b` |
+| **Act** (défaut code) | `code` / `pm` / `uncensored` | **110** heavy | `http://192.168.0.110:11434` | `huihui_ai/gemma-4-abliterated:12b` (alias → `:12b-qat` si seul tag QAT présent) |
 | **Plan** (plans utiles) | raisonnement PM | **110** heavy | `http://192.168.0.110:11434` | `huihui_ai/qwen3.5-abliterated:9b` |
 | Plan alt. (même qualité qu’Act) | `code` / `dialogue` | **110** | idem | `huihui_ai/gemma-4-abliterated:12b` |
 | Plan triage (outline rapide) | `fast` / `router` | **111** light | `http://192.168.0.111:11434` | `0.8B` ou `2B` |
