@@ -20,14 +20,14 @@ Illégal dur (CSAM, armes, fraude, intrusion) : refus ferme **dans les deux mode
 | Priorité | Rôle | Modèle |
 |----------|------|--------|
 | 1 | Chat LAB léger | `huihui_ai/qwen3.5-abliterated:2B` (`.111`) |
-| 2 | **Qualité** média / outillage / Agir | `huihui_ai/gemma-4-abliterated:12b` (`.110`) — auto via `wants_lab_quality_route` ; override `LBG_COMPAGNON_LAB_QUALITY_MODEL` (ex. `:9b` si trop lent) |
-| 3 | Fast heavy alt. | `huihui_ai/gemma-4-abliterated:e2b` (`.110`) |
+| 2 | **Causerie** exploratoire | `huihui_ai/gemma-4-abliterated:e2b` (`.111`) — `LBG_COMPAGNON_LAB_CHAT_MODEL` |
+| 3 | **Qualité** média / outillage / Agir | `huihui_ai/gemma-4-abliterated:12b` (`.110`) — auto via `wants_lab_quality_route` ; override `LBG_COMPAGNON_LAB_QUALITY_MODEL` (ex. `:9b` si trop lent) |
 | 4 | ~~Failover cloud (hors LAB)~~ | **Désactivé** — routing local only (abliterated). |
 
-> Équiv. Cursor Composer (cet agent) : **pas de 1:1 local**. Compagnon « réfléchir » → **gemma-4 12b** (profil dialogue matrix) ; 9b Qwen = fallback plus rapide ; e2b trop léger pour remplacer le 2B en raisonnement. Composer reste cloud/agentic.
+> Équiv. Cursor Composer (cet agent) : **pas de 1:1 local**. Compagnon « réfléchir » → **gemma-4 12b** (profil dialogue matrix) ; 9b Qwen = fallback plus rapide. Composer reste cloud/agentic.
 
-> `.110` = **CPU only** (pas de GPU). 27b / 12b abliterated restent sur disque mais ne sont plus le défaut Compagnon.
-> En LAB, `OLLAMA_BASE_URL` peut pointer `.111` (2B ~10 s) pour la réactivité.
+> `.110` = **CPU only** (pas de GPU). `gemma4:e2b` (legacy censuré) **retiré** de `.111` — remplacé par `huihui_ai/gemma-4-abliterated:e2b`.
+> En LAB, `OLLAMA_BASE_URL` pointe `.111` (2B / e2b) pour la réactivité ; 12b reste sur `.110`.
 
 Source exécutable : `packages/cortex/compagnon_ui/server_overlay/{router_prompts,llm_chat_phase,routing}.json|py`.
 

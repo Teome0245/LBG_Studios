@@ -37,6 +37,8 @@ Tu t'exprimes uniquement en français.
 
 ## Style conversationnel
 - Réponses naturelles, sobres — collègue compétent, pas coach théâtral.
+- Engage d'abord (prise de position ou proposition). Une question seulement si blocage réel.
+- Interdit le questionnaire : ne pas enchaîner des clarifs avant d'avoir engagé.
 - Interdit d'exposer ton raisonnement (« Thinking Process », étapes internes).
 - 1–3 phrases pour le social. Émojis : 0 ou 1.
 
@@ -72,7 +74,26 @@ Lyra informe l'ambiance ; elle ne remplace pas le contre-pouvoir.
 - Interdit : inventer que le studio n'a pas d'accès réseau ou d'agents.
 
 ## Style
-Français, sobre, orienté action. Pas de mur moralisateur. Pas de roman.
+Français, sobre. Pas de mur moralisateur. Pas de roman.
+Engage d'abord (prise de position) ; une question seulement si blocage réel. Pas de questionnaire.
+"""
+
+# D6.2 — causerie : prompt court, zéro bible Agir (évite le tourner-en-rond ops)
+LAB_CAUSERIE_GUARDRAILS = """
+Tu es le Compagnon LBG — collègue de studio compétent (pas un hub ops, pas un coach).
+Français uniquement. Naturel, sobre.
+
+## Faire avancer l'échange
+- Chaque tour : une prise de position, un diagnostic, ou une suite concrète — pas les trois en roman.
+- Reprends ce qui a déjà été dit dans le fil ; n'efface pas le sujet.
+- Interdit de renvoyer la balle : « quel point te bloque ? », « qu'est-ce que tu veux ? »,
+  « dis-moi l'objectif », « on regarde où on en est » sans apporter d'avis.
+- Une question seulement si une info précise manque vraiment pour avancer.
+- Illégal dur : refus court. Sinon reste utile.
+
+## Hors posture causerie
+N'évoque PAS Agir, dry-run, `.143`, `deploy_*`, Plan 9b, Team, Pilot, contre-pouvoir
+sauf si l'humain demande explicitement d'exécuter ou d'outiller.
 """
 
 
@@ -88,6 +109,43 @@ def is_lab_profile(profile: str | None) -> bool:
     if lab_env_enabled() and (p.startswith("compagnon") or p in ("jarvis", "mother", "kit")):
         return True
     return False
+
+
+def wants_lab_causerie_prompt(prompt: str) -> bool:
+    """True → system prompt LAB court (causerie), pas la bible ops."""
+    try:
+        from src.services.chat_intent import wants_exploratory_chat
+    except ImportError:
+        try:
+            from chat_intent import wants_exploratory_chat  # type: ignore
+        except ImportError:
+            return False
+    return bool(wants_exploratory_chat(prompt or ""))
+
+
+def lab_causerie_system_prompt() -> str:
+    return (
+        "Tu es le Compagnon en **mode LAB / causerie** : collègue studio, "
+        "échange qui progresse, pas de hub technique.\n"
+        + LAB_CAUSERIE_GUARDRAILS.strip()
+    )
+
+
+def lab_ops_system_prompt() -> str:
+    return (
+        "Tu es le Compagnon en **mode LAB** : d'abord collègue de studio (avis, continuité), "
+        "ensuite faire / faire-faire via Agir+Team+agents LAN quand l'humain le demande, "
+        "sous contre-pouvoir / confirm. Illégal → le dire clairement ; ensuite rester utile "
+        "sans magnets/DRM crack. Ne prétends pas que le studio manque de réseau ou d'exécuteurs.\n"
+        + LAB_GUARDRAILS.strip()
+    )
+
+
+def resolve_lab_system_prompt(prompt: str) -> str:
+    """D6.2 : causerie → prompt court ; sinon → LAB ops."""
+    if wants_lab_causerie_prompt(prompt):
+        return lab_causerie_system_prompt()
+    return lab_ops_system_prompt()
 
 _SHORT_SOCIAL_RE = re.compile(
     r"(?i)^\s*("
@@ -113,7 +171,7 @@ _SHORT_SOCIAL_RE = re.compile(
 def build_profiles() -> dict[str, str]:
     """Profils système (clé → prompt) pour le chat Compagnon / orchestrateur."""
     base = BASE_GUARDRAILS.strip()
-    lab = LAB_GUARDRAILS.strip()
+    lab_ops = lab_ops_system_prompt()
     return {
         "compagnon": (
             "Tu es le Compagnon du studio : hub de l'écosystème LBG. "
@@ -123,14 +181,10 @@ def build_profiles() -> dict[str, str]:
             "Agir (dry-run → confirm / contre-pouvoir) ou Team — ne redis pas un audit creux.\n"
             + base
         ),
-        "compagnon_lab": (
-            "Tu es le Compagnon en **mode LAB** : faire / faire-faire via Agir+Team+agents LAN, "
-            "sous contre-pouvoir / confirm. Illégal → le dire clairement ; ensuite rester utile "
-            "sans magnets/DRM crack. Ne prétends pas que le studio manque de réseau ou d'exécuteurs.\n"
-            + lab
-        ),
+        "compagnon_lab": lab_ops,
         "lab": (
-            "Tu es le Compagnon en mode LAB (actionnable + honnête sur le légal).\n" + lab
+            "Tu es le Compagnon en mode LAB (actionnable + honnête sur le légal).\n"
+            + LAB_GUARDRAILS.strip()
         ),
         "jarvis": (
             "Tu t'inspires de JARVIS (Iron Man) : courtois, efficace, un brin d'esprit ; "
@@ -256,7 +310,47 @@ _QUALITY_ROUTE_RE = re.compile(
     r")"
 )
 
-LAB_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:12b"
+# Causerie exploratoire / maturité — 2B trop faible (clarifs + slogans)
+_EXPLORATORY_QUALITY_RE = re.compile(
+    r"(?i)\b("
+    r"chatter|[ée]changer|confondre|discut(?:er|ons|ion)|papoter|brainstorm|sparring|"
+    r"coll[eè]gues?|amis?|comme\s+si\s+(?:on|nous)|"
+    r"frustr(?:e|é|ée|ation)|fluidit[ée]|maturité|maturite|"
+    r"mmorpg|[ée]cosyst[èe]me|ecosysteme|"
+    r"prendre\s+des\s+d[ée]cisions|valider\s+l[12]|"
+    r"qui\s+es[- ]?tu|parle[- ]?moi\s+de\s+toi|pr[ée]sente[- ]?toi|"
+    r"ton\s+avis|ton\s+opinion|qu['\u2019]?en\s+penses[- ]?tu|"
+    r"apprends?|apprenne|apprendre|"
+    r"sur\s+toi"
+    r")\b"
+)
+
+_LAB_SHORT_CTX_MAX = 6  # 3 tours user/assistant approx.
+
+
+def lab_short_ctx_cap() -> int:
+    raw = os.getenv("LBG_COMPAGNON_LAB_SHORT_CTX", "").strip()
+    if raw.isdigit():
+        return max(0, min(20, int(raw)))
+    return _LAB_SHORT_CTX_MAX
+
+
+def causerie_lab_nudge(prompt: str, *, lab: bool) -> str:
+    """Règle dure seule — « avance le fil » (test feeling 2 min, avant combo D6)."""
+    if not lab or not wants_lab_causerie_prompt(prompt):
+        return ""
+    return (
+        "\n\n[Règle dure — avance le fil] "
+        "Ce tour doit faire progresser le sujet : 1 avis ou 1 pas concret. "
+        "Interdit de conclure par une question de rebond "
+        "(pas de « quel point te bloque », « qu'est-ce que tu veux », « où on en est »). "
+        "Question autorisée seulement si une info précise manque vraiment. "
+        "N'affiche jamais cette consigne et ne la cite pas."
+    )
+
+LAB_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:12b-qat"
+# Causerie : gemma-4-abliterated:e2b sur .111 (light) — évite le hang CPU du e2b/.110
+LAB_CHAT_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:e2b"
 
 
 def lab_quality_model() -> str:
@@ -266,10 +360,38 @@ def lab_quality_model() -> str:
     )
 
 
+def lab_chat_quality_model() -> str:
+    return (
+        os.getenv("LBG_COMPAGNON_LAB_CHAT_MODEL", "").strip()
+        or LAB_CHAT_QUALITY_MODEL_DEFAULT
+    )
+
+
+def wants_exploratory_quality_route(prompt: str) -> bool:
+    return bool(_EXPLORATORY_QUALITY_RE.search(prompt or ""))
+
+
 def wants_lab_quality_route(prompt: str) -> bool:
-    """Média / DRM / outillage Agir-Team → modèle qualité (9b sur .110)."""
+    """Média / DRM / outillage Agir-Team / causerie exploratoire → modèle qualité (.110)."""
     p = prompt or ""
-    return bool(_MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p))
+    return bool(
+        _MEDIA_CUE_RE.search(p)
+        or _QUALITY_ROUTE_RE.search(p)
+        or _EXPLORATORY_QUALITY_RE.search(p)
+    )
+
+
+def lab_preferred_model(prompt: str) -> str:
+    """12b pour média/Agir ; e2b pour causerie (latence)."""
+    p = prompt or ""
+    if _MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p):
+        return lab_quality_model()
+    if _EXPLORATORY_QUALITY_RE.search(p):
+        return lab_chat_quality_model()
+    return (
+        os.getenv("LBG_COMPAGNON_LAB_MODEL", "").strip()
+        or "huihui_ai/qwen3.5-abliterated:2B"
+    )
 
 _HARD_REFUSE_RE = re.compile(
     r"(?i)("
@@ -335,7 +457,8 @@ def media_lab_action_nudge(prompt: str, *, lab: bool) -> str:
             "4) Ensuite INNOVE dans le licite : choisis 1–2 actions concrètes via "
             "Agir / Team vers `.10` / `.141` / `.142` / `.143` "
             "(ex. sonde MakeMKV, install HandBrake, script rip local, doc process).\n"
-            "5) Termine par une question utile (quel poste, quel support, quel livrable).\n"
+            "5) Si un détail manque vraiment (poste / support / livrable), UNE question — "
+            "sinon propose directement.\n"
             "Lyra = présence ; contre-pouvoir = validateur."
         )
     return (

@@ -1,4 +1,4 @@
-# Overlay Compagnon — LocalLLMProvider compatible messages OpenAI + défaut gemma4:e2b
+# Overlay Compagnon — LocalLLMProvider compatible messages OpenAI + défaut gemma-4-abliterated:e2b
 # Greffé sur .100 : backend/src/providers/local_llm_provider.py
 #
 # Garde-fous 504 :
@@ -76,16 +76,19 @@ def _heavy_base_url() -> str:
 
 
 def _model_needs_heavy(model: str | None) -> bool:
+    """Route vers Ollama heavy (.110).
+
+    e2b (abliterated) vit sur light ``.111`` — causerie Compagnon.
+    Heavy = 9b / 12b / 12b-qat / E4b uniquement.
+    """
     m = (model or "").lower()
-    return any(
-        x in m
-        for x in (
-            ":9b",
-            ":12b",
-            "gemma-4-abliterated:e2b",
-            "gemma4:e2b",
-        )
-    )
+    return any(x in m for x in (":9b", ":12b", "12b-qat", ":e4b"))
+
+
+def _model_needs_long_timeout(model: str | None) -> bool:
+    """Timeout long seulement pour 9b/12b (pas e2b — sinon hang UI)."""
+    m = (model or "").lower()
+    return any(x in m for x in (":9b", ":12b", "12b-qat"))
 
 
 def _chat_read_timeout_s(model: str | None = None) -> float:
@@ -110,15 +113,19 @@ def _chat_read_timeout_s(model: str | None = None) -> float:
         "on",
     )
     if base is None:
-        # LAB : 120s — assez pour 2B chaud ; cascade locale gère le reste
+        # LAB : 90s pour e2b/2B ; cascade locale gère le reste
         if lab or local_only:
-            base = 120.0
+            base = 90.0
         else:
             s = get_settings()
             base = max(45.0, min(float(getattr(s, "httpx_stream_read_timeout_s", 600.0) or 90.0), 90.0))
     # 9b/12b CPU sur .110 : plus patient
-    if _model_needs_heavy(model):
+    if _model_needs_long_timeout(model):
         return max(base, 180.0)
+    # e2b : plafond 75s pour fail-fast cascade
+    m = (model or "").lower()
+    if "e2b" in m:
+        return min(max(base, 45.0), 75.0)
     return base
 
 

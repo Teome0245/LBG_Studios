@@ -73,7 +73,7 @@ Serveurs jeu (runtime, hors Git) :
 | **`.10`** | Poste Teome | Cursor, ComfyUI, pilotage humain — plus l’executor LAN |
 | **`.100`** | Cockpit / Orch UI / Simple Chat | `:8093` Cockpit · `:3000` API · `:5174` SPA chat · `:3080` Open WebUI lab |
 | **`.110`** | Ollama **heavy** | `:11434` **CPU only** — `gemma-4-abliterated:12b` + `e2b` (+ `qwen3.5-abliterated:9b` disque) ; pas de 27B routé |
-| **`.111`** | Ollama **light** | `:11434` — `qwen3.5-abliterated:2B` (Clean / Compagnon LAB) + `0.8B` (Fast) |
+| **`.111`** | Ollama **light** | `:11434` — `qwen3.5-abliterated:2B` / `0.8B` + `gemma-4-abliterated:e2b` (causerie Compagnon) · **Piper TTS** `:8098` (`voice_local`) |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |

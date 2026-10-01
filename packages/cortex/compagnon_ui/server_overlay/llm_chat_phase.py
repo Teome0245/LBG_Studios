@@ -14,6 +14,7 @@ from src.services.agents import init_agents
 from src.services.router_prompts import (
     extract_program_name,
     is_lab_profile,
+    short_social_reply,
     soften_media_hard_refuse,
 )
 from src.services.routing_availability import (
@@ -43,6 +44,16 @@ async def run_llm_chat_phase(
     """
     logger = logging.getLogger("lbg.router.dispatch")
 
+    # Petites phrases sociales : réponse fixe (évite hang LLM)
+    fixed = short_social_reply(prompt)
+    if fixed is not None:
+        out = router.normalize_llm(fixed, "short_social", "local", latency=0.0)
+        if isinstance(out, dict):
+            out["source"] = "short_social"
+            out["model"] = "short_social"
+            out["model_used"] = "short_social"
+        return out
+
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
     lyra_tone_extra = ""
@@ -67,11 +78,31 @@ async def run_llm_chat_phase(
     if lab_mode:
         # Forcer le prompt LAB même si l'UI envoie profile=compagnon + LBG_COMPAGNON_LAB=1
         chat_profile = "compagnon_lab"
-        # Prompt court : éviter les timeouts Ollama (mémoire / historique gonflent le contexte)
+        # Mémoire stable coupée (anti-invention + taille) ; fil conversation conservé (D6.1)
         memory = {}
-        short_ctx = []
+        try:
+            from src.services.router_prompts import lab_short_ctx_cap
 
-    base_profile = router.PROFILES.get(chat_profile, router.PROFILES["chaleureux"])
+            _cap = lab_short_ctx_cap()
+        except Exception:
+            _cap = 6
+        if short_ctx and _cap > 0 and len(short_ctx) > _cap:
+            short_ctx = list(short_ctx)[-_cap:]
+        elif _cap == 0:
+            short_ctx = []
+
+    # D6.2 : LAB causerie → prompt court ; sinon profil registre / LAB ops
+    try:
+        from src.services.router_prompts import resolve_lab_system_prompt, wants_lab_causerie_prompt
+
+        lab_causerie = bool(lab_mode and wants_lab_causerie_prompt(prompt))
+        if lab_mode:
+            base_profile = resolve_lab_system_prompt(prompt)
+        else:
+            base_profile = router.PROFILES.get(chat_profile, router.PROFILES["chaleureux"])
+    except Exception:
+        lab_causerie = False
+        base_profile = router.PROFILES.get(chat_profile, router.PROFILES["chaleureux"])
 
     # Nudge média (légal + Agir) — le 2B oublie sinon le system long
     try:
@@ -81,12 +112,49 @@ async def run_llm_chat_phase(
     except Exception:
         media_nudge = ""
 
+    # Nudge causerie (D6.1/D6.2) — vide si prompt LAB_CAUSERIE déjà résolu
+    try:
+        from src.services.router_prompts import causerie_lab_nudge
+
+        causerie_nudge = causerie_lab_nudge(prompt, lab=lab_mode)
+    except Exception:
+        causerie_nudge = ""
+
+    # Couche Character (worldview + dials + ego soft) — best-effort
+    # Causerie : dials + ego seulement, pas le mur worldview/ops catchphrases
+    character_extra = ""
+    try:
+        from src.services.character_layer import character_enabled, format_character_block
+
+        if character_enabled() and chat_profile in (
+            "compagnon",
+            "compagnon_lab",
+            "lab",
+            "jarvis",
+            "mother",
+            "kit",
+        ):
+            block = format_character_block(
+                lab=lab_mode, prompt=prompt, causerie=lab_causerie
+            )
+            if block:
+                character_extra = "\n\n" + block
+    except Exception:
+        character_extra = ""
+
     if profile == "test" or lab_mode:
-        system_prompt = base_profile + media_nudge
+        # LAB : short_ctx porte le fil ; history global resterait redondant / bruyant
+        system_prompt = base_profile + media_nudge + causerie_nudge + character_extra
         history = []
     else:
         system_prompt = (
-            base_profile + "\n" + router.lyra.get_style_modifier() + lyra_tone_extra + media_nudge
+            base_profile
+            + "\n"
+            + router.lyra.get_style_modifier()
+            + lyra_tone_extra
+            + media_nudge
+            + causerie_nudge
+            + character_extra
         )
         history = await get_history(limit=1)
 
@@ -108,6 +176,65 @@ async def run_llm_chat_phase(
             router._exc_throttler,
             "lan_llm_grounding",
             "LAN LLM grounding inject failed (best-effort)",
+        )
+
+    # P1 — Self slim (conscience studio / memory_refs) dans le prompt
+    try:
+        from src.services.companion_self_grounding import (
+            format_self_grounding,
+            load_self_status,
+            wants_self_memory_context,
+        )
+
+        # D6.2 causerie : pas d'ancrage Self (bruit ops / leçons) — le fil suffit
+        if not lab_causerie:
+            self_payload = await load_self_status()
+            if self_payload is not None:
+                need_full = wants_self_memory_context(prompt) or not lab_mode
+                block = format_self_grounding(self_payload, compact=not need_full)
+                if block:
+                    system_prompt = system_prompt + "\n\n" + block
+    except Exception:
+        log_exception_throttled(
+            logging.getLogger("lbg.router.self_grounding"),
+            router._exc_throttler,
+            "companion_self_grounding",
+            "Self grounding inject failed (best-effort)",
+        )
+
+    # P2 — REGISTRE-lite (hosts / Prime / incarnations) si la question touche l'écosystème
+    try:
+        from src.services.ecosystem_grounding import (
+            format_ecosystem_grounding,
+            wants_ecosystem_context,
+        )
+
+        if (not lab_causerie) and wants_ecosystem_context(prompt):
+            eco = format_ecosystem_grounding()
+            if eco:
+                system_prompt = system_prompt + "\n\n" + eco
+    except Exception:
+        log_exception_throttled(
+            logging.getLogger("lbg.router.ecosystem_grounding"),
+            router._exc_throttler,
+            "ecosystem_grounding",
+            "Ecosystem grounding inject failed (best-effort)",
+        )
+
+    # P3 — RAG (leçons / expériences / knowledge) si LBG_RAG_ENABLED + indices mémoire
+    try:
+        from src.services.rag_grounding import load_rag_block
+
+        if not lab_causerie:
+            rag_block = await load_rag_block(prompt)
+            if rag_block:
+                system_prompt = system_prompt + "\n\n" + rag_block
+    except Exception:
+        log_exception_throttled(
+            logging.getLogger("lbg.router.rag_grounding"),
+            router._exc_throttler,
+            "rag_grounding",
+            "RAG grounding inject failed (best-effort)",
         )
 
     context_messages = []
@@ -175,30 +302,61 @@ async def run_llm_chat_phase(
             )
 
     if lab_mode:
-        # LAB : local only — chat léger = 2B (.111) ; média/outillage = 9b (.110)
-        from src.services.router_prompts import lab_quality_model, wants_lab_quality_route
+        # LAB : local only — chat léger = 2B (.111) ; causerie = gemma-4-abliterated:e2b ; média/Agir = 12b (.110)
+        from src.services.router_prompts import (
+            lab_preferred_model,
+            wants_lab_quality_route,
+            _MEDIA_CUE_RE,
+            _QUALITY_ROUTE_RE,
+        )
 
         quality = wants_lab_quality_route(prompt)
-        preferred = (
-            lab_quality_model()
-            if quality
-            else (
-                os.getenv("LBG_COMPAGNON_LAB_MODEL", "").strip()
-                or "huihui_ai/qwen3.5-abliterated:2B"
-            )
-        )
+        preferred = lab_preferred_model(prompt)
         before = list(sorted_models)
         local_only = [e for e in sorted_models if e.get("provider") == "local"]
-        if quality and not any(e.get("name") == preferred for e in local_only):
+        if not any(e.get("name") == preferred for e in local_only):
             local_only = [{"provider": "local", "name": preferred}, *local_only]
-        # Préférer le modèle LAB en tête, puis le reste local
         head = [e for e in local_only if e.get("name") == preferred]
         tail = [e for e in local_only if e.get("name") != preferred]
-        sorted_models = (head + tail) or local_only[:1]
+
+        needs_heavy = bool(_MEDIA_CUE_RE.search(prompt or "") or _QUALITY_ROUTE_RE.search(prompt or ""))
+
+        def _is_heavy(name: str) -> bool:
+            n = (name or "").lower()
+            # e2b reste light (.111) — pas de forçage heavy
+            return any(x in n for x in (":9b", ":12b", "12b-qat", ":e4b"))
+
+        if needs_heavy:
+            # Média / Agir : 12b puis 9b — pas de file d'attente light→heavy
+            allow_h = {
+                preferred,
+                "huihui_ai/gemma-4-abliterated:12b",
+                "huihui_ai/gemma-4-abliterated:12b-qat",
+                "huihui_ai/qwen3.5-abliterated:9b",
+            }
+            tail = [e for e in tail if e.get("name") in allow_h][:2]
+            sorted_models = (head + tail) or local_only[:1]
+        else:
+            # Causerie / social / général : UNIQUEMENT light .111 (évite hang 12b CPU)
+            light_ok = {
+                preferred,
+                "huihui_ai/gemma-4-abliterated:e2b",
+                "huihui_ai/qwen3.5-abliterated:2B",
+                "huihui_ai/qwen3.5-abliterated:0.8B",
+                "llama3.2:3b",
+                "qwen2.5:3b",
+            }
+            tail = [e for e in tail if e.get("name") in light_ok and not _is_heavy(str(e.get("name") or ""))][:3]
+            head = [e for e in head if not _is_heavy(str(e.get("name") or ""))] or [
+                {"provider": "local", "name": "huihui_ai/qwen3.5-abliterated:2B"}
+            ]
+            sorted_models = (head + tail) or [{"provider": "local", "name": "huihui_ai/qwen3.5-abliterated:2B"}]
+
         logger.info(
-            "LAB mode: local-only cascade preferred=%s quality=%s (from %s → %s)",
+            "LAB mode: local-only cascade preferred=%s quality=%s heavy=%s (from %s → %s)",
             preferred,
             quality,
+            needs_heavy,
             [(e.get("provider"), e.get("name")) for e in before],
             [(e.get("provider"), e.get("name")) for e in sorted_models],
         )
@@ -298,6 +456,17 @@ async def run_llm_chat_phase(
                 if softened:
                     logger.info("Media hard-refuse softened (garde + pistes legales)")
                     raw = {**raw, "content": softened}
+                    content_str = softened
+            try:
+                from src.services.character_layer import reshape_blacklist
+
+                cleaned = reshape_blacklist(content_str)
+                if cleaned:
+                    logger.info("Character blacklist reshape (anti langage IA générique)")
+                    raw = {**raw, "content": cleaned}
+                    content_str = cleaned
+            except Exception:
+                pass
             txt = str(raw["content"]).lower()
             if (not lab_mode) and any(
                 p in txt
