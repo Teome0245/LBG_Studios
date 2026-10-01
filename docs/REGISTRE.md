@@ -28,7 +28,7 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 
 | Quoi | Chemin / URL |
 |------|----------------|
-| Monorepo (source de vérité) | `/home/sdesh/projects/LBG_Studios` — GitHub `Teome0245/LBG_Studios` |
+| Monorepo (source de vérité) | GitHub `Teome0245/LBG_Studios` — clones : WSL `/home/sdesh/projects/LBG_Studios` · **éditeur `.143`** `/home/lbg/projects/LBG_Studios` (SMB `A:` depuis `.10`) · sync miroir `packages/cortex/infra/scripts/sync_projects_143.sh` · lab/prod via **git + `deploy_*`** (pas rsync massif) |
 | Workspace Cursor | `LBG_Studios.code-workspace` |
 | Deploy runtime Cortex | `.140` → **`/opt/LBG_IA_MMO`** (rsync, pas de `git clone`) |
 | Env prod | `.140` `/etc/lbg-ia-mmo.env` (depuis `packages/cortex/infra/secrets/lbg.env`) |
@@ -76,10 +76,10 @@ Serveurs jeu (runtime, hors Git) :
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
-| **`.143`** | VM `lbg-omarchy` | NUC `.200` — **éditeur studio** (VS Code + Cline) + Hyprland ; miroir git/SMB ; deploy lab via `deploy_*` ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
-| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142 / VM 143) · `.201` = R720 (CT 110 / 141) |
+| **`.143`** | VM `lbg-omarchy` | R720 `.201` (`lbgr720`) — **éditeur studio** (VS Code + Cline) + Hyprland ; miroir git/SMB ; deploy lab via `deploy_*` ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
+| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142) · `.201` = R720 (CT 100 / 110 / 141 · VM 140 / 143 / 245 / 246) |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
-| **`.245`** | PreCU | lecture seule `:8792` |
+| **`.245`** | PreCU | lecture seule `:8792` — **occasionnel** (`onboot: 0`) ; démarrer à la demande |
 | **`.246`** | Prime | monde produit `:8792` + sidecar IA |
 
 LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).

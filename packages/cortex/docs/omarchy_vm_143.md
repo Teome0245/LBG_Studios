@@ -1,8 +1,8 @@
-# VM Omarchy `.143` — lab Linux desktop sur NUC
+# VM Omarchy `.143` — lab Linux desktop
 
-**Statut** : **installée et joignable** — NUC `.200`, VMID **143**, IP **`192.168.0.143`**, user `lbg` (SSH clé)  
-**Rôle** : bac Omarchy (Arch + Hyprland) 24/7 sur le LAN — **ne remplace pas** `.10`, `.141`, `.142`.  
-**Date** : 2026-09-15
+**Statut** : **installée et joignable** — R720 **`lbgr720` `.201`**, VMID **143**, IP **`192.168.0.143`**, user `lbg` (SSH clé)  
+**Rôle** : bac Omarchy (Arch + Hyprland) 24/7 sur le LAN — **éditeur studio** ; **ne remplace pas** `.10`, `.141`, `.142`.  
+**Date** : 2026-09-15 · **migré NUC → R720** : 2026-10-01 (OOM NUC ; `.245` PreCU en démarrage occasionnel)
 
 > Incident install : le premier cidata pointait `/dev/vda` ; sous VirtIO-SCSI Proxmox le disque est **`/dev/sda`**. Corrigé dans le script + relance `omarchy-iso-install`.
 
@@ -10,11 +10,11 @@
 
 | | Choix |
 |--|--------|
-| Hyperviseur | **`.200` (NUC)** — décharge le R720 `.201` |
+| Hyperviseur | **`.201` (`lbgr720`)** — storage `local-vm-930g` (ex-NUC `.200` jusqu’au 2026-10-01) |
 | Forme | **QEMU VM** (UEFI/OVMF, Q35, VirtIO) — pas LXC |
 | IP / VMID | **`192.168.0.143` / 143** |
 | Hostname | `lbg-omarchy` |
-| Spec | 4 vCPU · 8 Go RAM · **60 Go** root (`scsi0` / `/dev/sda`) + **100 Go** data (`scsi1` / `/dev/sdb` → `/home/lbg/projects`) · `local-lvm` |
+| Spec | 4 vCPU · **16 Go** RAM (balloon 8 Go) · **60 Go** root + **100 Go** data (`/home/lbg/projects`) · `local-vm-930g` |
 | MAC | `BC:24:11:43:00:01` (réservation DHCP recommandée) |
 | ISO | Omarchy **4.0.3** → `local:iso/omarchy-4.0.3.iso` |
 
@@ -281,7 +281,7 @@ Notif Fcitx « Diagnostique Wayland » = cosmétique (keymap), ignorable.
 
 | Voie | URL / commande |
 |------|----------------|
-| Console Proxmox | https://192.168.0.200:8006/ → VM 143 (autologin) |
+| Console Proxmox | https://192.168.0.201:8006/ → VM 143 (souvent **noire** sous Hyprland/virtio — préférer RustDesk) |
 | SSH | `ssh lbg@192.168.0.143` |
 | Secrets | `packages/cortex/infra/secrets/omarchy-143.env.local` |
 
