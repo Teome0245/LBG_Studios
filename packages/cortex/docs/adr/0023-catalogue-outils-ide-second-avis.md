@@ -107,6 +107,18 @@ comparable, puis **arbitrage humain ou L2**.
 7. **Compagnon / Agir** : peut *proposer* un second avis (ouvrir l’outil concurrent sur `.143`) ;
    l’écriture Réel reste soumise au contre-pouvoir existant.
 
+#### Textes Agir (Compagnon)
+
+| Intention | Phrase |
+|-----------|--------|
+| Second avis défaut (Claude Code) | `second avis sur omarchy` / `second avis claude code sur omarchy` |
+| Concurrent expérimental | `deuxième avis opencode` · `second avis codex sur omarchy` |
+| Palette UI | entrée « Second avis Claude Code » (`usefulAgirActions`) |
+
+Implémentation : `action_proposal._propose_second_avis` → `open_app` + `context_patch.second_avis` ·
+cible forcée `.143` · allowlist seed `claude`/`opencode`/`codex`/`copilot` dans `deploy_linux_agent_143.sh`
+(ne réécrit pas un `linux.env` déjà présent — ajouter manuellement si agent déjà déployé).
+
 #### Flux type
 
 ```text

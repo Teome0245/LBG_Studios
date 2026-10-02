@@ -56,6 +56,7 @@ Cline **n’est pas** un second OS : même monorepo, même matrice LLM (`.110`/`
 | Intention | Texte Agir typique |
 |-----------|-------------------|
 | Ouvrir l’IDE studio | `ouvre code sur omarchy` / `ouvre vscode sur omarchy` |
+| Second avis (concurrent) | `second avis claude code sur omarchy` · `deuxième avis opencode` — ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md) § 3 |
 | Mettre à jour VS Code | `mets à jour vscode sur omarchy` (dry-run → confirm ; **pas** pendant Cline critique) |
 | Compagnon | `ouvre http://192.168.0.100:5174/ dans le navigateur` |
 | Team / Jobs | `ouvre http://192.168.0.140:8080/#/team` · `#/jobs` |

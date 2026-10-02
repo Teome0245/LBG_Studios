@@ -50,7 +50,31 @@ _APP_ALIASES: dict[str, str] = {
     "code-oss": "code",
     "vscodium": "code",
     "cline": "code",
+    # Second avis (ADR 0023) — concurrents IDE
+    "claude-code": "claude",
+    "claudecode": "claude",
+    "anthropic-claude": "claude",
 }
+
+# Noms multi-mots → slug unique avant découpe du 1er token
+_MULTIWORD_APP_MAP: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bvisual\s+studio\s+code\b", re.I), "vscode"),
+    (re.compile(r"\bvs\s*code\b", re.I), "vscode"),
+    (re.compile(r"\bclaude\s+code\b", re.I), "claude"),
+)
+
+# Workspace monorepo sur Omarchy .143 (second avis / ouverture IDE)
+OMARCHY_STUDIO_WORKSPACE = "/home/lbg/projects/LBG_Studios"
+
+# Concurrent second avis : (regex, app_id, label, statut ADR 0023)
+_SECOND_AVIS_CONCURRENTS: tuple[tuple[re.Pattern[str], str, str, str], ...] = (
+    (re.compile(r"\bclaude(?:\s*code)?\b", re.I), "claude", "Claude Code", "autorise"),
+    (re.compile(r"\bopencode\b", re.I), "opencode", "OpenCode", "experimentation"),
+    (re.compile(r"\bcodex\b", re.I), "codex", "Codex CLI", "experimentation"),
+    (re.compile(r"\bcopilot(?:\s*cli)?\b", re.I), "copilot", "Copilot CLI BYOK", "experimentation"),
+)
+
+_SECOND_AVIS_DEFAULT = ("claude", "Claude Code", "autorise")
 
 _WIN_EXE_PATH_RE = re.compile(
     r"(?:\(\s*)?([A-Za-z]:[\\/][^\s)\]\"']+\.exe)\s*\)?",
@@ -137,6 +161,8 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
         return None
     if "\\" in t or "/" in t or ".." in t:
         return None
+    for pattern, slug in _MULTIWORD_APP_MAP:
+        t = pattern.sub(slug, t)
     first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»")
     if not first:
         return None
@@ -151,6 +177,11 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
     if first.lower() in _OPEN_APP_STOP_TOKENS:
         return None
     return first.lower()
+
+
+def sanitize_desktop_app_slug(raw_tail: str) -> str | None:
+    """Alias public — même logique que ``_sanitize_app_slug``."""
+    return _sanitize_app_slug(raw_tail)
 
 
 def extract_exe_path_from_goal(goal: str) -> str | None:
@@ -170,6 +201,30 @@ def extract_exe_path_from_goal(goal: str) -> str | None:
 def normalize_desktop_app(app: str) -> str:
     raw = (app or "").strip().lower()
     return _APP_ALIASES.get(raw, raw)
+
+
+def resolve_second_avis_concurrent(text: str) -> tuple[str, str, str]:
+    """Choisit l'outil concurrent pour un second avis (ADR 0023).
+
+    Retourne ``(app_id, label, statut)`` — défaut Claude Code (autorisé).
+    """
+    raw = text or ""
+    for pattern, app_id, label, status in _SECOND_AVIS_CONCURRENTS:
+        if pattern.search(raw):
+            return app_id, label, status
+    return _SECOND_AVIS_DEFAULT
+
+
+def second_avis_open_app_action(text: str) -> dict[str, Any]:
+    """Payload ``open_app`` pour ouvrir le concurrent second avis sur le workspace studio."""
+    app_id, _label, _status = resolve_second_avis_concurrent(text)
+    action: dict[str, Any] = {
+        "kind": "open_app",
+        "app": app_id,
+        "args": [OMARCHY_STUDIO_WORKSPACE],
+        "learn": True,
+    }
+    return enrich_open_app_action(action)
 
 
 def supervised_auto_learn_enabled() -> bool:

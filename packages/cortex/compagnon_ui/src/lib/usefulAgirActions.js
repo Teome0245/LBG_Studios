@@ -93,6 +93,13 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'open_app',
   },
   {
+    id: 'omarchy_second_avis',
+    label: 'Second avis Claude Code',
+    hint: 'ADR 0023 · concurrent Cline',
+    sourceText: 'second avis claude code sur omarchy',
+    kind: 'open_app',
+  },
+  {
     id: 'team_pilot',
     label: 'Pilot Team',
     hint: 'équipe virtuelle',
@@ -131,7 +138,7 @@ export const USEFUL_AGIR_ACTIONS = [
 
 /**
  * Suggestions de suite après une action réussie (exclut l'action courante).
- * @param {{ kind?: string, url?: string, capability?: string }} [done]
+ * @param {{ kind?: string, url?: string, capability?: string, app?: string, sourceText?: string }} [done]
  * @param {number} [limit]
  * @returns {UsefulAgirAction[]}
  */
@@ -153,10 +160,20 @@ export function nextUsefulAgirSuggestions(done = {}, limit = 4) {
     skip.add('orch_ui')
   }
 
-  return USEFUL_AGIR_ACTIONS.filter((a) => !skip.has(a.kind) && !skip.has(a.id)).slice(
-    0,
-    Math.max(1, limit),
-  )
+  const preferSecondAvis =
+    kind === 'open_app' &&
+    (String(done.app || '').toLowerCase() === 'code' ||
+      String(done.sourceText || '').toLowerCase().includes('code'))
+
+  const filtered = USEFUL_AGIR_ACTIONS.filter((a) => !skip.has(a.kind) && !skip.has(a.id))
+  if (preferSecondAvis) {
+    const second = filtered.find((a) => a.id === 'omarchy_second_avis')
+    const rest = filtered.filter((a) => a.id !== 'omarchy_second_avis')
+    const ordered = second ? [second, ...rest] : rest
+    return ordered.slice(0, Math.max(1, limit))
+  }
+
+  return filtered.slice(0, Math.max(1, limit))
 }
 
 /** Défauts initiative quand aucun signal infra critique (rotation horaire). */

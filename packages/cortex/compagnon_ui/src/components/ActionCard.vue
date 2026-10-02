@@ -109,7 +109,9 @@ const nextSuggestions = computed(() => {
   return nextUsefulAgirSuggestions({
     kind: props.proposal?.action?.kind,
     url: props.proposal?.action?.url,
+    app: props.proposal?.action?.app,
     capability: props.proposal?.capability,
+    sourceText: props.sourceText,
   }, 4)
 })
 

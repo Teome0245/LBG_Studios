@@ -22,6 +22,28 @@ def test_infer_vghd() -> None:
     assert act and act["kind"] == "open_app" and act["app"] == "vghd"
 
 
+def test_resolve_second_avis_default_and_opencode() -> None:
+    from lbg_agents.desktop_apps import (
+        OMARCHY_STUDIO_WORKSPACE,
+        resolve_second_avis_concurrent,
+        second_avis_open_app_action,
+    )
+
+    assert resolve_second_avis_concurrent("second avis")[0] == "claude"
+    assert resolve_second_avis_concurrent("deuxième avis opencode")[0] == "opencode"
+    act = second_avis_open_app_action("second avis claude code")
+    assert act["kind"] == "open_app"
+    assert act["app"] == "claude"
+    assert OMARCHY_STUDIO_WORKSPACE in act["args"]
+
+
+def test_sanitize_claude_code_multiword() -> None:
+    from lbg_agents.desktop_apps import normalize_desktop_app, sanitize_desktop_app_slug
+
+    assert sanitize_desktop_app_slug("Claude Code") == "claude"
+    assert normalize_desktop_app("claude-code") == "claude"
+
+
 def test_infer_vghd_exe_suffix() -> None:
     """« ouvrir vghd.exe » doit mapper sur l’id logique vghd (pas lancer vghd.exe nu)."""
     act = default_desktop_action_from_text("tu peux ouvrir vghd.exe")

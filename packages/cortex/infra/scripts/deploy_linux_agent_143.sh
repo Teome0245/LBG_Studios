@@ -50,8 +50,8 @@ LBG_LINUX_APPROVAL_TOKEN=${TOKEN}
 LBG_LINUX_URL_ALLOWLIST=
 LBG_LINUX_URL_HOST_ALLOWLIST=google.com,duckduckgo.com,github.com,192.168.0.100,192.168.0.140
 LBG_LINUX_FILE_ALLOWLIST_DIRS=/tmp,/var/tmp,/home/lbg
-LBG_LINUX_APP_ALLOWLIST=chromium,firefox,htop,kitty,xdg-open
-LBG_LINUX_APP_MAP_JSON={"chromium":["/usr/bin/chromium"],"firefox":["/usr/bin/firefox"],"htop":["/usr/bin/htop"],"kitty":["/usr/bin/kitty"],"xdg-open":["/usr/bin/xdg-open"]}
+LBG_LINUX_APP_ALLOWLIST=chromium,code,firefox,htop,kitty,vscode,xdg-open,claude,opencode,codex,copilot
+LBG_LINUX_APP_MAP_JSON={"chromium":["/usr/bin/chromium"],"firefox":["/usr/bin/firefox"],"htop":["/usr/bin/htop"],"kitty":["/usr/bin/kitty"],"xdg-open":["/usr/bin/xdg-open"],"code":["/usr/bin/code"],"vscode":["/usr/bin/code"],"claude":["claude"],"opencode":["opencode"],"codex":["codex"],"copilot":["copilot"]}
 LBG_LINUX_LEARN_ENABLED=1
 LBG_LINUX_LEARN_APP_ALLOWLIST=chromium,firefox,htop,kitty
 LBG_LINUX_AUDIT_LOG_PATH=${REMOTE_DIR}/logs/linux_agent_audit.jsonl
@@ -141,3 +141,4 @@ curl -fsS -m 15 -X POST "http://${HOST}:${PORT}/invoke" \
 
 echo "OK  Agent Omarchy http://${HOST}:${PORT}/  · desktop_target=omarchy"
 echo "    Token : LBG_OMARCHY_LINUX_APPROVAL_TOKEN → infra/secrets/omarchy-143.env.local"
+echo "    Agir 2avis: « second avis claude code sur omarchy » (ADR 0023)"

@@ -9,7 +9,13 @@ from pydantic import BaseModel, Field
 
 from shared_registry import capability_registry
 
-from lbg_agents.desktop_apps import enrich_open_app_action, extract_exe_path_from_goal, repair_app_deps_action_from_goal
+from lbg_agents.desktop_apps import (
+    enrich_open_app_action,
+    extract_exe_path_from_goal,
+    repair_app_deps_action_from_goal,
+    resolve_second_avis_concurrent,
+    second_avis_open_app_action,
+)
 from lbg_agents.desktop_targets import infer_desktop_target_from_text
 
 from services.lia_jobs import (
@@ -69,6 +75,7 @@ def _propose_deterministic(
         or _propose_mail_preview(raw, normalized)
         or _propose_agent_session_status(raw, normalized)
         or _propose_fix_session0(raw, normalized)
+        or _propose_second_avis(raw, normalized)
         or _propose_core3_lia(raw, normalized)
         or _propose_capabilities_inventory(normalized)
         or _propose_network_inventory(normalized)
@@ -103,7 +110,7 @@ Réponds UNIQUEMENT avec un objet JSON valide, une seule ligne, sans markdown ni
 {"intent":"<id>","canonical_text":"<phrase FR>","why":"<raison courte>"}
 
 intent autorisés uniquement :
-mail_imap_preview | selfcheck | network_inventory | search_web_open | open_app | open_url | default_browser_info | jobs_l2 | fix_session0 | agent_session_status | none
+mail_imap_preview | selfcheck | network_inventory | search_web_open | open_app | open_url | default_browser_info | jobs_l2 | fix_session0 | agent_session_status | second_avis | none
 
 Exemples :
 - "regarde mon inbox" → {"intent":"mail_imap_preview","canonical_text":"regarde mes mails récents","why":"aperçu IMAP"}
@@ -111,6 +118,7 @@ Exemples :
 - "ouvre vghd" → {"intent":"open_app","canonical_text":"ouvre vghd sur mon pc","why":"lancer app"}
 - "jobs en attente" → {"intent":"jobs_l2","canonical_text":"ouvre http://192.168.0.140:8080/#/jobs dans le navigateur","why":"revue L2"}
 - "les apps ne s'ouvrent pas / session 0" → {"intent":"fix_session0","canonical_text":"répare session 0 de l agent desktop","why":"UI invisible"}
+- "second avis / deuxième avis" → {"intent":"second_avis","canonical_text":"second avis claude code sur omarchy","why":"concurrent IDE ADR 0023"}
 
 Interdit : piraterie, torrents de contenus protégés, fraude → intent=none.
 Conversation pure sans action poste/LAN → intent=none.
@@ -129,6 +137,7 @@ _INTENT_CANONICAL_FALLBACK: dict[str, str] = {
     "jobs_l2": "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
     "fix_session0": "répare session 0 de l agent desktop",
     "agent_session_status": "vérifie la session de l agent desktop",
+    "second_avis": "second avis claude code sur omarchy",
 }
 
 
@@ -286,6 +295,43 @@ def _propose_fix_session0(raw: str, normalized: str) -> ActionProposal | None:
         confidence=0.88,
         text=raw,
     )
+
+
+def _propose_second_avis(raw: str, normalized: str) -> ActionProposal | None:
+    """Ouvre un outil concurrent pour second avis (ADR 0023) — défaut Claude Code sur .143."""
+    if not re.search(
+        r"\b(second\s+avis|deuxi[eè]me\s+avis|2(?:e|eme|\u00e8me)\s+avis|"
+        r"second\s+opinion|avis\s+concurrent)\b",
+        normalized,
+    ):
+        return None
+    app_id, label, status = resolve_second_avis_concurrent(raw)
+    action = second_avis_open_app_action(raw)
+    text = raw if re.search(r"\bomarchy\b", normalized) else f"{raw} sur omarchy"
+    status_fr = "autorisé" if status == "autorise" else "expérimentation"
+    summary = (
+        f"Second avis : ouvrir « {label} » ({status_fr}) sur Omarchy (.143), "
+        f"workspace studio — concurrent de Cline (ADR 0023). "
+        f"Une session bornée ; pas d’écriture parallèle non revue."
+    )
+    proposal = _desktop_proposal(
+        action=action,
+        summary=summary,
+        confidence=0.9,
+        text=text,
+    )
+    if not proposal.context_patch.get("desktop_target"):
+        proposal.context_patch = {**proposal.context_patch, "desktop_target": "omarchy"}
+    proposal.context_patch = {
+        **proposal.context_patch,
+        "second_avis": {
+            "concurrent": app_id,
+            "label": label,
+            "status": status,
+            "primary_hint": "cline",
+        },
+    }
+    return proposal
 
 
 def _propose_notepad(raw: str, normalized: str, context: dict[str, object]) -> ActionProposal | None:

@@ -190,6 +190,49 @@ def test_action_proposal_desktop_target_ad() -> None:
     assert proposal["context_patch"].get("desktop_target") == "ad"
 
 
+def test_action_proposal_second_avis_default_claude() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "ops:1",
+            "text": "second avis sur omarchy",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    proposal = body["proposal"]
+    assert proposal is not None, body.get("reason")
+    assert proposal["capability"] == "desktop_control"
+    assert proposal["action"]["kind"] == "open_app"
+    assert proposal["action"]["app"] == "claude"
+    assert proposal["context_patch"].get("desktop_target") == "omarchy"
+    assert proposal["context_patch"]["desktop_dry_run"] is True
+    meta = proposal["context_patch"].get("second_avis") or {}
+    assert meta.get("concurrent") == "claude"
+    assert meta.get("primary_hint") == "cline"
+    assert meta.get("status") == "autorise"
+
+
+def test_action_proposal_second_avis_opencode() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "ops:1",
+            "text": "deuxième avis opencode",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["action"]["app"] == "opencode"
+    assert proposal["context_patch"].get("desktop_target") == "omarchy"
+    assert proposal["context_patch"]["second_avis"]["status"] == "experimentation"
+
+
 def test_action_proposal_network_inventory_fr() -> None:
     client = TestClient(app)
     r = client.post(
