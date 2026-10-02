@@ -98,6 +98,7 @@ Ollama thinking (Qwen) : `LBG_REASON_OLLAMA_THINK=false` (défaut) et `LBG_DIALO
 |-------|-----------|
 | Cursor | règle `.cursor/rules/local-llm-route-matrix.mdc` (`alwaysApply`) si présente |
 | Cline (VS Code) | `docs/cline_local_llm.md` + snippets `docs/cline/providers.*.json` (**Plan=110:9b** / Act=110:12b ; triage 111) |
+| Catalogue outils IDE / second avis | ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md) — quels clients ont le droit de pointer la matrice |
 | Team / Atlas | run `admin_infra` → champ `route_matrix` + mémoire `team/atlas` |
 | Env exemple | `infra/secrets/lbg.env.example` |
 | Audit LAN | `bash infra/scripts/audit_ollama_110_lan.sh` |

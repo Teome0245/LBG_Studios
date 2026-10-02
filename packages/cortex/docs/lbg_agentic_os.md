@@ -115,6 +115,8 @@ Réutiliser plutôt les **patterns** : rôles clairs, outils bornés, boucle obs
 
 **Garde-fou** : toute greffe (computer-use, OpenHands, Slack HITL) reste en **L2 / allowlist**, jamais en substitution du Conductor, du bus Team ni de la file SQLite. Slack alerte-only = périphérie OK ; Element reste backup tant que `LBG_OPS_NOTIFY_BACKEND=both`.
 
+**Catalogue IDE / agents** (autorisé · expérimentation · interdit) + procédure **second avis** (outil concurrent ponctuel) : ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md).
+
 ## 7. Roadmap produit (courte)
 
 1. **Fait** — Conductor V0–V2 (drain, coffee fill, act selon état, mission NL, UI Pilot) ; Cursor PR ; présence Petri.
