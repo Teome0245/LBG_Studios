@@ -31,6 +31,10 @@ quand une décision technique le justifie (revue, arbitrage plan, doute qualité
 **Cortex / Team / Pilot / Compagnon restent le cerveau.** Aucun outil de ce catalogue ne se substitue
 au bus Team, à la file SQLite, ni à l’orchestrateur `.140`.
 
+**Mains code headless** (sans UI) : ADR [`0025`](0025-mains-code-143-run-cli-agent.md) —
+kind `run_cli_agent` sur `.143` (Claude Code CLI nominal ; Cline/OpenCode allowlist).
+Cline UI reste observation / second passage, pas le runtime Campus.
+
 ### 2. Catalogue figé (inventaire 2026-10-02)
 
 #### Autorisé — chemin nominal

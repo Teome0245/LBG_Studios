@@ -764,9 +764,12 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
 
 def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
     from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
 
     if resolve_docs_only(task):
         return execute_docs_only_workflow(task)
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
     if resolve_godot_dev_workflow(task):
         return execute_godot_dev_workflow(task, _dispatch)
     return execute_godot_dev_workflow(task, _dispatch)
@@ -775,9 +778,12 @@ def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
 def _execute_dev_game(task: TeamTask) -> dict[str, object]:
     ctx = task.context or {}
     from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
 
     if resolve_docs_only(task):
         return execute_docs_only_workflow(task)
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
     if ctx.get("cursor_cloud_agent") or str(ctx.get("workflow") or "").strip().lower() in (
         "cursor_cloud_agent",
         "cursor_agent",

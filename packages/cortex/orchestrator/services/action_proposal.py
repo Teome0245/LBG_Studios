@@ -91,6 +91,7 @@ def _propose_deterministic(
         or _propose_agent_session_status(raw, normalized)
         or _propose_fix_session0(raw, normalized)
         or _propose_update_vscode(raw, normalized)
+        or _propose_run_cli_agent(raw, normalized)
         or _propose_second_avis(raw, normalized)
         or _propose_core3_lia(raw, normalized)
         or _propose_capabilities_inventory(normalized)
@@ -346,6 +347,60 @@ def _propose_update_vscode(raw: str, normalized: str) -> ActionProposal | None:
         confidence=0.9,
         text=text,
     )
+
+
+def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
+    """Mains code headless .143 — ADR 0025 (Claude Code CLI / Cline / OpenCode)."""
+    if not re.search(
+        r"\b(run_cli_agent|ide.?cli|mains?\s+code|"
+        r"lance\s+(?:claude|cline|opencode)\s+(?:sur\s+)?omarchy|"
+        r"claude\s+code\s+headless|"
+        r"(?:fais|lance)\s+(?:un\s+)?(?:patch|fix)\s+(?:via\s+)?(?:claude|cline)\s+(?:sur\s+)?omarchy)\b",
+        normalized,
+    ):
+        return None
+    app = "claude"
+    if re.search(r"\bcline\b", normalized):
+        app = "cline"
+    elif re.search(r"\bopencode\b", normalized):
+        app = "opencode"
+    # Extraire un mandat après « pour » / « : »
+    prompt = raw
+    m = re.search(r"(?i)(?:pour|mandate|mandat)\s*[:\-]?\s*(.+)$", raw.strip())
+    if m:
+        prompt = m.group(1).strip()
+    elif re.search(r"(?i)lance\s+(?:claude|cline|opencode)", raw):
+        # garder le texte entier comme prompt métier
+        prompt = re.sub(
+            r"(?i)^\s*lance\s+(?:claude|cline|opencode)(?:\s+code)?(?:\s+sur\s+omarchy)?\s*(?:pour|:)?\s*",
+            "",
+            raw,
+        ).strip() or raw
+    text = raw if re.search(r"\bomarchy\b", normalized) else f"{raw} sur omarchy"
+    from lbg_agents.desktop_apps import OMARCHY_STUDIO_WORKSPACE
+
+    proposal = _desktop_proposal(
+        action={
+            "kind": "run_cli_agent",
+            "app": app,
+            "prompt": prompt[:4000],
+            "cwd": OMARCHY_STUDIO_WORKSPACE,
+        },
+        summary=(
+            f"Mains code .143 : {app} CLI headless (ADR 0025) — dry-run jusqu’à confirm. "
+            "Pas besoin d’ouvrir l’UI Cline."
+        ),
+        confidence=0.88,
+        text=text,
+    )
+    if not proposal.context_patch.get("desktop_target"):
+        proposal.context_patch = {**proposal.context_patch, "desktop_target": "omarchy"}
+    proposal.context_patch = {
+        **proposal.context_patch,
+        "ide_cli": True,
+        "ide_session": {"primary_hint": app, "mode": "cli_headless"},
+    }
+    return proposal
 
 
 def _propose_second_avis(raw: str, normalized: str) -> ActionProposal | None:

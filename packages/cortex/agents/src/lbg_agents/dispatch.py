@@ -395,8 +395,19 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
                 "comfyui_restart",
                 "comfyui_queue",
                 "comfyui_patch_and_queue",
+                "run_cli_agent",
+                "ide_cli",
+                "cli_agent",
+                "update_vscode",
             }
-            with httpx.Client(timeout=120.0 if str((raw or {}).get("kind") or "") in long_kinds else 15.0) as client:
+            kind_s = str((raw or {}).get("kind") or "")
+            timeout = 300.0 if kind_s in long_kinds else 15.0
+            if kind_s in ("run_cli_agent", "ide_cli", "cli_agent"):
+                try:
+                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "360"))
+                except ValueError:
+                    timeout = 360.0
+            with httpx.Client(timeout=timeout) as client:
                 r = client.post(f"{base}/invoke", json={"actor_id": actor_id, "text": text, "context": ctx})
             if r.status_code >= 400:
                 return _with_desktop_hint({

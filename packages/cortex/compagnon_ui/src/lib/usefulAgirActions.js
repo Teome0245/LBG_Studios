@@ -100,6 +100,13 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'open_app',
   },
   {
+    id: 'omarchy_cli_agent',
+    label: 'Mains code Claude (.143)',
+    hint: 'CLI headless · ADR 0025',
+    sourceText: 'lance claude sur omarchy pour un smoke dry-run du monorepo',
+    kind: 'run_cli_agent',
+  },
+  {
     id: 'omarchy_second_avis',
     label: 'Second avis Claude Code',
     hint: 'ADR 0023 · concurrent Cline',

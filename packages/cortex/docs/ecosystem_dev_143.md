@@ -56,6 +56,7 @@ Cline **n’est pas** un second OS : même monorepo, même matrice LLM (`.110`/`
 | Intention | Texte Agir typique |
 |-----------|-------------------|
 | Ouvrir l’IDE studio | `ouvre code sur omarchy` / `ouvre vscode sur omarchy` |
+| **Mains code headless** (ADR [`0025`](adr/0025-mains-code-143-run-cli-agent.md)) | `lance claude sur omarchy pour …` — kind `run_cli_agent` (dry-run → confirm) ; Iris/Dédale/Pygmalion via `context.ide_cli` |
 | Second avis (concurrent) | `second avis claude code sur omarchy` · `deuxième avis opencode` — ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md) § 3 |
 | Mettre à jour VS Code | `mets à jour vscode sur omarchy` (dry-run → confirm ; **pas** pendant Cline critique) |
 | Compagnon | `ouvre http://192.168.0.100:5174/ dans le navigateur` |
@@ -100,6 +101,7 @@ Kind worker : `update_vscode` · paquet AUR `visual-studio-code-bin` · `require
 - [x] Team L1 depuis toast Compagnon (`POST /api/pilot/team/tasks` + run)  
 - [x] Contre-pouvoir Agir (`companion/review-proposal` dans ActionCard)  
 - [x] VS Code + Cline sur `.143` — ext. Cline OK ; smoke tags+chat Plan 9b / Act 12b (alias `:12b`→`:12b-qat` sur `.110`) ; UI Plan→Act reste un check manuel ponctuel  
+- [ ] **Mains code headless** ADR 0025 — `run_cli_agent` dry-run OK ; live après `LBG_LINUX_CLI_AGENT_ENABLED=1` + smoke `.143`  
 - [x] Doc sujet + leçon — [`lecon_m2_m3_self_compagnon_2026-09-27.md`](lecon_m2_m3_self_compagnon_2026-09-27.md)  
 - [x] Brief matinal P0 — Agir `fais mon brief du matin` + initiative 7h–10h ([`morning_brief.md`](morning_brief.md))
 - [x] Couche Character Compagnon — pack + dials lab + smoke voix ([`character_layer.md`](character_layer.md))

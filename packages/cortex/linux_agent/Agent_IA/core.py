@@ -696,3 +696,214 @@ def mail_imap_parse_action(action: dict[str, Any]) -> tuple[str, str, int, int, 
 def which(exe: str) -> str:
     return shutil.which(exe) or ""
 
+
+# -----------------------------------------------------------------------------
+# CLI agents IDE (Claude Code / Cline / OpenCode) — ADR 0025
+# -----------------------------------------------------------------------------
+
+_CLI_AGENT_APPS: frozenset[str] = frozenset({"claude", "cline", "opencode"})
+_DEFAULT_CLI_CWD = "/home/lbg/projects/LBG_Studios"
+
+
+def cli_agent_enabled() -> bool:
+    return os.environ.get("LBG_LINUX_CLI_AGENT_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
+    raw = None
+    if isinstance(action, dict):
+        raw = action.get("timeout_s")
+    if raw is None:
+        raw = os.environ.get("LBG_LINUX_CLI_AGENT_TIMEOUT_S", "300")
+    try:
+        n = int(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        n = 300
+    return max(30, min(n, 1800))
+
+
+def cli_agent_cwd_allowlist() -> list[Path]:
+    raw = os.environ.get("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST", "").strip()
+    roots: list[str] = []
+    if raw:
+        roots.extend(x.strip() for x in raw.split(",") if x.strip())
+    else:
+        roots.append("/home/lbg/projects")
+    out: list[Path] = []
+    for r in roots:
+        try:
+            out.append(Path(r).expanduser().resolve())
+        except Exception:
+            continue
+    return out
+
+
+def cli_agent_cwd_ok(cwd: str) -> bool:
+    try:
+        p = Path(cwd).expanduser().resolve()
+    except Exception:
+        return False
+    if not p.is_dir():
+        return False
+    for root in cli_agent_cwd_allowlist():
+        try:
+            if p == root or root in p.parents:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def resolve_cli_agent_argv(app: str, prompt: str) -> list[str] | None:
+    """Construit argv headless pour l'app (allowlist)."""
+    a = (app or "").strip().lower()
+    if a not in _CLI_AGENT_APPS:
+        return None
+    bin_path = which(a)
+    if a == "cline" and not bin_path:
+        bin_path = which("cline-cli")
+    if not bin_path:
+        return None
+    if a == "claude":
+        return [bin_path, "-p", prompt, "--output-format", "text"]
+    if a == "cline":
+        return [bin_path, "run", "--prompt", prompt]
+    if a == "opencode":
+        return [bin_path, "run", prompt]
+    return None
+
+
+def run_cli_agent(
+    *,
+    app: str,
+    prompt: str,
+    cwd: str | None = None,
+    dry_run: bool,
+    timeout_s: int | None = None,
+) -> dict[str, object]:
+    """Exécute un agent coding CLI headless (ADR 0025). Dry-run par défaut côté caller."""
+    if not cli_agent_enabled() and not dry_run:
+        return {
+            "ok": False,
+            "outcome": "feature_disabled",
+            "error": "LBG_LINUX_CLI_AGENT_ENABLED=0 — activer après smoke .143",
+            "app": app,
+        }
+    app_id = (app or "").strip().lower()
+    if app_id not in _CLI_AGENT_APPS:
+        return {
+            "ok": False,
+            "outcome": "allowlist_denied",
+            "error": f"app hors allowlist: {app_id}",
+            "allowed": sorted(_CLI_AGENT_APPS),
+        }
+    prompt_s = (prompt or "").strip()
+    if not prompt_s:
+        return {"ok": False, "outcome": "bad_request", "error": "prompt vide", "app": app_id}
+    if len(prompt_s) > 12000:
+        return {"ok": False, "outcome": "bad_request", "error": "prompt trop long (>12000)", "app": app_id}
+
+    work = (cwd or "").strip() or os.environ.get("LBG_OMARCHY_STUDIO_WORKSPACE", _DEFAULT_CLI_CWD).strip()
+    if not cli_agent_cwd_ok(work):
+        return {
+            "ok": False,
+            "outcome": "allowlist_denied",
+            "error": f"cwd hors allowlist: {work}",
+            "cwd": work,
+            "cwd_allowlist": [str(p) for p in cli_agent_cwd_allowlist()],
+        }
+
+    argv = resolve_cli_agent_argv(app_id, prompt_s)
+    if not argv:
+        if dry_run:
+            # Dry-run : preview même si binaire absent (smoke orch sans .143)
+            fake = {
+                "claude": ["claude", "-p", prompt_s, "--output-format", "text"],
+                "cline": ["cline", "run", "--prompt", prompt_s],
+                "opencode": ["opencode", "run", prompt_s],
+            }.get(app_id, [app_id])
+            to = timeout_s if timeout_s is not None else cli_agent_timeout_s()
+            return {
+                "ok": True,
+                "outcome": "dry_run",
+                "app": app_id,
+                "cwd": work,
+                "argv": fake,
+                "timeout_s": to,
+                "prompt_preview": prompt_s[:240],
+                "bin_missing": True,
+                "hint": f"Binaire « {app_id} » absent sur ce host — install sur .143 avant live",
+                "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} (bin missing)",
+            }
+        return {
+            "ok": False,
+            "outcome": "not_installed",
+            "error": f"binaire « {app_id} » introuvable sur PATH",
+            "app": app_id,
+            "cwd": work,
+        }
+
+    to = timeout_s if timeout_s is not None else cli_agent_timeout_s()
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+            "prompt_preview": prompt_s[:240],
+            "hint": "Réel: LBG_LINUX_CLI_AGENT_ENABLED=1 + approval desktop",
+            "reply": f"Dry-run run_cli_agent app={app_id} cwd={work}",
+        }
+
+    try:
+        proc = subprocess.run(
+            argv,
+            cwd=work,
+            capture_output=True,
+            text=True,
+            timeout=to,
+            check=False,
+            env={**os.environ, "TERM": "dumb"},
+        )
+        stdout = (proc.stdout or "")[-4000:]
+        stderr = (proc.stderr or "")[-2000:]
+        ok = proc.returncode == 0
+        return {
+            "ok": ok,
+            "outcome": "ok" if ok else "error",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+            "returncode": proc.returncode,
+            "stdout_tail": stdout,
+            "stderr_tail": stderr,
+            "reply": (stdout or stderr or f"rc={proc.returncode}")[:500],
+            "error": None if ok else f"cli rc={proc.returncode}",
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False,
+            "outcome": "timeout",
+            "error": f"timeout après {to}s",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+        }
+    except Exception as exc:
+        return {
+            "ok": False,
+            "outcome": "error",
+            "error": f"{type(exc).__name__}: {exc}",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+        }

@@ -457,6 +457,32 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
 
+    if kind in ("run_cli_agent", "ide_cli", "cli_agent"):
+        # ADR 0025 — mains code headless (Claude Code / Cline / OpenCode)
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": "run_cli_agent"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        app = str(action.get("app") or ctx.get("ide_cli_app") or "claude").strip()
+        prompt = str(action.get("prompt") or ctx.get("ide_cli_prompt") or text or "").strip()
+        cwd = action.get("cwd") or ctx.get("ide_cli_cwd")
+        cwd_s = str(cwd).strip() if isinstance(cwd, str) else None
+        to = action.get("timeout_s")
+        try:
+            to_i = int(to) if to is not None else None
+        except (TypeError, ValueError):
+            to_i = None
+        result = core.run_cli_agent(
+            app=app,
+            prompt=prompt,
+            cwd=cwd_s,
+            dry_run=dry_run,
+            timeout_s=to_i,
+        )
+        out = {**base, **result, "kind": "run_cli_agent"}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
     out = {**base, "ok": False, "outcome": "unknown_kind", "error": "Action inconnue", "kind": kind}
     core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
     return out
