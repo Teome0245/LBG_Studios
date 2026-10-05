@@ -91,22 +91,23 @@ def test_dispatch_routes_to_ad_url(monkeypatch) -> None:
 def test_resolve_hands_from_legacy_env(monkeypatch) -> None:
     monkeypatch.delenv("LBG_DESKTOP_TARGETS", raising=False)
     monkeypatch.setenv("LBG_AGENT_DESKTOP_URL", "http://192.168.0.10:5005")
-    monkeypatch.setenv("LBG_AGENT_HANDS_URL", "http://192.168.0.142:6001")
+    monkeypatch.setenv("LBG_AGENT_HANDS_URL", "http://192.168.0.143:5005")
+    monkeypatch.delenv("LBG_AGENT_OMARCHY_URL", raising=False)
     monkeypatch.delenv("AGENT_WINDOWS_URL", raising=False)
     monkeypatch.delenv("AGENT_WINDOWS_SRV_AD_URL", raising=False)
     out = resolve_desktop_target({"desktop_target": "hands"}, "")
     assert out is not None
-    assert out.target_id == "hands"
-    assert out.url == "http://192.168.0.142:6001"
-    assert infer_desktop_target_from_text("import_face_parts sur lbg-hands") == "hands"
+    assert out.target_id == "omarchy"
+    assert out.url == "http://192.168.0.143:5005"
+    assert infer_desktop_target_from_text("import_face_parts sur lbg-hands") == "omarchy"
 
 
 def test_resolve_hands_from_targets_json(monkeypatch) -> None:
     monkeypatch.setenv(
         "LBG_DESKTOP_TARGETS",
         '[{"id":"pc","host":"192.168.0.10","url":"http://192.168.0.10:5005"},'
-        '{"id":"hands","host":"192.168.0.142","url":"http://192.168.0.142:6001","aliases":["lbg-hands"]}]',
+        '{"id":"omarchy","host":"192.168.0.143","url":"http://192.168.0.143:5005","aliases":["hands","lbg-hands"]}]',
     )
     out = resolve_desktop_target({"desktop_target": "hands"}, "")
     assert out is not None
-    assert out.url == "http://192.168.0.142:6001"
+    assert out.url == "http://192.168.0.143:5005"

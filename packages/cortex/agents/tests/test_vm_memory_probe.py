@@ -27,3 +27,22 @@ def test_status_warn_and_critical():
     assert crit == "critical"
 
 
+def test_sticky_swap_critical_with_ram_headroom():
+    from lbg_agents.vm_memory_probe import is_sticky_swap
+
+    metrics = {"mem_avail_pct": 70.0, "swap_used_pct": 100.0}
+    assert is_sticky_swap(metrics) is True
+    assert _status(metrics) == "critical"
+
+
+def test_default_hosts_include_light(monkeypatch):
+    from lbg_agents.vm_memory_probe import _DEFAULT_HOSTS, _probe_hosts
+
+    monkeypatch.delenv("LBG_VM_MEMORY_PROBE_HOSTS", raising=False)
+    monkeypatch.delenv("LBG_VM_MEMORY_PROBE_EXCLUDE", raising=False)
+    monkeypatch.setenv("LBG_INFRA_WATCHDOG_EXCLUDE_PRIME", "0")
+    labels = {label for label, _ in _DEFAULT_HOSTS}
+    assert "light" in labels
+    hosts = _probe_hosts()
+    by_label = {label: host for label, host in hosts}
+    assert by_label.get("light") == "192.168.0.111"

@@ -18,9 +18,11 @@ def test_resolve_host_aliases() -> None:
     assert resolve_host("front") == "192.168.0.110"
     assert resolve_host("executor") == "192.168.0.141"
     assert resolve_host("linux-141") == "192.168.0.141"
-    assert resolve_host("hands") == "192.168.0.142"
-    assert resolve_host("lbg-hands") == "192.168.0.142"
-    assert resolve_host("142") == "192.168.0.142"
+    assert resolve_host("hands") == "192.168.0.143"
+    assert resolve_host("lbg-hands") == "192.168.0.143"
+    assert resolve_host("142") == "192.168.0.143"
+    assert resolve_host("omarchy") == "192.168.0.143"
+    assert resolve_host("143") == "192.168.0.143"
     assert resolve_host("inconnu") is None
 
 

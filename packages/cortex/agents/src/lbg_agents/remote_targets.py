@@ -44,6 +44,16 @@ _ALIASES: dict[str, str] = {
     "hands": "hands",
     "lbg-hands": "hands",
     "142": "hands",
+    "linux-143": "hands",
+    "omarchy": "hands",
+    "lbg-omarchy": "hands",
+    "143": "hands",
+    # CT Ollama light (NUC .200) — distinct du heavy front .110
+    "linux-111": "light",
+    "light": "light",
+    "ollama-light": "light",
+    "llm-light": "light",
+    "111": "light",
 }
 
 # Rôle -> (variable d'env hôte, IP par défaut LAN).
@@ -54,7 +64,8 @@ _ROLE_ENV: dict[str, tuple[str, str]] = {
     "mmo": ("LBG_LAN_HOST_MMO", "192.168.0.246"),
     "precu": ("LBG_LAN_HOST_PRECU", "192.168.0.245"),
     "executor": ("LBG_LAN_HOST_EXECUTOR", "192.168.0.141"),
-    "hands": ("LBG_LAN_HOST_HANDS", "192.168.0.142"),
+    "hands": ("LBG_LAN_HOST_HANDS", "192.168.0.143"),
+    "light": ("LBG_LAN_HOST_LLM_LIGHT", "192.168.0.111"),
 }
 
 
