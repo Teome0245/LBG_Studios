@@ -28,7 +28,7 @@ Modèle : **rôles + file de tâches + garde-fous** (complète le moteur jobs Ja
 | LBG-IA | `192.168.0.110` | Ollama heavy `:11434` (Pilot a migré sur `.140:8080`) |
 | LBG-IA-MMORPG | `192.168.0.140` | Pilot `:8080`, orchestrateur `:8010`, backend `:8000`, agents, **méta-orchestrateur** |
 | lbg-executor | `192.168.0.141` | CT poll Team WSL — [`pont_cloud_local.md`](pont_cloud_local.md) |
-| lbg-hands | `192.168.0.142` | CT linux_agent `:6001` — [`hands_ct_142.md`](hands_ct_142.md) |
+| lbg-hands → Omarchy | `192.168.0.143` | mains `linux_agent` `:5005` — [`migration_hands_142_to_143.md`](../../../docs/migration_hands_142_to_143.md) |
 | ServeurSWG | `192.168.0.245` | PreCU / legacy (sandbox Python gelé) |
 | Prime | `192.168.0.246` | **Core3 Prime prod** — sidecar IA `:8791`, joueurs IA |
 | Poste dev | `192.168.0.10` | Cursor, Claude Code, agent desktop `:5005` |

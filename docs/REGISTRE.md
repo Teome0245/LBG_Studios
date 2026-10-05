@@ -107,7 +107,7 @@ Source de vérité MAC/IP projet = **cette table** (sondage ARP + `qm`/`pct conf
 | `.111` | `ollama-light` / NUC Ollama 111 (CT 111 @ `.200`) | `BC:24:11:BF:8E:CA` | **statique Proxmox** | **OK** | Light LLM |
 | `.140` | `lbg-backend` / VM-Backend (VM 140 @ `.201`) | `BC:24:11:20:7F:81` | guest `.140/24` | **OK** | Core Studio |
 | `.141` | `lbg-executor` (CT 141 @ `.201`) | `BC:24:11:59:34:21` | **statique Proxmox** | **OK** | Freebox `lbg-Executor (141)` |
-| `.142` | — (ex `lbg-hands`) | `BC:24:11:16:BE:5E` | — | **libéré** | CT détruit — bail DHCP absent ; LAN fantôme à oublier (settings/UI) |
+| `.142` | — (ex `lbg-hands`) | `BC:24:11:16:BE:5E` | — | **libéré** | CT détruit — Freebox nettoyé (2026-10-05) |
 | `.143` | `lbg-omarchy` (VM 143 @ `.201`) | `BC:24:11:43:00:01` | **NM manuel** `.143/24` | **OK** | Freebox `lbg-omarchy (143)` — mains + éditeur |
 | `.200` | `NUC PROXMOX` | `F4:4D:30:67:3F:07` | bail | **OK** | Hôte CT 111 |
 | `.201` | `PowerEdge R720 - LAN1` | `C8:1F:66:BD:E4:3D` | bail | **OK** | ARP = `…:3D` (LAN1) |

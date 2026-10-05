@@ -12,19 +12,9 @@ Les baux Freebox restent utiles pour : nom visible, anti-collision, et VMs en DH
 | IP | Freebox bail statique | Notes |
 |----|----------------------|--------|
 | `.10` `.51` `.100` `.110` `.111` `.140` `.141` `.143` `.200` `.201` `.245` `.246` `.251` | **OK** | plan lab |
-| **`.142`** | **absent** (OK) | CT détruit — pas de bail DHCP ; entrée LAN fantôme `lbg-Hands (142)` encore visible (inactive) |
+| **`.142`** | **absent** (OK) | CT détruit — bail DHCP + entrée LAN nettoyés (2026-10-05) |
 
 Extras Freebox hors plan lab : Player / cam / VMware `.217`…
-
-### Entrée LAN fantôme `.142`
-
-L’API app `fr.lbg.cortex.freebox` a `settings=false` → **DELETE** LAN host refusé (`insufficient_rights`).
-
-Pour nettoyer l’entrée `lbg-Hands (142)` / MAC `BC:24:11:16:BE:5E` :
-
-1. **UI Freebox** : *Paramètres* → *Appareils connectés* (ou LAN) → oublier / supprimer `lbg-Hands (142)`  
-   **ou**
-2. Activer le droit **Paramètres / settings** pour l’app *LBG Cortex* (écran Freebox), puis relancer un DELETE API.
 
 ## Vérif LBG
 
