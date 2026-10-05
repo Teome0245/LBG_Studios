@@ -4,7 +4,7 @@
 **Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
 **Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
-Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
+Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
 
 ---
 
@@ -31,12 +31,12 @@ Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team
 | Ops / Team / approvals L2 | Pilot `.140:8080/pilot/` |
 | Bureau Windows | `packages/compagnon-desktop` (tray, overlay, notifications) |
 
-Jalons **D0–D3** et pilotage (⌘K, Agir dry-run → réel) : **OK**.  
-Le doc du 2026-09-18 couvre surtout polish UX, sonde AD et quota d’initiative.
+Jalons **D0–D5** (+ character / voix) : **OK** sur checklist.  
+**Focus suivant** : **D6 Causerie crédible** ([`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6) — fluidité collègue / continuité de fil / pas de runbook Agir en discussion. **Gate avant O2.**
 
 **Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
 Pilot reste le cockpit ops ; on n’absorbe **pas** Team/Jobs dans un clone de `:5174`.  
-Tant que le Compagnon n’est pas crédible sur `:5174`, le pari jeu « 30 s Lost Heaven » ([`FOCUS_WAHOU.md`](FOCUS_WAHOU.md), archivé) ne repasse pas en tête.
+Tant que D6 (feeling Jarvis / MC sur `:5174`) n’est pas crédible, le pari jeu « 30 s Lost Heaven » ([`FOCUS_WAHOU.md`](FOCUS_WAHOU.md), archivé) et O2 ne repassent pas en tête.
 
 Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).
 

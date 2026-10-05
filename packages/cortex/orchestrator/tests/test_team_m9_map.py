@@ -35,12 +35,12 @@ def test_audit_m9a_finds_map_config(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     prime = tmp_path / "prime-client"
     maps = prime / "assets/maps"
     maps.mkdir(parents=True)
-    (maps / "tatooine_map_config.json").write_text(
+    (maps / "scrapaltai_map_config.json").write_text(
         json.dumps({"display_name": "Scrapaltai", "half_size": 6500}),
         encoding="utf-8",
     )
-    (maps / "tatooine.svg").write_text("<svg/>", encoding="utf-8")
-    (maps / "tatooine_pois.json").write_text("[]", encoding="utf-8")
+    (maps / "scrapaltai.svg").write_text("<svg/>", encoding="utf-8")
+    (maps / "scrapaltai_pois.json").write_text("[]", encoding="utf-8")
 
     export_dir = repo / "tools/map_export"
     export_dir.mkdir(parents=True)

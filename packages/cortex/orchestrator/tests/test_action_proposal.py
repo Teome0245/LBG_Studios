@@ -102,6 +102,26 @@ def test_action_proposal_open_app_vs_code_omarchy() -> None:
     assert proposal is not None
     assert proposal["action"]["kind"] == "open_app"
     assert proposal["action"]["app"] == "code"
+    # Workspace studio injecté pour Cline Plan→Act
+    from lbg_agents.desktop_apps import OMARCHY_STUDIO_WORKSPACE
+
+    assert OMARCHY_STUDIO_WORKSPACE in (proposal["action"].get("args") or [])
+    assert proposal["context_patch"].get("desktop_target") == "omarchy"
+    assert (proposal["context_patch"].get("ide_session") or {}).get("primary_hint") == "cline"
+
+
+def test_action_proposal_ouvre_code_sur_omarchy_cline() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={"actor_id": "user:1", "text": "ouvre code sur omarchy", "context": {}},
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["action"]["app"] == "code"
+    assert "Plan" in proposal["summary"] or "Cline" in proposal["summary"]
+    assert proposal["context_patch"].get("desktop_target") == "omarchy"
 
 
 def test_action_proposal_open_app_alias_and_exe_path() -> None:

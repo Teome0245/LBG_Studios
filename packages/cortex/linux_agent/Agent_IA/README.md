@@ -70,6 +70,17 @@ Apprentissage contrôlé (optionnel) :
 - résolution via `which` (`shutil.which`)
 - persist dans `linux.env` (mapping + allowlist)
 
+### `update_vscode` (Omarchy .143)
+
+Dry-run / réel (approval) — paquet AUR `visual-studio-code-bin` via `yay`.
+**Ne pas lancer en Réel** pendant une session Cline/Continue critique (redémarrage IDE).
+
+```json
+{
+  "desktop_action": { "kind": "update_vscode" }
+}
+```
+
 ### `import_face_parts`
 
 Même contrat que le worker Windows (`kind: import_face_parts`). Activer `LBG_LINUX_FACE_PARTS_ENABLED=1` et pointer `LBG_LINUX_FACE_PARTS_INBOX` vers un montage OneDrive/NFS. Copier `face_parts_import_action.py` à côté de `main.py`.

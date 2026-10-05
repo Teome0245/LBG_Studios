@@ -98,6 +98,17 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
 
+    if kind in ("update_vscode", "vscode_update"):
+        # MAJ paquet AUR visual-studio-code-bin — ne pas lancer si une session Cline/IDE est critique.
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        result = core.update_vscode(dry_run=dry_run)
+        out = {**base, **result, "kind": "update_vscode"}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
     if kind == "open_url":
         url = action.get("url")
         if not isinstance(url, str) or not url.strip():
@@ -206,13 +217,19 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             return out
         if dry_run:
             hint_q = fc_ok or sc_ok
+            configured = bool(host and user and password)
+            body = (
+                "[dry-run] IMAP configuré — aucune connexion en simulation ; Réel lira l'INBOX."
+                if configured
+                else "[dry-run] Aucune connexion IMAP ; définir LBG_LINUX_MAIL_IMAP_* pour une exécution réelle."
+            )
             messages = [
                 {
                     "uid": "(dry-run)",
                     "from": "expéditeur@exemple.invalid",
                     "subject": f"… filtre « {hint_q} » (simulation)",
                     "date": "",
-                    "body_preview": "[dry-run] Aucune connexion IMAP ; définir LBG_LINUX_MAIL_IMAP_* pour une exécution réelle.",
+                    "body_preview": body,
                 }
             ]
             out = {
@@ -223,6 +240,7 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
                 "matched_count": len(messages),
                 "from_contains": fc_ok,
                 "subject_contains": sc_ok,
+                "imap_configured": configured,
             }
             core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
             return out

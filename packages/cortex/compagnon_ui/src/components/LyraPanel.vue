@@ -25,7 +25,10 @@
         v-if="initiative"
         class="rounded-xl border border-teal-400/35 bg-slate-950/80 p-2.5 space-y-2"
       >
-        <p class="text-[10px] font-bold uppercase tracking-widest text-teal-300">Je vois</p>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-teal-300">
+          Je vois
+          <span v-if="initiative.spontaneous" class="ml-1 text-sky-400/90 normal-case tracking-normal">· spontané</span>
+        </p>
         <p class="text-[11px] text-slate-200 leading-snug">{{ initiative.message }}</p>
         <button
           v-if="initiative.primary"

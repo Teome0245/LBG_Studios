@@ -153,7 +153,7 @@ def _desktop_dry_run(context: dict | None = None) -> bool:
     """
     Dry-run si :
     - `LBG_DESKTOP_DRY_RUN` est truthy (force global), OU
-    - `context.desktop_dry_run` est True (par requête, ex. Agir / Pilot).
+    - `context.desktop_dry_run` / `context.dry_run` est True (par requête, ex. Agir / Pilot).
 
     Important : `LBG_DESKTOP_DRY_RUN=0` ne doit PAS écraser un dry-run explicite du contexte
     (sinon propose→dry-run échoue avec « Approval token requis »).
@@ -161,7 +161,9 @@ def _desktop_dry_run(context: dict | None = None) -> bool:
     env = _get_desktop_cfg("LBG_DESKTOP_DRY_RUN").strip()
     if env and _truthy(env):
         return True
-    if isinstance(context, dict) and context.get("desktop_dry_run") is True:
+    if isinstance(context, dict) and (
+        context.get("desktop_dry_run") is True or context.get("dry_run") is True
+    ):
         return True
     return False
 
@@ -1650,13 +1652,19 @@ async def invoke(payload: InvokeRequest):
             return out
         if dry_run:
             hint_q = fc_ok or sc_ok
+            configured = bool(host and user and password)
+            body = (
+                "[dry-run] IMAP configuré — aucune connexion en simulation ; Réel lira l'INBOX."
+                if configured
+                else "[dry-run] Aucune connexion IMAP ; définir LBG_DESKTOP_MAIL_IMAP_* pour une exécution réelle."
+            )
             messages = [
                 {
                     "uid": "(dry-run)",
                     "from": "expéditeur@exemple.invalid",
                     "subject": f"… filtre « {hint_q} » (simulation)",
                     "date": "",
-                    "body_preview": "[dry-run] Aucune connexion IMAP ; définir LBG_DESKTOP_MAIL_IMAP_* pour une exécution réelle.",
+                    "body_preview": body,
                 }
             ]
             out = {
@@ -1667,6 +1675,7 @@ async def invoke(payload: InvokeRequest):
                 "matched_count": len(messages),
                 "from_contains": fc_ok,
                 "subject_contains": sc_ok,
+                "imap_configured": configured,
             }
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out

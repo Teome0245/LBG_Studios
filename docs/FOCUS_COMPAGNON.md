@@ -1,6 +1,6 @@
 # Focus — Compagnon Studio (type Jarvis)
 
-**Date** : 2026-09-20 (LLM LAB + matrice ≤12B)  
+**Date** : 2026-09-28 (couche Character + dials lab)  
 **Priorité** : **O1 Studio** — agents / UI / autonomie bornée.  
 **Hors scope immédiat** : intégration persona dans le MMO (Rang 2).
 
@@ -31,6 +31,10 @@ Pas de second OS type CrewAI. Même backend (Orch API `:3000` + Cortex / Team).
 Profils dialogue : `compagnon` (défaut), `compagnon_lab` / `lab`, `jarvis`, `mother`, `kit`, `hal`  
 (Orch overlays `compagnon_ui/server_overlay/router_prompts.py` + `lbg_agents/dialogue_llm.py`).  
 Voix d’accueil : `lbg_agents/lbg_ia_voice.py`.
+
+**Couche Character** (personnalité ≠ expression, inspirée MC / adaptée LBG) :  
+[`packages/cortex/docs/character_layer.md`](../packages/cortex/docs/character_layer.md)  
+— pack `knowledge/character/compagnon_v1.json`, 7 dials lab (UI `:5174`), blacklist anti-IA générique, ego soft, smoke voix V1–V5.
 
 **LLM / morale** (infra LAN = LAB, non exposée) :  
 [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md)  
@@ -97,6 +101,96 @@ Phasage réaliste :
    - 1 objectif persistant : **Veiller Jobs L2** (`studioGoal.js`)  
    - Feedback Agir / Ignorer → freine les signaux souvent ignorés (`learned_dismiss`)  
    - Toast : 1 CTA + badge objectif ; empty state affiche l’objectif actif  
+9. **D5 Initiative typée (plus que Jarvis)** — **OK** (2026-09-27)  
+   - Voir § **D5 — 4 types de propositions** ci-dessous  
+   - Code : `compagnon_ui/src/lib/mandate.js` + `initiativeQuota.js` + `studioGoal.js` · toast Mandat  
+   - Empty state `:5174` : chips Mandat si pas encore confirmé (demande la priorité tout de suite)  
+   - Soft-confirm LAB : `open_url` / `mail_imap_preview` / sondes → **Réel sans case** (`ActionCard` + `_SOFT_KINDS`)  
+   - Tests : `mandate.test.js` + `initiativeQuota.test.js` (12 verts)  
+10. **Character layer** — **OK** (2026-09-28)  
+   - Pack worldview + 7 dials + blacklist + ego soft — [`character_layer.md`](../packages/cortex/docs/character_layer.md)  
+   - UI lab panneau caractère (header) · API `/character/*` · smoke voix V1–V5  
+   - Tests : `test_character_layer.py` + `characterDials.test.js`
+11. **Voix TTS (`voice_local`)** — **OK** lot 2 (2026-10-02)  
+   - Provider **Edge** `fr-FR-DeniseNeural` + fallback Piper `.111:8098` + bouton Voix `:5174` — [`voice_local.md`](../packages/cortex/docs/voice_local.md)  
+   - Deploy : `deploy_piper_tts_111.sh` (fallback) puis `deploy_compagnon_100.sh`  
+12. **D6 Causerie crédible** — **EN COURS** (2026-10-01) — *prérequis feeling avant O2*  
+   - Voir § **D6 — Causerie crédible** ci-dessous  
+   - Lot 1 (ressenti immédiat) : fil LAB conservé (`short_ctx`) + nudge collègue sans runbook Agir
+
+## D6 — Causerie crédible (avant O2)
+
+**Problème** : O1 est « done » checklist (presence / Agir / dials), mais l’échange ne sent pas encore Jarvis / MC — mur d’incompréhension, reset de fil, récitation ops.
+
+**Invariant** : contre-pouvoir + dry-run inchangés pour **Agir**. D6 = posture **Discuter** distincte.
+
+### Critères done (concrets)
+
+| # | Critère | Mesure |
+|---|---------|--------|
+| C1 | **Continuité** | Sur 5 tours d’un même fil `:5174` (LAB), le Compagnon reprend le sujet sans redemander « l’objectif » ni repartir en fiche d’identité. |
+| C2 | **Collègue d’abord** | Ouverture type « discutons comme collègues du projet » → réponse avec prise de position / avis, **sans** réciter Agir / `.143` / dry-run / `deploy_*` (sauf demande explicite d’action). |
+| C3 | **Retours constructifs** | Sur un avis produit (« ça me frustre / j’aimerais X ») → 1 diagnostic + 1 proposition, pas un questionnaire ni un audit Team inventé. |
+| C4 | **Deux postures** | `Discuter` ≠ `Agir` : le bouton Agir / proposition d’action n’apparaît que si l’humain demande une exécution ou un outillage. |
+| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. |
+| C6 | **Gate O2** | Tant que C1–C5 ne sont pas verts en LAB sur `:5174`, O2 (jeu) ne repasse pas en priorité produit. |
+
+### Lots
+
+| Lot | Livrable | État |
+|-----|----------|------|
+| **D6.1** | `short_ctx` LAB conservé (cap 6 msgs) + nudge causerie + élargissement heuristiques collègue/ami | **OK** code (2026-10-01) — deploy `deploy_compagnon_100.sh` |
+| **D6.2** | Prompt `compagnon_lab` scindé « causerie courte » vs « ops » + character slim + anti-rebond | **OK** code (2026-10-01) — `resolve_lab_system_prompt` |
+| **D6.2b** | Combo feeling : sticky fil + anti-fausse investigation + OpenClaw pas sur « évoluer » causerie | **OK** code (2026-10-02) |
+| **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | TODO |
+| **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | TODO |
+
+## Chemins / surfaces (ne pas confondre)
+
+| Surface | URL | Rôle |
+|---------|-----|------|
+| **Compagnon produit** | http://192.168.0.100:5174/ | Présence, dialogue, initiative, Agir |
+| **Compagnon via Pilot** | http://192.168.0.140:8080/#/assistant | Même canal ops (dry-run / jeton) |
+| **Accueil Pilot** | http://192.168.0.140:8080/#/ | Hub liens — **pas** le chat produit |
+| **Bureau Team** | http://192.168.0.140:8080/#/team/office | Campus / présence agents |
+| **Jobs L2** | http://192.168.0.140:8080/#/jobs | Approbations |
+
+**Audit 2026-09-27** : les liens Accueil → 5174 / `#/assistant` / `#/team/*` / `#/jobs` / Cockpit répondent HTTP 200.  
+Pièges fréquents (pas des routes « perdues », mais de la confusion) :
+
+1. Menu **Studio** ouvert sur Accueil ≠ navigation vers Bureau — vérifier le hash (`#/` vs `#/team/office`).
+2. Canon présence = `:5174` ; Pilot = cockpit ops. Carte Accueil doublon « Chat produit (Orch) » **retirée** (2026-09-27).
+3. Routes Pilot étendues (`#/hunt`, `#/agents/map`, `#/providers`, `#/team/metrics`) passent par `src/main.js` (patches ESM) — pas par le monolithe `pilot.js` orphelin (plus chargé par `index.html`).
+
+## D5 — 4 types de propositions
+
+Invariant : **jamais d’auto-exec L2**. Toast / message → Agir (dry-run) → Réel.  
+Quota global : max 3/h · ≥10 min entre toasts · silence ≥90 s.
+
+| Type | Fingerprint / id | Déclencheurs | Contenu | Priorité |
+|------|------------------|--------------|---------|----------|
+| **Garde** | `infra:*`, `disk:*`, `jobs:l2:*`, `tension:high` | Alerte factuelle | 1–2 CTA Agir (sonde, Jobs) | P0 |
+| **Mandat** | `mandate:ask` | Pas de mandat frais (TTL 4 h) **ou** 1er idle session ; silence ≥2 h si mandat expiré | Chips : Jobs / LAN / Mail / Studio — « priorité ? » | P1 |
+| **Opportunité** | `jobs:idle` (+ rotation catalogue) | Silence ≥10 min, curiosité ≥0.7, pas d’alerte, mandat OK | mail / selfcheck / Jobs… dans le périmètre mandat | P2 |
+| **Studio** | `studio:*` | Mandat inclut `studio` ; silence ≥30 min **ou** Self `pending_will` | Veille évolution, synth doc focus, micro-tâche conception | P2 |
+
+### Ordre de sélection
+
+1. Garde si signal infra / jobs L2 / tension réelle  
+2. Sinon Mandat si aucun mandat actif / expiré (max 1 / 4 h)  
+3. Sinon Studio si mandat ⊇ `studio` et fingerprint non snoozé  
+4. Sinon Opportunité (idle) bornée au mandat  
+
+### Mandat (stockage)
+
+`localStorage` clé `lbg_compagnon_mandate_v1` :
+
+```json
+{ "watch": ["jobs_l2"], "updatedAt": 0, "until": 0 }
+```
+
+Scopes : `jobs_l2` | `lan` | `mail` | `studio`.  
+Réponse chips / toast met à jour le mandat **et** aligne `studioGoal` (objectif affiché empty state).
 
 ## Correctifs livrés (2026-09-18)
 

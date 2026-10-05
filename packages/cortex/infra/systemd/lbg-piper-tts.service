@@ -1,0 +1,17 @@
+[Unit]
+Description=LBG Piper TTS (voice_local Compagnon, FR)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/lbg-piper-tts
+Environment=LBG_PIPER_MODELS_DIR=/opt/lbg-piper-tts/models
+Environment=LBG_PIPER_VOICE=fr_FR-siwis-medium
+Environment=LBG_PIPER_MAX_CHARS=500
+ExecStart=/opt/lbg-piper-tts/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8098
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

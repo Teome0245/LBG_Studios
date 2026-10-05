@@ -99,9 +99,9 @@ def build_guest_remediation_plan(guest_payload: dict[str, Any] | None) -> dict[s
                             "command": (
                                 "Z=/opt/lbg-new-mmo-clean/MMOCoreORB/bin/log/zArchive; "
                                 "df -h /; du -sh \"$Z\" 2>/dev/null; "
-                                "find \"$Z\" -type f "
-                                "\\( -name '*.log.1' -o -name '*.log.[2-9]' -o -name '*.log.[0-9][0-9]*' "
-                                "-o -name '*.log.*.gz' \\) -delete 2>/dev/null; "
+                                # Rotations cassées type .log.1.1.1… — tout *.log.* (pas les *.log courants)
+                                "find \"$Z\" -type f -name '*.log.*' -delete 2>/dev/null; "
+                                "find \"$Z\" -type f -name '*.gz' -delete 2>/dev/null; "
                                 "du -sh \"$Z\" 2>/dev/null; df -h /"
                             ),
                         },

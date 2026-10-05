@@ -1906,7 +1906,7 @@
         textEl.value = "ouvre notepad et écris ceci est un test de l'Assistant Core";
         ctxEl.value = JSON.stringify({ history: [], desktop_default_notepad_path: prefs.notepad_path }, null, 2);
       } else if (kind === "web") {
-        textEl.value = "cherche sur internet le site de Cursor AI";
+        textEl.value = "vérifie l'état du backend Studio (Pilot / orch)";
         ctxEl.value = JSON.stringify({ history: [] }, null, 2);
       } else if (kind === "mail") {
         textEl.value = "regarde si j'ai un mail de Intel";

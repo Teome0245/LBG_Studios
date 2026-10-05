@@ -1,0 +1,123 @@
+"""Tests — chat_intent (identité / causerie / audit)."""
+
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+
+_OVERLAY = Path(__file__).resolve().parents[1]
+if str(_OVERLAY) not in sys.path:
+    sys.path.insert(0, str(_OVERLAY))
+
+import chat_intent as ci  # noqa: E402
+
+
+class ChatIntentTests(unittest.TestCase):
+    def test_identity_true(self) -> None:
+        for p in (
+            "Bonjour, tu peux me dire quoi sur toi.",
+            "dis moi quelque chose d interessant sur toi",
+            "qui es-tu ?",
+            "parle-moi de toi",
+            "présente-toi",
+            "raconte-moi quelque chose d'intéressant",
+        ):
+            self.assertTrue(ci.is_companion_chat(p), p)
+
+    def test_exploratory_true(self) -> None:
+        for p in (
+            "pour le moment je voudrai Chatter, échanger, confondre",
+            "discutons maturité et MMORPG",
+            "on peut brainstormer l'écosystème LBG",
+            "discutons comme entre collègues ou amis au sujet du projet",
+            "ce qui me frustre c'est le manque de fluidité",
+        ):
+            self.assertTrue(ci.is_companion_chat(p), p)
+            self.assertTrue(ci.wants_exploratory_chat(p), p)
+
+    def test_ops_false(self) -> None:
+        for p in (
+            "team: status campus",
+            "dis moi le status pilot",
+            "qui es-tu et status team",
+            "smoke lan",
+            "tu pourrais faire un auto audit ?",
+        ):
+            self.assertFalse(ci.is_companion_chat(p), p)
+
+    def test_causerie_lab_nudge(self) -> None:
+        import router_prompts as rp  # noqa: E402
+
+        nudge = rp.causerie_lab_nudge(
+            "discutons comme entre collègues du projet", lab=True
+        )
+        self.assertIn("avance le fil", nudge.lower())
+        self.assertIn("avis", nudge.lower())
+        self.assertEqual(rp.causerie_lab_nudge("discutons", lab=False), "")
+        self.assertEqual(rp.causerie_lab_nudge("smoke lan", lab=True), "")
+        # Sticky : follow-up sans mot-clé, mais fil causerie
+        ctx = [
+            {"role": "user", "content": "discutons comme collègues du projet LBG"},
+            {"role": "assistant", "content": "Mon avis : …"},
+        ]
+        self.assertTrue(
+            rp.wants_lab_causerie_prompt("tu inventes ou tu as investigué ?", short_ctx=ctx)
+        )
+        self.assertTrue(
+            rp.wants_lab_causerie_prompt(
+                "tu te sens prêt pour m'aider à faire évoluer tout ça ?", short_ctx=ctx
+            )
+        )
+        self.assertFalse(
+            rp.wants_lab_causerie_prompt("team: status campus", short_ctx=ctx)
+        )
+        causerie = rp.resolve_lab_system_prompt(
+            "discutons comme entre collègues du projet"
+        )
+        self.assertIn("avis", causerie.lower())
+        self.assertIn("hypoth", causerie.lower())
+        self.assertEqual(rp.lab_short_ctx_cap(), 6)
+
+    def test_openclaw_not_on_causerie_evoluer(self) -> None:
+        import openclaw_markers as oc  # noqa: E402
+
+        self.assertFalse(
+            oc.prompt_has_openclaw_substrings(
+                "tu te sens prêt pour m'aider à faire évoluer tout ça ?"
+            )
+        )
+        self.assertFalse(
+            oc.prompt_has_openclaw_substrings("que pense tu du rôle de Lyra ?")
+        )
+        self.assertTrue(oc.prompt_has_openclaw_substrings("lance openclaw repair"))
+        self.assertTrue(oc.prompt_has_openclaw_substrings("auto-évolution du module"))
+
+    def test_team_routing_campus_concept(self) -> None:
+        import team_routing as tr  # noqa: E402
+
+        self.assertFalse(
+            tr.should_route_to_team(
+                prompt="pour toi, qu'est ce que le campus lbg",
+                intent_v2={"intent": "conversation", "confidence": 0.9},
+                enabled=True,
+            )
+        )
+        self.assertTrue(
+            tr.should_route_to_team(
+                prompt="status campus",
+                intent_v2={"intent": "devops_request", "confidence": 0.9},
+                enabled=True,
+            )
+        )
+
+
+    def test_studio_audit(self) -> None:
+        self.assertTrue(ci.wants_studio_team_audit("audit Team, studio pour l'état actuel"))
+        self.assertTrue(ci.wants_broad_audit("tu pourrais faire un auto audit ?"))
+        self.assertFalse(ci.wants_ollama_only_audit("audit Team studio"))
+        self.assertTrue(ci.wants_ollama_only_audit("audit Ollama .110 .111"))
+
+
+if __name__ == "__main__":
+    unittest.main()

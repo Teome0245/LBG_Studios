@@ -2,7 +2,7 @@
  * L'install PWA native exige souvent HTTPS ; sur .10 préférer le raccourci --app=
  * (voir desktop/Install-CompagnonShortcut.ps1).
  */
-const CACHE = "lbg-compagnon-shell-v5";
+const CACHE = "lbg-compagnon-shell-v6";
 const PRECACHE = ["/manifest.webmanifest", "/pwa-icon.svg"];
 
 self.addEventListener("install", (event) => {

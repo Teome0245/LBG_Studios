@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PRIME="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-OVERLAY="${PRIME}/assets/maps/retail/tatooine/lost_heaven_retail_layout.json"
+OVERLAY="${PRIME}/assets/maps/retail/scrapaltai/lost_heaven_retail_layout.json"
 HTTP_BASE="${LBG_GATEWAY_HTTP:-http://192.168.0.246:8765}"
 ANCHOR_X="${LH_ANCHOR_X:-4749}"
 ANCHOR_Z="${LH_ANCHOR_Z:--737}"
@@ -75,5 +75,5 @@ else
 fi
 
 if [[ -d /mnt/j/swgemu/clients/prime-client ]]; then
-  rsync -a "${OVERLAY}" /mnt/j/swgemu/clients/prime-client/assets/maps/retail/tatooine/
+  rsync -a "${OVERLAY}" /mnt/j/swgemu/clients/prime-client/assets/maps/retail/scrapaltai/
 fi

@@ -2,9 +2,9 @@
 extends Control
 class_name PlanetMapPanel
 
-const POI_PATH := "res://assets/maps/tatooine_pois.json"
+const POI_PATH := "res://assets/maps/scrapaltai_pois.json"
 const LOC_PATH := "res://assets/maps/locations_tree.json"
-const MAP_CONFIG := "res://assets/maps/tatooine_map_config.json"
+const MAP_CONFIG := "res://assets/maps/scrapaltai_map_config.json"
 
 @export var camera_path: NodePath = NodePath("../../Camera2D")
 @export var player_controller_path: NodePath = NodePath("../../PlayerController")
@@ -126,7 +126,7 @@ func _load_config() -> void:
 		_half_size = float((raw as Dictionary).get("half_size", _half_size))
 
 func _load_texture() -> void:
-	for path in ["res://assets/maps/tatooine.svg", "res://assets/maps/tatooine.png"]:
+	for path in ["res://assets/maps/scrapaltai.svg", "res://assets/maps/scrapaltai_shard_legacy.png"]:
 		if ResourceLoader.exists(path):
 			_texture = load(path) as Texture2D
 			if _texture:

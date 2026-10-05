@@ -70,7 +70,7 @@ func _wire_creation_panel() -> void:
 
 func _apply_planet_subtitle() -> void:
 	var planet_label := "Scrapaltai"
-	const cfg_path := "res://assets/maps/tatooine_map_config.json"
+	const cfg_path := "res://assets/maps/scrapaltai_map_config.json"
 	if FileAccess.file_exists(cfg_path):
 		var f := FileAccess.open(cfg_path, FileAccess.READ)
 		var raw: Variant = JSON.parse_string(f.get_as_text())

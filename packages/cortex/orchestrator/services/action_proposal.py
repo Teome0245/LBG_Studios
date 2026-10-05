@@ -12,6 +12,7 @@ from shared_registry import capability_registry
 from lbg_agents.desktop_apps import (
     enrich_open_app_action,
     extract_exe_path_from_goal,
+    normalize_desktop_app,
     repair_app_deps_action_from_goal,
     resolve_second_avis_concurrent,
     sanitize_desktop_app_slug,
@@ -940,9 +941,36 @@ def _propose_open_app(raw: str, normalized: str) -> ActionProposal | None:
     exe = extract_exe_path_from_goal(raw)
     if exe:
         action["command"] = exe
+    target = infer_desktop_target_from_text(raw)
+    want_studio = bool(
+        target == "omarchy"
+        or re.search(r"\bomarchy\b", normalized)
+        or re.search(r"\bcline\b", normalized)
+    )
+    # « ouvre code » sans cible → Omarchy studio (canon ADR 0023 / ecosystem_dev_143).
+    if normalize_desktop_app(slug) == "code" and want_studio:
+        action["inject_studio_workspace"] = True
     action = enrich_open_app_action(action)
     app_label = action.get("app", slug)
-    target = infer_desktop_target_from_text(raw)
+    # VS Code / Cline sur Omarchy : workspace + hint Plan→Act (ADR 0023).
+    if app_label == "code" and want_studio:
+        summary = (
+            "Ouvrir VS Code + Cline sur Omarchy (.143) avec le workspace LBG_Studios — "
+            "puis Cline Plan (9b) → Act (12b)."
+        )
+        proposal = _desktop_proposal(
+            action=action,
+            summary=summary,
+            confidence=0.9,
+            text=raw if re.search(r"\bomarchy\b", normalized) else f"{raw} sur omarchy",
+        )
+        if not proposal.context_patch.get("desktop_target"):
+            proposal.context_patch = {**proposal.context_patch, "desktop_target": "omarchy"}
+        proposal.context_patch = {
+            **proposal.context_patch,
+            "ide_session": {"primary_hint": "cline", "mode": "plan_act"},
+        }
+        return proposal
     summary = f"Préparer l'ouverture de « {app_label} » via desktop_control (dry-run jusqu'à exécution)."
     if target == "ad":
         summary = f"Préparer l'ouverture de « {app_label} » sur le serveur AD (desktop_control, dry-run)."

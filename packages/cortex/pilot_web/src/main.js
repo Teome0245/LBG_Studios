@@ -1,5 +1,4 @@
 /* CSS via <link> dans index.html — pas d'import .css ici (ESM nginx sans Vite). */
-import "./modules/three_setup.js";
 import "./modules/office_map_module.js";
 import "./modules/orchestrator_avatar_module.js";
 import "./modules/face_rig_module.js";
@@ -16,6 +15,8 @@ import { installHuntYard } from "./modules/hunt_yard.js";
 import { installOrchSurfaces } from "./modules/orch_surfaces.js";
 import { installAssistantOrchChat } from "./modules/assistant_orch_chat.js";
 import { installAssistantChannelMode } from "./modules/assistant_channel_mode.js";
+import { installTeamFleet } from "./modules/team_fleet.js";
+import { installAgenticUi } from "./modules/agentic_ui.js";
 import { register as register_9 } from "./chunks/pilot_init.js";
 
 register_0();
@@ -31,6 +32,8 @@ installHuntYard();
 installOrchSurfaces();
 installAssistantOrchChat();
 installAssistantChannelMode();
+installTeamFleet();
+installAgenticUi();
 register_9();
 
 if (typeof globalThis.orchestratorAvatarInit === "function") {
@@ -39,3 +42,11 @@ if (typeof globalThis.orchestratorAvatarInit === "function") {
 if (typeof globalThis.faceRigInit === "function") {
   try { globalThis.faceRigInit(); } catch (_) {}
 }
+
+// Three.js optionnel (carte 3D / avatar GLTF) — ne doit JAMAIS tuer le routeur.
+// Si node_modules/three manque, nginx SPA renvoyait index.html → MIME error → Accueil collé.
+import("./modules/three_setup.js").catch(function (err) {
+  try {
+    console.warn("[pilot] three.js indisponible — bureau 2D OK, carte 3D désactivée", err);
+  } catch (_) {}
+});

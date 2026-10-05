@@ -16,9 +16,20 @@ def test_classifier_detects_quest_keywords_task_work() -> None:
 
 def test_classifier_detects_devops_probe() -> None:
     c = DeterministicIntentClassifier()
-    intent, conf = c.classify("sonde devops stp")
-    assert intent == "devops_probe"
-    assert 0.0 <= conf <= 1.0
+    for text in (
+        "sonde devops stp",
+        "fais un diagnostic infra selfcheck LAN",
+        "lance un selfcheck",
+    ):
+        intent, conf = c.classify(text)
+        assert intent == "devops_probe", text
+        assert conf >= 0.72
+
+
+def test_classifier_status_infra_still_wins_without_action() -> None:
+    c = DeterministicIntentClassifier()
+    intent, _ = c.classify("où en est l'infra et les healthz orchestrateur ?")
+    assert intent == "infra_status"
 
 
 def test_classifier_detects_opengame_prototype() -> None:

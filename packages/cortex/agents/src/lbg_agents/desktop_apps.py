@@ -45,6 +45,8 @@ _APP_ALIASES: dict[str, str] = {
     "swg": "swgemu",
     "starwarsgalaxies": "swgemu",
     # Studio éditeur (.143 Omarchy / .10) — Cline vit dans VS Code
+    # « vs » : premier token de « VS Code » / « vs code » (sinon allowlist_denied)
+    "vs": "code",
     "vscode": "code",
     "vs-code": "code",
     "code-oss": "code",
@@ -154,13 +156,15 @@ def default_desktop_action_from_text(text: str) -> dict[str, Any] | None:
     return {"kind": "open_app", "app": slug, "args": [], "learn": False}
 
 
-def _sanitize_app_slug(raw_tail: str) -> str | None:
+def sanitize_desktop_app_slug(raw_tail: str) -> str | None:
     """Nom court d'app sans chemin / URL ; aligné sur la validation dialogue ``open_app``."""
     t = (raw_tail or "").strip().strip("\"'«»")
     if not t or re.search(r"https?://", t):
         return None
     if "\\" in t or "/" in t or ".." in t:
         return None
+    # « VS Code » / « visual studio code » → vscode (puis alias → code)
+    # « Claude Code » → claude
     for pattern, slug in _MULTIWORD_APP_MAP:
         t = pattern.sub(slug, t)
     first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»")
@@ -179,9 +183,9 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
     return first.lower()
 
 
-def sanitize_desktop_app_slug(raw_tail: str) -> str | None:
-    """Alias public — même logique que ``_sanitize_app_slug``."""
-    return _sanitize_app_slug(raw_tail)
+def _sanitize_app_slug(raw_tail: str) -> str | None:
+    """Alias historique — préférer ``sanitize_desktop_app_slug``."""
+    return sanitize_desktop_app_slug(raw_tail)
 
 
 def extract_exe_path_from_goal(goal: str) -> str | None:
@@ -221,9 +225,13 @@ def second_avis_open_app_action(text: str) -> dict[str, Any]:
     action: dict[str, Any] = {
         "kind": "open_app",
         "app": app_id,
-        "args": [OMARCHY_STUDIO_WORKSPACE],
+        "args": [OMARCHY_STUDIO_WORKSPACE] if app_id == "code" else [],
         "learn": True,
     }
+    # VS Code / Cline : ouvrir le monorepo ; CLI agents : cwd via lancement nu + learn PATH
+    if app_id in ("claude", "opencode", "codex", "copilot"):
+        # Passer le workspace en arg si le binaire l'accepte ; sinon ignoré / learn
+        action["args"] = [OMARCHY_STUDIO_WORKSPACE]
     return enrich_open_app_action(action)
 
 
@@ -232,8 +240,17 @@ def supervised_auto_learn_enabled() -> bool:
     return os.environ.get("LBG_DESKTOP_OPEN_APP_LEARN", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
-def enrich_open_app_action(action: dict[str, Any], *, force_learn: bool | None = None) -> dict[str, Any]:
-    """Normalise l'app (alias) et pose ``learn`` (défaut : auto-learn activé)."""
+def enrich_open_app_action(
+    action: dict[str, Any],
+    *,
+    force_learn: bool | None = None,
+    studio_workspace: bool | None = None,
+) -> dict[str, Any]:
+    """Normalise l'app (alias) et pose ``learn`` (défaut : auto-learn activé).
+
+    Si ``studio_workspace`` / ``inject_studio_workspace`` et app=code : injecte
+    ``OMARCHY_STUDIO_WORKSPACE`` (Cline Plan→Act prêt sur .143).
+    """
     out = dict(action)
     app = normalize_desktop_app(str(out.get("app") or ""))
     if app:
@@ -248,6 +265,14 @@ def enrich_open_app_action(action: dict[str, Any], *, force_learn: bool | None =
     cmd = out.get("command")
     if isinstance(cmd, str) and cmd.strip():
         out["command"] = cmd.strip().replace("/", "\\")
+    want_ws = studio_workspace
+    if want_ws is None:
+        want_ws = bool(out.pop("inject_studio_workspace", False))
+    if app == "code" and want_ws:
+        args = out.get("args")
+        if not isinstance(args, list) or not args:
+            out["args"] = [OMARCHY_STUDIO_WORKSPACE]
+        out.setdefault("cline_hint", "Plan→Act")
     return out
 
 

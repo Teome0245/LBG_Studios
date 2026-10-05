@@ -5,6 +5,14 @@
       try { jobsPollStop(); } catch (_) {}
       const r = pilotParseRoute();
       document.body.dataset.pilotRoute = r;
+
+      // Hide ALL pages first — évite Accueil / lignes qui restent visibles (routeur partiel).
+      try {
+        document.querySelectorAll(".pilot-page").forEach(function (el) {
+          el.hidden = true;
+        });
+      } catch (_) {}
+
       const home = document.getElementById("pilot-page-home");
       const work = document.getElementById("pilot-page-work");
       const assistantPage = document.getElementById("pilot-page-assistant");
@@ -15,6 +23,10 @@
       const pm = document.getElementById("pilot-page-pm");
       const ly = document.getElementById("pilot-page-lyra");
       const de = document.getElementById("pilot-page-desktop");
+      const huntPage = document.getElementById("pilot-page-hunt");
+      const agentsMapPage = document.getElementById("pilot-page-agents-map");
+      const providersPage = document.getElementById("pilot-page-providers");
+
       if (home) home.hidden = r !== "home";
       if (work) work.hidden = r !== "chat" && r !== "ops";
       if (assistantPage) assistantPage.hidden = r !== "assistant";
@@ -25,6 +37,10 @@
       if (pm) pm.hidden = r !== "pm";
       if (ly) ly.hidden = r !== "lyra";
       if (de) de.hidden = r !== "desktop";
+      if (huntPage) huntPage.hidden = r !== "hunt";
+      if (agentsMapPage) agentsMapPage.hidden = r !== "agents_map";
+      if (providersPage) providersPage.hidden = r !== "providers";
+
       if (r === "jobs") {
         try { jobsBindPage(); } catch (_) {}
         try { jobsLoadModels(); } catch (_) {}
@@ -115,11 +131,14 @@
         chat: "studio",
         assistant: "studio",
         jobs: "studio",
+        providers: "studio",
         team: "campus",
         team_office: "campus",
         team_metrics: "campus",
+        agents_map: "campus",
         ops: "ops",
         desktop: "ops",
+        hunt: "jeu",
         pm: "projet",
         lyra: "projet",
       };

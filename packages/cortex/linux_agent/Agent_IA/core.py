@@ -100,7 +100,9 @@ def linux_dry_run(context: dict[str, Any] | None = None) -> bool:
     env = get_cfg("LBG_LINUX_DRY_RUN").strip()
     if env and truthy(env):
         return True
-    return bool(isinstance(context, dict) and context.get("desktop_dry_run") is True)
+    if not isinstance(context, dict):
+        return False
+    return context.get("desktop_dry_run") is True or context.get("dry_run") is True
 
 
 def linux_requires_approval() -> bool:
@@ -462,6 +464,169 @@ def heal_desktop_agent(*, dry_run: bool) -> dict[str, object]:
         }
     except Exception as e:
         return {"ok": False, "outcome": "error", "task": svc, "error": f"{type(e).__name__}: {e}", "before": before}
+
+
+# Paquets AUR/pacman que l’agent peut mettre à jour (allowlist stricte).
+_VSCODE_PKG = "visual-studio-code-bin"
+_PACKAGE_UPDATE_ALLOWLIST = frozenset({_VSCODE_PKG})
+
+
+def vscode_package_status() -> dict[str, object]:
+    """Lit version installée + éventuelle MAJ (pacman -Q / checkupdates), sans écrire."""
+    pkg = _VSCODE_PKG
+    current: str | None = None
+    available: str | None = None
+    try:
+        r = subprocess.run(
+            ["pacman", "-Q", pkg],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and (r.stdout or "").strip():
+            parts = (r.stdout or "").strip().split()
+            if len(parts) >= 2:
+                current = parts[1]
+    except Exception as e:
+        return {
+            "package": pkg,
+            "ok": False,
+            "error": f"pacman -Q: {type(e).__name__}: {e}",
+        }
+    # Prefer checkupdates: compares against a temp sync DB (no root, no /var/lib/pacman mutate).
+    # pacman -Qu alone often returns empty if the local sync DB is stale.
+    try:
+        cu = which("checkupdates") or "/usr/bin/checkupdates"
+        r2 = subprocess.run(
+            [cu],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        for line in (r2.stdout or "").splitlines():
+            s = line.strip()
+            if not s.startswith(pkg + " "):
+                continue
+            if "->" in s:
+                available = s.split("->", 1)[1].strip().split()[0]
+                break
+    except Exception:
+        available = None
+    if available is None:
+        try:
+            r3 = subprocess.run(
+                ["pacman", "-Qu", pkg],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            line = (r3.stdout or "").strip()
+            if line and "->" in line:
+                available = line.split("->", 1)[1].strip().split()[0]
+        except Exception:
+            available = None
+    update_available = bool(current and available and available != current)
+    return {
+        "ok": True,
+        "package": pkg,
+        "current": current,
+        "available": available,
+        "update_available": update_available,
+        "installed": current is not None,
+    }
+
+
+def update_vscode(*, dry_run: bool) -> dict[str, object]:
+    """Met à jour VS Code (AUR visual-studio-code-bin) via yay — poste Omarchy .143."""
+    pkg = _VSCODE_PKG
+    if pkg not in _PACKAGE_UPDATE_ALLOWLIST:
+        return {"ok": False, "outcome": "allowlist_denied", "error": f"Paquet hors allowlist: {pkg}"}
+    status = vscode_package_status()
+    if not status.get("ok"):
+        return {
+            "ok": False,
+            "outcome": "error",
+            "package": pkg,
+            "error": status.get("error") or "statut paquet illisible",
+            "status": status,
+        }
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "package": pkg,
+            "status": status,
+            "hint": (
+                f"Réel: yay -S --noconfirm --needed {pkg}"
+                + (
+                    f" ({status.get('current')} → {status.get('available')})"
+                    if status.get("update_available")
+                    else " (déjà à jour ou pas de sync)"
+                )
+            ),
+            "reply": (
+                f"MAJ VS Code disponible : {status.get('current')} → {status.get('available')}"
+                if status.get("update_available")
+                else f"VS Code déjà à jour ({status.get('current')}) ou aucune MAJ listée."
+            ),
+        }
+    if not status.get("update_available"):
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "package": pkg,
+            "status": status,
+            "skipped": True,
+            "reply": f"VS Code déjà à jour ({status.get('current')}).",
+        }
+    yay = which("yay") or "/usr/bin/yay"
+    try:
+        # Sync DB d’abord : sinon « --needed » peut ignorer une MAJ déjà listée par checkupdates.
+        subprocess.run(
+            [yay, "-Sy", "--noconfirm"],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        r = subprocess.run(
+            [yay, "-S", "--noconfirm", pkg],
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        detail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()
+        after = vscode_package_status()
+        if r.returncode != 0:
+            return {
+                "ok": False,
+                "outcome": "error",
+                "package": pkg,
+                "error": f"yay rc={r.returncode}",
+                "detail": detail[-800:],
+                "before": status,
+                "after": after,
+            }
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "package": pkg,
+            "before": status,
+            "after": after,
+            "detail": detail[-400:],
+            "reply": (
+                f"VS Code mis à jour : {status.get('current')} → "
+                f"{after.get('current') or status.get('available')}."
+            ),
+            "hint": "Redémarrer VS Code manuellement quand les sessions Cline/Continue sont libres.",
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "outcome": "error",
+            "package": pkg,
+            "error": f"{type(e).__name__}: {e}",
+            "before": status,
+        }
 
 
 def mail_imap_enabled() -> bool:

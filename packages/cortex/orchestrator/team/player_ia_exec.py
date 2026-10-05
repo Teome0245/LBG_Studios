@@ -1,9 +1,10 @@
-"""Routage exécution player_ia : sonde L1 vs think/tick L2."""
+"""Routage exécution player_ia : docs_only, sonde L1, ou think/tick L2."""
 
 from __future__ import annotations
 
 import os
 
+from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
 from team.models import TeamTask
 from team.player_ia_probe import probe_player_ia
 from team.player_ia_think import execute_player_ia_think, resolve_player_ia_mode
@@ -129,6 +130,9 @@ def _connectivity_ok(probe: dict[str, object]) -> bool:
 
 
 def execute_player_ia(task: TeamTask) -> dict[str, object]:
+    # docs_only avant toute sonde Core3 — Chœur peut rédiger markdown/JSON.
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
     if resolve_player_ia_mode(task) == "think_tick":
         return execute_player_ia_think(task)
     probe = probe_player_ia(task)

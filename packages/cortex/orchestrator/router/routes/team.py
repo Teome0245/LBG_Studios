@@ -402,6 +402,38 @@ def team_campus_status() -> dict[str, object]:
     return campus_conductor.status()  # type: ignore[return-value]
 
 
+@router.get("/team/fleet")
+def team_fleet() -> dict[str, object]:
+    """Supervision anti-sprawl — agents, Team L2, jobs, flags (plan gaps A2/A4)."""
+    from team import fleet as team_fleet
+
+    return team_fleet.fleet_snapshot()  # type: ignore[return-value]
+
+
+class OpsHealthPilotBody(BaseModel):
+    dry_run: bool = True
+    notify: bool | None = None
+    spawn_l2_remediation: bool = True
+    include_smoke: bool = False
+    actor_id: str = "pilot:ops_health"
+
+
+@router.post("/team/ops_health_pilot")
+def team_ops_health_pilot(payload: OpsHealthPilotBody) -> dict[str, object]:
+    """Playbook ops health (perception→décision→notify→L2). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import ops_health_pilot
+
+    return ops_health_pilot.run_ops_health_pilot(  # type: ignore[return-value]
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        spawn_l2_remediation=payload.spawn_l2_remediation,
+        include_smoke=payload.include_smoke,
+        actor_id=payload.actor_id,
+    )
+
+
 class CampusConductBody(BaseModel):
     dry_run: bool = False
     max_starts: int | None = None
@@ -453,6 +485,58 @@ def team_campus_mission(payload: CampusMissionBody) -> dict[str, object]:
         auto_act=payload.auto_act,
         max_tasks=payload.max_tasks,
     )
+
+
+class EvolutionLeadBody(BaseModel):
+    """Piste d'évolution (URL TikTok/doc/repo…) — fetch silencieux, pas d'onglet."""
+
+    url: str | None = None
+    text: str | None = None
+    note: str = ""
+    spawn_mission: bool = True
+    dry_run: bool = False
+    actor_id: str = "compagnon:evolution"
+    urls: list[str] | None = None
+
+
+@router.post("/team/evolution/lead")
+def team_evolution_lead(payload: EvolutionLeadBody) -> dict[str, object]:
+    """Veille silencieuse : meta URL → brief → mission / tâche evolution_veille."""
+    from services import evolution_lead as evo_lead
+
+    if not evo_lead.leads_enabled():
+        raise HTTPException(status_code=503, detail="evolution_leads_disabled")
+    urls = [u for u in (payload.urls or []) if u]
+    if urls:
+        out = evo_lead.ingest_leads_batch(
+            urls=urls,
+            text=payload.text,
+            note=payload.note,
+            spawn_mission=payload.spawn_mission,
+            dry_run=payload.dry_run,
+            actor_id=payload.actor_id,
+        )
+    else:
+        out = evo_lead.ingest_lead(
+            url=payload.url,
+            text=payload.text,
+            note=payload.note,
+            spawn_mission=payload.spawn_mission,
+            dry_run=payload.dry_run,
+            actor_id=payload.actor_id,
+        )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "lead_failed"))
+    return out  # type: ignore[return-value]
+
+
+@router.get("/team/evolution/leads")
+def team_evolution_leads(limit: int = 20) -> dict[str, object]:
+    """Dernières pistes d'évolution (jsonl)."""
+    from services import evolution_lead as evo_lead
+
+    rows = evo_lead.list_leads(limit=max(1, min(100, int(limit or 20))))
+    return {"ok": True, "count": len(rows), "leads": rows}
 
 
 class CampusMissionCloseBody(BaseModel):

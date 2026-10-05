@@ -6,14 +6,23 @@ import ActionCard from './ActionCard.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
 import { getStudioGoal } from '@/lib/studioGoal'
+import {
+  mandateAskIntents,
+  mandateAskMessage,
+  mandateNeedsAsk,
+  setMandate,
+} from '@/lib/mandate'
 
-const { messages, loadHistory } = useChat()
+const { messages, loadHistory, addUserMessage, addMessage } = useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
 const studioGoalTitle = computed(() => getStudioGoal().goal?.title || 'Veiller Jobs L2')
+const showMandateAsk = ref(false)
+const mandateChips = mandateAskIntents()
 
 onMounted(() => {
   loadHistory()
+  showMandateAsk.value = mandateNeedsAsk()
 })
 
 watch(messages, () => {
@@ -24,6 +33,22 @@ watch(messages, () => {
   })
 }, { deep: true, immediate: true })
 
+function pickMandate(intent) {
+  if (!intent?.mandateScope) return
+  setMandate([intent.mandateScope])
+  showMandateAsk.value = false
+  const goal = getStudioGoal()
+  addUserMessage(`Mandat · ${intent.label}`)
+  addMessage({
+    role: 'assistant',
+    content:
+      `OK — je veille prioritairement « ${intent.label} » pour ~4 h` +
+      ` (objectif · ${goal?.goal?.title || intent.label}).` +
+      `\nJe proposerai des actions dans ce périmètre ; Garde infra reste prioritaire.`,
+    source: 'mandate',
+    state: 'orchestrateur-happy',
+  })
+}
 const crumbCounts = computed(() => {
   let moi = 0
   let ai = 0
@@ -124,6 +149,27 @@ function triggerCtrlK() {
         <p class="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed mb-6">
           Présent pour dialoguer, concevoir et agir sur le poste sous ton contrôle (L2).
         </p>
+
+        <div
+          v-if="showMandateAsk"
+          class="w-full max-w-md mx-auto mb-6 rounded-2xl border border-teal-500/25 bg-teal-500/10 px-4 py-3.5 text-left"
+        >
+          <p class="text-[10px] uppercase tracking-wider text-teal-300/80 font-semibold mb-1.5">Priorité · mandat</p>
+          <p class="text-sm text-slate-200 leading-snug mb-3">{{ mandateAskMessage() }}</p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="chip in mandateChips"
+              :key="chip.id"
+              type="button"
+              class="rounded-xl border border-teal-400/35 bg-slate-950/50 px-3 py-1.5 text-xs font-medium text-teal-100 hover:bg-teal-500/20 hover:border-teal-300/50 transition-colors"
+              :title="chip.hint"
+              @click="pickMandate(chip)"
+            >
+              {{ chip.label }}
+            </button>
+          </div>
+        </div>
+
         <p class="text-[11px] text-slate-500 font-mono">
           Écris ci-dessous · <button type="button" class="text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline cursor-pointer" @click="triggerCtrlK">Ctrl+K</button> pour le pilotage · <span class="text-cyan-400/80">Agir</span> pour une action poste
         </p>

@@ -6,7 +6,7 @@
 
 | Couche | Fichier | Rôle |
 |--------|---------|------|
-| **Référence spatiale** | `assets/maps/retail/tatooine/lost_heaven_retail_layout.json` | Gabarit Mos Eisley décalé sur ancre LH `(4749, -737)` — 72 emprises + markers |
+| **Référence spatiale** | `assets/maps/retail/scrapaltai/lost_heaven_retail_layout.json` | Gabarit Mos Eisley décalé sur ancre LH `(4749, -737)` — 72 emprises + markers |
 | Overlay jeu | `RetailLayoutLayer` (Ctrl+Shift+R) | Carrés verts = cette référence |
 | POI lore LH | `lost_heaven_buildings.json` (12 bâtiments) | Labels LBG (La Perle, porte, marché…) — art / quêtes, **pas** la densité rue |
 | Props / chemins | `lost_heaven_props.json` | Plaza, palissade, props (Ctrl+H) |

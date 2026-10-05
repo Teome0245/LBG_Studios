@@ -45,6 +45,17 @@ def test_no_elevation_with_structured_action(monkeypatch: pytest.MonkeyPatch) ->
     assert should_elevate_to_agentic("desktop_control", {"desktop_action": {"kind": "open_app"}}) is False
 
 
+def test_intents_allowlist_restricts(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LBG_CHAT_AGENTIC", "1")
+    monkeypatch.setenv("LBG_JOBS_RUNNER_ENABLED", "1")
+    monkeypatch.setenv("LBG_CHAT_AGENTIC_INTENTS", "devops_probe")
+    assert should_elevate_to_agentic("devops_probe", {}) is True
+    assert should_elevate_to_agentic("project_pm", {}) is False
+    assert should_elevate_to_agentic("desktop_control", {}) is False
+    monkeypatch.delenv("LBG_CHAT_AGENTIC_INTENTS", raising=False)
+    assert should_elevate_to_agentic("project_pm", {}) is True
+
+
 def test_elevate_to_job_creates_background_job(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_CHAT_AGENTIC", "1")
     monkeypatch.setenv("LBG_JOBS_RUNNER_ENABLED", "1")

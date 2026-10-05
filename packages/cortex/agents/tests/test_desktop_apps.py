@@ -17,6 +17,17 @@ from lbg_agents.desktop_apps import (
 )
 
 
+def test_enrich_code_omarchy_workspace() -> None:
+    from lbg_agents.desktop_apps import OMARCHY_STUDIO_WORKSPACE, enrich_open_app_action
+
+    act = enrich_open_app_action(
+        {"kind": "open_app", "app": "code", "args": []},
+        studio_workspace=True,
+    )
+    assert OMARCHY_STUDIO_WORKSPACE in act["args"]
+    assert act.get("cline_hint") == "Plan→Act"
+
+
 def test_infer_vghd() -> None:
     act = default_desktop_action_from_text("tu peux lancer vghd sur mon pc ?")
     assert act and act["kind"] == "open_app" and act["app"] == "vghd"
@@ -71,6 +82,22 @@ def test_normalize_aliases() -> None:
     assert normalize_desktop_app("MSWORD") == "word"
     assert normalize_desktop_app("swg") == "swgemu"
     assert normalize_desktop_app("notepad") == "notepadpp"
+    assert normalize_desktop_app("vs") == "code"
+    assert normalize_desktop_app("vscode") == "code"
+
+
+def test_open_app_vs_code_aliases() -> None:
+    """« VS Code » / « vs » ne doivent pas rester en slug ``vs`` (allowlist .143 = code)."""
+    for text in (
+        "ouvre vs sur omarchy",
+        "ouvre VS Code sur omarchy",
+        "ouvre vs code sur omarchy",
+        "ouvre vscode sur omarchy",
+        "lance visual studio code",
+    ):
+        act = open_app_action_from_goal(text)
+        assert act is not None, text
+        assert act["app"] == "code", text
 
 
 def test_enrich_office_learn_default_on(monkeypatch: pytest.MonkeyPatch) -> None:

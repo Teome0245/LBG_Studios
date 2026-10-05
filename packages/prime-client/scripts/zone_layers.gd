@@ -2,7 +2,7 @@
 extends Node2D
 class_name ZoneLayers
 
-const ZONES_PATH := "res://assets/maps/tatooine_zones.json"
+const ZONES_PATH := "res://assets/maps/scrapaltai_zones.json"
 const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 const PROPS_PATH := "res://assets/maps/lost_heaven_props.json"
 

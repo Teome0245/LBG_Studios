@@ -1,8 +1,8 @@
-# map_texture_loader.gd — résout la texture planète depuis tatooine_map_config.json
+# map_texture_loader.gd — résout la texture planète depuis scrapaltai_map_config.json
 extends RefCounted
 class_name MapTextureLoader
 
-const CONFIG_PATH := "res://assets/maps/tatooine_map_config.json"
+const CONFIG_PATH := "res://assets/maps/scrapaltai_map_config.json"
 const MAP_DIR := "res://assets/maps/"
 
 static func load_config() -> Dictionary:
@@ -66,7 +66,7 @@ static func runtime_entity_sprites_enabled() -> bool:
 	return not debug_triangle_markers_enabled()
 
 static func load_texture(usage: String = "world") -> Texture2D:
-	# Fond jeu = planet_backdrop procédural ; ne pas tenter tatooine.svg (import often invalid).
+	# Fond jeu = planet_backdrop procédural ; ne pas tenter scrapaltai.svg (import often invalid).
 	if usage == "world" and not show_planet_texture():
 		return null
 	var path := resolve_path(usage)

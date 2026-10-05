@@ -27,14 +27,12 @@
   </div>
   <router-view />
   <LyraWidget />
-  <SelfPresenceStrip />
   <InitiativeToast />
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import LyraWidget from './components/LyraWidget.vue'
-import SelfPresenceStrip from './components/SelfPresenceStrip.vue'
 import InitiativeToast from './components/InitiativeToast.vue'
 import { PILOT_NAV } from './lib/pilotLinks.js'
 import { useLayout } from './composables/useLayout.js'

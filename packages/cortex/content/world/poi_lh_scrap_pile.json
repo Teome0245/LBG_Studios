@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "poi:lh_scrap_pile",
+  "label": "Pile de ferraille — débris convoi",
+  "planet": "Scrapaltai",
+  "hub": "lost_heaven",
+  "kind": "salvage_scrap",
+  "bible_ref": "docs/world/BIBLE_MMO.md#v11-v12",
+  "bible_safe": true,
+  "status": "stub",
+  "ticket": "C8",
+  "placement": {
+    "zone": "hors_palissade_est",
+    "near_gate": "poi:lost_heaven_gate",
+    "x": 6042.0,
+    "z": -1065.0,
+    "radius_m": 85,
+    "detail": true,
+    "essential": true,
+    "active": false,
+    "group": "lost_heaven",
+    "notes": "active=false jusqu'à event:lh_scrap_fall_convoy ou promotion manuelle — pas sync Godot v1."
+  },
+  "interaction_stub": {
+    "action": "salvage",
+    "skill_hint": "prospecteur_r1",
+    "craft_station_redirect": "poi:lost_heaven_artisan_hall"
+  },
+  "loot_table": [
+    {
+      "id": "scrap_metal",
+      "name": "Ferraille",
+      "qty_min": 2,
+      "qty_max": 4,
+      "weight": 50,
+      "m10_resource": true
+    },
+    {
+      "id": "binding_tape",
+      "name": "Ruban de liaison",
+      "qty_min": 0,
+      "qty_max": 1,
+      "weight": 20,
+      "m10_resource": true
+    },
+    {
+      "id": "carapace",
+      "name": "Carapace",
+      "qty_min": 0,
+      "qty_max": 1,
+      "weight": 15,
+      "source_beast": "beast:scorpion_titan",
+      "notes": "Débris mélangés à la carcasse d'un prédateur — pas loot garanti."
+    }
+  ],
+  "craft_outputs_hint": [
+    {
+      "schematic_id": "kit_reparation",
+      "inputs_from_loot": [{"id": "scrap_metal", "qty": 2}, {"id": "binding_tape", "qty": 1}]
+    },
+    {
+      "schematic_id": "plaque_carapace",
+      "inputs_from_loot": [{"id": "carapace", "qty": 1}, {"id": "scrap_metal", "qty": 1}]
+    }
+  ],
+  "event_link": "event:lh_scrap_fall_convoy",
+  "notes": "Boucle salvage SpaceMolt-style → M10 artisan novices. Coordonnées proches poi:lh_hunt_chacal, POI distinct."
+}

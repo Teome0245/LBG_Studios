@@ -283,6 +283,35 @@ async def pilot_team_campus_status() -> dict[str, object]:
         return {"ok": False, "error": str(e)}
 
 
+@router.get("/team/fleet", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_fleet() -> dict[str, object]:
+    """Proxy → `GET /v1/team/fleet` (supervision agents / jobs / L2)."""
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"{orchestrator_base()}/v1/team/fleet")
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/ops_health_pilot", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_ops_health_pilot(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/ops_health_pilot` (dry-run par défaut)."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/ops_health_pilot", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/team/campus/act", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_act(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/act`."""
@@ -304,6 +333,37 @@ async def pilot_team_campus_mission(payload: dict[str, object]) -> dict[str, obj
     try:
         async with httpx.AsyncClient(timeout=90.0) as client:
             r = await client.post(f"{orchestrator_base()}/v1/team/campus/mission", json=payload)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/evolution/lead", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_evolution_lead(payload: dict[str, object]) -> dict[str, object]:
+    """Proxy → `POST /v1/team/evolution/lead` (veille silencieuse, pas d'onglet)."""
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/evolution/lead", json=payload)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.get("/team/evolution/leads", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_evolution_leads(limit: int = 20) -> dict[str, object]:
+    """Proxy → `GET /v1/team/evolution/leads`."""
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(
+                f"{orchestrator_base()}/v1/team/evolution/leads",
+                params={"limit": max(1, min(100, int(limit or 20)))},
+            )
         if r.status_code != 200:
             return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
         data = r.json()

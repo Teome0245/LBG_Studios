@@ -16,13 +16,20 @@ _LEGACY_MODEL_PREFIXES = ("phi4-mini", "gemma3:4b")
 
 
 def ollama_base_url() -> str:
-    """Nœud heavy (110) — défaut historique."""
-    return (
-        os.environ.get("LBG_TEAM_OPS_OLLAMA_URL", "").strip()
-        or os.environ.get("LBG_REASON_HEAVY_BASE_URL", "").strip()
-        or os.environ.get("LBG_REASON_LOCAL_BASE_URL", "").strip()
-        or os.environ.get("OLLAMA_BASE_URL", "http://192.168.0.110:11434").strip()
-    ).rstrip("/")
+    """Nœud heavy (110) — ne pas prendre OLLAMA_BASE_URL s'il pointe vers light `.111`."""
+    for key in (
+        "LBG_TEAM_OPS_OLLAMA_URL",
+        "PROBE_OLLAMA_HEAVY_URL",
+        "LBG_REASON_HEAVY_BASE_URL",
+        "LBG_REASON_LOCAL_BASE_URL",
+    ):
+        raw = os.environ.get(key, "").strip()
+        if raw:
+            return raw.rstrip("/")
+    base = os.environ.get("OLLAMA_BASE_URL", "").strip().rstrip("/")
+    if base and "192.168.0.111" not in base.lower():
+        return base
+    return "http://192.168.0.110:11434"
 
 
 def light_ollama_base_url() -> str:
@@ -198,8 +205,8 @@ def _recommendations(
     )
     if has_ablit_12:
         recs.append(
-            "Code/PM/dialogue : huihui_ai/gemma-4-abliterated:12b sur heavy 110 "
-            "(≤12B uncensored — garde-fous maturité A/B/C)."
+            "Code/PM/dialogue : huihui_ai/gemma-4-abliterated:12b-qat sur heavy 110 "
+            "(≤12B uncensored — garde-fous maturité A/B/C ; pas d'alias :12b)."
         )
     elif has_ablit_9:
         recs.append(
@@ -240,6 +247,10 @@ def _recommendations(
 
     recs.append("Heavy 110 = CT Ollama-only ; front Pilot legacy = .112:8080 (hors charge LLM).")
     recs.append("CT heavy : OLLAMA_MAX_LOADED_MODELS=1 pour éviter swap sur 20 Go.")
+    recs.append(
+        "CT light 111 : même contrainte (OLLAMA_MAX_LOADED_MODELS=1) ; "
+        "swap saturé avec RAM libre → restart ollama (watchdog mémoire couvre light)."
+    )
 
     return recs
 

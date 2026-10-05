@@ -1210,7 +1210,62 @@ def _record_job_experience(job: Job, *, outcome: str) -> None:
             tags=tags,
         )
     except Exception:
+        pass
+    # Pont jobs → lessons Team (phase D) — best-effort, échecs surtout
+    try:
+        _bridge_job_to_lessons(job, outcome=outcome)
+    except Exception:
         return
+
+
+def _bridge_job_to_lessons(job: Job, *, outcome: str) -> None:
+    """Écrit une leçon Team depuis un job terminé (échecs prioritaires)."""
+    if os.environ.get("LBG_JOBS_LESSONS_BRIDGE", "1").strip().lower() not in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return
+    # Succès : seulement si explicitement demandé (évite le bruit)
+    if outcome in ("done", "success"):
+        if os.environ.get("LBG_JOBS_LESSONS_BRIDGE_SUCCESS", "0").strip().lower() not in (
+            "1",
+            "true",
+            "yes",
+            "on",
+        ):
+            return
+    try:
+        from team import lessons_learned
+    except Exception:
+        return
+    if not lessons_learned.lessons_enabled():
+        return
+    problem = ""
+    if job.error_log:
+        last = job.error_log[-1]
+        problem = f"{last.get('capability', '')}: {last.get('error', '')}"[:400]
+    pattern = (
+        f"job {outcome}: {(job.objective or '')[:120]}"
+        if outcome in ("failed", "fail")
+        else f"job ok: {(job.objective or '')[:120]}"
+    )
+    refs = [f"job:{job.id}"]
+    if job.trace_id:
+        refs.append(f"trace:{job.trace_id}")
+    lessons_learned.append_lesson(
+        agent_role="ops",
+        pattern=pattern[:500],
+        context=(problem or job.result_summary or "")[:800],
+        failure_or_success=("failure" if outcome in ("failed", "fail") else "success"),
+        do_not_repeat=(
+            "Réutiliser experience_memory / lessons avant de replanifier le même objectif."
+            if outcome in ("failed", "fail")
+            else ""
+        ),
+        refs=refs,
+    )
 
 
 def _maybe_fail_job(job: Job, step: JobStep) -> None:

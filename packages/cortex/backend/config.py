@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     lbg_agent_desktop_url: str = Field(default="", validation_alias="LBG_AGENT_DESKTOP_URL")
     lbg_mmo_server_url: str = Field(default="", validation_alias="LBG_MMO_SERVER_URL")
     lbg_mmo_internal_token: str = Field(default="", validation_alias="LBG_MMO_INTERNAL_TOKEN")
+    # Sidecar joueurs IA Core3 Prime (:8791) — distinct de LBG_MMO_SERVER_URL (souvent PreCU/legacy).
+    lbg_core3_sidecar_url: str = Field(default="", validation_alias="LBG_CORE3_SIDECAR_URL")
+    lbg_core3_ia_bots: str = Field(default="lia,nix,mira,kael", validation_alias="LBG_CORE3_IA_BOTS")
 
     lbg_pilot_internal_token: str = Field(default="", validation_alias="LBG_PILOT_INTERNAL_TOKEN")
     lbg_pilot_internal_rl_rps: float = Field(default=0.0, validation_alias="LBG_PILOT_INTERNAL_RL_RPS")
@@ -84,6 +87,19 @@ class Settings(BaseSettings):
             return max(15.0, min(600.0, float(raw)))
         except ValueError:
             return 120.0
+
+    def core3_sidecar_base(self) -> str:
+        """URL sidecar Prime (:8791) pour snapshots joueurs IA."""
+        raw = self.lbg_core3_sidecar_url.strip()
+        if raw:
+            return raw.rstrip("/")
+        prime_ip = (self.lbg_lan_host_mmo or "192.168.0.246").split(":")[0].strip() or "192.168.0.246"
+        return f"http://{prime_ip}:8791"
+
+    def core3_ia_bot_ids(self) -> list[str]:
+        raw = (self.lbg_core3_ia_bots or "lia,nix,mira,kael").strip()
+        bots = [p.strip().lower() for p in raw.split(",") if p.strip()]
+        return bots or ["lia", "nix", "mira", "kael"]
 
 
 @lru_cache

@@ -16,8 +16,17 @@ Playbook pour alertes mémoire LAN : sonde → plan → apply (approbation) → 
 Unités suggérées par label (override : `LBG_REMEDIATION_HOST_UNITS`) :
 
 ```
-prime=lbg-core3-prime.service,precu=lbg-core3-precu.service,front=nginx.service,core=lbg-orchestrator.service
+prime=lbg-core3-prime.service,precu=lbg-core3-precu.service,front=nginx.service,core=lbg-orchestrator.service,light=ollama.service
 ```
+
+**CT 111 (`light` / ollama-light)** est dans la sonde mémoire par défaut. Cas typique : swap à 100 % alors que la RAM est encore largement libre (« swap collé »). Cause fréquente observée : **`lbg-laya-serve`** (uvicorn :8097), pas ollama. Le plan propose :
+
+1. `ssh_run` lecture (`free -h`, `systemctl is-active ollama`) — allowlist SSH par défaut
+2. hint : `systemctl restart lbg-laya-serve` (souvent libère ~2 Go de swap) ; sinon `ollama`
+3. `OLLAMA_MAX_LOADED_MODELS=1` ; `vm.swappiness=10` **sur l’hôte Proxmox** (CT unprivileged = sysctl RO)
+4. depuis Proxmox NUC : `pct exec 111 -- systemctl restart lbg-laya-serve`
+
+Si `LBG_VM_MEMORY_PROBE_HOSTS` est fixé en prod, ajouter `light=111` explicitement.
 
 ## 1. Sonde manuelle (VM 140 — orchestrateur)
 

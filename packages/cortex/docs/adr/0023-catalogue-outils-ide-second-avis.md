@@ -2,7 +2,7 @@
 
 **Statut** : accepté  
 **Date** : 2026-10-02  
-**Complète** : [`lbg_agentic_os.md`](../lbg_agentic_os.md) § 6.1 · [`ecosystem_dev_143.md`](../ecosystem_dev_143.md) · [`local_llm_route_matrix.md`](../local_llm_route_matrix.md) · ADR [`0020`](0020-dsh-greffe-peripherique.md) · [`0022`](0022-ecc-greffe-peripherique.md)
+**Complète** : [`lbg_agentic_os.md`](../lbg_agentic_os.md) § 6.1 · [`ecosystem_dev_143.md`](../ecosystem_dev_143.md) · [`local_llm_route_matrix.md`](../local_llm_route_matrix.md) · ADR [`0020`](0020-dsh-greffe-peripherique.md) · [`0022`](0022-ecc-greffe-peripherique.md) · [`0024`](0024-prime-agent-greffe-peripherique.md)
 
 ## Contexte
 
@@ -49,7 +49,8 @@ au bus Team, à la file SQLite, ni à l’orchestrateur `.140`.
 | **OpenCode** | Alternative CLI OSS (OpenAI `/v1`) | Matrice respectée ; ctx local OK ; pas de deploy 140 |
 | **Codex CLI** | Surface Responses / OSS | Idem ; provider custom (éviter collision noms réservés) |
 | **Copilot CLI (BYOK)** | Terminal GH + endpoint local | BYOK → Ollama ; pas de dépendance cloud pour le LLM Studio |
-| **Pi** / **Oh My Pi** | Harness minimal / fork enrichi | Lab ; un seul des deux à la fois |
+| **Pi** / **Oh My Pi** | Harness minimal / fork enrichi | Lab ; un seul des deux à la fois (pas avec Prime Agent) |
+| **Prime Agent (PrimeIntellect)** | RLM + Continual Harness (`/refine`) | ADR 0024 — poste only ; **≠** `prime-client` jeu ; Team headless OFF |
 | **DeepSeek Harness (`dsh`)** | Lab Cordis / patterns | ADR 0020 — poste only, capability Team OFF par défaut |
 | **ECC (plugin Claude Code)** | Harness skills/hooks | ADR 0022 — **parké** tant que ctx Gemma ~4k |
 
@@ -85,9 +86,9 @@ comparable, puis **arbitrage humain ou L2**.
 
 | Classe | Primaire (nominal) | Concurrent autorisé pour second avis |
 |--------|--------------------|--------------------------------------|
-| Agent IDE Plan→Act | **Cline** | Claude Code *ou* 1 greffe expérimentale de la classe (OpenCode / Codex / Copilot BYOK) |
+| Agent IDE Plan→Act | **Cline** | Claude Code *ou* 1 greffe expérimentale de la classe (OpenCode / Codex / Copilot BYOK / Prime Agent) |
 | Chat / edit léger | **Continue** | Claude Code (chat) — pas un 3ᵉ IDE agent |
-| CLI agent | **Claude Code** | OpenCode *ou* Codex *ou* Copilot BYOK (un seul) |
+| CLI agent | **Claude Code** | OpenCode *ou* Codex *ou* Copilot BYOK *ou* Prime Agent (un seul) |
 | Review / critique | Team (Argus / Thémis) + humain | Second agent IDE **en lecture** ; pas d’écriture parallèle non revue |
 
 #### Règles opératoires
@@ -169,11 +170,11 @@ Pour entrer en **expérimentation** (puis éventuellement **autorisé**) :
 - Politique unique pour IDE/agents LAN : ce fichier = source de vérité catalogue.
 - Trio autorisé inchangé ; expérimentations listées et bornées.
 - Second avis = capacité **explicite** et **encadrée**, pas une excuse pour empiler.
-- ADR 0020 / 0022 restent les détails de greffe DSH / ECC ; ce catalogue fixe leur **statut**.
+- ADR 0020 / 0022 / 0024 restent les détails de greffe DSH / ECC / Prime Agent ; ce catalogue fixe leur **statut**.
 
 ## Références
 
 - [`ecosystem_dev_143.md`](../ecosystem_dev_143.md) · [`sans_cursor.md`](../sans_cursor.md) · [`omarchy_vm_143.md`](../omarchy_vm_143.md)
 - [`local_llm_route_matrix.md`](../local_llm_route_matrix.md) · [`cline_local_llm.md`](../cline_local_llm.md)
 - [`lbg_agentic_os.md`](../lbg_agentic_os.md) § 6.1
-- [`adr/0020-dsh-greffe-peripherique.md`](0020-dsh-greffe-peripherique.md) · [`adr/0022-ecc-greffe-peripherique.md`](0022-ecc-greffe-peripherique.md)
+- [`adr/0020-dsh-greffe-peripherique.md`](0020-dsh-greffe-peripherique.md) · [`adr/0022-ecc-greffe-peripherique.md`](0022-ecc-greffe-peripherique.md) · [`adr/0024-prime-agent-greffe-peripherique.md`](0024-prime-agent-greffe-peripherique.md) · [`prime_agent_143.md`](../prime_agent_143.md)

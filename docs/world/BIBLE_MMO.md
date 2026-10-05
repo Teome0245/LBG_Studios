@@ -3,8 +3,8 @@
 **Date** : 2026-08-03  
 **Statut** : **V1–V42 validées** (pilote 2026-08-03) · V50–V54 + ancres = canon vivant  
 **Rôle** : ancrer le lore, bloquer les dérives LLM / prompts / contenu  
-**Compléments** : [`INVENTAIRE_PNJ.md`](INVENTAIRE_PNJ.md) · [`ARBRES_TALENTS_PRECU.md`](ARBRES_TALENTS_PRECU.md) · [`BOITE_IDEES_GAMEPLAY.md`](BOITE_IDEES_GAMEPLAY.md) · [`m10_skills_catalog.json`](../../packages/cortex/content/m10/m10_skills_catalog.json)  
-**Produit** : [`PLAN_MMO_O2.md`](../PLAN_MMO_O2.md) · ADR 0009 (Scrapaltai / Lost Heaven) · ADR 0016 (talents + artisanat)  
+**Compléments** : [`INVENTAIRE_PNJ.md`](INVENTAIRE_PNJ.md) · [`ARBRES_TALENTS_PRECU.md`](ARBRES_TALENTS_PRECU.md) · [`BOITE_IDEES_GAMEPLAY.md`](BOITE_IDEES_GAMEPLAY.md) · [`CONCURRENTS_IA_MMO_2026-10.md`](CONCURRENTS_IA_MMO_2026-10.md) · [`m10_skills_catalog.json`](../../packages/cortex/content/m10/m10_skills_catalog.json)  
+**Produit** : [`PLAN_MMO_O2.md`](../PLAN_MMO_O2.md) · ADR 0009 (Scrapaltai / Lost Heaven) · ADR 0016 (talents + artisanat) · ADR docs [`0002-veille-concurrents-ia-mmo`](../adr/0002-veille-concurrents-ia-mmo.md)  
 **Garant runtime (cible)** : **Chœur du monde** (`studio_player_ia_choeur` / rôle Team `player_ia`)
 
 ---
@@ -169,3 +169,4 @@ Points ouverts ; **ne pas inventer** en attendant une décision datée ici.
 | 2026-08-04 | Loots→schematics M10 + templates quêtes LBG (anti-fantasy) |
 | 2026-08-04 | Relecture `plan MMMORPG.md` ; N12 MJ IA ; escort/enquête |
 | 2026-08-27 | **T8 / V60–V65** — maturité contenu : canon C, filtres B→A selon joueur (protéger ≠ amputer le monde) |
+| 2026-10-05 | Lien veille concurrents (`CONCURRENTS_IA_MMO_2026-10.md`, ADR docs 0002) — pas de nouvelle Vérité |

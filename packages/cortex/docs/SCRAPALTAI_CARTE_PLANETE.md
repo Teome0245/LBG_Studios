@@ -131,5 +131,5 @@ Lost Heaven est sur une **artère rouge** secondaire vers le bassin NE, pas au c
 |---------|------|
 | `docs/assets/scrapaltai_carte_planete_reference.png` | Art steampunk source |
 | `docs/assets/scrapaltai_planet_map.json` | Grille + settlements |
-| `prime-client/assets/maps/tatooine_map_config.json` | Shard local ±6500 m |
+| `prime-client/assets/maps/scrapaltai_map_config.json` | Shard local ±6500 m |
 | `docs/world/BIBLE_MMO.md` | Vérités lore V10–V13 |

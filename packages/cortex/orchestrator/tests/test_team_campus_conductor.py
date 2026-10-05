@@ -110,6 +110,7 @@ def test_campus_conduct_starts_in_background(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_campus_skips_approval_required() -> None:
+    """L2 sans jeton → status review à la création ; conduct ne l'auto-démarre pas."""
     client = TestClient(app)
     created = client.post(
         "/v1/team/tasks",
@@ -122,10 +123,16 @@ def test_campus_skips_approval_required() -> None:
         },
     )
     task_id = created.json()["id"]
+    assert created.json()["status"] == "review"
     r = client.post("/v1/team/campus/conduct", json={"dry_run": True})
     body = r.json()
+    started_ids = {s.get("task_id") for s in (body.get("started") or [])}
+    assert task_id not in started_ids
+    # Si encore dans la file queued (legacy), doit être skippé approval_required
     skipped = body.get("skipped") or []
-    assert any(s.get("task_id") == task_id and s.get("reason") == "approval_required" for s in skipped)
+    queued_skip = [s for s in skipped if s.get("task_id") == task_id]
+    if queued_skip:
+        assert queued_skip[0].get("reason") == "approval_required"
 
 
 def test_campus_coffee_fill_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -135,6 +142,8 @@ def test_campus_coffee_fill_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_COOLDOWN_S", "60")
     monkeypatch.setenv("LBG_TEAM_PLAYBOOK_SCORING", "1")
     campus_conductor._last_coffee_spawn_ts = 0.0
+    # Pas de mission ouverte (sinon coffee bloqué)
+    monkeypatch.setattr(campus_conductor, "last_mission", lambda: {})
 
     def fake_idle(_snap=None):
         return [
@@ -159,6 +168,43 @@ def test_campus_coffee_fill_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     assert props[0].get("role") in ("qa", "ops", "pm", "admin_infra")
     assert "playbook_score" in props[0]
     assert props[0].get("context", {}).get("utility_key")
+
+
+def test_campus_coffee_blocked_during_mission(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mission ouverte → pas de coffee-fill générique (évite mélange playbooks)."""
+    monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_FILL", "1")
+    monkeypatch.setenv("LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_MIN", "1")
+    monkeypatch.setattr(
+        campus_conductor,
+        "last_mission",
+        lambda: {"id": "m-test", "status": "open", "dry_run": False},
+    )
+    monkeypatch.setattr(
+        campus_conductor,
+        "evaluate_mission_closure",
+        lambda mission=None: {"closable": False, "reason": "pending"},
+    )
+
+    def fake_idle(_snap=None):
+        return [
+            {"agent_id": "studio_qa_argus", "display_name": "Argus", "reason": "coffee_available", "location": "zone_coffee"},
+            {"agent_id": "studio_ops_hephaistos", "display_name": "Héphaïstos", "reason": "coffee_available", "location": "zone_coffee"},
+        ]
+
+    monkeypatch.setattr(campus_conductor, "analyze_idle", fake_idle)
+    monkeypatch.setattr(campus_conductor, "_queued_tasks", lambda: [])
+    monkeypatch.setattr(campus_conductor, "_running_tasks", lambda: [])
+    monkeypatch.setattr(campus_conductor, "_busy_agent_ids", lambda _r: set())
+
+    client = TestClient(app)
+    r = client.post("/v1/team/campus/conduct", json={"dry_run": True, "max_starts": 2})
+    assert r.status_code == 200
+    assert (r.json().get("coffee_proposals") or []) == []
+
+    decision = campus_conductor.decide_action({"agents": []})
+    assert decision["mode"] == "mission_drive"
+    assert "coffee" not in decision["mode"]
+
 
 def test_campus_act_observe(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(

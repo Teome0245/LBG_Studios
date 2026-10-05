@@ -2,7 +2,7 @@
 extends Node2D
 class_name PoiLayer
 
-const POI_PATH := "res://assets/maps/tatooine_pois.json"
+const POI_PATH := "res://assets/maps/scrapaltai_pois.json"
 const DETAIL_ZOOM_MIN: float = 1.75
 
 @export var visible_pois: bool = true

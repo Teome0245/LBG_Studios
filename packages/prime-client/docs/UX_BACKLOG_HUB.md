@@ -6,10 +6,10 @@
 
 | Sujet | Changement |
 |--------|------------|
-| Fond Tatooine WebP | `tatooine_satellite.webp` + `MapTextureLoader` / `world_texture` dans config |
+| Fond Tatooine WebP | `scrapaltai_satellite.webp` + `MapTextureLoader` / `world_texture` dans config |
 | Sol hub opaque | `hub_fill_alpha` ~0.18 — la planète visible sous Lost Heaven |
 | Collisions hub | Palissade + boîtes bâtiments + clamp locomotion (`ZoneLayers` / `PlayerController`) |
-| Extraction 245 | `tools/retail/extract_precu_tatooine_assets.sh` → `docs/reference/retail_245/` |
+| Extraction 245 | `tools/retail/extract_precu_scrapaltai_assets.sh` → `docs/reference/retail_245/` |
 | Sprites overhead | `generate_sprites_prime_overhead.sh` + deploy vers `assets/sprites/units/` |
 
 Doc détaillée : `docs/MAP_TEXTURES_AND_RETAIL.md`

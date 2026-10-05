@@ -95,7 +95,7 @@ export const USEFUL_AGIR_ACTIONS = [
   {
     id: 'omarchy_vscode',
     label: 'VS Code + Cline (.143)',
-    hint: 'éditeur studio',
+    hint: 'workspace → Plan→Act',
     sourceText: 'ouvre code sur omarchy',
     kind: 'open_app',
   },

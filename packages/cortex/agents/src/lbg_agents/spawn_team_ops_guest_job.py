@@ -148,6 +148,9 @@ def run_spawn(*, persist: bool = True) -> dict[str, Any]:
                     "ops_kind": "guest_metrics",
                     "guest_metrics": wall,
                     "remediation_plan": plan,
+                    # Évite attribution Vulcan (.245 dans le mur) / zone Prime
+                    "presence_agent_id": "studio_ops_hephaistos",
+                    "presence_zone": "zone_core",
                 },
             )
             summary = task_run_summary(payload)

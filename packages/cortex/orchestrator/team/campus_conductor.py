@@ -782,8 +782,9 @@ def decide_action(snap: dict[str, Any] | None = None) -> dict[str, Any]:
         mode, reason = "triage_failed", f"{len(failed)} agent(s) failed — drain + follow-up"
     elif mission_open and closure.get("closable"):
         mode, reason = "mission_close", f"mission {mission.get('id')} — {closure.get('reason')}"
-    elif mission_open and (waiting or queued_n):
-        mode, reason = "mission_drive", f"mission {mission.get('id')} — avancer la file"
+    elif mission_open:
+        # Mission ouverte sans file : observer / drive — JAMAIS coffee-fill générique.
+        mode, reason = "mission_drive", f"mission {mission.get('id')} — pas de coffee pendant mission"
     elif waiting and slots > 0:
         mode, reason = "drain", f"{waiting} en file avec {slots} slot(s)"
     elif coffee >= coffee_min() and slots > 0 and coffee_fill_enabled():
@@ -867,11 +868,20 @@ def conduct(*, dry_run: bool = False, max_starts_override: int | None = None) ->
         reserved_agents.add(aid)
 
     idle_notes = analyze_idle()
-    coffee_proposals = _coffee_spawn_proposals(
-        idle_notes,
-        reserved_agents=reserved_agents,
-        slots_left=min(max(0, slots - len(candidates)), max(0, starts_budget - len(candidates))),
+    # Pendant une mission ouverte, ne pas mélanger les 5 playbooks coffee génériques.
+    mission_snap = last_mission()
+    mission_blocks_coffee = bool(
+        mission_snap.get("id")
+        and mission_snap.get("status") in ("open", "driving")
+        and not mission_snap.get("dry_run")
     )
+    coffee_proposals: list[dict[str, Any]] = []
+    if not mission_blocks_coffee:
+        coffee_proposals = _coffee_spawn_proposals(
+            idle_notes,
+            reserved_agents=reserved_agents,
+            slots_left=min(max(0, slots - len(candidates)), max(0, starts_budget - len(candidates))),
+        )
 
     started: list[dict[str, Any]] = []
     spawned: list[dict[str, Any]] = []

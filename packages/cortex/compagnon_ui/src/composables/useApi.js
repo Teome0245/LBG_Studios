@@ -75,7 +75,7 @@ export function useApi() {
       const message =
         err.response?.data?.detail ||
         (timedOut
-          ? 'Délai dépassé (LLM local lent) — réessaie ; cascade locale 2B→e2b (pas de Groq en LAB). Ctrl+K Selfcheck.'
+          ? 'Délai dépassé (LLM local lent) — réessaie ; causerie → e2b/.110, léger → 2B/.111 (pas de Groq en LAB). Ctrl+K Selfcheck.'
           : status === 504
             ? '504 Gateway Timeout — Ollama trop lent ; vérifie .111 (2B) chaud ou .110 e2b.'
             : err.message || 'Erreur inconnue')

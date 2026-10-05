@@ -8,6 +8,7 @@ const LYRA_KEY = 'lbg_orch_lyra_minimized'
 /** v2 : bannière Pilot masquée par défaut (chat-first) */
 const BANNER_KEY = 'lbg_orch_pilot_banner_dismissed_v2'
 const OPS_METRICS_KEY = 'lbg_orch_ops_metrics_v1'
+const CHARACTER_PANEL_KEY = 'lbg_compagnon_character_panel_v1'
 
 function loadBool(key, fallback = false) {
   try {
@@ -38,6 +39,8 @@ const lyraMinimized = ref(loadBool(LYRA_KEY, true))
 const pilotBannerDismissed = ref(loadBool(BANNER_KEY, true))
 /** CPU/RAM header — off par défaut */
 const opsMetricsVisible = ref(loadBool(OPS_METRICS_KEY, false))
+/** Panneau 7 dials caractère (lab) — off par défaut */
+const characterPanelOpen = ref(loadBool(CHARACTER_PANEL_KEY, false))
 
 watch(histCollapsed, (v) => saveBool(HIST_KEY, v))
 watch(infraCollapsed, (v) => saveBool(INFRA_KEY, v))
@@ -45,6 +48,7 @@ watch(monitorCollapsed, (v) => saveBool(MONITOR_KEY, v))
 watch(lyraMinimized, (v) => saveBool(LYRA_KEY, v))
 watch(pilotBannerDismissed, (v) => saveBool(BANNER_KEY, v))
 watch(opsMetricsVisible, (v) => saveBool(OPS_METRICS_KEY, v))
+watch(characterPanelOpen, (v) => saveBool(CHARACTER_PANEL_KEY, v))
 
 export function useLayout() {
   const toggleHist = () => {
@@ -65,6 +69,12 @@ export function useLayout() {
   const toggleOpsMetrics = () => {
     opsMetricsVisible.value = !opsMetricsVisible.value
   }
+  const toggleCharacterPanel = () => {
+    characterPanelOpen.value = !characterPanelOpen.value
+  }
+  const closeCharacterPanel = () => {
+    characterPanelOpen.value = false
+  }
 
   /** Alias rétrocompat */
   const leftCollapsed = histCollapsed
@@ -72,15 +82,17 @@ export function useLayout() {
   const toggleLeft = toggleHist
   const toggleRight = toggleMonitor
 
-  /** Rail nav = 3.5rem (w-14) + hist 16rem (w-64) ; droite = infra 16rem + monitor 18rem */
+  /** Rail nav = 3.5rem (w-14) + hist 16rem (w-64) ; droite = infra 16rem + monitor 18rem + character 18rem */
   const chatInputOffsetClass = computed(() => {
     const left = histCollapsed.value ? 'sm:left-14' : 'sm:left-[19.5rem]'
     let right = 'right-0'
     const infraOpen = !infraCollapsed.value
     const monOpen = !monitorCollapsed.value
-    if (infraOpen && monOpen) right = 'lg:right-[34rem]'
-    else if (infraOpen) right = 'lg:right-64'
-    else if (monOpen) right = 'lg:right-72'
+    const charOpen = characterPanelOpen.value
+    const rightCount = [infraOpen, monOpen, charOpen].filter(Boolean).length
+    if (rightCount === 3) right = 'lg:right-[52rem]'
+    else if (rightCount === 2) right = 'lg:right-[34rem]'
+    else if (infraOpen || monOpen || charOpen) right = 'lg:right-72'
     return `left-0 ${left} ${right}`
   })
 
@@ -91,12 +103,15 @@ export function useLayout() {
     lyraMinimized,
     pilotBannerDismissed,
     opsMetricsVisible,
+    characterPanelOpen,
     toggleHist,
     toggleInfra,
     toggleMonitor,
     toggleLyra,
     dismissPilotBanner,
     toggleOpsMetrics,
+    toggleCharacterPanel,
+    closeCharacterPanel,
     leftCollapsed,
     rightCollapsed,
     toggleLeft,

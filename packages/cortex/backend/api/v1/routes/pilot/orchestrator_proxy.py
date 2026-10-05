@@ -119,11 +119,18 @@ async def pilot_proxy_orchestrator_self_status(ensure_goals: bool = False) -> di
             if isinstance(g, dict) and str(g.get("status") or "").lower() in ("active", "pending", "open")
         ][:5]
         will = state.get("pending_will") if isinstance(state.get("pending_will"), list) else []
+        refs = state.get("memory_refs") if isinstance(state.get("memory_refs"), dict) else {}
+        slim_refs = {
+            "lessons_count": refs.get("lessons_count"),
+            "last_lesson_id": refs.get("last_lesson_id"),
+            "lessons_path": refs.get("lessons_path"),
+        }
         slim_state = {
             "identity": state.get("identity") if isinstance(state.get("identity"), dict) else {},
             "drives": state.get("drives") if isinstance(state.get("drives"), dict) else {},
             "intent": state.get("intent") if isinstance(state.get("intent"), dict) else {},
             "beliefs": state.get("beliefs") if isinstance(state.get("beliefs"), dict) else {},
+            "memory_refs": slim_refs,
             "pending_will": will[:8],
             "goals": active,
             "goals_active_count": len(active),
@@ -140,6 +147,74 @@ async def pilot_proxy_orchestrator_self_status(ensure_goals: bool = False) -> di
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+@router.post("/orchestrator/self/will", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_orchestrator_self_will(payload: dict[str, object]) -> dict[str, object]:
+    """Proxy `POST /v1/self/will` — injecte une envie Self (évolution spontanée)."""
+    orch_url = get_settings().orchestrator_base()
+    will_id = payload.get("id")
+    title = payload.get("title")
+    if not isinstance(will_id, str) or not will_id.strip():
+        raise HTTPException(status_code=400, detail={"error": "bad_request", "hint": "body.id required"})
+    if not isinstance(title, str) or not title.strip():
+        raise HTTPException(status_code=400, detail={"error": "bad_request", "hint": "body.title required"})
+    body = {
+        "id": will_id.strip()[:80],
+        "title": title.strip()[:160],
+        "summary": str(payload.get("summary") or "")[:280],
+        "kind": str(payload.get("kind") or "evolution")[:48],
+        "source": str(payload.get("source") or "spontaneity")[:48],
+        "meta": payload.get("meta") if isinstance(payload.get("meta"), dict) else {},
+    }
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            r = await client.post(f"{orch_url}/v1/self/will", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+async def _proxy_will_consume(path: str, payload: dict[str, object]) -> dict[str, object]:
+    orch_url = get_settings().orchestrator_base()
+    will_id = payload.get("will_id") or payload.get("id")
+    if not isinstance(will_id, str) or not will_id.strip():
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "bad_request", "hint": "body.will_id required"},
+        )
+    body = {
+        "will_id": will_id.strip()[:80],
+        "reason": str(payload.get("reason") or "done")[:48],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            r = await client.post(f"{orch_url}{path}", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/orchestrator/self/will/complete", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_orchestrator_self_will_complete(payload: dict[str, object]) -> dict[str, object]:
+    """Proxy `POST /v1/self/will/complete` — consomme une envie."""
+    return await _proxy_will_consume("/v1/self/will/complete", payload)
+
+
+@router.post("/orchestrator/self/will/dismiss", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_proxy_orchestrator_self_will_dismiss(payload: dict[str, object]) -> dict[str, object]:
+    """Proxy `POST /v1/self/will/dismiss` — ignore une envie."""
+    return await _proxy_will_consume("/v1/self/will/dismiss", payload)
 
 
 @router.post("/orchestrator/brain/toggle", tags=["pilot"], response_model=OkEnvelope)
@@ -186,16 +261,21 @@ async def pilot_proxy_orchestrator_brain_approve(payload: dict[str, object]) -> 
 @router.post("/jobs", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_create(payload: JobCreateBody) -> dict[str, object]:
     """Proxy same-origin vers `POST orchestrator /v1/jobs` (créer un job autonome)."""
+    # Planner LLM (Ollama) peut prendre 30–45 s ; le timeout proxy doit être > LBG_JOBS_PLANNER_LLM_TIMEOUT_S.
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             r = await client.post(f"{orchestrator_base()}/v1/jobs", json=payload.model_dump())
         if r.status_code != 200:
             return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
         data = r.json()
         return {"ok": True, **data} if isinstance(data, dict) else {"ok": True, "payload": data}
+    except httpx.TimeoutException:
+        return {
+            "ok": False,
+            "error": "timeout orchestrateur (>90s) — choisis Planificateur « Déterministe » ou vérifie Ollama .110",
+        }
     except Exception as e:
-        return {"ok": False, "error": str(e)}
-
+        return {"ok": False, "error": str(e) or e.__class__.__name__}
 
 @router.get("/jobs", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_jobs_list(actor_id: str | None = None) -> dict[str, object]:

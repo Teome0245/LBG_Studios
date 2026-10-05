@@ -6,6 +6,9 @@ LangGraph de P03 est le **moteur de jobs** (`services/jobs.py`) : au lieu d'un d
 
 Désactivé par défaut (``LBG_CHAT_AGENTIC=0``) ; activable globalement ou par requête
 (``context.prefer_agentic = true``). N'élève que des intents actionnables connus.
+
+Phase C — allowlist optionnelle : ``LBG_CHAT_AGENTIC_INTENTS=devops_probe`` restreint
+l'élévation même si ``LBG_CHAT_AGENTIC=1`` (prod progressive).
 """
 
 from __future__ import annotations
@@ -42,6 +45,18 @@ def _truthy(raw: str) -> bool:
     return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
+def agentic_intents_allowlist() -> frozenset[str] | None:
+    """Si ``LBG_CHAT_AGENTIC_INTENTS`` est défini, seuls ces intents s'élèvent.
+
+    Vide / absent → tous les ``AGENTIC_INTENTS``.
+    """
+    raw = os.environ.get("LBG_CHAT_AGENTIC_INTENTS", "").strip()
+    if not raw:
+        return None
+    parts = {p.strip() for p in raw.split(",") if p.strip()}
+    return frozenset(parts) if parts else None
+
+
 def chat_agentic_enabled(context: dict[str, Any] | None) -> bool:
     if isinstance(context, dict):
         pref = context.get("prefer_agentic")
@@ -64,7 +79,12 @@ def should_elevate_to_agentic(intent: str, context: dict[str, Any] | None = None
     ):
         # Action structurée explicite (console spécialisée) : pas d'élévation, dispatch one-shot.
         return False
-    return intent in AGENTIC_INTENTS
+    if intent not in AGENTIC_INTENTS:
+        return False
+    allow = agentic_intents_allowlist()
+    if allow is not None and intent not in allow:
+        return False
+    return True
 
 
 def elevate_to_job(
@@ -93,8 +113,10 @@ def elevate_to_job(
         "n_steps": len(job.steps),
         "plan_source": job.plan_source,
         "trace_id": job.trace_id,
+        "pilot_jobs_href": f"#/jobs?job={job.id}",
         "reply": (
             f"Tâche prise en charge en arrière-plan (job {job.id[:8]}…, {len(job.steps)} étape(s), "
-            f"statut « {job.status} »). Suivi dans Pilot ▸ Jobs."
+            f"statut « {job.status} »). Suivi : Pilot ▸ Jobs "
+            f"(#/jobs?job={job.id})."
         ),
     }

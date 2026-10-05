@@ -3,7 +3,7 @@ extends Node2D
 class_name WorldMap
 
 const HALF_SIZE_DEFAULT: float = 6500.0
-const CONFIG_PATH: String = "res://assets/maps/tatooine_map_config.json"
+const CONFIG_PATH: String = "res://assets/maps/scrapaltai_map_config.json"
 const MINIMAP_DIR: String = "res://assets/maps/"
 const _BackdropScript: GDScript = preload("res://scripts/planet_backdrop.gd")
 

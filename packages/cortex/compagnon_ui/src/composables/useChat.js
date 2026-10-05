@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { http } from '@/api/http'
 import { presenceTalk } from '@/lib/presence'
+import { speakText } from '@/lib/tts'
 
 const STORAGE_KEY = 'lbg_orch_conversation_id'
 
@@ -119,6 +120,11 @@ export function useChat() {
       const mood =
         source === 'error' ? 'tense' : actionProposal ? 'curious' : source === 'agir' ? 'curious' : 'serene'
       presenceTalk(String(content).slice(0, 160), mood)
+      if (source !== 'error') {
+        void speakText(String(content)).catch(() => {
+          /* best-effort TTS */
+        })
+      }
     }
   }
 

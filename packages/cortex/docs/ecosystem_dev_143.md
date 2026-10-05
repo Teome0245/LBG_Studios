@@ -6,7 +6,7 @@
 **LLM** : Ollama **`.110` / `.111`** (pas sur `.143`).  
 **Leçon M2/M3** : [`lecon_m2_m3_self_compagnon_2026-09-27.md`](lecon_m2_m3_self_compagnon_2026-09-27.md).
 
-Voir aussi : [`sans_cursor.md`](sans_cursor.md) · [`omarchy_vm_143.md`](omarchy_vm_143.md) · [`cline/SMOKE.md`](cline/SMOKE.md) · [`FOCUS_COMPAGNON.md`](../../../docs/FOCUS_COMPAGNON.md) · **catalogue outils** [`adr/0023-catalogue-outils-ide-second-avis.md`](adr/0023-catalogue-outils-ide-second-avis.md) (autorisé / expérimentation / interdit + second avis).
+Voir aussi : [`sans_cursor.md`](sans_cursor.md) · [`omarchy_vm_143.md`](omarchy_vm_143.md) · [`cline/SMOKE.md`](cline/SMOKE.md) · [`FOCUS_COMPAGNON.md`](../../../docs/FOCUS_COMPAGNON.md) · **catalogue outils** [`adr/0023-catalogue-outils-ide-second-avis.md`](adr/0023-catalogue-outils-ide-second-avis.md) (autorisé / expérimentation / interdit + second avis) · greffe **Prime Agent** [`adr/0024-prime-agent-greffe-peripherique.md`](adr/0024-prime-agent-greffe-peripherique.md) · [`prime_agent_143.md`](prime_agent_143.md).
 
 ---
 

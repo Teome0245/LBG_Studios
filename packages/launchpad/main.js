@@ -96,7 +96,12 @@ function defaultProfiles() {
 function defaultConfig() {
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
-    statusApiUrl: 'http://192.168.0.245:8792/api/servers',
+    // Primauté 246 (Prime) — 245 (PreCU) en secours ; l’ancien seul :245 casse l’UI si PreCU est down.
+    statusApiUrl: 'http://192.168.0.246:8792/api/servers',
+    statusApiUrls: [
+      'http://192.168.0.246:8792/api/servers',
+      'http://192.168.0.245:8792/api/servers',
+    ],
     patchServerUrl: 'http://192.168.0.246:8080',
     patchServerUrlNas: 'http://192.168.0.245:8080',
     diskSpaceWarningGb: 40,
@@ -129,6 +134,7 @@ function migrateLegacyConfig(legacy) {
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
     statusApiUrl: legacy.statusApiUrl || defaultConfig().statusApiUrl,
+    statusApiUrls: legacy.statusApiUrls || defaultConfig().statusApiUrls,
     patchServerUrl: legacy.patchServerUrl || defaultConfig().patchServerUrl,
     patchServerUrlNas: legacy.patchServerUrlNas || '',
     diskSpaceWarningGb: legacy.diskSpaceWarningGb ?? 40,
@@ -283,6 +289,32 @@ function migratePrecuHost246(cfg) {
   return changed;
 }
 
+/** statusApiUrl ne doit plus dépendre uniquement de PreCU (.245) — sinon UI « tous hors ligne ». */
+function migrateStatusApiPrimeFirst(cfg) {
+  let changed = false;
+  const primeUrl = `http://${PRIME_HOST_LAN}:8792/api/servers`;
+  const precuUrl = `http://${PRECU_HOST_LAN}:8792/api/servers`;
+  const current = String(cfg.statusApiUrl || '').trim();
+  if (!current || current.includes(`${PRECU_HOST_LAN}:8792`)) {
+    if (current !== primeUrl) {
+      cfg.statusApiUrl = primeUrl;
+      changed = true;
+    }
+  }
+  const desired = [primeUrl, precuUrl];
+  const existing = Array.isArray(cfg.statusApiUrls) ? cfg.statusApiUrls.map(String) : [];
+  const merged = [];
+  for (const u of [...desired, ...existing]) {
+    const s = String(u || '').trim();
+    if (s && !merged.includes(s)) merged.push(s);
+  }
+  if (JSON.stringify(existing) !== JSON.stringify(merged)) {
+    cfg.statusApiUrls = merged;
+    changed = true;
+  }
+  return changed;
+}
+
 function resolveApiClientHost(row, serverId) {
   if (row.client_ip) {
     return row.client_ip;
@@ -328,6 +360,7 @@ function normalizeConfig(raw) {
       })),
     };
     migratePrecuHost246(normalized);
+    migrateStatusApiPrimeFirst(normalized);
     migratePrimeToGodot(normalized);
     migratePrimeClientPath(normalized);
     banLegacyNewMmoPrimePath(normalized);
@@ -362,6 +395,7 @@ function loadConfig() {
       const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       const normalized = normalizeConfig(raw);
       const migratedHost = migratePrecuHost246(normalized);
+      const migratedStatusApi = migrateStatusApiPrimeFirst(normalized);
       const migratedGodot = migratePrimeToGodot(normalized);
       const migratedPath = migratePrimeClientPath(normalized);
       const bannedLegacy = banLegacyNewMmoPrimePath(normalized);
@@ -371,6 +405,7 @@ function loadConfig() {
         !raw.profiles ||
         raw.launchpadVersion !== LAUNCHPAD_VERSION ||
         migratedHost ||
+        migratedStatusApi ||
         migratedGodot ||
         migratedPath ||
         bannedLegacy ||
@@ -718,14 +753,79 @@ function mergePrimeGatewayRow(rows, gw) {
   return list;
 }
 
+function statusApiUrlList() {
+  const urls = [];
+  const fromArr = Array.isArray(config.statusApiUrls) ? config.statusApiUrls : [];
+  for (const u of fromArr) {
+    const s = String(u || '').trim();
+    if (s && !urls.includes(s)) urls.push(s);
+  }
+  const primary = String(config.statusApiUrl || '').trim();
+  if (primary && !urls.includes(primary)) urls.unshift(primary);
+  if (!urls.length) {
+    urls.push(
+      'http://192.168.0.246:8792/api/servers',
+      'http://192.168.0.245:8792/api/servers',
+    );
+  }
+  return urls;
+}
+
+function mergeStatusApiRowLists(lists) {
+  const byId = new Map();
+  for (const rows of lists) {
+    for (const row of rows || []) {
+      if (!row || !row.id) continue;
+      const prev = byId.get(row.id);
+      if (!prev) {
+        byId.set(row.id, row);
+        continue;
+      }
+      // Préférer une ligne ready/online à une offline du même id.
+      const score = (r) => (r.ready ? 2 : 0) + (r.online ? 1 : 0);
+      if (score(row) >= score(prev)) byId.set(row.id, { ...prev, ...row });
+    }
+  }
+  return Array.from(byId.values());
+}
+
+async function fetchStatusApiRowsMerged() {
+  const urls = statusApiUrlList();
+  const mappedLists = [];
+  const errors = [];
+  await Promise.all(
+    urls.map(async (url) => {
+      try {
+        const rows = await httpGetJson(url, STATUS_API_TIMEOUT_MS);
+        mappedLists.push(mapStatusApiRows(rows));
+      } catch (err) {
+        errors.push(`${url}: ${err.message}`);
+      }
+    }),
+  );
+  if (!mappedLists.length) {
+    const err = new Error(errors.join(' | ') || 'status API KO');
+    throw err;
+  }
+  return {
+    mapped: mergeStatusApiRowLists(mappedLists),
+    partial: errors.length > 0,
+    errors,
+  };
+}
+
 async function checkServerStatus() {
   if (!mainWindow) return;
   let mapped = null;
   let apiError = null;
   try {
-    const rows = await httpGetJson(config.statusApiUrl, STATUS_API_TIMEOUT_MS);
-    mapped = mapStatusApiRows(rows);
+    const out = await fetchStatusApiRowsMerged();
+    mapped = out.mapped;
     statusApiFailStreak = 0;
+    if (out.partial) {
+      apiError = out.errors.join(' | ');
+      console.warn('status API partial:', apiError);
+    }
   } catch (err) {
     console.warn('status API:', err.message);
     apiError = err.message;

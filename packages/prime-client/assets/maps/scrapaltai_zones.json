@@ -1,0 +1,8 @@
+{
+  "zone": "tatooine",
+  "schema_version": 2,
+  "notes": "Polygones Core3 (x,z). Mos Eisley retiré (deprecated ADR 0009). Collisions hub LH = lost_heaven_buildings.json via ZoneLayers. Debug : Ctrl+W eau, Ctrl+C collisions.",
+  "water_level_y": -4800.0,
+  "water": [],
+  "collision": []
+}

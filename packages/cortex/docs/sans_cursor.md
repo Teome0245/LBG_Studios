@@ -60,9 +60,19 @@ Choisir **LBG Act 12b** pour le chat code ; autocomplete = **0.8B** sur `.111`.
 Actions utiles (jeton desktop auto-sync LAN) :
 
 - `regarde mes mails récents` → IMAP
+- `fais mon brief du matin` → brief Self / proactive / infra (RO)
 - `ouvre vghd sur mon pc` → `.10`
 - `ouvre chromium sur omarchy` → `.143` Hyprland
+- `ouvre code sur omarchy` → VS Code + Cline
+- `mets à jour vscode sur omarchy` → dry-run puis confirm (**pas** pendant Cline critique)
 - `vérifie la session sur omarchy` / `répare session 0…` → heal agent
+
+Deploy / smoke MAJ éditeur (écosystème) :
+
+```bash
+bash packages/cortex/infra/scripts/deploy_update_vscode_ecosystem.sh
+bash packages/cortex/infra/scripts/smoke_update_vscode_143.sh
+```
 
 Prérequis Windows une fois (déjà fait si tâches présentes) :
 

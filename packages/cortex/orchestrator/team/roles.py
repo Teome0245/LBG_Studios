@@ -695,6 +695,10 @@ def _execute_failure_triage(task: TeamTask) -> dict[str, object]:
 def _execute_pm(task: TeamTask) -> dict[str, object]:
     ctx0 = task.context or {}
     wf = str(ctx0.get("workflow") or "").strip().lower()
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
     if (
         ctx0.get("agent_mutation")
         or ctx0.get("agent_mutation_review")
@@ -759,6 +763,10 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
 
 
 def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
     if resolve_godot_dev_workflow(task):
         return execute_godot_dev_workflow(task, _dispatch)
     return execute_godot_dev_workflow(task, _dispatch)
@@ -766,6 +774,10 @@ def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
 
 def _execute_dev_game(task: TeamTask) -> dict[str, object]:
     ctx = task.context or {}
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
     if ctx.get("cursor_cloud_agent") or str(ctx.get("workflow") or "").strip().lower() in (
         "cursor_cloud_agent",
         "cursor_agent",
@@ -1057,6 +1069,111 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
     if mentioned is not None:
         return mentioned
+
+    # --- Veille concurrents / docs-only : plan ciblé (évite coffee-fill playbooks génériques) ---
+    if re.search(
+        r"(?i)\b(concurrents|docs?\s*only|vague\s*[abc]|focus_concurrents|"
+        r"agent_skill_mmo|boite_idees|c1[-–]c12)\b",
+        objective or "",
+    ):
+        wave_m = re.search(r"(?i)vague\s*([abc])", objective or "")
+        wave = (wave_m.group(1).upper() if wave_m else "A")
+        if wave == "A" or "docs" in text:
+            _add(
+                "pm",
+                "Thémis — plan 72h concurrents (5 lignes) — FOCUS_CONCURRENTS_TEAM",
+                context={"concurrents_ticket": "plan_72h", "concurrents_wave": wave, "docs_only": True},
+            )
+            _add(
+                "player_ia",
+                "Chœur — brouillon AGENT_SKILL_MMO.md (C9) + schéma mémoire C2 — docs only",
+                context={"concurrents_ticket": "C9_C2", "concurrents_wave": wave, "docs_only": True},
+            )
+            _add(
+                "dev_godot",
+                "Iris — design C1 suggestions dialogue hub — docs only",
+                context={
+                    "concurrents_ticket": "C1",
+                    "concurrents_wave": wave,
+                    "docs_only": True,
+                    "godot_dev_persona": "iris",
+                    "subproject": "godot_iris",
+                },
+            )
+            _add(
+                "dev_game",
+                "Dédale — stubs C4 event + C8 POI scrap — JSON content/",
+                context={
+                    "concurrents_ticket": "C4_C8",
+                    "concurrents_wave": wave,
+                    "docs_only": True,
+                    "subproject": "content_world",
+                },
+            )
+            return proposals
+        if wave == "B":
+            _add(
+                "dev_godot",
+                "Iris — C1+C2 dialogue + world_hint (Vague B)",
+                context={
+                    "concurrents_ticket": "C1_C2",
+                    "concurrents_wave": "B",
+                    "godot_dev_persona": "iris",
+                    "subproject": "godot_iris",
+                },
+            )
+            _add(
+                "player_ia",
+                "Chœur — C3 compagnon spawn + finaliser C9",
+                context={"concurrents_ticket": "C3_C9", "concurrents_wave": "B"},
+            )
+            _add(
+                "qa",
+                "Argus — smoke dialogue / hunt Vague B",
+                context={
+                    "concurrents_ticket": "smoke_B",
+                    "concurrents_wave": "B",
+                    "owner_smoke_bundle": "godot_login",
+                    "_require_owner_smoke": True,
+                },
+            )
+            return proposals
+        # Vague C
+        _add(
+            "dev_godot",
+            "Hermès — C10 catalog + C11 tick",
+            context={
+                "concurrents_ticket": "C10_C11",
+                "concurrents_wave": "C",
+                "godot_dev_persona": "hermes",
+                "subproject": "godot_hermes",
+            },
+        )
+        _add(
+            "dev_godot",
+            "Iris — C12 dual response",
+            context={
+                "concurrents_ticket": "C12",
+                "concurrents_wave": "C",
+                "godot_dev_persona": "iris",
+                "subproject": "godot_iris",
+            },
+        )
+        _add(
+            "dev_game",
+            "Dédale — C5 chronique + C7 marchand",
+            context={"concurrents_ticket": "C5_C7", "concurrents_wave": "C"},
+        )
+        _add(
+            "qa",
+            "Argus — smoke stubs Vague C",
+            context={
+                "concurrents_ticket": "smoke_C",
+                "concurrents_wave": "C",
+                "_require_owner_smoke": True,
+            },
+        )
+        return proposals
 
     # --- Inventaire LAN / apparus-disparus (Héphaïstos) ---
     if _objective_is_network_inventory(text):
@@ -1546,7 +1663,14 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
 
     if not proposals:
         _add("pm", objective)
-        _add("qa", str(ROLE_SPECS["qa"]["default_objective"]))
+    else:
+        # Cap anti-dilution : un objectif NL large ne doit pas spawn 6+ playbooks génériques.
+        max_n = 4
+        m = re.search(r"(?i)max[_ ]?tasks?\s*[=:]?\s*(\d+)", objective or "")
+        if m:
+            max_n = max(1, min(6, int(m.group(1))))
+        if len(proposals) > max_n:
+            proposals[:] = proposals[:max_n]
 
     return proposals
 

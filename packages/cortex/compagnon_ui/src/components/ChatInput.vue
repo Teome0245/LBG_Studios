@@ -3,7 +3,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useChat } from '../composables/useChat.js'
 import { useApi } from '../composables/useApi.js'
 import { useLayout } from '../composables/useLayout.js'
-import { hasTeamMention, resolveAgentForPrompt } from '../lib/teamMentions.js'
+import { resolveAgentForPrompt } from '../lib/teamMentions.js'
 import { proposeAction } from '@/lib/agir'
 import {
   isRealizeRequest,
@@ -112,6 +112,15 @@ function loadSel(key, fallback) {
 }
 
 const selectedAgent = ref(loadSel(AGENT_KEY, 'auto'))
+// Ancien sticky Team (auto→team) cassait le chat : reset soft au chargement
+if (selectedAgent.value === 'team') {
+  selectedAgent.value = 'auto'
+  try {
+    localStorage.setItem(AGENT_KEY, 'auto')
+  } catch {
+    /* ignore */
+  }
+}
 const selectedModel = ref(loadSel(MODEL_KEY, 'auto'))
 const selectedProfile = ref(loadSel(PROFILE_KEY, 'compagnon'))
 
@@ -180,10 +189,8 @@ watch(mentionInsert, (v) => {
   if (cur.includes(token)) return
   const trimmed = cur.trimEnd()
   input.value = trimmed ? `${trimmed} ${token} ` : `${token} `
-  // Clic roster Team → bascule Agent=Team
-  if (hasTeamMention(token) || hasTeamMention(input.value)) {
-    selectedAgent.value = 'team'
-  }
+  // @mention Team → ce tour part en Team via resolveAgentForPrompt (auto),
+  // sans verrouiller le sélecteur (sinon chat identité cassé ensuite).
 })
 
 const send = async () => {
@@ -192,9 +199,8 @@ const send = async () => {
   const userMsg = input.value
   const images = [...pendingImages.value]
   const agent = resolveAgentForPrompt(selectedAgent.value, userMsg)
-  if (agent === 'team' && selectedAgent.value === 'auto') {
-    selectedAgent.value = 'team'
-  }
+  // Ne PAS coller Agent=Team après un seul tour auto/@mention :
+  // sinon chaque message suivant est préfixé `team:` → agent.fallback.
   const displayText = userMsg.trim() || (images.length ? '(image jointe)' : '')
   addUserMessage(displayText, { images })
   input.value = ''

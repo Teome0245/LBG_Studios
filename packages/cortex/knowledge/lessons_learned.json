@@ -124,6 +124,48 @@
       "hit_count": 1,
       "last_seen_ts": 1788891255.4512117,
       "last_seen": "2026-09-08"
+    },
+    {
+      "id": "lesson_rag_pgvector_facts",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "mémoire Compagnon",
+      "failure_or_success": "success",
+      "pattern": "Faits studio via RAG pgvector (.100) + nomic-embed-text (.111) ; pas via fine-tune des poids.",
+      "do_not_repeat": "Fine-tuner le LLM pour mémoriser leçons/LAN",
+      "refs": [
+        "orchestrator/services/rag/",
+        "LBG_RAG_ENABLED"
+      ],
+      "hit_count": 1
+    },
+    {
+      "id": "lesson_ft_e4b_vram",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "fine-tune persona E4b",
+      "failure_or_success": "failure",
+      "pattern": "QLoRA E4b OOM sur GTX 1050 Ti 4Go (WSL .10) après load — reprendre sur GPU ≥8 Go ; garder Modelfile lbg-compagnon-e4b-v1.",
+      "do_not_repeat": "Relancer FT E4b sur 4Go en espérant que ça passe",
+      "refs": [
+        "infra/llm_persona_e2b/RUN_ON_10.md",
+        "lbg-compagnon-e4b-v1"
+      ],
+      "hit_count": 1
+    },
+    {
+      "id": "lesson_wsl_ssh_10",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "accès poste .10",
+      "failure_or_success": "success",
+      "pattern": "SSH utile .10 = WSL sdesh@192.168.0.10:2222 (Host lbg-wsl-10), pas Windows :22 sans administrators_authorized_keys.",
+      "do_not_repeat": "ssh root@/.10:22 sans clé admin Windows",
+      "refs": [
+        "docs/omarchy_vm_143.md",
+        "~/.ssh/config Host lbg-wsl-10"
+      ],
+      "hit_count": 1
     }
   ]
 }

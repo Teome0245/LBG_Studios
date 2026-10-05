@@ -14,6 +14,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |-----|----------------|
 | **Ce fichier** | Priorités O2 + rails autonomie |
 | [`docs/world/BIBLE_MMO.md`](world/BIBLE_MMO.md) | **Vérités du monde** + anti-dérive lore · garant runtime = Chœur (V50) |
+| [`docs/world/CONCURRENTS_IA_MMO_2026-10.md`](world/CONCURRENTS_IA_MMO_2026-10.md) | Veille concurrents (Everwhere… SpaceMolt) · tickets = Boîte §14 · ADR docs 0002 |
 | [`docs/world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) | Rôles canon PNJ |
 | [`docs/world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) | Équivalence arbres Pre-CU → LBG |
 | `packages/cortex/content/m10/m10_skills_catalog.json` | Catalogue talents/craft (schema 3, professions) |

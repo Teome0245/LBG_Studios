@@ -1,7 +1,8 @@
 /**
- * Quota strict + intents Agir-ready pour initiatives (D3+).
+ * Quota strict + intents Agir-ready pour initiatives (D3+ / D5).
  * Jamais d'auto-exécution — toast / pet portent une action concrète.
  * Boucle autonomie : objectif Studio + feedback Agir/Ignorer.
+ * Types : garde | mandat | opportunite | studio.
  */
 
 import {
@@ -12,6 +13,15 @@ import {
   recordGoalFeedback,
 } from './studioGoal.js'
 import { idleUsefulAgirIntents } from './usefulAgirActions.js'
+import {
+  filterIntentsByMandate,
+  getMandate,
+  mandateAskIntents,
+  mandateAskMessage,
+  mandateNeedsAsk,
+  MANDATE_ASK_MIN_SILENCE_S,
+  mandateAllows,
+} from './mandate.js'
 
 const STORAGE_KEY = 'lbg_compagnon_initiative_quota_v1'
 
@@ -23,6 +33,9 @@ const STORAGE_KEY = 'lbg_compagnon_initiative_quota_v1'
  *   label: string,
  *   sourceText: string,
  *   hint?: string,
+ *   mandatePick?: boolean,
+ *   mandateScope?: string,
+ *   teamSpawn?: boolean,
  * }} AgirIntent
  */
 
@@ -33,6 +46,36 @@ export const INITIATIVE_DEFAULTS = {
   minSilenceSec: 90,
   defaultSnoozeHours: 4,
 }
+
+/** Intents Studio (conception / veille) — hors catalogue ops pur. */
+export const STUDIO_AGIR_INTENTS = [
+  {
+    id: 'studio_veille',
+    label: 'Veille évolution',
+    hint: 'Team L1 · lecture',
+    sourceText: 'team veille evolution compagnon',
+    teamSpawn: true,
+    teamRole: 'qa',
+    teamObjective:
+      'Veille courte (5 lignes) : 1 idée utile pour Compagnon Studio (initiative / mandat / desktop) — pas de merge.',
+  },
+  {
+    id: 'studio_focus_doc',
+    label: 'Ouvrir Pilot PM',
+    hint: 'jalons / docs',
+    sourceText: 'ouvre http://192.168.0.140:8080/#/pm dans le navigateur',
+  },
+  {
+    id: 'studio_micro',
+    label: 'Micro-tâche conception',
+    hint: 'Team L1 · pm',
+    sourceText: 'team micro conception compagnon',
+    teamSpawn: true,
+    teamRole: 'pm',
+    teamObjective:
+      'Proposer 1 micro-tâche conception Compagnon (copy empty-state ou toast Mandat) en 5 lignes — validation humaine.',
+  },
+]
 
 let _memoryFallback = null
 
@@ -88,7 +131,6 @@ function prune(shown, now = Date.now(), snoozed = {}) {
 export function fingerprintFromStatus(status) {
   if (!status || typeof status !== 'object') return ''
 
-  // 1. Alertes infra critiques prioritaires (stables, match avec messageFromStatus)
   const infra = status.infra_signals && typeof status.infra_signals === 'object' ? status.infra_signals : null
   if (infra?.disk_critical || (typeof infra?.disk_root_used_pct === 'number' && infra.disk_root_used_pct >= 90)) {
     return 'disk:critical'
@@ -100,7 +142,6 @@ export function fingerprintFromStatus(status) {
   if (infra?.orchestrator_reachable === false) return 'infra:orch_down'
   if (infra?.mmo_sidecar_reachable === false) return 'infra:mmo_down'
 
-  // Causes explicites du moteur (après recalibrage)
   const causes = Array.isArray(status.tension_causes) ? status.tension_causes : []
   for (const c of causes) {
     const s = String(c)
@@ -110,7 +151,6 @@ export function fingerprintFromStatus(status) {
     if (s.startsWith('jobs_l2')) return `jobs:l2:${s.split(':')[1] || 'n'}`
   }
 
-  // 2. Tension élevée UNIQUEMENT si cause réelle (plus le silence synthétique seul)
   const tension = Number(status.tension)
   const realCause = causes.some((c) => !String(c).includes('silence'))
   if (Number.isFinite(tension) && tension >= 0.85 && realCause) return 'tension:high'
@@ -123,25 +163,48 @@ export function fingerprintFromStatus(status) {
     (act && String(act.cause || '').includes('silence')) ||
     (act && /silence prolong/i.test(String(act.message || '')))
 
-  // 3. Silence prolongé → id stable aligné objectif Studio (évite off_goal sur act:…)
   if (silencePlan) return 'jobs:idle'
 
-  // 4. Action spécifique proactive (hors silence)
   if (act && act.message) {
     const kind = String(act.kind || 'action')
     const msg = String(act.message || '').slice(0, 60)
     return `act:${kind}|${msg}`
   }
 
-  // 5. Job L2 uniquement en dernier ressort
   const job = typeof status.last_job_id === 'string' ? status.last_job_id.trim() : ''
   if (job) return `job:${job}`
 
   return ''
 }
 
+/** @param {string} id */
+export function isGuardFingerprint(id) {
+  const s = String(id || '')
+  return (
+    s.startsWith('infra:') ||
+    s.startsWith('disk:') ||
+    s.startsWith('jobs:l2') ||
+    s === 'tension:high'
+  )
+}
+
 /**
- * Snooze explicite d'un fingerprint (ex. après Ignorer ou Agir réussi).
+ * @param {string} id
+ * @param {Record<string, unknown>} [status]
+ */
+export function offerTypeFromFingerprint(id, status = {}) {
+  if (id === 'mandate:ask') return 'mandat'
+  if (String(id).startsWith('studio:')) return 'studio'
+  if (isGuardFingerprint(id)) return 'garde'
+  if (id === 'jobs:idle' || String(id).startsWith('act:')) return 'opportunite'
+  if (String(id).startsWith('self:')) {
+    return mandateAllows('studio') ? 'studio' : 'opportunite'
+  }
+  void status
+  return 'opportunite'
+}
+
+/**
  * @param {string} id
  * @param {number} [durationHours=4]
  */
@@ -154,11 +217,7 @@ export function snoozeInitiative(id, durationHours = 4) {
   saveState({ shown, snoozed })
 }
 
-/**
- * Vérifie si un fingerprint d'initiative est actuellement snoozé.
- * @param {string} id
- * @returns {boolean}
- */
+/** @param {string} id */
 export function isInitiativeSnoozed(id) {
   if (!id) return false
   const now = Date.now()
@@ -167,7 +226,6 @@ export function isInitiativeSnoozed(id) {
 }
 
 /**
- * Intents Agir concrets (texte → action-proposal).
  * @param {Record<string, unknown>} status
  * @returns {AgirIntent[]}
  */
@@ -245,6 +303,13 @@ export function agirIntentsFromStatus(status) {
   return out.slice(0, 3)
 }
 
+export function studioIntentsFromStatus(_status) {
+  const hour = Math.floor(Date.now() / 3_600_000)
+  const start = STUDIO_AGIR_INTENTS.length ? hour % STUDIO_AGIR_INTENTS.length : 0
+  const rotated = [...STUDIO_AGIR_INTENTS.slice(start), ...STUDIO_AGIR_INTENTS.slice(0, start)]
+  return rotated.slice(0, 2)
+}
+
 export function messageFromStatus(status) {
   const infra = status?.infra_signals
   const pct = infra?.disk_root_used_pct
@@ -270,7 +335,6 @@ export function messageFromStatus(status) {
   const act = status?.last_action
   if (act && typeof act === 'object' && act.message) {
     const msg = String(act.message)
-    // Ancien wording « veille légère » → reformuler avec une piste concrète.
     if (/silence prolong|veille l[eé]g[eè]re/i.test(msg)) {
       return (
         'Silence prolongé (aucune alerte infra) — ' +
@@ -295,8 +359,11 @@ export function concreteProposalsFromStatus(status) {
 export function formatDiscussReply(status) {
   const headline = messageFromStatus(status)
   const intents = agirIntentsFromStatus(status)
+  const mandate = getMandate()
   const lines = [
     `Je vois ça : « ${headline} »`,
+    '',
+    `Mandat : ${mandate.fresh ? mandate.watch.join(', ') : 'non confirmé (défaut Jobs L2)'}`,
     '',
     'Actions concrètes (pas encore exécutées) :',
     ...intents.map((p, i) => `${i + 1}. ${p.label}${p.hint ? ` — ${p.hint}` : ''}`),
@@ -340,12 +407,55 @@ export function markInitiativeShown(id) {
 }
 
 /**
- * Enregistre le feedback utilisateur pour l’apprentissage local.
  * @param {string} id
  * @param {'accept'|'dismiss'} kind
  */
 export function recordInitiativeFeedback(id, kind) {
   recordGoalFeedback(id, kind)
+}
+
+/**
+ * @param {Record<string, unknown>} status
+ * @param {Partial<typeof INITIATIVE_DEFAULTS>} [opts]
+ */
+export function shouldOfferMandate(status, opts = {}) {
+  if (!status || status.enabled === false || status.ok === false) {
+    return { offer: false, reason: 'disabled' }
+  }
+  if (!mandateNeedsAsk()) return { offer: false, reason: 'mandate_fresh' }
+
+  const silence = Number(status.silence_seconds_est)
+  const minSilence = opts.minSilenceSec ?? INITIATIVE_DEFAULTS.minSilenceSec
+  const mandate = getMandate()
+  const needLongSilence = mandate.updatedAt > 0
+  if (needLongSilence) {
+    if (!Number.isFinite(silence) || silence < MANDATE_ASK_MIN_SILENCE_S) {
+      return { offer: false, reason: 'mandate_silence' }
+    }
+  } else if (Number.isFinite(silence) && silence < minSilence) {
+    return { offer: false, reason: 'user_active' }
+  }
+
+  const id = 'mandate:ask'
+  const learned = feedbackGate(id)
+  if (learned.suppress) return { offer: false, reason: learned.reason || 'learned_dismiss', id }
+
+  const gate = canShowInitiative(id, opts)
+  if (!gate.ok) return { offer: false, reason: gate.reason, id }
+
+  const intents = mandateAskIntents()
+  return {
+    offer: true,
+    id,
+    offerType: 'mandat',
+    message: mandateAskMessage(),
+    kind: 'mandat',
+    intents,
+    primary: intents[0] || null,
+    goal: null,
+    relevance: 1,
+    weight: learned.weight,
+  }
 }
 
 /** @param {Record<string, unknown>} status */
@@ -358,7 +468,108 @@ export function shouldOfferFromStatus(status, opts = {}) {
   if (Number.isFinite(silence) && silence < minSilence) {
     return { offer: false, reason: 'user_active' }
   }
+
   const id = fingerprintFromStatus(status)
+  if (id && isGuardFingerprint(id)) {
+    const learned = feedbackGate(id)
+    if (learned.suppress) {
+      return { offer: false, reason: learned.reason || 'learned_dismiss', id }
+    }
+    const gate = canShowInitiative(id, opts)
+    if (!gate.ok) return { offer: false, reason: gate.reason, id }
+    const intents = filterIntentsByMandate(agirIntentsFromStatus(status), { isGuard: true })
+    const studio = getStudioGoal()
+    return {
+      offer: true,
+      id,
+      offerType: 'garde',
+      message: messageWithGoal(messageFromStatus(status), id),
+      kind: (status.last_action && status.last_action.kind) || 'garde',
+      intents,
+      primary: intents[0] || null,
+      goal: studio.goal ? { id: studio.goal.id, title: studio.goal.title } : null,
+      relevance: 1,
+      weight: learned.weight,
+    }
+  }
+
+  const mandateOffer = shouldOfferMandate(status, opts)
+  if (mandateOffer.offer) return mandateOffer
+
+  // Brief matinal — fenêtre 7h–10h locale, 1 offre / jour (fingerprint day-key)
+  const localHour = new Date().getHours()
+  if (
+    localHour >= 7 &&
+    localHour < 10 &&
+    (mandateAllows('morning') || mandateAllows('studio') || mandateAllows('lan'))
+  ) {
+    const day = new Date().toISOString().slice(0, 10)
+    const morningId = `studio:morning:${day}`
+    const learnedM = feedbackGate(morningId)
+    if (!learnedM.suppress) {
+      const gateM = canShowInitiative(morningId, opts)
+      if (gateM.ok) {
+        const intents = filterIntentsByMandate(
+          [
+            {
+              id: 'morning_brief',
+              label: 'Brief du matin',
+              sourceText: 'fais mon brief du matin',
+              hint: 'Self · proactive · infra',
+            },
+            {
+              id: 'mail',
+              label: 'Mails récents',
+              sourceText: 'regarde mes mails récents',
+              hint: 'IMAP',
+            },
+          ],
+          { isGuard: false },
+        )
+        const studio = getStudioGoal()
+        return {
+          offer: true,
+          id: morningId,
+          offerType: 'studio',
+          message:
+            'Bonjour — le brief matinal studio est prêt (lecture seule). On le compile ?',
+          kind: 'morning_brief',
+          intents,
+          primary: intents[0] || null,
+          goal: studio.goal ? { id: studio.goal.id, title: studio.goal.title } : null,
+          relevance: 0.9,
+          weight: learnedM.weight,
+        }
+      }
+    }
+  }
+
+  const longSilence = Number.isFinite(silence) && silence >= 1800
+  if (longSilence && mandateAllows('studio') && id === 'jobs:idle') {
+    const studioId = 'studio:idle'
+    const learned = feedbackGate(studioId)
+    if (!learned.suppress) {
+      const gate = canShowInitiative(studioId, opts)
+      if (gate.ok) {
+        const intents = studioIntentsFromStatus(status)
+        const studio = getStudioGoal()
+        return {
+          offer: true,
+          id: studioId,
+          offerType: 'studio',
+          message:
+            'Silence studio prolongé — je propose une piste conception / veille (pas d’auto-exec).',
+          kind: 'studio',
+          intents,
+          primary: intents[0] || null,
+          goal: studio.goal ? { id: studio.goal.id, title: studio.goal.title } : null,
+          relevance: 0.8,
+          weight: learned.weight,
+        }
+      }
+    }
+  }
+
   if (!id) return { offer: false, reason: 'no_signal' }
 
   const learned = feedbackGate(id)
@@ -366,7 +577,6 @@ export function shouldOfferFromStatus(status, opts = {}) {
     return { offer: false, reason: learned.reason || 'learned_dismiss', id }
   }
 
-  // Objectif actif : signaux peu alignés (hors infra / idle Studio) → attendre
   const studio = getStudioGoal()
   const rel = goalRelevance(id)
   const allowIdle =
@@ -384,11 +594,13 @@ export function shouldOfferFromStatus(status, opts = {}) {
   const gate = canShowInitiative(id, opts)
   if (!gate.ok) return { offer: false, reason: gate.reason, id }
 
-  const intents = agirIntentsFromStatus(status)
+  const intents = filterIntentsByMandate(agirIntentsFromStatus(status), { isGuard: false })
+  const offerType = offerTypeFromFingerprint(id, status)
   const goal = studio.goal
   return {
     offer: true,
     id,
+    offerType,
     message: messageWithGoal(messageFromStatus(status), id),
     kind: (status.last_action && status.last_action.kind) || 'initiative',
     intents,

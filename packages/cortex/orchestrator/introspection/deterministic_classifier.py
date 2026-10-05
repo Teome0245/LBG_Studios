@@ -8,10 +8,25 @@ class DeterministicIntentClassifier:
     Classifieur déterministe (baseline) destiné à être remplacé/augmenté par des modèles.
     """
 
+    # Action DevOps explicite — avant infra_status (sinon « devops/selfcheck » tombe en statut factuel).
+    _DEVOPS_ACTION_RE = re.compile(
+        r"\b("
+        r"sonde\s+devops|probe\s+devops|devops\s+probe|"
+        r"selfcheck|diagnostic\s+infra\s+selfcheck|"
+        r"healthz\s+(backend|orchestrator)|"
+        r"fais\s+(une\s+)?sonde(\s+devops)?|"
+        r"lance\s+(un\s+)?selfcheck"
+        r")\b",
+        re.IGNORECASE,
+    )
+
     def classify(self, text: str) -> tuple[str, float]:
         t = text.strip().lower()
         if not t:
             return ("unknown", 0.0)
+
+        if self._DEVOPS_ACTION_RE.search(t):
+            return ("devops_probe", 0.78)
 
         status_intent, status_conf = classify_status_intent(text)
         if status_intent != "unknown":
@@ -38,6 +53,6 @@ class DeterministicIntentClassifier:
             return ("npc_dialogue", 0.7)
         if re.search(r"\b(combat|attaquer|taper)\b", t):
             return ("combat_action", 0.7)
-        if re.search(r"\b(devops|sonde\s+devops|probe\s+devops|healthz\s+(backend|orchestrator))\b", t):
+        if re.search(r"\bdevops\b", t):
             return ("devops_probe", 0.72)
         return ("unknown", 0.4)

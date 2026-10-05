@@ -11,8 +11,11 @@ ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "content/core3/core3_npc_catalog.json"
 REGISTRY = ROOT / "agents/src/lbg_agents/npc_registry.json"
 
+sys.path.insert(0, str(ROOT / "agents/src"))
+from lbg_agents.world_display import HUB_CITY, PLANET_DISPLAY, lore_label  # noqa: E402
+
 ROLE_FROM_MOBILE = {
-    "bartender": ("vendor", "barman cantina Mos Eisley", "chaleureux"),
+    "bartender": ("vendor", f"barman {HUB_CITY}", "chaleureux"),
     "trainer_brawler": ("trainer", "instructeur combat", "professionnel"),
     "trainer_marksman": ("trainer", "instructeur tireur", "professionnel"),
     "trainer_scout": ("trainer", "instructeur éclaireur", "professionnel"),
@@ -21,7 +24,7 @@ ROLE_FROM_MOBILE = {
     "trainer_entertainer": ("trainer", "instructeur artiste", "creatif"),
     "trainer_politician": ("trainer", "instructeur politique", "professionnel"),
     "informant_npc_lvl_1": ("informant", "informateur", "pragmatique"),
-    "mos_espa_police_officer": ("guard", "officier police Mos Eisley", "professionnel"),
+    "mos_espa_police_officer": ("guard", f"officier police {HUB_CITY}", "professionnel"),
     "scientist": ("scribe", "scientifique", "pedagogue"),
     "commoner_old": ("citizen", "habitant", "chaleureux"),
 }
@@ -38,7 +41,9 @@ def _entry_from_slot(slot: dict, roster: dict, profiles: dict) -> dict | None:
     name = str(slot.get("display_name", pid)).strip()
     binding = slot.get("binding") or {}
     mobile = str(binding.get("mobile_template", "")).strip()
-    role, summary_role, tone = ROLE_FROM_MOBILE.get(mobile, ("npc", "citoyen Tatooine", "professionnel"))
+    role, summary_role, tone = ROLE_FROM_MOBILE.get(
+        mobile, ("npc", f"citoyen {PLANET_DISPLAY}", "professionnel")
+    )
     prof_id = str(slot.get("profile_id", roster.get("profile_id", ""))).strip()
     prof = profiles.get(prof_id) if prof_id else {}
     hint = ""
@@ -46,23 +51,27 @@ def _entry_from_slot(slot: dict, roster: dict, profiles: dict) -> dict | None:
         llm = prof.get("llm") or {}
         if isinstance(llm, dict):
             hint = str(llm.get("system_hint", "")).strip()[:200]
-    loc = str(roster.get("location_id", "tatooine")).replace("_", " ")
-    summary = f"{summary_role} — {roster.get('description', '')}"[:220]
+    loc_raw = str(roster.get("location_id", "tatooine")).replace("_", " ")
+    loc = lore_label(loc_raw)
+    if loc.lower() in ("tatooine", "scrapaltai"):
+        loc = PLANET_DISPLAY
+    summary = lore_label(f"{summary_role} — {roster.get('description', '')}")[:220]
     if hint:
-        summary = f"{summary} | {hint}"
+        summary = lore_label(f"{summary} | {hint}")[:220]
     entry = {
         "id": pid,
         "name": name,
         "role": role,
         "race_id": "race:human",
-        "zone": f"Mos Eisley — {loc}",
-        "faction": "Civils Tatooine Prime",
+        "zone": f"{HUB_CITY} — {loc}",
+        "faction": f"Civils {PLANET_DISPLAY}",
         "tone": tone,
         "summary": summary,
-        "goals": ["repondre au joueur en restant dans son role SWG"],
+        "goals": ["repondre au joueur en restant dans son role LBG (Scrapaltai / Lost Heaven)"],
         "constraints": [
             "pas de metier Terre1 (forgeron village, auberge fantasy)",
             "reponses courtes",
+            "ne jamais dire Tatooine ni Mos Eisley (canon ADR 0009)",
             f"pilot_id={pid}",
         ],
         "core3_source": "core3_npc_catalog.json",

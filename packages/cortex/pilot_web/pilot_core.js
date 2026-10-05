@@ -1065,6 +1065,10 @@
       if (res && res.routed_to) addKV("routed_to", res.routed_to);
       if (res && typeof res.confidence === "number") addKV("confidence", res.confidence);
       if (out && out.agent) addKV("agent", out.agent);
+      if (out && out.agentic) addKV("agentic", "yes");
+      if (out && out.job_id) addKV("job_id", out.job_id);
+      if (out && out.status && out.agentic) addKV("job_status", out.status);
+      if (out && out.elevated_from) addKV("elevated_from", out.elevated_from);
       if (out && out.dialogue_profile_resolved) {
         addKV("dialogue_profile_resolved", out.dialogue_profile_resolved);
       }
@@ -1110,6 +1114,23 @@
       }
 
       let html = "";
+      if (out && out.agentic && out.job_id) {
+        const jid = String(out.job_id);
+        const href = out.pilot_jobs_href || ("#/jobs?job=" + encodeURIComponent(jid));
+        html +=
+          '<div style="margin-top:0.5rem;padding:0.75rem;border:1px solid #9ec9b0;border-radius:6px;background:#f0faf4;">' +
+          '<div style="font-weight:600;">Mode agentique — job de fond</div>' +
+          '<div class="muted" style="margin-top:0.25rem;">' +
+          escapeHtml(String(out.reply || "")) +
+          "</div>" +
+          '<div style="margin-top:0.45rem;"><a href="' +
+          escapeHtml(href) +
+          '">Ouvrir le job #' +
+          escapeHtml(jid.slice(0, 8)) +
+          "</a> · statut <code>" +
+          escapeHtml(String(out.status || "?")) +
+          "</code></div></div>";
+      }
       if (rows.length) {
         html += "<table style=\"width:100%;border-collapse:collapse;margin-top:0.25rem;\"><tbody>" + rows.join("") + "</tbody></table>";
       }

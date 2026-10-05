@@ -91,13 +91,13 @@ async def run_llm_chat_phase(
         elif _cap == 0:
             short_ctx = []
 
-    # D6.2 : LAB causerie → prompt court ; sinon profil registre / LAB ops
+    # D6.2/D6 combo : LAB causerie sticky (fil) → prompt court ; sinon ops
     try:
         from src.services.router_prompts import resolve_lab_system_prompt, wants_lab_causerie_prompt
 
-        lab_causerie = bool(lab_mode and wants_lab_causerie_prompt(prompt))
+        lab_causerie = bool(lab_mode and wants_lab_causerie_prompt(prompt, short_ctx=short_ctx))
         if lab_mode:
-            base_profile = resolve_lab_system_prompt(prompt)
+            base_profile = resolve_lab_system_prompt(prompt, short_ctx=short_ctx)
         else:
             base_profile = router.PROFILES.get(chat_profile, router.PROFILES["chaleureux"])
     except Exception:
@@ -112,11 +112,18 @@ async def run_llm_chat_phase(
     except Exception:
         media_nudge = ""
 
-    # Nudge causerie (D6.1/D6.2) — vide si prompt LAB_CAUSERIE déjà résolu
+    # Nudge causerie — avance le fil + anti-invention
     try:
         from src.services.router_prompts import causerie_lab_nudge
 
-        causerie_nudge = causerie_lab_nudge(prompt, lab=lab_mode)
+        causerie_nudge = causerie_lab_nudge(prompt, lab=lab_mode, short_ctx=short_ctx)
+    except TypeError:
+        try:
+            from src.services.router_prompts import causerie_lab_nudge
+
+            causerie_nudge = causerie_lab_nudge(prompt, lab=lab_mode)
+        except Exception:
+            causerie_nudge = ""
     except Exception:
         causerie_nudge = ""
 
@@ -312,6 +319,12 @@ async def run_llm_chat_phase(
 
         quality = wants_lab_quality_route(prompt)
         preferred = lab_preferred_model(prompt)
+        # Causerie sticky : forcer modèle chat qualité (pas 2B fallback silencieux)
+        if lab_causerie:
+            from src.services.router_prompts import lab_chat_quality_model
+
+            preferred = lab_chat_quality_model()
+            quality = True
         before = list(sorted_models)
         local_only = [e for e in sorted_models if e.get("provider") == "local"]
         if not any(e.get("name") == preferred for e in local_only):

@@ -115,3 +115,48 @@ def test_remediation_plan_memory_step(monkeypatch):
 
 def test_remediation_prime_enabled_default_off():
     assert remediation_prime_enabled() is False
+
+
+def _watchdog_critical_light_sticky() -> dict:
+    return {
+        "ok": True,
+        "outcome": "critical",
+        "memory": {
+            "ok": True,
+            "worst_status": "critical",
+            "hosts": [
+                {
+                    "label": "light",
+                    "host": "192.168.0.111",
+                    "ok": True,
+                    "status": "critical",
+                    "metrics": {
+                        "mem_avail_pct": 70.0,
+                        "swap_used_pct": 100.0,
+                        "sticky_swap": True,
+                        "top_processes": [{"comm": "ollama", "rss_kb": 4000000}],
+                    },
+                }
+            ],
+        },
+        "alerts": ["mem:light: critical"],
+    }
+
+
+def test_build_plan_light_sticky_swap():
+    plan = build_memory_remediation_plan(_watchdog_critical_light_sticky())
+    assert plan["memory_worst_status"] == "critical"
+    assert any("swap collé" in h or "swap saturé" in h for h in plan["hints"])
+    labels = [a.get("label", "") for a in plan["suggested_actions"]]
+    assert any("laya-serve" in lab for lab in labels)
+    ssh_kinds = [
+        a for a in plan["suggested_actions"]
+        if (a.get("devops_action") or {}).get("kind") == "ssh_run"
+    ]
+    assert ssh_kinds
+    assert all(a["devops_action"]["server_id"] == "light" for a in ssh_kinds)
+    # Pas de systemd_restart local 140 pour light
+    assert not any(
+        (a.get("devops_action") or {}).get("kind") == "systemd_restart"
+        for a in plan["suggested_actions"]
+    )
