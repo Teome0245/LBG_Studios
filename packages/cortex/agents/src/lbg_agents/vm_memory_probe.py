@@ -21,9 +21,10 @@ _DEFAULT_HOSTS: list[tuple[str, str]] = [
     ("prime", "246"),
     ("precu", "245"),
     ("front", "110"),
+    ("light", "111"),
     ("core", "140"),
     ("executor", "141"),
-    ("hands", "142"),
+    ("hands", "143"),
 ]
 
 
@@ -142,6 +143,13 @@ def _parse_probe_output(stdout: str) -> dict[str, Any]:
     }
 
 
+def is_sticky_swap(metrics: dict[str, Any]) -> bool:
+    """Swap saturé alors qu'il reste de la RAM dispo (pages non rapatriées)."""
+    avail = float(metrics.get("mem_avail_pct") or 0)
+    swap = float(metrics.get("swap_used_pct") or 0)
+    return swap >= 90.0 and avail >= _warn_pct()
+
+
 def _status(metrics: dict[str, Any]) -> str:
     avail = float(metrics.get("mem_avail_pct") or 0)
     swap = float(metrics.get("swap_used_pct") or 0)
@@ -163,7 +171,12 @@ def _format_host_line(label: str, host: str, entry: dict[str, Any]) -> str:
     rss_mib = (int(top[0].get("rss_kb") or 0)) / 1024 if top else 0
     st = entry.get("status", "ok")
     mark = {"ok": "OK", "warn": "ATTENTION", "critical": "CRITIQUE"}.get(st, st)
-    extra = f" — swap {m.get('swap_used_pct', 0)}%" if float(m.get("swap_used_pct") or 0) > 10 else ""
+    swap_pct = float(m.get("swap_used_pct") or 0)
+    extra = ""
+    if swap_pct > 10:
+        extra = f" — swap {m.get('swap_used_pct', 0)}%"
+        if m.get("sticky_swap") or is_sticky_swap(m):
+            extra += " (collé — RAM dispo OK)"
     return (
         f"• {label} ({host}) [{mark}] : {avail_g:.1f}/{total_g:.1f} Go disponibles "
         f"({m.get('mem_avail_pct')}%) — top: {top_s} {rss_mib:.0f} MiB{extra}"
@@ -223,6 +236,7 @@ def run_vm_memory_probe(
             worst = "critical"
             continue
         metrics = _parse_probe_output(stdout)
+        metrics["sticky_swap"] = is_sticky_swap(metrics)
         st = _status(metrics)
         if rank.get(st, 0) > rank.get(worst, 0):
             worst = st

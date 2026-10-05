@@ -23,16 +23,17 @@ _ALIASES: dict[str, str] = {
     "active-directory": "ad",
     "windows-ad": "ad",
     "default": "default",
-    "hands": "hands",
-    "lbg-hands": "hands",
-    "linux-hands": "hands",
-    "linux_agent": "hands",
-    "ct-142": "hands",
+    "ct-142": "omarchy",
     "omarchy": "omarchy",
     "lbg-omarchy": "omarchy",
     "linux-omarchy": "omarchy",
     "ct-143": "omarchy",
     "143": "omarchy",
+    # Alias historiques « hands » → même nœud Omarchy .143 (migration .142→.143)
+    "hands": "omarchy",
+    "lbg-hands": "omarchy",
+    "linux-hands": "omarchy",
+    "linux_agent": "omarchy",
 }
 
 
@@ -146,18 +147,36 @@ def _targets_from_legacy_env() -> list[DesktopTarget]:
         env_key="AGENT_WINDOWS_SRV_AD_URL",
         aliases=("ad", "srv-ad", "serveur-ad", "active-directory"),
     )
-    _add(
-        tid="hands",
-        label="lbg-hands",
-        env_key="LBG_AGENT_HANDS_URL",
-        aliases=("hands", "lbg-hands", "linux-hands", "linux_agent", "ct-142"),
+    # Mains + Omarchy = même nœud .143:5005 (migration .142→.143).
+    # Préférer OMARCHY_URL ; sinon HANDS_URL (rétrocompat).
+    omarchy_url = (
+        os.environ.get("LBG_AGENT_OMARCHY_URL", "").strip().rstrip("/")
+        or os.environ.get("LBG_AGENT_HANDS_URL", "").strip().rstrip("/")
     )
-    _add(
-        tid="omarchy",
-        label="lbg-omarchy",
-        env_key="LBG_AGENT_OMARCHY_URL",
-        aliases=("omarchy", "lbg-omarchy", "linux-omarchy", "ct-143", "143"),
-    )
+    if omarchy_url and omarchy_url not in seen_urls:
+        host = urlparse(omarchy_url).hostname or ""
+        if host:
+            seen_urls.add(omarchy_url)
+            rows.append(
+                DesktopTarget(
+                    target_id="omarchy",
+                    label="lbg-omarchy",
+                    host=host.split(":")[0],
+                    url=omarchy_url,
+                    aliases=(
+                        "omarchy",
+                        "lbg-omarchy",
+                        "linux-omarchy",
+                        "ct-143",
+                        "143",
+                        "hands",
+                        "lbg-hands",
+                        "linux-hands",
+                        "linux_agent",
+                        "ct-142",
+                    ),
+                )
+            )
 
     # Si default manquant mais pc présent, default = pc
     if not any(t.target_id == "default" for t in rows):
@@ -208,9 +227,9 @@ def infer_desktop_target_from_text(text: str) -> str | None:
     if re.search(r"\b192\.168\.0\.10\b", text):
         return "pc"
     if re.search(r"\b(lbg[-_]?hands|linux[-_]?agent|ct[- ]?142|sur les mains)\b", norm):
-        return "hands"
+        return "omarchy"
     if re.search(r"\b192\.168\.0\.142\b", text):
-        return "hands"
+        return "omarchy"
     if re.search(r"\b(omarchy|lbg[-_]?omarchy|ct[- ]?143|sur omarchy|sur le lab linux)\b", norm):
         return "omarchy"
     if re.search(r"\b192\.168\.0\.143\b", text):
