@@ -39,6 +39,35 @@
   let _agents = new Map();
   let _onSelect = null;
   let _running = false;
+  /** @type {Map<string, string|null>} zone_id → badge (ex. Éteinte) */
+  let _zoneHostBadges = new Map();
+  /** @type {Map<string, object>} Phaser text labels for zones */
+  let _zoneLabelNodes = new Map();
+
+  function zoneDisplayLabel(zid) {
+    const z = ZONES[zid];
+    if (!z) return zid;
+    const badge = _zoneHostBadges.get(zid);
+    if (badge) return z.label + " · " + badge;
+    return z.label;
+  }
+
+  function refreshZoneLabels() {
+    _zoneLabelNodes.forEach(function (txt, zid) {
+      if (txt && txt.setText) txt.setText(zoneDisplayLabel(zid));
+    });
+  }
+
+  function setZoneHostStates(zones) {
+    _zoneHostBadges = new Map();
+    (zones || []).forEach(function (z) {
+      if (!z || !z.id) return;
+      if (String(z.host_status || "") === "offline") {
+        _zoneHostBadges.set(z.id, String(z.host_badge || "Éteinte"));
+      }
+    });
+    refreshZoneLabels();
+  }
 
   function loadPhaser() {
     if (global.Phaser) return Promise.resolve(global.Phaser);
@@ -179,16 +208,18 @@
         });
 
         // Labels
+        _zoneLabelNodes.clear();
         Object.keys(ZONES).forEach((zid) => {
           const z = ZONES[zid];
-          this.add
-            .text(z.x * TILE + 6, z.y * TILE + 4, z.label, {
+          const txt = this.add
+            .text(z.x * TILE + 6, z.y * TILE + 4, zoneDisplayLabel(zid), {
               fontFamily: "IBM Plex Mono, monospace",
               fontSize: "10px",
               color: "#e8f2f4",
               fontStyle: "bold",
             })
             .setDepth(5);
+          _zoneLabelNodes.set(zid, txt);
         });
 
         // Decor: trees near café
@@ -463,6 +494,7 @@
     start: start,
     stop: stop,
     sync: sync,
+    setZoneHostStates: setZoneHostStates,
     isRunning: function () {
       return _running;
     },

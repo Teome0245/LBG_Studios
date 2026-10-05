@@ -67,6 +67,24 @@ HOST_HINT_BY_ZONE: dict[str, str] = {
     "zone_coffee": "192.168.0.140",
 }
 
+# Sondes TCP légères pour annoter les zones « machine éteinte » (Lab PreCU surtout).
+# Ports alignés Atlas / pilot status (8050 healthz, 3306 MySQL, 8792 PreCU, 22 SSH).
+ZONE_HOST_PROBES: dict[str, dict[str, Any]] = {
+    "zone_mmo_lab": {
+        "env": "LBG_LAN_HOST_PRECU",
+        "fallback_env": "LBG_LAN_HOST_MMO_SERVER",
+        "default": "192.168.0.245",
+        "ports": (8050, 3306, 8792, 22),
+        "force_env": "LBG_ZONE_MMO_LAB_HOST_STATE",
+        "offline_badge": "Éteinte",
+        "online_badge": "En ligne",
+    },
+}
+
+_zone_host_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+_zone_host_cache_ttl = float(os.environ.get("LBG_ZONE_HOST_PROBE_TTL_SEC", "30") or "30")
+_zone_host_probe_timeout = float(os.environ.get("LBG_ZONE_HOST_PROBE_TIMEOUT_SEC", "0.6") or "0.6")
+
 # Persona par défaut quand une tâche n'a pas de sous-projet (1er = principal du rôle)
 DEFAULT_AGENT_BY_ROLE: dict[str, str] = {
     "admin_infra": "admin_infra",
@@ -594,6 +612,94 @@ def reconcile_with_store() -> int:
         return 0
 
 
+def _host_ip_from_env(env_key: str, default: str, *, fallback_env: str | None = None) -> str:
+    raw = os.environ.get(env_key, "").strip()
+    if not raw and fallback_env:
+        raw = os.environ.get(fallback_env, "").strip()
+    if not raw:
+        raw = default
+    return raw.split(":")[0].split("/")[0]
+
+
+def _tcp_reachable(host: str, port: int, *, timeout: float) -> bool:
+    import socket
+
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def _force_host_state(raw: str | None) -> str | None:
+    val = str(raw or "").strip().lower()
+    if val in ("off", "offline", "down", "eteinte", "éteinte", "ferme", "fermé", "closed"):
+        return "offline"
+    if val in ("on", "online", "up", "live"):
+        return "online"
+    return None
+
+
+def probe_zone_host(zone_id: str, *, force_refresh: bool = False) -> dict[str, Any] | None:
+    """État hôte d'une zone (cache TTL). None si la zone n'a pas de sonde."""
+    spec = ZONE_HOST_PROBES.get(zone_id)
+    if not spec:
+        return None
+    now = time.time()
+    if not force_refresh:
+        cached = _zone_host_cache.get(zone_id)
+        if cached and (now - cached[0]) < max(1.0, _zone_host_cache_ttl):
+            return dict(cached[1])
+
+    host = _host_ip_from_env(
+        str(spec["env"]),
+        str(spec["default"]),
+        fallback_env=str(spec.get("fallback_env") or "") or None,
+    )
+    forced = _force_host_state(os.environ.get(str(spec.get("force_env") or "")))
+    if forced is None:
+        ports = tuple(int(p) for p in (spec.get("ports") or ()))
+        online = any(_tcp_reachable(host, port, timeout=_zone_host_probe_timeout) for port in ports)
+        status = "online" if online else "offline"
+    else:
+        status = forced
+
+    badge = (
+        str(spec.get("offline_badge") or "Éteinte")
+        if status == "offline"
+        else str(spec.get("online_badge") or "En ligne")
+    )
+    row = {
+        "host": host,
+        "host_status": status,
+        "host_badge": badge if status == "offline" else None,
+        "probed_at": int(now),
+    }
+    _zone_host_cache[zone_id] = (now, dict(row))
+    return row
+
+
+def zones_for_snapshot(*, force_refresh: bool = False) -> list[dict[str, Any]]:
+    """Zones presence + annotation hôte (badge Éteinte quand PreCU down)."""
+    out: list[dict[str, Any]] = []
+    for zone in ZONES:
+        row = dict(zone)
+        zid = str(zone.get("id") or "")
+        hint = HOST_HINT_BY_ZONE.get(zid)
+        if hint:
+            row["host_hint"] = hint
+        probe = probe_zone_host(zid, force_refresh=force_refresh)
+        if probe:
+            row.update(probe)
+            if probe.get("host_status") == "offline" and probe.get("host_badge"):
+                base = str(zone.get("label") or zid)
+                # Évite double suffixe si déjà présent.
+                if probe["host_badge"] not in base:
+                    row["label"] = f"{base} · {probe['host_badge']}"
+        out.append(row)
+    return out
+
+
 def snapshot(*, mode: str = "live") -> dict[str, Any]:
     recover_stale_failed()
     reconcile_with_store()
@@ -615,7 +721,7 @@ def snapshot(*, mode: str = "live") -> dict[str, Any]:
     return {
         "schema": SNAPSHOT_SCHEMA,
         "agents": agents,
-        "zones": list(ZONES),
+        "zones": zones_for_snapshot(),
         "generated_at": int(time.time()),
         "mode": mode,
     }

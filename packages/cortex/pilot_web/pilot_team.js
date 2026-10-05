@@ -45,12 +45,17 @@
       ["zone_prime", "Monde Prime (246)"],
       ["zone_coffee", "Pause café"],
     ];
+    /** @type {Map<string, object>} meta zones (host_status, host_badge…) depuis le snapshot */
+    let __officeZoneState = new Map();
+    let __officeZonePoll = null;
     let __officePing = null;
     let __officeAnim = {};
     let __officeView = "map";
     let __officeMapReady = false;
     let __officeSelectedId = null;
     let __officeSelectedTaskId = null;
+    let __officePlayerIa = null;
+    let __officePlayerIaPoll = null;
 
     function officeParseView() {
       const raw = (location.hash || "").replace(/^#/, "");
@@ -77,6 +82,9 @@
       const btnClassic = document.getElementById("office-btn-classic");
       if (mapWrap) mapWrap.hidden = __officeView !== "map";
       if (classicWrap) classicWrap.hidden = __officeView !== "classic";
+      const piaBar = document.getElementById("office-player-ia-bar");
+      // Barre globale en vue carte ; en classic les chips sont dans la tuile Monde Prime.
+      if (piaBar) piaBar.hidden = __officeView !== "map";
       if (btnMap) btnMap.classList.toggle("is-active", __officeView === "map");
       if (btnClassic) btnClassic.classList.toggle("is-active", __officeView === "classic");
       if (__officeView === "classic") {
@@ -85,6 +93,7 @@
         officeRender();
       } else {
         officeEnsureMap();
+        officeRenderPlayerIaBar();
       }
     }
 
@@ -390,6 +399,75 @@
       else el.textContent = htmlOrText;
     }
 
+    function officePlayerIaChipHtml(bot) {
+      const online = !!(bot && bot.online);
+      const inWorld = !!(bot && bot.in_world);
+      const name = (bot && (bot.display_name || bot.id)) || "?";
+      const zone = bot && (bot.zone_display || bot.zone) ? String(bot.zone_display || bot.zone) : "";
+      const age = bot && bot.age_s != null ? Number(bot.age_s) : null;
+      const state = !online ? "offline" : (inWorld ? "online" : "stale");
+      const label = !online ? "hors jeu" : (zone || (inWorld ? "en jeu" : "snapshot vieux"));
+      const ageTxt = age != null && !Number.isNaN(age) ? (" · " + (age < 10 ? age.toFixed(1) : Math.round(age)) + "s") : "";
+      const title = name + " — " + label + ageTxt + " (Chœur · lecture seule)";
+      return (
+        '<span class="office-pia-chip office-pia-chip--' + state + '" title="' + officeEsc(title) + '">' +
+          '<span class="office-pia-dot" aria-hidden="true"></span>' +
+          '<span class="office-pia-name">' + officeEsc(name) + "</span>" +
+          '<span class="office-pia-meta">' + officeEsc(label) + "</span>" +
+        "</span>"
+      );
+    }
+
+    function officePlayerIaStripHtml(compact) {
+      const rt = __officePlayerIa;
+      if (!rt) {
+        return '<div class="office-pia-strip' + (compact ? " office-pia-strip--compact" : "") + '">' +
+          '<span class="office-pia-label">Joueurs IA · Scrapaltai</span>' +
+          '<span class="muted" style="font-size:0.72rem;">chargement…</span></div>';
+      }
+      const bots = Array.isArray(rt.bots) ? rt.bots : [];
+      const online = rt.online_count != null ? rt.online_count : bots.filter(function (b) { return b && b.online; }).length;
+      const sidecarOk = rt.sidecar_ok !== false;
+      const head = sidecarOk
+        ? (online + "/" + bots.length + " en ligne")
+        : "sidecar KO";
+      const chips = bots.length
+        ? bots.map(officePlayerIaChipHtml).join("")
+        : '<span class="muted" style="font-size:0.72rem;">aucun bot</span>';
+      return (
+        '<div class="office-pia-strip' + (compact ? " office-pia-strip--compact" : "") + '" title="Runtime Prime via sidecar — associé à Chœur">' +
+          '<span class="office-pia-label">Joueurs IA · Scrapaltai</span>' +
+          '<span class="office-pia-count' + (sidecarOk ? "" : " office-pia-count--ko") + '">' + officeEsc(head) + "</span>" +
+          '<div class="office-pia-chips">' + chips + "</div>" +
+        "</div>"
+      );
+    }
+
+    function officeRenderPlayerIaBar() {
+      const bar = document.getElementById("office-player-ia-bar");
+      if (!bar) return;
+      bar.innerHTML = officePlayerIaStripHtml(false);
+    }
+
+    async function officeFetchPlayerIaRuntime() {
+      const base = (typeof getBase === "function" ? getBase() : "").replace(/\/$/, "");
+      const r = await fetch(base + "/v1/pilot/player-ia/runtime");
+      const data = await r.json().catch(function () { return null; });
+      if (!data || data.ok === false) {
+        __officePlayerIa = {
+          ok: false,
+          sidecar_ok: false,
+          bots: [],
+          online_count: 0,
+          error: (data && (data.error || data.detail)) || ("HTTP " + r.status),
+        };
+      } else {
+        __officePlayerIa = data;
+      }
+      officeRenderPlayerIaBar();
+      if (__officeView === "classic") officeRender();
+    }
+
     function officeRender() {
       const floor = document.getElementById("office-floor");
       if (!floor) return;
@@ -403,6 +481,11 @@
         const id = pair[0];
         const label = pair[1];
         const meta = OFFICE_ZONE_META[id] || { ico: "·", ip: "", short: id };
+        const zState = __officeZoneState.get(id) || {};
+        const hostOff = String(zState.host_status || "") === "offline";
+        const hostBadge = hostOff
+          ? String(zState.host_badge || "Éteinte")
+          : "";
         const list = byZone[id] || [];
         const flags = [];
         list.forEach(function (a) {
@@ -410,6 +493,7 @@
           if (a.status === "failed") flags.push("has-failed");
           if (a.status === "review") flags.push("has-review");
         });
+        if (hostOff) flags.push("is-host-off");
         const zoneClass = ("office-zone " + flags.join(" ")).trim();
         const cards = list.length
           ? list.map(function (a) {
@@ -463,16 +547,26 @@
               );
             }).join("")
           : '<div class="office-empty"><span class="ghost" aria-hidden="true">∅</span>salle vide</div>';
+        const piaStrip = id === "zone_prime" ? officePlayerIaStripHtml(true) : "";
+        const ipLine = hostBadge
+          ? (officeEsc(meta.ip) + ' · <span class="office-zone-host-badge">' + officeEsc(hostBadge) + "</span>")
+          : officeEsc(meta.ip);
+        const badgeChip = hostBadge
+          ? ('<span class="office-zone-chip office-zone-chip--off" title="Hôte ' +
+              officeEsc(zState.host || meta.ip) + ' injoignable">' + officeEsc(hostBadge) + "</span>")
+          : "";
         return (
           '<section class="' + zoneClass + '" data-zone="' + officeEsc(id) + '">' +
             '<div class="office-zone-head">' +
               '<div class="office-zone-ico" title="' + officeEsc(meta.short) + '">' + meta.ico + "</div>" +
               '<div class="office-zone-titles">' +
                 "<h2>" + officeEsc(label) + "</h2>" +
-                '<span class="ip">' + officeEsc(meta.ip) + "</span>" +
+                '<span class="ip">' + ipLine + "</span>" +
               "</div>" +
+              badgeChip +
               '<span class="count" title="agents">' + list.length + "</span>" +
             "</div>" +
+            piaStrip +
             '<div class="office-agents">' + cards + "</div>" +
           "</section>"
         );
@@ -535,10 +629,19 @@
     function officeApplySnapshot(snap) {
       if (!snap || !Array.isArray(snap.agents)) return;
       if (Array.isArray(snap.zones) && snap.zones.length) {
+        __officeZoneState = new Map();
         __officeZones = snap.zones
           .slice()
           .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); })
-          .map(function (z) { return [z.id, z.label || z.id]; });
+          .map(function (z) {
+            if (z && z.id) __officeZoneState.set(z.id, z);
+            return [z.id, z.label || z.id];
+          });
+        try {
+          if (window.LbgOfficeMap && typeof LbgOfficeMap.setZoneHostStates === "function") {
+            LbgOfficeMap.setZoneHostStates(Array.from(__officeZoneState.values()));
+          }
+        } catch (_) {}
       }
       __officeAgents.clear();
       snap.agents.forEach(function (a) { officeUpsert(a, { silent: true, batch: true }); });
@@ -569,9 +672,17 @@
         window.clearInterval(__officePing);
         __officePing = null;
       }
+      if (__officeZonePoll) {
+        window.clearInterval(__officeZonePoll);
+        __officeZonePoll = null;
+      }
       if (typeof __officeLyraPoll !== "undefined" && __officeLyraPoll) {
         window.clearInterval(__officeLyraPoll);
         __officeLyraPoll = null;
+      }
+      if (__officePlayerIaPoll) {
+        window.clearInterval(__officePlayerIaPoll);
+        __officePlayerIaPoll = null;
       }
     }
 
@@ -687,6 +798,16 @@
       officeFetchSnapshot()
         .catch(function () { officeSetConn("snapshot KO"); })
         .finally(function () { officeConnectWs(); });
+      officeFetchPlayerIaRuntime().catch(function () {});
+      if (__officePlayerIaPoll) window.clearInterval(__officePlayerIaPoll);
+      __officePlayerIaPoll = window.setInterval(function () {
+        officeFetchPlayerIaRuntime().catch(function () {});
+      }, 8000);
+      // Refresh zones (badge Éteinte Lab 245) même si le WS agents est live.
+      if (__officeZonePoll) window.clearInterval(__officeZonePoll);
+      __officeZonePoll = window.setInterval(function () {
+        officeFetchSnapshot().catch(function () {});
+      }, 45000);
       officeLyraRefresh().catch(function () {});
       if (__officeLyraPoll) window.clearInterval(__officeLyraPoll);
       __officeLyraPoll = window.setInterval(function () {
