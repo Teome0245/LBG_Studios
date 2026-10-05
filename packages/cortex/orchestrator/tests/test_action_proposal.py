@@ -49,6 +49,8 @@ def test_action_proposal_mail_preview_sender() -> None:
     assert proposal["action"]["kind"] == "mail_imap_preview"
     assert proposal["action"]["from_contains"] == "Intel"
     assert proposal["context_patch"]["desktop_dry_run"] is True
+    assert proposal["requires_review"] is False
+    assert proposal["risk_level"] == "low"
 
 
 def test_action_proposal_mail_preview_plurals_fr() -> None:
@@ -66,6 +68,8 @@ def test_action_proposal_mail_preview_plurals_fr() -> None:
     assert proposal["action"].get("recent") is True
     assert "subject_contains" not in proposal["action"]
     assert "from_contains" not in proposal["action"]
+    assert proposal["requires_review"] is False
+    assert proposal["risk_level"] == "low"
 
 
 def test_action_proposal_open_app_vghd_fr() -> None:
@@ -84,6 +88,20 @@ def test_action_proposal_open_app_vghd_fr() -> None:
     # learn:true par défaut (allowlist auto-apprise sur le worker — LBG_DESKTOP_OPEN_APP_LEARN).
     assert proposal["action"].get("learn") is True
     assert proposal["context_patch"]["desktop_dry_run"] is True
+
+
+def test_action_proposal_open_app_vs_code_omarchy() -> None:
+    """Régression : « VS Code » ne doit plus proposer app=vs (allowlist_denied)."""
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={"actor_id": "user:1", "text": "ouvre VS Code sur omarchy", "context": {}},
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["action"]["kind"] == "open_app"
+    assert proposal["action"]["app"] == "code"
 
 
 def test_action_proposal_open_app_alias_and_exe_path() -> None:
@@ -188,6 +206,28 @@ def test_action_proposal_desktop_target_ad() -> None:
     assert proposal is not None
     assert proposal["capability"] == "desktop_control"
     assert proposal["context_patch"].get("desktop_target") == "ad"
+
+
+def test_action_proposal_update_vscode_omarchy() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "ops:1",
+            "text": "mets à jour vscode sur omarchy",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    proposal = body["proposal"]
+    assert proposal is not None, body.get("reason")
+    assert proposal["capability"] == "desktop_control"
+    assert proposal["action"]["kind"] == "update_vscode"
+    assert proposal["context_patch"]["desktop_action"]["kind"] == "update_vscode"
+    assert proposal["context_patch"].get("desktop_target") == "omarchy"
+    assert proposal["context_patch"]["desktop_dry_run"] is True
+    assert proposal["requires_review"] is True
 
 
 def test_action_proposal_second_avis_default_claude() -> None:
@@ -332,6 +372,40 @@ def test_action_proposal_useful_default_selfcheck() -> None:
     assert proposal["action"]["kind"] == "selfcheck"
 
 
+def test_action_proposal_morning_brief() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={"actor_id": "user:1", "text": "fais mon brief du matin", "context": {}},
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["capability"] == "morning_brief"
+    assert proposal["routed_to"] == "agent.morning_brief"
+    assert proposal["action"]["kind"] == "morning_brief"
+    assert proposal["requires_review"] is False
+
+
+def test_action_proposal_memory_recall() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "user:1",
+            "text": "montre ce que tu retiens (mémoire agent)",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["capability"] == "memory_recall"
+    assert proposal["routed_to"] == "agent.memory_recall"
+    assert proposal["action"]["kind"] == "memory_recall"
+    assert proposal["requires_review"] is False
+
+
 def test_action_proposal_open_url_jobs_summary() -> None:
     client = TestClient(app)
     r = client.post(
@@ -372,3 +446,40 @@ def test_action_proposal_team_dev_game_forge_qa_followup() -> None:
     assert proposal["action"]["kind"] == "generate_prototype"
     assert proposal["context_patch"].get("opengame_dry_run") is True
     assert proposal["mmo_trace"]["qa_followup"] is True
+
+
+def test_action_proposal_agent_memory_not_vm_probe() -> None:
+    """« renforcer ta mémoire » → memory_recall, pas sonde RAM VM."""
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "user:1",
+            "text": (
+                "renforce ta mémoire et ta conscience de l'écosystème lbg "
+                "sur le MMO hébergé sur .246"
+            ),
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    proposal = r.json().get("proposal")
+    assert proposal is not None
+    assert proposal["action"]["kind"] == "memory_recall"
+    assert proposal["capability"] == "memory_recall"
+
+
+def test_action_proposal_vm_memory_probe_explicit() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "user:1",
+            "text": "sonde la mémoire RAM des VM 246 et 245",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["action"]["kind"] == "vm_memory_probe"

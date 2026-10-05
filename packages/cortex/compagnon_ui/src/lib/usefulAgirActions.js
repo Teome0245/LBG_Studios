@@ -37,11 +37,18 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'mail_imap_preview',
   },
   {
-    id: 'search',
-    label: 'Recherche web',
-    hint: 'navigateur',
-    sourceText: 'cherche sur internet LBG Studios Cursor agent desktop',
-    kind: 'search_web_open',
+    id: 'morning_brief',
+    label: 'Brief du matin',
+    hint: 'Self · proactive · infra',
+    sourceText: 'fais mon brief du matin',
+    kind: 'morning_brief',
+  },
+  {
+    id: 'memory_recall',
+    label: 'Ma mémoire',
+    hint: 'Self + leçons (≠ RAM VM)',
+    sourceText: 'montre ce que tu retiens (mémoire agent)',
+    kind: 'memory_recall',
   },
   {
     id: 'vghd',
@@ -98,6 +105,13 @@ export const USEFUL_AGIR_ACTIONS = [
     hint: 'ADR 0023 · concurrent Cline',
     sourceText: 'second avis claude code sur omarchy',
     kind: 'open_app',
+  },
+  {
+    id: 'omarchy_vscode_update',
+    label: 'MAJ VS Code (.143)',
+    hint: 'yay · hors session critique',
+    sourceText: 'mets à jour vscode sur omarchy',
+    kind: 'update_vscode',
   },
   {
     id: 'team_pilot',
@@ -160,6 +174,7 @@ export function nextUsefulAgirSuggestions(done = {}, limit = 4) {
     skip.add('orch_ui')
   }
 
+  // Après ouverture IDE (.143) : prioriser second avis (ADR 0023)
   const preferSecondAvis =
     kind === 'open_app' &&
     (String(done.app || '').toLowerCase() === 'code' ||
@@ -181,19 +196,38 @@ export function idleUsefulAgirIntents(limit = 3) {
   const pool = USEFUL_AGIR_ACTIONS.filter((a) =>
     [
       'selfcheck',
+      'morning_brief',
+      'memory_recall',
       'mail',
       'vghd',
       'inventory',
       'jobs',
       'session0',
-      'search',
       'cockpit',
       'omarchy_vscode',
       'team_pilot',
     ].includes(a.id),
   )
-  const hour = Math.floor(Date.now() / 3_600_000)
-  const start = pool.length ? hour % pool.length : 0
+  const hour = new Date().getHours()
+  // Matin (7–10) : prioriser le brief en tête de rotation
+  if (hour >= 7 && hour < 10) {
+    const brief = pool.find((a) => a.id === 'morning_brief')
+    const rest = pool.filter((a) => a.id !== 'morning_brief')
+    const rotatedRest = (() => {
+      const h = Math.floor(Date.now() / 3_600_000)
+      const start = rest.length ? h % rest.length : 0
+      return [...rest.slice(start), ...rest.slice(0, start)]
+    })()
+    const ordered = brief ? [brief, ...rotatedRest] : rotatedRest
+    return ordered.slice(0, Math.max(1, limit)).map((a) => ({
+      id: a.id,
+      label: a.label,
+      sourceText: a.sourceText,
+      hint: a.hint || 'initiative',
+    }))
+  }
+  const hourBucket = Math.floor(Date.now() / 3_600_000)
+  const start = pool.length ? hourBucket % pool.length : 0
   const rotated = [...pool.slice(start), ...pool.slice(0, start)]
   return rotated.slice(0, Math.max(1, limit)).map((a) => ({
     id: a.id,

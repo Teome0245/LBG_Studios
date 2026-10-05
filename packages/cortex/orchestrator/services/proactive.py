@@ -584,6 +584,10 @@ def _tick_once() -> None:
                     "tension_causes": list(getattr(st, "tension_causes", None) or []),
                 }
             )
+            try:
+                svc_self.ensure_morning_brief_will()
+            except Exception:
+                pass
     except Exception:
         pass
 

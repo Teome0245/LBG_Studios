@@ -9,6 +9,7 @@ import {
   summarizeRouteResult,
   routeLooksSuccessful,
   extractMailPreviewMessages,
+  extractStudioOffer,
   proposeAction,
   reviewProposal,
   isSoftConfirmMode,
@@ -16,6 +17,8 @@ import {
 } from '@/lib/agir'
 import { presenceAgirResult } from '@/lib/presence'
 import { nextUsefulAgirSuggestions } from '@/lib/usefulAgirActions'
+import { sendSpontaneityFeedback } from '@/lib/spontaneity'
+import { spawnTeamL1 } from '@/lib/teamSpawn'
 import { useChat } from '@/composables/useChat'
 import {
   startActivity,
@@ -54,6 +57,8 @@ const NO_HUMAN_CONFIRM_KINDS = new Set([
   'agent_session_status',
   'selfcheck',
   'network_inventory',
+  'memory_recall',
+  'morning_brief',
   'http_get',
   'comfyui_status',
   'comfyui_history',
@@ -168,6 +173,98 @@ const mailPreviewMessages = computed(() => {
 const mailPreviewIsDryRun = computed(
   () => lastResult.value?.mode === 'dry_run' || lastResult.value?.raw?.result?.output?.outcome === 'dry_run',
 )
+
+const studioOffer = computed(() => {
+  if (!lastResult.value?.ok || lastResult.value?.mode !== 'real') return null
+  if (!lastResult.value?.raw) return null
+  return extractStudioOffer(lastResult.value.raw)
+})
+
+const studioBusy = ref('')
+const studioDone = ref('')
+
+async function onStudioIntent(intent) {
+  const offer = studioOffer.value
+  if (!offer || !intent || studioBusy.value) return
+  studioBusy.value = intent.id || 'studio'
+  try {
+    if (intent.dismiss) {
+      await sendSpontaneityFeedback({
+        id: offer.id,
+        kind: 'dismiss',
+        themes: [offer.theme || 'memory'].filter(Boolean),
+        message: offer.message || '',
+        evolution_seed: null,
+      })
+      studioDone.value = 'ignored'
+      addMessage({
+        role: 'assistant',
+        content: 'OK — seed ignorée (pas de promotion Self).',
+        source: 'studio',
+      })
+      return
+    }
+    if (intent.teamSpawn) {
+      const objective =
+        String(intent.teamObjective || offer.evolution_seed || '').trim() ||
+        'Explorer une idée d’évolution Compagnon (L1 lecture seule).'
+      const out = await spawnTeamL1({
+        objective,
+        role: intent.teamRole || 'qa',
+        context: {
+          source: 'memory_recall_studio',
+          evolution_seed: offer.evolution_seed,
+          theme: offer.theme,
+        },
+      })
+      await sendSpontaneityFeedback({
+        id: offer.id,
+        kind: 'accept',
+        themes: [offer.theme || 'memory'].filter(Boolean),
+        message: offer.message || '',
+        evolution_seed: offer.evolution_seed,
+      })
+      studioDone.value = 'team'
+      addUserMessage(`Team L1 · ${intent.label || 'évolution'}`)
+      addMessage({
+        role: 'assistant',
+        content: out.ok
+          ? `Team L1 créée (${out.role || 'qa'}) : tâche ${out.id || '?'}. Seed enregistrée (pas d’auto-Réel).`
+          : `Team L1 impossible : ${out.error || 'erreur'}`,
+        source: out.ok ? 'studio' : 'error',
+      })
+      return
+    }
+    // En parler
+    const text = intent.sourceText || `parle-moi de : ${offer.evolution_seed}`
+    addUserMessage(`En parler · seed évolution`)
+    addMessage({
+      role: 'assistant',
+      content:
+        `On creuse cette seed (score ${Number(offer.evolution_score || 0).toFixed(2)}) :\n` +
+        `« ${offer.evolution_seed} »\n\n` +
+        `C’est une piste produit L3 — pas d’auto-merge. Tu peux ensuite lancer Team L1 ou Ignorer.`,
+      source: 'studio',
+    })
+    await sendSpontaneityFeedback({
+      id: offer.id,
+      kind: 'accept',
+      themes: [offer.theme || 'memory', 'discuss'].filter(Boolean),
+      message: String(text).slice(0, 160),
+      evolution_seed: offer.evolution_seed,
+    })
+    studioDone.value = 'discuss'
+    void text
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: `STUDIO erreur : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    studioBusy.value = ''
+  }
+}
 
 function persistToken() {
   saveApprovalToken(token.value.trim())
@@ -481,6 +578,40 @@ async function run(mode, opts = {}) {
         </li>
       </ul>
     </div>
+
+    <div
+      v-if="studioOffer && !studioDone"
+      class="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 space-y-2"
+    >
+      <p class="text-[10px] uppercase tracking-wider text-violet-200/90 font-semibold">
+        STUDIO · seed d’évolution
+        <span class="font-mono text-violet-300/80">
+          · score {{ Number(studioOffer.evolution_score || 0).toFixed(2) }} · pas d’auto-promo
+        </span>
+      </p>
+      <p class="text-xs text-violet-50/95 leading-relaxed">{{ studioOffer.message }}</p>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="intent in studioOffer.intents"
+          :key="intent.id"
+          type="button"
+          class="px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer disabled:opacity-40"
+          :class="intent.dismiss
+            ? 'border-white/15 bg-white/5 text-slate-300 hover:bg-white/10'
+            : 'border-violet-400/35 bg-violet-500/20 text-violet-50 hover:bg-violet-500/30'"
+          :disabled="!!busy || !!studioBusy"
+          @click="onStudioIntent(intent)"
+        >
+          {{ studioBusy === intent.id ? '…' : intent.label }}
+        </button>
+      </div>
+    </div>
+    <p
+      v-else-if="studioDone"
+      class="text-[11px] text-violet-200/80 bg-violet-500/10 border border-violet-500/20 rounded-xl px-3 py-2"
+    >
+      STUDIO · choix enregistré ({{ studioDone }}).
+    </p>
 
     <div
       v-if="nextSuggestions.length"

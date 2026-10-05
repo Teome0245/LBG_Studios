@@ -58,13 +58,15 @@ Sonde : `cast_speaker_client.probe_cast_speaker("192.168.0.75")` → rôle inven
 | Héphaïstos | `ops_kind=network_inventory` dans `team/roles.py` ; plan NL « inventaire réseau / apparus » |
 | Atlas | `load_network_lan_context()` dans `admin_infra_workflow` → champ `network_lan` + reco si diff |
 
-## Vague Compagnon Agir (avant P4)
+## Vague Compagnon Agir
 
 | # | Livrable | Statut |
 |---|----------|--------|
 | **P1** | IMAP + `auto_real` soft (mail) | OK |
 | **P2** | Selfcheck LAN + soft-confirm DevOps | OK |
 | **P3** | Inventaire LAN + timer + diff + Nest Cast + Team | OK |
+| **P4** | Brief du matin (Self + Jobs L2 + LAN + 1–2 Agir) | OK — [`morning_brief.md`](morning_brief.md) |
+| **P5** | Mémoire → seed d’évolution STUDIO | OK — [`memory_evolution_seed.md`](memory_evolution_seed.md) |
 
 ## Fichiers clés
 

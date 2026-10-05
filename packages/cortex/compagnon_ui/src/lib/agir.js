@@ -301,6 +301,59 @@ export function extractMailPreviewMessages(routePayload) {
   return msgs.filter((m) => m && typeof m === 'object')
 }
 
+/**
+ * Offre STUDIO (P5) depuis memory_recall — seed scorée, pas d’auto-promo.
+ * @returns {{
+ *   offer: boolean,
+ *   id?: string,
+ *   message?: string,
+ *   evolution_seed?: string,
+ *   evolution_score?: number,
+ *   theme?: string,
+ *   auto_promote?: boolean,
+ *   intents?: Array<Record<string, unknown>>,
+ * }|null}
+ */
+export function extractStudioOffer(routePayload) {
+  const output = extractRouteOutput(routePayload)
+  if (!output || typeof output !== 'object') return null
+  const status = output.status && typeof output.status === 'object' ? output.status : output
+  let studio = status.studio_offer
+  if (!studio && output.studio_offer) studio = output.studio_offer
+  if (!studio || typeof studio !== 'object') {
+    const seed = status.evolution_seed || output.evolution_seed
+    if (seed && typeof seed === 'object' && seed.text) {
+      studio = {
+        offer: true,
+        id: `memory:evo:${seed.theme || 'seed'}`,
+        message: `Seed d’évolution (score ${Number(seed.score || 0).toFixed(2)}) : « ${String(seed.text).slice(0, 120)} »`,
+        evolution_seed: String(seed.text),
+        evolution_score: Number(seed.score || 0),
+        theme: seed.theme,
+        auto_promote: false,
+        intents: [
+          { id: 'team_l1', label: 'Team L1', teamSpawn: true, teamObjective: String(seed.text).slice(0, 140) },
+          { id: 'discuss', label: 'En parler', sourceText: `parle-moi de cette idée d'évolution : ${String(seed.text).slice(0, 120)}` },
+          { id: 'ignore', label: 'Ignorer', dismiss: true },
+        ],
+      }
+    }
+  }
+  if (!studio || studio.offer === false) return null
+  const text = String(studio.evolution_seed || '').trim()
+  if (text.length < 12) return null
+  return {
+    offer: true,
+    id: String(studio.id || 'memory:evo').slice(0, 64),
+    message: String(studio.message || text).slice(0, 240),
+    evolution_seed: text.slice(0, 160),
+    evolution_score: Number(studio.evolution_score || 0),
+    theme: studio.theme || null,
+    auto_promote: false,
+    intents: Array.isArray(studio.intents) ? studio.intents : [],
+  }
+}
+
 /** Une ligne compacte par message pour résumé texte. */
 export function formatMailPreviewLines(messages, { max = 5, bodyChars = 120 } = {}) {
   const list = Array.isArray(messages) ? messages : []

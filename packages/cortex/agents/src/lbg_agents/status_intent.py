@@ -12,6 +12,8 @@ FACTUAL_STATUS_INTENTS = frozenset(
         "godot_status",
         "team_status",
         "infra_status",
+        "morning_brief",
+        "memory_recall",
         "project_status",
     }
 )
@@ -35,6 +37,28 @@ _STATUS_QUERY_RE = re.compile(
     r"que\s+(?:font|fait|se\s+passe)|"
     r"qu['\u2019]est-ce\s+qui\s+(?:tourne|avance|se\s+passe)"
     r")",
+    re.IGNORECASE,
+)
+
+_DOMAIN_MORNING_BRIEF_RE = re.compile(
+    r"\b("
+    r"brief\s+(?:du\s+)?matin(?:al)?|briefing\s+(?:du\s+)?matin|"
+    r"point\s+(?:du\s+)?matin|résumé\s+matinal|resume\s+matinal|"
+    r"jarvis\s*(?:matin)?|fais\s+mon\s+brief"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_DOMAIN_MEMORY_RECALL_RE = re.compile(
+    r"\b("
+    r"(?:ta|ma|sa|notre)\s+m[eé]moire|"
+    r"m[eé]moire\s+(?:agent|self|studio|conversation|leçons?|lessons)|"
+    r"ce\s+que\s+tu\s+(?:retiens|sais|connais|as\s+appris)|"
+    r"leçons?\s+apprises|lessons[_\s-]?learned|"
+    r"montre\s+(?:moi\s+)?(?:ta\s+)?m[eé]moire|"
+    r"rappelle[- ]?moi\s+(?:ta\s+)?m[eé]moire|"
+    r"conscience\s+(?:de\s+l['\u2019])?(?:écosystème|ecosysteme|self)"
+    r")\b",
     re.IGNORECASE,
 )
 
@@ -97,6 +121,8 @@ def is_operational_status_query(text: str) -> bool:
         return False
     if _STATUS_QUERY_RE.search(t):
         return True
+    if _DOMAIN_MORNING_BRIEF_RE.search(t):
+        return True
     tl = t.lower()
     if re.search(r"\b(statut|état|etat|avancement)\b", tl) and (
         _DOMAIN_INFOGRAPHISTE_RE.search(tl)
@@ -122,7 +148,9 @@ def classify_status_intent(text: str) -> tuple[str, float]:
 
     operational = is_operational_status_query(t)
     has_domain = bool(
-        _DOMAIN_INFOGRAPHISTE_RE.search(t)
+        _DOMAIN_MORNING_BRIEF_RE.search(t)
+        or _DOMAIN_MEMORY_RECALL_RE.search(t)
+        or _DOMAIN_INFOGRAPHISTE_RE.search(t)
         or _DOMAIN_SPRITES_RE.search(t)
         or _DOMAIN_GODOT_RE.search(t)
         or _DOMAIN_INFRA_RE.search(t)
@@ -133,6 +161,10 @@ def classify_status_intent(text: str) -> tuple[str, float]:
         return ("unknown", 0.0)
 
     tl = t.lower()
+    if _DOMAIN_MORNING_BRIEF_RE.search(tl):
+        return ("morning_brief", 0.93)
+    if _DOMAIN_MEMORY_RECALL_RE.search(tl):
+        return ("memory_recall", 0.92)
     if _DOMAIN_INFOGRAPHISTE_RE.search(tl):
         return ("infographiste_status", 0.92)
     if _DOMAIN_SPRITES_RE.search(tl):

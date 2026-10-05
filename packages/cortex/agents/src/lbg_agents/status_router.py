@@ -7,6 +7,8 @@ from typing import Any, Callable
 from lbg_agents.godot_status import run_godot_status
 from lbg_agents.infographiste_status import run_infographiste_status
 from lbg_agents.infra_status import run_infra_status
+from lbg_agents.morning_brief import run_morning_brief
+from lbg_agents.memory_recall import run_memory_recall
 from lbg_agents.project_status import run_project_status
 from lbg_agents.sprites_status import run_sprites_status
 from lbg_agents.status_intent import classify_status_intent, is_operational_status_query
@@ -18,6 +20,8 @@ _STATUS_HANDLERS: dict[str, Callable[..., dict[str, Any]]] = {
     "godot_status": run_godot_status,
     "team_status": run_team_status,
     "infra_status": run_infra_status,
+    "morning_brief": run_morning_brief,
+    "memory_recall": run_memory_recall,
     "project_status": run_project_status,
 }
 
