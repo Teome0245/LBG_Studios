@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Enregistre l'app LBG Cortex sur la Freebox (lecture seule une fois autorisée).
+# Enregistre l'app LBG Cortex sur la Freebox.
 # 1) Lance ce script
 # 2) Sur l'écran Freebox (ou Freebox OS) → autoriser « LBG Cortex »
-# 3) Le token est écrit dans infra/secrets/lbg.env + freebox.env.local
+# 3) Sur Freebox v7, cocher « Modification des réglages » via Freebox OS
+#    → Gestion des accès → Applications → Éditer LBG Cortex (souvent absent du LCD)
+# 4) Le token est écrit dans infra/secrets/lbg.env + freebox.env.local
+# Voir docs/LAN_ADRESSAGE_FREEBOX.md
 #
 # Usage :
 #   bash packages/cortex/infra/scripts/authorize_freebox_app.sh

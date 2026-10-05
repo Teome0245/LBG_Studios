@@ -94,7 +94,7 @@ LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 
 
 Passerelle DHCP : Freebox **`192.168.0.254`** → *Paramètres → Réseau local / DHCP → Baux statiques*.  
 Source de vérité MAC/IP projet = **cette table** (sondage ARP + `qm`/`pct config` Proxmox). Checklist UI : [`LAN_ADRESSAGE_FREEBOX.md`](LAN_ADRESSAGE_FREEBOX.md).  
-**Contrôle API 16:09** : smoke Freebox — **14/14** hôtes lab OK (0 manquant, 0 MAC≠). Token app `fr.lbg.cortex.freebox` dans secrets locaux.
+**Contrôle API 2026-10-05** : smoke Freebox — **13/13** hôtes lab OK (sans `.142`) · `settings: true`. Token app `fr.lbg.cortex.freebox` dans secrets locaux.
 
 | IP | Hostname / rôle | MAC (réelle) | IP comment | Freebox bail | Notes |
 |----|-----------------|--------------|------------|--------------|-------|
