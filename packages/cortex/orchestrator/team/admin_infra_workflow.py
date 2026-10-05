@@ -9,6 +9,7 @@ from lbg_sa.atlas_memory import recall_atlas_hints, record_atlas_admin_infra_run
 from team.admin_infra_element import maybe_notify_perimeter_ko
 from team.admin_infra_platform import admin_infra_perimeter, audit_admin_infra_platform
 from team.models import TeamTask
+from team.network_lan_context import load_network_lan_context
 from team.ollama_audit import audit_ollama_lan
 from team.llm_model_probe import audit_dialogue_fast_cloud
 from team.reason_llm import reason_route_matrix
@@ -93,6 +94,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
         if isinstance(platform.get("dialogue_fast_groq"), dict)
         else audit_dialogue_fast_cloud(probe=True)
     )
+    lan_ctx = load_network_lan_context()
 
     brief_ctx = {
         **ctx,
@@ -118,6 +120,23 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
         recommendations.append(
             "Route dialogue fast (Groq) KO — vérifier LBG_DIALOGUE_FAST_MODEL "
             "(≠ LBG_DIALOGUE_LLM_MODEL seul), aligner GROQ_MODEL_*, puis push_secrets_vm.sh."
+        )
+    if isinstance(lan_ctx, dict) and lan_ctx.get("ok"):
+        diff = lan_ctx.get("last_diff") if isinstance(lan_ctx.get("last_diff"), dict) else {}
+        n_app = int(diff.get("n_appeared") or 0)
+        n_dis = int(diff.get("n_disappeared") or 0)
+        if n_app or n_dis:
+            recommendations.append(
+                f"LAN : +{n_app} apparus / −{n_dis} disparus (dernier scan Héphaïstos) — "
+                "vérifier switch/IoT/Nest si inattendu."
+            )
+        if not lan_ctx.get("fresh"):
+            recommendations.append(
+                "Inventaire LAN périmé — vérifier timer lbg-network-inventory-job sur 140."
+            )
+    elif isinstance(lan_ctx, dict) and not lan_ctx.get("ok"):
+        recommendations.append(
+            "Pas d'état inventaire LAN — activer lbg-network-inventory-job (Héphaïstos)."
         )
     recommendations.extend(
         [
@@ -149,6 +168,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
         "ok": workflow_ok,
         "brief": brief,
         "platform_audit": platform,
+        "network_lan": lan_ctx,
         "perimeter_element_alert": perimeter_alert,
         "ollama_audit": ollama,
         "dialogue_fast_groq_audit": dialogue_fast,
@@ -175,7 +195,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
                 "llm_heavy": "192.168.0.110",
                 "llm_light": "192.168.0.111",
                 "lan_executor": "192.168.0.141",
-                "lan_hands": "192.168.0.142",
+                "lan_hands": "192.168.0.143",
             },
             "responsibilities": [
                 "capacite",
@@ -186,6 +206,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
                 "reprise_auto",
                 "budgets_materiels",
                 "routage_dual_110_111",
+                "contexte_lan_inventaire",
             ],
         },
         "constraints": {

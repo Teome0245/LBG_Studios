@@ -208,6 +208,15 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
     if explicit:
         return explicit
 
+    # Mur INFRA LAN / guest disk : toujours Héphaïstos (ne pas scanner hosts 245→Vulcan)
+    ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
+    if (
+        ops_kind in {"guest_metrics", "proxmox_storage", "proxmox_hw", "proxmox_guest_lock", "network_inventory"}
+        or ctx.get("_team_ops_guest_spawn")
+        or ctx.get("_team_network_inventory_spawn")
+    ):
+        return DEFAULT_AGENT_BY_ROLE.get("ops", "studio_ops_hephaistos")
+
     roster = _roster()
     by_id = {r["agent_id"]: r for r in roster}
     by_persona = {str(r.get("persona") or "").lower(): r["agent_id"] for r in roster if r.get("persona")}
@@ -229,8 +238,8 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
     if persona and persona in by_persona:
         return by_persona[persona]
 
-    # Indices dans l'objectif
-    blob = f"{task.objective or ''} {json_dumps_safe(ctx)}".lower()
+    # Indices dans l'objectif (pas le dump ctx hosts — évite faux positif Core3 SWG)
+    blob = (task.objective or "").lower()
     if "pygmalion" in blob or "infographiste" in blob or "lora" in blob:
         return by_sub.get("infographiste_ia") or by_persona.get("pygmalion") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if "vulcan" in blob or "core3" in blob or "zb-0" in blob or "antigravity" in blob:
@@ -264,6 +273,13 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
     explicit = str(ctx.get("presence_zone") or ctx.get("zone") or "").strip()
     if explicit in ZONE_IDS:
         return explicit
+    ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
+    if (
+        ops_kind in {"guest_metrics", "proxmox_storage", "proxmox_hw", "proxmox_guest_lock", "network_inventory"}
+        or ctx.get("_team_ops_guest_spawn")
+        or ctx.get("_team_network_inventory_spawn")
+    ):
+        return "zone_core"
     blob = " ".join(
         [
             task.objective or "",

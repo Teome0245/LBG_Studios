@@ -147,6 +147,7 @@ export async function proposeAction(text, context = {}) {
  *   pass: boolean,
  *   block_real: boolean,
  *   auto_dry_run: boolean,
+ *   auto_real: boolean,
  *   summary: string,
  *   risks: string[],
  *   alternatives: string[],
@@ -168,6 +169,7 @@ export async function reviewProposal(proposal, opts = {}) {
       pass: true,
       block_real: false,
       auto_dry_run: true,
+      auto_real: false,
       summary: out.json?.error || `Revue indisponible (HTTP ${out.status})`,
       risks: ['Contre-pouvoir offline — prudence humaine'],
       alternatives: [],
@@ -181,6 +183,7 @@ export async function reviewProposal(proposal, opts = {}) {
     pass: r.pass !== false,
     block_real: Boolean(r.block_real),
     auto_dry_run: Boolean(r.auto_dry_run),
+    auto_real: Boolean(r.auto_real),
     summary: String(r.summary || ''),
     risks: Array.isArray(r.risks) ? r.risks.map(String) : [],
     alternatives: Array.isArray(r.alternatives) ? r.alternatives.map(String) : [],
@@ -278,6 +281,43 @@ export async function runRouteFromProposal(proposal, mode, opts = {}) {
   return out.json
 }
 
+/** Output agent depuis une réponse /route (Pilot). */
+export function extractRouteOutput(routePayload) {
+  if (!routePayload || typeof routePayload !== 'object') return null
+  const result = routePayload.result || routePayload
+  const output = result?.output || routePayload.output || null
+  return output && typeof output === 'object' ? output : null
+}
+
+/**
+ * Liste mails IMAP (champ `messages` de mail_imap_preview).
+ * @returns {Array<{ uid?: string, from?: string, subject?: string, date?: string, body_preview?: string }>}
+ */
+export function extractMailPreviewMessages(routePayload) {
+  const output = extractRouteOutput(routePayload)
+  if (!output) return []
+  const msgs = output.messages
+  if (!Array.isArray(msgs)) return []
+  return msgs.filter((m) => m && typeof m === 'object')
+}
+
+/** Une ligne compacte par message pour résumé texte. */
+export function formatMailPreviewLines(messages, { max = 5, bodyChars = 120 } = {}) {
+  const list = Array.isArray(messages) ? messages : []
+  return list.slice(0, Math.max(0, max)).map((m, i) => {
+    const from = String(m.from || '—').slice(0, 80)
+    const subject = String(m.subject || '(sans objet)').slice(0, 120)
+    const date = String(m.date || '').slice(0, 40)
+    const body = String(m.body_preview || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, Math.max(0, bodyChars))
+    const head = `${i + 1}. ${from} — ${subject}`
+    const mid = date ? `${head} (${date})` : head
+    return body ? `${mid}\n   ${body}` : mid
+  })
+}
+
 /** Résumé court pour le chat après route. */
 export function summarizeRouteResult(routePayload, mode) {
   if (!routePayload) return 'Pas de réponse'
@@ -316,5 +356,16 @@ export function summarizeRouteResult(routePayload, mode) {
   }
   if (output.app) bits.push(`app=${output.app}`)
   if (output.desktop_target_host) bits.push(`host=${output.desktop_target_host}`)
+
+  const mailMsgs = extractMailPreviewMessages(routePayload)
+  if (mailMsgs.length) {
+    const n =
+      typeof output.matched_count === 'number' ? output.matched_count : mailMsgs.length
+    bits.push(`aperçu IMAP · ${n} message${n > 1 ? 's' : ''}`)
+    if (outcome === 'dry_run') {
+      bits.push('(simulation — cliquer Réel pour lire l’INBOX)')
+    }
+  }
+
   return bits.join(' — ')
 }

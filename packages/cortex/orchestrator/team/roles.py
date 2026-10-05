@@ -49,6 +49,10 @@ from team.evolution_sprint_workflow import (
     execute_evolution_sprint_workflow,
     resolve_evolution_sprint_workflow,
 )
+from team.evolution_veille_workflow import (
+    execute_evolution_veille_workflow,
+    resolve_evolution_veille_workflow,
+)
 from team.role_aliases import role_display
 
 Dispatcher = Callable[..., dict[str, object]]
@@ -237,7 +241,8 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         if not isinstance(plan, dict):
             plan = build_guest_remediation_plan(guest_metrics)
         outcome = str(guest_metrics.get("outcome") or "ok")
-        ok = outcome != "critical"
+        # warn/critical = alerte infra + plan consultatif — pas un échec de l'agent ops
+        ok = True
         return {
             "kind": "ops_guest_metrics",
             "guest_metrics": guest_metrics,
@@ -275,8 +280,11 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
                 wall = res if isinstance(res, dict) and "hosts" in res else {}
             plan = build_guest_remediation_plan(wall if wall else None)
             outcome = str((wall or {}).get("outcome") or "ok")
-            ok = bool(out.get("ok", True)) and outcome != "critical"
+            # Sonde + plan OK même si mur critical (remédiation L1, pas hard-fail agent)
+            ok = bool(out.get("ok", True))
             if isinstance(out.get("error"), str) and out["error"]:
+                ok = False
+            if not wall:
                 ok = False
             return {
                 "kind": "ops_guest_metrics",
@@ -339,6 +347,64 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         from team.ollama_audit import audit_ollama_lan
 
         return {"kind": "ops_ollama_audit", **audit_ollama_lan()}
+
+    # Inventaire LAN + diff apparus/disparus (Héphaïstos)
+    if ops_kind == "network_inventory" or ctx.get("_team_network_inventory_spawn"):
+        pre = ctx.get("network_inventory")
+        if isinstance(pre, dict) and (pre.get("diff") is not None or pre.get("devices") is not None):
+            diff = pre.get("diff") if isinstance(pre.get("diff"), dict) else {}
+            n_app = int(diff.get("n_appeared") or 0)
+            n_dis = int(diff.get("n_disappeared") or 0)
+            reply = str(pre.get("reply") or "")
+            if not reply:
+                reply = (
+                    f"Inventaire LAN — +{n_app} apparus / −{n_dis} disparus "
+                    f"({pre.get('n_present', '?')}/{pre.get('n_devices', '?')} présents)"
+                )
+            return {
+                "kind": "ops_network_inventory",
+                "ok": bool(pre.get("ok", True)),
+                "network_inventory": pre,
+                "diff": diff,
+                "by_role": pre.get("by_role"),
+                "n_present": pre.get("n_present"),
+                "n_devices": pre.get("n_devices"),
+                "cast_speakers": pre.get("cast_speakers"),
+                "reply": reply,
+                "outcome": "changed" if (n_app or n_dis) else "stable",
+            }
+        inv_ctx = dict(ctx)
+        inv_ctx.setdefault("persist_state", True)
+        inv_ctx.setdefault("freebox_lan", True)
+        inv_ctx.setdefault("cast_probe", True)
+        out = _dispatch(
+            "agent.network",
+            actor_id=task.actor_id,
+            text=task.objective,
+            context=inv_ctx,
+        )
+        res = out.get("result") if isinstance(out.get("result"), dict) else out
+        if not isinstance(res, dict):
+            res = {}
+        diff = res.get("diff") if isinstance(res.get("diff"), dict) else {}
+        ok = bool(out.get("ok", True)) and bool(res.get("ok", True))
+        return {
+            "kind": "ops_network_inventory",
+            "ok": ok,
+            "network_inventory": res,
+            "diff": diff,
+            "by_role": res.get("by_role"),
+            "n_present": res.get("n_present"),
+            "n_devices": res.get("n_devices"),
+            "cast_speakers": res.get("cast_speakers"),
+            "reply": res.get("reply") or out.get("reply"),
+            "output": out,
+            "outcome": (
+                "changed"
+                if int(diff.get("n_appeared") or 0) or int(diff.get("n_disappeared") or 0)
+                else "stable"
+            ),
+        }
 
     orch = _orchestrator_url()
     action = ctx.get("devops_action")
@@ -646,6 +712,9 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
 
         return execute_proposer_from_task(task)
 
+    # Veille avant sprint : « évolution » apparaît dans les deux, priorité au brief pistes.
+    if resolve_evolution_veille_workflow(task):
+        return execute_evolution_veille_workflow(task, _dispatch)
     if resolve_evolution_sprint_workflow(task):
         return execute_evolution_sprint_workflow(task, _dispatch)
     if resolve_autoconsult_workflow(task):
@@ -831,6 +900,31 @@ def _objective_is_guest_metrics(text: str) -> bool:
     return wall_cue and action_cue
 
 
+def _objective_is_network_inventory(text: str) -> bool:
+    """Inventaire LAN / cartographie / apparus-disparus (Héphaïstos)."""
+    t = (text or "").lower()
+    return any(
+        k in t
+        for k in (
+            "inventaire réseau",
+            "inventaire reseau",
+            "inventaire lan",
+            "cartograph",
+            "network_inventory",
+            "apparus",
+            "disparus",
+            "déconnect",
+            "deconnect",
+            "nouveaux appareils",
+            "nouvel appareil",
+            "freebox lan",
+            "scan réseau",
+            "scan reseau",
+            "scan lan",
+        )
+    )
+
+
 def _plan_from_at_mentions(
     objective: str, *, actor_id: str
 ) -> list[dict[str, object]] | None:
@@ -963,6 +1057,21 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
     if mentioned is not None:
         return mentioned
+
+    # --- Inventaire LAN / apparus-disparus (Héphaïstos) ---
+    if _objective_is_network_inventory(text):
+        _add(
+            "ops",
+            "Héphaïstos — inventaire LAN (Freebox + scan) + diff apparus/disparus",
+            context={
+                "ops_kind": "network_inventory",
+                "persist_state": True,
+                "freebox_lan": True,
+                "cast_probe": True,
+                "presence_agent_id": "studio_ops_hephaistos",
+            },
+        )
+        return proposals
 
     # --- Mur INFRA LAN guest disk/load (100/140/245/246) ---
     if _objective_is_guest_metrics(text):
@@ -1236,6 +1345,37 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
                 "capability": ROLE_SPECS["dev_game"]["capability"],
                 "context": {"m9_track": "m9_full", "subproject": "prime_client_2d"},
                 **{k: v for k, v in role_display("dev_game").items() if k in ("alias", "title", "label")},
+            }
+        )
+    if any(
+        k in text
+        for k in (
+            "evolution_veille",
+            "veille évolution",
+            "veille evolution",
+            "veille lbg",
+            "pistes tiktok",
+            "faisabilité pour l'écosystème",
+            "faisabilite pour l'ecosysteme",
+            "faisabilité lbg",
+            "faisabilite lbg",
+        )
+    ):
+        proposals.append(
+            {
+                "role": "pm",
+                "objective": objective,
+                "priority": "high",
+                "approval_required": False,
+                "actor_id": actor_id,
+                "capability": ROLE_SPECS["pm"]["capability"],
+                "context": {
+                    "evolution_veille": True,
+                    "presence_agent_id": "studio_pm_themis",
+                    "silent": True,
+                    "browser_open": False,
+                },
+                **{k: v for k, v in role_display("pm").items() if k in ("alias", "title", "label")},
             }
         )
     if any(

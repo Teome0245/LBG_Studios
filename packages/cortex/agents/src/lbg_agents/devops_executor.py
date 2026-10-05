@@ -34,6 +34,12 @@ via ``LBG_DEVOPS_AUDIT_LOG_PATH`` (append). ``LBG_DEVOPS_AUDIT_STDOUT=0`` désac
 ``http_get`` / ``read_log_tail`` / ``systemd_is_active`` / ``systemd_restart`` / ``selfcheck`` **hors dry-run** exige ``context.devops_approval`` identique au
 jeton (comparaison ``secrets.compare_digest``). Le jeton n’est jamais écrit dans l’audit.
 
+**Soft-confirm LAB** (aligné desktop Compagnon) : si ``LBG_DEVOPS_APPROVAL_MODE`` ∈
+``confirm|soft|lab``, ou ``LBG_DEVOPS_SOFT_CONFIRM=1``, ou ``LBG_COMPANION_LAB=1``, ou
+``LBG_DESKTOP_APPROVAL_MODE`` ∈ ``confirm|soft|lab``, alors ``context.devops_approval=confirmed``
+ou ``context.devops_confirm=true`` suffit (sentinelle Compagnon / ActionCard).
+Le jeton secret reste accepté.
+
 Aucun shell libre, pas d’autres méthodes HTTP.
 """
 
@@ -65,10 +71,7 @@ def _http_allowlist() -> list[str]:
     raw = os.environ.get("LBG_DEVOPS_HTTP_ALLOWLIST", "").strip()
     if raw:
         return _split_allowlist(raw)
-    return [
-        "http://127.0.0.1:8010/healthz",
-        "http://127.0.0.1:8000/healthz",
-    ]
+    return list(_STUDIO_LAN_HEALTH_URLS)
 
 
 def _log_allowlist() -> list[str]:
@@ -188,8 +191,40 @@ def _restart_quota_reserve() -> tuple[bool, str | None]:
 
 _SYSTEMD_UNIT_RE = re.compile(r"^[a-zA-Z0-9@._-]+\.(service|socket)$")
 
-_SELFCHECK_MAX_HTTP = 8
-_SELFCHECK_MAX_SYSTEMD = 6
+# Quota selfcheck : studio LAN complet (core + LLM + jeu + mains).
+_SELFCHECK_MAX_HTTP = 24
+_SELFCHECK_MAX_SYSTEMD = 8
+
+# Health HTTP studio (URLs exactes — allowlist + candidats selfcheck).
+# .141 n’a pas de healthz HTTP propre → sonde via orch `/v1/team/wsl/health`.
+_STUDIO_LAN_HEALTH_URLS: tuple[str, ...] = (
+    # Local (process orch)
+    "http://127.0.0.1:8010/healthz",
+    "http://127.0.0.1:8000/healthz",
+    # Core .140
+    "http://192.168.0.140:8010/healthz",
+    "http://192.168.0.140:8000/healthz",
+    "http://192.168.0.140:8020/healthz",
+    "http://192.168.0.140:8030/healthz",
+    "http://192.168.0.140:8040/healthz",
+    "http://192.168.0.140:8055/healthz",
+    "http://192.168.0.140:8010/v1/team/wsl/health",  # executor .141 (poll)
+    # Compagnon .100
+    "http://192.168.0.100:3000/health",
+    "http://192.168.0.100:5174/",
+    "http://192.168.0.100:8766/healthz",
+    # Desktop .10 + mains .143
+    "http://192.168.0.10:5005/healthz",
+    "http://192.168.0.143:5005/healthz",
+    # LLM .110 heavy / .111 light + Piper
+    "http://192.168.0.110:11434/api/tags",
+    "http://192.168.0.111:11434/api/tags",
+    "http://192.168.0.111:8098/healthz",
+    # Prime .246
+    "http://192.168.0.246:8765/health",
+    "http://192.168.0.246:8791/healthz",
+    "http://192.168.0.246:8792/",
+)
 
 
 def _valid_systemd_unit(unit: str) -> bool:
@@ -245,6 +280,7 @@ def _collect_selfcheck_http_urls() -> list[str]:
         candidates.extend(_split_allowlist(raw))
     else:
         candidates.append(_default_probe_url())
+        candidates.extend(_STUDIO_LAN_HEALTH_URLS)
         ou = os.environ.get("LBG_ORCHESTRATOR_URL", "").strip()
         if ou:
             h = _origin_healthz(ou)
@@ -255,6 +291,34 @@ def _collect_selfcheck_http_urls() -> list[str]:
             h = _origin_healthz(bu)
             if h:
                 candidates.append(h)
+        # Agents / surfaces depuis env (si définis)
+        for key in (
+            "LBG_AGENT_DIALOGUE_URL",
+            "LBG_AGENT_QUESTS_URL",
+            "LBG_AGENT_COMBAT_URL",
+            "LBG_AGENT_PM_URL",
+            "LBG_AGENT_DESKTOP_URL",
+            "LBG_AGENT_HANDS_URL",
+            "LBG_AGENT_OMARCHY_URL",
+            "OLLAMA_BASE_URL",
+            "LBG_REASON_LOCAL_BASE_URL",
+            "LBG_REASON_LIGHT_BASE_URL",
+        ):
+            base = os.environ.get(key, "").strip()
+            if not base:
+                continue
+            if "11434" in base:
+                # Ollama : /api/tags plus fiable que /healthz
+                try:
+                    n = _normalize_url(base.rstrip("/"))
+                    p = urlparse(n)
+                    candidates.append(f"{p.scheme}://{p.netloc}/api/tags")
+                except ValueError:
+                    pass
+            else:
+                h = _origin_healthz(base)
+                if h:
+                    candidates.append(h)
     candidates = _dedupe_urls_preserve(candidates)
     allowed = _http_allowlist()
     out: list[str] = []
@@ -624,15 +688,54 @@ def _approval_token() -> str | None:
     return t if t else None
 
 
+def devops_soft_confirm_enabled() -> bool:
+    """LAB : Compagnon envoie ``confirmed`` / ``devops_confirm`` (comme desktop)."""
+    mode = (os.environ.get("LBG_DEVOPS_APPROVAL_MODE") or "").strip().lower()
+    if mode in ("confirm", "soft", "lab"):
+        return True
+    if (os.environ.get("LBG_DEVOPS_SOFT_CONFIRM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return True
+    if (os.environ.get("LBG_COMPANION_LAB") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return True
+    desktop_mode = (os.environ.get("LBG_DESKTOP_APPROVAL_MODE") or "").strip().lower()
+    if desktop_mode in ("confirm", "soft", "lab"):
+        return True
+    return False
+
+
 def execution_requires_approval() -> bool:
-    """Vrai si une exécution réelle (non dry-run) exige ``context.devops_approval``."""
+    """Vrai si une exécution réelle (non dry-run) exige une approbation devops."""
+    if devops_soft_confirm_enabled():
+        return True
     return _approval_token() is not None
 
 
 def _approval_granted(context: dict[str, Any]) -> bool:
+    if devops_soft_confirm_enabled():
+        if context.get("devops_confirm") is True:
+            return True
+        got_soft = context.get("devops_approval")
+        if isinstance(got_soft, str) and got_soft.strip().lower() in (
+            "confirmed",
+            "confirm",
+            "yes",
+            "ok",
+        ):
+            return True
     token = _approval_token()
     if token is None:
-        return True
+        # Soft mode already handled ; sans token ni soft → pas de gate
+        return not devops_soft_confirm_enabled()
     got = context.get("devops_approval")
     if not isinstance(got, str):
         return False
@@ -643,6 +746,12 @@ def _approval_granted(context: dict[str, Any]) -> bool:
 
 
 def _approval_error() -> str:
+    if devops_soft_confirm_enabled():
+        return (
+            "Exécution réelle refusée : confirmation LAB requise "
+            "(context.devops_confirm=true ou devops_approval=confirmed), "
+            "ou jeton LBG_DEVOPS_APPROVAL_TOKEN ; sinon dry-run."
+        )
     return (
         "Exécution réelle refusée : renseigner context.devops_approval avec la valeur de "
         "LBG_DEVOPS_APPROVAL_TOKEN (ou activer le dry-run pour simuler sans jeton)."

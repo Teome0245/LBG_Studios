@@ -14,6 +14,7 @@ from lbg_agents.desktop_apps import (
     extract_exe_path_from_goal,
     repair_app_deps_action_from_goal,
     resolve_second_avis_concurrent,
+    sanitize_desktop_app_slug,
     second_avis_open_app_action,
 )
 from lbg_agents.desktop_targets import infer_desktop_target_from_text
@@ -28,6 +29,17 @@ from services.lia_jobs import (
 
 
 ProposalSource = Literal["deterministic", "mmo_session_bridge", "team_dev_game", "llm_map"]
+
+# Lecture seule / URL / sondes — pas de Validation L2 ni case soft-confirm en LAB
+_SOFT_DESKTOP_KINDS = frozenset(
+    {
+        "mail_imap_preview",
+        "open_url",
+        "search_web_open",
+        "default_browser_info",
+        "agent_session_status",
+    }
+)
 
 
 class ActionProposal(BaseModel):
@@ -73,8 +85,11 @@ def _propose_deterministic(
     return (
         _propose_notepad(raw, normalized, ctx)
         or _propose_mail_preview(raw, normalized)
+        or _propose_morning_brief(raw, normalized)
+        or _propose_memory_recall(raw, normalized)
         or _propose_agent_session_status(raw, normalized)
         or _propose_fix_session0(raw, normalized)
+        or _propose_update_vscode(raw, normalized)
         or _propose_second_avis(raw, normalized)
         or _propose_core3_lia(raw, normalized)
         or _propose_capabilities_inventory(normalized)
@@ -110,14 +125,17 @@ Réponds UNIQUEMENT avec un objet JSON valide, une seule ligne, sans markdown ni
 {"intent":"<id>","canonical_text":"<phrase FR>","why":"<raison courte>"}
 
 intent autorisés uniquement :
-mail_imap_preview | selfcheck | network_inventory | search_web_open | open_app | open_url | default_browser_info | jobs_l2 | fix_session0 | agent_session_status | second_avis | none
+mail_imap_preview | morning_brief | memory_recall | selfcheck | network_inventory | search_web_open | open_app | open_url | default_browser_info | jobs_l2 | fix_session0 | agent_session_status | update_vscode | second_avis | none
 
 Exemples :
 - "regarde mon inbox" → {"intent":"mail_imap_preview","canonical_text":"regarde mes mails récents","why":"aperçu IMAP"}
+- "fais mon brief du matin" → {"intent":"morning_brief","canonical_text":"fais mon brief du matin","why":"point studio RO"}
+- "montre ta mémoire / ce que tu retiens" → {"intent":"memory_recall","canonical_text":"montre ce que tu retiens (mémoire agent)","why":"Self + leçons"}
 - "check le LAN" → {"intent":"selfcheck","canonical_text":"fais un diagnostic infra selfcheck LAN","why":"sonde read-only"}
 - "ouvre vghd" → {"intent":"open_app","canonical_text":"ouvre vghd sur mon pc","why":"lancer app"}
 - "jobs en attente" → {"intent":"jobs_l2","canonical_text":"ouvre http://192.168.0.140:8080/#/jobs dans le navigateur","why":"revue L2"}
 - "les apps ne s'ouvrent pas / session 0" → {"intent":"fix_session0","canonical_text":"répare session 0 de l agent desktop","why":"UI invisible"}
+- "mets à jour vscode" → {"intent":"update_vscode","canonical_text":"mets à jour vscode sur omarchy","why":"MAJ IDE .143"}
 - "second avis / deuxième avis" → {"intent":"second_avis","canonical_text":"second avis claude code sur omarchy","why":"concurrent IDE ADR 0023"}
 
 Interdit : piraterie, torrents de contenus protégés, fraude → intent=none.
@@ -128,6 +146,8 @@ canonical_text doit être une phrase courte exécutable (pas la demande brute si
 
 _INTENT_CANONICAL_FALLBACK: dict[str, str] = {
     "mail_imap_preview": "regarde mes mails récents",
+    "morning_brief": "fais mon brief du matin",
+    "memory_recall": "montre ce que tu retiens (mémoire agent)",
     "selfcheck": "fais un diagnostic infra selfcheck LAN",
     "network_inventory": "fais un inventaire réseau LAN cartographie des appareils",
     "search_web_open": "cherche sur internet LBG Studios",
@@ -137,6 +157,7 @@ _INTENT_CANONICAL_FALLBACK: dict[str, str] = {
     "jobs_l2": "ouvre http://192.168.0.140:8080/#/jobs dans le navigateur",
     "fix_session0": "répare session 0 de l agent desktop",
     "agent_session_status": "vérifie la session de l agent desktop",
+    "update_vscode": "mets à jour vscode sur omarchy",
     "second_avis": "second avis claude code sur omarchy",
 }
 
@@ -297,6 +318,35 @@ def _propose_fix_session0(raw: str, normalized: str) -> ActionProposal | None:
     )
 
 
+def _propose_update_vscode(raw: str, normalized: str) -> ActionProposal | None:
+    """MAJ paquet VS Code sur Omarchy .143 (yay visual-studio-code-bin)."""
+    if not re.search(
+        r"\b(m(?:ets?|ettre)\s+[àa]\s+jour|update|upgrade|mise\s+[àa]\s+jour)\b",
+        normalized,
+    ):
+        return None
+    ide = bool(
+        re.search(
+            r"\b(vs\s*code|vscode|visual\s+studio\s+code|codium)\b",
+            normalized,
+        )
+    )
+    code_omarchy = bool(re.search(r"\bcode\b", normalized) and re.search(r"\bomarchy\b", normalized))
+    if not ide and not code_omarchy:
+        return None
+    # Cible forcément .143 (paquet AUR local) — forcer omarchy si non déduit.
+    text = raw if re.search(r"\bomarchy\b", normalized) else f"{raw} sur omarchy"
+    return _desktop_proposal(
+        action={"kind": "update_vscode"},
+        summary=(
+            "Mettre à jour VS Code sur Omarchy (.143) via yay "
+            "(visual-studio-code-bin). À faire hors session Cline critique."
+        ),
+        confidence=0.9,
+        text=text,
+    )
+
+
 def _propose_second_avis(raw: str, normalized: str) -> ActionProposal | None:
     """Ouvre un outil concurrent pour second avis (ADR 0023) — défaut Claude Code sur .143."""
     if not re.search(
@@ -320,6 +370,7 @@ def _propose_second_avis(raw: str, normalized: str) -> ActionProposal | None:
         confidence=0.9,
         text=text,
     )
+    # Garantir cible éditeur même si le texte omet « omarchy »
     if not proposal.context_patch.get("desktop_target"):
         proposal.context_patch = {**proposal.context_patch, "desktop_target": "omarchy"}
     proposal.context_patch = {
@@ -446,9 +497,9 @@ def _propose_network_inventory(normalized: str) -> ActionProposal | None:
     return ActionProposal(
         capability=cap.name,
         routed_to=cap.routed_to,
-        action_context_key=cap.action_context_key or "",
-        action={},
-        context_patch={},
+        action_context_key=cap.action_context_key or "network_inventory",
+        action={"kind": "network_inventory"},
+        context_patch={"network_inventory": True},
         summary="Inventaire réseau LAN (sondes HTTP/TCP read-only sur core/front/mmo/desktop).",
         risk_level=cap.risk_level,
         confidence=0.8,
@@ -541,6 +592,72 @@ def _propose_mail_preview(raw: str, normalized: str) -> ActionProposal | None:
         action=action,
         summary="Préparer un aperçu IMAP INBOX en lecture seule, borné et filtré.",
         confidence=0.78 if sender else 0.72,
+    )
+
+
+def _propose_morning_brief(raw: str, normalized: str) -> ActionProposal | None:
+    del raw
+    if not re.search(
+        r"\b("
+        r"brief\s+(?:du\s+)?matin(?:al)?|briefing\s+(?:du\s+)?matin|"
+        r"point\s+(?:du\s+)?matin|r[eé]sum[eé]\s+matinal|"
+        r"jarvis|fais\s+mon\s+brief"
+        r")\b",
+        normalized,
+    ):
+        return None
+    cap = capability_registry.get("morning_brief")
+    assert cap is not None
+    return ActionProposal(
+        capability=cap.name,
+        routed_to=cap.routed_to,
+        action_context_key=cap.action_context_key or "",
+        action={"kind": "morning_brief"},
+        context_patch={},
+        summary="Compiler le brief matinal studio (Self / proactive / infra, lecture seule).",
+        risk_level=cap.risk_level,
+        confidence=0.88,
+        requires_review=False,
+    )
+
+
+def _propose_memory_recall(raw: str, normalized: str) -> ActionProposal | None:
+    """Mémoire agent / leçons / conscience — jamais sonde RAM VM."""
+    del raw
+    # Exclure clairement la supervision mémoire machine
+    if re.search(
+        r"\b(ram|swap|vm\s+m[eé]moire|m[eé]moire\s+vm|m[eé]moire\s+(?:des\s+)?h[oô]tes?|"
+        r"sonde\s+(?:la\s+)?m[eé]moire|free\s+-|consommation\s+(?:ram|m[eé]moire))\b",
+        normalized,
+    ):
+        return None
+    if not re.search(
+        r"\b("
+        r"(?:ta|ma|sa|notre)\s+m[eé]moire|"
+        r"m[eé]moire\s+(?:agent|self|studio|conversation|leçons?|lessons)|"
+        r"ce\s+que\s+tu\s+(?:retiens|sais|connais|as\s+appris)|"
+        r"leçons?\s+apprises|lessons[_\s-]?learned|"
+        r"rappelle[- ]?moi\s+(?:ta\s+)?m[eé]moire|"
+        r"montre\s+(?:moi\s+)?(?:ta\s+)?m[eé]moire|"
+        r"synth[eè]se\s+(?:de\s+)?(?:ta\s+)?m[eé]moire|"
+        r"conscience\s+(?:de\s+l['\u2019])?(?:écosystème|ecosysteme|self)|"
+        r"renforce(?:r)?\s+(?:ta\s+)?m[eé]moire"
+        r")\b",
+        normalized,
+    ):
+        return None
+    cap = capability_registry.get("memory_recall")
+    assert cap is not None
+    return ActionProposal(
+        capability=cap.name,
+        routed_to=cap.routed_to,
+        action_context_key=cap.action_context_key or "",
+        action={"kind": "memory_recall"},
+        context_patch={},
+        summary="Synthèse mémoire agent (Self + leçons) — lecture seule, pas de sonde VM.",
+        risk_level=cap.risk_level,
+        confidence=0.9,
+        requires_review=False,
     )
 
 
@@ -691,66 +808,6 @@ _OPEN_APP_VERB_RE = re.compile(
     re.IGNORECASE,
 )
 
-_OPEN_APP_STOP_TOKENS = frozenset(
-    {
-        "le",
-        "la",
-        "les",
-        "un",
-        "une",
-        "the",
-        "a",
-        "an",
-        "mon",
-        "ma",
-        "mes",
-        "ton",
-        "ta",
-        "tes",
-        "son",
-        "sa",
-        "ses",
-        "my",
-        "your",
-        "ce",
-        "cette",
-        "cet",
-        "sur",
-        "avec",
-        "pour",
-        "dans",
-        "application",
-        "appli",
-        "app",
-        "programme",
-        "exe",
-        "pc",
-        "ordinateur",
-    },
-)
-
-
-def _sanitize_open_app_slug(raw_tail: str) -> str | None:
-    """Nom court sans chemin / URL ; aligné sur la validation dialogue ``open_app``."""
-    t = raw_tail.strip().strip("\"'«»")
-    if not t or re.search(r"https?://", t):
-        return None
-    if "\\" in t or "/" in t or ".." in t:
-        return None
-    first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»")
-    if not first:
-        return None
-    if len(first) > 80:
-        first = first[:80]
-    if not re.match(r"^[A-Za-z0-9_.\-]+$", first):
-        return None
-    first = re.sub(r"\.(exe|bat|cmd|com)$", "", first, flags=re.IGNORECASE)
-    if not first:
-        return None
-    if first.lower() in _OPEN_APP_STOP_TOKENS:
-        return None
-    return first.lower()
-
 
 def _extract_http_url(text: str) -> str | None:
     m = re.search(r"https?://[^\s\"'<>\]\)]+", text or "", flags=re.IGNORECASE)
@@ -777,7 +834,9 @@ def _propose_open_url(raw: str, normalized: str) -> ActionProposal | None:
     host = url.split("//", 1)[-1].split("/", 1)[0]
     path = ""
     if "#" in url:
-        path = "#" + url.split("#", 1)[1][:48]
+        # Garder le slash avant le hash : « host/#/jobs » (pas « host#/jobs »)
+        frag = url.split("#", 1)[1][:48]
+        path = "/#" + frag
     elif "/" in url.split("//", 1)[-1]:
         path = "/" + url.split("//", 1)[-1].split("/", 1)[1][:48]
     label = f"{host}{path}" if path else host
@@ -872,7 +931,7 @@ def _propose_open_app(raw: str, normalized: str) -> ActionProposal | None:
         flags=re.IGNORECASE,
     ).strip()
     tail_chunk = re.split(r"\s+(?:sur|on|avec|pour|dans)\s+", tail, maxsplit=1)[0].strip()
-    slug = _sanitize_open_app_slug(tail_chunk)
+    slug = sanitize_desktop_app_slug(tail_chunk)
     if not slug:
         return None
     # Enrichissement rapatrié de P03 : alias (notepad→notepadpp, swg→swgemu…),
@@ -922,12 +981,38 @@ def _propose_job_synthesis(normalized: str) -> ActionProposal | None:
     )
 
 
+_AGENT_MEMORY_INTENT_RE = re.compile(
+    r"\b(ta|ma|sa|notre)\s+(mémoire|memoire)\b|"
+    r"\b(mémoire|memoire)\s+(agent|self|équipe|equipe|studio|conversation|leçons?|lessons)\b|"
+    r"\b(conscience|écosystème|ecosysteme)\b|"
+    r"\b(incarner|incarnation|t['\u2019]incarner)\b|"
+    r"\b(self[\s_-]?state|leçons?\s+apprises|lessons[_\s-]?learned)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_agent_memory_intent(normalized: str) -> bool:
+    """Mémoire agent / Self / conscience — pas RAM VM."""
+    return bool(_AGENT_MEMORY_INTENT_RE.search(normalized or ""))
+
+
 def _propose_vm_memory_probe(normalized: str) -> ActionProposal | None:
+    if _is_agent_memory_intent(normalized):
+        return None
     if not re.search(r"\b(mémoire|memoire|memory|ram|swap|consommation)\b", normalized):
+        return None
+    # Exige signal VM/hôte/ops — pas « analyser ta mémoire » seul.
+    if not re.search(
+        r"\b(vm|hôte|hote|serveur|prime|246|245|110|140|ssh|"
+        r"supervis|surveill|contrôl|control|sond|fuites?|libér|liber|"
+        r"swap|ram)\b",
+        normalized,
+    ):
         return None
     if not re.search(
         r"\b(supervis|surveill|contrôl|control|sond|analys|audit|compare|état|etat|"
-        r"fuites?|libér|liber|charge|chargement)\b",
+        r"fuites?|libér|liber|charge|chargement|vm|hôte|hote|serveur|prime|"
+        r"246|245|110|140)\b",
         normalized,
     ):
         return None
@@ -1036,6 +1121,8 @@ def _desktop_proposal(
     target = infer_desktop_target_from_text(text)
     if target:
         patch["desktop_target"] = target
+    kind = str(action.get("kind") or "").strip()
+    soft = kind in _SOFT_DESKTOP_KINDS
     return ActionProposal(
         capability=cap.name,
         routed_to=cap.routed_to,
@@ -1043,7 +1130,8 @@ def _desktop_proposal(
         action=action,
         context_patch=patch,
         summary=summary,
-        risk_level=cap.risk_level,
+        risk_level="low" if soft else cap.risk_level,
+        requires_review=not soft,
         confidence=confidence,
     )
 

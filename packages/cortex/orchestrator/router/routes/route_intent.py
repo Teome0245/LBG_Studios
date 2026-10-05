@@ -90,6 +90,11 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
     # Sonde DevOps : priorité absolue (valider le fil de transmission même avec npc_name / autre bruit).
     if isinstance(ctx.get("devops_action"), dict):
         intent, confidence = ("devops_probe", 1.0)
+    # Inventaire LAN : priorité explicite (évite faux positif infra_status).
+    elif ctx.get("network_inventory") is True or (
+        isinstance(ctx.get("network_inventory"), dict)
+    ):
+        intent, confidence = ("network_inventory", 1.0)
     # Desktop (hybride) : priorité explicite via action structurée (évite les faux positifs).
     elif isinstance(ctx.get("desktop_action"), dict):
         intent, confidence = ("desktop_control", 1.0)

@@ -1,0 +1,18 @@
+[Unit]
+Description=LBG — inventaire réseau LAN (Freebox + scan + diff)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_NETWORK_INVENTORY_STATE=/var/lib/lbg/network_inventory/state.json
+WorkingDirectory=/opt/LBG_IA_MMO
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_network_inventory_job
+
+[Install]
+WantedBy=multi-user.target

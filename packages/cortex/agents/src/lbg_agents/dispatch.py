@@ -29,6 +29,8 @@ from lbg_agents.infographiste_status import run_infographiste_status
 from lbg_agents.godot_status import run_godot_status
 from lbg_agents.team_status import run_team_status
 from lbg_agents.infra_status import run_infra_status
+from lbg_agents.morning_brief import run_morning_brief
+from lbg_agents.memory_recall import run_memory_recall
 from lbg_agents.sprites_status import run_sprites_status
 from lbg_agents.project_status import run_project_status
 from lbg_agents.quests_stub import run_quests_stub
@@ -311,6 +313,14 @@ def _infra_status(actor_id: str, text: str, context: dict[str, Any]) -> dict[str
     return run_infra_status(actor_id=actor_id, text=text, context=context)
 
 
+def _morning_brief(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
+    return run_morning_brief(actor_id=actor_id, text=text, context=context)
+
+
+def _memory_recall(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
+    return run_memory_recall(actor_id=actor_id, text=text, context=context)
+
+
 def _project_status(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
     return run_project_status(actor_id=actor_id, text=text, context=context)
 
@@ -506,6 +516,8 @@ _HANDLERS: dict[str, Callable[..., dict[str, Any]]] = {
     "agent.godot_status": _godot_status,
     "agent.team_status": _team_status,
     "agent.infra_status": _infra_status,
+    "agent.morning_brief": _morning_brief,
+    "agent.memory_recall": _memory_recall,
     "agent.project_status": _project_status,
     "agent.devops": _devops,
     "agent.network": _network,

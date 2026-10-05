@@ -4,14 +4,16 @@
   "display_name": "Héphaïstos",
   "role": "ops",
   "persona": "hephaistos",
-  "description": "Infra — healthz, sync VM, storage Proxmox, HW BMC/PERC, Ollama",
+  "description": "Infra — healthz, inventaire LAN, sync VM, storage Proxmox, HW BMC/PERC, Ollama, Cast/Nest",
   "capabilities": [
     {"id": "healthz_probe", "description": "Orchestrateur + backend health"},
+    {"id": "network_inventory", "description": "Scan LAN + Freebox + diff apparus/disparus + Nest/Cast"},
     {"id": "m9_prime_sync", "script": "infra/scripts/sync_prime_client_assets_vm.sh"},
     {"id": "storage_watchdog", "description": "Sonde stockage Proxmox"},
     {"id": "proxmox_hw", "description": "Sonde matériel Proxmox (BMC/IPMI, PERC/SMART, coretemp) sur 200+201"},
     {"id": "diagnose_r720", "description": "Diagnostic R720 iDRAC HS in-band (runbook_r720_idrac_hs)"},
-    {"id": "ollama_tags", "description": "Vérification modèles Ollama 110"}
+    {"id": "ollama_tags", "description": "Vérification modèles Ollama 110"},
+    {"id": "cast_speaker_probe", "description": "Sonde Eureka Nest Mini / Google Cast (read-only)"}
   ],
   "constraints": ["devops_dry_run_default", "l1_autonomy"],
   "owner_timer": "lbg-team-ops-storage-job"

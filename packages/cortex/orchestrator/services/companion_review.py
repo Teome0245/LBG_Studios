@@ -14,7 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-# Lecture seule / sonde — dry-run auto OK, réel soft
+# Lecture seule / sonde / ouverture URL — dry-run auto OK, réel soft (pas de block)
 _SOFT_KINDS = frozenset(
     {
         "http_get",
@@ -30,6 +30,38 @@ _SOFT_KINDS = frozenset(
         "default_browser_info",
         "agent_session_status",
         "mail_imap_preview",
+        "morning_brief",
+        "memory_recall",
+        "network_inventory",
+        "comfyui_status",
+        "comfyui_history",
+        "comfyui_view",
+        # Décision produit : ouvrir URL / recherche web = pas de confirm L2
+        "open_url",
+        "search_web_open",
+    }
+)
+
+# Lecture seule pure — Réel auto en LAB (pas d’ouverture UI / pas d’effet visible poste).
+# open_url / search_web_open restent en dry-run auto (changent le focus navigateur).
+_AUTO_REAL_KINDS = frozenset(
+    {
+        "http_get",
+        "systemd_is_active",
+        "selfcheck",
+        "vm_memory_probe",
+        "proxmox_status",
+        "proxmox_guest_lock",
+        "infra_watchdog",
+        "memory_remediation_plan",
+        "remediation_plan",
+        "remediation_validate",
+        "default_browser_info",
+        "agent_session_status",
+        "mail_imap_preview",
+        "morning_brief",
+        "memory_recall",
+        "network_inventory",
         "comfyui_status",
         "comfyui_history",
         "comfyui_view",
@@ -83,6 +115,7 @@ class CompanionReview(BaseModel):
     pass_: bool = Field(True, alias="pass")
     block_real: bool = False
     auto_dry_run: bool = False
+    auto_real: bool = False
     summary: str = ""
     risks: list[str] = Field(default_factory=list)
     alternatives: list[str] = Field(default_factory=list)
@@ -105,6 +138,11 @@ def companion_review_enabled() -> bool:
 
 def companion_review_llm_enabled() -> bool:
     return _env_truthy("LBG_COMPANION_REVIEW_LLM", "0")
+
+
+def companion_auto_real_soft_enabled() -> bool:
+    """Réel auto pour kinds lecture seule (mails, sondes…). Défaut on (LAB fluide)."""
+    return _env_truthy("LBG_COMPANION_AUTO_REAL_SOFT", "1")
 
 
 def _action_kind(proposal: dict[str, Any] | None) -> str:
@@ -152,12 +190,18 @@ def _deterministic_review(proposal: dict[str, Any] | None, source_text: str) -> 
         summary = str(proposal.get("summary") or proposal.get("capability") or "")[:200]
 
     if kind in _SOFT_KINDS or risk in ("low", "read"):
+        do_auto_real = companion_auto_real_soft_enabled() and kind in _AUTO_REAL_KINDS
         return CompanionReview(
             **{
                 "pass": True,
                 "block_real": False,
-                "auto_dry_run": True,
-                "summary": f"Lecture / sonde OK — {summary or kind or 'action douce'}",
+                "auto_dry_run": not do_auto_real,
+                "auto_real": do_auto_real,
+                "summary": (
+                    f"Lecture / sonde OK — Réel auto — {summary or kind or 'action douce'}"
+                    if do_auto_real
+                    else f"Lecture / sonde OK — {summary or kind or 'action douce'}"
+                ),
                 "risks": [],
                 "alternatives": [],
                 "confidence": 0.9,
@@ -246,7 +290,8 @@ def _llm_enrich(base: CompanionReview, proposal: dict[str, Any] | None, source_t
         **{
             "pass": bool(parsed.get("pass", base.pass_)),
             "block_real": block,
-            "auto_dry_run": base.auto_dry_run,
+            "auto_dry_run": False if (base.auto_real and not block) else base.auto_dry_run,
+            "auto_real": bool(base.auto_real) and not block,
             "summary": str(parsed.get("summary") or base.summary)[:400],
             "risks": risks or base.risks,
             "alternatives": alts or base.alternatives,

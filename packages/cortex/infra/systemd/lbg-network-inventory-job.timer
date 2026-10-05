@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer — inventaire réseau LAN (nouveaux / déconnectés)
+
+[Timer]
+OnBootSec=12min
+OnUnitActiveSec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
