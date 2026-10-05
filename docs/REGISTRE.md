@@ -75,14 +75,53 @@ Serveurs jeu (runtime, hors Git) :
 | **`.111`** | Ollama **light** | `:11434` — `qwen3.5-abliterated:2B` (Clean / Compagnon LAB) + `0.8B` (Fast) |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
-| **`.142`** | CT `lbg-hands` | NUC `.200` — `linux_agent` `:6001`, inbox `/var/lib/lbg-hands/inbox` ; voir [`hands_ct_142.md`](../packages/cortex/docs/hands_ct_142.md) |
-| **`.143`** | VM `lbg-omarchy` | R720 `.201` (`lbgr720`) — **éditeur studio** (VS Code + Cline) + Hyprland ; miroir git/SMB ; deploy lab via `deploy_*` ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
-| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111 / 142) · `.201` = R720 (CT 100 / 110 / 141 · VM 140 / 143 / 245 / 246) |
+| **`.142`** | — | **IP libérée** (CT `lbg-hands` détruit 2026-10-02) — rôles absorbés par `.143` ; [`migration_hands_142_to_143.md`](migration_hands_142_to_143.md) |
+| **`.143`** | VM `lbg-omarchy` | **R720 `.201`** — nœud écosystème : éditeur (VS Code/Cline) + **mains** `linux_agent` `:5005` ; observation humaine ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) · [`migration_hands_142_to_143.md`](migration_hands_142_to_143.md) |
+| **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111) · `.201` = R720 (CT 100 / 110 / 141 · VM 140 / **143** / 245 / 246) |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` — **occasionnel** (`onboot: 0`) ; démarrer à la demande |
 | **`.246`** | Prime | monde produit `:8792` + sidecar IA |
 
 LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).
+
+### Plan d’adressage Freebox (`.254`) — 2026-09-27
+
+Passerelle DHCP : Freebox **`192.168.0.254`** → *Paramètres → Réseau local / DHCP → Baux statiques*.  
+Source de vérité MAC/IP projet = **cette table** (sondage ARP + `qm`/`pct config` Proxmox). Checklist UI : [`LAN_ADRESSAGE_FREEBOX.md`](LAN_ADRESSAGE_FREEBOX.md).  
+**Contrôle API 16:09** : smoke Freebox — **14/14** hôtes lab OK (0 manquant, 0 MAC≠). Token app `fr.lbg.cortex.freebox` dans secrets locaux.
+
+| IP | Hostname / rôle | MAC (réelle) | IP comment | Freebox bail | Notes |
+|----|-----------------|--------------|------------|--------------|-------|
+| `.10` | `PC-SDESHAROHES` | `04:7C:16:CD:98:A5` | manuel / bail | **OK** | Poste Teome |
+| `.14` | Freebox Player POP | `DC:00:B0:63:62:7F` | bail | OK (hors projet) | |
+| `.22` | `my-Cam` | `D8:EB:97:D7:8D:A4` | bail | OK (hors projet) | |
+| `.51` | `NAS_LBG` | `00:11:32:40:BE:2F` | bail | **OK** | Synology |
+| `.100` | `lbg-web-100` (CT 100 @ `.201`) | `BC:24:11:88:E2:DD` | **statique Proxmox** | **OK** | Nom Freebox `LBG-Web-100` |
+| `.110` | `ollama-110` (CT 110 @ `.201`) | `BC:24:11:6B:B8:54` | **statique Proxmox** | **OK** | Heavy LLM |
+| `.111` | `ollama-light` / NUC Ollama 111 (CT 111 @ `.200`) | `BC:24:11:BF:8E:CA` | **statique Proxmox** | **OK** | Light LLM |
+| `.140` | `lbg-backend` / VM-Backend (VM 140 @ `.201`) | `BC:24:11:20:7F:81` | guest `.140/24` | **OK** | Core Studio |
+| `.141` | `lbg-executor` (CT 141 @ `.201`) | `BC:24:11:59:34:21` | **statique Proxmox** | **OK** | Freebox `lbg-Executor (141)` |
+| `.142` | — (ex `lbg-hands`) | `BC:24:11:16:BE:5E` | — | **libéré** | CT détruit — Freebox nettoyé (2026-10-05) |
+| `.143` | `lbg-omarchy` (VM 143 @ `.201`) | `BC:24:11:43:00:01` | **NM manuel** `.143/24` | **OK** | Freebox `lbg-omarchy (143)` — mains + éditeur |
+| `.200` | `NUC PROXMOX` | `F4:4D:30:67:3F:07` | bail | **OK** | Hôte CT 111 |
+| `.201` | `PowerEdge R720 - LAN1` | `C8:1F:66:BD:E4:3D` | bail | **OK** | ARP = `…:3D` (LAN1) |
+| `.245` | `lbg-mmo-precu` / VM-MMORPG_PreCU (VM 245) | `00:0C:29:AC:34:C8` | guest `.245/24` | **OK** | PreCU lecture seule — souvent off ; badge bureau **Éteinte** |
+| `.246` | `lbg-mmo-prime` / VM-MMORPG_Prime (VM 246) | `BC:24:11:E9:CF:8C` | guest `.246/24` | **OK** | Prime produit |
+| `.251` | `TL-SG108E-SW` | `AC:15:A2:02:D0:1D` | bail | **OK** | Switch Garage |
+
+**Plages / convention**
+
+| Plage | Usage |
+|-------|--------|
+| `.1–.49` | Poste / IoT / Freebox (hors lab sauf `.10`) |
+| `.50–.99` | Stockage / lab divers (`.51` NAS) |
+| `.100–.149` | **Lab LBG** (front, LLM, core, agents, Omarchy) |
+| `.150–.199` | Réserve / essais |
+| `.200–.209` | Hyperviseurs Proxmox |
+| `.210–.249` | Serveurs jeu / legacy VMware (`.245` PreCU · `.246` Prime) |
+| `.250–.254` | Infra réseau (switch, Freebox) |
+
+**Baux Freebox orphelins** encore listés : `.217` (VMWare Port2) — hors lab ; les anciens `.40` `.90` etc. semblent déjà retirés.
 
 ## Actif — remotes liés (hors Git monorepo)
 
@@ -134,7 +173,7 @@ flowchart LR
     H111["Ollama 111 light"]
     H140["Core 140"]
     H141["Executor 141"]
-    H142["Hands 142"]
+    H143["Omarchy+mains 143"]
   end
   subgraph game["Serveurs jeu"]
     P246["Prime 246:8792"]
@@ -156,7 +195,7 @@ flowchart LR
   H140 --> H110
   H140 --> H111
   H140 --> H141
-  H140 --> H142
+  H140 --> H143
   LP --> P246
   PC --> P246
 ```

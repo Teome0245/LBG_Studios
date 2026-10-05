@@ -11,7 +11,8 @@ Document **vivant** : à mettre à jour si les IPs ou les rôles changent.
 | **`192.168.0.110`** | **Ollama heavy** `:11434` | `huihui_ai/gemma-4-abliterated:12b` + `huihui_ai/gemma-4-abliterated:e2b`. **Plus** le Pilot Nginx. |
 | **`192.168.0.111`** | **Ollama light** `:11434` | `huihui_ai/qwen3.5-abliterated:2B` / `huihui_ai/qwen3.5-abliterated:0.8B` |
 | **`192.168.0.141`** | **CT executor** | poll `/v1/team/wsl/*` |
-| **`192.168.0.142`** | **CT hands** | `linux_agent` `:6001` — [`hands_ct_142.md`](hands_ct_142.md) ; **pas** `.200` |
+| **`192.168.0.142`** | — (détruit) | ex-CT hands — IP libre ; [`hands_ct_142.md`](hands_ct_142.md) |
+| **`192.168.0.143`** | **Omarchy + mains** | `linux_agent` `:5005` — R720 `.201` ; [`migration_hands_142_to_143.md`](../../docs/migration_hands_142_to_143.md) |
 | **`192.168.0.246`** | **Prime** (monde produit) | `:8792` comptes · sidecar IA `:8791` |
 | **`192.168.0.245`** | **PreCU** (référence lecture seule) | `:8792` — ne pas y écrire de features LBG |
 | **`192.168.0.100`** | Cockpit / Orch UI | `:8093` · `:5174` · `:3000` |
