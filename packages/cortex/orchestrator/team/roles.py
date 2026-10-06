@@ -985,6 +985,12 @@ def _plan_from_at_mentions(
     objective: str, *, actor_id: str
 ) -> list[dict[str, object]] | None:
     """Si ≥2 @handles Team connus, une tâche par segment (objectifs NL respectés)."""
+    import unicodedata
+
+    def _fold_handle(s: str) -> str:
+        nfd = unicodedata.normalize("NFD", (s or "").strip())
+        return "".join(c for c in nfd if unicodedata.category(c) != "Mn").lower()
+
     raw = objective or ""
     handle_to_role: dict[str, str] = {
         "argus": "qa",
@@ -996,14 +1002,15 @@ def _plan_from_at_mentions(
         "hermes": "dev_godot",
         "pygmalion": "dev_game",
         "metis": "dev_studio",
-        "métis": "dev_studio",
         "choeur": "player_ia",
         "lia": "player_ia",
         "nix": "player_ia",
+        "lyra": "pm",
     }
     hits: list[tuple[str, str, str]] = []
-    for m in re.finditer(r"@([a-zA-Z0-9_-]+)\s*([^@]*)", raw):
-        handle = m.group(1).lower()
+    # Accents OK (@Thémis, @Métis) — fold NFD avant lookup
+    for m in re.finditer(r"@([^\s@:;,]+)\s*([^@]*)", raw):
+        handle = _fold_handle(m.group(1).rstrip(".,)"))
         role = handle_to_role.get(handle)
         if not role or role not in ROLE_SPECS:
             continue

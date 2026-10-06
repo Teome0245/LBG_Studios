@@ -404,9 +404,16 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
             timeout = 300.0 if kind_s in long_kinds else 15.0
             if kind_s in ("run_cli_agent", "ide_cli", "cli_agent"):
                 try:
-                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "360"))
+                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "900"))
                 except ValueError:
-                    timeout = 360.0
+                    timeout = 900.0
+                # Buffer HTTP ≥ timeout_s agent + marge (évite ReadTimeout orch pendant OpenCode)
+                try:
+                    agent_to = float((raw or {}).get("timeout_s") or 0)
+                except (TypeError, ValueError):
+                    agent_to = 0.0
+                if agent_to > 0:
+                    timeout = max(timeout, agent_to + 90.0)
             with httpx.Client(timeout=timeout) as client:
                 r = client.post(f"{base}/invoke", json={"actor_id": actor_id, "text": text, "context": ctx})
             if r.status_code >= 400:
