@@ -209,6 +209,14 @@ def fleet_snapshot() -> dict[str, Any]:
         last_pilot = ops_health_pilot.last_run()
     except Exception as exc:
         last_pilot = {"ok": False, "error": str(exc)}
+    mission_brief: dict[str, Any] = {"ok": False}
+    try:
+        from team import smoke_lan_mission
+
+        mission_brief = smoke_lan_mission.mission_brief()
+    except Exception as exc:
+        mission_brief = {"ok": False, "error": str(exc)}
+    mission_slice = mission_brief.get("mission") if isinstance(mission_brief, dict) else None
     return {
         "ok": True,
         "ts": time.time(),
@@ -226,10 +234,12 @@ def fleet_snapshot() -> dict[str, Any]:
         "campus": _campus_brief(),
         "lessons": _lessons_meta(),
         "ops_health_pilot": {"last_run": last_pilot},
+        "smoke_lan_mission": mission_brief,
         "flags": {
             "chat_agentic": _chat_agentic_flags(),
             "team_enabled": _truthy(os.environ.get("LBG_TEAM_ENABLED", "1")),
             "jobs_runner": jobs.get("runner_enabled"),
+            "jobs_l2_notify": _truthy(os.environ.get("LBG_JOBS_L2_NOTIFY", "1")),
         },
         "metrics": {
             "agents_busy": by_agent_status.get("busy", 0),
@@ -241,5 +251,7 @@ def fleet_snapshot() -> dict[str, Any]:
             "jobs_by_status": jobs.get("by_status") or {},
             "team_by_status": team.get("by_status") or {},
             "ops_health_last_decision": last_pilot.get("decision"),
+            "mission_status": (mission_slice or {}).get("status") if isinstance(mission_slice, dict) else None,
+            "mission_days_ok": (mission_slice or {}).get("days_ok") if isinstance(mission_slice, dict) else None,
         },
     }

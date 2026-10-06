@@ -434,6 +434,67 @@ def team_ops_health_pilot(payload: OpsHealthPilotBody) -> dict[str, object]:
     )
 
 
+class SmokeLanMissionCreateBody(BaseModel):
+    days: int = 3
+    budget_retries: int = 5
+    escalate_after_red: int = 2
+    dry_run: bool = False
+    actor_id: str = "pilot:smoke_lan_mission"
+
+
+class SmokeLanMissionTickBody(BaseModel):
+    dry_run: bool = True
+    notify: bool | None = None
+    include_smoke: bool = False
+    actor_id: str | None = None
+
+
+@router.get("/team/smoke_lan_mission")
+def team_smoke_lan_mission_get() -> dict[str, object]:
+    """État mission L3 bornée smoke LAN (E2/E4)."""
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.mission_brief()  # type: ignore[return-value]
+
+
+@router.post("/team/smoke_lan_mission")
+def team_smoke_lan_mission_create(payload: SmokeLanMissionCreateBody) -> dict[str, object]:
+    """Crée une mission L3 bornée (deadline / budget / escalade)."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.create_mission(  # type: ignore[return-value]
+        days=payload.days,
+        budget_retries=payload.budget_retries,
+        escalate_after_red=payload.escalate_after_red,
+        actor_id=payload.actor_id,
+        dry_run=payload.dry_run,
+    )
+
+
+@router.post("/team/smoke_lan_mission/tick")
+def team_smoke_lan_mission_tick(payload: SmokeLanMissionTickBody) -> dict[str, object]:
+    """Tick observe→retry→escalade L2 (E3). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.tick_mission(  # type: ignore[return-value]
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        include_smoke=payload.include_smoke,
+        actor_id=payload.actor_id,
+    )
+
+
+@router.post("/team/smoke_lan_mission/cancel")
+def team_smoke_lan_mission_cancel() -> dict[str, object]:
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.cancel_mission()  # type: ignore[return-value]
+
+
 class CampusConductBody(BaseModel):
     dry_run: bool = False
     max_starts: int | None = None

@@ -312,6 +312,65 @@ async def pilot_team_ops_health_pilot(payload: dict[str, object] | None = None) 
         return {"ok": False, "error": str(e)}
 
 
+@router.get("/team/smoke_lan_mission", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_smoke_lan_mission_get() -> dict[str, object]:
+    """Proxy → `GET /v1/team/smoke_lan_mission`."""
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"{orchestrator_base()}/v1/team/smoke_lan_mission")
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/smoke_lan_mission", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_smoke_lan_mission_create(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/smoke_lan_mission`."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/smoke_lan_mission", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/smoke_lan_mission/tick", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_smoke_lan_mission_tick(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/smoke_lan_mission/tick`."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/smoke_lan_mission/tick", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@router.post("/team/smoke_lan_mission/cancel", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_smoke_lan_mission_cancel(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/smoke_lan_mission/cancel`."""
+    _ = payload
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/smoke_lan_mission/cancel", json={})
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/team/campus/act", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_act(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/act`."""
