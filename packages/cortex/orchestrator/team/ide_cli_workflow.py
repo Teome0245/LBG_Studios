@@ -71,6 +71,23 @@ def _persona_label(task: TeamTask) -> str:
     return task.role
 
 
+def _resolve_ide_cli_timeout_s(task: TeamTask, prompt: str, app: str) -> int:
+    """Timeout mandat → agent .143 (plancher auto si prompt long)."""
+    ctx = task.context or {}
+    raw = ctx.get("ide_cli_timeout_s")
+    if raw is None:
+        raw = os.environ.get("LBG_TEAM_IDE_CLI_TIMEOUT_S", "").strip() or None
+    try:
+        explicit = int(raw) if raw is not None else None  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        explicit = None
+    # Miroir budget agent (base OpenCode 1200 + 60s/500 car., cap 3600)
+    base = 1200 if app == "opencode" else 900
+    budget = base + min(1500, (len(prompt or "") // 500) * 60)
+    n = max(explicit or 0, budget)
+    return max(60, min(n, 3600))
+
+
 def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, object]:
     """Dispatch desktop run_cli_agent vers Omarchy .143 (dry-run par défaut)."""
     ctx = dict(task.context or {})
@@ -84,17 +101,14 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
         # Toujours autoriser un dry-run de preview même si flag Team off
         dry = True
 
+    timeout_s = _resolve_ide_cli_timeout_s(task, prompt, app)
     action = {
         "kind": "run_cli_agent",
         "app": app,
         "prompt": prompt,
         "cwd": cwd,
+        "timeout_s": timeout_s,
     }
-    if ctx.get("ide_cli_timeout_s") is not None:
-        try:
-            action["timeout_s"] = int(ctx["ide_cli_timeout_s"])  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            pass
 
     desk_ctx = {
         **ctx,
@@ -102,6 +116,7 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
         "desktop_target": ctx.get("desktop_target") or "omarchy",
         "desktop_dry_run": dry,
         "ide_cli": True,
+        "ide_cli_timeout_s": timeout_s,
     }
     remote = dispatch(
         "agent.desktop",
@@ -114,6 +129,7 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
     summary = (
         f"{persona} — ide_cli app={app} "
         f"{'dry-run' if dry else 'live'} "
+        f"timeout_s={timeout_s} "
         f"ok={ok} · ADR 0025"
     )
     if isinstance(remote, dict) and remote.get("reply"):
@@ -126,6 +142,8 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
         "app": app,
         "cwd": cwd,
         "dry_run": dry,
+        "timeout_s": timeout_s,
+        "prompt_chars": len(prompt),
         "team_flag_enabled": ide_cli_enabled(),
         "persona": persona,
         "desktop": remote,

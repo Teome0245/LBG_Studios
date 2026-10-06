@@ -62,7 +62,7 @@ Contraintes ADR 0023 :
 | Apps | `opencode` (nominal) · `claude` (expérimental) · `cline` (réservé, non installé) |
 | Modèle | `LBG_LINUX_CLI_AGENT_MODEL` (défaut `opencode/big-pickle`) — **interdire** ids cloud type `claude-sonnet*` |
 | cwd | sous `/home/lbg/projects/` |
-| Timeout | `LBG_LINUX_CLI_AGENT_TIMEOUT_S` (défaut 300) |
+| Timeout | `LBG_LINUX_CLI_AGENT_TIMEOUT_S` (défaut **1200**, max 3600) — **auto-bump** si prompt long (~60 s / 500 car.) ; orch HTTP `LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S` ≥ agent + 120 s |
 | Audit | JSONL linux_agent + trace Team |
 
 ## Flux

@@ -147,6 +147,45 @@ def test_run_cli_agent_core_dry_run(tmp_path, monkeypatch: pytest.MonkeyPatch) -
     assert out["app"] == "opencode"
 
 
+def test_cli_agent_timeout_budget_long_prompt(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "linux_agent" / "Agent_IA" / "core.py"
+    spec = importlib.util.spec_from_file_location("linux_agent_core_timeout", path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    long_prompt = "x" * 3000  # 6 * 500 → +360s → budget 1200+360=1560
+    # timeout explicite trop bas (600) doit être relevé au budget
+    to = mod.cli_agent_timeout_s(
+        {"timeout_s": 600, "prompt": long_prompt, "app": "opencode"}
+    )
+    assert to >= 1560
+    assert to <= 3600
+
+    short = mod.cli_agent_timeout_s({"timeout_s": 120, "prompt": "PING", "app": "opencode"})
+    # court : max(120, 1200) = 1200 (base OpenCode)
+    assert short == 1200
+
+
+def test_ide_cli_timeout_auto_on_long_prompt(monkeypatch: pytest.MonkeyPatch) -> None:
+    from team.ide_cli_workflow import _resolve_ide_cli_timeout_s
+
+    task = TeamTask(
+        id="t-to",
+        role="dev_studio",
+        objective="x",
+        actor_id="u",
+        context={"ide_cli_timeout_s": 600},
+    )
+    prompt = "y" * 2500
+    to = _resolve_ide_cli_timeout_s(task, prompt, "opencode")
+    assert to > 600
+    assert to >= 1200
+
+
 def test_cli_agent_model_blocklist(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     import importlib.util
     from pathlib import Path

@@ -404,16 +404,21 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
             timeout = 300.0 if kind_s in long_kinds else 15.0
             if kind_s in ("run_cli_agent", "ide_cli", "cli_agent"):
                 try:
-                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "900"))
+                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "1500"))
                 except ValueError:
-                    timeout = 900.0
+                    timeout = 1500.0
                 # Buffer HTTP ≥ timeout_s agent + marge (évite ReadTimeout orch pendant OpenCode)
                 try:
                     agent_to = float((raw or {}).get("timeout_s") or 0)
                 except (TypeError, ValueError):
                     agent_to = 0.0
                 if agent_to > 0:
-                    timeout = max(timeout, agent_to + 90.0)
+                    timeout = max(timeout, agent_to + 120.0)
+                # Plancher aussi via longueur prompt (aligné budget agent)
+                prompt_len = len(str((raw or {}).get("prompt") or text or ""))
+                if prompt_len > 0:
+                    budget = 1200.0 + min(1500.0, (prompt_len // 500) * 60.0)
+                    timeout = max(timeout, budget + 120.0)
             with httpx.Client(timeout=timeout) as client:
                 r = client.post(f"{base}/invoke", json={"actor_id": actor_id, "text": text, "context": ctx})
             if r.status_code >= 400:

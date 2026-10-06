@@ -739,16 +739,31 @@ def cli_agent_model_ok(model: str) -> bool:
 
 
 def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
-    raw = None
-    if isinstance(action, dict):
-        raw = action.get("timeout_s")
+    """Timeout subprocess CLI — plancher auto selon longueur du mandat (OpenCode multi-étapes).
+
+    Cap 3600 s. Un ``timeout_s`` explicite trop bas pour un long prompt est relevé
+    au budget (évite kill à 600 s sur mandat Métis).
+    """
+    action = action if isinstance(action, dict) else {}
+    app = str(action.get("app") or "").strip().lower()
+    prompt = str(action.get("prompt") or "")
+    raw = action.get("timeout_s")
     if raw is None:
-        raw = get_cfg("LBG_LINUX_CLI_AGENT_TIMEOUT_S") or "300"
+        default = "1200" if app in ("opencode", "claude", "cline") else "900"
+        raw = get_cfg("LBG_LINUX_CLI_AGENT_TIMEOUT_S") or default
     try:
         n = int(raw)  # type: ignore[arg-type]
     except (TypeError, ValueError):
-        n = 300
-    return max(30, min(n, 1800))
+        n = 1200
+    n = max(n, _cli_prompt_budget_s(prompt, app))
+    return max(60, min(n, 3600))
+
+
+def _cli_prompt_budget_s(prompt: str, app: str) -> int:
+    """Budget mini : base + ~60 s / 500 car. de mandat (cap +1500)."""
+    base = 1200 if (app or "").lower() == "opencode" else 900
+    extra = min(1500, (len(prompt or "") // 500) * 60)
+    return base + extra
 
 
 def cli_agent_cwd_allowlist() -> list[Path]:
@@ -888,6 +903,8 @@ def run_cli_agent(
         }
 
     argv = resolve_cli_agent_argv(app_id, prompt_s)
+    # Toujours clamp + budget prompt (même si timeout_s explicite trop bas)
+    to = cli_agent_timeout_s({"timeout_s": timeout_s, "prompt": prompt_s, "app": app_id})
     if not argv:
         if dry_run:
             # Dry-run : preview même si binaire absent (smoke orch sans .143)
@@ -896,7 +913,6 @@ def run_cli_agent(
                 "cline": ["cline", "run", "--prompt", prompt_s],
                 "opencode": ["opencode", "run", prompt_s],
             }.get(app_id, [app_id])
-            to = timeout_s if timeout_s is not None else cli_agent_timeout_s()
             return {
                 "ok": True,
                 "outcome": "dry_run",
@@ -905,6 +921,7 @@ def run_cli_agent(
                 "argv": fake,
                 "timeout_s": to,
                 "prompt_preview": prompt_s[:240],
+                "prompt_chars": len(prompt_s),
                 "bin_missing": True,
                 "hint": f"Binaire « {app_id} » absent sur ce host — install sur .143 avant live",
                 "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} (bin missing)",
@@ -917,7 +934,6 @@ def run_cli_agent(
             "cwd": work,
         }
 
-    to = timeout_s if timeout_s is not None else cli_agent_timeout_s()
     if dry_run:
         return {
             "ok": True,
@@ -927,8 +943,9 @@ def run_cli_agent(
             "argv": argv,
             "timeout_s": to,
             "prompt_preview": prompt_s[:240],
+            "prompt_chars": len(prompt_s),
             "hint": "Réel: LBG_LINUX_CLI_AGENT_ENABLED=1 + approval desktop",
-            "reply": f"Dry-run run_cli_agent app={app_id} cwd={work}",
+            "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} timeout_s={to}",
         }
 
     try:
@@ -966,6 +983,11 @@ def run_cli_agent(
             "cwd": work,
             "argv": argv,
             "timeout_s": to,
+            "prompt_chars": len(prompt_s),
+            "hint": (
+                "Augmenter LBG_LINUX_CLI_AGENT_TIMEOUT_S / context.ide_cli_timeout_s, "
+                "ou scinder le mandat (OpenCode multi-étapes)."
+            ),
         }
     except Exception as exc:
         return {
