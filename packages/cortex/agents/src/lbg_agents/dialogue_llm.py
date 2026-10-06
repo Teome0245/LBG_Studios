@@ -1157,6 +1157,69 @@ def _load_npc_registry() -> dict[str, dict[str, Any]]:
     return out
 
 
+def _sanitize_suggested_move(raw: object) -> dict[str, Any] | None:
+    """Valide un template registry → coup wire (id/label/utterance, 0–3 côté appelant)."""
+    if not isinstance(raw, dict):
+        return None
+    mid = raw.get("id")
+    label = raw.get("label")
+    if not isinstance(mid, str) or not mid.strip():
+        return None
+    if not isinstance(label, str) or not label.strip():
+        return None
+    lab = label.strip()
+    if len(lab) > 28:
+        lab = lab[:28]
+    utt_raw = raw.get("utterance")
+    if isinstance(utt_raw, str) and utt_raw.strip():
+        utt = utt_raw.strip()
+    else:
+        utt = lab
+    if len(utt) > 160:
+        utt = utt[:160]
+    move: dict[str, Any] = {
+        "id": mid.strip(),
+        "label": lab,
+        "utterance": utt,
+    }
+    kind = raw.get("kind")
+    if isinstance(kind, str) and kind.strip():
+        move["kind"] = kind.strip()[:32]
+    action = raw.get("action")
+    if isinstance(action, dict) and action:
+        move["action"] = action
+    return move
+
+
+def resolve_suggested_moves(
+    context: dict[str, Any] | None,
+    *,
+    max_moves: int = 3,
+) -> list[dict[str, Any]]:
+    """C1 MVP : 0–3 coups depuis ``suggestion_templates`` du registre (pas LLM)."""
+    if not isinstance(context, dict):
+        return []
+    rid = context.get("world_npc_id")
+    if not isinstance(rid, str) or not rid.strip():
+        return []
+    entry = _load_npc_registry().get(rid.strip())
+    if not isinstance(entry, dict):
+        return []
+    templates = entry.get("suggestion_templates")
+    if not isinstance(templates, list):
+        return []
+    cap = max(0, min(int(max_moves), 3))
+    out: list[dict[str, Any]] = []
+    for row in templates:
+        move = _sanitize_suggested_move(row)
+        if move is None:
+            continue
+        out.append(move)
+        if len(out) >= cap:
+            break
+    return out
+
+
 def _format_npc_registry_for_prompt(context: dict[str, Any]) -> str | None:
     rid = context.get("world_npc_id")
     if not isinstance(rid, str) or not rid.strip():

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "chronicle:scribe_session_stub",
+  "ticket": "C5",
+  "status": "stub",
+  "bible_ref": "docs/world/BIBLE_MMO.md#v50-v54",
+  "bible_safe": true,
+  "kind": "scribe_chronicle",
+  "scribe_npc_id": "npc:scribe",
+  "scribe_core3_id": "npc:core3_scribe",
+  "hub": "lost_heaven",
+  "planet": "Scrapaltai",
+  "template": {
+    "title_cosmetic_optional": "Chronique du voyageur — {player_name}",
+    "line_count_min": 5,
+    "line_count_max": 10,
+    "lines": [
+      "Arrivée à Lost Heaven : le shuttleport crache encore de la poussière de Scrapaltai.",
+      "Au comptoir de La Perle, Jax Moro sert sans inventer de rumeurs.",
+      "Daan Oth, au poste de missions, tient le tableau des courses hub.",
+      "Hors palissade, la piste des chacals reste une affaire de milice et de scouts.",
+      "Le Scribe archive la session en cinq à dix lignes — pas de doublon ops Chœur.",
+      "Titre cosmétique optionnel : à coller en fin de run, jamais en Vérité Bible."
+    ]
+  },
+  "triggers_hint": ["quest_hub_complete", "tip_stage", "session_end_export"],
+  "notes": "MVP Everwhere journey book / ClaudeCraft deeds — data only, pas Core3 live."
+}

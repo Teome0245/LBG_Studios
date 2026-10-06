@@ -10,7 +10,7 @@ anchor_top = 1.0
 anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = -208.0
+offset_top = -248.0
 offset_right = 408.0
 offset_bottom = -16.0
 grow_vertical = 0
@@ -46,6 +46,19 @@ custom_minimum_size = Vector2(0, 72)
 theme_override_font_sizes/font_size = 12
 text = "Fenêtre portrait prête."
 autowrap_mode = 3
+
+[node name="SuggestedMoves" type="HBoxContainer" parent="Root/VBox"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="FollowUp" type="LineEdit" parent="Root/VBox"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Répondre au PNJ…"
+clear_button_enabled = true
 
 [node name="Hint" type="Label" parent="Root/VBox"]
 layout_mode = 2

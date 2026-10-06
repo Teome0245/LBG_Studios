@@ -164,6 +164,12 @@ func _ensure_dialogue_bridge() -> void:
 	if _dialogue_panel and _dialogue_panel.has_signal("followup_submitted"):
 		if not _dialogue_panel.followup_submitted.is_connected(_on_dialogue_followup):
 			_dialogue_panel.followup_submitted.connect(_on_dialogue_followup)
+	if _dialogue_panel and _dialogue_panel.has_signal("suggestion_clicked"):
+		if not _dialogue_panel.suggestion_clicked.is_connected(_on_dialogue_followup):
+			_dialogue_panel.suggestion_clicked.connect(_on_dialogue_followup)
+	if _dialogue_panel and _dialogue_panel.has_signal("suggestion_activated"):
+		if not _dialogue_panel.suggestion_activated.is_connected(_on_dialogue_suggestion_activated):
+			_dialogue_panel.suggestion_activated.connect(_on_dialogue_suggestion_activated)
 
 
 func _log_build_info() -> void:
@@ -1115,6 +1121,24 @@ func _on_dialogue_followup(text: String) -> void:
 		)
 
 
+func _on_dialogue_suggestion_activated(move: Dictionary) -> void:
+	## C1 — coups kind=ui (ex. Daan open_mission_board) : action client avant / sans LLM.
+	if move.is_empty():
+		return
+	var kind := str(move.get("kind", "")).strip_edges().to_lower()
+	if kind != "ui":
+		return
+	var action: Variant = move.get("action", {})
+	var action_name := ""
+	if action is Dictionary:
+		action_name = str((action as Dictionary).get("name", "")).strip_edges()
+	if action_name == "open_mission_board":
+		if _mission_board and _mission_board.has_method("toggle"):
+			if not bool(_mission_board.get("visible")):
+				_mission_board.toggle()
+			print("[Main] C1 suggestion UI → open_mission_board")
+
+
 func _on_dialogue_bridge_busy(busy: bool) -> void:
 	if _dialogue_panel and _dialogue_panel.visible:
 		_dialogue_panel.set_chat_busy(busy)
@@ -1126,11 +1150,18 @@ func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> voi
 	_dialogue_panel.set_chat_busy(false)
 	if ok and not reply.is_empty():
 		_dialogue_panel.set_body_text(reply)
+		var moves: Variant = meta.get("suggested_moves", [])
+		if moves is Array and _dialogue_panel.has_method("set_suggested_moves"):
+			_dialogue_panel.call("set_suggested_moves", moves)
+		elif _dialogue_panel.has_method("clear_suggested_moves"):
+			_dialogue_panel.call("clear_suggested_moves")
 		var eng := str(meta.get("lyra_engagement_resolved", ""))
 		var turns := int(meta.get("history_turns", 0))
 		if eng != "":
 			_hotbar_feedback("Persona %s · tours %d" % [eng, turns])
 		return
+	if _dialogue_panel.has_method("clear_suggested_moves"):
+		_dialogue_panel.call("clear_suggested_moves")
 	_dialogue_panel.set_body_text(
 		"Le pont dialogue est indisponible (%s). Réessaie plus tard." % str(meta.get("status", "?"))
 	)

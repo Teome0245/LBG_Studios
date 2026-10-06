@@ -410,3 +410,89 @@ def test_healthz_shows_default_llm_when_not_disabled(monkeypatch: pytest.MonkeyP
     assert j["llm_configured"] is True
     assert j["llm_model"] == "phi4-mini:latest"
 
+
+def test_invoke_suggested_moves_for_jax_stub(monkeypatch: pytest.MonkeyPatch) -> None:
+    """C1 : POST /invoke attache 1–3 suggested_moves registry pour Jax (mode stub)."""
+    monkeypatch.setenv("LBG_DIALOGUE_LLM_DISABLED", "1")
+    from lbg_agents import dialogue_llm as llm_mod
+
+    llm_mod._npc_registry_cache = None
+    client = TestClient(app)
+    r = client.post(
+        "/invoke",
+        json={
+            "actor_id": "prime:Lia",
+            "text": "Bonjour",
+            "context": {
+                "world_npc_id": "npc:core3_barman_jax",
+                "npc_name": "Jax Moro",
+                "lyra_engagement": "mmo_persona",
+                "_skip_factual_status": True,
+            },
+        },
+    )
+    assert r.status_code == 200
+    j = r.json()
+    moves = j.get("suggested_moves")
+    assert isinstance(moves, list)
+    assert 1 <= len(moves) <= 3
+    assert all(isinstance(m.get("id"), str) and m["id"] for m in moves)
+    assert all(isinstance(m.get("label"), str) and m["label"] for m in moves)
+    assert j["meta"].get("suggested_moves_source") == "registry_template"
+    assert j["meta"].get("free_text_enabled") is True
+    # C2 : merge memory_hint Jax depuis stub relation
+    ss = j.get("meta", {}).get("relation_memory") or {}
+    # memory injectée dans le contexte avant le tour ; exposée si applied
+    assert ss.get("applied") is True or "Cactus Noir" in str(
+        (j.get("meta") or {}).get("relation_memory", {})
+    )
+
+
+def test_invoke_suggested_moves_absent_npc_is_empty_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LBG_DIALOGUE_LLM_DISABLED", "1")
+    client = TestClient(app)
+    r = client.post(
+        "/invoke",
+        json={
+            "actor_id": "p:1",
+            "text": "Salut",
+            "context": {"npc_name": "Inconnu", "world_npc_id": "npc:no_templates_here"},
+        },
+    )
+    assert r.status_code == 200
+    assert r.json().get("suggested_moves") == []
+    assert r.json()["meta"].get("suggested_moves_source") == "registry_template"
+
+
+def test_invoke_c12_dual_envelope_mirrors_suggested_moves(monkeypatch: pytest.MonkeyPatch) -> None:
+    """C12 : result + structuredContent.suggested_moves miroir racine (additif)."""
+    monkeypatch.setenv("LBG_DIALOGUE_LLM_DISABLED", "1")
+    from lbg_agents import dialogue_llm as llm_mod
+
+    llm_mod._npc_registry_cache = None
+    client = TestClient(app)
+    r = client.post(
+        "/invoke",
+        json={
+            "actor_id": "prime:Lia",
+            "text": "Bonjour",
+            "context": {
+                "world_npc_id": "npc:core3_barman_jax",
+                "npc_name": "Jax Moro",
+                "lyra_engagement": "mmo_persona",
+                "_skip_factual_status": True,
+            },
+        },
+    )
+    assert r.status_code == 200
+    j = r.json()
+    assert isinstance(j.get("reply"), str) and j["reply"]
+    assert j.get("result") == j["reply"]
+    sc = j.get("structuredContent")
+    assert isinstance(sc, dict)
+    assert sc.get("suggested_moves") == j.get("suggested_moves")
+    assert 1 <= len(sc["suggested_moves"]) <= 3
+    assert j["meta"].get("dual_envelope") == "c12"
+    # C1 reste intact
+    assert j["meta"].get("suggested_moves_source") == "registry_template"
+

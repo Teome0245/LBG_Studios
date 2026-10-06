@@ -62,7 +62,7 @@ def test_groq_reasoning_payload_extras_qwen() -> None:
     from lbg_agents.dialogue_llm import _groq_reasoning_payload_extras
 
     extras = _groq_reasoning_payload_extras(
-        model="qwen/qwen3.6-27b",
+        model="qwen/qwen3.8-27b",
         base_url="https://api.groq.com/openai/v1",
     )
     assert extras["reasoning_effort"] == "none"
@@ -895,3 +895,68 @@ def test_effective_llm_http_timeout_ignores_desktop_min_without_desktop_plan(mon
     monkeypatch.setenv("LBG_DIALOGUE_LLM_TIMEOUT", "30")
     monkeypatch.setenv("LBG_DIALOGUE_LLM_TIMEOUT_DESKTOP_MIN", "240")
     assert _effective_llm_http_timeout_s(context={"world_npc_id": "npc:innkeeper"}) == 30.0
+
+
+def test_resolve_suggested_moves_from_registry_jax(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """C1 : 1–3 coups registry pour un PNJ hub (Jax)."""
+    from lbg_agents import dialogue_llm as mod
+    from lbg_agents.dialogue_llm import resolve_suggested_moves
+
+    reg = {
+        "schema_version": 1,
+        "npcs": [
+            {
+                "id": "npc:core3_barman_jax",
+                "name": "Jax Moro",
+                "role": "vendor",
+                "suggestion_templates": [
+                    {
+                        "id": "move:perle_boisson",
+                        "label": "Une boisson",
+                        "utterance": "Un verre, Jax — qu'est-ce que tu sers ce soir ?",
+                        "kind": "social",
+                    },
+                    {
+                        "id": "move:perle_show",
+                        "label": "Spectacle ce soir",
+                        "utterance": "Il y a un spectacle à La Perle ce soir ?",
+                        "kind": "info",
+                    },
+                    {
+                        "id": "move:perle_daan",
+                        "label": "Missions",
+                        "utterance": "Daan Oth a-t-il du travail en ville ?",
+                        "kind": "quest",
+                    },
+                ],
+            }
+        ],
+    }
+    p = tmp_path / "npc_registry.json"
+    p.write_text(json.dumps(reg), encoding="utf-8")
+    monkeypatch.setenv("LBG_DIALOGUE_NPC_REGISTRY_PATH", str(p))
+    mod._npc_registry_cache = None
+    try:
+        moves = resolve_suggested_moves({"world_npc_id": "npc:core3_barman_jax"})
+        assert 1 <= len(moves) <= 3
+        assert all("id" in m and "label" in m and "utterance" in m for m in moves)
+        assert moves[0]["id"] == "move:perle_boisson"
+        assert len(moves[0]["label"]) <= 28
+    finally:
+        mod._npc_registry_cache = None
+
+
+def test_resolve_suggested_moves_empty_without_templates(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    from lbg_agents import dialogue_llm as mod
+    from lbg_agents.dialogue_llm import resolve_suggested_moves
+
+    reg = {"schema_version": 1, "npcs": [{"id": "npc:orphan", "name": "X"}]}
+    p = tmp_path / "npc_registry.json"
+    p.write_text(json.dumps(reg), encoding="utf-8")
+    monkeypatch.setenv("LBG_DIALOGUE_NPC_REGISTRY_PATH", str(p))
+    mod._npc_registry_cache = None
+    try:
+        assert resolve_suggested_moves({"world_npc_id": "npc:orphan"}) == []
+        assert resolve_suggested_moves({}) == []
+    finally:
+        mod._npc_registry_cache = None

@@ -125,6 +125,26 @@
         "reponses courtes",
         "pilot_id=npc:core3_artisan_trainer_c"
       ],
+      "suggestion_templates": [
+        {
+          "id": "move:train_start",
+          "label": "Commencer",
+          "utterance": "Je veux apprendre ton métier — par où on commence ?",
+          "kind": "training"
+        },
+        {
+          "id": "move:train_gear",
+          "label": "Outils",
+          "utterance": "Quels outils il me faut pour travailler ici ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:train_perle",
+          "label": "Pas la danse",
+          "utterance": "Je cherche la formation danse — tu n'es pas le bon ?",
+          "kind": "info"
+        }
+      ],
       "core3_source": "core3_npc_catalog.json"
     },
     {
@@ -145,6 +165,26 @@
         "pas de metier Terre1 (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_barman_jax"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:perle_boisson",
+          "label": "Une boisson",
+          "utterance": "Un verre, Jax — qu'est-ce que tu sers ce soir ?",
+          "kind": "social"
+        },
+        {
+          "id": "move:perle_show",
+          "label": "Spectacle ce soir",
+          "utterance": "Il y a un spectacle à La Perle ce soir ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:perle_daan",
+          "label": "Missions",
+          "utterance": "Daan Oth a-t-il du travail en ville ?",
+          "kind": "quest"
+        }
       ],
       "core3_source": "core3_npc_catalog.json"
     },
@@ -278,6 +318,27 @@
         "pas de metier Terre1 (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_daan_oth"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:daan_offres",
+          "label": "Voir les offres",
+          "utterance": "Quelles missions as-tu ?",
+          "kind": "ui",
+          "action": {"name": "open_mission_board"}
+        },
+        {
+          "id": "move:daan_desert",
+          "label": "Survivre au désert",
+          "utterance": "Un conseil pour tenir hors des murs ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:daan_perle",
+          "label": "Tip scène",
+          "utterance": "Je veux soutenir le show à La Perle.",
+          "kind": "quest"
+        }
       ],
       "core3_source": "core3_npc_catalog.json"
     },

@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "vendor:jax_perle_nego",
+  "ticket": "C7",
+  "status": "stub",
+  "bible_ref": "docs/world/BIBLE_MMO.md#v40-v54",
+  "bible_safe": true,
+  "design_ref": "packages/cortex/docs/design_c7_vendor_negotiation.md",
+  "vendor_id": "npc:core3_barman_jax",
+  "display_name": "Jax Moro",
+  "hub": "lost_heaven",
+  "poi": "cantina",
+  "action": "trade/offer",
+  "bounds": {
+    "price_delta_pct_max": 15,
+    "price_delta_pct_max_low_rep": 8,
+    "reputation_delta_min": -5,
+    "reputation_delta_max": 5,
+    "low_reputation_threshold": 0,
+    "llm_price_forbidden": true
+  },
+  "catalog": [
+    {
+      "sku_id": "drink:cactus_noir",
+      "label": "Cactus Noir",
+      "list_price": 25,
+      "currency": "credits"
+    },
+    {
+      "sku_id": "drink:eau_filtrée",
+      "label": "Eau filtrée",
+      "list_price": 8,
+      "currency": "credits"
+    }
+  ],
+  "example_offer_ok": {
+    "sku_id": "drink:cactus_noir",
+    "list_price": 25,
+    "offer_price": 22,
+    "price_delta_pct": -12,
+    "reputation": 10,
+    "outcome": "accept",
+    "commit_flags": {
+      "trade_sku": "drink:cactus_noir",
+      "price_paid": 22,
+      "reputation_delta": 1
+    }
+  },
+  "example_offer_reject": {
+    "sku_id": "drink:cactus_noir",
+    "list_price": 25,
+    "offer_price": 10,
+    "price_delta_pct": -60,
+    "outcome": "reject",
+    "reason": "offer_out_of_bounds"
+  },
+  "notes": "1 vendor hub MVP — pas Core3 live, pas LLM sur le prix."
+}

@@ -335,6 +335,41 @@ func _on_http_done(result: int, response_code: int, _headers: PackedStringArray,
 	var ok := bool(d.get("ok", response_code >= 200 and response_code < 300)) and not reply.is_empty()
 	if not ok and d.has("detail"):
 		meta["detail"] = d.get("detail")
+	# C1 — suggested_moves (0–3) depuis l’agent ; absent = []
+	var moves_raw: Variant = d.get("suggested_moves", [])
+	var moves_out: Array = []
+	var max_moves := int(_cfg.get("max_suggested_moves", 3))
+	max_moves = clampi(max_moves, 0, 3)
+	if moves_raw is Array:
+		for item in moves_raw:
+			if moves_out.size() >= max_moves:
+				break
+			if not item is Dictionary:
+				continue
+			var m: Dictionary = item
+			var mid := str(m.get("id", "")).strip_edges()
+			var label := str(m.get("label", "")).strip_edges()
+			if mid.is_empty() or label.is_empty():
+				continue
+			if label.length() > 28:
+				label = label.substr(0, 28)
+			var utterance := str(m.get("utterance", label)).strip_edges()
+			if utterance.is_empty():
+				utterance = label
+			if utterance.length() > 160:
+				utterance = utterance.substr(0, 160)
+			var move := {"id": mid, "label": label, "utterance": utterance}
+			var kind := str(m.get("kind", "")).strip_edges()
+			if not kind.is_empty():
+				move["kind"] = kind
+			if m.get("action") is Dictionary:
+				move["action"] = (m.get("action") as Dictionary).duplicate(true)
+			moves_out.append(move)
+	meta["suggested_moves"] = moves_out
+	if d.get("meta") is Dictionary:
+		var src := str((d.get("meta") as Dictionary).get("suggested_moves_source", "")).strip_edges()
+		if not src.is_empty():
+			meta["suggested_moves_source"] = src
 	if ok:
 		_append_turn(_pending_player_text, reply)
 		meta["history_turns"] = _history.size()

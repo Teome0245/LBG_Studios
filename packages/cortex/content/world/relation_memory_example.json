@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "player_id": "Lia",
+    "source": "packages/cortex/content/world/relation_memory_example.json",
+    "bible_ref": "docs/world/BIBLE_MMO.md#V40",
+    "note": "Stub C2 Vague B — mémoire relations hub (Jax / Daan). Pas de lore inventé."
+  },
+  "entries": [
+    {
+      "player_id": "Lia",
+      "npc_id": "npc:core3_barman_jax",
+      "kind": "debt",
+      "note": "Tu lui dois encore le prix d'un Cactus Noir après le tip raté.",
+      "ts": "2026-10-05T14:30:00+02:00",
+      "value": 25
+    },
+    {
+      "player_id": "Lia",
+      "npc_id": "npc:core3_barman_jax",
+      "kind": "met",
+      "note": "Tu as déjà croisé Jax au comptoir de La Perle.",
+      "ts": "2026-10-04T20:00:00+02:00"
+    },
+    {
+      "player_id": "Lia",
+      "npc_id": "npc:core3_daan_oth",
+      "kind": "quest",
+      "note": "Daan t'a confié lh_survey_dunes ; tu n'as pas rendu l'échantillon.",
+      "ts": "2026-10-05T16:00:00+02:00",
+      "quest_id": "lh_survey_dunes"
+    }
+  ]
+}

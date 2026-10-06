@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from lbg_agents import agent_catalog as agent_catalog_mod
 from lbg_agents import dialogue_llm
+from lbg_agents import relation_memory as relation_memory_mod
 from lbg_agents import world_content as world_content_mod
 
 app = FastAPI(title="LBG_IA_MMO dialogue HTTP agent", version="0.2.0")
@@ -166,9 +168,91 @@ def world_content() -> dict[str, object]:
     }
 
 
+@app.get("/catalog")
+def catalog(type_: str = Query(default="skills", alias="type")) -> dict[str, object]:
+    """
+    C10 — catalogue read-only SpaceMolt-style (skills|recipes|npcs|poi).
+    Mock sous dialogue HTTP ; même contrat prévu pour sidecar ``:8791``.
+    """
+    payload = agent_catalog_mod.catalog(type_)
+    if not payload.get("ok"):
+        raise HTTPException(status_code=400, detail=payload)
+    return payload
+
+
+@app.get("/guide")
+def guide(playstyle: str = "prospecteur") -> dict[str, object]:
+    """C10 — ``get_guide(playstyle)`` data M10 (query gratuite)."""
+    payload = agent_catalog_mod.get_guide(playstyle)
+    if not payload.get("ok"):
+        raise HTTPException(status_code=404, detail=payload)
+    return payload
+
+
+@app.get("/tick-matrix")
+def tick_matrix() -> dict[str, object]:
+    """C11 — table queries gratuites vs mutations tickées + flag context."""
+    return agent_catalog_mod.tick_matrix_payload()
+
+
 def _meta_profile(ctx: dict[str, object]) -> str:
     """Profil dialogue effectif (explicite, registre ``tone``, ou env)."""
     return dialogue_llm._resolve_profile(ctx)
+
+
+def _prepare_invoke_context(ctx: dict[str, object], *, actor_id: str) -> dict[str, object]:
+    """C2 : merge mémoire relation → memory_hint / world_hint avant le tour."""
+    if not isinstance(ctx, dict):
+        return {}
+    ctx["_invoke_actor_id"] = actor_id
+    try:
+        return relation_memory_mod.merge_into_context(ctx, actor_id=actor_id)
+    except Exception:
+        return {}
+
+
+def _attach_dual_envelope(
+    payload: dict[str, object],
+    ctx: dict[str, object],
+) -> dict[str, object]:
+    """C1 + C12 : ``suggested_moves`` racine + dual ``result`` / ``structuredContent`` (additif).
+
+    - C1 : ``suggested_moves`` à la racine (clients Godot existants).
+    - C12 : ``result`` = texte joueur ; ``structuredContent.suggested_moves`` miroir ;
+      ``structuredContent.commit`` si présent (flags/deltas machine).
+    """
+    moves = dialogue_llm.resolve_suggested_moves(ctx if isinstance(ctx, dict) else {})
+    payload["suggested_moves"] = moves
+    meta = payload.get("meta")
+    if not isinstance(meta, dict):
+        meta = {}
+        payload["meta"] = meta
+    meta["suggested_moves_source"] = "registry_template"
+    meta["free_text_enabled"] = True
+
+    # C12 — envelope SpaceMolt-style (additive ; ne retire aucun champ C1).
+    reply = payload.get("reply")
+    result_text = reply if isinstance(reply, str) else ""
+    payload["result"] = result_text
+    structured: dict[str, object] = {
+        "suggested_moves": moves,
+        "speaker": payload.get("speaker"),
+        "actor_id": payload.get("actor_id"),
+        "player_text": payload.get("player_text"),
+    }
+    commit = payload.get("commit")
+    if isinstance(commit, dict):
+        structured["commit"] = commit
+    lines = payload.get("lines")
+    if isinstance(lines, list):
+        structured["lines"] = lines
+    payload["structuredContent"] = structured
+    meta["dual_envelope"] = "c12"
+    return payload
+
+
+# Alias rétrocompat tests / imports internes.
+_attach_suggested_moves = _attach_dual_envelope
 
 
 @app.post("/invoke")
@@ -176,6 +260,9 @@ def invoke(p: InvokeIn) -> dict[str, object]:
     player = _truncate(p.text, _MAX_PLAYER_CHARS) or "(…)"
     speaker = _resolve_speaker(p.context)
     profile_resolved = _meta_profile(p.context)
+    mem_meta: dict[str, object] = {}
+    if isinstance(p.context, dict):
+        mem_meta = _prepare_invoke_context(p.context, actor_id=p.actor_id)
 
     from lbg_agents.status_router import try_factual_status_for_dialogue
 
@@ -195,7 +282,7 @@ def invoke(p: InvokeIn) -> dict[str, object]:
         )
         if factual is not None:
             factual["dialogue_profile_resolved"] = "factual_status"
-            return factual
+            return _attach_suggested_moves(factual, p.context if isinstance(p.context, dict) else {})
 
     if dialogue_llm.is_configured():
         try:
@@ -259,7 +346,7 @@ def invoke(p: InvokeIn) -> dict[str, object]:
                         "npc_id": npc_id,
                         "flags": flags_q,
                     }
-            return {
+            out = {
                 "agent": "http_dialogue",
                 "reply": reply_text,
                 "lines": lines,
@@ -283,10 +370,13 @@ def invoke(p: InvokeIn) -> dict[str, object]:
                     "trace": trace,
                 },
             }
+            if mem_meta.get("applied"):
+                out["meta"]["relation_memory"] = mem_meta
+            return _attach_suggested_moves(out, p.context if isinstance(p.context, dict) else {})
         except Exception as e:
             err_s = str(e)[:800]
             lines, reply = _stub_turn(player, speaker, llm_error=err_s)
-            return {
+            out_err = {
                 "agent": "http_dialogue",
                 "reply": reply,
                 "lines": lines,
@@ -304,9 +394,12 @@ def invoke(p: InvokeIn) -> dict[str, object]:
                     "dialogue_profile_resolved": profile_resolved,
                 },
             }
+            if mem_meta.get("applied"):
+                out_err["meta"]["relation_memory"] = mem_meta
+            return _attach_suggested_moves(out_err, p.context if isinstance(p.context, dict) else {})
 
     lines, reply = _stub_turn(player, speaker)
-    return {
+    out_stub = {
         "agent": "http_dialogue",
         "reply": reply,
         "lines": lines,
@@ -320,6 +413,9 @@ def invoke(p: InvokeIn) -> dict[str, object]:
             "dialogue_profile_resolved": profile_resolved,
         },
     }
+    if mem_meta.get("applied"):
+        out_stub["meta"]["relation_memory"] = mem_meta
+    return _attach_suggested_moves(out_stub, p.context if isinstance(p.context, dict) else {})
 
 
 @app.post("/admin/cache/reset")

@@ -1,6 +1,6 @@
 # AGENT_SKILL_MMO — manuel joueurs IA (C9)
 
-**Date** : 2026-10-05 · **Statut** : brouillon Vague A (Chœur)  
+**Date** : 2026-10-06 · **Statut** : Vague B (manuel + pointeurs C1–C3)  
 **Ticket** : [`BOITE_IDEES_GAMEPLAY.md`](../../../docs/world/BOITE_IDEES_GAMEPLAY.md) §14 **C9**  
 **Inspiré** : SpaceMolt [`skill.md`](https://spacemolt.com/skill.md) — mapping [`CONCURRENTS_IA_MMO_2026-10.md`](../../../docs/world/CONCURRENTS_IA_MMO_2026-10.md) §6  
 **Canon** : [`BIBLE_MMO.md`](../../../docs/world/BIBLE_MMO.md) (V20–V24, V30–V35, V40–V42, V50–V54)
@@ -120,8 +120,8 @@ Mémoire relationnelle (C2) : schéma [`relation_memory_schema.json`](../content
 
 | ID | Owner | Done quand | TODO |
 |----|-------|------------|------|
-| **C10** | Hermès | `catalog(type=…)` read-only sur sidecar ou MCP Studio | OpenAPI `:8791` · types `skills\|recipes\|npcs\|poi` · `get_guide(playstyle)` |
-| **C11** | Hermès + WD | Mutations filetées vs queries | Middleware tick · cooldown partagé bots · doc erreurs mutation |
+| **C10** | Hermès | `catalog(type=…)` read-only sur sidecar ou MCP Studio | Stub ✅ [`design_c10_c11_catalog_tick.md`](design_c10_c11_catalog_tick.md) · `GET /catalog` dialogue HTTP · mirror `:8791` next |
+| **C11** | Hermès + WD | Mutations filetées vs queries | Stub ✅ table + flag `tick_cost` / `requires_tick` · middleware tick live next |
 | **C12** | Iris | Dual `result` + `structuredContent` | Endpoint dialogue : texte joueur + flags/deltas commit |
 
 **Séquence** : C9 (ce doc) → C10/C11 contrat → C12 dialogue · C2 mémoire avant C1 live suggestions.
@@ -130,8 +130,27 @@ Exécution Team : [`FOCUS_CONCURRENTS_TEAM.md`](../../../docs/FOCUS_CONCURRENTS_
 
 ---
 
+## Vague B — statut C1 / C2 / C3
+
+| Ticket | Statut | Pointeur |
+|--------|--------|----------|
+| **C1** | Design ✅ · impl live **en cours** (Iris + Cline `.143`) | [`design_c1_dialogue_suggestions.md`](design_c1_dialogue_suggestions.md) |
+| **C2** | Schéma ✅ · injection `world_hint` **en cours** | [`relation_memory_schema.json`](../content/world/relation_memory_schema.json) |
+| **C3** | Stub + design ✅ · wire Godot / sidecar **next Cline** | [`design_c3_companion_spawn.md`](design_c3_companion_spawn.md) · [`companion_spawn_lh.json`](../content/world/companion_spawn_lh.json) |
+
+### Checklist C3 (compagnon joueur-facing)
+
+- [ ] 1 bot (**Nix** défaut) ancré près `poi:player_spawn` (pas hunt yard / Pilot `#/hunt` seul)
+- [ ] Nameplate visible pour ce bot même si `hide_npc_nameplates_on_play`
+- [ ] Flag `spawn_companion` lu côté Godot ou feed snapshot (stub `companion_spawn_lh.json`)
+- [ ] Présence hub : pas de teleport Core3 246 sans doc ; pas toucher PreCU 245
+- [ ] Smoke joueur : login → voir nameplate compagnon au shuttleport LH
+
+---
+
 ## Historique
 
 | Date | Changement |
 |------|------------|
+| 2026-10-06 | Vague B — section C1/C2/C3 + checklist C3 |
 | 2026-10-05 | Brouillon C9 Vague A — Chœur |
