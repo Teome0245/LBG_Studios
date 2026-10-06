@@ -1413,9 +1413,51 @@ func _possess_local_player(obj_id: int, planet: String, force_camera: bool = fal
 	# Trop loin du hub : marche vers la plaza (pas de téléport).
 	if first and bool(cfg.get("walk_home_on_far", true)):
 		_maybe_walk_local_to_hub(obj_id)
+	if first:
+		call_deferred("_ensure_companion_visible")
 	if state_label and first:
 		state_label.text = "CONNECTED"
 	_update_info()
+
+
+func _ensure_companion_visible() -> void:
+	## C3 — Nix (ou companion_bot_id) nameplate joueur-facing ; stub local si absent du feed.
+	var cfg := _load_human_cfg()
+	if not bool(cfg.get("spawn_companion", false)):
+		return
+	var bot_id := str(cfg.get("companion_bot_id", "Nix")).strip_edges()
+	if bot_id.is_empty():
+		bot_id = "Nix"
+	var entity_key := "player:%s" % bot_id
+	var force_np := bool(cfg.get("companion_force_nameplate", true))
+	var found: Node = null
+	for e in entity_manager.get_all_entities():
+		if e == null:
+			continue
+		var key := str(e.entity_key).strip_edges()
+		var label := str(e.label_text).strip_edges()
+		if key == entity_key or label.to_lower() == bot_id.to_lower():
+			found = e
+			break
+	if found == null:
+		var stub_oid := 900001
+		var x := float(cfg.get("companion_stub_x", 4758.0))
+		var y := float(cfg.get("companion_stub_y", 0.15))
+		var z := float(cfg.get("companion_stub_z", -545.0))
+		found = entity_manager.spawn(
+			stub_oid,
+			Vector3(x, y, z),
+			Color(0.0, 0.9, 0.4, 1.0),
+			bot_id,
+			"player",
+			entity_key
+		)
+		if found:
+			print("[Main] C3 companion stub spawn %s at (%.0f, %.0f)" % [entity_key, x, z])
+	if found and force_np and found.has_method("set_force_nameplate"):
+		found.call("set_force_nameplate", true)
+		found.queue_redraw()
+		print("[Main] C3 companion nameplate on %s" % entity_key)
 
 
 func _maybe_walk_local_to_hub(obj_id: int) -> void:

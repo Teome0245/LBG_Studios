@@ -36,6 +36,12 @@ const COLOR_NPC             := Color(1.0, 0.5, 0.1, 1.0)
 const COLOR_OBJECT          := Color(0.7, 0.7, 0.7, 0.8)
 
 static var show_nameplates: bool = false
+## C3 — nameplate forcé même si play mode masque les labels globaux.
+var force_nameplate: bool = false
+
+func set_force_nameplate(enabled: bool) -> void:
+	force_nameplate = enabled
+	queue_redraw()
 
 func set_entity_key(key: String) -> void:
 	entity_key = key
@@ -320,7 +326,7 @@ func _draw() -> void:
 			Color(color.r, color.g, color.b, 0.45),
 			1.0
 		)
-	if show_nameplates and label_text != "":
+	if (show_nameplates or force_nameplate) and label_text != "":
 		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 4.0
 		var col := Color(1, 1, 1, 0.92) if kind == "player" else Color(0.95, 0.88, 0.75, 0.82)
 		draw_string(
