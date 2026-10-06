@@ -114,10 +114,9 @@ Phasage réaliste :
 11. **Voix TTS (`voice_local`)** — **OK** lot 2 (2026-10-02)  
    - Provider **Edge** `fr-FR-DeniseNeural` + fallback Piper `.111:8098` + bouton Voix `:5174` — [`voice_local.md`](../packages/cortex/docs/voice_local.md)  
    - Deploy : `deploy_piper_tts_111.sh` (fallback) puis `deploy_compagnon_100.sh`  
-12. **D6 Causerie crédible** — **OK code** (2026-10-06) — *prérequis feeling avant O2*  
-   - Lots D6.1–D6.4 livrés ; **gate O2** = smoke humain V6→V7→V8 vert sur `:5174` (C1–C5)  
-   - Voir § **D6 — Causerie crédible** ci-dessous  
-   - Lot 1 (ressenti immédiat) : fil LAB conservé (`short_ctx`) + nudge collègue sans runbook Agir
+12. **D6 Causerie crédible** — **OK** (2026-10-06) — *gate O2 feeling*  
+   - Lots D6.1–D6.4 livrés · smoke LAN **V6→V7→V8** vert (`SMOKE_D6_V6V8 OK`, fil `smoke-d6-v6v8-*`, modèle `lbg-compagnon-e4b-v1`)  
+   - Voir § **D6 — Causerie crédible** ci-dessous
 
 ## D6 — Causerie crédible (avant O2)
 
@@ -133,8 +132,8 @@ Phasage réaliste :
 | C2 | **Collègue d’abord** | Ouverture type « discutons comme collègues du projet » → réponse avec prise de position / avis, **sans** réciter Agir / `.143` / dry-run / `deploy_*` (sauf demande explicite d’action). |
 | C3 | **Retours constructifs** | Sur un avis produit (« ça me frustre / j’aimerais X ») → 1 diagnostic + 1 proposition, pas un questionnaire ni un audit Team inventé. |
 | C4 | **Deux postures** | `Discuter` ≠ `Agir` : le bouton Agir / proposition d’action n’apparaît que si l’humain demande une exécution ou un outillage. |
-| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. |
-| C6 | **Gate O2** | Tant que C1–C5 ne sont pas verts en LAB sur `:5174`, O2 (jeu) ne repasse pas en priorité produit. |
+| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. **V6→V8 auto PASS** 2026-10-06. |
+| C6 | **Gate O2** | ~~Tant que C1–C5 ne sont pas verts…~~ **ouvert** 2026-10-06 (smoke V6–V8 + D6.1–D6.4). |
 
 ### Lots
 
