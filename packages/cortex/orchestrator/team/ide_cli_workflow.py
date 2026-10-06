@@ -1,7 +1,8 @@
 """Workflow Team — mains code .143 via run_cli_agent (ADR 0025).
 
-Personas : Iris (dev_godot), Dédale (dev_game), Pygmalion (infographiste_ia).
-Pas de rôle « hors jeu » dédié — outil partagé.
+Personas : Iris (dev_godot), Dédale (dev_game), Pygmalion (infographiste_ia),
+Métis (dev_studio). Exécutant headless nominal : OpenCode ; Claude CLI expérimental ;
+Cline CLI hors scope (.143 PATH).
 """
 
 from __future__ import annotations
@@ -30,6 +31,8 @@ def resolve_ide_cli_workflow(task: TeamTask) -> bool:
     ctx = task.context or {}
     if ctx.get("ide_cli") is True or ctx.get("run_cli_agent") is True:
         return True
+    if task.role == "dev_studio":
+        return True
     wf = str(ctx.get("workflow") or "").strip().lower()
     if wf in ("ide_cli", "run_cli_agent", "mains_code"):
         return True
@@ -37,7 +40,7 @@ def resolve_ide_cli_workflow(task: TeamTask) -> bool:
     return bool(
         re.search(
             r"(?i)\b(run_cli_agent|ide.?cli|mains?\s+code|claude\s+code\s+headless|"
-            r"lance\s+claude\s+sur\s+omarchy)\b",
+            r"lance\s+(?:claude|opencode|cline)\s+sur\s+omarchy)\b",
             obj,
         )
     )
@@ -48,12 +51,14 @@ def _default_app(task: TeamTask) -> str:
     raw = str(ctx.get("ide_cli_app") or ctx.get("cli_app") or "").strip().lower()
     if raw in ("claude", "cline", "opencode"):
         return raw
-    # Pygmalion / Iris / Dédale : Claude Code headless (nominal ADR 0025)
-    return "claude"
+    # Nominal OpenCode (Claude CLI expérimental vs Ollama local — ADR 0025)
+    return "opencode"
 
 
 def _persona_label(task: TeamTask) -> str:
     ctx = task.context or {}
+    if task.role == "dev_studio" or str(ctx.get("subproject") or "") == "cortex_studio":
+        return "Métis"
     if ctx.get("infographiste_ia") or str(ctx.get("subproject") or "") == "infographiste_ia":
         return "Pygmalion"
     persona = str(ctx.get("godot_dev_persona") or "").lower()

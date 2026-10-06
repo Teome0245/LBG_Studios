@@ -32,7 +32,8 @@ quand une décision technique le justifie (revue, arbitrage plan, doute qualité
 au bus Team, à la file SQLite, ni à l’orchestrateur `.140`.
 
 **Mains code headless** (sans UI) : ADR [`0025`](0025-mains-code-143-run-cli-agent.md) —
-kind `run_cli_agent` sur `.143` (Claude Code CLI nominal ; Cline/OpenCode allowlist).
+kind `run_cli_agent` sur `.143` (**OpenCode** nominal ; Claude CLI expérimental ;
+Cline CLI hors scope — extension VS Code uniquement).
 Cline UI reste observation / second passage, pas le runtime Campus.
 
 ### 2. Catalogue figé (inventaire 2026-10-02)

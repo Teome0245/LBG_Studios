@@ -350,18 +350,21 @@ def _propose_update_vscode(raw: str, normalized: str) -> ActionProposal | None:
 
 
 def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
-    """Mains code headless .143 — ADR 0025 (Claude Code CLI / Cline / OpenCode)."""
+    """Mains code headless .143 — ADR 0025 (OpenCode nominal · Claude expérimental · Cline hors scope)."""
     if not re.search(
         r"\b(run_cli_agent|ide.?cli|mains?\s+code|"
         r"lance\s+(?:claude|cline|opencode)\s+(?:sur\s+)?omarchy|"
         r"claude\s+code\s+headless|"
-        r"(?:fais|lance)\s+(?:un\s+)?(?:patch|fix)\s+(?:via\s+)?(?:claude|cline)\s+(?:sur\s+)?omarchy)\b",
+        r"(?:fais|lance)\s+(?:un\s+)?(?:patch|fix)\s+(?:via\s+)?(?:claude|cline|opencode)\s+(?:sur\s+)?omarchy)\b",
         normalized,
     ):
         return None
-    app = "claude"
+    # Défaut OpenCode (ADR 0025 amendé 2026-10-06)
+    app = "opencode"
     if re.search(r"\bcline\b", normalized):
         app = "cline"
+    elif re.search(r"\bclaude\b", normalized):
+        app = "claude"
     elif re.search(r"\bopencode\b", normalized):
         app = "opencode"
     # Extraire un mandat après « pour » / « : »
@@ -388,7 +391,7 @@ def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
         },
         summary=(
             f"Mains code .143 : {app} CLI headless (ADR 0025) — dry-run jusqu’à confirm. "
-            "Pas besoin d’ouvrir l’UI Cline."
+            "OpenCode = nominal ; Claude = expérimental ; Cline CLI hors scope."
         ),
         confidence=0.88,
         text=text,

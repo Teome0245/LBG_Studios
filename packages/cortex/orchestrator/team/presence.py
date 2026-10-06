@@ -37,6 +37,7 @@ DEFAULT_ZONE_BY_ROLE: dict[str, str] = {
     "ops": "zone_core",
     "dev_game": "zone_mmo_lab",
     "dev_godot": "zone_prime",
+    "dev_studio": "zone_core",
     "player_ia": "zone_prime",
     "contrarian": "zone_llm",
 }
@@ -50,6 +51,7 @@ DEFAULT_ZONE_BY_AGENT: dict[str, str] = {
     "studio_ops_hephaistos": "zone_core",
     "studio_dev_dedale": "zone_mmo_lab",
     "studio_dev_vulcan": "zone_mmo_lab",
+    "studio_dev_metis": "zone_core",
     "studio_infographiste_pygmalion": "zone_front",
     "godot_dev_iris": "zone_prime",
     "godot_dev_hermes": "zone_prime",
@@ -93,6 +95,7 @@ DEFAULT_AGENT_BY_ROLE: dict[str, str] = {
     "ops": "studio_ops_hephaistos",
     "dev_game": "studio_dev_dedale",
     "dev_godot": "godot_dev_iris",
+    "dev_studio": "studio_dev_metis",
     "player_ia": "studio_player_ia_choeur",
     "contrarian": "studio_contrarian_promethee",
 }
@@ -245,6 +248,8 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
         sub = "infographiste_ia"
     if ctx.get("core3_build") and not sub:
         sub = "core3_build"
+    if task.role == "dev_studio" and not sub:
+        sub = "cortex_studio"
     persona = str(ctx.get("godot_dev_persona") or ctx.get("persona") or "").lower()
     if persona == "hermes" and not sub:
         sub = "godot_hermes"
@@ -266,6 +271,10 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
         return by_sub.get("godot_hermes") or by_persona.get("hermes") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if "iris" in blob or "m9" in blob or "scrapaltai" in blob or "minimap" in blob:
         return by_sub.get("godot_iris") or by_persona.get("iris") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
+    if "métis" in blob or "metis" in blob or "cortex_studio" in blob:
+        return by_sub.get("cortex_studio") or by_persona.get("metis") or DEFAULT_AGENT_BY_ROLE.get(
+            "dev_studio", task.role
+        )
 
     default_id = DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if default_id in by_id:

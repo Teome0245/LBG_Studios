@@ -90,6 +90,24 @@ SUBPROJECTS: list[dict[str, object]] = [
         "docs": ["docs/architecture_equipe_virtuelle_studio.md", "docs/handoff_equipe_virtuelle_2026-07-10.md"],
     },
     {
+        "id": "cortex_studio",
+        "label": "Cortex / Compagnon / Pilot (hors jeu)",
+        "owner_role": "dev_studio",
+        "persona": "Métis",
+        "paths": [
+            "agents/declarations/studio_dev_metis.json",
+            "orchestrator/team/",
+            "compagnon_ui/",
+            "pilot_web/",
+            "docs/adr/0025-mains-code-143-run-cli-agent.md",
+        ],
+        "docs": [
+            "docs/adr/0025-mains-code-143-run-cli-agent.md",
+            "docs/ecosystem_dev_143.md",
+        ],
+        "status": "actif",
+    },
+    {
         "id": "assistant_pilot",
         "label": "Assistant Core + Pilot (legacy n-1)",
         "owner_role": "pm",

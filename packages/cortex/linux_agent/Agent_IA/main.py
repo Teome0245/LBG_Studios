@@ -463,7 +463,7 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": "run_cli_agent"}
             core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
             return out
-        app = str(action.get("app") or ctx.get("ide_cli_app") or "claude").strip()
+        app = str(action.get("app") or ctx.get("ide_cli_app") or "opencode").strip()
         prompt = str(action.get("prompt") or ctx.get("ide_cli_prompt") or text or "").strip()
         cwd = action.get("cwd") or ctx.get("ide_cli_cwd")
         cwd_s = str(cwd).strip() if isinstance(cwd, str) else None

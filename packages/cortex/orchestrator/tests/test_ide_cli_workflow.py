@@ -31,7 +31,18 @@ def test_resolve_ide_cli_from_objective() -> None:
     task = TeamTask(
         id="t2",
         role="dev_game",
-        objective="lance claude sur omarchy pour fixer le smoke",
+        objective="lance opencode sur omarchy pour fixer le smoke",
+        actor_id="u",
+        context={},
+    )
+    assert resolve_ide_cli_workflow(task) is True
+
+
+def test_resolve_ide_cli_dev_studio_role() -> None:
+    task = TeamTask(
+        id="t-metis",
+        role="dev_studio",
+        objective="patch docs ADR",
         actor_id="u",
         context={},
     )
@@ -48,7 +59,7 @@ def test_execute_ide_cli_iris_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
             "ok": True,
             "outcome": "dry_run",
             "kind": "run_cli_agent",
-            "app": "claude",
+            "app": "opencode",
             "reply": "dry-run ok",
         }
 
@@ -68,11 +79,29 @@ def test_execute_ide_cli_iris_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out["ok"] is True
     assert out["dry_run"] is True
     assert out["persona"] == "Iris"
-    assert out["app"] == "claude"
+    assert out["app"] == "opencode"
     assert captured["routed_to"] == "agent.desktop"
     act = (captured["context"].get("desktop_action") or {})
     assert act.get("kind") == "run_cli_agent"
+    assert act.get("app") == "opencode"
     assert captured["context"].get("desktop_target") == "omarchy"
+
+
+def test_execute_ide_cli_metis(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_dispatch(routed_to: str, **kwargs):
+        return {"ok": True, "outcome": "dry_run", "kind": "run_cli_agent", "reply": "ok"}
+
+    task = TeamTask(
+        id="t-metis",
+        role="dev_studio",
+        objective="Métis — ajouter commentaire smoke ADR 0025",
+        actor_id="u",
+        context={"ide_cli": True, "subproject": "cortex_studio"},
+    )
+    out = execute_ide_cli_workflow(task, fake_dispatch)
+    assert out["persona"] == "Métis"
+    assert out["app"] == "opencode"
+    assert out["ok"] is True
 
 
 def test_execute_ide_cli_pygmalion(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -108,12 +137,39 @@ def test_run_cli_agent_core_dry_run(tmp_path, monkeypatch: pytest.MonkeyPatch) -
     work.mkdir(parents=True)
     monkeypatch.setenv("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST", str(tmp_path / "projects"))
     out = mod.run_cli_agent(
-        app="claude",
+        app="opencode",
         prompt="ajoute un test unitaire",
         cwd=str(work),
         dry_run=True,
     )
     assert out["ok"] is True
     assert out["outcome"] == "dry_run"
-    assert out["app"] == "claude"
-    assert "claude" in " ".join(str(x) for x in (out.get("argv") or []))
+    assert out["app"] == "opencode"
+
+
+def test_cli_agent_model_blocklist(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[2] / "linux_agent" / "Agent_IA" / "core.py"
+    spec = importlib.util.spec_from_file_location("linux_agent_core_model", path)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    assert mod.cli_agent_model_ok("opencode/big-pickle") is True
+    assert mod.cli_agent_model_ok("claude-sonnet-4") is False
+    assert mod.cli_agent_model_ok("anthropic/claude-3") is False
+
+    monkeypatch.setenv("LBG_LINUX_CLI_AGENT_MODEL", "claude-sonnet-4")
+    work = tmp_path / "projects" / "LBG_Studios"
+    work.mkdir(parents=True)
+    monkeypatch.setenv("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST", str(tmp_path / "projects"))
+    out = mod.run_cli_agent(
+        app="opencode",
+        prompt="x",
+        cwd=str(work),
+        dry_run=True,
+    )
+    assert out["ok"] is False
+    assert out["outcome"] == "allowlist_denied"

@@ -1,6 +1,6 @@
 # ADR 0025 — Mains code `.143` (`run_cli_agent`)
 
-**Statut** : accepté  
+**Statut** : accepté (amendé 2026-10-06)  
 **Date** : 2026-10-05  
 **Complète** : ADR [`0023`](0023-catalogue-outils-ide-second-avis.md) · [`0020`](0020-dsh-greffe-peripherique.md) · [`ecosystem_dev_143.md`](../ecosystem_dev_143.md) · [`lbg_agentic_os.md`](../lbg_agentic_os.md) § 6.1
 
@@ -19,34 +19,34 @@ Contraintes ADR 0023 :
 ## Décision
 
 1. **Figer** une capability / kind **`run_cli_agent`** sur le worker `linux_agent` `.143:5005`.
-2. **Cline n’est pas un agent Campus** : c’est (ou sera) une app cible du kind (`app=cline|claude|opencode`).
-3. **Exécutant préféré slice-1** : **Claude Code CLI** (`claude -p …`) — déjà autorisé ADR 0023,
-   scriptable. Cline CLI / OpenCode = allowlist opt-in une fois smoke OK.
-4. **Branchement Team** : personas **Iris** (`dev_godot`), **Dédale** (`dev_game`),
-   **Pygmalion** (`dev_game` + `infographiste_ia`) peuvent poser
-   `context.ide_cli=true` → workflow `ide_cli` → `agent.desktop` → `.143`.
-5. **Pas de rôle « hors jeu » dédié** pour l’instant (voir § Roles). L’outil est **partagé**.
+2. **Cline n’est pas un agent Campus** : outil UI IDE (`open_app`) + éventuel CLI plus tard.
+3. **Exécutant headless nominal (2026-10-06)** : **OpenCode CLI**
+   (`opencode run -m opencode/big-pickle …`) — smoke live OK sur `.143`.
+4. **Claude Code CLI** : allowlist **expérimentale** — hang / modèle Ollama non catalogué
+   (v2.1.x) ; garder UI / second avis ; réessayer après fix settings / version.
+5. **Cline CLI** : **absent** sur `.143` PATH — **hors scope** tant qu’OpenCode tient ;
+   extension VS Code Cline reste observation / Plan→Act manuel.
+6. **Branchement Team** : Iris (`dev_godot`), Dédale (`dev_game`), Pygmalion
+   (`infographiste_ia`), **Métis** (`dev_studio`) via `context.ide_cli=true`.
+7. **Rôle hors-jeu** : `dev_studio` (persona **Métis**) — Cortex / Compagnon / Pilot /
+   docs studio, pas le client Godot ni Core3.
 
-## Rôles — état 2026-10-05
+## Rôles — état 2026-10-06
 
 | Persona | Rôle technique | Scope code |
 |---------|----------------|------------|
 | Iris / Hermès | `dev_godot` | Client Godot / gateway |
 | Dédale | `dev_game` | Gameplay / content / Core3 |
 | Pygmalion | `dev_game` + flag infographiste | Assets / pipeline |
-| Héphaïstos / Atlas / Thémis | `ops` / `admin_infra` / `pm` | Infra / LLM / jalons — **pas** forge monorepo |
-
-**Pas de `dev_studio` / « hors game »** aujourd’hui. Le code Cortex / Compagnon / Pilot
-n’a pas de persona dédiée : quand besoin, une tâche `ide_cli` peut être portée par
-`dev_game` (Dédale) ou `ops` **via le même outil** — un futur rôle `dev_studio` est
-**hors slice**, ADR amendé si on le crée.
+| **Métis** | **`dev_studio`** | Cortex · Compagnon · Pilot · docs studio |
+| Héphaïstos / Atlas / Thémis | `ops` / `admin_infra` / `pm` | Infra / LLM / jalons |
 
 ## Contrat `run_cli_agent`
 
 ```json
 {
   "kind": "run_cli_agent",
-  "app": "claude",
+  "app": "opencode",
   "prompt": "mandat court…",
   "cwd": "/home/lbg/projects/LBG_Studios",
   "timeout_s": 300
@@ -55,12 +55,13 @@ n’a pas de persona dédiée : quand besoin, une tâche `ide_cli` peut être po
 
 | Garde-fou | Valeur |
 |-----------|--------|
-| Worker | `LBG_LINUX_CLI_AGENT_ENABLED=1` (défaut **0** jusqu’au smoke) |
-| Team | `LBG_TEAM_IDE_CLI_ENABLED=1` (défaut **0**) |
-| Dry-run | défaut **on** (`desktop_dry_run` / env) |
-| Approbation | même policy desktop (soft-confirm LAB / token) |
-| Apps | allowlist `claude` · `cline` · `opencode` |
-| cwd | sous `/home/lbg/projects/` (ou allowlist env) |
+| Worker | `LBG_LINUX_CLI_AGENT_ENABLED=1` |
+| Team | `LBG_TEAM_IDE_CLI_ENABLED=1` |
+| Dry-run | défaut **on** (`desktop_dry_run` / soft-confirm Agir) |
+| Approbation | policy desktop (soft-confirm LAB / token) |
+| Apps | `opencode` (nominal) · `claude` (expérimental) · `cline` (réservé, non installé) |
+| Modèle | `LBG_LINUX_CLI_AGENT_MODEL` (défaut `opencode/big-pickle`) — **interdire** ids cloud type `claude-sonnet*` |
+| cwd | sous `/home/lbg/projects/` |
 | Timeout | `LBG_LINUX_CLI_AGENT_TIMEOUT_S` (défaut 300) |
 | Audit | JSONL linux_agent + trace Team |
 
@@ -68,15 +69,14 @@ n’a pas de persona dédiée : quand besoin, une tâche `ide_cli` peut être po
 
 ```text
 Compagnon / Lyra
-  → tâche Iris|Dédale|Pygmalion (context.ide_cli=true)
+  → tâche Iris|Dédale|Pygmalion|Métis (context.ide_cli=true)
     → ide_cli_workflow → agent.desktop (target=omarchy)
       → POST :5005/invoke  kind=run_cli_agent
-        → claude -p "…"  (cwd monorepo)
+        → opencode run -m opencode/big-pickle "…"  (cwd monorepo)
           → stdout/stderr → Team result
 ```
 
-Cline UI reste disponible via `open_app` pour observation / second passage humain.
-Cursor Cloud Agent (L2) reste l’alternative cloud — **pas** le chemin nominal `.143`.
+Cline UI reste via `open_app`. Cursor Cloud Agent (L2) = alternative cloud, pas nominal `.143`.
 
 ## Alternatives rejetées
 
@@ -85,15 +85,16 @@ Cursor Cloud Agent (L2) reste l’alternative cloud — **pas** le chemin nomina
 | Cline = persona Campus | Contredit ADR 0023 |
 | Computer-use (clics Plan→Act) | Fragile ; hors kinds Linux |
 | Remplacer Team par harness IDE | Second OS |
-| Toujours-on Cline + OpenCode + Codex | Règle de charge ADR 0023 |
+| Claude CLI comme nominal (2026-10) | Hang headless vs Ollama local |
+| Cline CLI obligatoire | Non installé ; OpenCode suffit |
 
 ## Conséquences
 
-- Slice-1 : kind worker + workflow Team + tests dry-run ; enable flags après smoke `.143`.
-- Docs : `ecosystem_dev_143.md` + Agir « lance claude sur omarchy pour … ».
-- Amendement possible : rôle `dev_studio` si le volume Cortex hors-jeu le justifie.
+- Smoke : `infra/scripts/smoke_ide_cli_143.sh`
+- Agir : `lance opencode sur omarchy pour …` (défaut) · `lance claude …` (expérimental)
+- Amendement Claude → nominal seulement après smoke live stable
 
 ## Références
 
-- Impl : `linux_agent/Agent_IA/core.py` (`run_cli_agent`) · `team/ide_cli_workflow.py`
-- Smoke : à ajouter `infra/scripts/smoke_ide_cli_143.sh` (dry-run)
+- Impl : `linux_agent/Agent_IA/core.py` · `team/ide_cli_workflow.py`
+- Smoke : `infra/scripts/smoke_ide_cli_143.sh`

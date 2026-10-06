@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -703,15 +704,38 @@ def which(exe: str) -> str:
 
 _CLI_AGENT_APPS: frozenset[str] = frozenset({"claude", "cline", "opencode"})
 _DEFAULT_CLI_CWD = "/home/lbg/projects/LBG_Studios"
+# Modèles cloud / Anthropic API — interdits pour OpenCode headless LAN (ADR 0025)
+_CLI_MODEL_BLOCKLIST_RE = re.compile(
+    r"(?i)^(claude[-_]?(opus|sonnet|haiku)|anthropic/|gpt-4|o[13][-_]|gemini[-_])"
+)
+_CLI_MODEL_ALLOW_PREFIXES: tuple[str, ...] = (
+    "opencode/",
+    "ollama/",
+    "local/",
+)
 
 
 def cli_agent_enabled() -> bool:
-    return os.environ.get("LBG_LINUX_CLI_AGENT_ENABLED", "0").strip().lower() in (
-        "1",
-        "true",
-        "yes",
-        "on",
-    )
+    return truthy(get_cfg("LBG_LINUX_CLI_AGENT_ENABLED") or "0")
+
+
+def cli_agent_model() -> str:
+    return (get_cfg("LBG_LINUX_CLI_AGENT_MODEL") or "opencode/big-pickle").strip()
+
+
+def cli_agent_model_ok(model: str) -> bool:
+    """Allowlist soft : préfixe local/opencode, ou id hors blocklist cloud."""
+    m = (model or "").strip()
+    if not m:
+        return False
+    if _CLI_MODEL_BLOCKLIST_RE.search(m):
+        return False
+    if any(m.startswith(p) for p in _CLI_MODEL_ALLOW_PREFIXES):
+        return True
+    # Ids courts type big-pickle sans préfixe : OK si pas cloud
+    if "/" not in m and not _CLI_MODEL_BLOCKLIST_RE.search(m):
+        return True
+    return False
 
 
 def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
@@ -719,7 +743,7 @@ def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
     if isinstance(action, dict):
         raw = action.get("timeout_s")
     if raw is None:
-        raw = os.environ.get("LBG_LINUX_CLI_AGENT_TIMEOUT_S", "300")
+        raw = get_cfg("LBG_LINUX_CLI_AGENT_TIMEOUT_S") or "300"
     try:
         n = int(raw)  # type: ignore[arg-type]
     except (TypeError, ValueError):
@@ -728,7 +752,7 @@ def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
 
 
 def cli_agent_cwd_allowlist() -> list[Path]:
-    raw = os.environ.get("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST", "").strip()
+    raw = (get_cfg("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST") or "").strip()
     roots: list[str] = []
     if raw:
         roots.extend(x.strip() for x in raw.split(",") if x.strip())
@@ -770,13 +794,45 @@ def resolve_cli_agent_argv(app: str, prompt: str) -> list[str] | None:
     if not bin_path:
         return None
     if a == "claude":
-        return [bin_path, "-p", prompt, "--output-format", "text"]
+        # Headless : -p + bare + skip permissions (sandbox .143, LLM local)
+        return [
+            bin_path,
+            "-p",
+            prompt,
+            "--output-format",
+            "text",
+            "--bare",
+            "--dangerously-skip-permissions",
+        ]
     if a == "cline":
         return [bin_path, "run", "--prompt", prompt]
     if a == "opencode":
-        return [bin_path, "run", prompt]
+        model = cli_agent_model()
+        if not cli_agent_model_ok(model):
+            return None
+        argv = [bin_path, "run"]
+        if model:
+            argv.extend(["-m", model])
+        argv.append(prompt)
+        return argv
     return None
 
+
+def _cli_agent_child_env() -> dict[str, str]:
+    """Env enfant : Ollama local (.110) + anti-hang Claude unknown-model."""
+    env = {**os.environ, "TERM": "dumb"}
+    # Ne pas écraser si déjà posé dans linux.env / systemd
+    defaults = {
+        "ANTHROPIC_BASE_URL": get_cfg("ANTHROPIC_BASE_URL") or "http://192.168.0.110:11434",
+        "ANTHROPIC_AUTH_TOKEN": get_cfg("ANTHROPIC_AUTH_TOKEN") or "ollama",
+        "ANTHROPIC_API_KEY": get_cfg("ANTHROPIC_API_KEY") or "ollama",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT": "1",
+    }
+    for k, v in defaults.items():
+        if not (env.get(k) or "").strip():
+            env[k] = v
+    return env
 
 def run_cli_agent(
     *,
@@ -802,6 +858,19 @@ def run_cli_agent(
             "error": f"app hors allowlist: {app_id}",
             "allowed": sorted(_CLI_AGENT_APPS),
         }
+    if app_id == "opencode":
+        model = cli_agent_model()
+        if not cli_agent_model_ok(model):
+            return {
+                "ok": False,
+                "outcome": "allowlist_denied",
+                "error": (
+                    f"modèle interdit pour OpenCode headless: {model!r} "
+                    "(préférer opencode/big-pickle ; pas de claude-sonnet*/cloud)"
+                ),
+                "model": model,
+                "hint": "LBG_LINUX_CLI_AGENT_MODEL=opencode/big-pickle",
+            }
     prompt_s = (prompt or "").strip()
     if not prompt_s:
         return {"ok": False, "outcome": "bad_request", "error": "prompt vide", "app": app_id}
@@ -870,7 +939,7 @@ def run_cli_agent(
             text=True,
             timeout=to,
             check=False,
-            env={**os.environ, "TERM": "dumb"},
+            env=_cli_agent_child_env(),
         )
         stdout = (proc.stdout or "")[-4000:]
         stderr = (proc.stderr or "")[-2000:]

@@ -90,6 +90,15 @@ ROLE_SPECS: dict[str, dict[str, object]] = {
         "autonomy": "L0-L1",
         "default_objective": "Audit / prototype Godot Prime — Iris (2D UI) ou Hermès (SOE/gateway)",
     },
+    "dev_studio": {
+        "capability": "studio_code",
+        "routed_to": "agent.pm",
+        "autonomy": "L0-L1",
+        "default_objective": (
+            "Métis — forge studio hors jeu : Cortex / Compagnon / Pilot / docs "
+            "(mains code .143 via ide_cli, ADR 0025)"
+        ),
+    },
     "player_ia": {
         "capability": "core3_bot_action",
         "routed_to": "agent.core3",
@@ -808,6 +817,34 @@ def _execute_dev_game(task: TeamTask) -> dict[str, object]:
     return execute_dev_game_workflow(task, _dispatch)
 
 
+def _execute_dev_studio(task: TeamTask) -> dict[str, object]:
+    """Métis — code studio hors jeu (Cortex/Compagnon/Pilot) via ide_cli ou docs_only."""
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
+    ctx = dict(task.context or {})
+    ctx.setdefault("ide_cli", True)
+    ctx.setdefault("subproject", "cortex_studio")
+    task_ide = TeamTask(
+        id=task.id,
+        role=task.role,
+        objective=task.objective,
+        actor_id=task.actor_id,
+        context=ctx,
+        status=task.status,
+        priority=task.priority,
+        approval_required=task.approval_required,
+        result=task.result,
+        trace_id=task.trace_id,
+        created_ts=task.created_ts,
+        updated_ts=task.updated_ts,
+        stored_approval_token=task.stored_approval_token,
+    )
+    return execute_ide_cli_workflow(task_ide, _dispatch)
+
+
 def _execute_player_ia(task: TeamTask) -> dict[str, object]:
     return execute_player_ia(task)
 
@@ -826,6 +863,7 @@ _EXECUTORS: dict[str, Callable[[TeamTask], dict[str, object]]] = {
     "pm": _execute_pm,
     "dev_game": _execute_dev_game,
     "dev_godot": _execute_dev_godot,
+    "dev_studio": _execute_dev_studio,
     "player_ia": _execute_player_ia,
     "admin_infra": _execute_admin_infra,
     "contrarian": _execute_contrarian,
@@ -957,6 +995,8 @@ def _plan_from_at_mentions(
         "iris": "dev_godot",
         "hermes": "dev_godot",
         "pygmalion": "dev_game",
+        "metis": "dev_studio",
+        "métis": "dev_studio",
         "choeur": "player_ia",
         "lia": "player_ia",
         "nix": "player_ia",
@@ -1007,6 +1047,8 @@ def _plan_from_at_mentions(
             ctx = {}
         if handle == "pygmalion":
             ctx = {"infographiste_ia": True, "subproject": "infographiste_ia"}
+        if handle in ("metis", "métis"):
+            ctx = {"ide_cli": True, "subproject": "cortex_studio"}
         if handle == "iris":
             track = "iris_full"
             if re.search(r"(?i)\bm9[abc]?\b|scrapaltai|minimap|carte\s*m\b", obj):
@@ -1075,6 +1117,20 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
     if mentioned is not None:
         return mentioned
+
+    # --- Métis / forge studio hors jeu (ADR 0025) ---
+    if re.search(
+        r"(?i)\b(m[eé]tis|dev_studio|cortex_studio|"
+        r"(?:patch|forge|fix)\s+(?:cortex|compagnon|pilot)\b|"
+        r"mains?\s+code\s+(?:studio|hors\s+jeu))\b",
+        objective or "",
+    ):
+        _add(
+            "dev_studio",
+            objective.strip() if len((objective or "").strip()) >= 8 else str(ROLE_SPECS["dev_studio"]["default_objective"]),
+            context={"ide_cli": True, "subproject": "cortex_studio"},
+        )
+        return proposals
 
     # --- Veille concurrents / docs-only : plan ciblé (évite coffee-fill playbooks génériques) ---
     if re.search(
