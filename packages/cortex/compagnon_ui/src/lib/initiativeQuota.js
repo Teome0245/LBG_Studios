@@ -356,20 +356,114 @@ export function concreteProposalsFromStatus(status) {
   return agirIntentsFromStatus(status).map((i) => `${i.label}${i.hint ? ` (${i.hint})` : ''}`)
 }
 
-export function formatDiscussReply(status) {
-  const headline = messageFromStatus(status)
-  const intents = agirIntentsFromStatus(status)
+/**
+ * Intents du toast cohérents avec l’objectif affiché (évite job L2 sous « Veiller le LAN »).
+ * @param {AgirIntent[]} intents
+ * @param {{ message?: string, goal?: { id?: string, title?: string }|null }|null} initiative
+ * @returns {AgirIntent[]}
+ */
+function intentsForDiscuss(intents, initiative) {
+  const list = Array.isArray(intents) ? intents.filter((p) => p && p.label) : []
+  if (!list.length) return []
+  const msg = String(initiative?.message || '').toLowerCase()
+  const goalId = String(initiative?.goal?.id || '')
+  const goalTitle = String(initiative?.goal?.title || '').toLowerCase()
+  const softPlan = /plan l[eé]ger|clarifier/.test(msg)
+  const lanFocus =
+    goalId === 'lan_watch' ||
+    /veiller le lan|lan\b|selfcheck|infra/.test(`${goalTitle} ${msg}`)
+  if (!softPlan && !lanFocus) return list
+
+  const aligned = list.filter((i) => {
+    const id = String(i.id || '').toLowerCase()
+    const src = String(i.sourceText || '').toLowerCase()
+    const label = String(i.label || '').toLowerCase()
+    if (id.includes('open_jobs') || /revue job|pilot jobs/.test(label)) return false
+    if (lanFocus) {
+      return (
+        id.includes('selfcheck') ||
+        id.includes('inventory') ||
+        id.includes('probe') ||
+        id.includes('lan') ||
+        src.includes('selfcheck') ||
+        src.includes('inventaire') ||
+        /\blan\b|sonde|infra/.test(`${src} ${label}`)
+      )
+    }
+    return true
+  })
+  return aligned
+}
+
+/**
+ * Compte-rendu « Détails / En parler » — ancré sur le toast courant.
+ * Sans initiative : fallback statut proactive (comportement historique).
+ *
+ * @param {Record<string, unknown>} status
+ * @param {{
+ *   message?: string,
+ *   intents?: AgirIntent[],
+ *   goal?: { id?: string, title?: string, description?: string }|null,
+ *   offerType?: string,
+ *   kind?: string,
+ * }|null} [initiative]
+ */
+export function formatDiscussReply(status, initiative = null) {
+  const toastMsg = String(initiative?.message || '').trim()
+  const toastIntents = Array.isArray(initiative?.intents)
+    ? initiative.intents.filter((p) => p && p.label)
+    : []
+  const fromToast = Boolean(toastMsg || toastIntents.length || initiative?.goal)
+  const headline = toastMsg || messageFromStatus(status)
+  // Si on répond à CE toast : ne pas injecter job L2 / idle du statut global
+  const intents = fromToast
+    ? intentsForDiscuss(toastIntents, initiative)
+    : agirIntentsFromStatus(status)
   const mandate = getMandate()
+  const goal = initiative?.goal || null
   const lines = [
     `Je vois ça : « ${headline} »`,
     '',
     `Mandat : ${mandate.fresh ? mandate.watch.join(', ') : 'non confirmé (défaut Jobs L2)'}`,
-    '',
-    'Actions concrètes (pas encore exécutées) :',
-    ...intents.map((p, i) => `${i + 1}. ${p.label}${p.hint ? ` — ${p.hint}` : ''}`),
-    '',
-    'Clique Agir sur le toast, ou le bouton Agir avec le texte de l’action → Dry-run → Réel.',
   ]
+  if (goal?.title) {
+    lines.push(
+      `Objectif lié : ${goal.title}${goal.description ? ` — ${goal.description}` : ''}`,
+    )
+  }
+  lines.push('')
+  if (intents.length) {
+    lines.push('Sur cette suggestion (pas encore exécutées) :')
+    for (let i = 0; i < intents.length; i += 1) {
+      const p = intents[i]
+      lines.push(`${i + 1}. ${p.label}${p.hint ? ` — ${p.hint}` : ''}`)
+    }
+    lines.push('')
+    lines.push(
+      'Pour avancer : Agir / Team L1 sur le toast → Dry-run → Réel (ou Ignorer).',
+    )
+  } else if (fromToast) {
+    const soft = /plan l[eé]ger|clarifier/.test(toastMsg.toLowerCase())
+    lines.push(
+      soft
+        ? 'C’est un rappel de cap (pas un compte-rendu ops).'
+        : 'Cette suggestion clarifie le cap — pas d’action Agir déjà alignée.',
+      goal?.id === 'lan_watch' || /lan/i.test(String(goal?.title || ''))
+        ? 'Suite logique : Selfcheck LAN, inventaire, ou Team L1 lecture seule — pas la revue Jobs L2.'
+        : 'Tu peux : Team L1 (revue lecture seule), préciser le périmètre, ou Ignorer.',
+    )
+  } else {
+    lines.push('Actions concrètes (pas encore exécutées) :')
+    const fallback = agirIntentsFromStatus(status)
+    for (let i = 0; i < fallback.length; i += 1) {
+      const p = fallback[i]
+      lines.push(`${i + 1}. ${p.label}${p.hint ? ` — ${p.hint}` : ''}`)
+    }
+    lines.push('')
+    lines.push(
+      'Clique Agir sur le toast, ou le bouton Agir avec le texte de l’action → Dry-run → Réel.',
+    )
+  }
   return lines.join('\n')
 }
 

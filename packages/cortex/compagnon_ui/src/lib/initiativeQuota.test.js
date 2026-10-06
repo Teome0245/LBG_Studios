@@ -7,6 +7,7 @@ import {
   isInitiativeSnoozed,
   shouldOfferFromStatus,
   recordInitiativeFeedback,
+  formatDiscussReply,
 } from './initiativeQuota.js'
 import { resetStudioGoalFeedback, patchStudioGoal } from './studioGoal.js'
 import { resetMandate, setMandate } from './mandate.js'
@@ -142,6 +143,38 @@ test('silence prolongé + mandat frais: fingerprint jobs:idle et offre toast', (
   assert.equal(offer.offerType, 'opportunite')
   assert.ok(offer.intents?.length >= 1)
   assert.match(offer.message, /Silence prolongé|mails|Jobs/i)
+})
+
+test('formatDiscussReply: Détails ancré sur toast LAN, pas job L2 du statut', () => {
+  resetAll()
+  setMandate(['lan'])
+  const status = baseStatus({
+    last_job_id: '55ff02f951c448619df80a758dd61527',
+    last_action: {
+      kind: 'plan',
+      message: 'Plan léger conseillé pour clarifier l’objectif.',
+    },
+  })
+  const text = formatDiscussReply(status, {
+    message:
+      'Plan léger conseillé pour clarifier l’objectif. (objectif · Veiller le LAN)',
+    intents: [
+      {
+        id: 'open_jobs_job',
+        label: 'Revue job L2',
+        sourceText: 'ouvre http://192.168.0.140:8080/#/jobs dans le navigateur',
+        hint: 'job 55ff02f9…',
+      },
+    ],
+    goal: {
+      id: 'lan_watch',
+      title: 'Veiller le LAN',
+      description: 'Selfcheck, sondes AD/orch, inventaire — lecture seule prioritaire.',
+    },
+  })
+  assert.match(text, /Veiller le LAN/)
+  assert.match(text, /rappel de cap|Selfcheck LAN/i)
+  assert.doesNotMatch(text, /Revue job L2/)
 })
 
 test('mandat studio + silence long: offre studio:idle', () => {

@@ -40,14 +40,21 @@ export function startActivity(title, tools = []) {
   if (current.value && current.value.phase === 'running') {
     endActivity('done')
   }
+  const titleStr = String(title || 'Action').slice(0, 120)
+  const toolsList = (tools || []).map(String).slice(0, 6)
+  // D6.3 : encart replié pour ask/réponse ; ouvert pour Agir / Team / palette
+  const quietAsk =
+    toolsList.includes('ask') ||
+    /compagnon\s*[·•]\s*réponse/i.test(titleStr) ||
+    /causerie/i.test(titleStr)
   current.value = {
     id: nowId(),
-    title: String(title || 'Action').slice(0, 120),
-    tools: (tools || []).map(String).slice(0, 6),
+    title: titleStr,
+    tools: toolsList,
     lines: [],
     phase: 'running',
     phaseLabel: PHASE_LABELS.running,
-    open: true,
+    open: !quietAsk,
     startedAt: Date.now(),
   }
   return current.value.id

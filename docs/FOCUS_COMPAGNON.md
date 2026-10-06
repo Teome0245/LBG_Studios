@@ -114,7 +114,8 @@ Phasage réaliste :
 11. **Voix TTS (`voice_local`)** — **OK** lot 2 (2026-10-02)  
    - Provider **Edge** `fr-FR-DeniseNeural` + fallback Piper `.111:8098` + bouton Voix `:5174` — [`voice_local.md`](../packages/cortex/docs/voice_local.md)  
    - Deploy : `deploy_piper_tts_111.sh` (fallback) puis `deploy_compagnon_100.sh`  
-12. **D6 Causerie crédible** — **EN COURS** (2026-10-01) — *prérequis feeling avant O2*  
+12. **D6 Causerie crédible** — **OK code** (2026-10-06) — *prérequis feeling avant O2*  
+   - Lots D6.1–D6.4 livrés ; **gate O2** = smoke humain V6→V7→V8 vert sur `:5174` (C1–C5)  
    - Voir § **D6 — Causerie crédible** ci-dessous  
    - Lot 1 (ressenti immédiat) : fil LAB conservé (`short_ctx`) + nudge collègue sans runbook Agir
 
@@ -142,8 +143,8 @@ Phasage réaliste :
 | **D6.1** | `short_ctx` LAB conservé (cap 6 msgs) + nudge causerie + élargissement heuristiques collègue/ami | **OK** code (2026-10-01) — deploy `deploy_compagnon_100.sh` |
 | **D6.2** | Prompt `compagnon_lab` scindé « causerie courte » vs « ops » + character slim + anti-rebond | **OK** code (2026-10-01) — `resolve_lab_system_prompt` |
 | **D6.2b** | Combo feeling : sticky fil + anti-fausse investigation + OpenClaw pas sur « évoluer » causerie | **OK** code (2026-10-02) |
-| **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | TODO |
-| **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | TODO |
+| **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
+| **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
 
 ## Chemins / surfaces (ne pas confondre)
 

@@ -85,6 +85,7 @@ export function intentsForWill(will) {
         label: 'En parler',
         sourceText: `parle-moi de cette idée d'évolution : ${title}`,
         hint: 'discuss',
+        discuss: true,
       },
     ]
     void willId

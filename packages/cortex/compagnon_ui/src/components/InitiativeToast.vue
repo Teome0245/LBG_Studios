@@ -11,9 +11,24 @@ const { current, dismiss, discussText, proposing, selfLine, studioGoal } = useIn
 const { addUserMessage, addMessage } = useChat()
 const busyId = ref('')
 
-function discuss() {
+/** Intent « En parler » / discuss — dialogue, jamais Agir. */
+function isDiscussIntent(intent) {
+  if (!intent || intent.teamSpawn || intent.mandatePick) return false
+  if (intent.discuss === true) return true
+  const id = String(intent.id || '').toLowerCase()
+  const hint = String(intent.hint || '').toLowerCase()
+  const label = String(intent.label || '').toLowerCase()
+  return id.includes('discuss') || hint === 'discuss' || label === 'en parler'
+}
+
+function discuss(intent) {
   const msg = current.value?.message || 'initiative'
-  addUserMessage(`À propos de ton initiative : « ${msg} »`)
+  const src = String(intent?.sourceText || '').trim()
+  const opener =
+    src && /^(parle|discut|à propos|a propos)/i.test(src)
+      ? src
+      : `À propos de ton initiative : « ${msg} »`
+  addUserMessage(opener)
   addMessage({
     role: 'assistant',
     content: discussText(),
@@ -44,6 +59,11 @@ function pickMandate(intent) {
 async function runAgir(intent) {
   if (intent?.mandatePick) {
     pickMandate(intent)
+    return
+  }
+  // « En parler » ≠ Agir — ouvre le fil, snooze le toast (pas de proposition Réel)
+  if (isDiscussIntent(intent)) {
+    discuss(intent)
     return
   }
   if (!intent?.sourceText || proposing.value) return

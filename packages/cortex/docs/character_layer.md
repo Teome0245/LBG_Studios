@@ -34,7 +34,7 @@ Inspiration TikTok MC (Mec Chill) : blacklist anti-langage IA, ego + triggers, c
 - `GET /character/` — snapshot (dials, catchphrases, pack_id)
 - `GET|PUT /character/dials` — lire / écrire dials (`/var/lib/lbg/character/dials.json`)
 - `POST /character/catchphrases` — mémoriser une formule (opt-in, quota fichier)
-- `GET /character/voice-smoke` — batterie V1–V5
+- `GET /character/voice-smoke` — batterie V1–V8 (V6–V8 = causerie D6 / C1–C3)
 
 Depuis le SPA : préfixe `/api` (nginx) → `/api/character/…`.
 
@@ -59,8 +59,17 @@ curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq
 # Puis POST /ask avec chaque case.prompt — vérifier expect
 ```
 
-Cases : identité, ego toaster, blacklist, vérité ops, contre-pouvoir Agir.
+Cases :
 
+| Id | Critère | Attendu |
+|----|---------|---------|
+| V1–V5 | caractère / ops | identité, ego, blacklist, vérité Team, contre-pouvoir Agir |
+| **V6** | **C2** collègue | avis sans réciter Agir / dry-run / deploy |
+| **V7** | **C1** continuité | enchaîner sur le **même fil** LAB après V6 — reprend le sujet sans reset « objectif » |
+| **V8** | **C3** retours | 1 diagnostic + 1 proposition, pas questionnaire |
+
+Protocole C1 (D6.4) : V6 → V7 → V8 sur `:5174` sans nouveau chat · `short_ctx` LAB actif.  
+Checklist LAN : [`docs/SMOKE_LAN.md`](../../../docs/SMOKE_LAN.md) § Compagnon D6.
 ## Tests locaux
 
 ```bash

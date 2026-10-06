@@ -242,15 +242,22 @@ function dismiss(snoozeHours = 4, feedback = 'dismiss') {
 }
 
 function discussText() {
-  const base = formatDiscussReply(lastStatus.value || {})
-  const g = studioGoal.value?.goal
+  const init = current.value
+  const goal = init?.goal || studioGoal.value?.goal || null
+  const base = formatDiscussReply(lastStatus.value || {}, {
+    message: init?.message || '',
+    intents: init?.intents || [],
+    goal,
+    offerType: init?.offerType,
+    kind: init?.kind,
+  })
   const selfBit = selfLine.value ? `\n\nSelf : ${selfLine.value}` : ''
   const spont =
-    current.value?.spontaneous
-      ? `\n\nSpontané (${current.value.spice_mode || 'full'}) — themes : ${(current.value.themes || []).join(', ') || '—'}`
+    init?.spontaneous
+      ? `\n\nSpontané (${init.spice_mode || 'full'}) — themes : ${(init.themes || []).join(', ') || '—'}`
       : ''
-  if (!g) return `${base}${selfBit}${spont}`
-  return `${base}\n\nObjectif actif : ${g.title} — ${g.description}${selfBit}${spont}`
+  // Objectif déjà dans le corps si goal toast/studio ; éviter un 2e bloc décalé
+  return `${base}${selfBit}${spont}`
 }
 
 export function useInitiative() {

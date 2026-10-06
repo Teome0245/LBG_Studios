@@ -98,9 +98,14 @@ class CharacterLayerTests(unittest.TestCase):
 
     def test_voice_smoke_cases(self) -> None:
         cases = cl.voice_smoke_cases()
-        self.assertGreaterEqual(len(cases), 5)
+        self.assertGreaterEqual(len(cases), 8)
         ids = {c["id"] for c in cases}
         self.assertIn("V2_ego_toaster", ids)
+        self.assertIn("V6_causerie_open", ids)
+        self.assertIn("V7_causerie_continuity", ids)
+        self.assertIn("V8_causerie_feedback", ids)
+        v7 = next(c for c in cases if c["id"] == "V7_causerie_continuity")
+        self.assertEqual(v7.get("criterion"), "C1")
 
 
 if __name__ == "__main__":

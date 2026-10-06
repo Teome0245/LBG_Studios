@@ -65,6 +65,23 @@ class SpontaneityTests(unittest.TestCase):
         self.assertEqual(ok["intents"][0]["id"], "morning_brief")
         self.assertIn("éveille", ok["message"])
 
+    def test_sanitize_preserves_discuss_en_parler(self) -> None:
+        cleaned = sp._sanitize_intent(
+            {
+                "id": "discuss_evo",
+                "label": "En parler",
+                "sourceText": "parle-moi de cette idée d'évolution : veiller les mails",
+                "hint": "discuss",
+            },
+            0,
+        )
+        self.assertIsNotNone(cleaned)
+        assert cleaned is not None
+        self.assertTrue(cleaned.get("discuss"))
+        self.assertEqual(cleaned["hint"], "discuss")
+        self.assertTrue(cleaned["sourceText"].lower().startswith("parle"))
+        self.assertFalse(cleaned["sourceText"].lower().startswith("propose"))
+
     def test_feedback_evolves_themes_and_seeds(self) -> None:
         with patch.object(sp, "_push_will_to_self", return_value={"ok": True, "will_id": "evo:test"}):
             snap = sp.record_feedback(

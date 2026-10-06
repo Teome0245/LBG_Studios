@@ -333,7 +333,12 @@ export function extractStudioOffer(routePayload) {
         auto_promote: false,
         intents: [
           { id: 'team_l1', label: 'Team L1', teamSpawn: true, teamObjective: String(seed.text).slice(0, 140) },
-          { id: 'discuss', label: 'En parler', sourceText: `parle-moi de cette idée d'évolution : ${String(seed.text).slice(0, 120)}` },
+          {
+            id: 'discuss',
+            label: 'En parler',
+            sourceText: `parle-moi de cette idée d'évolution : ${String(seed.text).slice(0, 120)}`,
+            discuss: true,
+          },
           { id: 'ignore', label: 'Ignorer', dismiss: true },
         ],
       }

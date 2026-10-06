@@ -246,18 +246,29 @@ def _sanitize_intent(raw: dict[str, Any], idx: int) -> dict[str, Any] | None:
         return None
     if _FORBIDDEN_RE.search(label) or _FORBIDDEN_RE.search(source):
         return None
-    if not _SAFE_ACTION_PREFIX.search(source) and not source.lower().startswith("http"):
-        # force discuss-safe prefix
-        source = f"propose : {source}"[:220]
     hint = str(raw.get("hint") or "").strip()[:80]
     team = bool(raw.get("teamSpawn") or raw.get("team_spawn"))
+    discuss = bool(raw.get("discuss")) or hint.lower() == "discuss" or "discuss" in str(
+        raw.get("id") or ""
+    ).lower() or label.lower() == "en parler" or source.lower().startswith(
+        ("parle", "discut", "à propos", "a propos")
+    )
+    if (
+        not discuss
+        and not _SAFE_ACTION_PREFIX.search(source)
+        and not source.lower().startswith("http")
+    ):
+        # force Agir-safe prefix (pas pour discuss — « parle-moi » reste dialogue)
+        source = f"propose : {source}"[:220]
     iid = str(raw.get("id") or f"spont_{idx}").strip()[:48] or f"spont_{idx}"
     out: dict[str, Any] = {
         "id": iid,
         "label": label,
         "sourceText": source,
-        "hint": hint or ("Team L1" if team else "spontané"),
+        "hint": hint or ("discuss" if discuss else ("Team L1" if team else "spontané")),
     }
+    if discuss and not team:
+        out["discuss"] = True
     if team:
         out["teamSpawn"] = True
         obj = str(raw.get("teamObjective") or raw.get("team_objective") or source).strip()[:400]
