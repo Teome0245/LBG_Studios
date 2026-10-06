@@ -51,7 +51,7 @@ Réponse type :
 | Module Python `lbg_agents.agent_catalog` | **stub livré** | source de vérité locale |
 | `GET` dialogue HTTP `:8020` | **stub livré** | `/catalog?type=…`, `/guide?playstyle=…`, `/tick-matrix` |
 | Sidecar Prime `:8791` | **wire live** 2026-10-06 | `GET /catalog` `/guide` `/tick-matrix` (+ `/v1/*`) via `agent_catalog.http_get_dispatch` |
-| MCP Studio | futur | mêmes `type` + schémas |
+| MCP Studio | **stdio livré** 2026-10-06 | `tools/mcp_catalog_server` — tools `catalog` / `get_guide` / `tick_matrix` |
 
 Pas de mutation via ces endpoints — HTTP **GET** uniquement.
 
@@ -119,7 +119,7 @@ Implémentation machine : `lbg_agents.agent_catalog.classify_action` + `TICK_MAT
 ## Hors scope Vague C
 
 - Middleware tick live / cooldown partagé bots (mutations)
-- Ouverture MCP Studio publique
+- Ouverture MCP Studio **publique** / SSE distant (stdio Cursor OK)
 - Mutations craft/hunt via ce stub
 - Changer le manuel C9 hors pointeur done
 
@@ -131,3 +131,4 @@ Implémentation machine : `lbg_agents.agent_catalog.classify_action` + `TICK_MAT
 - [x] Stub catalog read-only (4 types) + `get_guide`
 - [x] Tests unitaires verts
 - [x] Mirror `:8791` — `GET /catalog|/guide|/tick-matrix` (+ alias `/v1/…`) via `lbg_agents.agent_catalog.http_get_dispatch` (2026-10-06)
+- [x] MCP Studio stdio — `tools/mcp_catalog_server` (2026-10-06)

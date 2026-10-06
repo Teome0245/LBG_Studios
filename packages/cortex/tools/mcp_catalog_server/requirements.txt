@@ -1,0 +1,2 @@
+# MCP Studio — catalog C10 / tick C11 (stdio)
+mcp>=1.2,<2

@@ -57,6 +57,12 @@ LBG_LINUX_LEARN_APP_ALLOWLIST=chromium,firefox,htop,kitty
 LBG_LINUX_AUDIT_LOG_PATH=${REMOTE_DIR}/logs/linux_agent_audit.jsonl
 LBG_LINUX_AUDIT_STDOUT=1
 LBG_LINUX_FACE_PARTS_ENABLED=0
+# ADR 0025 — mains code headless (ne pas retirer au redeploy)
+LBG_LINUX_CLI_AGENT_ENABLED=1
+LBG_LINUX_CLI_AGENT_MODEL=opencode/big-pickle
+LBG_LINUX_CLI_AGENT_TIMEOUT_S=1200
+LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST=/home/lbg/projects
+LBG_OMARCHY_STUDIO_WORKSPACE=/home/lbg/projects/LBG_Studios
 ENV
 
 echo "==> Sync Agent_IA → ${USER}@${HOST}:${REMOTE_DIR}"
