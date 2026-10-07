@@ -16,6 +16,8 @@ var _clients: Array = []  # {stream, oid, name, buf: PackedByteArray, mode: "ws"
 var sim: Node = null
 var http: Node = null
 var auth = null
+## 1 accept/frame : le handshake bloquant reste fiable (Godot headless), sans empiler les waits.
+const MAX_ACCEPTS_PER_FRAME := 1
 
 
 func start(sim_node: Node, port: int = 8787, http_router: Node = null, auth_svc = null) -> Error:
@@ -39,17 +41,19 @@ func client_count() -> int:
 
 
 func _process(_delta: float) -> void:
-	while _tcp.is_connection_available():
+	var accepted := 0
+	while accepted < MAX_ACCEPTS_PER_FRAME and _tcp.is_connection_available():
 		var stream: StreamPeerTCP = _tcp.take_connection()
 		if stream == null:
 			break
 		stream.set_no_delay(true)
 		_accept_connection(stream)
+		accepted += 1
 	_pump_clients()
 
 
 func _read_request_blocking(stream: StreamPeerTCP, timeout_ms: int = 4000) -> PackedByteArray:
-	## Même stratégie que hub_http (poll + delay) — fiable headless.
+	## poll + delay — fiable headless. Pas de delay tant que des octets arrivent.
 	var deadline := Time.get_ticks_msec() + timeout_ms
 	var req := PackedByteArray()
 	while Time.get_ticks_msec() < deadline:
@@ -69,10 +73,12 @@ func _read_request_blocking(stream: StreamPeerTCP, timeout_ms: int = 4000) -> Pa
 				var have := req.size() - body_start
 				if content_len <= 0 or have >= content_len:
 					return req
+			# Données partielles : re-poll immédiat sans dormir.
+			continue
 		elif stream.get_status() != StreamPeerTCP.STATUS_CONNECTED and stream.get_status() != StreamPeerTCP.STATUS_CONNECTING:
 			break
 		else:
-			OS.delay_usec(2000)
+			OS.delay_usec(500)
 	return req
 
 
@@ -235,7 +241,8 @@ func _ws_take_messages(c: Dictionary) -> Array:
 	return out
 
 
-func _ws_send_frame(c: Dictionary, payload: PackedByteArray, opcode: int = 0x1) -> void:
+func _ws_send_frame(c: Dictionary, payload: PackedByteArray, opcode: int = 0x1, drop_on_backpressure: bool = false) -> bool:
+	## drop_on_backpressure : zone_state — ne jamais bloquer la sim si Send-Q plein.
 	var stream: StreamPeerTCP = c["stream"]
 	var header := PackedByteArray()
 	header.append(0x80 | (opcode & 0x0F))
@@ -247,10 +254,20 @@ func _ws_send_frame(c: Dictionary, payload: PackedByteArray, opcode: int = 0x1) 
 		header.append((n >> 8) & 0xFF)
 		header.append(n & 0xFF)
 	else:
-		return
-	stream.put_data(header)
+		return false
+	var packet := header
 	if n > 0:
-		stream.put_data(payload)
+		packet.append_array(payload)
+	if not drop_on_backpressure:
+		stream.put_data(packet)
+		return true
+	var sent := 0
+	while sent < packet.size():
+		var r: Array = stream.put_partial_data(packet.slice(sent))
+		if int(r[0]) != OK or int(r[1]) <= 0:
+			return false
+		sent += int(r[1])
+	return true
 
 
 func _oid_still_connected(oid: int) -> bool:
@@ -318,14 +335,14 @@ func _handle_message(c: Dictionary, raw: String) -> void:
 			pass
 
 
-func _send(c: Dictionary, payload: Dictionary) -> void:
-	_ws_send_frame(c, JSON.stringify(payload).to_utf8_buffer(), 0x1)
+func _send(c: Dictionary, payload: Dictionary, drop_on_backpressure: bool = false) -> bool:
+	return _ws_send_frame(c, JSON.stringify(payload).to_utf8_buffer(), 0x1, drop_on_backpressure)
 
 
 func broadcast(payload: Dictionary) -> void:
 	var raw := JSON.stringify(payload).to_utf8_buffer()
 	for c in _clients:
-		_ws_send_frame(c, raw, 0x1)
+		_ws_send_frame(c, raw, 0x1, false)
 
 
 func _flush_chat() -> void:
@@ -344,4 +361,5 @@ func broadcast_zone_state() -> void:
 		return
 	for c in _clients:
 		var oid: int = int(c.get("oid", 100001))
-		_send(c, sim.zone_state_payload(oid))
+		# Si le client ne consomme pas assez vite : drop (garde la sim fluide).
+		_send(c, sim.zone_state_payload(oid), true)

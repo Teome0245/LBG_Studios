@@ -19,6 +19,7 @@ var auth = null
 var economy = null
 var catalog = null
 var dialogue = null
+var events = null
 
 
 func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dialogue_svc = null) -> void:
@@ -131,6 +132,9 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if sim and sim.agent_api != null:
 			var boot: Dictionary = sim.agent_api.bootstrap(sim)
 			seats = boot.get("seats", {})
+		var ev := {}
+		if events != null and events.has_method("snapshot"):
+			ev = events.snapshot()
 		return _ok({
 			"ok": true,
 			"service": "prime_hub",
@@ -144,6 +148,7 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			"npc_count": int(sim.npc_count()) if sim else 0,
 			"life": life,
 			"ai_seats": seats,
+			"active_event": ev,
 			"collision_blocks": _collision_count(),
 			"uptime_s": uptime,
 			"note": "G5+ vie hub · joueurs IA évoluent · PNJ tiennent ; WS+HTTP :%d" % ws_port,
@@ -187,6 +192,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		return _ok(economy.inventory(_query_param(query, "player", "Voyageur")))
 	if method == "GET" and path == "/v1/quests/board":
 		return _ok(economy.board(_query_param(query, "giver", "npc:core3_daan_oth"), _query_param(query, "player", "Voyageur")))
+	if method == "GET" and path in ["/v1/events/active", "/v1/events"]:
+		if events != null and events.has_method("snapshot"):
+			return _ok(events.snapshot())
+		return _ok({"ok": true, "active": false, "event_id": "", "source": "prime_hub"})
 	if method == "GET" and path == "/v1/quests/status":
 		return _ok(economy.status(_query_param(query, "player", "Voyageur")))
 	if method == "POST" and path == "/v1/quests/accept":
@@ -207,8 +216,24 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		return _ok(qo4, 200 if bool(qo4.get("ok")) else 400)
 	if method == "POST" and path == "/v1/craft/combine":
 		var cb := _json_body(req_body)
-		var co: Dictionary = economy.craft_combine(str(cb.get("player", "Voyageur")), str(cb.get("recipe_id", "")))
+		var rid := str(cb.get("schematic_id", cb.get("recipe_id", "")))
+		var co: Dictionary = economy.craft_combine(str(cb.get("player", "Voyageur")), rid)
 		return _ok(co, 200 if bool(co.get("ok")) else 400)
+	if method == "POST" and path in ["/v1/salvage", "/v1/salvage/loot"]:
+		var sb := _json_body(req_body)
+		var sx := NAN
+		var sz := NAN
+		if sb.has("x"):
+			sx = float(sb.get("x"))
+		if sb.has("z"):
+			sz = float(sb.get("z"))
+		var so: Dictionary = economy.salvage_loot(
+			str(sb.get("player", "Voyageur")),
+			str(sb.get("poi_id", "poi:lh_scrap_pile")),
+			sx,
+			sz
+		)
+		return _ok(so, 200 if bool(so.get("ok")) else 400)
 
 	# --- Dialogue ---
 	if method == "POST" and path in ["/v1/dialogue/invoke", "/v1/pilot/agent-dialogue/invoke"]:

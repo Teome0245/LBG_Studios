@@ -339,17 +339,24 @@
       "oid": 900008,
       "name": "Vex",
       "enabled": true,
-      "account_login": "vex_bridge",
+      "account_login": "vulcan_bridge",
       "account_id": 16,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
         "agent_id": "player_bridge_vex",
-        "persona": "vex_bridge",
+        "persona": "vulcan_bridge",
         "display_name": "Pont Vex",
         "can_suggest_world": true,
         "can_suggest_dev": true,
-        "studio_member": false
+        "studio_member": false,
+        "linked_studio": {
+          "agent_id": "studio_dev_vulcan",
+          "display_name": "Vulcan",
+          "role": "dev_game",
+          "link": "soft_adr0004",
+          "note": "Lien doux : Mode B = Vex/hub ; Mode A = Vulcan forge Core3. Login=vulcan_bridge. Pas de droits forge via le hub."
+        }
       },
       "playstyle": "scene",
       "spawn": [
@@ -381,8 +388,8 @@
         "quest",
         "dev"
       ],
-      "account_login_legacy": null,
-      "account_id_legacy": null
+      "account_login_legacy": "vex_bridge",
+      "account_id_legacy": 16
     },
     {
       "eid": "player:Ori",
@@ -440,17 +447,24 @@
       "oid": 900010,
       "name": "Tess",
       "enabled": true,
-      "account_login": "tess_bridge",
+      "account_login": "hermes_bridge",
       "account_id": 18,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
         "agent_id": "player_bridge_tess",
-        "persona": "tess_bridge",
+        "persona": "hermes_bridge",
         "display_name": "Pont Tess",
         "can_suggest_world": true,
         "can_suggest_dev": true,
-        "studio_member": false
+        "studio_member": false,
+        "linked_studio": {
+          "agent_id": "godot_dev_hermes",
+          "display_name": "Hermès",
+          "role": "dev_godot",
+          "link": "soft_adr0004",
+          "note": "Lien doux : Mode B = Tess/hub ; Mode A = Hermès réseau Godot. Login=hermes_bridge. Pas de droits forge via le hub."
+        }
       },
       "playstyle": "scout",
       "spawn": [
@@ -485,8 +499,8 @@
         "quest",
         "dev"
       ],
-      "account_login_legacy": null,
-      "account_id_legacy": null
+      "account_login_legacy": "tess_bridge",
+      "account_id_legacy": 18
     },
     {
       "eid": "player:Bram",
@@ -560,9 +574,9 @@
       "logins": [
         "renn_bridge",
         "sola_bridge",
-        "vex_bridge",
+        "vulcan_bridge",
         "ori_bridge",
-        "tess_bridge",
+        "hermes_bridge",
         "bram_bridge"
       ],
       "ids": [
@@ -574,10 +588,15 @@
         19
       ],
       "admin_level": 0,
-      "enabled_in_hub": false,
-      "note": "Comptes COMPTES prêts ; hub enabled=false jusqu’à vague 10."
+      "enabled_in_hub": true,
+      "note": "Vague 10 enabled. 2026-10-07 : vex_bridge→vulcan_bridge (#16), tess_bridge→hermes_bridge (#18) lien doux Studio."
     },
     "wave10_enabled_at": "2026-10-07",
-    "wave10_note": "10 joueurs IA enabled sur prime-hub (hub Godot, pas Core3)."
+    "wave10_note": "10 joueurs IA enabled sur prime-hub (hub Godot, pas Core3).",
+    "studio_soft_links_at": "2026-10-07",
+    "studio_soft_links": [
+      {"studio": "studio_dev_vulcan", "login": "vulcan_bridge", "ig": "Vex", "bridge": "player_bridge_vex"},
+      {"studio": "godot_dev_hermes", "login": "hermes_bridge", "ig": "Tess", "bridge": "player_bridge_tess"}
+    ]
   }
 }

@@ -3,17 +3,19 @@
   "agent_id": "player_bridge_vex",
   "display_name": "Pont Vex",
   "role": "player_bridge",
-  "persona": "vex_bridge",
-  "account_login": "vex_bridge",
+  "persona": "vulcan_bridge",
+  "account_login": "vulcan_bridge",
   "mmo_player": "Vex",
   "studio_member": false,
-  "description": "Pont In-Game ↔ Out-Game pour Vex. Login COMPTES=vex_bridge (persona out-game). Suggestions monde/dev → Studio.",
+  "linked_studio_agent_id": "studio_dev_vulcan",
+  "linked_studio_display": "Vulcan",
+  "description": "Pont In-Game ↔ Out-Game pour Vex. Login COMPTES=vulcan_bridge (persona Studio Vulcan). Lien doux ADR 0004 → Vulcan. Suggestions monde/dev → Studio ; pas de mutation auto.",
   "capabilities": [
     {"id": "play_hub", "mode": "mmo_persona", "autonomy": "L1"},
     {"id": "suggest_world", "mode": "suggest", "autonomy": "L1"},
     {"id": "suggest_dev", "mode": "suggest", "autonomy": "L1"},
     {"id": "bridge_session_summary", "mode": "export", "autonomy": "L1"}
   ],
-  "constraints": ["lan_only", "no_auto_world_mutation", "no_monorepo_write", "not_studio_staff", "bible_v40_v42"],
-  "consults_with": ["studio_player_ia_choeur"]
+  "constraints": ["lan_only", "no_auto_world_mutation", "no_monorepo_write", "not_studio_staff", "bible_v40_v42", "soft_link_no_forge_via_hub"],
+  "consults_with": ["studio_player_ia_choeur", "studio_dev_vulcan"]
 }

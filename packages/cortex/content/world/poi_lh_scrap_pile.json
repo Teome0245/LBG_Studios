@@ -7,7 +7,7 @@
   "kind": "salvage_scrap",
   "bible_ref": "docs/world/BIBLE_MMO.md#v11-v12",
   "bible_safe": true,
-  "status": "stub",
+  "status": "live_prime_hub",
   "ticket": "C8",
   "placement": {
     "zone": "hors_palissade_est",
@@ -17,9 +17,9 @@
     "radius_m": 85,
     "detail": true,
     "essential": true,
-    "active": false,
+    "active": true,
     "group": "lost_heaven",
-    "notes": "active=false jusqu'à event:lh_scrap_fall_convoy ou promotion manuelle — pas sync Godot v1."
+    "notes": "POI sync prime-client scrapaltai_pois + buildings ; quête board seulement pendant event C4."
   },
   "interaction_stub": {
     "action": "salvage",
@@ -64,5 +64,5 @@
     }
   ],
   "event_link": "event:lh_scrap_fall_convoy",
-  "notes": "Boucle salvage SpaceMolt-style → M10 artisan novices. Coordonnées proches poi:lh_hunt_chacal, POI distinct."
+  "notes": "Live : POST /v1/salvage sur prime-hub · client hotbar [1] dans radius_m. Craft kit_reparation via /v1/craft/combine."
 }

@@ -66,6 +66,9 @@ func roster() -> Array:
 		var og = p.get("out_game", {})
 		if typeof(og) != TYPE_DICTIONARY:
 			og = {}
+		var ls = og.get("linked_studio", {})
+		if typeof(ls) != TYPE_DICTIONARY:
+			ls = {}
 		out.append({
 			"enabled": bool(p.get("enabled", false)),
 			"character": str(p.get("name", "")),
@@ -78,6 +81,8 @@ func roster() -> Array:
 			"admin_label": str(p.get("admin_label", "player")),
 			"playstyle": str(p.get("playstyle", "")),
 			"studio_member": bool(og.get("studio_member", false)),
+			"linked_studio_agent_id": str(ls.get("agent_id", "")),
+			"linked_studio_display": str(ls.get("display_name", "")),
 		})
 	return out
 
@@ -138,6 +143,8 @@ func _endpoints() -> Dictionary:
 		"tick_matrix": "/v1/tick-matrix",
 		"quests_board": "/v1/quests/board",
 		"quests_status": "/v1/quests/status",
+		"events_active": "/v1/events/active",
+		"salvage": "POST /v1/salvage",
 		"inventory": "/v1/inventory?player=…",
 		"bots": "/v1/bots",
 		"move_to": "POST /v1/bots/move_to",

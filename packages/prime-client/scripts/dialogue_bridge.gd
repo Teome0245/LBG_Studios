@@ -181,13 +181,15 @@ func _append_turn(player_text: String, assistant_text: String) -> void:
 	while _history.size() > MAX_HISTORY:
 		_history.pop_front()
 	_save_history()
-	# session_summary : note courte bornée (pas de fuite poste)
-	var note := assistant_text.strip_edges()
-	if note.length() > 120:
-		note = note.substr(0, 117) + "…"
+	# session_summary : ce que le JOUEUR a dit (pas le blabla PNJ — sinon le rappel se perroquette).
 	var patch := {"last_npc": _pending_npc_name}
-	if not note.is_empty():
-		patch["player_note"] = "Dernier échange : %s" % note
+	var said := player_text.strip_edges()
+	var low := said.to_lower()
+	var greet := low.is_empty() or low in ["bonjour", "bonjour.", "salut", "hello", "hey"] or low.begins_with("bonjour")
+	if not said.is_empty() and not greet:
+		if said.length() > 80:
+			said = said.substr(0, 77) + "…"
+		patch["player_note"] = said
 	update_session(patch)
 
 

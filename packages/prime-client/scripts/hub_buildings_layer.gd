@@ -174,6 +174,8 @@ func _color_for_kind(kind: String) -> Color:
 			return Color(1.0, 0.55, 0.2, 1.0)
 		"cantina", "inn":
 			return Color(0.85, 0.45, 0.35, 1.0)
+		"npc_housing_block":
+			return Color(0.55, 0.48, 0.42, 1.0)
 		"terminal", "blue_frog", "mission_terminal":
 			return Color(0.35, 0.75, 1.0, 1.0)
 		"starport_shuttle":

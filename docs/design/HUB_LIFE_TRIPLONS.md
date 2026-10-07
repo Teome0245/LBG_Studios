@@ -10,7 +10,7 @@ Donner l’impression d’une population vivante **sans** spammer le chat ni fai
 
 | Acteur | Comportement |
 |--------|----------------|
-| **Joueurs IA** | Flotte `ai_players.json` (vague 10) · quête / explore **anneau ~3 km** (`explore_ring_lh.json`) / hub · suggestions → Studio |
+| **Joueurs IA** | Flotte `ai_players.json` (4 actifs, 6 prêts → vague 10) · quête / explore / hub · suggestions → Studio |
 | **PNJ Triplon** (3–4) | Cycle **travail → loisir → repos** ; 1 off ≈ ⅓ de la pop visible |
 | **Objectifs** | court / moyen / long par persona — anti « couloir plaza→market » |
 
@@ -26,7 +26,7 @@ Groupe de **3** (parfois 4) partageant un **poste de travail** (ex. instructeur 
 |-------|-----|---------|
 | `work` | Poste (clinique, board, atelier…) | oui |
 | `leisure` | POI aspiration (cantina, scène, dunes…) | oui |
-| `rest` | « Chez soi » (auberge / logement) | **non** (désactivé / hors zone_state) |
+| `rest` | Marche vers un **logement** (`lodge_w/n/e/s` ou auberge), puis off | **pendant trajet oui** → ensuite **non** (hors zone_state) |
 
 → **≈ 2/3 actifs**, **1/3 off**, poste toujours tenu par quelqu’un.
 

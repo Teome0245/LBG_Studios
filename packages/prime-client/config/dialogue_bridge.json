@@ -1,13 +1,13 @@
 {
   "enabled": true,
-  "pilot_base_url": "http://192.168.0.140:8000",
-  "invoke_path": "/v1/pilot/agent-dialogue/invoke",
-  "timeout_sec": 60,
+  "pilot_base_url": "http://192.168.0.246:8787",
+  "invoke_path": "/v1/dialogue/invoke",
+  "timeout_sec": 20,
   "fallback_stub_on_error": true,
   "greeting_text": "Bonjour — parle-moi de Lost Heaven et de Scrapaltai.",
   "followup_placeholder": "Répondre au PNJ…",
   "planet_display": "Scrapaltai",
   "hub_city": "Lost Heaven",
-	"world_hint": "Planète Scrapaltai, ville hub Lost Heaven — avant-poste désertique patchwork (récup', métal oxydé, bazar, shuttleport, quartiers). Cantina hub = « La Perle de Scrapaltai ». Tone: élégante désolation, objets jamais neufs. Respecter docs/world/BIBLE_MMO.md : ne jamais inventer ville/planète (pas Willowdale, Brindlemark, Mos Eisley, Tatooine, Veridian). Chaque PNJ garde son rôle registry (Kisreudi = scientifique Fel'Rani, pas danse ; formation danse = Talen Ress ; spectacle = Artiste de scène à La Perle).",
-	"max_suggested_moves": 3
+  "world_hint": "Planète Scrapaltai, ville hub Lost Heaven — avant-poste désertique patchwork (récup', métal oxydé, bazar, shuttleport, quartiers). Cantina hub = « La Perle de Scrapaltai ». Tone: élégante désolation, objets jamais neufs. Respecter docs/world/BIBLE_MMO.md : ne jamais inventer ville/planète (pas Willowdale, Brindlemark, Mos Eisley, Tatooine, Veridian). Chaque PNJ garde son rôle registry (Kisreudi = scientifique Fel'Rani, pas danse ; formation danse = Talen Ress ; spectacle = Artiste de scène à La Perle).",
+  "max_suggested_moves": 3
 }

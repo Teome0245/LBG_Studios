@@ -4,12 +4,19 @@
   "display_name": "Vulcan",
   "role": "dev_game",
   "persona": "vulcan",
-  "description": "Forge Core3 — build Antigravity, ZB-0, déploiement Prime 246",
+  "description": "Forge Core3 — build Antigravity, ZB-0, déploiement Prime 246. Lien doux jeu : Vex (vulcan_bridge).",
   "capabilities": [
     {"id": "core3_build_plan", "autonomy": "L1"},
     {"id": "core3_build_compile", "autonomy": "L2", "script": "infra/scripts/build_core3_antigravity_vm.sh"}
   ],
-  "constraints": ["l2_requires_approval_token"],
+  "constraints": ["l2_requires_approval_token", "mmo_play_no_forge_via_hub"],
   "subproject": "core3_build",
-  "owner_timer": "lbg-team-parallel-prime-job"
+  "owner_timer": "lbg-team-parallel-prime-job",
+  "mmo_play": {
+    "account_login": "vulcan_bridge",
+    "mmo_player": "Vex",
+    "bridge_agent_id": "player_bridge_vex",
+    "link": "soft_adr0004",
+    "note": "Mode B = jouer Lost Heaven via Vex ; Mode A = forge Core3. Login=vulcan_bridge. Pas de droits forge via le hub."
+  }
 }

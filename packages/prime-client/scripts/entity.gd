@@ -29,6 +29,16 @@ var _use_visual_override: bool = false
 var facing_angle: float = 0.0
 var _selected: bool = false
 var _last_patrol_offset: Vector3 = Vector3.ZERO
+## Lissage zone_state ~10 Hz → écran (évite saccades bots/PNJ distants).
+var _smooth_enabled: bool = false
+var _smooth_target: Vector3 = Vector3.ZERO
+var _smooth_vel: Vector3 = Vector3.ZERO
+var _smooth_target_ms: int = 0
+var _last_draw_pos: Vector2 = Vector2.INF
+const SMOOTH_SNAP_M := 28.0
+## Suivi souple + légère extrapolation vitesse (cible réseau 10 Hz).
+const SMOOTH_RATE := 11.0
+const SMOOTH_EXTRAP_S := 0.08
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_PLAYER_BOT      := Color(0.0, 0.9, 0.4, 1.0)
@@ -49,6 +59,11 @@ func set_entity_key(key: String) -> void:
 	_refresh_appearance()
 
 func set_core3_position(pos: Vector3) -> void:
+	## Snap immédiat (spawn, téléport, joueur local).
+	_smooth_enabled = false
+	_smooth_vel = Vector3.ZERO
+	_smooth_target = pos
+	_smooth_target_ms = Time.get_ticks_msec()
 	var prev := core3_pos
 	core3_pos     = pos
 	height_offset = _Projection3D2D.height_offset(pos.y)
@@ -58,6 +73,34 @@ func set_core3_position(pos: Vector3) -> void:
 	_refresh_screen_pos()
 	_update_sprite_offset()
 	queue_redraw()
+
+
+func set_core3_position_smooth(pos: Vector3) -> void:
+	## Cible réseau — interpolée dans _process (remote bots / PNJ hub).
+	if entity_key == "player:human":
+		set_core3_position(pos)
+		return
+	var dx := pos.x - core3_pos.x
+	var dz := pos.z - core3_pos.z
+	if dx * dx + dz * dz > SMOOTH_SNAP_M * SMOOTH_SNAP_M:
+		set_core3_position(pos)
+		return
+	var now := Time.get_ticks_msec()
+	var dt := float(now - _smooth_target_ms) * 0.001
+	if _smooth_target_ms > 0 and dt > 0.02 and dt < 0.75:
+		_smooth_vel = Vector3(
+			(pos.x - _smooth_target.x) / dt,
+			0.0,
+			(pos.z - _smooth_target.z) / dt
+		)
+		# Plafond ~vitesse bot hub (évite pics sur teleports partiels).
+		var spd := _smooth_vel.length()
+		if spd > 20.0:
+			_smooth_vel *= 20.0 / spd
+	_smooth_target = pos
+	_smooth_target_ms = now
+	_smooth_enabled = true
+	set_process(true)
 
 func set_display_jitter(offset: Vector2) -> void:
 	_display_jitter = offset
@@ -179,19 +222,42 @@ func _wants_ambient() -> bool:
 	return kind == "npc" or kind == "player" or not _anchor.is_empty()
 
 func _process(delta: float) -> void:
-	if not _wants_ambient():
-		return
-	var prev_patrol := _patrol_offset_m()
-	_idle_phase += delta
-	_refresh_screen_pos()
-	var cur_patrol := _patrol_offset_m()
-	if kind == "npc":
-		var vel := cur_patrol - prev_patrol
-		if vel.length_squared() > 1.0e-8:
-			set_facing_from_direction(Vector3(vel.x, 0.0, vel.z))
-	_last_patrol_offset = cur_patrol
+	var moved := false
+	if _smooth_enabled:
+		var prev := core3_pos
+		var aim := _smooth_target + _smooth_vel * SMOOTH_EXTRAP_S
+		var t := 1.0 - exp(-SMOOTH_RATE * maxf(delta, 1e-5))
+		core3_pos = core3_pos.lerp(aim, clampf(t, 0.0, 1.0))
+		height_offset = _Projection3D2D.height_offset(core3_pos.y)
+		if not _use_visual_override:
+			_visual_home = Vector3(core3_pos.x, core3_pos.y, core3_pos.z)
+		update_facing_from_move(prev, core3_pos)
+		if core3_pos.distance_squared_to(_smooth_target) < 0.04:
+			core3_pos = _smooth_target
+			_smooth_vel = Vector3.ZERO
+			_smooth_enabled = false
+		moved = true
+	if _wants_ambient():
+		var prev_patrol := _patrol_offset_m()
+		_idle_phase += delta
+		_refresh_screen_pos()
+		var cur_patrol := _patrol_offset_m()
+		if kind == "npc":
+			var vel := cur_patrol - prev_patrol
+			if vel.length_squared() > 1.0e-8:
+				set_facing_from_direction(Vector3(vel.x, 0.0, vel.z))
+				moved = true
+		_last_patrol_offset = cur_patrol
+		moved = true
+	else:
+		_refresh_screen_pos()
+		if not _smooth_enabled:
+			set_process(false)
 	_update_sprite_offset()
-	queue_redraw()
+	# Évite redraw 60 Hz × N entités si rien n'a bougé à l'écran.
+	if moved or _last_draw_pos == Vector2.INF or position.distance_squared_to(_last_draw_pos) > 0.25:
+		_last_draw_pos = position
+		queue_redraw()
 
 func _refresh_screen_pos() -> void:
 	var base := _visual_home if _use_visual_override else core3_pos

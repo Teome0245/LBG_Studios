@@ -1,11 +1,11 @@
-# mission_board_panel.gd — Board missions Lost Heaven (sidecar :8791)
+# mission_board_panel.gd — Board missions Lost Heaven (hub :8787, peel natif)
 extends PanelContainer
 class_name MissionBoardPanel
 
 signal quest_accepted(result: Dictionary)
 signal quest_completed(result: Dictionary)
 
-const SIDECAR_DEFAULT := "http://192.168.0.246:8791"
+const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 const PLAYER_DEFAULT := "local"
 const GIVER_DEFAULT := "npc:core3_daan_oth"
 
@@ -102,6 +102,36 @@ func _player_core3_xz() -> Vector2:
 	var p: Vector3 = e.get("core3_pos")
 	return Vector2(p.x, p.z)
 
+func _quest_steps(a: Dictionary) -> Array:
+	var steps = a.get("progress_steps", a.get("progress", []))
+	if typeof(steps) != TYPE_ARRAY:
+		return []
+	var done = a.get("steps_done", [])
+	if typeof(done) != TYPE_ARRAY:
+		done = []
+	var out: Array = []
+	for s in steps:
+		if typeof(s) != TYPE_DICTIONARY:
+			continue
+		var step: Dictionary = (s as Dictionary).duplicate(true)
+		var sid := str(step.get("id", ""))
+		if not bool(step.get("done", false)) and sid != "" and sid in done:
+			step["done"] = true
+		out.append(step)
+	return out
+
+
+func _normalize_active_list(raw: Array) -> Array:
+	var out: Array = []
+	for a in raw:
+		if typeof(a) != TYPE_DICTIONARY:
+			continue
+		var e: Dictionary = (a as Dictionary).duplicate(true)
+		e["progress_steps"] = _quest_steps(e)
+		out.append(e)
+	return out
+
+
 func _try_auto_progress() -> void:
 	if _active.is_empty():
 		return
@@ -112,9 +142,7 @@ func _try_auto_progress() -> void:
 		if typeof(a) != TYPE_DICTIONARY:
 			continue
 		var qid := str(a.get("id", ""))
-		var steps = a.get("progress_steps", [])
-		if typeof(steps) != TYPE_ARRAY:
-			continue
+		var steps := _quest_steps(a)
 		for s in steps:
 			if typeof(s) != TYPE_DICTIONARY:
 				continue
@@ -163,6 +191,7 @@ func toggle() -> void:
 	visible = panel_visible
 	_apply_mouse_filter()
 	if panel_visible:
+		_apply_hub_runtime_sidecar()
 		refresh_board()
 
 func _ensure_ui() -> void:
@@ -285,8 +314,8 @@ func _next_objective_text() -> String:
 		if typeof(a) != TYPE_DICTIONARY:
 			continue
 		var title := str(a.get("title", a.get("id", "Mission")))
-		var steps = a.get("progress_steps", [])
-		if typeof(steps) != TYPE_ARRAY or steps.is_empty():
+		var steps := _quest_steps(a)
+		if steps.is_empty():
 			return "Mission : %s — J pour terminer" % title
 		for s in steps:
 			if typeof(s) != TYPE_DICTIONARY:
@@ -356,7 +385,8 @@ func _on_http_done(result: int, code: int, _headers: PackedStringArray, body: Pa
 		_refresh_status_after_board()
 		return
 	# status
-	_active = parsed.get("active", [])
+	var raw_active = parsed.get("active", [])
+	_active = _normalize_active_list(raw_active if typeof(raw_active) == TYPE_ARRAY else [])
 	_credits = int(parsed.get("credits", _credits))
 	_status = "live — %d actives · %d Cr" % [_active.size(), _credits]
 	_paint()
@@ -403,6 +433,22 @@ func _post_act(path: String, payload: Dictionary, kind: String) -> void:
 
 func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	# 4xx métier (incomplete, etc.) : lire le JSON, pas « réseau KO ».
+	if typeof(parsed) == TYPE_DICTIONARY and code >= 400 and code < 500 and parsed.has("error"):
+		var err4 := str(parsed.get("error", code))
+		var hint4 := str(parsed.get("hint", ""))
+		match err4:
+			"incomplete", "objectives_incomplete":
+				_status = hint4 if hint4 != "" else "objectifs incomplets — va sur place"
+			"steps_out_of_order":
+				_status = hint4 if hint4 != "" else "fais les étapes dans l'ordre"
+			"not_active":
+				_status = "pas de mission active — rafraîchis le board"
+				call_deferred("refresh_board")
+			_:
+				_status = "échec: %s%s" % [err4, (" — " + hint4) if hint4 != "" else ""]
+		_paint_status()
+		return
 	if result != HTTPRequest.RESULT_SUCCESS or code < 200 or code >= 300:
 		if _pending == "accept":
 			_accept_local_mock()
@@ -421,12 +467,15 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 		var err := str(parsed.get("error", code))
 		var hint := str(parsed.get("hint", ""))
 		match err:
-			"objectives_incomplete":
+			"incomplete", "objectives_incomplete":
 				_status = hint if hint != "" else "objectifs incomplets — va sur place"
 			"steps_out_of_order":
 				_status = hint if hint != "" else "fais les étapes dans l'ordre"
 			"no_offers":
 				_status = hint if hint != "" else "aucune mission — rafraîchis le board"
+				call_deferred("refresh_board")
+			"not_active":
+				_status = "pas de mission active — rafraîchis le board"
 				call_deferred("refresh_board")
 			_:
 				_status = "échec: %s%s" % [err, (" — " + hint) if hint != "" else ""]
@@ -449,7 +498,8 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 		if bool(parsed.get("ready_to_turn_in", false)):
 			_status += " · prête à Terminer"
 		if parsed.has("active"):
-			_active = parsed.get("active", _active)
+			var pa = parsed.get("active", _active)
+			_active = _normalize_active_list(pa if typeof(pa) == TYPE_ARRAY else [])
 		_paint()
 		return
 	else:
@@ -462,7 +512,8 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 			_status = "terminée — %s (+%d Cr)" % [title, cr]
 		_credits = int(parsed.get("credits", _credits))
 		quest_completed.emit(parsed)
-	_active = parsed.get("active", _active)
+	var act = parsed.get("active", _active)
+	_active = _normalize_active_list(act if typeof(act) == TYPE_ARRAY else [])
 	_paint()
 	# refresh board list state
 	call_deferred("refresh_board")

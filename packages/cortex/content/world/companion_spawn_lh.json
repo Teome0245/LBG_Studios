@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "companion:spawn_lh",
   "ticket": "C3",
-  "status": "stub",
+  "status": "live_hub",
   "bible_ref": "docs/world/BIBLE_MMO.md#v40-v54",
   "bible_safe": true,
   "planet": "Scrapaltai",
@@ -28,9 +28,9 @@
   "presence": {
     "visible_on_human_login": true,
     "not_pilot_only": true,
-    "follow_short": false,
-    "comment_30s": false,
-    "notes": "follow / say 30s = backlog soft après nameplate."
+    "follow_short": true,
+    "comment_30s": true,
+    "notes": "2026-10-07 hub : fleet_greet = Nix only + escort ~28s ; nameplate client."
   },
   "godot_flags": {
     "config_key": "spawn_companion",

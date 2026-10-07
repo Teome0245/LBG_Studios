@@ -8,6 +8,7 @@ const HubAuthScript = preload("res://scripts/hub_auth.gd")
 const HubEconomyScript = preload("res://scripts/hub_economy.gd")
 const HubCatalogScript = preload("res://scripts/hub_catalog.gd")
 const HubDialogueScript = preload("res://scripts/hub_dialogue.gd")
+const HubEventsScript = preload("res://scripts/hub_events.gd")
 
 const TICK_HZ := 20.0
 const DEFAULT_PORT := 8787
@@ -19,6 +20,7 @@ var auth
 var economy
 var catalog
 var dialogue
+var events
 var _accum: float = 0.0
 
 
@@ -40,17 +42,23 @@ func _ready() -> void:
 	catalog = HubCatalogScript.new()
 	dialogue = HubDialogueScript.new()
 	dialogue.setup()
+	events = HubEventsScript.new()
 
 	sim = HubSimScript.new()
 	sim.name = "HubSim"
 	add_child(sim)
 	sim.attach_economy(economy)
+	sim.attach_events(events)
 	sim.reset()
+	economy.attach_events(events)
+	dialogue.attach_events(events)
+	events.setup(Callable(sim, "enqueue_say"))
 
 	http = HubHttpScript.new()
 	http.name = "HubHttp"
 	add_child(http)
 	http.setup_services(auth, economy, catalog, dialogue)
+	http.events = events
 	# Router only si même port que WS ; sinon écoute dédiée
 	var listen_http := 0 if http_port == port else http_port
 	if http.start(sim, listen_http, port) != OK:
@@ -87,8 +95,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_accum += delta
 	var interval := 1.0 / TICK_HZ
-	while _accum >= interval:
-		_accum -= interval
+	# Max 1 tick/frame — pas de rattrapage en rafale (sinon pic CPU + burst WS = saccades client).
+	if _accum >= interval:
+		_accum = minf(_accum - interval, interval)
 		sim.step(interval)
 		ws.flush_chat()
-		ws.broadcast_zone_state()
+		# zone_state ~10 Hz, payload slim + drop backpressure (Send-Q OK).
+		if int(sim.tick) % 2 == 0:
+			ws.broadcast_zone_state()

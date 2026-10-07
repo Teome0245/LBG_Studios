@@ -4,7 +4,7 @@
   "display_name": "Hermès",
   "role": "dev_godot",
   "persona": "hermes",
-  "description": "Dev Godot IA — réseau SOE, gateway lbg-ws/2, bridges UDP/WebSocket Prime",
+  "description": "Dev Godot IA — réseau SOE, gateway lbg-ws/2, bridges UDP/WebSocket Prime. Lien doux jeu : Tess (hermes_bridge).",
   "capabilities": [
     {
       "id": "audit_soe_m3",
@@ -30,8 +30,16 @@
   ],
   "constraints": [
     "read_only_probes_by_default",
-    "l0_l1_autonomy_only"
+    "l0_l1_autonomy_only",
+    "mmo_play_no_forge_via_hub"
   ],
   "subproject": "godot_hermes",
-  "owner_timer": "lbg-team-godot-dev-job"
+  "owner_timer": "lbg-team-godot-dev-job",
+  "mmo_play": {
+    "account_login": "hermes_bridge",
+    "mmo_player": "Tess",
+    "bridge_agent_id": "player_bridge_tess",
+    "link": "soft_adr0004",
+    "note": "Mode B = jouer Lost Heaven via Tess ; Mode A = réseau Godot. Login=hermes_bridge. Pas de droits forge via le hub."
+  }
 }

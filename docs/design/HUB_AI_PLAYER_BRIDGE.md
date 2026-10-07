@@ -39,6 +39,19 @@ Migration **faite** 2026-10-07 : `Bot_IA*` → `*_bridge` (persos IG conservés)
 
 Humains : même grille admin ; pont hors-jeu optionnel.
 
+## Liens doux Studio ↔ perso IG (ADR 0004)
+
+Un membre Studio peut être **associé** à un compte/perso hub **sans** fusionner Mode A (forge) et Mode B (jeu) :
+
+| Studio | Compte | Perso IG | Pont | Zones |
+|--------|--------|----------|------|-------|
+| **Vulcan** (`studio_dev_vulcan`) | `vulcan_bridge` (ex `vex_bridge`) | Vex | `player_bridge_vex` | Lab / Salle jeux |
+| **Hermès** (`godot_dev_hermes`) | `hermes_bridge` (ex `tess_bridge`) | Tess | `player_bridge_tess` | Prime / Salle jeux |
+
+- Suggestions / session IG → toujours via le **pont** (`player_bridge_*`).
+- Forge / audits → agent Studio (jetons L2 inchangés).
+- **Pas** de droits forge via le hub (`soft_link_no_forge_via_hub`).
+
 ## Ops COMPTES
 
 Comptes Prime `.246` (login = persona out-game) :
@@ -51,23 +64,12 @@ Comptes Prime `.246` (login = persona out-game) :
 | `kael_bridge` | 13 | 0 | Kael | oui |
 | `renn_bridge` | 14 | 0 | Renn | **oui** |
 | `sola_bridge` | 15 | 0 | Sola | **oui** |
-| `vex_bridge` | 16 | 0 | Vex | **oui** |
+| `vulcan_bridge` | 16 | 0 | Vex | **oui** · ↔ Vulcan |
 | `ori_bridge` | 17 | 0 | Ori | **oui** |
-| `tess_bridge` | 18 | 0 | Tess | **oui** |
+| `hermes_bridge` | 18 | 0 | Tess | **oui** · ↔ Hermès |
 | `bram_bridge` | 19 | 0 | Bram | **oui** |
 
 Nouveau joueur : login = persona · perso IG ≠ login · sync `ai_players.json` · `enabled: true` · redeploy.
-
-## Anneau désert (C13)
-
-Périmètre explore hors murs : [`explore_ring_lh.json`](../../packages/prime-hub/data/life/explore_ring_lh.json) (`max_radius_m`, défaut **3000**).
-
-- Autonomy charge waypoints + sample aléatoire dans l’anneau (`hub_bot_autonomy.gd`).
-- `POST /v1/bots/move_to` est **clampé** au rayon (hub_sim).
-- Skill runtime : `data/agent/skill.md` · manuel canon : [`AGENT_SKILL_MMO.md`](../../packages/cortex/docs/AGENT_SKILL_MMO.md).
-- Hors scope : Scrapaltai entière, Zalem jouable (V10b).
-
-Ajuster le rayon : éditer `max_radius_m` → `bash packages/cortex/infra/scripts/deploy_prime_hub_246.sh`.
 
 ## Suggestions
 

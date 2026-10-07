@@ -83,7 +83,7 @@
         "v": 0.62
       },
       "poi_ids": [
-        "poi:lost_heaven_housing_npc"
+        "poi:lost_heaven_lodge_w"
       ]
     },
     {
@@ -207,7 +207,7 @@
       }
     },
     {
-      "id": "poi:lost_heaven_housing_npc",
+      "id": "poi:lost_heaven_lodge_w",
       "map_uv": {
         "u": 0.18,
         "v": 0.55

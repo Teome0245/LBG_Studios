@@ -39,9 +39,8 @@ Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)
 |--------|------|
 | **Triplons** | Groupes 3 PNJ · cycle `work` → `leisure` → `rest` · ≈ ⅔ visibles |
 | **Flotte IA** | `ai_players.json` · login = persona out-game · pont `player_bridge_*` · admin 0–4 · cap 10/20 · LAN |
-| **Anneau explore** | `life/explore_ring_lh.json` · ~3 km autour plaza LH · clamp `POST /v1/bots/move_to` · pas Scrapaltai entière / pas Zalem (C13) |
 | **Objectifs** | `short` / `medium` / `long` par persona |
-| **Autonomie bots** | Tirage quête / explore (anneau) / hub |
+| **Autonomie bots** | Tirage quête / explore / hub |
 | **Suggestions monde** | File `data/world_suggestions.jsonl` · Studio, pas auto-monde |
 | **Surface agent** | `GET /v1/agent/bootstrap` · `GET /v1/agent/skill` · `/skill.md` |
 
@@ -68,6 +67,8 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 2. **Gameplay hub** — quêtes terrain POI, craft UX, dialogue riche
 3. **Combat / cour de chasse** — P5a déjà amorcé ; brancher sur `prime-hub`
 4. **Navmesh Godot** — remplacer A* grille AABB quand besoin
+5. **Anti-saccade (2026-10-07)** — client : lissage positions remote ; hub : budget A* `PATH_BUDGET_PER_TICK=2`
+6. **Anti-saccade v2** — gateway **non-bloquante** (plus de `OS.delay_usec` sur HTTP/WS accept) ; max 1 tick/frame ; `zone_state` ~10 Hz sans doublon `bots[]`
 
 ## Anti double-build
 

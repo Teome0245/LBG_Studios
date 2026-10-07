@@ -43,9 +43,14 @@ const FALLBACK_REPLIES := [
 	["craft", "Kell Asa à l'atelier : combine ce que tu ramasses."],
 	["soin", "Clinique, Odo Merr. Pas de miracle — des kits."],
 	["porte", "Porte est = désert. Porte ouest = Zalem. Les remparts tiennent… pour l'instant."],
+	["ferraille", "Si le board parle de débris de convoi, sors porte est — pile de scrap avant les chacals."],
+	["scrap", "Ferraille hors palissade : board Daan quand l'event tourne. Sinon, rien à ramasser."],
+	["convoi", "Convoi Zalem — frein lâché. Board des missions si l'offre est encore affichée."],
+	["rumeur", "Au marché et à La Perle on en parle — mais le board tranche."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry
+var events = null
 
 
 func setup() -> void:
@@ -59,6 +64,18 @@ func setup() -> void:
 	for n in npcs:
 		if typeof(n) == TYPE_DICTIONARY and str(n.get("id", "")) != "":
 			_registry[str(n["id"])] = n
+
+
+func attach_events(events_svc) -> void:
+	events = events_svc
+
+
+func _event_rumor() -> String:
+	if events == null or not events.has_method("is_active") or not bool(events.is_active()):
+		return ""
+	if events.has_method("rumor_hint"):
+		return str(events.rumor_hint()).strip_edges()
+	return ""
 
 
 func _normalize_npc_id(raw: String) -> String:
@@ -107,7 +124,33 @@ func _suggested_moves(npc_id: String) -> Array:
 	return out
 
 
-func _llm_line(npc_name: String, role_hint: String, player_text: String, place: String) -> String:
+func _session_memory_line(ss: Dictionary, npc_name: String) -> String:
+	## C2 — uniquement des faits utiles (quête, autre PNJ, demande joueur).
+	## Pas de « on s'est déjà croisés » ni de recycle de la réplique PNJ.
+	var bits: Array = []
+	var last := str(ss.get("last_npc", "")).strip_edges()
+	var quest := str(ss.get("tracked_quest", "")).strip_edges()
+	var note := str(ss.get("player_note", ss.get("memory_hint", ""))).strip_edges()
+	var same_npc := not last.is_empty() and last.to_lower() == npc_name.to_lower()
+	# Autre PNJ croisé récemment — utile pour orientation sociale.
+	if not last.is_empty() and not same_npc:
+		bits.append("vient de voir %s" % last)
+	# Quête suivie — toujours pertinent.
+	if not quest.is_empty():
+		var qlabel := quest
+		if qlabel.begins_with("lh_"):
+			qlabel = qlabel.substr(3).replace("_", " ")
+		bits.append("piste « %s »" % qlabel.substr(0, 40))
+	# Note = dernière demande JOUEUR (ignorer anciens dumps « Dernier échange : »).
+	if not note.is_empty() and not note.to_lower().begins_with("dernier échange"):
+		# Même PNJ : ne rappeler la demande que si ce n'est pas un simple salut.
+		bits.append("a dit : « %s »" % note.substr(0, 56))
+	if bits.is_empty():
+		return ""
+	return " · ".join(bits)
+
+
+func _llm_line(npc_name: String, role_hint: String, player_text: String, place: String, memory: String = "") -> String:
 	var disabled := OS.get_environment("LBG_HUB_LLM_DISABLED").strip_edges().to_lower()
 	if disabled in ["1", "true", "yes"]:
 		return ""
@@ -128,6 +171,11 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 		"Tu es %s, %s à %s (Lost Heaven). Réponds en français, 1 phrase courte, ton PNJ, pas de markdown."
 		% [npc_name, role_hint, place]
 	)
+	if not memory.is_empty():
+		system += (
+			" Contexte utile (une allusion max, naturelle, jamais recopier mot à mot) : %s."
+			% memory.substr(0, 140)
+		)
 	var body := JSON.stringify({
 		"model": model,
 		"messages": [
@@ -151,12 +199,13 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 		port = 11434 if port == 80 else port
 	if http.connect_to_host(host, port) != OK:
 		return ""
-	var deadline := Time.get_ticks_msec() + 2500
+	# Budget court : même process que la sim WS — un LLM bloquant = saccades jeu.
+	var deadline := Time.get_ticks_msec() + 600
 	while http.get_status() == HTTPClient.STATUS_CONNECTING or http.get_status() == HTTPClient.STATUS_RESOLVING:
 		http.poll()
 		if Time.get_ticks_msec() > deadline:
 			return ""
-		OS.delay_usec(2000)
+		OS.delay_usec(500)
 	if http.get_status() != HTTPClient.STATUS_CONNECTED:
 		return ""
 	var err := http.request(
@@ -171,7 +220,7 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 		http.poll()
 		if Time.get_ticks_msec() > deadline:
 			return ""
-		OS.delay_usec(2000)
+		OS.delay_usec(500)
 	if not http.has_response():
 		return ""
 	var rb := PackedByteArray()
@@ -179,7 +228,7 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 		http.poll()
 		var chunk := http.read_response_body_chunk()
 		if chunk.size() == 0:
-			OS.delay_usec(2000)
+			OS.delay_usec(500)
 		else:
 			rb.append_array(chunk)
 		if Time.get_ticks_msec() > deadline:
@@ -199,7 +248,7 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 	return text
 
 
-func _pick_reply(npc_id: String, npc_name: String, player_text: String) -> String:
+func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: String = "") -> String:
 	var t := player_text.strip_edges().to_lower()
 	var entry = _registry.get(npc_id, {})
 	var role := "habitant hub"
@@ -209,16 +258,46 @@ func _pick_reply(npc_id: String, npc_name: String, player_text: String) -> Strin
 		place = str(entry.get("zone", place))
 		if npc_name.is_empty():
 			npc_name = str(entry.get("name", ""))
-	var llm := _llm_line(npc_name if not npc_name.is_empty() else "PNJ", role.substr(0, 120), player_text, place)
+	var llm := _llm_line(
+		npc_name if not npc_name.is_empty() else "PNJ",
+		role.substr(0, 120),
+		player_text,
+		place,
+		memory
+	)
 	if not llm.is_empty():
 		return llm
+	var rumor := _event_rumor()
+	var rumor_npcs := [
+		"npc:core3_daan_oth", "npc:core3_barman_jax", "npc:rumeuriste", "npc:sergent_rue",
+	]
+	var wants_rumor := (
+		"rumeur" in t or "scrap" in t or "ferraille" in t or "convoi" in t
+		or "débris" in t or "debris" in t
+	)
+	if not rumor.is_empty() and npc_id in rumor_npcs and wants_rumor:
+		if npc_id == "npc:core3_daan_oth":
+			return "Daan Oth : %s Prends « Débris de convoi » au board tant que ça tient." % rumor
+		if npc_id == "npc:sergent_rue":
+			return "Sergent : %s Porte est, puis pile de ferraille — ne traîne pas." % rumor
+		return "%s : %s" % [npc_name if not npc_name.is_empty() else "PNJ", rumor]
 	var is_greet := t.is_empty() or t in ["bonjour", "bonjour.", "salut", "hello", "hey"] or t.begins_with("bonjour")
 	if is_greet and GREETINGS.has(npc_id):
-		return str(GREETINGS[npc_id])
+		var greet := str(GREETINGS[npc_id])
+		# Salut : une accroche utile max — jamais de parenthèse « au fait » ni de recycle.
+		if "piste" in memory:
+			return "%s Pour ta piste en cours : dis-moi ce dont tu as besoin ici." % greet
+		if "vient de voir" in memory:
+			return "%s Tu tournes sur le hub — je t'écoute." % greet
+		if not rumor.is_empty() and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste"]:
+			return "%s On dit : %s" % [greet, rumor]
+		return greet
 	for pair in FALLBACK_REPLIES:
 		if str(pair[0]) in t:
 			return str(pair[1])
 	var who := npc_name if not npc_name.is_empty() else "PNJ"
+	if "a dit" in memory:
+		return "%s : oui — à ce sujet, dis-moi ce qu'il te faut concrètement." % who
 	return "%s : je suis là. Qu'est-ce qu'il te faut à Lost Heaven ?" % who
 
 
@@ -229,6 +308,9 @@ func invoke(body: Dictionary) -> Dictionary:
 	var npc_id := _normalize_npc_id(str(ctx.get("world_npc_id", body.get("world_npc_id", ""))))
 	var npc_name := str(ctx.get("npc_name", body.get("npc_name", ""))).strip_edges()
 	var player_text := str(body.get("text", "")).strip_edges()
+	var ss = ctx.get("session_summary", {})
+	if typeof(ss) != TYPE_DICTIONARY:
+		ss = {}
 	if npc_name.is_empty() and _registry.has(npc_id):
 		npc_name = str((_registry[npc_id] as Dictionary).get("name", ""))
 	if npc_id.is_empty() and not npc_name.is_empty():
@@ -237,7 +319,8 @@ func invoke(body: Dictionary) -> Dictionary:
 			if str(ent.get("name", "")).to_lower() == npc_name.to_lower():
 				npc_id = str(eid)
 				break
-	var reply := _pick_reply(npc_id, npc_name, player_text)
+	var memory := _session_memory_line(ss, npc_name)
+	var reply := _pick_reply(npc_id, npc_name, player_text, memory)
 	var moves := _suggested_moves(npc_id)
 	return {
 		"ok": true,
@@ -250,5 +333,7 @@ func invoke(body: Dictionary) -> Dictionary:
 			"world_npc_id": npc_id,
 			"npc_name": npc_name,
 			"source": "prime_hub",
+			"session_memory": memory,
+			"session_memory_used": not memory.is_empty(),
 		},
 	}

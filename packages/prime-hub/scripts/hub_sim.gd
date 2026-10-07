@@ -22,6 +22,11 @@ const TRAINING := Vector3(4939.0, 0.15, -672.0)
 const INN := Vector3(4809.0, 0.15, -672.0)
 const TOWN_HALL := Vector3(4679.0, 0.15, -932.0)
 const ARTISAN := Vector3(5069.0, 0.15, -802.0)
+## Logements PNJ — anneau intérieur remparts (loin du cluster commercial).
+const LODGE_W := Vector3(4305.0, 0.15, -780.0)
+const LODGE_N := Vector3(4749.0, 0.15, -430.0)
+const LODGE_E := Vector3(5245.0, 0.15, -630.0)
+const LODGE_S := Vector3(4860.0, 0.15, -1185.0)
 const BOT_SPEED := 12.0
 
 const POIS: Dictionary = {
@@ -35,6 +40,10 @@ const POIS: Dictionary = {
 	"train": TRAINING,
 	"hall": TOWN_HALL,
 	"craft": ARTISAN,
+	"lodge_w": LODGE_W,
+	"lodge_n": LODGE_N,
+	"lodge_e": LODGE_E,
+	"lodge_s": LODGE_S,
 }
 
 ## Fallback si ai_players.json absent
@@ -109,6 +118,7 @@ var autonomy = null
 var suggest = null
 var economy = null
 var agent_api = null
+var events = null
 var bot_defs: Array = []
 var tick: int = 0
 var entities: Dictionary = {}
@@ -118,12 +128,19 @@ var _last_ambient: Dictionary = {}  # eid -> float unix
 var _rng := RandomNumberGenerator.new()
 var _persist_every_ticks: int = 100  # ~5 s @ 20 Hz
 var _life_tick_every: int = 20  # ~1 s
+## Budget A* par tick sim (évite pics CPU → broadcast zone_state en retard → saccades client).
+const PATH_BUDGET_PER_TICK := 2
+var _path_budget: int = 0
 
 
 func attach_economy(economy_svc) -> void:
 	economy = economy_svc
 	if autonomy != null:
 		autonomy.economy = economy_svc
+
+
+func attach_events(events_svc) -> void:
+	events = events_svc
 
 
 func reset() -> void:
@@ -193,6 +210,9 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 	var og = p.get("out_game", {})
 	if typeof(og) != TYPE_DICTIONARY:
 		og = {}
+	var ls = og.get("linked_studio", {})
+	if typeof(ls) != TYPE_DICTIONARY:
+		ls = {}
 	return {
 		"eid": str(p.get("eid", "player:%s" % p.get("name", "Bot"))),
 		"oid": int(p.get("oid", 900000)),
@@ -210,6 +230,8 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 		"account_login_legacy": str(p.get("account_login_legacy", "")),
 		"out_game_persona": str(og.get("persona", "")),
 		"agent_id": str(og.get("agent_id", "")),
+		"linked_studio_agent_id": str(ls.get("agent_id", "")),
+		"linked_studio_display": str(ls.get("display_name", "")),
 	}
 
 
@@ -264,6 +286,8 @@ func _ensure_fleet() -> void:
 			"account_login": str(b.get("account_login", "")),
 			"out_game_persona": str(b.get("out_game_persona", "")),
 			"agent_id": str(b.get("agent_id", "")),
+			"linked_studio_agent_id": str(b.get("linked_studio_agent_id", "")),
+			"linked_studio_display": str(b.get("linked_studio_display", "")),
 		}
 		entities[eid] = ent
 		# Goal sans A* au spawn (évite freeze startup) — path au premier step
@@ -356,18 +380,38 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 	bot["has_waypoint"] = false
 	bot["waypoint"] = Vector2.ZERO
 	bot["path"] = []
+	bot["needs_path"] = true
 	if with_path and collision != null:
-		var pos: Vector3 = bot["pos"]
-		var route: Array = collision.find_path(pos.x, pos.z, wz.x, wz.y)
-		var path: Array = []
-		for i in range(maxi(0, route.size() - 1)):
-			path.append(route[i])
-		if path.size() > 0:
-			bot["waypoint"] = path.pop_front()
-			bot["has_waypoint"] = true
-			bot["path"] = path
-		else:
-			bot["path"] = []
+		_apply_path_to_bot(bot, wz.x, wz.y)
+
+
+func _consume_path_budget() -> bool:
+	if _path_budget <= 0:
+		return false
+	_path_budget -= 1
+	return true
+
+
+func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> bool:
+	## True si A* exécuté (même chemin vide). False si budget épuisé.
+	if collision == null:
+		return true
+	if not _consume_path_budget():
+		return false
+	var pos: Vector3 = bot["pos"]
+	var route: Array = collision.find_path(pos.x, pos.z, tx, tz)
+	var path: Array = []
+	for i in range(maxi(0, route.size() - 1)):
+		path.append(route[i])
+	if path.size() > 0:
+		bot["waypoint"] = path.pop_front()
+		bot["has_waypoint"] = true
+		bot["path"] = path
+	else:
+		bot["path"] = []
+		bot["has_waypoint"] = false
+	bot["needs_path"] = false
+	return true
 
 
 func _pick_wander_target(ent: Dictionary) -> Vector3:
@@ -470,6 +514,7 @@ func drain_chat() -> Array:
 
 
 func fleet_greet_human(human_name: String, human_oid: int) -> void:
+	## C3 — un seul compagnon (Nix) accueille + escorte courte ; pas de spam flotte.
 	if _greeted_oids.has(human_oid):
 		return
 	_greeted_oids[human_oid] = true
@@ -477,12 +522,48 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	var who := human_name.strip_edges()
 	if who.is_empty():
 		who = "Voyageur"
+	var companion := _pick_companion_bot()
+	if companion.is_empty():
+		return
+	var line := str(companion.get("greet", "Salut {who}.")).replace("{who}", who)
+	enqueue_say(str(companion.get("name", "Nix")), int(companion.get("oid", 0)), line, "ia")
+	_start_companion_escort(companion, 28.0)
+
+
+func _pick_companion_bot() -> Dictionary:
+	## Préférence Nix, sinon premier bot enabled.
+	var prefer := ["player:Nix", "Nix", "player:Lia", "Lia"]
+	for want in prefer:
+		var w := str(want).to_lower()
+		for b in bot_defs:
+			var bot = entities.get(str(b["eid"]))
+			if bot == null:
+				continue
+			var eid := str(b.get("eid", "")).to_lower()
+			var nm := str(b.get("name", "")).to_lower()
+			if eid == w or nm == w or eid.ends_with(":" + w):
+				return bot
 	for b in bot_defs:
-		var bot = entities.get(str(b["eid"]))
-		if bot == null:
-			continue
-		var line := str(b.get("greet", "Salut {who}.")).replace("{who}", who)
-		enqueue_say(str(b["name"]), int(bot["oid"]), line, "ia")
+		var bot2 = entities.get(str(b["eid"]))
+		if bot2 != null:
+			return bot2
+	return {}
+
+
+func _start_companion_escort(bot: Dictionary, duration_s: float) -> void:
+	var now := Time.get_unix_time_from_system()
+	bot["_escort_until"] = now + maxf(8.0, duration_s)
+	bot["goal"] = "companion_escort"
+	bot["linger_until"] = 0.0
+	bot["has_waypoint"] = false
+	bot["path"] = []
+	bot["needs_path"] = false
+	var humans := _humans()
+	if humans.is_empty():
+		return
+	var hp: Vector3 = humans[0]["pos"]
+	var wz := _walkable_xz(hp.x + 5.0, hp.z + 3.0)
+	bot["target"] = Vector3(wz.x, hp.y, wz.y)
 
 
 func _humans() -> Array:
@@ -550,6 +631,20 @@ func _maybe_ambient() -> void:
 
 func _step_bot(bot: Dictionary, dt: float) -> void:
 	var now := Time.get_unix_time_from_system()
+	var escort_until := float(bot.get("_escort_until", 0.0))
+	var escorting := escort_until > now
+	if escorting:
+		# Rafraîchir la cible près du joueur (follow court C3).
+		var humans := _humans()
+		if not humans.is_empty():
+			var hp: Vector3 = humans[0]["pos"]
+			var wz := _walkable_xz(hp.x + 5.0, hp.z + 3.0)
+			bot["target"] = Vector3(wz.x, hp.y, wz.y)
+			bot["goal"] = "companion_escort"
+			bot["linger_until"] = 0.0
+	elif str(bot.get("goal", "")) == "companion_escort":
+		bot.erase("_escort_until")
+		_assign_bot_goal(bot)
 	if float(bot.get("linger_until", 0.0)) > now:
 		return
 	var target: Vector3 = bot["target"]
@@ -557,6 +652,8 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 		_assign_bot_goal(bot)
 		target = bot["target"]
 	var pos: Vector3 = bot["pos"]
+	if bool(bot.get("needs_path", false)):
+		_apply_path_to_bot(bot, target.x, target.z)
 
 	# Suivre waypoint A* si présent
 	var steer := target
@@ -578,6 +675,10 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	var dist := sqrt(dx * dx + dz * dz)
 	# Arrivée finale seulement sans waypoint restant
 	if not bool(bot.get("has_waypoint", false)) and dist < 4.0:
+		if escorting:
+			# Rester près du joueur sans repartir en autonomie.
+			bot["linger_until"] = now + 1.2
+			return
 		if autonomy != null:
 			autonomy.on_arrival(bot)
 		bot["linger_until"] = now + _rng.randf_range(3.0, 7.0)
@@ -599,16 +700,9 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 		bot["stuck_ticks"] = int(bot.get("stuck_ticks", 0)) + 1
 		if int(bot["stuck_ticks"]) >= 6 and collision != null:
 			var final: Vector3 = bot["target"]
-			var route: Array = collision.find_path(pos.x, pos.z, final.x, final.z)
-			var path2: Array = []
-			for i in range(maxi(0, route.size() - 1)):
-				path2.append(route[i])
-			bot["path"] = path2
-			if path2.size() > 0:
-				bot["waypoint"] = path2.pop_front()
-				bot["has_waypoint"] = true
-				bot["path"] = path2
-			else:
+			if not _apply_path_to_bot(bot, final.x, final.z):
+				bot["needs_path"] = true
+			elif not bool(bot.get("has_waypoint", false)):
 				var detour = collision.detour_waypoint(pos.x, pos.z, final.x, final.z)
 				if detour != null:
 					bot["waypoint"] = detour
@@ -622,22 +716,45 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	bot["pos"] = Vector3(nx, pos.y, nz)
 
 
+func _finalize_npc_rest(npc: Dictionary) -> void:
+	## Arrivé au logement → hors zone_state (inactif).
+	var home := _walkable_xz(float(npc.get("home_x", npc["pos"].x)), float(npc.get("home_z", npc["pos"].z)))
+	npc["pos"] = Vector3(home.x, float(npc["pos"].y), home.y)
+	npc["target"] = Vector3.ZERO
+	npc["speed"] = 0.0
+	npc["active"] = false
+	npc["wander_r"] = 0.0
+	npc["_rest_commute"] = false
+	npc["goal"] = "rest"
+	npc["stuck_ticks"] = 0
+
+
 func _step_npc(npc: Dictionary, dt: float) -> void:
 	if not bool(npc.get("active", true)):
 		return
-	var wander := float(npc.get("wander_r", 0.0))
 	var speed: float = float(npc.get("speed", 0.0))
-	if wander <= 0.0 or speed <= 0.0:
+	if speed <= 0.0:
+		return
+	var rest_home := str(npc.get("goal", "")) == "rest_home" or bool(npc.get("_rest_commute", false))
+	var wander := float(npc.get("wander_r", 0.0))
+	if not rest_home and wander <= 0.0:
 		return
 	var target: Vector3 = npc["target"]
 	if target == Vector3.ZERO:
-		npc["target"] = _pick_wander_target(npc)
-		target = npc["target"]
+		if rest_home:
+			target = Vector3(float(npc.get("home_x", 0.0)), 0.15, float(npc.get("home_z", 0.0)))
+			npc["target"] = target
+		else:
+			npc["target"] = _pick_wander_target(npc)
+			target = npc["target"]
 	var pos: Vector3 = npc["pos"]
 	var dx := target.x - pos.x
 	var dz := target.z - pos.z
 	var dist := sqrt(dx * dx + dz * dz)
-	if dist < 1.5:
+	if dist < (2.8 if rest_home else 1.5):
+		if rest_home:
+			_finalize_npc_rest(npc)
+			return
 		# Arrivé au poste / loisir : déambuler localement
 		npc["target"] = _pick_wander_target(npc)
 		npc["stuck_ticks"] = 0
@@ -653,6 +770,9 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	if moved < step_len * 0.15:
 		npc["stuck_ticks"] = int(npc.get("stuck_ticks", 0)) + 1
 		if int(npc["stuck_ticks"]) >= 5:
+			if rest_home:
+				_finalize_npc_rest(npc)
+				return
 			var home := _walkable_xz(float(npc["home_x"]), float(npc["home_z"]))
 			npc["pos"] = Vector3(home.x, pos.y, home.y)
 			npc["target"] = _pick_wander_target(npc)
@@ -667,7 +787,10 @@ func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	tick += 1
+	_path_budget = PATH_BUDGET_PER_TICK
 	dt = clampf(dt, 0.001, 0.25)
+	if events != null and tick % _life_tick_every == 0 and events.has_method("tick"):
+		events.tick(Time.get_unix_time_from_system())
 	if life != null and tick % _life_tick_every == 0:
 		life.tick_life(entities, Time.get_unix_time_from_system())
 	for eid in entities.keys():
@@ -687,7 +810,7 @@ func step(dt: float) -> void:
 		player_store.save_all()
 
 
-func entity_list() -> Array:
+func entity_list(slim: bool = false) -> Array:
 	var out: Array = []
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
@@ -695,19 +818,30 @@ func entity_list() -> Array:
 		if str(e.get("kind", "")) == "npc" and not bool(e.get("active", true)):
 			continue
 		var p: Vector3 = e["pos"]
-		out.append({
-			"id": int(e["oid"]),
-			"entity_key": str(e["eid"]),
-			"kind": str(e["kind"]),
-			"name": str(e["name"]),
-			"pos": [p.x, p.y, p.z],
-			"source": "prime_hub",
-			"goal": str(e.get("goal", "")),
-			"play_mode": str(e.get("play_mode", "")),
-			"quest_id": str(e.get("quest_id", "")),
-			"is_bot": bool(e.get("is_bot", false)),
-			"life_phase": str(e.get("life_phase", "")),
-		})
+		if slim:
+			# Fil de jeu : champs stricts (bande passante / JSON parse client).
+			out.append({
+				"id": int(e["oid"]),
+				"entity_key": str(e["eid"]),
+				"kind": str(e["kind"]),
+				"name": str(e["name"]),
+				"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
+				"is_bot": bool(e.get("is_bot", false)),
+			})
+		else:
+			out.append({
+				"id": int(e["oid"]),
+				"entity_key": str(e["eid"]),
+				"kind": str(e["kind"]),
+				"name": str(e["name"]),
+				"pos": [p.x, p.y, p.z],
+				"source": "prime_hub",
+				"goal": str(e.get("goal", "")),
+				"play_mode": str(e.get("play_mode", "")),
+				"quest_id": str(e.get("quest_id", "")),
+				"is_bot": bool(e.get("is_bot", false)),
+				"life_phase": str(e.get("life_phase", "")),
+			})
 	return out
 
 
@@ -731,6 +865,8 @@ func bots_payload() -> Array:
 			"admin_level": int(e.get("admin_level", 0)),
 			"account_login": str(e.get("account_login", "")),
 			"agent_id": str(e.get("agent_id", "")),
+			"linked_studio_agent_id": str(e.get("linked_studio_agent_id", "")),
+			"linked_studio_display": str(e.get("linked_studio_display", "")),
 		})
 	return out
 
@@ -792,19 +928,19 @@ func life_stats() -> Dictionary:
 
 func zone_state_payload(your_oid: int) -> Dictionary:
 	var online := online_players()
+	# Pas de "bots" dupliqué — entities[] slim pour le fil WS.
 	var payload := {
 		"type": "zone_state",
 		"proto": "lbg-ws/2",
 		"zone": ZONE,
 		"tick": tick,
 		"server_time_ms": int(Time.get_unix_time_from_system() * 1000.0),
-		"entities": entity_list(),
+		"entities": entity_list(true),
 		"your_character_id": your_oid,
 		"session_policy": "prime_hub_g4u",
 		"collision_blocks": collision.blocks.size() if collision else 0,
 		"online_players": online,
 		"online_count": online.size(),
-		"bots": bots_payload(),
 		"bot_count": bot_count(),
 		"npc_count": npc_count(),
 	}

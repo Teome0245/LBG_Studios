@@ -328,6 +328,7 @@ func _hub_guest_then_enter() -> void:
 		if chars.size() > 0 and typeof(chars[0]) == TYPE_DICTIONARY:
 			_hub_runtime["character_id"] = int((chars[0] as Dictionary).get("id", 100001))
 			_hub_runtime["player_name"] = str((chars[0] as Dictionary).get("name", player))
+		HubRuntimeCfg.set_player_name(str(_hub_runtime.get("player_name", player)))
 		_start_hub_runtime_spike()
 	)
 	var err := http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, body)

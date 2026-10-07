@@ -253,8 +253,8 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 |----|--------|---------|------------|-------------|
 | **C1** | Dialogue hub : 2–3 **suggestions d’actions** + texte libre | Everwhere | PNJ hub (cantina / board / trainer) expose coups typés + free text ; smoke dialogue | Iris + Chœur · design Vague A · **MVP code** ✅ Vague B (templates + Godot boutons ; smoke live / deploy reste) |
 | **C2** | **Mémoire relations** (dette, PNJ croisé, objet offert) injectée `world_hint` | Everwhere / Jenova | 1 joueur + 1 PNJ : rappel concret après action (tip / quête / don) | Chœur + Dédale · schéma Vague A · **merge stub** [`relation_memory.py`](../../packages/cortex/agents/src/lbg_agents/relation_memory.py) ✅ Vague B (persistance réelle reste) |
-| **C3** | **Compagnon IA visible** au spawn Lost Heaven (1 bot : Lia ou Nix) | Epitome + bots LBG | Nameplate + follow court / commentaire 30 s ; pas Pilot-only | Iris + Chœur · **stub+design** [`design_c3_companion_spawn.md`](../../packages/cortex/docs/design_c3_companion_spawn.md) / [`companion_spawn_lh.json`](../../packages/cortex/content/world/companion_spawn_lh.json) ✅ Vague B data |
-| **C4** | **1 event dynamique** board (meute portes **ou** chute scrap **ou** panne starport) | Epitome | Template EventEngine persisté + entrée board Daan ; Chœur peut sonder | WD + Chœur · **stub** [`event_lh_scrap_fall_or_meute.json`](../../packages/cortex/content/world/events/event_lh_scrap_fall_or_meute.json) ✅ Vague A |
+| **C3** | **Compagnon IA visible** au spawn Lost Heaven (1 bot : Lia ou Nix) | Epitome + bots LBG | Nameplate + follow court / commentaire 30 s ; pas Pilot-only | Iris + Chœur · **live hub** 2026-10-07 : Nix greet+escort ~28 s + nameplate (`fleet_greet` mono-compagnon) |
+| **C4** | **1 event dynamique** board (meute portes **ou** chute scrap **ou** panne starport) | Epitome | Template EventEngine persisté + entrée board Daan ; Chœur peut sonder | WD + Chœur · **live hub** 2026-10-07 : `hub_events` + quest `lh_scrap_fall_salvage` + `GET /v1/events/active` (chute scrap) · stub cortex ✅ Vague A |
 
 ### P1 — densité / data
 
@@ -263,7 +263,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 | **C5** | **Chronique session** Scribe (5–10 lignes) + titre cosmétique optionnel | Everwhere journey book / ClaudeCraft deeds | Export après quête hub ou tip scène | Dédale + Chœur · **stub** [`scribe_chronicle_session_stub.json`](../../packages/cortex/content/world/scribe_chronicle_session_stub.json) ✅ Vague C |
 | **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **MVP** [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
 | **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **stub** [`vendor_negotiation_jax.json`](../../packages/cortex/content/world/vendor_negotiation_jax.json) ✅ Vague C |
-| **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **stub** [`poi_lh_scrap_pile.json`](../../packages/cortex/content/world/poi_lh_scrap_pile.json) ✅ Vague A |
+| **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **live hub** 2026-10-07 : `POST /v1/salvage` + hotbar `[1]` près `poi:lh_scrap_pile` → craft `kit_reparation` (T) · stub cortex ✅ Vague A |
 | **C13** | **Anneau désert LH** — joueurs IA hors murs (~3 km), pas Scrapaltai entière | Studio (débride explore) | Data `explore_ring_lh.json` + autonomy + clamp `move_to` + skill | Chœur · **MVP** ✅ 2026-10-07 |
 
 ### P2 — contrat agents (SpaceMolt → Chœur / bots)

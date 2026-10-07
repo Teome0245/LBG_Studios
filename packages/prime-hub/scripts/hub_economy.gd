@@ -18,12 +18,44 @@ var _templates: Array = []
 var _by_id: Dictionary = {}
 var _players: Dictionary = {}
 var _path: String = ""
+var events = null
+var _salvage_cfg: Dictionary = {}
+var _salvage_cd: Dictionary = {}  # player -> unix until
+var _rng := RandomNumberGenerator.new()
+var _recipes_by_id: Dictionary = {}
 
 
 func setup() -> void:
 	_path = _HubPaths.data_file("players_state.json")
+	_rng.randomize()
 	reload_templates()
 	_load_players()
+	_load_salvage()
+	_load_recipes()
+
+
+func attach_events(events_svc) -> void:
+	events = events_svc
+
+
+func _load_salvage() -> void:
+	_salvage_cfg.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("salvage_lh_scrap_pile.json"))
+	if typeof(raw) == TYPE_DICTIONARY:
+		_salvage_cfg = raw
+
+
+func _load_recipes() -> void:
+	_recipes_by_id.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("catalog_recipes.json"))
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var items = raw.get("items", [])
+	if typeof(items) != TYPE_ARRAY:
+		return
+	for it in items:
+		if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) != "":
+			_recipes_by_id[str(it["id"])] = it
 
 
 func reload_templates() -> void:
@@ -105,10 +137,21 @@ func inventory(player: String) -> Dictionary:
 	}
 
 
+func _event_allows(t: Dictionary) -> bool:
+	var gate := str(t.get("event_gated", "")).strip_edges()
+	if gate.is_empty():
+		return true
+	if events == null or not events.has_method("is_active"):
+		return false
+	return bool(events.is_active(gate))
+
+
 func board(giver: String, player: String) -> Dictionary:
 	var quests: Array = []
 	for t in _templates:
-		quests.append({
+		if not _event_allows(t):
+			continue
+		var row := {
 			"id": t["id"],
 			"title": t.get("title", t["id"]),
 			"template": t.get("template", ""),
@@ -119,15 +162,61 @@ func board(giver: String, player: String) -> Dictionary:
 			"default_giver": t.get("default_giver", ""),
 			"giver_ids": (t.get("giver_ids", []) as Array).duplicate(),
 			"generated": false,
-		})
+		}
+		var gate := str(t.get("event_gated", "")).strip_edges()
+		if not gate.is_empty():
+			row["event_id"] = gate
+			row["event_offer"] = true
+		quests.append(row)
+	var ev_snap := {}
+	if events != null and events.has_method("snapshot"):
+		ev_snap = events.snapshot()
 	return {
 		"ok": true,
 		"hub": "lost_heaven",
 		"giver_id": giver if not giver.is_empty() else "npc:core3_daan_oth",
 		"player": player if not player.is_empty() else "Voyageur",
 		"quests": quests,
+		"active_event": ev_snap,
 		"source": "prime_hub",
 	}
+
+
+func _normalize_active_entry(a: Dictionary) -> Dictionary:
+	## Client attend progress_steps[].done (alias de progress + steps_done).
+	var out: Dictionary = a.duplicate(true)
+	var done: Array = out.get("steps_done", [])
+	if typeof(done) != TYPE_ARRAY:
+		done = []
+	var steps = out.get("progress", [])
+	if typeof(steps) != TYPE_ARRAY:
+		steps = []
+	var ps: Array = []
+	var label_for := ""
+	for s in steps:
+		if typeof(s) != TYPE_DICTIONARY:
+			continue
+		var step: Dictionary = (s as Dictionary).duplicate(true)
+		var sid := str(step.get("id", ""))
+		var is_done := sid != "" and sid in done
+		step["done"] = is_done
+		ps.append(step)
+		if label_for.is_empty() and not is_done:
+			label_for = str(step.get("label", sid))
+	out["progress_steps"] = ps
+	out["progress"] = steps.duplicate(true)
+	out["steps_done"] = done.duplicate()
+	if not label_for.is_empty():
+		out["next_label"] = label_for
+	return out
+
+
+func _normalized_active(player_active: Array) -> Array:
+	var out: Array = []
+	for a in player_active:
+		if typeof(a) == TYPE_DICTIONARY:
+			out.append(_normalize_active_entry(a))
+	return out
 
 
 func status(player: String) -> Dictionary:
@@ -136,7 +225,7 @@ func status(player: String) -> Dictionary:
 		"ok": true,
 		"player": player if not player.is_empty() else "Voyageur",
 		"credits": int(p["credits"]),
-		"active": (p["active"] as Array).duplicate(true),
+		"active": _normalized_active(p["active"] as Array),
 		"completed": (p["completed"] as Array).duplicate(),
 		"generated_offers": [],
 		"generated_by_id": {},
@@ -153,7 +242,14 @@ func accept(player: String, quest_id: String, giver_id: String = "") -> Dictiona
 		return {"ok": false, "error": "unknown_quest", "quest_id": qid}
 	for a in p["active"]:
 		if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) == qid:
-			return {"ok": true, "already": true, "quest_id": qid, "active": (p["active"] as Array).duplicate(true)}
+			var already := _normalize_active_entry(a)
+			return {
+				"ok": true,
+				"already": true,
+				"quest_id": qid,
+				"accepted": already,
+				"active": _normalized_active(p["active"] as Array),
+			}
 	if qid in (p["completed"] as Array):
 		return {"ok": false, "error": "already_completed", "quest_id": qid}
 	var tmpl: Dictionary = _by_id[qid]
@@ -166,7 +262,38 @@ func accept(player: String, quest_id: String, giver_id: String = "") -> Dictiona
 	}
 	(p["active"] as Array).append(entry)
 	_save_players()
-	return {"ok": true, "quest_id": qid, "active": (p["active"] as Array).duplicate(true), "source": "prime_hub"}
+	var accepted := _normalize_active_entry(entry)
+	return {
+		"ok": true,
+		"quest_id": qid,
+		"accepted": accepted,
+		"active": _normalized_active(p["active"] as Array),
+		"source": "prime_hub",
+	}
+
+
+func _ordered_step_ids(progress_arr: Array) -> Array:
+	var ids: Array = []
+	for s in progress_arr:
+		if typeof(s) == TYPE_DICTIONARY and str(s.get("id", "")) != "":
+			ids.append(str(s["id"]))
+	return ids
+
+
+func _backfill_prior_steps(done: Array, ordered: Array, reached_id: String) -> Array:
+	## Si le joueur valide une étape tardive (ex. meute), les étapes précédentes
+	## (porte) sont considérées faites — il a forcément passé le POI.
+	var out: Array = done.duplicate()
+	var idx := ordered.find(reached_id)
+	if idx < 0:
+		if reached_id != "" and reached_id not in out:
+			out.append(reached_id)
+		return out
+	for i in range(idx + 1):
+		var sid := str(ordered[i])
+		if sid not in out:
+			out.append(sid)
+	return out
 
 
 func progress(player: String, quest_id: String, step_id: String) -> Dictionary:
@@ -176,12 +303,31 @@ func progress(player: String, quest_id: String, step_id: String) -> Dictionary:
 	for a in p["active"]:
 		if typeof(a) != TYPE_DICTIONARY or str(a.get("id", "")) != qid:
 			continue
-		var done: Array = a.get("steps_done", [])
-		if sid not in done:
-			done.append(sid)
+		var ordered := _ordered_step_ids(a.get("progress", []) as Array)
+		var done: Array = _backfill_prior_steps(a.get("steps_done", []) as Array, ordered, sid)
 		a["steps_done"] = done
 		_save_players()
-		return {"ok": true, "quest_id": qid, "step_id": sid, "steps_done": done.duplicate(), "source": "prime_hub"}
+		var norm := _normalize_active_entry(a)
+		var step_label := sid
+		for s in norm.get("progress_steps", []):
+			if typeof(s) == TYPE_DICTIONARY and str(s.get("id", "")) == sid:
+				step_label = str(s.get("label", sid))
+				break
+		var ready := true
+		for n in ordered:
+			if n not in done:
+				ready = false
+				break
+		return {
+			"ok": true,
+			"quest_id": qid,
+			"step_id": sid,
+			"label": step_label,
+			"steps_done": done.duplicate(),
+			"ready_to_turn_in": ready,
+			"active": _normalized_active(p["active"] as Array),
+			"source": "prime_hub",
+		}
 	return {"ok": false, "error": "not_active", "quest_id": qid}
 
 
@@ -198,14 +344,25 @@ func complete(player: String, quest_id: String) -> Dictionary:
 			break
 	if found == null:
 		return {"ok": false, "error": "not_active"}
-	var needed: Array = []
-	for s in tmpl.get("progress", []):
-		if typeof(s) == TYPE_DICTIONARY and str(s.get("id", "")) != "":
-			needed.append(str(s["id"]))
+	var needed := _ordered_step_ids(tmpl.get("progress", []) as Array)
 	var done: Array = found.get("steps_done", [])
+	# Backfill : si une étape tardive est faite, les antérieures aussi.
+	var furthest := -1
+	for i in range(needed.size()):
+		if str(needed[i]) in done:
+			furthest = i
+	if furthest >= 0:
+		done = _backfill_prior_steps(done, needed, str(needed[furthest]))
+		found["steps_done"] = done
 	for n in needed:
 		if n not in done:
-			return {"ok": false, "error": "incomplete", "needed": needed, "steps_done": done.duplicate()}
+			return {
+				"ok": false,
+				"error": "incomplete",
+				"hint": "objectifs incomplets — approche les POI (porte / meute / bureau)",
+				"needed": needed,
+				"steps_done": done.duplicate(),
+			}
 	var active: Array = []
 	for a in p["active"]:
 		if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) != qid:
@@ -230,10 +387,14 @@ func complete(player: String, quest_id: String) -> Dictionary:
 	return {
 		"ok": true,
 		"quest_id": qid,
+		"title": str(tmpl.get("title", qid)),
 		"credits": int(p["credits"]),
 		"credits_gained": credits,
+		"reward_applied": {"credits_gained": credits, "items": granted},
 		"items": granted,
 		"inventory": (p["inventory"] as Array).duplicate(true),
+		"active": _normalized_active(p["active"] as Array),
+		"completed": (p["completed"] as Array).duplicate(),
 		"source": "prime_hub",
 	}
 
@@ -261,33 +422,178 @@ func _add_item(p: Dictionary, item_id: String, qty: int, item_name: String = "")
 	})
 
 
-func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
-	var p := _player(player)
-	var need := {"scrap_metal": 1, "binding_tape": 1}
-	for iid in need.keys():
-		var have := 0
-		for i in p["inventory"]:
-			if typeof(i) == TYPE_DICTIONARY and str(i.get("id", "")) == str(iid):
-				have = int(i.get("qty", 0))
-				break
-		if have < int(need[iid]):
-			return {"ok": false, "error": "missing_ingredients", "need": need}
-	for iid in need.keys():
-		for it in p["inventory"]:
-			if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) == str(iid):
-				it["qty"] = int(it["qty"]) - int(need[iid])
+func _inv_qty(p: Dictionary, item_id: String) -> int:
+	for i in p["inventory"]:
+		if typeof(i) == TYPE_DICTIONARY and str(i.get("id", "")) == item_id:
+			return int(i.get("qty", 0))
+	return 0
+
+
+func _consume(p: Dictionary, item_id: String, qty: int) -> void:
+	for it in p["inventory"]:
+		if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) == item_id:
+			it["qty"] = int(it.get("qty", 0)) - qty
+			break
 	var cleaned: Array = []
 	for i in p["inventory"]:
 		if typeof(i) == TYPE_DICTIONARY and int(i.get("qty", 0)) > 0:
 			cleaned.append(i)
 	p["inventory"] = cleaned
-	var crafted := {"id": "kit_reparation", "name": "Kit de réparation", "qty": 1, "icon": "kit"}
-	_add_item(p, crafted["id"], 1, crafted["name"])
+
+
+func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
+	var p := _player(player)
+	var rid := recipe_id.strip_edges()
+	if rid.is_empty():
+		rid = "kit_reparation"
+	var recipe: Dictionary = {}
+	if _recipes_by_id.has(rid):
+		recipe = _recipes_by_id[rid]
+	else:
+		# Fallback historique
+		recipe = {
+			"id": "kit_reparation",
+			"name": "Kit de réparation",
+			"requires_skill": "artisan_rue_r1",
+			"inputs": [{"id": "scrap_metal", "qty": 2}, {"id": "binding_tape", "qty": 1}],
+			"output": {"id": "kit_reparation", "qty": 1, "name": "Kit de réparation"},
+		}
+		rid = "kit_reparation"
+	var req_skill := str(recipe.get("requires_skill", "")).strip_edges()
+	if not req_skill.is_empty():
+		var skills: Array = p.get("skills", [])
+		if req_skill not in skills:
+			return {"ok": false, "error": "missing_skill", "requires_skill": req_skill}
+	for inp in recipe.get("inputs", []):
+		if typeof(inp) != TYPE_DICTIONARY:
+			continue
+		var iid := str(inp.get("id", ""))
+		var need := int(inp.get("qty", 1))
+		var have := _inv_qty(p, iid)
+		if have < need:
+			return {
+				"ok": false,
+				"error": "missing_inputs",
+				"item_id": iid,
+				"have": have,
+				"need": need,
+			}
+	for inp2 in recipe.get("inputs", []):
+		if typeof(inp2) != TYPE_DICTIONARY:
+			continue
+		_consume(p, str(inp2.get("id", "")), int(inp2.get("qty", 1)))
+	var out = recipe.get("output", {})
+	if typeof(out) != TYPE_DICTIONARY:
+		out = {"id": rid, "qty": 1}
+	var oid := str(out.get("id", rid))
+	var oqty := int(out.get("qty", 1))
+	var oname := str(out.get("name", recipe.get("name", oid)))
+	_add_item(p, oid, oqty, oname)
 	_save_players()
+	var crafted := {"id": oid, "name": oname, "qty": oqty, "icon": "kit"}
 	return {
 		"ok": true,
-		"recipe_id": recipe_id if not recipe_id.is_empty() else "bind_scrap",
+		"recipe_id": rid,
+		"schematic_id": rid,
 		"crafted": crafted,
 		"inventory": (p["inventory"] as Array).duplicate(true),
+		"source": "prime_hub",
+	}
+
+
+func salvage_loot(player: String, poi_id: String = "", x: float = NAN, z: float = NAN) -> Dictionary:
+	## C8 — loot pile scrap → inventaire M10 (cooldown).
+	if _salvage_cfg.is_empty():
+		_load_salvage()
+	if _salvage_cfg.is_empty():
+		return {"ok": false, "error": "salvage_unconfigured"}
+	var want := str(_salvage_cfg.get("poi_id", "poi:lh_scrap_pile"))
+	var pid := poi_id.strip_edges()
+	if not pid.is_empty() and pid != want:
+		return {"ok": false, "error": "wrong_poi", "expected": want}
+	var sx := float(_salvage_cfg.get("x", 6042.0))
+	var sz := float(_salvage_cfg.get("z", -1065.0))
+	var rad := float(_salvage_cfg.get("radius_m", 90.0))
+	if not is_nan(x) and not is_nan(z):
+		var dist := Vector2(x, z).distance_to(Vector2(sx, sz))
+		if dist > rad:
+			return {
+				"ok": false,
+				"error": "too_far",
+				"hint": "approche la pile de ferraille (hors palissade est)",
+				"distance_m": snappedf(dist, 0.1),
+				"radius_m": rad,
+			}
+	var key := player.strip_edges()
+	if key.is_empty():
+		key = "Voyageur"
+	var now := Time.get_unix_time_from_system()
+	var until := float(_salvage_cd.get(key, 0.0))
+	if now < until:
+		return {
+			"ok": false,
+			"error": "cooldown",
+			"retry_in_s": int(ceil(until - now)),
+			"hint": "laisse la pile « refroidir » quelques secondes",
+		}
+	var table = _salvage_cfg.get("loot_table", [])
+	if typeof(table) != TYPE_ARRAY or table.is_empty():
+		return {"ok": false, "error": "empty_loot_table"}
+	var event_on := false
+	var ev_id := str(_salvage_cfg.get("event_id", ""))
+	if events != null and events.has_method("is_active") and not ev_id.is_empty():
+		event_on = bool(events.is_active(ev_id))
+	var bonus := int(_salvage_cfg.get("event_bonus_qty", 1)) if event_on else 0
+	var granted: Array = []
+	var p0 := _player(key)
+	var need_tape := _inv_qty(p0, "binding_tape") < 1
+	# Toujours scrap ; ruban garanti si inventaire à sec (boucle craft C8).
+	for entry in table:
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var eid := str(entry.get("id", ""))
+		if eid.is_empty():
+			continue
+		var w := int(entry.get("weight", 0))
+		var qmin := int(entry.get("qty_min", 0))
+		var qmax := int(entry.get("qty_max", qmin))
+		var roll_ok := eid == "scrap_metal" or (eid == "binding_tape" and need_tape) \
+			or (w > 0 and _rng.randi_range(1, 100) <= w)
+		if not roll_ok:
+			continue
+		var qty := _rng.randi_range(mini(qmin, qmax), maxi(qmin, qmax))
+		if eid == "scrap_metal":
+			qty = maxi(1, qty) + bonus
+		elif eid == "binding_tape" and need_tape:
+			qty = maxi(1, qty)
+		if qty <= 0:
+			continue
+		_add_item(p0, eid, qty, str(entry.get("name", eid)))
+		granted.append({"id": eid, "name": str(entry.get("name", eid)), "qty": qty})
+		if eid == "binding_tape":
+			need_tape = false
+	if granted.is_empty():
+		_add_item(p0, "scrap_metal", 1 + bonus, "Ferraille")
+		granted.append({"id": "scrap_metal", "name": "Ferraille", "qty": 1 + bonus})
+	# Filet : kit_reparation exige scrap×2 + tape×1.
+	if _inv_qty(p0, "binding_tape") < 1:
+		_add_item(p0, "binding_tape", 1, "Ruban de liaison")
+		granted.append({"id": "binding_tape", "name": "Ruban de liaison", "qty": 1})
+
+	var cd := float(_salvage_cfg.get("cooldown_s", 40))
+	if event_on:
+		cd = maxf(20.0, cd * 0.75)
+	_salvage_cd[key] = now + cd
+	_save_players()
+	var p := _player(key)
+	return {
+		"ok": true,
+		"poi_id": want,
+		"player": key,
+		"loot": granted,
+		"event_boost": event_on,
+		"cooldown_s": int(cd),
+		"inventory": (p["inventory"] as Array).duplicate(true),
+		"hint": "Craft kit_reparation à l'atelier / panneau Talents (T)",
 		"source": "prime_hub",
 	}

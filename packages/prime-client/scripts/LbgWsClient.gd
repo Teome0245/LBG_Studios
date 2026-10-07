@@ -287,13 +287,20 @@ func _process(delta: float) -> void:
 			return
 	if state == WebSocketPeer.STATE_OPEN:
 		_send_login_if_needed()
+		# Drainer tout ; ne garder que le dernier zone_state (évite backlog → saccades).
+		var latest_zone: Variant = null
 		while _peer.get_available_packet_count() > 0:
 			var raw := _peer.get_packet().get_string_from_utf8()
 			if raw.is_empty():
 				error_message.emit("paquet WS vide (binaire ?)")
 				continue
-			print("[LbgWs] << %s" % raw.substr(0, mini(120, raw.length())))
+			var data: Variant = JSON.parse_string(raw)
+			if typeof(data) == TYPE_DICTIONARY and str((data as Dictionary).get("type", "")) == "zone_state":
+				latest_zone = data
+				continue
 			_dispatch(raw)
+		if latest_zone != null:
+			_dispatch_dict(latest_zone as Dictionary)
 	elif state == WebSocketPeer.STATE_CLOSING:
 		pass
 	elif state == WebSocketPeer.STATE_CLOSED:
@@ -322,7 +329,10 @@ func _dispatch(text: String) -> void:
 		push_warning("[LbgWs] JSON invalide: %s" % text.substr(0, min(120, text.length())))
 		error_message.emit("réponse gateway illisible")
 		return
-	var d: Dictionary = data
+	_dispatch_dict(data as Dictionary)
+
+
+func _dispatch_dict(d: Dictionary) -> void:
 	var t := str(d.get("type", ""))
 	match t:
 		"login_result":

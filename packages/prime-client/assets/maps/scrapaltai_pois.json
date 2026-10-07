@@ -136,17 +136,6 @@
       "group": "lost_heaven"
     },
     {
-      "id": "poi:lost_heaven_housing_npc",
-      "kind": "npc_housing_block",
-      "label": "Logements PNJ",
-      "x": 4549.0,
-      "z": -802.0,
-      "detail": true,
-      "essential": false,
-      "active": true,
-      "group": "lost_heaven"
-    },
-    {
       "id": "poi:lost_heaven_gate",
       "kind": "city_gate",
       "label": "Porte est — désert",
@@ -163,6 +152,17 @@
       "label": "Meute hors palissade",
       "x": 5985.0,
       "z": -1120.0,
+      "detail": true,
+      "essential": true,
+      "active": true,
+      "group": "lost_heaven"
+    },
+    {
+      "id": "poi:lh_scrap_pile",
+      "kind": "salvage_scrap",
+      "label": "Pile de ferraille — débris convoi",
+      "x": 6042.0,
+      "z": -1065.0,
       "detail": true,
       "essential": true,
       "active": true,
@@ -205,6 +205,50 @@
       "z": -6000.0,
       "detail": false,
       "deprecated": true
+    },
+    {
+      "id": "poi:lost_heaven_lodge_w",
+      "kind": "npc_housing_block",
+      "label": "Logements ouest",
+      "x": 4305.0,
+      "z": -780.0,
+      "detail": true,
+      "essential": false,
+      "active": true,
+      "group": "lost_heaven"
+    },
+    {
+      "id": "poi:lost_heaven_lodge_n",
+      "kind": "npc_housing_block",
+      "label": "Logements nord",
+      "x": 4749.0,
+      "z": -430.0,
+      "detail": true,
+      "essential": false,
+      "active": true,
+      "group": "lost_heaven"
+    },
+    {
+      "id": "poi:lost_heaven_lodge_e",
+      "kind": "npc_housing_block",
+      "label": "Logements est",
+      "x": 5245.0,
+      "z": -630.0,
+      "detail": true,
+      "essential": false,
+      "active": true,
+      "group": "lost_heaven"
+    },
+    {
+      "id": "poi:lost_heaven_lodge_s",
+      "kind": "npc_housing_block",
+      "label": "Logements sud",
+      "x": 4860.0,
+      "z": -1185.0,
+      "detail": true,
+      "essential": false,
+      "active": true,
+      "group": "lost_heaven"
     }
   ]
 }

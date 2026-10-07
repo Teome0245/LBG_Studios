@@ -8,10 +8,10 @@
   "duration_hint": "45-90m",
   "bible_ref": "docs/world/BIBLE_MMO.md#v10-v13",
   "bible_safe": true,
-  "status": "stub",
+  "status": "live_prime_hub",
   "ticket": "C4",
   "event_kind": "scrap_fall",
-  "variant_note": "Variante retenue pour Vague A : chute scrap (alternatives gelées : meute portes, panne starport).",
+  "variant_note": "Variante retenue : chute scrap. Live : packages/prime-hub/data/events/event_lh_scrap_fall_convoy.json + hub_events.gd (GET /v1/events/active).",
   "trigger_stub": {
     "kind": "weighted_random",
     "cooldown_hours": 12,
@@ -54,5 +54,5 @@
     "poi": "packages/cortex/content/world/poi_lh_scrap_pile.json",
     "craft_schematics_hint": ["kit_reparation", "plaque_carapace"]
   },
-  "notes": "Stub EventEngine — pas d'injection Core3 246. Chœur peut sonder via catalog futur."
+  "notes": "Live sur prime-hub :8787 — board injecte lh_scrap_fall_salvage tant que l'event est actif. Chœur : GET /v1/events/active."
 }

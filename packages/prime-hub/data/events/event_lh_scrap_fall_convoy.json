@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "id": "event:lh_scrap_fall_convoy",
+  "title": "Chute de ferraille — convoi Zalem",
+  "ticket": "C4",
+  "event_kind": "scrap_fall",
+  "bible_safe": true,
+  "duration_s": [1200, 2400],
+  "cooldown_s": [480, 900],
+  "weight": 1.0,
+  "announce": {
+    "from": "Daan Oth",
+    "oid": 910001,
+    "text": "Board : débris de convoi hors palissade est — ferraille à récupérer avant les chacals."
+  },
+  "board_quest_id": "lh_scrap_fall_salvage",
+  "rumor_hint": "Un frein a lâché sur la route rouge — plaques dans les dunes à l'est.",
+  "anchor_poi": "poi:lost_heaven_gate"
+}

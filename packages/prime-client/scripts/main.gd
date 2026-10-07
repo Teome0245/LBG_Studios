@@ -72,6 +72,10 @@ var _hub_chat_input: LineEdit = null
 var _hub_chat_root: Control = null
 var _hub_chat_lines: PackedStringArray = PackedStringArray()
 const HUB_CHAT_MAX_LINES := 8
+var _salvage_http: HTTPRequest = null
+var _salvage_poi_xz: Vector2 = Vector2(6042.0, -1065.0)
+const SALVAGE_POI_ID := "poi:lh_scrap_pile"
+const SALVAGE_RADIUS_M := 90.0
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
 const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
@@ -107,9 +111,116 @@ func _ready() -> void:
 	_ensure_initiation_quest()
 	_wire_login_ws()
 	_ensure_hub_chat_ui()
+	_ensure_salvage_http()
+	_load_salvage_poi()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
+
+
+func _ensure_salvage_http() -> void:
+	if _salvage_http != null and is_instance_valid(_salvage_http):
+		return
+	_salvage_http = HTTPRequest.new()
+	_salvage_http.name = "SalvageHttp"
+	add_child(_salvage_http)
+	_salvage_http.request_completed.connect(_on_salvage_http_done)
+
+
+func _load_salvage_poi() -> void:
+	const path := "res://assets/maps/lost_heaven_buildings.json"
+	if not FileAccess.file_exists(path):
+		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	for item in (raw as Dictionary).get("buildings", []):
+		if typeof(item) == TYPE_DICTIONARY and str(item.get("id", "")) == SALVAGE_POI_ID:
+			_salvage_poi_xz = Vector2(float(item.get("x", 6042.0)), float(item.get("z", -1065.0)))
+			return
+
+
+func _player_world_xz() -> Vector2:
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc == null or not pc.has_method("get_player_id"):
+		return Vector2.INF
+	var pid: int = int(pc.get_player_id())
+	if pid == 0:
+		return Vector2.INF
+	if entity_manager == null or not entity_manager.has_method("get_entity"):
+		return Vector2.INF
+	var e: Node = entity_manager.get_entity(pid)
+	if e == null:
+		return Vector2.INF
+	var p: Vector3 = e.get("core3_pos")
+	return Vector2(p.x, p.z)
+
+
+func _try_salvage_scrap() -> void:
+	_ensure_salvage_http()
+	var pos := _player_world_xz()
+	if pos == Vector2.INF:
+		_hotbar_feedback("Salvage — position joueur inconnue")
+		return
+	var dist := pos.distance_to(_salvage_poi_xz)
+	if dist > SALVAGE_RADIUS_M:
+		_hotbar_feedback("Salvage — approche la pile ferraille (%.0fm)" % dist)
+		return
+	if not HubRuntimeCfg.enabled():
+		_hotbar_feedback("Salvage — hub runtime off")
+		return
+	var player := HubRuntimeCfg.player_name("Voyageur")
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/salvage"
+	var body := JSON.stringify({
+		"player": player,
+		"poi_id": SALVAGE_POI_ID,
+		"x": pos.x,
+		"z": pos.y,
+	})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if _salvage_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_salvage_http.cancel_request()
+	_hotbar_feedback("Salvage…")
+	var err := _salvage_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hotbar_feedback("Salvage req_%d" % err)
+
+
+func _on_salvage_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_hotbar_feedback("Salvage réseau KO")
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_hotbar_feedback("Salvage parse (%d)" % code)
+		return
+	if not bool(parsed.get("ok", false)):
+		var err := str(parsed.get("error", code))
+		var hint := str(parsed.get("hint", ""))
+		if err == "cooldown":
+			_hotbar_feedback("Salvage cooldown %ss" % str(parsed.get("retry_in_s", "?")))
+		elif hint != "":
+			_hotbar_feedback("Salvage — %s" % hint)
+		else:
+			_hotbar_feedback("Salvage échec: %s" % err)
+		return
+	var loot = parsed.get("loot", [])
+	var bits: PackedStringArray = PackedStringArray()
+	if typeof(loot) == TYPE_ARRAY:
+		for it in loot:
+			if typeof(it) == TYPE_DICTIONARY:
+				bits.append("%s×%d" % [str(it.get("name", it.get("id", "?"))), int(it.get("qty", 1))])
+	var boost := " · event" if bool(parsed.get("event_boost", false)) else ""
+	_hotbar_feedback("Salvage OK — %s%s" % [", ".join(bits) if bits.size() > 0 else "loot", boost])
+	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
+		inventory_panel.refresh_inventory()
+	elif inventory_panel and inventory_panel.has_method("toggle"):
+		# force reopen refresh path
+		pass
 
 
 func _wire_m10_craft_inventory() -> void:
@@ -411,6 +522,8 @@ func _on_ws_handoff_started(ws_url: String, character_id: int, session_token: St
 	_ws_handoff_busy = true
 	if _login_panel and _login_panel.has_method("get_selected_character_name"):
 		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
+	if not _local_character_name.is_empty():
+		HubRuntimeCfg.set_player_name(_local_character_name)
 	print("[Main] handoff attaché (LoginPanel pilote) ws=%s char=%d name=%s" % [
 		ws_url, character_id, _local_character_name
 	])
@@ -503,6 +616,8 @@ func _on_enter_world_requested(ws_url: String, character_id: int, session_token:
 	_ws_handoff_busy = true
 	if _login_panel and _login_panel.has_method("get_selected_character_name"):
 		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
+	if not _local_character_name.is_empty():
+		HubRuntimeCfg.set_player_name(_local_character_name)
 	print("[Main] M11→M12 handoff (legacy) ws=%s char=%d name=%s" % [ws_url, character_id, _local_character_name])
 	_last_ws_url = ws_url
 	if _login_panel:
@@ -884,8 +999,9 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		var e2: Node = entity_manager.get_entity(oid)
 		if e2 and e2.has_method("set_force_nameplate"):
 			if kind == "player" or kind == "npc":
-				e2.call("set_force_nameplate", true)
-				e2.queue_redraw()
+				# Une fois suffit — pas de queue_redraw à chaque zone_state.
+				if not bool(e2.get("force_nameplate")):
+					e2.call("set_force_nameplate", true)
 
 
 func _purge_stale_ia_not_in_ws(entities: Array, your_id: int) -> void:
@@ -1137,7 +1253,12 @@ func _toggle_game_menu() -> void:
 func _on_hotbar_slot(index: int) -> void:
 	match index:
 		0:
-			_hotbar_feedback("Attaque — à brancher combat")
+			# C8 — salvage pile scrap si à portée ; sinon stub combat.
+			var pos := _player_world_xz()
+			if pos != Vector2.INF and pos.distance_to(_salvage_poi_xz) <= SALVAGE_RADIUS_M:
+				_try_salvage_scrap()
+			else:
+				_hotbar_feedback("Attaque — à brancher · [1] salvage près pile ferraille")
 		1:
 			_hotbar_feedback("Compétence — à brancher")
 		2:
@@ -1728,11 +1849,18 @@ func _ensure_companion_visible() -> void:
 		# Nix vient du WS hub_runtime (oid serveur) — pas de stub 900001 en double.
 		var cfg_h := _load_human_cfg()
 		var bot := str(cfg_h.get("companion_bot_id", "Nix")).strip_edges()
+		var key_want := ("player:%s" % bot).to_lower()
 		for e in entity_manager.get_all_entities():
-			if e and str(e.label_text).strip_edges().to_lower() == bot.to_lower():
+			if e == null:
+				continue
+			var lab := str(e.label_text).strip_edges().to_lower()
+			var ekey := str(e.entity_key).strip_edges().to_lower()
+			if lab == bot.to_lower() or ekey == key_want or ekey.ends_with(":" + bot.to_lower()):
 				if e.has_method("set_force_nameplate") and bool(cfg_h.get("companion_force_nameplate", true)):
 					e.call("set_force_nameplate", true)
 					e.queue_redraw()
+				print("[Main] C3 companion live nameplate → %s" % bot)
+				return
 		return
 	var cfg := _load_human_cfg()
 	if not bool(cfg.get("spawn_companion", false)):

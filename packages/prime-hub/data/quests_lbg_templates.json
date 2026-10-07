@@ -158,6 +158,33 @@
       "notes": "Mots fantasy (loup/bandit) redirigés ici pour anti-dérive couche D. Combat sandbox = Pilot #/hunt ou Prime (touche 1 au POI poi:lh_hunt_chacal, sidecar /v1/hunt-yard)."
     },
     {
+      "id": "lh_scrap_fall_salvage",
+      "title": "Débris de convoi",
+      "template": "salvage",
+      "event_gated": "event:lh_scrap_fall_convoy",
+      "keywords": ["scrap", "ferraille", "convoi", "salvage", "débris", "debris", "chute", "plaques"],
+      "giver_roles": ["quest_giver", "sergeant"],
+      "giver_ids": ["npc:core3_daan_oth", "npc:sergent_rue"],
+      "default_giver": "Daan Oth",
+      "objective": "Récupérer la ferraille du convoi hors palissade est avant que les chacals ne s'en mêlent.",
+      "rewards": {
+        "credits": 35,
+        "xp": {"xp_prospection": 25},
+        "items": [{"id": "scrap_metal", "qty": 4}, {"id": "binding_tape", "qty": 1}]
+      },
+      "progress": [
+        {"id": "exit", "label": "Sortir vers la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
+        {"id": "salvage", "label": "Approcher la pile de ferraille", "poi": "poi:lh_scrap_pile", "radius_m": 90},
+        {"id": "return", "label": "Rapporter au bureau des missions", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
+      "next_steps": [
+        "Prendre l'offre au board (event actif).",
+        "Sortir porte est vers la pile de débris.",
+        "Rapporter au bureau."
+      ],
+      "notes": "C4 — visible seulement pendant event:lh_scrap_fall_convoy (hub_events)."
+    },
+    {
       "id": "lh_med_venin",
       "title": "Antidote de camp",
       "template": "medicine",

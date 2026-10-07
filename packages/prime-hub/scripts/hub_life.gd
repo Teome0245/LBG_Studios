@@ -1,6 +1,7 @@
 extends RefCounted
 class_name HubLife
 ## Triplons travail/loisir/repos + solos — objectifs court/moyen/long.
+## Repos : marche vers un logement PNJ, puis inactive (hors zone_state).
 
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
@@ -11,6 +12,8 @@ var phase_seconds: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 ## eid -> {triplon_id, member_idx, phase, phase_until, ...meta}
 var _sched: Dictionary = {}
+## Rotation des logements si home_poi absent.
+const _LODGE_KEYS: Array = ["lodge_w", "lodge_n", "lodge_e", "lodge_s", "inn"]
 
 
 func setup(poi_map: Dictionary) -> void:
@@ -36,6 +39,7 @@ func setup(poi_map: Dictionary) -> void:
 
 
 func _init_schedules() -> void:
+	var lodge_i := 0
 	for t in triplons:
 		if typeof(t) != TYPE_DICTIONARY:
 			continue
@@ -43,12 +47,17 @@ func _init_schedules() -> void:
 		var members: Array = t.get("members", [])
 		# Stagger : member i starts at phase i % 3
 		var phases := ["work", "leisure", "rest"]
+		var default_home := str(t.get("home_poi", ""))
+		if default_home.is_empty():
+			default_home = str(_LODGE_KEYS[lodge_i % _LODGE_KEYS.size()])
+			lodge_i += 1
 		for i in range(members.size()):
 			var m = members[i]
 			if typeof(m) != TYPE_DICTIONARY:
 				continue
 			var eid := str(m.get("eid", ""))
 			var phase := str(phases[i % 3])
+			var home := str(m.get("home_poi", default_home))
 			_sched[eid] = {
 				"kind": "triplon",
 				"triplon_id": tid,
@@ -58,7 +67,7 @@ func _init_schedules() -> void:
 				"meta": m,
 				"work_poi": str(t.get("work_poi", "plaza")),
 				"leisure_poi": str(t.get("leisure_poi", "cantina")),
-				"home_poi": str(t.get("home_poi", "inn")),
+				"home_poi": home,
 			}
 	var solo_phases := ["work", "leisure", "rest"]
 	var si := 0
@@ -67,6 +76,9 @@ func _init_schedules() -> void:
 			continue
 		var eid2 := str(s.get("eid", ""))
 		var sp := str(solo_phases[si % 3])
+		var solo_home := str(s.get("home_poi", ""))
+		if solo_home.is_empty():
+			solo_home = str(_LODGE_KEYS[si % _LODGE_KEYS.size()])
 		si += 1
 		_sched[eid2] = {
 			"kind": "solo",
@@ -75,7 +87,8 @@ func _init_schedules() -> void:
 			"meta": s,
 			"work_poi": str(s.get("home", "plaza")),
 			"leisure_poi": "cantina",
-			"home_poi": "inn",
+			"home_poi": solo_home,
+			"member_idx": si,
 		}
 
 
@@ -87,7 +100,7 @@ func _phase_dur(phase: String) -> float:
 
 
 func spawn_all(entities: Dictionary) -> void:
-	## Remplit entities avec PNJ triplons + solos (rest = inactive).
+	## Remplit entities avec PNJ triplons + solos (rest = déjà au logement, inactive).
 	for eid in _sched.keys():
 		var sch: Dictionary = _sched[eid]
 		var meta: Dictionary = sch.get("meta", {})
@@ -101,6 +114,8 @@ func spawn_all(entities: Dictionary) -> void:
 			wander = 8.0
 		elif phase == "leisure":
 			wander = 14.0
+		elif phase == "rest":
+			wander = 0.0
 		entities[eid] = {
 			"eid": eid,
 			"oid": int(meta.get("oid", 910000)),
@@ -108,7 +123,7 @@ func spawn_all(entities: Dictionary) -> void:
 			"name": str(meta.get("name", eid)),
 			"pos": pos,
 			"target": Vector3.ZERO,
-			"speed": 7.5,
+			"speed": 0.0 if phase == "rest" else 7.5,
 			"is_bot": false,
 			"goal": phase,
 			"play_mode": "life",
@@ -125,6 +140,7 @@ func spawn_all(entities: Dictionary) -> void:
 			"obj_medium": str(meta.get("medium", "")),
 			"obj_long": str(meta.get("long", "")),
 			"triplon_id": str(sch.get("triplon_id", "")),
+			"_rest_commute": false,
 		}
 
 
@@ -149,18 +165,23 @@ func _apply_phase(entities: Dictionary, eid: String, sch: Dictionary, phase: Str
 	var ent: Dictionary = entities[eid]
 	var pos := _pos_for_phase(sch, phase)
 	ent["life_phase"] = phase
-	ent["active"] = phase != "rest"
 	ent["goal"] = phase
 	ent["home_x"] = pos.x
 	ent["home_z"] = pos.z
-	ent["wander_r"] = 14.0 if phase == "leisure" else 8.0
 	if phase == "rest":
-		ent["pos"] = pos
-		ent["target"] = Vector3.ZERO
-		ent["speed"] = 0.0
-	else:
+		# Marche vers le logement, reste visible, puis inactive à l'arrivée (hub_sim).
+		ent["active"] = true
+		ent["goal"] = "rest_home"
+		ent["_rest_commute"] = true
 		ent["target"] = pos
 		ent["speed"] = 7.5
+		ent["wander_r"] = 0.0
+	else:
+		ent["active"] = true
+		ent["_rest_commute"] = false
+		ent["target"] = pos
+		ent["speed"] = 7.5
+		ent["wander_r"] = 14.0 if phase == "leisure" else 8.0
 
 
 func _ensure_someone_works(triplon_id: String, leaving_eid: String, now: float, entities: Dictionary) -> void:
@@ -205,14 +226,22 @@ func _pos_for_phase(sch: Dictionary, phase: String) -> Vector3:
 		if "dune" in leis.to_lower() or "hors" in leis.to_lower():
 			return Vector3(5600.0, 0.15, -1000.0)
 	elif phase == "rest":
-		key = str(sch.get("home_poi", "inn"))
+		key = str(sch.get("home_poi", "lodge_w"))
 	var base: Vector3 = pois.get(key, Vector3(4749.0, 0.15, -737.0))
 	var off = meta.get("work_offset", null)
 	if phase == "work" and typeof(off) == TYPE_ARRAY and off.size() >= 2:
 		base = Vector3(base.x + float(off[0]), 0.15, base.z + float(off[1]))
-	# jitter léger anti-stack
-	base.x += _rng.randf_range(-3.0, 3.0)
-	base.z += _rng.randf_range(-3.0, 3.0)
+	if phase == "rest":
+		# Slot par membre — plusieurs lits dans le même bloc.
+		var slot := int(sch.get("member_idx", 0))
+		var ang := float(slot) * (TAU / 4.0) + float(hash(str(meta.get("eid", ""))) % 7) * 0.15
+		var rad := 5.0 + float(slot % 3) * 2.0
+		base.x += cos(ang) * rad
+		base.z += sin(ang) * rad
+	else:
+		# jitter léger anti-stack
+		base.x += _rng.randf_range(-3.0, 3.0)
+		base.z += _rng.randf_range(-3.0, 3.0)
 	return base
 
 
