@@ -6,6 +6,8 @@ const HubPlayerStoreScript = preload("res://scripts/hub_player_store.gd")
 const HubLifeScript = preload("res://scripts/hub_life.gd")
 const HubBotAutonomyScript = preload("res://scripts/hub_bot_autonomy.gd")
 const HubWorldSuggestScript = preload("res://scripts/hub_world_suggest.gd")
+const HubAgentApiScript = preload("res://scripts/hub_agent_api.gd")
+const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := 100001
 const ZONE := "scrapaltai"
@@ -35,7 +37,8 @@ const POIS: Dictionary = {
 	"craft": ARTISAN,
 }
 
-const BOT_DEFS: Array = [
+## Fallback si ai_players.json absent
+const BOT_DEFS_FALLBACK: Array = [
 	{
 		"eid": "player:Nix", "oid": 900002, "name": "Nix",
 		"spawn": Vector3(4757.0, 0.15, -720.0), "speed": 12.0,
@@ -105,6 +108,8 @@ var life = null
 var autonomy = null
 var suggest = null
 var economy = null
+var agent_api = null
+var bot_defs: Array = []
 var tick: int = 0
 var entities: Dictionary = {}
 var _chat_queue: Array = []
@@ -137,6 +142,10 @@ func reset() -> void:
 	if suggest == null:
 		suggest = HubWorldSuggestScript.new()
 		suggest.setup()
+	if agent_api == null:
+		agent_api = HubAgentApiScript.new()
+	agent_api.setup()
+	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
 	life.setup(POIS)
@@ -145,6 +154,53 @@ func reset() -> void:
 	autonomy.setup(economy, suggest, POIS)
 	_ensure_fleet()
 	_ensure_hub_npcs()
+
+
+func _load_bot_defs() -> void:
+	bot_defs.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/ai_players.json"))
+	var max_n := 10
+	if agent_api != null:
+		max_n = agent_api.effective_max()
+	if typeof(raw) == TYPE_DICTIONARY:
+		var arr = raw.get("players", [])
+		if typeof(arr) == TYPE_ARRAY:
+			for p in arr:
+				if typeof(p) != TYPE_DICTIONARY:
+					continue
+				if not bool(p.get("enabled", false)):
+					continue
+				if bot_defs.size() >= max_n:
+					break
+				bot_defs.append(_normalize_bot_row(p))
+	if bot_defs.is_empty():
+		bot_defs = BOT_DEFS_FALLBACK.duplicate(true)
+		while bot_defs.size() > max_n:
+			bot_defs.pop_back()
+
+
+func _normalize_bot_row(p: Dictionary) -> Dictionary:
+	var spawn_v: Vector3 = Vector3(4757.0, 0.15, -720.0)
+	var sp = p.get("spawn", null)
+	if typeof(sp) == TYPE_ARRAY and sp.size() >= 3:
+		spawn_v = Vector3(float(sp[0]), float(sp[1]), float(sp[2]))
+	elif typeof(sp) == TYPE_VECTOR3:
+		spawn_v = sp
+	var prefer: Array = []
+	var pref = p.get("prefer", [])
+	if typeof(pref) == TYPE_ARRAY:
+		prefer = pref
+	return {
+		"eid": str(p.get("eid", "player:%s" % p.get("name", "Bot"))),
+		"oid": int(p.get("oid", 900000)),
+		"name": str(p.get("name", "Bot")),
+		"spawn": spawn_v,
+		"speed": float(p.get("speed", BOT_SPEED)),
+		"prefer": prefer,
+		"greet": str(p.get("greet", "")),
+		"ambient": str(p.get("ambient", "")),
+		"playstyle": str(p.get("playstyle", "")),
+	}
 
 
 func _walkable_xz(x: float, z: float) -> Vector2:
@@ -156,14 +212,16 @@ func _walkable_xz(x: float, z: float) -> Vector2:
 
 
 func _bot_def(eid: String) -> Dictionary:
-	for b in BOT_DEFS:
+	for b in bot_defs:
 		if str(b["eid"]) == eid:
 			return b
 	return {}
 
 
 func _ensure_fleet() -> void:
-	for b in BOT_DEFS:
+	if bot_defs.is_empty():
+		_load_bot_defs()
+	for b in bot_defs:
 		var eid: String = str(b["eid"])
 		if entities.has(eid):
 			continue
@@ -404,7 +462,7 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	var who := human_name.strip_edges()
 	if who.is_empty():
 		who = "Voyageur"
-	for b in BOT_DEFS:
+	for b in bot_defs:
 		var bot = entities.get(str(b["eid"]))
 		if bot == null:
 			continue
@@ -426,7 +484,7 @@ func _maybe_ambient() -> void:
 	var humans := _humans()
 	if humans.is_empty():
 		return
-	for b in BOT_DEFS:
+	for b in bot_defs:
 		var eid: String = str(b["eid"])
 		var bot = entities.get(eid)
 		if bot == null:

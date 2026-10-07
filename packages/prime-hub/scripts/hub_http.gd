@@ -127,6 +127,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		var life := {}
 		if sim and sim.has_method("life_stats"):
 			life = sim.life_stats()
+		var seats := {}
+		if sim and sim.agent_api != null:
+			var boot: Dictionary = sim.agent_api.bootstrap(sim)
+			seats = boot.get("seats", {})
 		return _ok({
 			"ok": true,
 			"service": "prime_hub",
@@ -139,9 +143,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			"bot_count": int(sim.bot_count()) if sim else 0,
 			"npc_count": int(sim.npc_count()) if sim else 0,
 			"life": life,
+			"ai_seats": seats,
 			"collision_blocks": _collision_count(),
 			"uptime_s": uptime,
-			"note": "G5+ vie hub Triplons + autonomie bots ; WS+HTTP :%d" % ws_port,
+			"note": "G5+ vie hub · joueurs IA évoluent · PNJ tiennent ; WS+HTTP :%d" % ws_port,
 		})
 
 	# --- Catalog C10 ---
@@ -237,6 +242,24 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if sim and sim.has_method("enqueue_say"):
 			sim.enqueue_say(sp, int(sb.get("oid", 0)), text, source)
 		return _ok({"ok": true, "chat": {"from": sp, "text": text, "source": source}, "source": "prime_hub"})
+
+	# --- Agent surface (LAN) : skill + bootstrap ---
+	if method == "GET" and path in ["/v1/agent/skill", "/skill.md"]:
+		if sim == null or sim.agent_api == null:
+			return _ok({"ok": false, "error": "agent_api_unavailable"}, 501)
+		var want_md := path == "/skill.md" or _query_param(query, "format", "") == "md"
+		var sk: Dictionary = sim.agent_api.skill_payload(want_md)
+		if want_md:
+			return {
+				"code": 200,
+				"body": str(sk.get("skill", "")),
+				"content_type": "text/markdown; charset=utf-8",
+			}
+		return _ok(sk)
+	if method == "GET" and path == "/v1/agent/bootstrap":
+		if sim == null or sim.agent_api == null:
+			return _ok({"ok": false, "error": "agent_api_unavailable"}, 501)
+		return _ok(sim.agent_api.bootstrap(sim))
 
 	# --- Dev : suggestions monde (off → Studio, pas de mutation auto) ---
 	if method == "GET" and path == "/v1/dev/world_suggestions":

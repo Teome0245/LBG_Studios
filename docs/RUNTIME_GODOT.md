@@ -30,14 +30,21 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 
 Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)
 
+| Qui | Mission |
+|-----|---------|
+| **PNJ** | Tenir le monde **fonctionnel** (Triplons work/leisure/rest) |
+| **Joueurs** (humain + IA) | Faire **évoluer** le monde (quêtes, craft, explore, suggestions Studio) |
+
 | Brique | Rôle |
 |--------|------|
 | **Triplons** | Groupes 3 PNJ · cycle `work` → `leisure` → `rest` · ≈ ⅔ visibles |
-| **Objectifs** | `short` / `medium` / `long` par persona (bots + PNJ) |
-| **Autonomie bots** | Tirage quête / explore / hub (`hub_bot_autonomy.gd`) |
-| **Suggestions monde** | File `data/world_suggestions.jsonl` · `GET|POST /v1/dev/world_suggestions` (Studio, pas auto-monde) |
+| **Flotte IA** | `data/life/ai_players.json` · cap `LBG_MAX_AI_PLAYERS` (défaut 10, hard 20) · LAN only |
+| **Objectifs** | `short` / `medium` / `long` par persona |
+| **Autonomie bots** | Tirage quête / explore / hub |
+| **Suggestions monde** | File `data/world_suggestions.jsonl` · Studio, pas auto-monde |
+| **Surface agent** | `GET /v1/agent/bootstrap` · `GET /v1/agent/skill` · `/skill.md` |
 
-`/healthz` expose `life: {work, leisure, rest, active_ratio, …}`.
+`/healthz` expose `life` + `ai_seats`.
 
 ## Ops
 

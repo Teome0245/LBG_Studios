@@ -26,11 +26,32 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
 	pois = poi_map
 	_rng.randomize()
 	personas.clear()
-	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/bot_personas.json"))
-	if typeof(raw) == TYPE_DICTIONARY:
-		var bots = raw.get("bots", {})
-		if typeof(bots) == TYPE_DICTIONARY:
-			personas = bots
+	# Source primaire : ai_players.json (personas inline) ; fallback bot_personas.json
+	var fleet: Variant = _HubPaths.read_json(_HubPaths.data_file("life/ai_players.json"))
+	if typeof(fleet) == TYPE_DICTIONARY:
+		var arr = fleet.get("players", [])
+		if typeof(arr) == TYPE_ARRAY:
+			for p in arr:
+				if typeof(p) != TYPE_DICTIONARY:
+					continue
+				var nm := str(p.get("name", ""))
+				if nm.is_empty():
+					continue
+				personas[nm] = {
+					"short": str(p.get("short", "")),
+					"medium": str(p.get("medium", "")),
+					"long": str(p.get("long", "")),
+					"quest_prefer": p.get("quest_prefer", []),
+					"explore_prefer": p.get("explore_prefer", []),
+					"suggest_kinds": p.get("suggest_kinds", ["poi"]),
+					"playstyle": str(p.get("playstyle", "")),
+				}
+	if personas.is_empty():
+		var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/bot_personas.json"))
+		if typeof(raw) == TYPE_DICTIONARY:
+			var bots = raw.get("bots", {})
+			if typeof(bots) == TYPE_DICTIONARY:
+				personas = bots
 
 
 func assign_goal(bot: Dictionary, prefer: Array = []) -> Dictionary:

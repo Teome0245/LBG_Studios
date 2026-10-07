@@ -6,11 +6,15 @@
 
 Donner l’impression d’une population vivante **sans** spammer le chat ni faire tourner tout le monde en rond.
 
+**Règle produit** : les **PNJ** maintiennent un monde fonctionnel ; les **joueurs** (humain + IA) le font évoluer. Scope = **LAN / Studio** (pas d’ouverture publique LLM).
+
 | Acteur | Comportement |
 |--------|----------------|
-| **Joueurs IA** (Nix/Lia/Mira/Kael) | Choix autonome : quête / exploration / hub ; suggestions monde → file Studio |
+| **Joueurs IA** | Flotte `ai_players.json` (4 actifs, 6 prêts → vague 10) · quête / explore / hub · suggestions → Studio |
 | **PNJ Triplon** (3–4) | Cycle **travail → loisir → repos** ; 1 off ≈ ⅓ de la pop visible |
 | **Objectifs** | court / moyen / long par persona — anti « couloir plaza→market » |
+
+Surface agent : `GET /v1/agent/bootstrap` · `GET /v1/agent/skill` · manuel [`packages/prime-hub/data/agent/skill.md`](../../packages/prime-hub/data/agent/skill.md)
 
 ## Triplon (esquadre)
 
