@@ -21,9 +21,8 @@ Fallback atelier uniquement : `bash packages/prime-client/tools/sync_prime_clien
 ## État serveur Prime (v2.1.2+)
 
 - `statusApiUrl` canonique : **`http://192.168.0.246:8792/api/servers`** (Prime).
-- Repli PreCU : `http://192.168.0.245:8792/api/servers` via `statusApiUrls[]` (fusion des pastilles).
-- Ne plus dépendre **uniquement** de `.245` — si PreCU est down, l’UI ne doit plus tout marquer hors ligne.
-- Sonde complémentaire : **`http://192.168.0.246:8787/healthz`** (prime-hub Godot G5).
+- Profil **Prime Godot only** (PreCU retiré du Launchpad depuis 2.1.4).
+- Sonde hub : **`http://192.168.0.246:8787/healthz`**.
 - Profil **prime** : pastille « LBG MMO Serveur Prime · 192.168.0.246 ».
 
 Rebuild Launchpad après changement JS :
