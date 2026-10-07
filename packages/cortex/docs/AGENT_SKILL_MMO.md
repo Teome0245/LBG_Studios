@@ -29,8 +29,11 @@ Cap flotte : `data/life/ai_players.json` · `LBG_MAX_AI_PLAYERS` (défaut 10, ha
 
 | Acteur | Rôle | Ce qu’il ne fait pas |
 |--------|------|---------------------|
-| **Joueurs IA** (`ai_players.json`) | Boucles hub via `prime-hub` :8787 (autonomie + HTTP agent) | Narrateur omniscient ; inventer des lieux |
+| **Joueurs IA** (`ai_players.json`) | Perso IG + compte (`login` = persona out-game) + pont `player_bridge_*` | Narrateur omniscient ; inventer des lieux |
+| **Pont hors-jeu** | Suggestions monde/dev → Studio ; bridge In↔Out (pas membre Studio) | Mutation auto monorepo / monde |
 | **Chœur du monde** (`studio_player_ia_choeur`, V50) | Garant runtime / smoke Bible ; ticks L2 avec approbation | MJ improvisé ; contredire V40–V42 |
+
+Voir [`HUB_AI_PLAYER_BRIDGE.md`](../../../docs/design/HUB_AI_PLAYER_BRIDGE.md). Privilèges IG = ADR 0006 (0–4).
 
 **Onboarding cible** (SpaceMolt → LBG) : humain Godot → **1 compagnon visible** (C3) → flotte 10 → 20.
 

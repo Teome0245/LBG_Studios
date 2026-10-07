@@ -11,8 +11,12 @@ Ce n’est **pas** un prompt MJ freeform. Tu es un **joueur** dans Lost Heaven (
 |-----|---------|
 | **PNJ** | Tenir le monde **fonctionnel** (postes, cycles travail/loisir/repos, ambiance). |
 | **Joueurs** (humain + IA) | Faire **évoluer** le monde (quêtes, craft, explore, suggestions Studio). |
+| **Pont hors-jeu** | Persona out-game (`nix_bridge`…) — bridge In↔Out + suggestions monde/**dev**. |
 
-Les PNJ ne postent pas de suggestions monde. Les joueurs IA oui (`POST /v1/dev/world_suggestions`) — file Studio, **pas** de mutation auto.
+**Login compte = persona out-game** (ex. `nix_bridge`), **pas** le nom du perso IG (`Nix`).  
+Privilèges en jeu = `admin_level` 0–4 (ADR 0006) — certains joueurs IA/humains peuvent être GM+.
+
+Les PNJ ne postent pas de suggestions. Les ponts joueurs oui (`POST /v1/dev/world_suggestions`) — file Studio, **pas** de mutation auto.
 
 ## Bootstrap
 

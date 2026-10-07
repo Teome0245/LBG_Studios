@@ -1,11 +1,14 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": "lan_only",
   "max_ai_players": 10,
   "hard_cap": 20,
+  "admin_scale": "ADR_0006_0_4",
   "roles": {
     "npc": "Tenir le monde fonctionnel (postes, cycles, ambiance).",
-    "player": "Faire évoluer le monde (quêtes, craft, explore, suggestions Studio)."
+    "player": "Faire évoluer le monde (quêtes, craft, explore, suggestions Studio).",
+    "out_game_bridge": "Persona hors-jeu : pont In-Game ↔ Out-Game + suggestions dev/produit (pas mutation auto).",
+    "account_login": "Login compte = persona out-game (pas le nom du personnage IG)."
   },
   "players": [
     {
@@ -13,180 +16,521 @@
       "oid": 900002,
       "name": "Nix",
       "enabled": true,
+      "account_login": "nix_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_nix",
+        "persona": "nix_bridge",
+        "display_name": "Pont Nix",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false,
+        "note": "Cible login COMPTES=nix_bridge (legacy Bot_IA_2). Perso IG=Nix."
+      },
       "playstyle": "scout",
-      "spawn": [4757.0, 0.15, -720.0],
+      "spawn": [
+        4757.0,
+        0.15,
+        -720.0
+      ],
       "speed": 12.0,
-      "prefer": ["plaza", "market", "apron", "board"],
+      "prefer": [
+        "plaza",
+        "market",
+        "apron",
+        "board"
+      ],
       "greet": "Salut {who} — bienvenue au hub Lost Heaven.",
       "ambient": "{who}, je tourne sur le hub — board, marché, plaza.",
       "short": "bouger utile sur le hub",
       "medium": "terminer une course ou un relevé",
       "long": "connaître Lost Heaven mieux que le guide",
-      "quest_prefer": ["lh_survey_dunes", "lh_delivery_starport", "lh_aide_generale"],
-      "explore_prefer": ["gate_east", "spawn_apron", "gate_west"],
-      "suggest_kinds": ["poi", "quest"]
+      "quest_prefer": [
+        "lh_survey_dunes",
+        "lh_delivery_starport",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "gate_east",
+        "spawn_apron",
+        "gate_west"
+      ],
+      "suggest_kinds": [
+        "poi",
+        "quest",
+        "dev"
+      ],
+      "account_login_legacy": "Bot_IA_2",
+      "account_id_legacy": 9
     },
     {
       "eid": "player:Lia",
       "oid": 900003,
       "name": "Lia",
       "enabled": true,
+      "account_login": "lia_bridge",
+      "account_id": null,
+      "admin_level": 1,
+      "admin_label": "gm",
+      "out_game": {
+        "agent_id": "player_bridge_lia",
+        "persona": "lia_bridge",
+        "display_name": "Pont Lia",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false,
+        "note": "Compte GM (ADR 0006 niveau 1) — animation terrain, pas god mode. Cible login COMPTES=lia_bridge (legacy Bot_IA). Perso IG=Lia."
+      },
       "playstyle": "scene",
-      "spawn": [4780.0, 0.15, -690.0],
+      "spawn": [
+        4780.0,
+        0.15,
+        -690.0
+      ],
       "speed": 11.5,
-      "prefer": ["inn", "cantina", "plaza", "craft"],
+      "prefer": [
+        "inn",
+        "cantina",
+        "plaza",
+        "craft"
+      ],
       "greet": "Hey {who}. Lia — auberge, cantina, atelier.",
       "ambient": "{who}, besoin d'un coup de main au hub ?",
       "short": "aider quelqu'un au hub",
       "medium": "tenir un fil social (Perle / auberge)",
       "long": "devenir le lien cantina–atelier",
-      "quest_prefer": ["lh_rumor_perle", "lh_show_perle", "lh_repair_perle", "lh_aide_generale"],
-      "explore_prefer": ["spawn_apron", "hunt"],
-      "suggest_kinds": ["npc", "economy"]
+      "quest_prefer": [
+        "lh_rumor_perle",
+        "lh_show_perle",
+        "lh_repair_perle",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "spawn_apron",
+        "hunt"
+      ],
+      "suggest_kinds": [
+        "npc",
+        "economy",
+        "dev"
+      ],
+      "account_login_legacy": "Bot_IA",
+      "account_id_legacy": 4
     },
     {
       "eid": "player:Mira",
       "oid": 900004,
       "name": "Mira",
       "enabled": true,
+      "account_login": "mira_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_mira",
+        "persona": "mira_bridge",
+        "display_name": "Pont Mira",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false,
+        "note": "Cible login COMPTES=mira_bridge (legacy Bot_IA_3). Perso IG=Mira."
+      },
       "playstyle": "prospecteur",
-      "spawn": [4700.0, 0.15, -900.0],
+      "spawn": [
+        4700.0,
+        0.15,
+        -900.0
+      ],
       "speed": 11.0,
-      "prefer": ["board", "market", "hall", "plaza"],
+      "prefer": [
+        "board",
+        "market",
+        "hall",
+        "plaza"
+      ],
       "greet": "{who} — Mira. Board et marché, je joue les contrats.",
       "ambient": "Des contrats au board, {who}. Daan Oth t'attend.",
       "short": "un contrat au board",
       "medium": "finir une quête active",
       "long": "réseau board + marché",
-      "quest_prefer": ["lh_delivery_starport", "lh_enquete_marche", "lh_survey_dunes"],
-      "explore_prefer": ["gate_east", "gate_west"],
-      "suggest_kinds": ["quest", "economy"]
+      "quest_prefer": [
+        "lh_delivery_starport",
+        "lh_enquete_marche",
+        "lh_survey_dunes"
+      ],
+      "explore_prefer": [
+        "gate_east",
+        "gate_west"
+      ],
+      "suggest_kinds": [
+        "quest",
+        "economy",
+        "dev"
+      ],
+      "account_login_legacy": "Bot_IA_3",
+      "account_id_legacy": 11
     },
     {
       "eid": "player:Kael",
       "oid": 900005,
       "name": "Kael",
       "enabled": true,
+      "account_login": "kael_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_kael",
+        "persona": "kael_bridge",
+        "display_name": "Pont Kael",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false,
+        "note": "Cible login COMPTES=kael_bridge (legacy Bot_IA_4). Perso IG=Kael."
+      },
       "playstyle": "scout",
-      "spawn": [4809.0, 0.15, -700.0],
+      "spawn": [
+        4809.0,
+        0.15,
+        -700.0
+      ],
       "speed": 11.0,
-      "prefer": ["train", "inn", "plaza", "clinic"],
+      "prefer": [
+        "train",
+        "inn",
+        "plaza",
+        "clinic"
+      ],
       "greet": "{who}. Kael — trainers et auberge, côté nord.",
       "ambient": "Hall d'entraînement si tu veux te mesurer, {who}.",
       "short": "s'entraîner ou escorter",
       "medium": "une sortie hors murs",
       "long": "gardien des portes",
-      "quest_prefer": ["lh_survey_dunes", "lh_escort_gate_clinic", "lh_hunt_chacal"],
-      "explore_prefer": ["hunt", "gate_east"],
-      "suggest_kinds": ["poi", "npc"]
+      "quest_prefer": [
+        "lh_survey_dunes",
+        "lh_escort_gate_clinic",
+        "lh_hunt_chacal"
+      ],
+      "explore_prefer": [
+        "hunt",
+        "gate_east"
+      ],
+      "suggest_kinds": [
+        "poi",
+        "npc",
+        "dev"
+      ],
+      "account_login_legacy": "Bot_IA_4",
+      "account_id_legacy": 13
     },
     {
       "eid": "player:Renn",
       "oid": 900006,
       "name": "Renn",
       "enabled": false,
+      "account_login": "renn_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_renn",
+        "persona": "renn_bridge",
+        "display_name": "Pont Renn",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "prospecteur",
-      "spawn": [4720.0, 0.15, -560.0],
+      "spawn": [
+        4720.0,
+        0.15,
+        -560.0
+      ],
       "speed": 11.0,
-      "prefer": ["apron", "board", "market", "plaza"],
+      "prefer": [
+        "apron",
+        "board",
+        "market",
+        "plaza"
+      ],
       "greet": "{who}. Renn — dunes et relevés.",
       "ambient": "Gisements et pistes, {who}. Pas de tourisme.",
       "short": "relevé dunes",
       "medium": "terminer un survey",
       "long": "carte des gisements Scrapaltai",
-      "quest_prefer": ["lh_survey_dunes", "lh_aide_generale"],
-      "explore_prefer": ["gate_east", "hunt", "spawn_apron"],
-      "suggest_kinds": ["poi", "quest"]
+      "quest_prefer": [
+        "lh_survey_dunes",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "gate_east",
+        "hunt",
+        "spawn_apron"
+      ],
+      "suggest_kinds": [
+        "poi",
+        "quest",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     },
     {
       "eid": "player:Sola",
       "oid": 900007,
       "name": "Sola",
       "enabled": false,
+      "account_login": "sola_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_sola",
+        "persona": "sola_bridge",
+        "display_name": "Pont Sola",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "artisan",
-      "spawn": [5050.0, 0.15, -790.0],
+      "spawn": [
+        5050.0,
+        0.15,
+        -790.0
+      ],
       "speed": 10.5,
-      "prefer": ["craft", "market", "plaza", "inn"],
+      "prefer": [
+        "craft",
+        "market",
+        "plaza",
+        "inn"
+      ],
       "greet": "{who}. Sola — atelier et ferraille.",
       "ambient": "Besoin d'un kit, {who} ? On assemble.",
       "short": "assembler au banc",
       "medium": "finir 2 recipes",
       "long": "atelier de référence hub",
-      "quest_prefer": ["lh_repair_perle", "lh_aide_generale"],
-      "explore_prefer": ["spawn_apron", "gate_west"],
-      "suggest_kinds": ["economy", "poi"]
+      "quest_prefer": [
+        "lh_repair_perle",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "spawn_apron",
+        "gate_west"
+      ],
+      "suggest_kinds": [
+        "economy",
+        "poi",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     },
     {
       "eid": "player:Vex",
       "oid": 900008,
       "name": "Vex",
       "enabled": false,
+      "account_login": "vex_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_vex",
+        "persona": "vex_bridge",
+        "display_name": "Pont Vex",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "scene",
-      "spawn": [4920.0, 0.15, -810.0],
+      "spawn": [
+        4920.0,
+        0.15,
+        -810.0
+      ],
       "speed": 11.0,
-      "prefer": ["cantina", "inn", "plaza", "hall"],
+      "prefer": [
+        "cantina",
+        "inn",
+        "plaza",
+        "hall"
+      ],
       "greet": "{who}. Vex — scène et Perle.",
       "ambient": "Un set ce soir à La Perle, {who} ?",
       "short": "répéter à l'auberge",
       "medium": "un show Perle",
       "long": "moral du hub via la scène",
-      "quest_prefer": ["lh_show_perle", "lh_rumor_perle"],
-      "explore_prefer": ["spawn_apron"],
-      "suggest_kinds": ["npc", "quest"]
+      "quest_prefer": [
+        "lh_show_perle",
+        "lh_rumor_perle"
+      ],
+      "explore_prefer": [
+        "spawn_apron"
+      ],
+      "suggest_kinds": [
+        "npc",
+        "quest",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     },
     {
       "eid": "player:Ori",
       "oid": 900009,
       "name": "Ori",
       "enabled": false,
+      "account_login": "ori_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_ori",
+        "persona": "ori_bridge",
+        "display_name": "Pont Ori",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "medecin",
-      "spawn": [4690.0, 0.15, -680.0],
+      "spawn": [
+        4690.0,
+        0.15,
+        -680.0
+      ],
       "speed": 10.5,
-      "prefer": ["clinic", "inn", "plaza", "board"],
+      "prefer": [
+        "clinic",
+        "inn",
+        "plaza",
+        "board"
+      ],
       "greet": "{who}. Ori — clinique et kits.",
       "ambient": "Kits d'abord, discours après, {who}.",
       "short": "tenir la clinique",
       "medium": "préparer 1 escort blessé",
       "long": "soins terrain standards",
-      "quest_prefer": ["lh_escort_gate_clinic", "lh_aide_generale"],
-      "explore_prefer": ["gate_east", "spawn_apron"],
-      "suggest_kinds": ["npc", "poi"]
+      "quest_prefer": [
+        "lh_escort_gate_clinic",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "gate_east",
+        "spawn_apron"
+      ],
+      "suggest_kinds": [
+        "npc",
+        "poi",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     },
     {
       "eid": "player:Tess",
       "oid": 900010,
       "name": "Tess",
       "enabled": false,
+      "account_login": "tess_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_tess",
+        "persona": "tess_bridge",
+        "display_name": "Pont Tess",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "scout",
-      "spawn": [4950.0, 0.15, -690.0],
+      "spawn": [
+        4950.0,
+        0.15,
+        -690.0
+      ],
       "speed": 12.0,
-      "prefer": ["train", "apron", "plaza", "board"],
+      "prefer": [
+        "train",
+        "apron",
+        "plaza",
+        "board"
+      ],
       "greet": "{who}. Tess — pistes et portes.",
       "ambient": "Porte est sous surveillance, {who}.",
       "short": "patrouiller remparts",
       "medium": "une sortie hors murs",
       "long": "ouvrir une piste ouest sûre",
-      "quest_prefer": ["lh_survey_dunes", "lh_hunt_chacal"],
-      "explore_prefer": ["gate_west", "hunt", "gate_east"],
-      "suggest_kinds": ["poi", "quest"]
+      "quest_prefer": [
+        "lh_survey_dunes",
+        "lh_hunt_chacal"
+      ],
+      "explore_prefer": [
+        "gate_west",
+        "hunt",
+        "gate_east"
+      ],
+      "suggest_kinds": [
+        "poi",
+        "quest",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     },
     {
       "eid": "player:Bram",
       "oid": 900011,
       "name": "Bram",
       "enabled": false,
+      "account_login": "bram_bridge",
+      "account_id": null,
+      "admin_level": 0,
+      "admin_label": "player",
+      "out_game": {
+        "agent_id": "player_bridge_bram",
+        "persona": "bram_bridge",
+        "display_name": "Pont Bram",
+        "can_suggest_world": true,
+        "can_suggest_dev": true,
+        "studio_member": false
+      },
       "playstyle": "scout",
-      "spawn": [4880.0, 0.15, -860.0],
+      "spawn": [
+        4880.0,
+        0.15,
+        -860.0
+      ],
       "speed": 11.0,
-      "prefer": ["market", "plaza", "hall", "train"],
+      "prefer": [
+        "market",
+        "plaza",
+        "hall",
+        "train"
+      ],
       "greet": "{who}. Bram — ordre de rue.",
       "ambient": "Meute ou pas, on tient la porte, {who}.",
       "short": "rondes marché",
       "medium": "escorte courte",
       "long": "milice crédible Lost Heaven",
-      "quest_prefer": ["lh_escort_gate_clinic", "lh_aide_generale"],
-      "explore_prefer": ["gate_east", "spawn_apron"],
-      "suggest_kinds": ["npc", "economy"]
+      "quest_prefer": [
+        "lh_escort_gate_clinic",
+        "lh_aide_generale"
+      ],
+      "explore_prefer": [
+        "gate_east",
+        "spawn_apron"
+      ],
+      "suggest_kinds": [
+        "npc",
+        "economy",
+        "dev"
+      ],
+      "account_login_legacy": null,
+      "account_id_legacy": null
     }
   ]
 }

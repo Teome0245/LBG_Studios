@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "agent_id": "player_bridge_lia",
+  "display_name": "Pont Lia",
+  "role": "player_bridge",
+  "persona": "lia_bridge",
+  "description": "Pont In-Game ↔ Out-Game pour le joueur IA Lia. Login COMPTES cible = lia_bridge (persona out-game), perso IG = Lia. Suggestions monde/dev → Studio ; pas de mutation auto.",
+  "studio_member": false,
+  "mmo_player": "Lia",
+  "capabilities": [
+    {
+      "id": "play_hub",
+      "mode": "mmo_persona",
+      "autonomy": "L1",
+      "note": "Jouer Lost Heaven via prime-hub (autonomie flotte + HTTP agent)"
+    },
+    {
+      "id": "suggest_world",
+      "mode": "suggest",
+      "autonomy": "L1",
+      "note": "POST /v1/dev/world_suggestions kind=poi|quest|npc|economy"
+    },
+    {
+      "id": "suggest_dev",
+      "mode": "suggest",
+      "autonomy": "L1",
+      "note": "Suggestions amélioration produit/dev (kind=dev) — revue humaine"
+    },
+    {
+      "id": "bridge_session_summary",
+      "mode": "export",
+      "autonomy": "L1",
+      "note": "Résumé session IG → Out-Game (ADR 0004 lien doux, pas secrets)"
+    }
+  ],
+  "constraints": [
+    "lan_only",
+    "no_auto_world_mutation",
+    "no_monorepo_write",
+    "not_studio_staff",
+    "bible_v40_v42"
+  ],
+  "consults_with": [
+    "studio_player_ia_choeur"
+  ],
+  "refs": {
+    "ai_players": "packages/prime-hub/data/life/ai_players.json",
+    "design": "docs/design/HUB_AI_PLAYER_BRIDGE.md",
+    "admin": "packages/cortex/docs/adr/0006-lbg-admin-levels-refonte.md"
+  },
+  "account_login": "lia_bridge"
+}

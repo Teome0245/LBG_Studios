@@ -190,6 +190,9 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 	var pref = p.get("prefer", [])
 	if typeof(pref) == TYPE_ARRAY:
 		prefer = pref
+	var og = p.get("out_game", {})
+	if typeof(og) != TYPE_DICTIONARY:
+		og = {}
 	return {
 		"eid": str(p.get("eid", "player:%s" % p.get("name", "Bot"))),
 		"oid": int(p.get("oid", 900000)),
@@ -200,6 +203,13 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 		"greet": str(p.get("greet", "")),
 		"ambient": str(p.get("ambient", "")),
 		"playstyle": str(p.get("playstyle", "")),
+		"admin_level": int(p.get("admin_level", 0)),
+		"admin_label": str(p.get("admin_label", "player")),
+		# Login = persona out-game (pas le nom IG)
+		"account_login": str(p.get("account_login", og.get("persona", ""))),
+		"account_login_legacy": str(p.get("account_login_legacy", "")),
+		"out_game_persona": str(og.get("persona", "")),
+		"agent_id": str(og.get("agent_id", "")),
 	}
 
 
@@ -249,6 +259,11 @@ func _ensure_fleet() -> void:
 			"path": [],
 			"waypoint": Vector2.ZERO,
 			"has_waypoint": false,
+			"admin_level": int(b.get("admin_level", 0)),
+			"admin_label": str(b.get("admin_label", "player")),
+			"account_login": str(b.get("account_login", "")),
+			"out_game_persona": str(b.get("out_game_persona", "")),
+			"agent_id": str(b.get("agent_id", "")),
 		}
 		entities[eid] = ent
 		# Goal sans A* au spawn (évite freeze startup) — path au premier step
@@ -713,6 +728,9 @@ func bots_payload() -> Array:
 			"goal": str(e.get("goal", "")),
 			"play_mode": str(e.get("play_mode", "")),
 			"quest_id": str(e.get("quest_id", "")),
+			"admin_level": int(e.get("admin_level", 0)),
+			"account_login": str(e.get("account_login", "")),
+			"agent_id": str(e.get("agent_id", "")),
 		})
 	return out
 

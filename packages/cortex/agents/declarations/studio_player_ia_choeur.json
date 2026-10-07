@@ -4,7 +4,7 @@
   "display_name": "Chœur du monde",
   "role": "player_ia",
   "persona": "choeur",
-  "description": "Garant runtime du monde Prime : joueurs IA (Lia, Nix, Mira) sur sidecar 246 + écarts Bible / inventaire PNJ / arbres Pre-CU-LBG.",
+  "description": "Garant runtime hub Godot : joueurs IA (Nix/Lia/Mira/Kael) via prime-hub + ponts player_bridge_* (login=persona out-game). Écarts Bible / M10 / inventaire PNJ.",
   "bible_ref": "docs/world/BIBLE_MMO.md#V50",
   "talents_ref": "docs/world/ARBRES_TALENTS_PRECU.md",
   "capabilities": [

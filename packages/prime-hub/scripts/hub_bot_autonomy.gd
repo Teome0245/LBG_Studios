@@ -37,6 +37,9 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
 				var nm := str(p.get("name", ""))
 				if nm.is_empty():
 					continue
+				var og = p.get("out_game", {})
+				if typeof(og) != TYPE_DICTIONARY:
+					og = {}
 				personas[nm] = {
 					"short": str(p.get("short", "")),
 					"medium": str(p.get("medium", "")),
@@ -45,6 +48,9 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
 					"explore_prefer": p.get("explore_prefer", []),
 					"suggest_kinds": p.get("suggest_kinds", ["poi"]),
 					"playstyle": str(p.get("playstyle", "")),
+					"admin_level": int(p.get("admin_level", 0)),
+					"account_login": str(p.get("account_login", "")),
+					"agent_id": str(og.get("agent_id", "")),
 				}
 	if personas.is_empty():
 		var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/bot_personas.json"))
@@ -242,4 +248,7 @@ func _maybe_world_suggest(bot: Dictionary, persona: Dictionary, goal: Dictionary
 		"goal_id": str(goal.get("goal_id", "")),
 		"play_mode": str(goal.get("play_mode", "")),
 		"obj_long": str(persona.get("long", "")),
+		"agent_id": str(persona.get("agent_id", "")),
+		"admin_level": int(persona.get("admin_level", 0)),
+		"account_login": str(persona.get("account_login", "")),
 	})

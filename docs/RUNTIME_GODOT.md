@@ -38,7 +38,7 @@ Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)
 | Brique | Rôle |
 |--------|------|
 | **Triplons** | Groupes 3 PNJ · cycle `work` → `leisure` → `rest` · ≈ ⅔ visibles |
-| **Flotte IA** | `data/life/ai_players.json` · cap `LBG_MAX_AI_PLAYERS` (défaut 10, hard 20) · LAN only |
+| **Flotte IA** | `ai_players.json` · login = persona out-game · pont `player_bridge_*` · admin 0–4 · cap 10/20 · LAN |
 | **Objectifs** | `short` / `medium` / `long` par persona |
 | **Autonomie bots** | Tirage quête / explore / hub |
 | **Suggestions monde** | File `data/world_suggestions.jsonl` · Studio, pas auto-monde |

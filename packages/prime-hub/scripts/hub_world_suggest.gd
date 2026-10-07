@@ -26,6 +26,9 @@ func submit(from_name: String, kind: String, text: String, context: Dictionary =
 		"from": from_name.strip_edges(),
 		"kind": k,
 		"text": t.substr(0, 400),
+		"agent_id": str(context.get("agent_id", "")),
+		"admin_level": int(context.get("admin_level", 0)),
+		"account_login": str(context.get("account_login", "")),
 		"context": context,
 		"status": "pending",
 	}
