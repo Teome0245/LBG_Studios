@@ -26,6 +26,18 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 - Persistance : `data/accounts.json`, `players_state.json`, `player_positions.json`
 - Flotte IA : marche + goals ; **pas** d’annonce chat « vers X / j’y suis »
 
+### Tickets concurrents live sur `:8787` (2026-10-07)
+
+| ID | Surface | Notes joueur |
+|----|---------|--------------|
+| **C3** | Compagnon Nix | greet + escort court au spawn |
+| **C4** | `GET /v1/events/active` · board `lh_scrap_fall_salvage` | Event chute scrap au boot LAN ; rumeur Jax/Daan |
+| **C5** | `GET /v1/chronicle?player=…` | Journal session (quête/tip/salvage/craft) · Scribe « chronique » |
+| **C8** | `POST /v1/salvage` | Hotbar **`[1]`** près `poi:lh_scrap_pile` → loot → craft `kit_reparation` (**T**) |
+| Quêtes | `progress_steps` + backfill | Terminer (J) seulement si étapes OK ; 400 métier ≠ « réseau KO » |
+
+Client : `HubRuntimeCfg.set_player_name` aligne inventaire/board/craft sur le perso connecté (ex. Teome).
+
 ## Vie hub (G5+)
 
 Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)

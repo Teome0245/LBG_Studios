@@ -54,7 +54,7 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 | Rail | État |
 |------|------|
 | **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
-| **P3** | Persona en jeu — dialogue hub `:8787` + `session_summary` / history / C12 (C2 léger) **en cours** 2026-10-07 |
+| **P3** | Persona en jeu — dialogue hub `:8787` + history/C12 · **C3/C4/C5/C8 live** 2026-10-07 · suite **C7** négo Jax |
 | **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
 | **P5** | World Director / combat / cour de chasse sur `prime-hub` |
 

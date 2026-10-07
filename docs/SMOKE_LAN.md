@@ -124,6 +124,17 @@ bash tools/smoke_p3_hub_dialogue.sh
 # ou : bash tools/smoke_p3_hub_dialogue.sh http://192.168.0.246:8787
 ```
 
+### Hub gameplay C4 / C5 / C8 (2026-10-07)
+
+```bash
+H=http://192.168.0.246:8787
+curl -sS "$H/v1/events/active" | jq '{active,event_id,board_quest_id}'
+curl -sS "$H/v1/quests/board?player=Voyageur" | jq '{n:(.quests|length), event:.active_event.event_id}'
+curl -sS -X POST "$H/v1/salvage" -H 'Content-Type: application/json' \
+  -d '{"player":"Voyageur","poi_id":"poi:lh_scrap_pile","x":6042,"z":-1065}' | jq '{ok,loot,event_boost}'
+curl -sS "$H/v1/chronicle?player=Voyageur" | jq '{title,line_count,lines:(.lines[:3])}'
+```
+
 ## P3 persona dialogue (hub)
 
 Chemin live client : `prime-client` → `POST http://192.168.0.246:8787/v1/dialogue/invoke` (`session_summary` + `history`).  

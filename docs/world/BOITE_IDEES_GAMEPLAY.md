@@ -291,3 +291,4 @@ Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona dé
 | 2026-10-05 | Vague A docs/stubs : C1 design, C2 schéma, C4/C8 data, C9 `AGENT_SKILL_MMO.md` |
 | 2026-10-06 | Vague B code+smoke C1/C2/C3 ; Vague C MVP C5–C7 + C10–C12 |
 | 2026-10-07 | **C13** anneau désert LH — explore IA hors murs (`explore_ring_lh.json`) |
+| 2026-10-07 | **C4/C5/C8 live** prime-hub `:8787` — event scrap board, chronique Scribe, salvage→craft ; docs [`RUNTIME_GODOT.md`](../RUNTIME_GODOT.md) |

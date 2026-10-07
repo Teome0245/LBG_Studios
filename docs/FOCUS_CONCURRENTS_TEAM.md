@@ -115,6 +115,16 @@ Mission veille concurrents Vague C — contrat agents SpaceMolt-style.
 **Vague C** : livrables MVP ✅ 2026-10-06 (11 tests catalog verts · catalog live 140).  
 **Suite G5+** : catalog/tick/dialogue sur **`prime-hub` `:8787`** (TickGate C11 Godot + smoke `tools/smoke_p3_hub_dialogue.sh`) · MCP Studio stdio OK · sidecar `:8791` = legacy.
 
+### Live hub joueur (2026-10-07) — au-delà stubs Vague A/C
+
+| Ticket | Live `:8787` |
+|--------|----------------|
+| **C3** | Nix greet+escort |
+| **C4** | `hub_events` + board `lh_scrap_fall_salvage` + `GET /v1/events/active` |
+| **C5** | `GET /v1/chronicle` + dialogue Scribe |
+| **C8** | `POST /v1/salvage` + hotbar `[1]` + craft schematics |
+| **C7** | suite — négo Jax bornée (`trade/offer`) |
+
 ## Surfaces humaines
 
 | Action | Où |
