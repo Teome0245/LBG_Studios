@@ -744,9 +744,15 @@ func set_bot_target(player: String, x: float, y: float, z: float) -> Variant:
 			continue
 		if str(e.get("name", "")).to_lower() != want:
 			continue
+		# Anneau LH : bornes explore (pas Scrapaltai entière / pas Zalem)
+		if autonomy != null and autonomy.has_method("clamp_xz"):
+			var ring: Vector2 = autonomy.clamp_xz(x, z)
+			x = ring.x
+			z = ring.y
 		var wz := _walkable_xz(x, z)
 		e["target"] = Vector3(wz.x, y, wz.y)
 		e["goal"] = "http_move_to"
+		e["play_mode"] = "explore"
 		return e
 	return null
 

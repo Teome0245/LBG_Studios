@@ -73,19 +73,19 @@ Même **contrat d’actions** (noms + schémas JSON) sur :
 
 ---
 
-## 4. Actions autorisées — hub Lost Heaven
+## 4. Actions autorisées — hub Lost Heaven + anneau
 
-Périmètre **couche A** : Scrapaltai / **Lost Heaven** uniquement (V10–V13).
+Périmètre **couche A** : Scrapaltai / **Lost Heaven** + **anneau désert** (`prime-hub/data/life/explore_ring_lh.json`, ~3 km depuis la plaza) — V10–V13.
 
 | Action | But hub |
 |--------|---------|
 | `survey` / `hunt` / `craft` / `tip_stage` | Boucles playstyle |
 | `talk_npc` | Dialogue borné |
 | `accept_quest` / `progress_quest` | Board Daan Oth |
-| `move_to` | Trajet POI visible |
+| `move_to` | Trajet POI hub **ou** waypoint / sample dans l’anneau (clamp serveur) |
 | `world_suggest` | Proposition d’évolution (Studio) |
 
-Interdit : ouvrir Zalem jouable, factions inventées, spam chat POI.
+Interdit : Scrapaltai entière, Zalem jouable (V10b), factions inventées, spam chat POI.
 
 ---
 
@@ -107,6 +107,7 @@ Interdit : ouvrir Zalem jouable, factions inventées, spam chat POI.
 
 | Date | Changement |
 |------|------------|
+| 2026-10-07 | Anneau désert LH (`explore_ring_lh.json`) — explore IA hors murs, pas planète entière |
 | 2026-10-07 | Autorité `prime-hub` :8787 · surface agent · flotte data · PNJ vs joueurs |
 | 2026-10-06 | Vague B — C1/C2/C3 |
 | 2026-10-05 | Brouillon C9 Vague A |

@@ -58,6 +58,17 @@ Comptes Prime `.246` (login = persona out-game) :
 
 Nouveau joueur : login = persona · perso IG ≠ login · sync `ai_players.json` · `enabled: true` · redeploy.
 
+## Anneau désert (C13)
+
+Périmètre explore hors murs : [`explore_ring_lh.json`](../../packages/prime-hub/data/life/explore_ring_lh.json) (`max_radius_m`, défaut **3000**).
+
+- Autonomy charge waypoints + sample aléatoire dans l’anneau (`hub_bot_autonomy.gd`).
+- `POST /v1/bots/move_to` est **clampé** au rayon (hub_sim).
+- Skill runtime : `data/agent/skill.md` · manuel canon : [`AGENT_SKILL_MMO.md`](../../packages/cortex/docs/AGENT_SKILL_MMO.md).
+- Hors scope : Scrapaltai entière, Zalem jouable (V10b).
+
+Ajuster le rayon : éditer `max_radius_m` → `bash packages/cortex/infra/scripts/deploy_prime_hub_246.sh`.
+
 ## Suggestions
 
 `POST /v1/dev/world_suggestions` porte `from` (IG), `agent_id`, `account_login` (persona), `admin_level`, `kind` (`…` \| `dev`).

@@ -54,6 +54,7 @@
       ],
       "explore_prefer": [
         "gate_east",
+        "dunes_ne",
         "spawn_apron",
         "gate_west"
       ],
@@ -109,7 +110,8 @@
       ],
       "explore_prefer": [
         "spawn_apron",
-        "hunt"
+        "hunt",
+        "hollow_s"
       ],
       "suggest_kinds": [
         "npc",
@@ -162,7 +164,8 @@
       ],
       "explore_prefer": [
         "gate_east",
-        "gate_west"
+        "gate_west",
+        "scrap_e"
       ],
       "suggest_kinds": [
         "quest",
@@ -215,7 +218,9 @@
       ],
       "explore_prefer": [
         "hunt",
-        "gate_east"
+        "gate_east",
+        "ridge_n",
+        "watch_zalem"
       ],
       "suggest_kinds": [
         "poi",
@@ -267,6 +272,7 @@
       "explore_prefer": [
         "gate_east",
         "hunt",
+        "dunes_se",
         "spawn_apron"
       ],
       "suggest_kinds": [
@@ -471,6 +477,7 @@
       "explore_prefer": [
         "gate_west",
         "hunt",
+        "dunes_nw",
         "gate_east"
       ],
       "suggest_kinds": [

@@ -264,6 +264,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 | **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **MVP** [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
 | **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **stub** [`vendor_negotiation_jax.json`](../../packages/cortex/content/world/vendor_negotiation_jax.json) ✅ Vague C |
 | **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **stub** [`poi_lh_scrap_pile.json`](../../packages/cortex/content/world/poi_lh_scrap_pile.json) ✅ Vague A |
+| **C13** | **Anneau désert LH** — joueurs IA hors murs (~3 km), pas Scrapaltai entière | Studio (débride explore) | Data `explore_ring_lh.json` + autonomy + clamp `move_to` + skill | Chœur · **MVP** ✅ 2026-10-07 |
 
 ### P2 — contrat agents (SpaceMolt → Chœur / bots)
 
@@ -289,3 +290,4 @@ Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona dé
 | 2026-10-05 | §14 tickets veille concurrents + SpaceMolt (ADR 0002, `CONCURRENTS_IA_MMO_2026-10.md`) |
 | 2026-10-05 | Vague A docs/stubs : C1 design, C2 schéma, C4/C8 data, C9 `AGENT_SKILL_MMO.md` |
 | 2026-10-06 | Vague B code+smoke C1/C2/C3 ; Vague C MVP C5–C7 + C10–C12 |
+| 2026-10-07 | **C13** anneau désert LH — explore IA hors murs (`explore_ring_lh.json`) |

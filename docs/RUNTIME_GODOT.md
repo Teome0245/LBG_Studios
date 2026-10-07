@@ -39,8 +39,9 @@ Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)
 |--------|------|
 | **Triplons** | Groupes 3 PNJ · cycle `work` → `leisure` → `rest` · ≈ ⅔ visibles |
 | **Flotte IA** | `ai_players.json` · login = persona out-game · pont `player_bridge_*` · admin 0–4 · cap 10/20 · LAN |
+| **Anneau explore** | `life/explore_ring_lh.json` · ~3 km autour plaza LH · clamp `POST /v1/bots/move_to` · pas Scrapaltai entière / pas Zalem (C13) |
 | **Objectifs** | `short` / `medium` / `long` par persona |
-| **Autonomie bots** | Tirage quête / explore / hub |
+| **Autonomie bots** | Tirage quête / explore (anneau) / hub |
 | **Suggestions monde** | File `data/world_suggestions.jsonl` · Studio, pas auto-monde |
 | **Surface agent** | `GET /v1/agent/bootstrap` · `GET /v1/agent/skill` · `/skill.md` |
 

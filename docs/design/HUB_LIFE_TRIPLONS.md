@@ -10,7 +10,7 @@ Donner l’impression d’une population vivante **sans** spammer le chat ni fai
 
 | Acteur | Comportement |
 |--------|----------------|
-| **Joueurs IA** | Flotte `ai_players.json` (4 actifs, 6 prêts → vague 10) · quête / explore / hub · suggestions → Studio |
+| **Joueurs IA** | Flotte `ai_players.json` (vague 10) · quête / explore **anneau ~3 km** (`explore_ring_lh.json`) / hub · suggestions → Studio |
 | **PNJ Triplon** (3–4) | Cycle **travail → loisir → repos** ; 1 off ≈ ⅓ de la pop visible |
 | **Objectifs** | court / moyen / long par persona — anti « couloir plaza→market » |
 

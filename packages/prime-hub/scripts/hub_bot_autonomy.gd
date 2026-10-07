@@ -1,20 +1,28 @@
 extends RefCounted
 class_name HubBotAutonomy
-## Flotte IA : choix quête / explore / hub + suggestions monde occasionnelles.
+## Flotte IA : choix quête / explore (anneau LH) / hub + suggestions monde occasionnelles.
 
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
-const EXPLORE: Dictionary = {
+## Fallback si explore_ring_lh.json absent
+const EXPLORE_FALLBACK: Dictionary = {
 	"gate_east": {"label": "explorer porte est / dunes", "pos": Vector3(5813.6, 0.15, -982.5)},
 	"gate_west": {"label": "surveiller porte ouest Zalem", "pos": Vector3(3688.9, 0.15, -675.9)},
 	"hunt": {"label": "reconnaître hors murs", "pos": Vector3(5985.0, 0.15, -1120.0)},
 	"spawn_apron": {"label": "repasser au shuttleport", "pos": Vector3(4749.0, 0.15, -537.0)},
 }
 
+const RING_CENTER_FALLBACK := Vector3(4749.0, 0.15, -737.0)
+const RING_RADIUS_FALLBACK := 3000.0
+
 var personas: Dictionary = {}
 var economy = null
 var suggest = null
 var pois: Dictionary = {}
+var explore: Dictionary = {}
+var ring_center: Vector3 = RING_CENTER_FALLBACK
+var ring_radius_m: float = RING_RADIUS_FALLBACK
+var random_sample_chance: float = 0.28
 var _rng := RandomNumberGenerator.new()
 var _last_suggest: Dictionary = {}  # name -> unix
 var _quest_cd: Dictionary = {}
@@ -25,6 +33,7 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
 	suggest = suggest_svc
 	pois = poi_map
 	_rng.randomize()
+	_load_explore_ring()
 	personas.clear()
 	# Source primaire : ai_players.json (personas inline) ; fallback bot_personas.json
 	var fleet: Variant = _HubPaths.read_json(_HubPaths.data_file("life/ai_players.json"))
@@ -58,6 +67,58 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
 			var bots = raw.get("bots", {})
 			if typeof(bots) == TYPE_DICTIONARY:
 				personas = bots
+
+
+func _load_explore_ring() -> void:
+	explore = EXPLORE_FALLBACK.duplicate(true)
+	ring_center = RING_CENTER_FALLBACK
+	ring_radius_m = RING_RADIUS_FALLBACK
+	random_sample_chance = 0.28
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/explore_ring_lh.json"))
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var c = raw.get("center", {})
+	if typeof(c) == TYPE_DICTIONARY:
+		ring_center = Vector3(float(c.get("x", ring_center.x)), float(c.get("y", 0.15)), float(c.get("z", ring_center.z)))
+	ring_radius_m = maxf(200.0, float(raw.get("max_radius_m", ring_radius_m)))
+	random_sample_chance = clampf(float(raw.get("random_sample_chance", random_sample_chance)), 0.0, 1.0)
+	var wps = raw.get("waypoints", {})
+	if typeof(wps) != TYPE_DICTIONARY:
+		return
+	for id in wps.keys():
+		var spot = wps[id]
+		if typeof(spot) != TYPE_DICTIONARY:
+			continue
+		var p = spot.get("pos", {})
+		if typeof(p) != TYPE_DICTIONARY:
+			continue
+		var pos := Vector3(float(p.get("x", 0.0)), float(p.get("y", 0.15)), float(p.get("z", 0.0)))
+		pos = clamp_pos(pos)
+		explore[str(id)] = {
+			"label": str(spot.get("label", id)),
+			"pos": pos,
+		}
+
+
+func clamp_xz(x: float, z: float) -> Vector2:
+	var dx := x - ring_center.x
+	var dz := z - ring_center.z
+	var d := sqrt(dx * dx + dz * dz)
+	if d <= ring_radius_m or d < 1e-6:
+		return Vector2(x, z)
+	var s := ring_radius_m / d
+	return Vector2(ring_center.x + dx * s, ring_center.z + dz * s)
+
+
+func clamp_pos(pos: Vector3) -> Vector3:
+	var xz := clamp_xz(pos.x, pos.z)
+	return Vector3(xz.x, pos.y, xz.y)
+
+
+func in_ring(x: float, z: float) -> bool:
+	var dx := x - ring_center.x
+	var dz := z - ring_center.z
+	return sqrt(dx * dx + dz * dz) <= ring_radius_m + 0.5
 
 
 func assign_goal(bot: Dictionary, prefer: Array = []) -> Dictionary:
@@ -99,21 +160,44 @@ func _hub_goal(bot: Dictionary, prefer: Array, persona: Dictionary) -> Dictionar
 
 
 func _explore_goal(bot: Dictionary, persona: Dictionary) -> Dictionary:
+	# Point libre dans l'anneau (désert vide OK) — sinon waypoint catalogué
+	if explore.size() > 0 and _rng.randf() < random_sample_chance:
+		var rnd := _random_ring_pos()
+		return {
+			"target": rnd,
+			"goal_id": "ring_sample",
+			"goal_label": "reconnaître l'anneau désert",
+			"play_mode": "explore",
+			"quest_id": "",
+		}
 	var prefer: Array = persona.get("explore_prefer", []) if typeof(persona.get("explore_prefer", null)) == TYPE_ARRAY else []
 	var id := "gate_east"
 	if prefer.size() > 0:
 		id = str(prefer[_rng.randi() % prefer.size()])
-	elif EXPLORE.size() > 0:
-		var keys := EXPLORE.keys()
+	elif explore.size() > 0:
+		var keys := explore.keys()
 		id = str(keys[_rng.randi() % keys.size()])
-	var spot: Dictionary = EXPLORE.get(id, EXPLORE["gate_east"])
+	var spot: Dictionary = explore.get(id, explore.get("gate_east", EXPLORE_FALLBACK["gate_east"]))
+	var raw_pos: Variant = spot.get("pos", RING_CENTER_FALLBACK)
+	var pos: Vector3 = clamp_pos(raw_pos if typeof(raw_pos) == TYPE_VECTOR3 else RING_CENTER_FALLBACK)
 	return {
-		"target": spot["pos"],
+		"target": pos,
 		"goal_id": id,
 		"goal_label": str(spot.get("label", id)),
 		"play_mode": "explore",
 		"quest_id": "",
 	}
+
+
+func _random_ring_pos() -> Vector3:
+	## Anneau 35–100 % du rayon — hors cœur hub, dans le désert.
+	var ang := _rng.randf() * TAU
+	var dist := _rng.randf_range(ring_radius_m * 0.35, ring_radius_m)
+	return Vector3(
+		ring_center.x + cos(ang) * dist,
+		0.15,
+		ring_center.z + sin(ang) * dist
+	)
 
 
 func _quest_goal(bot: Dictionary, name: String, persona: Dictionary) -> Dictionary:
@@ -222,8 +306,8 @@ func _poi_to_pos(poi: String) -> Vector3:
 	var key := str(map.get(p, p))
 	if pois.has(key):
 		return pois[key]
-	if EXPLORE.has(key):
-		return EXPLORE[key]["pos"]
+	if explore.has(key):
+		return explore[key]["pos"]
 	return pois.get("plaza", Vector3(4749.0, 0.15, -737.0))
 
 

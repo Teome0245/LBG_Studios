@@ -34,7 +34,7 @@ Les PNJ ne postent pas de suggestions. Les ponts joueurs oui (`POST /v1/dev/worl
 
 ## Mutations (effet monde)
 
-- `POST /v1/bots/move_to` — déplacement bot hub  
+- `POST /v1/bots/move_to` — déplacement bot (clampé à l’anneau LH)  
 - `POST /v1/quests/accept|progress|complete|tip`  
 - `POST /v1/craft/combine`  
 - `POST /v1/say` — chat sobre (pas de spam POI)  
@@ -43,7 +43,8 @@ Les PNJ ne postent pas de suggestions. Les ponts joueurs oui (`POST /v1/dev/worl
 ## Anti-dérive
 
 - Faits = catalog / registry / Bible — pas inventer de villes ou factions.  
-- Périmètre = hub Lost Heaven (couche A).  
+- Périmètre = hub Lost Heaven + **anneau désert** (`data/life/explore_ring_lh.json`, ~3 km depuis la plaza).  
+- Hors anneau / Zalem jouable / Scrapaltai entière = **interdit** (V10b, couche A).  
 - Pas ouvrir le serveur aux LLM internet.  
 - Population IA plafonnée (`max_ai_players`, hard_cap 20).
 
