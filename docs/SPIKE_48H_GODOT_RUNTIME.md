@@ -1,5 +1,7 @@
 # Spike 48 h — runtime Godot-first (hors Core3)
 
+> **Clos 2026-10-07** — autorité live = [`prime-hub`](../packages/prime-hub/) ; ops = [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md). Historique du spike uniquement.
+
 **Date** : 2026-10-06 · **ADR** : [`0026-runtime-hors-core3.md`](../packages/cortex/docs/adr/0026-runtime-hors-core3.md)  
 **Objectif** : prouver qu’un humain + un bot IA marchent dans Lost Heaven **sans** Core3 246.  
 **Owners** : Iris (Godot) · Hermès (serveur mince / WS) · Chœur (contrat C10/C11)

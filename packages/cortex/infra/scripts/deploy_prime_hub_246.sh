@@ -32,6 +32,7 @@ User=lbg
 WorkingDirectory=${REMOTE_DIR}
 Environment=LBG_PRIME_HUB_WS_PORT=8787
 Environment=LBG_PRIME_HUB_HTTP_PORT=8789
+Environment=LBG_PRIME_HUB_STATE_DIR=${REMOTE_DIR}/data
 Environment=LBG_HUB_BUILDINGS_JSON=${REMOTE_DIR}/data/lost_heaven_buildings.json
 Environment=LBG_HUB_AUTH_UPSTREAM=http://127.0.0.1:8797
 Environment=LBG_HUB_HTTP_UPSTREAM=http://127.0.0.1:8797

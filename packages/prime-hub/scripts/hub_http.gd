@@ -61,7 +61,7 @@ func _serve_once(stream: StreamPeerTCP) -> void:
 			"ok": true,
 			"service": "prime_hub",
 			"proto": "lbg-ws/2",
-			"phase": "G4a",
+			"phase": "G4b",
 			"ws_port": ws_port,
 			"http_proxy": upstream,
 			"tick": int(sim.tick) if sim else 0,
@@ -69,7 +69,7 @@ func _serve_once(stream: StreamPeerTCP) -> void:
 			"npc_count": int(sim.npc_count()) if sim else 0,
 			"collision_blocks": _collision_count(),
 			"uptime_s": uptime,
-			"note": "G4+A* ; WS:8787 HTTP:8789 ; peel Python :8797",
+			"note": "G4b resume ; WS:8787 HTTP:8789 ; peel Python :8797",
 		})
 		_write_raw(stream, 200, body, "application/json; charset=utf-8")
 		return

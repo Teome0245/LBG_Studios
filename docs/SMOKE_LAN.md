@@ -23,7 +23,8 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 | **Cockpit P03** | http://192.168.0.100:8093/pilot/#/cockpit | Mur infra / équipe |
 | **Orch UI** (chat produit) | http://192.168.0.100:5174/ | SPA Orchestrateur — chat unique (rétabli, plus de redirect forcé) |
 | **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra (proxies Pilot) |
-| **Prime comptes** | http://192.168.0.246:8792/ | État + comptes Core3 Prime |
+| **Prime Hub Godot** | http://192.168.0.246:8789/healthz · ws://192.168.0.246:8787/ws | Autorité joueur Lost Heaven ([`RUNTIME_GODOT.md`](RUNTIME_GODOT.md)) |
+| **Prime comptes** | http://192.168.0.246:8792/ | Comptes (lab ; Core3 hors chemin joueur) |
 | **PreCU comptes** | http://192.168.0.245:8792/ | État + comptes PreCU |
 | **Patches** | http://192.168.0.246:8080/patches/prime/manifest.json | Client Prime |
 | **MCP front** | http://192.168.0.100:8766/healthz | MCP |
@@ -85,6 +86,35 @@ Workflow LAN solo :
 Garde-fous qui restent : Bearer Pilot, allowlists apps/URL sur le worker, dry-run explicite.
 
 Fil produit / checklist : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).
+
+## Compagnon D6 — causerie crédible (voix)
+
+Surface : http://192.168.0.100:5174/ · API cases : `/api/character/voice-smoke`
+
+| Critère | Mesure | Smoke |
+|---------|--------|-------|
+| **C1 Continuité** | 5 tours même fil LAB sans reset « objectif » / identité | **V7** juste après **V6** (même conversation) — **PASS** 2026-10-06 |
+| C2 Collègue | avis sans réciter Agir / dry-run / deploy | **V6** — **PASS** 2026-10-06 |
+| C3 Retours | 1 diagnostic + 1 proposition | **V8** — **PASS** 2026-10-06 |
+
+Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · modèle `lbg-compagnon-e4b-v1` · surface `:5174/api/ask`.
+
+```bash
+curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq '.cases[] | {id,criterion,prompt}'
+# Manuel : enchaîner V6 → V7 → V8 dans le fil :5174 (ne pas « Nouveau chat »)
+```
+
+UI D6.3 : timeline / réflexion / méta **repliées** par défaut en mode ask ; ouvertes si source Agir/Team.
+
+Doc : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6 · [`character_layer.md`](../packages/cortex/docs/character_layer.md).
+
+## MCP catalog (C10/C11)
+
+```bash
+bash packages/cortex/infra/scripts/smoke_mcp_catalog.sh
+```
+
+Serveur stdio Cursor : `packages/cortex/tools/mcp_catalog_server/server.py` (outils `catalog`, `get_guide`, `tick_matrix`).
 
 ## Voir aussi
 
