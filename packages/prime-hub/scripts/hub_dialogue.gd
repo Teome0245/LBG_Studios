@@ -159,7 +159,57 @@ func _session_memory_line(ss: Dictionary, npc_name: String) -> String:
 	return " · ".join(bits)
 
 
-func _llm_line(npc_name: String, role_hint: String, player_text: String, place: String, memory: String = "") -> String:
+func _history_for_llm(history: Variant, max_turns: int = 4) -> Array:
+	## Derniers tours client → messages Ollama (user/assistant). Cap court (budget 600 ms).
+	var out: Array = []
+	if typeof(history) != TYPE_ARRAY:
+		return out
+	var start := maxi(0, history.size() - max_turns)
+	for i in range(start, history.size()):
+		var turn = history[i]
+		if typeof(turn) != TYPE_DICTIONARY:
+			continue
+		var role := str(turn.get("role", "")).strip_edges().to_lower()
+		var content := str(turn.get("content", turn.get("text", ""))).strip_edges()
+		if content.is_empty():
+			continue
+		if content.length() > 160:
+			content = content.substr(0, 157) + "…"
+		if role in ["assistant", "npc", "bot"]:
+			out.append({"role": "assistant", "content": content})
+		else:
+			out.append({"role": "user", "content": content})
+	return out
+
+
+func _enrich_session_summary(ss: Dictionary, player: String) -> Dictionary:
+	## C2 léger : injecte tracked_quest depuis l'économie hub si le client ne l'a pas.
+	var out := ss.duplicate(true)
+	if str(out.get("tracked_quest", "")).strip_edges() != "":
+		return out
+	if economy == null or not economy.has_method("status"):
+		return out
+	var st: Dictionary = economy.status(player)
+	var active = st.get("active", [])
+	if typeof(active) != TYPE_ARRAY or active.is_empty():
+		return out
+	var first = active[0]
+	if typeof(first) != TYPE_DICTIONARY:
+		return out
+	var title := str(first.get("title", first.get("id", ""))).strip_edges()
+	if not title.is_empty():
+		out["tracked_quest"] = title
+	return out
+
+
+func _llm_line(
+	npc_name: String,
+	role_hint: String,
+	player_text: String,
+	place: String,
+	memory: String = "",
+	history: Array = []
+) -> String:
 	var disabled := OS.get_environment("LBG_HUB_LLM_DISABLED").strip_edges().to_lower()
 	if disabled in ["1", "true", "yes"]:
 		return ""
@@ -185,12 +235,16 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 			" Contexte utile (une allusion max, naturelle, jamais recopier mot à mot) : %s."
 			% memory.substr(0, 140)
 		)
+	var messages: Array = [{"role": "system", "content": system}]
+	for h in history:
+		messages.append(h)
+	messages.append({
+		"role": "user",
+		"content": player_text if not player_text.is_empty() else "bonjour",
+	})
 	var body := JSON.stringify({
 		"model": model,
-		"messages": [
-			{"role": "system", "content": system},
-			{"role": "user", "content": player_text if not player_text.is_empty() else "bonjour"},
-		],
+		"messages": messages,
 		"stream": false,
 		"think": false,
 		"options": {"num_predict": 80, "temperature": 0.7},
@@ -277,7 +331,14 @@ func _scribe_chronicle_line(player: String) -> String:
 	return "Scribe — %s%s" % [" ".join(body_bits), more]
 
 
-func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: String = "", player: String = "Voyageur") -> String:
+func _pick_reply(
+	npc_id: String,
+	npc_name: String,
+	player_text: String,
+	memory: String = "",
+	player: String = "Voyageur",
+	history: Array = []
+) -> String:
 	var t := player_text.strip_edges().to_lower()
 	var entry = _registry.get(npc_id, {})
 	var role := "habitant hub"
@@ -303,7 +364,8 @@ func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: 
 		role.substr(0, 120),
 		player_text,
 		place,
-		memory
+		memory,
+		history
 	)
 	if not llm.is_empty():
 		return llm
@@ -353,6 +415,8 @@ func invoke(body: Dictionary) -> Dictionary:
 	var ss = ctx.get("session_summary", {})
 	if typeof(ss) != TYPE_DICTIONARY:
 		ss = {}
+	ss = _enrich_session_summary(ss, player)
+	var history := _history_for_llm(ctx.get("history", body.get("history", [])))
 	if npc_name.is_empty() and _registry.has(npc_id):
 		npc_name = str((_registry[npc_id] as Dictionary).get("name", ""))
 	if npc_id.is_empty() and not npc_name.is_empty():
@@ -362,7 +426,7 @@ func invoke(body: Dictionary) -> Dictionary:
 				npc_id = str(eid)
 				break
 	var memory := _session_memory_line(ss, npc_name)
-	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player)
+	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player, history)
 	var moves := _suggested_moves(npc_id)
 	var meta := {
 		"lyra_engagement_resolved": "prime_hub",
@@ -373,12 +437,24 @@ func invoke(body: Dictionary) -> Dictionary:
 		"source": "prime_hub",
 		"session_memory": memory,
 		"session_memory_used": not memory.is_empty(),
+		"history_turns": history.size(),
+		"tracked_quest": str(ss.get("tracked_quest", "")),
 	}
 	if npc_id == "npc:scribe" and economy != null and economy.has_method("chronicle"):
 		meta["chronicle"] = economy.chronicle(player, true)
+	var structured := {
+		"reply": reply,
+		"suggested_moves": moves,
+		"world_npc_id": npc_id,
+		"npc_name": npc_name,
+		"session_summary": ss,
+		"source": "prime_hub",
+	}
 	return {
 		"ok": true,
 		"reply": reply,
+		"result": reply,
 		"suggested_moves": moves,
+		"structuredContent": structured,
 		"meta": meta,
 	}

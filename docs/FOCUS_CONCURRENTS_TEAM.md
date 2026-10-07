@@ -112,7 +112,8 @@ Mission veille concurrents Vague C — contrat agents SpaceMolt-style.
 | **C10** | [`design_c10_c11_catalog_tick.md`](../packages/cortex/docs/design_c10_c11_catalog_tick.md) · `GET /catalog` `/guide` live `.140:8020` |
 | **C11** | `/tick-matrix` + flag context · [`agent_catalog.py`](../packages/cortex/agents/src/lbg_agents/agent_catalog.py) |
 
-**Vague C** : livrables MVP ✅ 2026-10-06 (11 tests catalog verts · catalog live 140). Wire `:8791` / MCP Studio = suite.
+**Vague C** : livrables MVP ✅ 2026-10-06 (11 tests catalog verts · catalog live 140).  
+**Suite G5+** : catalog/tick/dialogue sur **`prime-hub` `:8787`** (TickGate C11 Godot + smoke `tools/smoke_p3_hub_dialogue.sh`) · MCP Studio stdio OK · sidecar `:8791` = legacy.
 
 ## Surfaces humaines
 

@@ -116,6 +116,19 @@ bash packages/cortex/infra/scripts/smoke_mcp_catalog.sh
 
 Serveur stdio Cursor : `packages/cortex/tools/mcp_catalog_server/server.py` (outils `catalog`, `get_guide`, `tick_matrix`).
 
+**Autorité joueur G5+** : catalog / tick-matrix / dialogue live sur **`prime-hub` `:8787`** (pas le sidecar Core3 `:8791`).
+
+```bash
+# P3 + C1 moves + C12 envelope + C10/C11 lecture
+bash tools/smoke_p3_hub_dialogue.sh
+# ou : bash tools/smoke_p3_hub_dialogue.sh http://192.168.0.246:8787
+```
+
+## P3 persona dialogue (hub)
+
+Chemin live client : `prime-client` → `POST http://192.168.0.246:8787/v1/dialogue/invoke` (`session_summary` + `history`).  
+Smoke C1 historique Pilot (`tools/smoke_c1_suggested_moves.sh` → `:8000`) = régression Python ; **vert produit** = `smoke_p3_hub_dialogue.sh`.
+
 ## Voir aussi
 
 - [`REGISTRE.md`](REGISTRE.md) — actifs / runtime

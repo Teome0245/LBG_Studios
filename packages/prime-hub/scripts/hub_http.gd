@@ -21,6 +21,19 @@ var catalog = null
 var dialogue = null
 var events = null
 
+## C11 TickGate — cooldown mutations par joueur (aligné agent_catalog / sidecar).
+const TICK_MUTATION_PATHS := {
+	"/v1/quests/accept": "quests/accept",
+	"/v1/quests/progress": "quests/progress",
+	"/v1/quests/complete": "quests/complete",
+	"/v1/quests/tip": "tip_stage",
+	"/v1/craft/combine": "craft/complete",
+	"/v1/salvage": "salvage/loot",
+	"/v1/salvage/loot": "salvage/loot",
+	"/v1/bots/move_to": "move_to",
+}
+var _tick_last_ms: Dictionary = {}  # player_key -> msec
+
 
 func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dialogue_svc = null) -> void:
 	auth = auth_svc if auth_svc != null else HubAuthScript.new()
@@ -118,10 +131,96 @@ func _ok(payload: Dictionary, code: int = 200) -> Dictionary:
 	}
 
 
+func _tick_gate_enabled() -> bool:
+	var raw := OS.get_environment("LBG_TICK_GATE").strip_edges().to_lower()
+	if raw.is_empty():
+		return true
+	return raw not in ["0", "false", "no", "off"]
+
+
+func _tick_cooldown_ms() -> int:
+	var raw := OS.get_environment("LBG_TICK_COOLDOWN_S").strip_edges()
+	var sec := 8.0
+	if not raw.is_empty():
+		sec = maxf(0.0, float(raw))
+	return int(sec * 1000.0)
+
+
+func _tick_player_key(body: Dictionary) -> String:
+	for key in ["player", "player_name", "username", "firstname", "name"]:
+		var v := str(body.get(key, "")).strip_edges()
+		if not v.is_empty():
+			return v.to_lower()
+	return "local"
+
+
+func _tick_busy(action: String, player: String, retry_after_s: float) -> Dictionary:
+	return _ok({
+		"ok": false,
+		"error": "tick_busy",
+		"reason": "cooldown",
+		"player": player,
+		"retry_after_s": snappedf(maxf(0.0, retry_after_s), 0.01),
+		"queue_depth": 1,
+		"tick_cost": "mutation",
+		"requires_tick": true,
+		"context": {
+			"action": action,
+			"tick_cost": "mutation",
+			"requires_tick": true,
+			"kind": "mutation",
+		},
+	}, 429)
+
+
+func _tick_guard(method: String, path: String, body: Dictionary) -> Dictionary:
+	## {} = OK ; sinon réponse 429 tick_busy.
+	if method != "POST" or not _tick_gate_enabled():
+		return {}
+	if not TICK_MUTATION_PATHS.has(path):
+		return {}
+	var action := str(TICK_MUTATION_PATHS[path])
+	var player := _tick_player_key(body)
+	var now := Time.get_ticks_msec()
+	var last := int(_tick_last_ms.get(player, 0))
+	var cool := _tick_cooldown_ms()
+	if cool > 0 and last > 0 and (now - last) < cool:
+		var retry := float(cool - (now - last)) / 1000.0
+		return _tick_busy(action, player, retry)
+	_tick_last_ms[player] = now
+	return {}
+
+
+func _attach_tick_flags(payload: Dictionary, path: String) -> Dictionary:
+	if not TICK_MUTATION_PATHS.has(path):
+		return payload
+	var action := str(TICK_MUTATION_PATHS[path])
+	var out := payload.duplicate(true)
+	out["tick_cost"] = "mutation"
+	out["requires_tick"] = true
+	var ctx = out.get("context", {})
+	if typeof(ctx) != TYPE_DICTIONARY:
+		ctx = {}
+	else:
+		ctx = (ctx as Dictionary).duplicate(true)
+	ctx["action"] = action
+	ctx["tick_cost"] = "mutation"
+	ctx["requires_tick"] = true
+	ctx["kind"] = "mutation"
+	out["context"] = ctx
+	return out
+
+
 func _dispatch(method: String, path: String, query: String, req_body: String) -> Dictionary:
 	method = method.to_upper()
 	if method == "OPTIONS":
 		return {"code": 204, "body": "", "content_type": "text/plain"}
+
+	# C11 — gate mutations avant handlers économie / bots
+	if method == "POST" and TICK_MUTATION_PATHS.has(path):
+		var gate := _tick_guard(method, path, _json_body(req_body))
+		if not gate.is_empty():
+			return gate
 
 	if path == "/healthz" or path == "/":
 		var uptime := int(Time.get_unix_time_from_system() - started_at)
@@ -201,24 +300,24 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 	if method == "POST" and path == "/v1/quests/accept":
 		var qb := _json_body(req_body)
 		var qo: Dictionary = economy.accept(str(qb.get("player", "Voyageur")), str(qb.get("quest_id", "")), str(qb.get("giver_id", "")))
-		return _ok(qo, 200 if bool(qo.get("ok")) else 400)
+		return _ok(_attach_tick_flags(qo, path), 200 if bool(qo.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/progress":
 		var qb2 := _json_body(req_body)
 		var qo2: Dictionary = economy.progress(str(qb2.get("player", "Voyageur")), str(qb2.get("quest_id", "")), str(qb2.get("step_id", "")))
-		return _ok(qo2, 200 if bool(qo2.get("ok")) else 400)
+		return _ok(_attach_tick_flags(qo2, path), 200 if bool(qo2.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/complete":
 		var qb3 := _json_body(req_body)
 		var qo3: Dictionary = economy.complete(str(qb3.get("player", "Voyageur")), str(qb3.get("quest_id", "")))
-		return _ok(qo3, 200 if bool(qo3.get("ok")) else 400)
+		return _ok(_attach_tick_flags(qo3, path), 200 if bool(qo3.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/tip":
 		var qb4 := _json_body(req_body)
 		var qo4: Dictionary = economy.tip(str(qb4.get("player", "Voyageur")), str(qb4.get("quest_id", "")), int(qb4.get("amount", 2)))
-		return _ok(qo4, 200 if bool(qo4.get("ok")) else 400)
+		return _ok(_attach_tick_flags(qo4, path), 200 if bool(qo4.get("ok")) else 400)
 	if method == "POST" and path == "/v1/craft/combine":
 		var cb := _json_body(req_body)
 		var rid := str(cb.get("schematic_id", cb.get("recipe_id", "")))
 		var co: Dictionary = economy.craft_combine(str(cb.get("player", "Voyageur")), rid)
-		return _ok(co, 200 if bool(co.get("ok")) else 400)
+		return _ok(_attach_tick_flags(co, path), 200 if bool(co.get("ok")) else 400)
 	if method == "POST" and path in ["/v1/salvage", "/v1/salvage/loot"]:
 		var sb := _json_body(req_body)
 		var sx := NAN
@@ -233,7 +332,7 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			sx,
 			sz
 		)
-		return _ok(so, 200 if bool(so.get("ok")) else 400)
+		return _ok(_attach_tick_flags(so, path), 200 if bool(so.get("ok")) else 400)
 	if method == "GET" and path in ["/v1/chronicle", "/v1/chronicle/session"]:
 		var cos := _query_param(query, "title", "1") != "0"
 		return _ok(economy.chronicle(_query_param(query, "player", "Voyageur"), cos))
@@ -262,7 +361,7 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			var ent = sim.set_bot_target(player, float(mb.get("x", 0)), float(mb.get("y", 0.15)), float(mb.get("z", 0)))
 			if ent == null:
 				return _ok({"ok": false, "error": "unknown_bot", "player": player}, 404)
-			return _ok({"ok": true, "player": player, "source": "prime_hub"})
+			return _ok(_attach_tick_flags({"ok": true, "player": player, "source": "prime_hub"}, path))
 		return _ok({"ok": false, "error": "sim_missing"}, 501)
 	if method == "POST" and path == "/v1/say":
 		var sb := _json_body(req_body)

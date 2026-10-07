@@ -406,13 +406,14 @@ async def pilot_aggregate_status() -> dict[str, object]:
         "vm140": "ok" if orch_state == "ok" else "error",
         "vm110": "ok" if check_port(front_ip, 11434) else "error",
         "vm245": "ok" if check_port(precu_ip, 3306) else "error",
-        "vm246": "ok" if check_port(prime_ip, 8791) else "error",
+        # G5+ : prime-hub Godot unifié (:8787). Sidecar Core3 :8791 = legacy OFF.
+        "vm246": "ok" if check_port(prime_ip, 8787) else "error",
     }
     res["game_status"] = {
         "precu_game": "ok" if check_port(precu_ip, 44453) else "offline",
         "prime_game": "ok" if check_port(prime_ip, 44553) else "offline",
     }
-    # Joueurs IA via sidecar Prime (:8791) — pas LBG_MMO_SERVER_URL (souvent PreCU).
+    # Joueurs IA via prime-hub (:8787) — pas LBG_MMO_SERVER_URL (souvent PreCU).
     player_ia = await _fetch_player_ia_runtime(timeout_s=1.8)
     res["player_ia_runtime"] = player_ia
     bots_status = player_ia.get("bots_status") if isinstance(player_ia.get("bots_status"), dict) else {}

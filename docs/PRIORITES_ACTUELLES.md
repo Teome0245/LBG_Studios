@@ -54,7 +54,7 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 | Rail | État |
 |------|------|
 | **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
-| **P3** | Persona en jeu — dialogue hub `:8787` + `session_summary` (C2 léger) **en cours** 2026-10-07 |
+| **P3** | Persona en jeu — dialogue hub `:8787` + `session_summary` / history / C12 (C2 léger) **en cours** 2026-10-07 |
 | **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
 | **P5** | World Director / combat / cour de chasse sur `prime-hub` |
 
@@ -87,4 +87,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : P3 persona/dialogue hub live + wire C10/C11 `:8791` / MCP Studio (voir [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md)).
+**Suite immédiate** : P3 + C11 TickGate sur **`prime-hub` `:8787`** (deploy + `tools/smoke_p3_hub_dialogue.sh`) · MCP Studio stdio déjà OK · sidecar `:8791` = legacy OFF (voir [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md)).

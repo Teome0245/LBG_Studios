@@ -39,7 +39,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **vert smoke 2026-08-15** ; GET `/v1/inventory` = dump Lua Core3 si perso online, sinon JSON bridge |
 | **P2b** | Missions hub | Board Daan Oth ↔ `:8791` accept/complete stub + UI Godot **J** | Iris + Dédale | **vert smoke 2026-08-15** ; **objectifs terrain POI** (progress sur toutes templates hub + HUD objectif hors J) **fait** ; Core3 journal = suite |
 | **P2c** | Scène cantina | Show La Perle + tip stub (après missions) | Iris | **MVP stub 2026-08-15** — `lh_show_perle` au board + `POST /v1/quests/tip` + bouton Tip Scène ; show live / formation Talen = suite |
-| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | **jaune→vert partiel** 2026-10-07 : invoke + moves + mémoire session sur `prime-hub` `:8787` |
+| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | **vert code** 2026-10-07 : invoke + history + C12 + moves + TickGate C11 sur `prime-hub` `:8787` · smoke `tools/smoke_p3_hub_dialogue.sh` · vérif Chœur terrain = suite |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | **de facto** 2026-10-07 (hub Godot) ; nettoyer restes |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
 | **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
