@@ -742,13 +742,29 @@ function mapStatusApiRows(rows) {
 }
 
 async function fetchPrimeGatewayHealth() {
-  const url = `http://${PRIME_HOST_LAN}:8765/health`;
+  // G5 : autorité joueur = prime-hub Godot (:8787), plus le gateway Core3 :8765
+  const url =
+    (config && config.primeGatewayHealthUrl) ||
+    `http://${PRIME_HOST_LAN}:8787/healthz`;
   try {
     const data = await httpGetJson(url, 3500);
     const ok = Boolean(data && data.ok);
-    return { online: ok, ready: ok, status: ok ? 'ready' : 'offline', source: 'gateway' };
+    return {
+      online: ok,
+      ready: ok,
+      status: ok ? 'ready' : 'offline',
+      source: 'prime_hub',
+      url,
+    };
   } catch (err) {
-    return { online: false, ready: false, status: 'offline', source: 'gateway', error: err.message };
+    return {
+      online: false,
+      ready: false,
+      status: 'offline',
+      source: 'prime_hub',
+      url,
+      error: err.message,
+    };
   }
 }
 
@@ -1148,7 +1164,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
       if (gameProcess.exitCode === null && gameProcess.signalCode === null) {
         gameProcess.unref();
         const target = godot
-          ? `Godot prime-client → gateway ${PRIME_HOST_LAN}:8765 / :50000`
+          ? `Godot prime-client → hub ${PRIME_HOST_LAN}:8787 (HTTP+WS)`
           : `${profile.label} → ${server.label} (${server.ip}:${server.loginPort})`;
         event.reply('launch-status', {
           error: false,
