@@ -24,6 +24,8 @@ def test_platform_specs_dual_llm_labels(monkeypatch) -> None:
     assert specs["llm_light_111"]["ollama_tier"] == "light"
     assert "front_legacy_112" not in specs
     assert specs["hands_142"]["required"] is True
+    assert specs["precu_245"]["required"] is False
+    assert specs["prime_246"]["required"] is True
     assert any(p.get("url", "").endswith(":6001/healthz") for p in specs["hands_142"]["probes"])
     assert any(p["url"].endswith(":11434/api/tags") for p in specs["llm_light_111"]["probes"])
 
@@ -107,10 +109,11 @@ def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
     )
     out = audit_admin_infra_platform()
     assert out["track"] == "admin_infra_platform"
-    assert out["hosts_total"] == 7
+    # 6 requis (245 PreCU optionnel exclu du total)
+    assert out["hosts_total"] == 6
     assert "111" in out["perimeter"]
     assert "141" in out["perimeter"]
     assert "142" in out["perimeter"]
     assert "245" in out["perimeter"]
-    assert any("245" in g for g in out.get("gaps") or [])
+    assert any("optional-245" in g or "245" in g for g in out.get("gaps") or [])
     assert out["topology"]["llm_light"].startswith("192.168.0.111")

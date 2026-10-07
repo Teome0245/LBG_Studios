@@ -1,4 +1,8 @@
-"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/142/245/246)."""
+"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/142/245/246).
+
+246 = prime-hub Godot G5+ ``:8787/healthz`` (pas Core3 gateway/sidecar).
+245 PreCU = optionnel (sandbox).
+"""
 
 from __future__ import annotations
 
@@ -46,9 +50,13 @@ def platform_host_specs() -> list[dict[str, Any]]:
     ip245 = _host_ip("LBG_LAN_HOST_PRECU", _host_ip("LBG_LAN_HOST_MMO_SERVER", "192.168.0.245"))
     ip246 = _host_ip("LBG_LAN_HOST_CORE3_PRIME", _host_ip("LBG_LAN_HOST_MMO", "192.168.0.246"))
 
-    sidecar = os.environ.get("LBG_CORE3_SIDECAR_URL", f"http://{ip246}:8791").strip().rstrip("/")
-    gateway_http = os.environ.get("LBG_TEAM_GODOT_GATEWAY_HOST", ip246).strip().split(":")[0]
-    gateway_health = f"http://{gateway_http}:8765/health"
+    # G5+ : prime-hub Godot unifié HTTP+WS :8787 (/healthz). Ancien :8765 + sidecar :8791 = Core3 OFF.
+    hub_base = (
+        os.environ.get("LBG_PRIME_HUB_URL", "").strip()
+        or os.environ.get("LBG_TEAM_GODOT_GATEWAY_URL", "").strip()
+        or f"http://{ip246}:8787"
+    ).rstrip("/")
+    hub_health = f"{hub_base}/healthz"
     orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
 
     # .112 décommissionné — sonde uniquement si LBG_ATLAS_PROBE_FRONT_LEGACY=1 (rollback).
@@ -142,21 +150,21 @@ def platform_host_specs() -> list[dict[str, Any]]:
             "host": ip245,
             "perimeter_id": "245",
             "role": "precu_runtime",
-            "required": True,
+            # Sandbox PreCU : OFF volontaire ≠ périmètre Atlas KO (cf. perimeter_has_ko).
+            "required": False,
             "probes": [
                 {"kind": "http", "url": f"http://{ip245}:8050/healthz"},
             ],
         },
         {
             "id": "prime_246",
-            "label": "Prime Core3 + gateway + sidecar IA",
+            "label": "Prime hub Godot G5+ (:8787)",
             "host": ip246,
             "perimeter_id": "246",
             "role": "prime_runtime",
             "required": True,
             "probes": [
-                {"kind": "http", "url": gateway_health},
-                {"kind": "http", "url": f"{sidecar}/healthz"},
+                {"kind": "http", "url": hub_health},
             ],
         },
     ]
@@ -328,9 +336,13 @@ def audit_admin_infra_platform() -> dict[str, Any]:
             "142 hands : vérifier CT lbg-hands sur Proxmox 200 (SSH :22) et lbg-linux-agent :6001/healthz."
         )
     if not any(h.get("id") == "precu_245" and h.get("ok") for h in hosts):
-        recommendations.append("245 PreCU : vérifier lbg-mmo / healthz :8050 (sandbox parallèle).")
+        recommendations.append(
+            "245 PreCU (optionnel) : sandbox éteint ou healthz :8050 down — hors alerte périmètre."
+        )
     if not any(h.get("id") == "prime_246" and h.get("ok") for h in hosts):
-        recommendations.append("246 Prime : vérifier gateway :8765/health et sidecar IA :8791/healthz.")
+        recommendations.append(
+            "246 Prime : vérifier lbg-prime-hub :8787/healthz (Godot G5+ unifié)."
+        )
     if host_ok < hosts_total:
         recommendations.append("Périmètre Atlas incomplet — corriger les sondes critiques avant bench long.")
 

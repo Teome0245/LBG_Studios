@@ -1792,7 +1792,9 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
 
-        needs_approval = kind != "comfyui_status"
+        # ensure = démarrage si down (chemin known C:\Users\sdesh\ComfyUI) — pas d'HITL.
+        # restart / queue / patch restent sous approval.
+        needs_approval = kind not in {"comfyui_status", "comfyui_ensure"}
         if needs_approval and not _desktop_approval_ok(ctx):
             out = {
                 **base,

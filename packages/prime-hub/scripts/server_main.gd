@@ -52,6 +52,7 @@ func _ready() -> void:
 	sim.reset()
 	economy.attach_events(events)
 	dialogue.attach_events(events)
+	dialogue.attach_economy(economy)
 	events.setup(Callable(sim, "enqueue_say"))
 
 	http = HubHttpScript.new()

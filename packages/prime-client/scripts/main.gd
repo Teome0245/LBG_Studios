@@ -250,9 +250,23 @@ func _on_mission_accepted(result: Dictionary) -> void:
 func _on_mission_completed(result: Dictionary) -> void:
 	var title := str(result.get("title", "mission"))
 	var cr := int((result.get("reward_applied") or {}).get("credits_gained", 0))
-	_hotbar_feedback("Mission OK — %s (+%d Cr)" % [title, cr])
+	var ch = result.get("chronicle", {})
+	if typeof(ch) == TYPE_DICTIONARY and int(ch.get("line_count", 0)) > 0:
+		_hotbar_feedback("Mission OK — %s (+%d Cr) · chronique Scribe prête" % [title, cr])
+	else:
+		_hotbar_feedback("Mission OK — %s (+%d Cr)" % [title, cr])
 	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
 		inventory_panel.refresh_inventory()
+	# C5 — pousse un extrait chat hub si disponible.
+	if typeof(ch) == TYPE_DICTIONARY:
+		var lines = ch.get("lines", [])
+		var ctitle := str(ch.get("title", "")).strip_edges()
+		if typeof(lines) == TYPE_ARRAY and lines.size() > 0:
+			var preview := str(lines[0])
+			if not ctitle.is_empty():
+				_append_hub_chat_line("Scribe", "%s — %s" % [ctitle, preview], "ia")
+			else:
+				_append_hub_chat_line("Scribe", preview, "ia")
 
 
 func _on_m10_craft_completed(result: Dictionary) -> void:

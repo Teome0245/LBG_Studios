@@ -228,6 +228,58 @@ function renderFleet(data) {
     }
   }
 
+  const missionEl = document.getElementById("fleet-mission");
+  const mb = data.smoke_lan_mission || {};
+  const mis = mb.mission || null;
+  if (missionEl) {
+    if (!mis) {
+      missionEl.textContent = "Aucune mission L3 active.";
+    } else {
+      missionEl.textContent =
+        "status=" +
+        (mis.status || "—") +
+        " · days " +
+        (mis.days_ok ?? 0) +
+        "/" +
+        (mis.days_target ?? "?") +
+        " · retries " +
+        (mis.retries_used ?? 0) +
+        "/" +
+        (mis.budget_retries ?? "?") +
+        " · red×" +
+        (mis.consecutive_red ?? 0) +
+        " (escalade @" +
+        (mis.escalate_after_red ?? "?") +
+        ")" +
+        "\nlast=" +
+        (mis.last_decision || "—") +
+        " · L2=" +
+        (mis.l2_task_id || "—") +
+        " · deadline_in_h=" +
+        (mis.deadline_in_h != null ? mis.deadline_in_h : "—") +
+        "\n" +
+        String(mis.objective || "").slice(0, 200);
+    }
+  }
+
+  const pygEl = document.getElementById("fleet-pygmalion");
+  const pygLast = ((data.pygmalion_assets_pilot || {}).last_run) || {};
+  if (pygEl) {
+    if (!pygLast.ts && !pygLast.decision) {
+      pygEl.textContent = "Aucun run Pygmalion persisté.";
+    } else {
+      pygEl.textContent =
+        "comfy=" +
+        (pygLast.comfy_ok === true ? "OK" : pygLast.comfy_ok === false ? "KO" : "—") +
+        " · L2=" +
+        (pygLast.l2_task_id || "—") +
+        " · " +
+        (pygLast.elapsed_ms != null ? pygLast.elapsed_ms + "ms" : "") +
+        "\n" +
+        String(pygLast.brief || pygLast.summary || "").slice(0, 240);
+    }
+  }
+
   const flagsEl = document.getElementById("fleet-flags");
   if (flagsEl) {
     const chat = (data.flags || {}).chat_agentic || {};
@@ -238,6 +290,8 @@ function renderFleet(data) {
       ((chat.LBG_CHAT_AGENTIC_INTENTS || []).join(",") || "(tous si agentic on)") +
       "\njobs_runner=" +
       String(!!(data.flags || {}).jobs_runner) +
+      "\njobs_l2_notify=" +
+      String(!!(data.flags || {}).jobs_l2_notify) +
       "\n" +
       (chat.note || "");
   }
@@ -280,7 +334,11 @@ function renderFleet(data) {
       "\nteam_l2_pending: " +
       String(m.team_l2_pending ?? "—") +
       "\nops_health: " +
-      String(m.ops_health_last_decision ?? "—");
+      String(m.ops_health_last_decision ?? "—") +
+      "\nmission: " +
+      String(m.mission_status ?? "—") +
+      " · days_ok=" +
+      String(m.mission_days_ok ?? "—");
   }
 }
 
@@ -403,6 +461,136 @@ export function installTeamFleet() {
     btnLive.addEventListener("click", function () {
       if (!window.confirm("Lancer ops_health_pilot en live (peut créer une tâche L2 si KO) ?")) return;
       fleetRunOpsPilot(false);
+    });
+  }
+
+  async function fleetMissionCreate() {
+    setText("fleet-pilot-hint", "Création mission L3…", false);
+    try {
+      const r = await fetch(getBase() + "/v1/pilot/team/smoke_lan_mission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 3, budget_retries: 5, escalate_after_red: 2, dry_run: false }),
+      });
+      const j = await r.json().catch(function () {
+        return {};
+      });
+      if (!r.ok || j.ok === false) throw new Error((j && (j.error || j.detail)) || "HTTP " + r.status);
+      setText("fleet-pilot-hint", "Mission " + ((j.mission && j.mission.id) || "?").slice(0, 8) + " active", false);
+      await fleetBind();
+    } catch (e) {
+      setText("fleet-pilot-hint", String(e && e.message ? e.message : e), true);
+    }
+  }
+
+  async function fleetMissionTick(dryRun) {
+    setText("fleet-pilot-hint", dryRun ? "Tick mission dry-run…" : "Tick mission live…", false);
+    try {
+      const r = await fetch(getBase() + "/v1/pilot/team/smoke_lan_mission/tick", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dry_run: !!dryRun, notify: dryRun ? false : true }),
+      });
+      const j = await r.json().catch(function () {
+        return {};
+      });
+      if (!r.ok || j.ok === false) throw new Error((j && (j.error || j.detail)) || "HTTP " + r.status);
+      const out = document.getElementById("fleet-pilot-out");
+      if (out) out.textContent = JSON.stringify(j, null, 2);
+      setText(
+        "fleet-pilot-hint",
+        "tick decision=" + (j.decision || "?") + " · escalated=" + String(!!j.escalated),
+        false
+      );
+      await fleetBind();
+    } catch (e) {
+      setText("fleet-pilot-hint", String(e && e.message ? e.message : e), true);
+    }
+  }
+
+  async function fleetMissionCancel() {
+    if (!window.confirm("Annuler la mission L3 smoke LAN ?")) return;
+    setText("fleet-pilot-hint", "Annulation…", false);
+    try {
+      const r = await fetch(getBase() + "/v1/pilot/team/smoke_lan_mission/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      const j = await r.json().catch(function () {
+        return {};
+      });
+      if (!r.ok || j.ok === false) throw new Error((j && (j.error || j.detail)) || "HTTP " + r.status);
+      setText("fleet-pilot-hint", "Mission annulée", false);
+      await fleetBind();
+    } catch (e) {
+      setText("fleet-pilot-hint", String(e && e.message ? e.message : e), true);
+    }
+  }
+
+  const btnMc = document.getElementById("btn-fleet-mission-create");
+  if (btnMc) btnMc.addEventListener("click", function () {
+    fleetMissionCreate();
+  });
+  const btnMt = document.getElementById("btn-fleet-mission-tick");
+  if (btnMt) btnMt.addEventListener("click", function () {
+    fleetMissionTick(true);
+  });
+  const btnMx = document.getElementById("btn-fleet-mission-cancel");
+  if (btnMx) btnMx.addEventListener("click", function () {
+    fleetMissionCancel();
+  });
+
+  async function fleetPygmalion(dryRun) {
+    const brief =
+      window.prompt(
+        "Brief Pygmalion (assets / Comfy)",
+        "Prépare ComfyUI pour un brief sprite PNJ (ensure only, L2)"
+      ) || "";
+    if (!String(brief).trim()) return;
+    setText("fleet-pilot-hint", dryRun ? "Pygmalion dry-run…" : "Pygmalion live L2…", false);
+    try {
+      const r = await fetch(getBase() + "/v1/pilot/team/pygmalion_assets_pilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brief: String(brief).trim(),
+          dry_run: !!dryRun,
+          notify: dryRun ? false : true,
+          spawn_l2: true,
+        }),
+      });
+      const j = await r.json().catch(function () {
+        return {};
+      });
+      if (!r.ok || j.ok === false) throw new Error((j && (j.error || j.detail)) || "HTTP " + r.status);
+      const out = document.getElementById("fleet-pilot-out");
+      if (out) out.textContent = JSON.stringify(j, null, 2);
+      setText(
+        "fleet-pilot-hint",
+        "pyg decision=" +
+          (j.decision || "?") +
+          " · comfy=" +
+          String(!!j.comfy_ok) +
+          " · L2=" +
+          (j.l2_task_id || "—"),
+        false
+      );
+      await fleetBind();
+    } catch (e) {
+      setText("fleet-pilot-hint", String(e && e.message ? e.message : e), true);
+    }
+  }
+
+  const btnPygDry = document.getElementById("btn-fleet-pyg-dry");
+  if (btnPygDry) btnPygDry.addEventListener("click", function () {
+    fleetPygmalion(true);
+  });
+  const btnPygLive = document.getElementById("btn-fleet-pyg-live");
+  if (btnPygLive) {
+    btnPygLive.addEventListener("click", function () {
+      if (!window.confirm("Créer une tâche L2 Pygmalion (HITL) ?")) return;
+      fleetPygmalion(false);
     });
   }
 

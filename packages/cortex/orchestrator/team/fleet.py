@@ -217,6 +217,13 @@ def fleet_snapshot() -> dict[str, Any]:
     except Exception as exc:
         mission_brief = {"ok": False, "error": str(exc)}
     mission_slice = mission_brief.get("mission") if isinstance(mission_brief, dict) else None
+    last_pyg: dict[str, Any] = {}
+    try:
+        from team import pygmalion_assets_pilot
+
+        last_pyg = pygmalion_assets_pilot.last_run()
+    except Exception as exc:
+        last_pyg = {"ok": False, "error": str(exc)}
     return {
         "ok": True,
         "ts": time.time(),
@@ -234,6 +241,7 @@ def fleet_snapshot() -> dict[str, Any]:
         "campus": _campus_brief(),
         "lessons": _lessons_meta(),
         "ops_health_pilot": {"last_run": last_pilot},
+        "pygmalion_assets_pilot": {"last_run": last_pyg},
         "smoke_lan_mission": mission_brief,
         "flags": {
             "chat_agentic": _chat_agentic_flags(),
@@ -253,5 +261,7 @@ def fleet_snapshot() -> dict[str, Any]:
             "ops_health_last_decision": last_pilot.get("decision"),
             "mission_status": (mission_slice or {}).get("status") if isinstance(mission_slice, dict) else None,
             "mission_days_ok": (mission_slice or {}).get("days_ok") if isinstance(mission_slice, dict) else None,
+            "pygmalion_last_comfy_ok": last_pyg.get("comfy_ok"),
+            "pygmalion_last_l2": last_pyg.get("l2_task_id"),
         },
     }

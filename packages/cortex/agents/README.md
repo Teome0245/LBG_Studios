@@ -326,7 +326,7 @@ En prod/LAN, ces valeurs sont en général définies via `/etc/lbg-ia-mmo.env` (
 | `LBG_DIALOGUE_BUDGET_MAX_USD` | Plafond **soft** (défaut `0` = désactivé) sur la somme des coûts **estimés** des réponses réussies `fast`/`remote` pour le **process** ; n’affecte que le mode **`auto`**. |
 | `LBG_DIALOGUE_FAST_COST_IN_PER_1K` / `LBG_DIALOGUE_FAST_COST_OUT_PER_1K` | USD / 1K tokens pour estimer le coût **`fast`** (budget + champ `estimated_cost_usd` dans la trace). |
 | `LBG_DIALOGUE_FAST_ENABLED` | Active le provider rapide explicite pour `dialogue_target=fast`. Si désactivé/incomplet, fallback vers `remote` si activé, sinon `local`. |
-| `LBG_DIALOGUE_FAST_BASE_URL` / `LBG_DIALOGUE_FAST_MODEL` / `LBG_DIALOGUE_FAST_API_KEY` | Provider rapide OpenAI-compatible, typiquement Groq (`https://api.groq.com/openai/v1`, ex. `qwen/qwen3.6-27b`). **Mettre à jour `LBG_DIALOGUE_FAST_MODEL` en même temps que `LBG_DIALOGUE_LLM_MODEL`** puis `push_secrets_vm.sh`. Contrôle Atlas : run `admin_infra` → `dialogue_fast_groq` ; sonde orchestrateur `GET /v1/llm/probe`. |
+| `LBG_DIALOGUE_FAST_BASE_URL` / `LBG_DIALOGUE_FAST_MODEL` / `LBG_DIALOGUE_FAST_API_KEY` | Provider rapide OpenAI-compatible, typiquement Groq (`https://api.groq.com/openai/v1`, ex. `qwen/qwen3.8-27b`). **Mettre à jour `LBG_DIALOGUE_FAST_MODEL` en même temps que `LBG_DIALOGUE_LLM_MODEL`** puis `push_secrets_vm.sh`. Contrôle Atlas : run `admin_infra` → `dialogue_fast_groq` ; sonde orchestrateur `GET /v1/llm/probe`. |
 | `LBG_DIALOGUE_DESKTOP_PLAN` | Si `1` / `true` : permet le préfixe `DESKTOP_JSON` lorsque `context._desktop_plan` est vrai (Pilot *Proposer via IA*). Déjà reflété dans `GET /healthz` (`desktop_plan_env_enabled`). |
 
 ### Multi‑LLM (`auto`) et base de suivi (trace)

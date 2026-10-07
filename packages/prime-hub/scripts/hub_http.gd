@@ -234,6 +234,15 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			sz
 		)
 		return _ok(so, 200 if bool(so.get("ok")) else 400)
+	if method == "GET" and path in ["/v1/chronicle", "/v1/chronicle/session"]:
+		var cos := _query_param(query, "title", "1") != "0"
+		return _ok(economy.chronicle(_query_param(query, "player", "Voyageur"), cos))
+	if method == "POST" and path == "/v1/chronicle/export":
+		var chb := _json_body(req_body)
+		var cos2 := true
+		if chb.has("cosmetic_title"):
+			cos2 = bool(chb.get("cosmetic_title"))
+		return _ok(economy.chronicle(str(chb.get("player", "Voyageur")), cos2))
 
 	# --- Dialogue ---
 	if method == "POST" and path in ["/v1/dialogue/invoke", "/v1/pilot/agent-dialogue/invoke"]:

@@ -236,10 +236,15 @@ def tick_mission(
 
     if perimeter_ok:
         m["consecutive_red"] = 0
-        m["days_ok"] = int(m.get("days_ok") or 0) + 1
+        # Un succès compte pour au plus 1 jour calendaire (UTC) — timer 3h ≠ 8 days_ok/j.
+        day_key = time.strftime("%Y-%m-%d", time.gmtime(now))
+        if str(m.get("last_ok_day") or "") != day_key:
+            m["days_ok"] = int(m.get("days_ok") or 0) + 1
+            m["last_ok_day"] = day_key
         if int(m["days_ok"]) >= int(m.get("days_target") or 1):
             m["status"] = "done"
         run["days_ok"] = m["days_ok"]
+        run["last_ok_day"] = m.get("last_ok_day")
     else:
         m["consecutive_red"] = int(m.get("consecutive_red") or 0) + 1
         m["retries_used"] = int(m.get("retries_used") or 0) + 1

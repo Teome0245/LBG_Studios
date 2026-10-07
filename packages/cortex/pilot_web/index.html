@@ -1084,6 +1084,11 @@
         <button type="button" id="btn-fleet-refresh" class="preset">Rafraîchir</button>
         <button type="button" id="btn-fleet-ops-dry" class="preset" title="Playbook ops health dry-run">Ops health dry-run</button>
         <button type="button" id="btn-fleet-ops-live" class="preset" title="Live : peut créer tâche L2 si KO">Ops health live</button>
+        <button type="button" id="btn-fleet-mission-create" class="preset" title="Mission L3 bornée smoke LAN">Mission L3 créer</button>
+        <button type="button" id="btn-fleet-mission-tick" class="preset" title="Tick mission (dry-run)">Mission tick dry</button>
+        <button type="button" id="btn-fleet-mission-cancel" class="preset" title="Annuler mission L3">Mission cancel</button>
+        <button type="button" id="btn-fleet-pyg-dry" class="preset" title="Brief Pygmalion → L2 (dry-run)">Pygmalion dry</button>
+        <button type="button" id="btn-fleet-pyg-live" class="preset" title="Brief Pygmalion live → tâche L2">Pygmalion live</button>
       </p>
       <p id="fleet-pilot-hint" class="muted" style="font-size:0.82rem;">—</p>
     </header>
@@ -1092,6 +1097,14 @@
       <section>
         <div class="panel-title"><h2>Métriques</h2></div>
         <pre id="fleet-metrics" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:5rem;">—</pre>
+      </section>
+      <section>
+        <div class="panel-title"><h2>Mission L3 smoke LAN</h2></div>
+        <pre id="fleet-mission" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:5rem;">—</pre>
+      </section>
+      <section>
+        <div class="panel-title"><h2>Pygmalion assets (F2)</h2></div>
+        <pre id="fleet-pygmalion" class="muted" style="font-size:0.82rem; white-space:pre-wrap; min-height:5rem;">—</pre>
       </section>
       <section>
         <div class="panel-title"><h2>Dernier ops health</h2></div>
@@ -1375,7 +1388,7 @@
           </label>
           <label style="margin:0; font-weight:600; display:inline-flex; align-items:center; gap:0.35rem;">
             <input type="checkbox" id="toggle-agentic">
-            Mode agentique (<code>prefer_agentic</code> → job fond ; prod : <code>LBG_CHAT_AGENTIC=1</code> + intents <code>devops_probe</code>)
+            Mode agentique (<code>prefer_agentic</code> → job fond ; prod : intents <code>devops_probe,project_pm,desktop_control</code>)
           </label>
           <span class="muted" style="font-size:0.88rem">Exécution réelle : si <code>LBG_DEVOPS_APPROVAL_TOKEN</code> est défini sur l’orchestrator, ajouter <code>devops_approval</code> dans le JSON context (ne pas committer le secret).</span>
           <button type="button" id="btn-reset-history">Reset history</button>
@@ -1535,6 +1548,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20261005-agentic-c"></script>
+  <script type="module" src="src/main.js?v=20261007-phase-f2"></script>
 </body>
 </html>

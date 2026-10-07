@@ -43,18 +43,28 @@ def agents_for_role(role: str) -> list[dict[str, Any]]:
 def list_agents_summary() -> list[dict[str, Any]]:
     summary: list[dict[str, Any]] = []
     for decl in load_agent_declarations():
-        summary.append(
-            {
-                "agent_id": decl.get("agent_id"),
-                "display_name": decl.get("display_name"),
-                "role": decl.get("role"),
-                "persona": decl.get("persona"),
-                "subproject": decl.get("subproject"),
-                "capabilities": [
-                    c.get("id") if isinstance(c, dict) else c
-                    for c in (decl.get("capabilities") or [])
-                ],
-                "owner_timer": decl.get("owner_timer"),
-            }
-        )
+        mmo_play = decl.get("mmo_play") if isinstance(decl.get("mmo_play"), dict) else {}
+        row: dict[str, Any] = {
+            "agent_id": decl.get("agent_id"),
+            "display_name": decl.get("display_name"),
+            "role": decl.get("role"),
+            "persona": decl.get("persona"),
+            "subproject": decl.get("subproject"),
+            "account_login": decl.get("account_login") or decl.get("persona"),
+            "mmo_player": decl.get("mmo_player"),
+            "studio_member": decl.get("studio_member"),
+            "linked_studio_agent_id": decl.get("linked_studio_agent_id"),
+            "linked_studio_display": decl.get("linked_studio_display"),
+            "capabilities": [
+                c.get("id") if isinstance(c, dict) else c
+                for c in (decl.get("capabilities") or [])
+            ],
+            "owner_timer": decl.get("owner_timer"),
+        }
+        if mmo_play:
+            # Lien doux Studio → compte/perso IG (ne remplace pas le login persona Studio)
+            row["mmo_account_login"] = mmo_play.get("account_login")
+            row["mmo_player"] = mmo_play.get("mmo_player") or row.get("mmo_player")
+            row["bridge_agent_id"] = mmo_play.get("bridge_agent_id")
+        summary.append(row)
     return summary

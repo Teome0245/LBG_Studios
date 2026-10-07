@@ -9,6 +9,9 @@ Désactivé par défaut (``LBG_CHAT_AGENTIC=0``) ; activable globalement ou par 
 
 Phase C — allowlist optionnelle : ``LBG_CHAT_AGENTIC_INTENTS=devops_probe`` restreint
 l'élévation même si ``LBG_CHAT_AGENTIC=1`` (prod progressive).
+
+Phase F1 — étendre l'allowlist à ``project_pm`` (PM agentique → job fond, même pattern).
+Phase F2 — ``desktop_control`` (brief assets / Pygmalion) : dry-run par défaut à l'élévation.
 """
 
 from __future__ import annotations
@@ -30,7 +33,8 @@ AGENTIC_INTENTS = frozenset(
 )
 
 # Clés de contexte indiquant une **action structurée** explicite (panneaux spécialisés du Pilot).
-# Dans ce cas on ne ré-planifie pas depuis le texte : on respecte le dispatch one-shot voulu.
+# Seuls les **dict** bloquent l'élévation (payload console). Un bool ``project_pm: true`` /
+# ``pm_focus`` reste compatible avec le mode agentique (phase F1).
 _STRUCTURED_ACTION_KEYS = (
     "devops_action",
     "desktop_action",
@@ -67,6 +71,12 @@ def chat_agentic_enabled(context: dict[str, Any] | None) -> bool:
     return _truthy(os.environ.get("LBG_CHAT_AGENTIC", "0"))
 
 
+def _has_structured_action_payload(context: dict[str, Any] | None) -> bool:
+    if not isinstance(context, dict):
+        return False
+    return any(isinstance(context.get(k), dict) for k in _STRUCTURED_ACTION_KEYS)
+
+
 def should_elevate_to_agentic(intent: str, context: dict[str, Any] | None = None) -> bool:
     """Vrai si la requête doit être déléguée au moteur de jobs plutôt qu'à un dispatch one-shot."""
     if not chat_agentic_enabled(context):
@@ -74,9 +84,7 @@ def should_elevate_to_agentic(intent: str, context: dict[str, Any] | None = None
     if not svc_jobs.runner_enabled():
         # Sans runner de fond, un job resterait « queued » : on garde le dispatch synchrone.
         return False
-    if isinstance(context, dict) and any(
-        isinstance(context.get(k), dict) or context.get(k) is True for k in _STRUCTURED_ACTION_KEYS
-    ):
+    if _has_structured_action_payload(context):
         # Action structurée explicite (console spécialisée) : pas d'élévation, dispatch one-shot.
         return False
     if intent not in AGENTIC_INTENTS:
@@ -97,10 +105,22 @@ def elevate_to_job(
     """Crée un job de fond pour ``text`` et renvoie une sortie compatible /route."""
     approval = context.get("devops_approval") or context.get("approval_token")
     approval = approval if isinstance(approval, str) and approval.strip() else None
+    ctx = dict(context)
+    # Aide le planner sans payload structuré bloquant (F1).
+    if intent == "project_pm" and not isinstance(ctx.get("project_pm"), dict):
+        ctx.setdefault("pm_focus", True)
+        ctx.setdefault("_agentic_from", "project_pm")
+    # F2 — desktop/Comfy : jamais d'effet de bord sans HITL ; dry-run par défaut.
+    if intent == "desktop_control" and not isinstance(ctx.get("desktop_action"), dict):
+        ctx.setdefault("desktop_dry_run", True)
+        ctx.setdefault("_agentic_from", "desktop_control")
+        if ctx.get("_pygmalion_brief") or ctx.get("infographiste_ia"):
+            ctx.setdefault("infographiste_ia", True)
+            ctx.setdefault("subproject", "infographiste_ia")
     job = svc_jobs.create_job(
         actor_id=actor_id,
         objective=text,
-        context=context,
+        context=ctx,
         approval_token=approval,
         auto_start=True,
     )

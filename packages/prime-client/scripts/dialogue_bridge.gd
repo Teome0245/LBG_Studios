@@ -123,9 +123,13 @@ func request_npc_reply(
 	if not npc_name.is_empty():
 		ss["last_npc"] = npc_name
 	var world := _world_context_for_wire()
+	var player := "Voyageur"
+	if HubRuntimeCfg.enabled():
+		player = HubRuntimeCfg.player_name("Voyageur")
 	var context := {
 		"world_npc_id": world_npc_id,
 		"npc_name": npc_name,
+		"player": player,
 		"lyra_engagement": "mmo_persona",
 		"_skip_factual_status": true,
 		"session_summary": ss,
@@ -138,6 +142,7 @@ func request_npc_reply(
 	var body := {
 		"actor_id": actor_id,
 		"text": text,
+		"player": player,
 		"context": context,
 	}
 	_pending_player_text = text

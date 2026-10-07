@@ -371,6 +371,21 @@ async def pilot_team_smoke_lan_mission_cancel(payload: dict[str, object] | None 
         return {"ok": False, "error": str(e)}
 
 
+@router.post("/team/pygmalion_assets_pilot", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_pygmalion_assets_pilot(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """Proxy → `POST /v1/team/pygmalion_assets_pilot`."""
+    body = payload if isinstance(payload, dict) else {}
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/pygmalion_assets_pilot", json=body)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/team/campus/act", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_campus_act(payload: dict[str, object] | None = None) -> dict[str, object]:
     """Proxy → `POST /v1/team/campus/act`."""

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "chronicle:scribe_session_stub",
   "ticket": "C5",
-  "status": "stub",
+  "status": "live_prime_hub",
   "bible_ref": "docs/world/BIBLE_MMO.md#v50-v54",
   "bible_safe": true,
   "kind": "scribe_chronicle",
@@ -24,5 +24,5 @@
     ]
   },
   "triggers_hint": ["quest_hub_complete", "tip_stage", "session_end_export"],
-  "notes": "MVP Everwhere journey book / ClaudeCraft deeds — data only, pas Core3 live."
+  "notes": "Live prime-hub : GET /v1/chronicle?player=… · session_log sur players_state · Scribe dialogue."
 }

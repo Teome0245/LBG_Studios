@@ -495,6 +495,32 @@ def team_smoke_lan_mission_cancel() -> dict[str, object]:
     return smoke_lan_mission.cancel_mission()  # type: ignore[return-value]
 
 
+class PygmalionAssetsPilotBody(BaseModel):
+    brief: str
+    dry_run: bool = True
+    notify: bool | None = None
+    spawn_l2: bool = True
+    propose_comfy_ensure: bool = True
+    actor_id: str = "pilot:pygmalion_assets"
+
+
+@router.post("/team/pygmalion_assets_pilot")
+def team_pygmalion_assets_pilot(payload: PygmalionAssetsPilotBody) -> dict[str, object]:
+    """Brief Pygmalion → sonde Comfy → tâche L2 (F2). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import pygmalion_assets_pilot
+
+    return pygmalion_assets_pilot.run_pygmalion_assets_pilot(  # type: ignore[return-value]
+        brief=payload.brief,
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        spawn_l2=payload.spawn_l2,
+        propose_comfy_ensure=payload.propose_comfy_ensure,
+        actor_id=payload.actor_id,
+    )
+
+
 class CampusConductBody(BaseModel):
     dry_run: bool = False
     max_starts: int | None = None

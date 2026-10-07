@@ -260,7 +260,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 
 | ID | Ticket | Origine | Done quand | Owner cible |
 |----|--------|---------|------------|-------------|
-| **C5** | **Chronique session** Scribe (5–10 lignes) + titre cosmétique optionnel | Everwhere journey book / ClaudeCraft deeds | Export après quête hub ou tip scène | Dédale + Chœur · **stub** [`scribe_chronicle_session_stub.json`](../../packages/cortex/content/world/scribe_chronicle_session_stub.json) ✅ Vague C |
+| **C5** | **Chronique session** Scribe (5–10 lignes) + titre cosmétique optionnel | Everwhere journey book / ClaudeCraft deeds | Export après quête hub ou tip scène | Dédale + Chœur · **live hub** 2026-10-07 : `GET /v1/chronicle` + log quête/tip/salvage/craft · dialogue Scribe « chronique » · stub ✅ Vague C |
 | **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **MVP** [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
 | **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **stub** [`vendor_negotiation_jax.json`](../../packages/cortex/content/world/vendor_negotiation_jax.json) ✅ Vague C |
 | **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **live hub** 2026-10-07 : `POST /v1/salvage` + hotbar `[1]` près `poi:lh_scrap_pile` → craft `kit_reparation` (T) · stub cortex ✅ Vague A |

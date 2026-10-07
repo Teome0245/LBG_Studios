@@ -1,9 +1,9 @@
 # Plan — Combler les gaps agentiques & réaliser le plan d’action
 
-**Date** : 2026-10-02  
-**Statut** : prêt à exécuter  
+**Date** : 2026-10-02 · **MAJ** 2026-10-07  
+**Statut** : pilote ops health **livré** (A–F2 + tick L3) — revue 7j / F3 O2 hors scope immédiat  
 **Priorité** : O1 Studio (`packages/cortex`) — LAN 140  
-**Complète** : [`lbg_agentic_os.md`](lbg_agentic_os.md) · [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md) · [`ops_notify_slack.md`](ops_notify_slack.md) · [`agents/README.md`](../agents/README.md)
+**Complète** : [`lbg_agentic_os.md`](lbg_agentic_os.md) · [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md) · [`ops_notify_slack.md`](ops_notify_slack.md) · [`agents/README.md`](../agents/README.md) · [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md)
 
 ## 0. Objectif
 
@@ -157,8 +157,8 @@ flowchart LR
 
 Ordre strict, **un** à la fois :
 
-1. **PM** : intent `project_pm` agentique → plan Team (même pattern C)
-2. **Assets** : brief Pygmalion → desktop/Comfy L2
+1. ~~**PM** : intent `project_pm` agentique → job fond (même pattern C)~~ — **F1**
+2. ~~**Assets** : brief Pygmalion → desktop/Comfy L2~~ — **F2** (`pygmalion_assets_pilot` + allowlist `desktop_control`)
 3. **O2 jeu** : workers quests/combat réels + mémoire `player/*` (hors scope immédiat O1)
 
 ## 5. Ordre de travail quotidien (plan d’action)
@@ -227,7 +227,10 @@ Le plan est **réalisé** quand, sur LAN 140 pendant **7 jours** :
 1. ~~Valider ce plan (surtout §2 processus pilote).~~
 2. ~~Démarrer **A2** (agrégat fleet) + **A3** (UI Pilot).~~
 3. ~~Dry-run **B1**~~ · ~~**B2–B5** notify/HITL/lesson~~ · ~~**B6** timer dry-run~~
-4. ~~**C1** allowlist `LBG_CHAT_AGENTIC_INTENTS`~~ (code prêt ; activer sur 140 si runner jobs on)
-5. **Sur 140** : deploy Pilot + orch, `bash infra/scripts/install_ops_health_pilot_job_vm.sh`, dry-run UI Fleet, puis bascule live quand prêt.
+4. ~~**C1–C5** chat agentique opt-in `devops_probe`~~ · ~~**D1** pont jobs→lessons~~
+5. ~~**E1** jobs `waiting_approval` → Slack HITL~~ · ~~**E2–E4** mission L3 `smoke_lan_mission`~~
+6. ~~**F1** `project_pm` agentique~~ · ~~**F2** Pygmalion assets L2~~
+7. ~~**Suite** : tick mission L3 sur timer ops_health~~ (245 optionnel · sonde 246 `:8787/healthz` · `days_ok` 1×/jour UTC).
+8. **Maintenant** : revue métriques 7j (Pilot Jobs / Slack `#lbg-ops`) · consolider Fleet/presence soft-links (Vulcan↔Vex, Hermès↔Tess) · **F3** O2 jeu = hors ce plan (voir [`PRIORITES_ACTUELLES.md`](../../../docs/PRIORITES_ACTUELLES.md) P3–P5).
 
 Voir [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md).

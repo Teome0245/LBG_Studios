@@ -983,12 +983,52 @@ def _context_for_step(job: Job, step: JobStep) -> dict[str, Any]:
     return ctx
 
 
+def _jobs_l2_notify_enabled() -> bool:
+    raw = os.environ.get("LBG_JOBS_L2_NOTIFY", "1").strip().lower()
+    return raw in ("1", "true", "yes", "on")
+
+
+def _notify_job_waiting_approval(payload: dict[str, Any]) -> None:
+    """Push Slack/Element (best-effort) — hors verrou jobs (E1)."""
+    if not _jobs_l2_notify_enabled():
+        return
+    try:
+        from lbg_agents.ops_notify import send_l2_pending
+
+        send_l2_pending(
+            {
+                "id": payload.get("id"),
+                "job_id": payload.get("id"),
+                "kind": "job",
+                "role": "job",
+                "role_alias": "Job Cowork",
+                "capability": payload.get("capability"),
+                "objective": payload.get("objective") or "",
+                "status": "waiting_approval",
+                "actor_id": payload.get("actor_id"),
+                "approval_required": True,
+            }
+        )
+    except Exception as exc:  # pragma: no cover - canal ops optionnel
+        print(
+            json.dumps(
+                {
+                    "event": "orchestrator.jobs.l2_notify_failed",
+                    "job_id": payload.get("id"),
+                    "error": str(exc)[:200],
+                },
+                ensure_ascii=False,
+            )
+        )
+
+
 def advance_job(job_id: str) -> Job | None:
     """Fait avancer le job d'**une** étape (planification, exécution, retry, ou pause).
 
     Retourne l'état du job après l'opération, ou ``None`` s'il n'existe pas.
     Pur et synchrone : la boucle daemon ne fait qu'appeler cette fonction.
     """
+    l2_notify_payload: dict[str, Any] | None = None
     with _lock:
         job = _jobs.get(job_id)
         if job is None:
@@ -1038,22 +1078,37 @@ def advance_job(job_id: str) -> Job | None:
                 decision=policy.decision,
                 reason=policy.reason,
             )
+            if not job.base_context.get("_l2_slack_notified"):
+                job.base_context["_l2_slack_notified"] = True
+                l2_notify_payload = {
+                    "id": job.id,
+                    "objective": job.objective,
+                    "capability": cap.name,
+                    "reason": policy.reason,
+                    "actor_id": job.actor_id,
+                }
             job.updated_ts = _now()
             _persist_locked(job)
-            return _clone(job)
+            waiting_out = _clone(job)
+        else:
+            waiting_out = None
+            # Exécution de l'étape.
+            step.status = "running"
+            step.attempts += 1
+            _emit(
+                job,
+                "step_started",
+                step_id=step.id,
+                capability=cap.name,
+                attempt=step.attempts,
+                decision=policy.decision,
+                real_execution=_is_elevated(job, step),
+            )
 
-        # Exécution de l'étape.
-        step.status = "running"
-        step.attempts += 1
-        _emit(
-            job,
-            "step_started",
-            step_id=step.id,
-            capability=cap.name,
-            attempt=step.attempts,
-            decision=policy.decision,
-            real_execution=_is_elevated(job, step),
-        )
+    if waiting_out is not None:
+        if l2_notify_payload is not None:
+            _notify_job_waiting_approval(l2_notify_payload)
+        return waiting_out
 
     inventory_direct = bool(
         ctx.get("_capabilities_inventory") or step.context_patch.get("_capabilities_inventory")

@@ -205,15 +205,24 @@ def _roster() -> list[dict[str, Any]]:
         if not aid or aid in seen:
             continue
         seen.add(aid)
-        out.append(
-            {
-                "agent_id": aid,
-                "display_name": str(d.get("display_name") or aid),
-                "role": str(d.get("role") or ""),
-                "persona": str(d.get("persona") or ""),
-                "subproject": str(d.get("subproject") or "") or None,
-            }
-        )
+        row: dict[str, Any] = {
+            "agent_id": aid,
+            "display_name": str(d.get("display_name") or aid),
+            "role": str(d.get("role") or ""),
+            "persona": str(d.get("persona") or ""),
+            "subproject": str(d.get("subproject") or "") or None,
+            "account_login": str(d.get("account_login") or d.get("persona") or "") or None,
+            "mmo_player": str(d.get("mmo_player") or "") or None,
+            "studio_member": d.get("studio_member"),
+        }
+        if d.get("linked_studio_agent_id"):
+            row["linked_studio_agent_id"] = str(d.get("linked_studio_agent_id"))
+            row["linked_studio_display"] = str(d.get("linked_studio_display") or d.get("linked_studio_agent_id"))
+        if d.get("mmo_account_login"):
+            row["mmo_account_login"] = str(d.get("mmo_account_login"))
+        if d.get("bridge_agent_id"):
+            row["bridge_agent_id"] = str(d.get("bridge_agent_id"))
+        out.append(row)
     if "admin_infra" not in seen and "studio_admin_atlas" not in seen:
         disp = role_display("admin_infra")
         out.append(
@@ -425,9 +434,29 @@ def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
     role = str(row.get("role") or "")
     location = default_zone_for_agent(agent_id, role)
     action = "En attente"
+    login = str(row.get("account_login") or row.get("persona") or "").strip() or None
+    mmo = str(row.get("mmo_player") or "").strip() or None
+    linked_studio = str(row.get("linked_studio_display") or "").strip() or None
+    linked_studio_id = str(row.get("linked_studio_agent_id") or "").strip() or None
+    mmo_login = str(row.get("mmo_account_login") or "").strip() or None
+    bridge_id = str(row.get("bridge_agent_id") or "").strip() or None
     if role == "player_bridge" or agent_id.startswith("player_bridge_"):
-        action = "Pont out-game — suggestions monde/dev"
-    return {
+        bits = ["Pont out-game"]
+        if login:
+            bits.append(f"login={login}")
+        if mmo:
+            bits.append(f"IG={mmo}")
+        if linked_studio:
+            bits.append(f"↔ {linked_studio}")
+        bits.append("suggestions monde/dev")
+        action = " · ".join(bits)
+    elif mmo and (mmo_login or bridge_id):
+        bits = [action]
+        bits.append(f"IG={mmo}")
+        if mmo_login:
+            bits.append(f"login={mmo_login}")
+        action = " · ".join(bits)
+    payload: dict[str, Any] = {
         "schema": SCHEMA,
         "agent_id": agent_id,
         "display_name": str(row.get("display_name") or agent_id),
@@ -441,6 +470,22 @@ def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
         "event": "heartbeat",
         "timestamp": int(time.time()),
     }
+    if role == "player_bridge" or agent_id.startswith("player_bridge_"):
+        if login:
+            payload["account_login"] = login
+            payload["persona"] = login
+    if mmo:
+        payload["mmo_player"] = mmo
+    if linked_studio_id:
+        payload["linked_studio_agent_id"] = linked_studio_id
+        payload["linked_studio_display"] = linked_studio or linked_studio_id
+    if mmo_login:
+        payload["mmo_account_login"] = mmo_login
+    if bridge_id:
+        payload["bridge_agent_id"] = bridge_id
+    if row.get("studio_member") is not None:
+        payload["studio_member"] = bool(row.get("studio_member"))
+    return payload
 
 
 def _idle_agent(role: str) -> dict[str, Any]:
@@ -734,6 +779,46 @@ def zones_for_snapshot(*, force_refresh: bool = False) -> list[dict[str, Any]]:
     return out
 
 
+def _merge_roster_soft_link(payload: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    """Conserve le statut live mais expose toujours les champs lien doux du registre."""
+    out = dict(payload)
+    role = str(row.get("role") or out.get("role") or "")
+    login = str(row.get("account_login") or row.get("persona") or "").strip() or None
+    mmo = str(row.get("mmo_player") or "").strip() or None
+    linked_studio = str(row.get("linked_studio_display") or "").strip() or None
+    linked_studio_id = str(row.get("linked_studio_agent_id") or "").strip() or None
+    mmo_login = str(row.get("mmo_account_login") or "").strip() or None
+    bridge_id = str(row.get("bridge_agent_id") or "").strip() or None
+    if role == "player_bridge" or str(out.get("agent_id") or "").startswith("player_bridge_"):
+        if login:
+            out["account_login"] = login
+            out.setdefault("persona", login)
+        if linked_studio_id:
+            out["linked_studio_agent_id"] = linked_studio_id
+            out["linked_studio_display"] = linked_studio or linked_studio_id
+        # Enrichir current_action si le lien Studio manque (émission tâche sans registre)
+        action = str(out.get("current_action") or "")
+        if linked_studio and f"↔ {linked_studio}" not in action:
+            bits = [action] if action and action != "En attente" else ["Pont out-game"]
+            if login and f"login={login}" not in action:
+                bits.append(f"login={login}")
+            if mmo and f"IG={mmo}" not in action:
+                bits.append(f"IG={mmo}")
+            bits.append(f"↔ {linked_studio}")
+            if "suggestions" not in action.lower():
+                bits.append("suggestions monde/dev")
+            out["current_action"] = " · ".join(bits)
+    if mmo:
+        out["mmo_player"] = mmo
+    if mmo_login:
+        out["mmo_account_login"] = mmo_login
+    if bridge_id:
+        out["bridge_agent_id"] = bridge_id
+    if row.get("studio_member") is not None:
+        out["studio_member"] = bool(row.get("studio_member"))
+    return out
+
+
 def snapshot(*, mode: str = "live") -> dict[str, Any]:
     recover_stale_failed()
     reconcile_with_store()
@@ -745,7 +830,7 @@ def snapshot(*, mode: str = "live") -> dict[str, Any]:
         aid = str(row["agent_id"])
         seen.add(aid)
         if aid in known:
-            agents.append(known[aid])
+            agents.append(_merge_roster_soft_link(known[aid], row))
         else:
             agents.append(_idle_agent_row(row))
     # États orphelins (ancien agent_id = rôle technique, system:…)

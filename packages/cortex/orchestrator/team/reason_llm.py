@@ -198,7 +198,7 @@ def reason_cloud_model() -> str:
     return (
         os.environ.get("LBG_REASON_CLOUD_MODEL", "").strip()
         or os.environ.get("LBG_DIALOGUE_FAST_MODEL", "").strip()
-        or "qwen/qwen3.6-27b"
+        or "qwen/qwen3.8-27b"
     )
 
 

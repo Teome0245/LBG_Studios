@@ -124,6 +124,30 @@
       LbgOfficeMap.sync(Array.from(__officeAgents.values()), { animate: !!animate });
     }
 
+    function officeIsBridgeAgent(agent) {
+      if (!agent) return false;
+      const role = String(agent.role || "");
+      const aid = String(agent.agent_id || "");
+      return role === "player_bridge" || aid.indexOf("player_bridge_") === 0;
+    }
+
+    function officeHubBotForBridge(agent) {
+      const rt = __officePlayerIa;
+      const bots = rt && Array.isArray(rt.bots) ? rt.bots : [];
+      if (!bots.length || !agent) return null;
+      const aid = String(agent.agent_id || "");
+      const login = String(agent.account_login || agent.persona || "");
+      const ig = String(agent.mmo_player || "").toLowerCase();
+      for (let i = 0; i < bots.length; i++) {
+        const b = bots[i];
+        if (!b) continue;
+        if (aid && String(b.agent_id || "") === aid) return b;
+        if (login && String(b.account_login || "") === login) return b;
+        if (ig && String(b.display_name || b.id || "").toLowerCase() === ig) return b;
+      }
+      return null;
+    }
+
     function officeSelectAgent(agent) {
       if (!agent) return;
       __officeSelectedId = agent.agent_id;
@@ -144,13 +168,37 @@
       if (action) action.textContent = agent.current_action || "—";
       if (meta) {
         const tid = agent.task_id ? String(agent.task_id) : "";
-        meta.innerHTML =
-          officeEsc(agent.location || "?") +
-          (agent.host_hint ? " · " + officeEsc(agent.host_hint) : "") +
-          (tid
-            ? ' · <a href="' + officeEsc(teamTaskHref(tid)) + '" title="Ouvrir la tâche">' +
+        const parts = [
+          officeEsc(agent.location || "?"),
+          agent.host_hint ? officeEsc(agent.host_hint) : "",
+        ];
+        if (officeIsBridgeAgent(agent)) {
+          const login = agent.account_login || agent.persona || "";
+          const ig = agent.mmo_player || "";
+          const studio = agent.linked_studio_display || "";
+          const bot = officeHubBotForBridge(agent);
+          if (login) parts.push("login=" + officeEsc(login));
+          if (ig) parts.push("IG=" + officeEsc(ig));
+          if (studio) parts.push("↔ " + officeEsc(studio));
+          if (bot) {
+            const zone = bot.zone_display || bot.zone || bot.play_mode || "hub";
+            parts.push(bot.online ? ("en hub · " + officeEsc(String(zone))) : "hors hub");
+            if (bot.admin_level != null) parts.push("admin=" + officeEsc(String(bot.admin_level)));
+          } else {
+            parts.push("hub: —");
+          }
+        } else if (agent.mmo_player || agent.mmo_account_login) {
+          if (agent.mmo_player) parts.push("IG=" + officeEsc(String(agent.mmo_player)));
+          if (agent.mmo_account_login) parts.push("login=" + officeEsc(String(agent.mmo_account_login)));
+          if (agent.bridge_agent_id) parts.push("pont=" + officeEsc(String(agent.bridge_agent_id)));
+        }
+        if (tid) {
+          parts.push(
+            '<a href="' + officeEsc(teamTaskHref(tid)) + '" title="Ouvrir la tâche">' +
               "#" + officeEsc(tid.slice(0, 8)) + "</a>"
-            : "");
+          );
+        }
+        meta.innerHTML = parts.filter(Boolean).join(" · ");
       }
       officeRefreshApprovalPanel(__officeSelectedTaskId, agent).catch(function () {});
     }
@@ -420,6 +468,56 @@
       );
     }
 
+    function officeBridgeChipHtml(agent) {
+      const bot = officeHubBotForBridge(agent);
+      const login = (agent && (agent.account_login || agent.persona)) || "";
+      const ig = (agent && agent.mmo_player) || "";
+      const studio = (agent && agent.linked_studio_display) || "";
+      const name = (agent && (agent.display_name || agent.agent_id)) || "?";
+      const online = !!(bot && bot.online);
+      const zone = bot && (bot.zone_display || bot.zone || bot.play_mode) ? String(bot.zone_display || bot.zone || bot.play_mode) : "";
+      const state = online ? "online" : "offline";
+      const label = studio
+        ? ("↔ " + studio)
+        : (online ? (zone || "en hub") : "hors hub");
+      const title =
+        name +
+        (login ? " · " + login : "") +
+        (ig ? " → IG " + ig : "") +
+        (studio ? " ↔ " + studio : "") +
+        " — " + (online ? (zone || "en hub") : "hors hub") +
+        " (persona out-game)";
+      return (
+        '<span class="office-pia-chip office-pia-chip--' + state + ' office-bridge-chip" title="' + officeEsc(title) +
+          '" data-office-bridge="' + officeEsc(agent.agent_id || "") + '">' +
+          '<span class="office-pia-dot" aria-hidden="true"></span>' +
+          '<span class="office-pia-name">' + officeEsc(ig || name) + "</span>" +
+          '<span class="office-pia-meta">' + officeEsc(label) + "</span>" +
+        "</span>"
+      );
+    }
+
+    function officeBridgeStripHtml(agents) {
+      const list = Array.isArray(agents) ? agents.filter(officeIsBridgeAgent) : [];
+      const rt = __officePlayerIa;
+      const hubOk = !rt || rt.sidecar_ok !== false;
+      let linked = 0;
+      list.forEach(function (a) { if (officeHubBotForBridge(a)) linked += 1; });
+      const head = hubOk
+        ? (linked + "/" + list.length + " liés hub")
+        : "prime-hub KO";
+      const chips = list.length
+        ? list.map(officeBridgeChipHtml).join("")
+        : '<span class="muted" style="font-size:0.72rem;">aucun pont</span>';
+      return (
+        '<div class="office-pia-strip office-pia-strip--compact office-bridge-strip" title="Personas out-game — login=*_bridge · pont In↔Out">' +
+          '<span class="office-pia-label">Ponts out-game</span>' +
+          '<span class="office-pia-count' + (hubOk ? "" : " office-pia-count--ko") + '">' + officeEsc(head) + "</span>" +
+          '<div class="office-pia-chips">' + chips + "</div>" +
+        "</div>"
+      );
+    }
+
     function officePlayerIaStripHtml(compact) {
       const rt = __officePlayerIa;
       if (!rt) {
@@ -507,6 +605,23 @@
               const needVal = officeAgentNeedsValidation(a);
               const needApprove = officeAgentAwaitingHumanApproval(a);
               const needRun = officeAgentAwaitingRun(a);
+              const isBridge = officeIsBridgeAgent(a);
+              const hubBot = isBridge ? officeHubBotForBridge(a) : null;
+              const login = isBridge ? (a.account_login || a.persona || "") : "";
+              const ig = isBridge ? (a.mmo_player || "") : "";
+              const studioLink = isBridge ? (a.linked_studio_display || "") : "";
+              const roleTag = isBridge
+                ? (login ? ("login " + login) : (a.role || a.agent_id))
+                : (a.role || a.agent_id);
+              const actionTxt = isBridge
+                ? (
+                    (ig ? ("IG " + ig) : "Pont out-game") +
+                    (studioLink ? (" ↔ " + studioLink) : "") +
+                    (hubBot && hubBot.online
+                      ? (" · " + (hubBot.zone_display || hubBot.zone || hubBot.play_mode || "hub"))
+                      : " · hors hub")
+                  )
+                : (a.current_action || "—");
               const approvalHtml = needVal
                 ? (
                     '<div class="office-card-approval">' +
@@ -527,15 +642,17 @@
                 : "";
               return (
                 '<article class="office-card ' + officeEsc(st) + (anim ? " " + anim : "") +
+                  (isBridge ? " office-card--bridge" : "") +
+                  (hubBot && hubBot.online ? " office-card--hub-on" : "") +
                   '" data-agent-id="' + officeEsc(a.agent_id) + '">' +
                   '<div class="office-avatar" aria-hidden="true">' +
-                    officeEsc(officeInitials(a.display_name || a.agent_id)) +
+                    officeEsc(officeInitials(ig || a.display_name || a.agent_id)) +
                     '<span class="busy-ring"></span>' +
                   "</div>" +
                   '<div class="office-card-main">' +
                     '<div class="name">' + officeEsc(a.display_name || a.agent_id) + "</div>" +
-                    '<div class="role-tag">' + officeEsc(a.role || a.agent_id) + "</div>" +
-                    '<div class="action">' + officeEsc(a.current_action || "—") + "</div>" +
+                    '<div class="role-tag">' + officeEsc(roleTag) + "</div>" +
+                    '<div class="action">' + officeEsc(actionTxt) + "</div>" +
                     '<div class="host">' + officeEsc(a.host_hint || "") +
                     (tid
                       ? (' · <a href="' + officeEsc(href) + '" title="Ouvrir la tâche #' + officeEsc(tid) + '">#' +
@@ -544,12 +661,13 @@
                     "</div>" +
                     approvalHtml +
                   "</div>" +
-                  '<span class="office-status">' + officeEsc(st) + "</span>" +
+                  '<span class="office-status">' + officeEsc(isBridge ? (hubBot && hubBot.online ? "hub" : "idle") : st) + "</span>" +
                 "</article>"
               );
             }).join("")
           : '<div class="office-empty"><span class="ghost" aria-hidden="true">∅</span>salle vide</div>';
         const piaStrip = id === "zone_prime" ? officePlayerIaStripHtml(true) : "";
+        const bridgeStrip = id === "zone_games" ? officeBridgeStripHtml(list) : "";
         const ipLine = hostBadge
           ? (officeEsc(meta.ip) + ' · <span class="office-zone-host-badge">' + officeEsc(hostBadge) + "</span>")
           : officeEsc(meta.ip);
@@ -569,6 +687,7 @@
               '<span class="count" title="agents">' + list.length + "</span>" +
             "</div>" +
             piaStrip +
+            bridgeStrip +
             '<div class="office-agents">' + cards + "</div>" +
           "</section>"
         );
@@ -580,6 +699,16 @@
             return;
           }
           const agentId = card.getAttribute("data-agent-id");
+          if (!agentId) return;
+          const agent = __officeAgents.get(agentId);
+          if (agent) officeSelectAgent(agent);
+        });
+      });
+      floor.querySelectorAll("[data-office-bridge]").forEach(function (chip) {
+        chip.addEventListener("click", function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const agentId = chip.getAttribute("data-office-bridge");
           if (!agentId) return;
           const agent = __officeAgents.get(agentId);
           if (agent) officeSelectAgent(agent);

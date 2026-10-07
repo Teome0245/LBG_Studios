@@ -12,7 +12,7 @@ const GREETINGS := {
 	"npc:core3_scout_trainer_c": "Yara Nis. Prospection et pistes hors remparts. Le désert ne pardonne pas.",
 	"npc:core3_artisan_trainer_c": "Kell Asa. Atelier — outils, kits, pièces. Rien de neuf ici, tout se récupère.",
 	"npc:core3_talen_ress": "Talen Ress. Formation scène à l'auberge — danse, musique, moral. Pas Kisreudi.",
-	"npc:scribe": "Scribe de la mairie. Chroniques de session, pas de légendes inventées. Tu notes ?",
+	"npc:scribe": "Scribe de la mairie. Dis « chronique » — j'archive ta session. Pas de légendes inventées.",
 	"npc:habitue_cantina": "Toujours la même table à La Perle. Qu'est-ce que tu bois ?",
 	"npc:videur": "Pas de bagarre devant La Perle. Jax s'occupe du verre, moi de la porte.",
 	"npc:sergent_rue": "Sergent de rue. Porte est sous surveillance — meute ou pas.",
@@ -47,6 +47,8 @@ const FALLBACK_REPLIES := [
 	["scrap", "Ferraille hors palissade : board Daan quand l'event tourne. Sinon, rien à ramasser."],
 	["convoi", "Convoi Zalem — frein lâché. Board des missions si l'offre est encore affichée."],
 	["rumeur", "Au marché et à La Perle on en parle — mais le board tranche."],
+	["chronique", "Le Scribe à la mairie archive ta session — demande-lui une chronique."],
+	["archive", "Archives à la mairie. Le Scribe note les faits, pas les légendes."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry
@@ -66,8 +68,15 @@ func setup() -> void:
 			_registry[str(n["id"])] = n
 
 
+var economy = null
+
+
 func attach_events(events_svc) -> void:
 	events = events_svc
+
+
+func attach_economy(economy_svc) -> void:
+	economy = economy_svc
 
 
 func _event_rumor() -> String:
@@ -248,7 +257,27 @@ func _llm_line(npc_name: String, role_hint: String, player_text: String, place: 
 	return text
 
 
-func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: String = "") -> String:
+func _scribe_chronicle_line(player: String) -> String:
+	if economy == null or not economy.has_method("chronicle"):
+		return ""
+	var ch: Dictionary = economy.chronicle(player if not player.is_empty() else "Voyageur", true)
+	var lines = ch.get("lines", [])
+	if typeof(lines) != TYPE_ARRAY or lines.is_empty():
+		return ""
+	var title := str(ch.get("title", "")).strip_edges()
+	var body_bits: PackedStringArray = PackedStringArray()
+	var n := mini(4, lines.size())
+	for i in range(n):
+		body_bits.append(str(lines[i]))
+	var more := ""
+	if lines.size() > n:
+		more = " (+%d lignes — GET /v1/chronicle)" % (lines.size() - n)
+	if not title.is_empty():
+		return "Scribe — « %s ». %s%s" % [title, " ".join(body_bits), more]
+	return "Scribe — %s%s" % [" ".join(body_bits), more]
+
+
+func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: String = "", player: String = "Voyageur") -> String:
 	var t := player_text.strip_edges().to_lower()
 	var entry = _registry.get(npc_id, {})
 	var role := "habitant hub"
@@ -258,6 +287,17 @@ func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: 
 		place = str(entry.get("zone", place))
 		if npc_name.is_empty():
 			npc_name = str(entry.get("name", ""))
+	var is_greet := t.is_empty() or t in ["bonjour", "bonjour.", "salut", "hello", "hey"] or t.begins_with("bonjour")
+	# C5 — Scribe avant LLM : chronique de session.
+	if npc_id == "npc:scribe":
+		var wants_ch := (
+			is_greet or "chronique" in t or "archive" in t or "session" in t
+			or "noter" in t or "écrire" in t or "ecrire" in t or "lire" in t
+		)
+		if wants_ch:
+			var ch_line := _scribe_chronicle_line(player)
+			if not ch_line.is_empty():
+				return ch_line
 	var llm := _llm_line(
 		npc_name if not npc_name.is_empty() else "PNJ",
 		role.substr(0, 120),
@@ -281,7 +321,6 @@ func _pick_reply(npc_id: String, npc_name: String, player_text: String, memory: 
 		if npc_id == "npc:sergent_rue":
 			return "Sergent : %s Porte est, puis pile de ferraille — ne traîne pas." % rumor
 		return "%s : %s" % [npc_name if not npc_name.is_empty() else "PNJ", rumor]
-	var is_greet := t.is_empty() or t in ["bonjour", "bonjour.", "salut", "hello", "hey"] or t.begins_with("bonjour")
 	if is_greet and GREETINGS.has(npc_id):
 		var greet := str(GREETINGS[npc_id])
 		# Salut : une accroche utile max — jamais de parenthèse « au fait » ni de recycle.
@@ -308,6 +347,9 @@ func invoke(body: Dictionary) -> Dictionary:
 	var npc_id := _normalize_npc_id(str(ctx.get("world_npc_id", body.get("world_npc_id", ""))))
 	var npc_name := str(ctx.get("npc_name", body.get("npc_name", ""))).strip_edges()
 	var player_text := str(body.get("text", "")).strip_edges()
+	var player := str(ctx.get("player", body.get("player", "Voyageur"))).strip_edges()
+	if player.is_empty():
+		player = "Voyageur"
 	var ss = ctx.get("session_summary", {})
 	if typeof(ss) != TYPE_DICTIONARY:
 		ss = {}
@@ -320,20 +362,23 @@ func invoke(body: Dictionary) -> Dictionary:
 				npc_id = str(eid)
 				break
 	var memory := _session_memory_line(ss, npc_name)
-	var reply := _pick_reply(npc_id, npc_name, player_text, memory)
+	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player)
 	var moves := _suggested_moves(npc_id)
+	var meta := {
+		"lyra_engagement_resolved": "prime_hub",
+		"dialogue_profile_resolved": "prime_hub_native",
+		"suggested_moves_source": "registry_template" if not moves.is_empty() else "none",
+		"world_npc_id": npc_id,
+		"npc_name": npc_name,
+		"source": "prime_hub",
+		"session_memory": memory,
+		"session_memory_used": not memory.is_empty(),
+	}
+	if npc_id == "npc:scribe" and economy != null and economy.has_method("chronicle"):
+		meta["chronicle"] = economy.chronicle(player, true)
 	return {
 		"ok": true,
 		"reply": reply,
 		"suggested_moves": moves,
-		"meta": {
-			"lyra_engagement_resolved": "prime_hub",
-			"dialogue_profile_resolved": "prime_hub_native",
-			"suggested_moves_source": "registry_template" if not moves.is_empty() else "none",
-			"world_npc_id": npc_id,
-			"npc_name": npc_name,
-			"source": "prime_hub",
-			"session_memory": memory,
-			"session_memory_used": not memory.is_empty(),
-		},
+		"meta": meta,
 	}

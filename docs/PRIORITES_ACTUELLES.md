@@ -81,4 +81,10 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 | Nouvelle feature jeu (O1 vert) | `packages/prime-client` |
 | Vérif LAN | `bash tools/smoke_lan_surfaces.sh --functional` — [`SMOKE_LAN.md`](SMOKE_LAN.md) |
 
-**En une phrase** : consolider le Compagnon sur `:5174` + Pilot/Team sur Cortex, puis P3–P4 MMO sur Prime Client, sans diluer l’effort dans le legacy ni rouvrir le MMO web.
+**En une phrase** : consolider le Compagnon sur `:5174` + Pilot/Team sur Cortex, puis P3–P5 MMO sur Prime Client / `prime-hub`, sans diluer l’effort dans le legacy ni rouvrir le MMO web.
+
+### Lot Studio ops (2026-10-07)
+
+Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
+Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
+**Suite immédiate** : P3 persona/dialogue hub live + wire C10/C11 `:8791` / MCP Studio (voir [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md)).

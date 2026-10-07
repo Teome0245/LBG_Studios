@@ -191,3 +191,37 @@ def test_zone_mmo_lab_online_force(monkeypatch):
     snap = team_presence.snapshot(mode="live")
     snap_lab = next(z for z in snap["zones"] if z["id"] == "zone_mmo_lab")
     assert snap_lab["host_status"] == "online"
+
+
+def test_zone_games_player_bridges_expose_login():
+    assert team_presence.default_zone_for_agent("player_bridge_nix", "player_bridge") == "zone_games"
+    snap = team_presence.snapshot(mode="live")
+    assert any(z["id"] == "zone_games" for z in snap["zones"])
+    games = [a for a in snap["agents"] if a.get("location") == "zone_games"]
+    assert len(games) >= 4
+    nix = next((a for a in games if a.get("agent_id") == "player_bridge_nix"), None)
+    assert nix is not None
+    assert nix.get("account_login") == "nix_bridge"
+    assert nix.get("mmo_player") == "Nix"
+    assert "login=nix_bridge" in (nix.get("current_action") or "")
+
+
+def test_soft_link_vulcan_vex_and_hermes_tess():
+    snap = team_presence.snapshot(mode="live")
+    by_id = {a["agent_id"]: a for a in snap["agents"]}
+    vex = by_id.get("player_bridge_vex")
+    tess = by_id.get("player_bridge_tess")
+    vulcan = by_id.get("studio_dev_vulcan")
+    hermes = by_id.get("godot_dev_hermes")
+    assert vex and vex.get("linked_studio_agent_id") == "studio_dev_vulcan"
+    assert vex.get("linked_studio_display") == "Vulcan"
+    assert "↔ Vulcan" in (vex.get("current_action") or "")
+    assert tess and tess.get("linked_studio_agent_id") == "godot_dev_hermes"
+    assert tess.get("linked_studio_display") == "Hermès"
+    assert vulcan and vulcan.get("mmo_player") == "Vex"
+    assert vulcan.get("mmo_account_login") == "vulcan_bridge"
+    assert hermes and hermes.get("mmo_player") == "Tess"
+    assert hermes.get("mmo_account_login") == "hermes_bridge"
+    assert hermes.get("bridge_agent_id") == "player_bridge_tess"
+    assert vex.get("account_login") == "vulcan_bridge"
+    assert tess.get("account_login") == "hermes_bridge"

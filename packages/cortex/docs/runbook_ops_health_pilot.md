@@ -64,12 +64,82 @@ journalctl -u lbg-ops-health-pilot-job -n 40 --no-pager
 ```bash
 # Toujours off global, OU :
 LBG_CHAT_AGENTIC=1
-LBG_CHAT_AGENTIC_INTENTS=devops_probe   # allowlist étroite
+LBG_CHAT_AGENTIC_INTENTS=devops_probe,project_pm,desktop_control   # C + F1 + F2
 LBG_JOBS_RUNNER_ENABLED=1
 ```
 
 Sans allowlist, tous les intents `AGENTIC_INTENTS` s'élèvent.  
 `context.prefer_agentic=true` force l'élévation même si global off (UI).
+
+## Phase F1 — PM agentique
+
+Intent NL `project_pm` (roadmap / point d’avancement / chef de projet) + `prefer_agentic`
+ou allowlist → job fond (pas le payload structuré `project_pm: {…}` console).
+
+```bash
+curl -s -X POST http://192.168.0.140:8010/v1/route \
+  -H 'Content-Type: application/json' \
+  -d '{"actor_id":"pilot:pm","text":"point d'\''avancement et plan de route",
+       "context":{"prefer_agentic":true,"pm_focus":true}}'
+```
+
+## Phase F2 — Pygmalion assets → L2
+
+Playbook : sonde Comfy → **auto-ensure si down** → tâche Team `dev_game` (approval) + HITL.  
+Pas de queue Comfy sans approve.
+
+**Ensure** (si `LBG_PYGMALION_COMFY_AUTO_ENSURE=1`, défaut) via agent Windows `.10:5005` :
+
+```text
+cd C:\Users\sdesh\ComfyUI
+.\venv\Scripts\python.exe main.py --listen 0.0.0.0 --port 8188 --lowvram
+```
+
+(équivalent de l’activation venv + `python main.py …` — géré par `comfyui_lifecycle` / `start_comfyui.ps1`)
+
+Prérequis worker : `LBG_DESKTOP_COMFYUI_ENABLED=1` dans `C:\Agent_IA\desktop.env`.  
+Sync agent : `bash infra/scripts/sync_windows_agent.sh`.
+
+```bash
+curl -s -X POST http://192.168.0.140:8010/v1/team/pygmalion_assets_pilot \
+  -H 'Content-Type: application/json' \
+  -d '{"brief":"Prépare ComfyUI pour sprite PNJ","dry_run":true}'
+curl -s -X POST http://192.168.0.140:8010/v1/team/pygmalion_assets_pilot \
+  -H 'Content-Type: application/json' \
+  -d '{"brief":"Prépare ComfyUI pour sprite PNJ","dry_run":false,"notify":true}'
+```
+
+NL + `prefer_agentic` : mots-clés `pygmalion` / `comfyui` / `brief assets` → `desktop_control` (dry-run injecté).  
+Pilot Fleet : boutons **Pygmalion dry / live**.
+
+## Phase E — HITL jobs + mission L3 bornée
+
+```bash
+LBG_JOBS_L2_NOTIFY=1          # push Slack quand job → waiting_approval
+# HITL texte : approve <job_id_court>  (résout Team puis Jobs)
+```
+
+Mission L3 (deadline / budget retries / escalade puis stop) :
+
+```bash
+curl -s -X POST http://192.168.0.140:8010/v1/team/smoke_lan_mission \
+  -H 'Content-Type: application/json' \
+  -d '{"days":3,"budget_retries":5,"escalate_after_red":2}'
+curl -s -X POST http://192.168.0.140:8010/v1/team/smoke_lan_mission/tick \
+  -H 'Content-Type: application/json' -d '{"dry_run":true}'
+curl -s http://192.168.0.140:8010/v1/team/smoke_lan_mission
+# Pilot Fleet : #/team/fleet — panneau Mission L3 + boutons
+```
+
+État : `/var/lib/lbg/smoke_lan_mission/state.json` (surcharge `LBG_SMOKE_LAN_MISSION_STATE`).
+
+Le timer `lbg-ops-health-pilot-job` appelle aussi `POST /v1/team/smoke_lan_mission/tick`
+après chaque run (`LBG_SMOKE_LAN_MISSION_TICK_ON_OPS_HEALTH=1` par défaut).  
+`days_ok` n’incrémente qu’**une fois par jour UTC** (même si le timer tourne toutes les 3 h).  
+Sans mission active → skip soft (`no_mission`).
+
+**Périmètre** : PreCU **245** est **optionnel** (`required=False`) — OFF ≠ remediate.  
+246 Prime requis via **`http://192.168.0.246:8787/healthz`** (Godot G5+ unifié ; plus `:8765` / sidecar `:8791`).
 
 ## Curl
 

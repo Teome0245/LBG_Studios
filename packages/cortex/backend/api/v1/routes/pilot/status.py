@@ -106,6 +106,8 @@ async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
                         "account_login": b.get("account_login"),
                         "agent_id": b.get("agent_id"),
                         "admin_level": b.get("admin_level"),
+                        "linked_studio_agent_id": b.get("linked_studio_agent_id"),
+                        "linked_studio_display": b.get("linked_studio_display"),
                         "x": x,
                         "y": y,
                         "z": z,

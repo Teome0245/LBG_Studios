@@ -23,6 +23,7 @@ var _salvage_cfg: Dictionary = {}
 var _salvage_cd: Dictionary = {}  # player -> unix until
 var _rng := RandomNumberGenerator.new()
 var _recipes_by_id: Dictionary = {}
+var _chronicle_cfg: Dictionary = {}
 
 
 func setup() -> void:
@@ -32,6 +33,7 @@ func setup() -> void:
 	_load_players()
 	_load_salvage()
 	_load_recipes()
+	_load_chronicle()
 
 
 func attach_events(events_svc) -> void:
@@ -56,6 +58,96 @@ func _load_recipes() -> void:
 	for it in items:
 		if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) != "":
 			_recipes_by_id[str(it["id"])] = it
+
+
+func _load_chronicle() -> void:
+	_chronicle_cfg.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("chronicle_scribe.json"))
+	if typeof(raw) == TYPE_DICTIONARY:
+		_chronicle_cfg = raw
+
+
+func _ensure_session_log(p: Dictionary) -> Array:
+	if typeof(p.get("session_log")) != TYPE_ARRAY:
+		p["session_log"] = []
+	return p["session_log"]
+
+
+func log_session_event(player: String, kind: String, text: String, meta: Dictionary = {}) -> void:
+	## C5 — faits utiles pour la chronique Scribe (pas de fluff).
+	var p := _player(player)
+	var log := _ensure_session_log(p)
+	var line := text.strip_edges()
+	if line.is_empty():
+		return
+	if line.length() > 160:
+		line = line.substr(0, 157) + "…"
+	log.append({
+		"t": int(Time.get_unix_time_from_system()),
+		"kind": kind.strip_edges(),
+		"text": line,
+		"meta": meta.duplicate(true) if typeof(meta) == TYPE_DICTIONARY else {},
+	})
+	while log.size() > 24:
+		log.remove_at(0)
+	p["session_log"] = log
+	_save_players()
+
+
+func chronicle(player: String, cosmetic_title: bool = true) -> Dictionary:
+	## Export 5–10 lignes + titre optionnel (C5).
+	if _chronicle_cfg.is_empty():
+		_load_chronicle()
+	var key := player.strip_edges()
+	if key.is_empty():
+		key = "Voyageur"
+	var p := _player(key)
+	var log := _ensure_session_log(p)
+	var lines: Array = []
+	var open = _chronicle_cfg.get("frame_open", [])
+	if typeof(open) == TYPE_ARRAY:
+		for o in open:
+			lines.append(str(o))
+	# Faits session (plus récents en dernier dans le corps).
+	var facts: Array = []
+	for e in log:
+		if typeof(e) != TYPE_DICTIONARY:
+			continue
+		var tx := str(e.get("text", "")).strip_edges()
+		if not tx.is_empty():
+			facts.append(tx)
+	# Garder les 6 derniers faits max.
+	if facts.size() > 6:
+		facts = facts.slice(facts.size() - 6, facts.size())
+	for f in facts:
+		lines.append(f)
+	if facts.is_empty():
+		lines.append("%s a foulé Lost Heaven — encore peu de faits à graver." % key)
+		lines.append("Daan Oth tient le board ; Jax la Perle ; le désert attend hors porte est.")
+	var close = _chronicle_cfg.get("frame_close", [])
+	if typeof(close) == TYPE_ARRAY and not close.is_empty():
+		lines.append(str(close[0]))
+	var mn := int(_chronicle_cfg.get("line_count_min", 5))
+	var mx := int(_chronicle_cfg.get("line_count_max", 10))
+	while lines.size() < mn:
+		lines.append("Le hub respire — shuttleport, marché, remparts.")
+	if lines.size() > mx:
+		lines = lines.slice(0, mx)
+	var title := ""
+	if cosmetic_title:
+		var tmpl := str(_chronicle_cfg.get("title_template", "Chronique du voyageur — {player_name}"))
+		title = tmpl.replace("{player_name}", key)
+	return {
+		"ok": true,
+		"player": key,
+		"title": title,
+		"lines": lines,
+		"line_count": lines.size(),
+		"events_used": facts.size(),
+		"scribe_npc_id": str(_chronicle_cfg.get("scribe_npc_id", "npc:scribe")),
+		"source": "prime_hub",
+		"ticket": "C5",
+	}
 
 
 func reload_templates() -> void:
@@ -120,8 +212,12 @@ func _player(name: String) -> Dictionary:
 			"credits": 50,
 			"active": [],
 			"completed": [],
+			"session_log": [],
 		}
-	return _players[key]
+	var p: Dictionary = _players[key]
+	if typeof(p.get("session_log")) != TYPE_ARRAY:
+		p["session_log"] = []
+	return p
 
 
 func inventory(player: String) -> Dictionary:
@@ -263,6 +359,7 @@ func accept(player: String, quest_id: String, giver_id: String = "") -> Dictiona
 	(p["active"] as Array).append(entry)
 	_save_players()
 	var accepted := _normalize_active_entry(entry)
+	log_session_event(player, "quest_accept", "Mission prise : %s." % str(tmpl.get("title", qid)), {"quest_id": qid})
 	return {
 		"ok": true,
 		"quest_id": qid,
@@ -384,10 +481,12 @@ func complete(player: String, quest_id: String) -> Dictionary:
 		_add_item(p, iid, qty, str(it.get("name", iid)))
 		granted.append({"id": iid, "qty": qty})
 	_save_players()
+	var qtitle := str(tmpl.get("title", qid))
+	log_session_event(player, "quest_complete", "Mission achevée : %s (+%d Cr)." % [qtitle, credits], {"quest_id": qid})
 	return {
 		"ok": true,
 		"quest_id": qid,
-		"title": str(tmpl.get("title", qid)),
+		"title": qtitle,
 		"credits": int(p["credits"]),
 		"credits_gained": credits,
 		"reward_applied": {"credits_gained": credits, "items": granted},
@@ -395,6 +494,7 @@ func complete(player: String, quest_id: String) -> Dictionary:
 		"inventory": (p["inventory"] as Array).duplicate(true),
 		"active": _normalized_active(p["active"] as Array),
 		"completed": (p["completed"] as Array).duplicate(),
+		"chronicle": chronicle(player),
 		"source": "prime_hub",
 	}
 
@@ -406,7 +506,17 @@ func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 		return {"ok": false, "error": "insufficient_credits", "credits": int(p["credits"])}
 	p["credits"] = int(p["credits"]) - amt
 	_save_players()
-	return {"ok": true, "quest_id": quest_id, "amount": amt, "credits": int(p["credits"]), "source": "prime_hub"}
+	log_session_event(player, "tip_stage", "Tip scène à La Perle — %d Cr." % amt, {"quest_id": quest_id})
+	return {
+		"ok": true,
+		"quest_id": quest_id,
+		"amount": amt,
+		"tipped": amt,
+		"credits": int(p["credits"]),
+		"message": "Scène",
+		"chronicle": chronicle(player),
+		"source": "prime_hub",
+	}
 
 
 func _add_item(p: Dictionary, item_id: String, qty: int, item_name: String = "") -> void:
@@ -491,6 +601,7 @@ func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
 	_add_item(p, oid, oqty, oname)
 	_save_players()
 	var crafted := {"id": oid, "name": oname, "qty": oqty, "icon": "kit"}
+	log_session_event(player, "craft", "Craft : %s ×%d." % [oname, oqty], {"recipe_id": rid})
 	return {
 		"ok": true,
 		"recipe_id": rid,
@@ -586,6 +697,11 @@ func salvage_loot(player: String, poi_id: String = "", x: float = NAN, z: float 
 	_salvage_cd[key] = now + cd
 	_save_players()
 	var p := _player(key)
+	var loot_bits: PackedStringArray = PackedStringArray()
+	for g in granted:
+		if typeof(g) == TYPE_DICTIONARY:
+			loot_bits.append("%s×%d" % [str(g.get("name", g.get("id", "?"))), int(g.get("qty", 1))])
+	log_session_event(key, "salvage", "Salvage hors palissade : %s." % ", ".join(loot_bits), {"poi_id": want})
 	return {
 		"ok": true,
 		"poi_id": want,

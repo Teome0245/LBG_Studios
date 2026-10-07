@@ -47,6 +47,11 @@ def test_create_tick_dry_run_escalation_path(tmp_path, monkeypatch: pytest.Monke
     assert tick2["mission"]["days_ok"] == 1
     assert tick2["mission"]["id"] == mid
 
+    # Même jour calendaire → pas de double incrément
+    tick3 = smoke_lan_mission.tick_mission(dry_run=False)
+    assert tick3.get("ok") is True
+    assert tick3["mission"]["days_ok"] == 1
+
 
 def test_escalate_after_consecutive_red(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     state = tmp_path / "mission2.json"

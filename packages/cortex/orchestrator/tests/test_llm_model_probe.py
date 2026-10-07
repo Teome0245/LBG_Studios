@@ -21,8 +21,8 @@ def test_audit_dialogue_fast_flags_legacy_model(monkeypatch: pytest.MonkeyPatch)
             base_url=str(kwargs.get("base_url", "")),
             configured_model=str(kwargs.get("configured_model", "")),
             configured_available=False,
-            recommended_model="qwen/qwen3.6-27b",
-            available_models=["qwen/qwen3.6-27b"],
+            recommended_model="qwen/qwen3.8-27b",
+            available_models=["qwen/qwen3.8-27b"],
         )
 
     monkeypatch.setattr("team.llm_model_probe.probe_cloud_models", fake_probe)
@@ -34,7 +34,7 @@ def test_audit_dialogue_fast_flags_legacy_model(monkeypatch: pytest.MonkeyPatch)
 
 def test_audit_dialogue_fast_flags_env_mismatch(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_DIALOGUE_FAST_ENABLED", "1")
-    monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "qwen/qwen3.6-27b")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "qwen/qwen3.8-27b")
     monkeypatch.setenv("GROQ_MODEL_FAST", "llama-3.1-8b-instant")
     monkeypatch.setenv("LBG_DIALOGUE_FAST_BASE_URL", "https://api.groq.com/openai/v1")
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
@@ -44,9 +44,9 @@ def test_audit_dialogue_fast_flags_env_mismatch(monkeypatch: pytest.MonkeyPatch)
         lambda **kwargs: ProbeResult(
             provider="groq_dialogue_fast",
             base_url="https://api.groq.com/openai/v1",
-            configured_model="qwen/qwen3.6-27b",
+            configured_model="qwen/qwen3.8-27b",
             configured_available=True,
-            available_models=["qwen/qwen3.6-27b"],
+            available_models=["qwen/qwen3.8-27b"],
         ),
     )
     out = audit_dialogue_fast_cloud(probe=True)
@@ -68,13 +68,13 @@ def test_probe_all_cloud_prioritizes_dialogue_fast_model(monkeypatch: pytest.Mon
 
     monkeypatch.setenv("LBG_DIALOGUE_FAST_BASE_URL", "https://api.groq.com/openai/v1")
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
-    monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "qwen/qwen3.6-27b")
-    monkeypatch.setenv("GROQ_MODEL_FAST", "qwen/qwen3.6-27b")
+    monkeypatch.setenv("LBG_DIALOGUE_FAST_MODEL", "qwen/qwen3.8-27b")
+    monkeypatch.setenv("GROQ_MODEL_FAST", "qwen/qwen3.8-27b")
     monkeypatch.setattr("team.llm_model_probe.probe_cloud_models", fake_probe)
 
     results = probe_all_cloud()
     assert len(results) == 1
-    assert calls == ["qwen/qwen3.6-27b"]
+    assert calls == ["qwen/qwen3.8-27b"]
 
 
 def test_auto_fix_env_patches_dialogue_fast_model(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,10 +86,10 @@ def test_auto_fix_env_patches_dialogue_fast_model(monkeypatch: pytest.MonkeyPatc
             base_url="https://api.groq.com/openai/v1",
             configured_model="llama-3.1-8b-instant",
             configured_available=False,
-            recommended_model="qwen/qwen3.6-27b",
-            available_models=["qwen/qwen3.6-27b"],
+            recommended_model="qwen/qwen3.8-27b",
+            available_models=["qwen/qwen3.8-27b"],
         )
     ]
     summary = auto_fix_env(results)
     assert summary["patched"] is True
-    assert os.environ.get("LBG_DIALOGUE_FAST_MODEL") == "qwen/qwen3.6-27b"
+    assert os.environ.get("LBG_DIALOGUE_FAST_MODEL") == "qwen/qwen3.8-27b"
