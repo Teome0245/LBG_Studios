@@ -1410,6 +1410,10 @@
       background: linear-gradient(165deg, #1a2030 0%, #141c28 100%);
       border-color: #3a5678;
     }
+    .office-zone[data-zone="zone_games"] {
+      background: linear-gradient(165deg, #241828 0%, #1a1420 100%);
+      border-color: #6a4a78;
+    }
     .office-player-ia-bar {
       margin: 0 0 0.65rem;
       padding: 0.45rem 0.65rem;

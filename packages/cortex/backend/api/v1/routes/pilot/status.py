@@ -20,105 +20,109 @@ router = APIRouter()
 
 async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
     """
-    Lecture seule sidecar Prime (:8791) — snapshots Lia/Nix/Mira/Kael.
-    Distinct de LBG_MMO_SERVER_URL (souvent PreCU / autre service).
+    Lecture seule prime-hub (:8787) — flotte joueurs IA (Nix/Lia/…).
+    Fallback legacy sidecar :8791 si hub KO.
     """
     settings = get_settings()
-    sidecar = settings.core3_sidecar_base()
-    bots = settings.core3_ia_bot_ids()
+    hub = settings.prime_hub_base()
     out: dict[str, Any] = {
         "ok": False,
-        "sidecar_url": sidecar,
+        "source": "prime_hub",
+        "hub_url": hub,
+        "sidecar_url": hub,  # compat UI (ancien champ)
         "sidecar_ok": False,
         "conductor_agent_id": "studio_player_ia_choeur",
         "bots": [],
         "online_count": 0,
         "ts": time.time(),
+        "planet_display": PLANET_DISPLAY,
+        "hub_city": HUB_CITY,
     }
     try:
         async with httpx.AsyncClient(timeout=timeout_s) as client:
             try:
-                hr = await client.get(f"{sidecar}/healthz")
-                health_body: dict[str, Any] = {}
+                hr = await client.get(f"{hub}/healthz")
+                health: dict[str, Any] = {}
                 if hr.content:
                     try:
                         raw_h = hr.json()
                         if isinstance(raw_h, dict):
-                            health_body = raw_h
+                            health = raw_h
                     except ValueError:
                         pass
-                sidecar_ok = hr.status_code == 200 and health_body.get("ok") is not False
-                out["sidecar_ok"] = sidecar_ok
+                hub_ok = hr.status_code == 200 and health.get("ok") is not False
+                out["sidecar_ok"] = hub_ok
                 out["sidecar_status"] = hr.status_code
+                out["hub_health"] = {
+                    "bot_count": health.get("bot_count"),
+                    "ai_seats": health.get("ai_seats"),
+                    "phase": health.get("phase"),
+                }
             except Exception as e:
                 out["sidecar_ok"] = False
                 out["error"] = str(e)
                 return out
 
+            if not out["sidecar_ok"]:
+                return out
+
             rows: list[dict[str, Any]] = []
             online_count = 0
-            for bot in bots:
-                display = bot[:1].upper() + bot[1:] if bot else bot
-                entry: dict[str, Any] = {
-                    "id": bot,
-                    "display_name": display,
-                    "online": False,
-                    "in_world": False,
-                    "zone": None,
-                    "age_s": None,
-                    "ok": False,
-                }
-                try:
-                    sr = await client.get(f"{sidecar}/v1/player-snapshot", params={"player": display})
-                    snap: dict[str, Any] = {}
-                    if sr.content:
-                        try:
-                            raw = sr.json()
-                            if isinstance(raw, dict):
-                                inner = raw.get("snapshot")
-                                snap = inner if isinstance(inner, dict) else raw
-                        except ValueError:
-                            pass
-                    online = bool(snap.get("online") or snap.get("connected"))
-                    zone = snap.get("zone")
-                    age = snap.get("age_s")
+            try:
+                br = await client.get(f"{hub}/v1/bots")
+                payload: dict[str, Any] = {}
+                if br.content:
                     try:
-                        age_f = float(age) if age is not None else None
-                    except (TypeError, ValueError):
-                        age_f = None
-                    # Fresh snapshot + online = « en jeu » ; offline = hors monde (café métier).
-                    fresh = age_f is None or age_f < 60.0
-                    in_world = online and fresh
-                    entry.update(
-                        {
-                            "online": online,
-                            "in_world": in_world,
-                            "zone": zone if isinstance(zone, str) else None,
-                            "age_s": age_f,
-                            "ok": sr.status_code == 200 and online,
-                            "status": sr.status_code,
-                            "x": snap.get("x"),
-                            "y": snap.get("y"),
-                            "z": snap.get("z"),
-                        }
-                    )
-                    if online:
-                        online_count += 1
-                except Exception as e:
-                    entry["error"] = str(e)
-                rows.append(enrich_bot_zone_fields(entry))
+                        raw_b = br.json()
+                        if isinstance(raw_b, dict):
+                            payload = raw_b
+                    except ValueError:
+                        pass
+                bots_arr = payload.get("bots") if isinstance(payload.get("bots"), list) else []
+                for b in bots_arr:
+                    if not isinstance(b, dict):
+                        continue
+                    name = str(b.get("name") or b.get("entity_key") or "?").strip()
+                    bid = name.lower()
+                    pos = b.get("pos")
+                    x = y = z = None
+                    if isinstance(pos, list) and len(pos) >= 3:
+                        try:
+                            x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
+                        except (TypeError, ValueError):
+                            pass
+                    play_mode = str(b.get("play_mode") or "hub")
+                    goal = str(b.get("goal") or "")
+                    entry: dict[str, Any] = {
+                        "id": bid,
+                        "display_name": name,
+                        "online": True,
+                        "in_world": True,
+                        "zone": play_mode or "scrapaltai",
+                        "age_s": 0.0,
+                        "ok": True,
+                        "goal": goal,
+                        "play_mode": play_mode,
+                        "account_login": b.get("account_login"),
+                        "agent_id": b.get("agent_id"),
+                        "admin_level": b.get("admin_level"),
+                        "x": x,
+                        "y": y,
+                        "z": z,
+                    }
+                    online_count += 1
+                    rows.append(enrich_bot_zone_fields(entry))
+            except Exception as e:
+                out["error"] = str(e)
 
             out["bots"] = rows
             out["online_count"] = online_count
             out["ok"] = bool(out["sidecar_ok"]) and online_count > 0
-            out["planet_display"] = PLANET_DISPLAY
-            out["hub_city"] = HUB_CITY
-            # Compat pastilles historiques Accueil/Jobs
             out["bots_status"] = {
                 str(b["id"]): ("online" if b.get("online") else "offline") for b in rows
             }
     except Exception as e:
-        LOG.warning("pilot.player_ia_runtime error sidecar=%s err=%s", sidecar, e)
+        LOG.warning("pilot.player_ia_runtime error hub=%s err=%s", hub, e)
         out["error"] = str(e)
     return out
 

@@ -3786,6 +3786,7 @@
       ["zone_llm", "Forge LLM (.110 / .111)"],
       ["zone_mmo_lab", "Lab SWG (245)"],
       ["zone_prime", "Monde Prime (246)"],
+      ["zone_games", "Salle de jeux"],
       ["zone_coffee", "Pause café"],
     ];
     let __officePing = null;
@@ -4100,6 +4101,7 @@
       zone_llm: { ico: "⚡", ip: ".110 / .111", short: "LLM" },
       zone_mmo_lab: { ico: "⚒", ip: "192.168.0.245", short: "Lab" },
       zone_prime: { ico: "◉", ip: "192.168.0.246", short: "Prime" },
+      zone_games: { ico: "▶", ip: "personas out-game", short: "Jeux" },
       zone_coffee: { ico: "☕", ip: "pause", short: "Café" },
     };
 

@@ -25,7 +25,8 @@ ZONES: list[dict[str, Any]] = [
     {"id": "zone_llm", "label": "Forge LLM (.110 / .111)", "sort_order": 2},
     {"id": "zone_mmo_lab", "label": "Lab SWG (245)", "sort_order": 3},
     {"id": "zone_prime", "label": "Monde Prime (246)", "sort_order": 4},
-    {"id": "zone_coffee", "label": "Pause café", "sort_order": 5},
+    {"id": "zone_games", "label": "Salle de jeux", "sort_order": 5},
+    {"id": "zone_coffee", "label": "Pause café", "sort_order": 6},
 ]
 
 ZONE_IDS = frozenset(z["id"] for z in ZONES)
@@ -39,6 +40,7 @@ DEFAULT_ZONE_BY_ROLE: dict[str, str] = {
     "dev_godot": "zone_prime",
     "dev_studio": "zone_core",
     "player_ia": "zone_prime",
+    "player_bridge": "zone_games",
     "contrarian": "zone_llm",
 }
 
@@ -58,6 +60,17 @@ DEFAULT_ZONE_BY_AGENT: dict[str, str] = {
     "studio_player_ia_choeur": "zone_prime",
     "studio_conductor_lyra": "zone_core",
     "studio_contrarian_promethee": "zone_llm",
+    # Ponts joueur out-game (login = persona) — salle de jeux
+    "player_bridge_nix": "zone_games",
+    "player_bridge_lia": "zone_games",
+    "player_bridge_mira": "zone_games",
+    "player_bridge_kael": "zone_games",
+    "player_bridge_renn": "zone_games",
+    "player_bridge_sola": "zone_games",
+    "player_bridge_vex": "zone_games",
+    "player_bridge_ori": "zone_games",
+    "player_bridge_tess": "zone_games",
+    "player_bridge_bram": "zone_games",
 }
 
 HOST_HINT_BY_ZONE: dict[str, str] = {
@@ -66,6 +79,7 @@ HOST_HINT_BY_ZONE: dict[str, str] = {
     "zone_llm": "192.168.0.110",
     "zone_mmo_lab": "192.168.0.245",
     "zone_prime": "192.168.0.246",
+    "zone_games": "192.168.0.246",
     "zone_coffee": "192.168.0.140",
 }
 
@@ -295,6 +309,17 @@ def json_dumps_safe(obj: object) -> str:
         return str(obj)
 
 
+def default_zone_for_agent(agent_id: str, role: str = "") -> str:
+    """Zone idle / défaut : ponts out-game → salle de jeux."""
+    aid = str(agent_id or "").strip()
+    r = str(role or "").strip()
+    if aid in DEFAULT_ZONE_BY_AGENT:
+        return DEFAULT_ZONE_BY_AGENT[aid]
+    if aid.startswith("player_bridge_") or r == "player_bridge":
+        return "zone_games"
+    return DEFAULT_ZONE_BY_ROLE.get(r, "zone_core")
+
+
 def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
     ctx = task.context or {}
     explicit = str(ctx.get("presence_zone") or ctx.get("zone") or "").strip()
@@ -316,6 +341,8 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
             str(ctx.get("target_host") or ""),
         ]
     ).lower()
+    if any(k in blob for k in ("player_bridge", "salle de jeux", "out-game", "out_game", "pont nix", "pont lia")):
+        return "zone_games"
     if any(k in blob for k in ("246", "prime", "godot", "lbg-ws", "scrapaltai", "m9")):
         return "zone_prime"
     if any(k in blob for k in ("245", "core3", "swg", "precu", "vulcan", "zb-")):
@@ -327,9 +354,7 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
     if "café" in blob or "cafe" in blob or "pause" in blob:
         return "zone_coffee"
     aid = agent_id or resolve_presence_agent_id(task)
-    if aid in DEFAULT_ZONE_BY_AGENT:
-        return DEFAULT_ZONE_BY_AGENT[aid]
-    return DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
+    return default_zone_for_agent(aid, task.role)
 
 
 def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dict[str, Any]:
@@ -364,10 +389,7 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
     )
     location = infer_zone(task, agent_id=agent_id)
     if status == "idle":
-        if task.status == "queued":
-            location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
-        else:
-            location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
+        location = default_zone_for_agent(agent_id, task.role)
     action = sanitize_action(task.objective if status != "idle" else "En attente")
     if status == "idle" and task.status == "queued":
         action = sanitize_action(f"En file — {task.objective}")
@@ -401,13 +423,16 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
 def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
     agent_id = str(row["agent_id"])
     role = str(row.get("role") or "")
-    location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(role, "zone_core")
+    location = default_zone_for_agent(agent_id, role)
+    action = "En attente"
+    if role == "player_bridge" or agent_id.startswith("player_bridge_"):
+        action = "Pont out-game — suggestions monde/dev"
     return {
         "schema": SCHEMA,
         "agent_id": agent_id,
         "display_name": str(row.get("display_name") or agent_id),
         "status": "idle",
-        "current_action": "En attente",
+        "current_action": action,
         "location": location,
         "target_destination": None,
         "role": role,

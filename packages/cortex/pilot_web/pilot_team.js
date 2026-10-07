@@ -43,6 +43,7 @@
       ["zone_llm", "Forge LLM (.110 / .111)"],
       ["zone_mmo_lab", "Lab SWG (245)"],
       ["zone_prime", "Monde Prime (246)"],
+      ["zone_games", "Salle de jeux"],
       ["zone_coffee", "Pause café"],
     ];
     /** @type {Map<string, object>} meta zones (host_status, host_badge…) depuis le snapshot */
@@ -372,6 +373,7 @@
       zone_llm: { ico: "⚡", ip: ".110 / .111", short: "LLM" },
       zone_mmo_lab: { ico: "⚒", ip: "192.168.0.245", short: "Lab" },
       zone_prime: { ico: "◉", ip: "192.168.0.246", short: "Prime" },
+      zone_games: { ico: "▶", ip: "personas out-game", short: "Jeux" },
       zone_coffee: { ico: "☕", ip: "pause", short: "Café" },
     };
 
@@ -408,7 +410,7 @@
       const state = !online ? "offline" : (inWorld ? "online" : "stale");
       const label = !online ? "hors jeu" : (zone || (inWorld ? "en jeu" : "snapshot vieux"));
       const ageTxt = age != null && !Number.isNaN(age) ? (" · " + (age < 10 ? age.toFixed(1) : Math.round(age)) + "s") : "";
-      const title = name + " — " + label + ageTxt + " (Chœur · lecture seule)";
+      const title = name + " — " + label + ageTxt + " (prime-hub · lecture seule)";
       return (
         '<span class="office-pia-chip office-pia-chip--' + state + '" title="' + officeEsc(title) + '">' +
           '<span class="office-pia-dot" aria-hidden="true"></span>' +
@@ -422,22 +424,22 @@
       const rt = __officePlayerIa;
       if (!rt) {
         return '<div class="office-pia-strip' + (compact ? " office-pia-strip--compact" : "") + '">' +
-          '<span class="office-pia-label">Joueurs IA · Scrapaltai</span>' +
+          '<span class="office-pia-label">Joueurs IA · Lost Heaven</span>' +
           '<span class="muted" style="font-size:0.72rem;">chargement…</span></div>';
       }
       const bots = Array.isArray(rt.bots) ? rt.bots : [];
       const online = rt.online_count != null ? rt.online_count : bots.filter(function (b) { return b && b.online; }).length;
-      const sidecarOk = rt.sidecar_ok !== false;
-      const head = sidecarOk
-        ? (online + "/" + bots.length + " en ligne")
-        : "sidecar KO";
+      const hubOk = rt.sidecar_ok !== false;
+      const head = hubOk
+        ? (online + "/" + bots.length + " en hub")
+        : "prime-hub KO";
       const chips = bots.length
         ? bots.map(officePlayerIaChipHtml).join("")
         : '<span class="muted" style="font-size:0.72rem;">aucun bot</span>';
       return (
-        '<div class="office-pia-strip' + (compact ? " office-pia-strip--compact" : "") + '" title="Runtime Prime via sidecar — associé à Chœur">' +
-          '<span class="office-pia-label">Joueurs IA · Scrapaltai</span>' +
-          '<span class="office-pia-count' + (sidecarOk ? "" : " office-pia-count--ko") + '">' + officeEsc(head) + "</span>" +
+        '<div class="office-pia-strip' + (compact ? " office-pia-strip--compact" : "") + '" title="Runtime prime-hub :8787 — flotte IG (Chœur supervise)">' +
+          '<span class="office-pia-label">Joueurs IA · Lost Heaven</span>' +
+          '<span class="office-pia-count' + (hubOk ? "" : " office-pia-count--ko") + '">' + officeEsc(head) + "</span>" +
           '<div class="office-pia-chips">' + chips + "</div>" +
         "</div>"
       );

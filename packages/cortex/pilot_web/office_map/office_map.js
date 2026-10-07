@@ -18,8 +18,9 @@
     zone_front: { x: 1, y: 8, w: 11, h: 8, label: "Front .100", color: 0x2a4a5a },
     zone_core: { x: 15, y: 8, w: 12, h: 8, label: "Core 140", color: 0x2a5a48 },
     zone_llm: { x: 30, y: 8, w: 11, h: 8, label: "Forge LLM", color: 0x2a5040 },
-    zone_mmo_lab: { x: 4, y: 19, w: 14, h: 8, label: "Lab 245", color: 0x5a3e28 },
-    zone_prime: { x: 24, y: 19, w: 14, h: 8, label: "Prime 246", color: 0x2a3a58 },
+    zone_mmo_lab: { x: 1, y: 19, w: 12, h: 8, label: "Lab 245", color: 0x5a3e28 },
+    zone_prime: { x: 15, y: 19, w: 12, h: 8, label: "Prime 246", color: 0x2a3a58 },
+    zone_games: { x: 29, y: 19, w: 12, h: 8, label: "Salle jeux", color: 0x4a2a5a },
   };
 
   const PATH_HUB = { x: 21, y: 16 };

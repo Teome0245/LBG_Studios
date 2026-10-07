@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     lbg_mmo_internal_token: str = Field(default="", validation_alias="LBG_MMO_INTERNAL_TOKEN")
     # Sidecar joueurs IA Core3 Prime (:8791) — distinct de LBG_MMO_SERVER_URL (souvent PreCU/legacy).
     lbg_core3_sidecar_url: str = Field(default="", validation_alias="LBG_CORE3_SIDECAR_URL")
+    lbg_prime_hub_url: str = Field(default="", validation_alias="LBG_PRIME_HUB_URL")
     lbg_core3_ia_bots: str = Field(default="lia,nix,mira,kael", validation_alias="LBG_CORE3_IA_BOTS")
 
     lbg_pilot_internal_token: str = Field(default="", validation_alias="LBG_PILOT_INTERNAL_TOKEN")
@@ -89,12 +90,20 @@ class Settings(BaseSettings):
             return 120.0
 
     def core3_sidecar_base(self) -> str:
-        """URL sidecar Prime (:8791) pour snapshots joueurs IA."""
+        """URL sidecar Prime (:8791) — legacy ; préférer prime_hub_base()."""
         raw = self.lbg_core3_sidecar_url.strip()
         if raw:
             return raw.rstrip("/")
         prime_ip = (self.lbg_lan_host_mmo or "192.168.0.246").split(":")[0].strip() or "192.168.0.246"
         return f"http://{prime_ip}:8791"
+
+    def prime_hub_base(self) -> str:
+        """URL prime-hub Godot (:8787) — autorité joueurs IA."""
+        raw = self.lbg_prime_hub_url.strip()
+        if raw:
+            return raw.rstrip("/")
+        prime_ip = (self.lbg_lan_host_mmo or "192.168.0.246").split(":")[0].strip() or "192.168.0.246"
+        return f"http://{prime_ip}:8787"
 
     def core3_ia_bot_ids(self) -> list[str]:
         raw = (self.lbg_core3_ia_bots or "lia,nix,mira,kael").strip()

@@ -38,8 +38,13 @@ DEFAULT_ROLE_ALIASES: dict[str, dict[str, str]] = {
     },
     "player_ia": {
         "alias": "Chœur du monde",
-        "title": "Joueurs IA Prime",
-        "tagline": "Lia, Nix… sur Core3 246",
+        "title": "Garant runtime monde",
+        "tagline": "prime-hub :8787 · flotte IA Lost Heaven",
+    },
+    "player_bridge": {
+        "alias": "Pont joueur",
+        "title": "Persona out-game",
+        "tagline": "Salle de jeux — login=persona · suggestions monde/dev",
     },
     "admin_infra": {
         "alias": "Atlas",
