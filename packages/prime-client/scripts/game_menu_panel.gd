@@ -65,6 +65,7 @@ func _ensure_ui() -> void:
 	_missions_btn = _mk_btn(root, "Missions", "Bureau des missions (J)")
 	_talents_btn = _mk_btn(root, "Talents", "Talents / craft (T)")
 	_inventory_btn = _mk_btn(root, "Inventory", "Inventaire (I)")
+	_mk_btn(root, "Wiki", "Wiki hub Lost Heaven")
 	_mk_btn(root, "Echo", "Écho Amas (H)")
 	_mk_btn(root, "Initiation", "Initiation Particule")
 	_mk_btn(root, "CreateHammat", "Nouvel Amas…")
@@ -77,6 +78,9 @@ func _ensure_ui() -> void:
 		_talents_btn.pressed.connect(_on_talents)
 	if not _inventory_btn.pressed.is_connected(_on_inventory):
 		_inventory_btn.pressed.connect(_on_inventory)
+	var wiki_btn := root.get_node_or_null("Wiki") as Button
+	if wiki_btn and not wiki_btn.pressed.is_connected(_on_wiki):
+		wiki_btn.pressed.connect(_on_wiki)
 	var echo_btn := root.get_node_or_null("Echo") as Button
 	if echo_btn and not echo_btn.pressed.is_connected(_on_echo):
 		echo_btn.pressed.connect(_on_echo)
@@ -120,6 +124,14 @@ func _on_inventory() -> void:
 	var main := get_tree().get_first_node_in_group("prime_main")
 	if main and main.has_method("_toggle_inventory"):
 		main.call("_toggle_inventory")
+
+
+func _on_wiki() -> void:
+	close_menu()
+	var main := get_tree().get_first_node_in_group("prime_main")
+	if main and main.has_method("_toggle_wiki"):
+		main.call("_toggle_wiki")
+
 
 func _on_echo() -> void:
 	close_menu()

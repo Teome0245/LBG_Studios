@@ -136,6 +136,7 @@ curl -sS "$H/v1/chronicle?player=Voyageur" | jq '{title,line_count,lines:(.lines
 curl -sS "$H/v1/trade/catalog" | jq '{vendor:.display_name,n:(.catalog|length)}'
 curl -sS -X POST "$H/v1/trade/offer" -H 'Content-Type: application/json' \
   -d '{"player":"Voyageur","sku_id":"drink:eau_filtree","offer_price":8}' | jq '{ok,outcome,price_paid,reputation}'
+curl -sS "$H/v1/wiki" | jq '{ok,drift,title,npc:(.npcs|length),poi:(.pois|length)}'
 ```
 
 ## P3 persona dialogue (hub)

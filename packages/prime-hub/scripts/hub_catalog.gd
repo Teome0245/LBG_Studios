@@ -1,8 +1,21 @@
 extends RefCounted
 class_name HubCatalog
 const _HubPaths = preload("res://scripts/hub_paths.gd")
+const HubWikiScript = preload("res://scripts/hub_wiki.gd")
 
 ## Catalog C10 + guides + tick-matrix — snapshots JSON sous data/.
+
+var _wiki = null
+
+
+func _wiki_svc():
+	if _wiki == null:
+		_wiki = HubWikiScript.new()
+	return _wiki
+
+
+func wiki() -> Dictionary:
+	return _wiki_svc().snapshot()
 
 
 func catalog(type_name: String = "skills") -> Dictionary:

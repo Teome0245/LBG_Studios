@@ -267,6 +267,16 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 	if method == "GET" and path in ["/guide", "/v1/guide"]:
 		var payload: Dictionary = catalog.guide(_query_param(query, "playstyle", "prospecteur"))
 		return _ok(payload, 200 if bool(payload.get("ok", true)) else 404)
+	if method == "GET" and path in ["/wiki", "/v1/wiki"]:
+		var fmt := _query_param(query, "format", "json").to_lower()
+		var wiki_payload: Dictionary = catalog.wiki()
+		if fmt == "md" or fmt == "markdown":
+			return {
+				"code": 200,
+				"body": str(wiki_payload.get("markdown", "")),
+				"content_type": "text/markdown; charset=utf-8",
+			}
+		return _ok(wiki_payload, 200 if bool(wiki_payload.get("ok", true)) else 500)
 	if method == "GET" and path in ["/tick-matrix", "/v1/tick-matrix"]:
 		return _ok(catalog.tick_matrix())
 

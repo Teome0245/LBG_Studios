@@ -140,6 +140,7 @@ func _endpoints() -> Dictionary:
 		"healthz": "/healthz",
 		"catalog": "/v1/catalog?type=skills|recipes|npcs|poi",
 		"guide": "/v1/guide?playstyle=…",
+		"wiki": "/v1/wiki",
 		"tick_matrix": "/v1/tick-matrix",
 		"quests_board": "/v1/quests/board",
 		"quests_status": "/v1/quests/status",

@@ -31,6 +31,7 @@ const _EchoHammatControllerScript = preload("res://scripts/echo_hammat_controlle
 const _InitiationQuestControllerScript = preload("res://scripts/initiation_quest_controller.gd")
 const _EntityScript = preload("res://scripts/entity.gd")
 const _WaypointStore = preload("res://scripts/waypoint_store.gd")
+const _WikiHubPanelScript = preload("res://scripts/wiki_hub_panel.gd")
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
@@ -76,6 +77,7 @@ var _salvage_http: HTTPRequest = null
 var _salvage_poi_xz: Vector2 = Vector2(6042.0, -1065.0)
 const SALVAGE_POI_ID := "poi:lh_scrap_pile"
 const SALVAGE_RADIUS_M := 90.0
+var _wiki_panel: Node = null
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
 const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
@@ -113,9 +115,28 @@ func _ready() -> void:
 	_ensure_hub_chat_ui()
 	_ensure_salvage_http()
 	_load_salvage_poi()
+	_ensure_wiki_panel()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
+
+
+func _ensure_wiki_panel() -> void:
+	if _wiki_panel != null and is_instance_valid(_wiki_panel):
+		return
+	var layer := get_node_or_null("UI/ModalLayer") as Control
+	if layer == null:
+		return
+	_wiki_panel = _WikiHubPanelScript.new()
+	_wiki_panel.name = "WikiHubPanel"
+	layer.add_child(_wiki_panel)
+
+
+func _toggle_wiki() -> void:
+	_ensure_wiki_panel()
+	if _wiki_panel and _wiki_panel.has_method("toggle"):
+		_wiki_panel.toggle()
+		_hotbar_feedback("Wiki hub Lost Heaven")
 
 
 func _ensure_salvage_http() -> void:
@@ -1532,6 +1553,9 @@ func _on_dialogue_suggestion_activated(move: Dictionary) -> void:
 			if not bool(_mission_board.get("visible")):
 				_mission_board.toggle()
 			print("[Main] C1 suggestion UI → open_mission_board")
+		return
+	if action_name == "open_wiki":
+		_toggle_wiki()
 		return
 	if action_name == "trade_offer":
 		_try_trade_offer(

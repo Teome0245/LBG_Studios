@@ -1,6 +1,6 @@
 # Wiki hub — Lost Heaven (MVP généré)
 
-**Ticket** : C6 · **Généré** : 2026-10-06 · **Script** : `packages/cortex/tools/generate_wiki_hub_lost_heaven_mvp.py`
+**Ticket** : C6 · **Généré** : 2026-10-06 · **Live** : `GET http://192.168.0.246:8787/v1/wiki` (2026-10-07) · **Script** : `packages/cortex/tools/generate_wiki_hub_lost_heaven_mvp.py`
 
 **Sources** : [`INVENTAIRE_PNJ.md`](../../../docs/world/INVENTAIRE_PNJ.md) §1 · [`m10_skills_catalog.json`](../content/m10/m10_skills_catalog.json)
 

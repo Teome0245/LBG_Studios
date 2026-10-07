@@ -31,6 +31,7 @@ const DEFAULT_MOVES := {
 	],
 	"npc:guide_quartier": [
 		{"id": "move:guide_map", "label": "Orientation", "utterance": "Où est le marché ?", "kind": "info"},
+		{"id": "move:guide_wiki", "label": "Wiki hub", "utterance": "Tu as un guide du hub ?", "kind": "ui", "action": {"name": "open_wiki"}},
 	],
 }
 
@@ -50,6 +51,8 @@ const FALLBACK_REPLIES := [
 	["rumeur", "Au marché et à La Perle on en parle — mais le board tranche."],
 	["chronique", "Le Scribe à la mairie archive ta session — demande-lui une chronique."],
 	["archive", "Archives à la mairie. Le Scribe note les faits, pas les légendes."],
+	["wiki", "Le Guide de quartier ouvre le wiki hub — PNJ, POI, métiers M10. Menu → Wiki."],
+	["guide", "Guide de quartier au starport — orientation et wiki Lost Heaven."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry

@@ -261,7 +261,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 | ID | Ticket | Origine | Done quand | Owner cible |
 |----|--------|---------|------------|-------------|
 | **C5** | **Chronique session** Scribe (5–10 lignes) + titre cosmétique optionnel | Everwhere journey book / ClaudeCraft deeds | Export après quête hub ou tip scène | Dédale + Chœur · **live hub** 2026-10-07 : `GET /v1/chronicle` + log quête/tip/salvage/craft · dialogue Scribe « chronique » · stub ✅ Vague C |
-| **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **MVP** [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
+| **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **live hub** 2026-10-07 : `GET /v1/wiki` + panel Menu · MVP md [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
 | **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **live hub** 2026-10-07 : `POST /v1/trade/offer` Jax ±15 % · suggestions dialogue · stub cortex ✅ Vague C |
 | **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **live hub** 2026-10-07 : `POST /v1/salvage` + hotbar `[1]` près `poi:lh_scrap_pile` → craft `kit_reparation` (T) · stub cortex ✅ Vague A |
 | **C13** | **Anneau désert LH** — joueurs IA hors murs (~3 km), pas Scrapaltai entière | Studio (débride explore) | Data `explore_ring_lh.json` + autonomy + clamp `move_to` + skill | Chœur · **MVP** ✅ 2026-10-07 |
@@ -292,3 +292,4 @@ Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona dé
 | 2026-10-06 | Vague B code+smoke C1/C2/C3 ; Vague C MVP C5–C7 + C10–C12 |
 | 2026-10-07 | **C13** anneau désert LH — explore IA hors murs (`explore_ring_lh.json`) |
 | 2026-10-07 | **C4/C5/C8 live** prime-hub `:8787` — event scrap board, chronique Scribe, salvage→craft ; docs [`RUNTIME_GODOT.md`](../RUNTIME_GODOT.md) |
+| 2026-10-07 | **C6/C7 live** — wiki `/v1/wiki` + panel ; négo Jax `/v1/trade/offer` |
