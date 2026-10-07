@@ -82,6 +82,8 @@ done
 MIGRATE
 
 rsync -az "$GODOT_REAL" "${REMOTE}:${REMOTE_DIR}/tools/${GODOT_NAME}"
+# Cour de chasse P5a — moteur Python (tools/ exclu du rsync principal pour garder le binaire Godot)
+[[ -f "${HUB}/tools/hunt_yard.py" ]] && rsync -az "${HUB}/tools/hunt_yard.py" "${REMOTE}:${REMOTE_DIR}/tools/hunt_yard.py"
 ssh -o BatchMode=yes "${REMOTE}" \
   "ln -sfn '${REMOTE_DIR}/tools/${GODOT_NAME}' '${REMOTE_DIR}/tools/godot' && chmod +x '${REMOTE_DIR}/tools/godot' '${REMOTE_DIR}/tools/${GODOT_NAME}'"
 

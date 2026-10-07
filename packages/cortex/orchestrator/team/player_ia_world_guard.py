@@ -159,6 +159,36 @@ def _bible_checks(root: Path) -> list[dict[str, Any]]:
     out.append(_check("La Perle de Scrapaltai" in txt, "bible_v13_perle", {"path": str(p)}))
     out.append(_check("T3" in txt and "Tranché" in txt, "bible_t3_status", {"path": str(p)}))
     out.append(_check("N12" in txt and "MJ IA" in txt, "bible_n12_mj", {"path": str(p)}))
+    out.append(_check("V50" in txt and "Chœur" in txt, "bible_v50_choeur", {"path": str(p)}))
+    out.append(_check("V53" in txt and "persona" in txt.lower(), "bible_v53_persona", {"path": str(p)}))
+    return out
+
+
+def _inventaire_pnj_checks(root: Path) -> list[dict[str, Any]]:
+    """T7 léger — INVENTAIRE_PNJ ancré (anti-dérive PNJ hub)."""
+    out: list[dict[str, Any]] = []
+    candidates = (
+        root / "docs" / "world" / "INVENTAIRE_PNJ.md",
+        root.parents[1] / "docs" / "world" / "INVENTAIRE_PNJ.md",
+        Path("/opt/LBG_IA_MMO/docs/world/INVENTAIRE_PNJ.md"),
+    )
+    path: Path | None = None
+    for cand in candidates:
+        try:
+            if cand.is_file():
+                path = cand.resolve()
+                break
+        except OSError:
+            continue
+    if path is None:
+        return [_check(False, "inventaire_pnj_read", {"error": "missing", "tried": [str(c) for c in candidates]})]
+    try:
+        txt = path.read_text(encoding="utf-8")
+    except Exception:
+        return [_check(False, "inventaire_pnj_read", {"path": str(path), "error": "read_failed"})]
+    out.append(_check("Jax" in txt or "jax" in txt.lower(), "inventaire_jax", {"path": str(path)}))
+    out.append(_check("Daan" in txt or "daan" in txt.lower(), "inventaire_daan", {"path": str(path)}))
+    out.append(_check("Lost Heaven" in txt, "inventaire_lost_heaven", {"path": str(path)}))
     return out
 
 
@@ -172,6 +202,7 @@ def run_world_truth_guard() -> dict[str, object]:
     checks.extend(_catalog_checks(root))
     checks.extend(_faille_gate_checks(root))
     checks.extend(_registry_checks(root))
+    checks.extend(_inventaire_pnj_checks(root))
     ok = all(bool(c.get("ok")) for c in checks)
     return {"kind": "world_truth_guard", "ok": ok, "enabled": True, "checks": checks}
 

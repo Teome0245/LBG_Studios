@@ -16,6 +16,8 @@ OWNER_BUNDLES: dict[str, tuple[str, ...]] = {
     "godot_craft": ("iris_m10",),
     "godot_assets": ("iris_m9", "iris_m10"),
     "lan_qa": ("argus_lan",),
+    "choeur_l1": ("choeur_terrain",),
+    "p5_hunt": ("p5_hunt_yard",),
 }
 
 OWNER_SCRIPTS: dict[str, str] = {
@@ -26,6 +28,9 @@ OWNER_SCRIPTS: dict[str, str] = {
     "iris_planet": "infra/scripts/smoke_prime_client_planet_map.sh",
     "hermes_sidecar": "infra/scripts/smoke_godot_sidecar_mirror_lan.sh",
     "argus_lan": "infra/scripts/smoke_vm_lan.sh",
+    # Relatifs à packages/cortex — smokes monorepo via tools/
+    "choeur_terrain": "../../tools/smoke_choeur_terrain.sh",
+    "p5_hunt_yard": "../../tools/smoke_p5_hunt_yard_hub.sh",
 }
 
 
