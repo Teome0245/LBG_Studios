@@ -442,6 +442,15 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 				_status = hint4 if hint4 != "" else "objectifs incomplets — va sur place"
 			"steps_out_of_order":
 				_status = hint4 if hint4 != "" else "fais les étapes dans l'ordre"
+			"hunt_required":
+				_status = hint4 if hint4 != "" else "victoire cour de chasse requise — [1] près meute"
+				# Permettre un nouvel auto-progress après claim hunt-yard
+				var drop4: Array = []
+				for k4 in _reported_steps.keys():
+					if str(k4).ends_with("|meute") or str(k4).contains("lh_hunt"):
+						drop4.append(k4)
+				for k4b in drop4:
+					_reported_steps.erase(k4b)
 			"not_active":
 				_status = "pas de mission active — rafraîchis le board"
 				call_deferred("refresh_board")
@@ -471,6 +480,14 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 				_status = hint if hint != "" else "objectifs incomplets — va sur place"
 			"steps_out_of_order":
 				_status = hint if hint != "" else "fais les étapes dans l'ordre"
+			"hunt_required":
+				_status = hint if hint != "" else "victoire cour de chasse requise — [1] près meute"
+				var drop: Array = []
+				for k in _reported_steps.keys():
+					if str(k).ends_with("|meute") or str(k).contains("lh_hunt"):
+						drop.append(k)
+				for kb in drop:
+					_reported_steps.erase(kb)
 			"no_offers":
 				_status = hint if hint != "" else "aucune mission — rafraîchis le board"
 				call_deferred("refresh_board")

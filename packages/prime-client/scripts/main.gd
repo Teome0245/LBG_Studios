@@ -77,6 +77,13 @@ var _salvage_http: HTTPRequest = null
 var _salvage_poi_xz: Vector2 = Vector2(6042.0, -1065.0)
 const SALVAGE_POI_ID := "poi:lh_scrap_pile"
 const SALVAGE_RADIUS_M := 90.0
+var _hunt_http: HTTPRequest = null
+var _hunt_poi_xz: Vector2 = Vector2(5985.0, -1120.0)
+const HUNT_POI_ID := "poi:lh_hunt_chacal"
+const HUNT_RADIUS_M := 90.0
+var _hunt_phase: String = ""  # reset | run | claim
+var _combat_density_zones: Array = []
+var _density_http: HTTPRequest = null
 var _wiki_panel: Node = null
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
@@ -115,6 +122,10 @@ func _ready() -> void:
 	_ensure_hub_chat_ui()
 	_ensure_salvage_http()
 	_load_salvage_poi()
+	_ensure_hunt_http()
+	_load_hunt_poi()
+	_ensure_density_http()
+	_fetch_combat_density()
 	_ensure_wiki_panel()
 	_apply_debug_hud()
 	_log_build_info()
@@ -160,9 +171,194 @@ func _load_salvage_poi() -> void:
 	if typeof(raw) != TYPE_DICTIONARY:
 		return
 	for item in (raw as Dictionary).get("buildings", []):
-		if typeof(item) == TYPE_DICTIONARY and str(item.get("id", "")) == SALVAGE_POI_ID:
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var iid := str(item.get("id", ""))
+		if iid == SALVAGE_POI_ID:
 			_salvage_poi_xz = Vector2(float(item.get("x", 6042.0)), float(item.get("z", -1065.0)))
+		elif iid == HUNT_POI_ID:
+			_hunt_poi_xz = Vector2(float(item.get("x", 5985.0)), float(item.get("z", -1120.0)))
+
+
+func _load_hunt_poi() -> void:
+	## Alias — coords aussi chargées dans _load_salvage_poi (même JSON).
+	_load_salvage_poi()
+
+
+func _ensure_hunt_http() -> void:
+	if _hunt_http != null and is_instance_valid(_hunt_http):
+		return
+	_hunt_http = HTTPRequest.new()
+	_hunt_http.name = "HuntYardHttp"
+	_hunt_http.timeout = 120.0
+	add_child(_hunt_http)
+	_hunt_http.request_completed.connect(_on_hunt_http_done)
+
+
+func _ensure_density_http() -> void:
+	if _density_http != null and is_instance_valid(_density_http):
+		return
+	_density_http = HTTPRequest.new()
+	_density_http.name = "CombatDensityHttp"
+	add_child(_density_http)
+	_density_http.request_completed.connect(_on_density_http_done)
+
+
+func _fetch_combat_density() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	_ensure_density_http()
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/world/combat-density"
+	if _density_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_density_http.cancel_request()
+	_density_http.request(url)
+
+
+func _on_density_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		return
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if typeof(parsed) != TYPE_DICTIONARY or not bool(parsed.get("ok", false)):
+		return
+	var zones = parsed.get("zones", [])
+	if typeof(zones) == TYPE_ARRAY:
+		_combat_density_zones = zones
+
+
+func _density_zone_at(pos: Vector2) -> Dictionary:
+	var best: Dictionary = {}
+	var best_d := INF
+	for z in _combat_density_zones:
+		if typeof(z) != TYPE_DICTIONARY:
+			continue
+		var p = z.get("pos", {})
+		if typeof(p) != TYPE_DICTIONARY:
+			continue
+		var zx := float(p.get("x", 0))
+		var zz := float(p.get("z", 0))
+		var r := float(z.get("radius_m", 80))
+		var d := pos.distance_to(Vector2(zx, zz))
+		if d <= r and d < best_d:
+			best_d = d
+			best = z
+	return best
+
+
+func _try_hunt_yard() -> void:
+	_ensure_hunt_http()
+	var pos := _player_world_xz()
+	if pos == Vector2.INF:
+		_hotbar_feedback("Chasse — position joueur inconnue")
+		return
+	var dist := pos.distance_to(_hunt_poi_xz)
+	if dist > HUNT_RADIUS_M:
+		_hotbar_feedback("Chasse — approche la meute hors palissade (%.0fm)" % dist)
+		return
+	if not HubRuntimeCfg.enabled():
+		_hotbar_feedback("Chasse — hub runtime off")
+		return
+	if _hunt_phase != "":
+		_hotbar_feedback("Chasse — déjà en cours…")
+		return
+	_hunt_phase = "reset"
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/hunt-yard/reset"
+	var body := JSON.stringify({"seed": 1})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if _hunt_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_hunt_http.cancel_request()
+	_hotbar_feedback("Chasse — engagement meute…")
+	var err := _hunt_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hunt_phase = ""
+		_hotbar_feedback("Chasse req_%d" % err)
+
+
+func _hunt_post_run() -> void:
+	_hunt_phase = "run"
+	var player := HubRuntimeCfg.player_name("Voyageur")
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/hunt-yard/run"
+	var body := JSON.stringify({"max_ticks": 350, "player": player})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var err := _hunt_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hunt_phase = ""
+		_hotbar_feedback("Chasse run_%d" % err)
+
+
+func _hunt_post_claim() -> void:
+	_hunt_phase = "claim"
+	var player := HubRuntimeCfg.player_name("Voyageur")
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/hunt-yard/claim-quest"
+	var body := JSON.stringify({"player": player, "quest_id": "lh_hunt_chacal"})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	var err := _hunt_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hunt_phase = ""
+		_hotbar_feedback("Chasse claim_%d" % err)
+
+
+func _on_hunt_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var phase := _hunt_phase
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_hunt_phase = ""
+		_hotbar_feedback("Chasse réseau KO")
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_hunt_phase = ""
+		_hotbar_feedback("Chasse parse (%d)" % code)
+		return
+	if code == 429 or str(parsed.get("error", "")) == "tick_busy":
+		var retry := float(parsed.get("retry_after_s", 8))
+		_hotbar_feedback("Chasse tick_busy — retry %.0fs" % retry)
+		if phase == "run" or phase == "claim":
+			get_tree().create_timer(maxf(1.0, retry + 0.3)).timeout.connect(
+				func () -> void:
+					if phase == "run":
+						_hunt_post_run()
+					elif phase == "claim":
+						_hunt_post_claim()
+			)
+		else:
+			_hunt_phase = ""
+		return
+	if phase == "reset":
+		if bool(parsed.get("ok", true)) == false and parsed.get("error"):
+			_hunt_phase = ""
+			_hotbar_feedback("Chasse reset — %s" % str(parsed.get("error")))
 			return
+		_hunt_post_run()
+		return
+	if phase == "run":
+		var status := str(parsed.get("status", ""))
+		if status != "victory":
+			_hunt_phase = ""
+			_hotbar_feedback("Chasse — %s (kills=%s)" % [status if status else "échec", str(parsed.get("kills", "?"))])
+			return
+		_hotbar_feedback(
+			"Chasse OK — meute vaincue (tick=%s kills=%s) · claim…"
+			% [str(parsed.get("tick", "?")), str(parsed.get("kills", "?"))]
+		)
+		# TickGate C11 : cooldown entre run et claim
+		get_tree().create_timer(8.5).timeout.connect(_hunt_post_claim)
+		return
+	if phase == "claim":
+		_hunt_phase = ""
+		if bool(parsed.get("ok", false)):
+			_hotbar_feedback("Chasse — étape meute validée")
+			if _mission_board and _mission_board.has_method("refresh_board"):
+				_mission_board.refresh_board()
+			elif _mission_board and _mission_board.has_method("refresh"):
+				_mission_board.refresh()
+		else:
+			var err := str(parsed.get("error", code))
+			var hint := str(parsed.get("hint", ""))
+			if hint != "":
+				_hotbar_feedback("Chasse claim — %s" % hint)
+			else:
+				_hotbar_feedback("Chasse claim — %s" % err)
+		return
+	_hunt_phase = ""
 
 
 func _player_world_xz() -> Vector2:
@@ -1288,12 +1484,36 @@ func _toggle_game_menu() -> void:
 func _on_hotbar_slot(index: int) -> void:
 	match index:
 		0:
-			# C8 — salvage pile scrap si à portée ; sinon stub combat.
+			# C8 salvage · P5a hunt_yard au POI chacal · sinon hint densité anneau.
 			var pos := _player_world_xz()
-			if pos != Vector2.INF and pos.distance_to(_salvage_poi_xz) <= SALVAGE_RADIUS_M:
+			if pos == Vector2.INF:
+				_hotbar_feedback("Attaque — position joueur inconnue")
+				return
+			var d_salvage := pos.distance_to(_salvage_poi_xz)
+			var d_hunt := pos.distance_to(_hunt_poi_xz)
+			var near_salvage := d_salvage <= SALVAGE_RADIUS_M
+			var near_hunt := d_hunt <= HUNT_RADIUS_M
+			if near_salvage and near_hunt:
+				if d_hunt <= d_salvage:
+					_try_hunt_yard()
+				else:
+					_try_salvage_scrap()
+			elif near_hunt:
+				_try_hunt_yard()
+			elif near_salvage:
 				_try_salvage_scrap()
 			else:
-				_hotbar_feedback("Attaque — à brancher · [1] salvage près pile ferraille")
+				var zone := _density_zone_at(pos)
+				if not zone.is_empty():
+					var eng := str(zone.get("engage_surface", "none"))
+					var dens := str(zone.get("density", "?"))
+					var label := str(zone.get("label", zone.get("id", "zone")))
+					if eng == "hunt_yard":
+						_hotbar_feedback("%s — densité %s · approche meute (%.0fm)" % [label, dens, d_hunt])
+					else:
+						_hotbar_feedback("%s — densité %s (pas d'engage encore)" % [label, dens])
+				else:
+					_hotbar_feedback("Attaque — hors zone · meute ~%.0fm · scrap ~%.0fm" % [d_hunt, d_salvage])
 		1:
 			_hotbar_feedback("Compétence — à brancher")
 		2:

@@ -159,7 +159,12 @@ bash tools/smoke_choeur_terrain.sh --skip-live
 bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → claim meute
 ```
 
-Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).
+Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).  
+Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`) · contrat HTTP :
+
+```bash
+bash tools/smoke_p5_client_hunt_contract.sh
+```
 
 ## Catalog POI + densité combat
 
