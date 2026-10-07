@@ -11,4 +11,5 @@ export_presets.cfg
 /tools/godot*
 data/accounts.json
 data/players_state.json
+data/hunt_yard_session.pkl
 data/player_positions.json
