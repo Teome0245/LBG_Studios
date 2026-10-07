@@ -279,6 +279,9 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		return _ok(wiki_payload, 200 if bool(wiki_payload.get("ok", true)) else 500)
 	if method == "GET" and path in ["/tick-matrix", "/v1/tick-matrix"]:
 		return _ok(catalog.tick_matrix())
+	if method == "GET" and path in ["/v1/world/combat-density", "/combat-density"]:
+		var dens: Dictionary = catalog.combat_density()
+		return _ok(dens, 200 if bool(dens.get("ok", false)) else 404)
 
 	# --- Auth ---
 	if method == "POST" and path == "/v1/auth/login":

@@ -159,6 +159,14 @@ bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → cla
 
 Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).
 
+## Catalog POI + densité combat
+
+```bash
+# Régénère packages/prime-hub/data/catalog_poi.json (avant deploy)
+python3 packages/cortex/infra/scripts/export_prime_hub_catalog_poi.py
+bash tools/smoke_catalog_poi_hub.sh          # GET /v1/catalog?type=poi + /v1/world/combat-density
+```
+
 ## Voir aussi
 
 - [`REGISTRE.md`](REGISTRE.md) — actifs / runtime

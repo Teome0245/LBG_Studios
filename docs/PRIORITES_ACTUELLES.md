@@ -56,7 +56,7 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 | **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
 | **P3** | Persona en jeu — dialogue + Chœur V50–V53 · **C3–C8 live** (wiki `/v1/wiki`) 2026-10-07 |
 | **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
-| **P5** | Cour de chasse hub `:8787` **vert** 2026-10-07 · WD / combat étendu = suite |
+| **P5** | Cour + densité anneau (`/v1/world/combat-density`) + catalog POI **vert** 2026-10-07 · spawn open-world = suite |
 
 Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
@@ -87,4 +87,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : World Director / densité combat hors cour · sync catalog POI · vérif Chœur terrain en mission Team (`choeur_l1`).
+**Suite immédiate** : spawn open-world (appliquer densité) · brancher hotbar client → hunt-yard · mission Team `choeur_l1`.

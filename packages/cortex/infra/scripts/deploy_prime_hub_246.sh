@@ -22,6 +22,13 @@ REMOTE_DIR="${LBG_PRIME_HUB_DIR:-/opt/lbg-prime-hub}"
 [[ -f "${BUILDINGS_SRC}" ]] || { echo "ERR: missing ${BUILDINGS_SRC}" >&2; exit 1; }
 [[ -x "${HUB}/tools/godot" ]] || { echo "ERR: run packages/prime-hub/scripts/fetch_godot.sh first" >&2; exit 1; }
 
+# C10 POI snapshot (agent_catalog → data/catalog_poi.json) avant rsync
+EXPORT_POI="${CORTEX_ROOT}/infra/scripts/export_prime_hub_catalog_poi.py"
+if [[ -f "${EXPORT_POI}" ]]; then
+  echo "==> Export catalog_poi → prime-hub/data"
+  python3 "${EXPORT_POI}" || echo "WARN: export catalog_poi failed — snapshot existant conservé"
+fi
+
 mkdir -p "$(dirname "$UNIT_LOCAL")"
 cat >"$UNIT_LOCAL" <<EOF
 [Unit]

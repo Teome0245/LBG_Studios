@@ -100,3 +100,17 @@ func tick_matrix() -> Dictionary:
 		out["source"] = "prime_hub"
 		return out
 	return {"ok": true, "count": 0, "actions": [], "source": "prime_hub"}
+
+
+func combat_density() -> Dictionary:
+	## Densité combat anneau (read-only) — pas de spawn.
+	var path: String = _HubPaths.data_file("combat_density_lh.json")
+	var raw: Variant = _HubPaths.read_json(path)
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {"ok": false, "error": "combat_density_missing", "source": "prime_hub"}
+	var out: Dictionary = raw
+	out["ok"] = true
+	out["source"] = "prime_hub"
+	var zones = out.get("zones", [])
+	out["count"] = zones.size() if typeof(zones) == TYPE_ARRAY else 0
+	return out
