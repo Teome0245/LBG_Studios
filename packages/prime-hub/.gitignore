@@ -1,4 +1,3 @@
-# Godot import / export cache
 .godot/
 *.translation
 export_presets.cfg
@@ -10,3 +9,6 @@ export_presets.cfg
 *.app
 /bin/
 /tools/godot*
+data/accounts.json
+data/players_state.json
+data/player_positions.json

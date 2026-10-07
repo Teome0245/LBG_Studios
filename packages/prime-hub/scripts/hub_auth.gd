@@ -1,83 +1,174 @@
 extends RefCounted
 class_name HubAuth
-## Résolution session — spike tokens locaux + optionnel upstream Python hub_runtime.
+const _HubPaths = preload("res://scripts/hub_paths.gd")
 
-const SPIKE_TOKENS := ["spike-local", "spike", "dev-mock-token", "smoke-g0"]
+## Auth / sessions HTTP natives — comptes + tokens (hors Python).
+
 const HUMAN_OID := 100001
+const SPIKE_TOKENS := ["spike-local", "spike", "dev-mock-token", "smoke-g0"]
+
+var _accounts: Dictionary = {}  # lower -> row
+var _sessions: Dictionary = {}  # token -> {username, character_id, created_at}
+var _next_oid: int = HUMAN_OID
+var _ws_public: String = "ws://192.168.0.246:8787/ws"
+var _path: String = ""
+
+
+func setup() -> void:
+	_path = _HubPaths.data_file("accounts.json")
+	var env_ws := OS.get_environment("LBG_HUB_WS_PUBLIC").strip_edges()
+	if not env_ws.is_empty():
+		_ws_public = env_ws
+	_load()
+
+
+func _load() -> void:
+	_accounts.clear()
+	var raw: Variant = _HubPaths.read_json(_path)
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var acc = raw.get("accounts", {})
+	if typeof(acc) == TYPE_DICTIONARY:
+		for k in acc.keys():
+			var row = acc[k]
+			if typeof(row) == TYPE_DICTIONARY:
+				_accounts[str(k).to_lower()] = row
+	_next_oid = int(raw.get("next_oid", HUMAN_OID))
+
+
+func _save() -> void:
+	_HubPaths.write_json(_path, {
+		"schema_version": 1,
+		"accounts": _accounts,
+		"next_oid": _next_oid,
+		"saved_at": int(Time.get_unix_time_from_system()),
+	})
+
+
+func _hash_password(password: String, salt: String) -> String:
+	return ("%s:%s" % [salt, password]).sha256_text()
+
+
+func _alloc_oid() -> int:
+	_next_oid = maxi(_next_oid + 1, HUMAN_OID + 1)
+	return _next_oid
+
+
+func _new_token() -> String:
+	return "ph_%d_%08x%08x" % [Time.get_ticks_msec(), randi(), randi()]
+
+
+func register_or_login(username: String, password: String) -> Dictionary:
+	var name := username.strip_edges()
+	if name.is_empty():
+		return {"ok": false, "error": "auth_failed", "message": "username vide"}
+	var key := name.to_lower()
+	var acc = _accounts.get(key, null)
+	if acc == null:
+		var salt := "%08x" % randi()
+		var oid := HUMAN_OID if key == "voyageur" else _alloc_oid()
+		acc = {
+			"username": name,
+			"salt": salt,
+			"password_hash": _hash_password(password, salt),
+			"character_id": oid,
+			"display_name": name,
+			"created_at": int(Time.get_unix_time_from_system()),
+		}
+		_accounts[key] = acc
+		_save()
+	else:
+		var salt := str(acc.get("salt", ""))
+		var expect := str(acc.get("password_hash", ""))
+		var got := _hash_password(password, salt)
+		if expect != got:
+			return {"ok": false, "error": "auth_failed", "message": "mot de passe invalide"}
+	var token := _new_token()
+	_sessions[token] = {
+		"username": str(acc["username"]),
+		"character_id": int(acc["character_id"]),
+		"created_at": Time.get_unix_time_from_system(),
+	}
+	return {
+		"ok": true,
+		"session_token": token,
+		"characters": [{
+			"id": int(acc["character_id"]),
+			"name": str(acc.get("display_name", name)),
+			"race": "prime_hub",
+		}],
+		"source": "prime_hub",
+	}
+
+
+func guest(player_name: String = "Voyageur") -> Dictionary:
+	var n := player_name.strip_edges()
+	if n.is_empty():
+		n = "Voyageur"
+	return register_or_login(n, "")
+
+
+func resolve_session(token: String) -> Variant:
+	## Dictionary ou null
+	var t := token.strip_edges()
+	if t.is_empty():
+		return null
+	if t in SPIKE_TOKENS:
+		return {"username": "Voyageur", "character_id": HUMAN_OID}
+	return _sessions.get(t, null)
 
 
 func resolve(token: String) -> Dictionary:
-	## Retourne {ok, username, character_id} ou {ok:false}
-	var t := token.strip_edges()
-	if t.is_empty():
+	## Compat WS login — {ok, username, character_id, source}
+	var sess = resolve_session(token)
+	if sess == null:
 		return {"ok": false}
-	if t in SPIKE_TOKENS:
-		return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "spike"}
-	var upstream := OS.get_environment("LBG_HUB_AUTH_UPSTREAM").strip_edges()
-	if upstream.is_empty():
-		upstream = "http://127.0.0.1:8787"
-	var url := upstream.rstrip("/") + "/v1/auth/resolve"
-	var body := JSON.stringify({"session_token": t})
-	var http := HTTPClient.new()
-	var err := http.connect_to_host(_host_of(url), _port_of(url))
-	if err != OK:
-		# Fallback G1 : token opaque → Voyageur (lab local sans Python)
-		return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "fallback"}
-	var deadline := Time.get_ticks_msec() + 2500
-	while http.get_status() == HTTPClient.STATUS_CONNECTING or http.get_status() == HTTPClient.STATUS_RESOLVING:
-		http.poll()
-		if Time.get_ticks_msec() > deadline:
-			return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "fallback_timeout"}
-		OS.delay_usec(2000)
-	if http.get_status() != HTTPClient.STATUS_CONNECTED:
-		return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "fallback_conn"}
-	var path := _path_of(url)
-	err = http.request(HTTPClient.METHOD_POST, path, PackedStringArray(["Content-Type: application/json"]), body)
-	if err != OK:
-		return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "fallback_req"}
-	while http.get_status() == HTTPClient.STATUS_REQUESTING:
-		http.poll()
-		if Time.get_ticks_msec() > deadline:
-			break
-		OS.delay_usec(2000)
-	if http.has_response():
-		var rb := PackedByteArray()
-		while http.get_status() == HTTPClient.STATUS_BODY:
-			http.poll()
-			var chunk := http.read_response_body_chunk()
-			if chunk.size() == 0:
-				OS.delay_usec(2000)
-			else:
-				rb.append_array(chunk)
-		var parsed: Variant = JSON.parse_string(rb.get_string_from_utf8())
-		if typeof(parsed) == TYPE_DICTIONARY and bool(parsed.get("ok", false)):
-			return {
-				"ok": true,
-				"username": str(parsed.get("username", "Voyageur")),
-				"character_id": int(parsed.get("character_id", HUMAN_OID)),
-				"source": "upstream",
-			}
-		if typeof(parsed) == TYPE_DICTIONARY and parsed.get("error") == "session_expired":
-			return {"ok": false}
-	return {"ok": true, "username": "Voyageur", "character_id": HUMAN_OID, "source": "fallback_parse"}
+	return {
+		"ok": true,
+		"username": str(sess.get("username", "Voyageur")),
+		"character_id": int(sess.get("character_id", HUMAN_OID)),
+		"source": "prime_hub",
+	}
 
 
-func _host_of(url: String) -> String:
-	var u := url.replace("http://", "").replace("https://", "")
-	return u.split("/")[0].split(":")[0]
+func select_character(token: String, character_id: int) -> Dictionary:
+	var sess = resolve_session(token)
+	if sess == null:
+		return {"ok": false, "error": "session_expired", "message": "login requis"}
+	var cid := character_id if character_id > 0 else int(sess["character_id"])
+	if cid != int(sess["character_id"]):
+		return {"ok": false, "error": "auth_failed", "message": "character_id inconnu"}
+	return {
+		"ok": true,
+		"character_id": cid,
+		"ws_url": _ws_public,
+		"source": "prime_hub",
+	}
 
 
-func _port_of(url: String) -> int:
-	var u := url.replace("http://", "").replace("https://", "")
-	var hostport := u.split("/")[0]
-	if ":" in hostport:
-		return int(hostport.split(":")[1])
-	return 80
+func enter_zone(token: String, zone: String = "scrapaltai") -> Dictionary:
+	var sess = resolve_session(token)
+	if sess == null:
+		return {"ok": false, "error": "session_expired", "message": "login requis"}
+	var z := zone.strip_edges()
+	if z.is_empty():
+		z = "scrapaltai"
+	return {
+		"ok": true,
+		"ws_url": _ws_public,
+		"your_character_id": int(sess["character_id"]),
+		"zone": z,
+		"source": "prime_hub",
+	}
 
 
-func _path_of(url: String) -> String:
-	var u := url.replace("http://", "").replace("https://", "")
-	var slash := u.find("/")
-	if slash < 0:
-		return "/"
-	return u.substr(slash)
+func http_resolve(token: String) -> Dictionary:
+	var sess = resolve_session(token)
+	if sess == null:
+		return {"ok": false, "error": "session_expired", "message": "token inconnu"}
+	return {
+		"ok": true,
+		"username": str(sess.get("username", "Voyageur")),
+		"character_id": int(sess.get("character_id", HUMAN_OID)),
+		"source": "prime_hub",
+	}

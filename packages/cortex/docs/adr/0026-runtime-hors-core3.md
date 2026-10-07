@@ -1,7 +1,7 @@
 # ADR 0026 — Runtime joueur hors Core3 (étude + spike)
 
 **Date** : 2026-10-06  
-**Statut** : **Godot-first live** — autorité hub = `prime-hub` `.246:8787` WS / `:8789` HTTP ; peel Python lab `:8797` ; Core3 hors chemin joueur (lab optionnel)
+**Statut** : **Godot-first G5** — `prime-hub` `.246:8787` HTTP+WS unifiés, peel natif ; Python hub_runtime OFF ; Core3 hors chemin joueur
 **Décideurs** : Pilote  
 **Amende** : ADR 0017 (seuils « Core3 = prison » atteints) · complète ADR docs 0002 (veille)  
 **Canon** : Bible V3 (lore sans assets SWG) · `PLAN_MMO_O2` · contrat SpaceMolt C9–C12
@@ -98,13 +98,11 @@ Phases : voir [`packages/prime-hub/README.md`](../../../prime-hub/README.md) (G0
 
 | Rôle | Process | Port |
 |------|---------|------|
-| Monde / move / bots / PNJ / chat | **`lbg-prime-hub`** | WS **8787** |
-| HTTP (proxy peel) | **`lbg-prime-hub`** | HTTP **8789** |
-| Peel inventaire / quêtes / auth / dialogue | `lbg-hub-runtime` Python | **8797** lab (conservé) |
-| Core3 bots + gateway | coupés | script `stop_core3_player_path_246.sh` |
+| Monde + peel HTTP + WS | **`lbg-prime-hub`** | **8787** unifié (G5) |
+| Python `hub_runtime` | OFF | — |
+| Core3 bots + gateway | coupés | `stop_core3_player_path_246.sh` |
 
-**Spike Python terminé** comme autorité monde ; il ne reste que le peel HTTP.  
-Doc ops : [`docs/RUNTIME_GODOT.md`](../../../docs/RUNTIME_GODOT.md).
+**Spike Python terminé** (monde + peel). Doc ops : [`docs/RUNTIME_GODOT.md`](../../../docs/RUNTIME_GODOT.md).
 
 ---
 
@@ -131,3 +129,4 @@ Doc ops : [`docs/RUNTIME_GODOT.md`](../../../docs/RUNTIME_GODOT.md).
 | 2026-10-07 | **G1–G2** — Godot WS `:8788` + HTTP `:8789` proxy peel → Python `:8787` ; client patch pointe les deux |
 | 2026-10-07 | **G4 cutover** — Godot WS `:8787` + HTTP `:8789` ; Python lab `:8797` |
 | 2026-10-07 | **G4a** A* bots ; persistance position joueur ; **§5c** Godot-first ; Core3 chemin joueur coupé |
+| 2026-10-07 | **G5** peel natif (auth/inv/quests/craft/catalog/dialogue) + HTTP+WS unifiés `:8787` ; Python hub_runtime OFF |

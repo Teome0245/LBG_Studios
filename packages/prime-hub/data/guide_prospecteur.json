@@ -1,0 +1,1 @@
+{"ok":true,"guide":{"playstyle":"prospecteur","profession_id":"prospecteur","loop":"survey dunes → ressources → vendeur / craft","hub_actions":["survey/execute","inventory/list","trade/offer","craft/start"],"profession_name":"Prospecteur"},"tick_cost":"free","requires_tick":false,"context":{"tick_cost":"free","requires_tick":false,"kind":"query","action":"get_guide"}}

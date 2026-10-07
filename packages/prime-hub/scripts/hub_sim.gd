@@ -593,6 +593,22 @@ func bots_payload() -> Array:
 	return out
 
 
+func set_bot_target(player: String, x: float, y: float, z: float) -> Variant:
+	## Dictionary entité ou null
+	var want := player.strip_edges().to_lower()
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if not bool(e.get("is_bot", false)):
+			continue
+		if str(e.get("name", "")).to_lower() != want:
+			continue
+		var wz := _walkable_xz(x, z)
+		e["target"] = Vector3(wz.x, y, wz.y)
+		e["goal"] = "http_move_to"
+		return e
+	return null
+
+
 func online_players() -> Array:
 	var out: Array = []
 	for eid in entities.keys():

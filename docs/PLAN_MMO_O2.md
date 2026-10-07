@@ -43,7 +43,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
 | **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
-| **P6** | Runtime Godot-first | ADR 0026 + [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) — humain+bots+PNJ **sans** Core3 | Hermès + Iris | **live** 2026-10-07 (`prime-hub` G4a) ; peel Python `:8797` ; Core3 chemin joueur coupé |
+| **P6** | Runtime Godot-first | ADR 0026 + [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) — humain+bots+PNJ **sans** Core3 | Hermès + Iris | **G5 live** 2026-10-07 (`prime-hub` :8787 unifié, peel natif) ; Python OFF |
 
 ### Jalons M9–M12 (rappel)
 

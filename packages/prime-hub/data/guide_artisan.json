@@ -1,0 +1,1 @@
+{"ok":true,"guide":{"playstyle":"artisan","profession_id":"artisan","loop":"atelier → schematic novices → kit / pièce","hub_actions":["craft/start","craft/complete","inventory/list","catalog"],"profession_name":"Artisan de rue"},"tick_cost":"free","requires_tick":false,"context":{"tick_cost":"free","requires_tick":false,"kind":"query","action":"get_guide"}}

@@ -1,12 +1,12 @@
 {
   "enabled": true,
-  "label": "Prime Hub Godot G4+A*",
-  "http_url": "http://192.168.0.246:8789",
+  "label": "Prime Hub Godot G5 native",
+  "http_url": "http://192.168.0.246:8787",
   "ws_url": "ws://192.168.0.246:8787/ws",
   "session_token": "spike-local",
   "character_id": 100001,
   "player_name": "Voyageur",
   "zone": "scrapaltai",
   "auto_connect_on_enter": true,
-  "notes": "ADR 0026 — Godot WS:8787 HTTP:8789 (A* bots) ; Python peel lab :8797. Unification HTTP:8787 reportée (TCP headless)."
+  "notes": "ADR 0026 G5 — HTTP+WS unifiés :8787 ; peel natif Godot (Python arrêté)."
 }

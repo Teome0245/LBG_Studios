@@ -1,5 +1,5 @@
 [Unit]
-Description=LBG Prime Hub (Godot headless) lbg-ws/2
+Description=LBG Prime Hub (Godot headless) lbg-ws/2 G5 native peel
 After=network.target
 
 [Service]
@@ -7,11 +7,13 @@ Type=simple
 User=lbg
 WorkingDirectory=/opt/lbg-prime-hub
 Environment=LBG_PRIME_HUB_WS_PORT=8787
-Environment=LBG_PRIME_HUB_HTTP_PORT=8789
+Environment=LBG_PRIME_HUB_HTTP_PORT=8787
 Environment=LBG_PRIME_HUB_STATE_DIR=/opt/lbg-prime-hub/data
+Environment=LBG_HUB_STATE_DIR=/opt/lbg-prime-hub/data
+Environment=LBG_HUB_WS_PUBLIC=ws://192.168.0.246:8787/ws
 Environment=LBG_HUB_BUILDINGS_JSON=/opt/lbg-prime-hub/data/lost_heaven_buildings.json
-Environment=LBG_HUB_AUTH_UPSTREAM=http://127.0.0.1:8797
-Environment=LBG_HUB_HTTP_UPSTREAM=http://127.0.0.1:8797
+Environment=LBG_HUB_QUESTS_JSON=/opt/lbg-prime-hub/data/quests_lbg_templates.json
+Environment=LBG_HUB_LLM_BASE_URL=http://192.168.0.110:11434
 ExecStart=/opt/lbg-prime-hub/tools/godot --headless --path /opt/lbg-prime-hub res://scenes/server_main.tscn
 Restart=on-failure
 RestartSec=3

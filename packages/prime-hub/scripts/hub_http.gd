@@ -1,41 +1,73 @@
 extends Node
-## HTTP G2 — /healthz local ; le reste proxy → hub_runtime Python (anti double-build).
+## Routeur HTTP peel natif (auth, inventaire, quêtes, craft, catalog, dialogue).
+## Peut écouter seul (port dédié) ou être appelé par hub_gateway (port unifié).
+
+const HubAuthScript = preload("res://scripts/hub_auth.gd")
+const HubEconomyScript = preload("res://scripts/hub_economy.gd")
+const HubCatalogScript = preload("res://scripts/hub_catalog.gd")
+const HubDialogueScript = preload("res://scripts/hub_dialogue.gd")
 
 @export var listen_host: String = "0.0.0.0"
 @export var listen_port: int = 8789
 
 var _tcp: TCPServer = TCPServer.new()
+var _listening: bool = false
 var sim: Node = null
-var ws_port: int = 8788
+var ws_port: int = 8787
 var started_at: float = 0.0
-var upstream: String = "http://127.0.0.1:8787"
+var auth = null
+var economy = null
+var catalog = null
+var dialogue = null
 
 
-func start(sim_node: Node, port: int = 8789, ws: int = 8788) -> Error:
+func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dialogue_svc = null) -> void:
+	auth = auth_svc if auth_svc != null else HubAuthScript.new()
+	economy = economy_svc if economy_svc != null else HubEconomyScript.new()
+	catalog = catalog_svc if catalog_svc != null else HubCatalogScript.new()
+	dialogue = dialogue_svc if dialogue_svc != null else HubDialogueScript.new()
+	if auth_svc == null and auth.has_method("setup"):
+		auth.setup()
+	if economy_svc == null and economy.has_method("setup"):
+		economy.setup()
+	if dialogue_svc == null and dialogue.has_method("setup"):
+		dialogue.setup()
+
+
+func start(sim_node: Node, port: int = 8789, ws: int = 8787) -> Error:
 	sim = sim_node
 	listen_port = port
 	ws_port = ws
 	started_at = Time.get_unix_time_from_system()
-	var env_up := OS.get_environment("LBG_HUB_HTTP_UPSTREAM").strip_edges()
-	if env_up.is_empty():
-		env_up = OS.get_environment("LBG_HUB_AUTH_UPSTREAM").strip_edges()
-	if not env_up.is_empty():
-		upstream = env_up.rstrip("/")
+	if auth == null:
+		setup_services()
+	if port <= 0:
+		_listening = false
+		print("[prime-hub] HTTP router only (unified gateway)")
+		return OK
 	var err := _tcp.listen(listen_port, listen_host)
 	if err != OK:
 		push_error("[prime-hub] HTTP listen failed port=%d err=%s" % [listen_port, err])
 		return err
-	print("[prime-hub] HTTP on http://%s:%d/healthz (proxy → %s)" % [listen_host, listen_port, upstream])
+	_listening = true
+	print("[prime-hub] HTTP native on http://%s:%d/healthz" % [listen_host, listen_port])
 	set_process(true)
 	return OK
 
 
 func _process(_delta: float) -> void:
+	if not _listening:
+		return
 	while _tcp.is_connection_available():
 		var stream: StreamPeerTCP = _tcp.take_connection()
 		if stream == null:
 			break
 		_serve_once(stream)
+
+
+func handle_raw_request(method: String, path: String, query: String, body: String) -> Dictionary:
+	## {code, body, content_type}
+	return _dispatch(method, path, query, body)
 
 
 func _collision_count() -> int:
@@ -46,41 +78,163 @@ func _collision_count() -> int:
 
 func _serve_once(stream: StreamPeerTCP) -> void:
 	var parsed := _read_http_request(stream)
-	var method: String = str(parsed.get("method", "GET"))
-	var path: String = str(parsed.get("path", "/"))
-	var query: String = str(parsed.get("query", ""))
-	var req_body: String = str(parsed.get("body", ""))
+	var result := _dispatch(
+		str(parsed.get("method", "GET")),
+		str(parsed.get("path", "/")),
+		str(parsed.get("query", "")),
+		str(parsed.get("body", ""))
+	)
+	_write_raw(
+		stream,
+		int(result.get("code", 500)),
+		str(result.get("body", "")),
+		str(result.get("content_type", "application/json; charset=utf-8"))
+	)
 
+
+func _query_param(query: String, key: String, default_value: String = "") -> String:
+	for part in query.split("&"):
+		var kv := str(part).split("=")
+		if kv.size() >= 1 and str(kv[0]) == key:
+			return str(kv[1] if kv.size() > 1 else "").uri_decode()
+	return default_value
+
+
+func _json_body(body: String) -> Dictionary:
+	if body.strip_edges().is_empty():
+		return {}
+	var parsed: Variant = JSON.parse_string(body)
+	if typeof(parsed) == TYPE_DICTIONARY:
+		return parsed
+	return {}
+
+
+func _ok(payload: Dictionary, code: int = 200) -> Dictionary:
+	return {
+		"code": code,
+		"body": JSON.stringify(payload),
+		"content_type": "application/json; charset=utf-8",
+	}
+
+
+func _dispatch(method: String, path: String, query: String, req_body: String) -> Dictionary:
+	method = method.to_upper()
 	if method == "OPTIONS":
-		_write_raw(stream, 204, "", "text/plain")
-		return
+		return {"code": 204, "body": "", "content_type": "text/plain"}
 
 	if path == "/healthz" or path == "/":
 		var uptime := int(Time.get_unix_time_from_system() - started_at)
-		var body := JSON.stringify({
+		return _ok({
 			"ok": true,
 			"service": "prime_hub",
 			"proto": "lbg-ws/2",
-			"phase": "G4b",
+			"phase": "G5",
 			"ws_port": ws_port,
-			"http_proxy": upstream,
+			"http_native": true,
+			"python_peel": false,
 			"tick": int(sim.tick) if sim else 0,
 			"bot_count": int(sim.bot_count()) if sim else 0,
 			"npc_count": int(sim.npc_count()) if sim else 0,
 			"collision_blocks": _collision_count(),
 			"uptime_s": uptime,
-			"note": "G4b resume ; WS:8787 HTTP:8789 ; peel Python :8797",
+			"note": "G5 peel natif + unify ; WS+HTTP :%d" % ws_port,
 		})
-		_write_raw(stream, 200, body, "application/json; charset=utf-8")
-		return
 
-	var proxied := _proxy(method, path, query, req_body)
-	_write_raw(
-		stream,
-		int(proxied.get("code", 502)),
-		str(proxied.get("body", "{\"ok\":false,\"error\":\"proxy_failed\"}")),
-		str(proxied.get("content_type", "application/json; charset=utf-8"))
-	)
+	# --- Catalog C10 ---
+	if method == "GET" and path in ["/catalog", "/v1/catalog", "/v1/catalog/skills"]:
+		var t := "skills" if path.ends_with("/skills") else _query_param(query, "type", "skills")
+		var payload: Dictionary = catalog.catalog(t)
+		return _ok(payload, 200 if bool(payload.get("ok", false)) else 400)
+	if method == "GET" and path in ["/guide", "/v1/guide"]:
+		var payload: Dictionary = catalog.guide(_query_param(query, "playstyle", "prospecteur"))
+		return _ok(payload, 200 if bool(payload.get("ok", true)) else 404)
+	if method == "GET" and path in ["/tick-matrix", "/v1/tick-matrix"]:
+		return _ok(catalog.tick_matrix())
+
+	# --- Auth ---
+	if method == "POST" and path == "/v1/auth/login":
+		var b := _json_body(req_body)
+		var out: Dictionary = auth.register_or_login(str(b.get("username", b.get("player", ""))), str(b.get("password", "")))
+		return _ok(out, 200 if bool(out.get("ok")) else 401)
+	if method == "POST" and path == "/v1/auth/guest":
+		var b2 := _json_body(req_body)
+		var out2: Dictionary = auth.guest(str(b2.get("player_name", b2.get("username", "Voyageur"))))
+		return _ok(out2, 200 if bool(out2.get("ok")) else 400)
+	if method == "POST" and path == "/v1/auth/select_character":
+		var b3 := _json_body(req_body)
+		var out3: Dictionary = auth.select_character(str(b3.get("session_token", "")), int(b3.get("character_id", 0)))
+		return _ok(out3, 200 if bool(out3.get("ok")) else 401)
+	if method == "POST" and path == "/v1/auth/enter_zone":
+		var b4 := _json_body(req_body)
+		var out4: Dictionary = auth.enter_zone(str(b4.get("session_token", "")), str(b4.get("zone", "scrapaltai")))
+		return _ok(out4, 200 if bool(out4.get("ok")) else 401)
+	if method == "POST" and path == "/v1/auth/resolve":
+		var b5 := _json_body(req_body)
+		var out5: Dictionary = auth.http_resolve(str(b5.get("session_token", "")))
+		return _ok(out5, 200 if bool(out5.get("ok")) else 401)
+
+	# --- Economy ---
+	if method == "GET" and path == "/v1/inventory":
+		return _ok(economy.inventory(_query_param(query, "player", "Voyageur")))
+	if method == "GET" and path == "/v1/quests/board":
+		return _ok(economy.board(_query_param(query, "giver", "npc:core3_daan_oth"), _query_param(query, "player", "Voyageur")))
+	if method == "GET" and path == "/v1/quests/status":
+		return _ok(economy.status(_query_param(query, "player", "Voyageur")))
+	if method == "POST" and path == "/v1/quests/accept":
+		var qb := _json_body(req_body)
+		var qo: Dictionary = economy.accept(str(qb.get("player", "Voyageur")), str(qb.get("quest_id", "")), str(qb.get("giver_id", "")))
+		return _ok(qo, 200 if bool(qo.get("ok")) else 400)
+	if method == "POST" and path == "/v1/quests/progress":
+		var qb2 := _json_body(req_body)
+		var qo2: Dictionary = economy.progress(str(qb2.get("player", "Voyageur")), str(qb2.get("quest_id", "")), str(qb2.get("step_id", "")))
+		return _ok(qo2, 200 if bool(qo2.get("ok")) else 400)
+	if method == "POST" and path == "/v1/quests/complete":
+		var qb3 := _json_body(req_body)
+		var qo3: Dictionary = economy.complete(str(qb3.get("player", "Voyageur")), str(qb3.get("quest_id", "")))
+		return _ok(qo3, 200 if bool(qo3.get("ok")) else 400)
+	if method == "POST" and path == "/v1/quests/tip":
+		var qb4 := _json_body(req_body)
+		var qo4: Dictionary = economy.tip(str(qb4.get("player", "Voyageur")), str(qb4.get("quest_id", "")), int(qb4.get("amount", 2)))
+		return _ok(qo4, 200 if bool(qo4.get("ok")) else 400)
+	if method == "POST" and path == "/v1/craft/combine":
+		var cb := _json_body(req_body)
+		var co: Dictionary = economy.craft_combine(str(cb.get("player", "Voyageur")), str(cb.get("recipe_id", "")))
+		return _ok(co, 200 if bool(co.get("ok")) else 400)
+
+	# --- Dialogue ---
+	if method == "POST" and path in ["/v1/dialogue/invoke", "/v1/pilot/agent-dialogue/invoke"]:
+		var db := _json_body(req_body)
+		var dout: Dictionary = dialogue.invoke(db)
+		return _ok(dout, 200 if bool(dout.get("ok")) else 400)
+
+	# --- Bots / say (thin) ---
+	if method == "GET" and path == "/v1/bots":
+		if sim and sim.has_method("bots_payload"):
+			return _ok({"ok": true, "bots": sim.bots_payload(), "count": sim.bot_count()})
+		return _ok({"ok": true, "bots": [], "count": 0})
+	if method == "POST" and path == "/v1/bots/move_to":
+		var mb := _json_body(req_body)
+		var player := str(mb.get("player", "Nix"))
+		if sim and sim.has_method("set_bot_target"):
+			var ent = sim.set_bot_target(player, float(mb.get("x", 0)), float(mb.get("y", 0.15)), float(mb.get("z", 0)))
+			if ent == null:
+				return _ok({"ok": false, "error": "unknown_bot", "player": player}, 404)
+			return _ok({"ok": true, "player": player, "source": "prime_hub"})
+		return _ok({"ok": false, "error": "sim_missing"}, 501)
+	if method == "POST" and path == "/v1/say":
+		var sb := _json_body(req_body)
+		var sp := str(sb.get("player", sb.get("from", "Nix"))).strip_edges()
+		var text := str(sb.get("text", sb.get("message", ""))).strip_edges()
+		if text.is_empty():
+			return _ok({"ok": false, "error": "empty_text"}, 400)
+		var source := str(sb.get("source", "")).strip_edges().to_lower()
+		if source.is_empty():
+			source = "ia" if sp.to_lower() in ["nix", "lia", "mira", "kael"] else "human"
+		if sim and sim.has_method("enqueue_say"):
+			sim.enqueue_say(sp, int(sb.get("oid", 0)), text, source)
+		return _ok({"ok": true, "chat": {"from": sp, "text": text, "source": source}, "source": "prime_hub"})
+
+	return _ok({"ok": false, "error": "not_found", "path": path}, 404)
 
 
 func _read_http_request(stream: StreamPeerTCP) -> Dictionary:
@@ -104,7 +258,10 @@ func _read_http_request(stream: StreamPeerTCP) -> Dictionary:
 			break
 		else:
 			OS.delay_usec(2000)
+	return _parse_http_bytes(req)
 
+
+func _parse_http_bytes(req: PackedByteArray) -> Dictionary:
 	var text := req.get_string_from_utf8()
 	var method := "GET"
 	var full_path := "/"
@@ -125,7 +282,11 @@ func _read_http_request(stream: StreamPeerTCP) -> Dictionary:
 	var hdr_end2 := text.find("\r\n\r\n")
 	if hdr_end2 >= 0:
 		body = text.substr(hdr_end2 + 4)
-	return {"method": method, "path": path, "query": query, "body": body}
+	return {"method": method, "path": path, "query": query, "body": body, "raw": text}
+
+
+func parse_http_bytes(req: PackedByteArray) -> Dictionary:
+	return _parse_http_bytes(req)
 
 
 func _content_length(headers_blob: String) -> int:
@@ -136,75 +297,8 @@ func _content_length(headers_blob: String) -> int:
 	return 0
 
 
-func _proxy(method: String, path: String, query: String, body: String) -> Dictionary:
-	var url_path := path
-	if not query.is_empty():
-		url_path = path + "?" + query
-	var http := HTTPClient.new()
-	var host := _host_of(upstream)
-	var port := _port_of(upstream)
-	var err := http.connect_to_host(host, port)
-	if err != OK:
-		return {"code": 502, "body": JSON.stringify({"ok": false, "error": "upstream_connect", "detail": err})}
-	var deadline := Time.get_ticks_msec() + 8000
-	while http.get_status() == HTTPClient.STATUS_CONNECTING or http.get_status() == HTTPClient.STATUS_RESOLVING:
-		http.poll()
-		if Time.get_ticks_msec() > deadline:
-			return {"code": 504, "body": JSON.stringify({"ok": false, "error": "upstream_timeout_connect"})}
-		OS.delay_usec(2000)
-	if http.get_status() != HTTPClient.STATUS_CONNECTED:
-		return {"code": 502, "body": JSON.stringify({"ok": false, "error": "upstream_not_connected", "status": http.get_status()})}
-
-	var headers := PackedStringArray([
-		"Content-Type: application/json",
-		"Accept: application/json",
-		"Connection: close",
-	])
-	var http_method := HTTPClient.METHOD_GET
-	match method:
-		"POST":
-			http_method = HTTPClient.METHOD_POST
-		"PUT":
-			http_method = HTTPClient.METHOD_PUT
-		"DELETE":
-			http_method = HTTPClient.METHOD_DELETE
-		"PATCH":
-			http_method = HTTPClient.METHOD_PATCH
-		_:
-			http_method = HTTPClient.METHOD_GET
-
-	err = http.request(http_method, url_path, headers, body)
-	if err != OK:
-		return {"code": 502, "body": JSON.stringify({"ok": false, "error": "upstream_request", "detail": err})}
-
-	while http.get_status() == HTTPClient.STATUS_REQUESTING:
-		http.poll()
-		if Time.get_ticks_msec() > deadline:
-			return {"code": 504, "body": JSON.stringify({"ok": false, "error": "upstream_timeout_request"})}
-		OS.delay_usec(2000)
-
-	if not http.has_response():
-		return {"code": 502, "body": JSON.stringify({"ok": false, "error": "upstream_no_response"})}
-
-	var code := http.get_response_code()
-	var rb := PackedByteArray()
-	while http.get_status() == HTTPClient.STATUS_BODY:
-		http.poll()
-		var chunk := http.read_response_body_chunk()
-		if chunk.size() == 0:
-			OS.delay_usec(2000)
-		else:
-			rb.append_array(chunk)
-		if Time.get_ticks_msec() > deadline:
-			break
-
-	var content_type := "application/json; charset=utf-8"
-	var resp_headers := http.get_response_headers_as_dictionary()
-	if resp_headers.has("Content-Type"):
-		content_type = str(resp_headers["Content-Type"])
-	elif resp_headers.has("content-type"):
-		content_type = str(resp_headers["content-type"])
-	return {"code": code, "body": rb.get_string_from_utf8(), "content_type": content_type}
+func write_response(stream: StreamPeerTCP, code: int, body: String, content_type: String) -> void:
+	_write_raw(stream, code, body, content_type)
 
 
 func _write_raw(stream: StreamPeerTCP, code: int, body: String, content_type: String) -> void:
@@ -217,10 +311,6 @@ func _write_raw(stream: StreamPeerTCP, code: int, body: String, content_type: St
 		reason = "Unauthorized"
 	elif code == 404:
 		reason = "Not Found"
-	elif code == 502:
-		reason = "Bad Gateway"
-	elif code == 504:
-		reason = "Gateway Timeout"
 	elif code >= 400:
 		reason = "Error"
 	var bytes := body.to_utf8_buffer()
@@ -236,16 +326,3 @@ func _write_raw(stream: StreamPeerTCP, code: int, body: String, content_type: St
 	if code != 204 and bytes.size() > 0:
 		stream.put_data(bytes)
 	stream.disconnect_from_host()
-
-
-func _host_of(url: String) -> String:
-	var u := url.replace("http://", "").replace("https://", "")
-	return u.split("/")[0].split(":")[0]
-
-
-func _port_of(url: String) -> int:
-	var u := url.replace("http://", "").replace("https://", "")
-	var hostport := u.split("/")[0]
-	if ":" in hostport:
-		return int(hostport.split(":")[1])
-	return 80
