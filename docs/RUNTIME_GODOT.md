@@ -8,8 +8,8 @@
 | Rôle | Process | Port | Statut |
 |------|---------|------|--------|
 | **Monde + peel HTTP + WS** | `lbg-prime-hub` (Godot headless) | **8787** (HTTP+WS unifiés) | **Prod joueur** |
-| hub_runtime Python | — | — | **Arrêté** (peel porté en G5) |
-| Core3 Prime / bots / gateway | — | — | **Hors chemin joueur** |
+| hub_runtime Python | — | — | **OFF** (peel G5) — `stop_core3_and_spike_246.sh` |
+| Core3 Prime / bots / gateway / sidecar / comptes | — | — | **OFF** (watchdogs désactivés) |
 
 Client : `packages/prime-client/config/hub_runtime.json`  
 → `http_url` **et** `ws_url` sur `:8787`
@@ -30,10 +30,15 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 
 ```bash
 bash packages/cortex/infra/scripts/deploy_prime_hub_246.sh
-bash packages/cortex/infra/scripts/stop_core3_player_path_246.sh --also-prime
+bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh   # Core3 + Python OFF (timers inclus)
 bash packages/prime-client/tools/deploy_prime_client_patch_246.sh
-# Launchpad (après build asar) :
-bash packages/prime-client/tools/publish_client_bootstrap_246.sh
+bash packages/prime-client/tools/publish_client_bootstrap_246.sh  # Launchpad zip
+```
+
+Garder l’UI comptes Core3 `:8792` uniquement si besoin lab :
+
+```bash
+bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-admin
 ```
 
 ## Suite produit (post-G5)
