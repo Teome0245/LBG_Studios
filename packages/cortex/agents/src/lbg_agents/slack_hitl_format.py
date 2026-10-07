@@ -19,35 +19,68 @@ def pilot_team_url(task_id: str = "") -> str:
     return url
 
 
+def pilot_jobs_url(job_id: str = "") -> str:
+    base = os.environ.get("LBG_PILOT_PUBLIC_URL", "http://192.168.0.140:8080").strip().rstrip("/")
+    url = f"{base}/#/jobs"
+    if job_id:
+        url = f"{url}?job={job_id}"
+    return url
+
+
+def _is_job_payload(task: dict[str, Any]) -> bool:
+    kind = str(task.get("kind") or task.get("hitl_kind") or "").strip().lower()
+    if kind in ("job", "jobs"):
+        return True
+    return bool(task.get("job_id")) and not task.get("role")
+
+
 def format_l2_pending_text(task: dict[str, Any]) -> str:
-    tid = str(task.get("id") or "?")
+    tid = str(task.get("id") or task.get("job_id") or "?")
     sid = short_task_id(tid)
-    alias = str(task.get("role_alias") or task.get("role_label") or task.get("role") or "?")
+    is_job = _is_job_payload(task)
+    alias = str(
+        task.get("role_alias")
+        or task.get("role_label")
+        or task.get("role")
+        or (task.get("capability") if is_job else None)
+        or ("job" if is_job else "?")
+    )
     obj = str(task.get("objective") or "").strip()
+    pilot = pilot_jobs_url(tid) if is_job else pilot_team_url(tid)
+    kind_label = "Job L2" if is_job else "L2"
     lines = [
-        f"🔔 L2 en attente — `{sid}` [{alias}]",
+        f"🔔 {kind_label} en attente — `{sid}` [{alias}]",
         obj[:500] if obj else "(sans objectif)",
         "",
         f"→ `approve {sid}`  ou  `valider {sid}`",
         f"→ `reject {sid}`  ou  `annuler {sid}`",
-        f"Pilot : {pilot_team_url(tid)}",
+        f"Pilot : {pilot}",
     ]
     return "\n".join(lines)
 
 
 def format_l2_pending_blocks(task: dict[str, Any]) -> list[dict[str, Any]]:
     """Block Kit : boutons action (bot) + lien Pilot (webhook OK)."""
-    tid = str(task.get("id") or "")
+    tid = str(task.get("id") or task.get("job_id") or "")
     sid = short_task_id(tid)
-    alias = str(task.get("role_alias") or task.get("role_label") or task.get("role") or "?")
+    is_job = _is_job_payload(task)
+    alias = str(
+        task.get("role_alias")
+        or task.get("role_label")
+        or task.get("role")
+        or (task.get("capability") if is_job else None)
+        or ("job" if is_job else "?")
+    )
     obj = str(task.get("objective") or "").strip() or "(sans objectif)"
     if len(obj) > 280:
         obj = obj[:277].rstrip() + "…"
+    pilot = pilot_jobs_url(tid) if is_job else pilot_team_url(tid)
+    header = f"{'Job L2' if is_job else 'L2'} en attente — {sid}"
 
     blocks: list[dict[str, Any]] = [
         {
             "type": "header",
-            "text": {"type": "plain_text", "text": f"L2 en attente — {sid}", "emoji": True},
+            "text": {"type": "plain_text", "text": header[:150], "emoji": True},
         },
         {
             "type": "section",
@@ -79,7 +112,7 @@ def format_l2_pending_blocks(task: dict[str, Any]) -> list[dict[str, Any]]:
                     "type": "button",
                     "action_id": "lbg_l2_pilot",
                     "text": {"type": "plain_text", "text": "Ouvrir Pilot", "emoji": True},
-                    "url": pilot_team_url(tid),
+                    "url": pilot,
                 },
             ],
         },
