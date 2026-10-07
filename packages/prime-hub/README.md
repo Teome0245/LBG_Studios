@@ -1,33 +1,37 @@
 # prime-hub — autorité Lost Heaven (Godot headless)
 
-**Décision pilote 2026-10-07** : bascule process vers Godot Dedicated / headless.  
+**Statut 2026-10-07** : **prod joueur** sur `.246` (WS `:8787` / HTTP `:8789`).  
 **Règle ADR 0026 §5** : **même contrat** `lbg-ws/2` + HTTP C10/C11 — le client `prime-client` ne change pas.  
-`hub_runtime` Python (`.246:8787`) reste **autorité live** jusqu’à parité + cutover.
+Peel inventaire/quests/auth/dialogue : proxy → Python lab `:8797` (pas encore natif Godot).
 
-## Pourquoi (choix produit)
+## Pourquoi
 
-Surnuméraire pour la charge hub actuelle, mais anticipé pour pathfinding / combat / même moteur que le client.  
-Ce n’est **pas** un 2ᵉ MMO : c’est un **changement de boîte** derrière le contrat gelé.
+Même moteur que `prime-client` ; pathfinding / combat futurs.  
+**Changement de boîte** derrière le contrat gelé — pas un 2ᵉ MMO.
 
 ## Phases
 
 | Phase | Done quand | Notes |
 |-------|------------|--------|
-| **G0** Scaffold | Projet Godot headless + WS accept + `healthz` HTTP stub | ✅ |
-| **G1** Parité move | 1 humain + flotte + AABB + auth resolve ; client inchangé pointe `:8788` | ✅ |
-| **G2** Peel | inventaire / board / auth / dialogue HTTP | ✅ proxy → Python `:8787` |
+| **G0** Scaffold | Projet Godot headless + WS accept + `healthz` | ✅ |
+| **G1** Parité move | 1 humain + flotte + AABB + auth resolve | ✅ |
+| **G2** Peel | inventaire / board / auth / dialogue HTTP | ✅ proxy → Python |
 | **G3** Vivant | PNJ wander, goals POI, greet/ambient chat | ✅ |
 | **G4** Cutover | Godot WS `:8787` + HTTP `:8789` ; Python lab `:8797` | ✅ |
 | **G4a** A* | `find_path` / detour bots (grille AABB) | ✅ |
-| **Unify :8787** | HTTP+WS même port | ⏸ reporté (TCP multiplex headless instable) |
+| **G4b** Resume | `player_positions.json` + LastPos client | ✅ |
+| **Unify :8787** | HTTP+WS même port | ⏸ reporté |
+| **Peel natif** | HTTP sans Python | ⏳ prochain |
 
-## Ports (// Core3 + hub_runtime pendant transition)
+## Ports (live)
 
 | Service | Port |
 |---------|------|
-| hub_runtime Python (live) | **8787** |
-| prime-hub Godot (spike) | **8788** WS / **8789** HTTP |
-| Core3 lab | 50000 / sidecar 8791 |
+| **prime-hub Godot** (monde) | **8787** WS / **8789** HTTP |
+| hub_runtime Python (peel only) | **8797** |
+| Core3 | hors chemin joueur (`stop_core3_player_path_246.sh`) |
+
+Voir [`docs/RUNTIME_GODOT.md`](../../docs/RUNTIME_GODOT.md).
 
 ## Lancer (dev)
 
@@ -38,30 +42,26 @@ cd packages/prime-hub
 bash scripts/fetch_godot.sh   # une fois → tools/godot
 bash scripts/run_headless.sh
 # → http://127.0.0.1:8789/healthz
-# → ws://127.0.0.1:8788/ws
+# → ws://127.0.0.1:8787/ws   (ou 8788 en lab local)
 ```
-
-Auth G0 : tout `session_token` non vide → login OK (oid 100001).  
-HTTP inventaire/quests reste sur Python `:8787` jusqu’à G2.
 
 ### Deploy `.246`
 
 ```bash
 bash packages/cortex/infra/scripts/deploy_prime_hub_246.sh
-# → http://192.168.0.246:8789/healthz
-# → ws://192.168.0.246:8788/ws
+bash packages/cortex/infra/scripts/stop_core3_player_path_246.sh   # une fois
+bash packages/prime-client/tools/deploy_prime_client_patch_246.sh
 ```
-
-Client de test (sans couper le live `:8787`) : pointer temporairement  
-`prime-client/config/hub_runtime.json` → `"ws_url": "ws://192.168.0.246:8788/ws"`.
 
 ## Fichiers
 
 - `project.godot` — export / headless
 - `scenes/server_main.tscn` + `scripts/server_main.gd`
 - `scripts/hub_ws_server.gd` — TCP + upgrade WebSocket `lbg-ws/2`
-- `scripts/hub_sim.gd` — positions + bots (port mince de `sim.py`)
-- `scripts/hub_http.gd` — `/healthz` (+ catalog plus tard)
+- `scripts/hub_sim.gd` — positions + bots + A* + goals
+- `scripts/hub_player_store.gd` — reprise session
+- `scripts/hub_http.gd` — `/healthz` + proxy peel
+- `scripts/hub_collision.gd` — AABB + pathfinding
 
 ## Anti double-build
 

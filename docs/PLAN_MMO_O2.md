@@ -23,7 +23,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | `packages/prime-client/docs/CLIENT_ONLY_GODOT.md` | Vision joueur Godot-only |
 | ADR 0016 (`new_mmo/…`) | Axe talents/artisanat — **accepté de facto** |
 | ADR 0017 | Core3 spatial + sidecar (historique peel) |
-| **ADR 0026** | **Runtime hors Core3** — étude + spike 48 h · [`SPIKE_48H_GODOT_RUNTIME.md`](SPIKE_48H_GODOT_RUNTIME.md) |
+| **ADR 0026** | **Runtime Godot-first** — live `prime-hub` · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · spike hist. [`SPIKE_48H_GODOT_RUNTIME.md`](SPIKE_48H_GODOT_RUNTIME.md) |
 | `plan_de_route.md` | Historique + étoile du nord (Studio) — pas le fil M12 |
 | `plan_mmorpg.md` | Vision long terme (ignorer le bloc « Godot gelé ») |
 | `plan_parallel_next_steps.md` | Bots / WD — **parallèle**, ne bloque pas P1–P4 |
@@ -43,7 +43,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
 | **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
-| **P6** | Spike runtime Godot-first | ADR 0026 + [`SPIKE_48H_GODOT_RUNTIME.md`](SPIKE_48H_GODOT_RUNTIME.md) — humain+bot marchent **sans** Core3 | Hermès + Iris | **go spike** 2026-10-06 (`hub_runtime`) · **swap Godot** 2026-10-07 (`packages/prime-hub` G0) |
+| **P6** | Runtime Godot-first | ADR 0026 + [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) — humain+bots+PNJ **sans** Core3 | Hermès + Iris | **live** 2026-10-07 (`prime-hub` G4a) ; peel Python `:8797` ; Core3 chemin joueur coupé |
 
 ### Jalons M9–M12 (rappel)
 
