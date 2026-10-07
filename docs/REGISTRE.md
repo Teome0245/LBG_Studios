@@ -38,7 +38,7 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 | Workspace Cursor | `LBG_Studios.code-workspace` |
 | Deploy runtime Cortex | `.140` → **`/opt/LBG_IA_MMO`** (rsync, pas de `git clone`) |
 | Env prod | `.140` `/etc/lbg-ia-mmo.env` (depuis `packages/cortex/infra/secrets/lbg.env`) |
-| Client Windows | Launchpad → `J:\swgemu\dist\` ; Godot `J:\swgemu\clients\prime-client` |
+| Client Windows | Launchpad ≥2.1.4 (Prime only) → `J:\…` ; hub joueur `.246:8787` ; Godot `J:\swgemu\clients\prime-client` |
 
 ### Client Godot (deux chemins — ne pas les confondre)
 

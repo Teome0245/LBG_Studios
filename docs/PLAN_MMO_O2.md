@@ -40,7 +40,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P2b** | Missions hub | Board Daan Oth ↔ `:8791` accept/complete stub + UI Godot **J** | Iris + Dédale | **vert smoke 2026-08-15** ; **objectifs terrain POI** (progress sur toutes templates hub + HUD objectif hors J) **fait** ; Core3 journal = suite |
 | **P2c** | Scène cantina | Show La Perle + tip stub (après missions) | Iris | **MVP stub 2026-08-15** — `lh_show_perle` au board + `POST /v1/quests/tip` + bouton Tip Scène ; show live / formation Talen = suite |
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | jaune (Rang 2) |
-| **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
+| **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | **de facto** 2026-10-07 (hub Godot) ; nettoyer restes |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
 | **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
 | **P6** | Runtime Godot-first | ADR 0026 + [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) — humain+bots+PNJ **sans** Core3 | Hermès + Iris | **G5 live** 2026-10-07 (`prime-hub` :8787 unifié, peel natif) ; Python OFF |

@@ -130,3 +130,4 @@ Phases : voir [`packages/prime-hub/README.md`](../../../prime-hub/README.md) (G0
 | 2026-10-07 | **G4 cutover** — Godot WS `:8787` + HTTP `:8789` ; Python lab `:8797` |
 | 2026-10-07 | **G4a** A* bots ; persistance position joueur ; **§5c** Godot-first ; Core3 chemin joueur coupé |
 | 2026-10-07 | **G5** peel natif (auth/inv/quests/craft/catalog/dialogue) + HTTP+WS unifiés `:8787` ; Python hub_runtime OFF |
+| 2026-10-07 | Launchpad **2.1.4** — PreCU retiré ; sonde `8787/healthz` ; flotte sans spam chat POI |

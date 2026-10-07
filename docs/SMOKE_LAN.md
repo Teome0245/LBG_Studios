@@ -23,9 +23,9 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 | **Cockpit P03** | http://192.168.0.100:8093/pilot/#/cockpit | Mur infra / équipe |
 | **Orch UI** (chat produit) | http://192.168.0.100:5174/ | SPA Orchestrateur — chat unique (rétabli, plus de redirect forcé) |
 | **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra (proxies Pilot) |
-| **Prime Hub Godot** | http://192.168.0.246:8789/healthz · ws://192.168.0.246:8787/ws | Autorité joueur Lost Heaven ([`RUNTIME_GODOT.md`](RUNTIME_GODOT.md)) |
-| **Prime comptes** | http://192.168.0.246:8792/ | Comptes (lab ; Core3 hors chemin joueur) |
-| **PreCU comptes** | http://192.168.0.245:8792/ | État + comptes PreCU |
+| **Prime Hub Godot** | http://192.168.0.246:8787/healthz · ws://192.168.0.246:8787/ws | Autorité joueur Lost Heaven G5 ([`RUNTIME_GODOT.md`](RUNTIME_GODOT.md)) |
+| **Prime comptes** | http://192.168.0.246:8792/ | Comptes lab (hors chemin joueur) |
+| **PreCU comptes** | http://192.168.0.245:8792/ | Réf. lecture seule (hors Launchpad) |
 | **Patches** | http://192.168.0.246:8080/patches/prime/manifest.json | Client Prime |
 | **MCP front** | http://192.168.0.100:8766/healthz | MCP |
 

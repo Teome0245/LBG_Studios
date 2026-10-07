@@ -1,10 +1,10 @@
 # Priorités actuelles — LBG Studios
 
-**Date** : 2026-09-27  
+**Date** : 2026-10-07  
 **Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
 **Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
-Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
+Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
 
 ---
 
@@ -44,22 +44,23 @@ Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_ll
 
 ---
 
-## O2 — Jeu (après O1)
+## O2 — Jeu
 
-`packages/prime-client` (Godot) + `packages/launchpad` → serveur Prime `.246`.  
-Plan exécuteur : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md).
+`packages/prime-client` + `packages/prime-hub` + `packages/launchpad` → `.246:8787`.  
+Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
 
-Beaucoup de rails **P0–P2c** (login M11, M12 WS, talents/craft, missions hub, cantina stub) sont faits ou en smoke vert. En cours / ouvert :
+**P6 Godot-first G5 = live** (peel natif, HTTP+WS unifiés, Core3/Python hors chemin joueur, Launchpad Prime-only).
 
 | Rail | État |
 |------|------|
-| **P3** | Persona en jeu — jaune, Rang 2 |
-| **P4** | Retrait du pont SOE Python côté joueur |
-| **P5** | World Director / bots en parallèle, sans bloquer P1–P4 |
+| **P6** | **fait** 2026-10-07 — `prime-hub` G5 |
+| **P3** | Persona / compagnon **en jeu** — prochain focus O2 |
+| **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
+| **P5** | World Director / combat / cour de chasse sur `prime-hub` |
 
-Lore et anti-dérive : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md), etc.
+Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
-**Règle dev** : nouvelle feature jeu (quand O1 est « vert » pour toi) → `packages/prime-client`.
+**Règle dev** : feature jeu → `packages/prime-client` / `packages/prime-hub` (pas Core3, pas spike Python).
 
 ---
 
