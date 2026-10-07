@@ -106,6 +106,8 @@ curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq '.cases[] | {id
 
 UI D6.3 : timeline / réflexion / méta **repliées** par défaut en mode ask ; ouvertes si source Agir/Team.
 
+**Pièges ops** (2026-10-02) : Agir/Team **HTTP 502** → `lbg-backend` sur `.140` (souvent `pydantic-settings` manquant dans le venv). Question « c’est quoi le campus » → chat causerie, pas Team live (`team_routing` overlay).
+
 Doc : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6 · [`character_layer.md`](../packages/cortex/docs/character_layer.md).
 
 ## MCP catalog (C10/C11)

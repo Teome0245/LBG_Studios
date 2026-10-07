@@ -31,12 +31,13 @@ Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team
 | Ops / Team / approvals L2 | Pilot `.140:8080/pilot/` |
 | Bureau Windows | `packages/compagnon-desktop` (tray, overlay, notifications) |
 
-Jalons **D0–D5** (+ character / voix) : **OK** sur checklist.  
-**Focus suivant** : **D6 Causerie crédible** ([`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6) — fluidité collègue / continuité de fil / pas de runbook Agir en discussion. **Gate avant O2.**
+Jalons **D0–D6** (+ character / voix) : **OK** sur checklist (smoke D6 V6–V8 **PASS** 2026-10-06).  
+Gate feeling Compagnon **ouverte** — voir [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
+**Suite Studio** : maintenir causerie sticky / Pilot Agir stables ; ops LAN (status Pilot lent si healthz agents KO).
 
 **Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
 Pilot reste le cockpit ops ; on n’absorbe **pas** Team/Jobs dans un clone de `:5174`.  
-Tant que D6 (feeling Jarvis / MC sur `:5174`) n’est pas crédible, le pari jeu « 30 s Lost Heaven » ([`FOCUS_WAHOU.md`](FOCUS_WAHOU.md), archivé) et O2 ne repassent pas en tête.
+O2 / hub Godot peut avancer en parallèle tant que D6 reste vert sur `:5174`.
 
 Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).
 
@@ -81,7 +82,7 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 | Nouvelle feature jeu (O1 vert) | `packages/prime-client` |
 | Vérif LAN | `bash tools/smoke_lan_surfaces.sh --functional` — [`SMOKE_LAN.md`](SMOKE_LAN.md) |
 
-**En une phrase** : consolider le Compagnon sur `:5174` + Pilot/Team sur Cortex, puis P3–P5 MMO sur Prime Client / `prime-hub`, sans diluer l’effort dans le legacy ni rouvrir le MMO web.
+**En une phrase** : Compagnon D6 vert sur `:5174` + Pilot/Team Cortex ; O2 hub Godot (P3–P5) sans diluer l’effort dans le legacy ni rouvrir le MMO web.
 
 ### Lot Studio ops (2026-10-07)
 

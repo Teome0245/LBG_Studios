@@ -142,8 +142,14 @@ Phasage réaliste :
 | **D6.1** | `short_ctx` LAB conservé (cap 6 msgs) + nudge causerie + élargissement heuristiques collègue/ami | **OK** code (2026-10-01) — deploy `deploy_compagnon_100.sh` |
 | **D6.2** | Prompt `compagnon_lab` scindé « causerie courte » vs « ops » + character slim + anti-rebond | **OK** code (2026-10-01) — `resolve_lab_system_prompt` |
 | **D6.2b** | Combo feeling : sticky fil + anti-fausse investigation + OpenClaw pas sur « évoluer » causerie | **OK** code (2026-10-02) |
+| **D6.2c** | Campus conceptuel ≠ Team live (`team_routing`) + rôles Compagnon/Lyra dans prompt causerie ; Pilot 502 = `lbg-backend` / `pydantic-settings` | **OK** (2026-10-02) |
 | **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
 | **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
+
+### Ops Agir / Pilot (rappel 2026-10-02)
+
+- **HTTP 502** « Pilotage impossible » / Team : souvent `lbg-backend` down sur `.140` (ex. `ModuleNotFoundError: pydantic_settings` dans `/opt/LBG_IA_MMO/.venv`). Fix : install deps venv + `systemctl restart lbg-backend` ; vérifier `curl -m 20 http://192.168.0.140:8080/v1/pilot/status` → 200 (peut prendre 10–20 s si healthz agents lents).
+- **« c’est quoi le campus »** doit rester en chat LLM (causerie), pas un compte-rendu Team live — overlay `compagnon_ui/server_overlay/team_routing.py`.
 
 ## Chemins / surfaces (ne pas confondre)
 
