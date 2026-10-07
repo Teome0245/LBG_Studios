@@ -124,20 +124,24 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 
 	if path == "/healthz" or path == "/":
 		var uptime := int(Time.get_unix_time_from_system() - started_at)
+		var life := {}
+		if sim and sim.has_method("life_stats"):
+			life = sim.life_stats()
 		return _ok({
 			"ok": true,
 			"service": "prime_hub",
 			"proto": "lbg-ws/2",
-			"phase": "G5",
+			"phase": "G5+",
 			"ws_port": ws_port,
 			"http_native": true,
 			"python_peel": false,
 			"tick": int(sim.tick) if sim else 0,
 			"bot_count": int(sim.bot_count()) if sim else 0,
 			"npc_count": int(sim.npc_count()) if sim else 0,
+			"life": life,
 			"collision_blocks": _collision_count(),
 			"uptime_s": uptime,
-			"note": "G5 peel natif + unify ; WS+HTTP :%d" % ws_port,
+			"note": "G5+ vie hub Triplons + autonomie bots ; WS+HTTP :%d" % ws_port,
 		})
 
 	# --- Catalog C10 ---
@@ -233,6 +237,24 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if sim and sim.has_method("enqueue_say"):
 			sim.enqueue_say(sp, int(sb.get("oid", 0)), text, source)
 		return _ok({"ok": true, "chat": {"from": sp, "text": text, "source": source}, "source": "prime_hub"})
+
+	# --- Dev : suggestions monde (off → Studio, pas de mutation auto) ---
+	if method == "GET" and path == "/v1/dev/world_suggestions":
+		if sim == null or sim.suggest == null:
+			return _ok({"ok": false, "error": "suggest_unavailable"}, 501)
+		var lim := int(_query_param(query, "limit", "40"))
+		return _ok(sim.suggest.list_recent(lim))
+	if method == "POST" and path == "/v1/dev/world_suggestions":
+		if sim == null or sim.suggest == null:
+			return _ok({"ok": false, "error": "suggest_unavailable"}, 501)
+		var wb := _json_body(req_body)
+		var wout: Dictionary = sim.suggest.submit(
+			str(wb.get("from", wb.get("player", "dev"))),
+			str(wb.get("kind", "poi")),
+			str(wb.get("text", "")),
+			wb.get("context", {}) if typeof(wb.get("context", null)) == TYPE_DICTIONARY else {}
+		)
+		return _ok(wout, 200 if bool(wout.get("ok")) else 400)
 
 	return _ok({"ok": false, "error": "not_found", "path": path}, 404)
 

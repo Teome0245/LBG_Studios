@@ -49,11 +49,11 @@ Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_ll
 `packages/prime-client` + `packages/prime-hub` + `packages/launchpad` → `.246:8787`.  
 Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
 
-**P6 Godot-first G5 = live** (peel natif, HTTP+WS unifiés, Core3/Python hors chemin joueur, Launchpad Prime-only).
+**P6 Godot-first G5+ = live** (peel natif, Triplons + autonomie bots, Core3/Python hors chemin joueur).
 
 | Rail | État |
 |------|------|
-| **P6** | **fait** 2026-10-07 — `prime-hub` G5 |
+| **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
 | **P3** | Persona / compagnon **en jeu** — prochain focus O2 |
 | **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
 | **P5** | World Director / combat / cour de chasse sur `prime-hub` |

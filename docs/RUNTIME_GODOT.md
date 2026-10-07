@@ -1,4 +1,4 @@
-# Runtime joueur Lost Heaven — Godot-first (G5)
+# Runtime joueur Lost Heaven — Godot-first (G5+)
 
 **Date** : 2026-10-07  
 **ADR** : [`0026-runtime-hors-core3.md`](../packages/cortex/docs/adr/0026-runtime-hors-core3.md)
@@ -26,6 +26,19 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 - Persistance : `data/accounts.json`, `players_state.json`, `player_positions.json`
 - Flotte IA : marche + goals ; **pas** d’annonce chat « vers X / j’y suis »
 
+## Vie hub (G5+)
+
+Design : [`design/HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)
+
+| Brique | Rôle |
+|--------|------|
+| **Triplons** | Groupes 3 PNJ · cycle `work` → `leisure` → `rest` · ≈ ⅔ visibles |
+| **Objectifs** | `short` / `medium` / `long` par persona (bots + PNJ) |
+| **Autonomie bots** | Tirage quête / explore / hub (`hub_bot_autonomy.gd`) |
+| **Suggestions monde** | File `data/world_suggestions.jsonl` · `GET|POST /v1/dev/world_suggestions` (Studio, pas auto-monde) |
+
+`/healthz` expose `life: {work, leisure, rest, active_ratio, …}`.
+
 ## Ops
 
 ```bash
@@ -41,7 +54,7 @@ Garder l’UI comptes Core3 `:8792` uniquement si besoin lab :
 bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-admin
 ```
 
-## Suite produit (post-G5)
+## Suite produit (post-G5+)
 
 1. **Persona / compagnon en jeu** — rail P3 ([`PLAN_MMO_O2.md`](PLAN_MMO_O2.md))
 2. **Gameplay hub** — quêtes terrain POI, craft UX, dialogue riche
@@ -50,4 +63,5 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 
 ## Anti double-build
 
-Contrat `lbg-ws/2` + HTTP C10/C11 **gelé**. Process = Godot only.
+Contrat `lbg-ws/2` + HTTP C10/C11 **gelé**. Process = Godot only.  
+Suggestions monde = file Studio uniquement (pas de mutation auto).

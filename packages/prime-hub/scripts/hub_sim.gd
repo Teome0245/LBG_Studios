@@ -1,8 +1,11 @@
 extends Node
-## Sim hub G3 — flotte + PNJ vivants + goals POI + chat (contrat = hub_runtime).
+## Sim hub G5+ — flotte autonome + Triplons (work/leisure/rest) + chat sobre.
 
 const HubCollisionScript = preload("res://scripts/hub_collision.gd")
 const HubPlayerStoreScript = preload("res://scripts/hub_player_store.gd")
+const HubLifeScript = preload("res://scripts/hub_life.gd")
+const HubBotAutonomyScript = preload("res://scripts/hub_bot_autonomy.gd")
+const HubWorldSuggestScript = preload("res://scripts/hub_world_suggest.gd")
 
 const HUMAN_OID := 100001
 const ZONE := "scrapaltai"
@@ -98,6 +101,10 @@ const HUB_NPCS: Array = [
 
 var collision = null
 var player_store = null
+var life = null
+var autonomy = null
+var suggest = null
+var economy = null
 var tick: int = 0
 var entities: Dictionary = {}
 var _chat_queue: Array = []
@@ -105,6 +112,13 @@ var _greeted_oids: Dictionary = {}  # oid -> true
 var _last_ambient: Dictionary = {}  # eid -> float unix
 var _rng := RandomNumberGenerator.new()
 var _persist_every_ticks: int = 100  # ~5 s @ 20 Hz
+var _life_tick_every: int = 20  # ~1 s
+
+
+func attach_economy(economy_svc) -> void:
+	economy = economy_svc
+	if autonomy != null:
+		autonomy.economy = economy_svc
 
 
 func reset() -> void:
@@ -120,6 +134,15 @@ func reset() -> void:
 	if player_store == null:
 		player_store = HubPlayerStoreScript.new()
 		player_store.setup()
+	if suggest == null:
+		suggest = HubWorldSuggestScript.new()
+		suggest.setup()
+	if life == null:
+		life = HubLifeScript.new()
+	life.setup(POIS)
+	if autonomy == null:
+		autonomy = HubBotAutonomyScript.new()
+	autonomy.setup(economy, suggest, POIS)
 	_ensure_fleet()
 	_ensure_hub_npcs()
 
@@ -175,6 +198,26 @@ func _ensure_fleet() -> void:
 
 
 func _ensure_hub_npcs() -> void:
+	if life != null and life._sched.size() > 0:
+		# Spawn Triplons + solos ; ne pas doubler avec HUB_NPCS legacy
+		var missing := false
+		for eid in life._sched.keys():
+			if not entities.has(eid):
+				missing = true
+				break
+		if missing:
+			life.spawn_all(entities)
+			# Snap walkable
+			for eid2 in life._sched.keys():
+				if not entities.has(eid2):
+					continue
+				var e: Dictionary = entities[eid2]
+				var p: Vector3 = e["pos"]
+				var wz := _walkable_xz(p.x, p.z)
+				e["pos"] = Vector3(wz.x, p.y, wz.y)
+				e["home_x"] = wz.x
+				e["home_z"] = wz.y
+		return
 	for n in HUB_NPCS:
 		var eid: String = str(n["eid"])
 		if entities.has(eid):
@@ -201,6 +244,7 @@ func _ensure_hub_npcs() -> void:
 			"home_z": p.z,
 			"wander_r": wander,
 			"ambient": str(n.get("ambient", "")),
+			"active": true,
 		}
 
 
@@ -208,20 +252,32 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 	if bdef.is_empty():
 		bdef = _bot_def(str(bot["eid"]))
 	var prefer: Array = bdef.get("prefer", ["plaza", "market"])
+	var target: Vector3 = PLAZA
 	var goal_id := "plaza"
-	if prefer.size() > 0:
-		goal_id = str(prefer[_rng.randi() % prefer.size()])
-	var target: Vector3 = POIS.get(goal_id, PLAZA)
-	# jitter léger
-	target = Vector3(
-		target.x + _rng.randf_range(-8.0, 8.0),
-		0.15,
-		target.z + _rng.randf_range(-8.0, 8.0)
-	)
+	var play_mode := "hub"
+	var quest_id := ""
+	if autonomy != null:
+		var g: Dictionary = autonomy.assign_goal(bot, prefer)
+		target = g.get("target", PLAZA)
+		goal_id = str(g.get("goal_id", "plaza"))
+		play_mode = str(g.get("play_mode", "hub"))
+		quest_id = str(g.get("quest_id", ""))
+	else:
+		if prefer.size() > 0:
+			goal_id = str(prefer[_rng.randi() % prefer.size()])
+		target = POIS.get(goal_id, PLAZA)
+	# jitter léger (sauf explore hors murs — garder le point)
+	if play_mode == "hub":
+		target = Vector3(
+			target.x + _rng.randf_range(-8.0, 8.0),
+			0.15,
+			target.z + _rng.randf_range(-8.0, 8.0)
+		)
 	var wz := _walkable_xz(target.x, target.z)
 	bot["target"] = Vector3(wz.x, 0.15, wz.y)
 	bot["goal"] = goal_id
-	bot["play_mode"] = "hub"
+	bot["play_mode"] = play_mode
+	bot["quest_id"] = quest_id
 	bot["linger_until"] = 0.0
 	bot["stuck_ticks"] = 0
 	bot["has_waypoint"] = false
@@ -398,6 +454,8 @@ func _maybe_ambient() -> void:
 		var e: Dictionary = entities[eid]
 		if str(e.get("kind", "")) != "npc":
 			continue
+		if not bool(e.get("active", true)):
+			continue
 		var amb := str(e.get("ambient", ""))
 		if amb.is_empty():
 			continue
@@ -447,6 +505,8 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	var dist := sqrt(dx * dx + dz * dz)
 	# Arrivée finale seulement sans waypoint restant
 	if not bool(bot.get("has_waypoint", false)) and dist < 4.0:
+		if autonomy != null:
+			autonomy.on_arrival(bot)
 		bot["linger_until"] = now + _rng.randf_range(3.0, 7.0)
 		# Pas de « j'y suis / vers X » — les allers-retours ne polluent pas le chat
 		_assign_bot_goal(bot)
@@ -490,6 +550,8 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 
 
 func _step_npc(npc: Dictionary, dt: float) -> void:
+	if not bool(npc.get("active", true)):
+		return
 	var wander := float(npc.get("wander_r", 0.0))
 	var speed: float = float(npc.get("speed", 0.0))
 	if wander <= 0.0 or speed <= 0.0:
@@ -503,6 +565,7 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	var dz := target.z - pos.z
 	var dist := sqrt(dx * dx + dz * dz)
 	if dist < 1.5:
+		# Arrivé au poste / loisir : déambuler localement
 		npc["target"] = _pick_wander_target(npc)
 		npc["stuck_ticks"] = 0
 		return
@@ -532,6 +595,8 @@ func step(dt: float) -> void:
 	_ensure_hub_npcs()
 	tick += 1
 	dt = clampf(dt, 0.001, 0.25)
+	if life != null and tick % _life_tick_every == 0:
+		life.tick_life(entities, Time.get_unix_time_from_system())
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):
@@ -553,6 +618,9 @@ func entity_list() -> Array:
 	var out: Array = []
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
+		# Repos Triplon : hors zone_state (≈ ⅓ off)
+		if str(e.get("kind", "")) == "npc" and not bool(e.get("active", true)):
+			continue
 		var p: Vector3 = e["pos"]
 		out.append({
 			"id": int(e["oid"]),
@@ -565,6 +633,7 @@ func entity_list() -> Array:
 			"play_mode": str(e.get("play_mode", "")),
 			"quest_id": str(e.get("quest_id", "")),
 			"is_bot": bool(e.get("is_bot", false)),
+			"life_phase": str(e.get("life_phase", "")),
 		})
 	return out
 
@@ -627,9 +696,16 @@ func bot_count() -> int:
 func npc_count() -> int:
 	var n := 0
 	for eid in entities.keys():
-		if str(entities[eid].get("kind", "")) == "npc":
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) == "npc" and bool(e.get("active", true)):
 			n += 1
 	return n
+
+
+func life_stats() -> Dictionary:
+	if life == null:
+		return {}
+	return life.stats()
 
 
 func zone_state_payload(your_oid: int) -> Dictionary:

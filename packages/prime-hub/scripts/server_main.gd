@@ -44,6 +44,7 @@ func _ready() -> void:
 	sim = HubSimScript.new()
 	sim.name = "HubSim"
 	add_child(sim)
+	sim.attach_economy(economy)
 	sim.reset()
 
 	http = HubHttpScript.new()
@@ -68,7 +69,15 @@ func _ready() -> void:
 	var nblocks: int = 0
 	if sim.collision != null:
 		nblocks = int(sim.collision.blocks.size())
-	print("[prime-hub] ready G5 — bots=%d npcs=%d collision=%d" % [sim.bot_count(), sim.npc_count(), nblocks])
+	var life_note := ""
+	if sim.has_method("life_stats"):
+		var ls: Dictionary = sim.life_stats()
+		life_note = " life=%d/%d(%.0f%%)" % [
+			int(ls.get("work", 0)) + int(ls.get("leisure", 0)),
+			int(ls.get("npc_scheduled", 0)),
+			float(ls.get("active_ratio", 0.0)) * 100.0,
+		]
+	print("[prime-hub] ready G5+ — bots=%d npcs=%d%s collision=%d" % [sim.bot_count(), sim.npc_count(), life_note, nblocks])
 	if listen_http == 0:
 		print("[prime-hub] unified HTTP+WS on :%d (peel native)" % port)
 	else:
