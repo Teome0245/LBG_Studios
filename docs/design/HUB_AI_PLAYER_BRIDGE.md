@@ -49,12 +49,12 @@ Comptes Prime `.246` (login = persona out-game) :
 | `nix_bridge` | 9 | 0 | Nix | oui |
 | `mira_bridge` | 11 | 0 | Mira | oui |
 | `kael_bridge` | 13 | 0 | Kael | oui |
-| `renn_bridge` | 14 | 0 | Renn | non (vague 10) |
-| `sola_bridge` | 15 | 0 | Sola | non |
-| `vex_bridge` | 16 | 0 | Vex | non |
-| `ori_bridge` | 17 | 0 | Ori | non |
-| `tess_bridge` | 18 | 0 | Tess | non |
-| `bram_bridge` | 19 | 0 | Bram | non |
+| `renn_bridge` | 14 | 0 | Renn | **oui** |
+| `sola_bridge` | 15 | 0 | Sola | **oui** |
+| `vex_bridge` | 16 | 0 | Vex | **oui** |
+| `ori_bridge` | 17 | 0 | Ori | **oui** |
+| `tess_bridge` | 18 | 0 | Tess | **oui** |
+| `bram_bridge` | 19 | 0 | Bram | **oui** |
 
 Nouveau joueur : login = persona · perso IG ≠ login · sync `ai_players.json` · `enabled: true` · redeploy.
 

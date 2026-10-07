@@ -229,7 +229,7 @@
       "eid": "player:Renn",
       "oid": 900006,
       "name": "Renn",
-      "enabled": false,
+      "enabled": true,
       "account_login": "renn_bridge",
       "account_id": 14,
       "admin_level": 0,
@@ -281,7 +281,7 @@
       "eid": "player:Sola",
       "oid": 900007,
       "name": "Sola",
-      "enabled": false,
+      "enabled": true,
       "account_login": "sola_bridge",
       "account_id": 15,
       "admin_level": 0,
@@ -332,7 +332,7 @@
       "eid": "player:Vex",
       "oid": 900008,
       "name": "Vex",
-      "enabled": false,
+      "enabled": true,
       "account_login": "vex_bridge",
       "account_id": 16,
       "admin_level": 0,
@@ -382,7 +382,7 @@
       "eid": "player:Ori",
       "oid": 900009,
       "name": "Ori",
-      "enabled": false,
+      "enabled": true,
       "account_login": "ori_bridge",
       "account_id": 17,
       "admin_level": 0,
@@ -433,7 +433,7 @@
       "eid": "player:Tess",
       "oid": 900010,
       "name": "Tess",
-      "enabled": false,
+      "enabled": true,
       "account_login": "tess_bridge",
       "account_id": 18,
       "admin_level": 0,
@@ -485,7 +485,7 @@
       "eid": "player:Bram",
       "oid": 900011,
       "name": "Bram",
-      "enabled": false,
+      "enabled": true,
       "account_login": "bram_bridge",
       "account_id": 19,
       "admin_level": 0,
@@ -569,6 +569,8 @@
       "admin_level": 0,
       "enabled_in_hub": false,
       "note": "Comptes COMPTES prêts ; hub enabled=false jusqu’à vague 10."
-    }
+    },
+    "wave10_enabled_at": "2026-10-07",
+    "wave10_note": "10 joueurs IA enabled sur prime-hub (hub Godot, pas Core3)."
   }
 }
