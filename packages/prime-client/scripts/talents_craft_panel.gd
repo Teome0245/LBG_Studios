@@ -28,6 +28,7 @@ var _craft_btn: Button
 
 func _ready() -> void:
 	visible = panel_visible
+	_apply_hub_runtime_sidecar()
 	_apply_mouse_filter()
 	_apply_modal_style()
 	_ensure_ui()
@@ -38,6 +39,14 @@ func _ready() -> void:
 	add_child(_http_craft)
 	_http_craft.request_completed.connect(_on_craft_http_done)
 	call_deferred("_refresh_sidecar")
+
+
+func _apply_hub_runtime_sidecar() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	sidecar_base_url = HubRuntimeCfg.http_url(sidecar_base_url)
+	player_id = HubRuntimeCfg.player_name("Voyageur")
+
 
 func _ensure_ui() -> void:
 	var root := get_node_or_null("VBox") as VBoxContainer

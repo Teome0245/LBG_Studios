@@ -3,9 +3,9 @@
 **Décision produit** : le joueur n’installe **que** `prime-client` (Godot).  
 Plus de client retail SWG, plus de `.tre` LucasArts, plus de `lbgemu.exe` / `prime-lbg` sur le poste.
 
-**Ce qui persiste** : le **serveur Core3 Prime** (VM 246, galaxie 3) — simulation, comptes, zone, craft.
+**Serveur** : historiquement Core3 Prime (VM 246). **2026-10-06** — étude runtime hors Core3 : ADR [`0026`](../../cortex/docs/adr/0026-runtime-hors-core3.md) + spike [`SPIKE_48H_GODOT_RUNTIME.md`](../../../docs/SPIKE_48H_GODOT_RUNTIME.md).
 
-Référence : ADR 0016 (`new_mmo/lbg-mmo/docs/adr/0016-prime-axe-lbg-talents-artisanat.md`).
+Référence talents : ADR 0016 (`new_mmo/…` ou catalogues M10 dans Studios).
 
 ---
 

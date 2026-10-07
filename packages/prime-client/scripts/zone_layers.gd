@@ -23,7 +23,22 @@ func _ready() -> void:
 	if zd is Dictionary:
 		show_water = bool((zd as Dictionary).get("show_water", show_water))
 		show_collision = bool((zd as Dictionary).get("show_collision", show_collision))
+	# Spike hub_runtime : remparts actifs (sinon traverser la palissade)
+	if _hub_runtime_enabled():
+		enforce_hub_fence = true
 	reload()
+
+
+func _hub_runtime_enabled() -> bool:
+	const path := "res://config/hub_runtime.json"
+	if not FileAccess.file_exists(path):
+		return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	return raw is Dictionary and bool((raw as Dictionary).get("enabled", false))
 
 func reload() -> void:
 	_load()

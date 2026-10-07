@@ -52,7 +52,9 @@ La bonne réponse n’est pas « tout jeter », c’est **éplucher** (2) puis �
 - Scale horizontal (beaucoup de zones) sans monolithe zone.  
 - Équipe capable de maintenir un backend Go/Rust + sim custom **en parallèle** du produit jouable.
 
-**Aujourd’hui** : Lost Heaven, IA, Godot, M9/M10 avancent **sur** Core3 — on n’est **pas** à ces seuils.
+**Aujourd’hui (2026-07)** : Lost Heaven, IA, Godot, M9/M10 avancent **sur** Core3 — seuils non atteints à la rédaction.
+
+**MAJ 2026-10-06** : seuils prison **constatés** (ops bots figés, tick Lua, saturation pending, objectif zéro SWG runtime). Voir **ADR 0026** + spike Godot-first — Core3 n’est plus la cible runtime joueur par défaut après go spike.
 
 ### Recommandation produit (A)
 

@@ -120,8 +120,8 @@ Mémoire relationnelle (C2) : schéma [`relation_memory_schema.json`](../content
 
 | ID | Owner | Done quand | TODO |
 |----|-------|------------|------|
-| **C10** | Hermès | `catalog(type=…)` read-only sur sidecar ou MCP Studio | Stub ✅ [`design_c10_c11_catalog_tick.md`](design_c10_c11_catalog_tick.md) · `GET /catalog` dialogue HTTP · mirror `:8791` next |
-| **C11** | Hermès + WD | Mutations filetées vs queries | Stub ✅ table + flag `tick_cost` / `requires_tick` · middleware tick live next |
+| **C10** | Hermès | `catalog(type=…)` read-only sur sidecar ou MCP Studio | ✅ wire `:8791` + MCP stdio · [`design_c10_c11_catalog_tick.md`](design_c10_c11_catalog_tick.md) |
+| **C11** | Hermès + WD | Mutations filetées vs queries | ✅ table + flags · **TickGate live** (`429 tick_busy`, cooldown) · bots respectent |
 | **C12** | Iris | Dual `result` + `structuredContent` | Endpoint dialogue : texte joueur + flags/deltas commit |
 
 **Séquence** : C9 (ce doc) → C10/C11 contrat → C12 dialogue · C2 mémoire avant C1 live suggestions.

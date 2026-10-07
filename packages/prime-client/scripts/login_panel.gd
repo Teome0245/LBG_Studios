@@ -20,6 +20,7 @@ var _local_ws: Node = null
 var _handoff_watchdog: SceneTreeTimer = null
 var _handoff_active: bool = false
 var _creation_panel: Control = null
+var _hub_runtime: Dictionary = {}
 
 
 func _ready() -> void:
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_auth.enter_zone_ok.connect(_on_enter_zone_ok)
 	_auth.enter_zone_failed.connect(_on_enter_zone_failed)
 	call_deferred("_wire_creation_panel")
+	call_deferred("_maybe_enable_hub_runtime_spike")
 
 
 func _get_creation_panel() -> Control:
@@ -136,6 +138,13 @@ func _on_login_ok(_session_token: String, characters: Array) -> void:
 	if _char_list.item_count > 0:
 		_char_list.select(0)
 		_btn_enter.disabled = false
+		if _hub_runtime_enabled() and characters.size() > 0 and typeof(characters[0]) == TYPE_DICTIONARY:
+			_hub_runtime["session_token"] = _session_token
+			_hub_runtime["character_id"] = int((characters[0] as Dictionary).get("id", 100001))
+			_hub_runtime["player_name"] = str((characters[0] as Dictionary).get("name", "Voyageur"))
+			if _auth:
+				_auth.your_character_id = int(_hub_runtime["character_id"])
+			_status.text = "OK hub — Enter"
 	else:
 		_status.text = "Aucun Amas — crée ton premier éclat"
 		call_deferred("_on_create_pressed")
@@ -144,6 +153,8 @@ func _on_login_ok(_session_token: String, characters: Array) -> void:
 func _on_login_failed(code: String, message: String) -> void:
 	_btn_login.disabled = false
 	_status.text = "%s: %s" % [code, message]
+	if _hub_runtime_enabled():
+		_btn_enter.disabled = false
 
 
 func _on_create_pressed() -> void:
@@ -224,7 +235,58 @@ func add_character_to_roster(entry: Dictionary) -> void:
 		_char_list.add_item("%s — %s" % [entry.get("name", "?"), entry.get("race", "")])
 
 
+func _load_hub_runtime_cfg() -> Dictionary:
+	const path := "res://config/hub_runtime.json"
+	if not FileAccess.file_exists(path):
+		return {}
+	var f := FileAccess.open(path, FileAccess.READ)
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	return raw if raw is Dictionary else {}
+
+
+func _hub_runtime_enabled() -> bool:
+	return bool(_hub_runtime.get("enabled", false))
+
+
+func _maybe_enable_hub_runtime_spike() -> void:
+	_hub_runtime = _load_hub_runtime_cfg()
+	if not _hub_runtime_enabled():
+		return
+	# Auth HTTP → hub_runtime (même contrat LbgAuthClient M11)
+	if _auth:
+		_auth.gateway_http_base = str(_hub_runtime.get("http_url", "http://192.168.0.246:8787"))
+		_auth.gateway_ws_base = str(_hub_runtime.get("ws_url", "ws://192.168.0.246:8787/ws"))
+	_chars = [{
+		"id": int(_hub_runtime.get("character_id", 100001)),
+		"name": str(_hub_runtime.get("player_name", "Voyageur")),
+		"race": "hub_runtime",
+	}]
+	if _char_list:
+		_char_list.clear()
+		_char_list.add_item("%s — hub_runtime" % str(_chars[0].get("name", "Voyageur")))
+		_char_list.select(0)
+	_btn_enter.disabled = false
+	_btn_login.disabled = false
+	_btn_create.disabled = true
+	var label := str(_hub_runtime.get("label", "Spike hub_runtime"))
+	_status.text = "%s — Login ou Enter (guest)" % label
+	print("[LoginPanel] hub_runtime spike ON → %s" % str(_hub_runtime.get("ws_url", "")))
+
+
 func _on_enter_pressed() -> void:
+	if _hub_runtime_enabled():
+		# Guest si pas encore de session
+		if _auth and str(_auth.session_token).is_empty():
+			_status.text = "Guest hub…"
+			_btn_enter.disabled = true
+			_hub_guest_then_enter()
+			return
+		if _auth and not str(_auth.session_token).is_empty():
+			_auth.enter_zone(str(_hub_runtime.get("zone", "scrapaltai")))
+			return
+		_start_hub_runtime_spike()
+		return
 	var idx := _char_list.get_selected_items()
 	if idx.is_empty():
 		_status.text = "Sélectionne un personnage"
@@ -236,9 +298,61 @@ func _on_enter_pressed() -> void:
 	_auth.select_character(cid)
 
 
+func _hub_guest_then_enter() -> void:
+	## POST /v1/auth/guest puis WS avec le token.
+	var http := HTTPRequest.new()
+	add_child(http)
+	var player := str(_hub_runtime.get("player_name", "Voyageur"))
+	var url := str(_hub_runtime.get("http_url", "http://192.168.0.246:8787")).rstrip("/") + "/v1/auth/guest"
+	var body := JSON.stringify({"player_name": player})
+	http.request_completed.connect(func(result: int, code: int, _h: PackedStringArray, raw: PackedByteArray) -> void:
+		http.queue_free()
+		if result != HTTPRequest.RESULT_SUCCESS or code < 200 or code >= 300:
+			_status.text = "Guest échoué (%s) — fallback spike-local" % code
+			_start_hub_runtime_spike()
+			return
+		var parsed: Variant = JSON.parse_string(raw.get_string_from_utf8())
+		if typeof(parsed) != TYPE_DICTIONARY or not bool((parsed as Dictionary).get("ok", false)):
+			_start_hub_runtime_spike()
+			return
+		var d: Dictionary = parsed
+		var token := str(d.get("session_token", ""))
+		var chars: Array = d.get("characters", [])
+		if _auth:
+			_auth.session_token = token
+			_auth.characters = chars
+			if chars.size() > 0 and typeof(chars[0]) == TYPE_DICTIONARY:
+				_auth.your_character_id = int((chars[0] as Dictionary).get("id", 100001))
+		_chars = chars if chars.size() > 0 else _chars
+		_hub_runtime["session_token"] = token
+		if chars.size() > 0 and typeof(chars[0]) == TYPE_DICTIONARY:
+			_hub_runtime["character_id"] = int((chars[0] as Dictionary).get("id", 100001))
+			_hub_runtime["player_name"] = str((chars[0] as Dictionary).get("name", player))
+		_start_hub_runtime_spike()
+	)
+	var err := http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, body)
+	if err != OK:
+		http.queue_free()
+		_start_hub_runtime_spike()
+
+
+func _start_hub_runtime_spike() -> void:
+	var ws_url := str(_hub_runtime.get("ws_url", "ws://127.0.0.1:8787/ws"))
+	var token := str(_hub_runtime.get("session_token", "spike-local"))
+	var cid := int(_hub_runtime.get("character_id", 100001))
+	_status.text = "Spike hub_runtime — WS…"
+	_btn_enter.disabled = true
+	_handoff_active = true
+	_arm_handoff_watchdog()
+	call_deferred("_start_ws_handoff", ws_url, cid, token, str(_hub_runtime.get("zone", "scrapaltai")))
+
+
 func _on_select_ok(_character_id: int, _ws_url: String) -> void:
 	_status.text = "Enter zone…"
-	_auth.enter_zone("tatooine")
+	var zone := "scrapaltai" if _hub_runtime_enabled() else "tatooine"
+	if _hub_runtime_enabled():
+		zone = str(_hub_runtime.get("zone", "scrapaltai"))
+	_auth.enter_zone(zone)
 
 
 func _on_select_failed(code: String, message: String) -> void:
@@ -380,7 +494,7 @@ func _find_main() -> Node:
 	return null
 
 
-func _start_ws_handoff(ws_url: String, character_id: int, session_token: String) -> void:
+func _start_ws_handoff(ws_url: String, character_id: int, session_token: String, zone: String = "tatooine") -> void:
 	# Toujours un WS local dédié sous LoginPanel (PROCESS_MODE_ALWAYS).
 	# Évite l'état busy/stuck du LbgWsClient de Main et les doubles connect.
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -402,9 +516,10 @@ func _start_ws_handoff(ws_url: String, character_id: int, session_token: String)
 		_status.text = "WS %s…" % ws_url
 		return
 
+	var z := zone if not zone.is_empty() else "tatooine"
 	_status.text = "WS %s…" % ws_url
-	print("[LoginPanel] connect_session %s char=%d" % [ws_url, character_id])
-	var err: int = ws.connect_session(ws_url, session_token, character_id, "tatooine")
+	print("[LoginPanel] connect_session %s char=%d zone=%s" % [ws_url, character_id, z])
+	var err: int = ws.connect_session(ws_url, session_token, character_id, z)
 	if err != OK:
 		_status.text = "WS connect err %s" % err
 		_btn_enter.disabled = false

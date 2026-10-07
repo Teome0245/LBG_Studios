@@ -20,6 +20,30 @@ const WSL_LBG_STUDIOS_PRIME =
 const WSL_NEW_MMO_PRIME =
   '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\new_mmo\\prime-client';
 
+/** Affiche un tampon ISO UTC (…Z) en heure locale (Europe/Paris ≈ +1/+2). */
+function formatStampLocal(stamp) {
+  const s = String(stamp || '').trim();
+  if (!s || s.startsWith('(')) return s;
+  const d = new Date(s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s) ? s : `${s}Z`);
+  if (Number.isNaN(d.getTime())) return s;
+  try {
+    return (
+      new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).format(d) + ' (Paris)'
+    );
+  } catch (_) {
+    return d.toLocaleString('fr-FR');
+  }
+}
+
 function resolvePrimeClientDir() {
   const fromEnv = (process.env.LBG_PRIME_CLIENT_DIR || '').trim();
   if (fromEnv && fs.existsSync(fromEnv)) {
@@ -1314,7 +1338,7 @@ async function checkGodotClientUpdates(profile) {
     mainWindow.webContents.send('patch-status', {
       status: 'ready',
       message:
-        `Prime à jour (${filesToUpdate.length} diff). Local ${localStamp} · référence ${remoteStamp}` +
+        `Prime à jour (${filesToUpdate.length} diff). Local ${formatStampLocal(localStamp)} · référence ${formatStampLocal(remoteStamp)}` +
         (sameStamp ? ' ✓' : ' (fichiers OK, tampon différent)'),
     });
     return;

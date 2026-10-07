@@ -3,7 +3,7 @@
 **Tickets** : Boîte §14 **C10** / **C11** · veille **SpaceMolt** ([`CONCURRENTS_IA_MMO_2026-10.md`](../../../docs/world/CONCURRENTS_IA_MMO_2026-10.md) §6)  
 **Date** : 2026-10-06 · **Owner** : Hermès (+ WD pour middleware tick live)  
 **Manuel** : [`AGENT_SKILL_MMO.md`](AGENT_SKILL_MMO.md) §3 / §7  
-**Statut** : design + stub dialogue `:8020` + **wire sidecar `:8791`** (GET catalog/guide/tick-matrix)
+**Statut** : design + stub dialogue `:8020` + wire sidecar `:8791` (GET catalog/guide/tick-matrix) + **TickGate live** (cooldown mutations → `429 tick_busy`) + bots Lia/Nix consomment catalog/guide
 
 ---
 
@@ -72,7 +72,19 @@ Pas de mutation via ces endpoints — HTTP **GET** uniquement.
 | `kind` | `"query"` \| `"mutation"` | Classification |
 | `action` | `string` | Nom d’action catalogue (`catalog`, `move_to`, …) |
 
-Erreurs mutation (cible middleware) : `429` / `tick_busy` si file pleine ; `400` si query déguisée en POST monde.
+Erreurs mutation (middleware) : `429` / `tick_busy` si cooldown actif ou file pleine ; `400` si query déguisée en POST monde.
+
+### TickGate live (`:8791`)
+
+| Élément | Détail |
+|---------|--------|
+| Module | `lbg_agents.agent_catalog.TickGate` + `http_post_tick_guard` |
+| Env | `LBG_TICK_GATE=1` · `LBG_TICK_COOLDOWN_S=8` · `LBG_TICK_QUEUE_MAX=1` |
+| Map path | `HTTP_POST_PATH_TO_ACTION` (`/v1/quests/*`, `/v1/craft/combine`, enqueue `move_to`…) |
+| Wire | `infra/scripts/wire_sidecar_c10_catalog_246.sh` + `patch_sidecar_c11_tick_gate.py` |
+| Bots | `quest_hub_bot_autonomy` : `GET /catalog`+`/guide`, outcome `tick_busy` sans retry immédiat |
+
+MVP : enforcement **cooldown par joueur** (file in-flight optionnelle via `try_acquire_mutation`).
 
 ### Table actions (hub Lost Heaven)
 
@@ -116,11 +128,10 @@ Implémentation machine : `lbg_agents.agent_catalog.classify_action` + `TICK_MAT
 
 ---
 
-## Hors scope Vague C
+## Hors scope (suite)
 
-- Middleware tick live / cooldown partagé bots (mutations)
-- Ouverture MCP Studio **publique** / SSE distant (stdio Cursor OK)
-- Mutations craft/hunt via ce stub
+- MCP Studio **publique** / SSE distant (stdio Cursor OK)
+- Mutations craft/hunt **implémentation gameplay** via ce module (gate seulement)
 - Changer le manuel C9 hors pointeur done
 
 ---
@@ -132,3 +143,4 @@ Implémentation machine : `lbg_agents.agent_catalog.classify_action` + `TICK_MAT
 - [x] Tests unitaires verts
 - [x] Mirror `:8791` — `GET /catalog|/guide|/tick-matrix` (+ alias `/v1/…`) via `lbg_agents.agent_catalog.http_get_dispatch` (2026-10-06)
 - [x] MCP Studio stdio — `tools/mcp_catalog_server` (2026-10-06)
+- [x] TickGate live — `http_post_tick_guard` + wire patch sidecar + bots catalog/tick_busy (2026-10-06)

@@ -37,6 +37,7 @@ var _reported_steps: Dictionary = {}  # "quest|step" -> true
 
 func _ready() -> void:
 	visible = panel_visible
+	_apply_hub_runtime_sidecar()
 	_apply_mouse_filter()
 	_apply_modal_style()
 	_ensure_ui()
@@ -50,6 +51,13 @@ func _ready() -> void:
 	_http_act.request_completed.connect(_on_act_done)
 	call_deferred("refresh_board")
 	call_deferred("_paint_objective_hud")
+
+
+func _apply_hub_runtime_sidecar() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	sidecar_base_url = HubRuntimeCfg.http_url(sidecar_base_url)
+	player_id = HubRuntimeCfg.player_name("Voyageur")
 
 func _process(delta: float) -> void:
 	if not panel_visible and _active.is_empty():

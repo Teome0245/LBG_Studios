@@ -30,6 +30,7 @@ const STUB_ITEMS: Array[Dictionary] = [
 func _ready() -> void:
 	visible = panel_visible
 	mouse_filter = Control.MOUSE_FILTER_IGNORE if not panel_visible else Control.MOUSE_FILTER_STOP
+	_apply_hub_runtime_sidecar()
 	_apply_modal_style()
 	_ensure_ui()
 	_http = HTTPRequest.new()
@@ -37,6 +38,13 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_http_done)
 	_fill_from_items(STUB_ITEMS)
 	call_deferred("refresh_inventory")
+
+
+func _apply_hub_runtime_sidecar() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	sidecar_base_url = HubRuntimeCfg.http_url(sidecar_base_url)
+	player_id = HubRuntimeCfg.player_name("Voyageur")
 
 func _apply_modal_style() -> void:
 	var sb := StyleBoxFlat.new()

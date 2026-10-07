@@ -5,6 +5,9 @@ extends Node
 @export var main_path: NodePath = NodePath("..")
 @export var config_path: String = "res://config/snapshot_paths.json"
 
+## Joueurs IA toujours mis à jour même en play SOE/WS (sinon figés à la connexion).
+const IA_BOT_NAMES: Array[String] = ["lia", "nix", "mira", "kael", "gally", "bot_ia"]
+
 var _em: EntityManager = null
 var _main: Node = null
 var _timer: float = 0.0
@@ -14,13 +17,17 @@ var _live: bool = false
 var _demo_loaded: bool = false
 var _live_until: float = 0.0
 var _managed_oids: Dictionary = {}
-var _paused: bool = false
+## Play mode : on ne coupe plus le poll — on filtre humain local / objets.
+var _play_mode: bool = false
 
 
 func set_paused(paused: bool) -> void:
-	_paused = paused
+	## Rétrocompat main.gd : « pause » = play mode (miroir IA reste actif).
+	_play_mode = paused
 	if paused:
-		print("[SnapshotBridge] pause (WS live)")
+		print("[SnapshotBridge] play mode — feed IA joueurs/PNJ actif (humain via SOE/WS)")
+	else:
+		print("[SnapshotBridge] lobby — feed complet")
 
 
 func _ready() -> void:
@@ -52,10 +59,28 @@ func notify_live_packet() -> void:
 func _is_network_live() -> bool:
 	return Time.get_ticks_msec() / 1000.0 < _live_until
 
+func _hub_runtime_active() -> bool:
+	const path := "res://config/hub_runtime.json"
+	if not FileAccess.file_exists(path):
+		return false
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return false
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	return raw is Dictionary and bool((raw as Dictionary).get("enabled", false))
+
+
 func _poll(_delta: float) -> void:
-	if _em == null or _paused:
+	if _em == null:
 		return
-	if _is_network_live():
+	# Spike ADR 0026 : entités uniquement via WS hub_runtime (évite cache Lia/Nix/Mira superposés).
+	if _hub_runtime_active():
+		return
+	# Avant play : si SOE live, laisser le réseau (comportement historique).
+	# En play : continuer le miroir pour Lia/Nix/PNJ (SOE ne porte pas toujours les bots).
+	var filter_ia := _play_mode
+	if not filter_ia and _is_network_live():
 		return
 	var payload: Dictionary = _read_zone_feed_json()
 	if payload.is_empty():
@@ -65,7 +90,7 @@ func _poll(_delta: float) -> void:
 		_demo_loaded = true
 	if payload.is_empty():
 		return
-	_apply_payload(payload)
+	_apply_payload(payload, filter_ia)
 
 func _read_zone_feed_json() -> Dictionary:
 	if not bool(_paths.get("prefer_zone_feed_json", true)):
@@ -153,7 +178,10 @@ func _npcs_from_snapshot(path: String) -> Array:
 		})
 	return out
 
-func _apply_payload(payload: Dictionary) -> void:
+func _is_ia_bot_name(name: String) -> bool:
+	return name.strip_edges().to_lower() in IA_BOT_NAMES
+
+func _apply_payload(payload: Dictionary, filter_ia: bool = false) -> void:
 	var ents: Variant = payload.get("entities", [])
 	if not ents is Array:
 		return
@@ -169,9 +197,16 @@ func _apply_payload(payload: Dictionary) -> void:
 		var eid := str(e.get("id", e.get("name", "")))
 		if eid == "":
 			continue
+		var label := str(e.get("name", eid))
+		# En play : uniquement joueurs IA + PNJ (pas le fantôme humain local).
+		if filter_ia:
+			if kind == "player":
+				if not _is_ia_bot_name(label):
+					continue
+			elif kind != "npc":
+				continue
 		var oid := _hash_id(eid)
 		seen_oids[oid] = true
-		var label := str(e.get("name", eid))
 		var col := _color_for_kind(kind, label)
 		var raw := Vector3(
 			float(e.get("x", 0.0)),
@@ -185,15 +220,23 @@ func _apply_payload(payload: Dictionary) -> void:
 			continue
 		if _em.get_entity(oid) == null:
 			_em.spawn(oid, pos, col, label, kind, eid)
+			# C3 : retirer le stub local figé si le vrai bot IA arrive via feed.
+			if kind == "player" and _is_ia_bot_name(label):
+				var stub := _em.get_entity(900001)
+				if stub != null and str(stub.label_text).strip_edges().to_lower() == label.strip_edges().to_lower():
+					_em.despawn(900001)
+					print("[SnapshotBridge] C3 stub remplacé par %s live" % label)
 		else:
 			var existing := _em.get_entity(oid)
 			if existing and existing.entity_key == "":
 				existing.set_entity_key(eid)
 			_em.move(oid, pos)
-	for oid: Variant in _managed_oids.keys():
-		if not seen_oids.has(oid):
-			_em.despawn(int(oid))
-			_managed_oids.erase(oid)
+	# Sync despawn seulement hors play (évite d'effacer le monde SOE).
+	if not filter_ia:
+		for oid: Variant in _managed_oids.keys():
+			if not seen_oids.has(oid):
+				_em.despawn(int(oid))
+				_managed_oids.erase(oid)
 	for oid: Variant in seen_oids.keys():
 		_managed_oids[oid] = true
 	if not _live:

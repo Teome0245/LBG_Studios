@@ -1,0 +1,34 @@
+[Unit]
+Description=LBG Hub Runtime spike (ADR 0026 — hors Core3, // sidecar)
+Documentation=https://github.com/Teome0245/LBG_Studios/blob/main/packages/cortex/tools/hub_runtime/README.md
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lbg
+Group=lbg
+WorkingDirectory=/opt/lbg-hub-runtime
+Environment=PYTHONUNBUFFERED=1
+Environment=LBG_HUB_RUNTIME_HOST=0.0.0.0
+Environment=LBG_HUB_RUNTIME_PORT=8797
+Environment=LBG_HUB_RUNTIME_TICK_HZ=10
+Environment=LBG_TICK_GATE=1
+Environment=PYTHONPATH=/opt/lbg-hub-runtime:/opt/LBG_IA_MMO/agents/src
+Environment=LBG_HUB_BUILDINGS_JSON=/opt/lbg-hub-runtime/data/lost_heaven_buildings.json
+Environment=LBG_HUB_PROPS_JSON=/opt/lbg-hub-runtime/data/lost_heaven_props.json
+Environment=LBG_HUB_QUESTS_JSON=/opt/lbg-hub-runtime/data/quests_lbg_templates.json
+Environment=LBG_HUB_STATE_DIR=/opt/lbg-hub-runtime/data
+Environment=LBG_HUB_WS_PUBLIC=ws://192.168.0.246:8787/ws
+Environment=LBG_HUB_ENFORCE_FENCE=1
+Environment=LBG_HUB_LLM_BASE_URL=http://192.168.0.110:11434/v1
+Environment=LBG_HUB_LLM_MODEL=huihui_ai/gemma-4-abliterated:e2b
+Environment=LBG_HUB_LLM_TIMEOUT=18
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+EnvironmentFile=-/etc/lbg-hub-runtime.env
+ExecStart=/opt/lbg-hub-runtime/.venv/bin/python -m tools.hub_runtime.server
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

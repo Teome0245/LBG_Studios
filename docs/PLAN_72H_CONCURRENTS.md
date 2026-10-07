@@ -7,7 +7,7 @@
 
 1. **J0** — Vague A docs/stubs (**fait** 2026-10-05) : C9, C2 schéma, C1 design, C4/C8 data. Mission A dry-run **closed_forced** 2026-10-06.
 2. **J1–J2** — Vague B **terminée** 2026-10-06 : C1+C2 MVP · C3 wire · deploy 140 · `SMOKE_C1_OK` · open_mission_board.
-3. **J2–J3** — Vague C **terminée** MVP 2026-10-06 (C5–C7, C10–C12). Wire `:8791` catalog/guide/tick-matrix **fait** 2026-10-06 ; MCP Studio reste optionnel.
+3. **J2–J3** — Vague C **terminée** MVP 2026-10-06 (C5–C7, C10–C12). Wire `:8791` catalog/guide/tick-matrix **fait** ; TickGate live (`429 tick_busy`) + bots catalog **fait** 2026-10-06 ; MCP Studio publique/SSE reste optionnel.
 4. **Parallèle O1** — D6 Compagnon reste gate stratégique ; ces vagues = **préparation O2/P3**, ne volent pas le focus Studio.
 5. **Exécuteurs docs** — `docs_only` Team écrit/vérifie markdown+JSON (Chœur ≠ sonde Core3) ; Vague B = Cline `.143`.
 

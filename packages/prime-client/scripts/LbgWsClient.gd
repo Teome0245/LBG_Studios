@@ -15,6 +15,7 @@ signal connecting(ws_url: String)
 signal handoff_progress(phase: String, detail: String)
 signal reconnecting(attempt: int, delay_s: float)
 signal echo_state_changed(payload: Dictionary)
+signal chat_received(from_name: String, text: String, from_oid: int, source: String)
 
 @export var proto: String = "lbg-ws/2"
 @export var echo_ws_stub: bool = true
@@ -102,6 +103,17 @@ func send_move(pos: Vector3, heading: float = 0.0, cell: int = 0) -> void:
 		"cell": cell,
 		"seq": _seq,
 	})
+
+
+func send_chat(text: String) -> void:
+	if not is_open():
+		return
+	var t := text.strip_edges()
+	if t.is_empty():
+		return
+	if t.length() > 200:
+		t = t.substr(0, 200)
+	_send({"type": "chat", "proto": proto, "text": t})
 
 
 func send_raw(payload: Dictionary) -> void:
@@ -350,7 +362,12 @@ func _dispatch(text: String) -> void:
 		"error":
 			error_message.emit(str(d.get("message", "error")))
 		"chat":
-			pass
+			chat_received.emit(
+				str(d.get("from", d.get("name", "?"))),
+				str(d.get("text", d.get("message", ""))),
+				int(d.get("oid", d.get("from_oid", 0))),
+				str(d.get("source", "human"))
+			)
 		"echo_state":
 			echo_state_changed.emit(d)
 		_:

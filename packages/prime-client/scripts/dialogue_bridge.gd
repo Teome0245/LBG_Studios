@@ -249,6 +249,9 @@ func _load_config() -> void:
 		"followup_placeholder": "Répondre au PNJ…",
 	}
 	if not FileAccess.file_exists(CONFIG_PATH):
+		_apply_hub_runtime_override()
+		var t0 := float(_cfg.get("timeout_sec", 60))
+		_http.timeout = maxf(10.0, t0)
 		return
 	var f := FileAccess.open(CONFIG_PATH, FileAccess.READ)
 	var raw: Variant = JSON.parse_string(f.get_as_text())
@@ -256,8 +259,34 @@ func _load_config() -> void:
 	if raw is Dictionary:
 		for k in (raw as Dictionary).keys():
 			_cfg[k] = (raw as Dictionary)[k]
+	_apply_hub_runtime_override()
 	var t := float(_cfg.get("timeout_sec", 60))
 	_http.timeout = maxf(10.0, t)
+
+
+func _apply_hub_runtime_override() -> void:
+	## Spike ADR 0026 : dialogue → hub_runtime sur .246 (pas Pilot 140 / 8020).
+	const hub_path := "res://config/hub_runtime.json"
+	if not FileAccess.file_exists(hub_path):
+		return
+	var hf := FileAccess.open(hub_path, FileAccess.READ)
+	if hf == null:
+		return
+	var raw: Variant = JSON.parse_string(hf.get_as_text())
+	hf.close()
+	if not raw is Dictionary:
+		return
+	var hub: Dictionary = raw
+	if not bool(hub.get("enabled", false)):
+		return
+	var http_url := str(hub.get("http_url", "")).strip_edges().rstrip("/")
+	if http_url.is_empty():
+		http_url = "http://192.168.0.246:8787"
+	_cfg["pilot_base_url"] = http_url
+	_cfg["invoke_path"] = "/v1/dialogue/invoke"
+	_cfg["timeout_sec"] = minf(float(_cfg.get("timeout_sec", 60)), 20.0)
+	_cfg["enabled"] = true
+	print("[DialogueBridge] hub_runtime → %s%s" % [http_url, _cfg["invoke_path"]])
 
 
 func _load_session() -> void:

@@ -35,13 +35,13 @@ def test_enqueue_walk_home_force(monkeypatch) -> None:
         calls.append({"player": getattr(player, "firstname", None), **kwargs})
         return {"ok": True, "outcome": "ok"}
 
-    monkeypatch.setenv("LBG_QUEST_HUB_BOT_MOVEMENT", "client")
+    monkeypatch.setenv("LBG_QUEST_HUB_BOT_MOVEMENT", "walk")
     player = SimpleNamespace(id="lia", firstname="Lia")
     snap = {"online": True, "x": 3520.0, "y": -4800.0, "z": 5.0, "zone": "tatooine"}
     out = enqueue_walk_home(player, snapshot=snap, enqueue=_enq, force=True)
     assert out is not None
     assert out.get("ok") is True
     assert out.get("reason") == "hub_walk_home"
-    assert out.get("movement") in {"walk", "client"}
+    assert out.get("movement") == "walk"
     assert calls and calls[0]["action"] == "move_to"
     assert calls[0]["message"] == "hub_walk_home"

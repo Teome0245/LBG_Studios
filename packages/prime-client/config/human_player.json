@@ -9,5 +9,5 @@
   "companion_stub_x": 4758.0,
   "companion_stub_y": 0.15,
   "companion_stub_z": -545.0,
-  "notes": "Packet UDP cn depuis prime_controller / SOE bridge → NetworkBridge:12345. C3: compagnon Nix nameplate (stub local si absent du feed)."
+  "notes": "Packet UDP cn depuis prime_controller / SOE bridge → NetworkBridge:12345. C3: compagnon Nix nameplate. SnapshotBridge garde le feed IA en play (mouvement visible)."
 }

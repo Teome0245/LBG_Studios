@@ -1,0 +1,12 @@
+# Godot import / export cache
+.godot/
+*.translation
+export_presets.cfg
+*.apk
+*.aab
+*.zip
+*.x86_64
+*.exe
+*.app
+/bin/
+/tools/godot*
