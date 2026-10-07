@@ -2,6 +2,18 @@
   "schema_version": 1,
   "lessons": [
     {
+      "id": "godot_g5_runtime_2026-10-07",
+      "date": "2026-10-07",
+      "tags": [
+        "o2",
+        "prime-hub",
+        "godot",
+        "core3-off"
+      ],
+      "summary": "Autorité joueur = prime-hub Godot .246:8787 (G5). Core3 + hub_runtime Python OFF. Feature jeu → prime-client/prime-hub. Doc: docs/RUNTIME_GODOT.md",
+      "pattern": "Ne pas relancer Core3/gateway/spike Python pour le chemin joueur ; watchdogs désactivés via stop_core3_and_spike_246.sh"
+    },
+    {
       "id": "lesson_smoke_block_close",
       "date": "2026-08-03",
       "agent_role": "qa",
@@ -166,6 +178,22 @@
         "~/.ssh/config Host lbg-wsl-10"
       ],
       "hit_count": 1
+    },
+    {
+      "id": "lesson_d45036e581",
+      "date": "2026-10-05",
+      "agent_role": "ops",
+      "context": "unknown: toujours en échec",
+      "failure_or_success": "failure",
+      "pattern": "job failed: étape condamnée",
+      "do_not_repeat": "Réutiliser experience_memory / lessons avant de replanifier le même objectif.",
+      "refs": [
+        "job:7a03c69890e94b97a4fc8e0b6b378a6f",
+        "trace:0a92bb1c786d408b85a515b937e41af0"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1791228778.5471218,
+      "last_seen": "2026-10-05"
     }
   ]
 }

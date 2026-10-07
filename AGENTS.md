@@ -1,7 +1,13 @@
 # AGENTS.md — LBG Studios
 
-Monorepo LBG Studios. Priorité : **O1 Studio** (`packages/cortex`) puis **O2 Jeu** (`packages/prime-client`).
-Voir `README.md`, `OBJECTIVES.md`, `docs/REGISTRE.md`. Réponses en français sauf demande contraire.
+Monorepo LBG Studios. Priorité : **O1 Studio** (`packages/cortex`) puis **O2 Jeu**.
+Voir `README.md`, `OBJECTIVES.md`, `docs/REGISTRE.md`, **`docs/RUNTIME_GODOT.md`**, `docs/PRIORITES_ACTUELLES.md`.
+Réponses en français sauf demande contraire.
+
+**Runtime joueur (G5, 2026-10-07)** : `packages/prime-hub` Godot headless sur **`.246:8787`** (HTTP+WS unifiés, peel natif).
+Client : `packages/prime-client` + Launchpad ≥2.1.4 (Prime only).
+**OFF** : Core3, gateway SOE, spike Python `hub_runtime` — script `packages/cortex/infra/scripts/stop_core3_and_spike_246.sh`.
+Feature jeu → `prime-client` / `prime-hub` (pas Core3, pas Python spike).
 
 ## Cursor Cloud specific instructions
 
@@ -17,8 +23,8 @@ Conséquences concrètes pour le développement local :
   un `import hybrid_proactive_agent` **au chargement** (idem `orchestrator/lbg_sa/memory_store.py`). Ce package legacy
   n'est pas dans le monorepo (gelé, cf. `docs/REGISTRE.md`), donc l'orchestrateur et les endpoints Pilot qui le proxient
   (chat/route, capabilities, jobs, team…) renvoient une erreur tant qu'il n'est pas fourni. Ne pas réintroduire le legacy.
-- **`packages/prime-client`** (client Godot 4.6) et **`packages/launchpad`** (launcher Electron, cible Windows) sont
-  **hors périmètre E2E ici** : prime-client nécessite le serveur « Prime » externe `192.168.0.246` ; launchpad se build sous Windows.
+- **`packages/prime-client`** (client Godot 4.6), **`packages/prime-hub`** (serveur hub headless) et **`packages/launchpad`**
+  sont **hors périmètre E2E Cloud** : runtime LAN `.246:8787` ; launchpad se build sous Windows.
 
 ### Environnement Python (Cortex)
 
@@ -40,8 +46,8 @@ Puis : `http://127.0.0.1:8000/pilot/` (UI), `GET /healthz`, `GET /v1/pilot/statu
 `GET /v1/pilot/status` affiche normalement `backend: ok` et `orchestrator: error` (attendu, cf. ci-dessus) en Cloud ;
 sur LAN 140, orchestrator + agents sont en général **ok**.
 
-Smoke surfaces LAN (Pilot 140, Cockpit/Orch `.100`, Core3 `:8792`) :
-`bash tools/smoke_lan_surfaces.sh --functional` — voir `docs/SMOKE_LAN.md`.
+Smoke surfaces LAN (Pilot 140, Cockpit/Orch `.100`, hub Godot `:8787`) :
+`bash tools/smoke_lan_surfaces.sh --functional` — voir `docs/SMOKE_LAN.md` + `docs/RUNTIME_GODOT.md`.
 
 ### Tests
 
