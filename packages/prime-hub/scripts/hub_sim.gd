@@ -375,25 +375,23 @@ func _maybe_ambient() -> void:
 		var bot = entities.get(eid)
 		if bot == null:
 			continue
+		# Flotte : pas d'annonce de POI / aller-retour — ambient rare, hors goal.
 		var last := float(_last_ambient.get(eid, 0.0))
-		if now - last < 50.0 + float(hash(eid) % 20):
+		if now - last < 180.0 + float(hash(eid) % 90):
 			continue
 		var near = null
 		var bp: Vector3 = bot["pos"]
 		for h in humans:
 			var hp: Vector3 = h["pos"]
-			if Vector2(hp.x - bp.x, hp.z - bp.z).length() <= 32.0:
+			if Vector2(hp.x - bp.x, hp.z - bp.z).length() <= 28.0:
 				near = h
 				break
 		if near == null:
 			continue
 		_last_ambient[eid] = now
-		var goal := str(bot.get("goal", ""))
-		var line: String
-		if not goal.is_empty():
-			line = "%s — vers %s." % [str(bot["name"]), goal]
-		else:
-			line = str(b.get("ambient", "{who}.")).replace("{who}", str(near["name"]))
+		var line := str(b.get("ambient", "")).replace("{who}", str(near["name"])).strip_edges()
+		if line.is_empty():
+			continue
 		enqueue_say(str(b["name"]), int(bot["oid"]), line, "ia")
 
 	for eid in entities.keys():
@@ -450,8 +448,7 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	# Arrivée finale seulement sans waypoint restant
 	if not bool(bot.get("has_waypoint", false)) and dist < 4.0:
 		bot["linger_until"] = now + _rng.randf_range(3.0, 7.0)
-		var goal := str(bot.get("goal", "hub"))
-		enqueue_say(str(bot["name"]), int(bot["oid"]), "%s — %s, j'y suis." % [str(bot["name"]), goal], "ia")
+		# Pas de « j'y suis / vers X » — les allers-retours ne polluent pas le chat
 		_assign_bot_goal(bot)
 		return
 	if dist < 1e-6:
