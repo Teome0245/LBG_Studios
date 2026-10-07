@@ -1523,13 +1523,86 @@ func _on_dialogue_suggestion_activated(move: Dictionary) -> void:
 		return
 	var action: Variant = move.get("action", {})
 	var action_name := ""
+	var action_dict: Dictionary = {}
 	if action is Dictionary:
-		action_name = str((action as Dictionary).get("name", "")).strip_edges()
+		action_dict = action
+		action_name = str(action_dict.get("name", "")).strip_edges()
 	if action_name == "open_mission_board":
 		if _mission_board and _mission_board.has_method("toggle"):
 			if not bool(_mission_board.get("visible")):
 				_mission_board.toggle()
 			print("[Main] C1 suggestion UI → open_mission_board")
+		return
+	if action_name == "trade_offer":
+		_try_trade_offer(
+			str(action_dict.get("sku_id", "")),
+			int(action_dict.get("offer_price", 0))
+		)
+		return
+
+
+func _try_trade_offer(sku_id: String, offer_price: int) -> void:
+	## C7 — négo Jax via hotbar suggestion dialogue.
+	if sku_id.strip_edges().is_empty():
+		_hotbar_feedback("Trade — sku manquant")
+		return
+	if not HubRuntimeCfg.enabled():
+		_hotbar_feedback("Trade — hub runtime off")
+		return
+	_ensure_salvage_http()
+	var player := HubRuntimeCfg.player_name("Voyageur")
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/trade/offer"
+	var body := JSON.stringify({
+		"player": player,
+		"vendor_id": "npc:core3_barman_jax",
+		"sku_id": sku_id,
+		"offer_price": offer_price,
+	})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if _salvage_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_salvage_http.cancel_request()
+	# Réutilise HTTPRequest salvage ; callback dédié via one-shot flag.
+	if _salvage_http.request_completed.is_connected(_on_salvage_http_done):
+		_salvage_http.request_completed.disconnect(_on_salvage_http_done)
+	if not _salvage_http.request_completed.is_connected(_on_trade_http_done):
+		_salvage_http.request_completed.connect(_on_trade_http_done)
+	_hotbar_feedback("Négociation Jax…")
+	var err := _salvage_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hotbar_feedback("Trade req_%d" % err)
+		_restore_salvage_http_callback()
+
+
+func _restore_salvage_http_callback() -> void:
+	if _salvage_http == null:
+		return
+	if _salvage_http.request_completed.is_connected(_on_trade_http_done):
+		_salvage_http.request_completed.disconnect(_on_trade_http_done)
+	if not _salvage_http.request_completed.is_connected(_on_salvage_http_done):
+		_salvage_http.request_completed.connect(_on_salvage_http_done)
+
+
+func _on_trade_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	_restore_salvage_http_callback()
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_hotbar_feedback("Trade réseau KO")
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_hotbar_feedback("Trade parse (%d)" % code)
+		return
+	if not bool(parsed.get("ok", false)):
+		var hint := str(parsed.get("hint", parsed.get("error", code)))
+		_hotbar_feedback("Jax refuse — %s" % hint)
+		if _dialogue_panel and _dialogue_panel.has_method("set_body_text"):
+			_dialogue_panel.set_body_text(str(parsed.get("hint", "Offre hors bornes.")))
+		return
+	var msg := str(parsed.get("message", "Marché conclu."))
+	_hotbar_feedback("%s (−%d Cr)" % [msg, int(parsed.get("price_paid", 0))])
+	if _dialogue_panel and _dialogue_panel.has_method("set_body_text"):
+		_dialogue_panel.set_body_text(msg)
+	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
+		inventory_panel.refresh_inventory()
 
 
 func _on_dialogue_bridge_busy(busy: bool) -> void:

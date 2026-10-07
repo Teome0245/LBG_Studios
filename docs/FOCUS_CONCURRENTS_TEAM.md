@@ -123,7 +123,7 @@ Mission veille concurrents Vague C — contrat agents SpaceMolt-style.
 | **C4** | `hub_events` + board `lh_scrap_fall_salvage` + `GET /v1/events/active` |
 | **C5** | `GET /v1/chronicle` + dialogue Scribe |
 | **C8** | `POST /v1/salvage` + hotbar `[1]` + craft schematics |
-| **C7** | suite — négo Jax bornée (`trade/offer`) |
+| **C7** | `POST /v1/trade/offer` + catalog Jax · suggestions dialogue |
 
 ## Surfaces humaines
 

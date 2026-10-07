@@ -2,7 +2,7 @@
 
 **Ticket** : Boîte §14 **C7** · Epitome  
 **Date** : 2026-10-06 · **Owner** : Dédale / Iris  
-**Statut** : design + stub data — **pas** LLM libre sur prix · **pas** Core3 live  
+**Statut** : **live prime-hub** `:8787` (2026-10-07) — **pas** LLM libre sur prix · **pas** Core3  
 **Canon** : [`AGENT_SKILL_MMO.md`](AGENT_SKILL_MMO.md) (`trade/offer`) · Bible V40–V54
 
 ---
@@ -11,7 +11,7 @@
 
 Un vendor hub accepte une **offre bornée** : delta prix + delta réputation, clampés. Pas de marchandage prose libre.
 
-Done MVP : 1 stub vendor JSON + contrat `trade/offer` lisible ; wire Godot / sidecar = backlog.
+Done MVP : stub JSON + **`POST /v1/trade/offer`** + suggestions dialogue Jax (client hotbar coups).
 
 ---
 

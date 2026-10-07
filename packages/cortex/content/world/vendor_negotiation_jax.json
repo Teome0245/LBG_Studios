@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "vendor:jax_perle_nego",
   "ticket": "C7",
-  "status": "stub",
+  "status": "live_prime_hub",
   "bible_ref": "docs/world/BIBLE_MMO.md#v40-v54",
   "bible_safe": true,
   "design_ref": "packages/cortex/docs/design_c7_vendor_negotiation.md",
@@ -54,5 +54,5 @@
     "outcome": "reject",
     "reason": "offer_out_of_bounds"
   },
-  "notes": "1 vendor hub MVP — pas Core3 live, pas LLM sur le prix."
+  "notes": "Live prime-hub : GET /v1/trade/catalog · POST /v1/trade/offer · data/vendor_negotiation_jax.json — pas LLM sur le prix."
 }

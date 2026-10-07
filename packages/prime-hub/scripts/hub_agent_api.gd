@@ -146,6 +146,8 @@ func _endpoints() -> Dictionary:
 		"events_active": "/v1/events/active",
 		"salvage": "POST /v1/salvage",
 		"chronicle": "/v1/chronicle?player=…",
+		"trade_catalog": "/v1/trade/catalog",
+		"trade_offer": "POST /v1/trade/offer",
 		"inventory": "/v1/inventory?player=…",
 		"bots": "/v1/bots",
 		"move_to": "POST /v1/bots/move_to",

@@ -25,7 +25,8 @@ const DEFAULT_MOVES := {
 		{"id": "move:daan_desert", "label": "Survivre au désert", "utterance": "Un conseil pour tenir hors des murs ?", "kind": "info"},
 	],
 	"npc:core3_barman_jax": [
-		{"id": "move:perle_boisson", "label": "Une boisson", "utterance": "Un verre, Jax — qu'est-ce que tu sers ce soir ?", "kind": "social"},
+		{"id": "move:perle_eau", "label": "Eau filtrée (8)", "utterance": "Une eau filtrée, prix affiché.", "kind": "ui", "action": {"name": "trade_offer", "sku_id": "drink:eau_filtree", "offer_price": 8}},
+		{"id": "move:perle_nego", "label": "Cactus à 22", "utterance": "Le Cactus Noir à 22 Cr ?", "kind": "ui", "action": {"name": "trade_offer", "sku_id": "drink:cactus_noir", "offer_price": 22}},
 		{"id": "move:perle_show", "label": "Spectacle ce soir", "utterance": "Il y a un spectacle à La Perle ce soir ?", "kind": "info"},
 	],
 	"npc:guide_quartier": [

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "vendor:jax_perle_nego",
+  "ticket": "C7",
+  "vendor_id": "npc:core3_barman_jax",
+  "display_name": "Jax Moro",
+  "hub": "lost_heaven",
+  "poi": "cantina",
+  "action": "trade/offer",
+  "bounds": {
+    "price_delta_pct_max": 15,
+    "price_delta_pct_max_low_rep": 8,
+    "reputation_delta_min": -5,
+    "reputation_delta_max": 5,
+    "low_reputation_threshold": 0,
+    "llm_price_forbidden": true
+  },
+  "catalog": [
+    {
+      "sku_id": "drink:cactus_noir",
+      "label": "Cactus Noir",
+      "list_price": 25,
+      "currency": "credits",
+      "item_id": "drink_cactus_noir"
+    },
+    {
+      "sku_id": "drink:eau_filtree",
+      "label": "Eau filtrée",
+      "list_price": 8,
+      "currency": "credits",
+      "item_id": "drink_eau_filtree"
+    }
+  ]
+}

@@ -133,12 +133,30 @@ curl -sS "$H/v1/quests/board?player=Voyageur" | jq '{n:(.quests|length), event:.
 curl -sS -X POST "$H/v1/salvage" -H 'Content-Type: application/json' \
   -d '{"player":"Voyageur","poi_id":"poi:lh_scrap_pile","x":6042,"z":-1065}' | jq '{ok,loot,event_boost}'
 curl -sS "$H/v1/chronicle?player=Voyageur" | jq '{title,line_count,lines:(.lines[:3])}'
+curl -sS "$H/v1/trade/catalog" | jq '{vendor:.display_name,n:(.catalog|length)}'
+curl -sS -X POST "$H/v1/trade/offer" -H 'Content-Type: application/json' \
+  -d '{"player":"Voyageur","sku_id":"drink:eau_filtree","offer_price":8}' | jq '{ok,outcome,price_paid,reputation}'
 ```
 
 ## P3 persona dialogue (hub)
 
 Chemin live client : `prime-client` → `POST http://192.168.0.246:8787/v1/dialogue/invoke` (`session_summary` + `history`).  
 Smoke C1 historique Pilot (`tools/smoke_c1_suggested_moves.sh` → `:8000`) = régression Python ; **vert produit** = `smoke_p3_hub_dialogue.sh`.
+
+## Chœur terrain (V50–V53)
+
+```bash
+bash tools/smoke_choeur_terrain.sh           # truth guard + probe hub + P3 si live
+bash tools/smoke_choeur_terrain.sh --skip-live
+```
+
+## P5a cour de chasse (hub)
+
+```bash
+bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → claim meute
+```
+
+Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).
 
 ## Voir aussi
 

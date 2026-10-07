@@ -61,6 +61,7 @@ rsync -az --delete \
   --exclude 'data/accounts.json' \
   --exclude 'data/players_state.json' \
   --exclude 'data/player_positions.json' \
+  --exclude 'data/hunt_yard_session.pkl' \
   "${HUB}/" "${REMOTE}:${REMOTE_DIR}/"
 
 ssh -o BatchMode=yes "${REMOTE}" "mkdir -p '${REMOTE_DIR}/data' '${REMOTE_DIR}/tools'"

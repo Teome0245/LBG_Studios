@@ -24,6 +24,7 @@ var _salvage_cd: Dictionary = {}  # player -> unix until
 var _rng := RandomNumberGenerator.new()
 var _recipes_by_id: Dictionary = {}
 var _chronicle_cfg: Dictionary = {}
+var _vendor_jax: Dictionary = {}
 
 
 func setup() -> void:
@@ -34,6 +35,7 @@ func setup() -> void:
 	_load_salvage()
 	_load_recipes()
 	_load_chronicle()
+	_load_vendor_jax()
 
 
 func attach_events(events_svc) -> void:
@@ -65,6 +67,13 @@ func _load_chronicle() -> void:
 	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("chronicle_scribe.json"))
 	if typeof(raw) == TYPE_DICTIONARY:
 		_chronicle_cfg = raw
+
+
+func _load_vendor_jax() -> void:
+	_vendor_jax.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("vendor_negotiation_jax.json"))
+	if typeof(raw) == TYPE_DICTIONARY:
+		_vendor_jax = raw
 
 
 func _ensure_session_log(p: Dictionary) -> Array:
@@ -393,10 +402,20 @@ func _backfill_prior_steps(done: Array, ordered: Array, reached_id: String) -> A
 	return out
 
 
-func progress(player: String, quest_id: String, step_id: String) -> Dictionary:
+func progress(player: String, quest_id: String, step_id: String, hunt_victory: bool = false) -> Dictionary:
 	var p := _player(player)
 	var qid := quest_id.strip_edges()
 	var sid := step_id.strip_edges()
+	# P5a — étape meute exige une victoire cour de chasse (sauf claim-quest).
+	if qid == "lh_hunt_chacal" and sid == "meute" and not hunt_victory:
+		return {
+			"ok": false,
+			"error": "hunt_required",
+			"quest_id": qid,
+			"step_id": sid,
+			"hint": "Victoire cour de chasse requise — POST /v1/hunt-yard/claim-quest après combat",
+			"source": "prime_hub",
+		}
 	for a in p["active"]:
 		if typeof(a) != TYPE_DICTIONARY or str(a.get("id", "")) != qid:
 			continue
@@ -426,6 +445,46 @@ func progress(player: String, quest_id: String, step_id: String) -> Dictionary:
 			"source": "prime_hub",
 		}
 	return {"ok": false, "error": "not_active", "quest_id": qid}
+
+
+func claim_hunt_quest(player: String, quest_id: String = "lh_hunt_chacal", hunt_yard = null) -> Dictionary:
+	## Valide l'étape « meute » après victoire hunt_yard.
+	if hunt_yard == null or not hunt_yard.has_method("snapshot"):
+		return {"ok": false, "error": "hunt_yard_unavailable", "source": "prime_hub"}
+	var snap: Dictionary = hunt_yard.snapshot()
+	if str(snap.get("status", "")) != "victory":
+		return {
+			"ok": false,
+			"error": "hunt_ongoing",
+			"hunt_status": snap.get("status"),
+			"tick": snap.get("tick"),
+			"kills": snap.get("kills"),
+			"heals": snap.get("heals"),
+			"hint": "Termine la cour de chasse (tick/run) avant de réclamer l'étape",
+			"source": "prime_hub",
+		}
+	# Accepte la quête si absente (bots / smoke).
+	var st := status(player)
+	var active = st.get("active", [])
+	var has := false
+	if typeof(active) == TYPE_ARRAY:
+		for a in active:
+			if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) == quest_id:
+				has = true
+				break
+	if not has:
+		var acc := accept(player, quest_id, "npc:core3_daan_oth")
+		if not bool(acc.get("ok")):
+			return acc
+	var result := progress(player, quest_id, "meute", true)
+	if bool(result.get("ok")):
+		result["hunt"] = {
+			"status": snap.get("status"),
+			"tick": snap.get("tick"),
+			"kills": snap.get("kills"),
+			"heals": snap.get("heals"),
+		}
+	return result
 
 
 func complete(player: String, quest_id: String) -> Dictionary:
@@ -712,4 +771,139 @@ func salvage_loot(player: String, poi_id: String = "", x: float = NAN, z: float 
 		"inventory": (p["inventory"] as Array).duplicate(true),
 		"hint": "Craft kit_reparation à l'atelier / panneau Talents (T)",
 		"source": "prime_hub",
+	}
+
+
+func _vendor_rep(p: Dictionary, vendor_id: String) -> int:
+	var reps = p.get("reputation", {})
+	if typeof(reps) != TYPE_DICTIONARY:
+		return 0
+	return int(reps.get(vendor_id, 0))
+
+
+func _set_vendor_rep(p: Dictionary, vendor_id: String, value: int) -> void:
+	if typeof(p.get("reputation")) != TYPE_DICTIONARY:
+		p["reputation"] = {}
+	(p["reputation"] as Dictionary)[vendor_id] = value
+
+
+func trade_catalog(vendor_id: String = "npc:core3_barman_jax") -> Dictionary:
+	if _vendor_jax.is_empty():
+		_load_vendor_jax()
+	if _vendor_jax.is_empty():
+		return {"ok": false, "error": "vendor_unconfigured"}
+	var vid := str(_vendor_jax.get("vendor_id", "npc:core3_barman_jax"))
+	if not vendor_id.is_empty() and vendor_id != vid:
+		return {"ok": false, "error": "unknown_vendor", "vendor_id": vendor_id}
+	return {
+		"ok": true,
+		"vendor_id": vid,
+		"display_name": str(_vendor_jax.get("display_name", "Jax Moro")),
+		"bounds": (_vendor_jax.get("bounds", {}) as Dictionary).duplicate(true),
+		"catalog": (_vendor_jax.get("catalog", []) as Array).duplicate(true),
+		"source": "prime_hub",
+		"ticket": "C7",
+	}
+
+
+func trade_offer(player: String, vendor_id: String, sku_id: String, offer_price: int) -> Dictionary:
+	## C7 — négo bornée Jax (pas de LLM sur le prix).
+	if _vendor_jax.is_empty():
+		_load_vendor_jax()
+	if _vendor_jax.is_empty():
+		return {"ok": false, "error": "vendor_unconfigured"}
+	var vid := str(_vendor_jax.get("vendor_id", "npc:core3_barman_jax"))
+	if not vendor_id.is_empty() and vendor_id != vid:
+		return {"ok": false, "error": "unknown_vendor", "vendor_id": vendor_id}
+	var sku := sku_id.strip_edges()
+	# Alias accent / underscore
+	if sku == "drink:eau_filtrée":
+		sku = "drink:eau_filtree"
+	var item: Dictionary = {}
+	for row in _vendor_jax.get("catalog", []):
+		if typeof(row) == TYPE_DICTIONARY and str(row.get("sku_id", "")) == sku:
+			item = row
+			break
+	if item.is_empty():
+		return {"ok": false, "error": "unknown_sku", "sku_id": sku_id}
+	var list_price := int(item.get("list_price", 0))
+	var offer := offer_price
+	if offer <= 0:
+		offer = list_price
+	var p := _player(player)
+	var rep := _vendor_rep(p, vid)
+	var bounds: Dictionary = _vendor_jax.get("bounds", {})
+	var max_pct := float(bounds.get("price_delta_pct_max", 15))
+	var low_th := int(bounds.get("low_reputation_threshold", 0))
+	if rep < low_th:
+		max_pct = float(bounds.get("price_delta_pct_max_low_rep", 8))
+	var delta_pct := 0.0
+	if list_price > 0:
+		delta_pct = (float(offer) - float(list_price)) / float(list_price) * 100.0
+	if absf(delta_pct) > max_pct + 0.01:
+		return {
+			"ok": false,
+			"error": "offer_out_of_bounds",
+			"reason": "offer_out_of_bounds",
+			"outcome": "reject",
+			"list_price": list_price,
+			"offer_price": offer,
+			"price_delta_pct": snappedf(delta_pct, 0.1),
+			"max_delta_pct": max_pct,
+			"reputation": rep,
+			"hint": "Jax refuse — reste dans ±%.0f %% du prix affiché" % max_pct,
+			"source": "prime_hub",
+		}
+	if int(p["credits"]) < offer:
+		return {
+			"ok": false,
+			"error": "insufficient_credits",
+			"credits": int(p["credits"]),
+			"offer_price": offer,
+			"hint": "Pas assez de crédits",
+			"source": "prime_hub",
+		}
+	p["credits"] = int(p["credits"]) - offer
+	var item_id := str(item.get("item_id", sku.replace(":", "_")))
+	var label := str(item.get("label", item_id))
+	_add_item(p, item_id, 1, label)
+	var rep_delta := 0
+	if offer < list_price:
+		rep_delta = 1
+	elif offer > list_price:
+		rep_delta = 1
+	var rmin := int(bounds.get("reputation_delta_min", -5))
+	var rmax := int(bounds.get("reputation_delta_max", 5))
+	rep_delta = clampi(rep_delta, rmin, rmax)
+	var new_rep := clampi(rep + rep_delta, -50, 50)
+	_set_vendor_rep(p, vid, new_rep)
+	_save_players()
+	log_session_event(
+		player,
+		"trade",
+		"Chez Jax : %s pour %d Cr (liste %d)." % [label, offer, list_price],
+		{"sku_id": sku, "price_paid": offer}
+	)
+	return {
+		"ok": true,
+		"outcome": "accept",
+		"vendor_id": vid,
+		"sku_id": sku,
+		"label": label,
+		"list_price": list_price,
+		"offer_price": offer,
+		"price_paid": offer,
+		"price_delta_pct": snappedf(delta_pct, 0.1),
+		"reputation": new_rep,
+		"reputation_delta": rep_delta,
+		"credits": int(p["credits"]),
+		"inventory": (p["inventory"] as Array).duplicate(true),
+		"commit_flags": {
+			"trade_sku": sku,
+			"price_paid": offer,
+			"reputation_delta": rep_delta,
+		},
+		"message": "Jax : marché conclu — %s." % label,
+		"source": "prime_hub",
+		"ticket": "C7",
 	}

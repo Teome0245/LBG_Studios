@@ -34,6 +34,7 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 | **C4** | `GET /v1/events/active` · board `lh_scrap_fall_salvage` | Event chute scrap au boot LAN ; rumeur Jax/Daan |
 | **C5** | `GET /v1/chronicle?player=…` | Journal session (quête/tip/salvage/craft) · Scribe « chronique » |
 | **C8** | `POST /v1/salvage` | Hotbar **`[1]`** près `poi:lh_scrap_pile` → loot → craft `kit_reparation` (**T**) |
+| **C7** | `GET /v1/trade/catalog` · `POST /v1/trade/offer` | Jax — boissons ±15 % (rep basse ±8 %) ; coups dialogue La Perle |
 | Quêtes | `progress_steps` + backfill | Terminer (J) seulement si étapes OK ; 400 métier ≠ « réseau KO » |
 
 Client : `HubRuntimeCfg.set_player_name` aligne inventaire/board/craft sur le perso connecté (ex. Teome).
@@ -77,7 +78,7 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 
 1. **Persona / compagnon en jeu** — rail P3 ([`PLAN_MMO_O2.md`](PLAN_MMO_O2.md))
 2. **Gameplay hub** — quêtes terrain POI, craft UX, dialogue riche
-3. **Combat / cour de chasse** — P5a déjà amorcé ; brancher sur `prime-hub`
+3. **Combat / cour de chasse** — P5a **sur `prime-hub`** (`/v1/hunt-yard*`, `tools/hunt_yard.py`) · smoke `tools/smoke_p5_hunt_yard_hub.sh`
 4. **Navmesh Godot** — remplacer A* grille AABB quand besoin
 5. **Anti-saccade (2026-10-07)** — client : lissage positions remote ; hub : budget A* `PATH_BUDGET_PER_TICK=2`
 6. **Anti-saccade v2** — gateway **non-bloquante** (plus de `OS.delay_usec` sur HTTP/WS accept) ; max 1 tick/frame ; `zone_state` ~10 Hz sans doublon `bots[]`

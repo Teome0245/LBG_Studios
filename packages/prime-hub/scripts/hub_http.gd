@@ -6,6 +6,7 @@ const HubAuthScript = preload("res://scripts/hub_auth.gd")
 const HubEconomyScript = preload("res://scripts/hub_economy.gd")
 const HubCatalogScript = preload("res://scripts/hub_catalog.gd")
 const HubDialogueScript = preload("res://scripts/hub_dialogue.gd")
+const HubHuntYardScript = preload("res://scripts/hub_hunt_yard.gd")
 
 @export var listen_host: String = "0.0.0.0"
 @export var listen_port: int = 8789
@@ -31,15 +32,20 @@ const TICK_MUTATION_PATHS := {
 	"/v1/salvage": "salvage/loot",
 	"/v1/salvage/loot": "salvage/loot",
 	"/v1/bots/move_to": "move_to",
+	"/v1/hunt-yard/run": "hunt/engage",
+	"/v1/hunt-yard/claim-quest": "hunt/engage",
+	"/v1/trade/offer": "trade/offer",
 }
 var _tick_last_ms: Dictionary = {}  # player_key -> msec
+var hunt_yard = null
 
 
-func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dialogue_svc = null) -> void:
+func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dialogue_svc = null, hunt_svc = null) -> void:
 	auth = auth_svc if auth_svc != null else HubAuthScript.new()
 	economy = economy_svc if economy_svc != null else HubEconomyScript.new()
 	catalog = catalog_svc if catalog_svc != null else HubCatalogScript.new()
 	dialogue = dialogue_svc if dialogue_svc != null else HubDialogueScript.new()
+	hunt_yard = hunt_svc if hunt_svc != null else HubHuntYardScript.new()
 	if auth_svc == null and auth.has_method("setup"):
 		auth.setup()
 	if economy_svc == null and economy.has_method("setup"):
@@ -342,12 +348,45 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if chb.has("cosmetic_title"):
 			cos2 = bool(chb.get("cosmetic_title"))
 		return _ok(economy.chronicle(str(chb.get("player", "Voyageur")), cos2))
+	if method == "GET" and path in ["/v1/trade/catalog", "/v1/trade"]:
+		return _ok(economy.trade_catalog(_query_param(query, "vendor", "npc:core3_barman_jax")))
+	if method == "POST" and path == "/v1/trade/offer":
+		var tb := _json_body(req_body)
+		var to: Dictionary = economy.trade_offer(
+			str(tb.get("player", "Voyageur")),
+			str(tb.get("vendor_id", "npc:core3_barman_jax")),
+			str(tb.get("sku_id", "")),
+			int(tb.get("offer_price", tb.get("price", 0)))
+		)
+		return _ok(_attach_tick_flags(to, path), 200 if bool(to.get("ok")) else 400)
 
 	# --- Dialogue ---
 	if method == "POST" and path in ["/v1/dialogue/invoke", "/v1/pilot/agent-dialogue/invoke"]:
 		var db := _json_body(req_body)
 		var dout: Dictionary = dialogue.invoke(db)
 		return _ok(dout, 200 if bool(dout.get("ok")) else 400)
+
+	# --- Cour de chasse P5a ---
+	if method == "GET" and path in ["/v1/hunt-yard", "/hunt-yard"]:
+		return _ok(hunt_yard.snapshot(), 200)
+	if method == "POST" and path == "/v1/hunt-yard/reset":
+		var hb := _json_body(req_body)
+		return _ok(hunt_yard.reset(int(hb.get("seed", 1))))
+	if method == "POST" and path == "/v1/hunt-yard/tick":
+		var hb2 := _json_body(req_body)
+		return _ok(hunt_yard.tick(int(hb2.get("ticks", 1))))
+	if method == "POST" and path == "/v1/hunt-yard/run":
+		var hb3 := _json_body(req_body)
+		var hout: Dictionary = hunt_yard.run(int(hb3.get("max_ticks", 120)))
+		return _ok(_attach_tick_flags(hout, path), 200 if bool(hout.get("ok", true)) else 400)
+	if method == "POST" and path == "/v1/hunt-yard/claim-quest":
+		var hb4 := _json_body(req_body)
+		var cout: Dictionary = economy.claim_hunt_quest(
+			str(hb4.get("player", "Voyageur")),
+			str(hb4.get("quest_id", "lh_hunt_chacal")),
+			hunt_yard
+		)
+		return _ok(_attach_tick_flags(cout, path), 200 if bool(cout.get("ok")) else 400)
 
 	# --- Bots / say (thin) ---
 	if method == "GET" and path == "/v1/bots":
