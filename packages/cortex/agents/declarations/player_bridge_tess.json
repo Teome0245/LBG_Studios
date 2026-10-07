@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "agent_id": "player_bridge_tess",
+  "display_name": "Pont Tess",
+  "role": "player_bridge",
+  "persona": "tess_bridge",
+  "account_login": "tess_bridge",
+  "mmo_player": "Tess",
+  "studio_member": false,
+  "description": "Pont In-Game ↔ Out-Game pour Tess. Login COMPTES=tess_bridge (persona out-game). Suggestions monde/dev → Studio.",
+  "capabilities": [
+    {"id": "play_hub", "mode": "mmo_persona", "autonomy": "L1"},
+    {"id": "suggest_world", "mode": "suggest", "autonomy": "L1"},
+    {"id": "suggest_dev", "mode": "suggest", "autonomy": "L1"},
+    {"id": "bridge_session_summary", "mode": "export", "autonomy": "L1"}
+  ],
+  "constraints": ["lan_only", "no_auto_world_mutation", "no_monorepo_write", "not_studio_staff", "bible_v40_v42"],
+  "consults_with": ["studio_player_ia_choeur"]
+}

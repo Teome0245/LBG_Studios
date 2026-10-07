@@ -17,7 +17,7 @@
       "name": "Nix",
       "enabled": true,
       "account_login": "nix_bridge",
-      "account_id": null,
+      "account_id": 9,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -27,7 +27,7 @@
         "can_suggest_world": true,
         "can_suggest_dev": true,
         "studio_member": false,
-        "note": "Cible login COMPTES=nix_bridge (legacy Bot_IA_2). Perso IG=Nix."
+        "note": "Login=nix_bridge (persona out-game). Perso IG=Nix."
       },
       "playstyle": "scout",
       "spawn": [
@@ -71,7 +71,7 @@
       "name": "Lia",
       "enabled": true,
       "account_login": "lia_bridge",
-      "account_id": null,
+      "account_id": 4,
       "admin_level": 1,
       "admin_label": "gm",
       "out_game": {
@@ -81,7 +81,7 @@
         "can_suggest_world": true,
         "can_suggest_dev": true,
         "studio_member": false,
-        "note": "Compte GM (ADR 0006 niveau 1) — animation terrain, pas god mode. Cible login COMPTES=lia_bridge (legacy Bot_IA). Perso IG=Lia."
+        "note": "Compte GM (ADR 0006 niveau 1). Login=lia_bridge (persona out-game)."
       },
       "playstyle": "scene",
       "spawn": [
@@ -125,7 +125,7 @@
       "name": "Mira",
       "enabled": true,
       "account_login": "mira_bridge",
-      "account_id": null,
+      "account_id": 11,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -135,7 +135,7 @@
         "can_suggest_world": true,
         "can_suggest_dev": true,
         "studio_member": false,
-        "note": "Cible login COMPTES=mira_bridge (legacy Bot_IA_3). Perso IG=Mira."
+        "note": "Login=mira_bridge (persona out-game). Perso IG=Mira."
       },
       "playstyle": "prospecteur",
       "spawn": [
@@ -178,7 +178,7 @@
       "name": "Kael",
       "enabled": true,
       "account_login": "kael_bridge",
-      "account_id": null,
+      "account_id": 13,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -188,7 +188,7 @@
         "can_suggest_world": true,
         "can_suggest_dev": true,
         "studio_member": false,
-        "note": "Cible login COMPTES=kael_bridge (legacy Bot_IA_4). Perso IG=Kael."
+        "note": "Login=kael_bridge (persona out-game). Perso IG=Kael."
       },
       "playstyle": "scout",
       "spawn": [
@@ -231,7 +231,7 @@
       "name": "Renn",
       "enabled": false,
       "account_login": "renn_bridge",
-      "account_id": null,
+      "account_id": 14,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -283,7 +283,7 @@
       "name": "Sola",
       "enabled": false,
       "account_login": "sola_bridge",
-      "account_id": null,
+      "account_id": 15,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -334,7 +334,7 @@
       "name": "Vex",
       "enabled": false,
       "account_login": "vex_bridge",
-      "account_id": null,
+      "account_id": 16,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -384,7 +384,7 @@
       "name": "Ori",
       "enabled": false,
       "account_login": "ori_bridge",
-      "account_id": null,
+      "account_id": 17,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -435,7 +435,7 @@
       "name": "Tess",
       "enabled": false,
       "account_login": "tess_bridge",
-      "account_id": null,
+      "account_id": 18,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -487,7 +487,7 @@
       "name": "Bram",
       "enabled": false,
       "account_login": "bram_bridge",
-      "account_id": null,
+      "account_id": 19,
       "admin_level": 0,
       "admin_label": "player",
       "out_game": {
@@ -532,5 +532,43 @@
       "account_login_legacy": null,
       "account_id_legacy": null
     }
-  ]
+  ],
+  "migration": {
+    "renamed_at": "2026-10-07",
+    "from": [
+      "Bot_IA",
+      "Bot_IA_2",
+      "Bot_IA_3",
+      "Bot_IA_4"
+    ],
+    "to": [
+      "lia_bridge",
+      "nix_bridge",
+      "mira_bridge",
+      "kael_bridge"
+    ],
+    "note": "Persos IG conservés (Lia/Nix/Mira/Kael) sous les nouveaux logins.",
+    "accounts_wave10_created": {
+      "at": "2026-10-07",
+      "logins": [
+        "renn_bridge",
+        "sola_bridge",
+        "vex_bridge",
+        "ori_bridge",
+        "tess_bridge",
+        "bram_bridge"
+      ],
+      "ids": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "admin_level": 0,
+      "enabled_in_hub": false,
+      "note": "Comptes COMPTES prêts ; hub enabled=false jusqu’à vague 10."
+    }
+  }
 }

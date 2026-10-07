@@ -645,10 +645,17 @@ def update_account(
     admin_level: int | None,
     active: int | None,
     password: str | None,
+    username: str | None = None,
 ) -> None:
     sets: list[str] = []
     params: list[Any] = []
 
+    if username is not None:
+        username = str(username).strip()
+        if not USERNAME_RE.match(username):
+            raise ValueError("username invalide (2–32 caractères alphanum + _)")
+        sets.append("username = %s")
+        params.append(username)
     if admin_level is not None:
         admin_level = normalize_admin_level(int(admin_level))
         if not 0 <= admin_level <= LBG_ADMIN_MAX:
@@ -673,6 +680,13 @@ def update_account(
     params.append(account_id)
     with connect_server(server_id) as conn:
         with conn.cursor() as cur:
+            if username is not None:
+                cur.execute(
+                    "SELECT account_id FROM accounts WHERE LOWER(username) = LOWER(%s) AND account_id <> %s",
+                    (username, account_id),
+                )
+                if cur.fetchone():
+                    raise ValueError(f"username déjà pris : {username}")
             cur.execute(f"UPDATE accounts SET {', '.join(sets)} WHERE account_id = %s", params)
             if cur.rowcount == 0:
                 raise ValueError("compte introuvable")
@@ -888,6 +902,7 @@ PAGE_HTML = """<!DOCTYPE html>
       <p id="selectedHint" style="color:var(--muted);font-size:.85rem">Cliquez sur un compte dans la liste.</p>
       <div class="grid">
         <div>
+          <label>Login (persona out-game) <input id="editUser" type="text" autocomplete="off" /></label>
           <label>Niveau LBG <select id="editAdmin"></select></label>
           <label>Actif <select id="editActive"><option value="1">Oui</option><option value="0">Non</option></select></label>
           <label>Nouveau mot de passe (vide = inchangé) <input id="editPass" type="password" /></label>
@@ -1054,6 +1069,7 @@ PAGE_HTML = """<!DOCTYPE html>
       if (!acc) return;
       document.getElementById("selectedHint").textContent =
         `${acc.server_label || acc.server_id} — compte #${acc.account_id} — ${acc.username}`;
+      document.getElementById("editUser").value = acc.username || "";
       document.getElementById("editAdmin").value = String(acc.admin_level);
       document.getElementById("editActive").value = acc.active ? "1" : "0";
       document.getElementById("editPass").value = "";
@@ -1096,6 +1112,7 @@ PAGE_HTML = """<!DOCTYPE html>
       try {
         saveToken();
         const body = {
+          username: document.getElementById("editUser").value.trim(),
           admin_level: +document.getElementById("editAdmin").value,
           active: +document.getElementById("editActive").value
         };
@@ -1258,6 +1275,7 @@ class AdminHandler(BaseHTTPRequestHandler):
                 int(data["admin_level"]) if "admin_level" in data else None,
                 int(data["active"]) if "active" in data else None,
                 str(data.get("password", "")) or None,
+                str(data["username"]).strip() if data.get("username") else None,
             )
             json_response(self, 200, {"ok": True})
         except ValueError as exc:

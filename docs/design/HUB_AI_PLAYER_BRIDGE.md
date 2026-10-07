@@ -26,7 +26,7 @@ Agent pont:    player_bridge_nix
 admin_level:   0–4 (ADR 0006) — privilèges en jeu (GM/mod/…)
 ```
 
-Legacy temporaire : `Bot_IA` / `Bot_IA_2`… stockés en `account_login_legacy` jusqu’à rename COMPTES.
+Migration **faite** 2026-10-07 : `Bot_IA*` → `*_bridge` (persos IG conservés). `account_login_legacy` = audit.
 
 ## Exemple cible
 
@@ -41,10 +41,22 @@ Humains : même grille admin ; pont hors-jeu optionnel.
 
 ## Ops COMPTES
 
-1. Créer (ou renommer) le login = persona out-game (`nix_bridge`, …).  
-2. Niveau LBG selon besoin (défaut **0** ; Lia = **1 gm** si animation terrain).  
-3. Perso IG créé sous ce compte = nom incarné (Nix…), **pas** le login.  
-4. `ai_players.json` : `account_login` = persona ; `enabled: true` ; redeploy.
+Comptes Prime `.246` (login = persona out-game) :
+
+| Login | ID | admin | Perso IG hub | enabled hub |
+|-------|----|-------|--------------|-------------|
+| `lia_bridge` | 4 | 1 gm | Lia | oui |
+| `nix_bridge` | 9 | 0 | Nix | oui |
+| `mira_bridge` | 11 | 0 | Mira | oui |
+| `kael_bridge` | 13 | 0 | Kael | oui |
+| `renn_bridge` | 14 | 0 | Renn | non (vague 10) |
+| `sola_bridge` | 15 | 0 | Sola | non |
+| `vex_bridge` | 16 | 0 | Vex | non |
+| `ori_bridge` | 17 | 0 | Ori | non |
+| `tess_bridge` | 18 | 0 | Tess | non |
+| `bram_bridge` | 19 | 0 | Bram | non |
+
+Nouveau joueur : login = persona · perso IG ≠ login · sync `ai_players.json` · `enabled: true` · redeploy.
 
 ## Suggestions
 
