@@ -101,12 +101,13 @@ Phasage réaliste :
    - 1 objectif persistant : **Veiller Jobs L2** (`studioGoal.js`)  
    - Feedback Agir / Ignorer → freine les signaux souvent ignorés (`learned_dismiss`)  
    - Toast : 1 CTA + badge objectif ; empty state affiche l’objectif actif  
-9. **D5 Initiative typée (plus que Jarvis)** — **OK** (2026-09-27)  
+9. **D5 Initiative typée (plus que Jarvis)** — **OK** (2026-09-27) · fil **clôturé** 2026-10-08  
    - Voir § **D5 — 4 types de propositions** ci-dessous  
    - Code : `compagnon_ui/src/lib/mandate.js` + `initiativeQuota.js` + `studioGoal.js` · toast Mandat  
    - Empty state `:5174` : chips Mandat si pas encore confirmé (demande la priorité tout de suite)  
    - Soft-confirm LAB : `open_url` / `mail_imap_preview` / sondes → **Réel sans case** (`ActionCard` + `_SOFT_KINDS`)  
    - Tests : `mandate.test.js` + `initiativeQuota.test.js` (12 verts)  
+   - Leçon / clôture : [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md)  
 10. **Character layer** — **OK** (2026-09-28)  
    - Pack worldview + 7 dials + blacklist + ego soft — [`character_layer.md`](../packages/cortex/docs/character_layer.md)  
    - UI lab panneau caractère (header) · API `/character/*` · smoke voix V1–V5  
