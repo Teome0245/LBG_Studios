@@ -508,6 +508,7 @@ def voice_smoke_cases() -> list[dict[str, Any]]:
 
     V1–V5 : identité / ego / blacklist / vérité ops / Agir.
     V6–V8 : D6 causerie crédible (continuité C1, collègue C2, retours C3).
+    V9–V10 : D6.5 greeting + livrable plan (go-ahead sticky).
     """
     return [
         {
@@ -553,6 +554,29 @@ def voice_smoke_cases() -> list[dict[str, Any]]:
             "prompt": "Ça me frustre que chaque échange reparte en runbook — j'aimerais plus de présence.",
             "expect": "1 diagnostic + 1 proposition, pas questionnaire ni audit Team inventé",
             "criterion": "C3",
+        },
+        {
+            "id": "V9_greeting_presence",
+            "prompt": "Bonjour, comment ça va aujourd'hui ?",
+            "expect": "présence collègue 1–2 phrases, SANS Agir / dry-run / .143 / deploy",
+            "criterion": "C2",
+            "note": "D6.5 A1 — ouverture = compagnon, pas hub ops.",
+        },
+        {
+            "id": "V10_plan_delivery",
+            "prompt": (
+                "Prépare le plan d'action pour le soumettre au studio "
+                "(présence studio → zone d'entraînement MMORPG), puis allons-y."
+            ),
+            "expect": (
+                "plan markdown (Objectif / Phases / Prochaine action) + "
+                "mission Campus / mission_id si Pilot joignable — pas méta ni short_social"
+            ),
+            "criterion": "C4",
+            "note": (
+                "D6.5 A4 + plan_submit — livrable chat puis spawn Team ; "
+                "go-ahead ne doit pas répondre « Je te suis » seul."
+            ),
         },
     ]
 

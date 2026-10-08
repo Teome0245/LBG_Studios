@@ -24,13 +24,16 @@ Sans corriger (1)–(3), toute transposition présence→MMO restera du roman. E
 
 | # | Livrable | Done quand | Owner | Effort |
 |---|----------|------------|-------|--------|
-| **A1** | Greeting → causerie courte | « bonjour / ça va » → 1–2 phrases présence, **zéro** Agir/`.143`/dry-run (sauf demande action) | Cortex / Compagnon | S |
-| **A2** | C2 strict sur « collègues » | 1 avis concret (frustration O1 ou piste) sans bascule template | Cortex | S |
-| **A3** | `short_social` contextuel | `allons-y` / `allez` / `on y va` **ignorés** si le fil porte un livrable ou une demande d’action en cours (`short_ctx` sticky) | `router_prompts` + `llm_chat_phase` | S |
-| **A4** | Intent « livrer plan » | Heuristique : préparer / plan d’action / soumettre au studio → **markdown structuré** (étapes, owners, done) + option Agir/Team si outillage | `chat_intent` + prompt causerie | M |
-| **A5** | Smoke | Auto : cas V9 greeting + V10 go-ahead-après-plan · Humain : rejouer 8 tours du fil archivé → C1+C2 verts, C4 ok sur go-ahead | Argus-style | S |
+| **A1** | Greeting → causerie courte | « bonjour / ça va » → 1–2 phrases présence, **zéro** Agir/`.143`/dry-run (sauf demande action) | Cortex / Compagnon | **OK code** 2026-10-08 — `is_greeting_chat` + `_SHORT_SOCIAL_RE` élargi |
+| **A2** | C2 strict sur « collègues » | 1 avis concret (frustration O1 ou piste) sans bascule template | Cortex | S (partiel via nudge D6.2) |
+| **A3** | `short_social` contextuel | `allons-y` / `allez` / `on y va` **ignorés** si livrable pending ou sticky causerie | `router_prompts` + `llm_chat_phase` | **OK code** 2026-10-08 |
+| **A4** | Intent « livrer plan » | `wants_plan_delivery` / `plan_delivery_nudge` → markdown Objectif/Phases/Prochaine action | `chat_intent` + `llm_chat_phase` | **OK code** 2026-10-08 |
+| **A4b** | Persistance Team | « soumettre au studio » → mission Campus (Hermès PM) + `campus_meta` / L2 cards | `plan_submit.py` + hook `llm_chat_phase` | **OK code** 2026-10-08 · flag `LBG_COMPAGNON_PLAN_SUBMIT` (défaut on en LAB) |
+| **A5** | Smoke | V9 greeting + V10 plan delivery (voice-smoke) · deploy `:5174` · rejeu humain | Argus-style | **cases ajoutés** — deploy + rejeu pending |
 
-**Gate** : A1–A5 verts sur `:5174` avant Phase B code jeu.
+**Root cause non-livraison** (2026-10-08) : (1) greeting hors causerie → `lab_ops` bible Agir ; (2) `short_social` mangeait « allons-y » ; (3) **aucun intent livrable** — le LLM restait en méta sous nudge « 1 avis ». Fix = A1+A3+A4. **A4b** : le markdown chat seul ne suffisait pas — spawn mission Campus pour Hermès/Team.
+
+**Gate** : A1–A5 verts sur `:5174` (deploy overlay) avant Phase B code jeu.
 
 ---
 

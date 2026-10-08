@@ -8,6 +8,54 @@ from __future__ import annotations
 import re
 
 
+# Greeting / social chaud — doit rester en causerie (pas bible ops Agir)
+_GREETING_CHAT_RE = re.compile(
+    r"(?i)^\s*("
+    r"(?:bonjour|salut|hello|hey|coucou|bonsoir)\b|"
+    r"comment\s+(?:(?:ça|ca)\s+)?va\b|"
+    r"(?:ça|ca)\s+va\b|"
+    r"(?:bien\s+)?merci\b.{0,40}\bet\s+toi\b|"
+    r"et\s+toi\s*\??\s*$|"
+    r"comment\s+vas[- ]?tu\b"
+    r")"
+)
+
+# Demande de livrable plan / démarrage travail (pas du social vide)
+_PLAN_DELIVERY_RE = re.compile(
+    r"(?i)\b("
+    r"plan\s+d['\u2019 ]?action|"
+    r"pr[ée]pare(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"r[ée]dige(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"structure(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"formalise(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"soumet(?:tre)?\s+(?:au\s+)?studio|"
+    r"livr(?:e|er)\s+(?:un\s+|le\s+)?plan|"
+    r"commence(?:r)?\s+[àa]\s+travaill|"
+    r"commence(?:r)?\s+dessus|"
+    r"travaill(?:e|er)\s+dessus|"
+    r"fais[- ]?moi\s+(?:un\s+)?plan|"
+    r"propose(?:r)?\s+(?:un\s+)?plan"
+    r")\b"
+)
+
+_GO_AHEAD_RE = re.compile(
+    r"(?i)^\s*("
+    r"allons[\s-]?y|allez(?:[\s-]?y)?|"
+    r"on\s+y\s+va|on\s+y\s+est|"
+    r"go\s*!+|c['\u2019]?est\s+parti|"
+    r"ok\s+(?:go|vas[- ]?y)|vas[- ]?y"
+    r")[\s!.?,…]*$"
+)
+
+_PENDING_WORK_RE = re.compile(
+    r"(?i)\b("
+    r"plan\s+d['\u2019 ]?action|pr[ée]pare(?:r)?|r[ée]dige(?:r)?|"
+    r"soumet(?:tre)?|livr(?:e|able)|commence(?:r)?|travaill(?:e|er)\s+dessus|"
+    r"prototyp|formalise|structure(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"fais[- ]?moi\s+(?:un\s+)?plan|propose(?:r)?\s+(?:un\s+)?plan"
+    r")\b"
+)
+
 # Causerie / identité — ne doit JAMAIS partir en team_route / agent.fallback
 _IDENTITY_CHAT_RE = re.compile(
     r"(?i)("
@@ -117,6 +165,65 @@ _BROAD_AUDIT_RE = re.compile(
 )
 
 
+def _ctx_text(item: object) -> str:
+    if isinstance(item, dict):
+        return str(item.get("content") or item.get("prompt") or item.get("text") or "")
+    return str(item or "")
+
+
+def is_greeting_chat(prompt: str) -> bool:
+    """True si ouverture sociale / greeting (doit sentir compagnon, pas hub ops)."""
+    text = (prompt or "").strip()
+    if not text or len(text) > 120:
+        return False
+    if _OPS_OVERRIDE_RE.search(text):
+        return False
+    return bool(_GREETING_CHAT_RE.search(text))
+
+
+def wants_plan_delivery(prompt: str) -> bool:
+    """True si l'humain demande un plan / livrable utilisable (pas de méta vide)."""
+    text = (prompt or "").strip()
+    if not text or len(text) > 500:
+        return False
+    return bool(_PLAN_DELIVERY_RE.search(text))
+
+
+def is_go_ahead(prompt: str) -> bool:
+    """True si go-ahead court (« allons-y ») — peut signifier « livre / enchaîne »."""
+    text = (prompt or "").strip()
+    if not text or len(text) > 40:
+        return False
+    return bool(_GO_AHEAD_RE.match(text))
+
+
+def has_pending_work(short_ctx: list | None = None) -> bool:
+    """True si le fil récent porte une demande de plan / travail (sticky livraison)."""
+    if not short_ctx:
+        return False
+    for item in list(short_ctx)[-8:]:
+        role = ""
+        if isinstance(item, dict):
+            role = str(item.get("role") or "").lower()
+        chunk = _ctx_text(item).strip()
+        if not chunk:
+            continue
+        if role in ("assistant", "ai", "compagnon"):
+            continue
+        if wants_plan_delivery(chunk) or _PENDING_WORK_RE.search(chunk):
+            return True
+    return False
+
+
+def wants_deliverable_turn(prompt: str, short_ctx: list | None = None) -> bool:
+    """True → ce tour doit produire un artefact (plan) plutôt qu'un short_social / méta."""
+    if wants_plan_delivery(prompt):
+        return True
+    if is_go_ahead(prompt) and has_pending_work(short_ctx):
+        return True
+    return False
+
+
 def is_companion_chat(prompt: str) -> bool:
     """True si message = causerie / identité / exploration Compagnon (pas d'ops)."""
     text = (prompt or "").strip()
@@ -124,6 +231,10 @@ def is_companion_chat(prompt: str) -> bool:
         return False
     if _OPS_OVERRIDE_RE.search(text):
         return False
+    if is_greeting_chat(text):
+        return True
+    if wants_plan_delivery(text):
+        return True
     return bool(_IDENTITY_CHAT_RE.search(text) or _EXPLORATORY_CHAT_RE.search(text))
 
 
@@ -134,13 +245,9 @@ def wants_exploratory_chat(prompt: str) -> bool:
         return False
     if _AUDIT_CUE_RE.search(text) and _STUDIO_SCOPE_RE.search(text):
         return False
+    if is_greeting_chat(text) or wants_plan_delivery(text):
+        return True
     return bool(_EXPLORATORY_CHAT_RE.search(text) or _IDENTITY_CHAT_RE.search(text))
-
-
-def _ctx_text(item: object) -> str:
-    if isinstance(item, dict):
-        return str(item.get("content") or item.get("prompt") or item.get("text") or "")
-    return str(item or "")
 
 
 def wants_sticky_causerie(

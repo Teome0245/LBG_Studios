@@ -145,7 +145,7 @@ Phasage réaliste :
 | **D6.2c** | Campus conceptuel ≠ Team live (`team_routing`) + rôles Compagnon/Lyra dans prompt causerie ; Pilot 502 = `lbg-backend` / `pydantic-settings` | **OK** (2026-10-02) |
 | **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
 | **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
-| **D6.5** | Greeting causerie + `short_social` sticky + intent livrer plan (suite smoke humain) | **plan** — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) Phase A · archive [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) |
+| **D6.5** | Greeting + sticky go-ahead + livrer plan + **persist Team** (`plan_submit` → mission Campus) | **code** 2026-10-08 — A1/A3/A4/A4b · V9/V10 · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) · [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) |
 
 ### Ops Agir / Pilot (rappel 2026-10-02)
 

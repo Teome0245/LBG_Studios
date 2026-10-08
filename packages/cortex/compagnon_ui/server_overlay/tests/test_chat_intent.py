@@ -36,6 +36,37 @@ class ChatIntentTests(unittest.TestCase):
             self.assertTrue(ci.is_companion_chat(p), p)
             self.assertTrue(ci.wants_exploratory_chat(p), p)
 
+    def test_greeting_causerie(self) -> None:
+        for p in (
+            "Bonjour, comment ça va aujourd'hui ?",
+            "salut",
+            "bien merci, et toi ?",
+            "ça va ?",
+        ):
+            self.assertTrue(ci.is_greeting_chat(p), p)
+            self.assertTrue(ci.is_companion_chat(p), p)
+            self.assertTrue(ci.wants_sticky_causerie(p), p)
+
+    def test_plan_delivery_intent(self) -> None:
+        self.assertTrue(
+            ci.wants_plan_delivery(
+                "tu pourrais préparer le plan d'action pour le soumettre au studio, "
+                "et commencer à travailler dessus ?"
+            )
+        )
+        self.assertTrue(ci.is_go_ahead("allons y"))
+        self.assertTrue(ci.is_go_ahead("Allons-y."))
+        ctx = [
+            {
+                "role": "user",
+                "content": "prépare le plan d'action pour le studio et commence",
+            },
+            {"role": "assistant", "content": "Je peux structurer…"},
+        ]
+        self.assertTrue(ci.has_pending_work(ctx))
+        self.assertTrue(ci.wants_deliverable_turn("allons y", ctx))
+        self.assertFalse(ci.wants_deliverable_turn("allons y", None))
+
     def test_ops_false(self) -> None:
         for p in (
             "team: status campus",
@@ -78,6 +109,44 @@ class ChatIntentTests(unittest.TestCase):
         self.assertIn("avis", causerie.lower())
         self.assertIn("hypoth", causerie.lower())
         self.assertEqual(rp.lab_short_ctx_cap(), 6)
+
+    def test_d65_short_social_and_plan_nudge(self) -> None:
+        import router_prompts as rp  # noqa: E402
+
+        # A1 — greeting chaud, pas ops
+        greet = rp.short_social_reply("Bonjour, comment ça va aujourd'hui ?")
+        self.assertIsNotNone(greet)
+        self.assertNotRegex(greet or "", r"(?i)agir|dry-run|\.143|deploy")
+        self.assertIn("écoute", (greet or "").lower())
+
+        # A3 — allons-y après demande de plan → pas de short_social
+        work_ctx = [
+            {
+                "role": "user",
+                "content": "prépare le plan d'action pour le soumettre au studio",
+            },
+            {"role": "assistant", "content": "Je peux structurer…"},
+        ]
+        self.assertIsNone(rp.short_social_reply("allons y", short_ctx=work_ctx))
+        # Sans contexte : short_social OK
+        alone = rp.short_social_reply("allons y", short_ctx=None)
+        self.assertEqual(alone, "Allons-y. Je te suis.")
+
+        # A4 — nudge livrable
+        pn = rp.plan_delivery_nudge(
+            "tu pourrais préparer le plan d'action pour le soumettre au studio",
+            lab=True,
+        )
+        self.assertIn("livrable", pn.lower())
+        self.assertIn("markdown", pn.lower())
+        self.assertEqual(
+            rp.plan_delivery_nudge("allons y", lab=True, short_ctx=work_ctx).lower().count(
+                "livrable"
+            ),
+            1,
+        )
+        self.assertEqual(rp.plan_delivery_nudge("allons y", lab=True, short_ctx=None), "")
+        self.assertEqual(rp.plan_delivery_nudge("prépare un plan", lab=False), "")
 
     def test_openclaw_not_on_causerie_evoluer(self) -> None:
         import openclaw_markers as oc  # noqa: E402

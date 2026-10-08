@@ -25,6 +25,28 @@ from src.services.routing_availability import (
 from src.observability import log_exception_throttled
 
 
+async def _maybe_attach_plan_submit(
+    result: dict,
+    *,
+    prompt: str,
+    short_ctx: list,
+    lab_mode: bool,
+) -> dict:
+    """D6.5 — persiste le plan markdown en mission Campus si soumettre au studio."""
+    try:
+        from src.services.plan_submit import attach_team_plan_if_needed
+
+        out = await attach_team_plan_if_needed(
+            result, prompt=prompt, short_ctx=short_ctx, lab=lab_mode
+        )
+        return out if isinstance(out, dict) else result
+    except Exception as e:
+        logging.getLogger("lbg.router.plan_submit").warning(
+            "plan_submit attach failed (best-effort): %s", e
+        )
+        return result
+
+
 async def run_llm_chat_phase(
     router: Any,
     *,
@@ -44,8 +66,9 @@ async def run_llm_chat_phase(
     """
     logger = logging.getLogger("lbg.router.dispatch")
 
-    # Petites phrases sociales : réponse fixe (évite hang LLM)
-    fixed = short_social_reply(prompt)
+    # Petites phrases sociales : réponse fixe (évite hang LLM).
+    # D6.5 : short_ctx passé — go-ahead sticky / livrable ne short-circuite pas.
+    fixed = short_social_reply(prompt, short_ctx=short_ctx)
     if fixed is not None:
         out = router.normalize_llm(fixed, "short_social", "local", latency=0.0)
         if isinstance(out, dict):
@@ -126,6 +149,16 @@ async def run_llm_chat_phase(
             causerie_nudge = ""
     except Exception:
         causerie_nudge = ""
+
+    # D6.5 — livrable plan (anti-méta) ; prioritaire sur le nudge causerie générique
+    try:
+        from src.services.router_prompts import plan_delivery_nudge
+
+        plan_nudge = plan_delivery_nudge(prompt, lab=lab_mode, short_ctx=short_ctx)
+        if plan_nudge:
+            causerie_nudge = plan_nudge
+    except Exception:
+        pass
 
     # Couche Character (worldview + dials + ego soft) — best-effort
     # Causerie : dials + ego seulement, pas le mur worldview/ops catchphrases
@@ -415,7 +448,12 @@ async def run_llm_chat_phase(
             prompt,
             model=selected_model,
         )
-        return router.normalize_llm(raw, selected_model, "local", latency=0.0)
+        local_out = router.normalize_llm(raw, selected_model, "local", latency=0.0)
+        if isinstance(local_out, dict):
+            return await _maybe_attach_plan_submit(
+                local_out, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
+            )
+        return local_out
 
     result = None
 
@@ -557,6 +595,11 @@ async def run_llm_chat_phase(
 
         raw = await fg(messages, fm)
         result = router.normalize_llm(raw, fm, fp, latency=0.0)
+
+    if isinstance(result, dict):
+        result = await _maybe_attach_plan_submit(
+            result, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
+        )
 
     await log_request(
         prompt,

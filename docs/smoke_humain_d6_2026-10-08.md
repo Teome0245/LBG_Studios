@@ -35,10 +35,15 @@
 
 ## Gaps à traiter (input plan)
 
-1. **Greeting → causerie** : « bonjour / ça va » ne doit pas charger le prompt ops / Agir.  
-2. **C2 strict** : « collègues du projet » → 1 avis concret, pas seulement bascule de mode.  
-3. **`short_social` vs go-ahead** : `allons-y` / `allez` / `on y va` ne doivent **pas** short-circuiter un fil où un livrable ou une action est en cours (contexte sticky).  
-4. **Délivrance collègue** : « prépare le plan / soumets au studio / commence » → artefact structuré (markdown plan) + proposition Agir/Team si outillage, pas roman méta.
+1. **Greeting → causerie** : « bonjour / ça va » ne doit pas charger le prompt ops / Agir. → **fixé D6.5 A1** (`is_greeting_chat` + short_social élargi).  
+2. **C2 strict** : « collègues du projet » → 1 avis concret, pas seulement bascule de mode. → partiel (nudge D6.2).  
+3. **`short_social` vs go-ahead** : `allons-y` ne short-circuite plus si livrable pending / sticky. → **fixé D6.5 A3**.  
+4. **Délivrance collègue** : intent `wants_plan_delivery` + `plan_delivery_nudge` → markdown. → **fixé D6.5 A4**.  
+5. **Persistance écosystème** : « soumettre au studio » → `plan_submit` spawn mission Campus (Hermès). → **fixé D6.5 A4b**.
+
+### Root cause non-livraison (diag 2026-10-08)
+
+Pas de canal « artefact » : le tour restait en **causerie sticky** avec nudge « 1 avis », le petit modèle produisait de la **méta** (« je peux structurer… »), puis « allons-y » tombait dans **`short_social`** → « Je te suis » sans jamais écrire le plan. L’écosystème (Team / Agir) n’était pas non plus déclenché faute d’intent livrable explicite. **A4b** branche le markdown sur `POST …/campus/mission` quand l’humain demande la soumission studio.
 
 ---
 

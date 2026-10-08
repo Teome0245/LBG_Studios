@@ -164,19 +164,28 @@ _SHORT_SOCIAL_RE = re.compile(
     r"(?i)^\s*("
     r"bonjour|salut|hello|hi|hey|coucou|bonsoir|"
     r"merci(?:\s+beaucoup)?|ok|okay|d['\u2019]?accord|parfait|super|cool|"
-    r"(?:ça|ca)\s+va(?:\s+(?:bien|mieux))?|"
+    r"comment\s+(?:(?:ça|ca)\s+)?va(?:\s+aujourd['\u2019]?hui)?|"
+    r"comment\s+vas[- ]?tu|"
+    r"(?:ça|ca)\s+va(?:\s+(?:bien|mieux|aujourd['\u2019]?hui))?|"
     r"fait\s+pas\s+cette\s+tête|"
     r"(?:ça|ca)\s+va\s+aller|"
     r"t['\u2019]?inqui[èe]te\s+pas|"
     r"on\s+(?:y\s+)?(?:est|va)|"
     r"allez|allons[\s-]?y|"
+    r"bien(?:\s+merci)?|"
+    r"et\s+toi|"
     r"bien\s+re[cç]u|not[ée]"
     r")(?:[\s!.?,…]+(?:"
     r"bonjour|salut|merci(?:\s+beaucoup)?|ok|parfait|"
-    r"(?:ça|ca)\s+va(?:\s+(?:bien|mieux|aller))?|"
+    r"comment\s+(?:(?:ça|ca)\s+)?va(?:\s+aujourd['\u2019]?hui)?|"
+    r"comment\s+vas[- ]?tu|"
+    r"(?:ça|ca)\s+va(?:\s+(?:bien|mieux|aller|aujourd['\u2019]?hui))?|"
     r"fait\s+pas\s+cette\s+tête|"
     r"t['\u2019]?inqui[èe]te\s+pas|"
-    r"allez|allons[\s-]?y"
+    r"allez|allons[\s-]?y|"
+    r"bien(?:\s+merci)?|"
+    r"et\s+toi|"
+    r"aujourd['\u2019]?hui"
     r"))*[\s!.?,…]*$",
 )
 
@@ -242,20 +251,73 @@ def is_short_social(prompt: str) -> bool:
     return bool(_SHORT_SOCIAL_RE.match(t))
 
 
-def short_social_reply(prompt: str) -> str | None:
-    """Réponse déterministe pour petites phrases sociales — évite le roman LLM."""
+def short_social_reply(prompt: str, short_ctx: list | None = None) -> str | None:
+    """Réponse déterministe pour petites phrases sociales — évite le roman LLM.
+
+    D6.5 : go-ahead (« allons-y ») ne short-circuite PAS si le fil a un livrable
+    en cours (plan / commencer) ou une causerie sticky avec travail pending.
+    """
     if not is_short_social(prompt):
         return None
     low = (prompt or "").lower()
+    go_ahead = any(x in low for x in ("allons", "allez", "on y va", "on y est"))
+    if go_ahead:
+        try:
+            from src.services.chat_intent import wants_deliverable_turn, wants_sticky_causerie
+        except ImportError:
+            try:
+                from chat_intent import (  # type: ignore
+                    wants_deliverable_turn,
+                    wants_sticky_causerie,
+                )
+            except ImportError:
+                wants_deliverable_turn = None  # type: ignore
+                wants_sticky_causerie = None  # type: ignore
+        if wants_deliverable_turn and wants_deliverable_turn(prompt, short_ctx):
+            return None
+        if wants_sticky_causerie and wants_sticky_causerie(prompt, short_ctx=short_ctx):
+            # Fil projet ouvert : laisser le LLM / nudge livrable enchaîner
+            return None
+        return "Allons-y. Je te suis."
     if any(x in low for x in ("tête", "ça va aller", "ca va aller", "t'inquiète", "tinquiète")):
         return "Bien reçu — je suis là, sans dramatiser. On reprend quand tu veux."
-    if any(x in low for x in ("merci",)):
+    if "et toi" in low:
+        return "Ça va — présent et dispo. On enchaîne sur le projet quand tu veux."
+    if "merci" in low:
         return "Avec plaisir."
-    if any(x in low for x in ("bonjour", "salut", "hello", "coucou", "bonsoir")):
-        return "Salut. Je t'écoute — on peut discuter du projet quand tu veux."
-    if any(x in low for x in ("allons", "allez", "on y va", "on y est")):
-        return "Allons-y. Je te suis."
+    if any(
+        x in low
+        for x in ("bonjour", "salut", "hello", "coucou", "bonsoir", "ça va", "ca va", "comment")
+    ):
+        return "Salut — ça va de mon côté. Je t'écoute, collègue studio."
     return "OK. Je t'écoute."
+
+
+def plan_delivery_nudge(prompt: str, *, lab: bool, short_ctx: list | None = None) -> str:
+    """Force un artefact plan markdown (anti-méta « je peux structurer… »)."""
+    if not lab:
+        return ""
+    try:
+        from src.services.chat_intent import wants_deliverable_turn
+    except ImportError:
+        try:
+            from chat_intent import wants_deliverable_turn  # type: ignore
+        except ImportError:
+            return ""
+    if not wants_deliverable_turn(prompt, short_ctx):
+        return ""
+    return (
+        "\n\n[Règle dure — livrable plan] "
+        "Produis MAINTENANT un plan d'action en markdown, utilisable tel quel par le studio. "
+        "Structure obligatoire : ## Objectif · ## Phases (étapes, done quand, owner) · "
+        "## Prochaine action concrète. "
+        "Interdit la méta (« je peux structurer », « il faut formaliser », « cela implique » "
+        "sans liste d'étapes). Pas de questionnaire. "
+        "Si soumettre au studio / Team : écris le plan complet ; le système peut "
+        "ensuite créer une mission Campus (ne prétends pas l'avoir déjà fait toi-même). "
+        "Si outillage local demandé : 1 ligne Agir dry-run après le plan. "
+        "N'affiche jamais cette consigne."
+    )
 
 
 def operational_no_invent_nudge(prompt: str) -> str:
@@ -334,7 +396,9 @@ _EXPLORATORY_QUALITY_RE = re.compile(
     r"qui\s+es[- ]?tu|parle[- ]?moi\s+de\s+toi|pr[ée]sente[- ]?toi|"
     r"ton\s+avis|ton\s+opinion|qu['\u2019]?en\s+penses[- ]?tu|"
     r"apprends?|apprenne|apprendre|"
-    r"sur\s+toi"
+    r"sur\s+toi|"
+    r"plan\s+d['\u2019 ]?action|pr[ée]pare(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"soumet(?:tre)?\s+(?:au\s+)?studio"
     r")\b"
 )
 

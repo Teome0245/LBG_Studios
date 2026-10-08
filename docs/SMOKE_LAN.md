@@ -99,7 +99,7 @@ Surface : http://192.168.0.100:5174/ · API cases : `/api/character/voice-smoke`
 
 Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-d6-v6v8-*` · surface `:5174/api/ask`.
 
-**Smoke humain C1–C2** (2026-10-08) : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — **C1 PASS** · **C2 PARTIEL** (greeting ops FAIL ; fil projet OK) · suite = gap délivrance + `short_social` sur « allons-y ».
+**Smoke humain C1–C2** (2026-10-08) : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — **C1 PASS** · **C2 PARTIEL** · D6.5 A1/A3/A4 **code** (greeting + short_social sticky + plan_delivery_nudge) · voice-smoke **V9/V10** · deploy `:5174` pour rejeu live.
 
 ```bash
 bash tools/smoke_d6_causerie_5174.sh
