@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { http } from '@/api/http'
 import { presenceTalk } from '@/lib/presence'
 import { speakText } from '@/lib/tts'
+import { watchMission } from '@/lib/missionWatch'
 
 const STORAGE_KEY = 'lbg_orch_conversation_id'
 
@@ -115,6 +116,19 @@ export function useChat() {
       actionSourceText: actionSourceText || '',
       state,
     })
+
+    // D6.5 — auto-watch mission Campus (retour à la clôture)
+    if (role === 'assistant' && campus_meta && typeof campus_meta === 'object') {
+      const mid = String(campus_meta.mission_id || campus_meta.id || '').trim()
+      if (mid) {
+        watchMission({
+          missionId: mid,
+          objective: String(campus_meta.objective || content || '').slice(0, 240),
+          taskIds: Array.isArray(campus_meta.task_ids) ? campus_meta.task_ids : [],
+          notify: true,
+        })
+      }
+    }
 
     if (role === 'assistant' && content) {
       const mood =

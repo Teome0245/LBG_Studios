@@ -77,6 +77,31 @@ async def run_llm_chat_phase(
             out["model_used"] = "short_social"
         return out
 
+    # D6.5 — « retour quand la Team a traité » : ack suivi, pas bible Agir
+    try:
+        from src.services.mission_watch_intent import (
+            mission_watch_ack_reply,
+            wants_mission_watch_notify,
+        )
+
+        if wants_mission_watch_notify(prompt):
+            watch_out = router.normalize_llm(
+                mission_watch_ack_reply(prompt),
+                "mission_watch",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(watch_out, dict):
+                watch_out["source"] = "mission_watch"
+                watch_out["model"] = "mission_watch"
+                watch_out["model_used"] = "mission_watch"
+                watch_out["mission_watch"] = {"notify": True}
+            return watch_out
+    except Exception as e:
+        logging.getLogger("lbg.router.mission_watch").warning(
+            "mission_watch short-circuit failed: %s", e
+        )
+
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
 

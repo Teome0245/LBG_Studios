@@ -206,6 +206,29 @@ const send = async () => {
   input.value = ''
   clearPendingImages()
 
+  // D6.5 — « retour quand Team a traité » : active le watch + ack (pas d'Agir)
+  if (!images.length) {
+    try {
+      const {
+        wantsMissionNotify,
+        requestNotify,
+        listWatches,
+        ackNotifyMessage,
+      } = await import('@/lib/missionWatch')
+      if (wantsMissionNotify(userMsg)) {
+        const hit = requestNotify() || listWatches()[0] || null
+        addMessage({
+          role: 'assistant',
+          content: ackNotifyMessage(hit),
+          source: 'mission_watch',
+        })
+        return
+      }
+    } catch (e) {
+      console.warn('missionWatch', e)
+    }
+  }
+
   // Interaction : « réalise les points » → agir / enchaîner, pas un nouveau pavé
   if (!images.length && isRealizeRequest(userMsg)) {
     const suggestions = suggestionsFromHistory(messages.value)

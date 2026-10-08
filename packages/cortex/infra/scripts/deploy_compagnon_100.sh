@@ -24,6 +24,7 @@ LOCAL_LLM_OVERLAY="${UI_ROOT}/server_overlay/local_llm_provider.py"
 REFLECTION_OVERLAY="${UI_ROOT}/server_overlay/reflection_router.py"
 CHAT_INTENT="${UI_ROOT}/server_overlay/chat_intent.py"
 PLAN_SUBMIT="${UI_ROOT}/server_overlay/plan_submit.py"
+MISSION_WATCH_INTENT="${UI_ROOT}/server_overlay/mission_watch_intent.py"
 OPENCLAW_MARKERS="${UI_ROOT}/server_overlay/openclaw_markers.py"
 TEAM_ROUTING="${UI_ROOT}/server_overlay/team_routing.py"
 TOOL_LOOP_OVERLAY="${UI_ROOT}/server_overlay/tool_loop.py"
@@ -149,6 +150,12 @@ if [[ -f "${PLAN_SUBMIT}" ]]; then
   echo "==> Overlay plan_submit (D6.5 plan → mission Campus) → backend"
   rsync -az "${PLAN_SUBMIT}" \
     "${REMOTE}:${REMOTE_DIR}/backend/src/services/plan_submit.py"
+fi
+
+if [[ -f "${MISSION_WATCH_INTENT}" ]]; then
+  echo "==> Overlay mission_watch_intent (retour clôture Team) → backend"
+  rsync -az "${MISSION_WATCH_INTENT}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/services/mission_watch_intent.py"
 fi
 
 if [[ -f "${TEAM_ROUTING}" ]]; then

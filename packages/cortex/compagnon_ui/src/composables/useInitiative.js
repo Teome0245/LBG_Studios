@@ -25,6 +25,11 @@ import {
 } from '@/lib/willPolicy'
 import { proposeAction, runRouteFromProposal, summarizeRouteResult } from '@/lib/agir'
 import { spawnTeamL1, teamObjectiveFromInitiative } from '@/lib/teamSpawn'
+import {
+  fetchCampusSnapshot,
+  markNotified,
+  nextMissionOffer,
+} from '@/lib/missionWatch'
 import { useChat } from '@/composables/useChat'
 
 const current = ref(null)
@@ -173,15 +178,32 @@ async function tryAutoValidateWill(offer) {
 async function tick() {
   try {
     studioGoal.value = getStudioGoal()
-    const [status, selfStatus, evo] = await Promise.all([
+    const [status, selfStatus, evo, campus] = await Promise.all([
       fetchStatus(),
       fetchSelfStatus(),
       fetchEvolution(),
+      fetchCampusSnapshot().catch(() => null),
     ])
     lastStatus.value = status
     lastSelf.value = selfStatus
     lastError.value = ''
     if (current.value || spiceBusy || autoBusy) return
+
+    // Priorité : retour mission Team demandée par l'humain
+    if (campus?.ok !== false && campus) {
+      const hit = nextMissionOffer(campus)
+      if (hit?.offer?.offer) {
+        markNotified(hit.watch.missionId, hit.eval.kind || 'done')
+        const { addMessage } = useChat()
+        addMessage({
+          role: 'assistant',
+          content: hit.offer.message,
+          source: 'mission_watch',
+        })
+        if (await applyOffer(hit.offer)) return
+        return
+      }
+    }
 
     const offer = shouldOfferFromStatus(status)
     if (await applyOffer(offer)) return
