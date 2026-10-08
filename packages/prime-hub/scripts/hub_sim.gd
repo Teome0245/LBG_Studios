@@ -969,7 +969,10 @@ func _step_beast(beast: Dictionary, dt: float) -> void:
 			if telegraph_s > 0.0 and goal != "aggro" and goal != "telegraph":
 				beast["goal"] = "telegraph"
 				beast["telegraph_until"] = Time.get_unix_time_from_system() + telegraph_s
-				beast["ambient"] = "Le sable frémit — la bête se dresse…"
+				var tline := "Le sable frémit — %s se dresse…" % str(beast.get("name", "la bête"))
+				beast["ambient"] = tline
+				# Chat immédiat (ambient PNJ a un cooldown trop long pour un windup 1,4 s).
+				enqueue_say(str(beast.get("name", "Bête")), int(beast.get("oid", 0)), tline, "ia")
 				return
 			beast["goal"] = "aggro"
 			# Chase un peu plus vite en meute
@@ -1069,14 +1072,22 @@ func entity_list(slim: bool = false) -> Array:
 		var p: Vector3 = e["pos"]
 		if slim:
 			# Fil de jeu : champs stricts (bande passante / JSON parse client).
-			out.append({
+			var slim_row := {
 				"id": int(e["oid"]),
 				"entity_key": str(e["eid"]),
 				"kind": str(e["kind"]),
 				"name": str(e["name"]),
 				"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
 				"is_bot": bool(e.get("is_bot", false)),
-			})
+			}
+			# P5b — telegraph boss visible client (goal court + flag).
+			if str(e.get("kind", "")) == "beast":
+				var bg := str(e.get("goal", "")).strip_edges()
+				if not bg.is_empty() and bg != "wander":
+					slim_row["goal"] = bg
+				if bool(e.get("is_boss", false)):
+					slim_row["is_boss"] = true
+			out.append(slim_row)
 		else:
 			var row := {
 				"id": int(e["oid"]),
@@ -1182,6 +1193,87 @@ func beast_count() -> int:
 		if str(e.get("kind", "")) == "beast" and bool(e.get("active", true)):
 			n += 1
 	return n
+
+
+func beasts_snapshot() -> Dictionary:
+	## Lecture P5 — bêtes actives (goal / boss / telegraph) pour smoke & debug.
+	var rows: Array = []
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) != "beast":
+			continue
+		if not bool(e.get("active", true)):
+			continue
+		var p: Vector3 = e["pos"]
+		rows.append({
+			"entity_key": str(e.get("eid", eid)),
+			"beast_id": str(e.get("beast_id", "")),
+			"name": str(e.get("name", "")),
+			"zone_id": str(e.get("zone_id", "")),
+			"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
+			"goal": str(e.get("goal", "wander")),
+			"is_boss": bool(e.get("is_boss", false)),
+			"telegraph_s": float(e.get("telegraph_s", 0.0)),
+			"telegraph_until": float(e.get("telegraph_until", 0.0)),
+			"ambient": str(e.get("ambient", "")),
+			"aggro_r": float(e.get("aggro_r", 0.0)),
+		})
+	return {
+		"ok": true,
+		"count": rows.size(),
+		"beasts": rows,
+		"source": "prime_hub",
+		"ticket": "P5b",
+	}
+
+
+func force_beast_telegraph(x: float, z: float, radius_m: float = 120.0, bosses_only: bool = true) -> Dictionary:
+	## Smoke / debug — force le windup telegraph sur la bête (boss) la plus proche.
+	var best_eid := ""
+	var best_d := INF
+	var best: Dictionary = {}
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) != "beast" or not bool(e.get("active", true)):
+			continue
+		if bosses_only and not bool(e.get("is_boss", false)):
+			continue
+		var p: Vector3 = e["pos"]
+		var d := Vector2(p.x - x, p.z - z).length()
+		if d <= radius_m and d < best_d:
+			best_d = d
+			best_eid = eid
+			best = e
+	if best_eid.is_empty():
+		return {
+			"ok": false,
+			"error": "no_boss_in_range" if bosses_only else "no_beast_in_range",
+			"radius_m": radius_m,
+			"source": "prime_hub",
+		}
+	var ts := float(best.get("telegraph_s", 1.4))
+	if ts <= 0.0:
+		ts = 1.4
+	best["telegraph_s"] = ts
+	best["goal"] = "telegraph"
+	best["telegraph_until"] = Time.get_unix_time_from_system() + ts
+	var tline := "Le sable frémit — %s se dresse…" % str(best.get("name", "la bête"))
+	best["ambient"] = tline
+	enqueue_say(str(best.get("name", "Bête")), int(best.get("oid", 0)), tline, "ia")
+	return {
+		"ok": true,
+		"entity_key": str(best.get("eid", best_eid)),
+		"beast_id": str(best.get("beast_id", "")),
+		"beast_name": str(best.get("name", "")),
+		"goal": "telegraph",
+		"telegraph_s": ts,
+		"telegraph_until": float(best["telegraph_until"]),
+		"ambient": tline,
+		"distance_m": snappedf(best_d, 0.1),
+		"is_boss": bool(best.get("is_boss", false)),
+		"source": "prime_hub",
+		"ticket": "P5b",
+	}
 
 
 func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 42.0) -> Dictionary:

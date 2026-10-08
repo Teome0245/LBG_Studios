@@ -85,6 +85,7 @@ var _hunt_phase: String = ""  # reset | run | claim
 var _combat_density_zones: Array = []
 var _density_http: HTTPRequest = null
 var _wiki_panel: Node = null
+var _beast_telegraph_seen: Dictionary = {}  # oid -> true (feedback one-shot)
 
 const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
 const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
@@ -1305,6 +1306,8 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		color = COLOR_PLAYER_BOT
 	elif kind == "beast":
 		color = Color(0.85, 0.55, 0.22, 1.0)
+		if bool(ent.get("is_boss", false)):
+			color = Color(0.72, 0.35, 0.55, 1.0)
 	if entity_manager.get_entity(oid) == null:
 		var ekey := str(ent.get("entity_key", ent.get("id", "")))
 		entity_manager.spawn(oid, pos, color, name, kind, ekey)
@@ -1318,6 +1321,16 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 				# Une fois suffit — pas de queue_redraw à chaque zone_state.
 				if not bool(e2.get("force_nameplate")):
 					e2.call("set_force_nameplate", true)
+		# P5b — telegraph / aggro boss via goal slim zone_state.
+		if kind == "beast" and e2 and e2.has_method("set_beast_combat"):
+			var bg := str(ent.get("goal", "")).strip_edges().to_lower()
+			var boss := bool(ent.get("is_boss", false))
+			e2.call("set_beast_combat", bg, boss)
+			if bg == "telegraph" and not _beast_telegraph_seen.has(oid):
+				_beast_telegraph_seen[oid] = true
+				_hotbar_feedback("⚠ %s — telegraph !" % name)
+			elif bg != "telegraph":
+				_beast_telegraph_seen.erase(oid)
 
 
 func _purge_stale_ia_not_in_ws(entities: Array, your_id: int) -> void:

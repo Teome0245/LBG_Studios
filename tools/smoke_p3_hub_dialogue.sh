@@ -55,6 +55,11 @@ assert d.get("ok") is True, d
 assert (d.get("reply") or "").strip(), d
 moves = d.get("suggested_moves") or []
 assert 1 <= len(moves) <= 3, moves
+ids = [m.get("id") for m in moves]
+assert "move:perle_eau" in ids, ids
+trade = next(m for m in moves if m.get("id") == "move:perle_eau")
+assert trade.get("kind") == "ui", trade
+assert (trade.get("action") or {}).get("name") == "trade_offer", trade
 meta = d.get("meta") or {}
 assert meta.get("suggested_moves_source") == "registry_template", meta
 assert meta.get("source") == "prime_hub", meta
@@ -62,8 +67,31 @@ assert "structuredContent" in d, list(d.keys())
 sc = d["structuredContent"]
 assert sc.get("reply") == d.get("reply"), sc
 assert d.get("result") == d.get("reply"), d.get("result")
-print("ok moves=", [m.get("id") for m in moves], "history_turns=", meta.get("history_turns"))
+print("ok moves=", ids, "history_turns=", meta.get("history_turns"))
 print("reply:", (d.get("reply") or "")[:160])
+'
+
+echo "== P3 Guide wiki ui =="
+curl -sS --max-time 30 -X POST "$BASE/v1/dialogue/invoke" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "actor_id":"prime:smoke_p3",
+    "text":"Bonjour",
+    "context":{
+      "world_npc_id":"npc:guide_quartier",
+      "npc_name":"Guide de quartier",
+      "player":"smoke_p3"
+    }
+  }' | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+moves = d.get("suggested_moves") or []
+ids = [m.get("id") for m in moves]
+assert "move:guide_wiki" in ids, ids
+wiki = next(m for m in moves if m.get("id") == "move:guide_wiki")
+assert wiki.get("kind") == "ui", wiki
+assert (wiki.get("action") or {}).get("name") == "open_wiki", wiki
+print("ok guide wiki ui")
 '
 
 echo "== P3 Daan ui move =="

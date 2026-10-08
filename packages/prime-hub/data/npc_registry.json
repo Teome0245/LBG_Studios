@@ -168,22 +168,24 @@
       ],
       "suggestion_templates": [
         {
-          "id": "move:perle_boisson",
-          "label": "Une boisson",
-          "utterance": "Un verre, Jax — qu'est-ce que tu sers ce soir ?",
-          "kind": "social"
+          "id": "move:perle_eau",
+          "label": "Eau filtrée (8)",
+          "utterance": "Une eau filtrée, prix affiché.",
+          "kind": "ui",
+          "action": {"name": "trade_offer", "sku_id": "drink:eau_filtree", "offer_price": 8}
+        },
+        {
+          "id": "move:perle_nego",
+          "label": "Cactus à 22",
+          "utterance": "Le Cactus Noir à 22 Cr ?",
+          "kind": "ui",
+          "action": {"name": "trade_offer", "sku_id": "drink:cactus_noir", "offer_price": 22}
         },
         {
           "id": "move:perle_show",
           "label": "Spectacle ce soir",
           "utterance": "Il y a un spectacle à La Perle ce soir ?",
           "kind": "info"
-        },
-        {
-          "id": "move:perle_daan",
-          "label": "Missions",
-          "utterance": "Daan Oth a-t-il du travail en ville ?",
-          "kind": "quest"
         }
       ],
       "core3_source": "core3_npc_catalog.json"
@@ -988,6 +990,27 @@
       "constraints": [
         "reponses courtes sans accents pour le chat spatial",
         "ne promet pas d'acces aux zones restreintes"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:guide_map",
+          "label": "Orientation",
+          "utterance": "Où est le marché ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:guide_wiki",
+          "label": "Wiki hub",
+          "utterance": "Tu as un guide du hub ?",
+          "kind": "ui",
+          "action": {"name": "open_wiki"}
+        },
+        {
+          "id": "move:guide_perle",
+          "label": "La Perle",
+          "utterance": "Où boire un verre ici ?",
+          "kind": "info"
+        }
       ],
       "core3_reference": {
         "pilot_id": "npc:core3_guide_quartier",

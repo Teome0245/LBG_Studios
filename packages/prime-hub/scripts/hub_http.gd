@@ -284,6 +284,21 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 	if method == "GET" and path in ["/v1/world/combat-density", "/combat-density"]:
 		var dens: Dictionary = catalog.combat_density()
 		return _ok(dens, 200 if bool(dens.get("ok", false)) else 404)
+	if method == "GET" and path in ["/v1/world/beasts", "/world/beasts"]:
+		if sim == null or not sim.has_method("beasts_snapshot"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		return _ok(sim.beasts_snapshot())
+	if method == "POST" and path in ["/v1/world/beast/telegraph", "/beast/telegraph"]:
+		var bt := _json_body(req_body)
+		if sim == null or not sim.has_method("force_beast_telegraph"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		var tout: Dictionary = sim.force_beast_telegraph(
+			float(bt.get("x", 0)),
+			float(bt.get("z", 0)),
+			float(bt.get("radius_m", 120)),
+			bool(bt.get("bosses_only", true))
+		)
+		return _ok(tout, 200 if bool(tout.get("ok")) else 400)
 	if method == "POST" and path in ["/v1/world/beast/engage", "/beast/engage"]:
 		var bb := _json_body(req_body)
 		if sim == null or not sim.has_method("engage_nearest_beast"):

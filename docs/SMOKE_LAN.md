@@ -173,10 +173,12 @@ bash packages/cortex/infra/scripts/install_choeur_l1_timer_140.sh
 ```bash
 bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → claim meute
 bash tools/smoke_p5_client_hunt_contract.sh  # contrat hotbar HTTP (OK 2026-10-08)
+bash tools/smoke_p5b_boss_telegraph_hub.sh   # telegraph boss sparse (P5b)
 ```
 
 Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).  
-Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`).
+Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`).  
+P5b : `GET /v1/world/beasts` · `POST /v1/world/beast/telegraph` · client anneau/pulse + chat ambient.
 
 ## C2 mémoire relations (hub)
 
