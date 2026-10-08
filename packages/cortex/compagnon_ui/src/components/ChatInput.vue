@@ -209,17 +209,27 @@ const send = async () => {
   // D6.5 — « retour quand Team a traité » : active le watch + ack (pas d'Agir)
   if (!images.length) {
     try {
-      const {
-        wantsMissionNotify,
-        requestNotify,
-        listWatches,
-        ackNotifyMessage,
-      } = await import('@/lib/missionWatch')
-      if (wantsMissionNotify(userMsg)) {
-        const hit = requestNotify() || listWatches()[0] || null
+      const mw = await import('@/lib/missionWatch')
+      if (mw.wantsMissionNotify(userMsg)) {
+        let hit = mw.requestNotify() || mw.listWatches()[0] || null
+        if (!hit) {
+          // Seed depuis la mission Campus ouverte (si aucune watch locale)
+          const snap = await mw.fetchCampusSnapshot().catch(() => null)
+          const mid = String(snap?.status?.mission?.id || '').trim()
+          if (mid) {
+            hit = mw.watchMission({
+              missionId: mid,
+              objective: String(snap.status.mission.objective || '').slice(0, 240),
+              taskIds: Array.isArray(snap.status.mission.task_ids)
+                ? snap.status.mission.task_ids
+                : [],
+              notify: true,
+            })
+          }
+        }
         addMessage({
           role: 'assistant',
-          content: ackNotifyMessage(hit),
+          content: mw.ackNotifyMessage(hit),
           source: 'mission_watch',
         })
         return
