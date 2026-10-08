@@ -286,6 +286,8 @@ func _ensure_density_beasts() -> void:
 				"wander_r": 28.0 if engage == "hunt_yard" else 22.0,
 				"aggro_r": 38.0 if is_pack else (22.0 if is_boss else 28.0),
 				"leash_r": 55.0 if is_pack else 40.0,
+				"telegraph_s": 1.4 if is_boss else 0.0,
+				"is_boss": is_boss,
 				"ambient": "",
 				"active": true,
 			}
@@ -922,7 +924,7 @@ func _nearest_player_xz(x: float, z: float, radius_m: float) -> Dictionary:
 
 
 func _step_beast(beast: Dictionary, dt: float) -> void:
-	## Wander + aggro joueur (leash home) — meute plus agressive, sparse/boss plus lent.
+	## Wander + aggro joueur (leash home) — meute plus agressive, sparse/boss + telegraph.
 	if not bool(beast.get("active", true)):
 		return
 	var speed: float = float(beast.get("speed", 0.0))
@@ -933,26 +935,54 @@ func _step_beast(beast: Dictionary, dt: float) -> void:
 	var home_z := float(beast.get("home_z", pos.z))
 	var aggro_r := float(beast.get("aggro_r", 28.0))
 	var leash_r := float(beast.get("leash_r", 45.0))
+	var telegraph_s := float(beast.get("telegraph_s", 0.0))
 	var from_home := Vector2(pos.x - home_x, pos.z - home_z).length()
+	var goal := str(beast.get("goal", "wander"))
 	if from_home > leash_r:
 		beast["goal"] = "leash"
 		beast["target"] = Vector3(home_x, 0.15, home_z)
 		beast.erase("aggro_eid")
+		beast.erase("telegraph_until")
+		beast["ambient"] = ""
+		goal = "leash"
+	elif goal == "telegraph":
+		var until := float(beast.get("telegraph_until", 0.0))
+		if Time.get_unix_time_from_system() >= until:
+			beast["goal"] = "aggro"
+			beast["ambient"] = ""
+			goal = "aggro"
+		else:
+			# Windup : immobile, face joueur
+			var hit_t := _nearest_player_xz(pos.x, pos.z, aggro_r * 1.2)
+			if not hit_t.is_empty():
+				var pp_t: Vector3 = hit_t["player"]["pos"]
+				beast["target"] = Vector3(pp_t.x, 0.15, pp_t.z)
+				beast["aggro_eid"] = str(hit_t["player"].get("eid", ""))
+			return
 	else:
 		var hit := _nearest_player_xz(pos.x, pos.z, aggro_r)
 		if not hit.is_empty():
 			var pl: Dictionary = hit["player"]
 			var pp: Vector3 = pl["pos"]
-			beast["goal"] = "aggro"
 			beast["aggro_eid"] = str(pl.get("eid", ""))
 			beast["target"] = Vector3(pp.x, 0.15, pp.z)
+			if telegraph_s > 0.0 and goal != "aggro" and goal != "telegraph":
+				beast["goal"] = "telegraph"
+				beast["telegraph_until"] = Time.get_unix_time_from_system() + telegraph_s
+				beast["ambient"] = "Le sable frémit — la bête se dresse…"
+				return
+			beast["goal"] = "aggro"
 			# Chase un peu plus vite en meute
-			speed = speed * 1.15
-		elif str(beast.get("goal", "")) == "aggro" or str(beast.get("goal", "")) == "leash":
+			speed = speed * (1.05 if bool(beast.get("is_boss", false)) else 1.15)
+			goal = "aggro"
+		elif goal in ["aggro", "leash", "telegraph"]:
 			beast["goal"] = "wander"
 			beast.erase("aggro_eid")
+			beast.erase("telegraph_until")
+			beast["ambient"] = ""
 			beast["target"] = _pick_wander_target(beast)
-	var goal := str(beast.get("goal", "wander"))
+			goal = "wander"
+	goal = str(beast.get("goal", "wander"))
 	if goal == "wander" or goal == "":
 		_step_npc(beast, dt)
 		return
@@ -989,6 +1019,8 @@ func _step_beast(beast: Dictionary, dt: float) -> void:
 			beast["goal"] = "wander"
 			beast["target"] = _pick_wander_target(beast)
 			beast.erase("aggro_eid")
+			beast.erase("telegraph_until")
+			beast["ambient"] = ""
 			beast["stuck_ticks"] = 0
 			return
 	else:
@@ -1046,7 +1078,7 @@ func entity_list(slim: bool = false) -> Array:
 				"is_bot": bool(e.get("is_bot", false)),
 			})
 		else:
-			out.append({
+			var row := {
 				"id": int(e["oid"]),
 				"entity_key": str(e["eid"]),
 				"kind": str(e["kind"]),
@@ -1058,7 +1090,13 @@ func entity_list(slim: bool = false) -> Array:
 				"quest_id": str(e.get("quest_id", "")),
 				"is_bot": bool(e.get("is_bot", false)),
 				"life_phase": str(e.get("life_phase", "")),
-			})
+			}
+			var amb := str(e.get("ambient", "")).strip_edges()
+			if not amb.is_empty():
+				row["ambient"] = amb
+			if bool(e.get("is_boss", false)):
+				row["is_boss"] = true
+			out.append(row)
 	return out
 
 

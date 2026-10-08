@@ -37,6 +37,8 @@ Zip : `http://192.168.0.246:8080/releases/launchpad/LBG-Launchpad-win.zip`
 | **C7** | `GET /v1/trade/catalog` · `POST /v1/trade/offer` | Jax — boissons ±15 % (rep basse ±8 %) ; coups dialogue La Perle |
 | **C6** | `GET /v1/wiki` (`?format=md`) | Panel Menu → Wiki ; Guide quartier `open_wiki` ; drift npc/poi/M10 |
 | Quêtes | `progress_steps` + backfill | Terminer (J) seulement si étapes OK ; 400 métier ≠ « réseau KO » |
+| **C2** | `GET /v1/relation-memory` · inject dialogue | tip/accept/trade/`met` → `players_state.relation_memory` · smoke `tools/smoke_c2_relation_memory_hub.sh` |
+| **P5** | densités + `POST /v1/world/beast/engage` | aggro/leash · telegraph boss ~1,4 s · respawn meute ~28 s / boss ~90 s · loot inventaire |
 
 Client : `HubRuntimeCfg.set_player_name` aligne inventaire/board/craft sur le perso connecté (ex. Teome).
 
