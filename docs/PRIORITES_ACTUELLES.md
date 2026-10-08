@@ -88,4 +88,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : L3 `days_ok` **2/3** → 3 (tick après minuit UTC) · rejeu humain D6.5/C1/C2 sur `:5174`.
+**Suite immédiate** : L3 `days_ok` **2/3** → 3 (`bash tools/status_l3_smoke_lan_mission.sh` — armed wait UTC) · rejeu humain D6.5/C1/C2 · ensuite O2 polish anneau / P5.

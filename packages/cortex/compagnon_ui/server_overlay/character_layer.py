@@ -578,6 +578,20 @@ def voice_smoke_cases() -> list[dict[str, Any]]:
                 "go-ahead ne doit pas répondre « Je te suis » seul."
             ),
         },
+        {
+            "id": "V11_presence_brief",
+            "prompt": "teste présence Nix chaleur haute",
+            "expect": "brief Objectif/Phases + smoke B3/B4 ; mission Campus optionnelle",
+            "criterion": "C1",
+            "note": "Phase C1 — presence_brief → zone d'entraînement.",
+        },
+        {
+            "id": "V12_presence_report",
+            "prompt": "retour hub présence — Nix vs Mira",
+            "expect": "causerie Nix/Mira (chaleur, escort/greet), pas dump JSON ni Agir",
+            "criterion": "C2",
+            "note": "Phase C2 — presence_report fetch :8787.",
+        },
     ]
 
 

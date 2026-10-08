@@ -265,6 +265,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 | **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **live hub** 2026-10-07 : `POST /v1/trade/offer` Jax ±15 % · suggestions dialogue · stub cortex ✅ Vague C |
 | **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **live hub** 2026-10-07 : `POST /v1/salvage` + hotbar `[1]` près `poi:lh_scrap_pile` → craft `kit_reparation` (T) · stub cortex ✅ Vague A |
 | **C13** | **Anneau désert LH** — joueurs IA hors murs (~3 km), pas Scrapaltai entière | Studio (débride explore) | Data `explore_ring_lh.json` + autonomy + clamp `move_to` + skill | Chœur · **MVP** ✅ 2026-10-07 |
+| **C14** | **Zone d'entraînement** — dials présence joueurs IA + boucle Compagnon↔hub | Studio (présence) | Dials B1–B4 smokeable · brief C1 · retour causerie C2 | Chœur + Compagnon · **live** 2026-10-08 : [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](../PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) · smokes B3/B4 + `smoke_c2_presence_report_5174.sh` |
 
 ### P2 — contrat agents (SpaceMolt → Chœur / bots)
 
@@ -294,3 +295,4 @@ Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona dé
 | 2026-10-07 | **C4/C5/C8 live** prime-hub `:8787` — event scrap board, chronique Scribe, salvage→craft ; docs [`RUNTIME_GODOT.md`](../RUNTIME_GODOT.md) |
 | 2026-10-07 | **C6/C7 live** — wiki `/v1/wiki` + panel ; négo Jax `/v1/trade/offer` |
 | 2026-10-08 | **C2 live** — relation_memory persistée hub + dialogue ; **P5a** hotbar chasse client OK |
+| 2026-10-08 | **C14 live** — zone entraînement dials + Compagnon C1/C2 (brief + retour présence) |

@@ -106,6 +106,8 @@ class CharacterLayerTests(unittest.TestCase):
         self.assertIn("V8_causerie_feedback", ids)
         self.assertIn("V9_greeting_presence", ids)
         self.assertIn("V10_plan_delivery", ids)
+        self.assertIn("V11_presence_brief", ids)
+        self.assertIn("V12_presence_report", ids)
         v7 = next(c for c in cases if c["id"] == "V7_causerie_continuity")
         self.assertEqual(v7.get("criterion"), "C1")
 

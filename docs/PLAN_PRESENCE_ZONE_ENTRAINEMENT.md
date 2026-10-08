@@ -93,6 +93,8 @@ A1 greeting ─┬─► A2 C2 avis
 
 ## Critères de succès (objectif atteint)
 
-1. Rejeu du fil humain 2026-10-08 : C1+C2 **PASS**, go-ahead produit un **plan markdown** (pas « Je te suis »).  
-2. Sur Lost Heaven : 1 joueur IA avec dials non neutres, présence 30 s **smokeable**.  
-3. Compagnon peut **discuter** de la zone d’entraînement **et** **soumettre** un plan studio utilisable sans méta vide.
+1. Rejeu du fil humain 2026-10-08 : C1+C2 **PASS**, go-ahead produit un **plan markdown** (pas « Je te suis »). → **auto OK** D6.5 ; **rejeu humain** encore ouvert.  
+2. Sur Lost Heaven : 1 joueur IA avec dials non neutres, présence 30 s **smokeable**. → **OK** B3/B4 (`SMOKE_B3B4_PRESENCE_HUB_OK`).  
+3. Compagnon peut **discuter** de la zone d’entraînement **et** **soumettre** un plan studio utilisable sans méta vide. → **OK** C1 brief + C2 retour + A4b plan_submit.
+
+**Phase C code** : **livrée** 2026-10-08 (C1–C3). Reste : rejeu humain feeling + L3 ops `days_ok=3`.
