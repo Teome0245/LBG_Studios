@@ -181,6 +181,37 @@ def is_greeting_chat(prompt: str) -> bool:
     return bool(_GREETING_CHAT_RE.search(text))
 
 
+# Ouverture « mode collègue » sans sujet — A2 : doit donner un avis, pas un questionnaire
+_COLLEAGUE_OPEN_RE = re.compile(
+    r"(?i)^\s*(?:bon[, ]+)?(?:on\s+)?(?:peut\s+|voudrais\s+|aimerais\s+)?"
+    r"(?:discut(?:ons|er)|parl(?:ons|er)|[ée]change(?:ons|r)?)\s+"
+    r"comme\s+(?:entre\s+)?coll[eè]gues?"
+    r"(?:\s+(?:du|sur(?:\s+le)?|au\s+sujet\s+du)\s+projet(?:\s+\w+)?)?"
+    r"(?:\s*[,:—–-]\s*(?:mode\s+)?discussion)?"
+    r"\s*[.!?…]*$"
+)
+
+_COLLEAGUE_TOPIC_RE = re.compile(
+    r"(?i)\b("
+    r"frustr|mmorpg|o1\b|o2\b|latence|feeling|incarnation|"
+    r"zone\s+d['\u2019 ]?entra[iî]nement|pr[ée]pare|plan\s+d|"
+    r"qu['\u2019]?est[- ]ce\s+qui|que\s+penses?"
+    r")\b"
+)
+
+
+def is_colleague_open(prompt: str) -> bool:
+    """True si invite collègue seule (sans sujet) — C2 strict : avis d'abord."""
+    text = (prompt or "").strip()
+    if not text or len(text) > 140:
+        return False
+    if _OPS_OVERRIDE_RE.search(text):
+        return False
+    if _COLLEAGUE_TOPIC_RE.search(text):
+        return False
+    return bool(_COLLEAGUE_OPEN_RE.match(text))
+
+
 def wants_plan_delivery(prompt: str) -> bool:
     """True si l'humain demande un plan / livrable utilisable (pas de méta vide)."""
     text = (prompt or "").strip()

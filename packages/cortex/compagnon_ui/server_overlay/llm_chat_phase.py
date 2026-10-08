@@ -12,6 +12,7 @@ from src.services.intent_learning import learn_new_intent
 from src.services.capability_generator import generate_capability_code
 from src.services.agents import init_agents
 from src.services.router_prompts import (
+    colleague_open_reply,
     extract_program_name,
     is_lab_profile,
     short_social_reply,
@@ -75,6 +76,16 @@ async def run_llm_chat_phase(
             out["source"] = "short_social"
             out["model"] = "short_social"
             out["model_used"] = "short_social"
+        return out
+
+    # A2 — « discutons comme collègues » sans sujet → avis net (pas questionnaire)
+    colleague = colleague_open_reply(prompt)
+    if colleague is not None:
+        out = router.normalize_llm(colleague, "colleague_open", "local", latency=0.0)
+        if isinstance(out, dict):
+            out["source"] = "colleague_open"
+            out["model"] = "colleague_open"
+            out["model_used"] = "colleague_open"
         return out
 
     # D6.5 — « retour quand la Team a traité » : ack suivi, pas bible Agir

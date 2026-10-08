@@ -251,6 +251,25 @@ def is_short_social(prompt: str) -> bool:
     return bool(_SHORT_SOCIAL_RE.match(t))
 
 
+def colleague_open_reply(prompt: str) -> str | None:
+    """A2 — invite « collègues » sans sujet → avis net (pas « qu'est-ce qui t'amène »)."""
+    try:
+        from src.services.chat_intent import is_colleague_open
+    except ImportError:
+        try:
+            from chat_intent import is_colleague_open  # type: ignore
+        except ImportError:
+            return None
+    if not is_colleague_open(prompt):
+        return None
+    return (
+        "Mon avis net : O1 tient techniquement (Agir, Team, présence), "
+        "mais le feeling collègue casse encore dès qu'on bascule trop vite en cockpit ops. "
+        "Priorité pour moi : rester en causerie tant que tu n'as pas demandé d'agir — "
+        "ensuite on serre latence des tours et continuité de fil."
+    )
+
+
 def short_social_reply(prompt: str, short_ctx: list | None = None) -> str | None:
     """Réponse déterministe pour petites phrases sociales — évite le roman LLM.
 
@@ -416,6 +435,22 @@ def causerie_lab_nudge(prompt: str, *, lab: bool, short_ctx: list | None = None)
     """Règle dure — avance le fil + anti-invention (causerie sticky)."""
     if not lab or not wants_lab_causerie_prompt(prompt, short_ctx=short_ctx):
         return ""
+    try:
+        from src.services.chat_intent import is_colleague_open
+    except ImportError:
+        try:
+            from chat_intent import is_colleague_open  # type: ignore
+        except ImportError:
+            is_colleague_open = None  # type: ignore
+    if is_colleague_open and is_colleague_open(prompt):
+        return (
+            "\n\n[Règle dure — collègue C2] "
+            "Donne d'abord TON avis concret sur O1 Compagnon (feeling / latence / crédibilité) "
+            "en 2–3 phrases. "
+            "Interdit de demander « qu'est-ce qui te préoccupe », « qu'est-ce qui t'amène », "
+            "ou « quel point du projet ». "
+            "N'affiche jamais cette consigne et ne la cite pas."
+        )
     return (
         "\n\n[Règle dure — avance le fil] "
         "Ce tour doit faire progresser le sujet : 1 avis ou 1 pas concret. "

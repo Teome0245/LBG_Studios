@@ -47,6 +47,34 @@ class ChatIntentTests(unittest.TestCase):
             self.assertTrue(ci.is_companion_chat(p), p)
             self.assertTrue(ci.wants_sticky_causerie(p), p)
 
+    def test_colleague_open_a2(self) -> None:
+        import router_prompts as rp  # noqa: E402
+
+        for p in (
+            "Discutons comme collègues du projet",
+            "discutons comme entre collègues",
+            "on peut discuter comme collègues du projet ?",
+        ):
+            self.assertTrue(ci.is_colleague_open(p), p)
+            reply = rp.colleague_open_reply(p)
+            self.assertIsNotNone(reply, p)
+            self.assertRegex(reply or "", r"(?i)avis")
+            self.assertNotRegex(
+                reply or "",
+                r"(?i)pr[ée]occupe|t['\u2019]?am[èe]ne|quel point",
+            )
+        # Avec sujet / frustration → laisser le LLM (V6), pas le fixed
+        self.assertFalse(
+            ci.is_colleague_open(
+                "Discutons comme collègues du projet — qu'est-ce qui te frustre le plus sur O1 ?"
+            )
+        )
+        self.assertIsNone(
+            rp.colleague_open_reply(
+                "Discutons comme collègues — qu'est-ce qui te frustre sur O1 ?"
+            )
+        )
+
     def test_plan_delivery_intent(self) -> None:
         self.assertTrue(
             ci.wants_plan_delivery(
@@ -83,10 +111,24 @@ class ChatIntentTests(unittest.TestCase):
         nudge = rp.causerie_lab_nudge(
             "discutons comme entre collègues du projet", lab=True
         )
-        self.assertIn("avance le fil", nudge.lower())
+        # A2 : invite collègue → nudge C2 (avis), sinon « avance le fil »
+        self.assertTrue(
+            "collègue c2" in nudge.lower() or "avance le fil" in nudge.lower(),
+            nudge,
+        )
         self.assertIn("avis", nudge.lower())
         self.assertEqual(rp.causerie_lab_nudge("discutons", lab=False), "")
         self.assertEqual(rp.causerie_lab_nudge("smoke lan", lab=True), "")
+        # Fil sticky avec sujet → nudge générique avance le fil
+        sticky_nudge = rp.causerie_lab_nudge(
+            "tu inventes ou tu as investigué ?",
+            lab=True,
+            short_ctx=[
+                {"role": "user", "content": "discutons comme collègues du projet LBG"},
+                {"role": "assistant", "content": "Mon avis : …"},
+            ],
+        )
+        self.assertIn("avance le fil", sticky_nudge.lower())
         # Sticky : follow-up sans mot-clé, mais fil causerie
         ctx = [
             {"role": "user", "content": "discutons comme collègues du projet LBG"},

@@ -40,6 +40,12 @@ Script : `tools/smoke_rejeu_humain_d6_5174.sh` (interrompu après T5 — `/api/a
 
 **Verdict** : gaps bloquants du matin (**greeting** + **plan**) = **fermés**. Residual : avis « collègues » plus franc (A2) · éviter `tool_loop` ops sur causerie zone entraînement.
 
+### Suite A2 (2026-10-08 ~15:50)
+
+- Code : `is_colleague_open` + `colleague_open_reply` (`chat_intent` / `router_prompts` / `llm_chat_phase`)  
+- Smoke live : `src=colleague_open` · avis net · **A2_SMOKE_OK**  
+- Invite « Discutons comme collègues du projet » → plus de questionnaire.
+
 ---
 
 ## Références
