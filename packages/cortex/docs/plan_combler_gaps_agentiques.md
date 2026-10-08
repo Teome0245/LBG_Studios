@@ -1,7 +1,7 @@
 # Plan — Combler les gaps agentiques & réaliser le plan d’action
 
 **Date** : 2026-10-02 · **MAJ** 2026-10-07  
-**Statut** : pilote ops health **livré** (A–F2 + tick L3) — revue 7j / F3 O2 hors scope immédiat  
+**Statut** : pilote ops health **livré** (A–F2 + tick L3) — **revue 7j = GO conditionnel** ([`revue_ops_health_7j.md`](revue_ops_health_7j.md)) · F3 O2 hors scope  
 **Priorité** : O1 Studio (`packages/cortex`) — LAN 140  
 **Complète** : [`lbg_agentic_os.md`](lbg_agentic_os.md) · [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md) · [`ops_notify_slack.md`](ops_notify_slack.md) · [`agents/README.md`](../agents/README.md) · [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md)
 
@@ -192,13 +192,13 @@ Ordre strict, **un** à la fois :
 
 Le plan est **réalisé** quand, sur LAN 140 pendant **7 jours** :
 
-- [ ] Au moins 1 run pilote auto/jour (vert ou KO géré)
-- [ ] 100 % des remédiations passent par L2
-- [ ] Toute clôture KO écrit une lesson
-- [ ] Chat NL ops peut créer un job (opt-in) sans activer les autres intents
-- [ ] Vue Fleet Pilot montre agents + pending L2
-- [ ] Aucun nouvel outil hors allowlist ; aucun shell libre L1
-- [ ] Métriques : taux succès smoke, % escalade L2, temps median perception→notify
+- [x] Au moins 1 run pilote auto/jour (vert ou KO géré)
+- [x] 100 % des remédiations passent par L2
+- [x] Toute clôture KO écrit une lesson
+- [x] Chat NL ops peut créer un job (opt-in) sans activer les autres intents
+- [x] Vue Fleet Pilot montre agents + pending L2
+- [x] Aucun nouvel outil hors allowlist ; aucun shell libre L1
+- [~] Métriques : décisions + `elapsed_ms` (state/journal) — agrégat dashboard 7j encore partiel (voir revue)
 
 ## 7. Risques & garde-fous
 
@@ -231,6 +231,6 @@ Le plan est **réalisé** quand, sur LAN 140 pendant **7 jours** :
 5. ~~**E1** jobs `waiting_approval` → Slack HITL~~ · ~~**E2–E4** mission L3 `smoke_lan_mission`~~
 6. ~~**F1** `project_pm` agentique~~ · ~~**F2** Pygmalion assets L2~~
 7. ~~**Suite** : tick mission L3 sur timer ops_health~~ (245 optionnel · sonde 246 `:8787/healthz` · `days_ok` 1×/jour UTC).
-8. **Maintenant** : revue métriques 7j (Pilot Jobs / Slack `#lbg-ops`) · consolider Fleet/presence soft-links (Vulcan↔Vex, Hermès↔Tess) · **F3** O2 jeu = hors ce plan (voir [`PRIORITES_ACTUELLES.md`](../../../docs/PRIORITES_ACTUELLES.md) P3–P5).
+8. ~~**Revue 7j**~~ → [`revue_ops_health_7j.md`](revue_ops_health_7j.md) (**GO conditionnel**) · ~~soft-links Fleet Vulcan↔Vex / Hermès↔Tess~~ · mission L3 → finir `days_ok=3` · **F3** O2 jeu = hors ce plan ([`PRIORITES_ACTUELLES.md`](../../../docs/PRIORITES_ACTUELLES.md) P3–P5).
 
 Voir [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md).

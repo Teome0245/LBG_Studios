@@ -495,6 +495,21 @@ def team_smoke_lan_mission_cancel() -> dict[str, object]:
     return smoke_lan_mission.cancel_mission()  # type: ignore[return-value]
 
 
+class SmokeLanMissionExtendBody(BaseModel):
+    extra_days: int | None = None
+
+
+@router.post("/team/smoke_lan_mission/extend")
+def team_smoke_lan_mission_extend(payload: SmokeLanMissionExtendBody | None = None) -> dict[str, object]:
+    """Prolonge la deadline mission (jours restants + marge)."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    body = payload or SmokeLanMissionExtendBody()
+    return smoke_lan_mission.extend_mission(extra_days=body.extra_days)  # type: ignore[return-value]
+
+
 class PygmalionAssetsPilotBody(BaseModel):
     brief: str
     dry_run: bool = True

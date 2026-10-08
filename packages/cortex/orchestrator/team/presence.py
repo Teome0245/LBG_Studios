@@ -451,8 +451,9 @@ def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
         bits.append("suggestions monde/dev")
         action = " · ".join(bits)
     elif mmo and (mmo_login or bridge_id):
+        # Studio → perso IG (symétrie ponts : ↔ Vulcan / ↔ Hermès)
         bits = [action]
-        bits.append(f"IG={mmo}")
+        bits.append(f"↔ {mmo}")
         if mmo_login:
             bits.append(f"login={mmo_login}")
         action = " · ".join(bits)
@@ -816,6 +817,19 @@ def _merge_roster_soft_link(payload: dict[str, Any], row: dict[str, Any]) -> dic
         out["bridge_agent_id"] = bridge_id
     if row.get("studio_member") is not None:
         out["studio_member"] = bool(row.get("studio_member"))
+    # Studio → perso IG : exposer ↔ même hors idle (review/busy) si absent du live
+    if (
+        mmo
+        and (bridge_id or mmo_login)
+        and not (role == "player_bridge" or str(out.get("agent_id") or "").startswith("player_bridge_"))
+    ):
+        action = str(out.get("current_action") or "")
+        if f"↔ {mmo}" not in action:
+            base = action if action and action not in ("En attente", "Dispo") else "En attente"
+            bits = [base, f"↔ {mmo}"]
+            if mmo_login and f"login={mmo_login}" not in base:
+                bits.append(f"login={mmo_login}")
+            out["current_action"] = " · ".join(bits)
     return out
 
 

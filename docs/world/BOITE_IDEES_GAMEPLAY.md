@@ -252,7 +252,7 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 | ID | Ticket | Origine | Done quand | Owner cible |
 |----|--------|---------|------------|-------------|
 | **C1** | Dialogue hub : 2–3 **suggestions d’actions** + texte libre | Everwhere | PNJ hub (cantina / board / trainer) expose coups typés + free text ; smoke dialogue | Iris + Chœur · design Vague A · **MVP code** ✅ Vague B (templates + Godot boutons ; smoke live / deploy reste) |
-| **C2** | **Mémoire relations** (dette, PNJ croisé, objet offert) injectée `world_hint` | Everwhere / Jenova | 1 joueur + 1 PNJ : rappel concret après action (tip / quête / don) | Chœur + Dédale · schéma Vague A · **merge stub** [`relation_memory.py`](../../packages/cortex/agents/src/lbg_agents/relation_memory.py) ✅ Vague B (persistance réelle reste) |
+| **C2** | **Mémoire relations** (dette, PNJ croisé, objet offert) injectée `world_hint` | Everwhere / Jenova | 1 joueur + 1 PNJ : rappel concret après action (tip / quête / don) | Chœur + Dédale · schéma Vague A · stub Python ✅ · **live hub** 2026-10-08 : `players_state.relation_memory` + `GET /v1/relation-memory` + inject dialogue (`tip`/`accept`/`trade`/`met`) · smoke `tools/smoke_c2_relation_memory_hub.sh` |
 | **C3** | **Compagnon IA visible** au spawn Lost Heaven (1 bot : Lia ou Nix) | Epitome + bots LBG | Nameplate + follow court / commentaire 30 s ; pas Pilot-only | Iris + Chœur · **live hub** 2026-10-07 : Nix greet+escort ~28 s + nameplate (`fleet_greet` mono-compagnon) |
 | **C4** | **1 event dynamique** board (meute portes **ou** chute scrap **ou** panne starport) | Epitome | Template EventEngine persisté + entrée board Daan ; Chœur peut sonder | WD + Chœur · **live hub** 2026-10-07 : `hub_events` + quest `lh_scrap_fall_salvage` + `GET /v1/events/active` (chute scrap) · stub cortex ✅ Vague A |
 
@@ -293,3 +293,4 @@ Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona dé
 | 2026-10-07 | **C13** anneau désert LH — explore IA hors murs (`explore_ring_lh.json`) |
 | 2026-10-07 | **C4/C5/C8 live** prime-hub `:8787` — event scrap board, chronique Scribe, salvage→craft ; docs [`RUNTIME_GODOT.md`](../RUNTIME_GODOT.md) |
 | 2026-10-07 | **C6/C7 live** — wiki `/v1/wiki` + panel ; négo Jax `/v1/trade/offer` |
+| 2026-10-08 | **C2 live** — relation_memory persistée hub + dialogue ; **P5a** hotbar chasse client OK |

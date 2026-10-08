@@ -220,8 +220,10 @@ def test_soft_link_vulcan_vex_and_hermes_tess():
     assert tess.get("linked_studio_display") == "Hermès"
     assert vulcan and vulcan.get("mmo_player") == "Vex"
     assert vulcan.get("mmo_account_login") == "vulcan_bridge"
+    assert "↔ Vex" in (vulcan.get("current_action") or "")
     assert hermes and hermes.get("mmo_player") == "Tess"
     assert hermes.get("mmo_account_login") == "hermes_bridge"
     assert hermes.get("bridge_agent_id") == "player_bridge_tess"
+    assert "↔ Tess" in (hermes.get("current_action") or "")
     assert vex.get("account_login") == "vulcan_bridge"
     assert tess.get("account_login") == "hermes_bridge"

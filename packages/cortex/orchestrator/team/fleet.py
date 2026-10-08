@@ -127,26 +127,38 @@ def _agents_fleet() -> list[dict[str, Any]]:
     for d in declared:
         aid = str(d.get("agent_id") or "")
         live = by_id.get(aid) or {}
-        out.append(
-            {
-                "agent_id": aid,
-                "display_name": d.get("display_name") or live.get("display_name") or aid,
-                "role": d.get("role") or live.get("role"),
-                "persona": d.get("persona"),
-                "subproject": d.get("subproject"),
-                "capabilities": d.get("capabilities") or [],
-                "owner_timer": d.get("owner_timer"),
-                "status": live.get("status") or "idle",
-                "location": live.get("location"),
-                "host_hint": live.get("host_hint"),
-                "current_action": live.get("current_action"),
-                "task_id": live.get("task_id"),
-                "approval_required": live.get("approval_required"),
-                "awaiting_human_approval": live.get("awaiting_human_approval"),
-                "awaiting_run": live.get("awaiting_run"),
-                "presence": bool(live),
-            }
-        )
+        row: dict[str, Any] = {
+            "agent_id": aid,
+            "display_name": d.get("display_name") or live.get("display_name") or aid,
+            "role": d.get("role") or live.get("role"),
+            "persona": d.get("persona"),
+            "subproject": d.get("subproject"),
+            "capabilities": d.get("capabilities") or [],
+            "owner_timer": d.get("owner_timer"),
+            "status": live.get("status") or "idle",
+            "location": live.get("location"),
+            "host_hint": live.get("host_hint"),
+            "current_action": live.get("current_action"),
+            "task_id": live.get("task_id"),
+            "approval_required": live.get("approval_required"),
+            "awaiting_human_approval": live.get("awaiting_human_approval"),
+            "awaiting_run": live.get("awaiting_run"),
+            "presence": bool(live),
+        }
+        # Soft-links ADR 0004 (Vulcan↔Vex, Hermès↔Tess, …) — registre + présence
+        for key in (
+            "mmo_player",
+            "mmo_account_login",
+            "bridge_agent_id",
+            "linked_studio_agent_id",
+            "linked_studio_display",
+            "account_login",
+            "studio_member",
+        ):
+            val = live.get(key) if live.get(key) is not None else d.get(key)
+            if val is not None and val != "":
+                row[key] = val
+        out.append(row)
     # Agents présents mais absents du registre (ne pas perdre la vue)
     known = {str(a.get("agent_id") or "") for a in out}
     for aid, live in by_id.items():
@@ -231,6 +243,7 @@ def fleet_snapshot() -> dict[str, Any]:
             "docs/plan_combler_gaps_agentiques.md",
             "docs/lbg_agentic_os.md",
             "docs/runbook_ops_health_pilot.md",
+            "docs/revue_ops_health_7j.md",
         ],
         "agents": agents,
         "agents_count": len(agents),

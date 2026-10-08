@@ -133,6 +133,15 @@ curl -s http://192.168.0.140:8010/v1/team/smoke_lan_mission
 
 État : `/var/lib/lbg/smoke_lan_mission/state.json` (surcharge `LBG_SMOKE_LAN_MISSION_STATE`).
 
+Prolonger la deadline (jours restants + marge) :
+
+```bash
+curl -s -X POST http://192.168.0.140:8010/v1/team/smoke_lan_mission/extend \
+  -H 'Content-Type: application/json' -d '{}'
+```
+
+Revue 7j : [`revue_ops_health_7j.md`](revue_ops_health_7j.md).
+
 Le timer `lbg-ops-health-pilot-job` appelle aussi `POST /v1/team/smoke_lan_mission/tick`
 après chaque run (`LBG_SMOKE_LAN_MISSION_TICK_ON_OPS_HEALTH=1` par défaut).  
 `days_ok` n’incrémente qu’**une fois par jour UTC** (même si le timer tourne toutes les 3 h).  

@@ -121,6 +121,40 @@ def cancel_mission(*, reason: str = "cancelled_by_operator") -> dict[str, Any]:
     return {"ok": True, "mission": m}
 
 
+def extend_mission(*, extra_days: int | None = None) -> dict[str, Any]:
+    """Prolonge la deadline pour couvrir les jours restants (``days_target - days_ok``).
+
+    Sans ``extra_days`` : ``max(1, days_target - days_ok) + 1`` jour(s) depuis *now*
+    (marge calendaire UTC pour le tick timer).
+    """
+    m = get_mission()
+    if not m:
+        return {"ok": False, "error": "no_mission"}
+    if str(m.get("status") or "") not in ACTIVE:
+        return {"ok": False, "error": f"mission_not_active:{m.get('status')}", "mission": m}
+    now = time.time()
+    target = int(m.get("days_target") or 1)
+    ok = int(m.get("days_ok") or 0)
+    remaining = max(1, target - ok)
+    if extra_days is None:
+        extra_days = remaining + 1
+    else:
+        extra_days = max(1, min(int(extra_days), 30))
+    old = float(m.get("deadline_ts") or 0)
+    m["deadline_ts"] = now + float(extra_days) * 86400.0
+    m["deadline_extended_ts"] = now
+    m["deadline_extended_from"] = old
+    m["updated_ts"] = now
+    _save({"mission": m, "updated_ts": now})
+    return {
+        "ok": True,
+        "extra_days": extra_days,
+        "deadline_ts": m["deadline_ts"],
+        "deadline_in_h": round((m["deadline_ts"] - now) / 3600.0, 1),
+        "mission": m,
+    }
+
+
 def _append_run(m: dict[str, Any], run: dict[str, Any]) -> None:
     runs = m.get("runs")
     if not isinstance(runs, list):
@@ -354,6 +388,7 @@ def mission_brief() -> dict[str, Any]:
             "deadline_in_h": round((deadline - now) / 3600.0, 1) if deadline else None,
             "owner_roles": m.get("owner_roles"),
             "n_runs": len(m.get("runs") or []) if isinstance(m.get("runs"), list) else 0,
+            "last_ok_day": m.get("last_ok_day"),
             "updated_ts": m.get("updated_ts"),
         },
     }

@@ -26,6 +26,22 @@ def _reset_team_db(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     monkeypatch.setenv("LBG_TEAM_LESSONS_ENABLED", "0")
 
 
+def test_fleet_soft_links_passthrough(monkeypatch: pytest.MonkeyPatch) -> None:
+    snap = team_fleet.fleet_snapshot()
+    by = {a["agent_id"]: a for a in (snap.get("agents") or [])}
+    vulcan = by.get("studio_dev_vulcan")
+    vex = by.get("player_bridge_vex")
+    hermes = by.get("godot_dev_hermes")
+    tess = by.get("player_bridge_tess")
+    if not all((vulcan, vex, hermes, tess)):
+        pytest.skip("déclarations soft-link absentes du registre local")
+    assert vulcan.get("mmo_player") == "Vex"
+    assert vulcan.get("bridge_agent_id") == "player_bridge_vex"
+    assert hermes.get("mmo_player") == "Tess"
+    assert tess.get("linked_studio_display") == "Hermès"
+    assert vex.get("linked_studio_display") == "Vulcan"
+
+
 def test_fleet_snapshot_shape(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "team.admin_infra_platform.audit_admin_infra_platform",

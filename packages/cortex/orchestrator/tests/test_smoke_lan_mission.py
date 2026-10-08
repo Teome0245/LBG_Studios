@@ -108,6 +108,24 @@ def test_escalate_after_consecutive_red(tmp_path, monkeypatch: pytest.MonkeyPatc
     assert t3.get("decision") == "awaiting_l2"
 
 
+def test_extend_mission_deadline(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    state = tmp_path / "mission_ext.json"
+    monkeypatch.setenv("LBG_SMOKE_LAN_MISSION_STATE", str(state))
+    from team import smoke_lan_mission
+
+    smoke_lan_mission.create_mission(days=3, dry_run=False)
+    m0 = smoke_lan_mission.get_mission()
+    assert m0 is not None
+    # Simule deadline trop courte (comme en prod avant revue)
+    m0["deadline_ts"] = time.time() + 3600
+    m0["days_ok"] = 2
+    smoke_lan_mission._save({"mission": m0, "updated_ts": time.time()})
+    out = smoke_lan_mission.extend_mission()
+    assert out.get("ok") is True
+    assert int(out.get("extra_days") or 0) >= 2  # (3-2)+1
+    assert float(out["deadline_ts"]) > time.time() + 24 * 3600
+
+
 def test_deadline_done(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     state = tmp_path / "mission3.json"
     monkeypatch.setenv("LBG_SMOKE_LAN_MISSION_STATE", str(state))

@@ -93,13 +93,14 @@ Surface : http://192.168.0.100:5174/ · API cases : `/api/character/voice-smoke`
 
 | Critère | Mesure | Smoke |
 |---------|--------|-------|
-| **C1 Continuité** | 5 tours même fil LAB sans reset « objectif » / identité | **V7** juste après **V6** (même conversation) — **PASS** 2026-10-06 |
-| C2 Collègue | avis sans réciter Agir / dry-run / deploy | **V6** — **PASS** 2026-10-06 |
-| C3 Retours | 1 diagnostic + 1 proposition | **V8** — **PASS** 2026-10-06 |
+| **C1 Continuité** | 5 tours même fil LAB sans reset « objectif » / identité | **V7** juste après **V6** (même conversation) — **PASS** 2026-10-08 |
+| C2 Collègue | avis sans réciter Agir / dry-run / deploy | **V6** — **PASS** 2026-10-08 |
+| C3 Retours | 1 diagnostic + 1 proposition | **V8** — **PASS** 2026-10-08 |
 
-Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · modèle `lbg-compagnon-e4b-v1` · surface `:5174/api/ask`.
+Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-d6-v6v8-*` · surface `:5174/api/ask`.
 
 ```bash
+bash tools/smoke_d6_causerie_5174.sh
 curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq '.cases[] | {id,criterion,prompt}'
 # Manuel : enchaîner V6 → V7 → V8 dans le fil :5174 (ne pas « Nouveau chat »)
 ```
@@ -169,14 +170,19 @@ bash packages/cortex/infra/scripts/install_choeur_l1_timer_140.sh
 
 ```bash
 bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → claim meute
+bash tools/smoke_p5_client_hunt_contract.sh  # contrat hotbar HTTP (OK 2026-10-08)
 ```
 
 Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).  
-Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`) · contrat HTTP :
+Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`).
+
+## C2 mémoire relations (hub)
 
 ```bash
-bash tools/smoke_p5_client_hunt_contract.sh
+bash tools/smoke_c2_relation_memory_hub.sh   # tip → GET memory → dialogue hint → accept quest
 ```
+
+Persistance : `players_state.json` → `relation_memory[]` · lecture `GET /v1/relation-memory?player=&npc_id=` · écriture tip/accept/trade + `met` au dialogue.
 
 ## Catalog POI + densité combat
 
