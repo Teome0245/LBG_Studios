@@ -28,7 +28,7 @@ _PLAN_DELIVERY_RE = re.compile(
     r"r[ée]dige(?:r)?\s+(?:le\s+|un\s+)?plan|"
     r"structure(?:r)?\s+(?:le\s+|un\s+)?plan|"
     r"formalise(?:r)?\s+(?:le\s+|un\s+)?plan|"
-    r"soumet(?:tre)?\s+(?:au\s+)?studio|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?studio|"
     r"livr(?:e|er)\s+(?:un\s+|le\s+)?plan|"
     r"commence(?:r)?\s+[àa]\s+travaill|"
     r"commence(?:r)?\s+dessus|"
