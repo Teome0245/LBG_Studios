@@ -88,4 +88,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : finir mission L3 `days_ok=3` · tick campus close Chœur sur 140 (register+act déployés) · polish client telegraph ambient.
+**Suite immédiate** : activer `LBG_TEAM_CAMPUS_*` si besoin pour act Chœur · finir L3 `days_ok=3` · client ambient telegraph boss.
