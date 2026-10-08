@@ -186,6 +186,38 @@ func _density_beast_count(density: String) -> int:
 			return 1
 
 
+func _beast_respawn_delay_s(beast_id: String, zone_id: String) -> float:
+	## Meute rapide ; boss sparse plus long.
+	if "serpent" in beast_id or "titan" in beast_id or "hollow" in zone_id:
+		return 90.0
+	if "hunt" in zone_id:
+		return 28.0
+	return 45.0
+
+
+func _revive_density_beasts() -> void:
+	var now := Time.get_unix_time_from_system()
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) != "beast":
+			continue
+		if bool(e.get("active", true)):
+			continue
+		var at := float(e.get("respawn_at", 0.0))
+		if at <= 0.0 or now < at:
+			continue
+		var hx := float(e.get("home_x", 0.0))
+		var hz := float(e.get("home_z", 0.0))
+		var wz := _walkable_xz(hx, hz)
+		e["pos"] = Vector3(wz.x, 0.15, wz.y)
+		e["target"] = Vector3.ZERO
+		e["goal"] = "wander"
+		e["active"] = true
+		e["stuck_ticks"] = 0
+		e.erase("aggro_eid")
+		e.erase("respawn_at")
+
+
 func _ensure_density_beasts() -> void:
 	## Spawn open-world depuis combat_density_lh.json (kind=beast, oid 920xxx).
 	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("combat_density_lh.json"))
@@ -968,6 +1000,7 @@ func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	_ensure_density_beasts()
+	_revive_density_beasts()
 	tick += 1
 	_path_budget = PATH_BUDGET_PER_TICK
 	dt = clampf(dt, 0.001, 0.25)
@@ -998,8 +1031,8 @@ func entity_list(slim: bool = false) -> Array:
 	var out: Array = []
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
-		# Repos Triplon : hors zone_state (≈ ⅓ off)
-		if str(e.get("kind", "")) == "npc" and not bool(e.get("active", true)):
+		# Repos Triplon / bête morte en cooldown respawn : hors zone_state
+		if str(e.get("kind", "")) in ["npc", "beast"] and not bool(e.get("active", true)):
 			continue
 		var p: Vector3 = e["pos"]
 		if slim:
@@ -1139,7 +1172,16 @@ func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 
 	var beast_id := str(best.get("beast_id", "beast:chacal_dore"))
 	var zone_id := str(best.get("zone_id", ""))
 	var name := str(best.get("name", beast_id))
-	entities.erase(best_eid)
+	var delay := _beast_respawn_delay_s(beast_id, zone_id)
+	best["active"] = false
+	best["goal"] = "dead"
+	best["target"] = Vector3.ZERO
+	best.erase("aggro_eid")
+	best["respawn_at"] = Time.get_unix_time_from_system() + delay
+	var hx := float(best.get("home_x", best["pos"].x))
+	var hz := float(best.get("home_z", best["pos"].z))
+	var home := _walkable_xz(hx, hz)
+	best["pos"] = Vector3(home.x, 0.15, home.y)
 	var loot: Array = [{"id": "fourrure_doree", "name": "Fourrure dorée", "qty": 1}]
 	if "scarab" in beast_id or "obsidien" in beast_id:
 		loot = [{"id": "obsidienne", "name": "Obsidienne", "qty": 1}]
@@ -1159,6 +1201,7 @@ func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 
 		"distance_m": snappedf(best_d, 0.1),
 		"loot": loot,
 		"credits_gained": credits,
+		"respawn_s": delay,
 		"beast_count": beast_count(),
 		"source": "prime_hub",
 	}
