@@ -26,6 +26,7 @@ CHAT_INTENT="${UI_ROOT}/server_overlay/chat_intent.py"
 PLAN_SUBMIT="${UI_ROOT}/server_overlay/plan_submit.py"
 MISSION_WATCH_INTENT="${UI_ROOT}/server_overlay/mission_watch_intent.py"
 PRESENCE_BRIEF="${UI_ROOT}/server_overlay/presence_brief.py"
+PRESENCE_REPORT="${UI_ROOT}/server_overlay/presence_report.py"
 OPENCLAW_MARKERS="${UI_ROOT}/server_overlay/openclaw_markers.py"
 TEAM_ROUTING="${UI_ROOT}/server_overlay/team_routing.py"
 TOOL_LOOP_OVERLAY="${UI_ROOT}/server_overlay/tool_loop.py"
@@ -163,6 +164,12 @@ if [[ -f "${PRESENCE_BRIEF}" ]]; then
   echo "==> Overlay presence_brief (C1 brief hub présence) → backend"
   rsync -az "${PRESENCE_BRIEF}" \
     "${REMOTE}:${REMOTE_DIR}/backend/src/services/presence_brief.py"
+fi
+
+if [[ -f "${PRESENCE_REPORT}" ]]; then
+  echo "==> Overlay presence_report (C2 retour terrain → causerie) → backend"
+  rsync -az "${PRESENCE_REPORT}" \
+    "${REMOTE}:${REMOTE_DIR}/backend/src/services/presence_report.py"
 fi
 
 if [[ -f "${TEAM_ROUTING}" ]]; then

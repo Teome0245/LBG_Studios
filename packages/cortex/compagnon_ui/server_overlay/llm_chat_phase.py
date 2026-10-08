@@ -105,6 +105,29 @@ async def run_llm_chat_phase(
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
 
+    # Phase C2 — retour terrain présence → causerie (fetch hub, pas dump ops)
+    try:
+        from src.services.presence_report import (
+            attach_presence_report_if_needed,
+            wants_presence_report,
+        )
+
+        if lab_mode and wants_presence_report(prompt):
+            seed = router.normalize_llm(
+                "retour présence",
+                "presence_report",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return await attach_presence_report_if_needed(
+                    seed, prompt=prompt, lab=lab_mode
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.presence_report").warning(
+            "presence_report short-circuit failed: %s", e
+        )
+
     # Phase C1 — brief présence hub (zone d'entraînement) : markdown + Campus borné
     try:
         from src.services.presence_brief import (
