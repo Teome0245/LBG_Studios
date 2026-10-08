@@ -76,6 +76,19 @@ class PlanSubmitTests(unittest.TestCase):
         self.assertTrue(ps.wants_team_plan_submit("allons y", ctx))
         self.assertFalse(ps.wants_team_plan_submit("allons y", None))
 
+    def test_submit_existing_plan_from_ctx(self) -> None:
+        ctx = [
+            {"role": "user", "content": "prépare un plan"},
+            {"role": "assistant", "content": _PLAN_MD},
+        ]
+        self.assertTrue(
+            ps.wants_submit_existing_plan("tu peux soumettre ce plan au studio ?", ctx)
+        )
+        self.assertEqual(ps.extract_plan_from_ctx(ctx), _PLAN_MD.strip())
+        self.assertFalse(
+            ps.wants_submit_existing_plan("tu peux soumettre ce plan au studio ?", None)
+        )
+
     def test_looks_like_plan(self) -> None:
         self.assertTrue(ps.looks_like_plan_content(_PLAN_MD))
         self.assertFalse(
@@ -153,6 +166,56 @@ class PlanSubmitTests(unittest.TestCase):
         out = asyncio.run(_run())
         self.assertIsNone(out.get("plan_submit"))
         self.assertEqual(out["content"], _PLAN_MD)
+
+    def test_extract_and_submit_existing_plan(self) -> None:
+        ctx = [
+            {"role": "user", "content": "prépare un plan"},
+            {"role": "assistant", "content": _PLAN_MD},
+        ]
+        self.assertTrue(ps.looks_like_plan_content(ps.extract_plan_from_ctx(ctx)))
+        self.assertTrue(ps.wants_submit_existing_plan("soumets ce plan au studio", ctx))
+
+        async def _run() -> dict:
+            with patch.dict("os.environ", {"LBG_COMPAGNON_PLAN_SUBMIT": "1"}):
+                with patch.object(
+                    ps,
+                    "submit_plan_mission",
+                    new=AsyncMock(
+                        return_value={
+                            "ok": True,
+                            "mission": {"id": "m-reuse"},
+                            "created": [{"task_id": "t9"}],
+                        }
+                    ),
+                ):
+                    with patch(
+                        "src.services.team_proxy._format_campus_mission",
+                        return_value="**Mission Campus lancée**\n- **mission_id** : `m-reuse`",
+                    ):
+                        with patch(
+                            "src.services.campus_recall.campus_snapshot_from_mission_data",
+                            return_value={"mission_id": "m-reuse", "task_ids": ["t9"]},
+                        ):
+                            with patch(
+                                "src.services.team_actions.fetch_tasks_by_ids",
+                                new=AsyncMock(return_value=[]),
+                            ):
+                                with patch(
+                                    "src.services.team_actions.approval_payload_from_tasks",
+                                    return_value=None,
+                                ):
+                                    return await ps.attach_team_plan_if_needed(
+                                        {"content": "ok", "response": "ok"},
+                                        prompt="soumets ce plan au studio",
+                                        short_ctx=ctx,
+                                        lab=True,
+                                    )
+
+        out = asyncio.run(_run())
+        self.assertTrue(out.get("plan_submit", {}).get("ok"))
+        self.assertEqual(out["plan_submit"]["mission_id"], "m-reuse")
+        self.assertIn("Objectif", out["content"])
+        self.assertIn("Mission Campus", out["content"])
 
 
 if __name__ == "__main__":

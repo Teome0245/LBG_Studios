@@ -4,6 +4,7 @@
   "max_ai_players": 10,
   "hard_cap": 20,
   "admin_scale": "ADR_0006_0_4",
+  "presence_dials_ref": "data/life/presence_dials.json",
   "roles": {
     "npc": "Tenir le monde fonctionnel (postes, cycles, ambiance).",
     "player": "Faire évoluer le monde (quêtes, craft, explore, suggestions Studio).",

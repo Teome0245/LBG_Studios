@@ -13,11 +13,11 @@ from typing import Any
 
 logger = logging.getLogger("lbg.plan_submit")
 
-# Handoff studio/Team — y compris « plan … pour le studio » (sans « soumettre »)
+# Handoff studio/Team — y compris « plan … pour le studio » / « soumettre ce plan »
 _TEAM_SUBMIT_RE = re.compile(
     r"(?i)\b("
-    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l))?\s+(?:au\s+)?studio|"
-    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l))?\s+(?:à|a)\s+(?:la\s+)?team|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?studio|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:à|a)\s+(?:la\s+)?team|"
     r"passe(?:r)?\s+(?:au\s+)?studio|"
     r"(?:plan|livrable).{0,80}\bpour\s+le\s+studio\b|"
     r"(?:plan|livrable).{0,40}\bau\s+studio\b|"
@@ -30,6 +30,16 @@ _TEAM_SUBMIT_RE = re.compile(
     r"d[ée]l[eè]gue(?:r)?\s+(?:au\s+|à\s+(?:la\s+)?)?(?:studio|team)|"
     r"job\s+team|t[aâ]che\s+team"
     r")"
+)
+
+# « soumettre ce plan » sans regénérer — plan déjà dans le fil
+_SUBMIT_EXISTING_PLAN_RE = re.compile(
+    r"(?i)\b("
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?\s+plan|"
+    r"soumet(?:s|tre)?.{0,30}\bau\s+studio|"
+    r"envoie(?:r)?\s+(?:le\s+|ce\s+)?plan|"
+    r"passe(?:r)?\s+(?:le\s+|ce\s+)?plan"
+    r")\b"
 )
 
 _META_ONLY_RE = re.compile(
@@ -126,6 +136,34 @@ def looks_like_plan_content(content: str) -> bool:
     return len(numbered) >= 3
 
 
+def extract_plan_from_ctx(short_ctx: list | None = None) -> str:
+    """Dernier message assistant plan-shaped (sans bloc Mission Campus éventuel)."""
+    if not short_ctx:
+        return ""
+    for item in reversed(list(short_ctx)[-12:]):
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").lower()
+        if role not in ("assistant", "ai", "compagnon"):
+            continue
+        chunk = str(item.get("content") or item.get("text") or "").strip()
+        if not chunk:
+            continue
+        # Retirer un éventuel bloc mission déjà annexé
+        chunk = re.split(r"\n\s*\*\*Mission Campus", chunk, maxsplit=1)[0].strip()
+        if looks_like_plan_content(chunk):
+            return chunk
+    return ""
+
+
+def wants_submit_existing_plan(prompt: str, short_ctx: list | None = None) -> bool:
+    """True → soumettre le plan déjà dans le fil, sans repasser par le LLM."""
+    text = (prompt or "").strip()
+    if not text or not _SUBMIT_EXISTING_PLAN_RE.search(text):
+        return False
+    return bool(extract_plan_from_ctx(short_ctx))
+
+
 def build_mission_objective(prompt: str, plan_content: str) -> str:
     """Objectif Campus : Hermès PM + extrait du plan Compagnon."""
     plan = (plan_content or "").strip()
@@ -174,13 +212,23 @@ async def attach_team_plan_if_needed(
         return result
     if not plan_submit_enabled(lab=lab):
         return result
-    if not wants_team_plan_submit(prompt, short_ctx):
+    if not wants_team_plan_submit(prompt, short_ctx) and not wants_submit_existing_plan(
+        prompt, short_ctx
+    ):
         return result
 
     content = str(result.get("content") or result.get("response") or "").strip()
     if not looks_like_plan_content(content):
-        logger.info("plan_submit skipped: content not plan-shaped (len=%s)", len(content))
-        return result
+        # Reprendre le plan déjà présent dans le fil (ex. « soumets ce plan »)
+        reused = extract_plan_from_ctx(short_ctx)
+        if reused:
+            content = reused
+            result = {**result, "content": content, "response": content}
+        else:
+            logger.info(
+                "plan_submit skipped: content not plan-shaped (len=%s)", len(content)
+            )
+            return result
 
     # Déjà soumis dans ce tour ?
     if result.get("campus_meta") or result.get("plan_submit"):

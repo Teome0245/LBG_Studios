@@ -79,6 +79,35 @@ async def run_llm_chat_phase(
 
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
+
+    # D6.5 — « soumets ce plan au studio » : réutilise le plan du fil, skip LLM
+    # (évite 502 timeout LLM+Pilot quand le livrable est déjà là).
+    try:
+        from src.services.plan_submit import (
+            extract_plan_from_ctx,
+            wants_submit_existing_plan,
+        )
+
+        if lab_mode and wants_submit_existing_plan(prompt, short_ctx):
+            prior = extract_plan_from_ctx(short_ctx)
+            if prior:
+                seed = router.normalize_llm(
+                    prior,
+                    "plan_submit_reuse",
+                    "local",
+                    latency=0.0,
+                )
+                if isinstance(seed, dict):
+                    seed["source"] = "plan_submit"
+                    seed["model"] = "plan_submit_reuse"
+                    seed["model_used"] = "plan_submit_reuse"
+                    return await _maybe_attach_plan_submit(
+                        seed, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
+                    )
+    except Exception as e:
+        logging.getLogger("lbg.router.plan_submit").warning(
+            "plan_submit reuse short-circuit failed: %s", e
+        )
     lyra_tone_extra = ""
     eng = getattr(router.lyra, "engine_v2", None)
     if eng is not None and profile != "test" and not lab_mode:
