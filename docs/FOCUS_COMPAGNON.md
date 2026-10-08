@@ -132,7 +132,7 @@ Phasage réaliste :
 | C2 | **Collègue d’abord** | Ouverture type « discutons comme collègues du projet » → réponse avec prise de position / avis, **sans** réciter Agir / `.143` / dry-run / `deploy_*` (sauf demande explicite d’action). |
 | C3 | **Retours constructifs** | Sur un avis produit (« ça me frustre / j’aimerais X ») → 1 diagnostic + 1 proposition, pas un questionnaire ni un audit Team inventé. |
 | C4 | **Deux postures** | `Discuter` ≠ `Agir` : le bouton Agir / proposition d’action n’apparaît que si l’humain demande une exécution ou un outillage. |
-| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. **V6→V8 auto PASS** 2026-10-06. |
+| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. **V6→V8 auto PASS** 2026-10-06. Humain 2026-10-08 : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — C1 PASS · C2 PARTIEL. |
 | C6 | **Gate O2** | ~~Tant que C1–C5 ne sont pas verts…~~ **ouvert** 2026-10-06 (smoke V6–V8 + D6.1–D6.4). |
 
 ### Lots
@@ -145,6 +145,7 @@ Phasage réaliste :
 | **D6.2c** | Campus conceptuel ≠ Team live (`team_routing`) + rôles Compagnon/Lyra dans prompt causerie ; Pilot 502 = `lbg-backend` / `pydantic-settings` | **OK** (2026-10-02) |
 | **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
 | **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
+| **D6.5** | Greeting causerie + `short_social` sticky + intent livrer plan (suite smoke humain) | **plan** — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) Phase A · archive [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) |
 
 ### Ops Agir / Pilot (rappel 2026-10-02)
 
