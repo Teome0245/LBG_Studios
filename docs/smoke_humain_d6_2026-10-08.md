@@ -3,7 +3,8 @@
 **Surface** : Compagnon `:5174` · profil ask/auto · modèle `lbg-compagnon-e4b-v1` (tours LLM)  
 **Fil** : causerie projet → MMORPG / incarnation joueurs IA / zone d’entraînement  
 **Critères visés** : **C1** continuité · **C2** collègue d’abord  
-**Verdict global** : **C1 PASS** · **C2 PARTIEL** (sauvé après déclencheur « collègues » ; ouverture greeting = FAIL)
+**Verdict global (matin)** : **C1 PASS** · **C2 PARTIEL** (sauvé après déclencheur « collègues » ; ouverture greeting = FAIL)  
+**Rejeu PM** : [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) — greeting **PASS** · plan **PASS** · C2 collègues encore PARTIEL
 
 ---
 

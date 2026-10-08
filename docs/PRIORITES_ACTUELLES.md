@@ -1,6 +1,6 @@
 # Priorités actuelles — LBG Studios
 
-**Date** : 2026-10-07  
+**Date** : 2026-10-08  
 **Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
 **Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
@@ -89,4 +89,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : L3 `days_ok` **2/3** → 3 (`bash tools/status_l3_smoke_lan_mission.sh` — armed wait UTC) · rejeu humain D6.5/C1/C2 · ensuite O2 polish anneau / P5.
+**Suite immédiate** : L3 `days_ok` **2/3** → 3 (`bash tools/status_l3_smoke_lan_mission.sh` — armed wait UTC) · residual D6 A2 (avis collègues) · O2 P3/P5 **reconfirmés verts** 2026-10-08 PM (`smoke_p3` / `smoke_p5*` / telegraph).

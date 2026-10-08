@@ -30,6 +30,7 @@ Sans corriger (1)–(3), toute transposition présence→MMO restera du roman. E
 | **A4** | Intent « livrer plan » | `wants_plan_delivery` / `plan_delivery_nudge` → markdown Objectif/Phases/Prochaine action | `chat_intent` + `llm_chat_phase` | **OK code** 2026-10-08 |
 | **A4b** | Persistance Team | « soumettre au studio » → mission Campus (Hermès PM) + `campus_meta` / L2 cards | `plan_submit.py` + hook `llm_chat_phase` | **OK code** 2026-10-08 · flag `LBG_COMPAGNON_PLAN_SUBMIT` (défaut on en LAB) |
 | **A4c** | Retour à la clôture | Watch mission + poll Campus → toast/chat ; « retour quand… » = ack sans Agir | `missionWatch.js` + `useInitiative` + `mission_watch_intent.py` | **OK code** 2026-10-08 |
+| **A4c.1** | Continuité même sujet | Respawn Campus même objectif → retarget silencieux (pas faux « traité ») | `sameSubjectObjective` / `retargetWatch` | **OK code** 2026-10-08 |
 | **A5** | Smoke | V9 greeting + V10 plan delivery (voice-smoke) · deploy `:5174` · rejeu humain | Argus-style | **OK live** 2026-10-08 — `bash tools/smoke_d65_greeting_plan_5174.sh` → `SMOKE_D65_V9V10 OK` (+ mission Campus) |
 
 **Root cause non-livraison** (2026-10-08) : (1) greeting hors causerie → `lab_ops` bible Agir ; (2) `short_social` mangeait « allons-y » ; (3) **aucun intent livrable** — le LLM restait en méta sous nudge « 1 avis ». Fix = A1+A3+A4. **A4b** : le markdown chat seul ne suffisait pas — spawn mission Campus pour Hermès/Team.
@@ -93,8 +94,8 @@ A1 greeting ─┬─► A2 C2 avis
 
 ## Critères de succès (objectif atteint)
 
-1. Rejeu du fil humain 2026-10-08 : C1+C2 **PASS**, go-ahead produit un **plan markdown** (pas « Je te suis »). → **auto OK** D6.5 ; **rejeu humain** encore ouvert.  
-2. Sur Lost Heaven : 1 joueur IA avec dials non neutres, présence 30 s **smokeable**. → **OK** B3/B4 (`SMOKE_B3B4_PRESENCE_HUB_OK`).  
-3. Compagnon peut **discuter** de la zone d’entraînement **et** **soumettre** un plan studio utilisable sans méta vide. → **OK** C1 brief + C2 retour + A4b plan_submit.
+1. Rejeu du fil humain 2026-10-08 : C1+C2 **PASS**, go-ahead produit un **plan markdown** (pas « Je te suis »). → **auto OK** D6.5 · **rejeu PM** [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) (greeting+plan **PASS** ; C2 collègues PARTIEL).  
+2. Sur Lost Heaven : 1 joueur IA avec dials non neutres, présence 30 s **smokeable**. → **OK** B3/B4 (`SMOKE_B3B4_PRESENCE_HUB_OK` reconfirmé PM).  
+3. Compagnon peut **discuter** de la zone d’entraînement **et** **soumettre** un plan studio utilisable sans méta vide. → **OK** C1 brief + C2 retour + A4b plan_submit (`SMOKE_C2_PRESENCE_REPORT_OK`).
 
-**Phase C code** : **livrée** 2026-10-08 (C1–C3). Reste : rejeu humain feeling + L3 ops `days_ok=3`.
+**Phase C code** : **livrée** 2026-10-08 (C1–C3). Feeling rejeu : **OK conditionnel** (A2 avis collègues + anti tool_loop causerie). Reste ops : L3 `days_ok` **2/3** → 3 (armed wait UTC).

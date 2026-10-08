@@ -99,13 +99,14 @@ Surface : http://192.168.0.100:5174/ · API cases : `/api/character/voice-smoke`
 
 Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-d6-v6v8-*` · surface `:5174/api/ask`.
 
-**Smoke humain C1–C2** (2026-10-08) : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — **C1 PASS** · **C2 PARTIEL** (corrigé D6.5).
+**Smoke humain C1–C2** (2026-10-08 matin) : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — **C1 PASS** · **C2 PARTIEL**.
 
-**D6.5 live** (2026-10-08) : deploy `:5174` · `SMOKE_D65_V9V10 OK` — V9 greeting `short_social` sans ops · V10 plan markdown + `mission_id` Campus.
+**D6.5 + rejeu PM** (2026-10-08) : `SMOKE_D65_V9V10 OK` · [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) — greeting+plan **PASS** · C2 collègues PARTIEL · `tools/smoke_rejeu_humain_d6_5174.sh`.
 
 ```bash
 bash tools/smoke_d6_causerie_5174.sh          # V6→V8
 bash tools/smoke_d65_greeting_plan_5174.sh    # V9 greeting + V10 plan/Team
+bash tools/smoke_rejeu_humain_d6_5174.sh      # proxy fil humain C1/C2 + plan
 curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq '.cases[] | {id,criterion,prompt}'
 # Manuel : enchaîner V6 → V7 → V8 (puis V9/V10) dans le fil :5174 (ne pas « Nouveau chat »)
 ```

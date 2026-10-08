@@ -133,7 +133,7 @@ Phasage réaliste :
 | C2 | **Collègue d’abord** | Ouverture type « discutons comme collègues du projet » → réponse avec prise de position / avis, **sans** réciter Agir / `.143` / dry-run / `deploy_*` (sauf demande explicite d’action). |
 | C3 | **Retours constructifs** | Sur un avis produit (« ça me frustre / j’aimerais X ») → 1 diagnostic + 1 proposition, pas un questionnaire ni un audit Team inventé. |
 | C4 | **Deux postures** | `Discuter` ≠ `Agir` : le bouton Agir / proposition d’action n’apparaît que si l’humain demande une exécution ou un outillage. |
-| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. **V6→V8 auto PASS** 2026-10-06. Humain 2026-10-08 : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — C1 PASS · C2 PARTIEL. |
+| C5 | **Smoke humain** | Batterie manuelle 5 tours (causerie projet) + tests unitaires `chat_intent` / nudge causerie verts. **V6→V8 auto PASS** 2026-10-06. Humain matin 2026-10-08 : C1 PASS · C2 PARTIEL. **Rejeu PM** : [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) — greeting+plan PASS · C2 collègues PARTIEL. |
 | C6 | **Gate O2** | ~~Tant que C1–C5 ne sont pas verts…~~ **ouvert** 2026-10-06 (smoke V6–V8 + D6.1–D6.4). |
 
 ### Lots
