@@ -61,7 +61,7 @@
       "density": "sparse",
       "beasts": ["beast:serpent_sable"],
       "engage_surface": "none",
-      "note": "Boss hint only — pas de spawn"
+      "note": "Boss sparse — 1 token serpent (aggro lent, leash 40)"
     }
   ]
 }

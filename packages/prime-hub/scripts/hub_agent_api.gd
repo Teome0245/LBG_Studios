@@ -147,6 +147,7 @@ func _endpoints() -> Dictionary:
 		"events_active": "/v1/events/active",
 		"salvage": "POST /v1/salvage",
 		"chronicle": "/v1/chronicle?player=…",
+		"relation_memory": "/v1/relation-memory?player=…&npc_id=",
 		"trade_catalog": "/v1/trade/catalog",
 		"trade_offer": "POST /v1/trade/offer",
 		"inventory": "/v1/inventory?player=…",

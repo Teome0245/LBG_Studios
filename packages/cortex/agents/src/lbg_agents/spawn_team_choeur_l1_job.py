@@ -121,6 +121,19 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
         except Exception as exc:  # noqa: BLE001 — job timer ne doit pas planter
             campus = {"ok": False, "error": str(exc)}
     result["campus_mission"] = campus
+    campus_act: dict[str, Any] = {"ok": False, "skipped": True}
+    if tids and bool(campus.get("ok")) and run_tasks:
+        try:
+            # Auto-clôture si smokes verts (LBG_TEAM_CAMPUS_MISSION_AUTO_CLOSE).
+            campus_act = api_json(
+                "POST",
+                f"{orchestrator_url()}/v1/team/campus/act",
+                {},
+                timeout=90,
+            )
+        except Exception as exc:  # noqa: BLE001
+            campus_act = {"ok": False, "error": str(exc)}
+    result["campus_act"] = campus_act
     if persist:
         save_json_state(
             state_path(),
@@ -130,6 +143,11 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
                 "last_task_ids": tids,
                 "last_outcome": result["outcome"],
                 "last_campus_ok": bool(campus.get("ok")),
+                "last_campus_act": str(
+                    (campus_act.get("outcome") if isinstance(campus_act, dict) else "")
+                    or campus_act.get("error")
+                    or ""
+                )[:120],
             },
         )
     return result

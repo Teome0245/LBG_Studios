@@ -430,6 +430,24 @@ func invoke(body: Dictionary) -> Dictionary:
 				npc_id = str(eid)
 				break
 	var memory := _session_memory_line(ss, npc_name)
+	# C2 — mémoire relations persistée (tip / quête / don / rencontre).
+	var rel_hint := ""
+	if economy != null and economy.has_method("relation_memory_hint") and not npc_id.is_empty():
+		rel_hint = str(economy.relation_memory_hint(player, npc_id)).strip_edges()
+		if not rel_hint.is_empty():
+			if memory.is_empty():
+				memory = rel_hint
+			else:
+				memory = "%s · %s" % [rel_hint, memory]
+		# Première adresse → kind=met (dédup côté store).
+		if economy.has_method("remember_relation"):
+			var who := npc_name if not npc_name.is_empty() else npc_id
+			economy.remember_relation(
+				player,
+				npc_id,
+				"met",
+				"Tu as déjà croisé %s à Lost Heaven." % who.substr(0, 40)
+			)
 	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player, history)
 	var moves := _suggested_moves(npc_id)
 	var meta := {
@@ -441,6 +459,7 @@ func invoke(body: Dictionary) -> Dictionary:
 		"source": "prime_hub",
 		"session_memory": memory,
 		"session_memory_used": not memory.is_empty(),
+		"relation_memory_hint": rel_hint,
 		"history_turns": history.size(),
 		"tracked_quest": str(ss.get("tracked_quest", "")),
 	}
