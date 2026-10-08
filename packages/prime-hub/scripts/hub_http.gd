@@ -448,7 +448,11 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		)
 		return _ok(_attach_tick_flags(cout, path), 200 if bool(cout.get("ok")) else 400)
 
-	# --- Bots / say (thin) ---
+	# --- Bots / say / presence dials (thin) ---
+	if method == "GET" and path in ["/v1/presence-dials", "/v1/presence_dials"]:
+		if sim and sim.has_method("presence_dials_payload"):
+			return _ok(sim.presence_dials_payload())
+		return _ok({"ok": false, "error": "sim_missing"}, 501)
 	if method == "GET" and path == "/v1/bots":
 		if sim and sim.has_method("bots_payload"):
 			return _ok({"ok": true, "bots": sim.bots_payload(), "count": sim.bot_count()})

@@ -128,6 +128,11 @@ var _last_ambient: Dictionary = {}  # eid -> float unix
 var _rng := RandomNumberGenerator.new()
 var _persist_every_ticks: int = 100  # ~5 s @ 20 Hz
 var _life_tick_every: int = 20  # ~1 s
+## Phase B — dials présence joueurs IA (zone d'entraînement).
+var _presence_dials_pack: Dictionary = {}
+var _presence_defaults: Dictionary = {}
+var _presence_by_persona: Dictionary = {}
+var _presence_templates: Dictionary = {}
 ## Budget A* par tick sim (évite pics CPU → broadcast zone_state en retard → saccades client).
 const PATH_BUDGET_PER_TICK := 2
 var _path_budget: int = 0
@@ -293,8 +298,102 @@ func _ensure_density_beasts() -> void:
 			}
 
 
+func _load_presence_dials() -> void:
+	_presence_dials_pack.clear()
+	_presence_defaults.clear()
+	_presence_by_persona.clear()
+	_presence_templates.clear()
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/presence_dials.json"))
+	if typeof(raw) != TYPE_DICTIONARY:
+		_presence_defaults = {"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4}
+		return
+	_presence_dials_pack = raw
+	var defs = raw.get("defaults", {})
+	if typeof(defs) == TYPE_DICTIONARY:
+		_presence_defaults = defs.duplicate(true)
+	var by = raw.get("by_persona", {})
+	if typeof(by) == TYPE_DICTIONARY:
+		_presence_by_persona = by.duplicate(true)
+	var tpl = raw.get("ambient_templates", {})
+	if typeof(tpl) == TYPE_DICTIONARY:
+		_presence_templates = tpl.duplicate(true)
+
+
+func _dials_for_persona(name: String) -> Dictionary:
+	if _presence_defaults.is_empty() and _presence_by_persona.is_empty():
+		_load_presence_dials()
+	var key := name.strip_edges()
+	var row = _presence_by_persona.get(key, null)
+	if typeof(row) != TYPE_DICTIONARY:
+		# fallback case-insensitive
+		for k in _presence_by_persona.keys():
+			if str(k).to_lower() == key.to_lower():
+				row = _presence_by_persona[k]
+				break
+	var out := _presence_defaults.duplicate(true) if not _presence_defaults.is_empty() else {
+		"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4
+	}
+	if typeof(row) == TYPE_DICTIONARY:
+		for dk in ["chaleur", "humeur", "humour", "initiative"]:
+			if row.has(dk):
+				out[dk] = clampf(float(row[dk]), 0.0, 1.0)
+	return out
+
+
+func presence_line_for(bot: Dictionary, who: String) -> String:
+	## Une phrase d'ambiance selon dials (B2) — observable sans LLM.
+	var dials: Dictionary = bot.get("presence_dials", {})
+	if dials.is_empty():
+		dials = _dials_for_persona(str(bot.get("name", "")))
+	var chaleur := float(dials.get("chaleur", 0.45))
+	var initiative := float(dials.get("initiative", 0.4))
+	var tpl_key := "high_chaleur" if chaleur >= 0.6 else ("low_chaleur" if chaleur <= 0.35 else "")
+	if tpl_key.is_empty():
+		tpl_key = "high_initiative" if initiative >= 0.6 else ("low_initiative" if initiative <= 0.35 else "")
+	if tpl_key.is_empty():
+		return ""
+	var tpl := str(_presence_templates.get(tpl_key, "")).strip_edges()
+	if tpl.is_empty():
+		match tpl_key:
+			"high_chaleur":
+				tpl = "{who} te salue franchement — chaleur haute."
+			"low_chaleur":
+				tpl = "{who} reste à distance, ton mesuré."
+			"high_initiative":
+				tpl = "{who} propose déjà le prochain pas."
+			_:
+				tpl = "{who} attend que tu mènes."
+	var nm := str(bot.get("name", "IA"))
+	return tpl.replace("{who}", nm if who.is_empty() else who)
+
+
+func presence_dials_payload() -> Dictionary:
+	if _presence_defaults.is_empty() and _presence_by_persona.is_empty():
+		_load_presence_dials()
+	var bots: Array = []
+	for b in bot_defs:
+		var nm := str(b.get("name", ""))
+		var dials: Dictionary = b.get("presence_dials", _dials_for_persona(nm))
+		bots.append({
+			"name": nm,
+			"eid": str(b.get("eid", "")),
+			"oid": int(b.get("oid", 0)),
+			"presence_dials": dials,
+			"presence_line": presence_line_for(b, "Voyageur"),
+		})
+	return {
+		"ok": true,
+		"schema_version": int(_presence_dials_pack.get("schema_version", 1)),
+		"defaults": _presence_defaults,
+		"bots": bots,
+		"count": bots.size(),
+		"source": "prime_hub",
+	}
+
+
 func _load_bot_defs() -> void:
 	bot_defs.clear()
+	_load_presence_dials()
 	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/ai_players.json"))
 	var max_n := 10
 	if agent_api != null:
@@ -314,6 +413,10 @@ func _load_bot_defs() -> void:
 		bot_defs = BOT_DEFS_FALLBACK.duplicate(true)
 		while bot_defs.size() > max_n:
 			bot_defs.pop_back()
+		for i in range(bot_defs.size()):
+			var fb: Dictionary = bot_defs[i]
+			fb["presence_dials"] = _dials_for_persona(str(fb.get("name", "")))
+			bot_defs[i] = fb
 
 
 func _normalize_bot_row(p: Dictionary) -> Dictionary:
@@ -333,10 +436,17 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 	var ls = og.get("linked_studio", {})
 	if typeof(ls) != TYPE_DICTIONARY:
 		ls = {}
+	var nm := str(p.get("name", "Bot"))
+	var dials := _dials_for_persona(nm)
+	var inline = p.get("presence_dials", null)
+	if typeof(inline) == TYPE_DICTIONARY:
+		for dk in ["chaleur", "humeur", "humour", "initiative"]:
+			if inline.has(dk):
+				dials[dk] = clampf(float(inline[dk]), 0.0, 1.0)
 	return {
-		"eid": str(p.get("eid", "player:%s" % p.get("name", "Bot"))),
+		"eid": str(p.get("eid", "player:%s" % nm)),
 		"oid": int(p.get("oid", 900000)),
-		"name": str(p.get("name", "Bot")),
+		"name": nm,
 		"spawn": spawn_v,
 		"speed": float(p.get("speed", BOT_SPEED)),
 		"prefer": prefer,
@@ -352,6 +462,7 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 		"agent_id": str(og.get("agent_id", "")),
 		"linked_studio_agent_id": str(ls.get("agent_id", "")),
 		"linked_studio_display": str(ls.get("display_name", "")),
+		"presence_dials": dials,
 	}
 
 
@@ -408,6 +519,7 @@ func _ensure_fleet() -> void:
 			"agent_id": str(b.get("agent_id", "")),
 			"linked_studio_agent_id": str(b.get("linked_studio_agent_id", "")),
 			"linked_studio_display": str(b.get("linked_studio_display", "")),
+			"presence_dials": (b.get("presence_dials", {}) as Dictionary).duplicate(true),
 		}
 		entities[eid] = ent
 		# Goal sans A* au spawn (évite freeze startup) — path au premier step
@@ -646,6 +758,9 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	if companion.is_empty():
 		return
 	var line := str(companion.get("greet", "Salut {who}.")).replace("{who}", who)
+	var dial_line := presence_line_for(companion, who)
+	if not dial_line.is_empty() and not line.contains(dial_line):
+		line = "%s %s" % [line, dial_line]
 	enqueue_say(str(companion.get("name", "Nix")), int(companion.get("oid", 0)), line, "ia")
 	_start_companion_escort(companion, 28.0)
 
@@ -719,7 +834,12 @@ func _maybe_ambient() -> void:
 		if near == null:
 			continue
 		_last_ambient[eid] = now
-		var line := str(b.get("ambient", "")).replace("{who}", str(near["name"])).strip_edges()
+		var who_n := str(near["name"])
+		var line := str(b.get("ambient", "")).replace("{who}", who_n).strip_edges()
+		var dial_amb := presence_line_for(bot if not bot.is_empty() else b, who_n)
+		# B2 : 1 bot sur 2 (hash) remplace l'ambient stock par la ligne dials — observable.
+		if not dial_amb.is_empty() and (hash(eid) % 2) == 0:
+			line = dial_amb
 		if line.is_empty():
 			continue
 		enqueue_say(str(b["name"]), int(bot["oid"]), line, "ia")
