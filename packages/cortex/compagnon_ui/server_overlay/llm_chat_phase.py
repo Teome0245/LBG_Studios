@@ -105,6 +105,29 @@ async def run_llm_chat_phase(
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
 
+    # Phase C1 — brief présence hub (zone d'entraînement) : markdown + Campus borné
+    try:
+        from src.services.presence_brief import (
+            attach_presence_brief_if_needed,
+            wants_presence_brief,
+        )
+
+        if lab_mode and wants_presence_brief(prompt):
+            seed = router.normalize_llm(
+                "brief présence",
+                "presence_brief",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return await attach_presence_brief_if_needed(
+                    seed, prompt=prompt, lab=lab_mode
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.presence_brief").warning(
+            "presence_brief short-circuit failed: %s", e
+        )
+
     # D6.5 — « soumets ce plan au studio » : réutilise le plan du fil, skip LLM
     # (évite 502 timeout LLM+Pilot quand le livrable est déjà là).
     try:

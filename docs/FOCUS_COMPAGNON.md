@@ -145,7 +145,8 @@ Phasage réaliste :
 | **D6.2c** | Campus conceptuel ≠ Team live (`team_routing`) + rôles Compagnon/Lyra dans prompt causerie ; Pilot 502 = `lbg-backend` / `pydantic-settings` | **OK** (2026-10-02) |
 | **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
 | **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
-| **D6.5** | Greeting + sticky go-ahead + livrer plan + **persist Team** (`plan_submit` → mission Campus) | **OK live** 2026-10-08 — `SMOKE_D65_V9V10 OK` sur `:5174` · A1/A3/A4/A4b · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) |
+| **D6.5** | Greeting + sticky go-ahead + livrer plan + **persist Team** + watch clôture | **OK live** 2026-10-08 — `SMOKE_D65_V9V10 OK` · A1/A3/A4/A4b/A4c · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) |
+| **C1 présence** | Brief hub « teste présence Nix… » → markdown + mission Campus bornée | **code** 2026-10-08 — `presence_brief.py` · smoke B3/B4 |
 
 ### Ops Agir / Pilot (rappel 2026-10-02)
 

@@ -21,6 +21,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | `RESTAURATION_PRODUIT.md` | Checklist vert/jaune/rouge |
 | `OBJECTIVES.md` | Cadre O1/O2 |
 | `packages/prime-client/docs/CLIENT_ONLY_GODOT.md` | Vision joueur Godot-only |
+| [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) | Zone d'entraînement IA (dials B1–B4 · boucle Studio↔jeu C1–C3) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) D6.5 |
 | ADR 0016 (`new_mmo/…`) | Axe talents/artisanat — **accepté de facto** |
 | ADR 0017 | Core3 spatial + sidecar (historique peel) |
 | **ADR 0026** | **Runtime Godot-first** — live `prime-hub` · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · spike hist. [`SPIKE_48H_GODOT_RUNTIME.md`](SPIKE_48H_GODOT_RUNTIME.md) |

@@ -57,9 +57,9 @@ S’appuie sur l’existant : C3 Nix greet+escort · P3 dialogue · `relation_me
 
 | # | Livrable | Done quand | Owner | Effort |
 |---|----------|------------|-------|--------|
-| **C1** | Mandat Compagnon → brief hub | Depuis `:5174`, « teste présence Nix chaleur haute » crée un brief / job borné (dry-run → L2) vers smoke ou session hub | Compagnon + Pilot | M |
+| **C1** | Mandat Compagnon → brief hub | Depuis `:5174`, « teste présence Nix chaleur haute » crée un brief / job borné (dry-run → L2) vers smoke ou session hub | Compagnon + Pilot | **OK code** 2026-10-08 — `presence_brief.py` (markdown + Campus) |
 | **C2** | Retour terrain → causerie | Résultat smoke / chronique courte réinjecté dans le fil Compagnon (pas dump ops) | Compagnon | **partiel** 2026-10-08 — A4c watch clôture Campus (toast/chat) ; smoke hub→fil encore ouvert |
-| **C3** | Doc canon | Lien depuis [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) + [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · boîte idées ticket « zone entraînement » | Thémis | S |
+| **C3** | Doc canon | Lien depuis [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) + [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · boîte idées ticket « zone entraînement » | Thémis | **OK** 2026-10-08 — liens O2 + FOCUS |
 
 ---
 
