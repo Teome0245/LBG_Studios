@@ -121,19 +121,20 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
         except Exception as exc:  # noqa: BLE001 — job timer ne doit pas planter
             campus = {"ok": False, "error": str(exc)}
     result["campus_mission"] = campus
-    campus_act: dict[str, Any] = {"ok": False, "skipped": True}
+    campus_close: dict[str, Any] = {"ok": False, "skipped": True}
     if tids and bool(campus.get("ok")) and run_tasks:
         try:
-            # Auto-clôture si smokes verts (LBG_TEAM_CAMPUS_MISSION_AUTO_CLOSE).
-            campus_act = api_json(
+            # Clôture directe (sans act conductor — souvent ENABLED=0 hors café).
+            campus_close = api_json(
                 "POST",
-                f"{orchestrator_url()}/v1/team/campus/act",
-                {},
-                timeout=90,
+                f"{orchestrator_url()}/v1/team/campus/mission/close",
+                {"force": False, "reason": "choeur_l1_job"},
+                timeout=60,
             )
         except Exception as exc:  # noqa: BLE001
-            campus_act = {"ok": False, "error": str(exc)}
-    result["campus_act"] = campus_act
+            # 400 not_closable (smokes rouges / tâches pending) → attendu, pas fatal
+            campus_close = {"ok": False, "error": str(exc)}
+    result["campus_close"] = campus_close
     if persist:
         save_json_state(
             state_path(),
@@ -143,11 +144,7 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
                 "last_task_ids": tids,
                 "last_outcome": result["outcome"],
                 "last_campus_ok": bool(campus.get("ok")),
-                "last_campus_act": str(
-                    (campus_act.get("outcome") if isinstance(campus_act, dict) else "")
-                    or campus_act.get("error")
-                    or ""
-                )[:120],
+                "last_campus_close": bool(campus_close.get("ok")),
             },
         )
     return result
