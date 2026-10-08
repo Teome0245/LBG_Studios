@@ -3,7 +3,7 @@
   "id": "combat_density_lh",
   "label": "Densité combat anneau désert Lost Heaven",
   "notes": [
-    "Read-only G5 — pas de spawn auto. Engage = hunt_yard au POI chacal ; autres zones = hint densité.",
+    "G5 : hub_sim spawne kind=beast (oid 920xxx) depuis ces zones ; engage combat = hunt_yard au POI chacal.",
     "Waypoints alignés explore_ring_lh.json · bestiaire content/world/bestiaire_scrapaltai.json."
   ],
   "ring_ref": "data/life/explore_ring_lh.json",

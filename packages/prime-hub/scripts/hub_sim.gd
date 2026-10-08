@@ -171,6 +171,88 @@ func reset() -> void:
 	autonomy.setup(economy, suggest, POIS)
 	_ensure_fleet()
 	_ensure_hub_npcs()
+	_ensure_density_beasts()
+
+
+func _density_beast_count(density: String) -> int:
+	match density.strip_edges().to_lower():
+		"pack":
+			return 3
+		"patrol":
+			return 2
+		"low", "sparse":
+			return 1
+		_:
+			return 1
+
+
+func _ensure_density_beasts() -> void:
+	## Spawn open-world depuis combat_density_lh.json (kind=beast, oid 920xxx).
+	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("combat_density_lh.json"))
+	if typeof(raw) != TYPE_DICTIONARY:
+		return
+	var zones = raw.get("zones", [])
+	if typeof(zones) != TYPE_ARRAY:
+		return
+	var oid_base := 920001
+	var seq := 0
+	for z in zones:
+		if typeof(z) != TYPE_DICTIONARY:
+			continue
+		# MVP : zone engage hunt_yard d'abord ; autres zones density != none
+		var engage := str(z.get("engage_surface", "none"))
+		var dens := str(z.get("density", "sparse"))
+		if engage != "hunt_yard" and dens in ["", "none"]:
+			continue
+		if engage != "hunt_yard" and dens == "sparse":
+			# Sparse hors meute : 1 token max pour ne pas saturer le désert
+			pass
+		var beasts = z.get("beasts", [])
+		if typeof(beasts) != TYPE_ARRAY or beasts.is_empty():
+			continue
+		var beast_id := str(beasts[0])
+		var n := _density_beast_count(dens if engage != "hunt_yard" else "pack")
+		if engage != "hunt_yard":
+			n = mini(n, 1)
+		var p = z.get("pos", {})
+		if typeof(p) != TYPE_DICTIONARY:
+			continue
+		var cx := float(p.get("x", 0))
+		var cz := float(p.get("z", 0))
+		var zone_id := str(z.get("id", "zone"))
+		var label := str(z.get("label", beast_id))
+		for i in range(n):
+			var eid := "beast:%s:%d" % [zone_id.replace(":", "_"), i]
+			if entities.has(eid):
+				continue
+			var ox := cx + _rng.randf_range(-18.0, 18.0)
+			var oz := cz + _rng.randf_range(-18.0, 18.0)
+			var wz := _walkable_xz(ox, oz)
+			var pos := Vector3(wz.x, 0.15, wz.y)
+			var oid := oid_base + seq
+			seq += 1
+			entities[eid] = {
+				"eid": eid,
+				"oid": oid,
+				"kind": "beast",
+				"name": "%s %d" % [label if engage == "hunt_yard" else beast_id.replace("beast:", "").replace("_", " "), i + 1],
+				"beast_id": beast_id,
+				"zone_id": zone_id,
+				"pos": pos,
+				"target": Vector3.ZERO,
+				"speed": 3.2,
+				"is_bot": false,
+				"goal": "wander",
+				"play_mode": "ring",
+				"quest_id": str(z.get("quest_id", "")),
+				"linger_until": 0.0,
+				"stuck_ticks": 0,
+				"home_x": pos.x,
+				"home_z": pos.z,
+				"wander_r": 28.0 if engage == "hunt_yard" else 22.0,
+				"ambient": "",
+				"active": true,
+			}
 
 
 func _load_bot_defs() -> void:
@@ -786,6 +868,7 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
+	_ensure_density_beasts()
 	tick += 1
 	_path_budget = PATH_BUDGET_PER_TICK
 	dt = clampf(dt, 0.001, 0.25)
@@ -797,7 +880,7 @@ func step(dt: float) -> void:
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):
 			_step_bot(e, dt)
-		elif str(e.get("kind", "")) == "npc":
+		elif str(e.get("kind", "")) in ["npc", "beast"]:
 			_step_npc(e, dt)
 	if tick % 40 == 0:
 		_maybe_ambient()
@@ -920,6 +1003,15 @@ func npc_count() -> int:
 	return n
 
 
+func beast_count() -> int:
+	var n := 0
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) == "beast" and bool(e.get("active", true)):
+			n += 1
+	return n
+
+
 func life_stats() -> Dictionary:
 	if life == null:
 		return {}
@@ -943,6 +1035,7 @@ func zone_state_payload(your_oid: int) -> Dictionary:
 		"online_count": online.size(),
 		"bot_count": bot_count(),
 		"npc_count": npc_count(),
+		"beast_count": beast_count(),
 	}
 	var eid := "player:%d" % your_oid
 	if entities.has(eid):

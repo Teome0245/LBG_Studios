@@ -1220,16 +1220,18 @@ func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 	var color := COLOR_NPC
 	if kind == "player":
 		color = COLOR_PLAYER_BOT
+	elif kind == "beast":
+		color = Color(0.85, 0.55, 0.22, 1.0)
 	if entity_manager.get_entity(oid) == null:
 		var ekey := str(ent.get("entity_key", ent.get("id", "")))
 		entity_manager.spawn(oid, pos, color, name, kind, ekey)
 	else:
 		entity_manager.move(oid, pos)
-	# Hub : nameplates joueurs distants + bots IA + PNJ hub
+	# Hub : nameplates joueurs distants + bots IA + PNJ hub + bêtes anneau
 	if _hub_runtime_enabled():
 		var e2: Node = entity_manager.get_entity(oid)
 		if e2 and e2.has_method("set_force_nameplate"):
-			if kind == "player" or kind == "npc":
+			if kind == "player" or kind == "npc" or kind == "beast":
 				# Une fois suffit — pas de queue_redraw à chaque zone_state.
 				if not bool(e2.get("force_nameplate")):
 					e2.call("set_force_nameplate", true)

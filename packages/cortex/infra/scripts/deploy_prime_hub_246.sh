@@ -26,7 +26,11 @@ REMOTE_DIR="${LBG_PRIME_HUB_DIR:-/opt/lbg-prime-hub}"
 EXPORT_POI="${CORTEX_ROOT}/infra/scripts/export_prime_hub_catalog_poi.py"
 if [[ -f "${EXPORT_POI}" ]]; then
   echo "==> Export catalog_poi → prime-hub/data"
-  python3 "${EXPORT_POI}" || echo "WARN: export catalog_poi failed — snapshot existant conservé"
+  PY_EXPORT=python3
+  if [[ -x "${CORTEX_ROOT}/.venv/bin/python" ]]; then
+    PY_EXPORT="${CORTEX_ROOT}/.venv/bin/python"
+  fi
+  "${PY_EXPORT}" "${EXPORT_POI}" || echo "WARN: export catalog_poi failed — snapshot existant conservé"
 fi
 
 mkdir -p "$(dirname "$UNIT_LOCAL")"

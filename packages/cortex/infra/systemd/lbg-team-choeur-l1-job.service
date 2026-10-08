@@ -1,0 +1,21 @@
+[Unit]
+Description=LBG équipe virtuelle — mission Chœur L1 (probe + smoke_choeur_terrain)
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_TEAM_CHOEUR_L1_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_TEAM_CHOEUR_L1_JOB_STATE=/var/lib/lbg/team_choeur_l1/state.json
+Environment=LBG_TEAM_CHOEUR_L1_JOB_ACTOR_ID=system:team_choeur_l1
+Environment=LBG_PRIME_HUB_URL=http://192.168.0.246:8787
+Environment=LBG_PLAYER_IA_PROBE_MODE=hub
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_team_choeur_l1_job
+
+[Install]
+WantedBy=multi-user.target

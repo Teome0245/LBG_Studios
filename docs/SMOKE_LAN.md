@@ -151,6 +151,15 @@ Smoke C1 historique Pilot (`tools/smoke_c1_suggested_moves.sh` → `:8000`) = r�
 ```bash
 bash tools/smoke_choeur_terrain.sh           # truth guard + probe hub + P3 si live
 bash tools/smoke_choeur_terrain.sh --skip-live
+# Owner bundle Team
+BUNDLE=choeur_l1 bash packages/cortex/infra/scripts/smoke_godot_owners.sh
+# Job spawn (dry) : python -m lbg_agents.spawn_team_choeur_l1_job
+```
+
+## Spawn bêtes densités (open-world)
+
+```bash
+bash tools/smoke_beast_spawn_hub.sh          # healthz.beast_count >= 1
 ```
 
 ## P5a cour de chasse (hub)

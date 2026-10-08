@@ -251,6 +251,7 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			"tick": int(sim.tick) if sim else 0,
 			"bot_count": int(sim.bot_count()) if sim else 0,
 			"npc_count": int(sim.npc_count()) if sim else 0,
+			"beast_count": int(sim.beast_count()) if sim and sim.has_method("beast_count") else 0,
 			"life": life,
 			"ai_seats": seats,
 			"active_event": ev,

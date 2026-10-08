@@ -105,6 +105,12 @@
       "name_match": ["trainer", "formateur", "instructeur", "maître"],
       "sprite": "npc_trainer"
     },
-    { "kind": "npc", "sprite": "npc_civilian" }
+    { "kind": "npc", "sprite": "npc_civilian" },
+    {
+      "kind": "beast",
+      "name_match": ["chacal", "meute", "hunt"],
+      "sprite": "npc_guard"
+    },
+    { "kind": "beast", "sprite": "npc_guard" }
   ]
 }
