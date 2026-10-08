@@ -88,4 +88,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : B3 seuils interaction dials · finir L3 `days_ok=3` (encore 2/3) · rejeu humain D6.5.
+**Suite immédiate** : L3 `days_ok` **2/3 armed** (tick live après minuit UTC) · Phase C présence studio↔jeu · optionnel rejeu humain D6.5.

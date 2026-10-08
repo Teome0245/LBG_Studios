@@ -10,7 +10,7 @@
 |------------|--------|
 | Ops health | `healthy` · 6/6 requis · 245 `[OFF]` optionnel · 246 `:8787/healthz` OK |
 | Timer | `lbg-ops-health-pilot-job` live (`DRY_RUN=0`, `NOTIFY=1`) · cooldown 3 h |
-| Mission L3 | `days_ok=2/3` · `last_ok_day=2026-10-08` · `consecutive_red=0` · retries 1/5 |
+| Mission L3 | `days_ok=2/3` · `last_ok_day=2026-10-08` · `consecutive_red=0` · retries 1/5 · **armed** pour jour 3 après minuit UTC (`tools/status_l3_smoke_lan_mission.sh`) |
 | Fleet L2 pending | 0 Team · 0 jobs `waiting_approval` |
 | Jobs | 117 total · done 110 · queued 4 · failed 3 |
 | Lessons | 104 entrées · path `knowledge/lessons_learned.json` |
@@ -49,7 +49,7 @@ Fleet expose désormais `mmo_player` / `bridge_agent_id` / `linked_studio_*` (pl
 |----------|--|
 | **GO** | Conserver le pilote live ; terminer mission 3/3 ; F1/F2 restent le cadre assets/PM |
 | **NO-GO** | Ne pas ouvrir F3 O2 jeu depuis ce plan (priorités P3–P5 séparées) |
-| **À faire** | Demain : tick → `days_ok=3` → `done` · optionnel : agrégat métriques 7j dans Fleet |
+| **À faire** | Après minuit UTC : timer live ou `POST …/smoke_lan_mission/tick` `dry_run=false` → `days_ok=3` → `done` · optionnel : agrégat métriques 7j |
 
 ## Commandes
 

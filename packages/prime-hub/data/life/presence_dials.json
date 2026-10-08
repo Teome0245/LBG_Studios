@@ -36,5 +36,33 @@
     "low_chaleur": "{who} reste à distance, ton mesuré.",
     "high_initiative": "{who} propose déjà le prochain pas.",
     "low_initiative": "{who} attend que tu mènes."
+  },
+  "thresholds": {
+    "_meta": "B3 — dial × distance → action (pas de LLM libre sur prix/combat).",
+    "ignore": {
+      "max_chaleur": 0.28,
+      "max_initiative": 0.32,
+      "max_distance_m": 40
+    },
+    "ambient": {
+      "min_chaleur": 0.28,
+      "max_distance_m": 28
+    },
+    "greet": {
+      "min_chaleur": 0.35,
+      "min_initiative": 0.3,
+      "max_distance_m": 32
+    },
+    "escort": {
+      "min_chaleur": 0.55,
+      "min_initiative": 0.5,
+      "max_distance_m": 24,
+      "duration_s_base": 14,
+      "duration_s_high": 28
+    },
+    "tip_ack": {
+      "min_chaleur": 0.4,
+      "max_distance_m": 18
+    }
   }
 }

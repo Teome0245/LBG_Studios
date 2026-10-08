@@ -133,6 +133,7 @@ var _presence_dials_pack: Dictionary = {}
 var _presence_defaults: Dictionary = {}
 var _presence_by_persona: Dictionary = {}
 var _presence_templates: Dictionary = {}
+var _presence_thresholds: Dictionary = {}
 ## Budget A* par tick sim (évite pics CPU → broadcast zone_state en retard → saccades client).
 const PATH_BUDGET_PER_TICK := 2
 var _path_budget: int = 0
@@ -303,6 +304,7 @@ func _load_presence_dials() -> void:
 	_presence_defaults.clear()
 	_presence_by_persona.clear()
 	_presence_templates.clear()
+	_presence_thresholds.clear()
 	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/presence_dials.json"))
 	if typeof(raw) != TYPE_DICTIONARY:
 		_presence_defaults = {"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4}
@@ -317,6 +319,9 @@ func _load_presence_dials() -> void:
 	var tpl = raw.get("ambient_templates", {})
 	if typeof(tpl) == TYPE_DICTIONARY:
 		_presence_templates = tpl.duplicate(true)
+	var th = raw.get("thresholds", {})
+	if typeof(th) == TYPE_DICTIONARY:
+		_presence_thresholds = th.duplicate(true)
 
 
 func _dials_for_persona(name: String) -> Dictionary:
@@ -367,6 +372,77 @@ func presence_line_for(bot: Dictionary, who: String) -> String:
 	return tpl.replace("{who}", nm if who.is_empty() else who)
 
 
+func presence_resolve_action(bot: Dictionary, distance_m: float) -> Dictionary:
+	## B3 — action autorisée (ignore/ambient/greet/escort/tip_ack) selon dials × distance.
+	if _presence_thresholds.is_empty():
+		_load_presence_dials()
+	var dials: Dictionary = bot.get("presence_dials", {})
+	if dials.is_empty():
+		dials = _dials_for_persona(str(bot.get("name", "")))
+	var chaleur := float(dials.get("chaleur", 0.45))
+	var initiative := float(dials.get("initiative", 0.4))
+	var d := maxf(0.0, distance_m)
+	var th: Dictionary = _presence_thresholds
+	var ign: Dictionary = th.get("ignore", {}) if typeof(th.get("ignore", null)) == TYPE_DICTIONARY else {}
+	var esc: Dictionary = th.get("escort", {}) if typeof(th.get("escort", null)) == TYPE_DICTIONARY else {}
+	var gre: Dictionary = th.get("greet", {}) if typeof(th.get("greet", null)) == TYPE_DICTIONARY else {}
+	var amb: Dictionary = th.get("ambient", {}) if typeof(th.get("ambient", null)) == TYPE_DICTIONARY else {}
+	var tip: Dictionary = th.get("tip_ack", {}) if typeof(th.get("tip_ack", null)) == TYPE_DICTIONARY else {}
+
+	var action := "ambient"
+	var reason := "default"
+	# Plus spécifique d'abord.
+	if (
+		chaleur <= float(ign.get("max_chaleur", -1.0))
+		and initiative <= float(ign.get("max_initiative", -1.0))
+		and d <= float(ign.get("max_distance_m", 40.0))
+	):
+		action = "ignore"
+		reason = "low_dials"
+	elif (
+		chaleur >= float(esc.get("min_chaleur", 0.55))
+		and initiative >= float(esc.get("min_initiative", 0.5))
+		and d <= float(esc.get("max_distance_m", 24.0))
+	):
+		action = "escort"
+		reason = "high_chaleur_initiative"
+	elif (
+		chaleur >= float(gre.get("min_chaleur", 0.35))
+		and initiative >= float(gre.get("min_initiative", 0.3))
+		and d <= float(gre.get("max_distance_m", 32.0))
+	):
+		action = "greet"
+		reason = "greet_ok"
+	elif (
+		chaleur >= float(tip.get("min_chaleur", 0.4))
+		and d <= float(tip.get("max_distance_m", 18.0))
+	):
+		action = "tip_ack"
+		reason = "near_tip"
+	elif chaleur >= float(amb.get("min_chaleur", 0.28)) and d <= float(amb.get("max_distance_m", 28.0)):
+		action = "ambient"
+		reason = "ambient_ok"
+	elif d > float(amb.get("max_distance_m", 28.0)):
+		action = "ignore"
+		reason = "too_far"
+	else:
+		action = "ignore"
+		reason = "below_ambient"
+
+	var dur := 0.0
+	if action == "escort":
+		dur = float(esc.get("duration_s_high", 28.0)) if chaleur >= 0.7 else float(esc.get("duration_s_base", 14.0))
+	return {
+		"action": action,
+		"reason": reason,
+		"distance_m": snappedf(d, 0.1),
+		"chaleur": chaleur,
+		"initiative": initiative,
+		"escort_duration_s": dur,
+		"persona": str(bot.get("name", "")),
+	}
+
+
 func presence_dials_payload() -> Dictionary:
 	if _presence_defaults.is_empty() and _presence_by_persona.is_empty():
 		_load_presence_dials()
@@ -374,20 +450,29 @@ func presence_dials_payload() -> Dictionary:
 	for b in bot_defs:
 		var nm := str(b.get("name", ""))
 		var dials: Dictionary = b.get("presence_dials", _dials_for_persona(nm))
-		bots.append({
+		var row := {
 			"name": nm,
 			"eid": str(b.get("eid", "")),
 			"oid": int(b.get("oid", 0)),
 			"presence_dials": dials,
 			"presence_line": presence_line_for(b, "Voyageur"),
-		})
+		}
+		# B3 — actions à 3 distances de référence (smoke B4).
+		row["actions_at_m"] = {
+			"12": presence_resolve_action(b, 12.0),
+			"20": presence_resolve_action(b, 20.0),
+			"35": presence_resolve_action(b, 35.0),
+		}
+		bots.append(row)
 	return {
 		"ok": true,
 		"schema_version": int(_presence_dials_pack.get("schema_version", 1)),
 		"defaults": _presence_defaults,
+		"thresholds": _presence_thresholds,
 		"bots": bots,
 		"count": bots.size(),
 		"source": "prime_hub",
+		"ticket": "B2+B3",
 	}
 
 
@@ -747,6 +832,7 @@ func drain_chat() -> Array:
 
 func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	## C3 — un seul compagnon (Nix) accueille + escorte courte ; pas de spam flotte.
+	## B3 — seuils dials : ignore / greet seul / escort (durée selon chaleur).
 	if _greeted_oids.has(human_oid):
 		return
 	_greeted_oids[human_oid] = true
@@ -757,12 +843,20 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	var companion := _pick_companion_bot()
 	if companion.is_empty():
 		return
+	# Distance spawn hub ≈ proche (12 m) pour le premier contact.
+	var decision: Dictionary = presence_resolve_action(companion, 12.0)
+	var act := str(decision.get("action", "greet"))
+	if act == "ignore":
+		return
 	var line := str(companion.get("greet", "Salut {who}.")).replace("{who}", who)
 	var dial_line := presence_line_for(companion, who)
 	if not dial_line.is_empty() and not line.contains(dial_line):
 		line = "%s %s" % [line, dial_line]
 	enqueue_say(str(companion.get("name", "Nix")), int(companion.get("oid", 0)), line, "ia")
-	_start_companion_escort(companion, 28.0)
+	if act == "escort":
+		var dur := float(decision.get("escort_duration_s", 28.0))
+		_start_companion_escort(companion, dur if dur > 0.0 else 28.0)
+	# greet / tip_ack / ambient : salut sans follow.
 
 
 func _pick_companion_bot() -> Dictionary:
@@ -832,6 +926,11 @@ func _maybe_ambient() -> void:
 				near = h
 				break
 		if near == null:
+			continue
+		var hp_n: Vector3 = near["pos"]
+		var dist_n := Vector2(hp_n.x - bp.x, hp_n.z - bp.z).length()
+		var decision_n: Dictionary = presence_resolve_action(bot if not bot.is_empty() else b, dist_n)
+		if str(decision_n.get("action", "")) == "ignore":
 			continue
 		_last_ambient[eid] = now
 		var who_n := str(near["name"])
