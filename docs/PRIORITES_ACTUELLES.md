@@ -88,4 +88,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : deploy/rejeu D6.5 V9/V10 sur `:5174` · finir L3 `days_ok=3` · Phase B présence zone entraînement.
+**Suite immédiate** : finir L3 `days_ok=3` · Phase B présence zone entraînement (D6.5 **OK live** 2026-10-08).
