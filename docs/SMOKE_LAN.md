@@ -201,6 +201,14 @@ bash tools/status_l3_smoke_lan_mission.sh    # mission L3 days_ok (calendaire UT
 
 Pack `data/life/presence_dials.json` (+ `thresholds`) · inject greet/ambient/escort `hub_sim` · zone d’entraînement ([`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md)).
 
+## C1/C2 Compagnon ↔ présence hub
+
+```bash
+# C1 — « teste présence Nix chaleur haute » → brief + mission Campus
+# C2 — « retour hub présence » → causerie depuis :8787 (OK 2026-10-08)
+bash tools/smoke_c2_presence_report_5174.sh
+```
+
 ## Catalog POI + densité combat
 
 ```bash

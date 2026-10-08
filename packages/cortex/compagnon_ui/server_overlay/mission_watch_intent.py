@@ -26,11 +26,16 @@ def wants_mission_watch_notify(prompt: str) -> bool:
 
 
 def mission_watch_ack_reply(prompt: str = "") -> str:
-    """Réponse déterministe — l'humain qui demande = déjà validé pour le suivi."""
+    """Réponse déterministe — l'humain qui demande = déjà validé pour le suivi.
+
+    Le client Compagnon arme le watch localStorage (mission Campus ouverte) ;
+    ce texte est le fallback si le front n'a pas encore le mission_id.
+    """
     _ = prompt
     return (
         "OK — je note le suivi. Tu es l'humain : cette demande vaut déjà "
         "pour un retour à la clôture (suivi lecture seule, pas une action Agir). "
-        "Dès que la mission Campus est traitée ou plus ouverte, je te préviens "
-        "ici (toast + message). Tu peux aussi suivre Pilot `#/team/office`."
+        "Le Compagnon arme la surveillance de la mission Campus ouverte ; "
+        "dès qu'elle est traitée ou plus ouverte, toast + message ici. "
+        "Pilot `#/team/office` pour le détail."
     )

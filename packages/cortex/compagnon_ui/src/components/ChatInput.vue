@@ -16,7 +16,32 @@ import {
   activityPhase,
   endActivity,
 } from '@/composables/useActivity'
+import {
+  wantsMissionNotify,
+  requestNotify,
+  listWatches,
+  watchMission,
+  ackNotifyMessage,
+  fetchCampusSnapshot,
+} from '@/lib/missionWatch'
 import PilotagePalette from './PilotagePalette.vue'
+
+/** Arme le watch sur la mission Campus ouverte (ou la dernière connue). */
+async function ensureMissionWatchArmed() {
+  let hit = requestNotify() || listWatches()[0] || null
+  if (hit) return hit
+  const snap = await fetchCampusSnapshot().catch(() => null)
+  const mid = String(snap?.status?.mission?.id || '').trim()
+  if (!mid) return null
+  return watchMission({
+    missionId: mid,
+    objective: String(snap?.status?.mission?.objective || '').slice(0, 240),
+    taskIds: Array.isArray(snap?.status?.mission?.task_ids)
+      ? snap.status.mission.task_ids
+      : [],
+    notify: true,
+  })
+}
 
 const AGENT_KEY = 'lbg_orch_input_agent'
 const MODEL_KEY = 'lbg_orch_input_model'
@@ -207,35 +232,18 @@ const send = async () => {
   clearPendingImages()
 
   // D6.5 — « retour quand Team a traité » : active le watch + ack (pas d'Agir)
-  if (!images.length) {
+  if (!images.length && wantsMissionNotify(userMsg)) {
     try {
-      const mw = await import('@/lib/missionWatch')
-      if (mw.wantsMissionNotify(userMsg)) {
-        let hit = mw.requestNotify() || mw.listWatches()[0] || null
-        if (!hit) {
-          // Seed depuis la mission Campus ouverte (si aucune watch locale)
-          const snap = await mw.fetchCampusSnapshot().catch(() => null)
-          const mid = String(snap?.status?.mission?.id || '').trim()
-          if (mid) {
-            hit = mw.watchMission({
-              missionId: mid,
-              objective: String(snap.status.mission.objective || '').slice(0, 240),
-              taskIds: Array.isArray(snap.status.mission.task_ids)
-                ? snap.status.mission.task_ids
-                : [],
-              notify: true,
-            })
-          }
-        }
-        addMessage({
-          role: 'assistant',
-          content: mw.ackNotifyMessage(hit),
-          source: 'mission_watch',
-        })
-        return
-      }
+      const hit = await ensureMissionWatchArmed()
+      addMessage({
+        role: 'assistant',
+        content: ackNotifyMessage(hit),
+        source: 'mission_watch',
+      })
+      return
     } catch (e) {
       console.warn('missionWatch', e)
+      // tombe sur /ask — on ré-arme quand même après la réponse backend
     }
   }
 
@@ -278,7 +286,7 @@ const send = async () => {
   )
   activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle…')
   try {
-    const backendResponse = await sendPrompt(userMsg, {
+    let backendResponse = await sendPrompt(userMsg, {
       agent,
       model: selectedModel.value,
       profile: selectedProfile.value,
@@ -296,6 +304,24 @@ const send = async () => {
       activityLog('Carte Agir jointe', 'ok')
     }
     activityPhase('planning')
+    // Si le backend a répondu mission_watch (ou intent suivi), armer le watch local
+    if (
+      backendResponse?.source === 'mission_watch' ||
+      backendResponse?.mission_watch?.notify ||
+      wantsMissionNotify(userMsg)
+    ) {
+      try {
+        const hit = await ensureMissionWatchArmed()
+        if (hit && backendResponse?.source === 'mission_watch') {
+          backendResponse = {
+            ...backendResponse,
+            content: ackNotifyMessage(hit),
+          }
+        }
+      } catch (e) {
+        console.warn('missionWatch arm after ask', e)
+      }
+    }
     addMessage(backendResponse)
     endActivity('done')
     loadConversations()
