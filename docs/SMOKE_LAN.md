@@ -191,6 +191,14 @@ bash tools/smoke_c2_relation_memory_hub.sh   # tip → GET memory → dialogue h
 
 Persistance : `players_state.json` → `relation_memory[]` · lecture `GET /v1/relation-memory?player=&npc_id=` · écriture tip/accept/trade + `met` au dialogue.
 
+## B2 presence_dials (joueurs IA)
+
+```bash
+bash tools/smoke_b2_presence_dials_hub.sh   # GET /v1/presence-dials — Nix chaleur haute (OK 2026-10-08)
+```
+
+Pack `data/life/presence_dials.json` · inject greet/ambient `hub_sim` · zone d’entraînement ([`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md)).
+
 ## Catalog POI + densité combat
 
 ```bash
