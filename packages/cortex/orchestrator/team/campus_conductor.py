@@ -244,6 +244,37 @@ def _set_mission(mission: dict[str, Any]) -> None:
             pass
 
 
+def register_mission(
+    mission_id: str,
+    objective: str,
+    task_ids: list[str],
+    *,
+    kind: str = "choeur_l1",
+    require_owner_smoke: bool = True,
+    status: str = "open",
+) -> dict[str, Any]:
+    """Enregistre une mission Lyra déjà spawnée (job timer) pour clôture campus."""
+    mid = str(mission_id or "").strip()
+    if not mid:
+        return {"ok": False, "error": "mission_id_required"}
+    tids = [str(x) for x in (task_ids or []) if str(x).strip()]
+    if not tids:
+        return {"ok": False, "error": "task_ids_required"}
+    mission = {
+        "id": mid,
+        "objective": str(objective or mid)[:2000],
+        "status": str(status or "open"),
+        "created_ts": time.time(),
+        "task_ids": tids,
+        "dry_run": False,
+        "kind": str(kind or "choeur_l1"),
+        "require_owner_smoke": bool(require_owner_smoke),
+        "_require_owner_smoke": bool(require_owner_smoke),
+    }
+    _set_mission(mission)
+    return {"ok": True, "mission": mission}
+
+
 def _mission_tasks(mission: dict[str, Any]) -> list[TeamTask]:
     ids = [str(x) for x in (mission.get("task_ids") or []) if x]
     out: list[TeamTask] = []

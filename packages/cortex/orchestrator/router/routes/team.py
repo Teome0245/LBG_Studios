@@ -574,6 +574,36 @@ def team_campus_mission(payload: CampusMissionBody) -> dict[str, object]:
     )
 
 
+class CampusMissionRegisterBody(BaseModel):
+    """Mission déjà spawnée (timer Chœur / jalon) — pose task_ids pour clôture."""
+
+    id: str = Field(..., min_length=1)
+    objective: str = Field(..., min_length=1)
+    task_ids: list[str] = Field(default_factory=list)
+    kind: str = "choeur_l1"
+    require_owner_smoke: bool = True
+    status: str = "open"
+
+
+@router.post("/team/campus/mission/register")
+def team_campus_mission_register(payload: CampusMissionRegisterBody) -> dict[str, object]:
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import campus_conductor
+
+    out = campus_conductor.register_mission(
+        payload.id,
+        payload.objective,
+        list(payload.task_ids or []),
+        kind=payload.kind,
+        require_owner_smoke=payload.require_owner_smoke,
+        status=payload.status,
+    )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "register_failed"))
+    return out  # type: ignore[return-value]
+
+
 class EvolutionLeadBody(BaseModel):
     """Piste d'évolution (URL TikTok/doc/repo…) — fetch silencieux, pas d'onglet."""
 

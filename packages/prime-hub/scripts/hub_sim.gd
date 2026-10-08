@@ -231,6 +231,8 @@ func _ensure_density_beasts() -> void:
 			var pos := Vector3(wz.x, 0.15, wz.y)
 			var oid := oid_base + seq
 			seq += 1
+			var is_pack := engage == "hunt_yard" or dens == "pack"
+			var is_boss := dens == "sparse" and ("titan" in beast_id or "serpent" in beast_id)
 			entities[eid] = {
 				"eid": eid,
 				"oid": oid,
@@ -240,7 +242,7 @@ func _ensure_density_beasts() -> void:
 				"zone_id": zone_id,
 				"pos": pos,
 				"target": Vector3.ZERO,
-				"speed": 3.2,
+				"speed": 2.4 if is_boss else (4.2 if is_pack else 3.2),
 				"is_bot": false,
 				"goal": "wander",
 				"play_mode": "ring",
@@ -250,6 +252,8 @@ func _ensure_density_beasts() -> void:
 				"home_x": pos.x,
 				"home_z": pos.z,
 				"wander_r": 28.0 if engage == "hunt_yard" else 22.0,
+				"aggro_r": 38.0 if is_pack else (22.0 if is_boss else 28.0),
+				"leash_r": 55.0 if is_pack else 40.0,
 				"ambient": "",
 				"active": true,
 			}
@@ -865,6 +869,101 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	npc["pos"] = Vector3(nx, pos.y, nz)
 
 
+func _nearest_player_xz(x: float, z: float, radius_m: float) -> Dictionary:
+	## Joueur humain le plus proche (pas bot IA flotte).
+	var best: Dictionary = {}
+	var best_d := INF
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) != "player":
+			continue
+		if bool(e.get("is_bot", false)):
+			continue
+		var p: Vector3 = e["pos"]
+		var d := Vector2(p.x - x, p.z - z).length()
+		if d <= radius_m and d < best_d:
+			best_d = d
+			best = e
+	if best.is_empty():
+		return {}
+	return {"player": best, "dist": best_d}
+
+
+func _step_beast(beast: Dictionary, dt: float) -> void:
+	## Wander + aggro joueur (leash home) — meute plus agressive, sparse/boss plus lent.
+	if not bool(beast.get("active", true)):
+		return
+	var speed: float = float(beast.get("speed", 0.0))
+	if speed <= 0.0:
+		return
+	var pos: Vector3 = beast["pos"]
+	var home_x := float(beast.get("home_x", pos.x))
+	var home_z := float(beast.get("home_z", pos.z))
+	var aggro_r := float(beast.get("aggro_r", 28.0))
+	var leash_r := float(beast.get("leash_r", 45.0))
+	var from_home := Vector2(pos.x - home_x, pos.z - home_z).length()
+	if from_home > leash_r:
+		beast["goal"] = "leash"
+		beast["target"] = Vector3(home_x, 0.15, home_z)
+		beast.erase("aggro_eid")
+	else:
+		var hit := _nearest_player_xz(pos.x, pos.z, aggro_r)
+		if not hit.is_empty():
+			var pl: Dictionary = hit["player"]
+			var pp: Vector3 = pl["pos"]
+			beast["goal"] = "aggro"
+			beast["aggro_eid"] = str(pl.get("eid", ""))
+			beast["target"] = Vector3(pp.x, 0.15, pp.z)
+			# Chase un peu plus vite en meute
+			speed = speed * 1.15
+		elif str(beast.get("goal", "")) == "aggro" or str(beast.get("goal", "")) == "leash":
+			beast["goal"] = "wander"
+			beast.erase("aggro_eid")
+			beast["target"] = _pick_wander_target(beast)
+	var goal := str(beast.get("goal", "wander"))
+	if goal == "wander" or goal == "":
+		_step_npc(beast, dt)
+		return
+	var target: Vector3 = beast.get("target", Vector3.ZERO)
+	if target == Vector3.ZERO:
+		beast["target"] = _pick_wander_target(beast)
+		_step_npc(beast, dt)
+		return
+	var dx := target.x - pos.x
+	var dz := target.z - pos.z
+	var dist := sqrt(dx * dx + dz * dz)
+	if goal == "leash" and dist < 2.0:
+		beast["goal"] = "wander"
+		beast["target"] = _pick_wander_target(beast)
+		beast["stuck_ticks"] = 0
+		return
+	if goal == "aggro" and dist < 1.8:
+		# Collé au joueur : rester en aggro, resync target au prochain tick
+		beast["stuck_ticks"] = 0
+		return
+	var step_len := minf(dist, speed * dt)
+	var nx := pos.x + (dx / dist) * step_len
+	var nz := pos.z + (dz / dist) * step_len
+	if collision != null:
+		var c: Vector2 = collision.clamp_move(pos.x, pos.z, nx, nz) as Vector2
+		nx = c.x
+		nz = c.y
+	var moved := Vector2(nx - pos.x, nz - pos.z).length()
+	if moved < step_len * 0.15:
+		beast["stuck_ticks"] = int(beast.get("stuck_ticks", 0)) + 1
+		if int(beast["stuck_ticks"]) >= 5:
+			var home := _walkable_xz(home_x, home_z)
+			beast["pos"] = Vector3(home.x, pos.y, home.y)
+			beast["goal"] = "wander"
+			beast["target"] = _pick_wander_target(beast)
+			beast.erase("aggro_eid")
+			beast["stuck_ticks"] = 0
+			return
+	else:
+		beast["stuck_ticks"] = 0
+	beast["pos"] = Vector3(nx, pos.y, nz)
+
+
 func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
@@ -880,7 +979,9 @@ func step(dt: float) -> void:
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):
 			_step_bot(e, dt)
-		elif str(e.get("kind", "")) in ["npc", "beast"]:
+		elif str(e.get("kind", "")) == "beast":
+			_step_beast(e, dt)
+		elif str(e.get("kind", "")) == "npc":
 			_step_npc(e, dt)
 	if tick % 40 == 0:
 		_maybe_ambient()

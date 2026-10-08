@@ -9,9 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from lbg_agents.team_job_spawn import (
+    api_json,
     cooldown_active,
     create_and_run_team_task,
     load_json_state,
+    orchestrator_url,
     save_json_state,
     task_run_summary,
     truthy,
@@ -100,6 +102,25 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
     result["player_ia"] = p_sum
     result["qa"] = q_sum
     result["outcome"] = "done" if (p_sum.get("task_ok") and q_sum.get("task_ok")) else "ran"
+    campus: dict[str, Any] = {"ok": False, "skipped": True}
+    if tids:
+        try:
+            campus = api_json(
+                "POST",
+                f"{orchestrator_url()}/v1/team/campus/mission/register",
+                {
+                    "id": mid,
+                    "objective": f"Chœur L1 — {probe_obj[:120]}",
+                    "task_ids": tids,
+                    "kind": "choeur_l1",
+                    "require_owner_smoke": True,
+                    "status": "open",
+                },
+                timeout=30,
+            )
+        except Exception as exc:  # noqa: BLE001 — job timer ne doit pas planter
+            campus = {"ok": False, "error": str(exc)}
+    result["campus_mission"] = campus
     if persist:
         save_json_state(
             state_path(),
@@ -108,6 +129,7 @@ def run_spawn(*, persist: bool = True, run_tasks: bool = True) -> dict[str, Any]
                 "last_mission": mid,
                 "last_task_ids": tids,
                 "last_outcome": result["outcome"],
+                "last_campus_ok": bool(campus.get("ok")),
             },
         )
     return result

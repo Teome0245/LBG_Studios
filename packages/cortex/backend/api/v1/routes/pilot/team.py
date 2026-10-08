@@ -415,6 +415,20 @@ async def pilot_team_campus_mission(payload: dict[str, object]) -> dict[str, obj
         return {"ok": False, "error": str(e)}
 
 
+@router.post("/team/campus/mission/register", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_campus_mission_register(payload: dict[str, object]) -> dict[str, object]:
+    """Proxy → `POST /v1/team/campus/mission/register` (job Chœur / jalons)."""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            r = await client.post(f"{orchestrator_base()}/v1/team/campus/mission/register", json=payload)
+        if r.status_code != 200:
+            return {"ok": False, "error": f"orchestrator HTTP {r.status_code}", "body": r.text[:500]}
+        data = r.json()
+        return data if isinstance(data, dict) else {"ok": True, "payload": data}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @router.post("/team/evolution/lead", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_team_evolution_lead(payload: dict[str, object]) -> dict[str, object]:
     """Proxy → `POST /v1/team/evolution/lead` (veille silencieuse, pas d'onglet)."""
