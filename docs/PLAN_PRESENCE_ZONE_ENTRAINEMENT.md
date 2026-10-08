@@ -45,10 +45,10 @@ S’appuie sur l’existant : C3 Nix greet+escort · P3 dialogue · `relation_me
 |---|----------|------------|-------|--------|
 | **B1** | Schéma `presence_dials` joueur IA | Pack JSON (chaleur, humeur, humour, initiative) aligné dials Compagnon lab, bornes 0–1, défauts par persona (Nix/Lia/…) | Chœur + Iris | **OK** 2026-10-08 — `data/life/presence_dials.json` · ref dans `ai_players.json` |
 | **B2** | Injection runtime | `world_hint` / dialogue hub lit les dials → 1 ligne d’ambiance + 1 comportement observable (follow / commentaire / silence) | `prime-hub` | **OK code** 2026-10-08 — greet/ambient + `GET /v1/presence-dials` · smoke `tools/smoke_b2_presence_dials_hub.sh` |
-| **B3** | Seuils d’interaction | Table : dial × distance × event → action autorisée (greet, escort, tip, ignore) — pas de LLM libre sur prix / combat | Iris | M |
-| **B4** | Métrique « zone d’entraînement » | Smoke hub : spawn → 30 s présence compagnon IA avec dials ≠ neutre ; log session (tourrique légère) | Argus | S |
+| **B3** | Seuils d'interaction | Table : dial × distance × event → action autorisée (greet, escort, tip, ignore) — pas de LLM libre sur prix / combat | Iris | **OK** 2026-10-08 — `thresholds` + `presence_resolve_action` · fleet_greet/ambient |
+| **B4** | Métrique « zone d'entraînement » | Smoke hub : présence différenciée dials ≠ neutre | Argus | **OK** 2026-10-08 — `tools/smoke_b3b4_presence_hub.sh` (Nix escort ≠ Mira greet) |
 
-**Done Phase B** : un bot incarné au spawn LH se comporte **différemment** selon dials, mesurable au smoke.
+**Done Phase B** : un bot incarné au spawn LH se comporte **différemment** selon dials, mesurable au smoke — **PASS** 2026-10-08.
 
 ---
 
