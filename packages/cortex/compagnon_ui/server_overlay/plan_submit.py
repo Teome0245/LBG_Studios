@@ -13,18 +13,23 @@ from typing import Any
 
 logger = logging.getLogger("lbg.plan_submit")
 
+# Handoff studio/Team — y compris « plan … pour le studio » (sans « soumettre »)
 _TEAM_SUBMIT_RE = re.compile(
     r"(?i)\b("
     r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l))?\s+(?:au\s+)?studio|"
     r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l))?\s+(?:à|a)\s+(?:la\s+)?team|"
     r"passe(?:r)?\s+(?:au\s+)?studio|"
+    r"(?:plan|livrable).{0,80}\bpour\s+le\s+studio\b|"
+    r"(?:plan|livrable).{0,40}\bau\s+studio\b|"
+    r"pour\s+le\s+studio\b|"
+    r"au\s+studio\b|"
     r"enregistre(?:r)?\s+(?:le\s+)?plan|"
     r"persiste(?:r)?\s+(?:le\s+)?plan|"
     r"mission\s+(?:campus|team|herm[eè]s)|"
     r"@herm[eè]s|"
     r"d[ée]l[eè]gue(?:r)?\s+(?:au\s+|à\s+(?:la\s+)?)?(?:studio|team)|"
     r"job\s+team|t[aâ]che\s+team"
-    r")\b"
+    r")"
 )
 
 _META_ONLY_RE = re.compile(
@@ -80,11 +85,12 @@ def wants_team_plan_submit(prompt: str, short_ctx: list | None = None) -> bool:
     if not text:
         return False
 
-    if _TEAM_SUBMIT_RE.search(text):
-        if wants_plan_delivery(text) or wants_deliverable_turn(text, short_ctx):
-            return True
-        if has_pending_work(short_ctx):
-            return True
+    handoff = bool(_TEAM_SUBMIT_RE.search(text))
+    # Plan demandé + destinataire studio/Team → persister (même sans « soumettre »)
+    if wants_plan_delivery(text) and handoff:
+        return True
+    if handoff and (wants_deliverable_turn(text, short_ctx) or has_pending_work(short_ctx)):
+        return True
 
     if is_go_ahead(text) and short_ctx:
         for item in list(short_ctx)[-8:]:

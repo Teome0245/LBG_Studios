@@ -53,8 +53,17 @@ class PlanSubmitTests(unittest.TestCase):
                 "prépare le plan d'action pour le soumettre au studio et commence"
             )
         )
+        # Formulation naturelle du smoke humain (sans le verbe « soumettre »)
+        self.assertTrue(
+            ps.wants_team_plan_submit(
+                "Prépare le plan d'action présence → zone d'entraînement MMORPG "
+                "pour le studio"
+            )
+        )
         self.assertFalse(ps.wants_team_plan_submit("prépare juste un plan sans rien"))
         self.assertFalse(ps.wants_team_plan_submit("bonjour ça va ?"))
+        # « pour le studio » seul (pas de plan) → pas de spawn
+        self.assertFalse(ps.wants_team_plan_submit("discutons pour le studio"))
 
     def test_wants_submit_go_ahead_sticky(self) -> None:
         ctx = [
