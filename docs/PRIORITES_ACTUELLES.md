@@ -57,7 +57,7 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 | **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
 | **P3** | Persona en jeu — dialogue + Chœur V50–V53 · **C3–C8 live** (wiki `/v1/wiki`) 2026-10-07 |
 | **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
-| **P5** | Cour + densité + hotbar + spawn bêtes WS **vert** 2026-10-08 · polish sprites / combat open-world = suite |
+| **P5** | Cour + densité + hotbar + spawn + engage bêtes **vert** 2026-10-08 · polish IA bêtes / boss = suite |
 
 Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
@@ -88,4 +88,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : deploy timer `lbg-team-choeur-l1-job` sur 140 · polish sprites bêtes · combat open-world (hors cour).
+**Suite immédiate** : polish IA bêtes / boss anneau · mission Team campus close sur `choeur_l1`.

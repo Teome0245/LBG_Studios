@@ -244,6 +244,88 @@ func _density_zone_at(pos: Vector2) -> Dictionary:
 	return best
 
 
+func _try_beast_engage(pos: Vector2) -> void:
+	if not HubRuntimeCfg.enabled():
+		_hotbar_feedback("Attaque — hub runtime off")
+		return
+	_ensure_salvage_http()  # HTTPRequest générique réutilisé
+	var player := HubRuntimeCfg.player_name("Voyageur")
+	var url := HubRuntimeCfg.http_url().rstrip("/") + "/v1/world/beast/engage"
+	var body := JSON.stringify({
+		"player": player,
+		"x": pos.x,
+		"z": pos.y,
+		"radius_m": 42.0,
+	})
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if _salvage_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		_salvage_http.cancel_request()
+	# Réutilise le callback salvage avec un flag phase via name — handler dédié
+	if not _salvage_http.request_completed.is_connected(_on_beast_engage_done):
+		if _salvage_http.request_completed.is_connected(_on_salvage_http_done):
+			_salvage_http.request_completed.disconnect(_on_salvage_http_done)
+		_salvage_http.request_completed.connect(_on_beast_engage_done)
+	_hotbar_feedback("Attaque — meute locale…")
+	var err := _salvage_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK:
+		_hotbar_feedback("Attaque req_%d" % err)
+		_restore_salvage_http_handler()
+
+
+func _restore_salvage_http_handler() -> void:
+	if _salvage_http == null:
+		return
+	if _salvage_http.request_completed.is_connected(_on_beast_engage_done):
+		_salvage_http.request_completed.disconnect(_on_beast_engage_done)
+	if not _salvage_http.request_completed.is_connected(_on_salvage_http_done):
+		_salvage_http.request_completed.connect(_on_salvage_http_done)
+
+
+func _on_beast_engage_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	_restore_salvage_http_handler()
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if result != HTTPRequest.RESULT_SUCCESS:
+		_hotbar_feedback("Attaque réseau KO")
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_hotbar_feedback("Attaque parse (%d)" % code)
+		return
+	if code == 429 or str(parsed.get("error", "")) == "tick_busy":
+		_hotbar_feedback("Attaque tick_busy — %.0fs" % float(parsed.get("retry_after_s", 8)))
+		return
+	if not bool(parsed.get("ok", false)):
+		var err := str(parsed.get("error", code))
+		var hint := str(parsed.get("hint", ""))
+		if err == "no_beast_in_range":
+			var zone := _density_zone_at(_player_world_xz())
+			if not zone.is_empty():
+				_hotbar_feedback("%s — densité %s · approche la meute" % [
+					str(zone.get("label", zone.get("id", "zone"))),
+					str(zone.get("density", "?")),
+				])
+			else:
+				_hotbar_feedback(hint if hint != "" else "Attaque — aucune bête à portée")
+		else:
+			_hotbar_feedback("Attaque — %s" % (hint if hint != "" else err))
+		return
+	var loot = parsed.get("loot", [])
+	var bits: PackedStringArray = PackedStringArray()
+	if typeof(loot) == TYPE_ARRAY:
+		for it in loot:
+			if typeof(it) == TYPE_DICTIONARY:
+				bits.append("%s×%d" % [str(it.get("name", it.get("id", "?"))), int(it.get("qty", 1))])
+	_hotbar_feedback(
+		"Attaque OK — %s · %s (+%d Cr)"
+		% [
+			str(parsed.get("beast_name", "bête")),
+			", ".join(bits) if bits.size() > 0 else "loot",
+			int(parsed.get("credits_gained", 0)),
+		]
+	)
+	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
+		inventory_panel.refresh_inventory()
+
+
 func _try_hunt_yard() -> void:
 	_ensure_hunt_http()
 	var pos := _player_world_xz()
@@ -379,6 +461,7 @@ func _player_world_xz() -> Vector2:
 
 func _try_salvage_scrap() -> void:
 	_ensure_salvage_http()
+	_restore_salvage_http_handler()
 	var pos := _player_world_xz()
 	if pos == Vector2.INF:
 		_hotbar_feedback("Salvage — position joueur inconnue")
@@ -1505,17 +1588,8 @@ func _on_hotbar_slot(index: int) -> void:
 			elif near_salvage:
 				_try_salvage_scrap()
 			else:
-				var zone := _density_zone_at(pos)
-				if not zone.is_empty():
-					var eng := str(zone.get("engage_surface", "none"))
-					var dens := str(zone.get("density", "?"))
-					var label := str(zone.get("label", zone.get("id", "zone")))
-					if eng == "hunt_yard":
-						_hotbar_feedback("%s — densité %s · approche meute (%.0fm)" % [label, dens, d_hunt])
-					else:
-						_hotbar_feedback("%s — densité %s (pas d'engage encore)" % [label, dens])
-				else:
-					_hotbar_feedback("Attaque — hors zone · meute ~%.0fm · scrap ~%.0fm" % [d_hunt, d_salvage])
+				# Combat open-world : bête à portée (hub despawn + loot)
+				_try_beast_engage(pos)
 		1:
 			_hotbar_feedback("Compétence — à brancher")
 		2:

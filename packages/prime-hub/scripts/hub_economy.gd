@@ -222,10 +222,13 @@ func _player(name: String) -> Dictionary:
 			"active": [],
 			"completed": [],
 			"session_log": [],
+			"relation_memory": [],
 		}
 	var p: Dictionary = _players[key]
 	if typeof(p.get("session_log")) != TYPE_ARRAY:
 		p["session_log"] = []
+	if typeof(p.get("relation_memory")) != TYPE_ARRAY:
+		p["relation_memory"] = []
 	return p
 
 
@@ -366,9 +369,18 @@ func accept(player: String, quest_id: String, giver_id: String = "") -> Dictiona
 		"progress": (tmpl.get("progress", []) as Array).duplicate(true),
 	}
 	(p["active"] as Array).append(entry)
+	var giver := str(entry.get("giver_id", "npc:core3_daan_oth"))
+	var qtitle := str(tmpl.get("title", qid))
+	remember_relation(
+		player,
+		giver,
+		"quest",
+		"%s t'a confié « %s »." % [_npc_short(giver), qtitle.substr(0, 48)],
+		{"quest_id": qid, "value": qid}
+	)
 	_save_players()
 	var accepted := _normalize_active_entry(entry)
-	log_session_event(player, "quest_accept", "Mission prise : %s." % str(tmpl.get("title", qid)), {"quest_id": qid})
+	log_session_event(player, "quest_accept", "Mission prise : %s." % qtitle, {"quest_id": qid})
 	return {
 		"ok": true,
 		"quest_id": qid,
@@ -564,6 +576,13 @@ func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 	if int(p["credits"]) < amt:
 		return {"ok": false, "error": "insufficient_credits", "credits": int(p["credits"])}
 	p["credits"] = int(p["credits"]) - amt
+	remember_relation(
+		player,
+		"npc:core3_barman_jax",
+		"gift",
+		"Tu as tippé %d Cr pour la scène à La Perle." % amt,
+		{"value": amt, "quest_id": quest_id}
+	)
 	_save_players()
 	log_session_event(player, "tip_stage", "Tip scène à La Perle — %d Cr." % amt, {"quest_id": quest_id})
 	return {
@@ -589,6 +608,33 @@ func _add_item(p: Dictionary, item_id: String, qty: int, item_name: String = "")
 		"qty": qty,
 		"icon": "copper",
 	})
+
+
+func grant_world_loot(player: String, loot: Array, credits: int = 0) -> Dictionary:
+	## Loot combat open-world (bêtes densités).
+	var p := _player(player)
+	var granted: Array = []
+	for it in loot:
+		if typeof(it) != TYPE_DICTIONARY:
+			continue
+		var iid := str(it.get("id", "")).strip_edges()
+		if iid.is_empty():
+			continue
+		var qty := int(it.get("qty", 1))
+		_add_item(p, iid, qty, str(it.get("name", iid)))
+		granted.append({"id": iid, "qty": qty, "name": str(it.get("name", iid))})
+	if credits > 0:
+		p["credits"] = int(p.get("credits", 0)) + credits
+	_save_players()
+	log_session_event(player, "beast_loot", "Butin anneau (+%d Cr)." % credits, {"credits": credits})
+	return {
+		"ok": true,
+		"player": player if not player.is_empty() else "Voyageur",
+		"credits": int(p["credits"]),
+		"credits_gained": credits,
+		"loot": granted,
+		"source": "prime_hub",
+	}
 
 
 func _inv_qty(p: Dictionary, item_id: String) -> int:
@@ -877,6 +923,13 @@ func trade_offer(player: String, vendor_id: String, sku_id: String, offer_price:
 	rep_delta = clampi(rep_delta, rmin, rmax)
 	var new_rep := clampi(rep + rep_delta, -50, 50)
 	_set_vendor_rep(p, vid, new_rep)
+	remember_relation(
+		player,
+		vid,
+		"gift",
+		"Tu as acheté « %s » chez Jax pour %d Cr." % [label.substr(0, 40), offer],
+		{"value": offer, "item_id": item_id}
+	)
 	_save_players()
 	log_session_event(
 		player,
@@ -907,3 +960,145 @@ func trade_offer(player: String, vendor_id: String, sku_id: String, offer_price:
 		"source": "prime_hub",
 		"ticket": "C7",
 	}
+
+
+const _REL_KIND_PREFIX := {
+	"debt": "Dette",
+	"met": "Rencontre",
+	"gift": "Cadeau",
+	"quest": "Quête",
+}
+
+
+func _npc_short(npc_id: String) -> String:
+	var nid := npc_id.strip_edges()
+	match nid:
+		"npc:core3_daan_oth":
+			return "Daan"
+		"npc:core3_barman_jax":
+			return "Jax"
+		"npc:scribe":
+			return "le Scribe"
+		"npc:guide_quartier":
+			return "le Guide"
+		_:
+			if nid.begins_with("npc:"):
+				return nid.substr(4).replace("core3_", "").replace("_", " ")
+			return nid if not nid.is_empty() else "PNJ"
+
+
+func _iso_now() -> String:
+	## ISO 8601 approximatif (UTC) pour schéma C2.
+	var t := Time.get_datetime_dict_from_system(true)
+	return "%04d-%02d-%02dT%02d:%02d:%02dZ" % [
+		int(t.get("year", 2026)), int(t.get("month", 1)), int(t.get("day", 1)),
+		int(t.get("hour", 0)), int(t.get("minute", 0)), int(t.get("second", 0)),
+	]
+
+
+func remember_relation(
+	player: String,
+	npc_id: String,
+	kind: String,
+	note: String,
+	extra: Dictionary = {}
+) -> Dictionary:
+	## C2 — persiste une entrée relation dans players_state (schéma Vague A).
+	var nid := npc_id.strip_edges()
+	var k := kind.strip_edges().to_lower()
+	var n := note.strip_edges().replace("\n", " ")
+	if nid.is_empty() or n.is_empty():
+		return {"ok": false, "error": "invalid_entry"}
+	if k not in ["debt", "met", "gift", "quest"]:
+		return {"ok": false, "error": "invalid_kind", "kind": kind}
+	if n.length() > 512:
+		n = n.substr(0, 509) + "…"
+	var p := _player(player)
+	var rows: Array = p["relation_memory"]
+	# Dédup met : une seule rencontre par PNJ.
+	if k == "met":
+		for row in rows:
+			if typeof(row) != TYPE_DICTIONARY:
+				continue
+			if str(row.get("npc_id", "")) == nid and str(row.get("kind", "")) == "met":
+				return {"ok": true, "already": true, "entry": row}
+	# Dédup récente même kind+note (évite spam tip/trade).
+	for row2 in rows:
+		if typeof(row2) != TYPE_DICTIONARY:
+			continue
+		if str(row2.get("npc_id", "")) == nid and str(row2.get("kind", "")) == k:
+			if str(row2.get("note", "")).strip_edges() == n:
+				return {"ok": true, "already": true, "entry": row2}
+	var entry := {
+		"player_id": player.strip_edges() if not player.strip_edges().is_empty() else "Voyageur",
+		"npc_id": nid,
+		"kind": k,
+		"note": n,
+		"ts": _iso_now(),
+	}
+	if extra.has("value"):
+		entry["value"] = extra["value"]
+	if extra.has("quest_id") and str(extra.get("quest_id", "")).strip_edges() != "":
+		entry["quest_id"] = str(extra["quest_id"]).strip_edges()
+	elif k == "quest" and extra.has("value"):
+		entry["quest_id"] = str(extra["value"])
+	if extra.has("item_id") and str(extra.get("item_id", "")).strip_edges() != "":
+		entry["item_id"] = str(extra["item_id"]).strip_edges()
+	if k == "quest" and str(entry.get("quest_id", "")).is_empty():
+		entry["quest_id"] = "unknown"
+	rows.append(entry)
+	while rows.size() > 48:
+		rows.remove_at(0)
+	p["relation_memory"] = rows
+	_save_players()
+	return {"ok": true, "entry": entry, "count": rows.size()}
+
+
+func relation_memory(player: String, npc_id: String = "") -> Dictionary:
+	## Lecture C2 — entrées filtrées (npc optionnel), plus récent d'abord.
+	var p := _player(player)
+	var nid := npc_id.strip_edges()
+	var out: Array = []
+	for row in p["relation_memory"]:
+		if typeof(row) != TYPE_DICTIONARY:
+			continue
+		if not nid.is_empty() and str(row.get("npc_id", "")) != nid:
+			continue
+		out.append((row as Dictionary).duplicate(true))
+	out.sort_custom(func(a, b): return str(a.get("ts", "")) > str(b.get("ts", "")))
+	return {
+		"ok": true,
+		"player": player.strip_edges() if not player.strip_edges().is_empty() else "Voyageur",
+		"npc_id": nid,
+		"entries": out,
+		"count": out.size(),
+		"source": "prime_hub",
+		"ticket": "C2",
+	}
+
+
+func relation_memory_hint(player: String, npc_id: String, max_len: int = 160, max_notes: int = 2) -> String:
+	## Phrase courte pour session_memory / world_hint (miroir Python relation_memory).
+	var pack: Dictionary = relation_memory(player, npc_id)
+	var rows = pack.get("entries", [])
+	if typeof(rows) != TYPE_ARRAY or rows.is_empty():
+		return ""
+	var parts: PackedStringArray = PackedStringArray()
+	var n := mini(maxi(1, max_notes), rows.size())
+	for i in range(n):
+		var row: Dictionary = rows[i]
+		var note := str(row.get("note", "")).strip_edges().replace("\n", " ")
+		if note.is_empty():
+			continue
+		var kind := str(row.get("kind", "")).strip_edges()
+		var prefix := str(_REL_KIND_PREFIX.get(kind, kind))
+		if not prefix.is_empty():
+			parts.append("%s: %s" % [prefix, note])
+		else:
+			parts.append(note)
+	if parts.is_empty():
+		return ""
+	var text := " · ".join(parts)
+	if text.length() > max_len:
+		text = text.substr(0, max_len - 1) + "…"
+	return text

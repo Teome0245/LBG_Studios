@@ -1012,6 +1012,57 @@ func beast_count() -> int:
 	return n
 
 
+func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 42.0) -> Dictionary:
+	## Combat open-world léger : despawn bête la plus proche + loot stub.
+	var best_eid := ""
+	var best_d := INF
+	var best: Dictionary = {}
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) != "beast" or not bool(e.get("active", true)):
+			continue
+		var p: Vector3 = e["pos"]
+		var d := Vector2(p.x - x, p.z - z).length()
+		if d <= radius_m and d < best_d:
+			best_d = d
+			best_eid = eid
+			best = e
+	if best_eid.is_empty():
+		return {
+			"ok": false,
+			"error": "no_beast_in_range",
+			"hint": "approche une meute (anneau / porte est)",
+			"radius_m": radius_m,
+			"source": "prime_hub",
+		}
+	var beast_id := str(best.get("beast_id", "beast:chacal_dore"))
+	var zone_id := str(best.get("zone_id", ""))
+	var name := str(best.get("name", beast_id))
+	entities.erase(best_eid)
+	var loot: Array = [{"id": "fourrure_doree", "name": "Fourrure dorée", "qty": 1}]
+	if "scarab" in beast_id or "obsidien" in beast_id:
+		loot = [{"id": "obsidienne", "name": "Obsidienne", "qty": 1}]
+	elif "scorpion" in beast_id:
+		loot = [{"id": "venin", "name": "Venin", "qty": 1}]
+	elif "serpent" in beast_id:
+		loot = [{"id": "ecailles_dorees", "name": "Écailles dorées", "qty": 1}]
+	var credits := 3
+	if economy != null and economy.has_method("grant_world_loot"):
+		economy.grant_world_loot(player, loot, credits)
+	return {
+		"ok": true,
+		"player": player if not player.is_empty() else "Voyageur",
+		"beast_id": beast_id,
+		"beast_name": name,
+		"zone_id": zone_id,
+		"distance_m": snappedf(best_d, 0.1),
+		"loot": loot,
+		"credits_gained": credits,
+		"beast_count": beast_count(),
+		"source": "prime_hub",
+	}
+
+
 func life_stats() -> Dictionary:
 	if life == null:
 		return {}

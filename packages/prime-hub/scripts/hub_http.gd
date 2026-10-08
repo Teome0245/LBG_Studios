@@ -34,6 +34,7 @@ const TICK_MUTATION_PATHS := {
 	"/v1/bots/move_to": "move_to",
 	"/v1/hunt-yard/run": "hunt/engage",
 	"/v1/hunt-yard/claim-quest": "hunt/engage",
+	"/v1/world/beast/engage": "hunt/engage",
 	"/v1/trade/offer": "trade/offer",
 }
 var _tick_last_ms: Dictionary = {}  # player_key -> msec
@@ -283,6 +284,17 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 	if method == "GET" and path in ["/v1/world/combat-density", "/combat-density"]:
 		var dens: Dictionary = catalog.combat_density()
 		return _ok(dens, 200 if bool(dens.get("ok", false)) else 404)
+	if method == "POST" and path in ["/v1/world/beast/engage", "/beast/engage"]:
+		var bb := _json_body(req_body)
+		if sim == null or not sim.has_method("engage_nearest_beast"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		var bout: Dictionary = sim.engage_nearest_beast(
+			str(bb.get("player", "Voyageur")),
+			float(bb.get("x", 0)),
+			float(bb.get("z", 0)),
+			float(bb.get("radius_m", 42))
+		)
+		return _ok(_attach_tick_flags(bout, path), 200 if bool(bout.get("ok")) else 400)
 
 	# --- Auth ---
 	if method == "POST" and path == "/v1/auth/login":
@@ -362,6 +374,25 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if chb.has("cosmetic_title"):
 			cos2 = bool(chb.get("cosmetic_title"))
 		return _ok(economy.chronicle(str(chb.get("player", "Voyageur")), cos2))
+	if method == "GET" and path in ["/v1/relation-memory", "/v1/relation_memory"]:
+		return _ok(economy.relation_memory(
+			_query_param(query, "player", "Voyageur"),
+			_query_param(query, "npc_id", "")
+		))
+	if method == "POST" and path in ["/v1/relation-memory/append", "/v1/relation_memory/append"]:
+		var rm := _json_body(req_body)
+		var rmo: Dictionary = economy.remember_relation(
+			str(rm.get("player", "Voyageur")),
+			str(rm.get("npc_id", "")),
+			str(rm.get("kind", "")),
+			str(rm.get("note", "")),
+			{
+				"value": rm.get("value", null),
+				"quest_id": str(rm.get("quest_id", "")),
+				"item_id": str(rm.get("item_id", "")),
+			}
+		)
+		return _ok(rmo, 200 if bool(rmo.get("ok")) else 400)
 	if method == "GET" and path in ["/v1/trade/catalog", "/v1/trade"]:
 		return _ok(economy.trade_catalog(_query_param(query, "vendor", "npc:core3_barman_jax")))
 	if method == "POST" and path == "/v1/trade/offer":

@@ -160,6 +160,9 @@ BUNDLE=choeur_l1 bash packages/cortex/infra/scripts/smoke_godot_owners.sh
 
 ```bash
 bash tools/smoke_beast_spawn_hub.sh          # healthz.beast_count >= 1
+bash tools/smoke_beast_engage_hub.sh         # POST /v1/world/beast/engage + loot
+# Timer Chœur .140
+bash packages/cortex/infra/scripts/install_choeur_l1_timer_140.sh
 ```
 
 ## P5a cour de chasse (hub)
