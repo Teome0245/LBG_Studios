@@ -2,6 +2,8 @@
 
 Monorepo LBG Studios. Priorité : **O1 Studio** (`packages/cortex`) puis **O2 Jeu**.
 Voir `README.md`, `OBJECTIVES.md`, `docs/REGISTRE.md`, **`docs/RUNTIME_GODOT.md`**, `docs/PRIORITES_ACTUELLES.md`.
+**État vivant (Cursor ↔ Antigravity)** : `docs/SESSION_EN_COURS.md` — le lire au démarrage, le mettre à jour avant de partir.
+Règles Antigravity : `.agents/rules/` (miroir des canons Cursor `.cursor/rules/`).
 Réponses en français sauf demande contraire.
 
 **Runtime joueur (G5, 2026-10-07)** : `packages/prime-hub` Godot headless sur **`.246:8787`** (HTTP+WS unifiés, peel natif).
