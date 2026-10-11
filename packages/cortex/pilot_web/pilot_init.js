@@ -5,7 +5,10 @@
         location.hash = "#/";
       }
     }
-    window.addEventListener("hashchange", pilotApplyRoute);
+    window.addEventListener("hashchange", function () {
+      var fn = (globalThis.PilotApp && PilotApp.pilotApplyRoute) || pilotApplyRoute;
+      if (typeof fn === "function") fn();
+    });
 
     // --------------------------
     // WS test client (minimal)

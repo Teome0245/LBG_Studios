@@ -1,0 +1,406 @@
+{
+  "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
+  "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
+  "updated_ts": 1791720114.5656848,
+  "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
+  "tickets": [
+    {
+      "id": "1.1",
+      "title": "Barrière sémantique causerie / tool_loop (+ presence_brief T5)",
+      "horizon": "immediat",
+      "perimeter": "O1 Compagnon",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "1.2"
+      ],
+      "evidence": "smoke T1→T5 OK (ab01e3fc) · t5_src=llm · deploy CT100",
+      "keywords": [
+        "presence_brief",
+        "design_brainstorm",
+        "smoke_rejeu_t1t5",
+        "barrière sémantique",
+        "t1→t5"
+      ],
+      "owner_hint": "dev_studio / Métis",
+      "team_signals": []
+    },
+    {
+      "id": "1.2",
+      "title": "Streaming SSE /api/ask/stream + ChatFlow",
+      "horizon": "sprint1",
+      "perimeter": "O1 Compagnon",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "3.1"
+      ],
+      "evidence": "SSE live CT100: POST /ask/stream start+ping+delta+done · UI useApi/ChatFlow · tests askStream+sse_ask · deploy 2026-10-09",
+      "keywords": [
+        "ask/stream",
+        "sse streaming",
+        "ChatFlow.vue",
+        "streaming SSE",
+        "1.2 SSE"
+      ],
+      "owner_hint": "dev_studio / Métis",
+      "team_signals": []
+    },
+    {
+      "id": "1.3",
+      "title": "Modularisation Pilot Web (pilot.js)",
+      "horizon": "sprint3",
+      "perimeter": "O1 Pilot",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [],
+      "evidence": "17 modules ES <1000L (pilot_*.js) · stub pilot.js · gen_chunks --check OK (17 chunks) · build Vite dist/ 957ms OK · pytest test_pilot_static PASS",
+      "keywords": [
+        "modularisation pilot",
+        "pilot.js segment",
+        "pilot_views"
+      ],
+      "owner_hint": "dev_studio",
+      "team_signals": [
+        {
+          "task_id": "327159f2-ba9a-43c5-be5b-e3899026e80c",
+          "status": "queued",
+          "role": "dev_studio",
+          "objective": "Ticket plan 1.3 LIVE OpenCode .143 — Modularisation Pilot Web (pilot.js). Découper en modules ES <1000L. Reprise après timeout 1200s: continuer depuis l état ac",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=327159f2-ba9a-43c5-be5b-e3899026e80c"
+        },
+        {
+          "task_id": "d14a9f03-7274-449c-83fe-4510c113d50f",
+          "status": "done",
+          "role": "pm",
+          "objective": "Triage échec dev_studio — analyser et proposer correctif/relance (parent=412a7852-185f-4721-a1ba-722e3aa40a20) : Ticket plan 1.3 LIVE OpenCode .143 — Modularisa",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=d14a9f03-7274-449c-83fe-4510c113d50f"
+        },
+        {
+          "task_id": "412a7852-185f-4721-a1ba-722e3aa40a20",
+          "status": "failed",
+          "role": "dev_studio",
+          "objective": "Ticket plan 1.3 LIVE OpenCode .143 — Modularisation Pilot Web (pilot.js). Découper en modules ES <1000L (pilot_views / pilot_metrics / pilot_cards / pilot_team ",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=412a7852-185f-4721-a1ba-722e3aa40a20"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/pilot_web/pilot_team.js",
+          "packages/cortex/pilot_web/src/modules/team_fleet.js"
+        ]
+      }
+    },
+    {
+      "id": "2.3",
+      "title": "NavigationServer3D navmesh prime-hub",
+      "horizon": "sprint1",
+      "perimeter": "O2 Hub",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "2.1"
+      ],
+      "evidence": "navmesh NavigationServer3D LIVE 2026-10-11: hub_nav.gd bake 193 polys/16 empreintes ~0.6s; PATH_BUDGET_PER_TICK supprimé (budget_per_tick=0); selftest 40/40 entités/tick ~34us (nav_selftest.gd); smoke_navmesh_prime_hub.sh OK; /healthz navmesh.ok + /v1/dev/navmesh/probe source=navmesh (fallback A* grille hors bornes)",
+      "keywords": [
+        "navmesh",
+        "NavigationServer3D",
+        "PATH_BUDGET_PER_TICK"
+      ],
+      "owner_hint": "dev_game / Iris",
+      "team_signals": [
+        {
+          "task_id": "3ac060bc-136e-455b-a195-19d0cbd3d9a4",
+          "status": "running",
+          "role": "dev_game",
+          "objective": "Ticket plan 2.1 LIVE — SQLite hub_player_store. Gate depends_on=2.3. Ne démarre que si 2.3 done. Mark 2.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=3ac060bc-136e-455b-a195-19d0cbd3d9a4"
+        },
+        {
+          "task_id": "df8ab93a-eadb-4d68-be23-29c3377456e2",
+          "status": "done",
+          "role": "dev_godot",
+          "objective": "Ticket plan 2.3 LIVE OpenCode .143 — NavigationServer3D navmesh prime-hub (Lost Heaven). Implémente réellement (pas dry-run). Puis: python3 tools/suivi_plan_evo",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=df8ab93a-eadb-4d68-be23-29c3377456e2"
+        },
+        {
+          "task_id": "098673ed-4fdd-4823-af57-258d99ec55f4",
+          "status": "cancelled",
+          "role": "dev_game",
+          "objective": "Ticket plan 2.1 LIVE — SQLite hub_player_store. Conductor gate depends_on=2.3. Ne démarre que si 2.3 done dans plan_evolutions.json. Mark 2.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=098673ed-4fdd-4823-af57-258d99ec55f4"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_nav.gd"
+        ]
+      }
+    },
+    {
+      "id": "2.1",
+      "title": "Persistance SQLite hub_player_store",
+      "horizon": "sprint2",
+      "perimeter": "O2 Hub",
+      "status": "in_progress",
+      "blocked_by": [
+        "2.3"
+      ],
+      "blocks": [
+        "2.2"
+      ],
+      "evidence": "",
+      "keywords": [
+        "hub_player_store",
+        "persistance SQLite",
+        "sqlite prime-hub"
+      ],
+      "owner_hint": "dev_game",
+      "team_signals": [
+        {
+          "task_id": "3ac060bc-136e-455b-a195-19d0cbd3d9a4",
+          "status": "running",
+          "role": "dev_game",
+          "objective": "Ticket plan 2.1 LIVE — SQLite hub_player_store. Gate depends_on=2.3. Ne démarre que si 2.3 done. Mark 2.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=3ac060bc-136e-455b-a195-19d0cbd3d9a4"
+        },
+        {
+          "task_id": "098673ed-4fdd-4823-af57-258d99ec55f4",
+          "status": "cancelled",
+          "role": "dev_game",
+          "objective": "Ticket plan 2.1 LIVE — SQLite hub_player_store. Conductor gate depends_on=2.3. Ne démarre que si 2.3 done dans plan_evolutions.json. Mark 2.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=098673ed-4fdd-4823-af57-258d99ec55f4"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_player_store.gd"
+        ]
+      }
+    },
+    {
+      "id": "2.2",
+      "title": "Découpage hub_sim.gd & main.gd",
+      "horizon": "sprint3",
+      "perimeter": "O2 Hub/Client",
+      "status": "blocked",
+      "blocked_by": [
+        "2.1"
+      ],
+      "blocks": [],
+      "evidence": "",
+      "keywords": [
+        "hub_sim.gd",
+        "UIManager",
+        "découpage hub_sim"
+      ],
+      "owner_hint": "dev_godot / Iris",
+      "team_signals": [
+        {
+          "task_id": "c210d345-9792-4a58-acfb-1440fdbe8f59",
+          "status": "done",
+          "role": "dev_godot",
+          "objective": "Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=c210d345-9792-4a58-acfb-1440fdbe8f59"
+        },
+        {
+          "task_id": "93207146-ebdb-41ea-b29b-fd69fc71f93b",
+          "status": "cancelled",
+          "role": "dev_godot",
+          "objective": "Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=93207146-ebdb-41ea-b29b-fd69fc71f93b"
+        }
+      ],
+      "block_reason": "prérequis non done: 2.1",
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_sim.gd",
+          "packages/prime-client/scripts/main.gd"
+        ]
+      }
+    },
+    {
+      "id": "3.1",
+      "title": "Live World Stream Hub → Compagnon",
+      "horizon": "sprint2",
+      "perimeter": "Pont Studio/Jeu",
+      "status": "in_progress",
+      "blocked_by": [
+        "1.2"
+      ],
+      "blocks": [
+        "3.2"
+      ],
+      "evidence": "chain v2 LIVE 9fbe70dd",
+      "keywords": [
+        "Live World Stream",
+        "world stream hub",
+        "événements hub compagnon"
+      ],
+      "owner_hint": "dev_studio + Chœur",
+      "team_signals": [
+        {
+          "task_id": "0f62265a-6228-4264-b618-2754024022a5",
+          "status": "running",
+          "role": "dev_studio",
+          "objective": "Ticket plan 3.1 LIVE OpenCode .143 — Live World Stream Hub→Compagnon. Code émetteur hub + consommateur Compagnon (SSE/events légers). Deploy CT100 si besoin. Pu",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=0f62265a-6228-4264-b618-2754024022a5"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_world_stream.gd",
+          "packages/cortex/compagnon_ui/server_overlay/presence_brief.py",
+          "packages/cortex/compagnon_ui/src/composables/useApi.js"
+        ]
+      }
+    },
+    {
+      "id": "3.2",
+      "title": "Mémoire relationnelle jeu ↔ bureau",
+      "horizon": "sprint2+",
+      "perimeter": "Pont Studio/Jeu",
+      "status": "blocked",
+      "blocked_by": [
+        "3.1"
+      ],
+      "blocks": [],
+      "evidence": "",
+      "keywords": [
+        "relation_memory",
+        "conversation_memory",
+        "mémoire relationnelle"
+      ],
+      "owner_hint": "dev_studio",
+      "team_signals": [
+        {
+          "task_id": "46ff8496-edb4-4f2d-97ae-81e527881a3a",
+          "status": "queued",
+          "role": "dev_studio",
+          "objective": "Ticket plan 3.2 LIVE — mémoire relationnelle jeu↔bureau. Gate depends_on=3.1. Mark 3.2 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=46ff8496-edb4-4f2d-97ae-81e527881a3a"
+        },
+        {
+          "task_id": "9ba09fb5-1a9d-4ece-92ca-2bf6cdb83560",
+          "status": "cancelled",
+          "role": "dev_studio",
+          "objective": "Ticket plan 3.2 LIVE — mémoire relationnelle. Gate depends_on=3.1. Mark 3.2 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=9ba09fb5-1a9d-4ece-92ca-2bf6cdb83560"
+        }
+      ],
+      "block_reason": "prérequis non done: 3.1",
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/compagnon_ui/server_overlay/presence_report.py"
+        ]
+      }
+    },
+    {
+      "id": "5.2",
+      "title": "Ruff + tests headless Godot CI",
+      "horizon": "sprint3",
+      "perimeter": "DevOps",
+      "status": "in_progress",
+      "blocked_by": [],
+      "blocks": [
+        "5.1"
+      ],
+      "evidence": "reopen: faux done ops_probe dry-run healthz — relance ide_cli LIVE",
+      "keywords": [
+        "ruff check",
+        "godot --headless",
+        "tests headless godot"
+      ],
+      "owner_hint": "ops / Argus",
+      "team_signals": [
+        {
+          "task_id": "f35a71da-ca7a-4748-a578-b472ee12512e",
+          "status": "queued",
+          "role": "dev_studio",
+          "objective": "Ticket plan 5.2 LIVE OpenCode .143 — Ruff + tests headless Godot CI (PAS une sonde healthz). Configurer ruff check + runner godot --headless dans le monorepo. P",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=f35a71da-ca7a-4748-a578-b472ee12512e"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "ruff.toml",
+          "pyproject.toml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/godot-headless.yml",
+          "tools/ci_godot_headless.sh"
+        ]
+      }
+    },
+    {
+      "id": "5.1",
+      "title": "Packaging atomique server_overlay CT100",
+      "horizon": "sprint3",
+      "perimeter": "DevOps",
+      "status": "done",
+      "blocked_by": [
+        "5.2"
+      ],
+      "blocks": [],
+      "evidence": "CT100 packaging atomique LIVE 1.0.0+4bcc331: server_overlay/pyproject.toml + overlay.map (33 fichiers); server_overlay_package.py build/verify/apply/rollback; deploy_compagnon_100.sh --smoke OK; marker /opt/orchestrateur/.server_overlay_version package_sha=8128a4e3470abded597b70e855289bab608e23c4fd6acbe273e4062ec272e5a5; smoke tools/smoke_server_overlay_package.sh OK; rollback testé",
+      "keywords": [
+        "packaging atomique",
+        "server_overlay package",
+        "pyproject server_overlay"
+      ],
+      "owner_hint": "ops / Atlas",
+      "team_signals": [
+        {
+          "task_id": "298598ff-ac0d-4eaa-80a3-6d1a6cb53448",
+          "status": "queued",
+          "role": "ops",
+          "objective": "Ticket plan 5.1 LIVE — packaging atomique server_overlay. Gate depends_on=5.2. Mark /v1/team/plan/mark.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=298598ff-ac0d-4eaa-80a3-6d1a6cb53448"
+        },
+        {
+          "task_id": "cb82a394-e5f5-4490-9c39-90337233d0a8",
+          "status": "cancelled",
+          "role": "ops",
+          "objective": "Ticket plan 5.1 LIVE OpenCode — packaging atomique server_overlay CT100. Preuve: chemins + deploy_compagnon_100.sh. Mark via /v1/team/plan/mark avec evidence. G",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=cb82a394-e5f5-4490-9c39-90337233d0a8"
+        },
+        {
+          "task_id": "d29a9100-aec3-48b0-8e3e-5469a72aff09",
+          "status": "done",
+          "role": "ops",
+          "objective": "Ticket plan 5.1 LIVE OpenCode — packaging atomique server_overlay CT100. Gate depends_on=5.2. ide_cli requis (pas healthz). Mark 5.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=d29a9100-aec3-48b0-8e3e-5469a72aff09"
+        },
+        {
+          "task_id": "b7abdff8-2baa-42fd-9408-e318faf502f5",
+          "status": "cancelled",
+          "role": "ops",
+          "objective": "Ticket plan 5.1 LIVE — packaging atomique server_overlay. Gate depends_on=5.2. Mark 5.1 done.",
+          "approval_required": false,
+          "pilot": "http://192.168.0.140:8080/pilot/#/team?task=b7abdff8-2baa-42fd-9408-e318faf502f5"
+        }
+      ],
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/infra/scripts/deploy_compagnon_100.sh"
+        ]
+      }
+    }
+  ]
+}

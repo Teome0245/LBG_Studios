@@ -43,6 +43,7 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
 - **Done quand** : Le premier token s'affiche sous 1 seconde en modèle light, supprimant la latence perçue.
 
 ### 1.3 Modularisation et allègement de Pilot Web ([`pilot_web`](file:///home/lbg/projects/LBG_Studios/packages/cortex/pilot_web))
+- **Statut** : **OK validé & packagé** — ancien monolithe `pilot.js` (~8 500 L) supprimé au profit de 17 modules ES modulaires < 1 000 L à la racine de `pilot_web/` (`pilot_actions.js`, `pilot_assistant.js`, `pilot_cards.js`, `pilot_chat.js`, `pilot_core.js`, `pilot_desktop.js`, `pilot_init.js`, `pilot_jobs.js`, `pilot_lyra.js`, `pilot_metrics.js`, `pilot_office.js`, `pilot_orch.js`, `pilot_pm.js`, `pilot_router.js`, `pilot_state.js`, `pilot_team.js`, `pilot_views.js`). Chunks ESM dérivés (`tools/gen_chunks.mjs --check` 17 chunks alignés), build de production Vite (`npm run build` OK en < 1 s), suite `test_pilot_static.py` 100 % passante.
 - **Problème** : [`pilot.js`](file:///home/lbg/projects/LBG_Studios/packages/cortex/pilot_web/pilot.js) atteint plus de 8 400 lignes et [`index.html`](file:///home/lbg/projects/LBG_Studios/packages/cortex/pilot_web/index.html) pèse 99 KB en JavaScript vanilla monolithique avec manipulation directe du DOM, alors que `compagnon_ui` est en Vue 3 / Vite.
 - **Solution** :
   1. Découper `pilot.js` en modules ES fonctionnels indépendants (`pilot_views.js`, `pilot_metrics.js`, `pilot_cards.js`).
