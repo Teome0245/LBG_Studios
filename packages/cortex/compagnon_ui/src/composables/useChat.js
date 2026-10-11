@@ -52,70 +52,55 @@ function turnToMessage(turn) {
   }
 }
 
+/** Champs d'une bulle assistant (communs /ask et flux SSE). */
+const MESSAGE_FIELDS = [
+  'content',
+  'source',
+  'model',
+  'provider',
+  'latency',
+  'agent_action',
+  'reflection',
+  'timeline',
+  'cursor',
+  'followup',
+  'multi_block',
+  'tools',
+  'approval',
+  'campus_meta',
+  'actionProposal',
+  'actionSourceText',
+]
+
+function pickFields(msg) {
+  const out = {}
+  for (const key of MESSAGE_FIELDS) {
+    if (msg[key] !== undefined) out[key] = msg[key]
+  }
+  return out
+}
+
+function stateFor(source) {
+  if (source === 'agent' || source === 'tool_loop' || source === 'team') return 'agent-local'
+  if (source === 'error') return 'orchestrateur-error'
+  return 'orchestrateur-happy'
+}
+
+/** Dernière bulle servie par le flux SSE (fusion du /ask final, pas de doublon). */
+let streamedMessage = null
+let streamTimer = null
+
+function clearStreamTimer() {
+  if (streamTimer) {
+    clearTimeout(streamTimer)
+    streamTimer = null
+  }
+}
+
 export function useChat() {
-  const addMessage = (backendMessage) => {
-    if (!backendMessage || typeof backendMessage !== 'object') {
-      messages.value.push({
-        role: 'assistant',
-        content: '⚠️ Réponse backend invalide',
-        source: 'error',
-        state: 'orchestrateur-error',
-      })
-      return
-    }
-
-    const {
-      role,
-      content,
-      source,
-      model,
-      provider,
-      latency,
-      agent_action,
-      reflection,
-      timeline,
-      cursor,
-      followup,
-      multi_block,
-      tools,
-      approval,
-      campus_meta,
-      actionProposal,
-      actionSourceText,
-    } = backendMessage
-
-    let state = 'orchestrateur-happy'
-
-    if (source === 'agent' || source === 'tool_loop' || source === 'team') {
-      state = 'agent-local'
-    } else if (source === 'error') {
-      state = 'orchestrateur-error'
-    }
-
-    if (agent_action === 'confirmation') {
-      pendingConfirmation.value = backendMessage
-    }
-
-    messages.value.push({
-      role,
-      content,
-      source,
-      model,
-      provider,
-      latency,
-      agent_action,
-      reflection: reflection || null,
-      timeline: Array.isArray(timeline) ? timeline : null,
-      cursor: cursor || null,
-      followup: followup || null,
-      multi_block: multi_block || null,
-      tools: tools || null,
-      approval: approval || null,
-      campus_meta: campus_meta || null,
-      actionProposal: actionProposal || null,
-      actionSourceText: actionSourceText || '',
-      state,
-    })
+  /** Effets de bord d'une bulle assistant — partagés par /ask et par le flux SSE. */
+  const runAssistantSideEffects = (msg) => {
+    const { role, content, source, campus_meta, actionProposal } = msg
 
     // D6.5 — auto-watch mission Campus (retour à la clôture)
     if (role === 'assistant' && campus_meta && typeof campus_meta === 'object') {
@@ -140,6 +125,140 @@ export function useChat() {
         })
       }
     }
+  }
+
+  const addMessage = (backendMessage) => {
+    if (!backendMessage || typeof backendMessage !== 'object') {
+      messages.value.push({
+        role: 'assistant',
+        content: '⚠️ Réponse backend invalide',
+        source: 'error',
+        state: 'orchestrateur-error',
+      })
+      return
+    }
+
+    // Bulle déjà rendue par le flux SSE (1.2) : on fusionne le payload final, sans doublon.
+    if (backendMessage.__streamed) {
+      if (streamedMessage && messages.value.includes(streamedMessage)) {
+        Object.assign(streamedMessage, pickFields(backendMessage), {
+          role: backendMessage.role || 'assistant',
+          state: stateFor(backendMessage.source),
+          streaming: false,
+          streamPending: false,
+          streamThinking: false,
+        })
+      }
+      return
+    }
+
+    const { role, agent_action } = backendMessage
+
+    if (agent_action === 'confirmation') {
+      pendingConfirmation.value = backendMessage
+    }
+
+    const message = {
+      ...pickFields(backendMessage),
+      role,
+      state: stateFor(backendMessage.source),
+    }
+
+    messages.value.push(message)
+    runAssistantSideEffects(message)
+  }
+
+  /* ---- Flux SSE (plan 1.2) : bulle progressive avant le payload complet ---- */
+
+  const beginStream = () => {
+    clearStreamTimer()
+    const msg = {
+      role: 'assistant',
+      content: '',
+      source: 'streaming',
+      state: 'orchestrateur-happy',
+      streaming: true,
+      // Masqué les 300 ms premières (indicateur de réflexion discret ensuite)
+      streamPending: true,
+      streamThinking: false,
+    }
+    messages.value.push(msg)
+    streamedMessage = msg
+    streamTimer = setTimeout(() => {
+      if (streamedMessage === msg && msg.streaming) {
+        msg.streamPending = false
+        msg.streamThinking = true
+      }
+    }, 300)
+    return msg
+  }
+
+  const appendStream = (delta) => {
+    const msg = streamedMessage
+    if (!msg || !msg.streaming || !delta) return
+    if (msg.streamPending) {
+      msg.streamPending = false
+      msg.streamThinking = false
+    }
+    msg.content += String(delta)
+  }
+
+  /** Fusionne le payload final dans la bulle ; renvoie le message à passer à addMessage. */
+  const finishStream = (final) => {
+    clearStreamTimer()
+    const msg = streamedMessage
+    const live = msg && messages.value.includes(msg)
+    const payload = final && typeof final === 'object' ? final : { content: String(final ?? '') }
+    const merged = {
+      ...payload,
+      role: payload.role || 'assistant',
+      content: payload.content ?? (live ? msg.content : ''),
+    }
+    if (!live) {
+      // Fallback sans bulle (conversation changée, pas de flux) → chemin /ask normal.
+      streamedMessage = null
+      return merged
+    }
+    Object.assign(msg, pickFields(payload), merged, {
+      state: stateFor(payload.source),
+      streaming: false,
+      streamPending: false,
+      streamThinking: false,
+      __streamed: true,
+    })
+    streamedMessage = msg
+    runAssistantSideEffects(msg)
+    return { ...merged, __streamed: true }
+  }
+
+  const failStream = (message) => {
+    clearStreamTimer()
+    const text = `Erreur : ${message}`
+    const msg = streamedMessage
+    if (!msg || !messages.value.includes(msg)) {
+      return { role: 'assistant', content: text, source: 'error' }
+    }
+    Object.assign(msg, {
+      content: text,
+      source: 'error',
+      state: 'orchestrateur-error',
+      streaming: false,
+      streamPending: false,
+      streamThinking: false,
+      __streamed: true,
+    })
+    streamedMessage = msg
+    return { ...pickFields(msg), role: 'assistant', content: text, source: 'error', __streamed: true }
+  }
+
+  /** Retire la bulle SSE en cours (fallback vers POST /ask JSON). */
+  const cancelStream = () => {
+    clearStreamTimer()
+    const msg = streamedMessage
+    streamedMessage = null
+    if (!msg) return
+    const i = messages.value.indexOf(msg)
+    if (i >= 0) messages.value.splice(i, 1)
   }
 
   const addUserMessage = (content, extras = {}) => {
@@ -243,5 +362,10 @@ export function useChat() {
     queuePrompt,
     mentionInsert,
     appendMention,
+    beginStream,
+    appendStream,
+    finishStream,
+    failStream,
+    cancelStream,
   }
 }

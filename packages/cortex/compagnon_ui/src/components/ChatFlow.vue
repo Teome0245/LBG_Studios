@@ -296,7 +296,7 @@ function triggerCtrlK() {
               >{{ msg.cursor.agent_url }}</a>
             </div>
 
-            <!-- Contenu textuel et multimédia -->
+            <!-- Contenu textuel et multimédia (+ indicateur SSE 1.2) -->
             <div v-if="viewFilter !== 'timeline'" class="space-y-3">
               <div v-if="msg.images?.length" class="flex flex-wrap gap-2 mb-1" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
                 <img
@@ -307,12 +307,29 @@ function triggerCtrlK() {
                   class="max-h-40 max-w-[220px] rounded-xl border border-white/15 object-cover shadow-md"
                 />
               </div>
+              <div
+                v-if="msg.streamThinking && !msg.content"
+                class="flex items-center gap-2 text-xs text-slate-400"
+                aria-live="polite"
+              >
+                <span class="inline-flex gap-1" aria-hidden="true">
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/80 animate-pulse" />
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/60 animate-pulse [animation-delay:150ms]" />
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/40 animate-pulse [animation-delay:300ms]" />
+                </span>
+                <span>Réflexion…</span>
+              </div>
               <template v-for="(part, pIndex) in parseContent(displayContent(msg))" :key="pIndex">
                 <div v-if="part.type === 'text'" class="whitespace-pre-wrap leading-relaxed">{{ part.value }}</div>
                 <div v-else-if="part.type === 'image'" class="my-2">
                   <img :src="part.url" :alt="part.alt" class="max-w-full rounded-xl border border-white/10 shadow-lg hover:scale-[1.01] transition-transform cursor-zoom-in" />
                 </div>
               </template>
+              <span
+                v-if="msg.streaming && msg.content"
+                class="inline-block w-1.5 h-4 align-text-bottom bg-teal-400/70 animate-pulse"
+                aria-hidden="true"
+              />
             </div>
 
             <ApprovalCard

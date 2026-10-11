@@ -5,6 +5,7 @@ Routes racine historiquement inline dans `app/factory.py` : /history, /models, /
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 
 from src.deps import get_brain_controller, get_router_ia
 from src.schemas.orchestration import (
@@ -18,8 +19,16 @@ from src.services.brain_controller import BrainController
 from src.services.history import get_history
 from src.services.model_checker import list_models
 from src.services.router import RouterIA
+from src.services.sse_ask import stream_ask
 
 router = APIRouter(tags=["Core"])
+
+_STREAM_HEADERS = {
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    # nginx : pas de buffering sur le SSE (le flux part octet par octet)
+    "X-Accel-Buffering": "no",
+}
 
 
 @router.get("/history")
@@ -91,9 +100,8 @@ async def get_models_dynamic(provider: str):
     return await list_models(provider)
 
 
-@router.post("/ask", response_model=AskJSONEnvelope)
-@router.post("/ask/", response_model=AskJSONEnvelope)
-async def ask(body: AskRequest, llm_router: RouterIA = Depends(get_router_ia)):
+def _resolve_ask_args(body: AskRequest) -> tuple[str, str | None, str | None, str]:
+    """(prompt, agent, model, mode) — raccourcis UI Agent + tier modèle (mutualisé /ask et /ask/stream)."""
     from src.services.team_routing import has_team_mention, strip_team_prefix
 
     try:
@@ -144,6 +152,11 @@ async def ask(body: AskRequest, llm_router: RouterIA = Depends(get_router_ia)):
     elif model == "auto":
         model = None
 
+    return prompt, agent, model, mode
+
+
+async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
+    prompt, agent, model, mode = _resolve_ask_args(body)
     result = await llm_router.dispatch(
         prompt,
         mode=mode,
@@ -152,8 +165,39 @@ async def ask(body: AskRequest, llm_router: RouterIA = Depends(get_router_ia)):
         agent=agent,
         model=model,
     )
-    payload = ensure_dispatch_dict(result)
-    return AskJSONEnvelope(response=payload)
+    out = ensure_dispatch_dict(result)
+    try:
+        from src.services.team_actions import maybe_attach_session_l2_nudge
+
+        attached = await maybe_attach_session_l2_nudge(
+            out, conversation_id=body.conversation_id
+        )
+        if isinstance(attached, dict):
+            return attached
+    except Exception:
+        pass
+    return out
+
+
+@router.post("/ask", response_model=AskJSONEnvelope)
+@router.post("/ask/", response_model=AskJSONEnvelope)
+async def ask(body: AskRequest, llm_router: RouterIA = Depends(get_router_ia)):
+    return AskJSONEnvelope(response=await _ask_payload(body, llm_router))
+
+
+@router.post("/ask/stream")
+@router.post("/ask/stream/")
+async def ask_stream(body: AskRequest, llm_router: RouterIA = Depends(get_router_ia)):
+    """SSE minimal (plan 1.2) — start immédiat, delta* du contenu, done avec la réponse complète."""
+
+    async def _dispatch() -> dict:
+        return await _ask_payload(body, llm_router)
+
+    return StreamingResponse(
+        stream_ask(_dispatch),
+        media_type="text/event-stream",
+        headers=_STREAM_HEADERS,
+    )
 
 
 @router.post("/brain", response_model=BrainJSONEnvelope)
