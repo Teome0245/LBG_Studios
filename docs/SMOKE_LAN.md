@@ -103,6 +103,8 @@ Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-
 
 **D6.5 + rejeu PM** (2026-10-08) : `SMOKE_D65_V9V10 OK` · [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) — greeting+plan **PASS** · C2 collègues PARTIEL · `tools/smoke_rejeu_humain_d6_5174.sh`.
 
+**A4c watch mission** (2026-10-08→11) : « retour quand la team a traité » → ack + watch `mission_id` · toast/chat à clôture · **A4c.1** retarget même sujet (pas faux `replaced`) — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md).
+
 ```bash
 bash tools/smoke_d6_causerie_5174.sh          # V6→V8
 bash tools/smoke_d65_greeting_plan_5174.sh    # V9 greeting + V10 plan/Team

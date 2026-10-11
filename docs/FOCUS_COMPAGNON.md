@@ -76,6 +76,7 @@ Phasage réaliste :
 | **D1** | Raccourci `.10` mode app Edge/Chrome + PWA manifest | **OK** — `compagnon_ui/desktop/` |
 | **D2** | App Electron *Compagnon* (tray + fenêtre chat + avatar) | **OK** — `packages/compagnon-desktop` |
 | **D3** | Overlay discret + notifications d’initiative (quota strict) | **OK** (2026-09-16) |
+| **D7** | **Présence Agents** — island live + Allow/Deny (ADR 0027) | **code monorepo OK** · Team live bloqué `approval_denied` (token `.143`) · **à sync worker** (2026-10-09) |
 
 ## Jalons (ordre)
 
@@ -146,7 +147,7 @@ Phasage réaliste :
 | **D6.2c** | Campus conceptuel ≠ Team live (`team_routing`) + rôles Compagnon/Lyra dans prompt causerie ; Pilot 502 = `lbg-backend` / `pydantic-settings` | **OK** (2026-10-02) |
 | **D6.3** | UI : chrome ops replié par défaut en mode réponse / ask (timeline tags moins bruyants) | **OK** code (2026-10-06) — `ChatFlow.vue` details timeline/réflexion/méta |
 | **D6.4** | Smoke voix causerie V6–V8 + critère C1 documenté dans `SMOKE_LAN` ou voice-smoke | **OK** (2026-10-06) — `voice_smoke_cases` + [`SMOKE_LAN.md`](../../docs/SMOKE_LAN.md) § Compagnon D6 |
-| **D6.5** | Greeting + sticky go-ahead + livrer plan + **persist Team** + watch clôture | **OK live** 2026-10-08 — `SMOKE_D65_V9V10 OK` · A1/A3/A4/A4b/A4c · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) |
+| **D6.5** | Greeting + sticky go-ahead + livrer plan + **persist Team** + watch clôture | **OK live** 2026-10-08 — `SMOKE_D65_V9V10 OK` · A1/A3/A4/A4b/A4c · **A4c.1** continuité même sujet **OK live** 2026-10-11 · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) |
 | **C1 présence** | Brief hub « teste présence Nix… » → markdown + mission Campus bornée | **OK live** 2026-10-08 — `presence_brief.py` |
 | **C2 présence** | Retour terrain → causerie (`retour hub présence`) | **OK live** 2026-10-08 — `SMOKE_C2_PRESENCE_REPORT_OK` · `presence_report.py` |
 

@@ -130,19 +130,124 @@ export async function fetchCampusSnapshot() {
   return { status, closure, ok: stRes.ok }
 }
 
+/** Tokens significatifs pour détecter un respawn « même sujet ». */
+const SUBJECT_KEEP = new Set([
+  'zone',
+  'entrainement',
+  'entraînement',
+  'presence',
+  'présence',
+  'nix',
+  'lia',
+  'mmorpg',
+  'dials',
+  'dial',
+  'smoke',
+  'brief',
+  'chaleur',
+  'humeur',
+  'compagnon',
+  'hub',
+  'lost',
+  'heaven',
+  'incarnation',
+  'joueur',
+  'joueurs',
+])
+
+/**
+ * Empreinte sujet (ignore blabla Hermès / Dry-run).
+ * @param {string} objective
+ * @returns {Set<string>}
+ */
+export function objectiveSubjectTokens(objective) {
+  const raw = String(objective || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+  const cleaned = raw
+    .replace(/herm[eè]s[^:]*:/gi, ' ')
+    .replace(/dry[\s-]?run[^.]*/gi, ' ')
+    .replace(/owners?\s+typiques[^.]*/gi, ' ')
+    .replace(/---[\s\S]*$/g, ' ')
+  const words = cleaned.match(/[a-z0-9àâäéèêëïîôùûüç]+/gi) || []
+  const out = new Set()
+  for (const w of words) {
+    const n = w
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .toLowerCase()
+    if (n.length < 3) continue
+    if (SUBJECT_KEEP.has(n) || SUBJECT_KEEP.has(w.toLowerCase())) out.add(n)
+    // bi-grammes utiles
+    if (n.includes('entrain')) out.add('entrainement')
+    if (n.includes('presen')) out.add('presence')
+  }
+  return out
+}
+
+/**
+ * Même sujet si ≥2 tokens partagés, ou 1 token fort (nix/mmorpg/…) + overlap.
+ * @param {string} a
+ * @param {string} b
+ */
+export function sameSubjectObjective(a, b) {
+  const ta = objectiveSubjectTokens(a)
+  const tb = objectiveSubjectTokens(b)
+  if (!ta.size || !tb.size) return false
+  let shared = 0
+  for (const t of ta) {
+    if (tb.has(t)) shared += 1
+  }
+  if (shared >= 2) return true
+  const strong = ['nix', 'lia', 'mmorpg', 'entrainement', 'presence']
+  if (shared >= 1 && strong.some((s) => ta.has(s) && tb.has(s))) return true
+  return false
+}
+
+/**
+ * Ré-attache le watch sur un nouvel id (respawn même sujet).
+ * @param {string} oldMissionId
+ * @param {{ missionId: string, objective?: string, taskIds?: string[] }} next
+ */
+export function retargetWatch(oldMissionId, next) {
+  const watches = listWatches()
+  const hit = watches.find((w) => w.missionId === oldMissionId)
+  const newId = String(next?.missionId || '').trim()
+  if (!hit || !newId) return null
+  // Évite doublon sur le nouvel id
+  const others = watches.filter((w) => w.missionId !== oldMissionId && w.missionId !== newId)
+  hit.missionId = newId
+  if (next.objective) hit.objective = String(next.objective).slice(0, 240)
+  if (Array.isArray(next.taskIds)) hit.taskIds = next.taskIds.map(String).slice(0, 20)
+  hit.notify = true
+  hit.notifiedAt = null
+  hit.lastStatus = 'retargeted'
+  hit.createdAt = Date.now()
+  others.unshift(hit)
+  persist(others)
+  return hit
+}
+
 /**
  * @param {{ status: any, closure: any }} snap
  * @param {MissionWatch} watch
- * @returns {{ ready: boolean, kind: 'closable'|'closed'|'replaced'|null, detail: string }}
+ * @returns {{
+ *   ready: boolean,
+ *   kind: 'closable'|'closed'|'replaced'|'continued'|null,
+ *   detail: string,
+ *   retarget?: { missionId: string, objective?: string, taskIds?: string[] },
+ * }}
  */
 export function evaluateWatch(snap, watch) {
   const mission = snap?.status?.mission || {}
   const openId = String(mission.id || '')
+  const openObj = String(mission.objective || '')
   const closure = snap?.closure || snap?.status?.mission_closure || {}
   const closable = Boolean(closure.closable ?? snap?.status?.decision?.mission_closable)
   const closeOutcome = closure.outcome || snap?.status?.decision?.mission_close_outcome
   const stats = closure.task_stats || {}
-  const obj = String(watch.objective || mission.objective || '').slice(0, 100)
+  const obj = String(watch.objective || openObj || '').slice(0, 100)
 
   if (openId && openId === watch.missionId) {
     if (closable || closeOutcome === 'closed' || String(mission.status) === 'closed') {
@@ -163,13 +268,25 @@ export function evaluateWatch(snap, watch) {
     }
   }
 
-  // Plus la mission ouverte courante → considérée traitée / remplacée
+  // Respawn même sujet → continuer le watch (pas de faux « traité »)
   if (watch.missionId && openId && openId !== watch.missionId) {
+    if (sameSubjectObjective(watch.objective || '', openObj)) {
+      return {
+        ready: false,
+        kind: 'continued',
+        detail: `Même sujet — watch basculé vers \`${openId.slice(0, 8)}…\`.`,
+        retarget: {
+          missionId: openId,
+          objective: openObj.slice(0, 240),
+          taskIds: Array.isArray(mission.task_ids) ? mission.task_ids : [],
+        },
+      }
+    }
     return {
       ready: true,
       kind: 'replaced',
       detail: obj
-        ? `La mission « ${obj} » n'est plus la mission Campus ouverte (traitée ou remplacée).`
+        ? `La mission « ${obj} » n'est plus la mission Campus ouverte (autre sujet).`
         : `Mission \`${watch.missionId.slice(0, 8)}…\` plus ouverte sur le Campus.`,
     }
   }
@@ -229,18 +346,39 @@ export function offerFromMissionDone(watch, evalResult) {
 }
 
 /**
- * Parcourt les watches notify — premier prêt gagne.
+ * Parcourt les watches notify — retarget même sujet silencieux ; premier prêt gagne.
  * @param {{ status: any, closure: any }} snap
  */
 export function nextMissionOffer(snap) {
   for (const w of listWatches()) {
     if (!w.notify || w.notifiedAt) continue
     const ev = evaluateWatch(snap, w)
+    if (ev.kind === 'continued' && ev.retarget?.missionId) {
+      retargetWatch(w.missionId, ev.retarget)
+      continue
+    }
     if (ev.ready) {
       return { watch: w, eval: ev, offer: offerFromMissionDone(w, ev) }
     }
   }
   return null
+}
+
+/**
+ * Ré-arme explicitement sur la mission Campus ouverte (après faux « replaced »).
+ * @returns {Promise<MissionWatch|null>}
+ */
+export async function rearmOnOpenCampusMission() {
+  const snap = await fetchCampusSnapshot().catch(() => null)
+  const mission = snap?.status?.mission || {}
+  const mid = String(mission.id || '').trim()
+  if (!mid) return null
+  return watchMission({
+    missionId: mid,
+    objective: String(mission.objective || '').slice(0, 240),
+    taskIds: Array.isArray(mission.task_ids) ? mission.task_ids : [],
+    notify: true,
+  })
 }
 
 /** Accusé de réception chat (sans Agir / dry-run). */

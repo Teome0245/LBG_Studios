@@ -10,6 +10,7 @@ import {
   markNotified,
   nextMissionOffer,
   ackNotifyMessage,
+  sameSubjectObjective,
 } from './missionWatch.js'
 
 // localStorage shim for node tests
@@ -61,13 +62,56 @@ test('watch + notify + evaluate closable', () => {
 
 test('evaluate replaced when other mission open', () => {
   store.clear()
-  watchMission({ missionId: 'old-mission', objective: 'Plan MMORPG', notify: true })
+  watchMission({
+    missionId: 'old-mission',
+    objective: 'Audit disque Proxmox cluster only',
+    notify: true,
+  })
   const snap = {
-    status: { mission: { id: 'new-mission', status: 'open' } },
+    status: {
+      mission: {
+        id: 'new-mission',
+        status: 'open',
+        objective: 'Brief inventaire Freebox LAN Héphaïstos',
+      },
+    },
     closure: { closable: false },
   }
   const hit = nextMissionOffer(snap)
   assert.equal(hit?.eval?.kind, 'replaced')
+})
+
+test('same subject respawn retargets without notify', () => {
+  store.clear()
+  assert.equal(
+    sameSubjectObjective(
+      'Hermès : brief zone d\'entraînement — smoke présence Nix (B3/B4 dials)',
+      'Hermès (PM) + Team : brief zone d\'entraînement — smoke présence Nix. Dry-run',
+    ),
+    true,
+  )
+  watchMission({
+    missionId: '5b0f9178-old',
+    objective: 'Hermès : brief zone d\'entraînement — smoke présence Nix (B3/B4 dials)',
+    notify: true,
+  })
+  const snap = {
+    status: {
+      mission: {
+        id: '8264112d-new',
+        status: 'open',
+        objective:
+          'Hermès (PM) + Team : brief zone d\'entraînement — smoke présence Nix (B3/B4 dials). Dry-run',
+        task_ids: ['t1', 't2'],
+      },
+    },
+    closure: { closable: false, task_stats: { pending: 4, done: 0 } },
+  }
+  assert.equal(nextMissionOffer(snap), null)
+  const w = listWatches()[0]
+  assert.equal(w.missionId, '8264112d-new')
+  assert.equal(w.notify, true)
+  assert.equal(w.notifiedAt, null)
 })
 
 test('requestNotify and ack', () => {

@@ -133,6 +133,33 @@ _OPS_OVERRIDE_RE = re.compile(
     r")\b"
 )
 
+# Game design / lore / gameplay — causerie collègue (interdit tool_loop sans impératif ops)
+_DESIGN_BRAINSTORM_RE = re.compile(
+    r"(?i)\b("
+    r"zone\s+d['\u2019 ]?entra[iî]nement|"
+    r"game\s*design|gameplay|\blore\b|"
+    r"personas?|incarnation|"
+    r"environnement\s+jeu|monde\s+(?:jeu|vivant)|"
+    r"feeling|pr[ée]sence\s+(?:hub|jeu|studio|mesurable)|"
+    r"scrapaltai|lost\s+heaven|"
+    r"\bpnj\b|bots?\s+ia|joueurs?\s+ia|"
+    r"qu[êe]tes?|\bboss\b|m[ée]caniques?"
+    r")\b"
+)
+
+# Verbes / ordres ops durs — seuls à autoriser l'armement outils infra
+_OPS_IMPERATIVE_RE = re.compile(
+    r"(?i)\b("
+    r"d[ée]ploie|deploy(?:er)?|ex[ée]cute|ex[ée]cuter|"
+    r"lance\s+(?:le\s+)?(?:smoke|deploy|audit|diagnostic)|"
+    r"v[ée]rifie(?:r)?(?:\s+l['\u2019 ]?)?(?:ip|status|statut|sondes?|healthz)|"
+    r"run\s+(?:smoke|audit|diagnostic)|"
+    r"fais\s+(?:un\s+)?(?:diagnostic|audit|bilan|check)|"
+    r"check\s+(?:lan|complet)|"
+    r"status\s+campus|team\s*:"
+    r")\b"
+)
+
 _STUDIO_SCOPE_RE = re.compile(
     r"(?i)\b("
     r"team|studio|campus|atlas|plateforme|pilot|cortex|"
@@ -255,6 +282,24 @@ def wants_deliverable_turn(prompt: str, short_ctx: list | None = None) -> bool:
     return False
 
 
+def is_design_brainstorm(prompt: str) -> bool:
+    """True si causerie game design / lore / gameplay sans impératif ops.
+
+    Barrière sémantique 1.1 : concept ≠ tool_loop. « zone d'entraînement »,
+    personas, lore → collègue créatif ; « déploie / vérifie l'IP / exécute » → ops.
+    """
+    text = (prompt or "").strip()
+    if not text or len(text) > 500:
+        return False
+    if not _DESIGN_BRAINSTORM_RE.search(text):
+        return False
+    if _OPS_IMPERATIVE_RE.search(text):
+        return False
+    if _OPS_OVERRIDE_RE.search(text):
+        return False
+    return True
+
+
 def is_companion_chat(prompt: str) -> bool:
     """True si message = causerie / identité / exploration Compagnon (pas d'ops)."""
     text = (prompt or "").strip()
@@ -265,6 +310,8 @@ def is_companion_chat(prompt: str) -> bool:
     if is_greeting_chat(text):
         return True
     if wants_plan_delivery(text):
+        return True
+    if is_design_brainstorm(text):
         return True
     return bool(_IDENTITY_CHAT_RE.search(text) or _EXPLORATORY_CHAT_RE.search(text))
 
@@ -277,6 +324,8 @@ def wants_exploratory_chat(prompt: str) -> bool:
     if _AUDIT_CUE_RE.search(text) and _STUDIO_SCOPE_RE.search(text):
         return False
     if is_greeting_chat(text) or wants_plan_delivery(text):
+        return True
+    if is_design_brainstorm(text):
         return True
     return bool(_EXPLORATORY_CHAT_RE.search(text) or _IDENTITY_CHAT_RE.search(text))
 
@@ -298,8 +347,8 @@ def wants_sticky_causerie(
             r")\b",
             text,
         )
-    )
-    # Override ops explicite → sortir de la sticky (sauf question conceptuelle)
+    ) or is_design_brainstorm(text)
+    # Override ops explicite → sortir de la sticky (sauf question conceptuelle / design)
     if _OPS_OVERRIDE_RE.search(text) and not conceptual:
         return False
     if wants_exploratory_chat(text) or is_companion_chat(text):

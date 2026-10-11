@@ -105,6 +105,35 @@ class ChatIntentTests(unittest.TestCase):
         ):
             self.assertFalse(ci.is_companion_chat(p), p)
 
+    def test_design_brainstorm_barrier(self) -> None:
+        """1.1 — zone d'entraînement / lore = causerie ; impératif ops = hors barrrière."""
+        t5 = (
+            "pour moi l'environnement jeu doit rester une zone d'entraînement "
+            "des personas, pas un dump ops"
+        )
+        self.assertTrue(ci.is_design_brainstorm(t5), t5)
+        self.assertTrue(ci.is_companion_chat(t5), t5)
+        self.assertTrue(ci.wants_exploratory_chat(t5), t5)
+        self.assertTrue(ci.wants_sticky_causerie(t5))
+
+        for p in (
+            "on parle lore Scrapaltai et feeling présence",
+            "l'incarnation des joueurs IA dans Lost Heaven",
+            "gameplay de la zone d'entraînement",
+        ):
+            self.assertTrue(ci.is_design_brainstorm(p), p)
+            self.assertTrue(ci.is_companion_chat(p), p)
+
+        # Impératif / override ops → pas de brainstorm « pur »
+        for p in (
+            "déploie la zone d'entraînement sur le hub",
+            "zone d'entraînement : status campus",
+            "vérifie l'IP du serveur pour la zone d'entraînement",
+            "fais un diagnostic zone d'entraînement",
+        ):
+            self.assertFalse(ci.is_design_brainstorm(p), p)
+            self.assertFalse(ci.is_companion_chat(p), p)
+
     def test_causerie_lab_nudge(self) -> None:
         import router_prompts as rp  # noqa: E402
 

@@ -30,7 +30,7 @@ Sans corriger (1)–(3), toute transposition présence→MMO restera du roman. E
 | **A4** | Intent « livrer plan » | `wants_plan_delivery` / `plan_delivery_nudge` → markdown Objectif/Phases/Prochaine action | `chat_intent` + `llm_chat_phase` | **OK code** 2026-10-08 |
 | **A4b** | Persistance Team | « soumettre au studio » → mission Campus (Hermès PM) + `campus_meta` / L2 cards | `plan_submit.py` + hook `llm_chat_phase` | **OK code** 2026-10-08 · flag `LBG_COMPAGNON_PLAN_SUBMIT` (défaut on en LAB) |
 | **A4c** | Retour à la clôture | Watch mission + poll Campus → toast/chat ; « retour quand… » = ack sans Agir | `missionWatch.js` + `useInitiative` + `mission_watch_intent.py` | **OK code** 2026-10-08 |
-| **A4c.1** | Continuité même sujet | Respawn Campus même objectif → retarget silencieux (pas faux « traité ») | `sameSubjectObjective` / `retargetWatch` | **OK code** 2026-10-08 |
+| **A4c.1** | Continuité même sujet | Respawn Campus même objectif → retarget silencieux (pas faux « traité ») | `sameSubjectObjective` / `retargetWatch` | **OK live** 2026-10-11 — ping `replaced` corrigé ; ré-arme sur mission ouverte |
 | **A5** | Smoke | V9 greeting + V10 plan delivery (voice-smoke) · deploy `:5174` · rejeu humain | Argus-style | **OK live** 2026-10-08 — `bash tools/smoke_d65_greeting_plan_5174.sh` → `SMOKE_D65_V9V10 OK` (+ mission Campus) |
 
 **Root cause non-livraison** (2026-10-08) : (1) greeting hors causerie → `lab_ops` bible Agir ; (2) `short_social` mangeait « allons-y » ; (3) **aucun intent livrable** — le LLM restait en méta sous nudge « 1 avis ». Fix = A1+A3+A4. **A4b** : le markdown chat seul ne suffisait pas — spawn mission Campus pour Hermès/Team.

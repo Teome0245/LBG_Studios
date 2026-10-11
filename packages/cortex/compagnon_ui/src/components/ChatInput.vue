@@ -26,21 +26,21 @@ import {
 } from '@/lib/missionWatch'
 import PilotagePalette from './PilotagePalette.vue'
 
-/** Arme le watch sur la mission Campus ouverte (ou la dernière connue). */
+/** Arme / ré-arme le watch sur la mission Campus *ouverte* (évite un vieux id notified). */
 async function ensureMissionWatchArmed() {
-  let hit = requestNotify() || listWatches()[0] || null
-  if (hit) return hit
   const snap = await fetchCampusSnapshot().catch(() => null)
   const mid = String(snap?.status?.mission?.id || '').trim()
-  if (!mid) return null
-  return watchMission({
-    missionId: mid,
-    objective: String(snap?.status?.mission?.objective || '').slice(0, 240),
-    taskIds: Array.isArray(snap?.status?.mission?.task_ids)
-      ? snap.status.mission.task_ids
-      : [],
-    notify: true,
-  })
+  if (mid) {
+    return watchMission({
+      missionId: mid,
+      objective: String(snap?.status?.mission?.objective || '').slice(0, 240),
+      taskIds: Array.isArray(snap?.status?.mission?.task_ids)
+        ? snap.status.mission.task_ids
+        : [],
+      notify: true,
+    })
+  }
+  return requestNotify() || listWatches()[0] || null
 }
 
 const AGENT_KEY = 'lbg_orch_input_agent'
@@ -282,9 +282,9 @@ const send = async () => {
   activityLog(
     images.length
       ? `POST /vision-ask · ${images.length} image(s) · profile=${selectedProfile.value}`
-      : `POST /ask · agent=${agent} · profile=${selectedProfile.value}`
+      : `POST /ask/stream · agent=${agent} · profile=${selectedProfile.value}`
   )
-  activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle…')
+  activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle (SSE)…')
   try {
     let backendResponse = await sendPrompt(userMsg, {
       agent,
