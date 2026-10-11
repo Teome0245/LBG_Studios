@@ -148,14 +148,14 @@
       "title": "Persistance SQLite hub_player_store",
       "horizon": "sprint2",
       "perimeter": "O2 Hub",
-      "status": "in_progress",
+      "status": "done",
       "blocked_by": [
         "2.3"
       ],
       "blocks": [
         "2.2"
       ],
-      "evidence": "",
+      "evidence": "hub_db.gd SQLite threadé WAL + queue async BEGIN IMMEDIATE/COMMIT · hub_player_store.gd table player_positions + auto-migration JSON + miroir périodique · db_selftest.gd OK · smoke_sqlite_prime_hub.sh kill -9 sans corruption",
       "keywords": [
         "hub_player_store",
         "persistance SQLite",
@@ -191,7 +191,7 @@
       "title": "Découpage hub_sim.gd & main.gd",
       "horizon": "sprint3",
       "perimeter": "O2 Hub/Client",
-      "status": "blocked",
+      "status": "todo",
       "blocked_by": [
         "2.1"
       ],

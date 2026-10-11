@@ -9,7 +9,7 @@
 
 | Done | En cours | À relancer | Bloqué | Todo |
 |:---:|:---:|:---:|:---:|:---:|
-| 5 | 3 | 0 | 2 | 0 |
+| 6 | 2 | 0 | 1 | 1 |
 
 ## Réalisés
 
@@ -25,6 +25,12 @@
   - `queued` [327159f2](http://192.168.0.140:8080/pilot/#/team?task=327159f2-ba9a-43c5-be5b-e3899026e80c) — Ticket plan 1.3 LIVE OpenCode .143 — Modularisation Pilot Web (pilot.js). Découper en modules ES <10
   - `done` [d14a9f03](http://192.168.0.140:8080/pilot/#/team?task=d14a9f03-7274-449c-83fe-4510c113d50f) — Triage échec dev_studio — analyser et proposer correctif/relance (parent=412a7852-185f-4721-a1ba-722
   - `failed` [412a7852](http://192.168.0.140:8080/pilot/#/team?task=412a7852-185f-4721-a1ba-722e3aa40a20) — Ticket plan 1.3 LIVE OpenCode .143 — Modularisation Pilot Web (pilot.js). Découper en modules ES <10
+
+### `2.1` — Persistance SQLite hub_player_store
+- **Preuve** : hub_db.gd SQLite threadé WAL + queue async BEGIN IMMEDIATE/COMMIT · hub_player_store.gd table player_positions + auto-migration JSON + miroir périodique · db_selftest.gd OK · smoke_sqlite_prime_hub.sh kill -9 sans corruption
+- **Team** :
+  - `running` [3ac060bc](http://192.168.0.140:8080/pilot/#/team?task=3ac060bc-136e-455b-a195-19d0cbd3d9a4) — Ticket plan 2.1 LIVE — SQLite hub_player_store. Gate depends_on=2.3. Ne démarre que si 2.3 done. Mar
+  - `cancelled` [098673ed](http://192.168.0.140:8080/pilot/#/team?task=098673ed-4fdd-4823-af57-258d99ec55f4) — Ticket plan 2.1 LIVE — SQLite hub_player_store. Conductor gate depends_on=2.3. Ne démarre que si 2.3
 
 ### `2.3` — NavigationServer3D navmesh prime-hub
 - **Preuve** : navmesh NavigationServer3D LIVE 2026-10-11: hub_nav.gd bake 193 polys/16 empreintes ~0.6s; PATH_BUDGET_PER_TICK supprimé (budget_per_tick=0); selftest 40/40 entités/tick ~34us (nav_selftest.gd); smoke_navmesh_prime_hub.sh OK; /healthz navmesh.ok + /v1/dev/navmesh/probe source=navmesh (fallback A* grille hors bornes)
@@ -43,11 +49,6 @@
 
 ## En cours
 
-### `2.1` — Persistance SQLite hub_player_store
-- **Team** :
-  - `running` [3ac060bc](http://192.168.0.140:8080/pilot/#/team?task=3ac060bc-136e-455b-a195-19d0cbd3d9a4) — Ticket plan 2.1 LIVE — SQLite hub_player_store. Gate depends_on=2.3. Ne démarre que si 2.3 done. Mar
-  - `cancelled` [098673ed](http://192.168.0.140:8080/pilot/#/team?task=098673ed-4fdd-4823-af57-258d99ec55f4) — Ticket plan 2.1 LIVE — SQLite hub_player_store. Conductor gate depends_on=2.3. Ne démarre que si 2.3
-
 ### `3.1` — Live World Stream Hub → Compagnon
 - **Preuve** : chain v2 LIVE 9fbe70dd
 - **Team** :
@@ -64,12 +65,6 @@ _Rien à relancer._
 
 ## Bloqués (prérequis / L2)
 
-### `2.2` — Découpage hub_sim.gd & main.gd
-- **Blocage** : prérequis non done: 2.1
-- **Team** :
-  - `done` [c210d345](http://192.168.0.140:8080/pilot/#/team?task=c210d345-9792-4a58-acfb-1440fdbe8f59) — Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.
-  - `cancelled` [93207146](http://192.168.0.140:8080/pilot/#/team?task=93207146-ebdb-41ea-b29b-fd69fc71f93b) — Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.
-
 ### `3.2` — Mémoire relationnelle jeu ↔ bureau
 - **Blocage** : prérequis non done: 3.1
 - **Team** :
@@ -78,7 +73,10 @@ _Rien à relancer._
 
 ## Todo
 
-_File vide._
+### `2.2` — Découpage hub_sim.gd & main.gd
+- **Team** :
+  - `done` [c210d345](http://192.168.0.140:8080/pilot/#/team?task=c210d345-9792-4a58-acfb-1440fdbe8f59) — Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.
+  - `cancelled` [93207146](http://192.168.0.140:8080/pilot/#/team?task=93207146-ebdb-41ea-b29b-fd69fc71f93b) — Ticket plan 2.2 LIVE — découpage hub_sim/main. Gate depends_on=2.1. Mark 2.2 done.
 
 ## Échecs Team liés au plan (hors ticket)
 
