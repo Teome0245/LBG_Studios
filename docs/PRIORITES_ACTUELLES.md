@@ -34,7 +34,8 @@ Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team
 Jalons **D0–D6** (+ character / voix) : **OK** sur checklist (smoke D6 V6–V8 **PASS** 2026-10-06).  
 Fil **Jarvis / D5** (mandat + soft-confirm + Accueil/Jobs) : **clôturé** — [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md).  
 Gate feeling Compagnon **ouverte** — voir [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
-**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · **ouverts** listés dans [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil* (A2/C2 feeling, polish retour terrain, L3 days_ok) ; ops LAN stables.
+**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · **ouverts** listés dans [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil* (A2/C2 feeling, polish retour terrain, L3 days_ok) ; ops LAN stables.  
+**D7 Présence Agents** : code monorepo livré — clôture [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) · sync worker `.143` encore ouvert.
 
 **Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
 Pilot reste le cockpit ops ; on n’absorbe **pas** Team/Jobs dans un clone de `:5174`.  

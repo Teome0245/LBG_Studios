@@ -1,0 +1,40 @@
+{
+  "$schema_comment": "Remplir après dialogue Compagnon (SESSION_ISLAND_D7_COMPAGNON_CLARIFS.md). Spawn P1 refuse si go manquant.",
+  "plan": "docs/PLAN_SESSION_ISLAND_D7.md",
+  "adr": "packages/cortex/docs/adr/0027-session-island-d7.md",
+  "updated_at": "2026-10-09T09:45:00+02:00",
+  "updated_by": "compagnon_clarifs_chat",
+  "go": "go",
+  "go_comment": "GO Phase 0–1 — clarifs closes ; timeout 60s ; spawn P0 autorisé",
+  "bus_v1": "http_sse_and_ipc",
+  "bus_v1_comment": "SSE HTTP + Unix socket (.143) / named pipe (.10) en parallèle dès P1",
+  "island_targets": "electron_10_and_omarchy_143",
+  "island_targets_comment": "Electron .10 + client minimal Omarchy .143 en P1",
+  "pilot_mirror_p1": true,
+  "pilot_mirror_p1_comment": "Best-effort P1 ; si ça met le MVP en danger → reporter P2 sans bloquer close",
+  "product_name": "Présence Agents",
+  "approval_timeout_s": 60,
+  "always_allow_scope": "session",
+  "optional_defaults_applied": true,
+  "optional_defaults_comment": "timeout 60s (humain) + Always-allow scoped session",
+  "enums": {
+    "go": ["go", "go_conditional", "no_go", "later"],
+    "bus_v1": ["http_sse", "unix_socket", "named_pipe", "http_sse_and_ipc"],
+    "island_targets": ["electron_10", "electron_10_and_omarchy_143"],
+    "always_allow_scope": ["session", "forbidden"]
+  },
+  "defaults_if_trust_companion": {
+    "bus_v1": "http_sse",
+    "island_targets": "electron_10",
+    "pilot_mirror_p1": false,
+    "product_name": "Session Island",
+    "approval_timeout_s": 30,
+    "always_allow_scope": "session"
+  },
+  "spawn_gate": {
+    "P0_requires": ["go"],
+    "P0_allowed_go": ["go", "go_conditional"],
+    "P1_requires": ["go", "bus_v1", "island_targets", "pilot_mirror_p1", "product_name"],
+    "P1_allowed_go": ["go", "go_conditional"]
+  }
+}

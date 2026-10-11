@@ -695,7 +695,18 @@ def mail_imap_parse_action(action: dict[str, Any]) -> tuple[str, str, int, int, 
 
 
 def which(exe: str) -> str:
-    return shutil.which(exe) or ""
+    found = shutil.which(exe) or ""
+    if found:
+        return found
+    # Installs user (Cline CLI → ~/.local/bin) hors PATH systemd minimal
+    for root in (
+        Path.home() / ".local" / "bin",
+        Path("/home/lbg/.local/bin"),
+    ):
+        cand = root / exe
+        if cand.is_file() and os.access(cand, os.X_OK):
+            return str(cand)
+    return ""
 
 
 # -----------------------------------------------------------------------------
@@ -820,7 +831,27 @@ def resolve_cli_agent_argv(app: str, prompt: str) -> list[str] | None:
             "--dangerously-skip-permissions",
         ]
     if a == "cline":
-        return [bin_path, "run", "--prompt", prompt]
+        # Cline CLI 3.x — headless local Ollama (.110), coûts maîtrisés (ADR 0025 second avis)
+        provider = (get_cfg("LBG_LINUX_CLINE_PROVIDER") or "ollama").strip() or "ollama"
+        model = (
+            get_cfg("LBG_LINUX_CLINE_MODEL")
+            or "huihui_ai/gemma-4-abliterated:E4b-qat"
+        ).strip()
+        argv = [
+            bin_path,
+            "-y",
+            "--json",
+            "--thinking",
+            (get_cfg("LBG_LINUX_CLINE_THINKING") or "none").strip() or "none",
+            "-P",
+            provider,
+            "-m",
+            model,
+            "--auto-approve",
+            "true",
+        ]
+        argv.append(prompt)
+        return argv
     if a == "opencode":
         model = cli_agent_model()
         if not cli_agent_model_ok(model):
@@ -834,7 +865,7 @@ def resolve_cli_agent_argv(app: str, prompt: str) -> list[str] | None:
 
 
 def _cli_agent_child_env() -> dict[str, str]:
-    """Env enfant : Ollama local (.110) + anti-hang Claude unknown-model."""
+    """Env enfant : Ollama local (.110) + PATH user (~/.local/bin pour cline)."""
     env = {**os.environ, "TERM": "dumb"}
     # Ne pas écraser si déjà posé dans linux.env / systemd
     defaults = {
@@ -847,6 +878,12 @@ def _cli_agent_child_env() -> dict[str, str]:
     for k, v in defaults.items():
         if not (env.get(k) or "").strip():
             env[k] = v
+    # Cline CLI installé en prefix user
+    home = os.path.expanduser("~")
+    local_bin = f"{home}/.local/bin"
+    path = env.get("PATH") or ""
+    if local_bin not in path.split(":"):
+        env["PATH"] = f"{local_bin}:{path}" if path else local_bin
     return env
 
 def run_cli_agent(
@@ -910,7 +947,16 @@ def run_cli_agent(
             # Dry-run : preview même si binaire absent (smoke orch sans .143)
             fake = {
                 "claude": ["claude", "-p", prompt_s, "--output-format", "text"],
-                "cline": ["cline", "run", "--prompt", prompt_s],
+                "cline": [
+                    "cline",
+                    "-y",
+                    "--json",
+                    "-P",
+                    "ollama",
+                    "-m",
+                    "huihui_ai/gemma-4-abliterated:E4b-qat",
+                    prompt_s,
+                ],
                 "opencode": ["opencode", "run", prompt_s],
             }.get(app_id, [app_id])
             return {
@@ -948,6 +994,29 @@ def run_cli_agent(
             "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} timeout_s={to}",
         }
 
+    # Présence Agents (D7) — télémétrie session (opt-in)
+    try:
+        import session_emitter as _se
+    except ImportError:
+        _se = None  # type: ignore
+    sid = ""
+    if _se is not None and _se.enabled():
+        sid = _se.new_session_id(f"cli-{app_id}")
+        _se.emit(
+            "session.start",
+            session_id=sid,
+            agent=app_id,
+            summary=f"{app_id} · {work}",
+            detail={"cwd": work, "kind": "run_cli_agent", "timeout_s": to},
+        )
+        _se.emit(
+            "session.prompt",
+            session_id=sid,
+            agent=app_id,
+            summary=prompt_s[:80],
+            detail={"prompt_chars": len(prompt_s)},
+        )
+
     try:
         proc = subprocess.run(
             argv,
@@ -961,6 +1030,23 @@ def run_cli_agent(
         stdout = (proc.stdout or "")[-4000:]
         stderr = (proc.stderr or "")[-2000:]
         ok = proc.returncode == 0
+        if _se is not None and _se.enabled() and sid:
+            if ok:
+                _se.emit(
+                    "session.stop",
+                    session_id=sid,
+                    agent=app_id,
+                    summary=f"exit {proc.returncode}",
+                    detail={"exit_code": proc.returncode},
+                )
+            else:
+                _se.emit(
+                    "session.error",
+                    session_id=sid,
+                    agent=app_id,
+                    summary=f"rc={proc.returncode}",
+                    detail={"exit_code": proc.returncode, "stderr_tail": stderr[-400:]},
+                )
         return {
             "ok": ok,
             "outcome": "ok" if ok else "error",
@@ -973,8 +1059,17 @@ def run_cli_agent(
             "stderr_tail": stderr,
             "reply": (stdout or stderr or f"rc={proc.returncode}")[:500],
             "error": None if ok else f"cli rc={proc.returncode}",
+            "session_id": sid or None,
         }
     except subprocess.TimeoutExpired:
+        if _se is not None and _se.enabled() and sid:
+            _se.emit(
+                "session.error",
+                session_id=sid,
+                agent=app_id,
+                summary=f"timeout {to}s",
+                detail={"timeout_s": to},
+            )
         return {
             "ok": False,
             "outcome": "timeout",
@@ -984,12 +1079,21 @@ def run_cli_agent(
             "argv": argv,
             "timeout_s": to,
             "prompt_chars": len(prompt_s),
+            "session_id": sid or None,
             "hint": (
                 "Augmenter LBG_LINUX_CLI_AGENT_TIMEOUT_S / context.ide_cli_timeout_s, "
                 "ou scinder le mandat (OpenCode multi-étapes)."
             ),
         }
     except Exception as exc:
+        if _se is not None and _se.enabled() and sid:
+            _se.emit(
+                "session.error",
+                session_id=sid,
+                agent=app_id,
+                summary=f"{type(exc).__name__}",
+                detail={"error": str(exc)[:200]},
+            )
         return {
             "ok": False,
             "outcome": "error",
@@ -997,4 +1101,5 @@ def run_cli_agent(
             "app": app_id,
             "cwd": work,
             "argv": argv,
+            "session_id": sid or None,
         }

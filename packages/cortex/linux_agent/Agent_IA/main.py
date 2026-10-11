@@ -1,23 +1,41 @@
 from __future__ import annotations
 
 import json
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from mail_imap_preview import run_mail_imap_preview
 from pydantic import BaseModel, Field
 
 import core
+import session_emitter
 from face_parts_import_action import run_import_face_parts
 
-app = FastAPI(title="lbg-linux-agent-ia", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    session_emitter.start_socket_server()
+    yield
+
+
+app = FastAPI(title="lbg-linux-agent-ia", version="0.1.0", lifespan=_lifespan)
 
 
 class InvokeRequest(BaseModel):
     actor_id: str
     text: str = Field(default="")
     context: dict[str, Any] = Field(default_factory=dict)
+
+
+class SessionDecisionBody(BaseModel):
+    v: int = 1
+    approval_id: str
+    decision: str
+    scope: str = "once"
+    ts: str | None = None
 
 
 @app.get("/healthz")
@@ -47,7 +65,37 @@ def healthz() -> dict[str, object]:
             "face_parts_enabled": core.get_cfg("LBG_LINUX_FACE_PARTS_ENABLED").strip().lower() in {"1", "true", "yes", "on"},
         },
         "session": core.session_info(),
+        "presence_agents": session_emitter.status(),
     }
+
+
+@app.get("/session/stream")
+async def session_stream() -> StreamingResponse:
+    """SSE Présence Agents — events session.* (opt-in LBG_SESSION_ISLAND_ENABLED)."""
+    return StreamingResponse(
+        session_emitter.stream_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/session/recent")
+def session_recent(limit: int = 50) -> dict[str, object]:
+    return {"ok": True, "events": session_emitter.recent(max(1, min(limit, 200)))}
+
+
+@app.post("/session/decision")
+def session_decision(body: SessionDecisionBody) -> dict[str, object]:
+    return session_emitter.apply_decision(body.model_dump())
+
+
+@app.get("/session/status")
+def session_status() -> dict[str, object]:
+    return {"ok": True, **session_emitter.status()}
 
 
 @app.post("/invoke")
@@ -288,6 +336,69 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
         }
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
+
+    if kind == "file_read":
+        path = action.get("path")
+        if not isinstance(path, str) or not path.strip():
+            out = {**base, "ok": False, "outcome": "bad_request", "error": "Champ `path` requis"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        path = path.strip()
+        if not core.path_is_allowed(path):
+            out = {
+                **base,
+                "ok": False,
+                "outcome": "allowlist_denied",
+                "error": "Chemin non autorisé",
+                "path": path,
+                "file_allowlist_dirs_preview": [str(p) for p in core.file_allowlist_dirs()[:5]],
+            }
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        # Lecture allowlist : soft-confirm suffit (plan_evolutions sync orch→.143)
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "path": path}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        try:
+            max_chars = int(action.get("max_chars") or 512_000)
+        except (TypeError, ValueError):
+            max_chars = 512_000
+        max_chars = max(1024, min(max_chars, 2_000_000))
+        if dry_run:
+            out = {**base, "ok": True, "outcome": "dry_run", "path": path, "max_chars": max_chars}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        try:
+            p = Path(path).expanduser()
+            raw = p.read_text(encoding="utf-8")
+            truncated = len(raw) > max_chars
+            text = raw[:max_chars]
+            out = {
+                **base,
+                "ok": True,
+                "outcome": "ok",
+                "path": str(p),
+                "text": text,
+                "bytes": len(text.encode("utf-8")),
+                "truncated": truncated,
+            }
+            core.audit_write(
+                {
+                    "event": "agents.linux.audit",
+                    "trace_id": trace_id,
+                    "ok": True,
+                    "outcome": "ok",
+                    "kind": "file_read",
+                    "path": str(p),
+                    "bytes": out["bytes"],
+                }
+            )
+            return out
+        except Exception as e:
+            out = {**base, "ok": False, "outcome": "error", "error": str(e), "path": path}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
 
     if kind == "file_append":
         path = action.get("path")
