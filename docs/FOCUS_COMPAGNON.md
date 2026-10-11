@@ -151,6 +151,8 @@ Phasage réaliste :
 | **C1 présence** | Brief hub « teste présence Nix… » → markdown + mission Campus bornée | **OK live** 2026-10-08 — `presence_brief.py` |
 | **C2 présence** | Retour terrain → causerie (`retour hub présence`) | **OK live** 2026-10-08 — `SMOKE_C2_PRESENCE_REPORT_OK` · `presence_report.py` |
 
+**Fil D6.5 clos** (2026-10-11) — suite ouverte (A2/C2 feeling, polish C1/C2, L3 days_ok) : [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.
+
 ### Ops Agir / Pilot (rappel 2026-10-02)
 
 - **HTTP 502** « Pilotage impossible » / Team : souvent `lbg-backend` down sur `.140` (ex. `ModuleNotFoundError: pydantic_settings` dans `/opt/LBG_IA_MMO/.venv`). Fix : install deps venv + `systemctl restart lbg-backend` ; vérifier `curl -m 20 http://192.168.0.140:8080/v1/pilot/status` → 200 (peut prendre 10–20 s si healthz agents lents).

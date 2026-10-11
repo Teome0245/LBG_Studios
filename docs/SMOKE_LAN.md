@@ -105,6 +105,8 @@ Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-
 
 **A4c watch mission** (2026-10-08→11) : « retour quand la team a traité » → ack + watch `mission_id` · toast/chat à clôture · **A4c.1** retarget même sujet (pas faux `replaced`) — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md).
 
+**Fil D6.5 clos** 2026-10-11 — points encore ouverts (A2/C2, polish C1/C2, L3) : même doc § *Clôture de fil*.
+
 ```bash
 bash tools/smoke_d6_causerie_5174.sh          # V6→V8
 bash tools/smoke_d65_greeting_plan_5174.sh    # V9 greeting + V10 plan/Team
