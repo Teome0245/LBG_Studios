@@ -1,8 +1,11 @@
 extends RefCounted
 class_name HubEconomy
 const _HubPaths = preload("res://scripts/hub_paths.gd")
+const HubDbScript = preload("res://scripts/hub_db.gd")
 
 ## Inventaire / board / quêtes / craft — contrats peel C10/C11.
+## Ticket 2.1 : état joueur (inventaire, quêtes, chronique session_log)
+## persisté en SQLite transactionnel (table player_state), export JSON conservé.
 
 const DEFAULT_INV := [
 	{"id": "scrap_metal", "name": "Ferraille", "qty": 4, "icon": "copper"},
@@ -18,6 +21,7 @@ var _templates: Array = []
 var _by_id: Dictionary = {}
 var _players: Dictionary = {}
 var _path: String = ""
+var db: HubDbScript = null
 var events = null
 var _salvage_cfg: Dictionary = {}
 var _salvage_cd: Dictionary = {}  # player -> unix until
@@ -30,6 +34,7 @@ var _vendor_jax: Dictionary = {}
 func setup() -> void:
 	_path = _HubPaths.data_file("players_state.json")
 	_rng.randomize()
+	db = HubDbScript.get_shared()
 	reload_templates()
 	_load_players()
 	_load_salvage()
@@ -191,20 +196,64 @@ func reload_templates() -> void:
 
 func _load_players() -> void:
 	_players.clear()
+	if db != null and db.available:
+		var rows := db.query_rows("SELECT player,data FROM player_state;")
+		if rows.size() > 0:
+			for r in rows:
+				var blob: Variant = JSON.parse_string(str(r.get("data", "")))
+				if typeof(blob) == TYPE_DICTIONARY:
+					_players[str(r.get("player", ""))] = blob
+			return
+		# Table vide → migration depuis le JSON legacy si présent.
+		if _read_legacy_players():
+			_save_players()
+		return
+	_read_legacy_players()
+
+
+func _read_legacy_players() -> bool:
+	_players.clear()
 	var raw: Variant = _HubPaths.read_json(_path)
 	if typeof(raw) != TYPE_DICTIONARY:
-		return
+		return false
 	var players = raw.get("players", {})
 	if typeof(players) == TYPE_DICTIONARY:
 		for k in players.keys():
 			var v = players[k]
 			if typeof(v) == TYPE_DICTIONARY:
 				_players[str(k)] = v
+	return _players.size() > 0
 
 
 func _save_players() -> void:
+	if db != null and db.available:
+		_save_players_db()
+		return
+	_write_players_json()
+
+
+func _save_players_db() -> void:
+	var stmts: Array = []
+	var now := int(Time.get_unix_time_from_system())
+	for key in _players.keys():
+		var row: Dictionary = _players[key]
+		stmts.append(
+			"INSERT INTO player_state(player,data,updated_at) VALUES('%s','%s',%d) "
+			% [
+				HubDbScript.escape_sql(str(key)),
+				HubDbScript.json_literal(row),
+				now,
+			]
+			+ "ON CONFLICT(player) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at;"
+		)
+	db.enqueue(stmts)
+	_write_players_json()
+
+
+func _write_players_json() -> void:
 	_HubPaths.write_json(_path, {
-		"schema_version": 1,
+		"schema_version": 2,
+		"backend": "sqlite" if (db != null and db.available) else "json",
 		"players": _players,
 		"saved_at": int(Time.get_unix_time_from_system()),
 	})

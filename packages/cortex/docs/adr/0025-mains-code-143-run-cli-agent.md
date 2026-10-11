@@ -24,8 +24,9 @@ Contraintes ADR 0023 :
    (`opencode run -m opencode/big-pickle …`) — smoke live OK sur `.143`.
 4. **Claude Code CLI** : allowlist **expérimentale** — hang / modèle Ollama non catalogué
    (v2.1.x) ; garder UI / second avis ; réessayer après fix settings / version.
-5. **Cline CLI** : **absent** sur `.143` PATH — **hors scope** tant qu’OpenCode tient ;
-   extension VS Code Cline reste observation / Plan→Act manuel.
+5. **Cline CLI** : installé `.143` (`~/.local/bin/cline`, 2026-10-11) en **second avis**
+   via Ollama **`.110`** (coûts locaux) — OpenCode reste nominal ; ADR 0023 = pas d’écriture
+   parallèle. Extension VS Code Cline = Plan→Act manuel. Voir [`cline/CLI_SECOND_AVIS.md`](../cline/CLI_SECOND_AVIS.md).
 6. **Branchement Team** : Iris (`dev_godot`), Dédale (`dev_game`), Pygmalion
    (`infographiste_ia`), **Métis** (`dev_studio`) via `context.ide_cli=true`.
 7. **Rôle hors-jeu** : `dev_studio` (persona **Métis**) — Cortex / Compagnon / Pilot /
@@ -59,8 +60,9 @@ Contraintes ADR 0023 :
 | Team | `LBG_TEAM_IDE_CLI_ENABLED=1` |
 | Dry-run | défaut **on** (`desktop_dry_run` / soft-confirm Agir) |
 | Approbation | policy desktop (soft-confirm LAB / token) |
-| Apps | `opencode` (nominal) · `claude` (expérimental) · `cline` (réservé, non installé) |
-| Modèle | `LBG_LINUX_CLI_AGENT_MODEL` (défaut `opencode/big-pickle`) — **interdire** ids cloud type `claude-sonnet*` |
+| Apps | `opencode` (nominal) · `cline` (second avis, Ollama `.110`) · `claude` (expérimental) |
+| Modèle OpenCode | `LBG_LINUX_CLI_AGENT_MODEL` (défaut `opencode/big-pickle`) — **pas Ollama** |
+| Modèle Cline | `LBG_LINUX_CLINE_MODEL` (défaut `huihui_ai/gemma-4-abliterated:E4b-qat` @ `.110`, plancher qualité) |
 | cwd | sous `/home/lbg/projects/` |
 | Timeout | `LBG_LINUX_CLI_AGENT_TIMEOUT_S` (défaut **1200**, max 3600) — **auto-bump** si prompt long (~60 s / 500 car.) ; orch HTTP `LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S` ≥ agent + 120 s |
 | Audit | JSONL linux_agent + trace Team |

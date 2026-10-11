@@ -124,6 +124,14 @@ class ChatIntentTests(unittest.TestCase):
             self.assertTrue(ci.is_design_brainstorm(p), p)
             self.assertTrue(ci.is_companion_chat(p), p)
 
+        # Handoff bureau/Team d'un plan factions ≠ ops
+        handoff = (
+            "répartition des factions sur scrapaltai, deux villes (POI) pour PNJ ; "
+            "prepaprer un plan et le soumettre au bureau/Team"
+        )
+        self.assertTrue(ci.wants_plan_delivery(handoff), handoff)
+        self.assertTrue(ci.is_design_brainstorm(handoff), handoff)
+
         # Impératif / override ops → pas de brainstorm « pur »
         for p in (
             "déploie la zone d'entraînement sur le hub",

@@ -64,6 +64,18 @@ class PlanSubmitTests(unittest.TestCase):
         self.assertFalse(ps.wants_team_plan_submit("bonjour ça va ?"))
         # « pour le studio » seul (pas de plan) → pas de spawn
         self.assertFalse(ps.wants_team_plan_submit("discutons pour le studio"))
+        # Formulation naturelle bureau/Team (typo prepaprer)
+        self.assertTrue(
+            ps.wants_team_plan_submit(
+                "tu peux prepaprer un plan factions Scrapaltai et le soumettre "
+                "au bureau/Team ?"
+            )
+        )
+        self.assertTrue(
+            ps.wants_team_plan_submit(
+                "Prépare un plan game design Scrapaltai. Soumets ce plan au studio/Team"
+            )
+        )
 
     def test_wants_submit_go_ahead_sticky(self) -> None:
         ctx = [
@@ -101,6 +113,9 @@ class PlanSubmitTests(unittest.TestCase):
         self.assertIn("Hermès", obj)
         self.assertIn("PLAN COMPAGNON", obj)
         self.assertIn("Objectif", obj)
+        # Ne pas empoisonner le routeur Campus (smoke/MMO → QA LAN / bug générique)
+        self.assertNotIn("smokes", obj.lower())
+        self.assertNotRegex(obj, r"(?i)\bMMO\b")
 
     def test_attach_spawns_mission(self) -> None:
         fake_data = {

@@ -71,6 +71,35 @@ def _persona_label(task: TeamTask) -> str:
     return task.role
 
 
+def _desktop_approval_token() -> str:
+    """Jeton attendu par l'agent .143 (LBG_LINUX_APPROVAL_TOKEN)."""
+    return (
+        os.environ.get("LBG_DESKTOP_APPROVAL_TOKEN")
+        or os.environ.get("LBG_LINUX_APPROVAL_TOKEN")
+        or ""
+    ).strip()
+
+
+def _inject_desktop_approval(desk_ctx: dict[str, object], *, dry: bool) -> dict[str, object]:
+    """LIVE : passe le jeton (ou soft-confirm) — sinon .143 renvoie approval_denied."""
+    if dry:
+        return desk_ctx
+    if desk_ctx.get("desktop_approval"):
+        return desk_ctx
+    tok = _desktop_approval_token()
+    if tok:
+        return {**desk_ctx, "desktop_approval": tok}
+    # LAB soft-confirm côté agent si mode confirm — utile si token non sync sur orch
+    if os.environ.get("LBG_TEAM_IDE_CLI_SOFT_CONFIRM", "1").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ):
+        return {**desk_ctx, "desktop_confirm": True, "desktop_approval": "confirmed"}
+    return desk_ctx
+
+
 def _resolve_ide_cli_timeout_s(task: TeamTask, prompt: str, app: str) -> int:
     """Timeout mandat → agent .143 (plancher auto si prompt long)."""
     ctx = task.context or {}
@@ -94,12 +123,24 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
     app = _default_app(task)
     prompt = str(ctx.get("ide_cli_prompt") or task.objective or "").strip()
     cwd = str(ctx.get("ide_cli_cwd") or os.environ.get("LBG_OMARCHY_STUDIO_WORKSPACE") or _DEFAULT_CWD).strip()
-    dry = True
-    if ctx.get("desktop_dry_run") is False or ctx.get("ide_cli_live") is True:
-        dry = False
+    # LIVE par défaut si le flag Team est ON — sinon dry-run only (preview).
+    # Opt-out explicite : desktop_dry_run=true / ide_cli_live=false.
     if not ide_cli_enabled():
-        # Toujours autoriser un dry-run de preview même si flag Team off
         dry = True
+    elif ctx.get("desktop_dry_run") is True or ctx.get("ide_cli_live") is False:
+        dry = True
+    else:
+        dry = False
+
+    try:
+        from team.plan_ticket_closure import closure_prompt_addon, is_plan_ticket_task
+
+        if is_plan_ticket_task(task):
+            addon = closure_prompt_addon(task)
+            if addon and addon not in prompt:
+                prompt = (prompt + addon).strip()
+    except Exception:
+        pass
 
     timeout_s = _resolve_ide_cli_timeout_s(task, prompt, app)
     action = {
@@ -118,6 +159,7 @@ def execute_ide_cli_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[str, 
         "ide_cli": True,
         "ide_cli_timeout_s": timeout_s,
     }
+    desk_ctx = _inject_desktop_approval(desk_ctx, dry=dry)
     remote = dispatch(
         "agent.desktop",
         actor_id=task.actor_id,

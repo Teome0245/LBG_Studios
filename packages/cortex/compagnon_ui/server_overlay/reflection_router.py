@@ -27,6 +27,7 @@ from src.settings import Settings
 try:
     from src.services.chat_intent import (
         is_companion_chat,
+        is_design_brainstorm,
         wants_broad_audit,
         wants_exploratory_chat,
         wants_ollama_only_audit,
@@ -35,6 +36,7 @@ try:
 except ImportError:  # overlay local / tests
     from chat_intent import (  # type: ignore
         is_companion_chat,
+        is_design_brainstorm,
         wants_broad_audit,
         wants_exploratory_chat,
         wants_ollama_only_audit,
@@ -213,6 +215,12 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
     if is_companion_chat(text):
         return ReflectionDecision("answer", "chat identité / causerie", None, "heuristic", 0.0, 0.93)
 
+    # 1.1 — brainstorming design / lore / gameplay → collègue, jamais tool_loop
+    if is_design_brainstorm(text):
+        return ReflectionDecision(
+            "answer", "brainstorming design / lore (pas ops)", None, "heuristic", 0.0, 0.93
+        )
+
     # Audit Team/studio AVANT verbes conversationnels (« tu pourrais faire un audit… »)
     if wants_studio_team_audit(text):
         return ReflectionDecision("team", "audit Team/studio", None, "heuristic", 0.0, 0.92)
@@ -313,7 +321,9 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
             r"explique|comment|pourquoi|aide[- ]?moi|peux[- ]?tu|pourrais|"
             r"dis[- ]?moi|parle[- ]?moi|raconte|montre|liste|résume|resume|"
             r"quoi|où|ou|quand|qui\s+es|chatter|[ée]changer|discut|confondre|"
-            r"maturité|maturite|[ée]cosyst[èe]me|mmorpg)\b",
+            r"maturité|maturite|[ée]cosyst[èe]me|mmorpg|"
+            r"zone\s+d['\u2019 ]?entra[iî]nement|personas?|gameplay|\blore\b|"
+            r"incarnation|environnement\s+jeu)\b",
             text,
         )
         and not wants_infra_lan_brief(text)

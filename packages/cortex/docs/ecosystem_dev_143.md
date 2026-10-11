@@ -26,6 +26,14 @@ Voir aussi : [`sans_cursor.md`](sans_cursor.md) · [`omarchy_vm_143.md`](omarchy
 **Séparation nette** : `.143` = **exécution VS + extensions** · `.110` = **inférence Ollama**.  
 Cline, Continue et Claude Code sont **trois composants distincts** dans le même VS Code — pas Copilot (cloud, panneau Conversation client).
 
+**Disponibilité ops (2026-10-08)** :
+| Chemin | Comment | Prérequis |
+|--------|---------|-----------|
+| **OpenCode headless** (Team/Métis) | `context.ide_cli` + `desktop_approval` → `run_cli_agent` | ADR 0025 · `LBG_TEAM_IDE_CLI_ENABLED=1` |
+| **Cline UI / CLI** | UI : `ouvre code sur omarchy` · CLI second avis : `lance cline sur omarchy` ([`cline/CLI_SECOND_AVIS.md`](cline/CLI_SECOND_AVIS.md)) | Provider **Ollama** `.110` · modèle plancher **`E4b-qat`** · **pas** d’auth Anthropic |
+| **Claude Code UI** | Extension `anthropic.claude-code` | Distinct du CLI : si `WAITING FOR AUTH`, reconnecter dans le panneau (CLI `claude auth status` peut déjà être OK) |
+| **Claude CLI** | `lance claude sur omarchy pour …` | Expérimental (hang Ollama) ; dry-run OK |
+
 **Catalogue** : seuls ces trois (+ scripts Terminal) sont **autorisés** en chemin nominal. Tout autre agent = greffe expérimentale ou **second avis** ponctuel — ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md). Pas d’empilement permanent.
 
 Principe : **percevoir → vouloir → proposer → (humain/L2) → coder sur `.143` → commit/push → deploy → leçon**.
@@ -56,7 +64,7 @@ Cline **n’est pas** un second OS : même monorepo, même matrice LLM (`.110`/`
 | Intention | Texte Agir typique |
 |-----------|-------------------|
 | Ouvrir l’IDE studio | `ouvre code sur omarchy` / `ouvre vscode sur omarchy` |
-| **Mains code headless** (ADR [`0025`](adr/0025-mains-code-143-run-cli-agent.md)) | `lance opencode sur omarchy pour …` — kind `run_cli_agent` (dry-run → confirm) ; Iris/Dédale/Pygmalion/Métis via `context.ide_cli` ; Claude CLI expérimental ; **Cline CLI hors scope** (UI Cline = `open_app`) |
+| **Mains code headless** (ADR [`0025`](adr/0025-mains-code-143-run-cli-agent.md)) | `lance opencode sur omarchy pour …` (nominal, `big-pickle`) · `lance cline sur omarchy pour …` (second avis, Ollama `.110`) — kind `run_cli_agent` ; Iris/Dédale/Pygmalion/Métis via `context.ide_cli` ; Claude CLI expérimental ; UI Cline = `open_app` — [`cline/CLI_SECOND_AVIS.md`](cline/CLI_SECOND_AVIS.md) |
 | Second avis (concurrent) | `second avis claude code sur omarchy` · `deuxième avis opencode` — ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md) § 3 |
 | Mettre à jour VS Code | `mets à jour vscode sur omarchy` (dry-run → confirm ; **pas** pendant Cline critique) |
 | Compagnon | `ouvre http://192.168.0.100:5174/ dans le navigateur` |

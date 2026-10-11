@@ -13,21 +13,25 @@ from typing import Any
 
 logger = logging.getLogger("lbg.plan_submit")
 
-# Handoff studio/Team — y compris « plan … pour le studio » / « soumettre ce plan »
+# Handoff studio/Team/bureau — y compris « plan … pour le studio » / « soumettre ce plan »
 _TEAM_SUBMIT_RE = re.compile(
     r"(?i)\b("
     r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?studio|"
-    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:à|a)\s+(?:la\s+)?team|"
-    r"passe(?:r)?\s+(?:au\s+)?studio|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?bureau|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:à|a|au)\s+(?:la\s+)?team|"
+    r"passe(?:r)?\s+(?:au\s+)?(?:studio|bureau)|"
     r"(?:plan|livrable).{0,80}\bpour\s+le\s+studio\b|"
-    r"(?:plan|livrable).{0,40}\bau\s+studio\b|"
+    r"(?:plan|livrable).{0,40}\bau\s+(?:studio|bureau)\b|"
     r"pour\s+le\s+studio\b|"
     r"au\s+studio\b|"
+    r"au\s+bureau(?:\s*/\s*team)?\b|"
+    r"studio\s*/\s*team|"
+    r"bureau\s*/\s*team|"
     r"enregistre(?:r)?\s+(?:le\s+)?plan|"
     r"persiste(?:r)?\s+(?:le\s+)?plan|"
     r"mission\s+(?:campus|team|herm[eè]s)|"
     r"@herm[eè]s|"
-    r"d[ée]l[eè]gue(?:r)?\s+(?:au\s+|à\s+(?:la\s+)?)?(?:studio|team)|"
+    r"d[ée]l[eè]gue(?:r)?\s+(?:au\s+|à\s+(?:la\s+)?)?(?:studio|team|bureau)|"
     r"job\s+team|t[aâ]che\s+team"
     r")"
 )
@@ -165,18 +169,21 @@ def wants_submit_existing_plan(prompt: str, short_ctx: list | None = None) -> bo
 
 
 def build_mission_objective(prompt: str, plan_content: str) -> str:
-    """Objectif Campus : Hermès PM + extrait du plan Compagnon."""
+    """Objectif Campus : plan Compagnon (sans mots-clés ops qui empoisonnent le routeur).
+
+    Évite volontairement « smokes / MMO / (PM) / LAN » dans le préambule : ces tokens
+    faisaient spawn QA Smoke LAN + « bug gameplay » générique au lieu du plan lore.
+    """
     plan = (plan_content or "").strip()
-    # Cap raisonnable pour l'objectif mission (pas un roman)
-    excerpt = plan[:1800]
-    if len(plan) > 1800:
+    # Cap large : le corps du plan doit survivre jusqu'aux tâches Campus
+    excerpt = plan[:3500]
+    if len(plan) > 3500:
         excerpt = excerpt.rstrip() + "\n…"
-    user_bit = re.sub(r"\s+", " ", (prompt or "").strip())[:220]
+    user_bit = re.sub(r"\s+", " ", (prompt or "").strip())[:400]
     return (
-        "Hermès (PM) + Team : exécuter / découper le plan studio livré par le Compagnon. "
+        "Plan studio Compagnon — exécuter / découper (game design / lore / contenu monde). "
         f"Demande humaine : {user_bit}. "
-        "Owners typiques : Hermès (ordo), Iris/Chœur (présence MMO / P3), "
-        "Argus (smokes). Contre-pouvoir L2 inchangé pour writes sensibles.\n\n"
+        "Owners : Hermès (ordo), Iris, Chœur, Dédale. Contre-pouvoir L2 inchangé.\n\n"
         f"--- PLAN COMPAGNON ---\n{excerpt}"
     )
 

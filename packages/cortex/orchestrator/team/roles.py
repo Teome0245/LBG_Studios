@@ -223,6 +223,12 @@ def _run_qa_smoke_script() -> dict[str, object]:
 
 
 def _execute_ops(task: TeamTask) -> dict[str, object]:
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
+
+    # Plan / CI via OpenCode (.143) — ne pas réduire à une sonde healthz dry-run
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
+
     ctx = dict(task.context)
     ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
 
@@ -1091,6 +1097,138 @@ def _plan_from_at_mentions(
     return out
 
 
+def _extract_compagnon_plan_body(objective: str) -> str:
+    """Corps markdown après le marqueur --- PLAN COMPAGNON ---."""
+    raw = objective or ""
+    parts = re.split(r"(?i)---\s*PLAN COMPAGNON\s*---", raw, maxsplit=1)
+    if len(parts) < 2:
+        return ""
+    return (parts[1] or "").strip()
+
+
+def _plan_from_compagnon_studio_plan(
+    objective: str, *, actor_id: str
+) -> list[dict[str, object]] | None:
+    """Handoff Compagnon → Campus : tâches alignées sur le plan lore, pas sur le coffee-fill.
+
+    Déclenché par le marqueur ``--- PLAN COMPAGNON ---`` (plan_submit) ou la formule
+    « Plan studio Compagnon ». Pas de QA smoke / M9a audit sauf demande explicite dans le plan.
+    """
+    raw = (objective or "").strip()
+    if not raw:
+        return None
+    low = raw.lower()
+    if "--- plan compagnon ---" not in low and "plan studio compagnon" not in low:
+        return None
+
+    body = _extract_compagnon_plan_body(raw)
+    scope = body if body else raw
+    scope_low = scope.lower()
+
+    def _row(
+        role: str,
+        obj: str,
+        *,
+        context: dict[str, object] | None = None,
+        priority: str = "normal",
+    ) -> dict[str, object]:
+        spec = ROLE_SPECS[role]
+        row: dict[str, object] = {
+            "role": role,
+            "objective": obj,
+            "priority": priority,
+            "approval_required": False,
+            "actor_id": actor_id,
+            "capability": spec["capability"],
+            **{k: v for k, v in role_display(role).items() if k in ("alias", "title", "label")},
+        }
+        ctx = {"compagnon_plan": True, **(context or {})}
+        row["context"] = ctx
+        return row
+
+    out: list[dict[str, object]] = []
+
+    # PM : conserve le plan (objectif long) pour découpe / suivi bureau
+    pm_obj = raw if len(raw) <= 1800 else (
+        raw[:800].rstrip()
+        + "\n…\n"
+        + (body[:900].rstrip() + ("\n…" if len(body) > 900 else "") if body else raw[-800:])
+    )
+    out.append(
+        _row(
+            "pm",
+            pm_obj,
+            context={"docs_only": True, "presence_agent_id": "studio_pm_themis"},
+            priority="high",
+        )
+    )
+
+    worldish = any(
+        k in scope_low
+        for k in (
+            "faction",
+            "scrapaltai",
+            "lost heaven",
+            "lore",
+            "game design",
+            "ville",
+        )
+    ) or bool(re.search(r"(?i)\bpnj\b|\bpoi\b", scope_low))
+
+    if worldish:
+        out.append(
+            _row(
+                "dev_game",
+                "Dédale — plan Compagnon : répartition factions Scrapaltai (évolutive) "
+                "+ 2 villes/POI + data PNJ par faction (content monde, pas audit M9a)",
+                context={
+                    "subproject": "content_world",
+                    "docs_only": True,
+                    "world_factions": True,
+                    "scrapaltai_world": True,
+                },
+                priority="high",
+            )
+        )
+        out.append(
+            _row(
+                "player_ia",
+                "Chœur — plan Compagnon : répartition PNJ / joueurs IA par faction "
+                "sur les nouveaux POI Scrapaltai",
+                context={"docs_only": True, "scrapaltai_world": True},
+            )
+        )
+    else:
+        # Plan générique : une tâche contenu à partir de la 1ʳᵉ phase si présente
+        phase_m = re.search(
+            r"(?im)^\s*(?:[-*]|\d+[.)])\s*\**\s*Phase\s*\d+[^*\n]*\**\s*[—:\-]?\s*(.+)$",
+            scope,
+        )
+        if phase_m:
+            out.append(
+                _row(
+                    "dev_game",
+                    f"Dédale — plan Compagnon, phase 1 : {phase_m.group(1).strip()[:220]}",
+                    context={"subproject": "content_world", "docs_only": True},
+                )
+            )
+
+    # Smoke / QA seulement si le plan le demande explicitement (pas le préambule)
+    if re.search(
+        r"(?i)\b(smoke|valider\s+lan|healthz|owner\s*smoke|tests?\s+qa)\b",
+        scope_low,
+    ):
+        out.append(
+            _row(
+                "qa",
+                "Argus — smoke demandé par le plan Compagnon",
+                context={"_require_owner_smoke": True},
+            )
+        )
+
+    return out[:4]
+
+
 def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> list[dict[str, object]]:
     """Propose des tâches à partir d'un objectif NL (heuristique phase A)."""
     text = (objective or "").lower()
@@ -1124,6 +1262,12 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
     if mentioned is not None:
         return mentioned
+
+    # --- Plan studio Compagnon (handoff chat → Campus) ---
+    # Avant le soup « smoke/MMO/plan » : évite QA Smoke LAN + bug gameplay générique.
+    compagnon_plan = _plan_from_compagnon_studio_plan(objective, actor_id=actor_id)
+    if compagnon_plan is not None:
+        return compagnon_plan
 
     # --- Métis / forge studio hors jeu (ADR 0025) ---
     if re.search(
@@ -1815,6 +1959,14 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
         else:
             result = dict(result)
         ok = bool(result.get("ok", True))
+        # Plan évolutions — refuse faux done / exige evidence (avant status final)
+        try:
+            from team.plan_ticket_closure import apply_plan_closure_gate
+
+            result = apply_plan_closure_gate(task, result)
+            ok = bool(result.get("ok", True))
+        except Exception:
+            pass
         status = "done" if ok else "failed"
         # Agency A.6 — trace consommation leçons injectées
         try:
@@ -1870,7 +2022,33 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
                 else 0,
             }
         )
-        if task.role == "qa" and status == "failed":
+        plan_relaunched: list[str] = []
+        if status == "failed":
+            refreshed_plan = team_store.get_task(task_id)
+            if refreshed_plan is not None:
+                try:
+                    from team.plan_ticket_closure import (
+                        is_plan_ticket_task,
+                        maybe_relaunch_plan_ticket,
+                    )
+
+                    if is_plan_ticket_task(refreshed_plan):
+                        plan_relaunched = maybe_relaunch_plan_ticket(refreshed_plan)
+                        if plan_relaunched:
+                            _trace_log(
+                                {
+                                    "event": "plan_relaunch_spawned",
+                                    "task_id": task_id,
+                                    "followup_ids": plan_relaunched,
+                                    "trace_id": trace_id,
+                                }
+                            )
+                except Exception:
+                    plan_relaunched = []
+
+        if plan_relaunched:
+            pass  # reprise plan prioritaire (timeout / qualité)
+        elif task.role == "qa" and status == "failed":
             refreshed = team_store.get_task(task_id)
             if refreshed is not None:
                 res = refreshed.result if isinstance(refreshed.result, dict) else {}

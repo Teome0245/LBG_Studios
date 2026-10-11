@@ -22,6 +22,17 @@ class PresenceBriefTests(unittest.TestCase):
         self.assertTrue(pb.wants_presence_brief("brief hub présence zone d'entraînement"))
         self.assertFalse(pb.wants_presence_brief("bonjour"))
         self.assertFalse(pb.wants_presence_brief("soumets le plan au studio"))
+        # T5 rejeu — causerie design, PAS un mandat brief/smoke
+        t5 = (
+            "pour moi l'environnement jeu doit rester une zone d'entraînement "
+            "des personas, pas un dump ops"
+        )
+        self.assertFalse(pb.wants_presence_brief(t5), t5)
+        self.assertFalse(
+            pb.wants_presence_brief(
+                "On parle de la zone d'entraînement Lost Heaven et du feeling"
+            )
+        )
 
     def test_markdown_shape(self) -> None:
         md = pb.build_presence_brief_markdown("teste présence Lia")

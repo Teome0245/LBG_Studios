@@ -2,6 +2,7 @@ extends Node
 ## Sim hub G5+ — flotte autonome + Triplons (work/leisure/rest) + chat sobre.
 
 const HubCollisionScript = preload("res://scripts/hub_collision.gd")
+const HubNavScript = preload("res://scripts/hub_nav.gd")
 const HubPlayerStoreScript = preload("res://scripts/hub_player_store.gd")
 const HubLifeScript = preload("res://scripts/hub_life.gd")
 const HubBotAutonomyScript = preload("res://scripts/hub_bot_autonomy.gd")
@@ -112,6 +113,7 @@ const HUB_NPCS: Array = [
 ]
 
 var collision = null
+var nav = null
 var player_store = null
 var life = null
 var autonomy = null
@@ -119,6 +121,7 @@ var suggest = null
 var economy = null
 var agent_api = null
 var events = null
+var world_stream = null
 var bot_defs: Array = []
 var tick: int = 0
 var entities: Dictionary = {}
@@ -134,9 +137,6 @@ var _presence_defaults: Dictionary = {}
 var _presence_by_persona: Dictionary = {}
 var _presence_templates: Dictionary = {}
 var _presence_thresholds: Dictionary = {}
-## Budget A* par tick sim (évite pics CPU → broadcast zone_state en retard → saccades client).
-const PATH_BUDGET_PER_TICK := 2
-var _path_budget: int = 0
 
 
 func attach_economy(economy_svc) -> void:
@@ -149,6 +149,16 @@ func attach_events(events_svc) -> void:
 	events = events_svc
 
 
+func attach_world_stream(stream_svc) -> void:
+	world_stream = stream_svc
+
+
+func _stream(kind: String, text: String, actor: String = "", zone: String = "", detail: Dictionary = {}) -> void:
+	## Plan 3.1 — émet un événement monde léger (no-op si stream absent).
+	if world_stream != null and world_stream.has_method("emit"):
+		world_stream.emit(kind, text, actor, zone, detail)
+
+
 func reset() -> void:
 	tick = 0
 	entities.clear()
@@ -159,6 +169,9 @@ func reset() -> void:
 	if collision == null:
 		collision = HubCollisionScript.new()
 	collision.reload()
+	if nav == null:
+		nav = HubNavScript.new()
+		nav.build(collision)
 	if player_store == null:
 		player_store = HubPlayerStoreScript.new()
 		player_store.setup()
@@ -702,24 +715,32 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 		_apply_path_to_bot(bot, wz.x, wz.y)
 
 
-func _consume_path_budget() -> bool:
-	if _path_budget <= 0:
-		return false
-	_path_budget -= 1
-	return true
+func _nav_path(sx: float, sz: float, tx: float, tz: float) -> Array:
+	## Navmesh natif si dispo + dans les bornes ; sinon A* grille AABB (dunes).
+	if nav != null and nav.ready_ok:
+		var route: Array = nav.find_path(sx, sz, tx, tz)
+		if not route.is_empty():
+			return route
+	if collision != null:
+		return collision.find_path(sx, sz, tx, tz)
+	return []
 
 
-func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> bool:
-	## True si A* exécuté (même chemin vide). False si budget épuisé.
-	if collision == null:
-		return true
-	if not _consume_path_budget():
-		return false
+func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> void:
+	## Construit les waypoints intermédiaires (origine + cible finale exclus).
+	## Navmesh : plus de budget par tick — N entités peuvent recalculer au même tick.
+	if collision == null and (nav == null or not nav.ready_ok):
+		return
 	var pos: Vector3 = bot["pos"]
-	var route: Array = collision.find_path(pos.x, pos.z, tx, tz)
+	var route: Array = _nav_path(pos.x, pos.z, tx, tz)
 	var path: Array = []
-	for i in range(maxi(0, route.size() - 1)):
-		path.append(route[i])
+	for i in range(route.size()):
+		var wp: Vector2 = route[i]
+		if i == 0 and Vector2(wp.x - pos.x, wp.y - pos.z).length() < 2.5:
+			continue  # origine
+		if Vector2(wp.x - tx, wp.y - tz).length() < 1.5:
+			continue  # cible finale suivie via bot["target"]
+		path.append(wp)
 	if path.size() > 0:
 		bot["waypoint"] = path.pop_front()
 		bot["has_waypoint"] = true
@@ -728,7 +749,6 @@ func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> bool:
 		bot["path"] = []
 		bot["has_waypoint"] = false
 	bot["needs_path"] = false
-	return true
 
 
 func _pick_wander_target(ent: Dictionary) -> Vector3:
@@ -856,6 +876,13 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 	if act == "escort":
 		var dur := float(decision.get("escort_duration_s", 28.0))
 		_start_companion_escort(companion, dur if dur > 0.0 else 28.0)
+		_stream(
+			"companion.escort",
+			"%s a escorté %s près du hub." % [str(companion.get("name", "Nix")), who],
+			str(companion.get("name", "Nix")),
+			ZONE,
+			{"human": who, "human_oid": human_oid, "chaleur": float(decision.get("chaleur", 0.0))}
+		)
 	# greet / tip_ack / ambient : salut sans follow.
 
 
@@ -1039,9 +1066,8 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 		bot["stuck_ticks"] = int(bot.get("stuck_ticks", 0)) + 1
 		if int(bot["stuck_ticks"]) >= 6 and collision != null:
 			var final: Vector3 = bot["target"]
-			if not _apply_path_to_bot(bot, final.x, final.z):
-				bot["needs_path"] = true
-			elif not bool(bot.get("has_waypoint", false)):
+			_apply_path_to_bot(bot, final.x, final.z)
+			if not bool(bot.get("has_waypoint", false)):
 				var detour = collision.detour_waypoint(pos.x, pos.z, final.x, final.z)
 				if detour != null:
 					bot["waypoint"] = detour
@@ -1256,7 +1282,6 @@ func step(dt: float) -> void:
 	_ensure_density_beasts()
 	_revive_density_beasts()
 	tick += 1
-	_path_budget = PATH_BUDGET_PER_TICK
 	dt = clampf(dt, 0.001, 0.25)
 	if events != null and tick % _life_tick_every == 0 and events.has_method("tick"):
 		events.tick(Time.get_unix_time_from_system())
@@ -1414,6 +1439,40 @@ func beast_count() -> int:
 	return n
 
 
+func navmesh_stats() -> Dictionary:
+	## Ticket 2.3 — état NavigationServer3D (healthz + smoke).
+	if nav == null:
+		return {"ok": false, "reason": "nav_absent"}
+	return nav.stats()
+
+
+func persistence_stats() -> Dictionary:
+	## Ticket 2.1 — état SQLite hub_player_store (healthz + smoke).
+	if player_store == null:
+		return {"ok": false, "reason": "player_store_absent"}
+	return player_store.stats()
+
+
+func nav_probe(sx: float, sz: float, tx: float, tz: float) -> Dictionary:
+	## Trace de trajectoire navmesh (preuve live + debug). Waypoints (x,z).
+	if nav == null or not nav.ready_ok:
+		return {"ok": false, "error": "navmesh_unavailable"}
+	var route: Array = _nav_path(sx, sz, tx, tz)
+	var waypoints: Array = []
+	for p in route:
+		waypoints.append([snappedf(p.x, 0.1), snappedf(p.y, 0.1)])
+	return {
+		"ok": not route.is_empty(),
+		"engine": "NavigationServer3D",
+		"source": "navmesh" if (nav.ready_ok and nav.in_bounds(sx, sz) and nav.in_bounds(tx, tz)) else "grid_fallback",
+		"from": [sx, sz],
+		"to": [tx, tz],
+		"waypoints": waypoints,
+		"count": waypoints.size(),
+		"last_query_us": nav.last_query_us,
+	}
+
+
 func beasts_snapshot() -> Dictionary:
 	## Lecture P5 — bêtes actives (goal / boss / telegraph) pour smoke & debug.
 	var rows: Array = []
@@ -1541,9 +1600,20 @@ func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 
 	var credits := 3
 	if economy != null and economy.has_method("grant_world_loot"):
 		economy.grant_world_loot(player, loot, credits)
+	var who := player if not player.is_empty() else "Voyageur"
+	var is_boss := bool(best.get("is_boss", false))
+	_stream(
+		"beast.defeated",
+		"%s a dispersé %s (%s)." % [who, name, beast_id],
+		who,
+		zone_id,
+		{"beast_id": beast_id, "is_boss": is_boss, "beast_count": beast_count()}
+	)
+	if is_boss:
+		_stream("world.boss_defeated", "Un boss a été abattu : %s." % name, who, zone_id, {"beast_id": beast_id})
 	return {
 		"ok": true,
-		"player": player if not player.is_empty() else "Voyageur",
+		"player": who,
 		"beast_id": beast_id,
 		"beast_name": name,
 		"zone_id": zone_id,

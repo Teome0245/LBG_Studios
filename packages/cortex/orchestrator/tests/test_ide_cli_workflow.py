@@ -104,6 +104,28 @@ def test_execute_ide_cli_metis(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out["ok"] is True
 
 
+def test_execute_ide_cli_live_injects_desktop_approval(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict = {}
+
+    def fake_dispatch(routed_to: str, **kwargs):
+        captured["context"] = kwargs.get("context") or {}
+        return {"ok": True, "outcome": "ok", "kind": "run_cli_agent"}
+
+    monkeypatch.setenv("LBG_TEAM_IDE_CLI_ENABLED", "1")
+    monkeypatch.setenv("LBG_DESKTOP_APPROVAL_TOKEN", "tok-test-live")
+    task = TeamTask(
+        id="t-live-tok",
+        role="dev_studio",
+        objective="LIVE patch",
+        actor_id="u",
+        context={"ide_cli": True},
+    )
+    out = execute_ide_cli_workflow(task, fake_dispatch)
+    assert out["dry_run"] is False
+    assert captured["context"].get("desktop_dry_run") is False
+    assert captured["context"].get("desktop_approval") == "tok-test-live"
+
+
 def test_execute_ide_cli_pygmalion(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_dispatch(routed_to: str, **kwargs):
         return {"ok": True, "outcome": "dry_run", "kind": "run_cli_agent", "reply": "ok"}

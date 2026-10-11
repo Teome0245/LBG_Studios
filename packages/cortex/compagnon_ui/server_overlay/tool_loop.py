@@ -34,6 +34,20 @@ def tool_loop_enabled() -> bool:
 
 
 def wants_tool_loop(prompt: str) -> bool:
+    # 1.1 — causerie design / collègue : jamais armer les outils infra
+    try:
+        from src.services.chat_intent import is_companion_chat, is_design_brainstorm
+    except ImportError:  # pragma: no cover
+        try:
+            from chat_intent import is_companion_chat, is_design_brainstorm  # type: ignore
+        except ImportError:
+            is_companion_chat = None  # type: ignore
+            is_design_brainstorm = None  # type: ignore
+    if is_design_brainstorm and is_design_brainstorm(prompt):
+        return False
+    if is_companion_chat and is_companion_chat(prompt):
+        return False
+
     low = (prompt or "").lower()
     triggers = (
         "diagnostic",

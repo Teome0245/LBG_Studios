@@ -1,12 +1,16 @@
 extends RefCounted
 class_name HubAuth
 const _HubPaths = preload("res://scripts/hub_paths.gd")
+const HubDbScript = preload("res://scripts/hub_db.gd")
 
 ## Auth / sessions HTTP natives — comptes + tokens (hors Python).
+## Ticket 2.1 : comptes persistés en SQLite transactionnel (table accounts),
+## export JSON conservé.
 
 const HUMAN_OID := 100001
 const SPIKE_TOKENS := ["spike-local", "spike", "dev-mock-token", "smoke-g0"]
 
+var db: HubDbScript = null
 var _accounts: Dictionary = {}  # lower -> row
 var _sessions: Dictionary = {}  # token -> {username, character_id, created_at}
 var _next_oid: int = HUMAN_OID
@@ -19,14 +23,34 @@ func setup() -> void:
 	var env_ws := OS.get_environment("LBG_HUB_WS_PUBLIC").strip_edges()
 	if not env_ws.is_empty():
 		_ws_public = env_ws
+	db = HubDbScript.get_shared()
 	_load()
 
 
 func _load() -> void:
 	_accounts.clear()
+	if db != null and db.available:
+		var rows := db.query_rows("SELECT login,data FROM accounts;")
+		if rows.size() > 0:
+			for r in rows:
+				var blob: Variant = JSON.parse_string(str(r.get("data", "")))
+				if typeof(blob) == TYPE_DICTIONARY:
+					_accounts[str(r.get("login", "")).to_lower()] = blob
+			_next_oid = int(db.meta_get("accounts.next_oid", str(HUMAN_OID)))
+			return
+		# Table vide → migration depuis le JSON legacy si présent.
+		var migrated := _read_legacy_json()
+		if migrated.size() > 0 or _next_oid != HUMAN_OID:
+			_save_to_db()
+		return
+	_read_legacy_json()
+
+
+func _read_legacy_json() -> Dictionary:
+	_accounts.clear()
 	var raw: Variant = _HubPaths.read_json(_path)
 	if typeof(raw) != TYPE_DICTIONARY:
-		return
+		return {}
 	var acc = raw.get("accounts", {})
 	if typeof(acc) == TYPE_DICTIONARY:
 		for k in acc.keys():
@@ -34,15 +58,48 @@ func _load() -> void:
 			if typeof(row) == TYPE_DICTIONARY:
 				_accounts[str(k).to_lower()] = row
 	_next_oid = int(raw.get("next_oid", HUMAN_OID))
+	return _accounts
 
 
 func _save() -> void:
+	if db != null and db.available:
+		_save_to_db()
+		return
+	_write_json_legacy()
+
+
+func _write_json_legacy() -> void:
 	_HubPaths.write_json(_path, {
-		"schema_version": 1,
+		"schema_version": 2,
+		"backend": "sqlite" if (db != null and db.available) else "json",
 		"accounts": _accounts,
 		"next_oid": _next_oid,
 		"saved_at": int(Time.get_unix_time_from_system()),
 	})
+
+
+func _save_to_db() -> void:
+	# Snapshot sous verrou (une écriture asymétrique non bloquante pour le serveur).
+	var stmts: Array = []
+	var now := int(Time.get_unix_time_from_system())
+	for key in _accounts.keys():
+		var row: Dictionary = _accounts[key]
+		stmts.append(
+			"INSERT INTO accounts(login,data,updated_at) VALUES('%s','%s',%d) "
+			% [
+				HubDbScript.escape_sql(key),
+				HubDbScript.json_literal(row),
+				now,
+			]
+			+ "ON CONFLICT(login) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at;"
+		)
+	stmts.append(
+		"INSERT INTO meta(k,v) VALUES('accounts.next_oid','%d') "
+		% _next_oid
+		+ "ON CONFLICT(k) DO UPDATE SET v=excluded.v;"
+	)
+	db.enqueue(stmts)
+	_write_json_legacy()
 
 
 func _hash_password(password: String, salt: String) -> String:

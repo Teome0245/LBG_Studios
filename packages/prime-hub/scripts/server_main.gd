@@ -9,6 +9,7 @@ const HubEconomyScript = preload("res://scripts/hub_economy.gd")
 const HubCatalogScript = preload("res://scripts/hub_catalog.gd")
 const HubDialogueScript = preload("res://scripts/hub_dialogue.gd")
 const HubEventsScript = preload("res://scripts/hub_events.gd")
+const HubWorldStreamScript = preload("res://scripts/hub_world_stream.gd")
 
 const TICK_HZ := 20.0
 const DEFAULT_PORT := 8787
@@ -21,6 +22,7 @@ var economy
 var catalog
 var dialogue
 var events
+var world_stream
 var _accum: float = 0.0
 
 
@@ -43,16 +45,19 @@ func _ready() -> void:
 	dialogue = HubDialogueScript.new()
 	dialogue.setup()
 	events = HubEventsScript.new()
+	world_stream = HubWorldStreamScript.new()
 
 	sim = HubSimScript.new()
 	sim.name = "HubSim"
 	add_child(sim)
 	sim.attach_economy(economy)
 	sim.attach_events(events)
+	sim.attach_world_stream(world_stream)
 	sim.reset()
 	economy.attach_events(events)
 	dialogue.attach_events(events)
 	dialogue.attach_economy(economy)
+	events.attach_world_stream(world_stream)
 	events.setup(Callable(sim, "enqueue_say"))
 
 	http = HubHttpScript.new()
@@ -60,6 +65,7 @@ func _ready() -> void:
 	add_child(http)
 	http.setup_services(auth, economy, catalog, dialogue)
 	http.events = events
+	http.world_stream = world_stream
 	# Router only si même port que WS ; sinon écoute dédiée
 	var listen_http := 0 if http_port == port else http_port
 	if http.start(sim, listen_http, port) != OK:
@@ -104,3 +110,9 @@ func _process(delta: float) -> void:
 		# zone_state ~10 Hz, payload slim + drop backpressure (Send-Q OK).
 		if int(sim.tick) % 2 == 0:
 			ws.broadcast_zone_state()
+
+
+func _exit_tree() -> void:
+	## Ticket 2.1 — flush SQLite avant de quitter (aucune écriture perdue).
+	if sim != null and sim.player_store != null:
+		sim.player_store.shutdown()

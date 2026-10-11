@@ -21,14 +21,15 @@ _GREETING_CHAT_RE = re.compile(
 )
 
 # Demande de livrable plan / démarrage travail (pas du social vide)
+# Inclut typos courantes : prepaprer / preparer
 _PLAN_DELIVERY_RE = re.compile(
     r"(?i)\b("
     r"plan\s+d['\u2019 ]?action|"
-    r"pr[ée]pare(?:r)?\s+(?:le\s+|un\s+)?plan|"
+    r"pr[ée]pa(?:re|rer|prer|pre)\s+(?:le\s+|un\s+)?plan|"
     r"r[ée]dige(?:r)?\s+(?:le\s+|un\s+)?plan|"
     r"structure(?:r)?\s+(?:le\s+|un\s+)?plan|"
     r"formalise(?:r)?\s+(?:le\s+|un\s+)?plan|"
-    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?studio|"
+    r"soumet(?:s|tre)?(?:[- ]?(?:le|la|l|ce|cette))?.{0,40}(?:au\s+)?(?:studio|bureau)|"
     r"livr(?:e|er)\s+(?:un\s+|le\s+)?plan|"
     r"commence(?:r)?\s+[àa]\s+travaill|"
     r"commence(?:r)?\s+dessus|"
@@ -142,8 +143,22 @@ _DESIGN_BRAINSTORM_RE = re.compile(
     r"environnement\s+jeu|monde\s+(?:jeu|vivant)|"
     r"feeling|pr[ée]sence\s+(?:hub|jeu|studio|mesurable)|"
     r"scrapaltai|lost\s+heaven|"
-    r"\bpnj\b|bots?\s+ia|joueurs?\s+ia|"
+    r"faction|factions|"
+    r"\bpnj\b|\bpoi\b|villes?|"
+    r"bots?\s+ia|joueurs?\s+ia|"
     r"qu[êe]tes?|\bboss\b|m[ée]caniques?"
+    r")\b"
+)
+
+# Handoff plan design → studio/Team/bureau (pas un ordre ops)
+_DESIGN_HANDOFF_RE = re.compile(
+    r"(?i)\b("
+    r"soumet(?:s|tre)?|"
+    r"pr[ée]pa(?:re|rer|prer|pre)\s+(?:le\s+|un\s+)?plan|"
+    r"plan\s+(?:game\s*design|lore|faction)|"
+    r"au\s+(?:studio|bureau)|"
+    r"studio\s*/\s*team|"
+    r"bureau\s*/\s*team"
     r")\b"
 )
 
@@ -287,6 +302,7 @@ def is_design_brainstorm(prompt: str) -> bool:
 
     Barrière sémantique 1.1 : concept ≠ tool_loop. « zone d'entraînement »,
     personas, lore → collègue créatif ; « déploie / vérifie l'IP / exécute » → ops.
+    Handoff « soumettre au bureau/Team » d'un plan design reste du design.
     """
     text = (prompt or "").strip()
     if not text or len(text) > 500:
@@ -295,6 +311,9 @@ def is_design_brainstorm(prompt: str) -> bool:
         return False
     if _OPS_IMPERATIVE_RE.search(text):
         return False
+    # Plan lore → studio/Team : ne pas laisser le mot « team » tuer le design
+    if _DESIGN_HANDOFF_RE.search(text):
+        return True
     if _OPS_OVERRIDE_RE.search(text):
         return False
     return True

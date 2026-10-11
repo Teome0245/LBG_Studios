@@ -1,6 +1,7 @@
 """Campus Conductor (Lyra) — drain, coffee fill, mission NL, act selon état.
 
-Opt-in : LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED=1
+Actif par défaut (LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED=1). Mettre =0 pour couper.
+Sans ça, le timer 5 min tourne mais la file queued ne démarre jamais.
 Les runs sont lancés en thread daemon pour ne pas bloquer le tick / HTTP.
 """
 
@@ -10,6 +11,7 @@ import os
 import threading
 import time
 import uuid
+from pathlib import Path
 from typing import Any
 
 from team import presence as team_presence
@@ -161,7 +163,9 @@ def coffee_utility_s() -> float:
 
 
 def enabled() -> bool:
-    return os.environ.get("LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED", "0").strip().lower() in (
+    # Défaut ON : sinon le timer systemd drain sans effet (file bloquée).
+    # Couper explicitement avec LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED=0.
+    return os.environ.get("LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED", "1").strip().lower() in (
         "1",
         "true",
         "yes",
@@ -575,8 +579,92 @@ def _priority_rank(task: TeamTask) -> int:
     return 0 if str(task.priority or "") == "high" else 1
 
 
+def _plan_evolutions_path() -> str | None:
+    """Chemin docs/suivi/plan_evolutions.json (source de vérité des tickets)."""
+    raw = (os.environ.get("LBG_PLAN_EVOLUTIONS_JSON") or "").strip()
+    candidates = [
+        raw,
+        "/opt/lbg-studios/docs/suivi/plan_evolutions.json",
+        "/home/lbg/projects/LBG_Studios/docs/suivi/plan_evolutions.json",
+        "/home/lbg/Projets/LBG_Studios/docs/suivi/plan_evolutions.json",
+        str(Path(__file__).resolve().parents[4] / "docs" / "suivi" / "plan_evolutions.json"),
+    ]
+    for c in candidates:
+        if c and Path(c).is_file():
+            return c
+    return None
+
+
+def _plan_ticket_status(ticket_id: str) -> str | None:
+    """Statut d'un ticket plan (done/todo/…) ou None si inconnu."""
+    path = _plan_evolutions_path()
+    if not path:
+        return None
+    try:
+        import json
+
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    tid = str(ticket_id or "").strip()
+    for t in data.get("tickets") or []:
+        if isinstance(t, dict) and str(t.get("id") or "") == tid:
+            return str(t.get("status") or "").strip().lower() or None
+    return None
+
+
+def _sibling_plan_ticket_done(ticket_id: str) -> bool:
+    """True si une tâche Team plan_ticket=X est done avec clôture propre."""
+    tid = str(ticket_id or "").strip()
+    if not tid:
+        return False
+    try:
+        from team.plan_ticket_closure import plan_closure_accepted
+    except Exception:
+
+        def plan_closure_accepted(res: dict) -> bool:  # type: ignore[misc]
+            return bool(res) and res.get("ok") is not False and res.get("dry_run") is not True
+
+    for t in team_store.list_tasks(limit=200):
+        ctx = t.context if isinstance(t.context, dict) else {}
+        if str(ctx.get("plan_ticket") or "") != tid:
+            continue
+        if str(t.status or "") != "done":
+            continue
+        res = t.result if isinstance(t.result, dict) else {}
+        if not plan_closure_accepted(res):
+            continue
+        return True
+    return False
+
+
+def _deps_unmet(task: TeamTask) -> list[str]:
+    """Prérequis context.depends_on non satisfaits.
+
+    Plan JSON prioritaire, mais une tâche Team sibling `done` (LIVE, ok)
+    débloque aussi — évite un suivi .140 périmé alors que Métis/Iris ont livré.
+    """
+    ctx = task.context if isinstance(task.context, dict) else {}
+    deps = ctx.get("depends_on") or []
+    if not isinstance(deps, list) or not deps:
+        return []
+    unmet: list[str] = []
+    for dep in deps:
+        did = str(dep or "").strip()
+        if not did:
+            continue
+        st = _plan_ticket_status(did)
+        if st == "done" or _sibling_plan_ticket_done(did):
+            continue
+        unmet.append(did)
+    return unmet
+
+
 def _blocked_context(task: TeamTask) -> str | None:
     ctx = task.context or {}
+    unmet = _deps_unmet(task)
+    if unmet:
+        return "waiting_plan_deps:" + ",".join(unmet)
     if ctx.get("cursor_cloud_agent") and task.approval_required and not task.stored_approval_token:
         return "cursor_cloud_agent_needs_L2"
     if (
@@ -1090,12 +1178,16 @@ def start_mission(
     skipped: list[dict[str, Any]] = []
     _emit_conductor("busy", f"Mission — {text[:80]}")
 
+    # Plan Compagnon / objectifs longs : ne pas tronquer à 200/400 (perte du markdown)
+    obj_ctx_max = 4000 if "--- PLAN COMPAGNON ---" in text else 800
+    obj_task_max = 2000 if "--- PLAN COMPAGNON ---" in text else 800
+
     for prop in proposals[: max(1, max_tasks)]:
         role = str(prop.get("role") or "")
         need_l2 = bool(prop.get("approval_required"))
         ctx = dict(prop.get("context") or {})
         ctx["_campus_mission_id"] = mission_id
-        ctx["_campus_mission_objective"] = text[:200]
+        ctx["_campus_mission_objective"] = text[:obj_ctx_max]
         if need_l2:
             skipped.append({"role": role, "reason": "approval_required", "objective": prop.get("objective")})
             continue
@@ -1108,7 +1200,11 @@ def start_mission(
         if allow is not None and role not in allow:
             skipped.append({"role": role, "reason": f"role_not_in_allowlist:{role}"})
             continue
-        row = {"role": role, "objective": str(prop.get("objective") or text)[:400], "context": ctx}
+        row = {
+            "role": role,
+            "objective": str(prop.get("objective") or text)[:obj_task_max],
+            "context": ctx,
+        }
         if dry_run:
             created.append({**row, "dry_run": True})
             continue

@@ -87,6 +87,18 @@ class ReflectionHeuristicTests(unittest.TestCase):
         assert d is not None
         self.assertEqual(d.action, "team")
 
+    def test_design_brainstorm_answer_not_tools(self) -> None:
+        """1.1 — rejeu T5 zone d'entraînement → answer, pas tools/tool_loop."""
+        t5 = (
+            "pour moi l'environnement jeu doit rester une zone d'entraînement "
+            "des personas, pas un dump ops"
+        )
+        d = rr._heuristic(t5)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+        self.assertNotEqual(d.action, "tools")
+
 
 if __name__ == "__main__":
     unittest.main()

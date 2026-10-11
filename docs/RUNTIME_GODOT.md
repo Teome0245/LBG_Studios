@@ -82,8 +82,8 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 1. **Persona / compagnon en jeu** — rail P3 ([`PLAN_MMO_O2.md`](PLAN_MMO_O2.md))
 2. **Gameplay hub** — quêtes terrain POI, craft UX, dialogue riche
 3. **Combat / cour de chasse** — P5a **sur `prime-hub`** (`/v1/hunt-yard*`, `tools/hunt_yard.py`) · smoke `tools/smoke_p5_hunt_yard_hub.sh`
-4. **Navmesh Godot** — remplacer A* grille AABB quand besoin
-5. **Anti-saccade (2026-10-07)** — client : lissage positions remote ; hub : budget A* `PATH_BUDGET_PER_TICK=2`
+4. **Navmesh Godot — FAIT (2026-10-11, ticket 2.3)** — `NavigationServer3D` natif (`packages/prime-hub/scripts/hub_nav.gd`), bake 193 polys / 16 empreintes (~0.6 s au boot), `map_force_update` synchrone ; A* grille AABB conservé **en fallback hors bornes** (dunes / anneau explore). Smoke `tools/smoke_navmesh_prime_hub.sh`, self-test `packages/prime-hub/tools/nav_selftest.gd`.
+5. **Anti-saccade (2026-10-07)** — client : lissage positions remote ; hub : ~~budget A* `PATH_BUDGET_PER_TICK=2`~~ **supprimé (2.3)** — 40 entités/tick ≈ 34 µs/entité via navmesh (`budget_per_tick=0`).
 6. **Anti-saccade v2** — gateway **non-bloquante** (plus de `OS.delay_usec` sur HTTP/WS accept) ; max 1 tick/frame ; `zone_state` ~10 Hz sans doublon `bots[]`
 
 ## Anti double-build

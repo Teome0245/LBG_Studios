@@ -13,15 +13,24 @@ from typing import Any
 
 logger = logging.getLogger("lbg.presence_brief")
 
+# Intent C1 = verbe d'action (teste / brief / smoke) — PAS une causerie design
+# qui mentionne seulement « zone d'entraînement » (rejeu T5 → fuite ops).
 _PRESENCE_BRIEF_RE = re.compile(
     r"(?i)\b("
     r"teste?\s+(?:la\s+)?pr[ée]sence|"
     r"brief\s+(?:hub\s+)?pr[ée]sence|"
     r"smoke\s+(?:b3|b4|pr[ée]sence)|"
-    r"zone\s+d['\u2019]?entra[îi]nement|"
-    r"pr[ée]sence\s+(?:de\s+)?(?:nix|lia|mira)|"
+    r"(?:lance|run|fais)\s+(?:un\s+)?(?:brief|smoke)\s+(?:hub\s+)?pr[ée]sence|"
+    r"pr[ée]sence\s+(?:de\s+)?(?:nix|lia|mira)\s+(?:chaleur|haute|dials?)|"
     r"chaleur\s+haute|"
     r"dials?\s+(?:nix|pr[ée]sence)"
+    r")\b"
+)
+
+_PRESENCE_ACTION_RE = re.compile(
+    r"(?i)\b("
+    r"teste?|brief|smoke|lance|run|fais|valide|mesure|"
+    r"dials?|chaleur\s+haute"
     r")\b"
 )
 
@@ -40,10 +49,30 @@ def presence_brief_enabled(*, lab: bool = False) -> bool:
 
 
 def wants_presence_brief(prompt: str) -> bool:
+    """True seulement si mandat d'action présence (teste/brief/smoke), pas causerie design."""
     text = (prompt or "").strip()
     if not text or len(text) > 400:
         return False
-    return bool(_PRESENCE_BRIEF_RE.search(text))
+    if not _PRESENCE_BRIEF_RE.search(text):
+        return False
+    # Barrière 1.1 : brainstorm design / lore sans verbe d'action → causerie, pas Campus
+    try:
+        from src.services.chat_intent import is_design_brainstorm
+    except ImportError:  # pragma: no cover
+        try:
+            from chat_intent import is_design_brainstorm  # type: ignore
+        except ImportError:
+            is_design_brainstorm = None  # type: ignore
+    if is_design_brainstorm and is_design_brainstorm(text):
+        if not _PRESENCE_ACTION_RE.search(text):
+            return False
+        # « zone d'entraînement » + design sans teste/brief/smoke explicite → causerie
+        if not re.search(
+            r"(?i)\b(teste?|brief|smoke|lance|run|fais|valide|mesure)\b",
+            text,
+        ):
+            return False
+    return True
 
 
 def _persona_from_prompt(prompt: str) -> str:

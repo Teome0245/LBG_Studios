@@ -213,6 +213,13 @@ def create_task(
             team_presence.emit_from_task(task, event="status_changed")
         except Exception:
             pass
+        if need_approval and not approval_token:
+            try:
+                from team.l2_notify import notify_l2_pending
+
+                notify_l2_pending(task)
+            except Exception:
+                pass
     return task  # type: ignore[return-value]
 
 
@@ -318,4 +325,11 @@ def update_task(
         team_presence.emit_from_task(task, event="status_changed")
     except Exception:
         pass
+    if stored_approval_token is not None and task.stored_approval_token:
+        try:
+            from team.l2_notify import notify_l2_execute_ready
+
+            notify_l2_execute_ready(task)
+        except Exception:
+            pass
     return task

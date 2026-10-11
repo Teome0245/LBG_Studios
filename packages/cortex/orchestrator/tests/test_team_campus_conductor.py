@@ -245,3 +245,66 @@ def test_campus_utility_skips_recent_qa(monkeypatch: pytest.MonkeyPatch) -> None
     ok, why = campus_conductor._coffee_utility_ok("qa", "qa_smoke")
     assert ok is False
     assert "recent" in why
+
+
+def test_campus_skips_waiting_plan_deps(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """depends_on non done dans plan_evolutions.json → pas d'autorun."""
+    import json
+
+    plan = {
+        "tickets": [
+            {"id": "2.3", "status": "in_progress"},
+            {"id": "2.1", "status": "blocked", "blocked_by": ["2.3"]},
+        ]
+    }
+    plan_path = tmp_path / "plan_evolutions.json"
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    monkeypatch.setenv("LBG_PLAN_EVOLUTIONS_JSON", str(plan_path))
+
+    client = TestClient(app)
+    created = client.post(
+        "/v1/team/tasks",
+        json={
+            "role": "dev_game",
+            "objective": "Ticket plan 2.1 gated",
+            "actor_id": "test:deps",
+            "approval_required": False,
+            "context": {
+                "plan_ticket": "2.1",
+                "depends_on": ["2.3"],
+                "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
+            },
+        },
+    )
+    assert created.status_code == 200
+    task_id = created.json()["id"]
+
+    r = client.post("/v1/team/campus/conduct", json={"dry_run": True})
+    body = r.json()
+    skipped = [s for s in (body.get("skipped") or []) if s.get("task_id") == task_id]
+    assert skipped, body
+    assert str(skipped[0].get("reason") or "").startswith("waiting_plan_deps")
+    candidates = {c.get("task_id") for c in (body.get("candidates") or [])}
+    assert task_id not in candidates
+
+
+def test_execute_ide_cli_live_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    from team.ide_cli_workflow import execute_ide_cli_workflow
+
+    captured: dict = {}
+
+    def fake_dispatch(routed_to: str, **kwargs):
+        captured["context"] = kwargs.get("context") or {}
+        return {"ok": True, "outcome": "ok", "kind": "run_cli_agent"}
+
+    monkeypatch.setenv("LBG_TEAM_IDE_CLI_ENABLED", "1")
+    task = TeamTask(
+        id="t-live",
+        role="dev_studio",
+        objective="LIVE patch",
+        actor_id="u",
+        context={"ide_cli": True},
+    )
+    out = execute_ide_cli_workflow(task, fake_dispatch)
+    assert out["dry_run"] is False
+    assert captured["context"].get("desktop_dry_run") is False

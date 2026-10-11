@@ -402,6 +402,67 @@ def team_campus_status() -> dict[str, object]:
     return campus_conductor.status()  # type: ignore[return-value]
 
 
+@router.get("/team/pending")
+def team_pending_approvals(limit: int = 20) -> dict[str, object]:
+    """Tâches Team en attente L2 (source unique pour Compagnon / Pilot bureau)."""
+    from team import fleet as team_fleet
+
+    snap = team_fleet.fleet_snapshot()
+    team_block = snap.get("team") if isinstance(snap, dict) else {}
+    pending = list((team_block or {}).get("l2_pending") or [])[: max(1, min(int(limit or 20), 50))]
+    cards = [
+        {
+            "task_id": str(t.get("id") or ""),
+            "role": str(t.get("role") or ""),
+            "role_label": str(t.get("role") or ""),
+            "objective": str(t.get("objective") or "")[:240],
+            "status": str(t.get("status") or ""),
+            "approval_required": True,
+            "needs_token": True,
+        }
+        for t in pending
+        if isinstance(t, dict) and t.get("id")
+    ]
+    approval = (
+        {
+            "title": "Validation humaine (L2)",
+            "tasks": cards,
+            "hint": "Token d'approbation Team — Pilot `#/team/office` ou Compagnon.",
+        }
+        if cards
+        else None
+    )
+    return {
+        "ok": True,
+        "count": len(pending),
+        "tasks": pending,
+        "approval": approval,
+    }
+
+
+class PlanMarkBody(BaseModel):
+    ticket_id: str = Field(..., min_length=1)
+    status: str = Field(..., min_length=1)
+    evidence: str = ""
+    actor_id: str = "system:plan_mark"
+
+
+@router.post("/team/plan/mark")
+def team_plan_mark(payload: PlanMarkBody) -> dict[str, object]:
+    """Mark ticket plan (evidence obligatoire pour done) — utilisé par Métis/OpenCode."""
+    from team.plan_ticket_closure import mark_plan_ticket
+
+    out = mark_plan_ticket(
+        payload.ticket_id,
+        payload.status,
+        payload.evidence,
+        actor_id=payload.actor_id,
+    )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "mark_failed"))
+    return out  # type: ignore[return-value]
+
+
 @router.get("/team/fleet")
 def team_fleet() -> dict[str, object]:
     """Supervision anti-sprawl — agents, Team L2, jobs, flags (plan gaps A2/A4)."""

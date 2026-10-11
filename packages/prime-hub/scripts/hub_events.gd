@@ -11,6 +11,16 @@ var active: Dictionary = {}
 var ends_at: float = 0.0
 var cooldown_until: float = 0.0
 var _on_announce: Callable = Callable()
+var world_stream = null
+
+
+func attach_world_stream(stream_svc) -> void:
+	world_stream = stream_svc
+
+
+func _stream(kind: String, text: String, actor: String = "", zone: String = "", detail: Dictionary = {}) -> void:
+	if world_stream != null and world_stream.has_method("emit"):
+		world_stream.emit(kind, text, actor, zone, detail)
 
 
 func setup(announce_cb: Callable = Callable()) -> void:
@@ -84,6 +94,12 @@ func _activate(ev: Dictionary, now: float) -> void:
 	ends_at = now + _rng.randf_range(d0, d1)
 	cooldown_until = 0.0
 	print("[prime-hub] event ON %s until +%.0fs" % [active_id, ends_at - now])
+	var title := str(ev.get("title", active_id))
+	var hint := str(ev.get("rumor_hint", "")).strip_edges()
+	var line := title
+	if not hint.is_empty():
+		line = "%s — %s" % [title, hint]
+	_stream("event.activate", line, "Monde", "scrapaltai", {"event_id": active_id, "board_quest_id": str(ev.get("board_quest_id", ""))})
 	var ann = ev.get("announce", {})
 	if typeof(ann) == TYPE_DICTIONARY and _on_announce.is_valid():
 		_on_announce.call(
@@ -102,6 +118,9 @@ func _deactivate(now: float) -> void:
 		c0 = float(cd[0])
 		c1 = float(cd[1])
 	print("[prime-hub] event OFF %s" % active_id)
+	var off_id := active_id
+	var off_title := str(active.get("title", off_id))
+	_stream("event.end", "Fin de l'événement : %s." % off_title, "Monde", "scrapaltai", {"event_id": off_id})
 	active_id = ""
 	active = {}
 	ends_at = 0.0

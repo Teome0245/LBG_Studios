@@ -28,6 +28,39 @@ except ImportError:  # pragma: no cover — greffe Orch
 
 logger = logging.getLogger("lbg.team_proxy")
 
+_L2_APPROVAL_RE = re.compile(
+    r"(?i)\b("
+    r"l2|hitl|approbation|approbations|validation\s+humaine|"
+    r"token\s+team|en\s+attente\s+d.?approbation|valider\s+team"
+    r")\b"
+)
+
+
+async def _attach_pending_l2_async(out: dict[str, Any], reply: str) -> dict[str, Any]:
+    try:
+        from src.services.team_actions import list_pending_approvals
+
+        pending = await list_pending_approvals(limit=10)
+    except Exception:
+        logger.debug("pending approvals attach skipped", exc_info=True)
+        out["content"] = reply
+        out["response"] = reply
+        return out
+    if not pending.get("approval"):
+        out["content"] = reply
+        out["response"] = reply
+        return out
+    n = pending.get("count") or 0
+    out["approval"] = pending["approval"]
+    suffix = (
+        f"\n\n**Approbations L2 en attente** : {n} — cartes ci-dessous, "
+        "Pilot `#/team/office` ou `#/team/fleet`."
+    )
+    out["content"] = reply.rstrip() + suffix
+    out["response"] = out["content"]
+    return out
+
+
 _STATUS_RE = re.compile(
     r"(?i)\b(status|état|etat|santé|sante|health)\b.{0,50}\b("
     r"orchestrateur|campus|systemd|ops|team|pilot|jobs"
@@ -504,11 +537,49 @@ async def call_cortex_pilot_route(
             "campus_meta": data.get("mission"),
         }
 
+    if _L2_APPROVAL_RE.search(low):
+        from src.services.team_actions import list_pending_approvals
+
+        pending = await list_pending_approvals(limit=10)
+        latency = time.perf_counter() - t0
+        n = int(pending.get("count") or 0)
+        tasks = pending.get("tasks") if isinstance(pending.get("tasks"), list) else []
+        if n:
+            lines = [f"**{n} validation(s) L2** en attente (même liste que Pilot Fleet) :"]
+            for t in tasks[:8]:
+                if not isinstance(t, dict):
+                    continue
+                sid = str(t.get("id") or "")[:8]
+                role = str(t.get("role") or "?")
+                obj = str(t.get("objective") or "")[:100]
+                st = str(t.get("status") or "")
+                lines.append(f"- `#{sid}` **{role}** ({st}) — {obj}")
+            lines.append("\nValide dans le Compagnon (cartes), Pilot `#/team/office` ou `#/team/fleet`.")
+            reply = "\n".join(lines)
+        else:
+            reply = "Aucune approbation L2 Team en attente pour l’instant."
+        out: dict[str, Any] = {
+            "role": "assistant",
+            "content": reply,
+            "response": reply,
+            "source": "team",
+            "model": "team-l2-pending",
+            "model_used": "team-l2-pending",
+            "provider": "cortex",
+            "latency": latency,
+            "trace_id": None,
+            "raw": pending,
+            "agent_action": None,
+        }
+        if pending.get("approval"):
+            out["approval"] = pending["approval"]
+        return out
+
     if _STATUS_RE.search(low):
         data = await _get_campus_status(base, timeout)
         latency = time.perf_counter() - t0
         reply = _format_campus_status(data)
-        out: dict[str, Any] = {
+        out = {
             "role": "assistant",
             "content": reply,
             "response": reply,
@@ -521,21 +592,7 @@ async def call_cortex_pilot_route(
             "raw": data,
             "agent_action": None,
         }
-        try:
-            from src.services.team_actions import list_pending_approvals
-
-            pending = await list_pending_approvals(limit=10)
-            if pending.get("approval"):
-                out["approval"] = pending["approval"]
-                n = pending.get("count") or 0
-                out["content"] = (
-                    reply.rstrip()
-                    + f"\n\n**Approbations L2 en attente** : {n} — cartes ci-dessous ou Pilot `#/team/office`."
-                )
-                out["response"] = out["content"]
-        except Exception:
-            logger.debug("pending approvals attach skipped", exc_info=True)
-        return out
+        return await _attach_pending_l2_async(out, reply)
 
     # Point Infra LAN / disk / Proxmox / @hephaistos — snapshot Cockpit (réel)
     if wants_infra_lan_brief(body_text):

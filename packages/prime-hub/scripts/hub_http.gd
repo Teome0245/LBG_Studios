@@ -21,6 +21,7 @@ var economy = null
 var catalog = null
 var dialogue = null
 var events = null
+var world_stream = null
 
 ## C11 TickGate — cooldown mutations par joueur (aligné agent_catalog / sidecar).
 const TICK_MUTATION_PATHS := {
@@ -241,6 +242,12 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		var ev := {}
 		if events != null and events.has_method("snapshot"):
 			ev = events.snapshot()
+		var wstream := {}
+		var wsvc = world_stream
+		if wsvc == null and sim != null:
+			wsvc = sim.world_stream
+		if wsvc != null and wsvc.has_method("snapshot"):
+			wstream = wsvc.snapshot()
 		return _ok({
 			"ok": true,
 			"service": "prime_hub",
@@ -256,7 +263,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			"life": life,
 			"ai_seats": seats,
 			"active_event": ev,
+			"world_stream": wstream,
 			"collision_blocks": _collision_count(),
+			"navmesh": sim.navmesh_stats() if sim and sim.has_method("navmesh_stats") else {},
+			"persistence": sim.persistence_stats() if sim and sim.has_method("persistence_stats") else {},
 			"uptime_s": uptime,
 			"note": "G5+ vie hub · joueurs IA évoluent · PNJ tiennent ; WS+HTTP :%d" % ws_port,
 		})
@@ -342,6 +352,23 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if events != null and events.has_method("snapshot"):
 			return _ok(events.snapshot())
 		return _ok({"ok": true, "active": false, "event_id": "", "source": "prime_hub"})
+	# --- Plan 3.1 : Live World Stream (événements légers → Compagnon) ---
+	if method == "GET" and path in ["/v1/world/stream", "/world/stream"]:
+		var wsvc = world_stream
+		if wsvc == null and sim != null:
+			wsvc = sim.world_stream
+		if wsvc == null or not wsvc.has_method("recent"):
+			return _ok({"ok": false, "error": "stream_unavailable"}, 501)
+		var since := int(_query_param(query, "since", "0"))
+		var lim := int(_query_param(query, "limit", "20"))
+		return _ok(wsvc.recent(since, lim))
+	if method == "GET" and path in ["/v1/world/stream/status", "/world/stream/status"]:
+		var wsvc2 = world_stream
+		if wsvc2 == null and sim != null:
+			wsvc2 = sim.world_stream
+		if wsvc2 == null or not wsvc2.has_method("snapshot"):
+			return _ok({"ok": false, "error": "stream_unavailable"}, 501)
+		return _ok(wsvc2.snapshot())
 	if method == "GET" and path == "/v1/quests/status":
 		return _ok(economy.status(_query_param(query, "player", "Voyageur")))
 	if method == "POST" and path == "/v1/quests/accept":
@@ -496,6 +523,20 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if sim == null or sim.agent_api == null:
 			return _ok({"ok": false, "error": "agent_api_unavailable"}, 501)
 		return _ok(sim.agent_api.bootstrap(sim))
+
+	# --- Ticket 2.3 : navmesh NavigationServer3D (stats + trace) ---
+	if method == "GET" and path in ["/v1/navmesh", "/v1/navmesh/stats"]:
+		if sim == null or not sim.has_method("navmesh_stats"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		return _ok(sim.navmesh_stats())
+	if method == "GET" and path in ["/v1/dev/navmesh/probe", "/v1/navmesh/path"]:
+		if sim == null or not sim.has_method("nav_probe"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		var fx := float(_query_param(query, "fx", _query_param(query, "sx", "4758")))
+		var fz := float(_query_param(query, "fz", _query_param(query, "sz", "-545")))
+		var tx := float(_query_param(query, "tx", _query_param(query, "dx", "4859.3")))
+		var tz := float(_query_param(query, "tz", _query_param(query, "dz", "-1008.3")))
+		return _ok(sim.nav_probe(fx, fz, tx, tz))
 
 	# --- Dev : suggestions monde (off → Studio, pas de mutation auto) ---
 	if method == "GET" and path == "/v1/dev/world_suggestions":

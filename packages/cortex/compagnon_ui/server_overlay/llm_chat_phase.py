@@ -116,6 +116,29 @@ async def run_llm_chat_phase(
     chat_profile = profile
     lab_mode = is_lab_profile(profile)
 
+    # Suivi plan d'évolutions — CR bloqués / à relancer / réalisés
+    try:
+        from src.services.plan_suivi import (
+            attach_plan_suivi_if_needed,
+            wants_plan_suivi,
+        )
+
+        if lab_mode and wants_plan_suivi(prompt):
+            seed = router.normalize_llm(
+                "suivi plan",
+                "plan_suivi",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return await attach_plan_suivi_if_needed(
+                    seed, prompt=prompt, lab=lab_mode
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.plan_suivi").warning(
+            "plan_suivi short-circuit failed: %s", e
+        )
+
     # Phase C2 — retour terrain présence → causerie (fetch hub, pas dump ops)
     try:
         from src.services.presence_report import (
@@ -139,7 +162,8 @@ async def run_llm_chat_phase(
             "presence_report short-circuit failed: %s", e
         )
 
-    # Phase C1 — brief présence hub (zone d'entraînement) : markdown + Campus borné
+    # Phase C1 — brief présence hub : markdown + Campus borné
+    # wants_presence_brief exclut déjà la causerie design T5 (zone sans teste/brief/smoke)
     try:
         from src.services.presence_brief import (
             attach_presence_brief_if_needed,

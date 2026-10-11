@@ -48,14 +48,26 @@ def format_l2_pending_text(task: dict[str, Any]) -> str:
     obj = str(task.get("objective") or "").strip()
     pilot = pilot_jobs_url(tid) if is_job else pilot_team_url(tid)
     kind_label = "Job L2" if is_job else "L2"
-    lines = [
-        f"🔔 {kind_label} en attente — `{sid}` [{alias}]",
-        obj[:500] if obj else "(sans objectif)",
-        "",
-        f"→ `approve {sid}`  ou  `valider {sid}`",
-        f"→ `reject {sid}`  ou  `annuler {sid}`",
-        f"Pilot : {pilot}",
-    ]
+    ready = bool(task.get("awaiting_run")) or (
+        not is_job and str(task.get("status") or "").lower() == "queued" and task.get("stored_approval_token")
+    )
+    if ready:
+        lines = [
+            f"▶️ {kind_label} approuvé — prêt à exécuter `{sid}` [{alias}]",
+            obj[:500] if obj else "(sans objectif)",
+            "",
+            f"→ Pilot `#/team/fleet` ou bureau Campus — **Exécuter**",
+            f"Pilot : {pilot}",
+        ]
+    else:
+        lines = [
+            f"🔔 {kind_label} en attente — `{sid}` [{alias}]",
+            obj[:500] if obj else "(sans objectif)",
+            "",
+            f"→ `approve {sid}`  ou  `valider {sid}`",
+            f"→ `reject {sid}`  ou  `annuler {sid}`",
+            f"Pilot : {pilot}",
+        ]
     return "\n".join(lines)
 
 
