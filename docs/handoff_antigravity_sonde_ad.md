@@ -1,9 +1,14 @@
 # Handoff Antigravity — Sonde AD qui revient en boucle (Compagnon)
 
-**Date** : 2026-09-17  
-**Repo** : `LBG_Studios` · branche `main`  
+**Statut** : **RÉSOLU / CLÔTURÉ (2026-10-11)**  
+**Date initiale** : 2026-09-17  
+**Décision d'architecture validée** : **Absence d'Active Directory actée dans l'écosystème.**  
+- Neutralisation définitive du faux positif `ad_agent_down`.  
+- Recadrage de la sonde sur le véritable agent Windows desktop (`192.168.0.10:5005`, poste Teome).  
+- Libellés mis à jour : « Sonde agent desktop » (sans mention d'AD).  
+**Repo** : `LBG_Studios`  
 **Surface** : Compagnon `http://192.168.0.100:5174/` · toast « Je vois `autonomous_nudge` »  
-**Priorité** : O1 Studio — calmer les initiatives faux-positifs, garder Agir = propose → dry-run → réel (jamais d’auto-exec).
+**Priorité** : O1 Studio — initiatives proactives stabilisées et signaux alignés sur le réel.
 
 ---
 

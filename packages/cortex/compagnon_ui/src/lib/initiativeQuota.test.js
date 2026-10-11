@@ -27,6 +27,21 @@ function resetAll() {
   patchStudioGoal({ goalId: 'jobs_l2', enabled: true, feedback: {} })
 }
 
+test('fingerprintFromStatus: privilégie desktop_agent_down plutôt qu un last_job_id changeant', () => {
+  const status1 = {
+    enabled: true,
+    last_job_id: 'uuid-1111',
+    infra_signals: { desktop_agent_down: true },
+  }
+  const status2 = {
+    enabled: true,
+    last_job_id: 'uuid-2222',
+    infra_signals: { desktop_agent_down: true },
+  }
+  assert.equal(fingerprintFromStatus(status1), 'infra:desktop_agent_down')
+  assert.equal(fingerprintFromStatus(status2), 'infra:desktop_agent_down')
+})
+
 test('fingerprintFromStatus: privilégie ad_agent_down plutôt qu un last_job_id changeant', () => {
   const status1 = {
     enabled: true,

@@ -138,6 +138,7 @@ export function fingerprintFromStatus(status) {
   if (infra?.disk_high || (typeof infra?.disk_root_used_pct === 'number' && infra.disk_root_used_pct >= 80)) {
     return 'disk:high'
   }
+  if (infra?.desktop_agent_down) return 'infra:desktop_agent_down'
   if (infra?.ad_agent_down) return 'infra:ad_agent_down'
   if (infra?.orchestrator_reachable === false) return 'infra:orch_down'
   if (infra?.mmo_sidecar_reachable === false) return 'infra:mmo_down'
@@ -147,6 +148,7 @@ export function fingerprintFromStatus(status) {
     const s = String(c)
     if (s.startsWith('disk_critical')) return 'disk:critical'
     if (s.startsWith('disk_high')) return 'disk:high'
+    if (s === 'desktop_agent_down') return 'infra:desktop_agent_down'
     if (s === 'ad_agent_down') return 'infra:ad_agent_down'
     if (s.startsWith('jobs_l2')) return `jobs:l2:${s.split(':')[1] || 'n'}`
   }
@@ -257,11 +259,11 @@ export function agirIntentsFromStatus(status) {
       hint: `root ${infra.disk_root_used_pct}%`,
     })
   }
-  if (infra.ad_agent_down) {
+  if (infra.desktop_agent_down || infra.ad_agent_down) {
     out.push({
       id: 'probe_ad',
-      label: 'Sonde AD (dry-run)',
-      sourceText: 'fais un diagnostic infra selfcheck de l agent AD sur le LAN',
+      label: 'Sonde agent desktop (dry-run)',
+      sourceText: 'fais un diagnostic infra selfcheck de l agent desktop sur le LAN',
       hint: 'devops_probe · lecture seule',
     })
   }
@@ -319,8 +321,8 @@ export function messageFromStatus(status) {
   if (infra?.disk_high || (typeof pct === 'number' && pct >= 80)) {
     return `Disque root à ${pct}% — je propose selfcheck puis approbation L2 pour remédier.`
   }
-  if (infra?.ad_agent_down) {
-    return 'Je vois l’agent AD injoignable — je peux lancer une sonde (dry-run).'
+  if (infra?.desktop_agent_down || infra?.ad_agent_down) {
+    return 'Je vois l’agent desktop injoignable — je peux lancer une sonde (dry-run).'
   }
   if (infra?.orchestrator_reachable === false) {
     return 'Orchestrateur injoignable — je propose une sonde health.'

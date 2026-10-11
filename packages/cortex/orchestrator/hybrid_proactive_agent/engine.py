@@ -92,9 +92,13 @@ class HybridProactiveEngine:
                 causes.append(f"disk_high:{int(disk)}")
                 pressure = max(pressure, 0.82)
 
-        if signals.get("ad_agent_down") or signals.get("ad_agent_reachable") is False:
-            causes.append("ad_agent_down")
-            pressure = max(pressure, 0.88)
+        if (
+            signals.get("desktop_agent_down")
+            or signals.get("ad_agent_down")
+            or (signals.get("desktop_agent_reachable") is False and signals.get("ad_agent_reachable") is False)
+        ):
+            causes.append("desktop_agent_down")
+            pressure = max(pressure, 0.70)
 
         if signals.get("orchestrator_reachable") is False:
             causes.append("orch_down")
@@ -174,7 +178,7 @@ class HybridProactiveEngine:
                     "remontée en L2 (Pilot Jobs, pas de purge auto)."
                 )
             return f"Disque root à {pct}% — plan selfcheck + escalade L2 conseillé."
-        if "ad_agent_down" in causes:
+        if "desktop_agent_down" in causes or "ad_agent_down" in causes:
             return "Agent desktop injoignable — sonde L1 (dry-run)."
         if "orch_down" in causes:
             return "Orchestrateur Cortex injoignable — sonde health."
