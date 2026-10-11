@@ -23,8 +23,11 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 ## Prochaines actions (à ajuster en fin de session)
 
 1. Confirmer dans Antigravity : Customizations → Rules voit `.agents/rules/` + `AGENTS.md`.
-2. Handoff sonde AD : **clôturé** (arbitrage absence d'AD actée, sonde recadrée sur l'agent desktop .10:5005).
-3. Si reprise Compagnon UI : coller `docs/handoff_antigravity_visuel_compagnon.md` ou traiter le streaming SSE ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.2).
+2. Handoffs Antigravity historiques : **tous deux clôturés** (sonde AD résolue + visuel Compagnon D6 déjà livré/validé).
+3. Suite Studio / Compagnon :
+   - Streaming SSE des réponses ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.2).
+   - Barrière sémantique causerie vs tool loop ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.1).
+   - Modularisation Pilot Web ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.3).
 4. Si reprise ops LAN : `bash tools/smoke_lan_surfaces.sh --functional` + `docs/SMOKE_LAN.md`.
 
 ## Fichiers / surfaces utiles
@@ -36,7 +39,7 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 | Registre | `docs/REGISTRE.md` |
 | Runtime jeu | `docs/RUNTIME_GODOT.md` |
 | Plan évolutions | `docs/PLAN_PROPOSITIONS_EVOLUTIONS.md` |
-| Handoff visuel Compagnon | `docs/handoff_antigravity_visuel_compagnon.md` |
+| Handoff visuel Compagnon (clos) | `docs/handoff_antigravity_visuel_compagnon.md` |
 | Handoff sonde AD (clos) | `docs/handoff_antigravity_sonde_ad.md` |
 | Workspace | `LBG_Studios.code-workspace` |
 
