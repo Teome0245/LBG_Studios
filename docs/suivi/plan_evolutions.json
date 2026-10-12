@@ -1,7 +1,7 @@
 {
   "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
   "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
-  "updated_ts": 1791788263.571813,
+  "updated_ts": 1791819581.425354,
   "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
   "tickets": [
     {
@@ -124,12 +124,12 @@
       "title": "Découpage hub_sim.gd & main.gd",
       "horizon": "sprint3",
       "perimeter": "O2 Hub/Client",
-      "status": "in_progress",
+      "status": "done",
       "blocked_by": [
         "2.1"
       ],
       "blocks": [],
-      "evidence": "Serveur hub_sim.gd scinde en 5 modules <800L (hub_sim 771L, hub_combat 447L, hub_presence 185L, hub_sim_ambient 196L, hub_sim_views 142L, hub_sim_defs 103L) - sim_selftest.gd OK headless - client main.gd en cours",
+      "evidence": "Serveur hub_sim.gd scinde en 5 modules <800L (771L, 447L, 185L, 196L, 142L, 103L, sim_selftest OK) et client main.gd scinde en 4 modules <800L (main 707L, gameplay 529L, quest 281L, net 675L, ui 506L, client_modular_selftest OK)",
       "keywords": [
         "hub_sim.gd",
         "UIManager",

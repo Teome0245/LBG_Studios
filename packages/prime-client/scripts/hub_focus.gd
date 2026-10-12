@@ -2,6 +2,7 @@
 extends RefCounted
 class_name HubFocus
 
+const MapTextureLoader = preload("res://scripts/map_texture_loader.gd")
 const DEFAULT_DEPRECATED: Array = [
 	{"id": "mos_eisley", "x": 3520.0, "z": -4800.0, "radius_m": 680.0},
 	{"id": "anchorhead", "x": -100.0, "z": -5400.0, "radius_m": 520.0},

@@ -6,6 +6,7 @@ class_name DialogueBridge
 signal reply_ready(ok: bool, reply: String, meta: Dictionary)
 signal busy_changed(busy: bool)
 
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
 const CONFIG_PATH := "res://config/dialogue_bridge.json"
 const MAP_CFG_PATH := "res://assets/maps/scrapaltai_map_config.json"
 const SESSION_PATH := "user://session_summary.json"

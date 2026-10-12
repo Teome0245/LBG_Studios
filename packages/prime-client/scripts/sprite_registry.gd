@@ -2,6 +2,8 @@
 extends RefCounted
 class_name SpriteRegistry
 
+const Projection3D2D = preload("res://scripts/projection.gd")
+const NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
 const MANIFEST_PATH := "res://config/sprite_manifest.json"
 
 static var _manifest: Dictionary = {}

@@ -2,6 +2,7 @@ extends PanelContainer
 class_name WikiHubPanel
 ## C6 — wiki hub Lost Heaven (GET /v1/wiki).
 
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
 const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 
 @export var sidecar_base_url: String = SIDECAR_DEFAULT
