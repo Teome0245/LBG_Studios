@@ -147,7 +147,8 @@ func _run_batch(batch: Array) -> void:
 		sql += str(s) + "\n"
 	sql += "COMMIT;\n"
 	var out: Array = []
-	var rc := OS.execute(binary, [db_path, sql], out, true)
+	var safe_sql := sql.replace('"', '\\"')
+	var rc := OS.execute(binary, [db_path, safe_sql], out, true)
 	if rc != 0:
 		_errors += 1
 		last_error = String(out.back()) if out.size() > 0 else "sqlite rc=%d" % rc
@@ -175,7 +176,8 @@ func exec_sync(sql: String) -> bool:
 	if not available and db_path == "":
 		return false
 	var out: Array = []
-	var rc := OS.execute(binary, [db_path, "PRAGMA busy_timeout=5000; " + sql], out, true)
+	var safe_sql := ("PRAGMA busy_timeout=5000; " + sql).replace('"', '\\"')
+	var rc := OS.execute(binary, [db_path, safe_sql], out, true)
 	if rc != 0:
 		last_error = String(out.back()) if out.size() > 0 else "sqlite rc=%d" % rc
 		return false
@@ -188,7 +190,8 @@ func query_rows(sql: String) -> Array:
 	if not available:
 		return []
 	var out: Array = []
-	var rc := OS.execute(binary, ["-json", db_path, sql], out, true)
+	var safe_sql := sql.replace('"', '\\"')
+	var rc := OS.execute(binary, ["-json", db_path, safe_sql], out, true)
 	if rc != 0:
 		last_error = String(out.back()) if out.size() > 0 else "sqlite rc=%d" % rc
 		push_warning("[prime-hub][db] query failed rc=%d %s" % [rc, last_error])
@@ -199,6 +202,8 @@ func query_rows(sql: String) -> Array:
 	var text := ""
 	for line in out:
 		text += str(line)
+	if text.strip_edges().is_empty():
+		return []
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_ARRAY:
 		return []

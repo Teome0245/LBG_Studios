@@ -37,6 +37,7 @@ export_presets.cfg.bak
 **/MMOCoreORB/bin/databases/
 third_party/new_mmo/
 **/core3*/**/bin/
+*.sqlite3*
 
 # Secrets / env
 .env

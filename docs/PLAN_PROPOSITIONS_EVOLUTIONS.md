@@ -64,13 +64,22 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
 - **Done quand** : Une coupure forcée du processus `prime-hub` ne corrompt aucune donnée joueur et les temps d'écriture n'impactent plus le tick de frame.
 
 ### 2.2 Découpage modulaire des méga-scripts GDScript
+- **Statut Serveur (OK validé)** : `hub_sim.gd` (initialement 1 669 L) a été scindé en 5 modules spécialisés, tous < 800 L :
+  - [`hub_sim.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_sim.gd) (**771 L**) : boucle de simulation, gestion entités et délégations publiques transparentes.
+  - [`hub_combat.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_combat.gd) (**447 L**) : combat open-world, bêtes, boss, windup telegraph, agro, leash et loots.
+  - [`hub_presence.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_presence.gd) (**185 L**) : dials de présence (`presence_dials.json`), proximité et salutations.
+  - [`hub_sim_ambient.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_sim_ambient.gd) (**196 L**) : chat ambiant, Nix escorte, ambiances périodiques.
+  - [`hub_sim_views.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_sim_views.gd) (**142 L**) : formatage et serialization (`zone_state_payload`, `enter_world_payload`, `bots_payload`).
+  - [`hub_sim_defs.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_sim_defs.gd) (**103 L**) : constantes de topologie, POIs, fallback PNJ et bots.
+  - Validation headless : [`sim_selftest.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/tools/sim_selftest.gd) (`SIM_SELFTEST_OK: entities=35 bots=10 beasts=7 ticks=60`).
+- **Reste Client** : [`main.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-client/scripts/main.gd) (client, ~2 400 L) à découper via `UIManager`.
 - **Problème** :
   - [`hub_sim.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_sim.gd) (serveur) : 1 600 lignes concentrant les déplacements, les ticks, les POIs, la simulation économique et les dialogues.
   - [`main.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-client/scripts/main.gd) (client) : 2 400 lignes interconnectant les entrées, la caméra, 15 fenêtres modales et les communications réseau.
 - **Solution** :
-  1. Côté serveur : scinder `hub_sim.gd` en nœuds de simulation spécialisés (`HubMovementSystem`, `HubCombatSystem`, `HubLifeCycleManager`).
+  1. Côté serveur : scinder `hub_sim.gd` en nœuds et modules de simulation spécialisés (`HubCombat`, `HubPresence`, `HubSimAmbient`, `HubSimViews`, `HubSimDefs`).
   2. Côté client : extraire la gestion des fenêtres et modales dans un `UIManager` piloté par signaux plutôt que par couplage `@onready` direct.
-- **Done quand** : Aucun script GDScript ne dépasse 800 lignes et les responsabilités sont isolées par nœuds Godot dédiés.
+- **Done quand** : Aucun script GDScript ne dépasse 800 lignes et les responsabilités sont isolées par modules Godot dédiés.
 
 ### 2.3 Navigation : Intégration du `NavigationServer3D` (Navmesh)
 - **Problème** : La grille A* AABB actuelle oblige à un bridage artificiel (`PATH_BUDGET_PER_TICK=2`) pour ne pas faire saccader la frame headless.

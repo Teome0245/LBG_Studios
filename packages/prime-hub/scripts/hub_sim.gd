@@ -1,5 +1,6 @@
 extends Node
 ## Sim hub G5+ — flotte autonome + Triplons (work/leisure/rest) + chat sobre.
+## Découpage modulaire Ticket 2.2 : HubCombat, HubPresence, HubSimViews, HubSimAmbient, HubSimDefs.
 
 const HubCollisionScript = preload("res://scripts/hub_collision.gd")
 const HubNavScript = preload("res://scripts/hub_nav.gd")
@@ -8,109 +9,22 @@ const HubLifeScript = preload("res://scripts/hub_life.gd")
 const HubBotAutonomyScript = preload("res://scripts/hub_bot_autonomy.gd")
 const HubWorldSuggestScript = preload("res://scripts/hub_world_suggest.gd")
 const HubAgentApiScript = preload("res://scripts/hub_agent_api.gd")
+const HubCombatScript = preload("res://scripts/hub_combat.gd")
+const HubPresenceScript = preload("res://scripts/hub_presence.gd")
+const HubSimViewsScript = preload("res://scripts/hub_sim_views.gd")
+const HubSimAmbientScript = preload("res://scripts/hub_sim_ambient.gd")
+const HubSimDefsScript = preload("res://scripts/hub_sim_defs.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
-const HUMAN_OID := 100001
-const ZONE := "scrapaltai"
-const SPAWN_HUMAN := Vector3(4758.0, 0.15, -545.0)
-const PLAZA := Vector3(4749.0, 0.15, -737.0)
-const MARKET := Vector3(4809.0, 0.15, -932.0)
-const STARPORT := Vector3(4740.0, 0.15, -820.0)
-const CANTINA := Vector3(4939.0, 0.15, -802.0)
-const MISSION := Vector3(4939.0, 0.15, -932.0)
-const CLINIC := Vector3(4679.0, 0.15, -672.0)
-const TRAINING := Vector3(4939.0, 0.15, -672.0)
-const INN := Vector3(4809.0, 0.15, -672.0)
-const TOWN_HALL := Vector3(4679.0, 0.15, -932.0)
-const ARTISAN := Vector3(5069.0, 0.15, -802.0)
-## Logements PNJ — anneau intérieur remparts (loin du cluster commercial).
-const LODGE_W := Vector3(4305.0, 0.15, -780.0)
-const LODGE_N := Vector3(4749.0, 0.15, -430.0)
-const LODGE_E := Vector3(5245.0, 0.15, -630.0)
-const LODGE_S := Vector3(4860.0, 0.15, -1185.0)
-const BOT_SPEED := 12.0
-
-const POIS: Dictionary = {
-	"plaza": PLAZA,
-	"market": MARKET,
-	"apron": STARPORT,
-	"board": MISSION,
-	"cantina": CANTINA,
-	"inn": INN,
-	"clinic": CLINIC,
-	"train": TRAINING,
-	"hall": TOWN_HALL,
-	"craft": ARTISAN,
-	"lodge_w": LODGE_W,
-	"lodge_n": LODGE_N,
-	"lodge_e": LODGE_E,
-	"lodge_s": LODGE_S,
-}
-
-## Fallback si ai_players.json absent
-const BOT_DEFS_FALLBACK: Array = [
-	{
-		"eid": "player:Nix", "oid": 900002, "name": "Nix",
-		"spawn": Vector3(4757.0, 0.15, -720.0), "speed": 12.0,
-		"prefer": ["plaza", "market", "apron", "board"],
-		"greet": "Salut {who} — bienvenue au hub Lost Heaven.",
-		"ambient": "{who}, je tourne sur le hub — board, marché, plaza.",
-	},
-	{
-		"eid": "player:Lia", "oid": 900003, "name": "Lia",
-		"spawn": Vector3(4780.0, 0.15, -690.0), "speed": 11.5,
-		"prefer": ["inn", "cantina", "plaza", "craft"],
-		"greet": "Hey {who}. Lia — auberge, cantina, atelier.",
-		"ambient": "{who}, besoin d'un coup de main au hub ?",
-	},
-	{
-		"eid": "player:Mira", "oid": 900004, "name": "Mira",
-		"spawn": Vector3(4700.0, 0.15, -900.0), "speed": 11.0,
-		"prefer": ["board", "market", "hall", "plaza"],
-		"greet": "{who} — Mira. Board et marché, je joue les contrats.",
-		"ambient": "Des contrats au board, {who}. Daan Oth t'attend.",
-	},
-	{
-		"eid": "player:Kael", "oid": 900005, "name": "Kael",
-		"spawn": Vector3(4809.0, 0.15, -700.0), "speed": 11.0,
-		"prefer": ["train", "inn", "plaza", "clinic"],
-		"greet": "{who}. Kael — trainers et auberge, côté nord.",
-		"ambient": "Hall d'entraînement si tu veux te mesurer, {who}.",
-	},
-]
-
-const HUB_NPCS: Array = [
-	{"eid": "npc:core3_daan_oth", "oid": 910001, "name": "Daan Oth", "pos": MISSION, "wander_r": 10.0,
-		"ambient": "Des offres au board — pas de touristes, des contrats."},
-	{"eid": "npc:core3_barman_jax", "oid": 910002, "name": "Jax Moro", "pos": CANTINA, "wander_r": 6.0,
-		"ambient": "La Perle reste ouverte. Un verre, ou juste l'ombre."},
-	{"eid": "npc:guide_quartier", "oid": 910003, "name": "Guide de quartier", "pos": STARPORT, "wander_r": 14.0,
-		"ambient": "Starport, marché, porte est — tu te perds, tu cries."},
-	{"eid": "npc:core3_medic_trainer_c", "oid": 910004, "name": "Odo Merr", "pos": CLINIC, "wander_r": 8.0,
-		"ambient": "Clinique. Kits d'abord, discours après."},
-	{"eid": "npc:core3_scout_trainer_c", "oid": 910005, "name": "Yara Nis", "pos": TRAINING, "wander_r": 12.0,
-		"ambient": "Pistes hors remparts — le désert ne pardonne pas."},
-	{"eid": "npc:core3_artisan_trainer_c", "oid": 910006, "name": "Kell Asa", "pos": ARTISAN, "wander_r": 10.0,
-		"ambient": "Atelier ouvert. On assemble ce qu'on ramasse."},
-	{"eid": "npc:core3_talen_ress", "oid": 910007, "name": "Talen Ress", "pos": INN, "wander_r": 8.0,
-		"ambient": "Formation scène à l'auberge — danse, musique, moral."},
-	{"eid": "npc:scribe", "oid": 910008, "name": "Scribe", "pos": TOWN_HALL, "wander_r": 6.0,
-		"ambient": "Chroniques de session. Pas de légendes inventées."},
-	{"eid": "npc:habitue_cantina", "oid": 910009, "name": "Habitué", "pos": CANTINA, "wander_r": 9.0,
-		"ambient": "Toujours la même table à La Perle…"},
-	{"eid": "npc:videur", "oid": 910010, "name": "Videur", "pos": Vector3(4920.0, 0.15, -790.0), "wander_r": 7.0,
-		"ambient": "Pas de bagarre devant La Perle."},
-	{"eid": "npc:sergent_rue", "oid": 910011, "name": "Sergent de rue", "pos": Vector3(4880.0, 0.15, -880.0), "wander_r": 16.0,
-		"ambient": "Porte est surveillée. Meute ou pas — on tient."},
-	{"eid": "npc:rumeuriste", "oid": 910012, "name": "Rumeuriste", "pos": MARKET, "wander_r": 14.0,
-		"ambient": "Au marché on entend tout — et on répète la moitié."},
-	{"eid": "npc:core3_brawler_trainer_c", "oid": 910013, "name": "Tobin Ress", "pos": TRAINING, "wander_r": 11.0,
-		"ambient": "Poing avant paroles. Hall d'entraînement."},
-	{"eid": "npc:core3_marksman_trainer_c", "oid": 910014, "name": "Unar Tek", "pos": Vector3(4960.0, 0.15, -690.0), "wander_r": 11.0,
-		"ambient": "Visée. Respire, tire, ne rate pas le désert."},
-	{"eid": "npc:core3_pilot_imperial_a", "oid": 910015, "name": "Garr Vek", "pos": STARPORT, "wander_r": 12.0,
-		"ambient": "Pilotage shuttle — apron propre, décollages courts."},
-]
+const HUMAN_OID := HubSimDefsScript.HUMAN_OID
+const ZONE := HubSimDefsScript.ZONE
+const SPAWN_HUMAN := HubSimDefsScript.SPAWN_HUMAN
+const PLAZA := HubSimDefsScript.PLAZA
+const MARKET := HubSimDefsScript.MARKET
+const BOT_SPEED := HubSimDefsScript.BOT_SPEED
+const POIS: Dictionary = HubSimDefsScript.POIS
+const BOT_DEFS_FALLBACK: Array = HubSimDefsScript.BOT_DEFS_FALLBACK
+const HUB_NPCS: Array = HubSimDefsScript.HUB_NPCS
 
 var collision = null
 var nav = null
@@ -122,21 +36,16 @@ var economy = null
 var agent_api = null
 var events = null
 var world_stream = null
+var combat = null
+var presence = null
+var ambient = null
+
 var bot_defs: Array = []
 var tick: int = 0
 var entities: Dictionary = {}
-var _chat_queue: Array = []
-var _greeted_oids: Dictionary = {}  # oid -> true
-var _last_ambient: Dictionary = {}  # eid -> float unix
 var _rng := RandomNumberGenerator.new()
 var _persist_every_ticks: int = 100  # ~5 s @ 20 Hz
 var _life_tick_every: int = 20  # ~1 s
-## Phase B — dials présence joueurs IA (zone d'entraînement).
-var _presence_dials_pack: Dictionary = {}
-var _presence_defaults: Dictionary = {}
-var _presence_by_persona: Dictionary = {}
-var _presence_templates: Dictionary = {}
-var _presence_thresholds: Dictionary = {}
 
 
 func attach_economy(economy_svc) -> void:
@@ -162,9 +71,6 @@ func _stream(kind: String, text: String, actor: String = "", zone: String = "", 
 func reset() -> void:
 	tick = 0
 	entities.clear()
-	_chat_queue.clear()
-	_greeted_oids.clear()
-	_last_ambient.clear()
 	_rng.randomize()
 	if collision == null:
 		collision = HubCollisionScript.new()
@@ -181,6 +87,16 @@ func reset() -> void:
 	if agent_api == null:
 		agent_api = HubAgentApiScript.new()
 	agent_api.setup()
+	if presence == null:
+		presence = HubPresenceScript.new()
+	presence.load_presence_dials()
+	if ambient == null:
+		ambient = HubSimAmbientScript.new()
+	ambient.setup(self)
+	ambient.clear()
+	if combat == null:
+		combat = HubCombatScript.new()
+	combat.setup(self)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -190,303 +106,37 @@ func reset() -> void:
 	autonomy.setup(economy, suggest, POIS)
 	_ensure_fleet()
 	_ensure_hub_npcs()
-	_ensure_density_beasts()
-
-
-func _density_beast_count(density: String) -> int:
-	match density.strip_edges().to_lower():
-		"pack":
-			return 3
-		"patrol":
-			return 2
-		"low", "sparse":
-			return 1
-		_:
-			return 1
-
-
-func _beast_respawn_delay_s(beast_id: String, zone_id: String) -> float:
-	## Meute rapide ; boss sparse plus long.
-	if "serpent" in beast_id or "titan" in beast_id or "hollow" in zone_id:
-		return 90.0
-	if "hunt" in zone_id:
-		return 28.0
-	return 45.0
-
-
-func _revive_density_beasts() -> void:
-	var now := Time.get_unix_time_from_system()
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "beast":
-			continue
-		if bool(e.get("active", true)):
-			continue
-		var at := float(e.get("respawn_at", 0.0))
-		if at <= 0.0 or now < at:
-			continue
-		var hx := float(e.get("home_x", 0.0))
-		var hz := float(e.get("home_z", 0.0))
-		var wz := _walkable_xz(hx, hz)
-		e["pos"] = Vector3(wz.x, 0.15, wz.y)
-		e["target"] = Vector3.ZERO
-		e["goal"] = "wander"
-		e["active"] = true
-		e["stuck_ticks"] = 0
-		e.erase("aggro_eid")
-		e.erase("respawn_at")
-
-
-func _ensure_density_beasts() -> void:
-	## Spawn open-world depuis combat_density_lh.json (kind=beast, oid 920xxx).
-	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("combat_density_lh.json"))
-	if typeof(raw) != TYPE_DICTIONARY:
-		return
-	var zones = raw.get("zones", [])
-	if typeof(zones) != TYPE_ARRAY:
-		return
-	var oid_base := 920001
-	var seq := 0
-	for z in zones:
-		if typeof(z) != TYPE_DICTIONARY:
-			continue
-		# MVP : zone engage hunt_yard d'abord ; autres zones density != none
-		var engage := str(z.get("engage_surface", "none"))
-		var dens := str(z.get("density", "sparse"))
-		if engage != "hunt_yard" and dens in ["", "none"]:
-			continue
-		if engage != "hunt_yard" and dens == "sparse":
-			# Sparse hors meute : 1 token max pour ne pas saturer le désert
-			pass
-		var beasts = z.get("beasts", [])
-		if typeof(beasts) != TYPE_ARRAY or beasts.is_empty():
-			continue
-		var beast_id := str(beasts[0])
-		var n := _density_beast_count(dens if engage != "hunt_yard" else "pack")
-		if engage != "hunt_yard":
-			n = mini(n, 1)
-		var p = z.get("pos", {})
-		if typeof(p) != TYPE_DICTIONARY:
-			continue
-		var cx := float(p.get("x", 0))
-		var cz := float(p.get("z", 0))
-		var zone_id := str(z.get("id", "zone"))
-		var label := str(z.get("label", beast_id))
-		for i in range(n):
-			var eid := "beast:%s:%d" % [zone_id.replace(":", "_"), i]
-			if entities.has(eid):
-				continue
-			var ox := cx + _rng.randf_range(-18.0, 18.0)
-			var oz := cz + _rng.randf_range(-18.0, 18.0)
-			var wz := _walkable_xz(ox, oz)
-			var pos := Vector3(wz.x, 0.15, wz.y)
-			var oid := oid_base + seq
-			seq += 1
-			var is_pack := engage == "hunt_yard" or dens == "pack"
-			var is_boss := dens == "sparse" and ("titan" in beast_id or "serpent" in beast_id)
-			entities[eid] = {
-				"eid": eid,
-				"oid": oid,
-				"kind": "beast",
-				"name": "%s %d" % [label if engage == "hunt_yard" else beast_id.replace("beast:", "").replace("_", " "), i + 1],
-				"beast_id": beast_id,
-				"zone_id": zone_id,
-				"pos": pos,
-				"target": Vector3.ZERO,
-				"speed": 2.4 if is_boss else (4.2 if is_pack else 3.2),
-				"is_bot": false,
-				"goal": "wander",
-				"play_mode": "ring",
-				"quest_id": str(z.get("quest_id", "")),
-				"linger_until": 0.0,
-				"stuck_ticks": 0,
-				"home_x": pos.x,
-				"home_z": pos.z,
-				"wander_r": 28.0 if engage == "hunt_yard" else 22.0,
-				"aggro_r": 38.0 if is_pack else (22.0 if is_boss else 28.0),
-				"leash_r": 55.0 if is_pack else 40.0,
-				"telegraph_s": 1.4 if is_boss else 0.0,
-				"is_boss": is_boss,
-				"ambient": "",
-				"active": true,
-			}
+	if combat != null:
+		combat.ensure_density_beasts()
 
 
 func _load_presence_dials() -> void:
-	_presence_dials_pack.clear()
-	_presence_defaults.clear()
-	_presence_by_persona.clear()
-	_presence_templates.clear()
-	_presence_thresholds.clear()
-	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("life/presence_dials.json"))
-	if typeof(raw) != TYPE_DICTIONARY:
-		_presence_defaults = {"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4}
-		return
-	_presence_dials_pack = raw
-	var defs = raw.get("defaults", {})
-	if typeof(defs) == TYPE_DICTIONARY:
-		_presence_defaults = defs.duplicate(true)
-	var by = raw.get("by_persona", {})
-	if typeof(by) == TYPE_DICTIONARY:
-		_presence_by_persona = by.duplicate(true)
-	var tpl = raw.get("ambient_templates", {})
-	if typeof(tpl) == TYPE_DICTIONARY:
-		_presence_templates = tpl.duplicate(true)
-	var th = raw.get("thresholds", {})
-	if typeof(th) == TYPE_DICTIONARY:
-		_presence_thresholds = th.duplicate(true)
+	if presence != null:
+		presence.load_presence_dials()
 
 
 func _dials_for_persona(name: String) -> Dictionary:
-	if _presence_defaults.is_empty() and _presence_by_persona.is_empty():
-		_load_presence_dials()
-	var key := name.strip_edges()
-	var row = _presence_by_persona.get(key, null)
-	if typeof(row) != TYPE_DICTIONARY:
-		# fallback case-insensitive
-		for k in _presence_by_persona.keys():
-			if str(k).to_lower() == key.to_lower():
-				row = _presence_by_persona[k]
-				break
-	var out := _presence_defaults.duplicate(true) if not _presence_defaults.is_empty() else {
-		"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4
-	}
-	if typeof(row) == TYPE_DICTIONARY:
-		for dk in ["chaleur", "humeur", "humour", "initiative"]:
-			if row.has(dk):
-				out[dk] = clampf(float(row[dk]), 0.0, 1.0)
-	return out
+	if presence != null:
+		return presence.dials_for_persona(name)
+	return {"chaleur": 0.45, "humeur": 0.4, "humour": 0.3, "initiative": 0.4}
 
 
 func presence_line_for(bot: Dictionary, who: String) -> String:
-	## Une phrase d'ambiance selon dials (B2) — observable sans LLM.
-	var dials: Dictionary = bot.get("presence_dials", {})
-	if dials.is_empty():
-		dials = _dials_for_persona(str(bot.get("name", "")))
-	var chaleur := float(dials.get("chaleur", 0.45))
-	var initiative := float(dials.get("initiative", 0.4))
-	var tpl_key := "high_chaleur" if chaleur >= 0.6 else ("low_chaleur" if chaleur <= 0.35 else "")
-	if tpl_key.is_empty():
-		tpl_key = "high_initiative" if initiative >= 0.6 else ("low_initiative" if initiative <= 0.35 else "")
-	if tpl_key.is_empty():
-		return ""
-	var tpl := str(_presence_templates.get(tpl_key, "")).strip_edges()
-	if tpl.is_empty():
-		match tpl_key:
-			"high_chaleur":
-				tpl = "{who} te salue franchement — chaleur haute."
-			"low_chaleur":
-				tpl = "{who} reste à distance, ton mesuré."
-			"high_initiative":
-				tpl = "{who} propose déjà le prochain pas."
-			_:
-				tpl = "{who} attend que tu mènes."
-	var nm := str(bot.get("name", "IA"))
-	return tpl.replace("{who}", nm if who.is_empty() else who)
+	if presence != null:
+		return presence.presence_line_for(bot, who)
+	return ""
 
 
 func presence_resolve_action(bot: Dictionary, distance_m: float) -> Dictionary:
-	## B3 — action autorisée (ignore/ambient/greet/escort/tip_ack) selon dials × distance.
-	if _presence_thresholds.is_empty():
-		_load_presence_dials()
-	var dials: Dictionary = bot.get("presence_dials", {})
-	if dials.is_empty():
-		dials = _dials_for_persona(str(bot.get("name", "")))
-	var chaleur := float(dials.get("chaleur", 0.45))
-	var initiative := float(dials.get("initiative", 0.4))
-	var d := maxf(0.0, distance_m)
-	var th: Dictionary = _presence_thresholds
-	var ign: Dictionary = th.get("ignore", {}) if typeof(th.get("ignore", null)) == TYPE_DICTIONARY else {}
-	var esc: Dictionary = th.get("escort", {}) if typeof(th.get("escort", null)) == TYPE_DICTIONARY else {}
-	var gre: Dictionary = th.get("greet", {}) if typeof(th.get("greet", null)) == TYPE_DICTIONARY else {}
-	var amb: Dictionary = th.get("ambient", {}) if typeof(th.get("ambient", null)) == TYPE_DICTIONARY else {}
-	var tip: Dictionary = th.get("tip_ack", {}) if typeof(th.get("tip_ack", null)) == TYPE_DICTIONARY else {}
-
-	var action := "ambient"
-	var reason := "default"
-	# Plus spécifique d'abord.
-	if (
-		chaleur <= float(ign.get("max_chaleur", -1.0))
-		and initiative <= float(ign.get("max_initiative", -1.0))
-		and d <= float(ign.get("max_distance_m", 40.0))
-	):
-		action = "ignore"
-		reason = "low_dials"
-	elif (
-		chaleur >= float(esc.get("min_chaleur", 0.55))
-		and initiative >= float(esc.get("min_initiative", 0.5))
-		and d <= float(esc.get("max_distance_m", 24.0))
-	):
-		action = "escort"
-		reason = "high_chaleur_initiative"
-	elif (
-		chaleur >= float(gre.get("min_chaleur", 0.35))
-		and initiative >= float(gre.get("min_initiative", 0.3))
-		and d <= float(gre.get("max_distance_m", 32.0))
-	):
-		action = "greet"
-		reason = "greet_ok"
-	elif (
-		chaleur >= float(tip.get("min_chaleur", 0.4))
-		and d <= float(tip.get("max_distance_m", 18.0))
-	):
-		action = "tip_ack"
-		reason = "near_tip"
-	elif chaleur >= float(amb.get("min_chaleur", 0.28)) and d <= float(amb.get("max_distance_m", 28.0)):
-		action = "ambient"
-		reason = "ambient_ok"
-	elif d > float(amb.get("max_distance_m", 28.0)):
-		action = "ignore"
-		reason = "too_far"
-	else:
-		action = "ignore"
-		reason = "below_ambient"
-
-	var dur := 0.0
-	if action == "escort":
-		dur = float(esc.get("duration_s_high", 28.0)) if chaleur >= 0.7 else float(esc.get("duration_s_base", 14.0))
-	return {
-		"action": action,
-		"reason": reason,
-		"distance_m": snappedf(d, 0.1),
-		"chaleur": chaleur,
-		"initiative": initiative,
-		"escort_duration_s": dur,
-		"persona": str(bot.get("name", "")),
-	}
+	if presence != null:
+		return presence.presence_resolve_action(bot, distance_m)
+	return {"action": "ambient", "reason": "default"}
 
 
 func presence_dials_payload() -> Dictionary:
-	if _presence_defaults.is_empty() and _presence_by_persona.is_empty():
-		_load_presence_dials()
-	var bots: Array = []
-	for b in bot_defs:
-		var nm := str(b.get("name", ""))
-		var dials: Dictionary = b.get("presence_dials", _dials_for_persona(nm))
-		var row := {
-			"name": nm,
-			"eid": str(b.get("eid", "")),
-			"oid": int(b.get("oid", 0)),
-			"presence_dials": dials,
-			"presence_line": presence_line_for(b, "Voyageur"),
-		}
-		# B3 — actions à 3 distances de référence (smoke B4).
-		row["actions_at_m"] = {
-			"12": presence_resolve_action(b, 12.0),
-			"20": presence_resolve_action(b, 20.0),
-			"35": presence_resolve_action(b, 35.0),
-		}
-		bots.append(row)
-	return {
-		"ok": true,
-		"schema_version": int(_presence_dials_pack.get("schema_version", 1)),
-		"defaults": _presence_defaults,
-		"thresholds": _presence_thresholds,
-		"bots": bots,
-		"count": bots.size(),
-		"source": "prime_hub",
-		"ticket": "B2+B3",
-	}
+	if presence != null:
+		return presence.presence_dials_payload(bot_defs)
+	return {"ok": false}
 
 
 func _load_bot_defs() -> void:
@@ -553,7 +203,6 @@ func _normalize_bot_row(p: Dictionary) -> Dictionary:
 		"playstyle": str(p.get("playstyle", "")),
 		"admin_level": int(p.get("admin_level", 0)),
 		"admin_label": str(p.get("admin_label", "player")),
-		# Login = persona out-game (pas le nom IG)
 		"account_login": str(p.get("account_login", og.get("persona", ""))),
 		"account_login_legacy": str(p.get("account_login_legacy", "")),
 		"out_game_persona": str(og.get("persona", "")),
@@ -620,13 +269,11 @@ func _ensure_fleet() -> void:
 			"presence_dials": (b.get("presence_dials", {}) as Dictionary).duplicate(true),
 		}
 		entities[eid] = ent
-		# Goal sans A* au spawn (évite freeze startup) — path au premier step
 		_assign_bot_goal(ent, b, false)
 
 
 func _ensure_hub_npcs() -> void:
 	if life != null and life._sched.size() > 0:
-		# Spawn Triplons + solos ; ne pas doubler avec HUB_NPCS legacy
 		var missing := false
 		for eid in life._sched.keys():
 			if not entities.has(eid):
@@ -634,7 +281,6 @@ func _ensure_hub_npcs() -> void:
 				break
 		if missing:
 			life.spawn_all(entities)
-			# Snap walkable
 			for eid2 in life._sched.keys():
 				if not entities.has(eid2):
 					continue
@@ -693,7 +339,6 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 		if prefer.size() > 0:
 			goal_id = str(prefer[_rng.randi() % prefer.size()])
 		target = POIS.get(goal_id, PLAZA)
-	# jitter léger (sauf explore hors murs — garder le point)
 	if play_mode == "hub":
 		target = Vector3(
 			target.x + _rng.randf_range(-8.0, 8.0),
@@ -716,7 +361,6 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 
 
 func _nav_path(sx: float, sz: float, tx: float, tz: float) -> Array:
-	## Navmesh natif si dispo + dans les bornes ; sinon A* grille AABB (dunes).
 	if nav != null and nav.ready_ok:
 		var route: Array = nav.find_path(sx, sz, tx, tz)
 		if not route.is_empty():
@@ -727,8 +371,6 @@ func _nav_path(sx: float, sz: float, tx: float, tz: float) -> Array:
 
 
 func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> void:
-	## Construit les waypoints intermédiaires (origine + cible finale exclus).
-	## Navmesh : plus de budget par tick — N entités peuvent recalculer au même tick.
 	if collision == null and (nav == null or not nav.ready_ok):
 		return
 	var pos: Vector3 = bot["pos"]
@@ -737,9 +379,9 @@ func _apply_path_to_bot(bot: Dictionary, tx: float, tz: float) -> void:
 	for i in range(route.size()):
 		var wp: Vector2 = route[i]
 		if i == 0 and Vector2(wp.x - pos.x, wp.y - pos.z).length() < 2.5:
-			continue  # origine
+			continue
 		if Vector2(wp.x - tx, wp.y - tz).length() < 1.5:
-			continue  # cible finale suivie via bot["target"]
+			continue
 		path.append(wp)
 	if path.size() > 0:
 		bot["waypoint"] = path.pop_front()
@@ -771,7 +413,6 @@ func ensure_human(oid: int, player_name: String) -> void:
 		entities[eid]["name"] = player_name
 		return
 	var slot := Vector3(SPAWN_HUMAN.x + float(entities.size() % 5) * 2.0, SPAWN_HUMAN.y, SPAWN_HUMAN.z)
-	# Reprise session serveur
 	if player_store != null:
 		var saved = player_store.get_pos(oid)
 		if saved != null:
@@ -806,7 +447,8 @@ func remove_human(oid: int) -> void:
 		player_store.set_pos(oid, p.x, p.y, p.z, str(entities[eid].get("name", "")))
 		player_store.save_all()
 	entities.erase(eid)
-	_greeted_oids.erase(oid)
+	if ambient != null:
+		ambient.remove_human(oid)
 
 
 func set_human_pos(oid: int, x: float, y: float, z: float) -> void:
@@ -825,174 +467,19 @@ func set_human_pos(oid: int, x: float, y: float, z: float) -> void:
 
 
 func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia") -> void:
-	var t := text.strip_edges()
-	if t.is_empty():
-		return
-	if t.length() > 200:
-		t = t.substr(0, 200)
-	_chat_queue.append({
-		"type": "chat",
-		"proto": "lbg-ws/2",
-		"from": from_name,
-		"oid": oid,
-		"from_oid": oid,
-		"text": t,
-		"source": source,
-		"server_time_ms": int(Time.get_unix_time_from_system() * 1000.0),
-	})
+	if ambient != null:
+		ambient.enqueue_say(from_name, oid, text, source)
 
 
 func drain_chat() -> Array:
-	if _chat_queue.is_empty():
-		return []
-	var out := _chat_queue.duplicate()
-	_chat_queue.clear()
-	return out
+	if ambient != null:
+		return ambient.drain_chat()
+	return []
 
 
 func fleet_greet_human(human_name: String, human_oid: int) -> void:
-	## C3 — un seul compagnon (Nix) accueille + escorte courte ; pas de spam flotte.
-	## B3 — seuils dials : ignore / greet seul / escort (durée selon chaleur).
-	if _greeted_oids.has(human_oid):
-		return
-	_greeted_oids[human_oid] = true
-	_ensure_fleet()
-	var who := human_name.strip_edges()
-	if who.is_empty():
-		who = "Voyageur"
-	var companion := _pick_companion_bot()
-	if companion.is_empty():
-		return
-	# Distance spawn hub ≈ proche (12 m) pour le premier contact.
-	var decision: Dictionary = presence_resolve_action(companion, 12.0)
-	var act := str(decision.get("action", "greet"))
-	if act == "ignore":
-		return
-	var line := str(companion.get("greet", "Salut {who}.")).replace("{who}", who)
-	var dial_line := presence_line_for(companion, who)
-	if not dial_line.is_empty() and not line.contains(dial_line):
-		line = "%s %s" % [line, dial_line]
-	enqueue_say(str(companion.get("name", "Nix")), int(companion.get("oid", 0)), line, "ia")
-	if act == "escort":
-		var dur := float(decision.get("escort_duration_s", 28.0))
-		_start_companion_escort(companion, dur if dur > 0.0 else 28.0)
-		_stream(
-			"companion.escort",
-			"%s a escorté %s près du hub." % [str(companion.get("name", "Nix")), who],
-			str(companion.get("name", "Nix")),
-			ZONE,
-			{"human": who, "human_oid": human_oid, "chaleur": float(decision.get("chaleur", 0.0))}
-		)
-	# greet / tip_ack / ambient : salut sans follow.
-
-
-func _pick_companion_bot() -> Dictionary:
-	## Préférence Nix, sinon premier bot enabled.
-	var prefer := ["player:Nix", "Nix", "player:Lia", "Lia"]
-	for want in prefer:
-		var w := str(want).to_lower()
-		for b in bot_defs:
-			var bot = entities.get(str(b["eid"]))
-			if bot == null:
-				continue
-			var eid := str(b.get("eid", "")).to_lower()
-			var nm := str(b.get("name", "")).to_lower()
-			if eid == w or nm == w or eid.ends_with(":" + w):
-				return bot
-	for b in bot_defs:
-		var bot2 = entities.get(str(b["eid"]))
-		if bot2 != null:
-			return bot2
-	return {}
-
-
-func _start_companion_escort(bot: Dictionary, duration_s: float) -> void:
-	var now := Time.get_unix_time_from_system()
-	bot["_escort_until"] = now + maxf(8.0, duration_s)
-	bot["goal"] = "companion_escort"
-	bot["linger_until"] = 0.0
-	bot["has_waypoint"] = false
-	bot["path"] = []
-	bot["needs_path"] = false
-	var humans := _humans()
-	if humans.is_empty():
-		return
-	var hp: Vector3 = humans[0]["pos"]
-	var wz := _walkable_xz(hp.x + 5.0, hp.z + 3.0)
-	bot["target"] = Vector3(wz.x, hp.y, wz.y)
-
-
-func _humans() -> Array:
-	var out: Array = []
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) == "player" and not bool(e.get("is_bot", false)):
-			out.append(e)
-	return out
-
-
-func _maybe_ambient() -> void:
-	var now := Time.get_unix_time_from_system()
-	var humans := _humans()
-	if humans.is_empty():
-		return
-	for b in bot_defs:
-		var eid: String = str(b["eid"])
-		var bot = entities.get(eid)
-		if bot == null:
-			continue
-		# Flotte : pas d'annonce de POI / aller-retour — ambient rare, hors goal.
-		var last := float(_last_ambient.get(eid, 0.0))
-		if now - last < 180.0 + float(hash(eid) % 90):
-			continue
-		var near = null
-		var bp: Vector3 = bot["pos"]
-		for h in humans:
-			var hp: Vector3 = h["pos"]
-			if Vector2(hp.x - bp.x, hp.z - bp.z).length() <= 28.0:
-				near = h
-				break
-		if near == null:
-			continue
-		var hp_n: Vector3 = near["pos"]
-		var dist_n := Vector2(hp_n.x - bp.x, hp_n.z - bp.z).length()
-		var decision_n: Dictionary = presence_resolve_action(bot if not bot.is_empty() else b, dist_n)
-		if str(decision_n.get("action", "")) == "ignore":
-			continue
-		_last_ambient[eid] = now
-		var who_n := str(near["name"])
-		var line := str(b.get("ambient", "")).replace("{who}", who_n).strip_edges()
-		var dial_amb := presence_line_for(bot if not bot.is_empty() else b, who_n)
-		# B2 : 1 bot sur 2 (hash) remplace l'ambient stock par la ligne dials — observable.
-		if not dial_amb.is_empty() and (hash(eid) % 2) == 0:
-			line = dial_amb
-		if line.is_empty():
-			continue
-		enqueue_say(str(b["name"]), int(bot["oid"]), line, "ia")
-
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "npc":
-			continue
-		if not bool(e.get("active", true)):
-			continue
-		var amb := str(e.get("ambient", ""))
-		if amb.is_empty():
-			continue
-		var last2 := float(_last_ambient.get(eid, 0.0))
-		if now - last2 < 70.0 + float(int(e["oid"]) % 25):
-			continue
-		var near2 = null
-		var ep: Vector3 = e["pos"]
-		for h2 in humans:
-			var hp2: Vector3 = h2["pos"]
-			if Vector2(hp2.x - ep.x, hp2.z - ep.z).length() <= 22.0:
-				near2 = h2
-				break
-		if near2 == null:
-			continue
-		_last_ambient[eid] = now
-		enqueue_say(str(e["name"]), int(e["oid"]), amb, "ia")
+	if ambient != null:
+		ambient.fleet_greet_human(human_name, human_oid)
 
 
 func _step_bot(bot: Dictionary, dt: float) -> void:
@@ -1000,14 +487,15 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	var escort_until := float(bot.get("_escort_until", 0.0))
 	var escorting := escort_until > now
 	if escorting:
-		# Rafraîchir la cible près du joueur (follow court C3).
-		var humans := _humans()
+		var humans := HubSimViewsScript.online_players(entities)
 		if not humans.is_empty():
-			var hp: Vector3 = humans[0]["pos"]
-			var wz := _walkable_xz(hp.x + 5.0, hp.z + 3.0)
-			bot["target"] = Vector3(wz.x, hp.y, wz.y)
-			bot["goal"] = "companion_escort"
-			bot["linger_until"] = 0.0
+			var first_human = entities.get("player:%d" % int(humans[0]["id"]))
+			if first_human != null:
+				var hp: Vector3 = first_human["pos"]
+				var wz := _walkable_xz(hp.x + 5.0, hp.z + 3.0)
+				bot["target"] = Vector3(wz.x, hp.y, wz.y)
+				bot["goal"] = "companion_escort"
+				bot["linger_until"] = 0.0
 	elif str(bot.get("goal", "")) == "companion_escort":
 		bot.erase("_escort_until")
 		_assign_bot_goal(bot)
@@ -1021,7 +509,6 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	if bool(bot.get("needs_path", false)):
 		_apply_path_to_bot(bot, target.x, target.z)
 
-	# Suivre waypoint A* si présent
 	var steer := target
 	if bool(bot.get("has_waypoint", false)):
 		var wp: Vector2 = bot["waypoint"]
@@ -1039,16 +526,13 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	var dx := steer.x - pos.x
 	var dz := steer.z - pos.z
 	var dist := sqrt(dx * dx + dz * dz)
-	# Arrivée finale seulement sans waypoint restant
 	if not bool(bot.get("has_waypoint", false)) and dist < 4.0:
 		if escorting:
-			# Rester près du joueur sans repartir en autonomie.
 			bot["linger_until"] = now + 1.2
 			return
 		if autonomy != null:
 			autonomy.on_arrival(bot)
 		bot["linger_until"] = now + _rng.randf_range(3.0, 7.0)
-		# Pas de « j'y suis / vers X » — les allers-retours ne polluent pas le chat
 		_assign_bot_goal(bot)
 		return
 	if dist < 1e-6:
@@ -1082,7 +566,6 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 
 
 func _finalize_npc_rest(npc: Dictionary) -> void:
-	## Arrivé au logement → hors zone_state (inactif).
 	var home := _walkable_xz(float(npc.get("home_x", npc["pos"].x)), float(npc.get("home_z", npc["pos"].z)))
 	npc["pos"] = Vector3(home.x, float(npc["pos"].y), home.y)
 	npc["target"] = Vector3.ZERO
@@ -1120,7 +603,6 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 		if rest_home:
 			_finalize_npc_rest(npc)
 			return
-		# Arrivé au poste / loisir : déambuler localement
 		npc["target"] = _pick_wander_target(npc)
 		npc["stuck_ticks"] = 0
 		return
@@ -1148,139 +630,12 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	npc["pos"] = Vector3(nx, pos.y, nz)
 
 
-func _nearest_player_xz(x: float, z: float, radius_m: float) -> Dictionary:
-	## Joueur humain le plus proche (pas bot IA flotte).
-	var best: Dictionary = {}
-	var best_d := INF
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "player":
-			continue
-		if bool(e.get("is_bot", false)):
-			continue
-		var p: Vector3 = e["pos"]
-		var d := Vector2(p.x - x, p.z - z).length()
-		if d <= radius_m and d < best_d:
-			best_d = d
-			best = e
-	if best.is_empty():
-		return {}
-	return {"player": best, "dist": best_d}
-
-
-func _step_beast(beast: Dictionary, dt: float) -> void:
-	## Wander + aggro joueur (leash home) — meute plus agressive, sparse/boss + telegraph.
-	if not bool(beast.get("active", true)):
-		return
-	var speed: float = float(beast.get("speed", 0.0))
-	if speed <= 0.0:
-		return
-	var pos: Vector3 = beast["pos"]
-	var home_x := float(beast.get("home_x", pos.x))
-	var home_z := float(beast.get("home_z", pos.z))
-	var aggro_r := float(beast.get("aggro_r", 28.0))
-	var leash_r := float(beast.get("leash_r", 45.0))
-	var telegraph_s := float(beast.get("telegraph_s", 0.0))
-	var from_home := Vector2(pos.x - home_x, pos.z - home_z).length()
-	var goal := str(beast.get("goal", "wander"))
-	if from_home > leash_r:
-		beast["goal"] = "leash"
-		beast["target"] = Vector3(home_x, 0.15, home_z)
-		beast.erase("aggro_eid")
-		beast.erase("telegraph_until")
-		beast["ambient"] = ""
-		goal = "leash"
-	elif goal == "telegraph":
-		var until := float(beast.get("telegraph_until", 0.0))
-		if Time.get_unix_time_from_system() >= until:
-			beast["goal"] = "aggro"
-			beast["ambient"] = ""
-			goal = "aggro"
-		else:
-			# Windup : immobile, face joueur
-			var hit_t := _nearest_player_xz(pos.x, pos.z, aggro_r * 1.2)
-			if not hit_t.is_empty():
-				var pp_t: Vector3 = hit_t["player"]["pos"]
-				beast["target"] = Vector3(pp_t.x, 0.15, pp_t.z)
-				beast["aggro_eid"] = str(hit_t["player"].get("eid", ""))
-			return
-	else:
-		var hit := _nearest_player_xz(pos.x, pos.z, aggro_r)
-		if not hit.is_empty():
-			var pl: Dictionary = hit["player"]
-			var pp: Vector3 = pl["pos"]
-			beast["aggro_eid"] = str(pl.get("eid", ""))
-			beast["target"] = Vector3(pp.x, 0.15, pp.z)
-			if telegraph_s > 0.0 and goal != "aggro" and goal != "telegraph":
-				beast["goal"] = "telegraph"
-				beast["telegraph_until"] = Time.get_unix_time_from_system() + telegraph_s
-				var tline := "Le sable frémit — %s se dresse…" % str(beast.get("name", "la bête"))
-				beast["ambient"] = tline
-				# Chat immédiat (ambient PNJ a un cooldown trop long pour un windup 1,4 s).
-				enqueue_say(str(beast.get("name", "Bête")), int(beast.get("oid", 0)), tline, "ia")
-				return
-			beast["goal"] = "aggro"
-			# Chase un peu plus vite en meute
-			speed = speed * (1.05 if bool(beast.get("is_boss", false)) else 1.15)
-			goal = "aggro"
-		elif goal in ["aggro", "leash", "telegraph"]:
-			beast["goal"] = "wander"
-			beast.erase("aggro_eid")
-			beast.erase("telegraph_until")
-			beast["ambient"] = ""
-			beast["target"] = _pick_wander_target(beast)
-			goal = "wander"
-	goal = str(beast.get("goal", "wander"))
-	if goal == "wander" or goal == "":
-		_step_npc(beast, dt)
-		return
-	var target: Vector3 = beast.get("target", Vector3.ZERO)
-	if target == Vector3.ZERO:
-		beast["target"] = _pick_wander_target(beast)
-		_step_npc(beast, dt)
-		return
-	var dx := target.x - pos.x
-	var dz := target.z - pos.z
-	var dist := sqrt(dx * dx + dz * dz)
-	if goal == "leash" and dist < 2.0:
-		beast["goal"] = "wander"
-		beast["target"] = _pick_wander_target(beast)
-		beast["stuck_ticks"] = 0
-		return
-	if goal == "aggro" and dist < 1.8:
-		# Collé au joueur : rester en aggro, resync target au prochain tick
-		beast["stuck_ticks"] = 0
-		return
-	var step_len := minf(dist, speed * dt)
-	var nx := pos.x + (dx / dist) * step_len
-	var nz := pos.z + (dz / dist) * step_len
-	if collision != null:
-		var c: Vector2 = collision.clamp_move(pos.x, pos.z, nx, nz) as Vector2
-		nx = c.x
-		nz = c.y
-	var moved := Vector2(nx - pos.x, nz - pos.z).length()
-	if moved < step_len * 0.15:
-		beast["stuck_ticks"] = int(beast.get("stuck_ticks", 0)) + 1
-		if int(beast["stuck_ticks"]) >= 5:
-			var home := _walkable_xz(home_x, home_z)
-			beast["pos"] = Vector3(home.x, pos.y, home.y)
-			beast["goal"] = "wander"
-			beast["target"] = _pick_wander_target(beast)
-			beast.erase("aggro_eid")
-			beast.erase("telegraph_until")
-			beast["ambient"] = ""
-			beast["stuck_ticks"] = 0
-			return
-	else:
-		beast["stuck_ticks"] = 0
-	beast["pos"] = Vector3(nx, pos.y, nz)
-
-
 func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
-	_ensure_density_beasts()
-	_revive_density_beasts()
+	if combat != null:
+		combat.ensure_density_beasts()
+		combat.revive_density_beasts()
 	tick += 1
 	dt = clampf(dt, 0.001, 0.25)
 	if events != null and tick % _life_tick_every == 0 and events.has_method("tick"):
@@ -1292,11 +647,12 @@ func step(dt: float) -> void:
 		if bool(e.get("is_bot", false)):
 			_step_bot(e, dt)
 		elif str(e.get("kind", "")) == "beast":
-			_step_beast(e, dt)
+			if combat != null:
+				combat.step_beast(e, dt)
 		elif str(e.get("kind", "")) == "npc":
 			_step_npc(e, dt)
-	if tick % 40 == 0:
-		_maybe_ambient()
+	if tick % 40 == 0 and ambient != null:
+		ambient.maybe_ambient()
 	if tick % _persist_every_ticks == 0 and player_store != null:
 		for eid2 in entities.keys():
 			var h: Dictionary = entities[eid2]
@@ -1307,82 +663,14 @@ func step(dt: float) -> void:
 
 
 func entity_list(slim: bool = false) -> Array:
-	var out: Array = []
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		# Repos Triplon / bête morte en cooldown respawn : hors zone_state
-		if str(e.get("kind", "")) in ["npc", "beast"] and not bool(e.get("active", true)):
-			continue
-		var p: Vector3 = e["pos"]
-		if slim:
-			# Fil de jeu : champs stricts (bande passante / JSON parse client).
-			var slim_row := {
-				"id": int(e["oid"]),
-				"entity_key": str(e["eid"]),
-				"kind": str(e["kind"]),
-				"name": str(e["name"]),
-				"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
-				"is_bot": bool(e.get("is_bot", false)),
-			}
-			# P5b — telegraph boss visible client (goal court + flag).
-			if str(e.get("kind", "")) == "beast":
-				var bg := str(e.get("goal", "")).strip_edges()
-				if not bg.is_empty() and bg != "wander":
-					slim_row["goal"] = bg
-				if bool(e.get("is_boss", false)):
-					slim_row["is_boss"] = true
-			out.append(slim_row)
-		else:
-			var row := {
-				"id": int(e["oid"]),
-				"entity_key": str(e["eid"]),
-				"kind": str(e["kind"]),
-				"name": str(e["name"]),
-				"pos": [p.x, p.y, p.z],
-				"source": "prime_hub",
-				"goal": str(e.get("goal", "")),
-				"play_mode": str(e.get("play_mode", "")),
-				"quest_id": str(e.get("quest_id", "")),
-				"is_bot": bool(e.get("is_bot", false)),
-				"life_phase": str(e.get("life_phase", "")),
-			}
-			var amb := str(e.get("ambient", "")).strip_edges()
-			if not amb.is_empty():
-				row["ambient"] = amb
-			if bool(e.get("is_boss", false)):
-				row["is_boss"] = true
-			out.append(row)
-	return out
+	return HubSimViewsScript.entity_list(entities, slim)
 
 
 func bots_payload() -> Array:
-	var out: Array = []
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if not bool(e.get("is_bot", false)):
-			continue
-		var p: Vector3 = e["pos"]
-		var t: Vector3 = e["target"]
-		out.append({
-			"id": int(e["oid"]),
-			"entity_key": str(e["eid"]),
-			"name": str(e["name"]),
-			"pos": [p.x, p.y, p.z],
-			"target": [t.x, t.y, t.z],
-			"goal": str(e.get("goal", "")),
-			"play_mode": str(e.get("play_mode", "")),
-			"quest_id": str(e.get("quest_id", "")),
-			"admin_level": int(e.get("admin_level", 0)),
-			"account_login": str(e.get("account_login", "")),
-			"agent_id": str(e.get("agent_id", "")),
-			"linked_studio_agent_id": str(e.get("linked_studio_agent_id", "")),
-			"linked_studio_display": str(e.get("linked_studio_display", "")),
-		})
-	return out
+	return HubSimViewsScript.bots_payload(entities)
 
 
 func set_bot_target(player: String, x: float, y: float, z: float) -> Variant:
-	## Dictionary entité ou null
 	var want := player.strip_edges().to_lower()
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
@@ -1390,7 +678,6 @@ func set_bot_target(player: String, x: float, y: float, z: float) -> Variant:
 			continue
 		if str(e.get("name", "")).to_lower() != want:
 			continue
-		# Anneau LH : bornes explore (pas Scrapaltai entière / pas Zalem)
 		if autonomy != null and autonomy.has_method("clamp_xz"):
 			var ring: Vector2 = autonomy.clamp_xz(x, z)
 			x = ring.x
@@ -1404,57 +691,36 @@ func set_bot_target(player: String, x: float, y: float, z: float) -> Variant:
 
 
 func online_players() -> Array:
-	var out: Array = []
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "player" or bool(e.get("is_bot", false)):
-			continue
-		out.append({"id": int(e["oid"]), "name": str(e["name"])})
-	return out
+	return HubSimViewsScript.online_players(entities)
 
 
 func bot_count() -> int:
-	var n := 0
-	for eid in entities.keys():
-		if bool(entities[eid].get("is_bot", false)):
-			n += 1
-	return n
+	return HubSimViewsScript.bot_count(entities)
 
 
 func npc_count() -> int:
-	var n := 0
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) == "npc" and bool(e.get("active", true)):
-			n += 1
-	return n
+	return HubSimViewsScript.npc_count(entities)
 
 
 func beast_count() -> int:
-	var n := 0
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) == "beast" and bool(e.get("active", true)):
-			n += 1
-	return n
+	if combat != null:
+		return combat.beast_count()
+	return 0
 
 
 func navmesh_stats() -> Dictionary:
-	## Ticket 2.3 — état NavigationServer3D (healthz + smoke).
 	if nav == null:
 		return {"ok": false, "reason": "nav_absent"}
 	return nav.stats()
 
 
 func persistence_stats() -> Dictionary:
-	## Ticket 2.1 — état SQLite hub_player_store (healthz + smoke).
 	if player_store == null:
 		return {"ok": false, "reason": "player_store_absent"}
 	return player_store.stats()
 
 
 func nav_probe(sx: float, sz: float, tx: float, tz: float) -> Dictionary:
-	## Trace de trajectoire navmesh (preuve live + debug). Waypoints (x,z).
 	if nav == null or not nav.ready_ok:
 		return {"ok": false, "error": "navmesh_unavailable"}
 	var route: Array = _nav_path(sx, sz, tx, tz)
@@ -1474,156 +740,21 @@ func nav_probe(sx: float, sz: float, tx: float, tz: float) -> Dictionary:
 
 
 func beasts_snapshot() -> Dictionary:
-	## Lecture P5 — bêtes actives (goal / boss / telegraph) pour smoke & debug.
-	var rows: Array = []
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "beast":
-			continue
-		if not bool(e.get("active", true)):
-			continue
-		var p: Vector3 = e["pos"]
-		rows.append({
-			"entity_key": str(e.get("eid", eid)),
-			"beast_id": str(e.get("beast_id", "")),
-			"name": str(e.get("name", "")),
-			"zone_id": str(e.get("zone_id", "")),
-			"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
-			"goal": str(e.get("goal", "wander")),
-			"is_boss": bool(e.get("is_boss", false)),
-			"telegraph_s": float(e.get("telegraph_s", 0.0)),
-			"telegraph_until": float(e.get("telegraph_until", 0.0)),
-			"ambient": str(e.get("ambient", "")),
-			"aggro_r": float(e.get("aggro_r", 0.0)),
-		})
-	return {
-		"ok": true,
-		"count": rows.size(),
-		"beasts": rows,
-		"source": "prime_hub",
-		"ticket": "P5b",
-	}
+	if combat != null:
+		return combat.beasts_snapshot()
+	return {"ok": true, "count": 0, "beasts": [], "source": "prime_hub", "ticket": "P5b"}
 
 
 func force_beast_telegraph(x: float, z: float, radius_m: float = 120.0, bosses_only: bool = true) -> Dictionary:
-	## Smoke / debug — force le windup telegraph sur la bête (boss) la plus proche.
-	var best_eid := ""
-	var best_d := INF
-	var best: Dictionary = {}
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "beast" or not bool(e.get("active", true)):
-			continue
-		if bosses_only and not bool(e.get("is_boss", false)):
-			continue
-		var p: Vector3 = e["pos"]
-		var d := Vector2(p.x - x, p.z - z).length()
-		if d <= radius_m and d < best_d:
-			best_d = d
-			best_eid = eid
-			best = e
-	if best_eid.is_empty():
-		return {
-			"ok": false,
-			"error": "no_boss_in_range" if bosses_only else "no_beast_in_range",
-			"radius_m": radius_m,
-			"source": "prime_hub",
-		}
-	var ts := float(best.get("telegraph_s", 1.4))
-	if ts <= 0.0:
-		ts = 1.4
-	best["telegraph_s"] = ts
-	best["goal"] = "telegraph"
-	best["telegraph_until"] = Time.get_unix_time_from_system() + ts
-	var tline := "Le sable frémit — %s se dresse…" % str(best.get("name", "la bête"))
-	best["ambient"] = tline
-	enqueue_say(str(best.get("name", "Bête")), int(best.get("oid", 0)), tline, "ia")
-	return {
-		"ok": true,
-		"entity_key": str(best.get("eid", best_eid)),
-		"beast_id": str(best.get("beast_id", "")),
-		"beast_name": str(best.get("name", "")),
-		"goal": "telegraph",
-		"telegraph_s": ts,
-		"telegraph_until": float(best["telegraph_until"]),
-		"ambient": tline,
-		"distance_m": snappedf(best_d, 0.1),
-		"is_boss": bool(best.get("is_boss", false)),
-		"source": "prime_hub",
-		"ticket": "P5b",
-	}
+	if combat != null:
+		return combat.force_beast_telegraph(x, z, radius_m, bosses_only)
+	return {"ok": false, "error": "combat_unavailable"}
 
 
 func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 42.0) -> Dictionary:
-	## Combat open-world léger : despawn bête la plus proche + loot stub.
-	var best_eid := ""
-	var best_d := INF
-	var best: Dictionary = {}
-	for eid in entities.keys():
-		var e: Dictionary = entities[eid]
-		if str(e.get("kind", "")) != "beast" or not bool(e.get("active", true)):
-			continue
-		var p: Vector3 = e["pos"]
-		var d := Vector2(p.x - x, p.z - z).length()
-		if d <= radius_m and d < best_d:
-			best_d = d
-			best_eid = eid
-			best = e
-	if best_eid.is_empty():
-		return {
-			"ok": false,
-			"error": "no_beast_in_range",
-			"hint": "approche une meute (anneau / porte est)",
-			"radius_m": radius_m,
-			"source": "prime_hub",
-		}
-	var beast_id := str(best.get("beast_id", "beast:chacal_dore"))
-	var zone_id := str(best.get("zone_id", ""))
-	var name := str(best.get("name", beast_id))
-	var delay := _beast_respawn_delay_s(beast_id, zone_id)
-	best["active"] = false
-	best["goal"] = "dead"
-	best["target"] = Vector3.ZERO
-	best.erase("aggro_eid")
-	best["respawn_at"] = Time.get_unix_time_from_system() + delay
-	var hx := float(best.get("home_x", best["pos"].x))
-	var hz := float(best.get("home_z", best["pos"].z))
-	var home := _walkable_xz(hx, hz)
-	best["pos"] = Vector3(home.x, 0.15, home.y)
-	var loot: Array = [{"id": "fourrure_doree", "name": "Fourrure dorée", "qty": 1}]
-	if "scarab" in beast_id or "obsidien" in beast_id:
-		loot = [{"id": "obsidienne", "name": "Obsidienne", "qty": 1}]
-	elif "scorpion" in beast_id:
-		loot = [{"id": "venin", "name": "Venin", "qty": 1}]
-	elif "serpent" in beast_id:
-		loot = [{"id": "ecailles_dorees", "name": "Écailles dorées", "qty": 1}]
-	var credits := 3
-	if economy != null and economy.has_method("grant_world_loot"):
-		economy.grant_world_loot(player, loot, credits)
-	var who := player if not player.is_empty() else "Voyageur"
-	var is_boss := bool(best.get("is_boss", false))
-	_stream(
-		"beast.defeated",
-		"%s a dispersé %s (%s)." % [who, name, beast_id],
-		who,
-		zone_id,
-		{"beast_id": beast_id, "is_boss": is_boss, "beast_count": beast_count()}
-	)
-	if is_boss:
-		_stream("world.boss_defeated", "Un boss a été abattu : %s." % name, who, zone_id, {"beast_id": beast_id})
-	return {
-		"ok": true,
-		"player": who,
-		"beast_id": beast_id,
-		"beast_name": name,
-		"zone_id": zone_id,
-		"distance_m": snappedf(best_d, 0.1),
-		"loot": loot,
-		"credits_gained": credits,
-		"respawn_s": delay,
-		"beast_count": beast_count(),
-		"source": "prime_hub",
-	}
+	if combat != null:
+		return combat.engage_nearest_beast(player, x, z, radius_m)
+	return {"ok": false, "error": "combat_unavailable"}
 
 
 func life_stats() -> Dictionary:
@@ -1633,37 +764,8 @@ func life_stats() -> Dictionary:
 
 
 func zone_state_payload(your_oid: int) -> Dictionary:
-	var online := online_players()
-	# Pas de "bots" dupliqué — entities[] slim pour le fil WS.
-	var payload := {
-		"type": "zone_state",
-		"proto": "lbg-ws/2",
-		"zone": ZONE,
-		"tick": tick,
-		"server_time_ms": int(Time.get_unix_time_from_system() * 1000.0),
-		"entities": entity_list(true),
-		"your_character_id": your_oid,
-		"session_policy": "prime_hub_g4u",
-		"collision_blocks": collision.blocks.size() if collision else 0,
-		"online_players": online,
-		"online_count": online.size(),
-		"bot_count": bot_count(),
-		"npc_count": npc_count(),
-		"beast_count": beast_count(),
-	}
-	var eid := "player:%d" % your_oid
-	if entities.has(eid):
-		var p: Vector3 = entities[eid]["pos"]
-		payload["position"] = [p.x, p.y, p.z]
-	return payload
+	return HubSimViewsScript.zone_state_payload(self, your_oid)
 
 
 func enter_world_payload(your_oid: int) -> Dictionary:
-	ensure_human(your_oid, "Voyageur")
-	var base := zone_state_payload(your_oid)
-	base["type"] = "enter_world"
-	var eid := "player:%d" % your_oid
-	if entities.has(eid):
-		var p: Vector3 = entities[eid]["pos"]
-		base["position"] = [p.x, p.y, p.z]
-	return base
+	return HubSimViewsScript.enter_world_payload(self, your_oid)
