@@ -36,7 +36,7 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 
 | Quoi | Chemin / URL |
 |------|----------------|
-| Monorepo (source de vérité) | `/home/sdesh/projects/LBG_Studios` — GitHub `Teome0245/LBG_Studios` |
+| Monorepo (source de vérité) | GitHub `Teome0245/LBG_Studios` — clones : WSL `/home/sdesh/projects/LBG_Studios` · **éditeur `.143`** `/home/lbg/projects/LBG_Studios` (SMB `A:` depuis `.10`) · sync miroir `packages/cortex/infra/scripts/sync_projects_143.sh` · lab/prod via **git + `deploy_*`** (pas rsync massif) |
 | Workspace Cursor | `LBG_Studios.code-workspace` |
 | Deploy runtime Cortex | `.140` → **`/opt/LBG_IA_MMO`** (rsync, pas de `git clone`) |
 | Env prod | `.140` `/etc/lbg-ia-mmo.env` (depuis `packages/cortex/infra/secrets/lbg.env`) |

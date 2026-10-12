@@ -1,9 +1,9 @@
 # VM Omarchy `.143` — nœud écosystème LBG (R720)
 
-**Statut** : **installée et joignable** — R720 `.201`, VMID **143**, IP **`192.168.0.143`**, user `lbg` (SSH clé)  
+**Statut** : **installée et joignable** — R720 **`lbgr720` `.201`**, VMID **143**, IP **`192.168.0.143`**, user `lbg` (SSH clé)  
 **Rôle** : nœud écosystème 24/7 — **mains** (`linux_agent` `:5005`) + session Hyprland d’**observation** (VS Code / Cline / Chromium). Pas un poste de manipulation humaine.  
 **Migration mains** : absorbé depuis CT `.142` — [`migration_hands_142_to_143.md`](../../../docs/migration_hands_142_to_143.md).  
-**Date** : 2026-09-15 (install) · placement R720 confirmé 2026-10-01
+**Date** : 2026-09-15 (install) · **migré NUC → R720** : 2026-10-01
 
 > Incident install : le premier cidata pointait `/dev/vda` ; sous VirtIO-SCSI Proxmox le disque est **`/dev/sda`**. Corrigé dans le script + relance `omarchy-iso-install`.
 
@@ -11,11 +11,11 @@
 
 | | Choix |
 |--|--------|
-| Hyperviseur | **`.201` (R720)** — (historique NUC `.200`, migré) |
+| Hyperviseur | **`.201` (`lbgr720`)** — storage `local-vm-930g` (ex-NUC `.200` jusqu’au 2026-10-01) |
 | Forme | **QEMU VM** (UEFI/OVMF, Q35, VirtIO) — pas LXC |
 | IP / VMID | **`192.168.0.143` / 143** |
 | Hostname | `lbg-omarchy` |
-| Spec | ~4 vCPU · **16 Go** RAM · root + disque `projects` |
+| Spec | 4 vCPU · **16 Go** RAM (balloon 8 Go) · **60 Go** root + **100 Go** data (`/home/lbg/projects`) · `local-vm-930g` |
 | MAC | `BC:24:11:43:00:01` (réservation DHCP recommandée) |
 | ISO | Omarchy **4.0.3** → `local:iso/omarchy-4.0.3.iso` |
 
@@ -284,7 +284,7 @@ Notif Fcitx « Diagnostique Wayland » = cosmétique (keymap), ignorable.
 
 | Voie | URL / commande |
 |------|----------------|
-| Console Proxmox | https://192.168.0.200:8006/ → VM 143 (autologin) |
+| Console Proxmox | https://192.168.0.201:8006/ → VM 143 (souvent **noire** sous Hyprland/virtio — préférer RustDesk) |
 | SSH | `ssh lbg@192.168.0.143` |
 | Secrets | `packages/cortex/infra/secrets/omarchy-143.env.local` |
 
