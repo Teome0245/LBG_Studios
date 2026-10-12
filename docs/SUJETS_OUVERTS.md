@@ -51,12 +51,24 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 | O-OPS-2 | Agrégat métriques 7j Fleet (optionnel) | DoD plan gaps encore `[~]` — [`revue_ops_health_7j.md`](../packages/cortex/docs/revue_ops_health_7j.md) · hors feeling Compagnon |
 | O-OPS-3 | **F3** O2 jeu (hors plan gaps) | Explicitement hors [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) — voir P3–P5 [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
 
+### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
+
+Infra Team `evolution_veille` + Lyra + mission batch 8 pistes **done** (brief heuristique). Suites = actions top 3 du livrable, pas le fil d’analyse.
+
+| ID | Sujet | Notes |
+|----|--------|--------|
+| O-VEIL-1 | Spike **DeepSeek Harness** `.10` → go/no-go `dsh_headless` | L2 · ADR [`../packages/cortex/docs/adr/0020-dsh-greffe-peripherique.md`](../packages/cortex/docs/adr/0020-dsh-greffe-peripherique.md) · Ollama `.110` · **pas** sur 140 |
+| O-VEIL-2 | Spike **VoiceStudio** (ou équiv.) TTS/ASR LAN Compagnon | L2 · axe `voice_local` · alternative ElevenLabs · hors cloud |
+| O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | L1 · inspiration seulement · pas de framework externe ([`lbg_agentic_os.md`](../packages/cortex/docs/lbg_agentic_os.md)) |
+| O-VEIL-4 | Fiabiliser chemin LLM veille (optionnel) | Batch 8 a timeouté Ollama → fallback heuristique OK ; profil `json` / timeout / pas de bascule lourde 111→110 |
+
 ---
 
 ## Clos (récents)
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-VEIL-0 | Fil veille batch 8 pistes + workflow Team `evolution_veille` + Lyra ON | **2026-10-12** · mission `4c28ada8-…` done · API `POST /v1/team/evolution/lead` · suites = `O-VEIL-1..4` |
 | O-GAPS-1 | Fil gaps agentiques A–F2 + revue 7j + soft-links Fleet | **2026-10-12** · pilote live · revue **GO** · Vulcan↔Vex / Hermès↔Tess · doc alignée |
 | O-JEUX-1 | Ticket **3.1** Live World Stream Hub → Compagnon | **2026-10-12** · `world_stream.py` `:8787` · tests 7/7 · greeting enrichi · package CT100 |
 | O-L3-1 | Mission L3 smoke LAN `days_ok` → 3 | **2026-10-11** · `status=done` · `tools/status_l3_smoke_lan_mission.sh` |
@@ -72,4 +84,4 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
