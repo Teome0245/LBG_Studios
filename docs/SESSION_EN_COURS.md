@@ -1,8 +1,9 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-11  
-**Branche** : `cursor/priorit-s-actuelles-lbg-studios-d491` (HEAD `eb67117` au bootstrap)  
-**Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.
+**Mis à jour** : 2026-10-12  
+**Branche** : `cursor/priorit-s-actuelles-lbg-studios-d491`  
+**Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
+**Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)
 
 ---
 
@@ -42,6 +43,7 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 | Runtime jeu | `docs/RUNTIME_GODOT.md` |
 | Plan évolutions | `docs/PLAN_PROPOSITIONS_EVOLUTIONS.md` |
 | Suivi plan évolutions | `docs/suivi/PLAN_EVOLUTIONS_STATUS.md` |
+| Sujets pas encore traités | [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
 | Handoff visuel Compagnon (clos) | `docs/handoff_antigravity_visuel_compagnon.md` |
 | Handoff sonde AD (clos) | `docs/handoff_antigravity_sonde_ad.md` |
 | Workspace | `LBG_Studios.code-workspace` |
