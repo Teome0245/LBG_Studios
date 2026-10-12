@@ -62,12 +62,22 @@ Infra Team `evolution_veille` + Lyra + mission batch 8 pistes **done** (brief he
 | O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | L1 · inspiration seulement · pas de framework externe ([`lbg_agentic_os.md`](../packages/cortex/docs/lbg_agentic_os.md)) |
 | O-VEIL-4 | Fiabiliser chemin LLM veille (optionnel) | Batch 8 a timeouté Ollama → fallback heuristique OK ; profil `json` / timeout / pas de bascule lourde 111→110 |
 
+### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
+
+Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **optionnels** du fil Create PR / review :
+
+| ID | Sujet | Notes |
+|----|--------|--------|
+| O-DOC-1 | Harmoniser `OBJECTIVES.md` entrée Compagnon | Texte encore « via Pilot `#/assistant` » — canon = présence `:5174`, Pilot = cockpit ops ([`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)) |
+| O-DOC-2 | Review Bugbot formelle du snapshot priorités (optionnel) | Review manuelle OK au fil ; Bugbot / Composer 2.5 hors quota à l’époque — relancer si besoin d’une review outillée |
+
 ---
 
 ## Clos (récents)
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-PRIO-0 | Fil priorités actuelles + PR #4 (`PRIORITES_ACTUELLES.md`) | **2026-10-12** · mergée · suites optionnelles = `O-DOC-1..2` |
 | O-VEIL-0 | Fil veille batch 8 pistes + workflow Team `evolution_veille` + Lyra ON | **2026-10-12** · mission `4c28ada8-…` done · API `POST /v1/team/evolution/lead` · suites = `O-VEIL-1..4` |
 | O-GAPS-1 | Fil gaps agentiques A–F2 + revue 7j + soft-links Fleet | **2026-10-12** · pilote live · revue **GO** · Vulcan↔Vex / Hermès↔Tess · doc alignée |
 | O-JEUX-1 | Ticket **3.1** Live World Stream Hub → Compagnon | **2026-10-12** · `world_stream.py` `:8787` · tests 7/7 · greeting enrichi · package CT100 |
@@ -84,4 +94,4 @@ Infra Team `evolution_veille` + Lyra + mission batch 8 pistes **done** (brief he
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
