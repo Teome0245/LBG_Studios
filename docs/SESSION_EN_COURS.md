@@ -26,8 +26,8 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-10-12 post-L3 DONE).
 
 1. **Plan d'évolutions (10/10 tickets)** : **100 % réalisé & clôturé** (tickets 1.1..1.3, 2.1..2.3, 3.1, 3.2, 5.1, 5.2 DONE).
-2. **Feeling Compagnon O-FEEL-1/2 (rejeu humain `:5174`)** : **validé & clôturé** (C1/C2/PLAN/GO ALL PASS).
-3. **Prochaines pistes** : **O-FEEL-3** (retour terrain présence long) · **O-IDE-1..3** (Cline) · Ops `smoke_lan_surfaces.sh`.
+2. **Feeling Compagnon O-FEEL-1..3 (rejeux humains `:5174`)** : **100 % validé & clôturé** (C1/C2/PLAN/GO ALL PASS + retour terrain présence naturel).
+3. **Prochaines pistes** : **O-IDE-1..3** (Cline E4b-qat / perf `.110` / ADR) · Ops `smoke_lan_surfaces.sh`.
 4. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
 
 ## Fichiers / surfaces utiles
@@ -51,6 +51,12 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-12 : **polish retour terrain longue durée Compagnon (O-FEEL-3) — validé & clôturé** —
+  - `presence_report.py` enrichi : regex de détection étendue aux tournures naturelles de fil long (« comment réagissent les personas sur le terrain », « des nouvelles de Lia »).
+  - Personnalisation dynamique du retour terrain selon le persona ciblé (`_persona_from_prompt`), avec conservation du comparatif équilibré Nix vs Mira par défaut.
+  - Garantie anti-ops stricte : en cas de hub de jeu inaccessible, réponse collègue fluide sans fuite d'exception brute, de numéro de port (`:8787`) ni de commande bash.
+  - `presence_brief.py` nettoyé de toute mention de tâche shell en fallback.
+  - Suite de tests unitaire étendue (9/9 tests verts), build atomique `1.0.0+f346979` déployé sur CT 100 (`192.168.0.100:5174`), smokes de rejeu terrain et rejeu humain 7 tours (`smoke_rejeu_humain_d6_5174.sh`) validés 100 % PASS.
 - 2026-10-12 : **initialisation outillage MCP REA (Reverse Engineer Anything) — matrice multi-environnements** —
   - Configurations dédiées créées : [`.cursor/mcp.json`](../.cursor/mcp.json) (Cursor), [`.agents/mcp_config.json`](../.agents/mcp_config.json) (Antigravity), [`.mcp.json`](../.mcp.json) (Claude Code, OpenCode), [`.vscode/cline_mcp_settings.json`](../.vscode/cline_mcp_settings.json) (Cline).
   - Wrapper Studio / CLI exécutable créé dans [`tools/rea_runner.sh`](../tools/rea_runner.sh) pour les agents backend/Team (Iris, Métis).

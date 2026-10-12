@@ -1,4 +1,4 @@
-"""Tests — presence_report (Phase C2)."""
+"""Tests — presence_report (Phase C2 Polish)."""
 
 from __future__ import annotations
 
@@ -30,6 +30,12 @@ _FAKE = {
             "presence_line": "Voyageur reste à distance, ton mesuré.",
             "actions_at_m": {"12": {"action": "greet"}},
         },
+        {
+            "name": "Lia",
+            "presence_dials": {"chaleur": 0.60, "initiative": 0.50},
+            "presence_line": "Voyageur observe les étoiles avec curiosité.",
+            "actions_at_m": {"12": {"action": "greet"}},
+        },
     ],
 }
 
@@ -42,6 +48,16 @@ class PresenceReportTests(unittest.TestCase):
         self.assertFalse(pr.wants_presence_report("bonjour"))
         self.assertFalse(pr.wants_presence_report("teste présence Nix chaleur haute"))
 
+    def test_detect_natural_long_conversation(self) -> None:
+        # Polish O-FEEL-3 : tournures naturelles sur rejeux longs
+        self.assertTrue(pr.wants_presence_report("comment réagissent les personas sur le terrain"))
+        self.assertTrue(pr.wants_presence_report("comment vont les bots sur le terrain"))
+        self.assertTrue(pr.wants_presence_report("des nouvelles de la présence sur Lost Heaven"))
+        self.assertTrue(pr.wants_presence_report("qu'est-ce que ça donne sur le terrain"))
+        self.assertTrue(pr.wants_presence_report("comment ça se passe sur le terrain"))
+        self.assertTrue(pr.wants_presence_report("point sur la présence des personas"))
+        self.assertTrue(pr.wants_presence_report("alors, le retour terrain ?"))
+
     def test_format_causerie(self) -> None:
         text = pr.format_presence_causerie(_FAKE)
         self.assertIn("Nix", text)
@@ -49,6 +65,21 @@ class PresenceReportTests(unittest.TestCase):
         self.assertIn("escort", text)
         self.assertNotIn("{", text)  # pas de dump JSON
         self.assertNotRegex(text, r"(?i)\bAgir\b")
+
+    def test_format_causerie_error_no_ops_leak(self) -> None:
+        # Polish O-FEEL-3 : en cas de déconnexion hub, rester en causerie sans fuite ops (:8787, bash, etc.)
+        err_data = {"ok": False, "error": "ConnectionRefusedError: port 8787"}
+        text = pr.format_presence_causerie(err_data)
+        self.assertNotIn("8787", text)
+        self.assertNotIn("bash", text)
+        self.assertNotIn("smoke_b3b4", text)
+        self.assertIn("serveur de jeu", text.lower())
+
+    def test_format_causerie_persona_specific(self) -> None:
+        # Polish O-FEEL-3 : ciblage d'un persona particulier (ex: Lia)
+        text = pr.format_presence_causerie(_FAKE, prompt="comment va Lia sur le terrain ?")
+        self.assertIn("Lia", text)
+        self.assertIn("chaleur", text.lower())
 
     def test_attach(self) -> None:
         async def _run() -> dict:

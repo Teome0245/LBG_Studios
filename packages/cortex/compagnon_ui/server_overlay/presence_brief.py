@@ -154,8 +154,8 @@ async def attach_presence_brief_if_needed(
     except Exception as e:
         logger.warning("presence_brief campus spawn failed: %s", e)
         note = (
-            f"\n\n_Brief non persisté côté Team ({e}). "
-            "Le markdown reste le livrable — lance le smoke à la main._"
+            f"\n\n_Brief généré (suivi Team non synchronisé : {e}). "
+            "Le plan reste le livrable de référence pour la zone d'entraînement._"
         )
         out["content"] = content + note
         out["response"] = out["content"]

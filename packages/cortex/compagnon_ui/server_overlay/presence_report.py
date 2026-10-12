@@ -20,12 +20,22 @@ _PRESENCE_REPORT_RE = re.compile(
     r"(?i)\b("
     r"r[ée]sultat\s+(?:du\s+|de\s+(?:la\s+)?)?(?:smoke\s+)?pr[ée]sence|"
     r"retour\s+(?:terrain|hub|pr[ée]sence|smoke)|"
-    r"comment\s+(?:s['\u2019]?est\s+pass[ée]|a\s+donn[ée])\s+(?:le\s+)?(?:smoke|hub|nix)|"
+    r"comment\s+(?:s['\u2019]?est\s+pass[ée]|a\s+donn[ée])\s+(?:le\s+)?(?:smoke|hub|terrain|nix|lia|mira)|"
+    r"comment\s+(?:vont|r[ée]agissent|se\s+comportent)\s+(?:les\s+)?(?:bots|personas|nix|lia|mira)|"
+    r"des\s+nouvelles\s+(?:de\s+la\s+pr[ée]sence|du\s+terrain|de\s+nix|de\s+lia|de\s+mira|de\s+lost\s+heaven)|"
+    r"point\s+sur\s+(?:la\s+pr[ée]sence|le\s+terrain|les\s+dials|les\s+personas|l['\u2019][ée]ntra[îi]nement)|"
+    r"qu['\u2019]est[- ]ce\s+que\s+(?:ça\s+|cela\s+)?donne\s+sur\s+le\s+terrain|"
+    r"comment\s+ça\s+se\s+passe\s+sur\s+le\s+terrain|"
+    r"alors\s+(?:sur\s+le\s+terrain|le\s+retour\s+terrain)|"
     r"lecture\s+dials?|"
     r"pr[ée]sence[- ]?dials?\s+(?:live|hub)|"
     r"nix\s+(?:vs|versus)\s+mira|"
     r"compte[- ]?rendu\s+pr[ée]sence"
     r")\b"
+)
+
+_PERSONA_RE = re.compile(
+    r"(?i)\b(nix|lia|mira|kael|renn|sola|vulcan|ori|tess|vex)\b"
 )
 
 
@@ -75,15 +85,42 @@ def _bot_by_name(bots: list, name: str) -> dict[str, Any] | None:
     return None
 
 
-def format_presence_causerie(data: dict[str, Any]) -> str:
-    """3–5 phrases collègue — pas de JSON ni chrome Agir."""
+def _persona_from_prompt(prompt: str) -> str | None:
+    m = _PERSONA_RE.search(prompt or "")
+    return m.group(1).capitalize() if m else None
+
+
+def format_presence_causerie(data: dict[str, Any], prompt: str = "") -> str:
+    """3–5 phrases collègue — pas de JSON ni chrome Agir ni fuite ops."""
     if not data.get("ok"):
-        err = str(data.get("error") or "hub injoignable")
         return (
-            f"Je n'ai pas pu lire le hub présence ({err}). "
-            "Vérifie `:8787` ou relance `bash tools/smoke_b3b4_presence_hub.sh`."
+            "Je n'ai pas pu joindre le serveur de jeu pour le moment. "
+            "Dès que la session Lost Heaven est active, je pourrai observer directement "
+            "comment les personas réagissent sur le terrain."
         )
     bots = data.get("bots") if isinstance(data.get("bots"), list) else []
+    target_persona = _persona_from_prompt(prompt)
+
+    # Si l'utilisateur cible spécifiquement un persona autre que la comparaison par défaut
+    if target_persona and target_persona not in ("Nix", "Mira"):
+        bot = _bot_by_name(bots, target_persona)
+        if bot:
+            bd = bot.get("presence_dials") if isinstance(bot.get("presence_dials"), dict) else {}
+            b_ch = float(bd.get("chaleur", 0) or 0)
+            ba = (bot.get("actions_at_m") or {}).get("12") if isinstance(bot.get("actions_at_m"), dict) else {}
+            b_act = str((ba or {}).get("action") or "neutral")
+            b_line = str(bot.get("presence_line") or "").strip()
+            bits = [
+                f"Retour terrain Lost Heaven : **{target_persona}** est actuellement en jeu "
+                f"avec une chaleur de {b_ch:.2f} et un comportement **{b_act}** à portée normale.",
+            ]
+            if b_line:
+                bits.append(f"Ambiance : « {b_line[:100]} »")
+            bits.append(
+                "Le profil est bien actif dans la zone d'entraînement, sans altérer l'économie ni le monde."
+            )
+            return "\n\n".join(bits)
+
     nix = _bot_by_name(bots, "Nix") or {}
     mira = _bot_by_name(bots, "Mira") or {}
     nd = nix.get("presence_dials") if isinstance(nix.get("presence_dials"), dict) else {}
@@ -98,13 +135,13 @@ def format_presence_causerie(data: dict[str, Any]) -> str:
     bits = [
         f"Retour terrain Lost Heaven : **Nix** reste plus chaleureux "
         f"(chaleur {n_ch:.2f}) que **Mira** ({m_ch:.2f}).",
-        f"À ~12 m, Nix part en **{n_act}**, Mira en **{m_act}** — les seuils B3 tiennent.",
+        f"À ~12 m, Nix part en **{n_act}**, Mira en **{m_act}** — les seuils d'incarnation tiennent bien.",
     ]
     if n_line:
         bits.append(f"Ambiance Nix : « {n_line[:100]} »")
     bits.append(
         "Pas de mutation monde : c'est de la présence mesurable pour la zone d'entraînement. "
-        "Si tu veux, on relance le brief ou on suit la mission Campus."
+        "On peut continuer à ajuster leurs attitudes ou suivre la prochaine étape."
     )
     return "\n\n".join(bits)
 
@@ -130,7 +167,7 @@ async def attach_presence_report_if_needed(
         logger.warning("presence_report fetch failed: %s", e)
         data = {"ok": False, "error": str(e)[:160]}
 
-    content = format_presence_causerie(data)
+    content = format_presence_causerie(data, prompt=prompt)
     out = {
         **result,
         "content": content,

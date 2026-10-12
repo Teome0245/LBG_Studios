@@ -13,9 +13,8 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 ### O1 — Feeling Compagnon / présence
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-FEEL-3 | Polish boucle C1/C2 présence (retour terrain) | `presence_brief.py` · `presence_report.py` — retour terrain en **causerie**, pas dump ops, sur rejeux longs |
+_Aucun sujet ouvert en attente — O-FEEL-1, O-FEEL-2 et O-FEEL-3 clos._
+
 
 ### O1 — Mains code / coûts LLM
 
@@ -73,6 +72,7 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-FEEL-3 | Polish boucle C1/C2 présence (retour terrain) | **2026-10-12** · `presence_report.py` + `presence_brief.py` · regex fil long naturelle · persona ciblé dynamique (ex: Lia) · anti-ops offline causerie · smoke live 5174 PASS |
 | O-REA-1 | Intégration MCP **REA** (Reverse Engineer Anything) | **2026-10-12** · `.cursor/mcp.json` + `.agents/mcp_config.json` configurés · doc [`OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) |
 | O-FEEL-1 | **A2 — C2 collègues** (rejeu humain) | **2026-10-12** · rejeu 7 tours `smoke_rejeu_humain_d6_5174.sh` C1/C2/PLAN/GO **PASS** (`rejeu-humain-d6-3fa2fffd`) |
 | O-FEEL-2 | Feeling C2 rejeu humain périodique | **2026-10-12** · pas de template ops à l'ouverture, greeting + follow naturels |
