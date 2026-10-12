@@ -201,7 +201,7 @@ Persistance : `players_state.json` → `relation_memory[]` · lecture `GET /v1/r
 ```bash
 bash tools/smoke_b2_presence_dials_hub.sh    # GET /v1/presence-dials — Nix chaleur haute
 bash tools/smoke_b3b4_presence_hub.sh        # seuils B3 + Nix escort ≠ Mira greet (B4)
-bash tools/status_l3_smoke_lan_mission.sh    # mission L3 days_ok (calendaire UTC)
+bash tools/status_l3_smoke_lan_mission.sh    # mission L3 — DONE 2026-10-11 (days_ok=3/3)
 ```
 
 Pack `data/life/presence_dials.json` (+ `thresholds`) · inject greet/ambient/escort `hub_sim` · zone d’entraînement ([`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md)).

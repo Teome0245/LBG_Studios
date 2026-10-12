@@ -34,7 +34,7 @@ Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team
 Jalons **D0–D6** (+ character / voix) : **OK** sur checklist (smoke D6 V6–V8 **PASS** 2026-10-06).  
 Fil **Jarvis / D5** (mandat + soft-confirm + Accueil/Jobs) : **clôturé** — [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md).  
 Gate feeling Compagnon **ouverte** — voir [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
-**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · **ouverts** listés dans [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil* (A2/C2 feeling, polish retour terrain, L3 days_ok) ; ops LAN stables.  
+**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · L3 smoke LAN **DONE** 2026-10-11 (`days_ok=3/3`) · **ouverts** : A2/C2 feeling / polish retour terrain — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.  
 **D7 Présence Agents** : code monorepo livré — clôture [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) · sync worker `.143` encore ouvert.
 
 **Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
@@ -90,4 +90,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : L3 `days_ok` **2/3** → 3 après minuit UTC (`status_l3_smoke_lan_mission.sh`) · D6 A2 collègues **livré** (`colleague_open`) · O2 P3/P5 verts.
+**Suite immédiate** : L3 **DONE** (`days_ok=3/3`, 2026-10-11) · D6 A2 collègues **livré** · O2 P3/P5 verts · polish feeling Compagnon (A2/C2).

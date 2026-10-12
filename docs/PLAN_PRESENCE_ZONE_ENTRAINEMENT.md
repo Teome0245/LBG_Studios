@@ -98,7 +98,7 @@ A1 greeting ─┬─► A2 C2 avis
 2. Sur Lost Heaven : 1 joueur IA avec dials non neutres, présence 30 s **smokeable**. → **OK** B3/B4 (`SMOKE_B3B4_PRESENCE_HUB_OK` reconfirmé PM).  
 3. Compagnon peut **discuter** de la zone d’entraînement **et** **soumettre** un plan studio utilisable sans méta vide. → **OK** C1 brief + C2 retour + A4b plan_submit (`SMOKE_C2_PRESENCE_REPORT_OK`).
 
-**Phase C code** : **livrée** 2026-10-08 (C1–C3). Feeling rejeu : **OK conditionnel** (A2 avis collègues + anti tool_loop causerie). Reste ops : L3 `days_ok` **2/3** → 3 (armed wait UTC).
+**Phase C code** : **livrée** 2026-10-08 (C1–C3). Feeling rejeu : **OK conditionnel** (A2 avis collègues + anti tool_loop causerie). Ops L3 : **DONE** 2026-10-11 (`days_ok=3/3`, `status=done`).
 
 ---
 
@@ -114,7 +114,7 @@ Livré et poussé : A1, A3, A4, A4b, A4c, A4c.1 · smokes V9/V10 · watch « ret
 | **O1** | **A2 — C2 collègues** | polish livré (fil 2026-10) | `chat_intent` / nudge causerie · rejeu [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) | Rejeu humain périodique si template « qu’est-ce qui t’amène » réapparaît |
 | **O2** | **Feeling C2 rejeu humain** | PARTIEL | `:5174` fil humain | Critère succès #1 : C2 encore PARTIEL sur certains tours |
 | **O3** | **Polish boucle C1/C2 présence** | code OK / UX | `presence_brief.py` · `presence_report.py` | Vérifier que le retour terrain reste en causerie (pas dump ops) sur rejeux longs |
-| **O4** | **L3 ops `days_ok` 2/3 → 3** | ops documenté | Pilot / mission L3 | Armed wait UTC — hors feeling Compagnon |
+| **O4** | **L3 ops `days_ok` → 3** | **DONE** 2026-10-11 | Pilot / mission L3 | `status=done` · hors feeling Compagnon |
 | **O5** | **Hors scope ce fil** | autre discussion | Session Island D7 · Pilot split · deploy overlay · prime-hub WIP | Ne pas mélanger ici |
 | **O6** | **Desktop portable notepad** | **CLOS** 2026-10-12 | `desktop_dispatch` · worker `.77` | Dry-run=0 + allowlist ; alias Compagnon `notepad` conservé (plus de force `notepadpp`) |
 

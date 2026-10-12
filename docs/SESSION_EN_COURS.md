@@ -17,7 +17,7 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 | Rail | État |
 |------|------|
 | **O1 Compagnon** | D0–D6 OK (smoke D6 V6–V8 PASS 2026-10-06) ; gate *feeling* ouverte — `FOCUS_COMPAGNON.md` |
-| **O1 ops** | Lot gaps A–F2 + tick L3 livré 2026-10-07 ; L3 `days_ok` → viser 3/3 |
+| **O1 ops** | Lot gaps A–F2 + tick L3 livré 2026-10-07 ; L3 **DONE** `days_ok=3/3` (2026-10-11) |
 | **O2 hub** | P6 Godot-first G5+ **live** (`.246:8787`) ; P3 wiki live ; P5 telegraph boss **vert** 2026-10-08 ; **2.3 navmesh `NavigationServer3D` LIVE** 2026-10-11 |
 | **Interdit** | Core3 / gateway SOE / `hub_runtime` Python sur chemin joueur |
 

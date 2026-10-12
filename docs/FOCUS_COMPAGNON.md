@@ -162,7 +162,7 @@ Phasage réaliste :
 | **C1 présence** | Brief hub « teste présence Nix… » → markdown + mission Campus bornée | **OK live** 2026-10-08 — `presence_brief.py` |
 | **C2 présence** | Retour terrain → causerie (`retour hub présence`) | **OK live** 2026-10-08 — `SMOKE_C2_PRESENCE_REPORT_OK` · `presence_report.py` |
 
-**Fil D6.5 clos** (2026-10-11) — suite hors-fil : O2 feeling C2, O3 polish présence, O4 L3 days_ok ; **O6 desktop portable clos** 2026-10-12 — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.
+**Fil D6.5 clos** (2026-10-11) — suite hors-fil : O2 feeling C2, O3 polish présence ; **O4 L3 DONE** 2026-10-11 ; **O6 desktop portable clos** 2026-10-12 — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.
 
 ### Ops Agir / Pilot (rappel 2026-10-02)
 
