@@ -1,10 +1,10 @@
 # Priorités actuelles — LBG Studios
 
-**Date** : 2026-10-08  
+**Date** : 2026-10-12  
 **Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
 **Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
-Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
+Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) · [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
 
 ---
 
@@ -90,4 +90,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : L3 **DONE** (`days_ok=3/3`, 2026-10-11) · D6 A2 collègues **livré** · O2 P3/P5 verts · polish feeling Compagnon (A2/C2).
+**Suite immédiate** : voir [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) — **3.1** World Stream (en cours) · feeling C2 rejeu · L3 **DONE**.

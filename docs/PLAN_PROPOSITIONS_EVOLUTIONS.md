@@ -5,7 +5,7 @@
 **Source** : Monorepo [`LBG_Studios`](file:///home/lbg/projects/LBG_Studios)  
 **Ordre stratégique** : **O1 Studio d’abord, O2 Jeu ensuite** — [`OBJECTIVES.md`](file:///home/lbg/projects/LBG_Studios/OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](file:///home/lbg/projects/LBG_Studios/docs/PRIORITES_ACTUELLES.md)  
 **Étoile du nord** : IA incarnée sur PC/infra (Rang 1) → persona au cœur du MMO (Rang 2) → évolution contrôlée du monde et du code (Rang 3) — [`RESTAURATION_PRODUIT.md`](file:///home/lbg/projects/LBG_Studios/docs/RESTAURATION_PRODUIT.md).  
-**Mains code `.143` (ADR 0025)** : OpenCode LIVE Métis [`dd6d73c9…`](http://192.168.0.140:8080/pilot/#/team?task=dd6d73c9-4cf1-46aa-bd2d-24943402dff5) (1.1 deploy+smoke → 1.2) ; Claude CLI = dry-run OK (expérimental) ; Cline CLI absent — VS Code ouvert sur Omarchy pour Plan→Act manuel.  
+**Mains code `.143` (ADR 0025)** : OpenCode LIVE Métis ; Claude CLI = dry-run OK (expérimental) ; **Cline CLI installé** sur `.143` — détail [`packages/cortex/docs/cline/CLI_SECOND_AVIS.md`](../packages/cortex/docs/cline/CLI_SECOND_AVIS.md) · smoke live E4b-qat encore ouvert ([`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) O-IDE-1).  
 **Délégation Team** : mission Campus `f11fa428-6aef-4a61-83e5-5b32fe6feee0` — suivi Pilot [`#/team`](http://192.168.0.140:8080/pilot/#/team).
 
 ---

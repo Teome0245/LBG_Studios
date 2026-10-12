@@ -23,15 +23,13 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 
 ## Prochaines actions (à ajuster en fin de session)
 
-1. Confirmer dans Antigravity : Customizations → Rules voit `.agents/rules/` + `AGENTS.md`.
-2. Handoffs Antigravity historiques : **tous deux clôturés** (sonde AD résolue + visuel Compagnon D6 déjà livré/validé).
-3. Plan d'évolutions Studio / Compagnon :
-   - Streaming SSE des réponses ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.2) : **validé & testé live**.
-   - Modularisation Pilot Web ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §1.3) : **validé & packagé** (17 modules ES <1 000 L, chunks synchronisés, build Vite OK).
-   - Persistance transactionnelle SQLite prime-hub ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §2.1) : **validé & clôturé** (`hub_db.gd` threadé WAL, `hub_player_store.gd`, selftest + crash-safety).
-   - Découpage modulaire des méga-scripts ([`PLAN_PROPOSITIONS_EVOLUTIONS.md`](PLAN_PROPOSITIONS_EVOLUTIONS.md) §2.2) : **validé & clôturé** (serveur `hub_sim.gd` scindé en 5 modules <800 L ; client `main.gd` scindé en 4 modules <800 L : `main` 707 L, `gameplay_ops` 529 L, `quest_ops` 281 L, `net_world` 675 L, `ui_dialogue` 506 L ; `client_modular_selftest.gd` et `sim_selftest.gd` verts).
-   - Prochaine action Studio / Jeu : Ticket 3.1 Live World Stream Hub → Compagnon (flux d'événements du monde vers le bureau).
-4. Si reprise ops LAN : `bash tools/smoke_lan_surfaces.sh --functional` + `docs/SMOKE_LAN.md`.
+Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-10-12 post-L3 DONE).
+
+1. **O-JEUX-1** — Ticket **3.1** Live World Stream Hub → Compagnon (en cours / WIP `world_stream.py` local — vérifier diff avant commit).
+2. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`) si pas de WIP 3.1.
+3. **O-FEEL-3** — Polish retour terrain présence (causerie, pas dump ops).
+4. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-CI-1** (5.2) · **O-IDE-*** Cline.
+5. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
 
 ## Fichiers / surfaces utiles
 
@@ -54,6 +52,7 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-12 soir : **L3 DONE** confirmé live (`days_ok=3/3`, `status=done`, `last_ok_day=2026-10-11`) · backlog [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) réécrit (feeling + 3.1 + clos L3/D6.5).
 - 2026-10-12 : **ticket 2.2 Découpage modulaire des méga-scripts — validé & clôturé** —
   - Volet client `packages/prime-client/scripts/main.gd` (initialement 2 406 L) ramené à **707 L** et scindé en 4 modules spécialisés < 800 L : `client_gameplay_ops.gd` (529 L, salvage, hunt, combat density, trade, wiki), `client_quest_ops.gd` (281 L, craft M10, board, Echo Hammat, initiation), `client_net_world.gd` (675 L, WebSocket, handoff, zone_state, synchronisation entités), `client_ui_dialogue.gd` (506 L, raccourcis, hotbar, chat hub, pont dialogue PNJ). Preuve : selftest headless `packages/prime-client/tools/client_modular_selftest.gd` 100 % vert sous Godot 4.6.3.
   - Volet serveur `packages/prime-hub/scripts/hub_sim.gd` (initialement 1 669 L) ramené à **771 L** et scindé en 5 modules < 800 L (`hub_combat.gd` 447 L, `hub_presence.gd` 185 L, `hub_sim_ambient.gd` 196 L, `hub_sim_views.gd` 142 L, `hub_sim_defs.gd` 103 L). Preuve : selftest headless `packages/prime-hub/tools/sim_selftest.gd` 100 % vert.
