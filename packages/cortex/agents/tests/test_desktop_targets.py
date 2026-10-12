@@ -110,3 +110,18 @@ def test_resolve_hands_from_targets_json(monkeypatch) -> None:
     out = resolve_desktop_target({"desktop_target": "hands"}, "")
     assert out is not None
     assert out.url == "http://192.168.0.142:6001"
+
+
+def test_resolve_portable_from_text(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "LBG_DESKTOP_TARGETS",
+        '[{"id":"pc","host":"192.168.0.10","url":"http://192.168.0.10:5005"},'
+        '{"id":"portable","host":"192.168.0.77","url":"http://192.168.0.77:5005",'
+        '"aliases":["portable-sds","laptop"]}]',
+    )
+    assert infer_desktop_target_from_text("ouvre notepad sur le portable") == "portable"
+    out = resolve_desktop_target({}, "lance chrome sur portable-sds")
+    assert out is not None
+    assert out.target_id == "portable"
+    assert out.url == "http://192.168.0.77:5005"
+    assert out.host == "192.168.0.77"

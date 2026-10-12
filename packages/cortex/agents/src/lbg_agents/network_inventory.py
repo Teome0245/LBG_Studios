@@ -115,6 +115,8 @@ _URL_ENV_LABELS: dict[str, tuple[str, str]] = {
     "LBG_AGENT_HANDS_URL": ("hands", "lbg-omarchy"),
     "LBG_AGENT_OMARCHY_URL": ("hands", "lbg-omarchy"),
     "AGENT_WINDOWS_URL": ("desktop", "pc-windows"),
+    "AGENT_WINDOWS_PORTABLE_URL": ("desktop", "portable-sds"),
+    "AGENT_WINDOWS_PORTABLE_WIFI_URL": ("desktop", "portable-sds-wifi"),
     "AGENT_WINDOWS_SRV_AD_URL": ("ad", "serveur-ad"),
     "AGENT_LINUX_MAIL_URL": ("mail", "serveur-mail"),
     "AGENT_LINUX_IA_URL": ("ia-agent", "agent-linux-ia"),
@@ -711,19 +713,57 @@ def _topology_probes() -> list[dict[str, Any]]:
         if role == "precu":
             for port, label in ((44453, "core3-precu-login"), (44462, "core3-precu-status"), (44463, "core3-precu-ping")):
                 row["probes"].append({"kind": "tcp", "port": port, "label": label})
-    desktop = os.environ.get("LBG_AGENT_DESKTOP_URL", "").strip().rstrip("/")
-    if desktop:
-        parsed = urlparse(desktop)
-        if parsed.hostname:
-            rows.append(
-                {
-                    "server_id": "desktop",
-                    "role": "desktop",
-                    "label": "pc-windows",
-                    "host": parsed.hostname,
-                    "probes": [{"kind": "http", "url": f"{desktop.rstrip('/')}/healthz", "label": "agent-desktop"}],
-                }
-            )
+    seen_desktop_hosts: set[str] = set()
+
+    def _add_desktop_row(*, server_id: str, label: str, url: str) -> None:
+        u = (url or "").strip().rstrip("/")
+        if not u:
+            return
+        parsed = urlparse(u)
+        host = parsed.hostname or ""
+        if not host or host in seen_desktop_hosts:
+            return
+        seen_desktop_hosts.add(host)
+        rows.append(
+            {
+                "server_id": server_id,
+                "role": "desktop",
+                "label": label,
+                "host": host,
+                "probes": [{"kind": "http", "url": f"{u}/healthz", "label": "agent-desktop"}],
+            }
+        )
+
+    # Cibles explicites (pc + portable + …) — source de vérité multi-poste
+    raw_targets = os.environ.get("LBG_DESKTOP_TARGETS", "").strip()
+    if raw_targets:
+        try:
+            data = json.loads(raw_targets)
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, list):
+            for row in data:
+                if not isinstance(row, dict):
+                    continue
+                tid = str(row.get("id") or row.get("target_id") or "desktop").strip() or "desktop"
+                label = str(row.get("label") or row.get("name") or tid).strip() or tid
+                _add_desktop_row(server_id=f"desktop-{tid}", label=label, url=str(row.get("url") or ""))
+
+    _add_desktop_row(
+        server_id="desktop",
+        label="pc-windows",
+        url=os.environ.get("LBG_AGENT_DESKTOP_URL", "") or os.environ.get("AGENT_WINDOWS_URL", ""),
+    )
+    _add_desktop_row(
+        server_id="desktop-portable",
+        label="portable-sds",
+        url=os.environ.get("AGENT_WINDOWS_PORTABLE_URL", ""),
+    )
+    _add_desktop_row(
+        server_id="desktop-portable-wifi",
+        label="portable-sds-wifi",
+        url=os.environ.get("AGENT_WINDOWS_PORTABLE_WIFI_URL", ""),
+    )
     return rows
 
 

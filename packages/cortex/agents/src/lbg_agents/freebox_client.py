@@ -25,7 +25,9 @@ _DEVICE_NAME = "lbg-omarchy"
 # Hôtes lab attendus (alignés REGISTRE / LAN_ADRESSAGE_FREEBOX) — MAC en minuscules.
 _EXPECTED_LEASES: dict[str, dict[str, str]] = {
     "192.168.0.10": {"mac": "04:7c:16:cd:98:a5", "label": "PC-Teome"},
+    "192.168.0.40": {"mac": "48:e7:da:34:33:b3", "label": "PORTABLE-SDS-WiFi"},
     "192.168.0.51": {"mac": "00:11:32:40:be:2f", "label": "NAS_LBG"},
+    "192.168.0.77": {"mac": "00:50:b6:b1:c6:80", "label": "PORTABLE-SDS-Eth"},
     "192.168.0.100": {"mac": "bc:24:11:88:e2:dd", "label": "lbg-web-100"},
     "192.168.0.110": {"mac": "bc:24:11:6b:b8:54", "label": "ollama-110"},
     "192.168.0.111": {"mac": "bc:24:11:bf:8e:ca", "label": "ollama-111"},

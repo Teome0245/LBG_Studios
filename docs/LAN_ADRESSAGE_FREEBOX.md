@@ -11,7 +11,8 @@ Les baux Freebox restent utiles pour : nom visible, anti-collision, et VMs en DH
 
 | IP | Freebox bail statique | Notes |
 |----|----------------------|--------|
-| `.10` `.51` `.100` `.110` `.111` `.140` `.141` `.143` `.200` `.201` `.245` `.246` `.251` | **OK** | plan lab |
+| `.10` `.40` `.51` `.77` `.100` `.110` `.111` `.140` `.141` `.143` `.200` `.201` `.245` `.246` `.251` | **OK** | plan lab (+ portable dual-NIC 2026-10-12) |
+| `.40` + `.77` (`PORTABLE-SDS`) | **OK** | Wi-Fi `48:E7:DA:34:33:B3` + Ethernet `00:50:B6:B1:C6:80` — agent `portable` URL `.77` |
 | **`.142`** | **absent** (OK) | CT détruit — bail DHCP + entrée LAN nettoyés (2026-10-05) |
 
 Extras Freebox hors plan lab : Player / cam / VMware `.217`…

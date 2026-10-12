@@ -100,7 +100,9 @@ Source de vérité MAC/IP projet = **cette table** (sondage ARP + `qm`/`pct conf
 
 | IP | Hostname / rôle | MAC (réelle) | IP comment | Freebox bail | Notes |
 |----|-----------------|--------------|------------|--------------|-------|
-| `.10` | `PC-SDESHAROHES` | `04:7C:16:CD:98:A5` | manuel / bail | **OK** | Poste Teome |
+| `.10` | `PC-SDESHAROHES` | `04:7C:16:CD:98:A5` | manuel / bail | **OK** | Poste Teome — agent Windows `:5005` (défaut) |
+| `.40` | `PORTABLE-SDS` (Wi-Fi) | `48:E7:DA:34:33:B3` | bail statique | **OK** | AzureWave Wi-Fi — agent `:5005` aussi (orch préfère `.77`) |
+| `.77` | `PORTABLE-SDS` (Ethernet) | `00:50:B6:B1:C6:80` | bail statique | **OK** | Ethernet **préféré** ; `desktop_target=portable` |
 | `.14` | Freebox Player POP | `DC:00:B0:63:62:7F` | bail | OK (hors projet) | |
 | `.22` | `my-Cam` | `D8:EB:97:D7:8D:A4` | bail | OK (hors projet) | |
 | `.51` | `NAS_LBG` | `00:11:32:40:BE:2F` | bail | **OK** | Synology |
