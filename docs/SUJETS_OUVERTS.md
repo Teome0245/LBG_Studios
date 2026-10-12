@@ -43,12 +43,13 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 | O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **Débloqué** (3.1 done) · prêt pour implémentation |
 | O-JEUX-3 | Nettoyage restes P4 / docs SOE | Pont SOE retiré de facto — docs/UI à purger au fil de l’eau |
 
-### Ops
+### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
 
 | ID | Sujet | Notes |
 |----|--------|--------|
 | O-OPS-1 | Smoke LAN surfaces si reprise ops | `bash tools/smoke_lan_surfaces.sh --functional` + [`SMOKE_LAN.md`](SMOKE_LAN.md) |
-| O-OPS-2 | Agrégat métriques 7j Fleet (optionnel) | Suite revue ops health — hors feeling Compagnon |
+| O-OPS-2 | Agrégat métriques 7j Fleet (optionnel) | DoD plan gaps encore `[~]` — [`revue_ops_health_7j.md`](../packages/cortex/docs/revue_ops_health_7j.md) · hors feeling Compagnon |
+| O-OPS-3 | **F3** O2 jeu (hors plan gaps) | Explicitement hors [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) — voir P3–P5 [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
 
 ---
 
@@ -56,6 +57,7 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-GAPS-1 | Fil gaps agentiques A–F2 + revue 7j + soft-links Fleet | **2026-10-12** · pilote live · revue **GO** · Vulcan↔Vex / Hermès↔Tess · doc alignée |
 | O-JEUX-1 | Ticket **3.1** Live World Stream Hub → Compagnon | **2026-10-12** · `world_stream.py` `:8787` · tests 7/7 · greeting enrichi · package CT100 |
 | O-L3-1 | Mission L3 smoke LAN `days_ok` → 3 | **2026-10-11** · `status=done` · `tools/status_l3_smoke_lan_mission.sh` |
 | O-DESK-1 | Desktop portable notepad (O6 plan présence) | **2026-10-12** · worker `.77` · allowlist |
@@ -70,4 +72,4 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Après clôture L3 / présence / 3.1 : reprendre en priorité **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
