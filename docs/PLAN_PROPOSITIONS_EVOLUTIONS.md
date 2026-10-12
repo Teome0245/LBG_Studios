@@ -107,6 +107,13 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
   3. Exemple d'ouverture naturelle :  
      *« Salut Teome ! La cour de Lost Heaven a été agitée tout à l'heure, la meute a été dispersée. Tu voulais qu'on avance sur quoi aujourd'hui ? »*
 - **Done quand** : Une action marquante en jeu est naturellement mentionnée par le Compagnon lors de la première prise de contact au bureau.
+- **Statut** : **OK validé & clôturé (2026-10-12)** :
+  - Émetteur Godot [`hub_world_stream.gd`](file:///home/lbg/projects/LBG_Studios/packages/prime-hub/scripts/hub_world_stream.gd) actif sur `prime-hub` (ring buffer 64 events exposé via `GET /v1/world/stream` sur `:8787`).
+  - Module Cortex [`world_stream.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/world_stream.py) connecté au hub avec cache mémoire et timeout 1.5 s sans blocage.
+  - Salutations sociales ([`router_prompts.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/router_prompts.py) / `short_social_reply`) et prompt système ([`character_layer.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/character_layer.py)) enrichis avec le dernier fait marquant de Lost Heaven.
+  - Route proxy/cache `GET /world/stream` dans [`core.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/core.py) et méthode `fetchWorldStream` dans [`useApi.js`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/src/composables/useApi.js).
+  - Suite de tests unitaires dédiée [`test_world_stream.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/tests/test_world_stream.py) 100 % passante (7 tests).
+  - Empreinte validée dans le packaging atomique CT 100 (`overlay.map` + `pyproject.toml`).
 
 ### 3.2 Convergence de la mémoire relationnelle
 - **Problème** : `relation_memory` (jeu) et `conversation_memory` (bureau) restent cloisonnées.

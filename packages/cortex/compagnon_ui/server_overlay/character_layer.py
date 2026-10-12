@@ -350,6 +350,23 @@ def format_character_block(
     if nudge:
         lines.append(f"[Trigger ego soft] {nudge}")
 
+    # Live World Stream Lost Heaven (Plan 3.1)
+    try:
+        from src.services.world_stream import format_world_context_block
+    except ImportError:
+        try:
+            from world_stream import format_world_context_block  # type: ignore
+        except ImportError:
+            format_world_context_block = None  # type: ignore
+
+    if format_world_context_block:
+        try:
+            wblock = format_world_context_block(limit=2)
+            if wblock:
+                lines.append(wblock)
+        except Exception:
+            pass
+
     return "\n".join(x for x in lines if x).strip()
 
 

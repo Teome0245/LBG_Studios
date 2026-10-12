@@ -35,5 +35,6 @@ spontaneity.py	backend/src/services/spontaneity.py
 spontaneity_api.py	backend/src/routers/spontaneity_api.py
 tts.py	backend/src/services/tts.py
 tts_api.py	backend/src/routers/tts_api.py
+world_stream.py	backend/src/services/world_stream.py
 character/compagnon_v1.json	backend/src/config/character/compagnon_v1.json
 character/compagnon_v1.json	backend/src/services/character/compagnon_v1.json

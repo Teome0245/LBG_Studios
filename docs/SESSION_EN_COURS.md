@@ -25,9 +25,9 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 
 Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-10-12 post-L3 DONE).
 
-1. **O-JEUX-1** — Ticket **3.1** Live World Stream Hub → Compagnon (en cours / WIP `world_stream.py` local — vérifier diff avant commit).
-2. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`) si pas de WIP 3.1.
-3. **O-FEEL-3** — Polish retour terrain présence (causerie, pas dump ops).
+1. **Ticket 3.1 Live World Stream Hub → Compagnon** : **validé & clôturé** (débloque 3.2).
+2. **Ticket 3.2** — Mémoire relationnelle jeu ↔ bureau (prochaine étape du plan d'évolutions).
+3. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`).
 4. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-CI-1** (5.2) · **O-IDE-*** Cline.
 5. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
 
@@ -52,6 +52,13 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-12 : **ticket 3.1 Live World Stream Hub → Compagnon — validé & clôturé** —
+  - Module [`world_stream.py`](../packages/cortex/compagnon_ui/server_overlay/world_stream.py) connecté au flux `prime-hub` (`GET /v1/world/stream` sur `:8787`) avec timeout 1.5 s, cache mémoire et fallback dégradé silencieux.
+  - Salutations sociales ([`router_prompts.py`](../packages/cortex/compagnon_ui/server_overlay/router_prompts.py) / `short_social_reply`) enrichies avec le dernier fait marquant de Lost Heaven (ex. boss abattu, chute de ferraille, escorte Nix).
+  - Contexte LLM ([`character_layer.py`](../packages/cortex/compagnon_ui/server_overlay/character_layer.py)) injectant les derniers événements du monde dans le prompt système du Compagnon.
+  - Route proxy / cache `GET /world/stream` dans [`core.py`](../packages/cortex/compagnon_ui/server_overlay/core.py) et méthode `fetchWorldStream` dans [`useApi.js`](../packages/cortex/compagnon_ui/src/composables/useApi.js).
+  - Suite de tests unitaires dédiée [`test_world_stream.py`](../packages/cortex/compagnon_ui/server_overlay/tests/test_world_stream.py) 100 % passante (7 tests) ; packaging atomique CT 100 validé (`overlay.map` + `pyproject.toml`).
+  - Débloque le ticket 3.2 (Mémoire relationnelle).
 - 2026-10-12 soir : **L3 DONE** confirmé live (`days_ok=3/3`, `status=done`, `last_ok_day=2026-10-11`) · backlog [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) réécrit (feeling + 3.1 + clos L3/D6.5).
 - 2026-10-12 : **ticket 2.2 Découpage modulaire des méga-scripts — validé & clôturé** —
   - Volet client `packages/prime-client/scripts/main.gd` (initialement 2 406 L) ramené à **707 L** et scindé en 4 modules spécialisés < 800 L : `client_gameplay_ops.gd` (529 L, salvage, hunt, combat density, trade, wiki), `client_quest_ops.gd` (281 L, craft M10, board, Echo Hammat, initiation), `client_net_world.gd` (675 L, WebSocket, handoff, zone_state, synchronisation entités), `client_ui_dialogue.gd` (506 L, raccourcis, hotbar, chat hub, pont dialogue PNJ). Preuve : selftest headless `packages/prime-client/tools/client_modular_selftest.gd` 100 % vert sous Godot 4.6.3.

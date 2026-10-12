@@ -40,8 +40,7 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-JEUX-1 | Ticket **3.1** Live World Stream Hub → Compagnon | **En cours** (suivi `chain v2`) · WIP local `world_stream.py` / tests — ne pas écraser sans diff · prérequis de **3.2** |
-| O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **Bloqué** tant que 3.1 non `done` |
+| O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **Débloqué** (3.1 done) · prêt pour implémentation |
 | O-JEUX-3 | Nettoyage restes P4 / docs SOE | Pont SOE retiré de facto — docs/UI à purger au fil de l’eau |
 
 ### Ops
@@ -57,6 +56,7 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-JEUX-1 | Ticket **3.1** Live World Stream Hub → Compagnon | **2026-10-12** · `world_stream.py` `:8787` · tests 7/7 · greeting enrichi · package CT100 |
 | O-L3-1 | Mission L3 smoke LAN `days_ok` → 3 | **2026-10-11** · `status=done` · `tools/status_l3_smoke_lan_mission.sh` |
 | O-DESK-1 | Desktop portable notepad (O6 plan présence) | **2026-10-12** · worker `.77` · allowlist |
 | O-HUB-1 | P5b telegraph boss + B3/B4 presence dials | **2026-10-08** · smokes hub |

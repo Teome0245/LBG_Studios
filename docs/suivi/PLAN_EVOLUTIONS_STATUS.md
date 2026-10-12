@@ -1,6 +1,6 @@
 # Suivi — Plan d'évolutions Studio / Jeu
 
-**Généré** : 2026-10-12 17:39 CEST  
+**Généré** : 2026-10-12 19:59 CEST  
 **Plan** : `PLAN_PROPOSITIONS_EVOLUTIONS` · source [`docs/PLAN_PROPOSITIONS_EVOLUTIONS.md`](../PLAN_PROPOSITIONS_EVOLUTIONS.md)  
 **Pilot** : [http://192.168.0.140:8080/pilot/#/team](http://192.168.0.140:8080/pilot/#/team)  
 **Plan entièrement réalisé** : ❌ non
@@ -9,7 +9,7 @@
 
 | Done | En cours | À relancer | Bloqué | Todo |
 |:---:|:---:|:---:|:---:|:---:|
-| 7 | 2 | 0 | 1 | 0 |
+| 8 | 1 | 0 | 0 | 1 |
 
 ## Réalisés
 
@@ -31,13 +31,13 @@
 ### `2.2` — Découpage hub_sim.gd & main.gd
 - **Preuve** : Serveur hub_sim.gd scinde en 5 modules <800L (771L, 447L, 185L, 196L, 142L, 103L, sim_selftest OK) et client main.gd scinde en 4 modules <800L (main 707L, gameplay 529L, quest 281L, net 675L, ui 506L, client_modular_selftest OK)
 
+### `3.1` — Live World Stream Hub → Compagnon
+- **Preuve** : hub_world_stream.gd ring buffer :8787 · world_stream.py fetch/cache/greeting · router_prompts.py short_social enrichi · character_layer.py contexte Lost Heaven · core.py GET /world/stream · useApi.js fetchWorldStream · test_world_stream.py 7/7 PASS · package CT100 OK
+
 ### `5.1` — Packaging atomique server_overlay CT100
 - **Preuve** : CT100 packaging atomique LIVE 1.0.0+4bcc331: server_overlay/pyproject.toml + overlay.map (33 fichiers); server_overlay_package.py build/verify/apply/rollback; deploy_compagnon_100.sh --smoke OK; marker /opt/orchestrateur/.server_overlay_version package_sha=8128a4e3470abded597b70e855289bab608e23c4fd6acbe273e4062ec272e5a5; smoke tools/smoke_server_overlay_package.sh OK; rollback testé
 
 ## En cours
-
-### `3.1` — Live World Stream Hub → Compagnon
-- **Preuve** : chain v2 LIVE 9fbe70dd
 
 ### `5.2` — Ruff + tests headless Godot CI
 - **Preuve** : reopen: faux done ops_probe dry-run healthz — relance ide_cli LIVE
@@ -48,12 +48,11 @@ _Rien à relancer._
 
 ## Bloqués (prérequis / L2)
 
-### `3.2` — Mémoire relationnelle jeu ↔ bureau
-- **Blocage** : prérequis non done: 3.1
+_Aucun blocage._
 
 ## Todo
 
-_File vide._
+### `3.2` — Mémoire relationnelle jeu ↔ bureau
 
 ## Échecs Team liés au plan (hors ticket)
 

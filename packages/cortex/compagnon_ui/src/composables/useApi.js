@@ -160,5 +160,21 @@ export function useApi() {
     }
   }
 
-  return { loading, error, sendPrompt }
+  /**
+   * Plan 3.1 — Lecture du Live World Stream Lost Heaven (hub :8787 via proxy ou direct)
+   */
+  const fetchWorldStream = async (opts = {}) => {
+    try {
+      const since = opts.since || 0
+      const limit = opts.limit || 20
+      const res = await fetch(apiUrl(`/world/stream?since=${since}&limit=${limit}`))
+      if (!res.ok) return { ok: false, events: [] }
+      return await res.json()
+    } catch {
+      return { ok: false, events: [] }
+    }
+  }
+
+  return { loading, error, sendPrompt, fetchWorldStream }
 }
+

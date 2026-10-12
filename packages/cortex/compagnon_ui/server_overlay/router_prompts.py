@@ -309,6 +309,24 @@ def short_social_reply(prompt: str, short_ctx: list | None = None) -> str | None
         x in low
         for x in ("bonjour", "salut", "hello", "coucou", "bonsoir", "ça va", "ca va", "comment")
     ):
+        try:
+            from src.services.world_stream import format_world_greeting, latest_world_highlight
+        except ImportError:
+            try:
+                from world_stream import format_world_greeting, latest_world_highlight  # type: ignore
+            except ImportError:
+                format_world_greeting = None  # type: ignore
+                latest_world_highlight = None  # type: ignore
+
+        if format_world_greeting and latest_world_highlight:
+            try:
+                ev = latest_world_highlight()
+                if ev:
+                    wg = format_world_greeting(ev)
+                    if wg:
+                        return wg
+            except Exception:
+                pass
         return "Salut — ça va de mon côté. Je t'écoute, collègue studio."
     return "OK. Je t'écoute."
 

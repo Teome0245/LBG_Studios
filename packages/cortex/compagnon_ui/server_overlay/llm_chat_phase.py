@@ -186,6 +186,29 @@ async def run_llm_chat_phase(
             "presence_brief short-circuit failed: %s", e
         )
 
+    # Plan 3.1 — flux direct d'événements monde (Live World Stream hub :8787)
+    try:
+        from src.services.world_stream import (
+            attach_world_stream_if_needed,
+            wants_world_stream,
+        )
+
+        if lab_mode and wants_world_stream(prompt):
+            seed = router.normalize_llm(
+                "live world stream",
+                "world_stream",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return await attach_world_stream_if_needed(
+                    seed, prompt=prompt, lab=lab_mode
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.world_stream").warning(
+            "world_stream short-circuit failed: %s", e
+        )
+
     # D6.5 — « soumets ce plan au studio » : réutilise le plan du fil, skip LLM
     # (évite 502 timeout LLM+Pilot quand le livrable est déjà là).
     try:

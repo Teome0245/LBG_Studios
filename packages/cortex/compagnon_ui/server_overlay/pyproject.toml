@@ -49,6 +49,7 @@ py-modules = [
     "tool_loop",
     "tts",
     "tts_api",
+    "world_stream",
 ]
 
 [tool.lbg.overlay]

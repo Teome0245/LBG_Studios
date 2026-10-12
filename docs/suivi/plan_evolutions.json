@@ -1,7 +1,7 @@
 {
   "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
   "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
-  "updated_ts": 1791819581.425354,
+  "updated_ts": 1791827968.8449936,
   "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
   "tickets": [
     {
@@ -149,14 +149,14 @@
       "title": "Live World Stream Hub → Compagnon",
       "horizon": "sprint2",
       "perimeter": "Pont Studio/Jeu",
-      "status": "in_progress",
+      "status": "done",
       "blocked_by": [
         "1.2"
       ],
       "blocks": [
         "3.2"
       ],
-      "evidence": "chain v2 LIVE 9fbe70dd",
+      "evidence": "hub_world_stream.gd ring buffer :8787 · world_stream.py fetch/cache/greeting · router_prompts.py short_social enrichi · character_layer.py contexte Lost Heaven · core.py GET /world/stream · useApi.js fetchWorldStream · test_world_stream.py 7/7 PASS · package CT100 OK",
       "keywords": [
         "Live World Stream",
         "world stream hub",
@@ -167,7 +167,7 @@
       "acceptance": {
         "paths_any": [
           "packages/prime-hub/scripts/hub_world_stream.gd",
-          "packages/cortex/compagnon_ui/server_overlay/presence_brief.py",
+          "packages/cortex/compagnon_ui/server_overlay/world_stream.py",
           "packages/cortex/compagnon_ui/src/composables/useApi.js"
         ]
       }
@@ -177,10 +177,8 @@
       "title": "Mémoire relationnelle jeu ↔ bureau",
       "horizon": "sprint2+",
       "perimeter": "Pont Studio/Jeu",
-      "status": "blocked",
-      "blocked_by": [
-        "3.1"
-      ],
+      "status": "todo",
+      "blocked_by": [],
       "blocks": [],
       "evidence": "",
       "keywords": [
@@ -190,7 +188,6 @@
       ],
       "owner_hint": "dev_studio",
       "team_signals": [],
-      "block_reason": "prérequis non done: 3.1",
       "acceptance": {
         "paths_any": [
           "packages/cortex/compagnon_ui/server_overlay/presence_report.py"

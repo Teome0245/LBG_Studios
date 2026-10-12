@@ -207,3 +207,18 @@ async def brain_entry(
 ):
     result = await bc.brain.handle(body.message)
     return BrainJSONEnvelope.model_validate(ensure_dispatch_dict(result))
+
+
+@router.get("/world/stream")
+@router.get("/world/stream/")
+async def world_stream_route(since: int = 0, limit: int = 20):
+    """Plan 3.1 — Proxy/cache du Live World Stream Lost Heaven (prime-hub :8787)."""
+    try:
+        from src.services.world_stream import fetch_world_stream
+    except ImportError:
+        try:
+            from world_stream import fetch_world_stream  # type: ignore
+        except ImportError:
+            return {"ok": False, "error": "world_stream_unavailable", "events": []}
+    return fetch_world_stream(since=since, limit=limit)
+
