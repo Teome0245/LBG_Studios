@@ -141,12 +141,29 @@ export function useChat() {
     // Bulle déjà rendue par le flux SSE (1.2) : on fusionne le payload final, sans doublon.
     if (backendMessage.__streamed) {
       if (streamedMessage && messages.value.includes(streamedMessage)) {
+        const prev = String(streamedMessage.content || '')
+        const next = backendMessage.content != null ? String(backendMessage.content) : ''
         Object.assign(streamedMessage, pickFields(backendMessage), {
           role: backendMessage.role || 'assistant',
-          state: stateFor(backendMessage.source),
+          // Garde le texte des deltas si le payload final arrive vide
+          content: next.trim() ? next : prev,
+          state: stateFor(backendMessage.source || streamedMessage.source),
           streaming: false,
           streamPending: false,
           streamThinking: false,
+        })
+      } else if (String(backendMessage.content || '').trim()) {
+        // Bulle SSE perdue (navigation) — afficher quand même la réponse
+        const { __streamed: _s, ...rest } = backendMessage
+        messages.value.push({
+          ...pickFields(rest),
+          role: rest.role || 'assistant',
+          state: stateFor(rest.source),
+          streaming: false,
+        })
+        runAssistantSideEffects({
+          ...pickFields(rest),
+          role: rest.role || 'assistant',
         })
       }
       return
@@ -209,10 +226,15 @@ export function useChat() {
     const msg = streamedMessage
     const live = msg && messages.value.includes(msg)
     const payload = final && typeof final === 'object' ? final : { content: String(final ?? '') }
+    // Ne jamais écraser les deltas avec un done vide / mal parsé (bulle « Terminé » sans texte).
+    const fromDelta = live ? String(msg.content || '') : ''
+    const fromPayload = payload.content != null ? String(payload.content) : ''
+    const content = fromPayload.trim() ? fromPayload : fromDelta
     const merged = {
       ...payload,
       role: payload.role || 'assistant',
-      content: payload.content ?? (live ? msg.content : ''),
+      content,
+      source: payload.source || (live && msg.source !== 'streaming' ? msg.source : 'assistant'),
     }
     if (!live) {
       // Fallback sans bulle (conversation changée, pas de flux) → chemin /ask normal.
@@ -220,7 +242,7 @@ export function useChat() {
       return merged
     }
     Object.assign(msg, pickFields(payload), merged, {
-      state: stateFor(payload.source),
+      state: stateFor(merged.source),
       streaming: false,
       streamPending: false,
       streamThinking: false,

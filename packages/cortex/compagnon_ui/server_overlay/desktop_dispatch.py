@@ -51,7 +51,23 @@ _OPEN_APP_STOP_TOKENS = frozenset(
 )
 
 _DESKTOP_LOCUS_RE = re.compile(
-    r"(?i)\b(pc|poste|machine|ordinateur|windows|bureau|desktop)\b"
+    r"(?i)\b(pc|poste|machine|ordinateur|windows|bureau|desktop|"
+    r"portable[- ]?sds|portable|laptop|omarchy)\b"
+)
+
+# Aligné `lbg_agents.desktop_targets.infer_desktop_target_from_text` (overlay Orch sans import agents).
+_TARGET_FROM_TEXT_RE = (
+    (re.compile(r"(?i)\b(serveur ad|srv[- ]?ad|sur l['']?ad|active directory|192\.168\.0\.100)\b"), "ad"),
+    (re.compile(r"(?i)\b(sur mon pc|mon pc|pc windows|poste windows|192\.168\.0\.10)\b"), "pc"),
+    (
+        re.compile(
+            r"(?i)\b(portable[- ]?sds|sur le portable|pc portable|laptop|"
+            r"portable[- ]?wifi|sur le wifi|192\.168\.0\.(?:40|77))\b"
+        ),
+        "portable",
+    ),
+    (re.compile(r"(?i)\b(omarchy|lbg[-_]?omarchy|ct[- ]?143|192\.168\.0\.143)\b"), "omarchy"),
+    (re.compile(r"(?i)\b(lbg[-_]?hands|linux[-_]?agent|ct[- ]?142|192\.168\.0\.142)\b"), "hands"),
 )
 
 
@@ -107,6 +123,9 @@ def infer_open_app_from_text(text: str) -> dict[str, Any] | None:
     slug = _sanitize_app_slug(tail_chunk)
     if not slug:
         return None
+    # Aligné worker Windows : allowlist / map utilisent souvent ``notepadpp``.
+    if slug == "notepad":
+        slug = "notepadpp"
     return {"kind": "open_app", "app": slug, "args": [], "learn": True}
 
 
@@ -170,6 +189,103 @@ def _desktop_worker_url(settings: Settings) -> str:
     return "http://192.168.0.10:5005"
 
 
+def _parse_desktop_targets_env() -> list[dict[str, str]]:
+    raw = os.getenv("LBG_DESKTOP_TARGETS", "").strip()
+    if not raw:
+        return []
+    try:
+        import json
+
+        data = json.loads(raw)
+    except Exception:
+        return []
+    if not isinstance(data, list):
+        return []
+    out: list[dict[str, str]] = []
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        tid = str(row.get("id") or "").strip()
+        url = str(row.get("url") or "").strip().rstrip("/")
+        host = str(row.get("host") or "").strip()
+        label = str(row.get("label") or tid or host).strip()
+        if not tid or not url:
+            continue
+        aliases = row.get("aliases") if isinstance(row.get("aliases"), list) else []
+        out.append(
+            {
+                "id": tid,
+                "url": url,
+                "host": host,
+                "label": label or tid,
+                "aliases": ",".join(str(a).strip().lower() for a in aliases if str(a).strip()),
+            }
+        )
+    return out
+
+
+def infer_desktop_target_id(text: str) -> str | None:
+    """Id logique (pc / portable / …) depuis le prompt NL."""
+    raw = text or ""
+    for cre, tid in _TARGET_FROM_TEXT_RE:
+        if cre.search(raw):
+            return tid
+    return None
+
+
+# Topologie LAB si `LBG_DESKTOP_TARGETS` absent du conteneur Orch (.100).
+_LAB_DESKTOP_FALLBACK: list[dict[str, str]] = [
+    {
+        "id": "pc",
+        "url": "http://192.168.0.10:5005",
+        "host": "192.168.0.10",
+        "label": "pc-windows",
+        "aliases": "desktop,windows",
+    },
+    {
+        "id": "portable",
+        "url": "http://192.168.0.77:5005",
+        "host": "192.168.0.77",
+        "label": "portable-sds",
+        "aliases": "portable-sds,laptop,pc-portable,wifi,portable-wifi,192.168.0.40",
+    },
+    {
+        "id": "omarchy",
+        "url": "http://192.168.0.143:5005",
+        "host": "192.168.0.143",
+        "label": "lbg-omarchy",
+        "aliases": "omarchy,lbg-omarchy,hands",
+    },
+]
+
+
+def resolve_desktop_worker(
+    prompt: str,
+    *,
+    settings: Settings,
+) -> tuple[str, str, str]:
+    """Retourne ``(worker_url, label, target_id)`` pour le poste cible."""
+    targets = _parse_desktop_targets_env() or list(_LAB_DESKTOP_FALLBACK)
+    want = infer_desktop_target_id(prompt)
+    if want and targets:
+        want_l = want.lower()
+        for t in targets:
+            tid = t["id"].lower()
+            aliases = {a for a in t["aliases"].split(",") if a} | {tid, t["label"].lower(), t["host"]}
+            if want_l in aliases or want_l == tid:
+                return t["url"], t["label"], t["id"]
+    # défaut : worker legacy / pc
+    if targets:
+        for prefer in ("pc", "default"):
+            for t in targets:
+                if t["id"].lower() == prefer:
+                    return t["url"], t["label"], t["id"]
+        t0 = targets[0]
+        return t0["url"], t0["label"], t0["id"]
+    url = _desktop_worker_url(settings)
+    return url, "windows-desktop", "pc"
+
+
 def _format_tasks_reply(data: dict[str, Any], goal: str) -> str:
     ok = data.get("ok")
     err = data.get("error") or data.get("detail")
@@ -212,16 +328,29 @@ def _format_tasks_reply(data: dict[str, Any], goal: str) -> str:
     )
 
 
-def _format_worker_reply(data: dict[str, Any], action: dict[str, Any]) -> str:
+def _format_worker_reply(
+    data: dict[str, Any],
+    action: dict[str, Any],
+    *,
+    label: str = "windows-desktop",
+) -> str:
     app = action.get("app") or "?"
+    where = (label or "windows-desktop").strip() or "windows-desktop"
     if data.get("ok") is True or data.get("outcome") in ("ok", "dry_run"):
+        outcome = data.get("outcome") or "ok"
+        extra = ""
+        if outcome == "dry_run":
+            extra = (
+                f"\n_Simulation : `LBG_DESKTOP_DRY_RUN=1` sur le worker ({where}). "
+                "Passe à `0` dans `desktop.env` puis redémarre l’agent pour un vrai open._"
+            )
         return (
-            f"**Desktop** : `{app}` — {data.get('outcome') or 'ok'} sur windows-desktop "
-            f"(worker Agent_IA)."
+            f"**Desktop** : `{app}` — {outcome} sur {where} "
+            f"(worker Agent_IA).{extra}"
         )
     err = data.get("error") or data.get("detail") or "échec"
     hint = data.get("hint") or ""
-    return f"Desktop worker : `{app}` — {err}" + (f"\n_{hint}_" if hint else "")
+    return f"Desktop worker ({where}) : `{app}` — {err}" + (f"\n_{hint}_" if hint else "")
 
 
 async def run_desktop_open(
@@ -251,10 +380,14 @@ async def run_desktop_open(
 
     t0 = time.monotonic()
     timeout = httpx_timeout(read=min(float(settings.httpx_agent_execute_read_s), 60.0))
+    worker, target_label, target_id = resolve_desktop_worker(cleaned, settings=settings)
+    # Cockpit P03 historiquement ancré sur le PC `.10` — cible explicite (portable, omarchy…)
+    # → worker direct pour ne pas ouvrir l'app sur la mauvaise machine.
+    prefer_direct = target_id.lower() not in ("pc", "default", "")
 
-    # 1) Cockpit / P03 tasks/run
+    # 1) Cockpit / P03 tasks/run (poste défaut uniquement)
     token = _pilot_token()
-    if token:
+    if token and not prefer_direct:
         url = _tasks_run_url(settings)
         headers = {
             "Authorization": f"Bearer {token}",
@@ -266,6 +399,12 @@ async def run_desktop_open(
             "context": {
                 "desktop_dry_run": bool(dry_run),
                 "desktop_action": action,
+                "desktop_target": target_id,
+                "desktop_target_host": worker.rsplit("//", 1)[-1].split(":")[0]
+                if "://" in worker
+                else target_id,
+                "desktop_target_url": worker,
+                "desktop_target_label": target_label,
             },
         }
         try:
@@ -299,15 +438,27 @@ async def run_desktop_open(
         except Exception as e:
             logger.warning("desktop tasks/run failed: %s", e)
 
-    # 2) Worker Windows direct
+    # 2) Worker Windows / Linux direct (cible résolue : portable-sds, pc, …)
     approval = _desktop_approval()
-    worker = _desktop_worker_url(settings)
+    approval_mode = (
+        os.getenv("LBG_DESKTOP_APPROVAL_MODE", "").strip().lower()
+        or ("confirm" if os.getenv("LBG_COMPAGNON_LAB", "").strip() in ("1", "true", "yes", "on") else "")
+    )
     ctx: dict[str, Any] = {
         "desktop_dry_run": bool(dry_run),
         "desktop_action": action,
+        "desktop_target": target_id,
+        "desktop_target_host": worker.rsplit("//", 1)[-1].split(":")[0]
+        if "://" in worker
+        else target_id,
     }
-    if approval and not dry_run:
-        ctx["desktop_approval"] = approval
+    if not dry_run:
+        if approval_mode in ("confirm", "soft", "lab"):
+            # Sentinelle LAB — alignée ActionCard / soft-confirm agents
+            ctx["desktop_approval"] = "confirmed"
+            ctx["desktop_confirm"] = True
+        elif approval:
+            ctx["desktop_approval"] = approval
     invoke_body = {
         "actor_id": "orch-ui:desktop",
         "text": cleaned,
@@ -324,29 +475,32 @@ async def run_desktop_open(
             return {
                 "ok": False,
                 "content": (
-                    f"Worker desktop `{worker}` HTTP {r.status_code}. "
+                    f"Worker desktop `{worker}` ({target_label}) HTTP {r.status_code}. "
                     "Configure `LBG_PILOT_API_TOKEN` (Cockpit) ou `LBG_DESKTOP_APPROVAL_TOKEN`."
                 ),
                 "source": "desktop",
                 "via": "worker_invoke",
                 "latency": latency,
                 "app": action["app"],
+                "desktop": {"target": target_id, "label": target_label, "url": worker},
             }
         return {
             "ok": data.get("ok") is True,
-            "content": _format_worker_reply(data, action),
+            "content": _format_worker_reply(data, action, label=target_label),
             "source": "desktop",
             "via": "worker_invoke",
             "latency": latency,
             "app": action["app"],
             "outcome": data.get("outcome"),
+            "desktop": {"target": target_id, "label": target_label, "url": worker},
         }
     except Exception as e:
         latency = time.monotonic() - t0
         return {
             "ok": False,
             "content": (
-                f"Desktop indisponible ({type(e).__name__}: {e}). "
+                f"Desktop indisponible sur {target_label} (`{worker}`) "
+                f"({type(e).__name__}: {e}). "
                 "Utilise Cockpit Supervisé http://192.168.0.100:8093/pilot/#/cockpit "
                 "ou configure les jetons Orch (`LBG_PILOT_API_TOKEN` / `LBG_DESKTOP_APPROVAL_TOKEN`)."
             ),
@@ -354,4 +508,5 @@ async def run_desktop_open(
             "via": "error",
             "latency": latency,
             "app": action["app"],
+            "desktop": {"target": target_id, "label": target_label, "url": worker},
         }

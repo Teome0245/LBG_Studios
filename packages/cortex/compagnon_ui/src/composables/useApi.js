@@ -109,7 +109,11 @@ export function useApi() {
     }
 
     if (streamErr) return failStream(streamErr)
-    return finishStream(final && typeof final === 'object' ? final : { content: String(final || '') })
+    // done manquant / JSON illisible → garder les deltas déjà affichés (évite bulle vide « Terminé »)
+    if (final == null) {
+      return finishStream({ content: '', source: 'assistant' })
+    }
+    return finishStream(typeof final === 'object' ? final : { content: String(final || '') })
   }
 
   const sendPrompt = async (prompt, opts = {}) => {
