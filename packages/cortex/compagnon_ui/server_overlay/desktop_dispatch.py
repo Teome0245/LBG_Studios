@@ -91,7 +91,8 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
         return None
     if len(first) > 80:
         first = first[:80]
-    if not re.match(r"^[A-Za-z0-9_.\-]+$", first):
+    # ``+`` autorisé pour ``notepad++`` (normalisé ensuite en ``notepadpp``).
+    if not re.match(r"^[A-Za-z0-9_.+\-]+$", first):
         return None
     # « vghd.exe » → id logique « vghd » (APP_MAP / allowlist)
     first = re.sub(r"\.(exe|bat|cmd|com)$", "", first, flags=re.IGNORECASE)
@@ -123,8 +124,9 @@ def infer_open_app_from_text(text: str) -> dict[str, Any] | None:
     slug = _sanitize_app_slug(tail_chunk)
     if not slug:
         return None
-    # Aligné worker Windows : allowlist / map utilisent souvent ``notepadpp``.
-    if slug == "notepad":
+    # Garder ``notepad`` (bloc-notes Windows). ``notepad++`` → ``notepadpp``
+    # seulement si l'utilisateur le demande explicitement (N++ pas toujours installé).
+    if slug in {"notepad++", "notepadplusplus"}:
         slug = "notepadpp"
     return {"kind": "open_app", "app": slug, "args": [], "learn": True}
 

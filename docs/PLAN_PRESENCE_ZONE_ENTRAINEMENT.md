@@ -111,10 +111,11 @@ Livré et poussé : A1, A3, A4, A4b, A4c, A4c.1 · smokes V9/V10 · watch « ret
 
 | ID | Sujet | État | Où reprendre | Notes |
 |----|--------|------|--------------|--------|
-| **O1** | **A2 — C2 collègues** | PARTIEL | `chat_intent` / nudge causerie · rejeu [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) | « Discutons comme collègues » → avis net, pas template « qu’est-ce qui t’amène » |
+| **O1** | **A2 — C2 collègues** | polish livré (fil 2026-10) | `chat_intent` / nudge causerie · rejeu [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) | Rejeu humain périodique si template « qu’est-ce qui t’amène » réapparaît |
 | **O2** | **Feeling C2 rejeu humain** | PARTIEL | `:5174` fil humain | Critère succès #1 : C2 encore PARTIEL sur certains tours |
 | **O3** | **Polish boucle C1/C2 présence** | code OK / UX | `presence_brief.py` · `presence_report.py` | Vérifier que le retour terrain reste en causerie (pas dump ops) sur rejeux longs |
-| **O4** | **L3 ops `days_ok` 2/3 → 3** | ops | Pilot / mission L3 | Armed wait UTC — hors feeling Compagnon |
-| **O5** | **Hors scope ce fil** | autre discussion | Session Island D7 · Pilot split · deploy overlay atomique · prime-hub WIP | Ne pas mélanger ici |
+| **O4** | **L3 ops `days_ok` 2/3 → 3** | ops documenté | Pilot / mission L3 | Armed wait UTC — hors feeling Compagnon |
+| **O5** | **Hors scope ce fil** | autre discussion | Session Island D7 · Pilot split · deploy overlay · prime-hub WIP | Ne pas mélanger ici |
+| **O6** | **Desktop portable notepad** | **CLOS** 2026-10-12 | `desktop_dispatch` · worker `.77` | Dry-run=0 + allowlist ; alias Compagnon `notepad` conservé (plus de force `notepadpp`) |
 
 **Règle** : ouvrir un fil dédié par ID (ou regrouper O1+O2 feeling) ; ne pas réouvrir ce fil pour le WIP O5.

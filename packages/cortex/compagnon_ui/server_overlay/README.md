@@ -12,7 +12,7 @@ carte `overlay.map` qui décrit chaque fichier livré.
 bash packages/cortex/infra/scripts/build_server_overlay_package.sh --out /tmp/overlay
 
 # Déploiement atomique complet (build → upload → checksum → apply + rollback)
-bash packages/cortex/infra/scripts/deploy_compagnon_100.sh --atomic --smoke
+bash packages/cortex/infra/scripts/deploy_compagnon_100.sh --smoke
 
 # Vérifier la version déployée sur CT100
 bash packages/cortex/infra/scripts/deploy_compagnon_100.sh --check
@@ -24,3 +24,12 @@ smoke restaure automatiquement la sauvegarde précédente (rollback).
 
 L'outil `server_overlay_package.py` expose `build`, `verify`, `apply`,
 `rollback`, `status` — bibliothèque standard uniquement.
+
+## Desktop (extrait)
+
+Module `desktop_dispatch.py` : infère `open_app` depuis le chat, route vers le
+worker Windows (`pc` `.10`, `portable` `.77` / PORTABLE-SDS, etc.).
+
+- `notepad` reste `notepad` ; `notepad++` → `notepadpp`.
+- Soft-confirm LAB pour kinds à faible risque (`open_url`, sondes…) — voir
+  `FOCUS_COMPAGNON.md` § D5.

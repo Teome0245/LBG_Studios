@@ -21,6 +21,14 @@ import desktop_dispatch as dd  # noqa: E402
 
 
 class DesktopDispatchTargets(unittest.TestCase):
+    def test_infer_open_app_keeps_notepad(self) -> None:
+        action = dd.infer_open_app_from_text("ouvre notepad sur PORTABLE-SDS")
+        assert action is not None
+        self.assertEqual(action["app"], "notepad")
+        action_pp = dd.infer_open_app_from_text("ouvre notepad++ sur le portable")
+        assert action_pp is not None
+        self.assertEqual(action_pp["app"], "notepadpp")
+
     def test_infer_portable_sds(self) -> None:
         self.assertEqual(
             dd.infer_desktop_target_id("tu peux ouvrir notepad sur PORTABLE-SDS"),

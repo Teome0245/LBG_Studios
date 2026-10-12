@@ -53,6 +53,17 @@ Prod-like : garde copyright = mise en garde + pistes légales (pas mur Groq, pas
 
 **Contre-pouvoir** (pas Lyra) : [`packages/cortex/docs/compagnon_contre_pouvoir.md`](../packages/cortex/docs/compagnon_contre_pouvoir.md) — revue avant Réel, auto dry-run soft, `block_real` + override humain.
 
+## Desktop workers (lab)
+
+| Target | Host | Notes |
+|--------|------|--------|
+| `pc` | `.10:5005` | Poste Windows principal |
+| `portable` | `.77:5005` (Ethernet ; `.40` Wi-Fi) | **PORTABLE-SDS** — même Agent_IA |
+| `omarchy` / hands | `.143:5005` | Linux agent (ex-`.142`) |
+
+Smoke live 2026-10-12 : « ouvre notepad sur PORTABLE-SDS » → `outcome=ok` (`app=notepad`).  
+Overlay : ne plus forcer `notepad`→`notepadpp` (N++ optionnel). Doc : [`desktop_hybride.md`](../packages/cortex/docs/desktop_hybride.md) § `open_app`.
+
 ## Desktop `.10` (vision « logiciel d’aide »)
 
 Oui, c’est possible — et ça colle à l’étoile du nord (assistant **sur le PC**).
@@ -151,7 +162,7 @@ Phasage réaliste :
 | **C1 présence** | Brief hub « teste présence Nix… » → markdown + mission Campus bornée | **OK live** 2026-10-08 — `presence_brief.py` |
 | **C2 présence** | Retour terrain → causerie (`retour hub présence`) | **OK live** 2026-10-08 — `SMOKE_C2_PRESENCE_REPORT_OK` · `presence_report.py` |
 
-**Fil D6.5 clos** (2026-10-11) — suite ouverte (A2/C2 feeling, polish C1/C2, L3 days_ok) : [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.
+**Fil D6.5 clos** (2026-10-11) — suite hors-fil : O2 feeling C2, O3 polish présence, O4 L3 days_ok ; **O6 desktop portable clos** 2026-10-12 — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.
 
 ### Ops Agir / Pilot (rappel 2026-10-02)
 
