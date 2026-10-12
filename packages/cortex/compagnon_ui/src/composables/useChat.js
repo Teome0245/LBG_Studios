@@ -143,11 +143,18 @@ export function useChat() {
       if (streamedMessage && messages.value.includes(streamedMessage)) {
         const prev = String(streamedMessage.content || '')
         const next = backendMessage.content != null ? String(backendMessage.content) : ''
+        const content = next.trim() ? next : prev.trim() ? prev : 'Réponse vide — réessaie.'
+        const source =
+          backendMessage.source && backendMessage.source !== 'streaming'
+            ? backendMessage.source
+            : streamedMessage.source && streamedMessage.source !== 'streaming'
+              ? streamedMessage.source
+              : 'assistant'
         Object.assign(streamedMessage, pickFields(backendMessage), {
           role: backendMessage.role || 'assistant',
-          // Garde le texte des deltas si le payload final arrive vide
-          content: next.trim() ? next : prev,
-          state: stateFor(backendMessage.source || streamedMessage.source),
+          content,
+          source,
+          state: stateFor(source),
           streaming: false,
           streamPending: false,
           streamThinking: false,
@@ -165,6 +172,14 @@ export function useChat() {
           ...pickFields(rest),
           role: rest.role || 'assistant',
         })
+      } else {
+        // Orphelin vide : retirer toute bulle SSE fantôme encore marquée streaming
+        for (let i = messages.value.length - 1; i >= 0; i -= 1) {
+          const m = messages.value[i]
+          if (m?.role === 'assistant' && (m.streaming || m.source === 'streaming') && !String(m.content || '').trim()) {
+            messages.value.splice(i, 1)
+          }
+        }
       }
       return
     }
@@ -228,13 +243,32 @@ export function useChat() {
     const payload = final && typeof final === 'object' ? final : { content: String(final ?? '') }
     // Ne jamais écraser les deltas avec un done vide / mal parsé (bulle « Terminé » sans texte).
     const fromDelta = live ? String(msg.content || '') : ''
-    const fromPayload = payload.content != null ? String(payload.content) : ''
-    const content = fromPayload.trim() ? fromPayload : fromDelta
+    const fromPayload =
+      payload.content != null
+        ? String(payload.content)
+        : payload.response != null
+          ? String(payload.response)
+          : payload.raw != null
+            ? String(payload.raw)
+            : ''
+    let content = fromPayload.trim() ? fromPayload : fromDelta
+    let source =
+      payload.source ||
+      (live && msg.source && msg.source !== 'streaming' ? msg.source : 'assistant')
+    // Garde-fou : jamais laisser source=streaming ni bulle vide après « Terminé ».
+    if (!source || source === 'streaming') source = 'assistant'
+    if (!String(content || '').trim()) {
+      const errBit = payload.error || payload.detail
+      content = errBit
+        ? `Erreur : ${errBit}`
+        : 'Réponse vide — réessaie ; si ça revient, vérifie le flux SSE /ask/stream.'
+      if (errBit) source = 'error'
+    }
     const merged = {
       ...payload,
       role: payload.role || 'assistant',
       content,
-      source: payload.source || (live && msg.source !== 'streaming' ? msg.source : 'assistant'),
+      source,
     }
     if (!live) {
       // Fallback sans bulle (conversation changée, pas de flux) → chemin /ask normal.

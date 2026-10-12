@@ -121,6 +121,17 @@ function displayContent(msg) {
   return c
 }
 
+/** Évite la bulle grise vide (SSE terminé sans texte). */
+function msgHasBubbleBody(msg) {
+  if (msg.role === 'user') return true
+  if (msg.streamThinking || msg.streaming) return true
+  if (String(msg.content || '').trim()) return true
+  if (msg.timeline?.length || msg.reflection || msg.actionProposal) return true
+  if (msg.approval?.tasks?.length || msg.cursor?.agent_url || msg.images?.length) return true
+  if (msg.model || msg.latency || msg.provider) return true
+  return false
+}
+
 function isOpsChromeMessage(msg) {
   /** Agir / Team / Cursor = chrome ops utile ; ask/réponse/causerie = replié. */
   const action = String(msg?.reflection?.action || '').toLowerCase()
@@ -221,6 +232,7 @@ function triggerCtrlK() {
           ]"
         >
           <div
+            v-if="msgHasBubbleBody(msg)"
             :class="[
               'text-[14px] sm:text-[15px] leading-relaxed p-4 sm:p-5 rounded-2xl shadow-lg border backdrop-blur-md',
               msg.role === 'user'

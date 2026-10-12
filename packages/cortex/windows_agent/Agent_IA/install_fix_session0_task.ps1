@@ -34,8 +34,9 @@ $settings = New-ScheduledTaskSettingsSet `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
-    -MultipleInstances IgnoreNew
+    -MultipleInstances Parallel
 # Pas de trigger auto — démarrage uniquement via Compagnon / Start-ScheduledTask
+# Parallel : évite IgnoreNew qui no-opait quand un fantôme « Running » bloquait la remédiation.
 Register-ScheduledTask -TaskName $name -Action $action -Principal $principal -Settings $settings | Out-Null
 
 # Autoriser l'utilisateur courant à démarrer la tâche (même depuis un worker non-admin / Session 0)

@@ -10,6 +10,7 @@ import os
 import secrets
 import sys
 import base64
+import time
 import uuid
 import urllib.request
 import urllib.error
@@ -1131,8 +1132,20 @@ def _desktop_listener_session_info() -> dict[str, object]:
     return info
 
 
+def _read_fix_session0_log(*, max_lines: int = 40) -> str:
+    """Queue du journal de remédiation (best-effort)."""
+    path = Path(r"C:\Agent_IA\logs\fix_session0.log")
+    try:
+        if not path.is_file():
+            return ""
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        return "\n".join(lines[-max(1, int(max_lines)) :])
+    except Exception:
+        return ""
+
+
 def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
-    """Déclenche la tâche élevée pré-installée (Compagnon AGIR → sans Cursor)."""
+    """Déclenche la tâche élevée puis **vérifie** que :5005 n'est plus en Session 0."""
     task = "LBG-AgentIA-fix-session0"
     if dry_run:
         return {
@@ -1141,7 +1154,9 @@ def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
             "task": task,
             "hint": "Réel: Start-ScheduledTask. Prérequis admin une fois: install_fix_session0_task.ps1",
         }
+    before = _desktop_listener_session_info()
     try:
+        # Stop fantôme Running + Start + attendre LastTaskResult (pas juste STATE=Ready)
         r = subprocess.run(
             [
                 "powershell.exe",
@@ -1152,8 +1167,25 @@ def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
                 (
                     f"$t=Get-ScheduledTask -TaskName '{task}' -ErrorAction SilentlyContinue; "
                     "if(-not $t){ Write-Output 'MISSING_TASK'; exit 2 }; "
-                    f"Start-ScheduledTask -TaskName '{task}'; Start-Sleep 2; "
-                    f"Write-Output ('STATE=' + (Get-ScheduledTask -TaskName '{task}').State)"
+                    "if($t.State -eq 'Running'){ Stop-ScheduledTask -TaskName '"
+                    + task
+                    + "' -ErrorAction SilentlyContinue; Start-Sleep 1 }; "
+                    f"Start-ScheduledTask -TaskName '{task}'; "
+                    "$deadline=(Get-Date).AddSeconds(45); "
+                    "do { "
+                    f"  $i=Get-ScheduledTaskInfo -TaskName '{task}' -ErrorAction SilentlyContinue; "
+                    f"  $st=(Get-ScheduledTask -TaskName '{task}').State; "
+                    "  if($st -ne 'Running'){ "
+                    "    Write-Output ('STATE=' + $st); "
+                    "    Write-Output ('LAST=' + $i.LastTaskResult); "
+                    "    Write-Output ('LAST_RUN=' + $i.LastRunTime); "
+                    "    break "
+                    "  }; "
+                    "  Start-Sleep 1 "
+                    "} while((Get-Date) -lt $deadline); "
+                    "if((Get-ScheduledTask -TaskName '"
+                    + task
+                    + "').State -eq 'Running'){ Write-Output 'STATE=Running TIMEOUT' }"
                 ),
             ],
             capture_output=True,
@@ -1167,23 +1199,64 @@ def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
                 "ok": False,
                 "outcome": "configuration_error",
                 "task": task,
+                "before": before,
                 "error": (
-                    "Tâche absente — une fois en PowerShell Admin: "
+                    "Tâche absente — une fois en PowerShell Admin (session bureau): "
                     "powershell -File C:\\Agent_IA\\install_fix_session0_task.ps1"
                 ),
-                "detail": detail[:400],
+                "detail": detail[:600],
             }
         if r.returncode != 0:
             return {
                 "ok": False,
                 "outcome": "error",
                 "task": task,
+                "before": before,
                 "error": f"Start-ScheduledTask rc={r.returncode}",
-                "detail": detail[:400],
+                "detail": detail[:600],
             }
-        return {"ok": True, "outcome": "ok", "task": task, "detail": detail[:400]}
+
+        # La tâche admin tue souvent CE process — si on est encore là, poll le listener.
+        after = before
+        for _ in range(25):
+            time.sleep(1.0)
+            after = _desktop_listener_session_info()
+            if after.get("session0_risk") is not True:
+                break
+
+        log_tail = _read_fix_session0_log()
+        still_s0 = after.get("session0_risk") is True
+        out: dict[str, object] = {
+            "ok": not still_s0,
+            "outcome": "ok" if not still_s0 else "session0_still",
+            "task": task,
+            "before": before,
+            "after": after,
+            "detail": detail[:600],
+            "log_tail": (log_tail or "")[-1200:],
+        }
+        if still_s0:
+            out["error"] = (
+                "Remédiation lancée mais Agent_IA écoute encore en Session 0 "
+                f"(pid={after.get('listener_pid')} session={after.get('listener_session_id')}). "
+                "Sur le bureau .10 en PowerShell Admin: "
+                "powershell -File C:\\Agent_IA\\fix_agent_to_user_session.ps1"
+            )
+            out["hint"] = (
+                "Si la tâche LBG-AgentIA-fix-session0 est absente/obsolète: "
+                "powershell -File C:\\Agent_IA\\install_fix_session0_task.ps1 "
+                "puis relancer « répare session 0 ». Voir C:\\Agent_IA\\logs\\fix_session0.log"
+            )
+        return out
     except Exception as e:
-        return {"ok": False, "outcome": "error", "task": task, "error": f"{type(e).__name__}: {e}"}
+        return {
+            "ok": False,
+            "outcome": "error",
+            "task": task,
+            "before": before,
+            "error": f"{type(e).__name__}: {e}",
+            "log_tail": _read_fix_session0_log()[-800:],
+        }
 
 
 def _app_deps_root() -> Path:
@@ -1526,11 +1599,21 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
         result = _run_fix_session0_task(dry_run=dry_run)
-        out = {**base, **result, "before": _desktop_listener_session_info()}
-        if result.get("ok") and not dry_run:
+        # `before` / `after` déjà dans result (vérification réelle post-tâche)
+        out = {**base, **result}
+        if dry_run:
+            out["reply"] = "Dry-run fix_session0 (pas d'exécution)."
+        elif result.get("ok"):
+            after = result.get("after") if isinstance(result.get("after"), dict) else {}
             out["reply"] = (
-                "Remédiation Session 0 déclenchée (tâche élevée). "
-                "Attendre ~10s puis retester open_app / mails."
+                "Session 0 réparée — Agent_IA écoute en session utilisateur "
+                f"(pid={after.get('listener_pid')} session={after.get('listener_session_id')}). "
+                "Reteste open_app / mails."
+            )
+        else:
+            out["reply"] = (
+                str(result.get("error") or "Remédiation Session 0 incomplète.")
+                + (f"\n_{result.get('hint')}_" if result.get("hint") else "")
             )
         _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
         return out
@@ -2307,6 +2390,28 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
 
+        # Session 0 = CreateProcess « ok » mais fenêtre invisible pour l'utilisateur interactif.
+        sess_info = _desktop_listener_session_info()
+        if sess_info.get("session0_risk") is True:
+            out = {
+                **base,
+                "ok": False,
+                "outcome": "session0_invisible",
+                "app": app_id,
+                "args": args_list,
+                "session": sess_info,
+                "error": (
+                    "Agent_IA tourne en Session 0 : l'app s'ouvrirait hors bureau utilisateur. "
+                    "Demande « répare session 0 » (AGIR / fix_session0) puis réessaie."
+                ),
+                "hint": (
+                    "Une fois en Admin si la tâche manque : "
+                    "powershell -File C:\\Agent_IA\\install_fix_session0_task.ps1"
+                ),
+            }
+            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+            return out
+
         cmd_override = action.get("command") or action.get("exe")
         if isinstance(cmd_override, str) and cmd_override.strip():
             cmd_list = [cmd_override.strip().replace("/", "\\")]
@@ -2330,7 +2435,25 @@ async def invoke(payload: InvokeRequest):
         # Préflight sidecars (ex. Qt5Sql.dll VGHD) + cwd = dossier exe
         sidecar_report: dict[str, object] = {}
         if cmd_list and isinstance(cmd_list[0], str):
-            sidecar_report = _ensure_app_sidecars(app_id, cmd_list[0])
+            exe0 = cmd_list[0]
+            # Chemin absolu / .exe explicite : échouer clairement avant WinError 2
+            looks_path = ("\\" in exe0) or ("/" in exe0) or exe0.lower().endswith((".exe", ".bat", ".cmd", ".com"))
+            if looks_path and not Path(exe0).is_file():
+                out = {
+                    **base,
+                    "ok": False,
+                    "outcome": "exe_not_found",
+                    "error": f"Exe introuvable: {exe0}",
+                    "app": app_id,
+                    "args": args_list,
+                    "hint": (
+                        "Mettre à jour LBG_DESKTOP_APP_MAP_JSON dans C:\\Agent_IA\\desktop.env "
+                        "(chemin absolu) ou learn:true + LBG_DESKTOP_LEARN_ENABLED=1."
+                    ),
+                }
+                _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+                return out
+            sidecar_report = _ensure_app_sidecars(app_id, exe0)
             if sidecar_report.get("missing"):
                 out = {
                     **base,

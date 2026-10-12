@@ -323,7 +323,14 @@ const send = async () => {
       }
     }
     addMessage(backendResponse)
-    endActivity('done')
+    const hasBody = Boolean(
+      String(backendResponse?.content || '').trim() ||
+        backendResponse?.actionProposal ||
+        backendResponse?.approval?.tasks?.length ||
+        backendResponse?.timeline?.length
+    )
+    if (hasBody) endActivity('done')
+    else endActivity('error', 'Réponse vide (SSE / backend)')
     loadConversations()
   } catch (e) {
     console.error('Error sending message:', e)

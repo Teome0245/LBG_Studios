@@ -23,18 +23,28 @@ C:\Agent_IA\run_agent.cmd
 Si l’agent tourne déjà sous **Système / Session 0** (apps ouvertes invisibles) :
 
 ```powershell
-# Une fois en PowerShell **Admin** (désactive aussi le service AgentLocalV0 qui respawn Session 0) :
+# Remède one-shot (Admin, session bureau) — tire scripts + main.py depuis le staging LAN :
+irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex
+
+# Ou en local si les fichiers sont déjà à jour dans C:\Agent_IA :
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_session0_admin.ps1
-
-# Pour que **Compagnon** puisse le refaire ensuite (AGIR → fix_session0), installer la tâche élevée **une fois** :
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_fix_session0_task.ps1
-
-# Ou sans Admin si :5005 n’est pas verrouillé par SYSTEM :
 powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\fix_agent_to_user_session.ps1
 ```
 
-Ensuite depuis Compagnon : « répare session 0 » → Dry-run → Réel (jeton desktop).
-Cause fréquente de régression : service Windows **`AgentLocalV0`** (`start_agent.bat` en SYSTEM) — à laisser **Disabled**.
+Vérif LAN (doit afficher `session0_risk=False`, `listener_session_id` > 0) :
+
+```bash
+curl -sS -X POST http://192.168.0.10:5005/invoke \
+  -H 'Content-Type: application/json' \
+  -d '{"actor_id":"diag","text":"agent session status","context":{"desktop_action":{"kind":"agent_session_status"},"desktop_approval":"confirmed"}}'
+```
+
+Ensuite depuis Compagnon : « répare session 0 » → Dry-run → Réel.  
+**Important** : `fix_session0` ne se contente plus de `Start-ScheduledTask` + `STATE=Ready` — il **poll** le listener et renvoie `ok=false` / `session0_still` si `:5005` reste en Session 0. Log : `C:\Agent_IA\logs\fix_session0.log`.
+
+Cause fréquente de régression : service Windows **`AgentLocalV0`** (`start_agent.bat` en SYSTEM) — à laisser **Disabled**.  
+Compagnon refuse `open_app` tant que `session0_risk=true` (garde overlay + worker).
 
 Démarrage auto (logon) + redémarrage 08:00 / 20:00 — **toujours en compte utilisateur Interactive** :
 

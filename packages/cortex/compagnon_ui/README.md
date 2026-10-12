@@ -44,3 +44,8 @@ Joindre ou coller une image dans le chat → `POST /api/pilot/vision-ask` (Corte
 
 Overlay `server_overlay/routing.json` + `local_llm_provider.py` : priorise Ollama `.110`
 (`gemma4:e2b` fast/balanced, `huihui_ai/Qwen3.8-abliterated:27b` smart). Groq `gpt-oss-20b` reste en fallback cloud.
+
+## Desktop + bulles SSE (notes ops)
+
+- **Session 0** (`.10`) : overlay `desktop_dispatch` refuse `open_app` si le worker est en Session 0 ; remède Admin → `APPLY_SESSION0_FIX.ps1` (voir `windows_agent/Agent_IA/README.md`).
+- **Bulles vides** : `useChat.finishStream` / `sse_ask` forcent un contenu de secours ; `ChatFlow` ne peint plus une carte glass vide ; activité → Échec si réponse vraiment vide.

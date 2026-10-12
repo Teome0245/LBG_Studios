@@ -1,0 +1,52 @@
+#Requires -RunAsAdministrator
+# Applique le correctif Session 0 (scripts + main.py) puis bascule Agent_IA en session bureau.
+#
+# Usage (PowerShell Admin, session interactive sdesh sur .10) :
+#   irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex
+# ou:
+#   powershell -NoProfile -ExecutionPolicy Bypass -File C:\Temp\APPLY_SESSION0_FIX.ps1
+
+$ErrorActionPreference = "Stop"
+$Base = "http://192.168.0.100:8765"
+$Dst = "C:\Agent_IA"
+$Tmp = "C:\Temp\Agent_IA_fix_session0"
+New-Item -ItemType Directory -Force -Path $Dst, $Tmp | Out-Null
+
+$files = @(
+  "main.py",
+  "fix_session0_admin.ps1",
+  "install_fix_session0_task.ps1",
+  "fix_agent_to_user_session.ps1"
+)
+foreach ($f in $files) {
+  $url = "$Base/$f"
+  $out = Join-Path $Tmp $f
+  Write-Host "GET $url"
+  Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+  Copy-Item $out (Join-Path $Dst $f) -Force
+  Write-Host "OK -> $Dst\$f"
+}
+
+Write-Host "== reinstall task LBG-AgentIA-fix-session0 =="
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "install_fix_session0_task.ps1")
+
+Write-Host "== bascule session utilisateur =="
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "fix_agent_to_user_session.ps1")
+$code = $LASTEXITCODE
+if ($code -ne 0) {
+  Write-Host "WARN fix_agent exit=$code — tente fix_session0_admin"
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "fix_session0_admin.ps1")
+  $code = $LASTEXITCODE
+}
+
+Start-Sleep 3
+try {
+  $h = Invoke-RestMethod http://127.0.0.1:5005/healthz
+  Write-Host ("healthz ok service={0}" -f $h.service)
+} catch {
+  Write-Host "WARN healthz: $_"
+}
+
+Write-Host ""
+Write-Host "Si OK: Compagnon peut ouvrir vghd. Sinon voir C:\Agent_IA\logs\fix_session0.log"
+exit $code

@@ -100,7 +100,11 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
         return None
     if first.lower() in _OPEN_APP_STOP_TOKENS:
         return None
-    return first.lower()
+    slug = first.lower()
+    # Typos fréquents VGHD
+    if slug in {"vqhd", "vphd", "vhgd"}:
+        slug = "vghd"
+    return slug
 
 
 def infer_open_app_from_text(text: str) -> dict[str, Any] | None:
@@ -297,7 +301,22 @@ def _format_tasks_reply(data: dict[str, Any], goal: str) -> str:
     if isinstance(reply, dict):
         reply = reply.get("text") or reply.get("content") or str(reply)
     plan = data.get("plan_source") or data.get("planner") or ""
-    if ok is True or (ok is None and not err and data.get("status") in ("success", "ok", "done")):
+    reply_s = str(reply or "")
+    detail_blob = f"{reply_s} {err or ''}"
+    # Faux positifs Cockpit / Session 0 (app « ok » mais invisible)
+    if re.search(r"session0|Session\s*0|invisible", detail_blob, re.I):
+        return (
+            f"Desktop : agent en Session 0 — l'app ne s'affiche pas sur le bureau. "
+            f"{(err or reply_s)[:200]}. "
+            "Dis « répare session 0 » puis réessaie d'ouvrir l'app."
+        )
+    if re.search(r"WinError\s*2|introuvable|FileNotFound", detail_blob, re.I):
+        return (
+            f"Desktop : exe introuvable — {detail_blob.strip()[:240]}. "
+            "Vérifie l’id d’app (`vghd` pas `vghd.exe`) et `LBG_DESKTOP_APP_MAP_JSON` sur `.10`."
+        )
+    # Succès uniquement si ok=True explicite (plus de faux positifs ok=None)
+    if ok is True:
         app = ""
         blob = str(data)
         m = re.search(r'"app"\s*:\s*"([^"]+)"', blob)
@@ -309,16 +328,10 @@ def _format_tasks_reply(data: dict[str, Any], goal: str) -> str:
         ]
         if plan:
             lines.append(f"- plan : `{plan}`")
-        if reply:
-            lines.append(f"- détail : {str(reply)[:300]}")
+        if reply_s:
+            lines.append(f"- détail : {reply_s[:300]}")
         return "\n".join(lines)
-    err_s = str(err or "réponse inattendue")
-    # WinError 2 ≠ jeton manquant
-    if re.search(r"WinError\s*2|introuvable|FileNotFound", err_s, re.I):
-        return (
-            f"Desktop : exe introuvable — {err_s}. "
-            "Vérifie l’id d’app (`vghd` pas `vghd.exe`) et `LBG_DESKTOP_APP_MAP_JSON` sur `.10`."
-        )
+    err_s = str(err or reply_s or "réponse inattendue")
     if re.search(r"approval|jeton|token|401|403", err_s, re.I):
         return (
             f"Desktop via Cockpit : échec auth — {err_s}. "
@@ -338,8 +351,14 @@ def _format_worker_reply(
 ) -> str:
     app = action.get("app") or "?"
     where = (label or "windows-desktop").strip() or "windows-desktop"
-    if data.get("ok") is True or data.get("outcome") in ("ok", "dry_run"):
-        outcome = data.get("outcome") or "ok"
+    outcome = str(data.get("outcome") or "")
+    if outcome == "session0_invisible" or (
+        isinstance(data.get("session"), dict) and data["session"].get("session0_risk")
+    ):
+        err = data.get("error") or "Agent en Session 0 (app invisible)"
+        hint = data.get("hint") or "Dis « répare session 0 » puis réessaie."
+        return f"Desktop worker ({where}) : `{app}` — {err}\n_{hint}_"
+    if data.get("ok") is True or outcome in ("ok", "dry_run"):
         extra = ""
         if outcome == "dry_run":
             extra = (
@@ -347,12 +366,48 @@ def _format_worker_reply(
                 "Passe à `0` dans `desktop.env` puis redémarre l’agent pour un vrai open._"
             )
         return (
-            f"**Desktop** : `{app}` — {outcome} sur {where} "
+            f"**Desktop** : `{app}` — {outcome or 'ok'} sur {where} "
             f"(worker Agent_IA).{extra}"
         )
     err = data.get("error") or data.get("detail") or "échec"
     hint = data.get("hint") or ""
     return f"Desktop worker ({where}) : `{app}` — {err}" + (f"\n_{hint}_" if hint else "")
+
+
+async def _probe_worker_session0(
+    worker: str,
+    *,
+    timeout: Any,
+    approval: str,
+    approval_mode: str,
+) -> dict[str, Any] | None:
+    """Lit ``agent_session_status`` sur le worker ; ``None`` si indisponible."""
+    ctx: dict[str, Any] = {
+        "desktop_dry_run": False,
+        "desktop_action": {"kind": "agent_session_status"},
+    }
+    if approval_mode in ("confirm", "soft", "lab"):
+        ctx["desktop_approval"] = "confirmed"
+        ctx["desktop_confirm"] = True
+    elif approval:
+        ctx["desktop_approval"] = approval
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.post(
+                f"{worker.rstrip('/')}/invoke",
+                json={
+                    "actor_id": "orch-ui:desktop-session",
+                    "text": "agent session status",
+                    "context": ctx,
+                },
+            )
+        if r.status_code >= 400:
+            return None
+        data = r.json() if r.content else {}
+        return data if isinstance(data, dict) else None
+    except Exception as e:
+        logger.info("desktop session probe failed: %s", e)
+        return None
 
 
 async def run_desktop_open(
@@ -387,6 +442,43 @@ async def run_desktop_open(
     # → worker direct pour ne pas ouvrir l'app sur la mauvaise machine.
     prefer_direct = target_id.lower() not in ("pc", "default", "")
 
+    approval = _desktop_approval()
+    approval_mode = (
+        os.getenv("LBG_DESKTOP_APPROVAL_MODE", "").strip().lower()
+        or ("confirm" if os.getenv("LBG_COMPAGNON_LAB", "").strip() in ("1", "true", "yes", "on") else "")
+    )
+
+    # Garde Session 0 : évite le faux « ok » Cockpit alors que l'app est invisible.
+    if not dry_run:
+        sess = await _probe_worker_session0(
+            worker, timeout=timeout, approval=approval, approval_mode=approval_mode
+        )
+        sess_info = sess.get("session") if isinstance(sess, dict) else None
+        if isinstance(sess_info, dict) and sess_info.get("session0_risk") is True:
+            latency = time.monotonic() - t0
+            return {
+                "ok": False,
+                "content": (
+                    f"Desktop ({target_label}) : Agent_IA en **Session 0** — "
+                    f"`{action['app']}` ne s'afficherait pas sur ton bureau. "
+                    "La remédiation auto a déjà été essayée : le listener reste en session 0. "
+                    "Sur le PC `.10`, PowerShell **Admin** (session bureau) :\n"
+                    "`irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex`\n"
+                    "Puis réessaie d'ouvrir l'app."
+                ),
+                "source": "desktop",
+                "via": "session0_guard",
+                "latency": latency,
+                "app": action["app"],
+                "outcome": "session0_invisible",
+                "desktop": {
+                    "target": target_id,
+                    "label": target_label,
+                    "url": worker,
+                    "session": sess_info,
+                },
+            }
+
     # 1) Cockpit / P03 tasks/run (poste défaut uniquement)
     token = _pilot_token()
     if token and not prefer_direct:
@@ -418,10 +510,11 @@ async def run_desktop_open(
                 if not isinstance(data, dict):
                     data = {"raw": data}
                 content = _format_tasks_reply(data, cleaned)
-                ok = data.get("ok") is True or (
-                    "approval" not in str(data.get("error") or "").lower()
-                    and r.status_code == 200
-                    and data.get("ok") is not False
+                # Ne plus traiter ok=None / HTTP 200 comme succès (faux « ok sur windows-desktop »)
+                ok = data.get("ok") is True and not re.search(
+                    r"session0|WinError\s*2|introuvable|FileNotFound",
+                    content,
+                    re.I,
                 )
                 return {
                     "ok": ok,
@@ -441,11 +534,6 @@ async def run_desktop_open(
             logger.warning("desktop tasks/run failed: %s", e)
 
     # 2) Worker Windows / Linux direct (cible résolue : portable-sds, pc, …)
-    approval = _desktop_approval()
-    approval_mode = (
-        os.getenv("LBG_DESKTOP_APPROVAL_MODE", "").strip().lower()
-        or ("confirm" if os.getenv("LBG_COMPAGNON_LAB", "").strip() in ("1", "true", "yes", "on") else "")
-    )
     ctx: dict[str, Any] = {
         "desktop_dry_run": bool(dry_run),
         "desktop_action": action,

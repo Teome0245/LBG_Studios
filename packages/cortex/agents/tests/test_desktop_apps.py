@@ -81,7 +81,9 @@ def test_infer_none_without_verb() -> None:
 def test_normalize_aliases() -> None:
     assert normalize_desktop_app("MSWORD") == "word"
     assert normalize_desktop_app("swg") == "swgemu"
-    assert normalize_desktop_app("notepad") == "notepadpp"
+    assert normalize_desktop_app("notepad") == "notepad"
+    assert normalize_desktop_app("notepad++") == "notepadpp"
+    assert normalize_desktop_app("vqhd") == "vghd"
     assert normalize_desktop_app("vs") == "code"
     assert normalize_desktop_app("vscode") == "code"
 

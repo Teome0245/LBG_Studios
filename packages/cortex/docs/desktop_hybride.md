@@ -204,7 +204,20 @@ Contrôle :
 **Compagnon `:5174` (overlay `desktop_dispatch`)** :
 - « ouvre notepad » → id `notepad` (bloc-notes Windows) — **pas** de remap forcé vers `notepadpp`.
 - « ouvre notepad++ » → id `notepadpp` (Notepad++), seulement si demandé explicitement.
+- Typos VGHD : `vqhd` / `vphd` → `vghd`.
 - Cible **PORTABLE-SDS** : `desktop_target=portable` → worker `http://192.168.0.77:5005` (Ethernet ; Wi-Fi `.40` = même Agent_IA). Prérequis lab : `LBG_DESKTOP_DRY_RUN=0` sur le portable + `notepad` (ou l’exe mappé) dans allowlist/`APP_MAP`.
+- **Garde Session 0** : avant `open_app`, probe `agent_session_status` ; si `session0_risk` → refus clair (pas de faux « ok » Cockpit). Remède : `APPLY_SESSION0_FIX.ps1` / README Agent_IA.
+- Cockpit `tasks/run` : succès seulement si `ok is True` (plus de HTTP 200 + `ok=None`).
+
+### Session 0 (Windows `.10`) — apps « ok » mais invisibles
+
+Si Agent_IA écoute en **Session 0** (service / SYSTEM), `CreateProcess` réussit mais la fenêtre n’apparaît pas sur le bureau.
+
+| Symptôme | Cause | Remède |
+|----------|--------|--------|
+| Compagnon dit Session 0 | `listener_session_id=0` | Admin bureau : `irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 \| iex` |
+| « répare session 0 » dit ok mais pid inchangé | ancien bug : `STATE=Ready` sans vérif | `main.py` poll le listener ; `ok=false` si toujours S0 |
+| Régression après reboot | service `AgentLocalV0` | laisser **Disabled** ; logon via `LBG-AgentIA-logon` Interactive |
 
 Apprentissage contrôlé (optionnel) :
 - si `LBG_DESKTOP_LEARN_ENABLED=1` et que l’action contient `"learn": true`,

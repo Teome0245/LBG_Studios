@@ -29,6 +29,11 @@ class DesktopDispatchTargets(unittest.TestCase):
         assert action_pp is not None
         self.assertEqual(action_pp["app"], "notepadpp")
 
+    def test_infer_open_app_vqhd_typo(self) -> None:
+        action = dd.infer_open_app_from_text("ouvre vqhd sur mon pc (.10)")
+        assert action is not None
+        self.assertEqual(action["app"], "vghd")
+
     def test_infer_portable_sds(self) -> None:
         self.assertEqual(
             dd.infer_desktop_target_id("tu peux ouvrir notepad sur PORTABLE-SDS"),

@@ -67,7 +67,20 @@ async def stream_ask(
         return
 
     payload = payload or {}
-    text = str(payload.get("content") or "")
+    if not isinstance(payload, dict):
+        payload = {"content": str(payload), "source": "assistant"}
+    text = str(payload.get("content") or payload.get("response") or payload.get("raw") or "")
+    # Évite un done « vide » (bulle Terminé sans texte) — contenu minimal de secours.
+    if not text.strip():
+        err = payload.get("error") or payload.get("detail")
+        text = (
+            f"Erreur : {err}"
+            if err
+            else "Réponse vide — réessaie ; vérifie /ask/stream si ça revient."
+        )
+        payload = {**payload, "content": text}
+        if err and not payload.get("source"):
+            payload["source"] = "error"
     step = max(1, int(chunk_chars))
     for start in range(0, len(text), step):
         if start:

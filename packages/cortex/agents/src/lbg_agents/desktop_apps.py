@@ -37,8 +37,12 @@ _CUSTOM_EXE_APPS = frozenset({"swgemu", "word", "winword", "msword", "vghd"})
 _APP_ALIASES: dict[str, str] = {
     "msword": "word",
     "winword": "word",
-    "notepad": "notepadpp",
+    # notepad = bloc-notes Windows (PATH). notepad++ seulement si demandé explicitement.
     "notepad++": "notepadpp",
+    "notepadplusplus": "notepadpp",
+    "vqhd": "vghd",
+    "vphd": "vghd",
+    "vhgd": "vghd",
     "mozilla": "firefox",
     "firefox.exe": "firefox",
     "swgemu.exe": "swgemu",

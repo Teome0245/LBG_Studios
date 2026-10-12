@@ -78,9 +78,13 @@ Prérequis Windows une fois (déjà fait si tâches présentes) :
 
 ```powershell
 Get-ScheduledTask -TaskName 'LBG-AgentIA-*'
-# Si fix-session0 absente :
+# Si Agent_IA en Session 0 (apps invisibles) — Admin session bureau :
+irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex
+# Ou si fichiers déjà à jour :
 powershell -File C:\Agent_IA\install_fix_session0_task.ps1   # Admin
 ```
+
+Détail Session 0 / `open_app` : `packages/cortex/windows_agent/Agent_IA/README.md` · `docs/desktop_hybride.md`.
 
 ---
 
