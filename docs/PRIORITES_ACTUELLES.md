@@ -90,4 +90,4 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : voir [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) — **3.1** World Stream (en cours) · feeling C2 rejeu · L3 **DONE**.
+**Suite immédiate** : voir [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) — **3.1** World Stream **clos** · feeling C2 rejeu · L3 ops **DONE** · optionnel `O-OPS-2` métriques Fleet.

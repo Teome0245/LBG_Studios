@@ -70,4 +70,4 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Après clôture L3 / présence : reprendre en priorité **O-JEUX-1** (si WIP) ou **O-FEEL-1/2** (feeling).
+4. Après clôture L3 / présence / 3.1 : reprendre en priorité **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).

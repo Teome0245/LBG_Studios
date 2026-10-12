@@ -1,8 +1,8 @@
 # Revue métriques — pilote Ops Health (LAN 140)
 
-**Date** : 2026-10-08  
+**Date** : 2026-10-08 · **MAJ** 2026-10-12  
 **Périmètre** : plan gaps A–F2 + tick mission L3  
-**Verdict** : **GO conditionnel** Phase F (F1/F2 déjà livrés) — mission L3 à clôturer (jour 3) ; F3 O2 jeu **hors** ce plan.
+**Verdict** : **GO** — mission L3 **`done`** (`days_ok=3/3`, `last_ok_day=2026-10-11`) ; F1/F2 livrés ; F3 O2 jeu **hors** ce plan.
 
 ## Snapshot live (2026-10-08 ~10h)
 
@@ -33,6 +33,7 @@
 1. **Avant 2026-10-07** : faux positifs remediate (245 requis) → bruit Slack.
 2. **2026-10-07 soir** : 245 optionnel · sonde 246 → `:8787/healthz` · tick mission sur timer · `days_ok=1`.
 3. **2026-10-08 matin** : `days_ok=2` · périmètre vert · deadline mission trop courte → **extend** (marge jours restants).
+4. **2026-10-09 → 11** : ticks timer live · `days_ok` 1→2→3 · **`status=done`** (confirmé live 2026-10-12).
 
 ## Soft-links (ADR 0004)
 
@@ -47,9 +48,9 @@ Fleet expose désormais `mmo_player` / `bridge_agent_id` / `linked_studio_*` (pl
 
 | Décision | |
 |----------|--|
-| **GO** | Conserver le pilote live ; terminer mission 3/3 ; F1/F2 restent le cadre assets/PM |
+| **GO** | Pilote live conservé · mission L3 **clôturée** · F1/F2 = cadre assets/PM |
 | **NO-GO** | Ne pas ouvrir F3 O2 jeu depuis ce plan (priorités P3–P5 séparées) |
-| **À faire** | Mission L3 **clôturée** 2026-10-11 · optionnel : agrégat métriques 7j dans Fleet · Phase C présence |
+| **Suite** | Optionnel : agrégat métriques 7j Fleet (`O-OPS-2`) · feeling Compagnon (`SUJETS_OUVERTS`) |
 
 ## Commandes
 

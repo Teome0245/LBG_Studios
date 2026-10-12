@@ -1,7 +1,7 @@
 # Plan — Combler les gaps agentiques & réaliser le plan d’action
 
-**Date** : 2026-10-02 · **MAJ** 2026-10-07  
-**Statut** : pilote ops health **livré** (A–F2 + tick L3) — **revue 7j = GO conditionnel** ([`revue_ops_health_7j.md`](revue_ops_health_7j.md)) · F3 O2 hors scope  
+**Date** : 2026-10-02 · **MAJ** 2026-10-12  
+**Statut** : pilote ops health **clos** (A–F2 + tick L3) — revue 7j **GO** · mission L3 **`done` 3/3** ([`revue_ops_health_7j.md`](revue_ops_health_7j.md)) · F3 O2 hors scope  
 **Priorité** : O1 Studio (`packages/cortex`) — LAN 140  
 **Complète** : [`lbg_agentic_os.md`](lbg_agentic_os.md) · [`plan_meta_autonomie_l3.md`](plan_meta_autonomie_l3.md) · [`ops_notify_slack.md`](ops_notify_slack.md) · [`agents/README.md`](../agents/README.md) · [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md)
 
@@ -231,6 +231,6 @@ Le plan est **réalisé** quand, sur LAN 140 pendant **7 jours** :
 5. ~~**E1** jobs `waiting_approval` → Slack HITL~~ · ~~**E2–E4** mission L3 `smoke_lan_mission`~~
 6. ~~**F1** `project_pm` agentique~~ · ~~**F2** Pygmalion assets L2~~
 7. ~~**Suite** : tick mission L3 sur timer ops_health~~ (245 optionnel · sonde 246 `:8787/healthz` · `days_ok` 1×/jour UTC).
-8. ~~**Revue 7j**~~ → [`revue_ops_health_7j.md`](revue_ops_health_7j.md) (**GO conditionnel**) · ~~soft-links Fleet Vulcan↔Vex / Hermès↔Tess~~ · mission L3 → finir `days_ok=3` · **F3** O2 jeu = hors ce plan ([`PRIORITES_ACTUELLES.md`](../../../docs/PRIORITES_ACTUELLES.md) P3–P5).
+8. ~~**Revue 7j**~~ → [`revue_ops_health_7j.md`](revue_ops_health_7j.md) (**GO**) · ~~soft-links Fleet Vulcan↔Vex / Hermès↔Tess~~ · ~~mission L3 `days_ok=3/3` `done` (2026-10-11)~~ · **F3** O2 jeu = hors ce plan ([`PRIORITES_ACTUELLES.md`](../../../docs/PRIORITES_ACTUELLES.md) P3–P5).
 
-Voir [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md).
+Voir [`runbook_ops_health_pilot.md`](runbook_ops_health_pilot.md) · backlog : [`SUJETS_OUVERTS.md`](../../../docs/SUJETS_OUVERTS.md).
