@@ -1,14 +1,14 @@
 # Outillage Dev & Analyse MCP — LBG Studios
 
 **Date** : 2026-10-12  
-**Statut** : Actif / Intégré
+**Statut** : Actif / Intégré multi-environnements
 
 ---
 
 ## 1. REA — Reverse Engineer Anything
 
 - **Dépôt upstream** : [`morluto/rea`](https://github.com/morluto/rea) (Licence MIT / Open Source)
-- **Objectif** : Serveur MCP (*Model Context Protocol*) permettant aux agents de dev IA (Cursor, Antigravity, Claude Code) d'inspecter, décompiler et rétro-ingénierer des formats ou exécutables sans accès au code source.
+- **Objectif** : Serveur MCP (*Model Context Protocol*) permettant aux agents de dev IA d'inspecter, décompiler et rétro-ingénierer des formats, applications ou exécutables sans accès au code source.
 
 ### Cibles supportées
 - **Applications JavaScript / Electron** : dépaquetage d'archives `.asar`, analyse statique de code minifié/obfusqué.
@@ -16,10 +16,23 @@
 - **Assemblages .NET & APKs**.
 - **Analyse de structures & protocoles réseau**.
 
-### Configurations dans le monorepo
-Les fichiers suivants déclarent le serveur REA en mode transport `stdio` :
-- [`.cursor/mcp.json`](../.cursor/mcp.json) (Cursor IDE)
-- [`.agents/mcp_config.json`](../.agents/mcp_config.json) (Antigravity IDE / Gemini CLI)
+---
+
+## 2. Matrice d'intégration dans l'écosystème LBG Studios
+
+Chaque outil dispose de sa configuration prête à l'emploi dans le monorepo :
+
+| Environnement / Outil | Fichier de configuration | Prise en charge |
+|-----------------------|--------------------------|-----------------|
+| **Cursor IDE** | [`.cursor/mcp.json`](../.cursor/mcp.json) | Automatique au chargement du workspace |
+| **Antigravity IDE / Gemini CLI** | [`.agents/mcp_config.json`](../.agents/mcp_config.json) | Automatique via le système de personnalisation `.agents/` |
+| **Claude Code & OpenCode** | [`.mcp.json`](../.mcp.json) | Standard racine MCP lu nativement par Claude Code et OpenCode |
+| **Cline (VS Code)** | [`.vscode/cline_mcp_settings.json`](../.vscode/cline_mcp_settings.json) | Chargé par Cline dans VS Code ou importable directement |
+| **Studio (Cortex / Team / Métis / Iris)** | [`tools/rea_runner.sh`](../tools/rea_runner.sh) | Script wrapper exécutable en sub-process ou en CLI |
+
+---
+
+## 3. Configuration MCP standard
 
 ```json
 {
@@ -35,12 +48,22 @@ Les fichiers suivants déclarent le serveur REA en mode transport `stdio` :
 }
 ```
 
-### Usage direct en ligne de commande (CLI)
-Il est également possible d'invoquer l'outil ponctuellement depuis le terminal :
+---
+
+## 4. Usage direct en ligne de commande (Studio / CLI)
+
+Via le wrapper monorepo :
 ```bash
-npx -y rea-agents@latest analyze-javascript-application /chemin/vers/app --json
+# Lancer le serveur MCP en direct (stdio) :
+./tools/rea_runner.sh
+
+# Analyser une application JavaScript / Electron :
+./tools/rea_runner.sh analyze-javascript-application /chemin/vers/app --json
 ```
 
-### Règles de sécurité LBG Studios
-1. **Local-first** : l'exécution et l'analyse restent 100 % locales sur la machine de dev.
+---
+
+## 5. Règles de sécurité LBG Studios
+
+1. **Local-first absolu** : l'exécution et l'analyse restent 100 % locales sur la machine de dev ; aucun binaire ni jeton n'est envoyé vers des tiers.
 2. **Périmètre Dev/Studio uniquement (O1)** : cet outillage est réservé aux phases d'analyse, d'audit de legacy et d'ingénierie ; il n'est **jamais** embarqué dans le runtime joueur Godot (`prime-hub` / `prime-client`).
