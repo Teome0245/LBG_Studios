@@ -209,6 +209,29 @@ async def run_llm_chat_phase(
             "world_stream short-circuit failed: %s", e
         )
 
+    # Plan 3.2 — convergence mémoire relationnelle jeu ↔ bureau (:8787)
+    try:
+        from src.services.relation_memory import (
+            attach_relation_memory_if_needed,
+            wants_relation_memory,
+        )
+
+        if lab_mode and wants_relation_memory(prompt):
+            seed = router.normalize_llm(
+                "mémoire relationnelle",
+                "relation_memory",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return await attach_relation_memory_if_needed(
+                    seed, prompt=prompt, lab=lab_mode, player="Teome"
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.relation_memory").warning(
+            "relation_memory short-circuit failed: %s", e
+        )
+
     # D6.5 — « soumets ce plan au studio » : réutilise le plan du fil, skip LLM
     # (évite 502 timeout LLM+Pilot quand le livrable est déjà là).
     try:

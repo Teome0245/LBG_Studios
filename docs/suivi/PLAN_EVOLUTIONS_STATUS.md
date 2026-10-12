@@ -1,6 +1,6 @@
 # Suivi — Plan d'évolutions Studio / Jeu
 
-**Généré** : 2026-10-12 19:59 CEST  
+**Généré** : 2026-10-12 20:19 CEST  
 **Plan** : `PLAN_PROPOSITIONS_EVOLUTIONS` · source [`docs/PLAN_PROPOSITIONS_EVOLUTIONS.md`](../PLAN_PROPOSITIONS_EVOLUTIONS.md)  
 **Pilot** : [http://192.168.0.140:8080/pilot/#/team](http://192.168.0.140:8080/pilot/#/team)  
 **Plan entièrement réalisé** : ❌ non
@@ -9,7 +9,7 @@
 
 | Done | En cours | À relancer | Bloqué | Todo |
 |:---:|:---:|:---:|:---:|:---:|
-| 8 | 1 | 0 | 0 | 1 |
+| 9 | 1 | 0 | 0 | 0 |
 
 ## Réalisés
 
@@ -34,6 +34,9 @@
 ### `3.1` — Live World Stream Hub → Compagnon
 - **Preuve** : hub_world_stream.gd ring buffer :8787 · world_stream.py fetch/cache/greeting · router_prompts.py short_social enrichi · character_layer.py contexte Lost Heaven · core.py GET /world/stream · useApi.js fetchWorldStream · test_world_stream.py 7/7 PASS · package CT100 OK
 
+### `3.2` — Mémoire relationnelle jeu ↔ bureau
+- **Preuve** : relation_memory.py fetch/append :8787 · character_layer.py bloc mémoire in-game Teome · llm_chat_phase.py attach/grounding · core.py GET+POST · useApi.js fetch+append · test_relation_memory.py 6/6 PASS · package CT100 36 fichiers
+
 ### `5.1` — Packaging atomique server_overlay CT100
 - **Preuve** : CT100 packaging atomique LIVE 1.0.0+4bcc331: server_overlay/pyproject.toml + overlay.map (33 fichiers); server_overlay_package.py build/verify/apply/rollback; deploy_compagnon_100.sh --smoke OK; marker /opt/orchestrateur/.server_overlay_version package_sha=8128a4e3470abded597b70e855289bab608e23c4fd6acbe273e4062ec272e5a5; smoke tools/smoke_server_overlay_package.sh OK; rollback testé
 
@@ -52,7 +55,7 @@ _Aucun blocage._
 
 ## Todo
 
-### `3.2` — Mémoire relationnelle jeu ↔ bureau
+_File vide._
 
 ## Échecs Team liés au plan (hors ticket)
 

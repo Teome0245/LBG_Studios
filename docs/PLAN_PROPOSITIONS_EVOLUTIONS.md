@@ -121,6 +121,13 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
   1. Établir une passerelle de synchronisation bilatérale des traits relationnels pour l'avatar Teome.
   2. Si Nix ou Jax interagissent avec Teome dans le jeu (boisson, quête, combat), le Compagnon au bureau sur `.10` intègre ce contexte dans ses références.
 - **Done quand** : Les interactions in-game nourrissent la familiarité et le ton du Compagnon Studio.
+- **Statut** : **OK validé & clôturé (2026-10-12)** :
+  - Module [`relation_memory.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/relation_memory.py) connecté à `prime-hub` (`/v1/relation-memory` et `/v1/relation-memory/append` sur `:8787`).
+  - Prompt système Compagnon ([`character_layer.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/character_layer.py)) enrichi avec le bloc `[Mémoire relationnelle in-game (Lost Heaven)]`.
+  - Intention `wants_relation_memory` branchée dans [`llm_chat_phase.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/llm_chat_phase.py).
+  - Endpoints proxy/append dans [`core.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/core.py) et méthodes `fetchRelationMemory`/`appendRelationMemory` dans [`useApi.js`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/src/composables/useApi.js).
+  - Suite de tests [`test_relation_memory.py`](file:///home/lbg/projects/LBG_Studios/packages/cortex/compagnon_ui/server_overlay/tests/test_relation_memory.py) 100 % passante (6 tests) ; packaging CT 100 vérifié (36 fichiers).
+
 
 ---
 

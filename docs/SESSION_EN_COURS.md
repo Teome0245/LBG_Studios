@@ -25,10 +25,10 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 
 Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-10-12 post-L3 DONE).
 
-1. **Ticket 3.1 Live World Stream Hub → Compagnon** : **validé & clôturé** (débloque 3.2).
-2. **Ticket 3.2** — Mémoire relationnelle jeu ↔ bureau (prochaine étape du plan d'évolutions).
-3. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`).
-4. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-CI-1** (5.2) · **O-IDE-*** Cline.
+1. **Ticket 3.1 & 3.2 (Axe 3 Pont Monde ↔ Studio)** : **tous deux validés & clôturés**.
+2. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`).
+3. **O-CI-1** — Ticket **5.2** Ruff + tests headless Godot CI (dernier ticket plan ouvert).
+4. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-IDE-*** Cline.
 5. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
 
 ## Fichiers / surfaces utiles
@@ -52,6 +52,13 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-12 : **ticket 3.2 Convergence de la mémoire relationnelle jeu ↔ bureau — validé & clôturé** —
+  - Module [`relation_memory.py`](../packages/cortex/compagnon_ui/server_overlay/relation_memory.py) connecté à `prime-hub` (`GET /v1/relation-memory` et `POST /v1/relation-memory/append` sur `:8787`).
+  - Ancrage prompt système ([`character_layer.py`](../packages/cortex/compagnon_ui/server_overlay/character_layer.py)) injectant les liens de Teome (Jax, Nix, Daan, pourboires, quêtes) dans la conscience du Compagnon.
+  - Détection d'intention `wants_relation_memory` branchée dans [`llm_chat_phase.py`](../packages/cortex/compagnon_ui/server_overlay/llm_chat_phase.py) pour restituer l'état relationnel.
+  - Endpoints proxy/append dans [`core.py`](../packages/cortex/compagnon_ui/server_overlay/core.py) et méthodes `fetchRelationMemory`/`appendRelationMemory` dans [`useApi.js`](../packages/cortex/compagnon_ui/src/composables/useApi.js).
+  - 6/6 tests unitaires passants dans [`test_relation_memory.py`](../packages/cortex/compagnon_ui/server_overlay/tests/test_relation_memory.py) ; packaging atomique CT 100 validé (`overlay.map` + `pyproject.toml`, 36 fichiers).
+  - Axe 3 du plan d'évolutions 100 % achevé.
 - 2026-10-12 : **ticket 3.1 Live World Stream Hub → Compagnon — validé & clôturé** —
   - Module [`world_stream.py`](../packages/cortex/compagnon_ui/server_overlay/world_stream.py) connecté au flux `prime-hub` (`GET /v1/world/stream` sur `:8787`) avec timeout 1.5 s, cache mémoire et fallback dégradé silencieux.
   - Salutations sociales ([`router_prompts.py`](../packages/cortex/compagnon_ui/server_overlay/router_prompts.py) / `short_social_reply`) enrichies avec le dernier fait marquant de Lost Heaven (ex. boss abattu, chute de ferraille, escorte Nix).

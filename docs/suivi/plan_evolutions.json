@@ -1,7 +1,7 @@
 {
   "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
   "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
-  "updated_ts": 1791827968.8449936,
+  "updated_ts": 1791829178.9559066,
   "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
   "tickets": [
     {
@@ -177,10 +177,10 @@
       "title": "Mémoire relationnelle jeu ↔ bureau",
       "horizon": "sprint2+",
       "perimeter": "Pont Studio/Jeu",
-      "status": "todo",
+      "status": "done",
       "blocked_by": [],
       "blocks": [],
-      "evidence": "",
+      "evidence": "relation_memory.py fetch/append :8787 · character_layer.py bloc mémoire in-game Teome · llm_chat_phase.py attach/grounding · core.py GET+POST · useApi.js fetch+append · test_relation_memory.py 6/6 PASS · package CT100 36 fichiers",
       "keywords": [
         "relation_memory",
         "conversation_memory",
@@ -190,7 +190,8 @@
       "team_signals": [],
       "acceptance": {
         "paths_any": [
-          "packages/cortex/compagnon_ui/server_overlay/presence_report.py"
+          "packages/cortex/compagnon_ui/server_overlay/relation_memory.py",
+          "packages/cortex/compagnon_ui/src/composables/useApi.js"
         ]
       }
     },

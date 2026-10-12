@@ -50,6 +50,7 @@ py-modules = [
     "tts",
     "tts_api",
     "world_stream",
+    "relation_memory",
 ]
 
 [tool.lbg.overlay]

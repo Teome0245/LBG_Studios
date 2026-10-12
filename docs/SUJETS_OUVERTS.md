@@ -40,7 +40,6 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **Débloqué** (3.1 done) · prêt pour implémentation |
 | O-JEUX-3 | Nettoyage restes P4 / docs SOE | Pont SOE retiré de facto — docs/UI à purger au fil de l’eau |
 
 ### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
@@ -77,6 +76,7 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **2026-10-12** · `relation_memory.py` `:8787` · bloc prompt in-game Teome · tests 6/6 · package CT100 |
 | O-PRIO-0 | Fil priorités actuelles + PR #4 (`PRIORITES_ACTUELLES.md`) | **2026-10-12** · mergée · suites optionnelles = `O-DOC-1..2` |
 | O-VEIL-0 | Fil veille batch 8 pistes + workflow Team `evolution_veille` + Lyra ON | **2026-10-12** · mission `4c28ada8-…` done · API `POST /v1/team/evolution/lead` · suites = `O-VEIL-1..4` |
 | O-GAPS-1 | Fil gaps agentiques A–F2 + revue 7j + soft-links Fleet | **2026-10-12** · pilote live · revue **GO** · Vulcan↔Vex / Hermès↔Tess · doc alignée |
@@ -94,4 +94,4 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-JEUX-2** (mémoire relationnelle).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-CI-1** (ticket 5.2 Ruff + tests Godot CI).

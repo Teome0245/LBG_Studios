@@ -222,3 +222,37 @@ async def world_stream_route(since: int = 0, limit: int = 20):
             return {"ok": False, "error": "world_stream_unavailable", "events": []}
     return fetch_world_stream(since=since, limit=limit)
 
+
+@router.get("/relation-memory")
+@router.get("/relation-memory/")
+async def relation_memory_route(player: str = "Teome", npc_id: str = ""):
+    """Plan 3.2 — Proxy/cache de la mémoire relationnelle MMO (prime-hub :8787)."""
+    try:
+        from src.services.relation_memory import fetch_relation_memory
+    except ImportError:
+        try:
+            from relation_memory import fetch_relation_memory  # type: ignore
+        except ImportError:
+            return {"ok": False, "error": "relation_memory_unavailable", "entries": []}
+    return fetch_relation_memory(player=player, npc_id=npc_id)
+
+
+@router.post("/relation-memory/append")
+@router.post("/relation-memory/append/")
+async def relation_memory_append_route(body: dict[str, Any]):
+    """Plan 3.2 — Synchronisation bilatérale d'une note relationnelle vers prime-hub :8787."""
+    try:
+        from src.services.relation_memory import append_relation_memory
+    except ImportError:
+        try:
+            from relation_memory import append_relation_memory  # type: ignore
+        except ImportError:
+            return {"ok": False, "error": "relation_memory_unavailable"}
+    return append_relation_memory(
+        player=str(body.get("player", "Teome")),
+        npc_id=str(body.get("npc_id", "")),
+        kind=str(body.get("kind", "chat")),
+        note=str(body.get("note", "")),
+        detail=body.get("detail") if isinstance(body.get("detail"), dict) else None,
+    )
+

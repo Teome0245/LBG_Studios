@@ -367,6 +367,23 @@ def format_character_block(
         except Exception:
             pass
 
+    # Mémoire relationnelle jeu ↔ bureau (Plan 3.2)
+    try:
+        from src.services.relation_memory import format_relation_memory_block
+    except ImportError:
+        try:
+            from relation_memory import format_relation_memory_block  # type: ignore
+        except ImportError:
+            format_relation_memory_block = None  # type: ignore
+
+    if format_relation_memory_block:
+        try:
+            rblock = format_relation_memory_block(limit=3)
+            if rblock:
+                lines.append(rblock)
+        except Exception:
+            pass
+
     return "\n".join(x for x in lines if x).strip()
 
 

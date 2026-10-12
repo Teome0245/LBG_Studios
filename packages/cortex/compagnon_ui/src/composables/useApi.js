@@ -175,6 +175,38 @@ export function useApi() {
     }
   }
 
-  return { loading, error, sendPrompt, fetchWorldStream }
+  /**
+   * Plan 3.2 — Lecture de la mémoire relationnelle MMO (prime-hub :8787)
+   */
+  const fetchRelationMemory = async (opts = {}) => {
+    try {
+      const player = opts.player || 'Teome'
+      const npcId = opts.npcId || ''
+      const res = await fetch(apiUrl(`/relation-memory?player=${encodeURIComponent(player)}&npc_id=${encodeURIComponent(npcId)}`))
+      if (!res.ok) return { ok: false, entries: [] }
+      return await res.json()
+    } catch {
+      return { ok: false, entries: [] }
+    }
+  }
+
+  /**
+   * Plan 3.2 — Écriture bilatérale d'une interaction relationnelle vers prime-hub :8787
+   */
+  const appendRelationMemory = async (payload) => {
+    try {
+      const res = await fetch(apiUrl('/relation-memory/append'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {}),
+      })
+      if (!res.ok) return { ok: false }
+      return await res.json()
+    } catch {
+      return { ok: false }
+    }
+  }
+
+  return { loading, error, sendPrompt, fetchWorldStream, fetchRelationMemory, appendRelationMemory }
 }
 
