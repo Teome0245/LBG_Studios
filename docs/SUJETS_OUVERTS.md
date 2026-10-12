@@ -15,8 +15,6 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-FEEL-1 | **A2 — C2 collègues** (rejeu humain) | Code/polish livré ; critère #1 encore **PARTIEL** sur certains tours — rejeu [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) · `chat_intent` / nudge causerie |
-| O-FEEL-2 | Feeling C2 rejeu humain périodique | Sur `:5174` : éviter template « qu’est-ce qui t’amène » / hub ops à l’ouverture |
 | O-FEEL-3 | Polish boucle C1/C2 présence (retour terrain) | `presence_brief.py` · `presence_report.py` — retour terrain en **causerie**, pas dump ops, sur rejeux longs |
 
 ### O1 — Mains code / coûts LLM
@@ -75,6 +73,8 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-FEEL-1 | **A2 — C2 collègues** (rejeu humain) | **2026-10-12** · rejeu 7 tours `smoke_rejeu_humain_d6_5174.sh` C1/C2/PLAN/GO **PASS** (`rejeu-humain-d6-3fa2fffd`) |
+| O-FEEL-2 | Feeling C2 rejeu humain périodique | **2026-10-12** · pas de template ops à l'ouverture, greeting + follow naturels |
 | O-CI-1 | Ticket **5.2** Ruff + tests headless Godot CI | **2026-10-12** · `ruff.toml` 100% vert · `tools/ci_godot_headless.sh` sim/nav/db 18/18 en 3s · Plan d'évolutions 10/10 DONE |
 | O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **2026-10-12** · `relation_memory.py` `:8787` · bloc prompt in-game Teome · tests 6/6 · package CT100 |
 | O-PRIO-0 | Fil priorités actuelles + PR #4 (`PRIORITES_ACTUELLES.md`) | **2026-10-12** · mergée · suites optionnelles = `O-DOC-1..2` |
@@ -94,4 +94,4 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Plan d'évolutions 10/10 **DONE**. Priorité session : **O-FEEL-1/2** (rejeu feeling humain Compagnon :5174).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Plan d'évolutions 10/10 **DONE**. Feeling O-FEEL-1/2 **DONE**. Suite recommandée : **O-FEEL-3** ou **O-IDE-1..3** (Cline).
