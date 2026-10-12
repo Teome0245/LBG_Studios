@@ -11,7 +11,6 @@ import os
 from typing import Any
 
 import httpx
-
 from backend.services.session_summary_export import SESSION_SUMMARY_KEYS, sanitize_session_summary
 
 

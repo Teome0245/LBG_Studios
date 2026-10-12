@@ -23,7 +23,7 @@ class _FakeResp:
 
 
 class _FakeAsyncClient:
-    async def __aenter__(self) -> "_FakeAsyncClient":
+    async def __aenter__(self) -> _FakeAsyncClient:
         return self
 
     async def __aexit__(self, *args: object) -> None:

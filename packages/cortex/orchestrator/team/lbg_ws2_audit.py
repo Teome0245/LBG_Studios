@@ -143,7 +143,6 @@ def audit_zb0_readiness() -> dict[str, Any]:
 
 def _probe_zone_bridge_feed_ssh(host: str) -> dict[str, Any]:
     """Sonde feed ZB-1 sur Prime via SSH (orchestrateur 140 → VM 246)."""
-    import json
     import subprocess
 
     user = os.environ.get("LBG_ZONE_BRIDGE_PROBE_USER", "lbg").strip()

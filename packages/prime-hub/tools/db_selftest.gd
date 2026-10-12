@@ -60,6 +60,7 @@ func _init() -> void:
 	_check("register ok", bool(r1.get("ok", false)))
 	var r2: Dictionary = auth.register_or_login("Teome", "BAD")
 	_check("mauvais mdp refusé", not bool(r2.get("ok", false)))
+	db.wait_idle(8000)
 	var acc_rows = db.count_rows("accounts")
 	_check("accounts persisted", acc_rows >= 1, "rows=%d" % acc_rows)
 	_check("next_oid meta", int(db.meta_get("accounts.next_oid", "0")) >= 100002, db.meta_get("accounts.next_oid"))
@@ -70,6 +71,7 @@ func _init() -> void:
 	var inv: Dictionary = eco.inventory("Teome")
 	_check("inventory seed", bool(inv.get("ok", false)))
 	eco.log_session_event("Teome", "fight", "Bataille gagnée hors des murs")
+	db.wait_idle(8000)
 	var st_rows = db.count_rows("player_state")
 	_check("player_state persisted", st_rows >= 1, "rows=%d" % st_rows)
 
@@ -85,10 +87,11 @@ func _init() -> void:
 	_check("post-checkpoint intègre", db.integrity_ok() and db.count_rows("player_positions") == 3)
 
 	# Export JSON conservé.
+	p1.shutdown()
 	_check("export JSON positions", FileAccess.file_exists(state_dir.path_join("player_positions.json")))
 	_check("export JSON accounts", FileAccess.file_exists(state_dir.path_join("accounts.json")))
 	_check("export JSON players_state", FileAccess.file_exists(state_dir.path_join("players_state.json")))
 
-	p1.shutdown()
+	db.shutdown()
 	print("selftest: %d/%d checks OK%s" % [_checks - _fails, _checks, "" if _fails == 0 else " — %d FAIL" % _fails])
 	quit(0 if _fails == 0 else 1)

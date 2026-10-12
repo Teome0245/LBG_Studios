@@ -10,10 +10,10 @@ from typing import Any
 from fastapi import APIRouter
 
 from config import get_settings
+from world_display import HUB_CITY, PLANET_DISPLAY, enrich_bot_zone_fields
 
 from ._common import LOG, httpx, lbg_ia_backend_base_url, pilot_lbg_ia_http_timeout_s
 from ._models import LbgIaStatusResponse, OkEnvelope, PilotStatusResponse
-from world_display import enrich_bot_zone_fields, PLANET_DISPLAY, HUB_CITY
 
 router = APIRouter()
 

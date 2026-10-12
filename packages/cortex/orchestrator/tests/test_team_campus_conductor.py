@@ -290,6 +290,7 @@ def test_campus_skips_waiting_plan_deps(tmp_path, monkeypatch: pytest.MonkeyPatc
 
 def test_execute_ide_cli_live_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     from team.ide_cli_workflow import execute_ide_cli_workflow
+    from team.models import TeamTask
 
     captured: dict = {}
 

@@ -63,8 +63,8 @@ les suites `backend` / `orchestrator` partagent des noms de modules top-level (`
   sont des dépendances de données manquantes, pas un souci d'environnement.
 - Orchestrator : non collectable (mêmes imports legacy manquants que ci-dessus).
 
-### Lint
+### Lint & CI locale
 
-Aucun linter n'est configuré dans le dépôt (pas de ruff/flake8/mypy/black, pas de pre-commit ; seul
-`packages/cortex/infra/ci/test_pytest.sh` existe et suppose les packages legacy). Vérif syntaxe rapide :
-`python -m compileall backend`.
+- **Lint Python (Ruff)** : `ruff check .` (configuré via `ruff.toml` & `pyproject.toml` racine).
+- **Tests Headless Godot (Jeu)** : `bash tools/ci_godot_headless.sh` (exécute les suites simulation, navigation NavigationServer3D et persistance SQLite/économie en ~3 s sans dépendance réseau).
+- **Tests Cortex Backend** : `cd packages/cortex && python -m pytest backend/tests`.

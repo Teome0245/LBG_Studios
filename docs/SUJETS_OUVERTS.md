@@ -33,7 +33,6 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 |----|--------|--------|
 | O-CAMP-1 | Rejouer tickets plan encore ouverts / faux « done » | Gate `plan_ticket_closure` ; sync [`suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md) |
 | O-CAMP-2 | Deploy lab overlay Compagnon / orch si drift | `.100` Compagnon + `.140` orch après overlays récents |
-| O-CI-1 | Ticket **5.2** Ruff + tests headless Godot CI | Suivi : *reopen* (faux done ops_probe) — relance `ide_cli` LIVE |
 | O-D7-1 | Sync worker **`.143`** Présence Agents D7 | Code monorepo livré — [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) |
 
 ### O2 — Jeu / pont Studio↔Monde
@@ -76,6 +75,7 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-CI-1 | Ticket **5.2** Ruff + tests headless Godot CI | **2026-10-12** · `ruff.toml` 100% vert · `tools/ci_godot_headless.sh` sim/nav/db 18/18 en 3s · Plan d'évolutions 10/10 DONE |
 | O-JEUX-2 | Ticket **3.2** Mémoire relationnelle jeu ↔ bureau | **2026-10-12** · `relation_memory.py` `:8787` · bloc prompt in-game Teome · tests 6/6 · package CT100 |
 | O-PRIO-0 | Fil priorités actuelles + PR #4 (`PRIORITES_ACTUELLES.md`) | **2026-10-12** · mergée · suites optionnelles = `O-DOC-1..2` |
 | O-VEIL-0 | Fil veille batch 8 pistes + workflow Team `evolution_veille` + Lyra ON | **2026-10-12** · mission `4c28ada8-…` done · API `POST /v1/team/evolution/lead` · suites = `O-VEIL-1..4` |
@@ -94,4 +94,4 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 1. Ajouter ici dès qu’un sujet est identifié mais **pas** démarré (ou pas `done`).  
 2. Ne pas dupliquer le détail technique déjà dans ADR / leçons / tickets plan — **lien + une ligne**.  
 3. Session en cours = focus immédiat ; **ce fichier** = reste à traiter.  
-4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Priorité session : **O-FEEL-1/2** (feeling) ou **O-CI-1** (ticket 5.2 Ruff + tests Godot CI).
+4. Fil gaps/L3 **clos** : suites ops = `O-OPS-1..3` seulement. Fil veille batch **clos** : suites = `O-VEIL-1..4`. Fil priorités PR #4 **clos** : suites optionnelles = `O-DOC-1..2`. Plan d'évolutions 10/10 **DONE**. Priorité session : **O-FEEL-1/2** (rejeu feeling humain Compagnon :5174).

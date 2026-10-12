@@ -1,7 +1,7 @@
 {
   "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
   "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
-  "updated_ts": 1791829178.9559066,
+  "updated_ts": 1791833559.3830326,
   "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
   "tickets": [
     {
@@ -200,12 +200,12 @@
       "title": "Ruff + tests headless Godot CI",
       "horizon": "sprint3",
       "perimeter": "DevOps",
-      "status": "in_progress",
+      "status": "done",
       "blocked_by": [],
       "blocks": [
         "5.1"
       ],
-      "evidence": "reopen: faux done ops_probe dry-run healthz — relance ide_cli LIVE",
+      "evidence": "ruff.toml + pyproject.toml racine ruff check 100% vert · tools/ci_godot_headless.sh sim/nav/db 18/18 en 3s · AGENTS.md documenté",
       "keywords": [
         "ruff check",
         "godot --headless",

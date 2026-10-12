@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
-
-import httpx
 
 import api.v1.routes.pilot as pilot_mod
 from models.intents import IntentResponse
@@ -21,7 +20,7 @@ class _FakeResp:
 
 
 class _FakeAsyncClient:
-    async def __aenter__(self) -> "_FakeAsyncClient":
+    async def __aenter__(self) -> _FakeAsyncClient:
         return self
 
     async def __aexit__(self, *args: object) -> None:

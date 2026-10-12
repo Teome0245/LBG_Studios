@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -19,7 +20,7 @@ class _FakeResp:
 
 
 class _FakeAsyncClient:
-    async def __aenter__(self) -> "_FakeAsyncClient":
+    async def __aenter__(self) -> _FakeAsyncClient:
         return self
 
     async def __aexit__(self, *args: object) -> None:

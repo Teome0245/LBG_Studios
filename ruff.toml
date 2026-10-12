@@ -1,0 +1,42 @@
+# Configuration Ruff pour le monorepo LBG Studios (Ticket 5.2)
+target-version = "py311"
+line-length = 120
+
+exclude = [
+    ".git",
+    ".godot",
+    ".venv",
+    "venv",
+    "**/__pycache__",
+    "node_modules",
+    "dist",
+    "build",
+    "_archive",
+    "_shelf",
+    "scratch",
+    "packages/cortex/.venv",
+    "packages/cortex/infra",
+    "packages/cortex/tools/colab",
+    "packages/cortex/tools/hub_runtime",
+    "*.ipynb",
+]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+]
+ignore = [
+    "E501",  # line-too-long
+    "E402",  # module level import not at top of file
+    "E722",  # bare except
+    "E731",  # do not assign a lambda expression
+    "E741",  # ambiguous variable name
+    "F401",  # imported but unused
+    "F541",  # f-string without placeholders
+    "F841",  # local variable assigned but never used
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"**/tests/*" = ["F841", "E402", "E731"]

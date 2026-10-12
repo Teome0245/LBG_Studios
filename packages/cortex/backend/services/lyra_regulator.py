@@ -11,7 +11,6 @@ import os
 import time
 from typing import Any
 
-
 _last_action_ts: float = 0.0
 
 

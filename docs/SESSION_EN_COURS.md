@@ -25,11 +25,10 @@ Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 
 
 Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-10-12 post-L3 DONE).
 
-1. **Ticket 3.1 & 3.2 (Axe 3 Pont Monde ↔ Studio)** : **tous deux validés & clôturés**.
+1. **Plan d'évolutions (10/10 tickets)** : **100 % réalisé & clôturé** (tickets 1.1..1.3, 2.1..2.3, 3.1, 3.2, 5.1, 5.2 DONE).
 2. **O-FEEL-1/2** — Feeling C2 collègues (rejeu humain `:5174`).
-3. **O-CI-1** — Ticket **5.2** Ruff + tests headless Godot CI (dernier ticket plan ouvert).
-4. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-IDE-*** Cline.
-5. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
+3. Ops optionnel : `bash tools/smoke_lan_surfaces.sh --functional` · **O-IDE-*** Cline.
+4. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
 
 ## Fichiers / surfaces utiles
 
@@ -52,6 +51,10 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-12 : **ticket 5.2 Outillage Ruff & tests headless Godot CI — validé & clôturé** —
+  - Configuration [`ruff.toml`](../ruff.toml) et [`pyproject.toml`](../pyproject.toml) racine pour le linting Python ; `ruff check .` passe à 100 % vert.
+  - Runner headless Godot [`tools/ci_godot_headless.sh`](../tools/ci_godot_headless.sh) intégré : sim, nav et db/économie (18/18 checks) exécutés en ~3 s (< 10 s DoD) sans dépendance réseau LAN.
+  - Le plan d'évolutions `PLAN_PROPOSITIONS_EVOLUTIONS` est officiellement **100 % réalisé** (10/10 tickets DONE).
 - 2026-10-12 : **ticket 3.2 Convergence de la mémoire relationnelle jeu ↔ bureau — validé & clôturé** —
   - Module [`relation_memory.py`](../packages/cortex/compagnon_ui/server_overlay/relation_memory.py) connecté à `prime-hub` (`GET /v1/relation-memory` et `POST /v1/relation-memory/append` sur `:8787`).
   - Ancrage prompt système ([`character_layer.py`](../packages/cortex/compagnon_ui/server_overlay/character_layer.py)) injectant les liens de Teome (Jax, Nix, Daan, pourboires, quêtes) dans la conscience du Compagnon.

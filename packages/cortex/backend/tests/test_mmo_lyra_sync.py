@@ -1,8 +1,7 @@
 import asyncio
 
-import pytest
-
 import httpx
+import pytest
 
 from services.mmo_lyra_sync import merge_mmo_lyra_if_configured
 

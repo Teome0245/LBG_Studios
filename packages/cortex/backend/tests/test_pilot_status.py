@@ -1,7 +1,6 @@
 import pytest
-from fastapi.testclient import TestClient
-
 from backend.main import app
+from fastapi.testclient import TestClient
 
 
 def test_pilot_status_shape(monkeypatch: pytest.MonkeyPatch) -> None:

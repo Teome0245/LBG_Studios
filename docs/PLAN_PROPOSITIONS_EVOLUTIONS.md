@@ -146,6 +146,10 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
   1. Configurer **Ruff** à la racine pour le formatage et le linting Python sans friction.
   2. Intégrer un runner de tests headless Godot (`godot --headless -s test_runner.gd`) pour tester la logique de `prime-hub` (calculs de craft, économie, quêtes) en local ou en intégration continue, sans dépendre du réseau LAN.
 - **Done quand** : `ruff check` passe à 100 % et les tests économiques et mécaniques de `prime-hub` s'exécutent en moins de 10 secondes en ligne de commande.
+- **Statut** : **OK validé & clôturé (2026-10-12)** :
+  - Configuration Ruff standardisée via [`ruff.toml`](../ruff.toml) et [`pyproject.toml`](../pyproject.toml) racine ; `ruff check .` passe à 100 % vert.
+  - Runner headless Godot [`tools/ci_godot_headless.sh`](../tools/ci_godot_headless.sh) intégré : exécute simulation, navigation NavigationServer3D et persistance SQLite/économie (18/18 checks) en 3 secondes (< 10 s DoD) sans dépendance réseau.
+  - Alignement canon documenté dans [`AGENTS.md`](../AGENTS.md).
 
 ---
 

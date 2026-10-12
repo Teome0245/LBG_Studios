@@ -1,9 +1,8 @@
 """CORS pilot cross-origin — LBG_CORS_ORIGINS."""
 
 import pytest
-from fastapi.testclient import TestClient
-
 from backend.main import create_app
+from fastapi.testclient import TestClient
 
 
 def test_no_cors_without_lbg_cors_origins(monkeypatch: pytest.MonkeyPatch) -> None:

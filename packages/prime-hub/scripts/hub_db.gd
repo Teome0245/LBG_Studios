@@ -121,7 +121,10 @@ func _worker() -> void:
 		if not _job_sem.try_wait():
 			if _stop:
 				break
-			OS.delay_msec(5)
+			if OS != null:
+				OS.delay_msec(5)
+			else:
+				break
 			continue
 		_mutex.lock()
 		if _queue.is_empty():
@@ -132,11 +135,13 @@ func _worker() -> void:
 			continue
 		var batch: Array = _queue
 		_queue = []
+		_mutex.unlock()
+		_run_batch(batch)
+		_mutex.lock()
 		_pending -= batch.size()
 		if _pending < 0:
 			_pending = 0
 		_mutex.unlock()
-		_run_batch(batch)
 
 
 func _run_batch(batch: Array) -> void:

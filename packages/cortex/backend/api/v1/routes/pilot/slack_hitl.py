@@ -32,7 +32,7 @@ def _verify_slack_signature(request: Request, raw_body: bytes) -> bool:
             return False
     except ValueError:
         return False
-    base = f"v0:{ts}:{raw_body.decode('utf-8')}".encode("utf-8")
+    base = f"v0:{ts}:{raw_body.decode('utf-8')}".encode()
     digest = "v0=" + hmac.new(secret.encode("utf-8"), base, hashlib.sha256).hexdigest()
     return hmac.compare_digest(digest, sig)
 

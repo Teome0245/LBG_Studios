@@ -1,15 +1,15 @@
 # Suivi — Plan d'évolutions Studio / Jeu
 
-**Généré** : 2026-10-12 20:19 CEST  
+**Généré** : 2026-10-12 21:32 CEST  
 **Plan** : `PLAN_PROPOSITIONS_EVOLUTIONS` · source [`docs/PLAN_PROPOSITIONS_EVOLUTIONS.md`](../PLAN_PROPOSITIONS_EVOLUTIONS.md)  
 **Pilot** : [http://192.168.0.140:8080/pilot/#/team](http://192.168.0.140:8080/pilot/#/team)  
-**Plan entièrement réalisé** : ❌ non
+**Plan entièrement réalisé** : ✅ OUI
 
 ## Synthèse
 
 | Done | En cours | À relancer | Bloqué | Todo |
 |:---:|:---:|:---:|:---:|:---:|
-| 9 | 1 | 0 | 0 | 0 |
+| 10 | 0 | 0 | 0 | 0 |
 
 ## Réalisés
 
@@ -37,13 +37,15 @@
 ### `3.2` — Mémoire relationnelle jeu ↔ bureau
 - **Preuve** : relation_memory.py fetch/append :8787 · character_layer.py bloc mémoire in-game Teome · llm_chat_phase.py attach/grounding · core.py GET+POST · useApi.js fetch+append · test_relation_memory.py 6/6 PASS · package CT100 36 fichiers
 
+### `5.2` — Ruff + tests headless Godot CI
+- **Preuve** : ruff.toml + pyproject.toml racine ruff check 100% vert · tools/ci_godot_headless.sh sim/nav/db 18/18 en 3s · AGENTS.md documenté
+
 ### `5.1` — Packaging atomique server_overlay CT100
 - **Preuve** : CT100 packaging atomique LIVE 1.0.0+4bcc331: server_overlay/pyproject.toml + overlay.map (33 fichiers); server_overlay_package.py build/verify/apply/rollback; deploy_compagnon_100.sh --smoke OK; marker /opt/orchestrateur/.server_overlay_version package_sha=8128a4e3470abded597b70e855289bab608e23c4fd6acbe273e4062ec272e5a5; smoke tools/smoke_server_overlay_package.sh OK; rollback testé
 
 ## En cours
 
-### `5.2` — Ruff + tests headless Godot CI
-- **Preuve** : reopen: faux done ops_probe dry-run healthz — relance ide_cli LIVE
+_Rien en cours._
 
 ## À relancer (échecs Team)
 

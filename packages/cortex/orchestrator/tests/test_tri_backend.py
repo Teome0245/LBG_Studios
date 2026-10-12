@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pathlib import Path
-
 import pytest
 
 from team.openclaw_adapter import list_skills, load_skill_definitions, run_skill

@@ -33,7 +33,7 @@ func _load() -> void:
 		var rows := db.query_rows("SELECT oid,x,y,z,name,ts FROM player_positions;")
 		if rows.size() > 0:
 			for r in rows:
-				var key := str(r.get("oid", 0))
+				var key := str(int(r.get("oid", 0)))
 				if key == "0":
 					continue
 				_pos[key] = {

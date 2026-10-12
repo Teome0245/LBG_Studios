@@ -50,7 +50,7 @@ async def test_vision_ask_calls_ollama(monkeypatch: pytest.MonkeyPatch) -> None:
         def __init__(self, *a: object, **k: object) -> None:
             pass
 
-        async def __aenter__(self) -> "_Client":
+        async def __aenter__(self) -> _Client:
             return self
 
         async def __aexit__(self, *a: object) -> None:

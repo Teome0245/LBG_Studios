@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 
 import pytest
+from backend.main import create_app
 from fastapi.testclient import TestClient
 
 import api.v1.routes.pilot as pilot_mod
-from backend.main import create_app
 from models.intents import IntentResponse
 
 
