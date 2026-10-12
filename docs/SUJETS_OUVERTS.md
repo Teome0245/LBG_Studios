@@ -73,6 +73,7 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-REA-1 | Intégration MCP **REA** (Reverse Engineer Anything) | **2026-10-12** · `.cursor/mcp.json` + `.agents/mcp_config.json` configurés · doc [`OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) |
 | O-FEEL-1 | **A2 — C2 collègues** (rejeu humain) | **2026-10-12** · rejeu 7 tours `smoke_rejeu_humain_d6_5174.sh` C1/C2/PLAN/GO **PASS** (`rejeu-humain-d6-3fa2fffd`) |
 | O-FEEL-2 | Feeling C2 rejeu humain périodique | **2026-10-12** · pas de template ops à l'ouverture, greeting + follow naturels |
 | O-CI-1 | Ticket **5.2** Ruff + tests headless Godot CI | **2026-10-12** · `ruff.toml` 100% vert · `tools/ci_godot_headless.sh` sim/nav/db 18/18 en 3s · Plan d'évolutions 10/10 DONE |
