@@ -4,12 +4,13 @@
   "display_name": "Atlas",
   "role": "admin_infra",
   "persona": "atlas",
-  "description": "Plateforme LLM locale — capacité Ollama, benches, watchdogs, alertes Element, budgets matériels",
+  "description": "Plateforme LLM locale — capacité Ollama, benches, watchdogs, alertes Element, budgets matériels, contexte LAN",
   "capabilities": [
     {"id": "audit_ollama_lan", "description": "Inventaire modèles Ollama 110/111 vs config LBG"},
     {"id": "local_llm_bench", "description": "Bench stabilisé local LLM (latence / OK rate)"},
     {"id": "perimeter_element_alert", "description": "Alerte Element si périmètre 110/111/140/245/246 KO"},
-    {"id": "storage_budget", "description": "Watchdogs stockage / reprise auto lab LLM"}
+    {"id": "storage_budget", "description": "Watchdogs stockage / reprise auto lab LLM"},
+    {"id": "network_lan_context", "description": "Lecture état inventaire LAN (diff apparus/disparus, edge Cast/IoT)"}
   ],
   "constraints": ["devops_dry_run_default", "l1_autonomy", "no_core3_write"],
   "subproject": "local_llm_lab",

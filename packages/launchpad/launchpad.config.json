@@ -1,29 +1,15 @@
 {
-  "launchpadVersion": "2.1.2",
-  "statusApiUrl": "http://192.168.0.245:8792/api/servers",
-  "primeGatewayHealthUrl": "http://192.168.0.246:8765/health",
+  "launchpadVersion": "2.1.4",
+  "statusApiUrl": "http://192.168.0.246:8792/api/servers",
+  "statusApiUrls": [
+    "http://192.168.0.246:8792/api/servers"
+  ],
+  "primeGatewayHealthUrl": "http://192.168.0.246:8787/healthz",
   "patchServerUrl": "http://192.168.0.246:8080",
   "patchServerUrlNas": "http://192.168.0.245:8080",
   "diskSpaceWarningGb": 40,
   "defaultProfileId": "prime",
   "profiles": [
-    {
-      "id": "precu",
-      "label": "SWGEmu PreCu (original)",
-      "clientKind": "swgemu",
-      "gameDir": "J:\\swgemu\\StarWarsGalaxies",
-      "gameExe": "SWGEmu.exe",
-      "configFile": "swgemu.cfg",
-      "patchChannel": "precu",
-      "servers": [
-        {
-          "id": "precu",
-          "label": "LBG SWGEMU PreCu",
-          "ip": "192.168.0.245",
-          "loginPort": 44453
-        }
-      ]
-    },
     {
       "id": "prime",
       "label": "LBG Prime (Godot)",
@@ -42,7 +28,7 @@
       "servers": [
         {
           "id": "prime",
-          "label": "LBG MMO Serveur Prime",
+          "label": "LBG MMO Serveur",
           "ip": "192.168.0.246",
           "loginPort": 44553
         }

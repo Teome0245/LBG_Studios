@@ -2,6 +2,18 @@
   "schema_version": 1,
   "lessons": [
     {
+      "id": "godot_g5_runtime_2026-10-07",
+      "date": "2026-10-07",
+      "tags": [
+        "o2",
+        "prime-hub",
+        "godot",
+        "core3-off"
+      ],
+      "summary": "Autorité joueur = prime-hub Godot .246:8787 (G5). Core3 + hub_runtime Python OFF. Feature jeu → prime-client/prime-hub. Doc: docs/RUNTIME_GODOT.md",
+      "pattern": "Ne pas relancer Core3/gateway/spike Python pour le chemin joueur ; watchdogs désactivés via stop_core3_and_spike_246.sh"
+    },
+    {
       "id": "lesson_smoke_block_close",
       "date": "2026-08-03",
       "agent_role": "qa",
@@ -124,6 +136,66 @@
       "hit_count": 1,
       "last_seen_ts": 1788891255.4512117,
       "last_seen": "2026-09-08"
+    },
+    {
+      "id": "lesson_rag_pgvector_facts",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "mémoire Compagnon",
+      "failure_or_success": "success",
+      "pattern": "Faits studio via RAG pgvector (.100) + nomic-embed-text (.111) ; pas via fine-tune des poids.",
+      "do_not_repeat": "Fine-tuner le LLM pour mémoriser leçons/LAN",
+      "refs": [
+        "orchestrator/services/rag/",
+        "LBG_RAG_ENABLED"
+      ],
+      "hit_count": 1
+    },
+    {
+      "id": "lesson_ft_e4b_vram",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "fine-tune persona E4b",
+      "failure_or_success": "failure",
+      "pattern": "QLoRA E4b OOM sur GTX 1050 Ti 4Go (WSL .10) après load — reprendre sur GPU ≥8 Go ; garder Modelfile lbg-compagnon-e4b-v1.",
+      "do_not_repeat": "Relancer FT E4b sur 4Go en espérant que ça passe",
+      "refs": [
+        "infra/llm_persona_e2b/RUN_ON_10.md",
+        "lbg-compagnon-e4b-v1"
+      ],
+      "hit_count": 1
+    },
+    {
+      "id": "lesson_wsl_ssh_10",
+      "date": "2026-10-02",
+      "agent_role": "ops",
+      "context": "accès poste .10",
+      "failure_or_success": "success",
+      "pattern": "SSH utile .10 = WSL sdesh@192.168.0.10:2222 (Host lbg-wsl-10), pas Windows :22 sans administrators_authorized_keys.",
+      "do_not_repeat": "ssh root@/.10:22 sans clé admin Windows",
+      "refs": [
+        "docs/omarchy_vm_143.md",
+        "~/.ssh/config Host lbg-wsl-10"
+      ],
+      "hit_count": 1
+    },
+    {
+      "id": "lesson_d45036e581",
+      "date": "2026-10-05",
+      "agent_role": "ops",
+      "context": "unknown: toujours en échec",
+      "failure_or_success": "failure",
+      "pattern": "job failed: étape condamnée",
+      "do_not_repeat": "Réutiliser experience_memory / lessons avant de replanifier le même objectif.",
+      "refs": [
+        "job:7a03c69890e94b97a4fc8e0b6b378a6f",
+        "trace:0a92bb1c786d408b85a515b937e41af0",
+        "job:67b8fb8033954e689a0754184959ab45",
+        "trace:ca765b911d8843a6803f6544baf8bd0c"
+      ],
+      "hit_count": 2,
+      "last_seen_ts": 1791400267.152261,
+      "last_seen": "2026-10-07"
     }
   ]
 }

@@ -201,6 +201,11 @@ Contrôle :
 - `app` doit être dans `LBG_DESKTOP_APP_ALLOWLIST`
 - la commande est définie par `LBG_DESKTOP_APP_MAP_JSON` (id → commande)
 
+**Compagnon `:5174` (overlay `desktop_dispatch`)** :
+- « ouvre notepad » → id `notepad` (bloc-notes Windows) — **pas** de remap forcé vers `notepadpp`.
+- « ouvre notepad++ » → id `notepadpp` (Notepad++), seulement si demandé explicitement.
+- Cible **PORTABLE-SDS** : `desktop_target=portable` → worker `http://192.168.0.77:5005` (Ethernet ; Wi-Fi `.40` = même Agent_IA). Prérequis lab : `LBG_DESKTOP_DRY_RUN=0` sur le portable + `notepad` (ou l’exe mappé) dans allowlist/`APP_MAP`.
+
 Apprentissage contrôlé (optionnel) :
 - si `LBG_DESKTOP_LEARN_ENABLED=1` et que l’action contient `"learn": true`,
   l’agent peut tenter de **résoudre automatiquement** le chemin (via resolver Windows)

@@ -1,4 +1,4 @@
-"""Sonde L1 joueurs IA Core3 Prime (sidecar :8791, VM 246)."""
+"""Sonde L1 joueurs IA — autorité G5 prime-hub :8787 (sidecar :8791 = legacy)."""
 
 from __future__ import annotations
 
@@ -10,8 +10,20 @@ from team.models import TeamTask
 from team.player_ia_world_guard import run_world_truth_guard
 
 
+def hub_base_url() -> str:
+    return os.environ.get("LBG_PRIME_HUB_URL", "http://192.168.0.246:8787").strip().rstrip("/")
+
+
 def sidecar_base_url() -> str:
+    """Legacy Core3 sidecar — utilisé si LBG_PLAYER_IA_PROBE_MODE=sidecar."""
     return os.environ.get("LBG_CORE3_SIDECAR_URL", "http://192.168.0.246:8791").strip().rstrip("/")
+
+
+def probe_base_url() -> str:
+    mode = os.environ.get("LBG_PLAYER_IA_PROBE_MODE", "hub").strip().lower()
+    if mode in {"sidecar", "legacy", "8791"}:
+        return sidecar_base_url()
+    return hub_base_url()
 
 
 def managed_bot_ids() -> tuple[str, ...]:
@@ -104,9 +116,93 @@ def _score_humanity(events: list[dict[str, object]], player: str) -> dict[str, o
     }
 
 
+def _probe_hub_bots(client: httpx.Client, base: str, bots: list[str], required: frozenset[str]) -> tuple[bool, list[dict[str, object]]]:
+    """G5 : healthz + présence flotte via GET /v1/bots."""
+    checks: list[dict[str, object]] = []
+    health_ok = False
+    try:
+        hr = client.get(f"{base}/healthz")
+        health_ok = hr.status_code == 200
+        body = hr.json() if hr.content else {}
+        if isinstance(body, dict) and body.get("ok") is False:
+            health_ok = False
+        checks.append(
+            {
+                "kind": "hub_healthz",
+                "url": f"{base}/healthz",
+                "ok": health_ok,
+                "status": hr.status_code,
+                "phase": body.get("phase") if isinstance(body, dict) else None,
+                "bot_count": body.get("bot_count") if isinstance(body, dict) else None,
+            }
+        )
+    except httpx.HTTPError as e:
+        checks.append({"kind": "hub_healthz", "url": f"{base}/healthz", "ok": False, "error": str(e)})
+        return False, checks
+
+    by_name: dict[str, dict[str, object]] = {}
+    try:
+        br = client.get(f"{base}/v1/bots")
+        payload = br.json() if br.content else {}
+        rows = payload.get("bots") if isinstance(payload, dict) else []
+        if isinstance(rows, list):
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                key = str(row.get("name") or row.get("id") or "").strip().lower()
+                if key:
+                    by_name[key] = row
+        checks.append(
+            {
+                "kind": "hub_bots",
+                "ok": br.status_code == 200 and bool(by_name),
+                "status": br.status_code,
+                "count": len(by_name),
+            }
+        )
+    except httpx.HTTPError as e:
+        checks.append({"kind": "hub_bots", "ok": False, "error": str(e)})
+
+    for bot in bots:
+        is_required = bot.lower() in required
+        row = by_name.get(bot.lower())
+        online = row is not None
+        bot_ok = online
+        entry: dict[str, object] = {
+            "kind": "player_snapshot",
+            "player": bot,
+            "required": is_required,
+            "ok": bot_ok if is_required else True,
+            "online": online,
+            "source": "prime_hub",
+        }
+        if row and row.get("pos"):
+            entry["pos"] = row.get("pos")
+        if row and row.get("quest_id"):
+            entry["quest_id"] = row.get("quest_id")
+        if not is_required and not bot_ok:
+            entry["skipped"] = True
+        checks.append(entry)
+        # Humanité : pas d'events sidecar — score neutre « hub_presence » (advisory).
+        if bot_ok and is_required:
+            checks.append(
+                {
+                    "kind": "player_humanity",
+                    "player": bot,
+                    "required": True,
+                    "ok": True,
+                    "score": 0.5,
+                    "band": "medium",
+                    "signals": {"source": "hub_presence"},
+                }
+            )
+    return health_ok, checks
+
+
 def probe_player_ia(task: TeamTask | None = None) -> dict[str, object]:
-    """Healthz sidecar + snapshot par bot (read-only, phase D L1)."""
-    base = sidecar_base_url()
+    """Healthz hub G5 + flotte bots (read-only L1). Mode sidecar legacy via env."""
+    base = probe_base_url()
+    mode = "sidecar" if base.rstrip("/").endswith(":8791") else "hub"
     bots = list(managed_bot_ids())
     if task and isinstance(task.context.get("player_ia_bots"), list):
         extra = [str(x).strip().lower() for x in task.context["player_ia_bots"] if str(x).strip()]
@@ -119,145 +215,116 @@ def probe_player_ia(task: TeamTask | None = None) -> dict[str, object]:
 
     try:
         with httpx.Client(timeout=httpx.Timeout(12.0)) as client:
-            try:
-                hr = client.get(f"{base}/healthz")
-                health_ok = hr.status_code == 200
-                body = hr.json() if hr.content else {}
-                if isinstance(body, dict) and body.get("ok") is False:
-                    health_ok = False
-                checks.append({"kind": "sidecar_healthz", "url": f"{base}/healthz", "ok": health_ok, "status": hr.status_code})
-            except httpx.HTTPError as e:
-                checks.append({"kind": "sidecar_healthz", "url": f"{base}/healthz", "ok": False, "error": str(e)})
-
-            for bot in bots:
-                url = f"{base}/v1/player-snapshot"
-                is_required = bot.lower() in required
+            if mode == "hub":
+                health_ok, checks = _probe_hub_bots(client, base, bots, required)
+            else:
                 try:
-                    sr = client.get(url, params={"player": bot.capitalize()})
-                    snap_ok = sr.status_code == 200
-                    snap: dict[str, object] = {}
-                    if sr.content:
-                        try:
-                            raw = sr.json()
-                            if isinstance(raw, dict):
-                                inner = raw.get("snapshot")
-                                snap = inner if isinstance(inner, dict) else raw
-                        except ValueError:
-                            snap_ok = False
-                    online = bool(snap.get("online") or snap.get("connected"))
-                    bot_ok = snap_ok and online
-                    entry: dict[str, object] = {
-                        "kind": "player_snapshot",
-                        "player": bot,
-                        "required": is_required,
-                        "ok": bot_ok if is_required else True,
-                        "online": online,
-                        "status": sr.status_code,
-                    }
-                    if not is_required and not bot_ok:
-                        entry["skipped"] = True
-                    if snap.get("zone"):
-                        entry["zone"] = snap.get("zone")
-                    if bot_ok:
-                        try:
-                            # include_actor=1 : compter aussi les paroles / acts du bot
-                            # (défaut sidecar = inbound target-only, sinon humanité reste à 0).
-                            evr = client.get(
-                                f"{base}/v1/events",
-                                params={
-                                    "player": bot.capitalize(),
-                                    "after": "",
-                                    "limit": str(_events_sample_limit()),
-                                    "include_actor": "1",
-                                },
-                            )
-                            events_payload = evr.json() if evr.content else {}
-                            events_raw = events_payload.get("events") if isinstance(events_payload, dict) else []
-                            events = [x for x in events_raw if isinstance(x, dict)] if isinstance(events_raw, list) else []
-                            humanity = _score_humanity(events, bot)
-                            entry["humanity"] = humanity
-                            checks.append(
-                                {
-                                    "kind": "player_humanity",
-                                    "player": bot,
-                                    "required": is_required,
-                                    "ok": True,
-                                    "score": humanity["score"],
-                                    "band": humanity["band"],
-                                    "signals": humanity["signals"],
-                                }
-                            )
-                        except httpx.HTTPError as e:
-                            checks.append(
-                                {
-                                    "kind": "player_humanity",
-                                    "player": bot,
-                                    "required": is_required,
-                                    "ok": False,
-                                    "error": str(e),
-                                }
-                            )
-                    checks.append(entry)
-                except httpx.HTTPError as e:
+                    hr = client.get(f"{base}/healthz")
+                    health_ok = hr.status_code == 200
+                    body = hr.json() if hr.content else {}
+                    if isinstance(body, dict) and body.get("ok") is False:
+                        health_ok = False
                     checks.append(
                         {
+                            "kind": "sidecar_healthz",
+                            "url": f"{base}/healthz",
+                            "ok": health_ok,
+                            "status": hr.status_code,
+                        }
+                    )
+                except httpx.HTTPError as e:
+                    checks.append({"kind": "sidecar_healthz", "url": f"{base}/healthz", "ok": False, "error": str(e)})
+
+                for bot in bots:
+                    url = f"{base}/v1/player-snapshot"
+                    is_required = bot.lower() in required
+                    try:
+                        sr = client.get(url, params={"player": bot.capitalize()})
+                        snap_ok = sr.status_code == 200
+                        snap: dict[str, object] = {}
+                        if sr.content:
+                            try:
+                                raw = sr.json()
+                                if isinstance(raw, dict):
+                                    inner = raw.get("snapshot")
+                                    snap = inner if isinstance(inner, dict) else raw
+                            except ValueError:
+                                snap_ok = False
+                        online = bool(snap.get("online") or snap.get("connected"))
+                        bot_ok = snap_ok and online
+                        entry: dict[str, object] = {
                             "kind": "player_snapshot",
                             "player": bot,
                             "required": is_required,
-                            "ok": False if is_required else True,
-                            "skipped": not is_required,
-                            "error": str(e),
+                            "ok": bot_ok if is_required else True,
+                            "online": online,
+                            "status": sr.status_code,
                         }
-                    )
-
-            # Autres joueurs (humains / non gérés) — inventaire monde
-            try:
-                wr = client.get(f"{base}/v1/player-snapshots")
-                world = wr.json() if wr.content else {}
-                if isinstance(world, dict) and wr.status_code == 200:
-                    managed = {b.lower() for b in bots}
-                    others_online: list[dict[str, object]] = []
-                    others_offline: list[str] = []
-                    players = world.get("players") if isinstance(world.get("players"), dict) else {}
-                    for name, row in (players or {}).items():
-                        if not isinstance(row, dict):
-                            continue
-                        key = str(name).strip()
-                        if key.lower() in managed:
-                            continue
-                        if row.get("online"):
-                            others_online.append(
-                                {
-                                    "player": key,
-                                    "zone": row.get("zone"),
-                                    "x": row.get("x"),
-                                    "y": row.get("y"),
-                                    "z": row.get("z"),
-                                }
-                            )
-                        else:
-                            others_offline.append(key)
-                    checks.append(
-                        {
-                            "kind": "other_players",
-                            "ok": True,
-                            "online_count": len(others_online),
-                            "online": others_online,
-                            "offline": sorted(others_offline)[:20],
-                            "world_online_count": int(world.get("online_count") or 0),
-                        }
-                    )
-            except httpx.HTTPError as e:
-                checks.append({"kind": "other_players", "ok": False, "error": str(e)})
+                        if not is_required and not bot_ok:
+                            entry["skipped"] = True
+                        if snap.get("zone"):
+                            entry["zone"] = snap.get("zone")
+                        if bot_ok:
+                            try:
+                                evr = client.get(
+                                    f"{base}/v1/events",
+                                    params={
+                                        "player": bot.capitalize(),
+                                        "after": "",
+                                        "limit": str(_events_sample_limit()),
+                                        "include_actor": "1",
+                                    },
+                                )
+                                events_payload = evr.json() if evr.content else {}
+                                events_raw = events_payload.get("events") if isinstance(events_payload, dict) else []
+                                events = (
+                                    [x for x in events_raw if isinstance(x, dict)]
+                                    if isinstance(events_raw, list)
+                                    else []
+                                )
+                                humanity = _score_humanity(events, bot)
+                                entry["humanity"] = humanity
+                                checks.append(
+                                    {
+                                        "kind": "player_humanity",
+                                        "player": bot,
+                                        "required": is_required,
+                                        "ok": True,
+                                        "score": humanity["score"],
+                                        "band": humanity["band"],
+                                        "signals": humanity["signals"],
+                                    }
+                                )
+                            except httpx.HTTPError as e:
+                                checks.append(
+                                    {
+                                        "kind": "player_humanity",
+                                        "player": bot,
+                                        "required": is_required,
+                                        "ok": False,
+                                        "error": str(e),
+                                    }
+                                )
+                        checks.append(entry)
+                    except httpx.HTTPError as e:
+                        checks.append(
+                            {
+                                "kind": "player_snapshot",
+                                "player": bot,
+                                "required": is_required,
+                                "ok": False if is_required else True,
+                                "skipped": not is_required,
+                                "error": str(e),
+                            }
+                        )
     except httpx.HTTPError as e:
-        return {"kind": "player_ia_probe", "ok": False, "error": str(e), "sidecar": base}
+        return {"kind": "player_ia_probe", "ok": False, "error": str(e), "hub": base, "sidecar": base}
 
     online_count = sum(
         1 for c in checks if c.get("kind") == "player_snapshot" and c.get("online") and not c.get("skipped")
     )
     required_ok = all(c.get("ok") for c in checks if c.get("kind") == "player_snapshot" and c.get("required"))
     all_ok = health_ok and required_ok
-    # Moyenne humanité sur bots cœur (required).
     humanity_scores = [
         float(c.get("score"))
         for c in checks
@@ -289,13 +356,14 @@ def probe_player_ia(task: TeamTask | None = None) -> dict[str, object]:
                 entry["check_kind"] = check_kind
                 checks.append(entry)
 
-    # Soft par défaut : truth-guard advisory (LBG_TEAM_PLAYER_IA_TRUTH_GUARD_HARD=1 pour hard-fail)
     hard = os.environ.get("LBG_TEAM_PLAYER_IA_TRUTH_GUARD_HARD", "0").strip().lower() in {"1", "true", "yes", "on"}
     if hard:
         all_ok = all_ok and bool(truth_guard.get("ok", False))
     return {
         "kind": "player_ia_probe",
         "ok": all_ok,
+        "mode": mode,
+        "hub": base,
         "sidecar": base,
         "target_vm": "246-prime",
         "bots_checked": bots,

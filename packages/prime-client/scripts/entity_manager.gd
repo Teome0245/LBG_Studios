@@ -61,7 +61,12 @@ func move(object_id: int, core3_pos: Vector3) -> void:
 	if not _entities.has(object_id):
 		# Ne pas auto-créer un point gris (mv UDP avant sp).
 		return
-	_entities[object_id].set_core3_position(core3_pos)
+	var e: Node = _entities[object_id]
+	# Remote : lissage anti-saccade (zone_state 20 Hz). Local humain = snap.
+	if e.has_method("set_core3_position_smooth"):
+		e.call("set_core3_position_smooth", core3_pos)
+	else:
+		e.set_core3_position(core3_pos)
 
 func despawn(object_id: int) -> void:
 	if _entities.has(object_id):

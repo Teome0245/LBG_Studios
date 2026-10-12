@@ -25,6 +25,9 @@ export default defineConfig(({ mode }) => {
     '/health',
     '/monitor',
     '/lyra',
+    '/character',
+    '/spontaneity',
+    '/tts',
   ]
 
   const proxy = Object.fromEntries(

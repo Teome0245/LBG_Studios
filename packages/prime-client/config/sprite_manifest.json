@@ -25,7 +25,9 @@
     "npc_guide": "res://assets/sprites/units/npc_guide.svg",
     "npc_agent": "res://assets/sprites/units/npc_agent.svg",
     "npc_trainer": "res://assets/sprites/units/npc_trainer.svg",
-    "npc_civilian": "res://assets/sprites/units/npc_civilian.svg"
+    "npc_civilian": "res://assets/sprites/units/npc_civilian.svg",
+    "beast_chacal": "res://assets/sprites/units/beast_chacal.svg",
+    "beast_default": "res://assets/sprites/units/beast_chacal.svg"
   },
   "player_tints": {
     "lia": "#7dffb8",
@@ -105,6 +107,12 @@
       "name_match": ["trainer", "formateur", "instructeur", "maître"],
       "sprite": "npc_trainer"
     },
-    { "kind": "npc", "sprite": "npc_civilian" }
+    { "kind": "npc", "sprite": "npc_civilian" },
+    {
+      "kind": "beast",
+      "name_match": ["chacal", "meute", "hunt", "scarab", "scorpion", "serpent"],
+      "sprite": "beast_chacal"
+    },
+    { "kind": "beast", "sprite": "beast_default" }
   ]
 }

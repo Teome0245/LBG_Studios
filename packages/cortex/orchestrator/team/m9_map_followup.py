@@ -173,7 +173,7 @@ def maybe_spawn_after_m9_failure(task: TeamTask) -> list[str]:
     if any("texture" in g.lower() or "svg" in g.lower() for g in gaps):
         art = team_store.create_task(
             role="dev_game",
-            objective="Infographiste — enrichir texture Scrapaltai tatooine.svg (M9a-1)",
+            objective="Infographiste — enrichir texture Scrapaltai scrapaltai.svg (M9a-1)",
             actor_id=followup_actor_id(),
             priority="normal",
             context={

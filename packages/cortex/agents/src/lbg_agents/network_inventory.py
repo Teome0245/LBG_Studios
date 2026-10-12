@@ -8,6 +8,7 @@ import os
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -16,16 +17,19 @@ import httpx
 from lbg_agents.remote_targets import canonical_role, resolve_host
 
 # Phase 1 : détecter les hôtes vivants (rapide).
-_DISCOVERY_PORTS = (22, 80, 443, 445)
+_DISCOVERY_PORTS = (22, 80, 443, 445, 161)
 # Phase 2 : fingerprint sur hôtes répondants.
 _DETAIL_PORTS = (
-    22, 80, 443, 445, 3389, 5000, 5001, 548, 8006, 902, 8080, 11434, 5005, 6000, 6001, 8010, 8050, 8773, 7733,
+    22, 23, 80, 443, 445, 161, 3389, 5000, 5001, 548, 8006, 902, 8080, 8443, 11434,
+    5005, 6000, 6001, 8010, 8050, 8773, 7733, 8765, 8791, 8792, 8098, 8766,
     44453, 44462, 44463,
 )
 _PORT_HINTS: dict[int, str] = {
     22: "ssh",
+    23: "telnet",
     80: "http",
     443: "https",
+    161: "snmp",
     445: "smb",
     3389: "rdp",
     5000: "synology/nas",
@@ -34,6 +38,7 @@ _PORT_HINTS: dict[int, str] = {
     8006: "proxmox",
     902: "vmware-esxi",
     8080: "http-alt",
+    8443: "https-alt",
     11434: "ollama",
     5005: "agent-windows",
     6000: "agent-linux",
@@ -42,6 +47,11 @@ _PORT_HINTS: dict[int, str] = {
     8050: "mmo-http",
     8773: "mmmorpg-internal",
     7733: "mmmorpg-ws",
+    8765: "prime-gateway",
+    8791: "prime-sidecar",
+    8792: "prime-world",
+    8098: "piper-tts",
+    8766: "mcp",
     44453: "core3-precu-login",
     44462: "core3-precu-status",
     44463: "core3-precu-ping",
@@ -59,8 +69,18 @@ _ROLE_SUGGESTIONS: dict[str, tuple[str, ...]] = {
     "ad": ("desktop_control", "devops_probe"),
     "mail": ("devops_probe",),
     "router": ("network_inventory",),
+    "switch": ("network_inventory", "devops_probe"),
+    "wifi_extender": ("network_inventory",),
+    "stb": ("network_inventory",),
+    "phone": ("network_inventory",),
+    "iot": ("network_inventory",),
+    "cast": ("network_inventory",),
+    "speaker": ("network_inventory",),
+    "console": ("network_inventory",),
+    "server": ("devops_probe", "network_inventory"),
     "nas": ("devops_probe",),
     "hypervisor": ("devops_probe", "network_inventory"),
+    "lan": ("network_inventory",),
     "discovered": ("devops_probe", "network_inventory"),
 }
 _HINT_SUGGESTIONS: dict[str, tuple[str, ...]] = {
@@ -92,8 +112,11 @@ _PORT_SUGGESTIONS: dict[int, tuple[str, ...]] = {
 
 _URL_ENV_LABELS: dict[str, tuple[str, str]] = {
     "LBG_AGENT_DESKTOP_URL": ("desktop", "pc-windows"),
-    "LBG_AGENT_HANDS_URL": ("hands", "lbg-hands"),
+    "LBG_AGENT_HANDS_URL": ("hands", "lbg-omarchy"),
+    "LBG_AGENT_OMARCHY_URL": ("hands", "lbg-omarchy"),
     "AGENT_WINDOWS_URL": ("desktop", "pc-windows"),
+    "AGENT_WINDOWS_PORTABLE_URL": ("desktop", "portable-sds"),
+    "AGENT_WINDOWS_PORTABLE_WIFI_URL": ("desktop", "portable-sds-wifi"),
     "AGENT_WINDOWS_SRV_AD_URL": ("ad", "serveur-ad"),
     "AGENT_LINUX_MAIL_URL": ("mail", "serveur-mail"),
     "AGENT_LINUX_IA_URL": ("ia-agent", "agent-linux-ia"),
@@ -217,7 +240,10 @@ def _devices_export_payload(devices: list[dict[str, Any]]) -> list[dict[str, Any
                 "label": d.get("label"),
                 "role": d.get("role"),
                 "device_hint": d.get("device_hint"),
+                "mac": d.get("mac"),
+                "vendor": d.get("vendor"),
                 "reachable": d.get("reachable"),
+                "freebox_active": d.get("freebox_active"),
                 "open_ports": d.get("open_ports") or [],
                 "action_suggestions": d.get("action_suggestions") or [],
                 "source": d.get("source"),
@@ -291,11 +317,227 @@ def _hint_from_ports(open_ports: list[int]) -> str | None:
         return "vmware-esxi"
     if 5000 in open_ports or 5001 in open_ports:
         return "synology/nas"
+    if 161 in open_ports and 80 in open_ports:
+        return "switch/ap"
     if 3389 in open_ports and 445 in open_ports:
         return "windows"
     if 445 in open_ports and 3389 not in open_ports:
         return "smb"
     return None
+
+
+def _role_from_name_vendor(name: str, vendor: str = "") -> tuple[str, str]:
+    """Infère un rôle réseau (switch, box, poste, IoT…) depuis Freebox / hostname."""
+    label = (name or "").strip() or "hôte"
+    n = label.lower()
+    v = (vendor or "").lower()
+    if any(x in n for x in ("tl-sg", "sg108", "sg105", "switch")) and "nintendo" not in n:
+        return "switch", label
+    if "tp-link" in v and ("sg" in n or "switch" in n):
+        return "switch", label
+    if any(x in n for x in ("repete", "répète", "repeater", "extender", "mesh")):
+        return "wifi_extender", label
+    if "freebox player" in n or ("player" in n and "freebox" in v):
+        return "stb", label
+    if "freebox" in n and "player" not in n and "repete" not in n:
+        return "router", label
+    if any(x in n for x in ("phone", "iphone", "redmi", "android", "pixel", "galaxy")):
+        return "phone", label
+    if any(x in n for x in ("cam", "nest", "lunii", "kindel", "kindle", "esp32", "tasmota")):
+        if "nest mini" in n or "google-nest-mini" in n or "nest-mini" in n:
+            return "cast", label
+        if "nest" in n and "cam" not in n:
+            return "cast", label
+        return "iot", label
+    if "chromecast" in n or "google cast" in n:
+        return "cast", label
+    if "nintendo" in n or "nintendo" in v:
+        return "console", label
+    if "nas" in n or "synology" in v or "diskstation" in n:
+        return "nas", label
+    if any(x in n for x in ("portable", "laptop", "pc-", "pc ", "desktop", "notebook")):
+        return "desktop", label
+    if "poweredge" in n or ("dell" in v and "r720" in n):
+        return "hypervisor", label
+    if "proxmox" in v or n.startswith("vm-") or n.startswith("lbg-") or "ct " in n:
+        return "server", label
+    if "ubuntu" in n or "server" in n:
+        return "server", label
+    return "lan", label
+
+
+def _pick_lan_ipv4(ipv4s: list[str], cidr: str = "192.168.0.0/24") -> str | None:
+    try:
+        net = ipaddress.ip_network(cidr, strict=False)
+    except ValueError:
+        net = None
+    preferred: list[str] = []
+    other: list[str] = []
+    for raw in ipv4s:
+        ip = str(raw or "").strip()
+        if not ip or ":" in ip:
+            continue
+        try:
+            addr = ipaddress.ip_address(ip)
+        except ValueError:
+            continue
+        if net and addr in net:
+            preferred.append(ip)
+        else:
+            other.append(ip)
+    return (preferred or other or [None])[0]
+
+
+def _catalog_from_freebox(freebox: dict[str, Any] | None, *, cidr: str) -> list[dict[str, Any]]:
+    """Transforme les hôtes Freebox LAN en entrées catalogue (box, switch, postes, IoT…)."""
+    if not isinstance(freebox, dict):
+        return []
+    hosts = freebox.get("lan_hosts") or freebox.get("lan_hosts_sample") or []
+    if not isinstance(hosts, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for h in hosts:
+        if not isinstance(h, dict):
+            continue
+        ipv4s = h.get("ipv4") if isinstance(h.get("ipv4"), list) else []
+        host = _pick_lan_ipv4([str(x) for x in ipv4s], cidr=cidr)
+        if not host:
+            continue
+        name = str(h.get("name") or "").strip()
+        vendor = str(h.get("vendor") or "").strip()
+        role, label = _role_from_name_vendor(name, vendor)
+        active = bool(h.get("active"))
+        reachable_fb = bool(h.get("reachable"))
+        rows.append(
+            {
+                "host": host,
+                "server_id": f"freebox-{host.replace('.', '-')}",
+                "role": role,
+                "label": label,
+                "mac": str(h.get("mac") or "").strip() or None,
+                "vendor": vendor or None,
+                "device_hint": role,
+                "source": "freebox",
+                "freebox_active": active,
+                "freebox_reachable": reachable_fb,
+                # Présence Freebox (Wi-Fi / L2) — complète le scan TCP.
+                "reachable": active or reachable_fb,
+            }
+        )
+    return rows
+
+
+def _state_path() -> Path:
+    raw = os.environ.get("LBG_NETWORK_INVENTORY_STATE", "").strip()
+    if raw:
+        return Path(raw)
+    return Path("/var/lib/lbg/network_inventory/state.json")
+
+
+def _load_state() -> dict[str, Any]:
+    path = _state_path()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _save_state(state: dict[str, Any]) -> None:
+    path = _state_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _host_present(device: dict[str, Any]) -> bool:
+    if device.get("reachable") is True:
+        return True
+    if device.get("freebox_active") is True or device.get("freebox_reachable") is True:
+        return True
+    return False
+
+
+def _diff_against_previous(devices: list[dict[str, Any]]) -> dict[str, Any]:
+    """Compare à l’instantané précédent : apparus / disparus / toujours présents."""
+    prev = _load_state()
+    prev_hosts = prev.get("hosts") if isinstance(prev.get("hosts"), dict) else {}
+    now_ts = time.time()
+    current: dict[str, dict[str, Any]] = {}
+    for d in devices:
+        host = str(d.get("host") or "").strip()
+        if not host:
+            continue
+        present = _host_present(d)
+        current[host] = {
+            "label": d.get("label") or d.get("hostname") or host,
+            "role": d.get("role") or "lan",
+            "mac": d.get("mac"),
+            "vendor": d.get("vendor"),
+            "reachable": present,
+            "last_seen": now_ts if present else (prev_hosts.get(host) or {}).get("last_seen"),
+            "open_ports": d.get("open_ports") or [],
+            "source": d.get("source"),
+        }
+
+    prev_present = {h for h, meta in prev_hosts.items() if isinstance(meta, dict) and meta.get("reachable")}
+    curr_present = {h for h, meta in current.items() if meta.get("reachable")}
+
+    appeared = sorted(curr_present - prev_present)
+    disappeared = sorted(prev_present - curr_present)
+    still = sorted(curr_present & prev_present)
+
+    # Fusion : garder last_seen des absents pour historique court
+    merged_hosts = dict(prev_hosts)
+    merged_hosts.update(current)
+    for h in disappeared:
+        if h in merged_hosts and isinstance(merged_hosts[h], dict):
+            merged_hosts[h] = {**merged_hosts[h], "reachable": False}
+
+    diff = {
+        "appeared": [
+            {"host": h, "label": (current.get(h) or {}).get("label"), "role": (current.get(h) or {}).get("role")}
+            for h in appeared
+        ],
+        "disappeared": [
+            {
+                "host": h,
+                "label": (prev_hosts.get(h) or {}).get("label"),
+                "role": (prev_hosts.get(h) or {}).get("role"),
+            }
+            for h in disappeared
+        ],
+        "still_count": len(still),
+        "n_appeared": len(appeared),
+        "n_disappeared": len(disappeared),
+    }
+    _save_state(
+        {
+            "ts": now_ts,
+            "hosts": merged_hosts,
+            "last_diff": diff,
+            "n_hosts": len(merged_hosts),
+            "n_present": len(curr_present),
+        }
+    )
+    return diff
+
+
+def _format_diff_text(diff: dict[str, Any]) -> str:
+    lines = [
+        "Changements depuis le dernier scan :",
+        f"  + apparus : {diff.get('n_appeared', 0)} · − disparus : {diff.get('n_disappeared', 0)} · "
+        f"= stables : {diff.get('still_count', 0)}",
+    ]
+    for row in diff.get("appeared") or []:
+        lines.append(f"  + {row.get('host')} — {row.get('label')} ({row.get('role')})")
+    for row in diff.get("disappeared") or []:
+        lines.append(f"  − {row.get('host')} — {row.get('label')} ({row.get('role')})")
+    if not diff.get("appeared") and not diff.get("disappeared"):
+        lines.append("  (aucun changement)")
+    return "\n".join(lines)
 
 
 def _iter_hosts(cidr: str) -> list[str]:
@@ -459,7 +701,7 @@ def _topology_probes() -> list[dict[str, Any]]:
         "mmo": [(8050, "/healthz", "mmo-server"), (7733, "/", "mmmorpg-ws")],
         "precu": [],
         "executor": [],
-        "hands": [(6001, "/healthz", "linux-agent")],
+        "hands": [(5005, "/healthz", "linux-agent")],
     }
     for row in rows:
         host = row["host"]
@@ -471,19 +713,57 @@ def _topology_probes() -> list[dict[str, Any]]:
         if role == "precu":
             for port, label in ((44453, "core3-precu-login"), (44462, "core3-precu-status"), (44463, "core3-precu-ping")):
                 row["probes"].append({"kind": "tcp", "port": port, "label": label})
-    desktop = os.environ.get("LBG_AGENT_DESKTOP_URL", "").strip().rstrip("/")
-    if desktop:
-        parsed = urlparse(desktop)
-        if parsed.hostname:
-            rows.append(
-                {
-                    "server_id": "desktop",
-                    "role": "desktop",
-                    "label": "pc-windows",
-                    "host": parsed.hostname,
-                    "probes": [{"kind": "http", "url": f"{desktop.rstrip('/')}/healthz", "label": "agent-desktop"}],
-                }
-            )
+    seen_desktop_hosts: set[str] = set()
+
+    def _add_desktop_row(*, server_id: str, label: str, url: str) -> None:
+        u = (url or "").strip().rstrip("/")
+        if not u:
+            return
+        parsed = urlparse(u)
+        host = parsed.hostname or ""
+        if not host or host in seen_desktop_hosts:
+            return
+        seen_desktop_hosts.add(host)
+        rows.append(
+            {
+                "server_id": server_id,
+                "role": "desktop",
+                "label": label,
+                "host": host,
+                "probes": [{"kind": "http", "url": f"{u}/healthz", "label": "agent-desktop"}],
+            }
+        )
+
+    # Cibles explicites (pc + portable + …) — source de vérité multi-poste
+    raw_targets = os.environ.get("LBG_DESKTOP_TARGETS", "").strip()
+    if raw_targets:
+        try:
+            data = json.loads(raw_targets)
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, list):
+            for row in data:
+                if not isinstance(row, dict):
+                    continue
+                tid = str(row.get("id") or row.get("target_id") or "desktop").strip() or "desktop"
+                label = str(row.get("label") or row.get("name") or tid).strip() or tid
+                _add_desktop_row(server_id=f"desktop-{tid}", label=label, url=str(row.get("url") or ""))
+
+    _add_desktop_row(
+        server_id="desktop",
+        label="pc-windows",
+        url=os.environ.get("LBG_AGENT_DESKTOP_URL", "") or os.environ.get("AGENT_WINDOWS_URL", ""),
+    )
+    _add_desktop_row(
+        server_id="desktop-portable",
+        label="portable-sds",
+        url=os.environ.get("AGENT_WINDOWS_PORTABLE_URL", ""),
+    )
+    _add_desktop_row(
+        server_id="desktop-portable-wifi",
+        label="portable-sds-wifi",
+        url=os.environ.get("AGENT_WINDOWS_PORTABLE_WIFI_URL", ""),
+    )
     return rows
 
 
@@ -491,6 +771,7 @@ def _merge_catalog(
     known: list[dict[str, Any]],
     topology: list[dict[str, Any]],
     scan: dict[str, list[int]],
+    freebox_rows: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     by_ip: dict[str, dict[str, Any]] = {}
 
@@ -506,13 +787,27 @@ def _merge_catalog(
             if k == "probes" and isinstance(v, list):
                 existing = cur.get("probes") if isinstance(cur.get("probes"), list) else []
                 cur["probes"] = existing + v
-            elif v and (k not in cur or not cur.get(k)):
+            elif k == "reachable" and v is True:
+                cur["reachable"] = True
+            elif v and (k not in cur or not cur.get(k) or cur.get(k) == "discovered" or cur.get(k) == "lan"):
+                # Freebox / known enrichissent label+role mieux que « discovered »
+                if k in ("label", "role", "device_hint", "mac", "vendor") and cur.get("source") in (
+                    "scan",
+                    "discovered",
+                    None,
+                ):
+                    cur[k] = v
+                elif k not in cur or not cur.get(k):
+                    cur[k] = v
+            elif v and k in ("freebox_active", "freebox_reachable", "mac", "vendor"):
                 cur[k] = v
 
     for row in known:
         _upsert({**row, "source": row.get("source") or "known"})
     for row in topology:
         _upsert({**row, "source": row.get("source") or "topology"})
+    for row in freebox_rows or []:
+        _upsert({**row, "source": row.get("source") or "freebox"})
 
     for host, open_ports in sorted(scan.items(), key=lambda x: ipaddress.ip_address(x[0])):
         port_probes = [
@@ -530,10 +825,14 @@ def _merge_catalog(
                 entry["probe_results"] = port_probes
             entry["source"] = entry.get("source") or "scan"
         else:
+            role = "discovered"
+            label = hint or f"hôte-{host}"
+            if hint == "switch/ap":
+                role = "switch"
             by_ip[host] = {
                 "server_id": f"discovered-{host.replace('.', '-')}",
-                "role": "discovered",
-                "label": hint or f"hôte-{host}",
+                "role": role,
+                "label": label,
                 "host": host,
                 "reachable": True,
                 "open_ports": open_ports,
@@ -591,30 +890,38 @@ def _probe_entry(entry: dict[str, Any]) -> dict[str, Any]:
         "device_hint": device_hint,
         "probe_results": probe_results,
         "source": entry.get("source"),
+        "mac": entry.get("mac"),
+        "vendor": entry.get("vendor"),
+        "freebox_active": entry.get("freebox_active"),
+        "freebox_reachable": entry.get("freebox_reachable"),
     }
+    if device.get("freebox_active") or device.get("freebox_reachable"):
+        device["reachable"] = True
     device["action_suggestions"] = _suggest_capabilities(device)
     return device
 
 
 def _format_devices_text(devices: list[dict[str, Any]], *, scan_cidr: str, n_scanned: int) -> str:
+    present = sum(1 for d in devices if _host_present(d))
     lines = [
-        f"Inventaire réseau LAN — {len(devices)} hôte(s) — scan {scan_cidr} ({n_scanned} IP) — instantané T",
+        f"Inventaire réseau LAN — {present}/{len(devices)} présent(s) — scan {scan_cidr} ({n_scanned} IP)",
         "",
     ]
     for d in devices:
         host = d.get("host", "?")
         label = d.get("label") or d.get("server_id") or "?"
+        role = d.get("role") or "?"
         hint = d.get("device_hint")
-        reachable = d.get("reachable")
+        reachable = _host_present(d)
         mark = "OK" if reachable else "KO"
-        extra = f" [{hint}]" if hint else ""
+        extra = f" [{hint}]" if hint and hint != role else ""
         ports = d.get("open_ports") or []
         hostname = d.get("hostname")
         host_s = f"{host}" + (f" / {hostname}" if hostname else "")
         port_s = f" ports={','.join(str(p) for p in ports)}" if ports else ""
         sugg = d.get("action_suggestions") or []
         sugg_s = f" → caps: {', '.join(sugg)}" if sugg else ""
-        lines.append(f"• {label} ({host_s}) — {mark}{extra}{port_s}{sugg_s}")
+        lines.append(f"• {label} ({role}) {host_s} — {mark}{extra}{port_s}{sugg_s}")
         for p in d.get("probe_results") or []:
             plabel = p.get("label", p.get("kind", "?"))
             if p.get("kind") == "http":
@@ -634,26 +941,157 @@ def run_network_inventory(
     text: str,
     context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Scan sous-réseau + sondes sur hôtes connus (read-only)."""
+    """Scan sous-réseau + Freebox LAN + sondes sur hôtes connus (read-only)."""
     _ = actor_id, text
     ctx = context if isinstance(context, dict) else {}
     cidr = str(ctx.get("network_scan_cidr") or _scan_cidr())
     known = _apply_router_override(_parse_known_devices_json() + _known_from_env_urls())
     topology = _topology_probes()
     scan = _scan_subnet(cidr) if ctx.get("network_scan") is not False else {}
-    catalog = _merge_catalog(known, topology, scan)
+
+    freebox: dict[str, Any] | None = None
+    try:
+        from lbg_agents.freebox_client import freebox_enabled, probe_freebox
+
+        if freebox_enabled() and ctx.get("freebox_probe") is not False:
+            freebox = probe_freebox(include_lan=bool(ctx.get("freebox_lan", True)))
+    except Exception as exc:  # noqa: BLE001 — inventaire TCP reste valide
+        freebox = {"ok": False, "error": str(exc)}
+
+    freebox_rows = _catalog_from_freebox(freebox, cidr=cidr)
+    catalog = _merge_catalog(known, topology, scan, freebox_rows)
     devices = [_probe_entry(entry) for entry in catalog]
     _resolve_hostnames(devices)
     for d in devices:
+        # Présence : scan TCP OU Freebox active
+        if d.get("freebox_active") or d.get("freebox_reachable"):
+            d["reachable"] = True
         d["action_suggestions"] = _suggest_capabilities(d)
+    n_scanned = len(_iter_hosts(cidr))
+
+    nas: dict[str, Any] | None = None
+    cast_speakers: dict[str, Any] | None = None
+    try:
+        from lbg_agents.cast_speaker_client import (
+            cast_hosts_from_env,
+            format_cast_probe_text,
+            probe_cast_speakers,
+        )
+
+        if ctx.get("cast_probe") is not False:
+            hosts = list(cast_hosts_from_env())
+            for d in devices:
+                if d.get("role") in ("cast", "speaker", "iot") and d.get("host"):
+                    h = str(d["host"])
+                    if h not in hosts and (
+                        d.get("role") in ("cast", "speaker")
+                        or "nest" in str(d.get("label") or "").lower()
+                    ):
+                        hosts.append(h)
+            # Toujours sonder les hôtes Cast connus même si absents du scan
+            cast_speakers = probe_cast_speakers(hosts)
+            by_cast = {
+                str(s.get("host")): s
+                for s in (cast_speakers.get("speakers") or [])
+                if isinstance(s, dict) and s.get("ok")
+            }
+            seen_hosts = {str(d.get("host") or "") for d in devices}
+            for host, info in by_cast.items():
+                if host in seen_hosts:
+                    continue
+                devices.append(
+                    {
+                        "server_id": f"cast-{host.replace('.', '-')}",
+                        "role": "cast",
+                        "label": str(info.get("name") or host),
+                        "host": host,
+                        "reachable": True,
+                        "open_ports": [8008, 8009],
+                        "device_hint": "google-cast",
+                        "mac": info.get("mac_address"),
+                        "source": "cast",
+                        "cast": {
+                            "name": info.get("name"),
+                            "locale": info.get("locale"),
+                            "connected": info.get("connected"),
+                            "build_version": info.get("build_version"),
+                        },
+                        "action_suggestions": ["network_inventory"],
+                    }
+                )
+                seen_hosts.add(host)
+            for d in devices:
+                host = str(d.get("host") or "")
+                info = by_cast.get(host)
+                if not info:
+                    continue
+                d["role"] = "cast"
+                d["device_hint"] = "google-cast"
+                if info.get("name"):
+                    d["label"] = str(info["name"])
+                if info.get("mac_address"):
+                    d["mac"] = info["mac_address"]
+                d["cast"] = {
+                    "name": info.get("name"),
+                    "locale": info.get("locale"),
+                    "connected": info.get("connected"),
+                    "build_version": info.get("build_version"),
+                }
+                d["reachable"] = True
+                d["action_suggestions"] = _suggest_capabilities(d)
+    except Exception as exc:  # noqa: BLE001
+        cast_speakers = {"ok": False, "error": str(exc)}
+
     devices.sort(
         key=lambda d: (
-            0 if d.get("source") in ("known", "topology", "env_url", "env_router") else 1,
+            0 if d.get("source") in ("known", "topology", "env_url", "env_router", "freebox", "cast") else 1,
             ipaddress.ip_address(str(d.get("host") or "0.0.0.0")),
         )
     )
-    n_scanned = len(_iter_hosts(cidr))
+
+    persist = ctx.get("persist_state") is not False
+    diff: dict[str, Any] | None = None
+    if persist:
+        diff = _diff_against_previous(devices)
+
+    reply = _format_devices_text(devices, scan_cidr=cidr, n_scanned=n_scanned)
+    if diff is not None:
+        reply = f"{reply}\n\n{_format_diff_text(diff)}"
+    try:
+        from lbg_agents.freebox_client import format_audit_text
+
+        if isinstance(freebox, dict) and freebox.get("configured") is not False:
+            reply = f"{reply}\n\n{format_audit_text(freebox)}"
+    except Exception:
+        pass
+    try:
+        from lbg_agents.synology_client import (
+            format_nas_probe_text,
+            nas_enabled,
+            probe_nas,
+        )
+
+        if nas_enabled() and ctx.get("nas_probe") is not False:
+            nas = probe_nas(include_downloads=bool(ctx.get("nas_downloads", True)))
+            reply = f"{reply}\n\n{format_nas_probe_text(nas)}"
+    except Exception as exc:  # noqa: BLE001 — inventaire TCP reste valide
+        nas = {"ok": False, "error": str(exc)}
+
+    if isinstance(cast_speakers, dict) and cast_speakers.get("speakers") is not None:
+        try:
+            from lbg_agents.cast_speaker_client import format_cast_probe_text
+
+            reply = f"{reply}\n\n{format_cast_probe_text(cast_speakers)}"
+        except Exception:
+            pass
+
+    by_role: dict[str, int] = {}
+    for d in devices:
+        role = str(d.get("role") or "lan")
+        by_role[role] = by_role.get(role, 0) + 1
+
     devices_export = _devices_export_payload(devices)
+
     return {
         "ok": True,
         "agent": "network_inventory",
@@ -664,7 +1102,13 @@ def run_network_inventory(
         "n_hosts_scanned": n_scanned,
         "scan_cidr": cidr,
         "n_hosts_alive": len(scan),
-        "reply": _format_devices_text(devices, scan_cidr=cidr, n_scanned=n_scanned),
-        "source": "lan_scan+probes",
+        "n_present": sum(1 for d in devices if _host_present(d)),
+        "by_role": by_role,
+        "diff": diff,
+        "freebox": freebox,
+        "nas": nas,
+        "cast_speakers": cast_speakers,
+        "reply": reply,
+        "source": "lan_scan+freebox+cast+probes",
         "ts": time.time(),
     }

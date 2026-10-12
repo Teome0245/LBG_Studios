@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "combat_density_lh",
+  "label": "Densité combat anneau désert Lost Heaven",
+  "notes": [
+    "G5 : hub_sim spawne kind=beast (oid 920xxx) depuis ces zones ; engage combat = hunt_yard au POI chacal.",
+    "Waypoints alignés explore_ring_lh.json · bestiaire content/world/bestiaire_scrapaltai.json."
+  ],
+  "ring_ref": "data/life/explore_ring_lh.json",
+  "zones": [
+    {
+      "id": "zone:hunt_chacal",
+      "label": "Meute hors palissade",
+      "waypoint": "hunt",
+      "poi_id": "poi:lh_hunt_chacal",
+      "pos": {"x": 5985.0, "y": 0.15, "z": -1120.0},
+      "radius_m": 90,
+      "density": "pack",
+      "beasts": ["beast:chacal_dore"],
+      "engage_surface": "hunt_yard",
+      "quest_id": "lh_hunt_chacal"
+    },
+    {
+      "id": "zone:scrap_e",
+      "label": "Champ de scrap est",
+      "waypoint": "scrap_e",
+      "poi_id": "poi:lh_scrap_pile",
+      "pos": {"x": 7549.0, "y": 0.15, "z": -937.0},
+      "radius_m": 120,
+      "density": "low",
+      "beasts": ["beast:scarabee_obsidien", "beast:chacal_dore"],
+      "engage_surface": "none",
+      "note": "Salvage C8 prioritaire ; combat open-world = suite"
+    },
+    {
+      "id": "zone:dunes_ne",
+      "label": "Dunes nord-est",
+      "waypoint": "dunes_ne",
+      "pos": {"x": 6749.0, "y": 0.15, "z": -2737.0},
+      "radius_m": 200,
+      "density": "sparse",
+      "beasts": ["beast:chacal_dore", "beast:scorpion_titan"],
+      "engage_surface": "none"
+    },
+    {
+      "id": "zone:gate_east",
+      "label": "Approche porte est",
+      "waypoint": "gate_east",
+      "pos": {"x": 5813.6, "y": 0.15, "z": -982.5},
+      "radius_m": 80,
+      "density": "patrol",
+      "beasts": ["beast:chacal_dore"],
+      "engage_surface": "none"
+    },
+    {
+      "id": "zone:hollow_s",
+      "label": "Cuvette sud",
+      "waypoint": "hollow_s",
+      "pos": {"x": 4649.0, "y": 0.15, "z": 2063.0},
+      "radius_m": 150,
+      "density": "sparse",
+      "beasts": ["beast:serpent_sable"],
+      "engage_surface": "none",
+      "note": "Boss sparse — 1 token serpent (aggro lent, leash 40)"
+    }
+  ]
+}

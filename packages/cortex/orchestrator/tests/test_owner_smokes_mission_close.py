@@ -107,6 +107,35 @@ def test_close_ok_when_owner_smoke_green() -> None:
     assert ev.get("smoke_ok") is True
 
 
+def test_register_mission_choeur_l1() -> None:
+    qa = team_store.create_task(
+        role="qa",
+        objective="Argus choeur",
+        actor_id="test",
+        context={"owner_smoke_bundle": "choeur_l1", "mmo_jalon": True},
+    )
+    probe = team_store.create_task(
+        role="player_ia",
+        objective="Probe choeur",
+        actor_id="test",
+        context={"owner_smoke_bundle": "choeur_l1", "mmo_jalon": True},
+    )
+    out = campus_conductor.register_mission(
+        "choeur_l1_test",
+        "Chœur L1 test",
+        [probe.id, qa.id],
+        kind="choeur_l1",
+        require_owner_smoke=True,
+    )
+    assert out.get("ok") is True
+    m = campus_conductor.last_mission()
+    assert m.get("id") == "choeur_l1_test"
+    assert m.get("require_owner_smoke") is True
+    assert qa.id in (m.get("task_ids") or [])
+    assert campus_conductor.register_mission("", "x", [qa.id]).get("ok") is False
+    assert campus_conductor.register_mission("m", "x", []).get("ok") is False
+
+
 def test_godot_mission_without_qa_not_closable() -> None:
     hermes = team_store.create_task(
         role="dev_godot",

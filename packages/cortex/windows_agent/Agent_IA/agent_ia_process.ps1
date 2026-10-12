@@ -15,8 +15,19 @@ function Get-AgentPython {
     if (Test-Path $venvPy) { return $venvPy }
     $venvPy2 = Join-Path $AgentDir ".venv\Scripts\python.exe"
     if (Test-Path $venvPy2) { return $venvPy2 }
+    # Installs silencieux typiques (éviter le stub Microsoft Store "python")
+    foreach ($candidate in @(
+            "C:\Python\Python314\python.exe",
+            "C:\Python\Python313\python.exe",
+            "C:\Python\Python312\python.exe",
+            "C:\Python\Python311\python.exe"
+        )) {
+        if (Test-Path $candidate) { return $candidate }
+    }
     $sysW = (Get-Command pythonw.exe -ErrorAction SilentlyContinue)
-    if ($sysW) { return $sysW.Source }
+    if ($sysW -and $sysW.Source -and ($sysW.Source -notmatch 'WindowsApps')) { return $sysW.Source }
+    $sys = (Get-Command python.exe -ErrorAction SilentlyContinue)
+    if ($sys -and $sys.Source -and ($sys.Source -notmatch 'WindowsApps')) { return $sys.Source }
     return "python"
 }
 

@@ -14,7 +14,7 @@ const STORAGE_KEY = 'lbg_compagnon_studio_goal_v1'
  * }} StudioGoalDef
  */
 
-/** Catalogue minimal — un seul objectif actif pour l’instant. */
+/** Catalogue — un seul objectif actif ; le mandat choisit lequel. */
 /** @type {StudioGoalDef[]} */
 export const STUDIO_GOALS = [
   {
@@ -23,6 +23,30 @@ export const STUDIO_GOALS = [
     description: 'Proposer une revue quand tension orch élevée, silence proactif, ou job en attente.',
     // jobs:idle = silence prolongé (orch proactif) — rendu « vivant » sans alerte infra
     signalPrefixes: ['tension:high', 'job:', 'jobs:', 'infra:', 'disk:', 'act:'],
+  },
+  {
+    id: 'lan_watch',
+    title: 'Veiller le LAN',
+    description: 'Selfcheck, sondes AD/orch, inventaire — lecture seule prioritaire.',
+    signalPrefixes: ['infra:', 'disk:', 'jobs:idle', 'act:'],
+  },
+  {
+    id: 'mail_watch',
+    title: 'Veiller les mails',
+    description: 'Proposer un aperçu IMAP quand silence prolongé.',
+    signalPrefixes: ['jobs:idle', 'act:'],
+  },
+  {
+    id: 'studio_craft',
+    title: 'Studio / conception',
+    description: 'Proposer veille évolution, synth doc, micro-tâches conception (L1 / validation).',
+    signalPrefixes: ['studio:', 'self:', 'jobs:idle', 'act:'],
+  },
+  {
+    id: 'morning_brief',
+    title: 'Brief du matin',
+    description: 'Proposer le point matinal Self / proactive / infra (7h–10h).',
+    signalPrefixes: ['studio:morning', 'self:will', 'jobs:idle', 'act:'],
   },
 ]
 
@@ -164,6 +188,27 @@ export function resetStudioGoalFeedback() {
   const st = load()
   st.feedback = {}
   save(st)
+}
+
+/**
+ * Biais léger de l'objectif Studio selon thèmes d'une suggestion acceptée.
+ * @param {string[]} themes
+ */
+export function biasGoalFromThemes(themes) {
+  const list = (Array.isArray(themes) ? themes : []).map((t) => String(t).toLowerCase())
+  if (!list.length) return null
+  const joined = list.join(' ')
+  let goalId = null
+  if (/(studio|craft|evol|conception|toast|spont)/.test(joined)) goalId = 'studio_craft'
+  else if (/(mail|imap)/.test(joined)) goalId = 'mail_watch'
+  else if (/(lan|infra|selfcheck|sonde)/.test(joined)) goalId = 'lan_watch'
+  else if (/(job|l2|tension)/.test(joined)) goalId = 'jobs_l2'
+  else if (/(matin|brief)/.test(joined)) goalId = 'morning_brief'
+  if (!goalId) return null
+  const st = load()
+  if (st.goalId === goalId) return goalId
+  save({ ...st, goalId, enabled: true })
+  return goalId
 }
 
 /** @param {Partial<StudioGoalState>} patch */

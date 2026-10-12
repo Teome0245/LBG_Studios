@@ -207,7 +207,7 @@ def export_planet(ws_path: Path, out_dir: Path) -> dict[str, int]:
         out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         summary[city] = len(items)
 
-    all_path = out_dir / "tatooine_retail_all.json"
+    all_path = out_dir / "scrapaltai_retail_all.json"
     all_path.write_text(
         json.dumps(
             {"schema_version": 1, "zone": "tatooine", "objects": flat, "cities": summary},
@@ -227,7 +227,7 @@ def main() -> None:
         "-o",
         "--out",
         type=Path,
-        default=Path("assets/maps/retail/tatooine"),
+        default=Path("assets/maps/retail/scrapaltai"),
         help="Dossier sortie (relatif prime-client)",
     )
     args = ap.parse_args()

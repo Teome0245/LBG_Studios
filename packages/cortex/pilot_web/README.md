@@ -6,10 +6,16 @@ Structure statique servie par le **backend** sous `/pilot/` :
 |---------|------|
 | `index.html` | Shell HTML + navigation |
 | `src/main.js` | Entrée Vite (chunks + Three.js npm) |
+| `pilot_metrics.js` · `pilot_core.js` · `pilot_state.js` | Métriques / base API / persistance |
+| `pilot_assistant.js` · `pilot_views.js` · `pilot_actions.js` · `pilot_orch.js` | Assistant (UI, rendus, actions, orch) |
+| `pilot_office.js` · `pilot_team.js` · `pilot_cards.js` | Bureau, Team virtuelle, composants cartes |
+| `pilot_chat.js` · `pilot_jobs.js` · `pilot_router.js` · `pilot_pm.js` · `pilot_lyra.js` · `pilot_desktop.js` · `pilot_init.js` | Autres modules |
+| `pilot.js` | *retiré* — monolithe orphelin remplacé par les sous-modules (< 1 000 L) |
 | `pilot.css` | Styles Pilot (dashboard, assistant, bureau…) |
 | `face_rig/` | Face rig 2D Lyra |
 | `orchestrator_avatar/` | Avatar 3D (GLB + CSS) |
 | `office_map/` | Carte bureau équipe |
+| `src/chunks/` | Chunks exécutés — générés par `tools/gen_chunks.mjs` |
 | `dist/` | Bundle prod (`npm run build`) — servi si présent |
 
 **Build / serving**
@@ -19,6 +25,17 @@ cd packages/cortex/pilot_web
 npm install
 npm run build          # → dist/ (minifié, base /pilot/)
 ```
+
+**Chunks (modularisation)** : les sources `pilot_*.js` sont les modules
+autoritaires ; `src/chunks/*.js` en sont dérivés (chaîne + `register`) :
+
+```bash
+node tools/gen_chunks.mjs           # régénère src/chunks/* après édition
+node tools/gen_chunks.mjs --check   # vérifie l'alignement source ↔ chunk
+```
+
+Ordre de chargement : `CHUNK_ORDER` dans `tools/gen_chunks.mjs` (= `src/main.js`).
+`pilot_metrics` est chargé avant `pilot_core` (écouteurs core → fonctions métriques).
 
 Le backend monte `dist/` automatiquement si `dist/index.html` existe (`LBG_PILOT_STATIC=auto`).  
 Forcer les sources (dev ESM / import map) : `LBG_PILOT_STATIC=source`. Dev HMR : `npm run dev` (port 4173, proxy `/v1` → `:8000`).

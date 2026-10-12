@@ -26,8 +26,8 @@ Parité SWG visée : expérience **carte M + minimap**, pas clone pixel-perfect 
 | Composant | Existe | Limite |
 |-----------|--------|--------|
 | `WorldMap` plein écran | ✓ | Pas de widget minimap |
-| `tatooine_map_config.json` | ✓ | `display_name: Scrapaltai`, ±6500 m |
-| Texture `tatooine.svg` | ✓ | Hub LH détaillé, reste planète simplifié |
+| `scrapaltai_map_config.json` | ✓ | `display_name: Scrapaltai`, ±6500 m |
+| Texture `scrapaltai.svg` | ✓ | Hub LH détaillé, reste planète simplifié |
 | POI / hub / `.ws` | ✓ | POI surtout Lost Heaven ; ME deprecated |
 | `scrapaltai.json` (serveur) | ✓ | Pas sync auto → Godot |
 | World Editor HTML | ✓ | Export manuel vers Godot |
@@ -79,11 +79,11 @@ flowchart TB
 
 | ID | Livrable | Fichiers / scripts | Owner | Critère d'acceptation |
 |----|----------|-------------------|-------|------------------------|
-| M9a-1 | Texture planète enrichie | `prime-client/assets/maps/tatooine.svg` (+ PNG fallback) | Pygmalion + humain | Désert + repères LH + routes ; calibrée ±6500 m |
+| M9a-1 | Texture planète enrichie | `prime-client/assets/maps/scrapaltai.svg` (+ PNG fallback) | Pygmalion + humain | Désert + repères LH + routes ; calibrée ±6500 m |
 | M9a-2 | Pipeline export WE → Godot | `LBG_IA_MMO/tools/map_export/export_scrapaltai_for_godot.py` | Dédale | 1 commande : SVG + JSON POI + config |
-| M9a-3 | Sync POI serveur → client | `infra/scripts/sync_scrapaltai_poi_godot.sh` | Dédale | `scrapaltai.json` → `tatooine_pois.json` + `lost_heaven_buildings.json` |
+| M9a-3 | Sync POI serveur → client | `infra/scripts/sync_scrapaltai_poi_godot.sh` | Dédale | `scrapaltai.json` → `scrapaltai_pois.json` + `lost_heaven_buildings.json` |
 | M9a-4 | `WorldMap.set_planet()` branché | `main.gd`, `world_map.gd` | Dédale | Connexion joueur → nom planète affiché Scrapaltai |
-| M9a-5 | Couches POI planétaires | `poi_layer.gd`, `tatooine_pois.json` | Dédale | ≥ hub LH + starport + 3 POI secondaires visibles |
+| M9a-5 | Couches POI planétaires | `poi_layer.gd`, `scrapaltai_pois.json` | Dédale | ≥ hub LH + starport + 3 POI secondaires visibles |
 | M9a-6 | Sprites top-down hub | `assets/sprites/units/` via Infographiste | Pygmalion | Bots/NPC différenciés sur fond carte |
 
 **Commandes** :
@@ -265,7 +265,7 @@ LBG_SCRAPALTAI_POI=/opt/LBG_IA_MMO/content/core3/world_poi/scrapaltai.json
 ## Prochaine action équipe (immédiate)
 
 1. **Ops** — confirmer timer `lbg-team-m9-map-job` sur 140 (dernier critère ouvert).
-2. **Pygmalion** — polish texture `tatooine.svg` (routes / désert) si besoin artistique.
+2. **Pygmalion** — polish texture `scrapaltai.svg` (routes / désert) si besoin artistique.
 3. **Dédale** — HUD Prime : icônes flat (`assets/ui/icons/`) + panneau debug masqué (F9).
 4. **Thémis** — brief réunification si besoin de clôturer officiellement le jalon.
 

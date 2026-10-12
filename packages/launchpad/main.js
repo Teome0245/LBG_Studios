@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const LAUNCHPAD_VERSION = '2.1.2';
+const LAUNCHPAD_VERSION = '2.1.4';
 const STATUS_API_TIMEOUT_MS = 12000;
 const STATUS_API_FAIL_THRESHOLD = 2;
 const PRECU_HOST_LAN = '192.168.0.245';
@@ -19,6 +19,30 @@ const WSL_LBG_STUDIOS_PRIME =
   '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\LBG_Studios\\packages\\prime-client';
 const WSL_NEW_MMO_PRIME =
   '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\new_mmo\\prime-client';
+
+/** Affiche un tampon ISO UTC (…Z) en heure locale (Europe/Paris ≈ +1/+2). */
+function formatStampLocal(stamp) {
+  const s = String(stamp || '').trim();
+  if (!s || s.startsWith('(')) return s;
+  const d = new Date(s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s) ? s : `${s}Z`);
+  if (Number.isNaN(d.getTime())) return s;
+  try {
+    return (
+      new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).format(d) + ' (Paris)'
+    );
+  } catch (_) {
+    return d.toLocaleString('fr-FR');
+  }
+}
 
 function resolvePrimeClientDir() {
   const fromEnv = (process.env.LBG_PRIME_CLIENT_DIR || '').trim();
@@ -60,19 +84,7 @@ function configPath() {
 }
 
 function defaultProfiles() {
-  const swgRoot = 'J:\\swgemu';
   return [
-    {
-      id: 'precu',
-      label: 'SWGEmu PreCu (original)',
-      gameDir: path.join(swgRoot, 'StarWarsGalaxies'),
-      gameExe: 'SWGEmu.exe',
-      configFile: 'swgemu.cfg',
-      patchChannel: 'precu',
-      servers: [
-        { id: 'precu', label: 'LBG SWGEMU PreCu', ip: PRECU_HOST_LAN, loginPort: 44453 },
-      ],
-    },
     {
       id: 'prime',
       label: 'LBG Prime (Godot)',
@@ -87,7 +99,7 @@ function defaultProfiles() {
       godotFullscreen: false,
       launchArgs: ['--path', DEFAULT_PRIME_CLIENT_DIR],
       servers: [
-        { id: 'prime', label: 'LBG MMO Serveur Prime', ip: PRIME_HOST_LAN, loginPort: 44553 },
+        { id: 'prime', label: 'LBG MMO Serveur', ip: PRIME_HOST_LAN, loginPort: 44553 },
       ],
     },
   ];
@@ -96,7 +108,9 @@ function defaultProfiles() {
 function defaultConfig() {
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
-    statusApiUrl: 'http://192.168.0.245:8792/api/servers',
+    statusApiUrl: 'http://192.168.0.246:8792/api/servers',
+    statusApiUrls: ['http://192.168.0.246:8792/api/servers'],
+    primeGatewayHealthUrl: `http://${PRIME_HOST_LAN}:8787/healthz`,
     patchServerUrl: 'http://192.168.0.246:8080',
     patchServerUrlNas: 'http://192.168.0.245:8080',
     diskSpaceWarningGb: 40,
@@ -105,44 +119,72 @@ function defaultConfig() {
   };
 }
 
-/** Ancien format (gameDir unique + servers[]) → profils PreCu / Prime. */
+/** Retire PreCU / SWGEmu du Launchpad (Godot-only). */
+function stripPrecuProfiles(cfg) {
+  let changed = false;
+  const beforeIds = (cfg.profiles || []).map((p) => p.id).join(',');
+  cfg.profiles = (cfg.profiles || []).filter((p) => p && p.id !== 'precu' && p.id !== 'swgemu');
+  for (const profile of cfg.profiles) {
+    const n0 = (profile.servers || []).length;
+    profile.servers = (profile.servers || []).filter(
+      (s) => s && s.id !== 'precu' && s.id !== 'swgemu'
+    );
+    if (profile.servers.length !== n0) changed = true;
+    if (profile.id === 'prime' && (profile.servers || []).length === 0) {
+      profile.servers = [
+        { id: 'prime', label: 'LBG MMO Serveur', ip: PRIME_HOST_LAN, loginPort: 44553 },
+      ];
+      changed = true;
+    }
+  }
+  if (!cfg.profiles.some((p) => p.id === 'prime')) {
+    cfg.profiles = defaultProfiles();
+    changed = true;
+  }
+  if (cfg.defaultProfileId !== 'prime') {
+    cfg.defaultProfileId = 'prime';
+    changed = true;
+  }
+  if (Array.isArray(cfg.statusApiUrls)) {
+    const filtered = cfg.statusApiUrls.filter((u) => !String(u).includes('.245:'));
+    if (filtered.length !== cfg.statusApiUrls.length) {
+      cfg.statusApiUrls = filtered;
+      changed = true;
+    }
+  }
+  if (!cfg.statusApiUrls || cfg.statusApiUrls.length === 0) {
+    cfg.statusApiUrls = [`http://${PRIME_HOST_LAN}:8792/api/servers`];
+    changed = true;
+  }
+  if (cfg.statusApiUrl !== cfg.statusApiUrls[0]) {
+    cfg.statusApiUrl = cfg.statusApiUrls[0];
+    changed = true;
+  }
+  if (beforeIds !== cfg.profiles.map((p) => p.id).join(',')) changed = true;
+  return changed;
+}
+
+/** Ancien format (gameDir unique + servers[]) → profil Prime Godot only. */
 function migrateLegacyConfig(legacy) {
-  const swgRoot = legacy.gameDir
-    ? path.dirname(legacy.gameDir.replace(/[/\\]+$/, ''))
-    : 'J:\\swgemu';
   const legacyServers = Array.isArray(legacy.servers) ? legacy.servers : [];
-  const precuServer = legacyServers.find((s) => s.id === 'precu') || {
-    id: 'precu',
-    label: 'LBG SWGEMU PreCu',
-    ip: PRECU_HOST_LAN,
-    loginPort: 44453,
-  };
   const primeServer = legacyServers.find((s) => s.id === 'prime') || {
     id: 'prime',
-    label: 'LBG MMO Serveur Prime',
+    label: 'LBG MMO Serveur',
     ip: PRIME_HOST_LAN,
     loginPort: 44553,
   };
-  const precuDir = legacy.gameDir || path.join(swgRoot, 'StarWarsGalaxies');
-  const defaultProf = legacy.defaultServerId === 'precu' ? 'precu' : 'prime';
 
   return {
     launchpadVersion: LAUNCHPAD_VERSION,
     statusApiUrl: legacy.statusApiUrl || defaultConfig().statusApiUrl,
+    statusApiUrls: legacy.statusApiUrls || defaultConfig().statusApiUrls,
+    primeGatewayHealthUrl:
+      legacy.primeGatewayHealthUrl || defaultConfig().primeGatewayHealthUrl,
     patchServerUrl: legacy.patchServerUrl || defaultConfig().patchServerUrl,
     patchServerUrlNas: legacy.patchServerUrlNas || '',
     diskSpaceWarningGb: legacy.diskSpaceWarningGb ?? 40,
-    defaultProfileId: defaultProf,
+    defaultProfileId: 'prime',
     profiles: [
-      {
-        id: 'precu',
-        label: 'SWGEmu PreCu (original)',
-        gameDir: precuDir,
-        gameExe: legacy.gameExe || 'SWGEmu.exe',
-        configFile: legacy.configFile || 'swgemu.cfg',
-        patchChannel: 'precu',
-        servers: [precuServer],
-      },
       {
         id: 'prime',
         label: 'LBG Prime (Godot)',
@@ -283,6 +325,32 @@ function migratePrecuHost246(cfg) {
   return changed;
 }
 
+/** statusApiUrl ne doit plus dépendre uniquement de PreCU (.245) — sinon UI « tous hors ligne ». */
+function migrateStatusApiPrimeFirst(cfg) {
+  let changed = false;
+  const primeUrl = `http://${PRIME_HOST_LAN}:8792/api/servers`;
+  const precuUrl = `http://${PRECU_HOST_LAN}:8792/api/servers`;
+  const current = String(cfg.statusApiUrl || '').trim();
+  if (!current || current.includes(`${PRECU_HOST_LAN}:8792`)) {
+    if (current !== primeUrl) {
+      cfg.statusApiUrl = primeUrl;
+      changed = true;
+    }
+  }
+  const desired = [primeUrl, precuUrl];
+  const existing = Array.isArray(cfg.statusApiUrls) ? cfg.statusApiUrls.map(String) : [];
+  const merged = [];
+  for (const u of [...desired, ...existing]) {
+    const s = String(u || '').trim();
+    if (s && !merged.includes(s)) merged.push(s);
+  }
+  if (JSON.stringify(existing) !== JSON.stringify(merged)) {
+    cfg.statusApiUrls = merged;
+    changed = true;
+  }
+  return changed;
+}
+
 function resolveApiClientHost(row, serverId) {
   if (row.client_ip) {
     return row.client_ip;
@@ -328,6 +396,7 @@ function normalizeConfig(raw) {
       })),
     };
     migratePrecuHost246(normalized);
+    migrateStatusApiPrimeFirst(normalized);
     migratePrimeToGodot(normalized);
     migratePrimeClientPath(normalized);
     banLegacyNewMmoPrimePath(normalized);
@@ -361,7 +430,9 @@ function loadConfig() {
     if (fs.existsSync(cfgPath)) {
       const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       const normalized = normalizeConfig(raw);
+      const strippedPrecu = stripPrecuProfiles(normalized);
       const migratedHost = migratePrecuHost246(normalized);
+      const migratedStatusApi = migrateStatusApiPrimeFirst(normalized);
       const migratedGodot = migratePrimeToGodot(normalized);
       const migratedPath = migratePrimeClientPath(normalized);
       const bannedLegacy = banLegacyNewMmoPrimePath(normalized);
@@ -370,7 +441,9 @@ function loadConfig() {
       if (
         !raw.profiles ||
         raw.launchpadVersion !== LAUNCHPAD_VERSION ||
+        strippedPrecu ||
         migratedHost ||
+        migratedStatusApi ||
         migratedGodot ||
         migratedPath ||
         bannedLegacy ||
@@ -683,13 +756,29 @@ function mapStatusApiRows(rows) {
 }
 
 async function fetchPrimeGatewayHealth() {
-  const url = `http://${PRIME_HOST_LAN}:8765/health`;
+  // G5 : autorité joueur = prime-hub Godot (:8787), plus le gateway Core3 :8765
+  const url =
+    (config && config.primeGatewayHealthUrl) ||
+    `http://${PRIME_HOST_LAN}:8787/healthz`;
   try {
     const data = await httpGetJson(url, 3500);
     const ok = Boolean(data && data.ok);
-    return { online: ok, ready: ok, status: ok ? 'ready' : 'offline', source: 'gateway' };
+    return {
+      online: ok,
+      ready: ok,
+      status: ok ? 'ready' : 'offline',
+      source: 'prime_hub',
+      url,
+    };
   } catch (err) {
-    return { online: false, ready: false, status: 'offline', source: 'gateway', error: err.message };
+    return {
+      online: false,
+      ready: false,
+      status: 'offline',
+      source: 'prime_hub',
+      url,
+      error: err.message,
+    };
   }
 }
 
@@ -718,14 +807,81 @@ function mergePrimeGatewayRow(rows, gw) {
   return list;
 }
 
+function statusApiUrlList() {
+  const urls = [];
+  const fromArr = Array.isArray(config.statusApiUrls) ? config.statusApiUrls : [];
+  for (const u of fromArr) {
+    const s = String(u || '').trim();
+    if (s && !urls.includes(s)) urls.push(s);
+  }
+  const primary = String(config.statusApiUrl || '').trim();
+  if (primary && !urls.includes(primary)) urls.unshift(primary);
+  if (!urls.length) {
+    urls.push(`http://${PRIME_HOST_LAN}:8792/api/servers`);
+  }
+  return urls;
+}
+
+function filterKnownServerRows(rows) {
+  const known = new Set(flattenServers(config.profiles).map((s) => s.id));
+  return (rows || []).filter((r) => r && known.has(r.id));
+}
+
+function mergeStatusApiRowLists(lists) {
+  const byId = new Map();
+  for (const rows of lists) {
+    for (const row of rows || []) {
+      if (!row || !row.id) continue;
+      const prev = byId.get(row.id);
+      if (!prev) {
+        byId.set(row.id, row);
+        continue;
+      }
+      // Préférer une ligne ready/online à une offline du même id.
+      const score = (r) => (r.ready ? 2 : 0) + (r.online ? 1 : 0);
+      if (score(row) >= score(prev)) byId.set(row.id, { ...prev, ...row });
+    }
+  }
+  return Array.from(byId.values());
+}
+
+async function fetchStatusApiRowsMerged() {
+  const urls = statusApiUrlList();
+  const mappedLists = [];
+  const errors = [];
+  await Promise.all(
+    urls.map(async (url) => {
+      try {
+        const rows = await httpGetJson(url, STATUS_API_TIMEOUT_MS);
+        mappedLists.push(mapStatusApiRows(rows));
+      } catch (err) {
+        errors.push(`${url}: ${err.message}`);
+      }
+    }),
+  );
+  if (!mappedLists.length) {
+    const err = new Error(errors.join(' | ') || 'status API KO');
+    throw err;
+  }
+  return {
+    mapped: mergeStatusApiRowLists(mappedLists),
+    partial: errors.length > 0,
+    errors,
+  };
+}
+
 async function checkServerStatus() {
   if (!mainWindow) return;
   let mapped = null;
   let apiError = null;
   try {
-    const rows = await httpGetJson(config.statusApiUrl, STATUS_API_TIMEOUT_MS);
-    mapped = mapStatusApiRows(rows);
+    const out = await fetchStatusApiRowsMerged();
+    mapped = out.mapped;
     statusApiFailStreak = 0;
+    if (out.partial) {
+      apiError = out.errors.join(' | ');
+      console.warn('status API partial:', apiError);
+    }
   } catch (err) {
     console.warn('status API:', err.message);
     apiError = err.message;
@@ -736,7 +892,7 @@ async function checkServerStatus() {
   }
   const gw = await fetchPrimeGatewayHealth();
   if (mapped) {
-    mapped = mergePrimeGatewayRow(mapped, gw);
+    mapped = filterKnownServerRows(mergePrimeGatewayRow(mapped, gw));
     lastGoodServerStatus = mapped;
     mainWindow.webContents.send('servers-status', {
       source: apiError ? 'api+gateway' : 'api',
@@ -746,21 +902,23 @@ async function checkServerStatus() {
     });
     return;
   }
-  const fallbackServers = mergePrimeGatewayRow(
-    lastGoodServerStatus
-      ? lastGoodServerStatus
-      : flattenServers(config.profiles).map((s) => ({
-          ...s,
-          host: s.ip,
-          online: false,
-          ready: false,
-          status: 'offline',
-        })),
-    gw,
+  const fallbackServers = filterKnownServerRows(
+    mergePrimeGatewayRow(
+      lastGoodServerStatus
+        ? lastGoodServerStatus
+        : flattenServers(config.profiles).map((s) => ({
+            ...s,
+            host: s.ip,
+            online: false,
+            ready: false,
+            status: 'offline',
+          })),
+      gw,
+    ),
   );
   lastGoodServerStatus = fallbackServers;
   mainWindow.webContents.send('servers-status', {
-    source: lastGoodServerStatus ? 'stale-fallback' : 'gateway-fallback',
+    source: 'gateway-fallback',
     servers: fallbackServers,
     error: !lastGoodServerStatus,
     stale: Boolean(lastGoodServerStatus),
@@ -1024,7 +1182,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
       if (gameProcess.exitCode === null && gameProcess.signalCode === null) {
         gameProcess.unref();
         const target = godot
-          ? `Godot prime-client → gateway ${PRIME_HOST_LAN}:8765 / :50000`
+          ? `Godot prime-client → hub ${PRIME_HOST_LAN}:8787 (HTTP+WS)`
           : `${profile.label} → ${server.label} (${server.ip}:${server.loginPort})`;
         event.reply('launch-status', {
           error: false,
@@ -1214,7 +1372,7 @@ async function checkGodotClientUpdates(profile) {
     mainWindow.webContents.send('patch-status', {
       status: 'ready',
       message:
-        `Prime à jour (${filesToUpdate.length} diff). Local ${localStamp} · référence ${remoteStamp}` +
+        `Prime à jour (${filesToUpdate.length} diff). Local ${formatStampLocal(localStamp)} · référence ${formatStampLocal(remoteStamp)}` +
         (sameStamp ? ' ✓' : ' (fichiers OK, tampon différent)'),
     });
     return;

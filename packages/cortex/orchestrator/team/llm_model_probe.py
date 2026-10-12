@@ -22,21 +22,22 @@ _LEGACY_GROQ_MODELS = frozenset(
         "llama-3.1-8b-instant",
         "llama3-8b-8192",
         "llama-3.1-70b-versatile",
+        "qwen/qwen3.6-27b",
     }
 )
 
-_CANONICAL_GROQ_FAST = "qwen/qwen3.6-27b"
+_CANONICAL_GROQ_FAST = "qwen/qwen3.8-27b"
 
 # Priorité de sélection si le modèle configuré n'est plus dispo.
 # Ordre : préféré → fallback. On privilégie les modèles rapides/petits pour le fast,
 # et les gros pour smart/balanced.
 _GROQ_PREFERENCE = [
-    "qwen/qwen3.6-27b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
     "meta-llama/llama-4-scout-17b-16e-instruct",
     "meta-llama/llama-4-maverick-17b-128e-instruct",
     "meta-llama/llama-3.3-70b-versatile",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
     "allam-2-7b",
 ]
 

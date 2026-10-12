@@ -1,9 +1,15 @@
 # Handoff Antigravity — Visuel & polish Compagnon
 
-**Date** : 2026-09-17  
-**Repo** : `LBG_Studios` · `main` (après `d7cbc90` ou plus récent)  
+**Statut** : **RÉSOLU / LIVRÉ (2026-09-18)**  
+**Date initiale** : 2026-09-17  
+**Bilan de livraison** : Tous les critères de done ont été validés et déployés sur CT100 (`:5174`) :  
+- Socle Tailwind v4 avec `@source` complets et tokens studio sobres (`style.css`).  
+- Empty state 30s orienté présence et dialogue (Outfit, avatar avec pulse, mandat chips).  
+- Hiérarchie assainie : réglages techniques (agent/mode/persona) et métriques ops repliés par défaut ; palette Ctrl+K complète.  
+- `InitiativeToast` repositionné et z-index calibré sans chevaucher l'input.  
+- `ActivityEncart` intégré style Cursor.  
+**Repo** : `LBG_Studios`  
 **Surface** : Compagnon `http://192.168.0.100:5174/` · sources `packages/cortex/compagnon_ui`  
-**Optionnel** : overlay Electron `packages/compagnon-desktop` (cohérence visuelle avatar)  
 **Priorité** : O1 Studio — *feeling* compagnon (Jarvis / présence), pas un dashboard ops.
 
 ---

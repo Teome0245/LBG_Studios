@@ -25,7 +25,8 @@ ZONES: list[dict[str, Any]] = [
     {"id": "zone_llm", "label": "Forge LLM (.110 / .111)", "sort_order": 2},
     {"id": "zone_mmo_lab", "label": "Lab SWG (245)", "sort_order": 3},
     {"id": "zone_prime", "label": "Monde Prime (246)", "sort_order": 4},
-    {"id": "zone_coffee", "label": "Pause café", "sort_order": 5},
+    {"id": "zone_games", "label": "Salle de jeux", "sort_order": 5},
+    {"id": "zone_coffee", "label": "Pause café", "sort_order": 6},
 ]
 
 ZONE_IDS = frozenset(z["id"] for z in ZONES)
@@ -37,7 +38,9 @@ DEFAULT_ZONE_BY_ROLE: dict[str, str] = {
     "ops": "zone_core",
     "dev_game": "zone_mmo_lab",
     "dev_godot": "zone_prime",
+    "dev_studio": "zone_core",
     "player_ia": "zone_prime",
+    "player_bridge": "zone_games",
     "contrarian": "zone_llm",
 }
 
@@ -50,12 +53,24 @@ DEFAULT_ZONE_BY_AGENT: dict[str, str] = {
     "studio_ops_hephaistos": "zone_core",
     "studio_dev_dedale": "zone_mmo_lab",
     "studio_dev_vulcan": "zone_mmo_lab",
+    "studio_dev_metis": "zone_core",
     "studio_infographiste_pygmalion": "zone_front",
     "godot_dev_iris": "zone_prime",
     "godot_dev_hermes": "zone_prime",
     "studio_player_ia_choeur": "zone_prime",
     "studio_conductor_lyra": "zone_core",
     "studio_contrarian_promethee": "zone_llm",
+    # Ponts joueur out-game (login = persona) — salle de jeux
+    "player_bridge_nix": "zone_games",
+    "player_bridge_lia": "zone_games",
+    "player_bridge_mira": "zone_games",
+    "player_bridge_kael": "zone_games",
+    "player_bridge_renn": "zone_games",
+    "player_bridge_sola": "zone_games",
+    "player_bridge_vex": "zone_games",
+    "player_bridge_ori": "zone_games",
+    "player_bridge_tess": "zone_games",
+    "player_bridge_bram": "zone_games",
 }
 
 HOST_HINT_BY_ZONE: dict[str, str] = {
@@ -64,8 +79,27 @@ HOST_HINT_BY_ZONE: dict[str, str] = {
     "zone_llm": "192.168.0.110",
     "zone_mmo_lab": "192.168.0.245",
     "zone_prime": "192.168.0.246",
+    "zone_games": "192.168.0.246",
     "zone_coffee": "192.168.0.140",
 }
+
+# Sondes TCP légères pour annoter les zones « machine éteinte » (Lab PreCU surtout).
+# Ports alignés Atlas / pilot status (8050 healthz, 3306 MySQL, 8792 PreCU, 22 SSH).
+ZONE_HOST_PROBES: dict[str, dict[str, Any]] = {
+    "zone_mmo_lab": {
+        "env": "LBG_LAN_HOST_PRECU",
+        "fallback_env": "LBG_LAN_HOST_MMO_SERVER",
+        "default": "192.168.0.245",
+        "ports": (8050, 3306, 8792, 22),
+        "force_env": "LBG_ZONE_MMO_LAB_HOST_STATE",
+        "offline_badge": "Éteinte",
+        "online_badge": "En ligne",
+    },
+}
+
+_zone_host_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+_zone_host_cache_ttl = float(os.environ.get("LBG_ZONE_HOST_PROBE_TTL_SEC", "30") or "30")
+_zone_host_probe_timeout = float(os.environ.get("LBG_ZONE_HOST_PROBE_TIMEOUT_SEC", "0.6") or "0.6")
 
 # Persona par défaut quand une tâche n'a pas de sous-projet (1er = principal du rôle)
 DEFAULT_AGENT_BY_ROLE: dict[str, str] = {
@@ -75,6 +109,7 @@ DEFAULT_AGENT_BY_ROLE: dict[str, str] = {
     "ops": "studio_ops_hephaistos",
     "dev_game": "studio_dev_dedale",
     "dev_godot": "godot_dev_iris",
+    "dev_studio": "studio_dev_metis",
     "player_ia": "studio_player_ia_choeur",
     "contrarian": "studio_contrarian_promethee",
 }
@@ -170,15 +205,24 @@ def _roster() -> list[dict[str, Any]]:
         if not aid or aid in seen:
             continue
         seen.add(aid)
-        out.append(
-            {
-                "agent_id": aid,
-                "display_name": str(d.get("display_name") or aid),
-                "role": str(d.get("role") or ""),
-                "persona": str(d.get("persona") or ""),
-                "subproject": str(d.get("subproject") or "") or None,
-            }
-        )
+        row: dict[str, Any] = {
+            "agent_id": aid,
+            "display_name": str(d.get("display_name") or aid),
+            "role": str(d.get("role") or ""),
+            "persona": str(d.get("persona") or ""),
+            "subproject": str(d.get("subproject") or "") or None,
+            "account_login": str(d.get("account_login") or d.get("persona") or "") or None,
+            "mmo_player": str(d.get("mmo_player") or "") or None,
+            "studio_member": d.get("studio_member"),
+        }
+        if d.get("linked_studio_agent_id"):
+            row["linked_studio_agent_id"] = str(d.get("linked_studio_agent_id"))
+            row["linked_studio_display"] = str(d.get("linked_studio_display") or d.get("linked_studio_agent_id"))
+        if d.get("mmo_account_login"):
+            row["mmo_account_login"] = str(d.get("mmo_account_login"))
+        if d.get("bridge_agent_id"):
+            row["bridge_agent_id"] = str(d.get("bridge_agent_id"))
+        out.append(row)
     if "admin_infra" not in seen and "studio_admin_atlas" not in seen:
         disp = role_display("admin_infra")
         out.append(
@@ -208,6 +252,15 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
     if explicit:
         return explicit
 
+    # Mur INFRA LAN / guest disk : toujours Héphaïstos (ne pas scanner hosts 245→Vulcan)
+    ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
+    if (
+        ops_kind in {"guest_metrics", "proxmox_storage", "proxmox_hw", "proxmox_guest_lock", "network_inventory"}
+        or ctx.get("_team_ops_guest_spawn")
+        or ctx.get("_team_network_inventory_spawn")
+    ):
+        return DEFAULT_AGENT_BY_ROLE.get("ops", "studio_ops_hephaistos")
+
     roster = _roster()
     by_id = {r["agent_id"]: r for r in roster}
     by_persona = {str(r.get("persona") or "").lower(): r["agent_id"] for r in roster if r.get("persona")}
@@ -218,6 +271,8 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
         sub = "infographiste_ia"
     if ctx.get("core3_build") and not sub:
         sub = "core3_build"
+    if task.role == "dev_studio" and not sub:
+        sub = "cortex_studio"
     persona = str(ctx.get("godot_dev_persona") or ctx.get("persona") or "").lower()
     if persona == "hermes" and not sub:
         sub = "godot_hermes"
@@ -229,8 +284,8 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
     if persona and persona in by_persona:
         return by_persona[persona]
 
-    # Indices dans l'objectif
-    blob = f"{task.objective or ''} {json_dumps_safe(ctx)}".lower()
+    # Indices dans l'objectif (pas le dump ctx hosts — évite faux positif Core3 SWG)
+    blob = (task.objective or "").lower()
     if "pygmalion" in blob or "infographiste" in blob or "lora" in blob:
         return by_sub.get("infographiste_ia") or by_persona.get("pygmalion") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if "vulcan" in blob or "core3" in blob or "zb-0" in blob or "antigravity" in blob:
@@ -239,6 +294,10 @@ def resolve_presence_agent_id(task: TeamTask) -> str:
         return by_sub.get("godot_hermes") or by_persona.get("hermes") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if "iris" in blob or "m9" in blob or "scrapaltai" in blob or "minimap" in blob:
         return by_sub.get("godot_iris") or by_persona.get("iris") or DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
+    if "métis" in blob or "metis" in blob or "cortex_studio" in blob:
+        return by_sub.get("cortex_studio") or by_persona.get("metis") or DEFAULT_AGENT_BY_ROLE.get(
+            "dev_studio", task.role
+        )
 
     default_id = DEFAULT_AGENT_BY_ROLE.get(task.role, task.role)
     if default_id in by_id:
@@ -259,11 +318,29 @@ def json_dumps_safe(obj: object) -> str:
         return str(obj)
 
 
+def default_zone_for_agent(agent_id: str, role: str = "") -> str:
+    """Zone idle / défaut : ponts out-game → salle de jeux."""
+    aid = str(agent_id or "").strip()
+    r = str(role or "").strip()
+    if aid in DEFAULT_ZONE_BY_AGENT:
+        return DEFAULT_ZONE_BY_AGENT[aid]
+    if aid.startswith("player_bridge_") or r == "player_bridge":
+        return "zone_games"
+    return DEFAULT_ZONE_BY_ROLE.get(r, "zone_core")
+
+
 def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
     ctx = task.context or {}
     explicit = str(ctx.get("presence_zone") or ctx.get("zone") or "").strip()
     if explicit in ZONE_IDS:
         return explicit
+    ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
+    if (
+        ops_kind in {"guest_metrics", "proxmox_storage", "proxmox_hw", "proxmox_guest_lock", "network_inventory"}
+        or ctx.get("_team_ops_guest_spawn")
+        or ctx.get("_team_network_inventory_spawn")
+    ):
+        return "zone_core"
     blob = " ".join(
         [
             task.objective or "",
@@ -273,6 +350,8 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
             str(ctx.get("target_host") or ""),
         ]
     ).lower()
+    if any(k in blob for k in ("player_bridge", "salle de jeux", "out-game", "out_game", "pont nix", "pont lia")):
+        return "zone_games"
     if any(k in blob for k in ("246", "prime", "godot", "lbg-ws", "scrapaltai", "m9")):
         return "zone_prime"
     if any(k in blob for k in ("245", "core3", "swg", "precu", "vulcan", "zb-")):
@@ -284,9 +363,7 @@ def infer_zone(task: TeamTask, *, agent_id: str | None = None) -> str:
     if "café" in blob or "cafe" in blob or "pause" in blob:
         return "zone_coffee"
     aid = agent_id or resolve_presence_agent_id(task)
-    if aid in DEFAULT_ZONE_BY_AGENT:
-        return DEFAULT_ZONE_BY_AGENT[aid]
-    return DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
+    return default_zone_for_agent(aid, task.role)
 
 
 def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dict[str, Any]:
@@ -321,10 +398,7 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
     )
     location = infer_zone(task, agent_id=agent_id)
     if status == "idle":
-        if task.status == "queued":
-            location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
-        else:
-            location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(task.role, "zone_core")
+        location = default_zone_for_agent(agent_id, task.role)
     action = sanitize_action(task.objective if status != "idle" else "En attente")
     if status == "idle" and task.status == "queued":
         action = sanitize_action(f"En file — {task.objective}")
@@ -358,13 +432,37 @@ def _presence_from_task(task: TeamTask, *, event: str = "status_changed") -> dic
 def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
     agent_id = str(row["agent_id"])
     role = str(row.get("role") or "")
-    location = DEFAULT_ZONE_BY_AGENT.get(agent_id) or DEFAULT_ZONE_BY_ROLE.get(role, "zone_core")
-    return {
+    location = default_zone_for_agent(agent_id, role)
+    action = "En attente"
+    login = str(row.get("account_login") or row.get("persona") or "").strip() or None
+    mmo = str(row.get("mmo_player") or "").strip() or None
+    linked_studio = str(row.get("linked_studio_display") or "").strip() or None
+    linked_studio_id = str(row.get("linked_studio_agent_id") or "").strip() or None
+    mmo_login = str(row.get("mmo_account_login") or "").strip() or None
+    bridge_id = str(row.get("bridge_agent_id") or "").strip() or None
+    if role == "player_bridge" or agent_id.startswith("player_bridge_"):
+        bits = ["Pont out-game"]
+        if login:
+            bits.append(f"login={login}")
+        if mmo:
+            bits.append(f"IG={mmo}")
+        if linked_studio:
+            bits.append(f"↔ {linked_studio}")
+        bits.append("suggestions monde/dev")
+        action = " · ".join(bits)
+    elif mmo and (mmo_login or bridge_id):
+        # Studio → perso IG (symétrie ponts : ↔ Vulcan / ↔ Hermès)
+        bits = [action]
+        bits.append(f"↔ {mmo}")
+        if mmo_login:
+            bits.append(f"login={mmo_login}")
+        action = " · ".join(bits)
+    payload: dict[str, Any] = {
         "schema": SCHEMA,
         "agent_id": agent_id,
         "display_name": str(row.get("display_name") or agent_id),
         "status": "idle",
-        "current_action": "En attente",
+        "current_action": action,
         "location": location,
         "target_destination": None,
         "role": role,
@@ -373,6 +471,22 @@ def _idle_agent_row(row: dict[str, Any]) -> dict[str, Any]:
         "event": "heartbeat",
         "timestamp": int(time.time()),
     }
+    if role == "player_bridge" or agent_id.startswith("player_bridge_"):
+        if login:
+            payload["account_login"] = login
+            payload["persona"] = login
+    if mmo:
+        payload["mmo_player"] = mmo
+    if linked_studio_id:
+        payload["linked_studio_agent_id"] = linked_studio_id
+        payload["linked_studio_display"] = linked_studio or linked_studio_id
+    if mmo_login:
+        payload["mmo_account_login"] = mmo_login
+    if bridge_id:
+        payload["bridge_agent_id"] = bridge_id
+    if row.get("studio_member") is not None:
+        payload["studio_member"] = bool(row.get("studio_member"))
+    return payload
 
 
 def _idle_agent(role: str) -> dict[str, Any]:
@@ -578,6 +692,147 @@ def reconcile_with_store() -> int:
         return 0
 
 
+def _host_ip_from_env(env_key: str, default: str, *, fallback_env: str | None = None) -> str:
+    raw = os.environ.get(env_key, "").strip()
+    if not raw and fallback_env:
+        raw = os.environ.get(fallback_env, "").strip()
+    if not raw:
+        raw = default
+    return raw.split(":")[0].split("/")[0]
+
+
+def _tcp_reachable(host: str, port: int, *, timeout: float) -> bool:
+    import socket
+
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def _force_host_state(raw: str | None) -> str | None:
+    val = str(raw or "").strip().lower()
+    if val in ("off", "offline", "down", "eteinte", "éteinte", "ferme", "fermé", "closed"):
+        return "offline"
+    if val in ("on", "online", "up", "live"):
+        return "online"
+    return None
+
+
+def probe_zone_host(zone_id: str, *, force_refresh: bool = False) -> dict[str, Any] | None:
+    """État hôte d'une zone (cache TTL). None si la zone n'a pas de sonde."""
+    spec = ZONE_HOST_PROBES.get(zone_id)
+    if not spec:
+        return None
+    now = time.time()
+    if not force_refresh:
+        cached = _zone_host_cache.get(zone_id)
+        if cached and (now - cached[0]) < max(1.0, _zone_host_cache_ttl):
+            return dict(cached[1])
+
+    host = _host_ip_from_env(
+        str(spec["env"]),
+        str(spec["default"]),
+        fallback_env=str(spec.get("fallback_env") or "") or None,
+    )
+    forced = _force_host_state(os.environ.get(str(spec.get("force_env") or "")))
+    if forced is None:
+        ports = tuple(int(p) for p in (spec.get("ports") or ()))
+        online = any(_tcp_reachable(host, port, timeout=_zone_host_probe_timeout) for port in ports)
+        status = "online" if online else "offline"
+    else:
+        status = forced
+
+    badge = (
+        str(spec.get("offline_badge") or "Éteinte")
+        if status == "offline"
+        else str(spec.get("online_badge") or "En ligne")
+    )
+    row = {
+        "host": host,
+        "host_status": status,
+        "host_badge": badge if status == "offline" else None,
+        "probed_at": int(now),
+    }
+    _zone_host_cache[zone_id] = (now, dict(row))
+    return row
+
+
+def zones_for_snapshot(*, force_refresh: bool = False) -> list[dict[str, Any]]:
+    """Zones presence + annotation hôte (badge Éteinte quand PreCU down)."""
+    out: list[dict[str, Any]] = []
+    for zone in ZONES:
+        row = dict(zone)
+        zid = str(zone.get("id") or "")
+        hint = HOST_HINT_BY_ZONE.get(zid)
+        if hint:
+            row["host_hint"] = hint
+        probe = probe_zone_host(zid, force_refresh=force_refresh)
+        if probe:
+            row.update(probe)
+            if probe.get("host_status") == "offline" and probe.get("host_badge"):
+                base = str(zone.get("label") or zid)
+                # Évite double suffixe si déjà présent.
+                if probe["host_badge"] not in base:
+                    row["label"] = f"{base} · {probe['host_badge']}"
+        out.append(row)
+    return out
+
+
+def _merge_roster_soft_link(payload: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    """Conserve le statut live mais expose toujours les champs lien doux du registre."""
+    out = dict(payload)
+    role = str(row.get("role") or out.get("role") or "")
+    login = str(row.get("account_login") or row.get("persona") or "").strip() or None
+    mmo = str(row.get("mmo_player") or "").strip() or None
+    linked_studio = str(row.get("linked_studio_display") or "").strip() or None
+    linked_studio_id = str(row.get("linked_studio_agent_id") or "").strip() or None
+    mmo_login = str(row.get("mmo_account_login") or "").strip() or None
+    bridge_id = str(row.get("bridge_agent_id") or "").strip() or None
+    if role == "player_bridge" or str(out.get("agent_id") or "").startswith("player_bridge_"):
+        if login:
+            out["account_login"] = login
+            out.setdefault("persona", login)
+        if linked_studio_id:
+            out["linked_studio_agent_id"] = linked_studio_id
+            out["linked_studio_display"] = linked_studio or linked_studio_id
+        # Enrichir current_action si le lien Studio manque (émission tâche sans registre)
+        action = str(out.get("current_action") or "")
+        if linked_studio and f"↔ {linked_studio}" not in action:
+            bits = [action] if action and action != "En attente" else ["Pont out-game"]
+            if login and f"login={login}" not in action:
+                bits.append(f"login={login}")
+            if mmo and f"IG={mmo}" not in action:
+                bits.append(f"IG={mmo}")
+            bits.append(f"↔ {linked_studio}")
+            if "suggestions" not in action.lower():
+                bits.append("suggestions monde/dev")
+            out["current_action"] = " · ".join(bits)
+    if mmo:
+        out["mmo_player"] = mmo
+    if mmo_login:
+        out["mmo_account_login"] = mmo_login
+    if bridge_id:
+        out["bridge_agent_id"] = bridge_id
+    if row.get("studio_member") is not None:
+        out["studio_member"] = bool(row.get("studio_member"))
+    # Studio → perso IG : exposer ↔ même hors idle (review/busy) si absent du live
+    if (
+        mmo
+        and (bridge_id or mmo_login)
+        and not (role == "player_bridge" or str(out.get("agent_id") or "").startswith("player_bridge_"))
+    ):
+        action = str(out.get("current_action") or "")
+        if f"↔ {mmo}" not in action:
+            base = action if action and action not in ("En attente", "Dispo") else "En attente"
+            bits = [base, f"↔ {mmo}"]
+            if mmo_login and f"login={mmo_login}" not in base:
+                bits.append(f"login={mmo_login}")
+            out["current_action"] = " · ".join(bits)
+    return out
+
+
 def snapshot(*, mode: str = "live") -> dict[str, Any]:
     recover_stale_failed()
     reconcile_with_store()
@@ -589,7 +844,7 @@ def snapshot(*, mode: str = "live") -> dict[str, Any]:
         aid = str(row["agent_id"])
         seen.add(aid)
         if aid in known:
-            agents.append(known[aid])
+            agents.append(_merge_roster_soft_link(known[aid], row))
         else:
             agents.append(_idle_agent_row(row))
     # États orphelins (ancien agent_id = rôle technique, system:…)
@@ -599,7 +854,7 @@ def snapshot(*, mode: str = "live") -> dict[str, Any]:
     return {
         "schema": SNAPSHOT_SCHEMA,
         "agents": agents,
-        "zones": list(ZONES),
+        "zones": zones_for_snapshot(),
         "generated_at": int(time.time()),
         "mode": mode,
     }

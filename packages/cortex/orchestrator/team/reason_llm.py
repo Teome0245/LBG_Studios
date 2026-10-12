@@ -12,9 +12,9 @@ import httpx
 # Profils délestés vers le nœud léger (NUC / CT 111) si LBG_REASON_LIGHT_BASE_URL est défini.
 _LIGHT_PROFILES = frozenset({"router", "json", "fast"})
 
-# Heavy 110 — code/PM/dialogue ≤12B abliterated ; garde-fous maturité A/B/C.
-# Qualité code : gemma-4-abliterated:12b (plafond filtre HF ≤12B). Forge reste e2b.
-HEAVY_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:12b"
+# Heavy 110 — code/PM/dialogue ≤12B abliterated QAT ; garde-fous maturité A/B/C.
+# Canon : gemma-4-abliterated:12b-qat (pas d'alias :12b — un seul tag).
+HEAVY_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:12b-qat"
 FORGE_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:e2b"
 LIGHT_CLEAN_DEFAULT = "huihui_ai/qwen3.5-abliterated:2B"
 LIGHT_FAST_DEFAULT = "huihui_ai/qwen3.5-abliterated:0.8B"
@@ -198,7 +198,7 @@ def reason_cloud_model() -> str:
     return (
         os.environ.get("LBG_REASON_CLOUD_MODEL", "").strip()
         or os.environ.get("LBG_DIALOGUE_FAST_MODEL", "").strip()
-        or "qwen/qwen3.6-27b"
+        or "qwen/qwen3.8-27b"
     )
 
 

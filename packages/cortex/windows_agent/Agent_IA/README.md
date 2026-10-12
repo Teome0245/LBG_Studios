@@ -164,10 +164,10 @@ Actions :
   - `filename` (requis), `subfolder` (optionnel), `type` (optionnel, défaut `output`)
   - `return` : `path|base64|none` (défaut `path`) ; écrit dans `LBG_COMFYUI_DOWNLOAD_DIR` si `path`
 - `comfyui_status` : probe `GET /system_stats` (pas d’approval)
-- `comfyui_ensure` : démarre ComfyUI s’il est down (hidden, voir ci-dessous)
-- `comfyui_restart` : stop process `:8188` puis relance
+- `comfyui_ensure` : démarre ComfyUI s’il est down (hidden, **sans HITL**) — défaut root `C:\Users\sdesh\ComfyUI`, args `--listen 0.0.0.0 --port 8188 --lowvram`
+- `comfyui_restart` : stop process `:8188` puis relance (**approval**)
 
-`desktop.env` : `LBG_COMFYUI_ROOT`, `LBG_COMFYUI_PYTHON`, `LBG_COMFYUI_ARGS`, `LBG_COMFYUI_AUTO_ENSURE=1` (ensure automatique avant `comfyui_queue` si down).
+`desktop.env` : `LBG_COMFYUI_ROOT`, `LBG_COMFYUI_PYTHON`, `LBG_COMFYUI_ARGS`, `LBG_COMFYUI_AUTO_ENSURE=1` (ensure automatique avant `comfyui_queue` / brief Pygmalion si down).
 
 ### ComfyUI — démarrage sans fenêtre
 

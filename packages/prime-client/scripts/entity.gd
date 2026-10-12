@@ -29,6 +29,16 @@ var _use_visual_override: bool = false
 var facing_angle: float = 0.0
 var _selected: bool = false
 var _last_patrol_offset: Vector3 = Vector3.ZERO
+## Lissage zone_state ~10 Hz → écran (évite saccades bots/PNJ distants).
+var _smooth_enabled: bool = false
+var _smooth_target: Vector3 = Vector3.ZERO
+var _smooth_vel: Vector3 = Vector3.ZERO
+var _smooth_target_ms: int = 0
+var _last_draw_pos: Vector2 = Vector2.INF
+const SMOOTH_SNAP_M := 28.0
+## Suivi souple + légère extrapolation vitesse (cible réseau 10 Hz).
+const SMOOTH_RATE := 11.0
+const SMOOTH_EXTRAP_S := 0.08
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_PLAYER_BOT      := Color(0.0, 0.9, 0.4, 1.0)
@@ -36,6 +46,26 @@ const COLOR_NPC             := Color(1.0, 0.5, 0.1, 1.0)
 const COLOR_OBJECT          := Color(0.7, 0.7, 0.7, 0.8)
 
 static var show_nameplates: bool = false
+## C3 — nameplate forcé même si play mode masque les labels globaux.
+var force_nameplate: bool = false
+## P5b — windup boss (telegraph) / aggro : teinte + anneau.
+var combat_goal: String = ""
+var is_boss_beast: bool = false
+
+func set_force_nameplate(enabled: bool) -> void:
+	force_nameplate = enabled
+	queue_redraw()
+
+
+func set_beast_combat(goal: String, boss: bool = false) -> void:
+	var g := goal.strip_edges().to_lower()
+	if g == combat_goal and boss == is_boss_beast:
+		return
+	combat_goal = g
+	is_boss_beast = boss
+	if kind == "beast" and g == "telegraph":
+		set_process(true)
+	queue_redraw()
 
 func set_entity_key(key: String) -> void:
 	entity_key = key
@@ -43,6 +73,11 @@ func set_entity_key(key: String) -> void:
 	_refresh_appearance()
 
 func set_core3_position(pos: Vector3) -> void:
+	## Snap immédiat (spawn, téléport, joueur local).
+	_smooth_enabled = false
+	_smooth_vel = Vector3.ZERO
+	_smooth_target = pos
+	_smooth_target_ms = Time.get_ticks_msec()
 	var prev := core3_pos
 	core3_pos     = pos
 	height_offset = _Projection3D2D.height_offset(pos.y)
@@ -52,6 +87,34 @@ func set_core3_position(pos: Vector3) -> void:
 	_refresh_screen_pos()
 	_update_sprite_offset()
 	queue_redraw()
+
+
+func set_core3_position_smooth(pos: Vector3) -> void:
+	## Cible réseau — interpolée dans _process (remote bots / PNJ hub).
+	if entity_key == "player:human":
+		set_core3_position(pos)
+		return
+	var dx := pos.x - core3_pos.x
+	var dz := pos.z - core3_pos.z
+	if dx * dx + dz * dz > SMOOTH_SNAP_M * SMOOTH_SNAP_M:
+		set_core3_position(pos)
+		return
+	var now := Time.get_ticks_msec()
+	var dt := float(now - _smooth_target_ms) * 0.001
+	if _smooth_target_ms > 0 and dt > 0.02 and dt < 0.75:
+		_smooth_vel = Vector3(
+			(pos.x - _smooth_target.x) / dt,
+			0.0,
+			(pos.z - _smooth_target.z) / dt
+		)
+		# Plafond ~vitesse bot hub (évite pics sur teleports partiels).
+		var spd := _smooth_vel.length()
+		if spd > 20.0:
+			_smooth_vel *= 20.0 / spd
+	_smooth_target = pos
+	_smooth_target_ms = now
+	_smooth_enabled = true
+	set_process(true)
 
 func set_display_jitter(offset: Vector2) -> void:
 	_display_jitter = offset
@@ -173,19 +236,45 @@ func _wants_ambient() -> bool:
 	return kind == "npc" or kind == "player" or not _anchor.is_empty()
 
 func _process(delta: float) -> void:
-	if not _wants_ambient():
-		return
-	var prev_patrol := _patrol_offset_m()
-	_idle_phase += delta
-	_refresh_screen_pos()
-	var cur_patrol := _patrol_offset_m()
-	if kind == "npc":
-		var vel := cur_patrol - prev_patrol
-		if vel.length_squared() > 1.0e-8:
-			set_facing_from_direction(Vector3(vel.x, 0.0, vel.z))
-	_last_patrol_offset = cur_patrol
+	if kind == "beast" and combat_goal == "telegraph":
+		queue_redraw()
+		# Pas de patrol ambient — juste le pulse telegraph.
+	var moved := false
+	if _smooth_enabled:
+		var prev := core3_pos
+		var aim := _smooth_target + _smooth_vel * SMOOTH_EXTRAP_S
+		var t := 1.0 - exp(-SMOOTH_RATE * maxf(delta, 1e-5))
+		core3_pos = core3_pos.lerp(aim, clampf(t, 0.0, 1.0))
+		height_offset = _Projection3D2D.height_offset(core3_pos.y)
+		if not _use_visual_override:
+			_visual_home = Vector3(core3_pos.x, core3_pos.y, core3_pos.z)
+		update_facing_from_move(prev, core3_pos)
+		if core3_pos.distance_squared_to(_smooth_target) < 0.04:
+			core3_pos = _smooth_target
+			_smooth_vel = Vector3.ZERO
+			_smooth_enabled = false
+		moved = true
+	if _wants_ambient():
+		var prev_patrol := _patrol_offset_m()
+		_idle_phase += delta
+		_refresh_screen_pos()
+		var cur_patrol := _patrol_offset_m()
+		if kind == "npc":
+			var vel := cur_patrol - prev_patrol
+			if vel.length_squared() > 1.0e-8:
+				set_facing_from_direction(Vector3(vel.x, 0.0, vel.z))
+				moved = true
+		_last_patrol_offset = cur_patrol
+		moved = true
+	else:
+		_refresh_screen_pos()
+		if not _smooth_enabled and not (kind == "beast" and combat_goal == "telegraph"):
+			set_process(false)
 	_update_sprite_offset()
-	queue_redraw()
+	# Évite redraw 60 Hz × N entités si rien n'a bougé à l'écran.
+	if moved or _last_draw_pos == Vector2.INF or position.distance_squared_to(_last_draw_pos) > 0.25:
+		_last_draw_pos = position
+		queue_redraw()
 
 func _refresh_screen_pos() -> void:
 	var base := _visual_home if _use_visual_override else core3_pos
@@ -313,6 +402,19 @@ func _draw() -> void:
 	elif kind == "npc":
 		draw_circle(draw_pos + Vector2(0.5, 0.5), 3.5, Color(0, 0, 0, 0.25))
 		draw_circle(draw_pos, 3.0, color.darkened(0.15))
+	elif kind == "beast":
+		var beast_col := color
+		if combat_goal == "telegraph":
+			beast_col = Color(1.0, 0.82, 0.2, 1.0)
+		elif combat_goal == "aggro":
+			beast_col = Color(0.95, 0.25, 0.18, 1.0)
+		draw_circle(draw_pos + Vector2(1, 1), radius * 1.15, Color(0, 0, 0, 0.28))
+		draw_circle(draw_pos, radius * (1.25 if is_boss_beast else 1.0), beast_col)
+		if combat_goal == "telegraph":
+			var pulse := 0.55 + 0.35 * sin(Time.get_ticks_msec() * 0.012)
+			draw_arc(draw_pos, radius * 2.2, 0.0, TAU, 28, Color(1.0, 0.85, 0.25, pulse), 2.0, true)
+		elif combat_goal == "aggro":
+			draw_arc(draw_pos, radius * 1.8, 0.0, TAU, 24, Color(0.95, 0.3, 0.2, 0.75), 1.6, true)
 	if abs(height_offset) > 1.0 and abs(height_offset) <= 48.0:
 		draw_line(
 			Vector2(0.0, 0.0),
@@ -320,13 +422,19 @@ func _draw() -> void:
 			Color(color.r, color.g, color.b, 0.45),
 			1.0
 		)
-	if show_nameplates and label_text != "":
+	if (show_nameplates or force_nameplate) and label_text != "":
 		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 4.0
+		var shown := label_text
 		var col := Color(1, 1, 1, 0.92) if kind == "player" else Color(0.95, 0.88, 0.75, 0.82)
+		if kind == "beast" and combat_goal == "telegraph":
+			shown = "%s !" % label_text
+			col = Color(1.0, 0.9, 0.35, 0.95)
+		elif kind == "beast" and combat_goal == "aggro":
+			col = Color(1.0, 0.45, 0.35, 0.95)
 		draw_string(
 			ThemeDB.fallback_font,
-			draw_pos + Vector2(-label_text.length() * 2.8, label_y),
-			label_text,
+			draw_pos + Vector2(-shown.length() * 2.8, label_y),
+			shown,
 			HORIZONTAL_ALIGNMENT_LEFT,
 			-1,
 			9,

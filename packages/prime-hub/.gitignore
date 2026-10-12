@@ -1,0 +1,15 @@
+.godot/
+*.translation
+export_presets.cfg
+*.apk
+*.aab
+*.zip
+*.x86_64
+*.exe
+*.app
+/bin/
+/tools/godot*
+data/accounts.json
+data/players_state.json
+data/hunt_yard_session.pkl
+data/player_positions.json

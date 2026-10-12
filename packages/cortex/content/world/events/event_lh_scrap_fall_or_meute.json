@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "id": "event:lh_scrap_fall_convoy",
+  "title": "Chute de ferraille — convoi Zalem",
+  "planet": "Scrapaltai",
+  "hub": "lost_heaven",
+  "scope": "hub_elargi",
+  "duration_hint": "45-90m",
+  "bible_ref": "docs/world/BIBLE_MMO.md#v10-v13",
+  "bible_safe": true,
+  "status": "live_prime_hub",
+  "ticket": "C4",
+  "event_kind": "scrap_fall",
+  "variant_note": "Variante retenue : chute scrap. Live : packages/prime-hub/data/events/event_lh_scrap_fall_convoy.json + hub_events.gd (GET /v1/events/active).",
+  "trigger_stub": {
+    "kind": "weighted_random",
+    "cooldown_hours": 12,
+    "requires_flags_any": [],
+    "anchor_poi": "poi:lost_heaven_gate"
+  },
+  "board_entry": {
+    "surface": "poi:lost_heaven_mission_post",
+    "poster_npc": "npc:core3_daan_oth",
+    "headline": "Débris de convoi hors palissade",
+    "blurb": "Un frein de convoi a lâché sur la route rouge : des plaques et ferraille jonchent les dunes à l'est. Récupérez ce que vous pouvez avant que les chacals ne s'en mêlent.",
+    "keywords": ["scrap", "ferraille", "convoi", "salvage", "dunes", "palissade"],
+    "priority": "normal",
+    "expires_with_event": true
+  },
+  "effects": [
+    {
+      "id": "spawn_poi_salvage",
+      "kind": "poi_activate",
+      "target": "poi:lh_scrap_pile",
+      "stub": true
+    },
+    {
+      "id": "rumor_cantina",
+      "kind": "world_hint",
+      "target_poi": "poi:lost_heaven_cantina",
+      "hint_key": "rumor_scrap_fall",
+      "stub": true
+    },
+    {
+      "id": "chacal_pressure",
+      "kind": "spawn_density",
+      "biome": "desert",
+      "creature_ref": "beast:chacal_dore",
+      "delta": "low",
+      "stub": true
+    }
+  ],
+  "related_data": {
+    "poi": "packages/cortex/content/world/poi_lh_scrap_pile.json",
+    "craft_schematics_hint": ["kit_reparation", "plaque_carapace"]
+  },
+  "notes": "Live sur prime-hub :8787 — board injecte lh_scrap_fall_salvage tant que l'event est actif. Chœur : GET /v1/events/active."
+}

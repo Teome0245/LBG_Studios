@@ -1,23 +1,41 @@
 from __future__ import annotations
 
 import json
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 from mail_imap_preview import run_mail_imap_preview
 from pydantic import BaseModel, Field
 
 import core
+import session_emitter
 from face_parts_import_action import run_import_face_parts
 
-app = FastAPI(title="lbg-linux-agent-ia", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    session_emitter.start_socket_server()
+    yield
+
+
+app = FastAPI(title="lbg-linux-agent-ia", version="0.1.0", lifespan=_lifespan)
 
 
 class InvokeRequest(BaseModel):
     actor_id: str
     text: str = Field(default="")
     context: dict[str, Any] = Field(default_factory=dict)
+
+
+class SessionDecisionBody(BaseModel):
+    v: int = 1
+    approval_id: str
+    decision: str
+    scope: str = "once"
+    ts: str | None = None
 
 
 @app.get("/healthz")
@@ -47,7 +65,37 @@ def healthz() -> dict[str, object]:
             "face_parts_enabled": core.get_cfg("LBG_LINUX_FACE_PARTS_ENABLED").strip().lower() in {"1", "true", "yes", "on"},
         },
         "session": core.session_info(),
+        "presence_agents": session_emitter.status(),
     }
+
+
+@app.get("/session/stream")
+async def session_stream() -> StreamingResponse:
+    """SSE Présence Agents — events session.* (opt-in LBG_SESSION_ISLAND_ENABLED)."""
+    return StreamingResponse(
+        session_emitter.stream_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/session/recent")
+def session_recent(limit: int = 50) -> dict[str, object]:
+    return {"ok": True, "events": session_emitter.recent(max(1, min(limit, 200)))}
+
+
+@app.post("/session/decision")
+def session_decision(body: SessionDecisionBody) -> dict[str, object]:
+    return session_emitter.apply_decision(body.model_dump())
+
+
+@app.get("/session/status")
+def session_status() -> dict[str, object]:
+    return {"ok": True, **session_emitter.status()}
 
 
 @app.post("/invoke")
@@ -95,6 +143,17 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             return out
         result = core.heal_desktop_agent(dry_run=dry_run)
         out = {**base, **result}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in ("update_vscode", "vscode_update"):
+        # MAJ paquet AUR visual-studio-code-bin — ne pas lancer si une session Cline/IDE est critique.
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        result = core.update_vscode(dry_run=dry_run)
+        out = {**base, **result, "kind": "update_vscode"}
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
 
@@ -206,13 +265,19 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             return out
         if dry_run:
             hint_q = fc_ok or sc_ok
+            configured = bool(host and user and password)
+            body = (
+                "[dry-run] IMAP configuré — aucune connexion en simulation ; Réel lira l'INBOX."
+                if configured
+                else "[dry-run] Aucune connexion IMAP ; définir LBG_LINUX_MAIL_IMAP_* pour une exécution réelle."
+            )
             messages = [
                 {
                     "uid": "(dry-run)",
                     "from": "expéditeur@exemple.invalid",
                     "subject": f"… filtre « {hint_q} » (simulation)",
                     "date": "",
-                    "body_preview": "[dry-run] Aucune connexion IMAP ; définir LBG_LINUX_MAIL_IMAP_* pour une exécution réelle.",
+                    "body_preview": body,
                 }
             ]
             out = {
@@ -223,6 +288,7 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
                 "matched_count": len(messages),
                 "from_contains": fc_ok,
                 "subject_contains": sc_ok,
+                "imap_configured": configured,
             }
             core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
             return out
@@ -270,6 +336,69 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
         }
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
+
+    if kind == "file_read":
+        path = action.get("path")
+        if not isinstance(path, str) or not path.strip():
+            out = {**base, "ok": False, "outcome": "bad_request", "error": "Champ `path` requis"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        path = path.strip()
+        if not core.path_is_allowed(path):
+            out = {
+                **base,
+                "ok": False,
+                "outcome": "allowlist_denied",
+                "error": "Chemin non autorisé",
+                "path": path,
+                "file_allowlist_dirs_preview": [str(p) for p in core.file_allowlist_dirs()[:5]],
+            }
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        # Lecture allowlist : soft-confirm suffit (plan_evolutions sync orch→.143)
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "path": path}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        try:
+            max_chars = int(action.get("max_chars") or 512_000)
+        except (TypeError, ValueError):
+            max_chars = 512_000
+        max_chars = max(1024, min(max_chars, 2_000_000))
+        if dry_run:
+            out = {**base, "ok": True, "outcome": "dry_run", "path": path, "max_chars": max_chars}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        try:
+            p = Path(path).expanduser()
+            raw = p.read_text(encoding="utf-8")
+            truncated = len(raw) > max_chars
+            text = raw[:max_chars]
+            out = {
+                **base,
+                "ok": True,
+                "outcome": "ok",
+                "path": str(p),
+                "text": text,
+                "bytes": len(text.encode("utf-8")),
+                "truncated": truncated,
+            }
+            core.audit_write(
+                {
+                    "event": "agents.linux.audit",
+                    "trace_id": trace_id,
+                    "ok": True,
+                    "outcome": "ok",
+                    "kind": "file_read",
+                    "path": str(p),
+                    "bytes": out["bytes"],
+                }
+            )
+            return out
+        except Exception as e:
+            out = {**base, "ok": False, "outcome": "error", "error": str(e), "path": path}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
 
     if kind == "file_append":
         path = action.get("path")
@@ -436,6 +565,32 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             return out
         result = run_import_face_parts(action=action, get_cfg=core.get_cfg, dry_run=dry_run)
         out = {**base, **result, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in ("run_cli_agent", "ide_cli", "cli_agent"):
+        # ADR 0025 — mains code headless (Claude Code / Cline / OpenCode)
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": "run_cli_agent"}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        app = str(action.get("app") or ctx.get("ide_cli_app") or "opencode").strip()
+        prompt = str(action.get("prompt") or ctx.get("ide_cli_prompt") or text or "").strip()
+        cwd = action.get("cwd") or ctx.get("ide_cli_cwd")
+        cwd_s = str(cwd).strip() if isinstance(cwd, str) else None
+        to = action.get("timeout_s")
+        try:
+            to_i = int(to) if to is not None else None
+        except (TypeError, ValueError):
+            to_i = None
+        result = core.run_cli_agent(
+            app=app,
+            prompt=prompt,
+            cwd=cwd_s,
+            dry_run=dry_run,
+            timeout_s=to_i,
+        )
+        out = {**base, **result, "kind": "run_cli_agent"}
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
 

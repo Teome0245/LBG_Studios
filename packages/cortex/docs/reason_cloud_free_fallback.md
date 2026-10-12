@@ -31,7 +31,7 @@ Les modèles free tier **ne remplacent pas** les tags abliterated locaux. Pour d
 ```bash
 export LBG_REASON_FAILOVER=1
 export LBG_REASON_CLOUD_BASE_URL="https://api.groq.com/openai/v1"
-export LBG_REASON_CLOUD_MODEL="qwen/qwen3.6-27b"   # aligner GROQ_MODEL_*
+export LBG_REASON_CLOUD_MODEL="qwen/qwen3.8-27b"   # aligner GROQ_MODEL_*
 export LBG_REASON_CLOUD_API_KEY="<GROQ_API_KEY>"
 # optionnel : forcer cloud en premier
 # export LBG_REASON_PREFER_CLOUD=1
@@ -42,7 +42,7 @@ export LBG_REASON_CLOUD_API_KEY="<GROQ_API_KEY>"
 ```bash
 export LBG_DIALOGUE_FAST_ENABLED=1
 export LBG_DIALOGUE_FAST_BASE_URL="https://api.groq.com/openai/v1"
-export LBG_DIALOGUE_FAST_MODEL="qwen/qwen3.6-27b"
+export LBG_DIALOGUE_FAST_MODEL="qwen/qwen3.8-27b"
 export LBG_DIALOGUE_FAST_API_KEY="<GROQ_API_KEY>"
 # ou GROQ_API_KEY=… (résolu par le probe)
 ```
@@ -55,7 +55,7 @@ export LBG_DIALOGUE_FAST_API_KEY="<GROQ_API_KEY>"
 | Sonde | `GET /v1/llm/probe` (orchestrateur) |
 | Code | `team/llm_model_probe.py` → `audit_dialogue_fast_cloud()` |
 
-Canon Groq fast : `qwen/qwen3.6-27b` (éviter legacy `llama-3.1-8b-instant` signalé par le probe).
+Canon Groq fast : `qwen/qwen3.8-27b` (éviter legacy `llama-3.1-8b-instant` signalé par le probe).
 
 ### Smoke manuel
 
@@ -110,7 +110,7 @@ export LBG_REASON_CLOUD_API_KEY="<HF_TOKEN>"
 | Profil REASON | Local | Secours free réaliste |
 |---------------|-------|------------------------|
 | `router` / `json` / `fast` | `.111` 0.8B–2B | Groq petit / instant (qualité ≠ JSON local) |
-| `forge` / `default` | gemma e2b abliterated | Groq `qwen/qwen3.6-27b` |
+| `forge` / `default` | gemma e2b abliterated | Groq `qwen/qwen3.8-27b` |
 | `code` / `pm` / `dialogue` | qwen3.5 9b abliterated | Groq (filtré) ou ephemeral Colab 8b |
 | `uncensored` / Prométhée | même 9b + prompts | **ephemeral** ou attendre `.110` — pas Groq free |
 

@@ -3,7 +3,7 @@ extends Node
 class_name PlayerController
 
 const CMD_PORT:        int   = 12346
-const CAM_FOLLOW_SPEED: float = 5.0
+const CAM_FOLLOW_SPEED: float = 12.0
 const PLAY_CFG:        String = "res://config/play_mode.json"
 const MOVE_SPEED:      float = 16.0
 const RUN_MULT:        float = 1.75
@@ -131,7 +131,11 @@ func _apply_ws_locomotion(delta: float) -> void:
 	core3.z += dir.z * speed * delta
 	if _zones:
 		core3 = _zones.clamp_move(e.core3_pos, core3)
-	_em.move(_player_id, core3)
+	# Snap local (pas move() lissé) — sinon sensation de lag/saccade au clavier.
+	if e.has_method("set_core3_position"):
+		e.set_core3_position(core3)
+	else:
+		_em.move(_player_id, core3)
 	_move_accum += delta
 	if _move_accum >= 0.05:
 		_move_accum = 0.0
@@ -168,7 +172,10 @@ func _apply_click_move(delta: float) -> void:
 	var core3 := e.core3_pos + dir * step
 	if _zones:
 		core3 = _zones.clamp_move(e.core3_pos, core3)
-	_em.move(_player_id, core3)
+	if e.has_method("set_core3_position"):
+		e.set_core3_position(core3)
+	else:
+		_em.move(_player_id, core3)
 	_move_accum += delta
 	if _move_accum >= 0.05:
 		_move_accum = 0.0

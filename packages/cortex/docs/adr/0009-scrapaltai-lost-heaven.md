@@ -177,6 +177,7 @@ Ordre de pose recommandé (chaque ligne = futur `poi_id` dans `world_poi`) :
 | Navmesh / cell manquante après structure | Runbook restart zone ; noter `building_cell` avant export PNJ |
 | Double vérité coords | `locations/*.json` + export WE ; pas d’édition JSON manuelle hors process |
 | Marque SWG | Renommer affichage + mobiles LBG ; ne pas redistribuer `.tre` |
+| Chemins Godot `tatooine_*` | Renommés en `scrapaltai_*` (2026-10) — id `planet` JSON reste `tatooine` ; symlinks compat temporaires |
 
 ---
 
@@ -186,5 +187,6 @@ Ordre de pose recommandé (chaque ligne = futur `poi_id` dans `world_poi`) :
 - [ADR 0008 — World Editor](0008-world-editor-world-poi.md)
 - [`docs/core3_ia_npc_rollout.md`](../core3_ia_npc_rollout.md)
 - [`docs/GEOGRAPHIE_SCRAPALTAI.md`](../GEOGRAPHIE_SCRAPALTAI.md) — carte, calques Godot, migration PNJ
+- Assets client : `packages/prime-client/assets/maps/scrapaltai_map_config.json` (+ `retail/scrapaltai/`)
 - Core3 vanilla : `tatooine_regions.lua`, `tatooine_mos_eisley.lua`, `PlayerManagerImplementation::loadStartingLocations()`
 - Install locale : `/mnt/j/swgemu/StarWarsGalaxies/`, `MOD_LBG/`

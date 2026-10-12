@@ -497,20 +497,20 @@
       ]
     },
     {
-      "id": "path:lh_door_lost_heaven_housing_npc",
+      "id": "path:lh_door_lost_heaven_lodge_w",
       "kind": "alley",
-      "label": "Seuil Logements PNJ",
-      "building_id": "poi:lost_heaven_housing_npc",
+      "label": "Seuil Logements ouest",
+      "building_id": "poi:lost_heaven_lodge_w",
       "width_m": 3.2,
       "closed": false,
       "points": [
         {
-          "x": 4501.6,
-          "z": -822.8
+          "x": 4337.0,
+          "z": -780.0
         },
         {
-          "x": 4511.6,
-          "z": -822.8
+          "x": 4347.0,
+          "z": -780.0
         }
       ]
     },

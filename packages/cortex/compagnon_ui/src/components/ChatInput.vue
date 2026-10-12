@@ -3,7 +3,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useChat } from '../composables/useChat.js'
 import { useApi } from '../composables/useApi.js'
 import { useLayout } from '../composables/useLayout.js'
-import { hasTeamMention, resolveAgentForPrompt } from '../lib/teamMentions.js'
+import { resolveAgentForPrompt } from '../lib/teamMentions.js'
 import { proposeAction } from '@/lib/agir'
 import {
   isRealizeRequest,
@@ -16,7 +16,32 @@ import {
   activityPhase,
   endActivity,
 } from '@/composables/useActivity'
+import {
+  wantsMissionNotify,
+  requestNotify,
+  listWatches,
+  watchMission,
+  ackNotifyMessage,
+  fetchCampusSnapshot,
+} from '@/lib/missionWatch'
 import PilotagePalette from './PilotagePalette.vue'
+
+/** Arme / ré-arme le watch sur la mission Campus *ouverte* (évite un vieux id notified). */
+async function ensureMissionWatchArmed() {
+  const snap = await fetchCampusSnapshot().catch(() => null)
+  const mid = String(snap?.status?.mission?.id || '').trim()
+  if (mid) {
+    return watchMission({
+      missionId: mid,
+      objective: String(snap?.status?.mission?.objective || '').slice(0, 240),
+      taskIds: Array.isArray(snap?.status?.mission?.task_ids)
+        ? snap.status.mission.task_ids
+        : [],
+      notify: true,
+    })
+  }
+  return requestNotify() || listWatches()[0] || null
+}
 
 const AGENT_KEY = 'lbg_orch_input_agent'
 const MODEL_KEY = 'lbg_orch_input_model'
@@ -112,6 +137,15 @@ function loadSel(key, fallback) {
 }
 
 const selectedAgent = ref(loadSel(AGENT_KEY, 'auto'))
+// Ancien sticky Team (auto→team) cassait le chat : reset soft au chargement
+if (selectedAgent.value === 'team') {
+  selectedAgent.value = 'auto'
+  try {
+    localStorage.setItem(AGENT_KEY, 'auto')
+  } catch {
+    /* ignore */
+  }
+}
 const selectedModel = ref(loadSel(MODEL_KEY, 'auto'))
 const selectedProfile = ref(loadSel(PROFILE_KEY, 'compagnon'))
 
@@ -180,10 +214,8 @@ watch(mentionInsert, (v) => {
   if (cur.includes(token)) return
   const trimmed = cur.trimEnd()
   input.value = trimmed ? `${trimmed} ${token} ` : `${token} `
-  // Clic roster Team → bascule Agent=Team
-  if (hasTeamMention(token) || hasTeamMention(input.value)) {
-    selectedAgent.value = 'team'
-  }
+  // @mention Team → ce tour part en Team via resolveAgentForPrompt (auto),
+  // sans verrouiller le sélecteur (sinon chat identité cassé ensuite).
 })
 
 const send = async () => {
@@ -192,13 +224,28 @@ const send = async () => {
   const userMsg = input.value
   const images = [...pendingImages.value]
   const agent = resolveAgentForPrompt(selectedAgent.value, userMsg)
-  if (agent === 'team' && selectedAgent.value === 'auto') {
-    selectedAgent.value = 'team'
-  }
+  // Ne PAS coller Agent=Team après un seul tour auto/@mention :
+  // sinon chaque message suivant est préfixé `team:` → agent.fallback.
   const displayText = userMsg.trim() || (images.length ? '(image jointe)' : '')
   addUserMessage(displayText, { images })
   input.value = ''
   clearPendingImages()
+
+  // D6.5 — « retour quand Team a traité » : active le watch + ack (pas d'Agir)
+  if (!images.length && wantsMissionNotify(userMsg)) {
+    try {
+      const hit = await ensureMissionWatchArmed()
+      addMessage({
+        role: 'assistant',
+        content: ackNotifyMessage(hit),
+        source: 'mission_watch',
+      })
+      return
+    } catch (e) {
+      console.warn('missionWatch', e)
+      // tombe sur /ask — on ré-arme quand même après la réponse backend
+    }
+  }
 
   // Interaction : « réalise les points » → agir / enchaîner, pas un nouveau pavé
   if (!images.length && isRealizeRequest(userMsg)) {
@@ -235,11 +282,11 @@ const send = async () => {
   activityLog(
     images.length
       ? `POST /vision-ask · ${images.length} image(s) · profile=${selectedProfile.value}`
-      : `POST /ask · agent=${agent} · profile=${selectedProfile.value}`
+      : `POST /ask/stream · agent=${agent} · profile=${selectedProfile.value}`
   )
-  activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle…')
+  activityPhase('running', images.length ? 'Analyse image…' : 'Appel modèle (SSE)…')
   try {
-    const backendResponse = await sendPrompt(userMsg, {
+    let backendResponse = await sendPrompt(userMsg, {
       agent,
       model: selectedModel.value,
       profile: selectedProfile.value,
@@ -257,6 +304,24 @@ const send = async () => {
       activityLog('Carte Agir jointe', 'ok')
     }
     activityPhase('planning')
+    // Si le backend a répondu mission_watch (ou intent suivi), armer le watch local
+    if (
+      backendResponse?.source === 'mission_watch' ||
+      backendResponse?.mission_watch?.notify ||
+      wantsMissionNotify(userMsg)
+    ) {
+      try {
+        const hit = await ensureMissionWatchArmed()
+        if (hit && backendResponse?.source === 'mission_watch') {
+          backendResponse = {
+            ...backendResponse,
+            content: ackNotifyMessage(hit),
+          }
+        }
+      } catch (e) {
+        console.warn('missionWatch arm after ask', e)
+      }
+    }
     addMessage(backendResponse)
     endActivity('done')
     loadConversations()

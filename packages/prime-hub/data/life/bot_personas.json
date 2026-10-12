@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "bots": {
+    "Nix": {
+      "short": "bouger utile sur le hub",
+      "medium": "terminer une course ou un relevé",
+      "long": "connaître Lost Heaven mieux que le guide",
+      "quest_prefer": ["lh_survey_dunes", "lh_delivery_starport", "lh_aide_generale"],
+      "explore_prefer": ["gate_east", "dunes_ne", "spawn_apron", "gate_west"],
+      "suggest_kinds": ["poi", "quest"]
+    },
+    "Lia": {
+      "short": "aider quelqu'un au hub",
+      "medium": "tenir un fil social (Perle / auberge)",
+      "long": "devenir le lien cantina–atelier",
+      "quest_prefer": ["lh_rumor_perle", "lh_show_perle", "lh_repair_perle", "lh_aide_generale"],
+      "explore_prefer": ["spawn_apron", "hunt", "hollow_s"],
+      "suggest_kinds": ["npc", "economy"]
+    },
+    "Mira": {
+      "short": "un contrat au board",
+      "medium": "finir une quête active",
+      "long": "réseau board + marché",
+      "quest_prefer": ["lh_delivery_starport", "lh_enquete_marche", "lh_survey_dunes"],
+      "explore_prefer": ["gate_east", "gate_west", "scrap_e"],
+      "suggest_kinds": ["quest", "economy"]
+    },
+    "Kael": {
+      "short": "s'entraîner ou escorter",
+      "medium": "une sortie hors murs",
+      "long": "gardien des portes",
+      "quest_prefer": ["lh_survey_dunes", "lh_escort_gate_clinic", "lh_hunt_chacal"],
+      "explore_prefer": ["hunt", "gate_east", "ridge_n", "watch_zalem"],
+      "suggest_kinds": ["poi", "npc"]
+    }
+  }
+}

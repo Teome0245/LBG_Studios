@@ -15,6 +15,7 @@ signal connecting(ws_url: String)
 signal handoff_progress(phase: String, detail: String)
 signal reconnecting(attempt: int, delay_s: float)
 signal echo_state_changed(payload: Dictionary)
+signal chat_received(from_name: String, text: String, from_oid: int, source: String)
 
 @export var proto: String = "lbg-ws/2"
 @export var echo_ws_stub: bool = true
@@ -102,6 +103,17 @@ func send_move(pos: Vector3, heading: float = 0.0, cell: int = 0) -> void:
 		"cell": cell,
 		"seq": _seq,
 	})
+
+
+func send_chat(text: String) -> void:
+	if not is_open():
+		return
+	var t := text.strip_edges()
+	if t.is_empty():
+		return
+	if t.length() > 200:
+		t = t.substr(0, 200)
+	_send({"type": "chat", "proto": proto, "text": t})
 
 
 func send_raw(payload: Dictionary) -> void:
@@ -275,13 +287,20 @@ func _process(delta: float) -> void:
 			return
 	if state == WebSocketPeer.STATE_OPEN:
 		_send_login_if_needed()
+		# Drainer tout ; ne garder que le dernier zone_state (évite backlog → saccades).
+		var latest_zone: Variant = null
 		while _peer.get_available_packet_count() > 0:
 			var raw := _peer.get_packet().get_string_from_utf8()
 			if raw.is_empty():
 				error_message.emit("paquet WS vide (binaire ?)")
 				continue
-			print("[LbgWs] << %s" % raw.substr(0, mini(120, raw.length())))
+			var data: Variant = JSON.parse_string(raw)
+			if typeof(data) == TYPE_DICTIONARY and str((data as Dictionary).get("type", "")) == "zone_state":
+				latest_zone = data
+				continue
 			_dispatch(raw)
+		if latest_zone != null:
+			_dispatch_dict(latest_zone as Dictionary)
 	elif state == WebSocketPeer.STATE_CLOSING:
 		pass
 	elif state == WebSocketPeer.STATE_CLOSED:
@@ -310,7 +329,10 @@ func _dispatch(text: String) -> void:
 		push_warning("[LbgWs] JSON invalide: %s" % text.substr(0, min(120, text.length())))
 		error_message.emit("réponse gateway illisible")
 		return
-	var d: Dictionary = data
+	_dispatch_dict(data as Dictionary)
+
+
+func _dispatch_dict(d: Dictionary) -> void:
 	var t := str(d.get("type", ""))
 	match t:
 		"login_result":
@@ -350,7 +372,12 @@ func _dispatch(text: String) -> void:
 		"error":
 			error_message.emit(str(d.get("message", "error")))
 		"chat":
-			pass
+			chat_received.emit(
+				str(d.get("from", d.get("name", "?"))),
+				str(d.get("text", d.get("message", ""))),
+				int(d.get("oid", d.get("from_oid", 0))),
+				str(d.get("source", "human"))
+			)
 		"echo_state":
 			echo_state_changed.emit(d)
 		_:

@@ -1,8 +1,8 @@
 # Boîte à idées — Gameplay extrait (LBG Prime)
 
-**Date** : 2026-08-04  
+**Date** : 2026-08-04 · **MAJ** 2026-10-05 (§14 veille)  
 **Statut** : extrait vivant — **n’écrit pas de Vérité** sans décision datée dans [`BIBLE_MMO.md`](BIBLE_MMO.md)  
-**Source** : `LBG_IA_MMORPG/Boite à idées/` (lecture legacy)  
+**Source** : `LBG_IA_MMORPG/Boite à idées/` (lecture legacy) · veille [`CONCURRENTS_IA_MMO_2026-10.md`](CONCURRENTS_IA_MMO_2026-10.md)  
 **Canon produit** : Bible · [`ARBRES_TALENTS_PRECU.md`](ARBRES_TALENTS_PRECU.md) · [`INVENTAIRE_PNJ.md`](INVENTAIRE_PNJ.md) · catalogue M10  
 **Réf. Pre-CU runtime** : 245 lecture seule (V4)
 
@@ -215,6 +215,7 @@ Priorité O2 actuelle : M10 craft B2B + persona + hub LH + Chœur.
 5. Faction civils hub (label T*) + T3 pilotes
 6. Spawns désert autour LH — sans toucher 245
 7. MJ IA / events systémiques via Chœur (plan §6.3)
+8. Tickets **§14 veille concurrents** (P3 / wahou / agent contract) — *ouvert 2026-10-05*
 
 ---
 
@@ -232,10 +233,52 @@ Priorité O2 actuelle : M10 craft B2B + persona + hub LH + Chœur.
 | `…/MMO_LBG_Guides_suite_3.txt` | Quêtes / éco / craft Core3 |
 | `…/20260428_1220_on ce recentre.txt` | Priorité IA desktop puis MMO |
 | `…/20260624.txt` | Client Godot / Prime |
+| [`CONCURRENTS_IA_MMO_2026-10.md`](CONCURRENTS_IA_MMO_2026-10.md) | Veille Everwhere / Jenova / Epitome / ClaudeCraft / SpaceMolt |
 
 ### Gel explicite (ne pas propager)
 
 Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** · Élémentaires / Homonculus / Elfe-Orc fantasy · OTServ · craft hors Pre-CU · inspirations multivers (Gunnm/DBZ/…) en `world_hint`.
+
+---
+
+## 14. Veille concurrents IA/MMO (2026-10) — tickets
+
+**Source** : [`CONCURRENTS_IA_MMO_2026-10.md`](CONCURRENTS_IA_MMO_2026-10.md) · ADR [`../adr/0002-veille-concurrents-ia-mmo.md`](../adr/0002-veille-concurrents-ia-mmo.md) · exécution Team [`../FOCUS_CONCURRENTS_TEAM.md`](../FOCUS_CONCURRENTS_TEAM.md)  
+**Règle** : ticket ici = idée priorisée ; promotion Bible / catalogue = décision datée séparée.  
+**Spawn** : `LBG_ORCHESTRATOR_URL=http://192.168.0.140:8010 python -m lbg_agents.spawn_team_concurrents_wave_job` (vague A|B|C via `LBG_TEAM_CONCURRENTS_WAVE`).
+
+### P0 — wahou / P3 (prochains)
+
+| ID | Ticket | Origine | Done quand | Owner cible |
+|----|--------|---------|------------|-------------|
+| **C1** | Dialogue hub : 2–3 **suggestions d’actions** + texte libre | Everwhere | PNJ hub (cantina / board / trainer) expose coups typés + free text ; smoke dialogue | Iris + Chœur · **live hub** 2026-10-08 : Jax trade UI + Guide wiki UI + Daan board · free text panel · smoke `tools/smoke_p3_hub_dialogue.sh` |
+| **C2** | **Mémoire relations** (dette, PNJ croisé, objet offert) injectée `world_hint` | Everwhere / Jenova | 1 joueur + 1 PNJ : rappel concret après action (tip / quête / don) | Chœur + Dédale · schéma Vague A · stub Python ✅ · **live hub** 2026-10-08 : `players_state.relation_memory` + `GET /v1/relation-memory` + inject dialogue (`tip`/`accept`/`trade`/`met`) · smoke `tools/smoke_c2_relation_memory_hub.sh` |
+| **C3** | **Compagnon IA visible** au spawn Lost Heaven (1 bot : Lia ou Nix) | Epitome + bots LBG | Nameplate + follow court / commentaire 30 s ; pas Pilot-only | Iris + Chœur · **live hub** 2026-10-07 : Nix greet+escort ~28 s + nameplate (`fleet_greet` mono-compagnon) |
+| **C4** | **1 event dynamique** board (meute portes **ou** chute scrap **ou** panne starport) | Epitome | Template EventEngine persisté + entrée board Daan ; Chœur peut sonder | WD + Chœur · **live hub** 2026-10-07 : `hub_events` + quest `lh_scrap_fall_salvage` + `GET /v1/events/active` (chute scrap) · stub cortex ✅ Vague A |
+
+### P1 — densité / data
+
+| ID | Ticket | Origine | Done quand | Owner cible |
+|----|--------|---------|------------|-------------|
+| **C5** | **Chronique session** Scribe (5–10 lignes) + titre cosmétique optionnel | Everwhere journey book / ClaudeCraft deeds | Export après quête hub ou tip scène | Dédale + Chœur · **live hub** 2026-10-07 : `GET /v1/chronicle` + log quête/tip/salvage/craft · dialogue Scribe « chronique » · stub ✅ Vague C |
+| **C6** | **Wiki / guide joueur** généré depuis inventaire PNJ + M10 + POI | ClaudeCraft wiki | Page ou panel lisible, drift = fail smoke data | Argus + Iris · **live hub** 2026-10-07 : `GET /v1/wiki` + panel Menu · MVP md [`wiki_hub_lost_heaven_mvp.md`](../../packages/cortex/docs/wiki_hub_lost_heaven_mvp.md) ✅ Vague C |
+| **C7** | **Négociation marchand** bornée (delta prix + réputation) | Epitome | 1 vendor hub ; pas LLM libre sur prix | Iris · **live hub** 2026-10-07 : `POST /v1/trade/offer` Jax ±15 % · suggestions dialogue · stub cortex ✅ Vague C |
+| **C8** | Boucle **salvage scrap** hors palissade → input craft M10 | SpaceMolt salvage / Scrapaltai | 1 wreck/pile scrap + loots → schematic existant | Dédale · **live hub** 2026-10-07 : `POST /v1/salvage` + hotbar `[1]` près `poi:lh_scrap_pile` → craft `kit_reparation` (T) · stub cortex ✅ Vague A |
+| **C13** | **Anneau désert LH** — joueurs IA hors murs (~3 km), pas Scrapaltai entière | Studio (débride explore) | Data `explore_ring_lh.json` + autonomy + clamp `move_to` + skill | Chœur · **MVP** ✅ 2026-10-07 |
+| **C14** | **Zone d'entraînement** — dials présence joueurs IA + boucle Compagnon↔hub | Studio (présence) | Dials B1–B4 smokeable · brief C1 · retour causerie C2 | Chœur + Compagnon · **live** 2026-10-08 : [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](../PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) · smokes B3/B4 + `smoke_c2_presence_report_5174.sh` |
+
+### P2 — contrat agents (SpaceMolt → Chœur / bots)
+
+| ID | Ticket | Origine | Done quand | Owner cible |
+|----|--------|---------|------------|-------------|
+| **C9** | **`AGENT_SKILL_MMO.md`** (manuel unique bots joueurs IA) | SpaceMolt `skill.md` | 1 doc : actions autorisées, Bible, anti-dérive, playstyles hub | Chœur + Thémis · **brouillon** [`AGENT_SKILL_MMO.md`](../../packages/cortex/docs/AGENT_SKILL_MMO.md) ✅ Vague A |
+| **C10** | **Catalog tools** read-only (`skills`, `recipes`, `npcs`, `poi`) | SpaceMolt `catalog` / `get_guide` | Endpoint ou MCP Studio ; guides playstyle = data M10 | Hermès · **stub** `GET /catalog` + `/guide` dialogue HTTP ✅ Vague C |
+| **C11** | **Tick mutations** vs queries gratuites sur pont joueur IA | SpaceMolt tick model | Mutations craft/quête/tip filetées ; snapshots free | Hermès + WD · **stub** `/tick-matrix` + flag context ✅ Vague C |
+| **C12** | Réponses **duales** texte joueur + `structuredContent` commit | SpaceMolt envelope API | Dialogue + commit flags/deltas sans double parse fragile | Iris · **MVP** dual envelope `/invoke` ✅ Vague C |
+
+### Gel explicit (veille)
+
+Text-only MMO · UE5 megaserver · freeform sans Bible · permadeath persona défaut · token Solana · ouverture publique serveur aux LLM internet · galaxy 500 systèmes v1.
 
 ---
 
@@ -245,3 +288,11 @@ Veridian / Nexus-Arbre comme lieux jouables · Terre1 · **Cercle des Arcanes** 
 |------|------------|
 | 2026-08-04 | Premier extrait Boîte à idées → canon Studios |
 | 2026-08-04 | Relecture complète `plan MMMORPG.md` — QuestEngine, MJ IA, archétypes, 75 % civils, params monde |
+| 2026-10-05 | §14 tickets veille concurrents + SpaceMolt (ADR 0002, `CONCURRENTS_IA_MMO_2026-10.md`) |
+| 2026-10-05 | Vague A docs/stubs : C1 design, C2 schéma, C4/C8 data, C9 `AGENT_SKILL_MMO.md` |
+| 2026-10-06 | Vague B code+smoke C1/C2/C3 ; Vague C MVP C5–C7 + C10–C12 |
+| 2026-10-07 | **C13** anneau désert LH — explore IA hors murs (`explore_ring_lh.json`) |
+| 2026-10-07 | **C4/C5/C8 live** prime-hub `:8787` — event scrap board, chronique Scribe, salvage→craft ; docs [`RUNTIME_GODOT.md`](../RUNTIME_GODOT.md) |
+| 2026-10-07 | **C6/C7 live** — wiki `/v1/wiki` + panel ; négo Jax `/v1/trade/offer` |
+| 2026-10-08 | **C2 live** — relation_memory persistée hub + dialogue ; **P5a** hotbar chasse client OK |
+| 2026-10-08 | **C14 live** — zone entraînement dials + Compagnon C1/C2 (brief + retour présence) |

@@ -72,7 +72,7 @@ TASKS: list[dict] = [
         "objective": (
             "Hermès — Valider et documenter le flux PNJ serveur côté prime-client : "
             "retail_layout_layer.merge_zone_entities(), triangles cyan, "
-            "tatooine_map_config.json world_render.server_npcs, "
+            "scrapaltai_map_config.json world_render.server_npcs, "
             "tools/retail/export_server_npcs_lost_heaven.sh + build_prime_position_map.sh. "
             "Critère done : après spawn Dédale, npcs_server > 0 en jeu + export JSON à jour. "
             "Ne pas réécrire zone_layers / gate_exits (déjà OK). Livrable : deliverables[] + note dans RETAIL_CITY_LAYOUT.md."

@@ -117,6 +117,30 @@ def test_presence_done_clears_task_id():
     assert matches[0]["status"] == "idle"
 
 
+def test_guest_metrics_ops_maps_to_hephaistos_not_vulcan():
+    """Mur guest avec hosts Core3 SWG/.245 ne doit pas attribuer Vulcan."""
+    task = TeamTask(
+        id="guest-crit-1",
+        role="ops",
+        objective="Sonde guest mur INFRA LAN — alerte critical (Front web, Prime monde)",
+        status="running",
+        context={
+            "ops_kind": "guest_metrics",
+            "guest_metrics": {
+                "hosts": [
+                    {"label": "Front web", "host": "192.168.0.100"},
+                    {"label": "Core3 SWG", "host": "192.168.0.245"},
+                    {"label": "Prime monde", "host": "192.168.0.246"},
+                ]
+            },
+        },
+    )
+    aid = team_presence.resolve_presence_agent_id(task)
+    assert "vulcan" not in aid.lower()
+    assert "hephaistos" in aid.lower() or aid == "ops"
+    assert team_presence.infer_zone(task, agent_id=aid) == "zone_core"
+
+
 def test_sanitize_action_truncates_and_redacts():
     long = "x" * 200
     assert len(team_presence.sanitize_action(long)) <= 120
@@ -143,3 +167,63 @@ def test_emit_from_task_updates_snapshot():
     assert matches[0]["status"] == "busy"
     assert matches[0]["location"] == "zone_llm"
     assert len(matches[0]["current_action"]) <= 120
+
+
+def test_zone_mmo_lab_annotated_when_offline(monkeypatch):
+    monkeypatch.setenv("LBG_ZONE_MMO_LAB_HOST_STATE", "off")
+    team_presence._zone_host_cache.clear()
+    zones = {z["id"]: z for z in team_presence.zones_for_snapshot(force_refresh=True)}
+    lab = zones["zone_mmo_lab"]
+    assert lab["host_status"] == "offline"
+    assert lab["host_badge"] == "Éteinte"
+    assert "Éteinte" in lab["label"]
+    assert lab["host"] == "192.168.0.245"
+
+
+def test_zone_mmo_lab_online_force(monkeypatch):
+    monkeypatch.setenv("LBG_ZONE_MMO_LAB_HOST_STATE", "on")
+    team_presence._zone_host_cache.clear()
+    zones = {z["id"]: z for z in team_presence.zones_for_snapshot(force_refresh=True)}
+    lab = zones["zone_mmo_lab"]
+    assert lab["host_status"] == "online"
+    assert lab.get("host_badge") in (None, "")
+    assert "Éteinte" not in lab["label"]
+    snap = team_presence.snapshot(mode="live")
+    snap_lab = next(z for z in snap["zones"] if z["id"] == "zone_mmo_lab")
+    assert snap_lab["host_status"] == "online"
+
+
+def test_zone_games_player_bridges_expose_login():
+    assert team_presence.default_zone_for_agent("player_bridge_nix", "player_bridge") == "zone_games"
+    snap = team_presence.snapshot(mode="live")
+    assert any(z["id"] == "zone_games" for z in snap["zones"])
+    games = [a for a in snap["agents"] if a.get("location") == "zone_games"]
+    assert len(games) >= 4
+    nix = next((a for a in games if a.get("agent_id") == "player_bridge_nix"), None)
+    assert nix is not None
+    assert nix.get("account_login") == "nix_bridge"
+    assert nix.get("mmo_player") == "Nix"
+    assert "login=nix_bridge" in (nix.get("current_action") or "")
+
+
+def test_soft_link_vulcan_vex_and_hermes_tess():
+    snap = team_presence.snapshot(mode="live")
+    by_id = {a["agent_id"]: a for a in snap["agents"]}
+    vex = by_id.get("player_bridge_vex")
+    tess = by_id.get("player_bridge_tess")
+    vulcan = by_id.get("studio_dev_vulcan")
+    hermes = by_id.get("godot_dev_hermes")
+    assert vex and vex.get("linked_studio_agent_id") == "studio_dev_vulcan"
+    assert vex.get("linked_studio_display") == "Vulcan"
+    assert "↔ Vulcan" in (vex.get("current_action") or "")
+    assert tess and tess.get("linked_studio_agent_id") == "godot_dev_hermes"
+    assert tess.get("linked_studio_display") == "Hermès"
+    assert vulcan and vulcan.get("mmo_player") == "Vex"
+    assert vulcan.get("mmo_account_login") == "vulcan_bridge"
+    assert "↔ Vex" in (vulcan.get("current_action") or "")
+    assert hermes and hermes.get("mmo_player") == "Tess"
+    assert hermes.get("mmo_account_login") == "hermes_bridge"
+    assert hermes.get("bridge_agent_id") == "player_bridge_tess"
+    assert "↔ Tess" in (hermes.get("current_action") or "")
+    assert vex.get("account_login") == "vulcan_bridge"
+    assert tess.get("account_login") == "hermes_bridge"

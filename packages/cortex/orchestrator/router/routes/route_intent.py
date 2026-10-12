@@ -90,6 +90,11 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
     # Sonde DevOps : priorité absolue (valider le fil de transmission même avec npc_name / autre bruit).
     if isinstance(ctx.get("devops_action"), dict):
         intent, confidence = ("devops_probe", 1.0)
+    # Inventaire LAN : priorité explicite (évite faux positif infra_status).
+    elif ctx.get("network_inventory") is True or (
+        isinstance(ctx.get("network_inventory"), dict)
+    ):
+        intent, confidence = ("network_inventory", 1.0)
     # Desktop (hybride) : priorité explicite via action structurée (évite les faux positifs).
     elif isinstance(ctx.get("desktop_action"), dict):
         intent, confidence = ("desktop_control", 1.0)
@@ -132,43 +137,9 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
     assert cap is not None
     ctx_for_agent = _dialogue_context_for_route(ctx) if cap.routed_to == "agent.dialogue" else ctx
     policy = evaluate_action_policy(cap, ctx)
-    if not policy.allowed:
-        elapsed_ms = int((time.perf_counter() - t0) * 1000)
-        svc_metrics.inc("orchestrator_route_success_total")
-        out_body: dict[str, object] = {
-            "capability": cap.name,
-            "ok": False,
-            "outcome": policy.decision,
-            "error": policy.reason,
-            "policy": policy.model_dump(),
-        }
-        print(
-            json.dumps(
-                {
-                    "event": "orchestrator.route",
-                    "trace_id": trace_id,
-                    "actor_id": payload.actor_id,
-                    "intent": intent,
-                    "confidence": confidence,
-                    "routed_to": cap.routed_to,
-                    "elapsed_ms": elapsed_ms,
-                    "intent_source": route_meta.get("intent_source") if route_meta else None,
-                    "policy_decision": policy.decision,
-                    "policy_allowed": policy.allowed,
-                },
-                ensure_ascii=False,
-            )
-        )
-        svc_proactive.enrich_route_output(
-            actor_id=payload.actor_id,
-            text=payload.text,
-            intent=intent,
-            context=ctx,
-            out_body=out_body,
-        )
-        return RouteResponse(intent=intent, confidence=confidence, routed_to=cap.routed_to, output=out_body)
-    # Élévation agentique : si activée et intent actionnable, on délègue au moteur de jobs
-    # (planification + exécution de fond + auto-correction) au lieu d'un dispatch one-shot.
+    # Élévation agentique avant le refus policy (F2) : sans payload structuré
+    # (ex. desktop_action), la policy interdit le one-shot — le job fond peut
+    # quand même planifier en dry-run / attendre L2.
     if should_elevate_to_agentic(intent, ctx):
         try:
             agentic_out = elevate_to_job(
@@ -198,6 +169,42 @@ def route_intent(payload: RouteRequest) -> RouteResponse:
                     "elapsed_ms": elapsed_ms,
                     "agentic": True,
                     "job_id": agentic_out.get("job_id"),
+                    "policy_decision": policy.decision,
+                    "policy_allowed": policy.allowed,
+                },
+                ensure_ascii=False,
+            )
+        )
+        svc_proactive.enrich_route_output(
+            actor_id=payload.actor_id,
+            text=payload.text,
+            intent=intent,
+            context=ctx,
+            out_body=out_body,
+        )
+        return RouteResponse(intent=intent, confidence=confidence, routed_to=cap.routed_to, output=out_body)
+
+    if not policy.allowed:
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        svc_metrics.inc("orchestrator_route_success_total")
+        out_body = {
+            "capability": cap.name,
+            "ok": False,
+            "outcome": policy.decision,
+            "error": policy.reason,
+            "policy": policy.model_dump(),
+        }
+        print(
+            json.dumps(
+                {
+                    "event": "orchestrator.route",
+                    "trace_id": trace_id,
+                    "actor_id": payload.actor_id,
+                    "intent": intent,
+                    "confidence": confidence,
+                    "routed_to": cap.routed_to,
+                    "elapsed_ms": elapsed_ms,
+                    "intent_source": route_meta.get("intent_source") if route_meta else None,
                     "policy_decision": policy.decision,
                     "policy_allowed": policy.allowed,
                 },

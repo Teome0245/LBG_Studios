@@ -44,7 +44,7 @@ def test_ephemeral_before_cloud(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_REASON_EPHEMERAL_BEFORE_CLOUD", "1")
     monkeypatch.setenv("LBG_REASON_CLOUD_BASE_URL", "https://api.groq.com/openai/v1")
     monkeypatch.setenv("LBG_REASON_CLOUD_API_KEY", "gsk")
-    monkeypatch.setenv("LBG_REASON_CLOUD_MODEL", "qwen/qwen3.6-27b")
+    monkeypatch.setenv("LBG_REASON_CLOUD_MODEL", "qwen/qwen3.8-27b")
     tiers = [r["tier"] for r in reason_routes(profile="forge")]
     assert tiers == ["local", "ephemeral", "cloud"]
 

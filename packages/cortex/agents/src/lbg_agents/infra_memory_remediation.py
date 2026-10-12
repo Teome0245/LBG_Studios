@@ -34,6 +34,7 @@ def host_systemd_units() -> dict[str, str]:
         "precu": "lbg-core3-precu.service",
         "front": "nginx.service",
         "core": "lbg-orchestrator.service",
+        "light": "ollama.service",
     }
 
 
@@ -43,7 +44,114 @@ def _format_metrics(entry: dict[str, Any]) -> str:
     swap = m.get("swap_used_pct", 0)
     top = m.get("top_processes") or []
     top_s = top[0].get("comm", "?") if top else "?"
-    return f"dispo {avail}% — top {top_s}" + (f" — swap {swap}%" if float(swap or 0) > 10 else "")
+    sticky = bool(m.get("sticky_swap"))
+    base = f"dispo {avail}% — top {top_s}" + (f" — swap {swap}%" if float(swap or 0) > 10 else "")
+    if sticky:
+        return base + " — swap collé (RAM dispo OK)"
+    return base
+
+
+def _is_light_label(label: str) -> bool:
+    return label.strip().lower() in {"light", "111", "ollama-light", "llm-light"}
+
+
+def _append_light_actions(
+    suggestions: list[dict[str, Any]],
+    hints: list[str],
+    *,
+    host: str,
+    st: str,
+    metrics: dict[str, Any],
+) -> None:
+    """Actions CT 111 ollama-light — ssh_run / hints (pas de systemd_restart local 140)."""
+    sticky = bool(metrics.get("sticky_swap")) or (
+        float(metrics.get("swap_used_pct") or 0) >= 90.0
+        and float(metrics.get("mem_avail_pct") or 0) >= 15.0
+    )
+    top = metrics.get("top_processes") or []
+    top_comm = str(top[0].get("comm") or "").lower() if top else ""
+    if sticky:
+        hints.append(
+            "light (111) : swap saturé avec RAM encore disponible — pages collées en swap ; "
+            "souvent lbg-laya-serve (8097) plutôt qu'ollama."
+        )
+    suggestions.append(
+        {
+            "level": "safe",
+            "label": "light 111 : sonde free/swap (SSH lecture)",
+            "devops_action": {
+                "kind": "ssh_run",
+                "server_id": "light",
+                "command": "free -h",
+            },
+            "requires_approval": True,
+            "target_host": host,
+        }
+    )
+    suggestions.append(
+        {
+            "level": "safe",
+            "label": "light 111 : statut ollama (SSH lecture)",
+            "devops_action": {
+                "kind": "ssh_run",
+                "server_id": "light",
+                "command": "systemctl is-active ollama",
+            },
+            "requires_approval": True,
+            "target_host": host,
+        }
+    )
+    # Priorité : laya-serve si top process uvicorn / sticky (cas observé swap 2/2 GiB).
+    suggestions.append(
+        {
+            "level": "elevated" if st == "critical" else "manual",
+            "label": "light 111 : redémarrer lbg-laya-serve (libère souvent le swap collé)",
+            "command_hint": (
+                "ssh lbg@192.168.0.111 "
+                "'sudo systemctl restart lbg-laya-serve && free -h'"
+            ),
+            "note": (
+                "Sur NUC Proxmox : pct exec 111 -- systemctl restart lbg-laya-serve. "
+                "Top process typique : uvicorn /opt/lbg-laya-serve (port 8097)."
+            ),
+        }
+    )
+    if sticky or "ollama" in top_comm:
+        suggestions.append(
+            {
+                "level": "manual",
+                "label": "light 111 : redémarrer ollama.service (si modèles LLM en cause)",
+                "command_hint": (
+                    "ssh lbg@192.168.0.111 'sudo systemctl restart ollama && free -h'"
+                ),
+            }
+        )
+    suggestions.append(
+        {
+            "level": "manual",
+            "label": "light 111 : OLLAMA_MAX_LOADED_MODELS=1 (éviter multi-modèles)",
+            "command_hint": (
+                "ssh lbg@192.168.0.111 "
+                "'grep -R OLLAMA_MAX /etc/systemd/system/ollama.service.d/ 2>/dev/null; "
+                "systemctl show ollama -p Environment'"
+            ),
+        }
+    )
+    if sticky:
+        suggestions.append(
+            {
+                "level": "manual",
+                "label": "light 111 : vm.swappiness sur hôte Proxmox (CT unprivileged = RO)",
+                "command_hint": (
+                    "Sur NUC .200 (pas dans le CT) : "
+                    "echo vm.swappiness=10 | sudo tee /etc/sysctl.d/99-lbg-swappiness.conf "
+                    "&& sudo sysctl -p /etc/sysctl.d/99-lbg-swappiness.conf"
+                ),
+                "note": (
+                    "CT unprivileged : sysctl vm.swappiness est en lecture seule dans le guest."
+                ),
+            }
+        )
 
 
 def build_memory_remediation_plan(
@@ -109,7 +217,15 @@ def build_memory_remediation_plan(
         label = str(entry.get("label") or "").lower()
         host = str(entry.get("host") or "")
         st = str(entry.get("status") or "warn")
+        metrics = entry.get("metrics") if isinstance(entry.get("metrics"), dict) else {}
         unit = units.get(label)
+
+        if _is_light_label(label):
+            _append_light_actions(
+                suggestions, hints, host=host, st=st, metrics=metrics
+            )
+            continue
+
         if label == "prime":
             suggestions.append(
                 {

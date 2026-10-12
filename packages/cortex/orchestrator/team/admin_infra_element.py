@@ -41,19 +41,28 @@ def alert_cooldown_s() -> float:
 
 
 def perimeter_has_ko(platform: dict[str, Any]) -> bool:
-    hosts_ok = int(platform.get("hosts_ok") or 0)
-    hosts_total = int(platform.get("hosts_total") or 0)
-    if hosts_total and hosts_ok < hosts_total:
-        return True
-    gaps = platform.get("gaps")
-    return isinstance(gaps, list) and len(gaps) > 0
+    """True seulement si un hôte **requis** est KO.
+
+    PreCU 245 (``required=False`` par défaut) éteint volontairement ≠ alerte.
+    Les gaps soft (ollama-config, dialogue-fast) ne déclenchent pas non plus.
+    """
+    hosts = platform.get("hosts") if isinstance(platform.get("hosts"), list) else []
+    for h in hosts:
+        if not isinstance(h, dict):
+            continue
+        if bool(h.get("required", True)) and not h.get("ok"):
+            return True
+    return False
 
 
 def perimeter_ko_signature(platform: dict[str, Any]) -> str:
     failed_ids: list[str] = []
     hosts = platform.get("hosts") if isinstance(platform.get("hosts"), list) else []
     for h in hosts:
-        if isinstance(h, dict) and not h.get("ok"):
+        if not isinstance(h, dict):
+            continue
+        # Hôtes optionnels (ex. 245 OFF) exclus de la signature d'alerte.
+        if h.get("required", True) and not h.get("ok"):
             failed_ids.append(str(h.get("perimeter_id") or h.get("id") or "?"))
     gaps = platform.get("gaps") if isinstance(platform.get("gaps"), list) else []
     payload = {"failed": sorted(failed_ids), "gaps": gaps[:20]}
@@ -72,9 +81,16 @@ def format_perimeter_ko_message(platform: dict[str, Any]) -> str:
     for h in hosts:
         if not isinstance(h, dict):
             continue
-        mark = "OK" if h.get("ok") else "KO"
+        required = bool(h.get("required", True))
+        if h.get("ok"):
+            mark = "OK"
+        elif required:
+            mark = "KO"
+        else:
+            mark = "OFF"
         lines.append(f"• [{mark}] {h.get('perimeter_id')} — {h.get('label')} ({h.get('host')})")
-        if not h.get("ok"):
+        # Détails probe uniquement pour les KO critiques (pas les OFF attendus).
+        if required and not h.get("ok"):
             probes = h.get("probes") if isinstance(h.get("probes"), list) else []
             for p in probes:
                 if isinstance(p, dict) and not p.get("ok"):

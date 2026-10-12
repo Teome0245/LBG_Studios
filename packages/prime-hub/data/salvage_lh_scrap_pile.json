@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "poi_id": "poi:lh_scrap_pile",
+  "label": "Pile de ferraille — débris convoi",
+  "x": 6042.0,
+  "z": -1065.0,
+  "radius_m": 90,
+  "cooldown_s": 40,
+  "event_id": "event:lh_scrap_fall_convoy",
+  "skill_hint": "prospecteur_r1",
+  "loot_table": [
+    {"id": "scrap_metal", "name": "Ferraille", "qty_min": 2, "qty_max": 4, "weight": 50},
+    {"id": "binding_tape", "name": "Ruban de liaison", "qty_min": 1, "qty_max": 1, "weight": 55},
+    {"id": "carapace", "name": "Carapace", "qty_min": 0, "qty_max": 1, "weight": 15}
+  ],
+  "event_bonus_qty": 1,
+  "ticket": "C8"
+}

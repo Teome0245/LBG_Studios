@@ -111,6 +111,54 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .session-pill {
+        display: none;
+        max-width: 168px;
+        padding: 6px 8px;
+        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.94);
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: #e0f2fe;
+        font-size: 10px;
+        line-height: 1.3;
+        -webkit-app-region: no-drag;
+      }
+      .session-pill.visible {
+        display: block;
+      }
+      .session-pill .agent {
+        font-weight: 700;
+        color: #7dd3fc;
+      }
+      .session-pill .ticker {
+        margin: 2px 0 0;
+        opacity: 0.9;
+      }
+      .session-pill .session-actions {
+        display: none;
+        gap: 4px;
+        margin-top: 6px;
+      }
+      .session-pill.needs-approval .session-actions {
+        display: flex;
+      }
+      .session-pill .session-actions button {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+      }
+      .session-pill .allow {
+        background: #38bdf8;
+        color: #0c4a6e;
+      }
+      .session-pill .deny {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
       @keyframes idle-bob {
         0%,
         100% {
@@ -143,6 +191,14 @@
   </head>
   <body>
     <div class="stage">
+      <div id="session-pill" class="session-pill" aria-live="polite">
+        <div class="agent" id="session-agent">opencode</div>
+        <p class="ticker" id="session-ticker"></p>
+        <div class="session-actions">
+          <button type="button" class="allow" id="btn-allow">Allow</button>
+          <button type="button" class="deny" id="btn-deny">Deny</button>
+        </div>
+      </div>
       <div id="bubble" class="bubble" aria-live="polite">
         <p id="bubble-msg" class="bubble-msg"></p>
         <div class="bubble-actions">

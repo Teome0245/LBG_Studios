@@ -32,8 +32,22 @@ Sur LAN sécurisé (`LBG_COMPAGNON_LAB=1` ou `LBG_DESKTOP_APPROVAL_MODE=confirm`
 | Coller `LBG_DESKTOP_APPROVAL_TOKEN` | Case **« Je confirme l’exécution réelle »** |
 | Secret dans localStorage | Sentinelle `confirmed` + `desktop_confirm: true` |
 
+**Réel auto (lecture seule)** — kinds `mail_imap_preview`, `memory_recall`, `selfcheck`, `network_inventory`, `morning_brief`, sondes… : `auto_real=true` (plus de Dry-run → clic Réel).  
+`open_url` / `search_web_open` restent en dry-run auto (effet UI).  
+Off : `LBG_COMPANION_AUTO_REAL_SOFT=0`.
+
 Agents (`.10` / `.143`) : même mode via `LBG_DESKTOP_APPROVAL_MODE=confirm` (Windows) ou `LBG_LINUX_APPROVAL_MODE=confirm`.  
 Le jeton secret reste accepté en secours. Contre-pouvoir `block_real` + override inchangé.
+
+## Vague Agir 2026-10 (P1–P3)
+
+| # | Sujet | Doc / code |
+|---|--------|------------|
+| P1 | Mail IMAP + auto-Réel soft | `mail_imap_preview` · `companion_review._AUTO_REAL_KINDS` |
+| P2 | Selfcheck LAN + soft-confirm DevOps | `devops_executor` · `LBG_DEVOPS_SOFT_CONFIRM` |
+| P3 | Inventaire LAN + timer + Héphaïstos/Atlas + Nest Cast | [`runbook_network_inventory.md`](runbook_network_inventory.md) |
+| P4 | Brief du matin (Self + Jobs L2 + LAN) | [`morning_brief.md`](morning_brief.md) |
+| P5 | Mémoire → seed évolution STUDIO | [`memory_evolution_seed.md`](memory_evolution_seed.md) |
 
 ## Smoke
 

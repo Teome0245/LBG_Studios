@@ -8,6 +8,8 @@ import {
   runRouteFromProposal,
   summarizeRouteResult,
   routeLooksSuccessful,
+  extractMailPreviewMessages,
+  extractStudioOffer,
   proposeAction,
   reviewProposal,
   isSoftConfirmMode,
@@ -15,6 +17,8 @@ import {
 } from '@/lib/agir'
 import { presenceAgirResult } from '@/lib/presence'
 import { nextUsefulAgirSuggestions } from '@/lib/usefulAgirActions'
+import { sendSpontaneityFeedback } from '@/lib/spontaneity'
+import { spawnTeamL1 } from '@/lib/teamSpawn'
 import { useChat } from '@/composables/useChat'
 import {
   startActivity,
@@ -43,12 +47,34 @@ const softMode = ref(false)
 const humanConfirm = ref(false)
 const { addUserMessage, addMessage } = useChat()
 
+/** Kinds LAB où Réel n’exige plus la case « Je confirme » (ni banner L2).
+ *  Aligné sur companion_review._SOFT_KINDS (sous-ensemble desktop UX). */
+const NO_HUMAN_CONFIRM_KINDS = new Set([
+  'open_url',
+  'search_web_open',
+  'mail_imap_preview',
+  'default_browser_info',
+  'agent_session_status',
+  'selfcheck',
+  'network_inventory',
+  'memory_recall',
+  'morning_brief',
+  'http_get',
+  'comfyui_status',
+  'comfyui_history',
+  'comfyui_view',
+])
+
 onMounted(async () => {
   const tok = await bootstrapApprovalToken({ force: true })
   softMode.value = isSoftConfirmMode()
   if (softMode.value) {
     token.value = SOFT_CONFIRM_SENTINEL
     tokenSynced.value = true
+    // Pré-autoriser les actions douces (URL / mail preview / sondes)
+    if (NO_HUMAN_CONFIRM_KINDS.has(String(props.proposal?.action?.kind || ''))) {
+      humanConfirm.value = true
+    }
   } else if (tok) {
     token.value = tok
     tokenSynced.value = true
@@ -64,7 +90,18 @@ async function loadReviewAndMaybeDryRun() {
       `Contre-pouvoir · ${review.value.source} · ${review.value.summary || ''}`.slice(0, 160),
       review.value.block_real ? 'warn' : 'ok',
     )
-    if (review.value.auto_dry_run && !busy.value && !lastResult.value) {
+    if (busy.value || lastResult.value) return
+    // Lecture seule (mails, sondes…) : Réel auto en LAB — pas de clic Dry-run → Réel
+    if (
+      review.value.auto_real &&
+      softMode.value &&
+      skipHumanConfirm.value &&
+      !review.value.block_real
+    ) {
+      await run('real', { fromReview: true })
+      return
+    }
+    if (review.value.auto_dry_run) {
       await run('dry_run', { fromReview: true })
     }
   } catch (e) {
@@ -72,6 +109,7 @@ async function loadReviewAndMaybeDryRun() {
       pass: true,
       block_real: false,
       auto_dry_run: false,
+      auto_real: false,
       summary: String(e?.message || e),
       risks: [],
       alternatives: [],
@@ -88,10 +126,22 @@ const risk = computed(() => props.proposal?.risk_level || '')
 const requiresReview = computed(() => Boolean(props.proposal?.requires_review))
 const routedTo = computed(() => props.proposal?.routed_to || '')
 const actionKind = computed(() => props.proposal?.action?.kind || '')
+const skipHumanConfirm = computed(() =>
+  NO_HUMAN_CONFIRM_KINDS.has(String(actionKind.value || '')),
+)
 const tokenReady = computed(() => {
-  if (softMode.value) return Boolean(humanConfirm.value)
+  if (softMode.value) {
+    if (skipHumanConfirm.value) return true
+    return Boolean(humanConfirm.value)
+  }
   return Boolean(String(token.value || '').trim()) || hasApprovalToken()
 })
+const showSoftConfirmBox = computed(
+  () => softMode.value && !skipHumanConfirm.value,
+)
+const showL2Banner = computed(
+  () => requiresReview.value && !skipHumanConfirm.value,
+)
 const tokenMismatch = computed(() =>
   Boolean(
     !softMode.value &&
@@ -109,9 +159,112 @@ const nextSuggestions = computed(() => {
   return nextUsefulAgirSuggestions({
     kind: props.proposal?.action?.kind,
     url: props.proposal?.action?.url,
+    app: props.proposal?.action?.app,
     capability: props.proposal?.capability,
+    sourceText: props.sourceText,
   }, 4)
 })
+
+const mailPreviewMessages = computed(() => {
+  if (!lastResult.value?.raw) return []
+  return extractMailPreviewMessages(lastResult.value.raw)
+})
+
+const mailPreviewIsDryRun = computed(
+  () => lastResult.value?.mode === 'dry_run' || lastResult.value?.raw?.result?.output?.outcome === 'dry_run',
+)
+
+const studioOffer = computed(() => {
+  if (!lastResult.value?.ok || lastResult.value?.mode !== 'real') return null
+  if (!lastResult.value?.raw) return null
+  return extractStudioOffer(lastResult.value.raw)
+})
+
+const studioBusy = ref('')
+const studioDone = ref('')
+
+async function onStudioIntent(intent) {
+  const offer = studioOffer.value
+  if (!offer || !intent || studioBusy.value) return
+  studioBusy.value = intent.id || 'studio'
+  try {
+    if (intent.dismiss) {
+      await sendSpontaneityFeedback({
+        id: offer.id,
+        kind: 'dismiss',
+        themes: [offer.theme || 'memory'].filter(Boolean),
+        message: offer.message || '',
+        evolution_seed: null,
+      })
+      studioDone.value = 'ignored'
+      addMessage({
+        role: 'assistant',
+        content: 'OK — seed ignorée (pas de promotion Self).',
+        source: 'studio',
+      })
+      return
+    }
+    if (intent.teamSpawn) {
+      const objective =
+        String(intent.teamObjective || offer.evolution_seed || '').trim() ||
+        'Explorer une idée d’évolution Compagnon (L1 lecture seule).'
+      const out = await spawnTeamL1({
+        objective,
+        role: intent.teamRole || 'qa',
+        context: {
+          source: 'memory_recall_studio',
+          evolution_seed: offer.evolution_seed,
+          theme: offer.theme,
+        },
+      })
+      await sendSpontaneityFeedback({
+        id: offer.id,
+        kind: 'accept',
+        themes: [offer.theme || 'memory'].filter(Boolean),
+        message: offer.message || '',
+        evolution_seed: offer.evolution_seed,
+      })
+      studioDone.value = 'team'
+      addUserMessage(`Team L1 · ${intent.label || 'évolution'}`)
+      addMessage({
+        role: 'assistant',
+        content: out.ok
+          ? `Team L1 créée (${out.role || 'qa'}) : tâche ${out.id || '?'}. Seed enregistrée (pas d’auto-Réel).`
+          : `Team L1 impossible : ${out.error || 'erreur'}`,
+        source: out.ok ? 'studio' : 'error',
+      })
+      return
+    }
+    // En parler
+    const text = intent.sourceText || `parle-moi de : ${offer.evolution_seed}`
+    addUserMessage(`En parler · seed évolution`)
+    addMessage({
+      role: 'assistant',
+      content:
+        `On creuse cette seed (score ${Number(offer.evolution_score || 0).toFixed(2)}) :\n` +
+        `« ${offer.evolution_seed} »\n\n` +
+        `C’est une piste produit L3 — pas d’auto-merge. Tu peux ensuite lancer Team L1 ou Ignorer.`,
+      source: 'studio',
+    })
+    await sendSpontaneityFeedback({
+      id: offer.id,
+      kind: 'accept',
+      themes: [offer.theme || 'memory', 'discuss'].filter(Boolean),
+      message: String(text).slice(0, 160),
+      evolution_seed: offer.evolution_seed,
+    })
+    studioDone.value = 'discuss'
+    void text
+  } catch (e) {
+    addMessage({
+      role: 'assistant',
+      content: `STUDIO erreur : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    studioBusy.value = ''
+  }
+}
 
 function persistToken() {
   saveApprovalToken(token.value.trim())
@@ -180,7 +333,7 @@ async function run(mode, opts = {}) {
       /* ignore */
     }
     const t = softMode.value
-      ? (humanConfirm.value ? SOFT_CONFIRM_SENTINEL : '')
+      ? (skipHumanConfirm.value || humanConfirm.value ? SOFT_CONFIRM_SENTINEL : '')
       : String(token.value || '').trim()
     if (!t) {
       lastError.value = softMode.value
@@ -203,7 +356,7 @@ async function run(mode, opts = {}) {
     activityLog(`${label} · ${props.proposal?.summary || props.proposal?.capability || 'action'}`.slice(0, 160))
     activityPhase('running', mode === 'dry_run' ? 'Simulation…' : 'Exécution…')
   } else {
-    activityLog('Auto dry-run (contre-pouvoir)…')
+    activityLog(mode === 'real' && opts.fromReview ? 'Réel auto (lecture seule)…' : 'Auto dry-run (contre-pouvoir)…')
   }
   try {
     const json = await runRouteFromProposal(props.proposal, mode, {
@@ -258,8 +411,20 @@ async function run(mode, opts = {}) {
 
     <p class="text-sm text-slate-100 font-medium leading-relaxed">{{ summary }}</p>
     <p v-if="routedTo" class="text-[11px] text-slate-400 font-mono">Cible : {{ routedTo }}</p>
-    <p v-if="requiresReview" class="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+    <p v-if="showL2Banner" class="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
       Validation L2 requise — Dry-run sans risque ; Réel exige le jeton desktop.
+    </p>
+    <p
+      v-else-if="skipHumanConfirm && softMode && review?.auto_real"
+      class="text-xs text-teal-200/90 bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2"
+    >
+      Lecture seule — exécution réelle automatique (non destructif). Dry-run disponible si besoin.
+    </p>
+    <p
+      v-else-if="skipHumanConfirm && softMode"
+      class="text-xs text-teal-200/90 bg-teal-500/10 border border-teal-500/20 rounded-xl px-3 py-2"
+    >
+      Action douce (URL / aperçu / sonde) — Réel sans case de confirmation en LAB.
     </p>
 
     <div
@@ -287,7 +452,7 @@ async function run(mode, opts = {}) {
     </div>
 
     <div class="pt-1">
-      <template v-if="softMode">
+      <template v-if="showSoftConfirmBox">
         <label class="flex items-start gap-2.5 text-xs text-slate-200 cursor-pointer select-none rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5">
           <input v-model="humanConfirm" type="checkbox" class="mt-0.5 rounded border-emerald-400/50" />
           <span>
@@ -298,7 +463,7 @@ async function run(mode, opts = {}) {
           </span>
         </label>
       </template>
-      <template v-else>
+      <template v-else-if="!softMode">
         <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
           Jeton desktop / devops
           <span
@@ -347,7 +512,7 @@ async function run(mode, opts = {}) {
       <button
         type="button"
         class="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40 transition-all cursor-pointer shadow-md active:scale-95"
-        :disabled="!!busy || realBlocked || (softMode && !humanConfirm)"
+        :disabled="!!busy || realBlocked || (showSoftConfirmBox && !humanConfirm)"
         :title="realBlocked ? 'Contre-pouvoir : override requis' : (tokenReady ? 'Exécution réelle' : (softMode ? 'Confirmation requise' : 'Jeton requis'))"
         @click="run('real')"
       >
@@ -366,7 +531,7 @@ async function run(mode, opts = {}) {
     <pre
       v-if="showJson"
       class="text-[10px] font-mono text-slate-400 bg-slate-950/80 rounded-xl p-3 overflow-x-auto max-h-48 border border-white/10"
-    >{{ JSON.stringify({ proposal, review }, null, 2) }}</pre>
+    >{{ JSON.stringify({ proposal, review, lastResult: lastResult ? { mode: lastResult.mode, ok: lastResult.ok, text: lastResult.text, output: lastResult.raw?.result?.output || lastResult.raw?.output || null } : null }, null, 2) }}</pre>
 
     <p
       v-if="lastError"
@@ -377,6 +542,76 @@ async function run(mode, opts = {}) {
       class="text-xs font-mono rounded-xl p-2.5 border"
       :class="lastResult.ok ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-300 bg-amber-500/10 border-amber-500/20'"
     >{{ lastResult.text }}</p>
+
+    <div
+      v-if="mailPreviewMessages.length"
+      class="rounded-xl border border-cyan-500/20 bg-slate-950/70 p-3 space-y-2.5"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-[10px] uppercase tracking-wider text-cyan-300/90 font-semibold">
+          Aperçu IMAP · {{ mailPreviewMessages.length }} message{{ mailPreviewMessages.length > 1 ? 's' : '' }}
+        </p>
+        <p
+          v-if="mailPreviewIsDryRun"
+          class="text-[10px] text-amber-200/90 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-0.5"
+        >
+          Simulation — cliquer « Réel » pour lire l’INBOX
+        </p>
+      </div>
+      <ul class="space-y-2">
+        <li
+          v-for="(m, i) in mailPreviewMessages"
+          :key="m.uid || i"
+          class="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 space-y-1"
+        >
+          <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+            <p class="text-xs text-slate-100 font-medium truncate max-w-full">
+              {{ m.subject || '(sans objet)' }}
+            </p>
+            <p v-if="m.date" class="text-[10px] text-slate-500 font-mono shrink-0">{{ m.date }}</p>
+          </div>
+          <p class="text-[11px] text-cyan-200/80 truncate">{{ m.from || '—' }}</p>
+          <p
+            v-if="m.body_preview"
+            class="text-[11px] text-slate-400 leading-snug line-clamp-3 whitespace-pre-wrap"
+          >{{ m.body_preview }}</p>
+        </li>
+      </ul>
+    </div>
+
+    <div
+      v-if="studioOffer && !studioDone"
+      class="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 space-y-2"
+    >
+      <p class="text-[10px] uppercase tracking-wider text-violet-200/90 font-semibold">
+        STUDIO · seed d’évolution
+        <span class="font-mono text-violet-300/80">
+          · score {{ Number(studioOffer.evolution_score || 0).toFixed(2) }} · pas d’auto-promo
+        </span>
+      </p>
+      <p class="text-xs text-violet-50/95 leading-relaxed">{{ studioOffer.message }}</p>
+      <div class="flex flex-wrap gap-1.5">
+        <button
+          v-for="intent in studioOffer.intents"
+          :key="intent.id"
+          type="button"
+          class="px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer disabled:opacity-40"
+          :class="intent.dismiss
+            ? 'border-white/15 bg-white/5 text-slate-300 hover:bg-white/10'
+            : 'border-violet-400/35 bg-violet-500/20 text-violet-50 hover:bg-violet-500/30'"
+          :disabled="!!busy || !!studioBusy"
+          @click="onStudioIntent(intent)"
+        >
+          {{ studioBusy === intent.id ? '…' : intent.label }}
+        </button>
+      </div>
+    </div>
+    <p
+      v-else-if="studioDone"
+      class="text-[11px] text-violet-200/80 bg-violet-500/10 border border-violet-500/20 rounded-xl px-3 py-2"
+    >
+      STUDIO · choix enregistré ({{ studioDone }}).
+    </p>
 
     <div
       v-if="nextSuggestions.length"

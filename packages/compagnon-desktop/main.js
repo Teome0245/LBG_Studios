@@ -37,6 +37,12 @@ const DEFAULT_CONFIG = {
     minSilenceSec: 90,
     proactiveUrl: "http://192.168.0.100:5174/api/pilot/orchestrator/proactive/status",
   },
+  /** D7 — Présence Agents (SSE via main process) */
+  sessionIsland: {
+    enabled: false,
+    streamUrl: "http://192.168.0.143:5005/session/stream",
+    decisionUrl: "http://192.168.0.143:5005/session/decision",
+  },
 };
 
 let mainWindow = null;
@@ -48,6 +54,9 @@ let initiativeTimer = null;
 /** @type {{ ts: number, id: string }[]} */
 let initiativeShown = [];
 let lastNotifiedId = "";
+/** @type {import("http").IncomingMessage | null} */
+let sessionStreamReq = null;
+let sessionStreamRetry = null;
 
 function appRoot() {
   return app.isPackaged ? path.dirname(process.execPath) : __dirname;
@@ -69,6 +78,10 @@ function loadConfig() {
         overlay: { ...DEFAULT_CONFIG.overlay, ...(raw.overlay || {}) },
         tray: { ...DEFAULT_CONFIG.tray, ...(raw.tray || {}) },
         initiative: { ...DEFAULT_CONFIG.initiative, ...(raw.initiative || {}) },
+        sessionIsland: {
+          ...DEFAULT_CONFIG.sessionIsland,
+          ...(raw.sessionIsland || {}),
+        },
       };
       return;
     } catch (e) {
@@ -352,6 +365,7 @@ function initiativeFingerprint(status) {
     if (kind || msg) return `act:${kind}|${msg}`;
   }
   const infra = status.infra_signals && typeof status.infra_signals === "object" ? status.infra_signals : null;
+  if (infra && infra.desktop_agent_down) return "infra:desktop_agent_down";
   if (infra && infra.ad_agent_down) return "infra:ad_agent_down";
   if (infra && infra.orchestrator_reachable === false) return "infra:orch_down";
   return "";
@@ -367,11 +381,11 @@ function agirIntentsFromStatus(status) {
   const tension = Number(status && status.tension);
   const job = typeof (status && status.last_job_id) === "string" ? status.last_job_id : "";
 
-  if (infra.ad_agent_down) {
+  if (infra.desktop_agent_down || infra.ad_agent_down) {
     out.push({
       id: "probe_ad",
-      label: "Sonde AD (dry-run)",
-      sourceText: "fais un diagnostic infra selfcheck de l agent AD sur le LAN",
+      label: "Sonde agent desktop (dry-run)",
+      sourceText: "fais un diagnostic infra selfcheck de l agent desktop sur le LAN",
       hint: "devops_probe · lecture seule",
     });
   }
@@ -420,8 +434,8 @@ function agirIntentsFromStatus(status) {
 
 function initiativeMessage(status) {
   const infra = status && status.infra_signals;
-  if (infra && infra.ad_agent_down) {
-    return "Je vois l’agent AD injoignable — je peux lancer une sonde (dry-run).";
+  if (infra && (infra.desktop_agent_down || infra.ad_agent_down)) {
+    return "Je vois l’agent desktop injoignable — je peux lancer une sonde (dry-run).";
   }
   if (infra && infra.orchestrator_reachable === false) {
     return "Orchestrateur injoignable — je propose une sonde health.";
@@ -535,6 +549,7 @@ ipcMain.handle("compagnon:get-config", () => ({
   compagnonUrl: compagnonUrl(),
   overlay: config.overlay,
   initiative: config.initiative,
+  sessionIsland: config.sessionIsland,
 }));
 
 ipcMain.on("compagnon:open-chat", () => showChat());
@@ -551,6 +566,124 @@ ipcMain.on("compagnon:open-chat-agir", (_e, payload) => {
 ipcMain.on("compagnon:overlay-mood", (_e, mood) => {
   setOverlayMood(mood);
 });
+
+ipcMain.handle("compagnon:session-decision", async (_e, body) => {
+  const cfg = config.sessionIsland || DEFAULT_CONFIG.sessionIsland;
+  const url = String((cfg && cfg.decisionUrl) || "").trim();
+  if (!url) return { ok: false, error: "decisionUrl manquant" };
+  try {
+    const u = new URL(url);
+    const lib = u.protocol === "https:" ? https : http;
+    const payload = JSON.stringify(body || {});
+    return await new Promise((resolve) => {
+      const req = lib.request(
+        {
+          hostname: u.hostname,
+          port: u.port || (u.protocol === "https:" ? 443 : 80),
+          path: u.pathname + u.search,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+          timeout: 8000,
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (c) => {
+            data += c;
+          });
+          res.on("end", () => {
+            try {
+              resolve(JSON.parse(data));
+            } catch (_) {
+              resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, raw: data.slice(0, 200) });
+            }
+          });
+        }
+      );
+      req.on("error", (err) => resolve({ ok: false, error: String(err.message || err) }));
+      req.write(payload);
+      req.end();
+    });
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+});
+
+function forwardSessionEvent(ev) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  try {
+    overlayWindow.webContents.send("compagnon:session-event", ev);
+  } catch (_) {}
+}
+
+function stopSessionIslandStream() {
+  if (sessionStreamRetry) {
+    clearTimeout(sessionStreamRetry);
+    sessionStreamRetry = null;
+  }
+  if (sessionStreamReq) {
+    try {
+      sessionStreamReq.destroy();
+    } catch (_) {}
+    sessionStreamReq = null;
+  }
+}
+
+function startSessionIslandStream() {
+  const cfg = config.sessionIsland || DEFAULT_CONFIG.sessionIsland;
+  if (!cfg || cfg.enabled === false) return;
+  const url = String(cfg.streamUrl || "").trim();
+  if (!url) return;
+  stopSessionIslandStream();
+  let u;
+  try {
+    u = new URL(url);
+  } catch (_) {
+    return;
+  }
+  const lib = u.protocol === "https:" ? https : http;
+  const req = lib.get(
+    {
+      hostname: u.hostname,
+      port: u.port || (u.protocol === "https:" ? 443 : 80),
+      path: u.pathname + u.search,
+      headers: { Accept: "text/event-stream" },
+      timeout: 0,
+    },
+    (res) => {
+      sessionStreamReq = res;
+      let buf = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        buf += chunk;
+        const parts = buf.split("\n\n");
+        buf = parts.pop() || "";
+        for (const block of parts) {
+          const line = block
+            .split("\n")
+            .find((l) => l.startsWith("data: "));
+          if (!line) continue;
+          try {
+            forwardSessionEvent(JSON.parse(line.slice(6)));
+          } catch (_) {}
+        }
+      });
+      res.on("end", () => {
+        sessionStreamReq = null;
+        sessionStreamRetry = setTimeout(startSessionIslandStream, 5000);
+      });
+      res.on("error", () => {
+        sessionStreamReq = null;
+        sessionStreamRetry = setTimeout(startSessionIslandStream, 8000);
+      });
+    }
+  );
+  req.on("error", () => {
+    sessionStreamRetry = setTimeout(startSessionIslandStream, 8000);
+  });
+}
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -582,11 +715,13 @@ if (!gotLock) {
     createOverlayWindow();
     showChat();
     startInitiativePolling();
+    startSessionIslandStream();
   });
 
   app.on("before-quit", () => {
     quitting = true;
     if (initiativeTimer) clearInterval(initiativeTimer);
+    stopSessionIslandStream();
   });
 
   app.on("window-all-closed", () => {

@@ -1,0 +1,11 @@
+[Unit]
+Description=LBG — timer mission Chœur L1 (2× / jour)
+
+[Timer]
+OnCalendar=*-*-* 06:30:00
+OnCalendar=*-*-* 18:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

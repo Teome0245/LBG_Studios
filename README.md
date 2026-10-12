@@ -5,12 +5,12 @@
 | Priorité | Objectif | Package |
 |----------|----------|---------|
 | **O1** | **Studio** — Cortex, Pilot, Campus, agents | [`packages/cortex`](packages/cortex/) |
-| **O2** | **Jeu** — Godot Prime Client → serveur 246 | [`packages/prime-client`](packages/prime-client/) |
+| **O2** | **Jeu** — client + hub Godot `.246:8787` | [`packages/prime-client`](packages/prime-client/) · [`packages/prime-hub`](packages/prime-hub/) |
 
-Voir [`OBJECTIVES.md`](OBJECTIVES.md), [`docs/REGISTRE.md`](docs/REGISTRE.md) (repos, chemins, LAN), restauration produit [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
-Smoke LAN (Pilot, Cockpit, Orch UI, Core3 `:8792`) : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — `bash tools/smoke_lan_surfaces.sh [--functional]`.  
+Voir [`OBJECTIVES.md`](OBJECTIVES.md), [`docs/PRIORITES_ACTUELLES.md`](docs/PRIORITES_ACTUELLES.md), [`docs/RUNTIME_GODOT.md`](docs/RUNTIME_GODOT.md) (**G5 live**), [`docs/REGISTRE.md`](docs/REGISTRE.md), [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
+Smoke LAN : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — hub `http://192.168.0.246:8787/healthz`.  
 LLM local (110/111) : [`packages/cortex/docs/local_llm_route_matrix.md`](packages/cortex/docs/local_llm_route_matrix.md).  
-Sprint évolution 7 j (Team / Thémis, L1 auto / L2 Pilot) : [`packages/cortex/docs/team_evolution_sprint.md`](packages/cortex/docs/team_evolution_sprint.md).
+Sprint évolution 7 j : [`packages/cortex/docs/team_evolution_sprint.md`](packages/cortex/docs/team_evolution_sprint.md).
 
 ## Démarrer
 
@@ -37,11 +37,11 @@ cd packages/prime-client
 | `../Infographiste_IA` | Pipeline assets / LoRA |
 | Cockpit `.100:8093` | Ops infra (sources `_shelf/LBG_Project_03`) |
 | Orch UI `.100:5174` | SPA Vue Lyra / carte agents (sources `_archive/LBG_IA`) |
-| Prime / PreCU `:8792` | État serveurs + comptes Core3 |
+| Hub Godot `.246:8787` | Autorité joueur Lost Heaven (G5) — Core3 / spike Python **OFF** |
 | Legacy | `../LBG_IA_MMORPG`, `../new_mmo` ; archive `../_archive/avatar_app` |
 
 ## Règle
 
 Toute **nouvelle** feature Studio → `packages/cortex`.  
-Toute **nouvelle** feature jeu (après O1 vert) → `packages/prime-client`.  
+Toute **nouvelle** feature jeu → `packages/prime-client` / `packages/prime-hub` (pas Core3, pas `hub_runtime` Python).  
 Correctifs urgents dans les repos legacy OK ; pas de nouvelle feature hors O1/O2.

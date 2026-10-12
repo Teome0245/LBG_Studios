@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "id": "explore_ring_lh",
+  "label": "Anneau désert Lost Heaven",
+  "notes": [
+    "Périmètre joueurs IA hors murs — pas Scrapaltai entière, pas Zalem jouable (V10b).",
+    "Centre = plaza hub. max_radius_m borne explore + POST /v1/bots/move_to.",
+    "Waypoints au-delà des portes = dunes vides OK (contenu P0 ultérieur)."
+  ],
+  "center": {"x": 4749.0, "y": 0.15, "z": -737.0},
+  "max_radius_m": 3000.0,
+  "random_sample_chance": 0.28,
+  "waypoints": {
+    "gate_east": {
+      "label": "explorer porte est / dunes",
+      "pos": {"x": 5813.6, "y": 0.15, "z": -982.5}
+    },
+    "gate_west": {
+      "label": "surveiller porte ouest Zalem",
+      "pos": {"x": 3688.9, "y": 0.15, "z": -675.9}
+    },
+    "hunt": {
+      "label": "reconnaître hors murs",
+      "pos": {"x": 5985.0, "y": 0.15, "z": -1120.0}
+    },
+    "spawn_apron": {
+      "label": "repasser au shuttleport",
+      "pos": {"x": 4749.0, "y": 0.15, "z": -537.0}
+    },
+    "dunes_ne": {
+      "label": "dunes nord-est (anneau)",
+      "pos": {"x": 6749.0, "y": 0.15, "z": -2737.0}
+    },
+    "dunes_se": {
+      "label": "dunes sud-est (anneau)",
+      "pos": {"x": 6949.0, "y": 0.15, "z": 763.0}
+    },
+    "dunes_sw": {
+      "label": "dunes sud-ouest (anneau)",
+      "pos": {"x": 2549.0, "y": 0.15, "z": 1063.0}
+    },
+    "dunes_nw": {
+      "label": "dunes nord-ouest (anneau)",
+      "pos": {"x": 2749.0, "y": 0.15, "z": -2737.0}
+    },
+    "ridge_n": {
+      "label": "crête nord hors palissade",
+      "pos": {"x": 4949.0, "y": 0.15, "z": -3437.0}
+    },
+    "scrap_e": {
+      "label": "champ de scrap est",
+      "pos": {"x": 7549.0, "y": 0.15, "z": -937.0}
+    },
+    "hollow_s": {
+      "label": "cuvette sud désert",
+      "pos": {"x": 4649.0, "y": 0.15, "z": 2063.0}
+    },
+    "watch_zalem": {
+      "label": "veille approche Zalem (hors capitale)",
+      "pos": {"x": 1949.0, "y": 0.15, "z": -500.0}
+    }
+  }
+}

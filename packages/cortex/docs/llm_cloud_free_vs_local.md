@@ -63,8 +63,24 @@ local 111/110 → failover heavy → ephemeral? → cloud?
 
 ---
 
+## Note — AirLLM (méthode, pas un provider)
+
+**AirLLM** ([lyogavin/airllm](https://github.com/lyogavin/airllm)) : inférence **couche par couche** (une couche GPU à la fois) pour faire tenir un gros modèle sur peu de VRAM (ex. 70B ≈ 4 Go). Contrepartie : **très lent**. Pas intégré à Ollama.
+
+| Chez LBG | Décision |
+|----------|----------|
+| Remplacer Ollama `.110` / `.111` | **Non** |
+| Compagnon / Team / Cline H24 | **Non** (latence) |
+| PoC « gros modèle » si host **avec GPU** lab | **OK périphérie** — même case que Colab éphémère |
+| `.110` CPU only (état actuel) | Gain VRAM **quasi nul** → pas prioritaire |
+
+Pas d’install tant qu’il n’y a pas de GPU lab. Si un jour : wrapper OpenAI-compat optionnel, hors matrice, hors Atlas H24.
+
+---
+
 ## Hors scope
 
 - Push `LBG_REASON_EPHEMERAL_*` vers `.140`  
 - Remplacer Atlas / audit Ollama par un notebook  
-- Héberger un tunnel public H24 vers un Colab
+- Héberger un tunnel public H24 vers un Colab  
+- AirLLM / layer-streaming sur le chemin Studio H24

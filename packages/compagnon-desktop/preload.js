@@ -19,4 +19,12 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
       } catch (_) {}
     });
   },
+  onSessionEvent: (cb) => {
+    ipcRenderer.on("compagnon:session-event", (_e, payload) => {
+      try {
+        cb(payload);
+      } catch (_) {}
+    });
+  },
+  sessionDecision: (body) => ipcRenderer.invoke("compagnon:session-decision", body || {}),
 });

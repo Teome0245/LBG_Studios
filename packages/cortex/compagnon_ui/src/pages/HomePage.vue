@@ -6,17 +6,20 @@ import ChatFlow from '../components/ChatFlow.vue'
 import ChatInput from '../components/ChatInput.vue'
 import MonitoringPanel from '../components/MonitoringPanel.vue'
 import InfraColumn from '../components/InfraColumn.vue'
+import CharacterDialsPanel from '../components/CharacterDialsPanel.vue'
 import { useLayout } from '../composables/useLayout'
 
 const {
   histCollapsed,
   infraCollapsed,
   monitorCollapsed,
+  characterPanelOpen,
+  closeCharacterPanel,
 } = useLayout()
 </script>
 
 <template>
-  <!-- Canal chat : rail + hist optionnel + fil ; infra/monitor uniquement si ouverts -->
+  <!-- Canal chat : rail + hist optionnel + fil ; infra/monitor/caractère uniquement si ouverts -->
   <div class="flex h-full w-full overflow-hidden bg-slate-950 text-slate-200">
     <NavRail />
 
@@ -43,6 +46,11 @@ const {
     >
       <MonitoringPanel />
     </aside>
+
+    <CharacterDialsPanel
+      :open="characterPanelOpen"
+      @close="closeCharacterPanel"
+    />
   </div>
 </template>
 

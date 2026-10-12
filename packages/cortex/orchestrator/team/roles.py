@@ -49,6 +49,10 @@ from team.evolution_sprint_workflow import (
     execute_evolution_sprint_workflow,
     resolve_evolution_sprint_workflow,
 )
+from team.evolution_veille_workflow import (
+    execute_evolution_veille_workflow,
+    resolve_evolution_veille_workflow,
+)
 from team.role_aliases import role_display
 
 Dispatcher = Callable[..., dict[str, object]]
@@ -85,6 +89,15 @@ ROLE_SPECS: dict[str, dict[str, object]] = {
         "routed_to": "agent.pm",
         "autonomy": "L0-L1",
         "default_objective": "Audit / prototype Godot Prime — Iris (2D UI) ou Hermès (SOE/gateway)",
+    },
+    "dev_studio": {
+        "capability": "studio_code",
+        "routed_to": "agent.pm",
+        "autonomy": "L0-L1",
+        "default_objective": (
+            "Métis — forge studio hors jeu : Cortex / Compagnon / Pilot / docs "
+            "(mains code .143 via ide_cli, ADR 0025)"
+        ),
     },
     "player_ia": {
         "capability": "core3_bot_action",
@@ -210,6 +223,12 @@ def _run_qa_smoke_script() -> dict[str, object]:
 
 
 def _execute_ops(task: TeamTask) -> dict[str, object]:
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
+
+    # Plan / CI via OpenCode (.143) — ne pas réduire à une sonde healthz dry-run
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
+
     ctx = dict(task.context)
     ops_kind = str(ctx.get("ops_kind") or "").strip().lower()
 
@@ -237,7 +256,8 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         if not isinstance(plan, dict):
             plan = build_guest_remediation_plan(guest_metrics)
         outcome = str(guest_metrics.get("outcome") or "ok")
-        ok = outcome != "critical"
+        # warn/critical = alerte infra + plan consultatif — pas un échec de l'agent ops
+        ok = True
         return {
             "kind": "ops_guest_metrics",
             "guest_metrics": guest_metrics,
@@ -275,8 +295,11 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
                 wall = res if isinstance(res, dict) and "hosts" in res else {}
             plan = build_guest_remediation_plan(wall if wall else None)
             outcome = str((wall or {}).get("outcome") or "ok")
-            ok = bool(out.get("ok", True)) and outcome != "critical"
+            # Sonde + plan OK même si mur critical (remédiation L1, pas hard-fail agent)
+            ok = bool(out.get("ok", True))
             if isinstance(out.get("error"), str) and out["error"]:
+                ok = False
+            if not wall:
                 ok = False
             return {
                 "kind": "ops_guest_metrics",
@@ -339,6 +362,64 @@ def _execute_ops(task: TeamTask) -> dict[str, object]:
         from team.ollama_audit import audit_ollama_lan
 
         return {"kind": "ops_ollama_audit", **audit_ollama_lan()}
+
+    # Inventaire LAN + diff apparus/disparus (Héphaïstos)
+    if ops_kind == "network_inventory" or ctx.get("_team_network_inventory_spawn"):
+        pre = ctx.get("network_inventory")
+        if isinstance(pre, dict) and (pre.get("diff") is not None or pre.get("devices") is not None):
+            diff = pre.get("diff") if isinstance(pre.get("diff"), dict) else {}
+            n_app = int(diff.get("n_appeared") or 0)
+            n_dis = int(diff.get("n_disappeared") or 0)
+            reply = str(pre.get("reply") or "")
+            if not reply:
+                reply = (
+                    f"Inventaire LAN — +{n_app} apparus / −{n_dis} disparus "
+                    f"({pre.get('n_present', '?')}/{pre.get('n_devices', '?')} présents)"
+                )
+            return {
+                "kind": "ops_network_inventory",
+                "ok": bool(pre.get("ok", True)),
+                "network_inventory": pre,
+                "diff": diff,
+                "by_role": pre.get("by_role"),
+                "n_present": pre.get("n_present"),
+                "n_devices": pre.get("n_devices"),
+                "cast_speakers": pre.get("cast_speakers"),
+                "reply": reply,
+                "outcome": "changed" if (n_app or n_dis) else "stable",
+            }
+        inv_ctx = dict(ctx)
+        inv_ctx.setdefault("persist_state", True)
+        inv_ctx.setdefault("freebox_lan", True)
+        inv_ctx.setdefault("cast_probe", True)
+        out = _dispatch(
+            "agent.network",
+            actor_id=task.actor_id,
+            text=task.objective,
+            context=inv_ctx,
+        )
+        res = out.get("result") if isinstance(out.get("result"), dict) else out
+        if not isinstance(res, dict):
+            res = {}
+        diff = res.get("diff") if isinstance(res.get("diff"), dict) else {}
+        ok = bool(out.get("ok", True)) and bool(res.get("ok", True))
+        return {
+            "kind": "ops_network_inventory",
+            "ok": ok,
+            "network_inventory": res,
+            "diff": diff,
+            "by_role": res.get("by_role"),
+            "n_present": res.get("n_present"),
+            "n_devices": res.get("n_devices"),
+            "cast_speakers": res.get("cast_speakers"),
+            "reply": res.get("reply") or out.get("reply"),
+            "output": out,
+            "outcome": (
+                "changed"
+                if int(diff.get("n_appeared") or 0) or int(diff.get("n_disappeared") or 0)
+                else "stable"
+            ),
+        }
 
     orch = _orchestrator_url()
     action = ctx.get("devops_action")
@@ -629,6 +710,10 @@ def _execute_failure_triage(task: TeamTask) -> dict[str, object]:
 def _execute_pm(task: TeamTask) -> dict[str, object]:
     ctx0 = task.context or {}
     wf = str(ctx0.get("workflow") or "").strip().lower()
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
     if (
         ctx0.get("agent_mutation")
         or ctx0.get("agent_mutation_review")
@@ -646,6 +731,9 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
 
         return execute_proposer_from_task(task)
 
+    # Veille avant sprint : « évolution » apparaît dans les deux, priorité au brief pistes.
+    if resolve_evolution_veille_workflow(task):
+        return execute_evolution_veille_workflow(task, _dispatch)
     if resolve_evolution_sprint_workflow(task):
         return execute_evolution_sprint_workflow(task, _dispatch)
     if resolve_autoconsult_workflow(task):
@@ -690,6 +778,13 @@ def _execute_pm(task: TeamTask) -> dict[str, object]:
 
 
 def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
     if resolve_godot_dev_workflow(task):
         return execute_godot_dev_workflow(task, _dispatch)
     return execute_godot_dev_workflow(task, _dispatch)
@@ -697,6 +792,13 @@ def _execute_dev_godot(task: TeamTask) -> dict[str, object]:
 
 def _execute_dev_game(task: TeamTask) -> dict[str, object]:
     ctx = task.context or {}
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow, resolve_ide_cli_workflow
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
+    if resolve_ide_cli_workflow(task):
+        return execute_ide_cli_workflow(task, _dispatch)
     if ctx.get("cursor_cloud_agent") or str(ctx.get("workflow") or "").strip().lower() in (
         "cursor_cloud_agent",
         "cursor_agent",
@@ -721,6 +823,34 @@ def _execute_dev_game(task: TeamTask) -> dict[str, object]:
     return execute_dev_game_workflow(task, _dispatch)
 
 
+def _execute_dev_studio(task: TeamTask) -> dict[str, object]:
+    """Métis — code studio hors jeu (Cortex/Compagnon/Pilot) via ide_cli ou docs_only."""
+    from team.docs_write_workflow import execute_docs_only_workflow, resolve_docs_only
+    from team.ide_cli_workflow import execute_ide_cli_workflow
+
+    if resolve_docs_only(task):
+        return execute_docs_only_workflow(task)
+    ctx = dict(task.context or {})
+    ctx.setdefault("ide_cli", True)
+    ctx.setdefault("subproject", "cortex_studio")
+    task_ide = TeamTask(
+        id=task.id,
+        role=task.role,
+        objective=task.objective,
+        actor_id=task.actor_id,
+        context=ctx,
+        status=task.status,
+        priority=task.priority,
+        approval_required=task.approval_required,
+        result=task.result,
+        trace_id=task.trace_id,
+        created_ts=task.created_ts,
+        updated_ts=task.updated_ts,
+        stored_approval_token=task.stored_approval_token,
+    )
+    return execute_ide_cli_workflow(task_ide, _dispatch)
+
+
 def _execute_player_ia(task: TeamTask) -> dict[str, object]:
     return execute_player_ia(task)
 
@@ -739,6 +869,7 @@ _EXECUTORS: dict[str, Callable[[TeamTask], dict[str, object]]] = {
     "pm": _execute_pm,
     "dev_game": _execute_dev_game,
     "dev_godot": _execute_dev_godot,
+    "dev_studio": _execute_dev_studio,
     "player_ia": _execute_player_ia,
     "admin_infra": _execute_admin_infra,
     "contrarian": _execute_contrarian,
@@ -831,10 +962,41 @@ def _objective_is_guest_metrics(text: str) -> bool:
     return wall_cue and action_cue
 
 
+def _objective_is_network_inventory(text: str) -> bool:
+    """Inventaire LAN / cartographie / apparus-disparus (Héphaïstos)."""
+    t = (text or "").lower()
+    return any(
+        k in t
+        for k in (
+            "inventaire réseau",
+            "inventaire reseau",
+            "inventaire lan",
+            "cartograph",
+            "network_inventory",
+            "apparus",
+            "disparus",
+            "déconnect",
+            "deconnect",
+            "nouveaux appareils",
+            "nouvel appareil",
+            "freebox lan",
+            "scan réseau",
+            "scan reseau",
+            "scan lan",
+        )
+    )
+
+
 def _plan_from_at_mentions(
     objective: str, *, actor_id: str
 ) -> list[dict[str, object]] | None:
     """Si ≥2 @handles Team connus, une tâche par segment (objectifs NL respectés)."""
+    import unicodedata
+
+    def _fold_handle(s: str) -> str:
+        nfd = unicodedata.normalize("NFD", (s or "").strip())
+        return "".join(c for c in nfd if unicodedata.category(c) != "Mn").lower()
+
     raw = objective or ""
     handle_to_role: dict[str, str] = {
         "argus": "qa",
@@ -845,13 +1007,16 @@ def _plan_from_at_mentions(
         "iris": "dev_godot",
         "hermes": "dev_godot",
         "pygmalion": "dev_game",
+        "metis": "dev_studio",
         "choeur": "player_ia",
         "lia": "player_ia",
         "nix": "player_ia",
+        "lyra": "pm",
     }
     hits: list[tuple[str, str, str]] = []
-    for m in re.finditer(r"@([a-zA-Z0-9_-]+)\s*([^@]*)", raw):
-        handle = m.group(1).lower()
+    # Accents OK (@Thémis, @Métis) — fold NFD avant lookup
+    for m in re.finditer(r"@([^\s@:;,]+)\s*([^@]*)", raw):
+        handle = _fold_handle(m.group(1).rstrip(".,)"))
         role = handle_to_role.get(handle)
         if not role or role not in ROLE_SPECS:
             continue
@@ -895,6 +1060,8 @@ def _plan_from_at_mentions(
             ctx = {}
         if handle == "pygmalion":
             ctx = {"infographiste_ia": True, "subproject": "infographiste_ia"}
+        if handle in ("metis", "métis"):
+            ctx = {"ide_cli": True, "subproject": "cortex_studio"}
         if handle == "iris":
             track = "iris_full"
             if re.search(r"(?i)\bm9[abc]?\b|scrapaltai|minimap|carte\s*m\b", obj):
@@ -930,6 +1097,138 @@ def _plan_from_at_mentions(
     return out
 
 
+def _extract_compagnon_plan_body(objective: str) -> str:
+    """Corps markdown après le marqueur --- PLAN COMPAGNON ---."""
+    raw = objective or ""
+    parts = re.split(r"(?i)---\s*PLAN COMPAGNON\s*---", raw, maxsplit=1)
+    if len(parts) < 2:
+        return ""
+    return (parts[1] or "").strip()
+
+
+def _plan_from_compagnon_studio_plan(
+    objective: str, *, actor_id: str
+) -> list[dict[str, object]] | None:
+    """Handoff Compagnon → Campus : tâches alignées sur le plan lore, pas sur le coffee-fill.
+
+    Déclenché par le marqueur ``--- PLAN COMPAGNON ---`` (plan_submit) ou la formule
+    « Plan studio Compagnon ». Pas de QA smoke / M9a audit sauf demande explicite dans le plan.
+    """
+    raw = (objective or "").strip()
+    if not raw:
+        return None
+    low = raw.lower()
+    if "--- plan compagnon ---" not in low and "plan studio compagnon" not in low:
+        return None
+
+    body = _extract_compagnon_plan_body(raw)
+    scope = body if body else raw
+    scope_low = scope.lower()
+
+    def _row(
+        role: str,
+        obj: str,
+        *,
+        context: dict[str, object] | None = None,
+        priority: str = "normal",
+    ) -> dict[str, object]:
+        spec = ROLE_SPECS[role]
+        row: dict[str, object] = {
+            "role": role,
+            "objective": obj,
+            "priority": priority,
+            "approval_required": False,
+            "actor_id": actor_id,
+            "capability": spec["capability"],
+            **{k: v for k, v in role_display(role).items() if k in ("alias", "title", "label")},
+        }
+        ctx = {"compagnon_plan": True, **(context or {})}
+        row["context"] = ctx
+        return row
+
+    out: list[dict[str, object]] = []
+
+    # PM : conserve le plan (objectif long) pour découpe / suivi bureau
+    pm_obj = raw if len(raw) <= 1800 else (
+        raw[:800].rstrip()
+        + "\n…\n"
+        + (body[:900].rstrip() + ("\n…" if len(body) > 900 else "") if body else raw[-800:])
+    )
+    out.append(
+        _row(
+            "pm",
+            pm_obj,
+            context={"docs_only": True, "presence_agent_id": "studio_pm_themis"},
+            priority="high",
+        )
+    )
+
+    worldish = any(
+        k in scope_low
+        for k in (
+            "faction",
+            "scrapaltai",
+            "lost heaven",
+            "lore",
+            "game design",
+            "ville",
+        )
+    ) or bool(re.search(r"(?i)\bpnj\b|\bpoi\b", scope_low))
+
+    if worldish:
+        out.append(
+            _row(
+                "dev_game",
+                "Dédale — plan Compagnon : répartition factions Scrapaltai (évolutive) "
+                "+ 2 villes/POI + data PNJ par faction (content monde, pas audit M9a)",
+                context={
+                    "subproject": "content_world",
+                    "docs_only": True,
+                    "world_factions": True,
+                    "scrapaltai_world": True,
+                },
+                priority="high",
+            )
+        )
+        out.append(
+            _row(
+                "player_ia",
+                "Chœur — plan Compagnon : répartition PNJ / joueurs IA par faction "
+                "sur les nouveaux POI Scrapaltai",
+                context={"docs_only": True, "scrapaltai_world": True},
+            )
+        )
+    else:
+        # Plan générique : une tâche contenu à partir de la 1ʳᵉ phase si présente
+        phase_m = re.search(
+            r"(?im)^\s*(?:[-*]|\d+[.)])\s*\**\s*Phase\s*\d+[^*\n]*\**\s*[—:\-]?\s*(.+)$",
+            scope,
+        )
+        if phase_m:
+            out.append(
+                _row(
+                    "dev_game",
+                    f"Dédale — plan Compagnon, phase 1 : {phase_m.group(1).strip()[:220]}",
+                    context={"subproject": "content_world", "docs_only": True},
+                )
+            )
+
+    # Smoke / QA seulement si le plan le demande explicitement (pas le préambule)
+    if re.search(
+        r"(?i)\b(smoke|valider\s+lan|healthz|owner\s*smoke|tests?\s+qa)\b",
+        scope_low,
+    ):
+        out.append(
+            _row(
+                "qa",
+                "Argus — smoke demandé par le plan Compagnon",
+                context={"_require_owner_smoke": True},
+            )
+        )
+
+    return out[:4]
+
+
 def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> list[dict[str, object]]:
     """Propose des tâches à partir d'un objectif NL (heuristique phase A)."""
     text = (objective or "").lower()
@@ -963,6 +1262,146 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     mentioned = _plan_from_at_mentions(objective, actor_id=actor_id)
     if mentioned is not None:
         return mentioned
+
+    # --- Plan studio Compagnon (handoff chat → Campus) ---
+    # Avant le soup « smoke/MMO/plan » : évite QA Smoke LAN + bug gameplay générique.
+    compagnon_plan = _plan_from_compagnon_studio_plan(objective, actor_id=actor_id)
+    if compagnon_plan is not None:
+        return compagnon_plan
+
+    # --- Métis / forge studio hors jeu (ADR 0025) ---
+    if re.search(
+        r"(?i)\b(m[eé]tis|dev_studio|cortex_studio|"
+        r"(?:patch|forge|fix)\s+(?:cortex|compagnon|pilot)\b|"
+        r"mains?\s+code\s+(?:studio|hors\s+jeu))\b",
+        objective or "",
+    ):
+        _add(
+            "dev_studio",
+            objective.strip() if len((objective or "").strip()) >= 8 else str(ROLE_SPECS["dev_studio"]["default_objective"]),
+            context={"ide_cli": True, "subproject": "cortex_studio"},
+        )
+        return proposals
+
+    # --- Veille concurrents / docs-only : plan ciblé (évite coffee-fill playbooks génériques) ---
+    if re.search(
+        r"(?i)\b(concurrents|docs?\s*only|vague\s*[abc]|focus_concurrents|"
+        r"agent_skill_mmo|boite_idees|c1[-–]c12)\b",
+        objective or "",
+    ):
+        wave_m = re.search(r"(?i)vague\s*([abc])", objective or "")
+        wave = (wave_m.group(1).upper() if wave_m else "A")
+        if wave == "A" or "docs" in text:
+            _add(
+                "pm",
+                "Thémis — plan 72h concurrents (5 lignes) — FOCUS_CONCURRENTS_TEAM",
+                context={"concurrents_ticket": "plan_72h", "concurrents_wave": wave, "docs_only": True},
+            )
+            _add(
+                "player_ia",
+                "Chœur — brouillon AGENT_SKILL_MMO.md (C9) + schéma mémoire C2 — docs only",
+                context={"concurrents_ticket": "C9_C2", "concurrents_wave": wave, "docs_only": True},
+            )
+            _add(
+                "dev_godot",
+                "Iris — design C1 suggestions dialogue hub — docs only",
+                context={
+                    "concurrents_ticket": "C1",
+                    "concurrents_wave": wave,
+                    "docs_only": True,
+                    "godot_dev_persona": "iris",
+                    "subproject": "godot_iris",
+                },
+            )
+            _add(
+                "dev_game",
+                "Dédale — stubs C4 event + C8 POI scrap — JSON content/",
+                context={
+                    "concurrents_ticket": "C4_C8",
+                    "concurrents_wave": wave,
+                    "docs_only": True,
+                    "subproject": "content_world",
+                },
+            )
+            return proposals
+        if wave == "B":
+            _add(
+                "dev_godot",
+                "Iris — C1+C2 dialogue + world_hint (Vague B)",
+                context={
+                    "concurrents_ticket": "C1_C2",
+                    "concurrents_wave": "B",
+                    "godot_dev_persona": "iris",
+                    "subproject": "godot_iris",
+                },
+            )
+            _add(
+                "player_ia",
+                "Chœur — C3 compagnon spawn + finaliser C9",
+                context={"concurrents_ticket": "C3_C9", "concurrents_wave": "B"},
+            )
+            _add(
+                "qa",
+                "Argus — smoke dialogue / hunt Vague B",
+                context={
+                    "concurrents_ticket": "smoke_B",
+                    "concurrents_wave": "B",
+                    "owner_smoke_bundle": "godot_login",
+                    "_require_owner_smoke": True,
+                },
+            )
+            return proposals
+        # Vague C
+        _add(
+            "dev_godot",
+            "Hermès — C10 catalog + C11 tick",
+            context={
+                "concurrents_ticket": "C10_C11",
+                "concurrents_wave": "C",
+                "godot_dev_persona": "hermes",
+                "subproject": "godot_hermes",
+            },
+        )
+        _add(
+            "dev_godot",
+            "Iris — C12 dual response",
+            context={
+                "concurrents_ticket": "C12",
+                "concurrents_wave": "C",
+                "godot_dev_persona": "iris",
+                "subproject": "godot_iris",
+            },
+        )
+        _add(
+            "dev_game",
+            "Dédale — C5 chronique + C7 marchand",
+            context={"concurrents_ticket": "C5_C7", "concurrents_wave": "C"},
+        )
+        _add(
+            "qa",
+            "Argus — smoke stubs Vague C",
+            context={
+                "concurrents_ticket": "smoke_C",
+                "concurrents_wave": "C",
+                "_require_owner_smoke": True,
+            },
+        )
+        return proposals
+
+    # --- Inventaire LAN / apparus-disparus (Héphaïstos) ---
+    if _objective_is_network_inventory(text):
+        _add(
+            "ops",
+            "Héphaïstos — inventaire LAN (Freebox + scan) + diff apparus/disparus",
+            context={
+                "ops_kind": "network_inventory",
+                "persist_state": True,
+                "freebox_lan": True,
+                "cast_probe": True,
+                "presence_agent_id": "studio_ops_hephaistos",
+            },
+        )
+        return proposals
 
     # --- Mur INFRA LAN guest disk/load (100/140/245/246) ---
     if _objective_is_guest_metrics(text):
@@ -1241,6 +1680,37 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
     if any(
         k in text
         for k in (
+            "evolution_veille",
+            "veille évolution",
+            "veille evolution",
+            "veille lbg",
+            "pistes tiktok",
+            "faisabilité pour l'écosystème",
+            "faisabilite pour l'ecosysteme",
+            "faisabilité lbg",
+            "faisabilite lbg",
+        )
+    ):
+        proposals.append(
+            {
+                "role": "pm",
+                "objective": objective,
+                "priority": "high",
+                "approval_required": False,
+                "actor_id": actor_id,
+                "capability": ROLE_SPECS["pm"]["capability"],
+                "context": {
+                    "evolution_veille": True,
+                    "presence_agent_id": "studio_pm_themis",
+                    "silent": True,
+                    "browser_open": False,
+                },
+                **{k: v for k, v in role_display("pm").items() if k in ("alias", "title", "label")},
+            }
+        )
+    if any(
+        k in text
+        for k in (
             "evolution_sprint",
             "sprint évolution",
             "sprint evolution",
@@ -1406,7 +1876,14 @@ def plan_from_objective(objective: str, *, actor_id: str = "system:team") -> lis
 
     if not proposals:
         _add("pm", objective)
-        _add("qa", str(ROLE_SPECS["qa"]["default_objective"]))
+    else:
+        # Cap anti-dilution : un objectif NL large ne doit pas spawn 6+ playbooks génériques.
+        max_n = 4
+        m = re.search(r"(?i)max[_ ]?tasks?\s*[=:]?\s*(\d+)", objective or "")
+        if m:
+            max_n = max(1, min(6, int(m.group(1))))
+        if len(proposals) > max_n:
+            proposals[:] = proposals[:max_n]
 
     return proposals
 
@@ -1482,6 +1959,14 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
         else:
             result = dict(result)
         ok = bool(result.get("ok", True))
+        # Plan évolutions — refuse faux done / exige evidence (avant status final)
+        try:
+            from team.plan_ticket_closure import apply_plan_closure_gate
+
+            result = apply_plan_closure_gate(task, result)
+            ok = bool(result.get("ok", True))
+        except Exception:
+            pass
         status = "done" if ok else "failed"
         # Agency A.6 — trace consommation leçons injectées
         try:
@@ -1537,7 +2022,33 @@ def run_task(task_id: str, *, approval_token: str | None = None) -> TeamTask | N
                 else 0,
             }
         )
-        if task.role == "qa" and status == "failed":
+        plan_relaunched: list[str] = []
+        if status == "failed":
+            refreshed_plan = team_store.get_task(task_id)
+            if refreshed_plan is not None:
+                try:
+                    from team.plan_ticket_closure import (
+                        is_plan_ticket_task,
+                        maybe_relaunch_plan_ticket,
+                    )
+
+                    if is_plan_ticket_task(refreshed_plan):
+                        plan_relaunched = maybe_relaunch_plan_ticket(refreshed_plan)
+                        if plan_relaunched:
+                            _trace_log(
+                                {
+                                    "event": "plan_relaunch_spawned",
+                                    "task_id": task_id,
+                                    "followup_ids": plan_relaunched,
+                                    "trace_id": trace_id,
+                                }
+                            )
+                except Exception:
+                    plan_relaunched = []
+
+        if plan_relaunched:
+            pass  # reprise plan prioritaire (timeout / qualité)
+        elif task.role == "qa" and status == "failed":
             refreshed = team_store.get_task(task_id)
             if refreshed is not None:
                 res = refreshed.result if isinstance(refreshed.result, dict) else {}

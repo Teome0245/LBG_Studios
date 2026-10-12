@@ -29,6 +29,8 @@ from lbg_agents.infographiste_status import run_infographiste_status
 from lbg_agents.godot_status import run_godot_status
 from lbg_agents.team_status import run_team_status
 from lbg_agents.infra_status import run_infra_status
+from lbg_agents.morning_brief import run_morning_brief
+from lbg_agents.memory_recall import run_memory_recall
 from lbg_agents.sprites_status import run_sprites_status
 from lbg_agents.project_status import run_project_status
 from lbg_agents.quests_stub import run_quests_stub
@@ -311,6 +313,14 @@ def _infra_status(actor_id: str, text: str, context: dict[str, Any]) -> dict[str
     return run_infra_status(actor_id=actor_id, text=text, context=context)
 
 
+def _morning_brief(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
+    return run_morning_brief(actor_id=actor_id, text=text, context=context)
+
+
+def _memory_recall(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
+    return run_memory_recall(actor_id=actor_id, text=text, context=context)
+
+
 def _project_status(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any]:
     return run_project_status(actor_id=actor_id, text=text, context=context)
 
@@ -385,8 +395,31 @@ def _desktop(actor_id: str, text: str, context: dict[str, Any]) -> dict[str, Any
                 "comfyui_restart",
                 "comfyui_queue",
                 "comfyui_patch_and_queue",
+                "run_cli_agent",
+                "ide_cli",
+                "cli_agent",
+                "update_vscode",
             }
-            with httpx.Client(timeout=120.0 if str((raw or {}).get("kind") or "") in long_kinds else 15.0) as client:
+            kind_s = str((raw or {}).get("kind") or "")
+            timeout = 300.0 if kind_s in long_kinds else 15.0
+            if kind_s in ("run_cli_agent", "ide_cli", "cli_agent"):
+                try:
+                    timeout = float(os.environ.get("LBG_DESKTOP_CLI_AGENT_HTTP_TIMEOUT_S", "1500"))
+                except ValueError:
+                    timeout = 1500.0
+                # Buffer HTTP ≥ timeout_s agent + marge (évite ReadTimeout orch pendant OpenCode)
+                try:
+                    agent_to = float((raw or {}).get("timeout_s") or 0)
+                except (TypeError, ValueError):
+                    agent_to = 0.0
+                if agent_to > 0:
+                    timeout = max(timeout, agent_to + 120.0)
+                # Plancher aussi via longueur prompt (aligné budget agent)
+                prompt_len = len(str((raw or {}).get("prompt") or text or ""))
+                if prompt_len > 0:
+                    budget = 1200.0 + min(1500.0, (prompt_len // 500) * 60.0)
+                    timeout = max(timeout, budget + 120.0)
+            with httpx.Client(timeout=timeout) as client:
                 r = client.post(f"{base}/invoke", json={"actor_id": actor_id, "text": text, "context": ctx})
             if r.status_code >= 400:
                 return _with_desktop_hint({
@@ -506,6 +539,8 @@ _HANDLERS: dict[str, Callable[..., dict[str, Any]]] = {
     "agent.godot_status": _godot_status,
     "agent.team_status": _team_status,
     "agent.infra_status": _infra_status,
+    "agent.morning_brief": _morning_brief,
+    "agent.memory_recall": _memory_recall,
     "agent.project_status": _project_status,
     "agent.devops": _devops,
     "agent.network": _network,

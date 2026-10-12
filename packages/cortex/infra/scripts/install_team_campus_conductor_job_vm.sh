@@ -26,12 +26,21 @@ sudo touch "$ENV_FILE"
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED 1
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_MAX_BUSY 4
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_MAX_STARTS 2
-touch_env LBG_TEAM_CAMPUS_CONDUCTOR_ROLES "qa,ops,pm,admin_infra,dev_game,dev_godot"
+touch_env LBG_TEAM_CAMPUS_CONDUCTOR_ROLES "qa,ops,pm,admin_infra,dev_game,dev_godot,dev_studio,player_ia"
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_JOB_ENABLED 1
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_FILL 1
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_MIN 3
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_MAX_SPAWN 1
 touch_env LBG_TEAM_CAMPUS_CONDUCTOR_COFFEE_COOLDOWN_S 1800
+# Drop-in orch : survit à un push_secrets qui oublie les clés CAMPUS dans lbg.env
+sudo mkdir -p /etc/systemd/system/lbg-orchestrator.service.d
+sudo tee /etc/systemd/system/lbg-orchestrator.service.d/campus-conductor.conf >/dev/null <<'DROPIN'
+[Service]
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED=1
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_MAX_BUSY=4
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_MAX_STARTS=2
+Environment=LBG_TEAM_CAMPUS_CONDUCTOR_JOB_ENABLED=1
+DROPIN
 sudo systemctl daemon-reload
 sudo systemctl enable lbg-team-campus-conductor-job.timer
 sudo systemctl restart lbg-team-campus-conductor-job.timer

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import threading
 import time
 import uuid
 from typing import Any
@@ -96,15 +97,26 @@ def _connect() -> sqlite3.Connection:
 
 
 _conn: sqlite3.Connection | None = None
+_db_lock = threading.RLock()
+
+
+def _safe_commit(conn: sqlite3.Connection) -> None:
+    """Commit tolérant aux courses multi-thread (Lyra daemon threads)."""
+    try:
+        conn.commit()
+    except sqlite3.OperationalError as exc:
+        if "no transaction is active" not in str(exc).lower():
+            raise
 
 
 def _get_conn() -> sqlite3.Connection:
     global _conn
-    if _conn is None:
-        _conn = _connect()
-        _conn.executescript(_SCHEMA)
-        _conn.commit()
-    return _conn
+    with _db_lock:
+        if _conn is None:
+            _conn = _connect()
+            _conn.executescript(_SCHEMA)
+            _safe_commit(_conn)
+        return _conn
 
 
 def get_connection() -> sqlite3.Connection:
@@ -168,30 +180,31 @@ def create_task(
     # L2 sans jeton → status review dès la création (bureau des validations / presence).
     initial_status = "review" if (need_approval and not approval_token) else "queued"
     conn = _get_conn()
-    conn.execute(
-        """
-        INSERT INTO team_tasks (
-            id, role, objective, status, priority, approval_required,
-            actor_id, context_json, result_json, trace_id,
-            created_ts, updated_ts, stored_approval_token
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?, ?, ?)
-        """,
-        (
-            task_id,
-            role,
-            objective,
-            initial_status,
-            priority,
-            1 if need_approval else 0,
-            actor_id,
-            json.dumps(ctx, ensure_ascii=False),
-            trace_id or str(ctx.get("trace_id") or ""),
-            now,
-            now,
-            approval_token,
-        ),
-    )
-    conn.commit()
+    with _db_lock:
+        conn.execute(
+            """
+            INSERT INTO team_tasks (
+                id, role, objective, status, priority, approval_required,
+                actor_id, context_json, result_json, trace_id,
+                created_ts, updated_ts, stored_approval_token
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?, ?, ?)
+            """,
+            (
+                task_id,
+                role,
+                objective,
+                initial_status,
+                priority,
+                1 if need_approval else 0,
+                actor_id,
+                json.dumps(ctx, ensure_ascii=False),
+                trace_id or str(ctx.get("trace_id") or ""),
+                now,
+                now,
+                approval_token,
+            ),
+        )
+        _safe_commit(conn)
     task = get_task(task_id)
     if task is not None:
         try:
@@ -200,6 +213,13 @@ def create_task(
             team_presence.emit_from_task(task, event="status_changed")
         except Exception:
             pass
+        if need_approval and not approval_token:
+            try:
+                from team.l2_notify import notify_l2_pending
+
+                notify_l2_pending(task)
+            except Exception:
+                pass
     return task  # type: ignore[return-value]
 
 
@@ -281,27 +301,35 @@ def update_task(
         task.stored_approval_token = stored_approval_token
     task.updated_ts = time.time()
     conn = _get_conn()
-    conn.execute(
-        """
-        UPDATE team_tasks SET
-            status = ?, result_json = ?, context_json = ?,
-            updated_ts = ?, stored_approval_token = ?
-        WHERE id = ?
-        """,
-        (
-            task.status,
-            json.dumps(task.result, ensure_ascii=False),
-            json.dumps(task.context, ensure_ascii=False),
-            task.updated_ts,
-            task.stored_approval_token,
-            task_id,
-        ),
-    )
-    conn.commit()
+    with _db_lock:
+        conn.execute(
+            """
+            UPDATE team_tasks SET
+                status = ?, result_json = ?, context_json = ?,
+                updated_ts = ?, stored_approval_token = ?
+            WHERE id = ?
+            """,
+            (
+                task.status,
+                json.dumps(task.result, ensure_ascii=False),
+                json.dumps(task.context, ensure_ascii=False),
+                task.updated_ts,
+                task.stored_approval_token,
+                task_id,
+            ),
+        )
+        _safe_commit(conn)
     try:
         from team import presence as team_presence
 
         team_presence.emit_from_task(task, event="status_changed")
     except Exception:
         pass
+    if stored_approval_token is not None and task.stored_approval_token:
+        try:
+            from team.l2_notify import notify_l2_execute_ready
+
+            notify_l2_execute_ready(task)
+        except Exception:
+            pass
     return task

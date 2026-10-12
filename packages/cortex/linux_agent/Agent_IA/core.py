@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -100,7 +101,9 @@ def linux_dry_run(context: dict[str, Any] | None = None) -> bool:
     env = get_cfg("LBG_LINUX_DRY_RUN").strip()
     if env and truthy(env):
         return True
-    return bool(isinstance(context, dict) and context.get("desktop_dry_run") is True)
+    if not isinstance(context, dict):
+        return False
+    return context.get("desktop_dry_run") is True or context.get("dry_run") is True
 
 
 def linux_requires_approval() -> bool:
@@ -464,6 +467,169 @@ def heal_desktop_agent(*, dry_run: bool) -> dict[str, object]:
         return {"ok": False, "outcome": "error", "task": svc, "error": f"{type(e).__name__}: {e}", "before": before}
 
 
+# Paquets AUR/pacman que l’agent peut mettre à jour (allowlist stricte).
+_VSCODE_PKG = "visual-studio-code-bin"
+_PACKAGE_UPDATE_ALLOWLIST = frozenset({_VSCODE_PKG})
+
+
+def vscode_package_status() -> dict[str, object]:
+    """Lit version installée + éventuelle MAJ (pacman -Q / checkupdates), sans écrire."""
+    pkg = _VSCODE_PKG
+    current: str | None = None
+    available: str | None = None
+    try:
+        r = subprocess.run(
+            ["pacman", "-Q", pkg],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if r.returncode == 0 and (r.stdout or "").strip():
+            parts = (r.stdout or "").strip().split()
+            if len(parts) >= 2:
+                current = parts[1]
+    except Exception as e:
+        return {
+            "package": pkg,
+            "ok": False,
+            "error": f"pacman -Q: {type(e).__name__}: {e}",
+        }
+    # Prefer checkupdates: compares against a temp sync DB (no root, no /var/lib/pacman mutate).
+    # pacman -Qu alone often returns empty if the local sync DB is stale.
+    try:
+        cu = which("checkupdates") or "/usr/bin/checkupdates"
+        r2 = subprocess.run(
+            [cu],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        for line in (r2.stdout or "").splitlines():
+            s = line.strip()
+            if not s.startswith(pkg + " "):
+                continue
+            if "->" in s:
+                available = s.split("->", 1)[1].strip().split()[0]
+                break
+    except Exception:
+        available = None
+    if available is None:
+        try:
+            r3 = subprocess.run(
+                ["pacman", "-Qu", pkg],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            line = (r3.stdout or "").strip()
+            if line and "->" in line:
+                available = line.split("->", 1)[1].strip().split()[0]
+        except Exception:
+            available = None
+    update_available = bool(current and available and available != current)
+    return {
+        "ok": True,
+        "package": pkg,
+        "current": current,
+        "available": available,
+        "update_available": update_available,
+        "installed": current is not None,
+    }
+
+
+def update_vscode(*, dry_run: bool) -> dict[str, object]:
+    """Met à jour VS Code (AUR visual-studio-code-bin) via yay — poste Omarchy .143."""
+    pkg = _VSCODE_PKG
+    if pkg not in _PACKAGE_UPDATE_ALLOWLIST:
+        return {"ok": False, "outcome": "allowlist_denied", "error": f"Paquet hors allowlist: {pkg}"}
+    status = vscode_package_status()
+    if not status.get("ok"):
+        return {
+            "ok": False,
+            "outcome": "error",
+            "package": pkg,
+            "error": status.get("error") or "statut paquet illisible",
+            "status": status,
+        }
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "package": pkg,
+            "status": status,
+            "hint": (
+                f"Réel: yay -S --noconfirm --needed {pkg}"
+                + (
+                    f" ({status.get('current')} → {status.get('available')})"
+                    if status.get("update_available")
+                    else " (déjà à jour ou pas de sync)"
+                )
+            ),
+            "reply": (
+                f"MAJ VS Code disponible : {status.get('current')} → {status.get('available')}"
+                if status.get("update_available")
+                else f"VS Code déjà à jour ({status.get('current')}) ou aucune MAJ listée."
+            ),
+        }
+    if not status.get("update_available"):
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "package": pkg,
+            "status": status,
+            "skipped": True,
+            "reply": f"VS Code déjà à jour ({status.get('current')}).",
+        }
+    yay = which("yay") or "/usr/bin/yay"
+    try:
+        # Sync DB d’abord : sinon « --needed » peut ignorer une MAJ déjà listée par checkupdates.
+        subprocess.run(
+            [yay, "-Sy", "--noconfirm"],
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+        r = subprocess.run(
+            [yay, "-S", "--noconfirm", pkg],
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        detail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()
+        after = vscode_package_status()
+        if r.returncode != 0:
+            return {
+                "ok": False,
+                "outcome": "error",
+                "package": pkg,
+                "error": f"yay rc={r.returncode}",
+                "detail": detail[-800:],
+                "before": status,
+                "after": after,
+            }
+        return {
+            "ok": True,
+            "outcome": "ok",
+            "package": pkg,
+            "before": status,
+            "after": after,
+            "detail": detail[-400:],
+            "reply": (
+                f"VS Code mis à jour : {status.get('current')} → "
+                f"{after.get('current') or status.get('available')}."
+            ),
+            "hint": "Redémarrer VS Code manuellement quand les sessions Cline/Continue sont libres.",
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "outcome": "error",
+            "package": pkg,
+            "error": f"{type(e).__name__}: {e}",
+            "before": status,
+        }
+
+
 def mail_imap_enabled() -> bool:
     return truthy(get_cfg("LBG_LINUX_MAIL_ENABLED"))
 
@@ -529,5 +695,411 @@ def mail_imap_parse_action(action: dict[str, Any]) -> tuple[str, str, int, int, 
 
 
 def which(exe: str) -> str:
-    return shutil.which(exe) or ""
+    found = shutil.which(exe) or ""
+    if found:
+        return found
+    # Installs user (Cline CLI → ~/.local/bin) hors PATH systemd minimal
+    for root in (
+        Path.home() / ".local" / "bin",
+        Path("/home/lbg/.local/bin"),
+    ):
+        cand = root / exe
+        if cand.is_file() and os.access(cand, os.X_OK):
+            return str(cand)
+    return ""
 
+
+# -----------------------------------------------------------------------------
+# CLI agents IDE (Claude Code / Cline / OpenCode) — ADR 0025
+# -----------------------------------------------------------------------------
+
+_CLI_AGENT_APPS: frozenset[str] = frozenset({"claude", "cline", "opencode"})
+_DEFAULT_CLI_CWD = "/home/lbg/projects/LBG_Studios"
+# Modèles cloud / Anthropic API — interdits pour OpenCode headless LAN (ADR 0025)
+_CLI_MODEL_BLOCKLIST_RE = re.compile(
+    r"(?i)^(claude[-_]?(opus|sonnet|haiku)|anthropic/|gpt-4|o[13][-_]|gemini[-_])"
+)
+_CLI_MODEL_ALLOW_PREFIXES: tuple[str, ...] = (
+    "opencode/",
+    "ollama/",
+    "local/",
+)
+
+
+def cli_agent_enabled() -> bool:
+    return truthy(get_cfg("LBG_LINUX_CLI_AGENT_ENABLED") or "0")
+
+
+def cli_agent_model() -> str:
+    return (get_cfg("LBG_LINUX_CLI_AGENT_MODEL") or "opencode/big-pickle").strip()
+
+
+def cli_agent_model_ok(model: str) -> bool:
+    """Allowlist soft : préfixe local/opencode, ou id hors blocklist cloud."""
+    m = (model or "").strip()
+    if not m:
+        return False
+    if _CLI_MODEL_BLOCKLIST_RE.search(m):
+        return False
+    if any(m.startswith(p) for p in _CLI_MODEL_ALLOW_PREFIXES):
+        return True
+    # Ids courts type big-pickle sans préfixe : OK si pas cloud
+    if "/" not in m and not _CLI_MODEL_BLOCKLIST_RE.search(m):
+        return True
+    return False
+
+
+def cli_agent_timeout_s(action: dict[str, object] | None = None) -> int:
+    """Timeout subprocess CLI — plancher auto selon longueur du mandat (OpenCode multi-étapes).
+
+    Cap 3600 s. Un ``timeout_s`` explicite trop bas pour un long prompt est relevé
+    au budget (évite kill à 600 s sur mandat Métis).
+    """
+    action = action if isinstance(action, dict) else {}
+    app = str(action.get("app") or "").strip().lower()
+    prompt = str(action.get("prompt") or "")
+    raw = action.get("timeout_s")
+    if raw is None:
+        default = "1200" if app in ("opencode", "claude", "cline") else "900"
+        raw = get_cfg("LBG_LINUX_CLI_AGENT_TIMEOUT_S") or default
+    try:
+        n = int(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        n = 1200
+    n = max(n, _cli_prompt_budget_s(prompt, app))
+    return max(60, min(n, 3600))
+
+
+def _cli_prompt_budget_s(prompt: str, app: str) -> int:
+    """Budget mini : base + ~60 s / 500 car. de mandat (cap +1500)."""
+    base = 1200 if (app or "").lower() == "opencode" else 900
+    extra = min(1500, (len(prompt or "") // 500) * 60)
+    return base + extra
+
+
+def cli_agent_cwd_allowlist() -> list[Path]:
+    raw = (get_cfg("LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST") or "").strip()
+    roots: list[str] = []
+    if raw:
+        roots.extend(x.strip() for x in raw.split(",") if x.strip())
+    else:
+        roots.append("/home/lbg/projects")
+    out: list[Path] = []
+    for r in roots:
+        try:
+            out.append(Path(r).expanduser().resolve())
+        except Exception:
+            continue
+    return out
+
+
+def cli_agent_cwd_ok(cwd: str) -> bool:
+    try:
+        p = Path(cwd).expanduser().resolve()
+    except Exception:
+        return False
+    if not p.is_dir():
+        return False
+    for root in cli_agent_cwd_allowlist():
+        try:
+            if p == root or root in p.parents:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def resolve_cli_agent_argv(app: str, prompt: str) -> list[str] | None:
+    """Construit argv headless pour l'app (allowlist)."""
+    a = (app or "").strip().lower()
+    if a not in _CLI_AGENT_APPS:
+        return None
+    bin_path = which(a)
+    if a == "cline" and not bin_path:
+        bin_path = which("cline-cli")
+    if not bin_path:
+        return None
+    if a == "claude":
+        # Headless : -p + bare + skip permissions (sandbox .143, LLM local)
+        return [
+            bin_path,
+            "-p",
+            prompt,
+            "--output-format",
+            "text",
+            "--bare",
+            "--dangerously-skip-permissions",
+        ]
+    if a == "cline":
+        # Cline CLI 3.x — headless local Ollama (.110), coûts maîtrisés (ADR 0025 second avis)
+        provider = (get_cfg("LBG_LINUX_CLINE_PROVIDER") or "ollama").strip() or "ollama"
+        model = (
+            get_cfg("LBG_LINUX_CLINE_MODEL")
+            or "huihui_ai/gemma-4-abliterated:E4b-qat"
+        ).strip()
+        argv = [
+            bin_path,
+            "-y",
+            "--json",
+            "--thinking",
+            (get_cfg("LBG_LINUX_CLINE_THINKING") or "none").strip() or "none",
+            "-P",
+            provider,
+            "-m",
+            model,
+            "--auto-approve",
+            "true",
+        ]
+        argv.append(prompt)
+        return argv
+    if a == "opencode":
+        model = cli_agent_model()
+        if not cli_agent_model_ok(model):
+            return None
+        argv = [bin_path, "run"]
+        if model:
+            argv.extend(["-m", model])
+        argv.append(prompt)
+        return argv
+    return None
+
+
+def _cli_agent_child_env() -> dict[str, str]:
+    """Env enfant : Ollama local (.110) + PATH user (~/.local/bin pour cline)."""
+    env = {**os.environ, "TERM": "dumb"}
+    # Ne pas écraser si déjà posé dans linux.env / systemd
+    defaults = {
+        "ANTHROPIC_BASE_URL": get_cfg("ANTHROPIC_BASE_URL") or "http://192.168.0.110:11434",
+        "ANTHROPIC_AUTH_TOKEN": get_cfg("ANTHROPIC_AUTH_TOKEN") or "ollama",
+        "ANTHROPIC_API_KEY": get_cfg("ANTHROPIC_API_KEY") or "ollama",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT": "1",
+    }
+    for k, v in defaults.items():
+        if not (env.get(k) or "").strip():
+            env[k] = v
+    # Cline CLI installé en prefix user
+    home = os.path.expanduser("~")
+    local_bin = f"{home}/.local/bin"
+    path = env.get("PATH") or ""
+    if local_bin not in path.split(":"):
+        env["PATH"] = f"{local_bin}:{path}" if path else local_bin
+    return env
+
+def run_cli_agent(
+    *,
+    app: str,
+    prompt: str,
+    cwd: str | None = None,
+    dry_run: bool,
+    timeout_s: int | None = None,
+) -> dict[str, object]:
+    """Exécute un agent coding CLI headless (ADR 0025). Dry-run par défaut côté caller."""
+    if not cli_agent_enabled() and not dry_run:
+        return {
+            "ok": False,
+            "outcome": "feature_disabled",
+            "error": "LBG_LINUX_CLI_AGENT_ENABLED=0 — activer après smoke .143",
+            "app": app,
+        }
+    app_id = (app or "").strip().lower()
+    if app_id not in _CLI_AGENT_APPS:
+        return {
+            "ok": False,
+            "outcome": "allowlist_denied",
+            "error": f"app hors allowlist: {app_id}",
+            "allowed": sorted(_CLI_AGENT_APPS),
+        }
+    if app_id == "opencode":
+        model = cli_agent_model()
+        if not cli_agent_model_ok(model):
+            return {
+                "ok": False,
+                "outcome": "allowlist_denied",
+                "error": (
+                    f"modèle interdit pour OpenCode headless: {model!r} "
+                    "(préférer opencode/big-pickle ; pas de claude-sonnet*/cloud)"
+                ),
+                "model": model,
+                "hint": "LBG_LINUX_CLI_AGENT_MODEL=opencode/big-pickle",
+            }
+    prompt_s = (prompt or "").strip()
+    if not prompt_s:
+        return {"ok": False, "outcome": "bad_request", "error": "prompt vide", "app": app_id}
+    if len(prompt_s) > 12000:
+        return {"ok": False, "outcome": "bad_request", "error": "prompt trop long (>12000)", "app": app_id}
+
+    work = (cwd or "").strip() or os.environ.get("LBG_OMARCHY_STUDIO_WORKSPACE", _DEFAULT_CLI_CWD).strip()
+    if not cli_agent_cwd_ok(work):
+        return {
+            "ok": False,
+            "outcome": "allowlist_denied",
+            "error": f"cwd hors allowlist: {work}",
+            "cwd": work,
+            "cwd_allowlist": [str(p) for p in cli_agent_cwd_allowlist()],
+        }
+
+    argv = resolve_cli_agent_argv(app_id, prompt_s)
+    # Toujours clamp + budget prompt (même si timeout_s explicite trop bas)
+    to = cli_agent_timeout_s({"timeout_s": timeout_s, "prompt": prompt_s, "app": app_id})
+    if not argv:
+        if dry_run:
+            # Dry-run : preview même si binaire absent (smoke orch sans .143)
+            fake = {
+                "claude": ["claude", "-p", prompt_s, "--output-format", "text"],
+                "cline": [
+                    "cline",
+                    "-y",
+                    "--json",
+                    "-P",
+                    "ollama",
+                    "-m",
+                    "huihui_ai/gemma-4-abliterated:E4b-qat",
+                    prompt_s,
+                ],
+                "opencode": ["opencode", "run", prompt_s],
+            }.get(app_id, [app_id])
+            return {
+                "ok": True,
+                "outcome": "dry_run",
+                "app": app_id,
+                "cwd": work,
+                "argv": fake,
+                "timeout_s": to,
+                "prompt_preview": prompt_s[:240],
+                "prompt_chars": len(prompt_s),
+                "bin_missing": True,
+                "hint": f"Binaire « {app_id} » absent sur ce host — install sur .143 avant live",
+                "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} (bin missing)",
+            }
+        return {
+            "ok": False,
+            "outcome": "not_installed",
+            "error": f"binaire « {app_id} » introuvable sur PATH",
+            "app": app_id,
+            "cwd": work,
+        }
+
+    if dry_run:
+        return {
+            "ok": True,
+            "outcome": "dry_run",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+            "prompt_preview": prompt_s[:240],
+            "prompt_chars": len(prompt_s),
+            "hint": "Réel: LBG_LINUX_CLI_AGENT_ENABLED=1 + approval desktop",
+            "reply": f"Dry-run run_cli_agent app={app_id} cwd={work} timeout_s={to}",
+        }
+
+    # Présence Agents (D7) — télémétrie session (opt-in)
+    try:
+        import session_emitter as _se
+    except ImportError:
+        _se = None  # type: ignore
+    sid = ""
+    if _se is not None and _se.enabled():
+        sid = _se.new_session_id(f"cli-{app_id}")
+        _se.emit(
+            "session.start",
+            session_id=sid,
+            agent=app_id,
+            summary=f"{app_id} · {work}",
+            detail={"cwd": work, "kind": "run_cli_agent", "timeout_s": to},
+        )
+        _se.emit(
+            "session.prompt",
+            session_id=sid,
+            agent=app_id,
+            summary=prompt_s[:80],
+            detail={"prompt_chars": len(prompt_s)},
+        )
+
+    try:
+        proc = subprocess.run(
+            argv,
+            cwd=work,
+            capture_output=True,
+            text=True,
+            timeout=to,
+            check=False,
+            env=_cli_agent_child_env(),
+        )
+        stdout = (proc.stdout or "")[-4000:]
+        stderr = (proc.stderr or "")[-2000:]
+        ok = proc.returncode == 0
+        if _se is not None and _se.enabled() and sid:
+            if ok:
+                _se.emit(
+                    "session.stop",
+                    session_id=sid,
+                    agent=app_id,
+                    summary=f"exit {proc.returncode}",
+                    detail={"exit_code": proc.returncode},
+                )
+            else:
+                _se.emit(
+                    "session.error",
+                    session_id=sid,
+                    agent=app_id,
+                    summary=f"rc={proc.returncode}",
+                    detail={"exit_code": proc.returncode, "stderr_tail": stderr[-400:]},
+                )
+        return {
+            "ok": ok,
+            "outcome": "ok" if ok else "error",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+            "returncode": proc.returncode,
+            "stdout_tail": stdout,
+            "stderr_tail": stderr,
+            "reply": (stdout or stderr or f"rc={proc.returncode}")[:500],
+            "error": None if ok else f"cli rc={proc.returncode}",
+            "session_id": sid or None,
+        }
+    except subprocess.TimeoutExpired:
+        if _se is not None and _se.enabled() and sid:
+            _se.emit(
+                "session.error",
+                session_id=sid,
+                agent=app_id,
+                summary=f"timeout {to}s",
+                detail={"timeout_s": to},
+            )
+        return {
+            "ok": False,
+            "outcome": "timeout",
+            "error": f"timeout après {to}s",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "timeout_s": to,
+            "prompt_chars": len(prompt_s),
+            "session_id": sid or None,
+            "hint": (
+                "Augmenter LBG_LINUX_CLI_AGENT_TIMEOUT_S / context.ide_cli_timeout_s, "
+                "ou scinder le mandat (OpenCode multi-étapes)."
+            ),
+        }
+    except Exception as exc:
+        if _se is not None and _se.enabled() and sid:
+            _se.emit(
+                "session.error",
+                session_id=sid,
+                agent=app_id,
+                summary=f"{type(exc).__name__}",
+                detail={"error": str(exc)[:200]},
+            )
+        return {
+            "ok": False,
+            "outcome": "error",
+            "error": f"{type(exc).__name__}: {exc}",
+            "app": app_id,
+            "cwd": work,
+            "argv": argv,
+            "session_id": sid or None,
+        }

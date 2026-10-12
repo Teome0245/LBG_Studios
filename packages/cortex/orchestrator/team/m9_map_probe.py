@@ -41,7 +41,7 @@ def audit_m9a_readiness() -> dict[str, Any]:
     if not checks["maps_dir"]:
         gaps.append("assets/maps/ Prime Client absent")
 
-    cfg = maps_dir / "tatooine_map_config.json"
+    cfg = maps_dir / "scrapaltai_map_config.json"
     checks["map_config"] = cfg.is_file()
     if cfg.is_file():
         try:
@@ -50,18 +50,18 @@ def audit_m9a_readiness() -> dict[str, Any]:
             half = data.get("half_size")
             checks["planet_half_size_6500"] = half == 6500 or half == 6500.0
             if not checks["scrapaltai_display_name"]:
-                gaps.append("tatooine_map_config.json sans display_name Scrapaltai")
+                gaps.append("scrapaltai_map_config.json sans display_name Scrapaltai")
         except (json.JSONDecodeError, OSError):
             checks["map_config_valid"] = False
-            gaps.append("tatooine_map_config.json illisible")
+            gaps.append("scrapaltai_map_config.json illisible")
     else:
-        gaps.append("tatooine_map_config.json absent")
+        gaps.append("scrapaltai_map_config.json absent")
 
-    svg = maps_dir / "tatooine.svg"
-    png = maps_dir / "tatooine.png"
+    svg = maps_dir / "scrapaltai.svg"
+    png = maps_dir / "scrapaltai_shard_legacy.png"
     checks["planet_texture"] = svg.is_file() or png.is_file()
     if not checks["planet_texture"]:
-        gaps.append("texture planète tatooine.svg/png absente")
+        gaps.append("texture planète scrapaltai.svg/png absente")
 
     export_py = root / "tools/map_export/export_scrapaltai_for_godot.py"
     sync_sh = root / "infra/scripts/sync_scrapaltai_poi_godot.sh"
@@ -72,7 +72,7 @@ def audit_m9a_readiness() -> dict[str, Any]:
     if not checks["poi_sync_script"]:
         gaps.append("sync_scrapaltai_poi_godot.sh à créer (M9a-3)")
 
-    poi_json = prime / "assets/maps/tatooine_pois.json"
+    poi_json = prime / "assets/maps/scrapaltai_pois.json"
     checks["poi_layer_data"] = poi_json.is_file()
 
     scrapaltai_srv = root / "content/core3/world_poi/scrapaltai.json"

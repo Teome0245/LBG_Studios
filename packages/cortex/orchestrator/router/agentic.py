@@ -6,6 +6,12 @@ LangGraph de P03 est le **moteur de jobs** (`services/jobs.py`) : au lieu d'un d
 
 Désactivé par défaut (``LBG_CHAT_AGENTIC=0``) ; activable globalement ou par requête
 (``context.prefer_agentic = true``). N'élève que des intents actionnables connus.
+
+Phase C — allowlist optionnelle : ``LBG_CHAT_AGENTIC_INTENTS=devops_probe`` restreint
+l'élévation même si ``LBG_CHAT_AGENTIC=1`` (prod progressive).
+
+Phase F1 — étendre l'allowlist à ``project_pm`` (PM agentique → job fond, même pattern).
+Phase F2 — ``desktop_control`` (brief assets / Pygmalion) : dry-run par défaut à l'élévation.
 """
 
 from __future__ import annotations
@@ -27,7 +33,8 @@ AGENTIC_INTENTS = frozenset(
 )
 
 # Clés de contexte indiquant une **action structurée** explicite (panneaux spécialisés du Pilot).
-# Dans ce cas on ne ré-planifie pas depuis le texte : on respecte le dispatch one-shot voulu.
+# Seuls les **dict** bloquent l'élévation (payload console). Un bool ``project_pm: true`` /
+# ``pm_focus`` reste compatible avec le mode agentique (phase F1).
 _STRUCTURED_ACTION_KEYS = (
     "devops_action",
     "desktop_action",
@@ -42,6 +49,18 @@ def _truthy(raw: str) -> bool:
     return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
+def agentic_intents_allowlist() -> frozenset[str] | None:
+    """Si ``LBG_CHAT_AGENTIC_INTENTS`` est défini, seuls ces intents s'élèvent.
+
+    Vide / absent → tous les ``AGENTIC_INTENTS``.
+    """
+    raw = os.environ.get("LBG_CHAT_AGENTIC_INTENTS", "").strip()
+    if not raw:
+        return None
+    parts = {p.strip() for p in raw.split(",") if p.strip()}
+    return frozenset(parts) if parts else None
+
+
 def chat_agentic_enabled(context: dict[str, Any] | None) -> bool:
     if isinstance(context, dict):
         pref = context.get("prefer_agentic")
@@ -52,6 +71,12 @@ def chat_agentic_enabled(context: dict[str, Any] | None) -> bool:
     return _truthy(os.environ.get("LBG_CHAT_AGENTIC", "0"))
 
 
+def _has_structured_action_payload(context: dict[str, Any] | None) -> bool:
+    if not isinstance(context, dict):
+        return False
+    return any(isinstance(context.get(k), dict) for k in _STRUCTURED_ACTION_KEYS)
+
+
 def should_elevate_to_agentic(intent: str, context: dict[str, Any] | None = None) -> bool:
     """Vrai si la requête doit être déléguée au moteur de jobs plutôt qu'à un dispatch one-shot."""
     if not chat_agentic_enabled(context):
@@ -59,12 +84,15 @@ def should_elevate_to_agentic(intent: str, context: dict[str, Any] | None = None
     if not svc_jobs.runner_enabled():
         # Sans runner de fond, un job resterait « queued » : on garde le dispatch synchrone.
         return False
-    if isinstance(context, dict) and any(
-        isinstance(context.get(k), dict) or context.get(k) is True for k in _STRUCTURED_ACTION_KEYS
-    ):
+    if _has_structured_action_payload(context):
         # Action structurée explicite (console spécialisée) : pas d'élévation, dispatch one-shot.
         return False
-    return intent in AGENTIC_INTENTS
+    if intent not in AGENTIC_INTENTS:
+        return False
+    allow = agentic_intents_allowlist()
+    if allow is not None and intent not in allow:
+        return False
+    return True
 
 
 def elevate_to_job(
@@ -77,10 +105,22 @@ def elevate_to_job(
     """Crée un job de fond pour ``text`` et renvoie une sortie compatible /route."""
     approval = context.get("devops_approval") or context.get("approval_token")
     approval = approval if isinstance(approval, str) and approval.strip() else None
+    ctx = dict(context)
+    # Aide le planner sans payload structuré bloquant (F1).
+    if intent == "project_pm" and not isinstance(ctx.get("project_pm"), dict):
+        ctx.setdefault("pm_focus", True)
+        ctx.setdefault("_agentic_from", "project_pm")
+    # F2 — desktop/Comfy : jamais d'effet de bord sans HITL ; dry-run par défaut.
+    if intent == "desktop_control" and not isinstance(ctx.get("desktop_action"), dict):
+        ctx.setdefault("desktop_dry_run", True)
+        ctx.setdefault("_agentic_from", "desktop_control")
+        if ctx.get("_pygmalion_brief") or ctx.get("infographiste_ia"):
+            ctx.setdefault("infographiste_ia", True)
+            ctx.setdefault("subproject", "infographiste_ia")
     job = svc_jobs.create_job(
         actor_id=actor_id,
         objective=text,
-        context=context,
+        context=ctx,
         approval_token=approval,
         auto_start=True,
     )
@@ -93,8 +133,10 @@ def elevate_to_job(
         "n_steps": len(job.steps),
         "plan_source": job.plan_source,
         "trace_id": job.trace_id,
+        "pilot_jobs_href": f"#/jobs?job={job.id}",
         "reply": (
             f"Tâche prise en charge en arrière-plan (job {job.id[:8]}…, {len(job.steps)} étape(s), "
-            f"statut « {job.status} »). Suivi dans Pilot ▸ Jobs."
+            f"statut « {job.status} »). Suivi : Pilot ▸ Jobs "
+            f"(#/jobs?job={job.id})."
         ),
     }

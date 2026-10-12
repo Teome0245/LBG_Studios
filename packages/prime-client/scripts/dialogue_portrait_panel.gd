@@ -5,6 +5,9 @@ class_name DialoguePortraitPanel
 const _PortraitRegistry = preload("res://scripts/portrait_registry.gd")
 
 signal followup_submitted(text: String)
+signal suggestion_clicked(utterance: String)
+## C1 — coup complet (kind / action) pour UI côté client (ex. open_mission_board).
+signal suggestion_activated(move: Dictionary)
 
 @export var panel_visible: bool = false
 
@@ -13,12 +16,14 @@ var _body: Label
 var _portrait: TextureRect
 var _hint: Label
 var _input: LineEdit
+var _moves_row: HBoxContainer
 var _current_speaker_key: String = ""
 var _current_kind: String = "npc"
 var _current_name: String = ""
 var _current_entity_key: String = ""
 var _current_expression: String = "neutral"
 var _chat_enabled: bool = false
+var _moves_busy: bool = false
 
 func _ready() -> void:
 	visible = panel_visible
@@ -98,6 +103,21 @@ func _ensure_ui() -> void:
 		_body.add_theme_color_override("font_color", Color(0.92, 0.9, 0.84, 1))
 		vbox.add_child(_body)
 
+	_moves_row = vbox.get_node_or_null("SuggestedMoves") as HBoxContainer
+	if _moves_row == null:
+		_moves_row = HBoxContainer.new()
+		_moves_row.name = "SuggestedMoves"
+		_moves_row.add_theme_constant_override("separation", 6)
+		_moves_row.visible = false
+		_moves_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# Sous le corps, au-dessus du LineEdit (avant Hint si présent).
+		var body_i := _body.get_index() if _body else -1
+		if body_i >= 0:
+			vbox.add_child(_moves_row)
+			vbox.move_child(_moves_row, body_i + 1)
+		else:
+			vbox.add_child(_moves_row)
+
 	_input = vbox.get_node_or_null("FollowUp") as LineEdit
 	if _input == null:
 		_input = LineEdit.new()
@@ -107,7 +127,12 @@ func _ensure_ui() -> void:
 		_input.visible = false
 		_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_input.text_submitted.connect(_on_followup_submitted)
+		var moves_i := _moves_row.get_index() if _moves_row else -1
 		vbox.add_child(_input)
+		if moves_i >= 0:
+			vbox.move_child(_input, moves_i + 1)
+	elif not _input.text_submitted.is_connected(_on_followup_submitted):
+		_input.text_submitted.connect(_on_followup_submitted)
 
 	_hint = vbox.get_node_or_null("Hint") as Label
 	if _hint == null:
@@ -142,6 +167,7 @@ func show_portrait(
 		_input.visible = _chat_enabled
 		_input.editable = _chat_enabled
 		_input.clear()
+	clear_suggested_moves()
 	_apply_current_portrait()
 
 func set_expression(expression: String) -> void:
@@ -152,10 +178,49 @@ func set_body_text(body_text: String) -> void:
 	if _body:
 		_body.text = body_text
 
-func set_chat_busy(busy: bool) -> void:
-	if _input == null:
+func clear_suggested_moves() -> void:
+	if _moves_row == null:
 		return
-	_input.editable = _chat_enabled and not busy
+	for c in _moves_row.get_children():
+		c.queue_free()
+	_moves_row.visible = false
+
+func set_suggested_moves(moves: Array) -> void:
+	_ensure_ui()
+	clear_suggested_moves()
+	if not _chat_enabled or _moves_row == null:
+		return
+	var n := 0
+	for item in moves:
+		if n >= 3:
+			break
+		if not item is Dictionary:
+			continue
+		var m: Dictionary = item
+		var label := str(m.get("label", "")).strip_edges()
+		var utterance := str(m.get("utterance", label)).strip_edges()
+		if label.is_empty() or utterance.is_empty():
+			continue
+		if label.length() > 28:
+			label = label.substr(0, 28)
+		var btn := Button.new()
+		btn.text = label
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.disabled = _moves_busy
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_suggestion_pressed.bind(m.duplicate(true)))
+		_moves_row.add_child(btn)
+		n += 1
+	_moves_row.visible = n > 0
+
+func set_chat_busy(busy: bool) -> void:
+	_moves_busy = busy
+	if _input:
+		_input.editable = _chat_enabled and not busy
+	if _moves_row:
+		for c in _moves_row.get_children():
+			if c is BaseButton:
+				(c as BaseButton).disabled = busy or not _chat_enabled
 	if _hint and _chat_enabled:
 		_hint.text = (
 			"Échange en cours…" if busy
@@ -167,6 +232,7 @@ func hide_portrait() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_chat_enabled = false
+	clear_suggested_moves()
 	if _input:
 		_input.visible = false
 		_input.clear()
@@ -191,6 +257,19 @@ func _on_followup_submitted(text: String) -> void:
 	if _input:
 		_input.clear()
 	followup_submitted.emit(t)
+
+func _on_suggestion_pressed(move: Dictionary) -> void:
+	if not _chat_enabled or _moves_busy:
+		return
+	suggestion_activated.emit(move)
+	var kind := str(move.get("kind", "")).strip_edges().to_lower()
+	if kind == "ui":
+		# Action client seule (ex. open_mission_board) — pas d’utterance LLM.
+		return
+	var utterance := str(move.get("utterance", move.get("label", ""))).strip_edges()
+	if utterance.is_empty():
+		return
+	suggestion_clicked.emit(utterance)
 
 func _apply_current_portrait() -> void:
 	if _portrait == null:

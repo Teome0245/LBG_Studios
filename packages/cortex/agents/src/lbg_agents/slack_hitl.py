@@ -151,13 +151,100 @@ def resolve_task_id(task_ref: str) -> tuple[str | None, str | None]:
     return None, f"ambigu `{ref}` → {len(matches)} tâches"
 
 
+def resolve_job_id(job_ref: str) -> tuple[str | None, str | None]:
+    """Résout un id job court ou complet via ``GET /v1/jobs``."""
+    ref = (job_ref or "").strip()
+    if not ref:
+        return None, "réf vide"
+    if len(ref) >= 32:
+        return ref, None
+
+    code, body = _http_json("GET", f"{orch_base_url()}/v1/jobs", timeout_s=15.0)
+    if code >= 400:
+        return None, f"list jobs HTTP {code}"
+    jobs = body.get("jobs") if isinstance(body.get("jobs"), list) else []
+    matches = [
+        str(j.get("id"))
+        for j in jobs
+        if isinstance(j, dict) and str(j.get("id") or "").startswith(ref)
+    ]
+    if len(matches) == 1:
+        return matches[0], None
+    if not matches:
+        return None, f"aucun job pour `{ref}`"
+    return None, f"ambigu job `{ref}` → {len(matches)}"
+
+
+def resolve_hitl_target(ref: str) -> tuple[str | None, str | None, str | None]:
+    """Retourne ``(kind, id, error)`` — kind ∈ ``task``|``job``."""
+    tid, terr = resolve_task_id(ref)
+    if tid and not terr:
+        return "task", tid, None
+    jid, jerr = resolve_job_id(ref)
+    if jid and not jerr:
+        return "job", jid, None
+    return None, None, terr or jerr or "introuvable"
+
+
+def approve_job(job_ref: str) -> dict[str, Any]:
+    token = approval_token()
+    if not token:
+        return {"ok": False, "error": "LBG_TEAM_APPROVAL_TOKEN manquant"}
+    jid, err = resolve_job_id(job_ref)
+    if err or not jid:
+        return {"ok": False, "error": err or "introuvable", "kind": "job"}
+    code, body = _http_json(
+        "POST",
+        f"{orch_base_url()}/v1/jobs/{urllib.parse.quote(jid)}/approve",
+        body={"token": token},
+        timeout_s=30.0,
+    )
+    if code >= 400:
+        return {"ok": False, "error": f"job approve HTTP {code}", "body": body, "job_id": jid}
+    return {
+        "ok": True,
+        "action": "approve_job",
+        "kind": "job",
+        "job_id": jid,
+        "task_id": jid,
+        "short_id": short_task_id(jid),
+        "job": body,
+    }
+
+
+def reject_job(job_ref: str) -> dict[str, Any]:
+    jid, err = resolve_job_id(job_ref)
+    if err or not jid:
+        return {"ok": False, "error": err or "introuvable", "kind": "job"}
+    code, body = _http_json(
+        "POST",
+        f"{orch_base_url()}/v1/jobs/{urllib.parse.quote(jid)}/cancel",
+        body={},
+        timeout_s=20.0,
+    )
+    if code >= 400:
+        return {"ok": False, "error": f"job cancel HTTP {code}", "body": body, "job_id": jid}
+    return {
+        "ok": True,
+        "action": "reject_job",
+        "kind": "job",
+        "job_id": jid,
+        "task_id": jid,
+        "short_id": short_task_id(jid),
+        "job": body,
+    }
+
+
 def approve_and_run(task_ref: str) -> dict[str, Any]:
     token = approval_token()
     if not token:
         return {"ok": False, "error": "LBG_TEAM_APPROVAL_TOKEN manquant"}
-    tid, err = resolve_task_id(task_ref)
-    if err or not tid:
+
+    kind, tid, err = resolve_hitl_target(task_ref)
+    if err or not kind or not tid:
         return {"ok": False, "error": err or "introuvable"}
+    if kind == "job":
+        return approve_job(tid)
 
     code_a, body_a = _http_json(
         "POST",
@@ -166,6 +253,9 @@ def approve_and_run(task_ref: str) -> dict[str, Any]:
         timeout_s=20.0,
     )
     if code_a >= 400:
+        job_try = approve_job(task_ref)
+        if job_try.get("ok"):
+            return job_try
         return {"ok": False, "error": f"approve HTTP {code_a}", "body": body_a, "task_id": tid}
 
     code_r, body_r = _http_json(
@@ -179,6 +269,7 @@ def approve_and_run(task_ref: str) -> dict[str, Any]:
     return {
         "ok": True,
         "action": "approve_run",
+        "kind": "task",
         "task_id": tid,
         "short_id": short_task_id(tid),
         "task": body_r,
@@ -186,9 +277,12 @@ def approve_and_run(task_ref: str) -> dict[str, Any]:
 
 
 def reject_task(task_ref: str) -> dict[str, Any]:
-    tid, err = resolve_task_id(task_ref)
-    if err or not tid:
+    kind, tid, err = resolve_hitl_target(task_ref)
+    if err or not kind or not tid:
         return {"ok": False, "error": err or "introuvable"}
+    if kind == "job":
+        return reject_job(tid)
+
     code, body = _http_json(
         "POST",
         f"{orch_base_url()}/v1/team/tasks/{urllib.parse.quote(tid)}/cancel",
@@ -196,10 +290,14 @@ def reject_task(task_ref: str) -> dict[str, Any]:
         timeout_s=20.0,
     )
     if code >= 400:
+        job_try = reject_job(task_ref)
+        if job_try.get("ok"):
+            return job_try
         return {"ok": False, "error": f"cancel HTTP {code}", "body": body, "task_id": tid}
     return {
         "ok": True,
         "action": "reject",
+        "kind": "task",
         "task_id": tid,
         "short_id": short_task_id(tid),
         "task": body,

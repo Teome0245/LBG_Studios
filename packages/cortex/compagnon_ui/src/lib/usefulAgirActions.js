@@ -37,11 +37,18 @@ export const USEFUL_AGIR_ACTIONS = [
     kind: 'mail_imap_preview',
   },
   {
-    id: 'search',
-    label: 'Recherche web',
-    hint: 'navigateur',
-    sourceText: 'cherche sur internet LBG Studios Cursor agent desktop',
-    kind: 'search_web_open',
+    id: 'morning_brief',
+    label: 'Brief du matin',
+    hint: 'Self · proactive · infra',
+    sourceText: 'fais mon brief du matin',
+    kind: 'morning_brief',
+  },
+  {
+    id: 'memory_recall',
+    label: 'Ma mémoire',
+    hint: 'Self + leçons (≠ RAM VM)',
+    sourceText: 'montre ce que tu retiens (mémoire agent)',
+    kind: 'memory_recall',
   },
   {
     id: 'vghd',
@@ -88,9 +95,30 @@ export const USEFUL_AGIR_ACTIONS = [
   {
     id: 'omarchy_vscode',
     label: 'VS Code + Cline (.143)',
-    hint: 'éditeur studio',
+    hint: 'workspace → Plan→Act',
     sourceText: 'ouvre code sur omarchy',
     kind: 'open_app',
+  },
+  {
+    id: 'omarchy_cli_agent',
+    label: 'Mains code OpenCode (.143)',
+    hint: 'CLI headless · ADR 0025',
+    sourceText: 'lance opencode sur omarchy pour un smoke dry-run du monorepo',
+    kind: 'run_cli_agent',
+  },
+  {
+    id: 'omarchy_second_avis',
+    label: 'Second avis Claude Code',
+    hint: 'ADR 0023 · concurrent Cline',
+    sourceText: 'second avis claude code sur omarchy',
+    kind: 'open_app',
+  },
+  {
+    id: 'omarchy_vscode_update',
+    label: 'MAJ VS Code (.143)',
+    hint: 'yay · hors session critique',
+    sourceText: 'mets à jour vscode sur omarchy',
+    kind: 'update_vscode',
   },
   {
     id: 'team_pilot',
@@ -131,7 +159,7 @@ export const USEFUL_AGIR_ACTIONS = [
 
 /**
  * Suggestions de suite après une action réussie (exclut l'action courante).
- * @param {{ kind?: string, url?: string, capability?: string }} [done]
+ * @param {{ kind?: string, url?: string, capability?: string, app?: string, sourceText?: string }} [done]
  * @param {number} [limit]
  * @returns {UsefulAgirAction[]}
  */
@@ -153,10 +181,21 @@ export function nextUsefulAgirSuggestions(done = {}, limit = 4) {
     skip.add('orch_ui')
   }
 
-  return USEFUL_AGIR_ACTIONS.filter((a) => !skip.has(a.kind) && !skip.has(a.id)).slice(
-    0,
-    Math.max(1, limit),
-  )
+  // Après ouverture IDE (.143) : prioriser second avis (ADR 0023)
+  const preferSecondAvis =
+    kind === 'open_app' &&
+    (String(done.app || '').toLowerCase() === 'code' ||
+      String(done.sourceText || '').toLowerCase().includes('code'))
+
+  const filtered = USEFUL_AGIR_ACTIONS.filter((a) => !skip.has(a.kind) && !skip.has(a.id))
+  if (preferSecondAvis) {
+    const second = filtered.find((a) => a.id === 'omarchy_second_avis')
+    const rest = filtered.filter((a) => a.id !== 'omarchy_second_avis')
+    const ordered = second ? [second, ...rest] : rest
+    return ordered.slice(0, Math.max(1, limit))
+  }
+
+  return filtered.slice(0, Math.max(1, limit))
 }
 
 /** Défauts initiative quand aucun signal infra critique (rotation horaire). */
@@ -164,19 +203,38 @@ export function idleUsefulAgirIntents(limit = 3) {
   const pool = USEFUL_AGIR_ACTIONS.filter((a) =>
     [
       'selfcheck',
+      'morning_brief',
+      'memory_recall',
       'mail',
       'vghd',
       'inventory',
       'jobs',
       'session0',
-      'search',
       'cockpit',
       'omarchy_vscode',
       'team_pilot',
     ].includes(a.id),
   )
-  const hour = Math.floor(Date.now() / 3_600_000)
-  const start = pool.length ? hour % pool.length : 0
+  const hour = new Date().getHours()
+  // Matin (7–10) : prioriser le brief en tête de rotation
+  if (hour >= 7 && hour < 10) {
+    const brief = pool.find((a) => a.id === 'morning_brief')
+    const rest = pool.filter((a) => a.id !== 'morning_brief')
+    const rotatedRest = (() => {
+      const h = Math.floor(Date.now() / 3_600_000)
+      const start = rest.length ? h % rest.length : 0
+      return [...rest.slice(start), ...rest.slice(0, start)]
+    })()
+    const ordered = brief ? [brief, ...rotatedRest] : rotatedRest
+    return ordered.slice(0, Math.max(1, limit)).map((a) => ({
+      id: a.id,
+      label: a.label,
+      sourceText: a.sourceText,
+      hint: a.hint || 'initiative',
+    }))
+  }
+  const hourBucket = Math.floor(Date.now() / 3_600_000)
+  const start = pool.length ? hourBucket % pool.length : 0
   const rotated = [...pool.slice(start), ...pool.slice(0, start)]
   return rotated.slice(0, Math.max(1, limit)).map((a) => ({
     id: a.id,

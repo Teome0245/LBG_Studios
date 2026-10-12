@@ -6,7 +6,14 @@ from capabilities.spec import CapabilitySpec
 from pydantic import BaseModel, Field
 
 
-PolicyDecision = Literal["safe_read", "dry_run", "approval_required", "forbidden", "approved_action"]
+PolicyDecision = Literal[
+    "safe_read",
+    "dry_run",
+    "approval_required",
+    "forbidden",
+    "approved_action",
+    "bootstrap",
+]
 
 
 class ActionPolicyResult(BaseModel):
@@ -65,6 +72,12 @@ _DESKTOP_SAFE_READ_KINDS = {
     "default_browser_info",
     "agent_session_status",
     "mail_imap_preview",
+    "comfyui_status",
+}
+
+# Démarrage ComfyUI si down (binaire allowlisté) — sans token HITL.
+_DESKTOP_BOOTSTRAP_KINDS = {
+    "comfyui_ensure",
 }
 
 
@@ -218,6 +231,15 @@ def _evaluate_desktop(
             "safe_read",
             True,
             "Lecture seule poste (navigateur par défaut, etc.) — pas d’effet de bord.",
+            action_kind=action_kind,
+            constraints=constraints,
+        )
+    if action_kind in _DESKTOP_BOOTSTRAP_KINDS:
+        return _result(
+            capability,
+            "bootstrap",
+            True,
+            "Bootstrap ComfyUI (ensure si down) — chemin allowlisté, sans HITL.",
             action_kind=action_kind,
             constraints=constraints,
         )

@@ -22,6 +22,15 @@ _ALIASES: dict[str, str] = {
     "server-ad": "ad",
     "active-directory": "ad",
     "windows-ad": "ad",
+    "portable": "portable",
+    "portable-sds": "portable",
+    "portablesds": "portable",
+    "laptop": "portable",
+    "pc-portable": "portable",
+    "wifi": "portable",
+    "portable-wifi": "portable",
+    "192.168.0.40": "portable",
+    "192.168.0.77": "portable",
     "default": "default",
     "hands": "hands",
     "lbg-hands": "hands",
@@ -122,6 +131,12 @@ def _targets_from_legacy_env() -> list[DesktopTarget]:
         rows.append(DesktopTarget(target_id=tid, label=label, host=host, url=raw, aliases=aliases))
 
     _add(tid="pc", label="pc-windows", env_key="AGENT_WINDOWS_URL", aliases=("pc", "desktop", "windows"))
+    _add(
+        tid="portable",
+        label="portable-sds",
+        env_key="AGENT_WINDOWS_PORTABLE_URL",
+        aliases=("portable", "portable-sds", "laptop", "pc-portable"),
+    )
     default_url = os.environ.get("LBG_AGENT_DESKTOP_URL", "").strip().rstrip("/")
     if default_url and default_url not in seen_urls:
         host = urlparse(default_url).hostname or ""
@@ -207,6 +222,10 @@ def infer_desktop_target_from_text(text: str) -> str | None:
         return "pc"
     if re.search(r"\b192\.168\.0\.10\b", text):
         return "pc"
+    if re.search(r"\b(portable[- ]?sds|sur le portable|pc portable|laptop|portable[- ]?wifi|sur le wifi)\b", norm):
+        return "portable"
+    if re.search(r"\b192\.168\.0\.(40|77)\b", text):
+        return "portable"
     if re.search(r"\b(lbg[-_]?hands|linux[-_]?agent|ct[- ]?142|sur les mains)\b", norm):
         return "hands"
     if re.search(r"\b192\.168\.0\.142\b", text):

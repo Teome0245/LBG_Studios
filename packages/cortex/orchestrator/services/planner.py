@@ -165,12 +165,28 @@ def _objective_is_network_infra_survey(normalized: str) -> bool:
     return bool(has_scope and has_intent)
 
 
+_AGENT_MEMORY_OBJECTIVE_RE = re.compile(
+    r"\b(ta|ma|sa|notre)\s+(mémoire|memoire)\b|"
+    r"\b(mémoire|memoire)\s+(agent|self|équipe|equipe|studio|conversation|leçons?|lessons)\b|"
+    r"\b(conscience|écosystème|ecosysteme)\b|"
+    r"\b(incarner|incarnation)\b|"
+    r"\b(self[\s_-]?state|lessons[_\s-]?learned)\b",
+    re.IGNORECASE,
+)
+
+
 def _objective_is_vm_memory_supervision(normalized: str) -> bool:
+    if _AGENT_MEMORY_OBJECTIVE_RE.search(normalized or ""):
+        return False
     return bool(
         re.search(r"\b(mémoire|memoire|memory|ram|swap)\b", normalized)
         and re.search(
             r"\b(supervis|surveill|contrôl|control|sond|analys|audit|compare|"
-            r"fuites?|libér|liber|charge|chargement|246|245|110)\b",
+            r"fuites?|libér|liber|charge|chargement|246|245|110|vm|hôte|hote)\b",
+            normalized,
+        )
+        and re.search(
+            r"\b(vm|hôte|hote|serveur|prime|246|245|110|140|ssh|swap|ram)\b",
             normalized,
         )
     )

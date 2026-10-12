@@ -45,12 +45,38 @@ _APP_ALIASES: dict[str, str] = {
     "swg": "swgemu",
     "starwarsgalaxies": "swgemu",
     # Studio éditeur (.143 Omarchy / .10) — Cline vit dans VS Code
+    # « vs » : premier token de « VS Code » / « vs code » (sinon allowlist_denied)
+    "vs": "code",
     "vscode": "code",
     "vs-code": "code",
     "code-oss": "code",
     "vscodium": "code",
     "cline": "code",
+    # Second avis (ADR 0023) — concurrents IDE
+    "claude-code": "claude",
+    "claudecode": "claude",
+    "anthropic-claude": "claude",
 }
+
+# Noms multi-mots → slug unique avant découpe du 1er token
+_MULTIWORD_APP_MAP: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bvisual\s+studio\s+code\b", re.I), "vscode"),
+    (re.compile(r"\bvs\s*code\b", re.I), "vscode"),
+    (re.compile(r"\bclaude\s+code\b", re.I), "claude"),
+)
+
+# Workspace monorepo sur Omarchy .143 (second avis / ouverture IDE)
+OMARCHY_STUDIO_WORKSPACE = "/home/lbg/projects/LBG_Studios"
+
+# Concurrent second avis : (regex, app_id, label, statut ADR 0023)
+_SECOND_AVIS_CONCURRENTS: tuple[tuple[re.Pattern[str], str, str, str], ...] = (
+    (re.compile(r"\bclaude(?:\s*code)?\b", re.I), "claude", "Claude Code", "autorise"),
+    (re.compile(r"\bopencode\b", re.I), "opencode", "OpenCode", "experimentation"),
+    (re.compile(r"\bcodex\b", re.I), "codex", "Codex CLI", "experimentation"),
+    (re.compile(r"\bcopilot(?:\s*cli)?\b", re.I), "copilot", "Copilot CLI BYOK", "experimentation"),
+)
+
+_SECOND_AVIS_DEFAULT = ("claude", "Claude Code", "autorise")
 
 _WIN_EXE_PATH_RE = re.compile(
     r"(?:\(\s*)?([A-Za-z]:[\\/][^\s)\]\"']+\.exe)\s*\)?",
@@ -130,13 +156,17 @@ def default_desktop_action_from_text(text: str) -> dict[str, Any] | None:
     return {"kind": "open_app", "app": slug, "args": [], "learn": False}
 
 
-def _sanitize_app_slug(raw_tail: str) -> str | None:
+def sanitize_desktop_app_slug(raw_tail: str) -> str | None:
     """Nom court d'app sans chemin / URL ; aligné sur la validation dialogue ``open_app``."""
     t = (raw_tail or "").strip().strip("\"'«»")
     if not t or re.search(r"https?://", t):
         return None
     if "\\" in t or "/" in t or ".." in t:
         return None
+    # « VS Code » / « visual studio code » → vscode (puis alias → code)
+    # « Claude Code » → claude
+    for pattern, slug in _MULTIWORD_APP_MAP:
+        t = pattern.sub(slug, t)
     first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»")
     if not first:
         return None
@@ -151,6 +181,11 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
     if first.lower() in _OPEN_APP_STOP_TOKENS:
         return None
     return first.lower()
+
+
+def _sanitize_app_slug(raw_tail: str) -> str | None:
+    """Alias historique — préférer ``sanitize_desktop_app_slug``."""
+    return sanitize_desktop_app_slug(raw_tail)
 
 
 def extract_exe_path_from_goal(goal: str) -> str | None:
@@ -172,13 +207,50 @@ def normalize_desktop_app(app: str) -> str:
     return _APP_ALIASES.get(raw, raw)
 
 
+def resolve_second_avis_concurrent(text: str) -> tuple[str, str, str]:
+    """Choisit l'outil concurrent pour un second avis (ADR 0023).
+
+    Retourne ``(app_id, label, statut)`` — défaut Claude Code (autorisé).
+    """
+    raw = text or ""
+    for pattern, app_id, label, status in _SECOND_AVIS_CONCURRENTS:
+        if pattern.search(raw):
+            return app_id, label, status
+    return _SECOND_AVIS_DEFAULT
+
+
+def second_avis_open_app_action(text: str) -> dict[str, Any]:
+    """Payload ``open_app`` pour ouvrir le concurrent second avis sur le workspace studio."""
+    app_id, _label, _status = resolve_second_avis_concurrent(text)
+    action: dict[str, Any] = {
+        "kind": "open_app",
+        "app": app_id,
+        "args": [OMARCHY_STUDIO_WORKSPACE] if app_id == "code" else [],
+        "learn": True,
+    }
+    # VS Code / Cline : ouvrir le monorepo ; CLI agents : cwd via lancement nu + learn PATH
+    if app_id in ("claude", "opencode", "codex", "copilot"):
+        # Passer le workspace en arg si le binaire l'accepte ; sinon ignoré / learn
+        action["args"] = [OMARCHY_STUDIO_WORKSPACE]
+    return enrich_open_app_action(action)
+
+
 def supervised_auto_learn_enabled() -> bool:
     """``learn:true`` par défaut côté orchestrateur (allowlist auto-apprise sur le worker)."""
     return os.environ.get("LBG_DESKTOP_OPEN_APP_LEARN", "1").strip().lower() in ("1", "true", "yes", "on")
 
 
-def enrich_open_app_action(action: dict[str, Any], *, force_learn: bool | None = None) -> dict[str, Any]:
-    """Normalise l'app (alias) et pose ``learn`` (défaut : auto-learn activé)."""
+def enrich_open_app_action(
+    action: dict[str, Any],
+    *,
+    force_learn: bool | None = None,
+    studio_workspace: bool | None = None,
+) -> dict[str, Any]:
+    """Normalise l'app (alias) et pose ``learn`` (défaut : auto-learn activé).
+
+    Si ``studio_workspace`` / ``inject_studio_workspace`` et app=code : injecte
+    ``OMARCHY_STUDIO_WORKSPACE`` (Cline Plan→Act prêt sur .143).
+    """
     out = dict(action)
     app = normalize_desktop_app(str(out.get("app") or ""))
     if app:
@@ -193,6 +265,14 @@ def enrich_open_app_action(action: dict[str, Any], *, force_learn: bool | None =
     cmd = out.get("command")
     if isinstance(cmd, str) and cmd.strip():
         out["command"] = cmd.strip().replace("/", "\\")
+    want_ws = studio_workspace
+    if want_ws is None:
+        want_ws = bool(out.pop("inject_studio_workspace", False))
+    if app == "code" and want_ws:
+        args = out.get("args")
+        if not isinstance(args, list) or not args:
+            out["args"] = [OMARCHY_STUDIO_WORKSPACE]
+        out.setdefault("cline_hint", "Plan→Act")
     return out
 
 

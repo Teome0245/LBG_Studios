@@ -1,10 +1,10 @@
-# talents_craft_panel.gd — M10 UI talents + craft (Control, sidecar :8791)
+# talents_craft_panel.gd — M10 UI talents + craft (Control, hub :8787)
 extends PanelContainer
 class_name TalentsCraftPanel
 
 signal craft_completed(result: Dictionary)
 
-const SIDECAR_DEFAULT := "http://192.168.0.246:8791"
+const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 const PLAYER_DEFAULT := "local"
 
 @export var sidecar_base_url: String = SIDECAR_DEFAULT
@@ -28,6 +28,7 @@ var _craft_btn: Button
 
 func _ready() -> void:
 	visible = panel_visible
+	_apply_hub_runtime_sidecar()
 	_apply_mouse_filter()
 	_apply_modal_style()
 	_ensure_ui()
@@ -38,6 +39,14 @@ func _ready() -> void:
 	add_child(_http_craft)
 	_http_craft.request_completed.connect(_on_craft_http_done)
 	call_deferred("_refresh_sidecar")
+
+
+func _apply_hub_runtime_sidecar() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	sidecar_base_url = HubRuntimeCfg.http_url(sidecar_base_url)
+	player_id = HubRuntimeCfg.player_name("Voyageur")
+
 
 func _ensure_ui() -> void:
 	var root := get_node_or_null("VBox") as VBoxContainer
@@ -143,9 +152,11 @@ func toggle() -> void:
 	visible = panel_visible
 	_apply_mouse_filter()
 	if panel_visible:
+		_apply_hub_runtime_sidecar()
 		_refresh_sidecar()
 
 func _refresh_sidecar() -> void:
+	_apply_hub_runtime_sidecar()
 	_status = "fetch…"
 	_pending = "catalog"
 	_paint_status()
@@ -164,12 +175,17 @@ func _on_http_done(result: int, code: int, _headers: PackedStringArray, body: Pa
 		if typeof(parsed) == TYPE_DICTIONARY:
 			_skills = parsed.get("skills", [])
 			_schematics = parsed.get("schematics", [])
+			# Fallback forme catalog M10 (items) si le hub n'a pas encore enrichi.
+			if (typeof(_skills) != TYPE_ARRAY or _skills.is_empty()) and typeof(parsed.get("items")) == TYPE_ARRAY:
+				_skills = parsed.get("items", [])
+			if typeof(_schematics) != TYPE_ARRAY:
+				_schematics = []
 			var fb := bool(parsed.get("fallback", false))
 			var src := str(parsed.get("source", ""))
 			_status = "live%s — %d skills, %d schematics%s" % [
 				" (fallback catalog)" if fb else "",
-				_skills.size(),
-				_schematics.size(),
+				_skills.size() if typeof(_skills) == TYPE_ARRAY else 0,
+				_schematics.size() if typeof(_schematics) == TYPE_ARRAY else 0,
 				(" · " + src) if src != "" else "",
 			]
 		else:

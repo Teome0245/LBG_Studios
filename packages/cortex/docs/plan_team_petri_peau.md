@@ -111,11 +111,28 @@ Ordre d’implémentation minimal :
 
 | Méthode | Route | Rôle |
 |---------|-------|------|
-| GET | `/v1/team/presence/snapshot` | `{ "agents": [...], "zones": [...], "generated_at": … }` |
+| GET | `/v1/team/presence/snapshot` | `{ "agents": [...], "zones": [...], "generated_at": … }` — `zones[]` enrichi (`host`, `host_status`, `host_badge`) |
 | GET | `/v1/team/presence/history?limit=50` | Derniers événements (JSONL ring buffer optionnel) |
 | WS | `/v1/team/presence/ws` | Push `{ "type": "presence", "payload": … }` |
 
 Enregistrement router : même app que `/v1/pilot/team/*` (backend **8000** ou orchestrateur **8010** — choisir **8010** si Team y est déjà centralisé).
+
+### Annotation hôte zone (Lab SWG / PreCU)
+
+La zone **`zone_mmo_lab`** est **thématique** (personas `dev_game` Dédale/Vulcan) — pas un heartbeat « agents tournent sur `.245` ».
+
+Quand PreCU **`.245`** est injoignable, le snapshot annote la zone :
+
+| Champ zone | Exemple offline |
+|------------|-----------------|
+| `host_status` | `offline` |
+| `host_badge` | `Éteinte` |
+| `label` | `Lab SWG (245) · Éteinte` |
+
+- Sonde TCP légère (ports `8050` / `3306` / `8792` / `22`), cache TTL `LBG_ZONE_HOST_PROBE_TTL_SEC` (défaut 30 s).
+- Forcer sans sonde : `LBG_ZONE_MMO_LAB_HOST_STATE=off|on`.
+- UI : badge ambre vue classic + label carte Phaser (`office_map.setZoneHostStates`).
+- Aligné Atlas : PreCU **hors critique** par défaut (`LBG_ATLAS_REQUIRE_PRECU=0`).
 
 ---
 
@@ -128,7 +145,7 @@ Enregistrement router : même app que `/v1/pilot/team/*` (backend **8000** ou or
   - **Open Space Core (140)**
   - **Front web (.100)**
   - **Forge LLM (.110 / .111)**
-  - **Lab SWG (245)**
+  - **Lab SWG (245)** — badge **Éteinte** si hôte PreCU down (voir § annotation hôte)
   - **Monde Prime (246)**
   - **Pause café**
 - Chaque agent = carte : avatar (initiales / icône rôle), barre statut, `current_action`, lien `task_id` → fil Team existant.
@@ -220,6 +237,10 @@ Variables env proposées :
 LBG_TEAM_PRESENCE_ENABLED=1
 LBG_TEAM_PRESENCE_WS=1
 LBG_TEAM_PRESENCE_HISTORY=100   # ring buffer events
+# Annotation Lab SWG (.245) — badge Éteinte si PreCU down
+# LBG_ZONE_MMO_LAB_HOST_STATE=off   # forcer offline|online (sinon sonde TCP)
+# LBG_ZONE_HOST_PROBE_TTL_SEC=30
+# LBG_ZONE_HOST_PROBE_TIMEOUT_SEC=0.6
 ```
 
 ---

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import socket
+import time
+from typing import Any
 
 from fastapi import APIRouter
 
@@ -11,8 +13,127 @@ from config import get_settings
 
 from ._common import LOG, httpx, lbg_ia_backend_base_url, pilot_lbg_ia_http_timeout_s
 from ._models import LbgIaStatusResponse, OkEnvelope, PilotStatusResponse
+from world_display import enrich_bot_zone_fields, PLANET_DISPLAY, HUB_CITY
 
 router = APIRouter()
+
+
+async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
+    """
+    Lecture seule prime-hub (:8787) — flotte joueurs IA (Nix/Lia/…).
+    Fallback legacy sidecar :8791 si hub KO.
+    """
+    settings = get_settings()
+    hub = settings.prime_hub_base()
+    out: dict[str, Any] = {
+        "ok": False,
+        "source": "prime_hub",
+        "hub_url": hub,
+        "sidecar_url": hub,  # compat UI (ancien champ)
+        "sidecar_ok": False,
+        "conductor_agent_id": "studio_player_ia_choeur",
+        "bots": [],
+        "online_count": 0,
+        "ts": time.time(),
+        "planet_display": PLANET_DISPLAY,
+        "hub_city": HUB_CITY,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=timeout_s) as client:
+            try:
+                hr = await client.get(f"{hub}/healthz")
+                health: dict[str, Any] = {}
+                if hr.content:
+                    try:
+                        raw_h = hr.json()
+                        if isinstance(raw_h, dict):
+                            health = raw_h
+                    except ValueError:
+                        pass
+                hub_ok = hr.status_code == 200 and health.get("ok") is not False
+                out["sidecar_ok"] = hub_ok
+                out["sidecar_status"] = hr.status_code
+                out["hub_health"] = {
+                    "bot_count": health.get("bot_count"),
+                    "ai_seats": health.get("ai_seats"),
+                    "phase": health.get("phase"),
+                }
+            except Exception as e:
+                out["sidecar_ok"] = False
+                out["error"] = str(e)
+                return out
+
+            if not out["sidecar_ok"]:
+                return out
+
+            rows: list[dict[str, Any]] = []
+            online_count = 0
+            try:
+                br = await client.get(f"{hub}/v1/bots")
+                payload: dict[str, Any] = {}
+                if br.content:
+                    try:
+                        raw_b = br.json()
+                        if isinstance(raw_b, dict):
+                            payload = raw_b
+                    except ValueError:
+                        pass
+                bots_arr = payload.get("bots") if isinstance(payload.get("bots"), list) else []
+                for b in bots_arr:
+                    if not isinstance(b, dict):
+                        continue
+                    name = str(b.get("name") or b.get("entity_key") or "?").strip()
+                    bid = name.lower()
+                    pos = b.get("pos")
+                    x = y = z = None
+                    if isinstance(pos, list) and len(pos) >= 3:
+                        try:
+                            x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
+                        except (TypeError, ValueError):
+                            pass
+                    play_mode = str(b.get("play_mode") or "hub")
+                    goal = str(b.get("goal") or "")
+                    entry: dict[str, Any] = {
+                        "id": bid,
+                        "display_name": name,
+                        "online": True,
+                        "in_world": True,
+                        "zone": play_mode or "scrapaltai",
+                        "age_s": 0.0,
+                        "ok": True,
+                        "goal": goal,
+                        "play_mode": play_mode,
+                        "account_login": b.get("account_login"),
+                        "agent_id": b.get("agent_id"),
+                        "admin_level": b.get("admin_level"),
+                        "linked_studio_agent_id": b.get("linked_studio_agent_id"),
+                        "linked_studio_display": b.get("linked_studio_display"),
+                        "x": x,
+                        "y": y,
+                        "z": z,
+                    }
+                    online_count += 1
+                    rows.append(enrich_bot_zone_fields(entry))
+            except Exception as e:
+                out["error"] = str(e)
+
+            out["bots"] = rows
+            out["online_count"] = online_count
+            out["ok"] = bool(out["sidecar_ok"]) and online_count > 0
+            out["bots_status"] = {
+                str(b["id"]): ("online" if b.get("online") else "offline") for b in rows
+            }
+    except Exception as e:
+        LOG.warning("pilot.player_ia_runtime error hub=%s err=%s", hub, e)
+        out["error"] = str(e)
+    return out
+
+
+@router.get("/player-ia/runtime", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_player_ia_runtime() -> dict[str, object]:
+    """Snapshots joueurs IA Prime (lecture seule) pour le bureau Campus."""
+    runtime = await _fetch_player_ia_runtime(timeout_s=2.0)
+    return {"ok": True, **runtime}
 
 @router.get("/ollama/tags", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_ollama_tags() -> dict[str, object]:
@@ -285,36 +406,23 @@ async def pilot_aggregate_status() -> dict[str, object]:
         "vm140": "ok" if orch_state == "ok" else "error",
         "vm110": "ok" if check_port(front_ip, 11434) else "error",
         "vm245": "ok" if check_port(precu_ip, 3306) else "error",
-        "vm246": "ok" if check_port(prime_ip, 8791) else "error",
+        # G5+ : prime-hub Godot unifié (:8787). Sidecar Core3 :8791 = legacy OFF.
+        "vm246": "ok" if check_port(prime_ip, 8787) else "error",
     }
     res["game_status"] = {
         "precu_game": "ok" if check_port(precu_ip, 44453) else "offline",
         "prime_game": "ok" if check_port(prime_ip, 44553) else "offline",
     }
-    # Prober Lia / Nix / Mira status
-    lia_online = False
-    nix_online = False
-    mira_online = False
-    if mmo_state == "ok" and mmo_url_raw:
-        try:
-            mmo_base = mmo_url_raw.rstrip("/")
-            async with httpx.AsyncClient(timeout=1.5) as client:
-                r_lia = await client.get(f"{mmo_base}/v1/player-snapshot?player=Lia")
-                if r_lia.status_code == 200:
-                    lia_online = r_lia.json().get("online", False)
-                r_nix = await client.get(f"{mmo_base}/v1/player-snapshot?player=Nix")
-                if r_nix.status_code == 200:
-                    nix_online = r_nix.json().get("online", False)
-                r_mira = await client.get(f"{mmo_base}/v1/player-snapshot?player=Mira")
-                if r_mira.status_code == 200:
-                    mira_online = r_mira.json().get("online", False)
-        except Exception:
-            pass
-
+    # Joueurs IA via prime-hub (:8787) — pas LBG_MMO_SERVER_URL (souvent PreCU).
+    player_ia = await _fetch_player_ia_runtime(timeout_s=1.8)
+    res["player_ia_runtime"] = player_ia
+    bots_status = player_ia.get("bots_status") if isinstance(player_ia.get("bots_status"), dict) else {}
+    # Compat Accueil/Jobs (au minimum lia/nix/mira)
     res["bots_status"] = {
-        "lia": "online" if lia_online else "offline",
-        "nix": "online" if nix_online else "offline",
-        "mira": "online" if mira_online else "offline",
+        "lia": str(bots_status.get("lia") or "offline"),
+        "nix": str(bots_status.get("nix") or "offline"),
+        "mira": str(bots_status.get("mira") or "offline"),
+        "kael": str(bots_status.get("kael") or "offline"),
     }
 
     # Métriques d'économie et objectifs du Chroniqueur de monde (Option C)

@@ -40,6 +40,27 @@ def test_format_blocks_has_actions() -> None:
     assert "lbg_l2_reject" in ids
 
 
+def test_format_job_payload_links_jobs() -> None:
+    job = {
+        "id": "bbbbbbbb-cccc-dddd-eeee-ffffffffffff",
+        "kind": "job",
+        "capability": "desktop_control",
+        "objective": "open notepad",
+    }
+    text = format_l2_pending_text(job)
+    assert "Job L2" in text
+    assert "#/jobs" in text
+    blocks = format_l2_pending_blocks(job)
+    pilot_btn = [
+        el
+        for b in blocks
+        if b.get("type") == "actions"
+        for el in b.get("elements") or []
+        if el.get("action_id") == "lbg_l2_pilot"
+    ]
+    assert pilot_btn and "#/jobs" in pilot_btn[0].get("url", "")
+
+
 def test_handle_hitl_not_allowlisted(monkeypatch) -> None:
     monkeypatch.setenv("LBG_SLACK_ALLOWLIST", "UONLY")
     monkeypatch.setenv("LBG_SLACK_HITL", "1")

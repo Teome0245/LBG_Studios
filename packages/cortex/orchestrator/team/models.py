@@ -4,13 +4,31 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 TeamRole = Literal[
-    "ops", "qa", "pm", "dev_game", "dev_godot", "player_ia", "admin_infra", "contrarian"
+    "ops",
+    "qa",
+    "pm",
+    "dev_game",
+    "dev_godot",
+    "dev_studio",
+    "player_ia",
+    "admin_infra",
+    "contrarian",
 ]
 TaskStatus = Literal["queued", "running", "review", "done", "failed", "cancelled"]
 TaskPriority = Literal["low", "normal", "high", "critical"]
 
 VALID_ROLES: frozenset[str] = frozenset(
-    {"ops", "qa", "pm", "dev_game", "dev_godot", "player_ia", "admin_infra", "contrarian"}
+    {
+        "ops",
+        "qa",
+        "pm",
+        "dev_game",
+        "dev_godot",
+        "dev_studio",
+        "player_ia",
+        "admin_infra",
+        "contrarian",
+    }
 )
 VALID_STATUSES: frozenset[str] = frozenset({"queued", "running", "review", "done", "failed", "cancelled"})
 VALID_PRIORITIES: frozenset[str] = frozenset({"low", "normal", "high", "critical"})

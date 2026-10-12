@@ -20,7 +20,7 @@ if [[ ! -d "$(dirname "$DST")" ]]; then
 fi
 
 STAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-SCHEMA="$(python3 -c "import json; print(json.load(open('$SRC/assets/maps/tatooine_map_config.json')).get('schema_version',0))" 2>/dev/null || echo 0)"
+SCHEMA="$(python3 -c "import json; print(json.load(open('$SRC/assets/maps/scrapaltai_map_config.json')).get('schema_version',0))" 2>/dev/null || echo 0)"
 
 export STAMP SRC SCHEMA
 mkdir -p "$SRC/assets"

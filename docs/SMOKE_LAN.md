@@ -23,8 +23,9 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 | **Cockpit P03** | http://192.168.0.100:8093/pilot/#/cockpit | Mur infra / équipe |
 | **Orch UI** (chat produit) | http://192.168.0.100:5174/ | SPA Orchestrateur — chat unique (rétabli, plus de redirect forcé) |
 | **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra (proxies Pilot) |
-| **Prime comptes** | http://192.168.0.246:8792/ | État + comptes Core3 Prime |
-| **PreCU comptes** | http://192.168.0.245:8792/ | État + comptes PreCU |
+| **Prime Hub Godot** | http://192.168.0.246:8787/healthz · ws://192.168.0.246:8787/ws | Autorité joueur Lost Heaven G5 ([`RUNTIME_GODOT.md`](RUNTIME_GODOT.md)) |
+| **Prime comptes** | http://192.168.0.246:8792/ | Comptes lab (hors chemin joueur) |
+| **PreCU comptes** | http://192.168.0.245:8792/ | Réf. lecture seule (hors Launchpad) |
 | **Patches** | http://192.168.0.246:8080/patches/prime/manifest.json | Client Prime |
 | **MCP front** | http://192.168.0.100:8766/healthz | MCP |
 
@@ -85,6 +86,141 @@ Workflow LAN solo :
 Garde-fous qui restent : Bearer Pilot, allowlists apps/URL sur le worker, dry-run explicite.
 
 Fil produit / checklist : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).
+
+## Compagnon D6 — causerie crédible (voix)
+
+Surface : http://192.168.0.100:5174/ · API cases : `/api/character/voice-smoke`
+
+| Critère | Mesure | Smoke |
+|---------|--------|-------|
+| **C1 Continuité** | 5 tours même fil LAB sans reset « objectif » / identité | **V7** juste après **V6** (même conversation) — **PASS** 2026-10-08 |
+| C2 Collègue | avis sans réciter Agir / dry-run / deploy | **V6** — **PASS** 2026-10-08 |
+| C3 Retours | 1 diagnostic + 1 proposition | **V8** — **PASS** 2026-10-08 |
+
+Dernier smoke auto (même `conversation_id`) : `SMOKE_D6_V6V8 OK` · fil `smoke-d6-v6v8-*` · surface `:5174/api/ask`.
+
+**Smoke humain C1–C2** (2026-10-08 matin) : [`smoke_humain_d6_2026-10-08.md`](smoke_humain_d6_2026-10-08.md) — **C1 PASS** · **C2 PARTIEL**.
+
+**D6.5 + rejeu PM** (2026-10-08) : `SMOKE_D65_V9V10 OK` · [`smoke_rejeu_d6_2026-10-08b.md`](smoke_rejeu_d6_2026-10-08b.md) — greeting+plan **PASS** · C2 collègues PARTIEL · `tools/smoke_rejeu_humain_d6_5174.sh`.
+
+**A4c watch mission** (2026-10-08→11) : « retour quand la team a traité » → ack + watch `mission_id` · toast/chat à clôture · **A4c.1** retarget même sujet (pas faux `replaced`) — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md).
+
+**Fil D6.5 clos** 2026-10-11 — points encore ouverts (A2/C2, polish C1/C2, L3) : même doc § *Clôture de fil*.
+
+```bash
+bash tools/smoke_d6_causerie_5174.sh          # V6→V8
+bash tools/smoke_d65_greeting_plan_5174.sh    # V9 greeting + V10 plan/Team
+bash tools/smoke_rejeu_humain_d6_5174.sh      # proxy fil humain C1/C2 + plan
+curl -s http://192.168.0.100:5174/api/character/voice-smoke | jq '.cases[] | {id,criterion,prompt}'
+# Manuel : enchaîner V6 → V7 → V8 (puis V9/V10) dans le fil :5174 (ne pas « Nouveau chat »)
+```
+
+UI D6.3 : timeline / réflexion / méta **repliées** par défaut en mode ask ; ouvertes si source Agir/Team.
+
+**Pièges ops** (2026-10-02) : Agir/Team **HTTP 502** → `lbg-backend` sur `.140` (souvent `pydantic-settings` manquant dans le venv). Question « c’est quoi le campus » → chat causerie, pas Team live (`team_routing` overlay).
+
+Doc : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6 · [`character_layer.md`](../packages/cortex/docs/character_layer.md).
+
+## MCP catalog (C10/C11)
+
+```bash
+bash packages/cortex/infra/scripts/smoke_mcp_catalog.sh
+```
+
+Serveur stdio Cursor : `packages/cortex/tools/mcp_catalog_server/server.py` (outils `catalog`, `get_guide`, `tick_matrix`).
+
+**Autorité joueur G5+** : catalog / tick-matrix / dialogue live sur **`prime-hub` `:8787`** (pas le sidecar Core3 `:8791`).
+
+```bash
+# P3 + C1 moves + C12 envelope + C10/C11 lecture
+bash tools/smoke_p3_hub_dialogue.sh
+# ou : bash tools/smoke_p3_hub_dialogue.sh http://192.168.0.246:8787
+```
+
+### Hub gameplay C4 / C5 / C8 (2026-10-07)
+
+```bash
+H=http://192.168.0.246:8787
+curl -sS "$H/v1/events/active" | jq '{active,event_id,board_quest_id}'
+curl -sS "$H/v1/quests/board?player=Voyageur" | jq '{n:(.quests|length), event:.active_event.event_id}'
+curl -sS -X POST "$H/v1/salvage" -H 'Content-Type: application/json' \
+  -d '{"player":"Voyageur","poi_id":"poi:lh_scrap_pile","x":6042,"z":-1065}' | jq '{ok,loot,event_boost}'
+curl -sS "$H/v1/chronicle?player=Voyageur" | jq '{title,line_count,lines:(.lines[:3])}'
+curl -sS "$H/v1/trade/catalog" | jq '{vendor:.display_name,n:(.catalog|length)}'
+curl -sS -X POST "$H/v1/trade/offer" -H 'Content-Type: application/json' \
+  -d '{"player":"Voyageur","sku_id":"drink:eau_filtree","offer_price":8}' | jq '{ok,outcome,price_paid,reputation}'
+curl -sS "$H/v1/wiki" | jq '{ok,drift,title,npc:(.npcs|length),poi:(.pois|length)}'
+```
+
+## P3 persona dialogue (hub)
+
+Chemin live client : `prime-client` → `POST http://192.168.0.246:8787/v1/dialogue/invoke` (`session_summary` + `history`).  
+Smoke C1 historique Pilot (`tools/smoke_c1_suggested_moves.sh` → `:8000`) = régression Python ; **vert produit** = `smoke_p3_hub_dialogue.sh`.
+
+## Chœur terrain (V50–V53)
+
+```bash
+bash tools/smoke_choeur_terrain.sh           # truth guard + probe hub + P3 si live
+bash tools/smoke_choeur_terrain.sh --skip-live
+# Owner bundle Team
+BUNDLE=choeur_l1 bash packages/cortex/infra/scripts/smoke_godot_owners.sh
+# Job spawn (dry) : python -m lbg_agents.spawn_team_choeur_l1_job
+```
+
+## Spawn bêtes densités (open-world)
+
+```bash
+bash tools/smoke_beast_spawn_hub.sh          # healthz.beast_count >= 1
+bash tools/smoke_beast_engage_hub.sh         # POST /v1/world/beast/engage + loot
+# Timer Chœur .140
+bash packages/cortex/infra/scripts/install_choeur_l1_timer_140.sh
+```
+
+## P5a cour de chasse (hub)
+
+```bash
+bash tools/smoke_p5_hunt_yard_hub.sh         # reset → run → victory → claim meute
+bash tools/smoke_p5_client_hunt_contract.sh  # contrat hotbar HTTP (OK 2026-10-08)
+bash tools/smoke_p5b_boss_telegraph_hub.sh   # telegraph boss sparse (P5b)
+```
+
+Endpoints : `GET/POST http://192.168.0.246:8787/v1/hunt-yard*` (peel Godot + `tools/hunt_yard.py`).  
+Client : hotbar **[1]** près `poi:lh_hunt_chacal` → reset/run/claim (`main.gd`).  
+P5b : `GET /v1/world/beasts` · `POST /v1/world/beast/telegraph` · client anneau/pulse + chat ambient.
+
+## C2 mémoire relations (hub)
+
+```bash
+bash tools/smoke_c2_relation_memory_hub.sh   # tip → GET memory → dialogue hint → accept quest
+```
+
+Persistance : `players_state.json` → `relation_memory[]` · lecture `GET /v1/relation-memory?player=&npc_id=` · écriture tip/accept/trade + `met` au dialogue.
+
+## B2–B4 presence_dials (joueurs IA)
+
+```bash
+bash tools/smoke_b2_presence_dials_hub.sh    # GET /v1/presence-dials — Nix chaleur haute
+bash tools/smoke_b3b4_presence_hub.sh        # seuils B3 + Nix escort ≠ Mira greet (B4)
+bash tools/status_l3_smoke_lan_mission.sh    # mission L3 — DONE 2026-10-11 (days_ok=3/3)
+```
+
+Pack `data/life/presence_dials.json` (+ `thresholds`) · inject greet/ambient/escort `hub_sim` · zone d’entraînement ([`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md)).
+
+## C1/C2 Compagnon ↔ présence hub
+
+```bash
+# C1 — « teste présence Nix chaleur haute » → brief + mission Campus
+# C2 — « retour hub présence » → causerie depuis :8787 (OK 2026-10-08)
+bash tools/smoke_c2_presence_report_5174.sh
+```
+
+## Catalog POI + densité combat
+
+```bash
+# Régénère packages/prime-hub/data/catalog_poi.json (avant deploy)
+python3 packages/cortex/infra/scripts/export_prime_hub_catalog_poi.py
+bash tools/smoke_catalog_poi_hub.sh          # GET /v1/catalog?type=poi + /v1/world/combat-density
+```
 
 ## Voir aussi
 

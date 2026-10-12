@@ -88,6 +88,8 @@ def test_guest_spawns_on_warn(monkeypatch, tmp_path):
     call_kw = mock_create.call_args.kwargs
     assert call_kw["role"] == "ops"
     assert call_kw["context"]["ops_kind"] == "guest_metrics"
+    assert call_kw["context"]["presence_agent_id"] == "studio_ops_hephaistos"
+    assert call_kw["context"]["presence_zone"] == "zone_core"
     assert "Front web" in call_kw["objective"]
 
 

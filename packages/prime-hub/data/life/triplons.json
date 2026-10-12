@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "phase_seconds": {
+    "work": [480, 840],
+    "leisure": [300, 600],
+    "rest": [360, 720]
+  },
+  "triplons": [
+    {
+      "id": "mission",
+      "label": "Donneurs de quêtes",
+      "work_poi": "board",
+      "leisure_poi": "market",
+      "home_poi": "lodge_s",
+      "members": [
+        {"eid": "npc:core3_daan_oth", "oid": 910001, "name": "Daan Oth", "short": "tenir le board", "medium": "placer 2 contrats", "long": "réseau informateurs Scrapaltai", "leisure": "écouter le marché"},
+        {"eid": "npc:mission_b", "oid": 910101, "name": "Neris Vohl", "short": "relève board", "medium": "vérifier offres dunes", "long": "cartographier les pistes", "leisure": "thé à l'auberge"},
+        {"eid": "npc:mission_c", "oid": 910201, "name": "Jorun Mek", "short": "conseils porte est", "medium": "surveiller meute", "long": "devenir éclaireur senior", "leisure": "marcher vers les dunes"}
+      ]
+    },
+    {
+      "id": "medic",
+      "label": "Instructeurs médecin",
+      "work_poi": "clinic",
+      "leisure_poi": "cantina",
+      "home_poi": "inn",
+      "members": [
+        {"eid": "npc:core3_medic_trainer_c", "oid": 910004, "name": "Odo Merr", "short": "clinique ouverte", "medium": "former 1 apprenti", "long": "kits terrain standards", "leisure": "un verre à La Perle"},
+        {"eid": "npc:medic_b", "oid": 910104, "name": "Sera Quill", "short": "relève clinique", "medium": "inventaire kits", "long": "herboristerie dunes", "leisure": "cueillir hors murs"},
+        {"eid": "npc:medic_c", "oid": 910204, "name": "Vim Korr", "short": "garde nuit clinique", "medium": "repos récupération", "long": "tenir la relève", "leisure": "sommeil auberge"}
+      ]
+    },
+    {
+      "id": "scout",
+      "label": "Instructeurs éclaireur",
+      "work_poi": "train",
+      "leisure_poi": "apron",
+      "home_poi": "lodge_n",
+      "members": [
+        {"eid": "npc:core3_scout_trainer_c", "oid": 910005, "name": "Yara Nis", "short": "piste sûre", "medium": "brief porte est", "long": "carte dunes à jour", "leisure": "surveiller apron"},
+        {"eid": "npc:scout_b", "oid": 910105, "name": "Tov Renn", "short": "relève hall", "medium": "patrouille remparts", "long": "ouvrir une piste ouest", "leisure": "observer starport"},
+        {"eid": "npc:scout_c", "oid": 910205, "name": "Lira Vos", "short": "repos éclaireur", "medium": "sécher le matériel", "long": "former la relève", "leisure": "ombre auberge"}
+      ]
+    },
+    {
+      "id": "artisan",
+      "label": "Instructeurs artisan",
+      "work_poi": "craft",
+      "leisure_poi": "market",
+      "home_poi": "lodge_e",
+      "members": [
+        {"eid": "npc:core3_artisan_trainer_c", "oid": 910006, "name": "Kell Asa", "short": "atelier ouvert", "medium": "assembler 2 kits", "long": "atelier référence hub", "leisure": "négocier ferraille"},
+        {"eid": "npc:artisan_b", "oid": 910106, "name": "Bix Torren", "short": "relève établi", "medium": "récup pièces", "long": "nouvelle presse", "leisure": "marché aux outils"},
+        {"eid": "npc:artisan_c", "oid": 910206, "name": "Mara Sol", "short": "repos forge", "medium": "affûter", "long": "tenir la guilde", "leisure": "dormir auberge"}
+      ]
+    },
+    {
+      "id": "entertainer",
+      "label": "Instructeurs scène",
+      "work_poi": "inn",
+      "leisure_poi": "cantina",
+      "home_poi": "inn",
+      "members": [
+        {"eid": "npc:core3_talen_ress", "oid": 910007, "name": "Talen Ress", "short": "former à la scène", "medium": "répétition", "long": "moral hub via arts", "leisure": "show à La Perle", "home_poi": "inn"},
+        {"eid": "npc:ent_b", "oid": 910107, "name": "Bige Coto", "short": "relève formation", "medium": "écrire un set", "long": "scène principale Perle", "leisure": "chanter au comptoir"},
+        {"eid": "npc:ent_c", "oid": 910207, "name": "Lyra Velo", "short": "repos artiste", "medium": "soigner la voix", "long": "duo avec Talen", "leisure": "silence auberge"}
+      ]
+    },
+    {
+      "id": "brawler",
+      "label": "Instructeurs poing",
+      "work_poi": "train",
+      "leisure_poi": "cantina",
+      "home_poi": "lodge_e",
+      "members": [
+        {"eid": "npc:core3_brawler_trainer_c", "oid": 910013, "name": "Tobin Ress", "short": "sparring hall", "medium": "tenir 3 rounds", "long": "école de rue", "leisure": "verre sans bagarre"},
+        {"eid": "npc:brawl_b", "oid": 910113, "name": "Kade Orr", "short": "relève hall", "medium": "patrouille rue", "long": "videur formateur", "leisure": "marcher plaza"},
+        {"eid": "npc:brawl_c", "oid": 910213, "name": "Nim Hale", "short": "repos muscle", "medium": "soins cliniques", "long": "relève Tobin", "leisure": "sommeil"}
+      ]
+    }
+  ],
+  "solos": [
+    {"eid": "npc:core3_barman_jax", "oid": 910002, "name": "Jax Moro", "home": "cantina", "home_poi": "lodge_e", "wander_r": 6.0, "short": "servir", "medium": "tenir La Perle", "long": "refuge du hub", "leisure": "écouter rumeurs", "ambient": "La Perle reste ouverte. Un verre, ou juste l'ombre."},
+    {"eid": "npc:guide_quartier", "oid": 910003, "name": "Guide de quartier", "home": "apron", "home_poi": "lodge_n", "wander_r": 14.0, "short": "orienter", "medium": "connaître chaque coin", "long": "carte mentale Lost Heaven", "leisure": "marcher remparts", "ambient": "Starport, marché, porte est — tu te perds, tu cries."},
+    {"eid": "npc:scribe", "oid": 910008, "name": "Scribe", "home": "hall", "home_poi": "lodge_s", "wander_r": 6.0, "short": "noter", "medium": "chronique du jour", "long": "archives Scrapaltai", "leisure": "lire à l'auberge", "ambient": "Chroniques de session. Pas de légendes inventées."},
+    {"eid": "npc:habitue_cantina", "oid": 910009, "name": "Habitué", "home": "cantina", "home_poi": "inn", "wander_r": 9.0, "short": "sa table", "medium": "une rumeur par soir", "long": "rester anonyme", "leisure": "boire", "ambient": "Toujours la même table à La Perle…"},
+    {"eid": "npc:videur", "oid": 910010, "name": "Videur", "home": "cantina", "home_poi": "lodge_e", "wander_r": 7.0, "work_offset": [-19, 12], "short": "tenir la porte", "medium": "zéro bagarre", "long": "réputation Perle", "leisure": "rondes plaza", "ambient": "Pas de bagarre devant La Perle."},
+    {"eid": "npc:sergent_rue", "oid": 910011, "name": "Sergent de rue", "home": "market", "home_poi": "lodge_s", "wander_r": 16.0, "work_offset": [71, 52], "short": "porte est", "medium": "meute sous contrôle", "long": "milice crédible", "leisure": "brief clinique", "ambient": "Porte est surveillée. Meute ou pas — on tient."},
+    {"eid": "npc:rumeuriste", "oid": 910012, "name": "Rumeuriste", "home": "market", "home_poi": "lodge_w", "wander_r": 14.0, "short": "colporter", "medium": "3 rumeurs vraies", "long": "réseau oreilles", "leisure": "écouter Jax", "ambient": "Au marché on entend tout — et on répète la moitié."},
+    {"eid": "npc:core3_marksman_trainer_c", "oid": 910014, "name": "Unar Tek", "home": "train", "home_poi": "lodge_n", "wander_r": 11.0, "work_offset": [21, -18], "short": "visée", "medium": "former 1 tireur", "long": "pas de raté au désert", "leisure": "ombre starport", "ambient": "Visée. Respire, tire, ne rate pas le désert."},
+    {"eid": "npc:core3_pilot_imperial_a", "oid": 910015, "name": "Garr Vek", "home": "apron", "home_poi": "lodge_n", "wander_r": 12.0, "short": "apron propre", "medium": "brief shuttle", "long": "espace bientôt", "leisure": "cantina courte", "ambient": "Pilotage shuttle — apron propre, décollages courts."}
+  ]
+}

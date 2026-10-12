@@ -14,14 +14,17 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 |-----|----------------|
 | **Ce fichier** | Priorités O2 + rails autonomie |
 | [`docs/world/BIBLE_MMO.md`](world/BIBLE_MMO.md) | **Vérités du monde** + anti-dérive lore · garant runtime = Chœur (V50) |
+| [`docs/world/CONCURRENTS_IA_MMO_2026-10.md`](world/CONCURRENTS_IA_MMO_2026-10.md) | Veille concurrents (Everwhere… SpaceMolt) · tickets = Boîte §14 · ADR docs 0002 |
 | [`docs/world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) | Rôles canon PNJ |
 | [`docs/world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) | Équivalence arbres Pre-CU → LBG |
 | `packages/cortex/content/m10/m10_skills_catalog.json` | Catalogue talents/craft (schema 3, professions) |
 | `RESTAURATION_PRODUIT.md` | Checklist vert/jaune/rouge |
 | `OBJECTIVES.md` | Cadre O1/O2 |
 | `packages/prime-client/docs/CLIENT_ONLY_GODOT.md` | Vision joueur Godot-only |
+| [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) | Zone d'entraînement IA (dials B1–B4 · boucle Studio↔jeu C1–C3) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) D6.5 |
 | ADR 0016 (`new_mmo/…`) | Axe talents/artisanat — **accepté de facto** |
-| ADR 0017 | Core3 spatial + sidecar |
+| ADR 0017 | Core3 spatial + sidecar (historique peel) |
+| **ADR 0026** | **Runtime Godot-first** — live `prime-hub` · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · spike hist. [`SPIKE_48H_GODOT_RUNTIME.md`](SPIKE_48H_GODOT_RUNTIME.md) |
 | `plan_de_route.md` | Historique + étoile du nord (Studio) — pas le fil M12 |
 | `plan_mmorpg.md` | Vision long terme (ignorer le bloc « Godot gelé ») |
 | `plan_parallel_next_steps.md` | Bots / WD — **parallèle**, ne bloque pas P1–P4 |
@@ -37,10 +40,11 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **vert smoke 2026-08-15** ; GET `/v1/inventory` = dump Lua Core3 si perso online, sinon JSON bridge |
 | **P2b** | Missions hub | Board Daan Oth ↔ `:8791` accept/complete stub + UI Godot **J** | Iris + Dédale | **vert smoke 2026-08-15** ; **objectifs terrain POI** (progress sur toutes templates hub + HUD objectif hors J) **fait** ; Core3 journal = suite |
 | **P2c** | Scène cantina | Show La Perle + tip stub (après missions) | Iris | **MVP stub 2026-08-15** — `lh_show_perle` au board + `POST /v1/quests/tip` + bouton Tip Scène ; show live / formation Talen = suite |
-| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | jaune (Rang 2) |
-| **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | ouvert |
+| **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | **vert** 2026-10-07 : invoke + history + C12 · `smoke_p3_hub_dialogue` + `smoke_choeur_terrain` |
+| **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | **de facto** 2026-10-07 (hub Godot) ; nettoyer restes |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |
-| **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + `lbg_agents.hunt_yard` (réflexes, pas Core3) | Chœur | **fait** 2026-08-24 |
+| **P5a** | Cour de chasse (sandbox) | Lia/Nix/Mira vs Chacals — Pilot `#/hunt` + peel hub `/v1/hunt-yard*` | Chœur | **vert hub** 2026-10-07 (`smoke_p5_hunt_yard_hub`) · Pilot Python 2026-08-24 |
+| **P6** | Runtime Godot-first | ADR 0026 + [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) — humain+bots+PNJ **sans** Core3 | Hermès + Iris | **G5 live** 2026-10-07 (`prime-hub` :8787 unifié, peel natif) ; Python OFF |
 
 ### Jalons M9–M12 (rappel)
 

@@ -10,7 +10,7 @@ if [[ ! -d "${PRIME_ROOT}" ]]; then
   exit 2
 fi
 
-CFG="${PRIME_ROOT}/assets/maps/tatooine_map_config.json"
+CFG="${PRIME_ROOT}/assets/maps/scrapaltai_map_config.json"
 SPRITES="${PRIME_ROOT}/config/sprite_manifest.json"
 PORTRAITS="${PRIME_ROOT}/config/dialogue_portraits.json"
 

@@ -6,14 +6,23 @@ import ActionCard from './ActionCard.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
 import { getStudioGoal } from '@/lib/studioGoal'
+import {
+  mandateAskIntents,
+  mandateAskMessage,
+  mandateNeedsAsk,
+  setMandate,
+} from '@/lib/mandate'
 
-const { messages, loadHistory } = useChat()
+const { messages, loadHistory, addUserMessage, addMessage } = useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
 const studioGoalTitle = computed(() => getStudioGoal().goal?.title || 'Veiller Jobs L2')
+const showMandateAsk = ref(false)
+const mandateChips = mandateAskIntents()
 
 onMounted(() => {
   loadHistory()
+  showMandateAsk.value = mandateNeedsAsk()
 })
 
 watch(messages, () => {
@@ -24,6 +33,22 @@ watch(messages, () => {
   })
 }, { deep: true, immediate: true })
 
+function pickMandate(intent) {
+  if (!intent?.mandateScope) return
+  setMandate([intent.mandateScope])
+  showMandateAsk.value = false
+  const goal = getStudioGoal()
+  addUserMessage(`Mandat · ${intent.label}`)
+  addMessage({
+    role: 'assistant',
+    content:
+      `OK — je veille prioritairement « ${intent.label} » pour ~4 h` +
+      ` (objectif · ${goal?.goal?.title || intent.label}).` +
+      `\nJe proposerai des actions dans ce périmètre ; Garde infra reste prioritaire.`,
+    source: 'mandate',
+    state: 'orchestrateur-happy',
+  })
+}
 const crumbCounts = computed(() => {
   let moi = 0
   let ai = 0
@@ -96,6 +121,21 @@ function displayContent(msg) {
   return c
 }
 
+function isOpsChromeMessage(msg) {
+  /** Agir / Team / Cursor = chrome ops utile ; ask/réponse/causerie = replié. */
+  const action = String(msg?.reflection?.action || '').toLowerCase()
+  if (action === 'answer') return false
+  const src = String(msg?.source || '').toLowerCase()
+  if (src === 'agir' || src.startsWith('team') || src.includes('campus')) return true
+  if (src.includes('cursor') || src.includes('desktop') || src === 'vision') return true
+  if (msg?.actionProposal || msg?.approval?.tasks?.length) return true
+  return false
+}
+
+function timelineOpenByDefault(msg) {
+  return viewFilter.value === 'timeline' || isOpsChromeMessage(msg)
+}
+
 function triggerCtrlK() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
 }
@@ -124,6 +164,27 @@ function triggerCtrlK() {
         <p class="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed mb-6">
           Présent pour dialoguer, concevoir et agir sur le poste sous ton contrôle (L2).
         </p>
+
+        <div
+          v-if="showMandateAsk"
+          class="w-full max-w-md mx-auto mb-6 rounded-2xl border border-teal-500/25 bg-teal-500/10 px-4 py-3.5 text-left"
+        >
+          <p class="text-[10px] uppercase tracking-wider text-teal-300/80 font-semibold mb-1.5">Priorité · mandat</p>
+          <p class="text-sm text-slate-200 leading-snug mb-3">{{ mandateAskMessage() }}</p>
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="chip in mandateChips"
+              :key="chip.id"
+              type="button"
+              class="rounded-xl border border-teal-400/35 bg-slate-950/50 px-3 py-1.5 text-xs font-medium text-teal-100 hover:bg-teal-500/20 hover:border-teal-300/50 transition-colors"
+              :title="chip.hint"
+              @click="pickMandate(chip)"
+            >
+              {{ chip.label }}
+            </button>
+          </div>
+        </div>
+
         <p class="text-[11px] text-slate-500 font-mono">
           Écris ci-dessous · <button type="button" class="text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline cursor-pointer" @click="triggerCtrlK">Ctrl+K</button> pour le pilotage · <span class="text-cyan-400/80">Agir</span> pour une action poste
         </p>
@@ -167,16 +228,21 @@ function triggerCtrlK() {
                 : 'glass-card text-slate-100 rounded-tl-none'
             ]"
           >
-            <!-- Timeline (pliée/synthétique) -->
-            <div
+            <!-- Timeline — D6.3 : repliée par défaut en mode ask/réponse -->
+            <details
               v-if="msg.role === 'assistant' && msg.timeline?.length"
-              class="mb-3.5 pb-3.5 border-b border-white/10"
+              class="mb-3.5 pb-3.5 border-b border-white/10 group/tl"
               :class="viewFilter === 'timeline' ? 'ring-1 ring-cyan-500/20 rounded-xl p-2 -m-1' : ''"
+              :open="timelineOpenByDefault(msg) ? true : undefined"
             >
-              <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">
+              <summary
+                class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-0 cursor-pointer select-none list-none inline-flex items-center gap-1.5 hover:text-slate-300 [&::-webkit-details-marker]:hidden"
+              >
+                <span class="opacity-70 group-open/tl:rotate-90 transition-transform inline-block">›</span>
                 Timeline
-              </p>
-              <ol class="space-y-1.5">
+                <span class="font-mono text-[9px] opacity-60 normal-case tracking-normal">{{ msg.timeline.length }}</span>
+              </summary>
+              <ol class="space-y-1.5 mt-2">
                 <li
                   v-for="(step, si) in msg.timeline"
                   :key="si"
@@ -191,19 +257,26 @@ function triggerCtrlK() {
                   <span v-if="step.ms != null" class="text-slate-500 font-mono text-[10px]">{{ Math.round(step.ms) }}ms</span>
                 </li>
               </ol>
-            </div>
+            </details>
 
-            <!-- Réflexion adoucie -->
-            <div
+            <!-- Réflexion — D6.3 : repliée sauf Agir/ops -->
+            <details
               v-if="msg.role === 'assistant' && msg.reflection && viewFilter !== 'timeline'"
-              class="mb-3 text-[11px] text-slate-400 flex flex-wrap gap-2 items-center bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5"
+              class="mb-3 text-[11px] text-slate-400 group/rf"
+              :open="isOpsChromeMessage(msg) ? true : undefined"
             >
-              <span class="uppercase tracking-widest font-bold text-cyan-400 text-[9px]">Réflexion</span>
-              <span class="font-mono text-slate-300">{{ msg.reflection.action }}</span>
-              <span class="text-slate-600">·</span>
-              <span class="text-slate-300">{{ msg.reflection.reason }}</span>
-              <span v-if="msg.reflection.source" class="font-mono text-slate-500 text-[10px]">({{ msg.reflection.source }})</span>
-            </div>
+              <summary
+                class="flex flex-wrap gap-2 items-center bg-white/5 px-2.5 py-1.5 rounded-lg border border-white/5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden hover:bg-white/[0.07]"
+              >
+                <span class="uppercase tracking-widest font-bold text-cyan-400 text-[9px]">Réflexion</span>
+                <span class="font-mono text-slate-300 truncate max-w-[12rem]">{{ msg.reflection.action }}</span>
+                <span class="text-slate-600 opacity-60 group-open/rf:hidden">· détail</span>
+              </summary>
+              <div class="mt-1.5 px-2.5 text-slate-300">
+                <span>{{ msg.reflection.reason }}</span>
+                <span v-if="msg.reflection.source" class="font-mono text-slate-500 text-[10px] ml-1">({{ msg.reflection.source }})</span>
+              </div>
+            </details>
 
             <!-- Cursor Agent info -->
             <div
@@ -223,7 +296,7 @@ function triggerCtrlK() {
               >{{ msg.cursor.agent_url }}</a>
             </div>
 
-            <!-- Contenu textuel et multimédia -->
+            <!-- Contenu textuel et multimédia (+ indicateur SSE 1.2) -->
             <div v-if="viewFilter !== 'timeline'" class="space-y-3">
               <div v-if="msg.images?.length" class="flex flex-wrap gap-2 mb-1" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
                 <img
@@ -234,12 +307,29 @@ function triggerCtrlK() {
                   class="max-h-40 max-w-[220px] rounded-xl border border-white/15 object-cover shadow-md"
                 />
               </div>
+              <div
+                v-if="msg.streamThinking && !msg.content"
+                class="flex items-center gap-2 text-xs text-slate-400"
+                aria-live="polite"
+              >
+                <span class="inline-flex gap-1" aria-hidden="true">
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/80 animate-pulse" />
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/60 animate-pulse [animation-delay:150ms]" />
+                  <span class="h-1.5 w-1.5 rounded-full bg-teal-400/40 animate-pulse [animation-delay:300ms]" />
+                </span>
+                <span>Réflexion…</span>
+              </div>
               <template v-for="(part, pIndex) in parseContent(displayContent(msg))" :key="pIndex">
                 <div v-if="part.type === 'text'" class="whitespace-pre-wrap leading-relaxed">{{ part.value }}</div>
                 <div v-else-if="part.type === 'image'" class="my-2">
                   <img :src="part.url" :alt="part.alt" class="max-w-full rounded-xl border border-white/10 shadow-lg hover:scale-[1.01] transition-transform cursor-zoom-in" />
                 </div>
               </template>
+              <span
+                v-if="msg.streaming && msg.content"
+                class="inline-block w-1.5 h-4 align-text-bottom bg-teal-400/70 animate-pulse"
+                aria-hidden="true"
+              />
             </div>
 
             <ApprovalCard
@@ -253,22 +343,32 @@ function triggerCtrlK() {
               :source-text="msg.actionSourceText || ''"
             />
 
-            <!-- Pied de message : modèle et latence discrets -->
-            <div
+            <!-- Pied modèle/latence — D6.3 : discret / replié en ask -->
+            <details
               v-if="msg.role === 'assistant' && viewFilter !== 'timeline' && (msg.model || msg.latency || msg.provider)"
-              class="mt-3.5 pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-2 text-[10px]"
+              class="mt-3.5 pt-2.5 border-t border-white/10 group/meta"
+              :open="isOpsChromeMessage(msg) ? true : undefined"
             >
-              <div v-if="msg.model" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 font-mono">
-                <span class="uppercase font-bold text-emerald-400">Modèle</span>
-                <span>{{ msg.model }}</span>
+              <summary
+                class="text-[10px] text-slate-500 cursor-pointer select-none list-none inline-flex items-center gap-1.5 hover:text-slate-300 [&::-webkit-details-marker]:hidden"
+              >
+                <span class="opacity-70 group-open/meta:rotate-90 transition-transform inline-block">›</span>
+                Méta
+                <span v-if="msg.model && !isOpsChromeMessage(msg)" class="font-mono text-slate-400 truncate max-w-[10rem]">{{ msg.model }}</span>
+              </summary>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[10px]">
+                <div v-if="msg.model" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 font-mono">
+                  <span class="uppercase font-bold text-emerald-400">Modèle</span>
+                  <span>{{ msg.model }}</span>
+                </div>
+                <div v-if="msg.provider" class="text-slate-400 uppercase font-semibold">
+                  {{ msg.provider }}
+                </div>
+                <div v-if="msg.latency" class="text-slate-500 font-mono">
+                  {{ Number(msg.latency).toFixed(2) }}s
+                </div>
               </div>
-              <div v-if="msg.provider" class="text-slate-400 uppercase font-semibold">
-                {{ msg.provider }}
-              </div>
-              <div v-if="msg.latency" class="text-slate-500 font-mono">
-                {{ Number(msg.latency).toFixed(2) }}s
-              </div>
-            </div>
+            </details>
           </div>
 
           <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase px-2 mt-0.5">

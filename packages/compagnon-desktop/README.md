@@ -68,3 +68,18 @@ Petite fenêtre transparente bas-droite (`overlay/`) — bulle « Je vois » + *
 Poll `proactive/status` via le proxy `:5174`. Si nouvelle initiative et quota OK :
 notif Windows + bulle overlay avec **intent Agir-ready**. Clic notif / Agir →
 chat avec proposal préremplie. Aucune action poste auto.
+
+## Présence Agents (D7)
+
+Bandeau session + Allow/Deny (ADR 0027). Opt-in dans `config.json` :
+
+```json
+"sessionIsland": {
+  "enabled": true,
+  "streamUrl": "http://192.168.0.143:5005/session/stream",
+  "decisionUrl": "http://192.168.0.143:5005/session/decision"
+}
+```
+
+Le process Electron s’abonne au SSE et forward vers l’overlay (pas de CSP réseau dans le renderer).
+Runbook : `packages/cortex/docs/runbook_session_island_d7.md`.

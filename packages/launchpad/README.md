@@ -20,9 +20,10 @@ Fallback atelier uniquement : `bash packages/prime-client/tools/sync_prime_clien
 
 ## État serveur Prime (v2.1.2+)
 
-- L’API `:8792` sur **245** ne remonte souvent que PreCu.
-- Launchpad sonde aussi **`http://192.168.0.246:8765/health`** (gateway Prime).
-- Profil **prime** : une seule pastille « LBG MMO Serveur Prime · 192.168.0.246 ».
+- `statusApiUrl` canonique : **`http://192.168.0.246:8792/api/servers`** (Prime).
+- Profil **Prime Godot only** (PreCU retiré du Launchpad depuis 2.1.4).
+- Sonde hub : **`http://192.168.0.246:8787/healthz`**.
+- Profil **prime** : pastille « LBG MMO Serveur Prime · 192.168.0.246 ».
 
 Rebuild Launchpad après changement JS :
 ```bash

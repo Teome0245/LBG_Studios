@@ -37,14 +37,16 @@ def _truthy(raw: str) -> bool:
 def desktop_dry_run(context: dict[str, Any] | None = None) -> bool:
     """
     Dry-run si `LBG_DESKTOP_DRY_RUN` est truthy (force global), ou si
-    `context.desktop_dry_run` est True (par requête).
+    `context.desktop_dry_run` / `context.dry_run` est True (par requête).
 
     `LBG_DESKTOP_DRY_RUN=0` / false ne doit pas bloquer un dry-run explicite du contexte.
     """
     env = os.environ.get("LBG_DESKTOP_DRY_RUN", "").strip()
     if env and _truthy(env):
         return True
-    if isinstance(context, dict) and context.get("desktop_dry_run") is True:
+    if isinstance(context, dict) and (
+        context.get("desktop_dry_run") is True or context.get("dry_run") is True
+    ):
         return True
     return False
 
@@ -550,13 +552,19 @@ def run_desktop_action(
             return out
         if dry_run:
             hint_q = fc_ok or sc_ok
+            configured = bool(host and user and password)
+            body = (
+                "[dry-run] IMAP configuré — aucune connexion en simulation ; Réel lira l'INBOX."
+                if configured
+                else "[dry-run] Aucune connexion IMAP ; définir LBG_DESKTOP_MAIL_IMAP_* pour une exécution réelle."
+            )
             messages = [
                 {
                     "uid": "(dry-run)",
                     "from": "expéditeur@exemple.invalid",
                     "subject": f"… filtre « {hint_q} » (simulation)",
                     "date": "",
-                    "body_preview": "[dry-run] Aucune connexion IMAP ; définir LBG_DESKTOP_MAIL_IMAP_* pour une exécution réelle.",
+                    "body_preview": body,
                 }
             ]
             out = {
@@ -567,6 +575,7 @@ def run_desktop_action(
                 "matched_count": len(messages),
                 "from_contains": fc_ok,
                 "subject_contains": sc_ok,
+                "imap_configured": configured,
             }
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out

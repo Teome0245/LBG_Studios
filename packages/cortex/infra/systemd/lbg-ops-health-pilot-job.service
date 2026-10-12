@@ -1,0 +1,20 @@
+[Unit]
+Description=LBG Ops Health Pilot — perception périmètre LAN
+After=network-online.target lbg-orchestrator.service
+Wants=lbg-orchestrator.service
+
+[Service]
+Type=oneshot
+User=lbg
+Group=lbg
+# DRY_RUN / NOTIFY : définis dans /etc/lbg-ia-mmo.env (sinon défauts code = dry-run safe)
+EnvironmentFile=-/etc/lbg-ia-mmo.env
+Environment=PYTHONPATH=/opt/LBG_IA_MMO/agents/src
+Environment=LBG_OPS_HEALTH_PILOT_JOB_ENABLED=1
+Environment=LBG_ORCHESTRATOR_URL=http://127.0.0.1:8010
+Environment=LBG_OPS_HEALTH_PILOT_JOB_STATE=/var/lib/lbg/ops_health_pilot/job_state.json
+Environment=LBG_OPS_HEALTH_PILOT_STATE=/var/lib/lbg/ops_health_pilot/state.json
+ExecStart=/opt/LBG_IA_MMO/.venv/bin/python -m lbg_agents.spawn_ops_health_pilot_job
+
+[Install]
+WantedBy=multi-user.target

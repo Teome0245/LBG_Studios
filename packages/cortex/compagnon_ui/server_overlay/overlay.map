@@ -1,0 +1,40 @@
+# Carte de packaging atomique server_overlay (ticket plan 5.1).
+# Format : <source relative à server_overlay> <TAB> <cible relative à /opt/orchestrateur>
+# Chaque ligne = un fichier livré atomiquement (backup/rollback + checksum).
+# Les commentaires (#) et lignes vides sont ignorés.
+
+router_prompts.py	backend/src/services/router_prompts.py
+llm_chat_phase.py	backend/src/services/llm_chat_phase.py
+companion_self_grounding.py	backend/src/services/companion_self_grounding.py
+ecosystem_grounding.py	backend/src/services/ecosystem_grounding.py
+rag_grounding.py	backend/src/services/rag_grounding.py
+desktop_dispatch.py	backend/src/services/desktop_dispatch.py
+local_llm_provider.py	backend/src/providers/local_llm_provider.py
+routing.json	backend/src/config/routing.json
+reflection_router.py	backend/src/services/reflection_router.py
+chat_intent.py	backend/src/services/chat_intent.py
+plan_submit.py	backend/src/services/plan_submit.py
+team_autonomy_plan.py	backend/src/services/team_autonomy_plan.py
+mission_watch_intent.py	backend/src/services/mission_watch_intent.py
+presence_brief.py	backend/src/services/presence_brief.py
+presence_report.py	backend/src/services/presence_report.py
+plan_suivi.py	backend/src/services/plan_suivi.py
+team_routing.py	backend/src/services/team_routing.py
+openclaw_markers.py	backend/src/services/openclaw_markers.py
+tool_loop.py	backend/src/services/tool_loop.py
+ollama_audit.py	backend/src/services/ollama_audit.py
+core.py	backend/src/routers/core.py
+sse_ask.py	backend/src/services/sse_ask.py
+team_proxy.py	backend/src/services/team_proxy.py
+team_actions.py	backend/src/services/team_actions.py
+infra_lan_intent.py	backend/src/services/infra_lan_intent.py
+character_layer.py	backend/src/services/character_layer.py
+character_api.py	backend/src/routers/character_api.py
+desktop_approval.py	backend/src/routers/desktop_approval.py
+spontaneity.py	backend/src/services/spontaneity.py
+spontaneity_api.py	backend/src/routers/spontaneity_api.py
+tts.py	backend/src/services/tts.py
+tts_api.py	backend/src/routers/tts_api.py
+world_stream.py	backend/src/services/world_stream.py
+character/compagnon_v1.json	backend/src/config/character/compagnon_v1.json
+character/compagnon_v1.json	backend/src/services/character/compagnon_v1.json

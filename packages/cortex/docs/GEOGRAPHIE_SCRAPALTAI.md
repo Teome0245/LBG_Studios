@@ -44,7 +44,7 @@ Règle d’or : **gameplay v1 = Lost Heaven** (petite ville). **Capitale = Zalem
 | Planète (diamètre) | **10 465 km** | Carte référence / `scrapaltai_planet_map.json` |
 | Lost Heaven (carte) | **Col 8, row 3** (petite ville) | `SCRAPALTAI_CARTE_PLANETE.md` |
 | Capitale | **Zalem** (col ~6) | idem |
-| Shard jouable (client) | **±6500 m** (13×13 km) | `tatooine_map_config.json` |
+| Shard jouable (client) | **±6500 m** (13×13 km) | `scrapaltai_map_config.json` |
 | Distance LH ↔ ME (shard) | **~4240 m** | Δ coords Core3 |
 | Rayon PNJ live (gateway) | **800 m** autour LH | map config |
 
@@ -98,7 +98,7 @@ Cellules intérieures LH : **TBD** tant que les POI `world_poi` ne sont pas pos�
 | Spawns LBG / PNJ catalogue | **Migration → LH** (script `migrate_npc_catalog_me_to_lh.py`) |
 | Cantina cell `1082877` | Legacy — `housing_enter cantina` à remplacer par La Perle |
 | `locations/mos_eisley_*.json` | `deprecated: true` |
-| POI client | `deprecated: true` dans `tatooine_pois.json` |
+| POI client | `deprecated: true` dans `scrapaltai_pois.json` |
 
 On **décommissionne** ME pour le gameplay ; on ne **rase** pas la ville vanilla du moteur.
 
@@ -140,7 +140,7 @@ Voir aussi [`GEOGRAPHIE_SCRAPALTAI.md`](GEOGRAPHIE_SCRAPALTAI.md) — référenc
 | Hub serveur | `packages/cortex/content/core3/locations/lost_heaven_hub.json` |
 | Catalogue PNJ | `packages/cortex/content/core3/core3_npc_catalog.json` |
 | POI export | `content/core3/world_poi/scrapaltai.json` |
-| Carte client | `packages/prime-client/assets/maps/tatooine_map_config.json` |
+| Carte client | `packages/prime-client/assets/maps/scrapaltai_map_config.json` |
 | Gabarit spatial | `packages/prime-client/docs/RETAIL_CITY_LAYOUT.md` |
 
 ---

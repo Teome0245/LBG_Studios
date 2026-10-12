@@ -3,7 +3,7 @@
 Gabarit Mos Eisley (retail .ws) → Lost Heaven + fusion tailles / refs.
 
 Produit :
-  - assets/maps/retail/tatooine/lost_heaven_retail_layout.json (overlay Ctrl+Shift+R)
+  - assets/maps/retail/scrapaltai/lost_heaven_retail_layout.json (overlay Ctrl+Shift+R)
   - assets/maps/lost_heaven_gabarit_me.json (référence éditable)
   - Met à jour size_m / retail_tmpl sur lost_heaven_buildings.json (sans écraser x/z LH)
 """
@@ -15,9 +15,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 PRIME = Path(__file__).resolve().parents[2]
-ME_LAYOUT = PRIME / "assets/maps/retail/tatooine/mos_eisley_retail_layout.json"
+ME_LAYOUT = PRIME / "assets/maps/retail/scrapaltai/mos_eisley_retail_layout.json"
 LH_BUILDINGS = PRIME / "assets/maps/lost_heaven_buildings.json"
-OUT_OVERLAY = PRIME / "assets/maps/retail/tatooine/lost_heaven_retail_layout.json"
+OUT_OVERLAY = PRIME / "assets/maps/retail/scrapaltai/lost_heaven_retail_layout.json"
 OUT_REF = PRIME / "assets/maps/lost_heaven_gabarit_me.json"
 
 ME_CENTER = (3520.0, -4800.0)

@@ -402,6 +402,201 @@ def team_campus_status() -> dict[str, object]:
     return campus_conductor.status()  # type: ignore[return-value]
 
 
+@router.get("/team/pending")
+def team_pending_approvals(limit: int = 20) -> dict[str, object]:
+    """Tâches Team en attente L2 (source unique pour Compagnon / Pilot bureau)."""
+    from team import fleet as team_fleet
+
+    snap = team_fleet.fleet_snapshot()
+    team_block = snap.get("team") if isinstance(snap, dict) else {}
+    pending = list((team_block or {}).get("l2_pending") or [])[: max(1, min(int(limit or 20), 50))]
+    cards = [
+        {
+            "task_id": str(t.get("id") or ""),
+            "role": str(t.get("role") or ""),
+            "role_label": str(t.get("role") or ""),
+            "objective": str(t.get("objective") or "")[:240],
+            "status": str(t.get("status") or ""),
+            "approval_required": True,
+            "needs_token": True,
+        }
+        for t in pending
+        if isinstance(t, dict) and t.get("id")
+    ]
+    approval = (
+        {
+            "title": "Validation humaine (L2)",
+            "tasks": cards,
+            "hint": "Token d'approbation Team — Pilot `#/team/office` ou Compagnon.",
+        }
+        if cards
+        else None
+    )
+    return {
+        "ok": True,
+        "count": len(pending),
+        "tasks": pending,
+        "approval": approval,
+    }
+
+
+class PlanMarkBody(BaseModel):
+    ticket_id: str = Field(..., min_length=1)
+    status: str = Field(..., min_length=1)
+    evidence: str = ""
+    actor_id: str = "system:plan_mark"
+
+
+@router.post("/team/plan/mark")
+def team_plan_mark(payload: PlanMarkBody) -> dict[str, object]:
+    """Mark ticket plan (evidence obligatoire pour done) — utilisé par Métis/OpenCode."""
+    from team.plan_ticket_closure import mark_plan_ticket
+
+    out = mark_plan_ticket(
+        payload.ticket_id,
+        payload.status,
+        payload.evidence,
+        actor_id=payload.actor_id,
+    )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "mark_failed"))
+    return out  # type: ignore[return-value]
+
+
+@router.get("/team/fleet")
+def team_fleet() -> dict[str, object]:
+    """Supervision anti-sprawl — agents, Team L2, jobs, flags (plan gaps A2/A4)."""
+    from team import fleet as team_fleet
+
+    return team_fleet.fleet_snapshot()  # type: ignore[return-value]
+
+
+class OpsHealthPilotBody(BaseModel):
+    dry_run: bool = True
+    notify: bool | None = None
+    spawn_l2_remediation: bool = True
+    include_smoke: bool = False
+    actor_id: str = "pilot:ops_health"
+
+
+@router.post("/team/ops_health_pilot")
+def team_ops_health_pilot(payload: OpsHealthPilotBody) -> dict[str, object]:
+    """Playbook ops health (perception→décision→notify→L2). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import ops_health_pilot
+
+    return ops_health_pilot.run_ops_health_pilot(  # type: ignore[return-value]
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        spawn_l2_remediation=payload.spawn_l2_remediation,
+        include_smoke=payload.include_smoke,
+        actor_id=payload.actor_id,
+    )
+
+
+class SmokeLanMissionCreateBody(BaseModel):
+    days: int = 3
+    budget_retries: int = 5
+    escalate_after_red: int = 2
+    dry_run: bool = False
+    actor_id: str = "pilot:smoke_lan_mission"
+
+
+class SmokeLanMissionTickBody(BaseModel):
+    dry_run: bool = True
+    notify: bool | None = None
+    include_smoke: bool = False
+    actor_id: str | None = None
+
+
+@router.get("/team/smoke_lan_mission")
+def team_smoke_lan_mission_get() -> dict[str, object]:
+    """État mission L3 bornée smoke LAN (E2/E4)."""
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.mission_brief()  # type: ignore[return-value]
+
+
+@router.post("/team/smoke_lan_mission")
+def team_smoke_lan_mission_create(payload: SmokeLanMissionCreateBody) -> dict[str, object]:
+    """Crée une mission L3 bornée (deadline / budget / escalade)."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.create_mission(  # type: ignore[return-value]
+        days=payload.days,
+        budget_retries=payload.budget_retries,
+        escalate_after_red=payload.escalate_after_red,
+        actor_id=payload.actor_id,
+        dry_run=payload.dry_run,
+    )
+
+
+@router.post("/team/smoke_lan_mission/tick")
+def team_smoke_lan_mission_tick(payload: SmokeLanMissionTickBody) -> dict[str, object]:
+    """Tick observe→retry→escalade L2 (E3). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.tick_mission(  # type: ignore[return-value]
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        include_smoke=payload.include_smoke,
+        actor_id=payload.actor_id,
+    )
+
+
+@router.post("/team/smoke_lan_mission/cancel")
+def team_smoke_lan_mission_cancel() -> dict[str, object]:
+    from team import smoke_lan_mission
+
+    return smoke_lan_mission.cancel_mission()  # type: ignore[return-value]
+
+
+class SmokeLanMissionExtendBody(BaseModel):
+    extra_days: int | None = None
+
+
+@router.post("/team/smoke_lan_mission/extend")
+def team_smoke_lan_mission_extend(payload: SmokeLanMissionExtendBody | None = None) -> dict[str, object]:
+    """Prolonge la deadline mission (jours restants + marge)."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import smoke_lan_mission
+
+    body = payload or SmokeLanMissionExtendBody()
+    return smoke_lan_mission.extend_mission(extra_days=body.extra_days)  # type: ignore[return-value]
+
+
+class PygmalionAssetsPilotBody(BaseModel):
+    brief: str
+    dry_run: bool = True
+    notify: bool | None = None
+    spawn_l2: bool = True
+    propose_comfy_ensure: bool = True
+    actor_id: str = "pilot:pygmalion_assets"
+
+
+@router.post("/team/pygmalion_assets_pilot")
+def team_pygmalion_assets_pilot(payload: PygmalionAssetsPilotBody) -> dict[str, object]:
+    """Brief Pygmalion → sonde Comfy → tâche L2 (F2). Dry-run par défaut."""
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import pygmalion_assets_pilot
+
+    return pygmalion_assets_pilot.run_pygmalion_assets_pilot(  # type: ignore[return-value]
+        brief=payload.brief,
+        dry_run=payload.dry_run,
+        notify=payload.notify,
+        spawn_l2=payload.spawn_l2,
+        propose_comfy_ensure=payload.propose_comfy_ensure,
+        actor_id=payload.actor_id,
+    )
+
+
 class CampusConductBody(BaseModel):
     dry_run: bool = False
     max_starts: int | None = None
@@ -453,6 +648,88 @@ def team_campus_mission(payload: CampusMissionBody) -> dict[str, object]:
         auto_act=payload.auto_act,
         max_tasks=payload.max_tasks,
     )
+
+
+class CampusMissionRegisterBody(BaseModel):
+    """Mission déjà spawnée (timer Chœur / jalon) — pose task_ids pour clôture."""
+
+    id: str = Field(..., min_length=1)
+    objective: str = Field(..., min_length=1)
+    task_ids: list[str] = Field(default_factory=list)
+    kind: str = "choeur_l1"
+    require_owner_smoke: bool = True
+    status: str = "open"
+
+
+@router.post("/team/campus/mission/register")
+def team_campus_mission_register(payload: CampusMissionRegisterBody) -> dict[str, object]:
+    if not team_store.team_enabled():
+        raise HTTPException(status_code=503, detail="équipe virtuelle désactivée")
+    from team import campus_conductor
+
+    out = campus_conductor.register_mission(
+        payload.id,
+        payload.objective,
+        list(payload.task_ids or []),
+        kind=payload.kind,
+        require_owner_smoke=payload.require_owner_smoke,
+        status=payload.status,
+    )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "register_failed"))
+    return out  # type: ignore[return-value]
+
+
+class EvolutionLeadBody(BaseModel):
+    """Piste d'évolution (URL TikTok/doc/repo…) — fetch silencieux, pas d'onglet."""
+
+    url: str | None = None
+    text: str | None = None
+    note: str = ""
+    spawn_mission: bool = True
+    dry_run: bool = False
+    actor_id: str = "compagnon:evolution"
+    urls: list[str] | None = None
+
+
+@router.post("/team/evolution/lead")
+def team_evolution_lead(payload: EvolutionLeadBody) -> dict[str, object]:
+    """Veille silencieuse : meta URL → brief → mission / tâche evolution_veille."""
+    from services import evolution_lead as evo_lead
+
+    if not evo_lead.leads_enabled():
+        raise HTTPException(status_code=503, detail="evolution_leads_disabled")
+    urls = [u for u in (payload.urls or []) if u]
+    if urls:
+        out = evo_lead.ingest_leads_batch(
+            urls=urls,
+            text=payload.text,
+            note=payload.note,
+            spawn_mission=payload.spawn_mission,
+            dry_run=payload.dry_run,
+            actor_id=payload.actor_id,
+        )
+    else:
+        out = evo_lead.ingest_lead(
+            url=payload.url,
+            text=payload.text,
+            note=payload.note,
+            spawn_mission=payload.spawn_mission,
+            dry_run=payload.dry_run,
+            actor_id=payload.actor_id,
+        )
+    if not out.get("ok"):
+        raise HTTPException(status_code=400, detail=str(out.get("error") or "lead_failed"))
+    return out  # type: ignore[return-value]
+
+
+@router.get("/team/evolution/leads")
+def team_evolution_leads(limit: int = 20) -> dict[str, object]:
+    """Dernières pistes d'évolution (jsonl)."""
+    from services import evolution_lead as evo_lead
+
+    rows = evo_lead.list_leads(limit=max(1, min(100, int(limit or 20))))
+    return {"ok": True, "count": len(rows), "leads": rows}
 
 
 class CampusMissionCloseBody(BaseModel):

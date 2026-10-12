@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lbg/world/relation_memory",
+  "title": "Mémoire relations joueur ↔ PNJ (C2)",
+  "description": "Entrées persistantes injectées dans world_hint (dette, rencontre, cadeau, lien quête). Ticket BOITE_IDEES §14 C2.",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "_meta": {
+      "type": "object",
+      "properties": {
+        "player_id": { "type": "string", "description": "Propriétaire du fichier ou scope session" },
+        "source": { "type": "string" },
+        "bible_ref": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relation_memory_entry" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "relation_memory_entry": {
+      "type": "object",
+      "required": ["player_id", "npc_id", "kind", "note", "ts"],
+      "properties": {
+        "player_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifiant joueur (compte ou personnage sidecar), ex. Lia"
+        },
+        "npc_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Clé registry PNJ, ex. npc:core3_daan_oth"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["debt", "met", "gift", "quest"],
+          "description": "debt = dette/contrat ; met = rencontre ; gift = objet offert ; quest = fil quête ou favori"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Phrase factuelle pour world_hint (pas de lore inventé)"
+        },
+        "ts": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Horodatage ISO 8601 de l'événement"
+        },
+        "value": {
+          "description": "Optionnel : montant crédits (debt/tip), item_id (gift), quest_id (quest)",
+          "oneOf": [
+            { "type": "number" },
+            { "type": "string" },
+            { "type": "null" }
+          ]
+        },
+        "quest_id": {
+          "type": "string",
+          "description": "Si kind=quest, id template hub ex. lh_show_perle"
+        },
+        "item_id": {
+          "type": "string",
+          "description": "Si kind=gift, référence inventaire / schematic connue"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "quest" } } },
+          "then": { "required": ["quest_id"] }
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "schema_version": 1,
+      "_meta": {
+        "source": "packages/cortex/content/world/relation_memory_schema.json",
+        "bible_ref": "docs/world/BIBLE_MMO.md#V40"
+      },
+      "entries": [
+        {
+          "player_id": "Lia",
+          "npc_id": "npc:core3_barman_jax",
+          "kind": "debt",
+          "note": "Tu lui dois encore le prix d'un Cactus Noir après le tip raté.",
+          "ts": "2026-10-05T14:30:00+02:00",
+          "value": 25
+        },
+        {
+          "player_id": "Lia",
+          "npc_id": "npc:core3_daan_oth",
+          "kind": "quest",
+          "note": "Daan t'a confié lh_survey_dunes ; tu n'as pas rendu l'échantillon.",
+          "ts": "2026-10-05T16:00:00+02:00",
+          "quest_id": "lh_survey_dunes"
+        }
+      ]
+    }
+  ]
+}

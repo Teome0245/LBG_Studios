@@ -358,6 +358,52 @@ capability_registry = InMemoryCapabilityRegistry(
             tags=["assistant", "infra", "devops"],
         ),
         CapabilitySpec(
+            name="morning_brief",
+            routed_to="agent.morning_brief",
+            description="Brief matinal studio — agrégat read-only Self / proactive / infra (sans LLM)",
+            mode="local_assistant",
+            risk_level="low",
+            input_schema=_object_schema({"text": {"type": "string"}}, required=["text"]),
+            output_schema=_object_schema(
+                {
+                    "reply": {"type": "string"},
+                    "status": {"type": "object"},
+                }
+            ),
+            effects=["Read-only snapshot; suggests Agir follow-ups; never auto-executes."],
+            errors=["probe_unavailable"],
+            constraints=[
+                CapabilityConstraint(
+                    name="read_only",
+                    description="Aucun effet de bord ; pas d'IMAP ni d'écriture.",
+                )
+            ],
+            tags=["local_assistant", "compagnon", "brief", "jarvis"],
+        ),
+        CapabilitySpec(
+            name="memory_recall",
+            routed_to="agent.memory_recall",
+            description="Mémoire agent — Self + leçons (lecture seule, ≠ RAM VM)",
+            mode="local_assistant",
+            risk_level="low",
+            input_schema=_object_schema({"text": {"type": "string"}}, required=["text"]),
+            output_schema=_object_schema(
+                {
+                    "reply": {"type": "string"},
+                    "status": {"type": "object"},
+                }
+            ),
+            effects=["Read-only Self + lessons_learned; never probes VM RAM/disk."],
+            errors=["self_unreachable", "lessons_unavailable"],
+            constraints=[
+                CapabilityConstraint(
+                    name="read_only",
+                    description="Aucun SSH / devops_probe ; synthèse mémoire agent uniquement.",
+                )
+            ],
+            tags=["local_assistant", "compagnon", "memory", "self", "lessons"],
+        ),
+        CapabilitySpec(
             name="project_status",
             routed_to="agent.project_status",
             description="Point projet factuel — plan de route + tâches team (sans LLM)",

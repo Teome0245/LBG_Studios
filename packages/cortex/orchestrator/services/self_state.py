@@ -513,3 +513,201 @@ def reset_cache_for_tests() -> None:
     global _cache
     with _lock:
         _cache = None
+
+
+def smoke_will_allowed() -> bool:
+    """Autorise les ids/titres smoke (lab uniquement). Défaut : refus."""
+    return os.environ.get("LBG_SELF_WILL_ALLOW_SMOKE", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def is_blocked_smoke_will(*, will_id: str = "", title: str = "") -> bool:
+    """True si l'envie ressemble à un inject smoke et que le filtre prod est actif."""
+    if smoke_will_allowed():
+        return False
+    wid = str(will_id or "").strip().lower()
+    tit = str(title or "").strip().lower()
+    if not wid and not tit:
+        return False
+    if "smoke" in wid or wid.startswith("evo:smoke"):
+        return True
+    if "smoke" in tit:
+        return True
+    return False
+
+
+def _drop_stale_morning_briefs(wills: list[dict[str, Any]], *, keep_day: str) -> list[dict[str, Any]]:
+    """Garde au plus le brief du jour ``keep_day`` ; retire les morning_brief:* plus vieux."""
+    keep_id = f"morning_brief:{keep_day}"
+    out: list[dict[str, Any]] = []
+    for w in wills:
+        wid = str(w.get("id") or "")
+        if wid.startswith("morning_brief:") and wid != keep_id:
+            continue
+        out.append(w)
+    return out
+
+
+def purge_blocked_pending_wills(*, day_key: str | None = None) -> dict[str, Any] | None:
+    """Retire smoke (si filtre on) + briefs matin hors jour courant."""
+    if not self_state_enabled():
+        return None
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    tz_name = os.environ.get("LBG_MORNING_BRIEF_TZ", "Europe/Paris").strip() or "Europe/Paris"
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("Europe/Paris")
+    key = (day_key or datetime.now(tz).strftime("%Y-%m-%d")).strip()
+    with _lock:
+        st = load_state()
+        wills = [w for w in (st.get("pending_will") or []) if isinstance(w, dict)]
+        cleaned = [
+            w
+            for w in wills
+            if not is_blocked_smoke_will(will_id=str(w.get("id") or ""), title=str(w.get("title") or ""))
+        ]
+        cleaned = _drop_stale_morning_briefs(cleaned, keep_day=key)
+        if cleaned == wills:
+            return deepcopy(st)
+        st["pending_will"] = cleaned[:12]
+        return persist_state(st)
+
+
+def complete_pending_will(
+    will_id: str,
+    *,
+    reason: str = "done",
+) -> dict[str, Any] | None:
+    """Consomme une envie (retire de ``pending_will``)."""
+    if not self_state_enabled():
+        return None
+    wid = str(will_id or "").strip()
+    if not wid:
+        raise ValueError("will_id vide")
+    with _lock:
+        st = load_state()
+        wills = [w for w in (st.get("pending_will") or []) if isinstance(w, dict)]
+        kept = [w for w in wills if str(w.get("id") or "") != wid]
+        if len(kept) == len(wills):
+            return deepcopy(st)
+        st["pending_will"] = kept[:12]
+        tick = dict(st.get("last_tick") or {}) if isinstance(st.get("last_tick"), dict) else {}
+        tick.update(
+            {
+                "kind": "will_complete",
+                "ts": _now(),
+                "ok": True,
+                "summary": f"{reason}:{wid}"[:160],
+            }
+        )
+        st["last_tick"] = tick
+        return persist_state(st)
+
+
+def dismiss_pending_will(will_id: str) -> dict[str, Any] | None:
+    """Ignore une envie (même retrait que complete, reason=dismiss)."""
+    return complete_pending_will(will_id, reason="dismiss")
+
+
+def ensure_morning_brief_will(*, day_key: str | None = None) -> dict[str, Any] | None:
+    """Ajoute une envie Self « brief du matin » une fois par jour (opt-in Self).
+
+    Jamais d'auto-Réel desktop — Compagnon toast / Agir / auto L1 lecture seule.
+    """
+    if not self_state_enabled():
+        return None
+    if os.environ.get("LBG_MORNING_BRIEF_ENABLED", "1").strip().lower() in (
+        "0",
+        "false",
+        "no",
+        "off",
+    ):
+        return None
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    tz_name = os.environ.get("LBG_MORNING_BRIEF_TZ", "Europe/Paris").strip() or "Europe/Paris"
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("Europe/Paris")
+    local = datetime.now(tz)
+    try:
+        start = int(os.environ.get("LBG_MORNING_BRIEF_HOUR_START", "7").strip() or "7")
+        end = int(os.environ.get("LBG_MORNING_BRIEF_HOUR_END", "10").strip() or "10")
+    except ValueError:
+        start, end = 7, 10
+    key = (day_key or local.strftime("%Y-%m-%d")).strip()
+    purge_blocked_pending_wills(day_key=key)
+    if not (start <= local.hour < end):
+        return get_state()
+    will_id = f"morning_brief:{key}"
+    with _lock:
+        st = load_state()
+        wills = [w for w in (st.get("pending_will") or []) if isinstance(w, dict)]
+        if any(str(w.get("id") or "") == will_id for w in wills):
+            return deepcopy(st)
+        wills.insert(
+            0,
+            {
+                "id": will_id,
+                "kind": "morning_brief",
+                "title": "Brief du matin",
+                "summary": "Compiler le point studio Self / proactive / infra (lecture seule).",
+                "ts": _now(),
+            },
+        )
+        st["pending_will"] = wills[:12]
+        return persist_state(st)
+
+
+def upsert_pending_will(
+    *,
+    will_id: str,
+    title: str,
+    summary: str = "",
+    kind: str = "evolution",
+    source: str = "spontaneity",
+    meta: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Insert ou rafraîchit une envie Self (Compagnon toast / Agir — pas d'auto-Réel)."""
+    if not self_state_enabled():
+        return None
+    wid = str(will_id or "").strip()[:80]
+    tit = str(title or "").strip()[:160]
+    if not wid or not tit:
+        raise ValueError("will_id and title required")
+    if is_blocked_smoke_will(will_id=wid, title=tit):
+        raise ValueError("smoke will blocked (set LBG_SELF_WILL_ALLOW_SMOKE=1 for lab)")
+    entry = {
+        "id": wid,
+        "kind": str(kind or "evolution").strip()[:48] or "evolution",
+        "title": tit,
+        "summary": str(summary or "").strip()[:280],
+        "source": str(source or "spontaneity").strip()[:48] or "spontaneity",
+        "ts": _now(),
+    }
+    if isinstance(meta, dict) and meta:
+        entry["meta"] = {str(k)[:40]: v for k, v in list(meta.items())[:12]}
+    with _lock:
+        st = load_state()
+        wills = [w for w in (st.get("pending_will") or []) if isinstance(w, dict)]
+        wills = [
+            w
+            for w in wills
+            if str(w.get("id") or "") != wid
+            and not is_blocked_smoke_will(
+                will_id=str(w.get("id") or ""),
+                title=str(w.get("title") or ""),
+            )
+        ]
+        wills.insert(0, entry)
+        st["pending_will"] = wills[:12]
+        return persist_state(st)

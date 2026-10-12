@@ -1,36 +1,42 @@
 # main.gd — Scene principale Prime Client (Godot 4.6)
+# Découpage modulaire Ticket 2.2 : client_gameplay_ops, client_quest_ops, client_net_world, client_ui_dialogue.
 extends Node2D
 
 @onready var camera:         Camera2D      = $Camera2D
-@onready var entity_manager: Node = $EntityManager
+@onready var entity_manager: Node          = $EntityManager
 @onready var info_label:     Label         = $UI/HudLayer/InfoPanel/VBox/InfoLabel
 @onready var stats_label:    Label         = $UI/HudLayer/InfoPanel/VBox/StatsLabel
 @onready var state_label:    Label         = $UI/HudLayer/StatePanel/StateLabel
-@onready var hotbar:         Node         = $UI/HudLayer/Hotbar
-@onready var inventory_panel: Node = $UI/ModalLayer/InventoryPanel
-@onready var _talents_panel: Node = $UI/ModalLayer/TalentsCraftPanel
-@onready var _mission_board: Node = $UI/ModalLayer/MissionBoardPanel
-@onready var _game_menu: Node = $UI/ModalLayer/GameMenuPanel
-@onready var _echo_panel: Node = $UI/ModalLayer/EchoHammatPanel
-@onready var _initiation_panel: Node = $UI/ModalLayer/InitiationQuestPanel
-@onready var _creation_panel: Control = $UI/ModalLayer/CharacterCreationPanel
-@onready var _dialogue_panel: Node = $UI/ModalLayer/DialoguePortraitPanel
-@onready var _login_panel: Control = $UI/LoginPanel
-@onready var _ws: Node = get_node_or_null("%LbgWsClient")
-# preload (pas class_name) : évite casse du parse main.gd si le cache .godot est incomplet.
-const _DialogueBridgeScript = preload("res://scripts/dialogue_bridge.gd")
-var _dialogue_bridge: Node = null
+@onready var hotbar:         Node          = $UI/HudLayer/Hotbar
+@onready var inventory_panel: Node         = $UI/ModalLayer/InventoryPanel
+@onready var _talents_panel: Node          = $UI/ModalLayer/TalentsCraftPanel
+@onready var _mission_board: Node          = $UI/ModalLayer/MissionBoardPanel
+@onready var _game_menu:     Node          = $UI/ModalLayer/GameMenuPanel
+@onready var _echo_panel:    Node          = $UI/ModalLayer/EchoHammatPanel
+@onready var _initiation_panel: Node       = $UI/ModalLayer/InitiationQuestPanel
+@onready var _creation_panel: Control      = $UI/ModalLayer/CharacterCreationPanel
+@onready var _dialogue_panel: Node         = $UI/ModalLayer/DialoguePortraitPanel
+@onready var _login_panel:   Control       = $UI/LoginPanel
+@onready var _ws:            Node          = get_node_or_null("%LbgWsClient")
 
-# preload (pas class_name) : main.gd reste parseable même si .godot/class cache est incomplet.
+# Modules spécialisés Ticket 2.2
+const _GameplayOpsScript = preload("res://scripts/client_gameplay_ops.gd")
+const _QuestOpsScript = preload("res://scripts/client_quest_ops.gd")
+const _NetWorldScript = preload("res://scripts/client_net_world.gd")
+const _UiDialogueScript = preload("res://scripts/client_ui_dialogue.gd")
+
+# Scripts helpers préchargés
 const _Projection3D2D = preload("res://scripts/projection.gd")
-const _NpcAnchorResolver = preload("res://scripts/npc_anchor_resolver.gd")
-const _HubFocus = preload("res://scripts/hub_focus.gd")
 const _Crc32Util = preload("res://scripts/crc32_util.gd")
-const _LbgWsClientScript = preload("res://scripts/LbgWsClient.gd")
-const _EchoHammatControllerScript = preload("res://scripts/echo_hammat_controller.gd")
-const _InitiationQuestControllerScript = preload("res://scripts/initiation_quest_controller.gd")
 const _EntityScript = preload("res://scripts/entity.gd")
-const _WaypointStore = preload("res://scripts/waypoint_store.gd")
+const _LastPos = preload("res://scripts/last_position_store.gd")
+const _HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
+
+var gameplay_ops: RefCounted = null
+var quest_ops: RefCounted = null
+var net_world: RefCounted = null
+var ui_dialogue: RefCounted = null
+
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
@@ -40,6 +46,11 @@ const CAM_ZOOM_STEP: float   = 0.15
 const CAM_ZOOM_MIN:  Vector2 = Vector2(0.05, 0.05)
 const CAM_ZOOM_MAX:  Vector2 = Vector2(8.0, 8.0)
 
+const LOST_HEAVEN_HUB := Vector3(4749.0, 0.0, -737.0)
+const LOST_HEAVEN_ZOOM: Vector2 = Vector2(3.0, 3.0)
+const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
+const HUMAN_CFG := "res://config/human_player.json"
+
 @export var allow_demo_fallback: bool = false
 @export var camera_free_pan: bool = true
 @export var show_debug_hud: bool = false
@@ -48,1109 +59,83 @@ const CAM_ZOOM_MAX:  Vector2 = Vector2(8.0, 8.0)
 var _cam_target:   Vector2 = Vector2.ZERO
 var _play_mode:    bool    = false
 var _frame_count:  int     = 0
-var _planet_name:  String  = ""         # planete courante (M5)
-var _loco_state:   String  = "STANDING" # etat locomotion (M5)
-var _is_connected: bool    = false       # vrai quand un vrai joueur est connecté
-var _snapshot_live: bool  = false
-var _udp_live: bool       = false
-var _ws_live: bool        = false
+var _planet_name:  String  = ""
+var _loco_state:   String  = "STANDING"
+var _is_connected: bool    = false
+var _snapshot_live: bool   = false
+var _udp_live:     bool    = false
+var _ws_live:      bool    = false
 var _ws_handoff_busy: bool = false
-var _last_ws_url: String = ""
+var _last_ws_url:  String  = ""
 var _local_character_name: String = ""
-var _dialogue_demo_expression_index: int = 0
+var _online_players: Array = []
 var _selected_entity_id: int = 0
-var _dialogue_world_npc_id: String = ""
-var _dialogue_npc_name: String = ""
-var _dialogue_npc_role: String = ""
-var _echo_controller: Node = null
-var _initiation_controller: Node = null
 var _world_entry_done: bool = false
 var _possessed_id: int = 0
+var _beast_telegraph_seen: Dictionary = {}
 
-const FOCUS_BOTS: Array[String] = ["Nix", "Lia", "Mira"]
-const FOCUS_ZOOM: Vector2 = Vector2(2.0, 2.0)
-const DIALOGUE_DEMO_EXPRESSIONS: Array[String] = [
-	"neutral",
-	"happy",
-	"determined",
-	"talk_1",
-	"talk_2",
-	"angry",
-	"sad",
-	"surprised",
-]
+# Accesseurs de compatibilité pour sous-modules et vues externes
+var _echo_controller: Node:
+	get: return quest_ops.echo_controller if quest_ops else null
+var _initiation_controller: Node:
+	get: return quest_ops.initiation_controller if quest_ops else null
+var _dialogue_bridge: Node:
+	get: return ui_dialogue.dialogue_bridge if ui_dialogue else null
+var _wiki_panel: Node:
+	get: return gameplay_ops.wiki_panel if gameplay_ops else null
+var _salvage_http: HTTPRequest:
+	get: return gameplay_ops.salvage_http if gameplay_ops else null
+var _hunt_http: HTTPRequest:
+	get: return gameplay_ops.hunt_http if gameplay_ops else null
+var _density_http: HTTPRequest:
+	get: return gameplay_ops.density_http if gameplay_ops else null
+var _hub_chat_root: Control:
+	get: return ui_dialogue.hub_chat_root if ui_dialogue else null
 
-const LOST_HEAVEN_HUB := Vector3(4749.0, 0.0, -737.0)
-const LOST_HEAVEN_ZOOM: Vector2 = Vector2(3.0, 3.0)
-const HUB_FIT_MARGIN: float = 0.72
-const HUMAN_CFG := "res://config/human_player.json"
-const _LastPos = preload("res://scripts/last_position_store.gd")
 
 func _ready() -> void:
 	add_to_group("prime_main")
-	# Demo M2 : SnapshotBridge charge demo_entities.json si pas de snapshots
-	get_tree().create_timer(0.35).timeout.connect(_maybe_demo_spawn)
-	call_deferred("_focus_lost_heaven_hub")
-	if hotbar:
+	_init_modules()
+
+	if hotbar and hotbar.has_signal("slot_activated"):
 		hotbar.slot_activated.connect(_on_hotbar_slot)
-	_wire_m10_craft_inventory()
-	_wire_mission_board()
-	_ensure_dialogue_bridge()
-	_ensure_ws_client()
-	_ensure_echo_hammat()
-	_ensure_initiation_quest()
-	_wire_login_ws()
+	if hotbar and hotbar.has_signal("slot_clicked"):
+		hotbar.slot_clicked.connect(_on_hotbar_slot)
+
+	if _creation_panel and _creation_panel.has_signal("character_created"):
+		_creation_panel.character_created.connect(_on_second_character_created_in_game)
+
+	net_world.wire_login_ws()
+	quest_ops.wire_m10_craft_inventory()
+	quest_ops.wire_mission_board()
+	ui_dialogue.ensure_dialogue_bridge()
+
+	_focus_lost_heaven_hub()
+	_maybe_demo_spawn()
+	_ensure_wiki_panel()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
 
 
-func _wire_m10_craft_inventory() -> void:
-	if _talents_panel == null or inventory_panel == null:
-		return
-	if _talents_panel.has_signal("craft_completed"):
-		if not _talents_panel.craft_completed.is_connected(_on_m10_craft_completed):
-			_talents_panel.craft_completed.connect(_on_m10_craft_completed)
+func _init_modules() -> void:
+	gameplay_ops = _GameplayOpsScript.new()
+	quest_ops = _QuestOpsScript.new()
+	net_world = _NetWorldScript.new()
+	ui_dialogue = _UiDialogueScript.new()
+
+	gameplay_ops.setup(self)
+	quest_ops.setup(self)
+	net_world.setup(self)
+	ui_dialogue.setup(self)
 
-
-func _wire_mission_board() -> void:
-	if _mission_board == null:
-		return
-	if _mission_board.has_signal("quest_completed"):
-		if not _mission_board.quest_completed.is_connected(_on_mission_completed):
-			_mission_board.quest_completed.connect(_on_mission_completed)
-	if _mission_board.has_signal("quest_accepted"):
-		if not _mission_board.quest_accepted.is_connected(_on_mission_accepted):
-			_mission_board.quest_accepted.connect(_on_mission_accepted)
-
-
-func _on_mission_accepted(result: Dictionary) -> void:
-	var title := str((result.get("accepted") or {}).get("title", "mission"))
-	_hotbar_feedback("Mission acceptée — %s" % title)
-
-
-func _on_mission_completed(result: Dictionary) -> void:
-	var title := str(result.get("title", "mission"))
-	var cr := int((result.get("reward_applied") or {}).get("credits_gained", 0))
-	_hotbar_feedback("Mission OK — %s (+%d Cr)" % [title, cr])
-	if inventory_panel and inventory_panel.has_method("refresh_inventory"):
-		inventory_panel.refresh_inventory()
-
-
-func _on_m10_craft_completed(result: Dictionary) -> void:
-	# Ouvre l'inventaire pour voir le résultat (B2B craft → bags).
-	if inventory_panel:
-		if inventory_panel.has_method("toggle") and not bool(inventory_panel.get("visible")):
-			inventory_panel.toggle()
-		elif "visible" in inventory_panel:
-			inventory_panel.visible = true
-		if inventory_panel.has_method("apply_craft_result"):
-			inventory_panel.apply_craft_result(result)
-		elif inventory_panel.has_method("refresh_inventory"):
-			inventory_panel.refresh_inventory()
-	_hotbar_feedback("Craft OK — inventaire mis à jour")
-
-
-func _ensure_dialogue_bridge() -> void:
-	if _dialogue_bridge != null and is_instance_valid(_dialogue_bridge):
-		return
-	_dialogue_bridge = _DialogueBridgeScript.new()
-	_dialogue_bridge.name = "DialogueBridge"
-	add_child(_dialogue_bridge)
-	if _dialogue_bridge.has_signal("reply_ready"):
-		_dialogue_bridge.reply_ready.connect(_on_dialogue_bridge_reply)
-	if _dialogue_bridge.has_signal("busy_changed"):
-		_dialogue_bridge.busy_changed.connect(_on_dialogue_bridge_busy)
-	if _dialogue_panel and _dialogue_panel.has_signal("followup_submitted"):
-		if not _dialogue_panel.followup_submitted.is_connected(_on_dialogue_followup):
-			_dialogue_panel.followup_submitted.connect(_on_dialogue_followup)
-
-
-func _log_build_info() -> void:
-	const path := "res://assets/build_info.json"
-	if not FileAccess.file_exists(path):
-		print("[Main] build_info absent — sync J: via tools/sync_prime_client_to_j.sh")
-		return
-	var f := FileAccess.open(path, FileAccess.READ)
-	var raw: Variant = JSON.parse_string(f.get_as_text())
-	f.close()
-	if raw is Dictionary:
-		var d: Dictionary = raw
-		var stamp := str(d.get("synced_at", "?"))
-		var schema := int(d.get("map_config_schema", 0))
-		print("[Main] prime-client build synced_at=%s map_schema=%d" % [stamp, schema])
-		if info_label and OS.is_debug_build():
-			info_label.text = "build %s · map v%d" % [stamp.substr(0, min(19, stamp.length())), schema]
-
-
-func _ensure_ws_client() -> void:
-	if _ws != null and is_instance_valid(_ws):
-		if not _ws.is_in_group("lbg_ws_client"):
-			_ws.add_to_group("lbg_ws_client")
-		return
-	_ws = get_node_or_null("LbgWsClient")
-	if _ws == null:
-		_ws = preload("res://scripts/LbgWsClient.gd").new()
-		_ws.name = "LbgWsClient"
-		add_child(_ws)
-		print("[Main] LbgWsClient créé dynamiquement")
-	if not _ws.is_in_group("lbg_ws_client"):
-		_ws.add_to_group("lbg_ws_client")
-
-
-func _ensure_echo_hammat() -> void:
-	if _echo_controller == null:
-		_echo_controller = _EchoHammatControllerScript.new()
-		_echo_controller.name = "EchoHammatController"
-		add_child(_echo_controller)
-	if _ws != null:
-		_echo_controller.bind_ws_client(_ws)
-	_echo_controller.bind_world(entity_manager, get_node_or_null("PlayerController"))
-	if _echo_panel != null and _echo_panel.has_method("bind_controller"):
-		_echo_panel.bind_controller(_echo_controller)
-	if _echo_controller.has_signal("state_changed"):
-		if not _echo_controller.state_changed.is_connected(_on_echo_state_changed):
-			_echo_controller.state_changed.connect(_on_echo_state_changed)
-
-
-func _on_echo_state_changed(state: Dictionary) -> void:
-	if _initiation_controller == null:
-		return
-	var step: Dictionary = _initiation_controller.get_current_step()
-	if str(step.get("id", "")) != "invocation":
-		return
-	if str(state.get("echo_character_id", "")).is_empty():
-		return
-	if _initiation_controller.has_method("mark_echo_practiced"):
-		_initiation_controller.mark_echo_practiced()
-	if _initiation_panel and _initiation_panel.has_method("_paint_step"):
-		_initiation_panel.call("_paint_step")
-
-
-func _sync_echo_roster() -> void:
-	if _echo_controller == null:
-		return
-	var roster: Array = []
-	var meta: Dictionary = {}
-	if _login_panel:
-		if _login_panel.has_method("get_account_roster"):
-			roster = _login_panel.call("get_account_roster")
-		if _login_panel.has_method("get_selected_character_meta"):
-			meta = _login_panel.call("get_selected_character_meta")
-	var active_id := str(meta.get("character_id", meta.get("id", "")))
-	var active_name := str(meta.get("name", _local_character_name))
-	_echo_controller.set_roster(roster, active_id, active_name)
-
-
-func _toggle_echo_hammat() -> void:
-	if _echo_panel == null:
-		return
-	_sync_echo_roster()
-	if _echo_panel.has_method("toggle"):
-		_echo_panel.toggle()
-
-
-func _ensure_initiation_quest() -> void:
-	if _initiation_controller == null:
-		_initiation_controller = _InitiationQuestControllerScript.new()
-		_initiation_controller.name = "InitiationQuestController"
-		add_child(_initiation_controller)
-	if _initiation_panel != null and _initiation_panel.has_method("bind_controller"):
-		_initiation_panel.bind_controller(_initiation_controller)
-	if _initiation_controller.has_signal("request_create_character"):
-		if not _initiation_controller.request_create_character.is_connected(_on_initiation_create_character):
-			_initiation_controller.request_create_character.connect(_on_initiation_create_character)
-	if _initiation_controller.has_signal("request_open_echo_panel"):
-		if not _initiation_controller.request_open_echo_panel.is_connected(_on_initiation_open_echo):
-			_initiation_controller.request_open_echo_panel.connect(_on_initiation_open_echo)
-	if _initiation_controller.has_signal("step_changed"):
-		if not _initiation_controller.step_changed.is_connected(_on_initiation_step_changed):
-			_initiation_controller.step_changed.connect(_on_initiation_step_changed)
-	if _initiation_controller.has_signal("quest_completed"):
-		if not _initiation_controller.quest_completed.is_connected(_on_initiation_quest_completed):
-			_initiation_controller.quest_completed.connect(_on_initiation_quest_completed)
-
-
-func _get_roster_size() -> int:
-	if _login_panel and _login_panel.has_method("get_account_roster"):
-		return (_login_panel.call("get_account_roster") as Array).size()
-	return 1
-
-
-func _count_hammat_characters() -> int:
-	if _login_panel == null or not _login_panel.has_method("get_account_roster"):
-		return 0
-	var roster: Array = _login_panel.call("get_account_roster")
-	var n := 0
-	for c in roster:
-		if str(c.get("noyau_id", "")).strip_edges() != "":
-			n += 1
-	return n
-
-
-func _get_particule_info() -> Dictionary:
-	if _login_panel and _login_panel.has_method("get_selected_character_meta"):
-		return _login_panel.call("get_selected_character_meta")
-	return {}
-
-
-func _maybe_start_initiation_quest() -> void:
-	if _initiation_controller == null:
-		return
-	var hammat_n := _count_hammat_characters()
-	if not _initiation_controller.should_auto_start(hammat_n):
-		return
-	var meta := _get_particule_info()
-	if _initiation_panel and _initiation_panel.has_method("set_particule_info"):
-		_initiation_panel.set_particule_info(
-			str(meta.get("noyau_id", "")),
-			str(meta.get("particule_seed", "")),
-		)
-	_initiation_controller.start_quest()
-	if _initiation_panel:
-		if _initiation_panel.has_method("open_panel"):
-			_initiation_panel.open_panel()
-		if _initiation_panel.has_method("refresh_step"):
-			_initiation_panel.refresh_step()
-		elif _initiation_panel.has_method("_paint_step"):
-			_initiation_panel.call("_paint_step")
-
-
-func open_initiation_quest() -> void:
-	if _initiation_controller == null:
-		return
-	if _initiation_controller.is_done():
-		return
-	var meta := _get_particule_info()
-	if _initiation_panel and _initiation_panel.has_method("set_particule_info"):
-		_initiation_panel.set_particule_info(
-			str(meta.get("noyau_id", "")),
-			str(meta.get("particule_seed", "")),
-		)
-	if not bool(_initiation_controller.active):
-		_initiation_controller.start_quest()
-	if _initiation_panel:
-		if _initiation_panel.has_method("open_panel"):
-			_initiation_panel.open_panel()
-		if _initiation_panel.has_method("refresh_step"):
-			_initiation_panel.refresh_step()
-
-
-func open_character_creation(from_menu: bool = false) -> void:
-	if _login_panel and _login_panel.has_method("open_character_creation_in_game"):
-		_login_panel.call("open_character_creation_in_game")
-	elif _creation_panel and _creation_panel.has_method("open_panel"):
-		_creation_panel.call("open_panel", from_menu)
-
-
-func _on_initiation_step_changed(_step_id: String, _idx: int) -> void:
-	if _initiation_panel and _initiation_panel.has_method("_paint_step"):
-		_initiation_panel.call("_paint_step")
-
-
-func _on_initiation_create_character() -> void:
-	if _login_panel and _login_panel.has_method("open_character_creation_in_game"):
-		_login_panel.call("open_character_creation_in_game")
-
-
-func _on_initiation_open_echo() -> void:
-	_toggle_echo_hammat()
-
-
-func _on_initiation_quest_completed(_quest_id: String) -> void:
-	if state_label:
-		state_label.text = "Initiation terminée — Écho Amas débloqué"
-	if _initiation_panel and _initiation_panel.has_method("close_panel"):
-		_initiation_panel.close_panel()
-
-
-func _on_second_character_created_in_game(entry: Dictionary) -> void:
-	_sync_echo_roster()
-	if _initiation_panel and _initiation_panel.has_method("set_particule_info"):
-		_initiation_panel.set_particule_info(
-			str(entry.get("noyau_id", "")),
-			str(entry.get("particule_seed", "")),
-		)
-	if _initiation_controller and _initiation_controller.has_method("on_second_character_created"):
-		_initiation_controller.on_second_character_created()
-	if _initiation_panel and _initiation_panel.has_method("_paint_step"):
-		_initiation_panel.call("_paint_step")
-	_restore_local_control()
-
-
-func _restore_local_control() -> void:
-	var vp := get_viewport()
-	if vp:
-		vp.gui_release_focus()
-	var pid := _possessed_id
-	var pc: Node = get_node_or_null("PlayerController")
-	if pid <= 0 and pc and pc.has_method("get_player_id"):
-		pid = int(pc.get_player_id())
-	if pid <= 0 and _ws != null and "your_character_id" in _ws:
-		pid = int(_ws.your_character_id)
-	if pid > 0:
-		_possess_local_player(pid, _planet_name, true)
-
-
-## Appelé par LoginPanel : attache le WS déjà connecté (LoginPanel pilote le handshake).
-func _on_ws_handoff_started(ws_url: String, character_id: int, session_token: String, ws: Node) -> void:
-	_last_ws_url = ws_url
-	_ws_handoff_busy = true
-	if _login_panel and _login_panel.has_method("get_selected_character_name"):
-		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
-	print("[Main] handoff attaché (LoginPanel pilote) ws=%s char=%d name=%s" % [
-		ws_url, character_id, _local_character_name
-	])
-	if ws != null and is_instance_valid(ws):
-		_ws = ws
-		if not _ws.is_in_group("lbg_ws_client"):
-			_ws.add_to_group("lbg_ws_client")
-	else:
-		_ensure_ws_client()
-	_wire_ws_signals_only()
-	var pc: Node = get_node_or_null("PlayerController")
-	if pc and pc.has_method("set_ws_client") and _ws:
-		pc.set_ws_client(_ws)
-	if state_label:
-		state_label.text = "WS…"
-	# session_token réservé (compat signature) — LoginPanel a déjà le token pour connect_session.
-	if session_token.strip_edges().is_empty():
-		push_warning("[Main] session_token vide à l’attach handoff")
-
-
-func _wire_ws_signals_only() -> void:
-	if _ws == null:
-		return
-	if _ws.has_signal("connecting") and not _ws.connecting.is_connected(_on_ws_connecting):
-		_ws.connecting.connect(_on_ws_connecting)
-	if _ws.has_signal("connected") and not _ws.connected.is_connected(_on_ws_connected):
-		_ws.connected.connect(_on_ws_connected)
-	if _ws.has_signal("zone_state_received") and not _ws.zone_state_received.is_connected(_on_ws_zone_state):
-		_ws.zone_state_received.connect(_on_ws_zone_state)
-	if _ws.has_signal("disconnected") and not _ws.disconnected.is_connected(_on_ws_disconnected):
-		_ws.disconnected.connect(_on_ws_disconnected)
-	if _ws.has_signal("error_message") and not _ws.error_message.is_connected(_on_ws_error):
-		_ws.error_message.connect(_on_ws_error)
-	if _ws.has_signal("login_result") and not _ws.login_result.is_connected(_on_ws_login_result):
-		_ws.login_result.connect(_on_ws_login_result)
-	if _ws.has_signal("handoff_progress") and not _ws.handoff_progress.is_connected(_on_ws_handoff_progress):
-		_ws.handoff_progress.connect(_on_ws_handoff_progress)
-	if _ws.has_signal("reconnecting") and not _ws.reconnecting.is_connected(_on_ws_reconnecting):
-		_ws.reconnecting.connect(_on_ws_reconnecting)
-
-
-func _wire_login_ws() -> void:
-	if _login_panel:
-		_login_panel.visible = show_login_on_start
-		if show_login_on_start:
-			_dismiss_modals_for_login()
-		if _login_panel.has_signal("enter_world_requested"):
-			_login_panel.enter_world_requested.connect(_on_enter_world_requested)
-	_wire_ws_signals_only()
-	var pc: Node = get_node_or_null("PlayerController")
-	if pc and pc.has_method("set_ws_client") and _ws:
-		pc.set_ws_client(_ws)
-
-
-func _dismiss_modals_for_login() -> void:
-	var pmap: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
-	if pmap and pmap.has_method("close_map"):
-		pmap.close_map()
-	if inventory_panel and inventory_panel.get("visible") and inventory_panel.has_method("toggle"):
-		inventory_panel.toggle()
-	if _talents_panel and _talents_panel.get("visible") and _talents_panel.has_method("toggle"):
-		_talents_panel.toggle()
-	if _mission_board and _mission_board.get("visible") and _mission_board.has_method("toggle"):
-		_mission_board.toggle()
-	if _game_menu and _game_menu.get("visible") and _game_menu.has_method("close_menu"):
-		_game_menu.close_menu()
-	if _dialogue_panel and _dialogue_panel.get("visible") and _dialogue_panel.has_method("hide_portrait"):
-		_dialogue_panel.hide_portrait()
-	var retail: Node = get_node_or_null("WorldMap/RetailLayoutLayer")
-	if retail and retail.has_method("set_visible_layout") and bool(retail.get("visible_layout")):
-		retail.set_visible_layout(false)
-
-
-func _set_login_status(message: String) -> void:
-	if _login_panel and _login_panel.has_method("set_ws_status"):
-		_login_panel.set_ws_status(message)
-	elif _login_panel and _login_panel.has_node("%StatusLabel"):
-		(_login_panel.get_node("%StatusLabel") as Label).text = message
-
-
-func _on_enter_world_requested(ws_url: String, character_id: int, session_token: String) -> void:
-	# Compat : si un vieux LoginPanel délègue encore le connect à Main.
-	if _ws_handoff_busy and _ws != null and _ws.has_method("is_open") and bool(_ws.is_open()):
-		return
-	if session_token.strip_edges().is_empty():
-		_on_ws_error("session_token vide (login HTTP)")
-		return
-	_ws_handoff_busy = true
-	if _login_panel and _login_panel.has_method("get_selected_character_name"):
-		_local_character_name = str(_login_panel.call("get_selected_character_name")).strip_edges()
-	print("[Main] M11→M12 handoff (legacy) ws=%s char=%d name=%s" % [ws_url, character_id, _local_character_name])
-	_last_ws_url = ws_url
-	if _login_panel:
-		_login_panel.visible = true
-	_dismiss_modals_for_login()
-	_ensure_ws_client()
-	_wire_ws_signals_only()
-	_set_login_status("WS %s…" % ws_url)
-	if state_label:
-		state_label.text = "WS…"
-	if _ws and _ws.has_method("connect_session"):
-		var err: int = _ws.connect_session(ws_url, session_token, character_id, "tatooine")
-		if err != OK:
-			_ws_handoff_busy = false
-			_on_ws_error("connect_session err %s" % err)
-	else:
-		_ws_handoff_busy = false
-		_on_ws_error("LbgWsClient absent après _ensure_ws_client")
-
-
-func _on_ws_connecting(ws_url: String) -> void:
-	_set_login_status("WS connexion %s…" % ws_url)
-	if state_label:
-		state_label.text = "WS…"
-
-
-func _on_ws_handoff_progress(phase: String, detail: String) -> void:
-	if phase == "state":
-		var host := _last_ws_url
-		if host.length() > 48:
-			host = host.substr(0, 45) + "…"
-		_set_login_status("WS %s — %s" % [detail, host])
-	elif phase == "auth":
-		_set_login_status("WS %s" % detail)
-	elif phase == "reconnect":
-		_set_login_status("WS %s" % detail)
-	elif phase == "error":
-		_on_ws_error(detail)
-
-
-func _on_ws_reconnecting(attempt: int, delay_s: float) -> void:
-	_ws_live = false
-	var msg := "Reconnexion WS dans %.0fs (#%d)…" % [delay_s, attempt]
-	_set_login_status(msg)
-	if state_label:
-		state_label.text = "WS RECON…"
-	print("[Main] %s" % msg)
-
-
-func _on_ws_connected(your_character_id: int, zone: String) -> void:
-	_on_world_entered(your_character_id, zone)
-
-
-func _on_world_entered(your_character_id: int, zone: String) -> void:
-	if _world_entry_done:
-		return
-	_world_entry_done = true
-	_ws_handoff_busy = false
-	_ws_live = true
-	_is_connected = true
-	_play_mode = true
-	camera_free_pan = false
-	_planet_name = zone
-	print("[Main] entrée monde char=%d zone=%s" % [your_character_id, zone])
-	if _login_panel and _login_panel.has_method("on_ws_connected"):
-		_login_panel.on_ws_connected(your_character_id, zone)
-	else:
-		_set_login_status("Connecté — %s" % zone)
-	_dismiss_modals_for_login()
-	if _login_panel:
-		_login_panel.visible = false
-	_ensure_echo_hammat()
-	_sync_echo_roster()
-	if your_character_id > 0:
-		call_deferred("_possess_local_player", your_character_id, zone, false)
-	get_tree().create_timer(1.2).timeout.connect(_maybe_start_initiation_quest)
-	get_tree().create_timer(1.8).timeout.connect(_prime_wahou_hunt_beat)
-	if state_label:
-		state_label.text = "WS OK"
-
-
-func _prime_wahou_hunt_beat() -> void:
-	"""30 premières secondes : board chasse + waypoint porte est (hors palissade)."""
-	if _mission_board and _mission_board.has_method("seed_hub_hunt_beat"):
-		var seeded: Variant = _mission_board.call("seed_hub_hunt_beat")
-		if typeof(seeded) == TYPE_DICTIONARY and bool((seeded as Dictionary).get("ok", false)):
-			var title := str((seeded as Dictionary).get("title", "Meute aux portes"))
-			_hotbar_feedback("J — %s · porte est hors palissade" % title)
-		else:
-			_hotbar_feedback("J — board chasse · porte est hors palissade")
-	else:
-		_hotbar_feedback("J — board chasse · porte est hors palissade")
-	_ensure_east_gate_hunt_waypoint()
-
-
-func _ensure_east_gate_hunt_waypoint() -> void:
-	const gate_x := 5813.6
-	const gate_z := -982.5
-	const label := "Porte est — chasse"
-	var existing: Array = _WaypointStore.load_all()
-	for item: Variant in existing:
-		if item is Dictionary and str((item as Dictionary).get("label", "")).findn("porte est") >= 0:
-			return
-	_WaypointStore.add_waypoint(label, gate_x, gate_z)
-
-
-func _on_ws_disconnected(reason: String) -> void:
-	if _ws != null and _ws.has_method("is_reconnecting") and bool(_ws.is_reconnecting()):
-		_ws_handoff_busy = false
-		_ws_live = false
-		if state_label:
-			state_label.text = "WS RECON…"
-		print("[Main] WS drop — reconnexion auto: %s" % reason)
-		return
-	_ws_handoff_busy = false
-	_ws_live = false
-	_world_entry_done = false
-	_possessed_id = 0
-	print("[Main] WS disconnected: %s" % reason)
-	if state_label:
-		state_label.text = "WS OFF"
-	if not _is_connected:
-		if _login_panel:
-			_login_panel.visible = true
-			_dismiss_modals_for_login()
-			if _login_panel.has_method("on_ws_failed"):
-				_login_panel.on_ws_failed(reason)
-			else:
-				_set_login_status("WS échoué: %s" % reason)
-
-
-func _on_ws_login_result(success: bool, reason: String) -> void:
-	if success:
-		_set_login_status("WS auth OK — entrée zone…")
-		return
-	_ws_handoff_busy = false
-	_on_ws_error("login_result: %s" % (reason if reason else "auth_failed"))
-
-
-func _on_ws_error(message: String) -> void:
-	_ws_handoff_busy = false
-	push_warning("[Main] WS error: %s" % message)
-	if _login_panel and not _is_connected:
-		_login_panel.visible = true
-		_dismiss_modals_for_login()
-		if _login_panel.has_method("on_ws_failed"):
-			_login_panel.on_ws_failed(message)
-		else:
-			_set_login_status(message)
-	if state_label:
-		state_label.text = "WS ERR"
-
-
-func _on_ws_zone_state(payload: Dictionary) -> void:
-	_ws_live = true
-	_snapshot_live = true
-	var zone := str(payload.get("zone", payload.get("map", _planet_name)))
-	if zone != "":
-		var z_norm := zone.to_lower()
-		var changed := z_norm != _planet_name.to_lower()
-		_planet_name = zone
-		if changed:
-			var wm: Node = get_node_or_null("WorldMap")
-			if wm:
-				wm.set_planet(z_norm)
-
-	var your_id := int(payload.get("your_character_id", 0))
-	if your_id == 0 and _ws and "your_character_id" in _ws:
-		your_id = int(_ws.your_character_id)
-	# Entrée monde : le premier zone_state suffit (enter_world peut être fusionné côté gateway).
-	if your_id > 0 and not _world_entry_done:
-		_on_world_entered(your_id, zone if zone != "" else "tatooine")
-	elif your_id > 0 and _login_panel and _login_panel.visible:
-		_ws_handoff_busy = false
-		if _login_panel.has_method("on_ws_connected"):
-			_login_panel.on_ws_connected(your_id, zone if zone != "" else "tatooine")
-
-	var pos := Vector3(LOST_HEAVEN_HUB.x, LOST_HEAVEN_HUB.y, LOST_HEAVEN_HUB.z)
-	var has_pos := false
-	if payload.get("position") is Array:
-		var p: Array = payload["position"]
-		if p.size() >= 3:
-			pos = Vector3(float(p[0]), float(p[1]), float(p[2]))
-			has_pos = true
-
-	# Entités zone (skip le joueur local pour éviter le double sprite)
-	var entities: Array = payload.get("entities", [])
-	if typeof(entities) == TYPE_ARRAY:
-		for ent in entities:
-			if not ent is Dictionary:
-				continue
-			_apply_ws_entity(ent as Dictionary, your_id)
-		var retail: Node = get_node_or_null("WorldMap/RetailLayoutLayer")
-		if retail:
-			retail.merge_zone_entities(entities, your_id)
-		_cull_stray_entities(your_id)
-
-	# Joueur contrôlé — spawn une fois ; ne pas recentrer à chaque tick zone_state
-	if your_id > 0:
-		var existing: Node = entity_manager.get_entity(your_id)
-		var first_spawn := existing == null
-		if first_spawn:
-			var label := _local_character_name if _local_character_name != "" else "You"
-			var cfg := _load_human_cfg()
-			if label == "You" and str(cfg.get("display_name", "")) != "":
-				label = str(cfg["display_name"])
-			# Secours client : si gateway renvoie le hub défaut, reprendre la dernière pos locale
-			var saved := _LastPos.load_pos(your_id)
-			if saved != Vector3.INF:
-				var near_default := (pos - LOST_HEAVEN_HUB).length_squared() < 4.0
-				if near_default or not has_pos:
-					pos = saved
-					has_pos = true
-			entity_manager.spawn(your_id, pos, COLOR_PLAYER_OFFICIAL, label, "player", "player:human")
-		elif has_pos and existing != null:
-			# Client-authoritative pendant le play : pas de soft-correct (cause le rebond).
-			# On ne recentre que si le joueur est immobile ET très loin (> 40 m).
-			var pc_chk: Node = get_node_or_null("PlayerController")
-			var moving := pc_chk != null and pc_chk.has_method("is_moving") and bool(pc_chk.is_moving())
-			if not moving:
-				var dx: float = existing.core3_pos.x - pos.x
-				var dz: float = existing.core3_pos.z - pos.z
-				if dx * dx + dz * dz > 1600.0:  # > 40 m
-					entity_manager.move(your_id, pos)
-		var pc: Node = get_node_or_null("PlayerController")
-		if pc:
-			pc.set_player_id(your_id)
-			if first_spawn and pc.has_method("send_initial_position"):
-				pc.send_initial_position(pos.x, pos.y, pos.z)
-		_possess_local_player(your_id, zone if zone != "" else "tatooine", first_spawn)
-
-	for rid in payload.get("removed_entity_ids", []):
-		var oid := _LbgWsClientScript.resolve_oid(rid)
-		if oid != 0 and oid != your_id:
-			entity_manager.despawn(oid)
-
-
-func _resolve_ws_oid(raw: Variant) -> int:
-	return _LbgWsClientScript.resolve_oid(raw)
-
-
-func _apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
-	var oid := _resolve_ws_oid(ent.get("id", ent.get("name", "")))
-	if oid == 0:
-		return
-	if your_id > 0 and oid == your_id:
-		return
-	if _echo_controller and oid == int(_echo_controller.echo_object_id()):
-		return
-	var name := str(ent.get("name", ""))
-	var kind := str(ent.get("kind", "npc"))
-	var name_l := name.strip_edges().to_lower()
-	# Stub gateway "Vous (Godot)" + ton propre perso Core3 (Gally, …)
-	if kind == "player":
-		if name_l.begins_with("vous") or name_l == "you" or name_l == "voyageur":
-			return
-		if _local_character_name != "" and name_l.begins_with(_local_character_name.to_lower()):
-			return
-	var pos_raw = ent.get("pos")
-	var pos := Vector3.ZERO
-	if pos_raw is Array and (pos_raw as Array).size() >= 3:
-		var a: Array = pos_raw
-		pos = Vector3(float(a[0]), float(a[1]), float(a[2]))
-	else:
-		pos = Vector3(float(ent.get("x", 0)), float(ent.get("y", 0)), float(ent.get("z", 0)))
-	if kind == "npc" and not _HubFocus.should_show_entity(pos, kind, name, str(ent.get("id", ""))):
-		if entity_manager.get_entity(oid) != null:
-			entity_manager.despawn(oid)
-		return
-	if _HubFocus.is_clutter(kind, name, str(ent.get("id", ""))):
-		if entity_manager.get_entity(oid) != null:
-			entity_manager.despawn(oid)
-		return
-	if name == "":
-		name = str(ent.get("id", ""))
-	var color := COLOR_NPC
-	if kind == "player":
-		color = COLOR_PLAYER_BOT
-	if entity_manager.get_entity(oid) == null:
-		entity_manager.spawn(oid, pos, color, name, kind, str(ent.get("id", "")))
-	else:
-		entity_manager.move(oid, pos)
-
-
-func _cull_stray_entities(your_id: int = 0) -> void:
-	for entity_v in entity_manager.get_all_entities():
-		var entity: Node = entity_v as Node
-		if entity == null:
-			continue
-		if your_id > 0 and int(entity.object_id) == your_id:
-			continue
-		if _echo_controller and int(entity.object_id) == int(_echo_controller.echo_object_id()):
-			continue
-		if not _HubFocus.should_show_entity(entity.core3_pos, str(entity.kind), str(entity.label_text), str(entity.entity_key)):
-			entity_manager.despawn(int(entity.object_id))
-
-func _focus_lost_heaven_hub() -> void:
-	if camera == null:
-		return
-	var center := _Projection3D2D.to_screen(LOST_HEAVEN_HUB)
-	var fit_z := _hub_fit_zoom()
-	camera.position = center
-	camera.zoom = Vector2(fit_z, fit_z)
-	_cam_target = center
-	print("[Main] focus Lost Heaven hub (4749, -737) zoom=%.2f" % fit_z)
-
-func _hub_fit_zoom() -> float:
-	var vp := get_viewport().get_visible_rect().size
-	if vp.x < 64.0 or vp.y < 64.0:
-		return LOST_HEAVEN_ZOOM.x
-	var bounds := _hub_world_bounds()
-	if bounds.is_empty():
-		return LOST_HEAVEN_ZOOM.x
-	var span_x: float = (float(bounds["max_x"]) - float(bounds["min_x"])) * _Projection3D2D.SCALE
-	var span_z: float = (float(bounds["max_z"]) - float(bounds["min_z"])) * _Projection3D2D.SCALE
-	if span_x < 1.0 or span_z < 1.0:
-		return LOST_HEAVEN_ZOOM.x
-	var zx: float = (vp.x * HUB_FIT_MARGIN) / span_x
-	var zy: float = (vp.y * HUB_FIT_MARGIN) / span_z
-	return clampf(minf(zx, zy), CAM_ZOOM_MIN.x, CAM_ZOOM_MAX.x)
-
-func _hub_world_bounds() -> Dictionary:
-	const path := "res://assets/maps/lost_heaven_buildings.json"
-	const pad := 80.0
-	if not FileAccess.file_exists(path):
-		return {}
-	var f := FileAccess.open(path, FileAccess.READ)
-	var raw: Variant = JSON.parse_string(f.get_as_text())
-	f.close()
-	if not raw is Dictionary:
-		return {}
-	var min_x := 1.0e12
-	var max_x := -1.0e12
-	var min_z := 1.0e12
-	var max_z := -1.0e12
-	for item: Variant in (raw as Dictionary).get("buildings", []):
-		if not item is Dictionary:
-			continue
-		var b: Dictionary = item
-		var cx := float(b.get("x", 0.0))
-		var cz := float(b.get("z", 0.0))
-		var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", 1.0))
-		if mul <= 0.0:
-			mul = 1.0
-		var half := float(b.get("size_m", 32.0)) * 0.5 * mul + pad * 0.35
-		min_x = minf(min_x, cx - half)
-		max_x = maxf(max_x, cx + half)
-		min_z = minf(min_z, cz - half)
-		max_z = maxf(max_z, cz + half)
-	if min_x > max_x:
-		return {}
-	return {"min_x": min_x - pad, "max_x": max_x + pad, "min_z": min_z - pad, "max_z": max_z + pad}
-
-# ---------------------------------------------------------------------------
-# Demo M2 (fallback si SnapshotBridge sans données)
-# ---------------------------------------------------------------------------
-func _maybe_demo_spawn() -> void:
-	if not allow_demo_fallback:
-		return
-	if _snapshot_live or _udp_live or entity_manager.count() > 0:
-		return
-	_demo_spawn()
-
-func _demo_spawn() -> void:
-	entity_manager.spawn(
-		0x0000_0001_0000_0001,
-		Vector3(4749.0, 0.0, -737.0),
-		COLOR_PLAYER_OFFICIAL,
-		"SWG_Client",
-		"player"
-	)
-	entity_manager.spawn(
-		0x0000_0001_0000_0002,
-		Vector3(4755.0, 0.0, -732.0),
-		COLOR_PLAYER_BOT,
-		"Bot_IA",
-		"player"
-	)
-	entity_manager.spawn(
-		0x0000_0002_0000_0001,
-		Vector3(4738.0, 8.0, -745.0),
-		COLOR_NPC,
-		"NPC_Guard",
-		"npc"
-	)
-	entity_manager.spawn(0, Vector3(0.0, 0.0, 0.0), Color(1.0, 1.0, 0.0, 0.6), "(0,0)")
-	var center := _Projection3D2D.to_screen(Vector3(4749.0, 0.0, -737.0))
-	camera.position = center
-	_cam_target     = center
-
-# ---------------------------------------------------------------------------
-# Inputs
-# ---------------------------------------------------------------------------
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_zoom_camera(CAM_ZOOM_STEP)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_zoom_camera(-CAM_ZOOM_STEP)
-		elif event.button_index == MOUSE_BUTTON_LEFT:
-			_handle_world_left_click(_canvas_mouse_pos())
-			get_viewport().set_input_as_handled()
-	if event is InputEventKey and event.pressed:
-		match event.keycode:
-			KEY_F1:
-				_focus_bot("Lia")
-			KEY_F2:
-				_focus_bot("Nix")
-			KEY_F3:
-				_focus_bot("Mira")
-			KEY_H:
-				_toggle_echo_hammat()
-			KEY_R:
-				_focus_lost_heaven_hub()
-			KEY_F:
-				var e: Node = entity_manager.get_entity(0x0000_0001_0000_0002)
-				if e:
-					camera.position = e.position
-			KEY_T:
-				_toggle_talents()
-			KEY_I:
-				_toggle_inventory()
-			KEY_J:
-				_toggle_missions()
-			KEY_P:
-				_toggle_dialogue_demo()
-			KEY_O:
-				_cycle_dialogue_expression()
-			KEY_L:
-				_EntityScript.toggle_nameplates()
-				for e in entity_manager.get_all_entities():
-					if e:
-						e.queue_redraw()
-				print("[Main] nameplates=%s" % _EntityScript.show_nameplates)
-			KEY_F9:
-				show_debug_hud = not show_debug_hud
-				_apply_debug_hud()
-			KEY_ESCAPE:
-				if _game_menu and _game_menu.get("visible") and _game_menu.has_method("close_menu"):
-					_game_menu.close_menu()
-				elif _mission_board and _mission_board.get("visible") and _mission_board.has_method("toggle"):
-					_mission_board.toggle()
-				elif _talents_panel and _talents_panel.get("visible") and _talents_panel.has_method("toggle"):
-					_talents_panel.toggle()
-				elif inventory_panel and inventory_panel.get("visible") and inventory_panel.has_method("toggle"):
-					inventory_panel.toggle()
-				elif _login_panel and _login_panel.visible and _is_connected:
-					_login_panel.visible = false
-				elif _login_panel and not _login_panel.visible and not _is_connected:
-					_login_panel.visible = true
-				elif _game_menu and _game_menu.has_method("toggle"):
-					_game_menu.toggle()
-				else:
-					get_tree().quit()
-			KEY_F10:
-				if _login_panel:
-					_login_panel.visible = not _login_panel.visible
-
-
-func _apply_debug_hud() -> void:
-	var info := get_node_or_null("UI/HudLayer/InfoPanel") as Control
-	if info:
-		info.visible = show_debug_hud
-
-func _toggle_talents() -> void:
-	if _talents_panel == null:
-		return
-	# Inventaire + craft peuvent coexister (M10 craft lit l'inventaire).
-	_talents_panel.toggle()
-
-func _toggle_inventory() -> void:
-	if inventory_panel == null:
-		return
-	inventory_panel.toggle()
-
-func _toggle_missions() -> void:
-	if _mission_board == null:
-		return
-	_mission_board.toggle()
-
-func _toggle_game_menu() -> void:
-	if _game_menu == null:
-		return
-	_game_menu.toggle()
-
-func _on_hotbar_slot(index: int) -> void:
-	match index:
-		0:
-			_hotbar_feedback("Attaque — à brancher combat")
-		1:
-			_hotbar_feedback("Compétence — à brancher")
-		2:
-			_hotbar_feedback("Objet rapide — à brancher")
-		3:
-			_hotbar_feedback("Emote — à brancher")
-		4: # Carte
-			var map_panel: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
-			if map_panel and map_panel.has_method("toggle_map"):
-				map_panel.call("toggle_map")
-				_hotbar_feedback("Carte planétaire")
-		5: # Talents
-			_toggle_talents()
-			_hotbar_feedback("Talents / craft")
-		6: # Inventaire
-			_toggle_inventory()
-			_hotbar_feedback("Inventaire")
-		7: # Chat / dialogue
-			_toggle_dialogue_demo()
-			_hotbar_feedback("Dialogue")
-		8: # Monture (stub)
-			_hotbar_feedback("Monture — à brancher")
-		9: # Menu
-			_toggle_game_menu()
-			_hotbar_feedback("Menu")
-		_:
-			_hotbar_feedback("Slot %d" % index)
-
-func _hotbar_feedback(msg: String) -> void:
-	if state_label:
-		state_label.text = msg
-		state_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 1))
-
-func _toggle_dialogue_demo() -> void:
-	if _dialogue_panel == null:
-		return
-	if _dialogue_panel.visible:
-		_dialogue_panel.hide_portrait()
-		return
-	var expr := DIALOGUE_DEMO_EXPRESSIONS[_dialogue_demo_expression_index % DIALOGUE_DEMO_EXPRESSIONS.size()]
-	_dialogue_panel.show_portrait(
-		"Odo le guide",
-		"npc",
-		expr,
-		"Bienvenue à Lost Heaven. Le portrait dialogue est en place ; il reste à brancher les vraies interactions PNJ.",
-		"npc:odo_guide"
-	)
-	_hotbar_feedback("Portrait %s" % expr)
-
-func _cycle_dialogue_expression() -> void:
-	if _dialogue_panel == null:
-		return
-	_dialogue_demo_expression_index = (_dialogue_demo_expression_index + 1) % DIALOGUE_DEMO_EXPRESSIONS.size()
-	if not _dialogue_panel.visible:
-		return
-	var expr := DIALOGUE_DEMO_EXPRESSIONS[_dialogue_demo_expression_index]
-	_dialogue_panel.set_expression(expr)
-	_dialogue_panel.set_body_text("Expression active : %s" % expr)
-	_hotbar_feedback("Expression %s" % expr)
-
-func _open_npc_dialogue(entity: Node) -> void:
-	if entity == null or _dialogue_panel == null:
-		return
-	_ensure_dialogue_bridge()
-	var speaker: String = str(entity.get_display_name())
-	var anchor := _NpcAnchorResolver.resolve(entity.entity_key, speaker)
-	var role := str(anchor.get("role", ""))
-	var world_npc_id := _NpcAnchorResolver.normalize_pilot_id(entity.entity_key)
-	if world_npc_id.is_empty():
-		world_npc_id = "npc:unknown"
-	_dialogue_world_npc_id = world_npc_id
-	_dialogue_npc_name = speaker
-	_dialogue_npc_role = role
-	_dialogue_demo_expression_index = 0
-	_dialogue_panel.show_portrait(
-		speaker,
-		entity.kind,
-		"neutral",
-		"…",
-		entity.entity_key,
-		true
-	)
-	_hotbar_feedback("Interaction %s" % speaker)
-	if _dialogue_bridge == null or not bool(_dialogue_bridge.call("is_enabled")):
-		_dialogue_panel.set_body_text(
-			"%s\n\n(pont dialogue désactivé — stub)" % _npc_dialogue_stub(role, speaker)
-		)
-		return
-	if bool(_dialogue_bridge.call("is_busy")):
-		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
-		_dialogue_panel.set_chat_busy(true)
-		return
-	_dialogue_bridge.call("touch_npc", speaker, world_npc_id)
-	_dialogue_bridge.call("update_session", {"last_npc": speaker})
-	_dialogue_panel.set_chat_busy(true)
-	var ok: bool = bool(
-		_dialogue_bridge.call(
-			"request_npc_reply",
-			"",
-			world_npc_id,
-			speaker,
-			"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
-		)
-	)
-	if not ok:
-		_dialogue_panel.set_chat_busy(false)
-		_dialogue_panel.set_body_text(
-			"Impossible de joindre le Pilot (HTTP). Stub : %s" % _npc_dialogue_stub(role, speaker)
-		)
-
-
-func _on_dialogue_followup(text: String) -> void:
-	if _dialogue_bridge == null or _dialogue_panel == null:
-		return
-	if _dialogue_world_npc_id.is_empty():
-		return
-	if bool(_dialogue_bridge.call("is_busy")):
-		_dialogue_panel.set_body_text("Un échange est déjà en cours…")
-		return
-	_dialogue_panel.set_chat_busy(true)
-	_dialogue_panel.set_body_text("…")
-	var ok: bool = bool(
-		_dialogue_bridge.call(
-			"request_npc_reply",
-			text,
-			_dialogue_world_npc_id,
-			_dialogue_npc_name,
-			"prime:%s" % (_local_character_name if _local_character_name != "" else "client")
-		)
-	)
-	if not ok:
-		_dialogue_panel.set_chat_busy(false)
-		_dialogue_panel.set_body_text(
-			"Impossible d'envoyer la suite. Stub : %s"
-			% _npc_dialogue_stub(_dialogue_npc_role, _dialogue_npc_name)
-		)
-
-
-func _on_dialogue_bridge_busy(busy: bool) -> void:
-	if _dialogue_panel and _dialogue_panel.visible:
-		_dialogue_panel.set_chat_busy(busy)
-
-
-func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> void:
-	if _dialogue_panel == null or not _dialogue_panel.visible:
-		return
-	_dialogue_panel.set_chat_busy(false)
-	if ok and not reply.is_empty():
-		_dialogue_panel.set_body_text(reply)
-		var eng := str(meta.get("lyra_engagement_resolved", ""))
-		var turns := int(meta.get("history_turns", 0))
-		if eng != "":
-			_hotbar_feedback("Persona %s · tours %d" % [eng, turns])
-		return
-	_dialogue_panel.set_body_text(
-		"Le pont dialogue est indisponible (%s). Réessaie plus tard." % str(meta.get("status", "?"))
-	)
-
-func _npc_dialogue_stub(role: String, speaker: String) -> String:
-	match role:
-		"guide", "quest_giver", "archivist", "rumormonger":
-			return "%s : bienvenue à Lost Heaven. Nous brancherons ici les vraies lignes de dialogue et les expressions." % speaker
-		"bartender", "host", "performer", "patron", "cantina_fallback":
-			return "%s : un portrait vivant type Warcraft 3 fonctionne bien pour les échanges courts et lisibles." % speaker
-		"merchant", "resident":
-			return "%s : le panneau dialogue est prêt ; il reste à relier l'inventaire, les quêtes ou le commerce." % speaker
-		_:
-			return "%s : interaction PNJ MVP active." % speaker
 
 func _process(delta: float) -> void:
 	_handle_camera_move(delta)
 	_frame_count += 1
 	if _frame_count % 60 == 0:
 		_update_info()
+
 
 func _handle_camera_move(delta: float) -> void:
 	if camera == null or _play_mode or not camera_free_pan:
@@ -1171,10 +156,16 @@ func _handle_camera_move(delta: float) -> void:
 	if dir != Vector2.ZERO:
 		camera.position += dir.normalized() * CAM_SPEED * delta / camera.zoom.x
 
+
 func _zoom_camera(step: float) -> void:
 	if camera == null:
 		return
 	camera.zoom = (camera.zoom + Vector2(step, step)).clamp(CAM_ZOOM_MIN, CAM_ZOOM_MAX)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if ui_dialogue:
+		ui_dialogue.unhandled_input(event)
 
 
 func _canvas_mouse_pos() -> Vector2:
@@ -1183,6 +174,22 @@ func _canvas_mouse_pos() -> Vector2:
 
 func _screen_click_to_core3(canvas_pos: Vector2) -> Vector3:
 	return _Projection3D2D.from_screen(canvas_pos)
+
+
+func _player_world_xz() -> Vector2:
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc == null or not pc.has_method("get_player_id"):
+		return Vector2.INF
+	var pid: int = int(pc.get_player_id())
+	if pid == 0:
+		return Vector2.INF
+	if entity_manager == null or not entity_manager.has_method("get_entity"):
+		return Vector2.INF
+	var e: Node = entity_manager.get_entity(pid)
+	if e == null:
+		return Vector2.INF
+	var p: Vector3 = e.get("core3_pos")
+	return Vector2(p.x, p.z)
 
 
 func _set_selected_entity(oid: int) -> void:
@@ -1217,7 +224,7 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 	var pc: Node = get_node_or_null("PlayerController")
 	if pc == null or not pc.enabled or not _play_mode:
 		return
-	var core3 := _screen_click_to_core3(screen_pos)
+	var core3: Vector3 = _screen_click_to_core3(screen_pos)
 	var pid: int = int(pc.get_player_id())
 	if pid <= 0:
 		return
@@ -1231,23 +238,21 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 
 
 func _open_player_inspect(entity: Node) -> void:
-	"""Portrait d'inspection joueur (pas de dialogue LLM — ADR 0004)."""
 	if entity == null or _dialogue_panel == null:
 		return
-	_dialogue_world_npc_id = ""
-	_dialogue_npc_name = ""
-	_dialogue_npc_role = ""
+	if ui_dialogue:
+		ui_dialogue.dialogue_world_npc_id = ""
+		ui_dialogue.dialogue_npc_name = ""
+		ui_dialogue.dialogue_npc_role = ""
+		ui_dialogue.dialogue_demo_expression_index = 0
 	var speaker: String = str(entity.get_display_name())
 	var is_self := false
 	var pc: Node = get_node_or_null("PlayerController")
 	if pc and pc.get_player_id() == entity.object_id:
 		is_self = true
 	var body := "%s — personnage joueur." % speaker
-	if is_self:
+	if is_self or (_local_character_name != "" and speaker.to_lower() == _local_character_name.to_lower()):
 		body = "%s — ton personnage (toi)." % speaker
-	elif _local_character_name != "" and speaker.to_lower() == _local_character_name.to_lower():
-		body = "%s — ton personnage (toi)." % speaker
-	_dialogue_demo_expression_index = 0
 	_dialogue_panel.show_portrait(
 		speaker,
 		"player",
@@ -1258,21 +263,21 @@ func _open_player_inspect(entity: Node) -> void:
 	)
 	_hotbar_feedback("Portrait %s" % speaker)
 
-# ---------------------------------------------------------------------------
-# UI debug
-# ---------------------------------------------------------------------------
+
 func _update_info() -> void:
-	if camera == null:
-		return
-	if not show_debug_hud:
+	if camera == null or not show_debug_hud:
 		return
 	var center := camera.get_screen_center_position()
 	var core3 := _hud_reference_core3(center)
 	if info_label:
 		var mode := "PLAY" if _play_mode else ("WS LIVE" if _ws_live else ("UDP LIVE" if _udp_live else ("PRIME" if _snapshot_live else "ATTENTE")))
 		var players: int = int(entity_manager.count())
+		var me := _local_character_name if _local_character_name != "" else "?"
+		var online_n := _online_players.size()
+		var ws_hint := "  |  %s" % _last_ws_url if _last_ws_url != "" else ""
+		var online_hint := "  |  online:%d (%s)" % [online_n, me] if online_n > 0 else ""
 		info_label.text = (
-			"Prime Client v0.2  |  %s  |  Bots: %d\n" % [mode, players] +
+			"Prime Client v0.2  |  %s  |  Entités: %d%s%s\n" % [mode, players, ws_hint, online_hint] +
 			"Zoom: %.2fx   %s" % [camera.zoom.x, _Projection3D2D.format_hud_coordinates(core3, false)]
 		)
 	if stats_label:
@@ -1280,6 +285,7 @@ func _update_info() -> void:
 			stats_label.text = "[ZQSD/flèches] move · clic sol · [T/I] panels · [L] labels · [1-0] hotbar"
 		else:
 			stats_label.text = "[H/R] hub  [M] minimap  [Ctrl+M] carte  [L] labels  [1-0] hotbar"
+
 
 func _hud_reference_core3(cam_screen: Vector2) -> Vector3:
 	var pc: Node = get_node_or_null("PlayerController")
@@ -1291,35 +297,39 @@ func _hud_reference_core3(cam_screen: Vector2) -> Vector3:
 				return _Projection3D2D.normalize_core3_pos(e.core3_pos as Vector3)
 	return _Projection3D2D.normalize_core3_pos(_Projection3D2D.from_screen(cam_screen))
 
-# ---------------------------------------------------------------------------
-# API reseau — appelee par NetworkBridge
-# ---------------------------------------------------------------------------
+
 func on_data_transform(object_id: int, x: float, y: float, z: float) -> void:
 	entity_manager.move(object_id, Vector3(x, y, z))
+
 
 func on_object_destroy(object_id: int) -> void:
 	entity_manager.despawn(object_id)
 
+
 func on_zone_change() -> void:
 	entity_manager.clear()
 	_is_connected = false
+
 
 func on_mirror_udp_active() -> void:
 	_udp_live = true
 	_snapshot_live = true
 	_update_info()
 
+
 func on_snapshot_feed_active() -> void:
+	if _hub_runtime_enabled():
+		return
 	_snapshot_live = true
 	_update_info()
-	# Garder la vue hub Lost Heaven ; F1/F2/F3 pour cibler un bot
 	call_deferred("_focus_lost_heaven_hub")
 	print("[Main] flux snapshot actif — Ctrl+H hub · F1/F2/F3 bots")
+
 
 func _focus_bot(name: String) -> bool:
 	if camera == null:
 		return false
-	var oid := _Crc32Util.entity_oid("player:%s" % name)
+	var oid: int = _Crc32Util.entity_oid("player:%s" % name)
 	var e: Node = entity_manager.get_entity(oid)
 	if e == null:
 		print("[Main] focus %s : absent — lance run_m3_mirror.sh ?" % name)
@@ -1330,16 +340,17 @@ func _focus_bot(name: String) -> bool:
 	print("[Main] focus %s" % name)
 	return true
 
+
 func _focus_first_bot() -> void:
-	for name in FOCUS_BOTS:
+	for name in ["Lia", "Nix", "Mira"]:
 		if _focus_bot(name):
 			return
 
-# M5 — Joueur connecté (reçu via NetworkBridge "cn")
+
 func on_player_connected(obj_id: int, planet: String) -> void:
 	_possess_local_player(obj_id, planet, true)
 	if not _world_entry_done:
-		_on_world_entered(obj_id, planet)
+		net_world.on_world_entered(obj_id, planet)
 	print("[Main] Joueur humain 0x%016x connecté sur %s (name=%s)" % [obj_id, planet, _local_character_name])
 
 
@@ -1372,6 +383,12 @@ func _possess_local_player(obj_id: int, planet: String, force_camera: bool = fal
 		for e in entity_manager.get_all_entities():
 			if e:
 				e.queue_redraw()
+	if _hub_runtime_enabled():
+		_EntityScript.show_nameplates = true
+		for e in entity_manager.get_all_entities():
+			if e and e.has_method("set_force_nameplate"):
+				e.call("set_force_nameplate", true)
+				e.queue_redraw()
 	if (first or force_camera) and bool(cfg.get("auto_focus_on_connect", true)):
 		var e: Node = entity_manager.get_entity(obj_id)
 		if e and camera:
@@ -1379,12 +396,93 @@ func _possess_local_player(obj_id: int, planet: String, force_camera: bool = fal
 			var zf := float(cfg.get("play_zoom", 2.2))
 			camera.zoom = Vector2(zf, zf)
 			_cam_target = e.position
-	# Trop loin du hub : marche vers la plaza (pas de téléport).
 	if first and bool(cfg.get("walk_home_on_far", true)):
 		_maybe_walk_local_to_hub(obj_id)
-	if state_label and first:
-		state_label.text = "CONNECTED"
+	if first:
+		call_deferred("_ensure_companion_visible")
+	if first:
+		_refresh_connection_hud()
 	_update_info()
+
+
+func _refresh_connection_hud() -> void:
+	if state_label == null:
+		return
+	if not _hub_runtime_enabled() and not _ws_live:
+		return
+	var me := _local_character_name if _local_character_name != "" else "Voyageur"
+	var n := _online_players.size()
+	if n <= 0 and _is_connected:
+		n = 1
+	var others: PackedStringArray = PackedStringArray()
+	for p: Variant in _online_players:
+		if not p is Dictionary:
+			continue
+		var nm := str((p as Dictionary).get("name", "")).strip_edges()
+		if nm == "" or nm.to_lower() == me.to_lower():
+			continue
+		others.append(nm)
+	var extra := " · +" + ", ".join(others) if others.size() > 0 else ""
+	if _hub_runtime_enabled():
+		state_label.text = "CONNECTED · %s · %d joueur%s%s" % [me, max(n, 1), "s" if n > 1 else "", extra]
+	elif _ws_live:
+		state_label.text = "CONNECTED · %s" % me
+	state_label.add_theme_color_override("font_color", Color(0.45, 1.0, 0.55, 1))
+
+
+func _ensure_companion_visible() -> void:
+	if _hub_runtime_enabled():
+		var cfg_h := _load_human_cfg()
+		var bot := str(cfg_h.get("companion_bot_id", "Nix")).strip_edges()
+		var key_want := ("player:%s" % bot).to_lower()
+		for e in entity_manager.get_all_entities():
+			if e == null:
+				continue
+			var lab := str(e.label_text).strip_edges().to_lower()
+			var ekey := str(e.entity_key).strip_edges().to_lower()
+			if lab == bot.to_lower() or ekey == key_want or ekey.ends_with(":" + bot.to_lower()):
+				if e.has_method("set_force_nameplate") and bool(cfg_h.get("companion_force_nameplate", true)):
+					e.call("set_force_nameplate", true)
+					e.queue_redraw()
+				print("[Main] C3 companion live nameplate → %s" % bot)
+				return
+		return
+	var cfg := _load_human_cfg()
+	if not bool(cfg.get("spawn_companion", false)):
+		return
+	var bot_id := str(cfg.get("companion_bot_id", "Nix")).strip_edges()
+	if bot_id.is_empty():
+		bot_id = "Nix"
+	var entity_key := "player:%s" % bot_id
+	var force_np := bool(cfg.get("companion_force_nameplate", true))
+	var found: Node = null
+	for e in entity_manager.get_all_entities():
+		if e == null:
+			continue
+		var key := str(e.entity_key).strip_edges()
+		var label := str(e.label_text).strip_edges()
+		if key == entity_key or label.to_lower() == bot_id.to_lower():
+			found = e
+			break
+	if found == null:
+		var stub_oid := 900001
+		var x := float(cfg.get("companion_stub_x", 4758.0))
+		var y := float(cfg.get("companion_stub_y", 0.15))
+		var z := float(cfg.get("companion_stub_z", -545.0))
+		found = entity_manager.spawn(
+			stub_oid,
+			Vector3(x, y, z),
+			Color(0.0, 0.9, 0.4, 1.0),
+			bot_id,
+			"player",
+			entity_key
+		)
+		if found:
+			print("[Main] C3 companion stub spawn %s at (%.0f, %.0f)" % [entity_key, x, z])
+	if found and force_np and found.has_method("set_force_nameplate"):
+		found.call("set_force_nameplate", true)
+		found.queue_redraw()
+		print("[Main] C3 companion nameplate on %s" % entity_key)
 
 
 func _maybe_walk_local_to_hub(obj_id: int) -> void:
@@ -1394,6 +492,18 @@ func _maybe_walk_local_to_hub(obj_id: int) -> void:
 	var hub := LOST_HEAVEN_HUB
 	var dx: float = e.core3_pos.x - hub.x
 	var dz: float = e.core3_pos.z - hub.z
+	if absf(e.core3_pos.x) < 50.0 and absf(e.core3_pos.z) < 50.0:
+		entity_manager.move(obj_id, Vector3(hub.x, 0.15, hub.z))
+		if camera:
+			var e2: Node = entity_manager.get_entity(obj_id)
+			if e2:
+				camera.position = e2.position
+				_cam_target = e2.position
+		var pc0: Node = get_node_or_null("PlayerController")
+		if pc0 and pc0.has_method("send_initial_position"):
+			pc0.send_initial_position(hub.x, 0.15, hub.z)
+		print("[Main] rescue spawn Lost Heaven (était en 0,0)")
+		return
 	var far_m := 400.0
 	var cfg := _load_human_cfg()
 	far_m = float(cfg.get("walk_home_far_m", far_m))
@@ -1404,8 +514,8 @@ func _maybe_walk_local_to_hub(obj_id: int) -> void:
 		pc.request_move_to(hub.x, hub.z)
 		print("[Main] marche vers Lost Heaven (%.0f, %.0f) — pas de téléport" % [hub.x, hub.z])
 
+
 func _despawn_local_player_ghosts(your_id: int) -> void:
-	## Retire les doublons "Vous (Godot)" / Gally snapshot à côté du sprite contrôlé.
 	var names: Array[String] = []
 	if _local_character_name != "":
 		names.append(_local_character_name.to_lower())
@@ -1413,15 +523,11 @@ func _despawn_local_player_ghosts(your_id: int) -> void:
 	names.append("voyageur")
 	var to_kill: Array[int] = []
 	for e in entity_manager.get_all_entities():
-		if e == null:
+		if e == null or int(e.object_id) == your_id:
 			continue
-		if int(e.object_id) == your_id:
+		if quest_ops and quest_ops.echo_controller and e.object_id == int(quest_ops.echo_controller.echo_object_id()):
 			continue
-		if _echo_controller and e.object_id == int(_echo_controller.echo_object_id()):
-			continue
-		if str(e.entity_key).begins_with("player:echo"):
-			continue
-		if str(e.kind) != "player":
+		if str(e.entity_key).begins_with("player:echo") or str(e.kind) != "player":
 			continue
 		var label := str(e.label_text).strip_edges().to_lower()
 		var key := str(e.entity_key).strip_edges().to_lower()
@@ -1438,23 +544,164 @@ func _despawn_local_player_ghosts(your_id: int) -> void:
 		entity_manager.despawn(oid)
 		print("[Main] ghost joueur despawn oid=%d" % oid)
 
+
 func _load_human_cfg() -> Dictionary:
 	if not FileAccess.file_exists(HUMAN_CFG):
 		return {}
 	var f := FileAccess.open(HUMAN_CFG, FileAccess.READ)
+	if f == null:
+		return {}
 	var raw: Variant = JSON.parse_string(f.get_as_text())
 	f.close()
 	return raw if raw is Dictionary else {}
 
-# M5 — Etat locomotion depuis prime_controller.py ("ls")
+
 func on_locomotion_state(state: String) -> void:
 	_loco_state = state.to_upper()
 	if state_label:
 		state_label.text = _loco_state
-		# Couleur selon l'etat
 		match _loco_state:
-			"RUNNING":  state_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4, 1))
+			"RUNNING":           state_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4, 1))
 			"JUMPING","FALLING": state_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2, 1))
-			"SWIMMING": state_label.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0, 1))
-			"WALKING":  state_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5, 1))
-			_:          state_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5, 1))
+			"SWIMMING":          state_label.add_theme_color_override("font_color", Color(0.2, 0.8, 1.0, 1))
+			"WALKING":           state_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5, 1))
+			_:                   state_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5, 1))
+
+
+func _log_build_info() -> void:
+	const path := "res://assets/build_info.json"
+	if not FileAccess.file_exists(path):
+		print("[Main] build_info absent — sync J: via tools/sync_prime_client_to_j.sh")
+		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	if raw is Dictionary:
+		var d: Dictionary = raw
+		var stamp := str(d.get("synced_at", "?"))
+		var schema := int(d.get("map_config_schema", 0))
+		print("[Main] prime-client build synced_at=%s map_schema=%d" % [stamp, schema])
+		if info_label and OS.is_debug_build():
+			info_label.text = "build %s · map v%d" % [stamp.substr(0, min(19, stamp.length())), schema]
+
+
+# ===========================================================================
+# Délégations publiques / passerelles transparentes
+# ===========================================================================
+func open_initiation_quest() -> void:
+	quest_ops.open_initiation_quest()
+
+func open_character_creation(from_menu: bool = false) -> void:
+	quest_ops.open_character_creation(from_menu)
+
+func _on_second_character_created_in_game(entry: Dictionary) -> void:
+	quest_ops.on_second_character_created_in_game(entry)
+
+func _ensure_wiki_panel() -> void:
+	gameplay_ops.ensure_wiki_panel()
+
+func _toggle_wiki() -> void:
+	gameplay_ops.toggle_wiki()
+
+func _ensure_salvage_http() -> void:
+	gameplay_ops.ensure_salvage_http()
+
+func _try_salvage_scrap() -> void:
+	gameplay_ops.try_salvage_scrap()
+
+func _try_hunt_yard() -> void:
+	gameplay_ops.try_hunt_yard()
+
+func _try_beast_engage(pos: Vector2) -> void:
+	gameplay_ops.try_beast_engage(pos)
+
+func _try_trade_offer(sku_id: String, offer_price: int) -> void:
+	gameplay_ops.try_trade_offer(sku_id, offer_price)
+
+func _prime_wahou_hunt_beat() -> void:
+	gameplay_ops.prime_wahou_hunt_beat()
+
+func _ensure_east_gate_hunt_waypoint() -> void:
+	gameplay_ops.ensure_east_gate_hunt_waypoint()
+
+func _apply_debug_hud() -> void:
+	ui_dialogue.apply_debug_hud()
+
+func _toggle_talents() -> void:
+	ui_dialogue.toggle_talents()
+
+func _toggle_inventory() -> void:
+	ui_dialogue.toggle_inventory()
+
+func _toggle_missions() -> void:
+	ui_dialogue.toggle_missions()
+
+func _toggle_game_menu() -> void:
+	ui_dialogue.toggle_game_menu()
+
+func _on_hotbar_slot(index: int) -> void:
+	ui_dialogue.on_hotbar_slot(index)
+
+func _hotbar_feedback(msg: String) -> void:
+	if state_label:
+		state_label.text = msg
+		state_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 1))
+
+func _ensure_hub_chat_ui() -> void:
+	ui_dialogue.ensure_hub_chat_ui()
+
+func _refresh_hub_chat_visibility() -> void:
+	ui_dialogue.refresh_hub_chat_visibility()
+
+func _focus_hub_chat_input() -> void:
+	ui_dialogue.focus_hub_chat_input()
+
+func _on_hub_chat_submitted(text: String) -> void:
+	ui_dialogue.on_hub_chat_submitted(text)
+
+func _on_hub_chat_received(from_name: String, text: String, from_oid: int, source: String = "human") -> void:
+	ui_dialogue.on_hub_chat_received(from_name, text, from_oid, source)
+
+func _append_hub_chat_line(from_name: String, text: String, source: String = "human") -> void:
+	ui_dialogue.append_hub_chat_line(from_name, text, source)
+
+func _toggle_dialogue_demo() -> void:
+	ui_dialogue.toggle_dialogue_demo()
+
+func _cycle_dialogue_expression() -> void:
+	ui_dialogue.cycle_dialogue_expression()
+
+func _open_npc_dialogue(entity: Node) -> void:
+	ui_dialogue.open_npc_dialogue(entity)
+
+func _on_dialogue_followup(text: String) -> void:
+	ui_dialogue.on_dialogue_followup(text)
+
+func _on_dialogue_suggestion_activated(move: Dictionary) -> void:
+	ui_dialogue.on_dialogue_suggestion_activated(move)
+
+func _on_dialogue_bridge_busy(busy: bool) -> void:
+	ui_dialogue.on_dialogue_bridge_busy(busy)
+
+func _on_dialogue_bridge_reply(ok: bool, reply: String, meta: Dictionary) -> void:
+	ui_dialogue.on_dialogue_bridge_reply(ok, reply, meta)
+
+func _on_ws_handoff_started(ws_url: String, character_id: int, session_token: String, ws: Node) -> void:
+	net_world.on_ws_handoff_started(ws_url, character_id, session_token, ws)
+
+func _on_enter_world_requested(ws_url: String, character_id: int, session_token: String) -> void:
+	net_world.on_enter_world_requested(ws_url, character_id, session_token)
+
+func _on_ws_zone_state(payload: Dictionary) -> void:
+	net_world.on_ws_zone_state(payload)
+
+func _focus_lost_heaven_hub() -> void:
+	net_world.focus_lost_heaven_hub()
+
+func _maybe_demo_spawn() -> void:
+	net_world.maybe_demo_spawn()
+
+func _hub_runtime_enabled() -> bool:
+	return net_world.hub_runtime_enabled()

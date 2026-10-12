@@ -6,8 +6,9 @@ class_name DialogueBridge
 signal reply_ready(ok: bool, reply: String, meta: Dictionary)
 signal busy_changed(busy: bool)
 
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
 const CONFIG_PATH := "res://config/dialogue_bridge.json"
-const MAP_CFG_PATH := "res://assets/maps/tatooine_map_config.json"
+const MAP_CFG_PATH := "res://assets/maps/scrapaltai_map_config.json"
 const SESSION_PATH := "user://session_summary.json"
 const HISTORY_PATH := "user://dialogue_history.json"
 const SESSION_KEYS: Array[String] = [
@@ -123,9 +124,13 @@ func request_npc_reply(
 	if not npc_name.is_empty():
 		ss["last_npc"] = npc_name
 	var world := _world_context_for_wire()
+	var player := "Voyageur"
+	if HubRuntimeCfg.enabled():
+		player = HubRuntimeCfg.player_name("Voyageur")
 	var context := {
 		"world_npc_id": world_npc_id,
 		"npc_name": npc_name,
+		"player": player,
 		"lyra_engagement": "mmo_persona",
 		"_skip_factual_status": true,
 		"session_summary": ss,
@@ -138,6 +143,7 @@ func request_npc_reply(
 	var body := {
 		"actor_id": actor_id,
 		"text": text,
+		"player": player,
 		"context": context,
 	}
 	_pending_player_text = text
@@ -181,13 +187,15 @@ func _append_turn(player_text: String, assistant_text: String) -> void:
 	while _history.size() > MAX_HISTORY:
 		_history.pop_front()
 	_save_history()
-	# session_summary : note courte bornée (pas de fuite poste)
-	var note := assistant_text.strip_edges()
-	if note.length() > 120:
-		note = note.substr(0, 117) + "…"
+	# session_summary : ce que le JOUEUR a dit (pas le blabla PNJ — sinon le rappel se perroquette).
 	var patch := {"last_npc": _pending_npc_name}
-	if not note.is_empty():
-		patch["player_note"] = "Dernier échange : %s" % note
+	var said := player_text.strip_edges()
+	var low := said.to_lower()
+	var greet := low.is_empty() or low in ["bonjour", "bonjour.", "salut", "hello", "hey"] or low.begins_with("bonjour")
+	if not said.is_empty() and not greet:
+		if said.length() > 80:
+			said = said.substr(0, 77) + "…"
+		patch["player_note"] = said
 	update_session(patch)
 
 
@@ -249,6 +257,9 @@ func _load_config() -> void:
 		"followup_placeholder": "Répondre au PNJ…",
 	}
 	if not FileAccess.file_exists(CONFIG_PATH):
+		_apply_hub_runtime_override()
+		var t0 := float(_cfg.get("timeout_sec", 60))
+		_http.timeout = maxf(10.0, t0)
 		return
 	var f := FileAccess.open(CONFIG_PATH, FileAccess.READ)
 	var raw: Variant = JSON.parse_string(f.get_as_text())
@@ -256,8 +267,34 @@ func _load_config() -> void:
 	if raw is Dictionary:
 		for k in (raw as Dictionary).keys():
 			_cfg[k] = (raw as Dictionary)[k]
+	_apply_hub_runtime_override()
 	var t := float(_cfg.get("timeout_sec", 60))
 	_http.timeout = maxf(10.0, t)
+
+
+func _apply_hub_runtime_override() -> void:
+	## Spike ADR 0026 : dialogue → hub_runtime sur .246 (pas Pilot 140 / 8020).
+	const hub_path := "res://config/hub_runtime.json"
+	if not FileAccess.file_exists(hub_path):
+		return
+	var hf := FileAccess.open(hub_path, FileAccess.READ)
+	if hf == null:
+		return
+	var raw: Variant = JSON.parse_string(hf.get_as_text())
+	hf.close()
+	if not raw is Dictionary:
+		return
+	var hub: Dictionary = raw
+	if not bool(hub.get("enabled", false)):
+		return
+	var http_url := str(hub.get("http_url", "")).strip_edges().rstrip("/")
+	if http_url.is_empty():
+		http_url = "http://192.168.0.246:8787"
+	_cfg["pilot_base_url"] = http_url
+	_cfg["invoke_path"] = "/v1/dialogue/invoke"
+	_cfg["timeout_sec"] = minf(float(_cfg.get("timeout_sec", 60)), 20.0)
+	_cfg["enabled"] = true
+	print("[DialogueBridge] hub_runtime → %s%s" % [http_url, _cfg["invoke_path"]])
 
 
 func _load_session() -> void:
@@ -335,6 +372,41 @@ func _on_http_done(result: int, response_code: int, _headers: PackedStringArray,
 	var ok := bool(d.get("ok", response_code >= 200 and response_code < 300)) and not reply.is_empty()
 	if not ok and d.has("detail"):
 		meta["detail"] = d.get("detail")
+	# C1 — suggested_moves (0–3) depuis l’agent ; absent = []
+	var moves_raw: Variant = d.get("suggested_moves", [])
+	var moves_out: Array = []
+	var max_moves := int(_cfg.get("max_suggested_moves", 3))
+	max_moves = clampi(max_moves, 0, 3)
+	if moves_raw is Array:
+		for item in moves_raw:
+			if moves_out.size() >= max_moves:
+				break
+			if not item is Dictionary:
+				continue
+			var m: Dictionary = item
+			var mid := str(m.get("id", "")).strip_edges()
+			var label := str(m.get("label", "")).strip_edges()
+			if mid.is_empty() or label.is_empty():
+				continue
+			if label.length() > 28:
+				label = label.substr(0, 28)
+			var utterance := str(m.get("utterance", label)).strip_edges()
+			if utterance.is_empty():
+				utterance = label
+			if utterance.length() > 160:
+				utterance = utterance.substr(0, 160)
+			var move := {"id": mid, "label": label, "utterance": utterance}
+			var kind := str(m.get("kind", "")).strip_edges()
+			if not kind.is_empty():
+				move["kind"] = kind
+			if m.get("action") is Dictionary:
+				move["action"] = (m.get("action") as Dictionary).duplicate(true)
+			moves_out.append(move)
+	meta["suggested_moves"] = moves_out
+	if d.get("meta") is Dictionary:
+		var src := str((d.get("meta") as Dictionary).get("suggested_moves_source", "")).strip_edges()
+		if not src.is_empty():
+			meta["suggested_moves_source"] = src
 	if ok:
 		_append_turn(_pending_player_text, reply)
 		meta["history_turns"] = _history.size()

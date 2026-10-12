@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "companion:spawn_lh",
+  "ticket": "C3",
+  "status": "live_hub",
+  "bible_ref": "docs/world/BIBLE_MMO.md#v40-v54",
+  "bible_safe": true,
+  "planet": "Scrapaltai",
+  "hub": "lost_heaven",
+  "spawn_companion": true,
+  "bot_id": "Nix",
+  "fallback_bot_id": "Lia",
+  "entity_id": "player:Nix",
+  "kind": "player",
+  "nameplate": "Nix",
+  "force_nameplate": true,
+  "player_facing": true,
+  "placement": {
+    "anchor_poi": "poi:player_spawn",
+    "zone": "tatooine",
+    "x": 4758.0,
+    "y": 0.15,
+    "z": -545.0,
+    "radius_m": 12,
+    "offset_from_spawn_m": 8,
+    "notes": "Légèrement à l'est du shuttleport (4749,-537) — pas hunt_yard, pas intérieur."
+  },
+  "presence": {
+    "visible_on_human_login": true,
+    "not_pilot_only": true,
+    "follow_short": true,
+    "comment_30s": true,
+    "notes": "2026-10-07 hub : fleet_greet = Nix only + escort ~28s ; nameplate client."
+  },
+  "godot_flags": {
+    "config_key": "spawn_companion",
+    "human_player_mirror": {
+      "spawn_companion": true,
+      "companion_bot_id": "Nix",
+      "companion_force_nameplate": true
+    }
+  },
+  "active": true,
+  "notes": "active=true — flags mirroir human_player.json wire Godot 2026-10-06. Pas de mutation Core3 246 depuis ce stub."
+}

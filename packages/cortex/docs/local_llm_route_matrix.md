@@ -21,7 +21,8 @@ Une seule matrice pour **Cursor**, **Cline**, **Team (Atlas, Thémis, …)** et 
 
 **Heavy code/PM/dialogue** : `huihui_ai/gemma-4-abliterated:12b` (plafond ≤12B, qualité code).  
 Garde-fous présentation = maturité **A/B/C** (prompts).  
-Legacy disque OK : `huihui_ai/qwen3.5-abliterated:9b`, `huihui_ai/Qwen3.8-abliterated:27b`, `gemma4:e2b`, `qwen2.5:3b`, `llama3.2:3b` — **plus routés**.
+Legacy disque OK : `huihui_ai/qwen3.5-abliterated:9b`, `huihui_ai/Qwen3.8-abliterated:27b`, `qwen2.5:3b`, `llama3.2:3b` — **plus routés**.  
+`gemma4:e2b` (censuré) : **retiré** de `.111` (2026-10-01) — remplacé par `huihui_ai/gemma-4-abliterated:e2b`.
 
 Tags **Ollama natifs `huihui_ai/*`** préférés aux pulls `hf.co/HauhauCS/...` (erreurs load Qwen3.5 signalées sur HF).
 
@@ -45,6 +46,7 @@ ollama pull huihui_ai/gemma-4-abliterated:e2b
 # .111
 ollama pull huihui_ai/qwen3.5-abliterated:2B
 ollama pull huihui_ai/qwen3.5-abliterated:0.8B
+ollama pull huihui_ai/gemma-4-abliterated:e2b
 ```
 
 ---
@@ -54,7 +56,7 @@ ollama pull huihui_ai/qwen3.5-abliterated:0.8B
 | Hôte | Rôle | Modèles routés |
 |------|------|----------------|
 | **110** heavy | code / PM / forge / dialogue — **CPU only** (pas de GPU) | `huihui_ai/gemma-4-abliterated:12b`, `huihui_ai/gemma-4-abliterated:e2b` (+ `qwen3.5-abliterated:9b` disque) |
-| **111** light (NUC) | délestage latence / **Compagnon LAB** | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast) |
+| **111** light (NUC) | délestage latence / **Compagnon LAB** | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast), **`huihui_ai/gemma-4-abliterated:e2b`** (causerie) |
 
 > `.110` sans GPU : préférer **2B/9b** pour l’interactif ; **12b** = batch / patient. Qualité type heavy en PoC → Colab T4 (`LBG_REASON_EPHEMERAL_*`, défaut `qwen3.5-abliterated:9b`).
 
@@ -96,6 +98,7 @@ Ollama thinking (Qwen) : `LBG_REASON_OLLAMA_THINK=false` (défaut) et `LBG_DIALO
 |-------|-----------|
 | Cursor | règle `.cursor/rules/local-llm-route-matrix.mdc` (`alwaysApply`) si présente |
 | Cline (VS Code) | `docs/cline_local_llm.md` + snippets `docs/cline/providers.*.json` (**Plan=110:9b** / Act=110:12b ; triage 111) |
+| Catalogue outils IDE / second avis | ADR [`0023`](adr/0023-catalogue-outils-ide-second-avis.md) — quels clients ont le droit de pointer la matrice |
 | Team / Atlas | run `admin_infra` → champ `route_matrix` + mémoire `team/atlas` |
 | Env exemple | `infra/secrets/lbg.env.example` |
 | Audit LAN | `bash infra/scripts/audit_ollama_110_lan.sh` |

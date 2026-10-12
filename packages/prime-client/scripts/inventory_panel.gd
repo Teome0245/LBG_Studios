@@ -1,9 +1,9 @@
-# inventory_panel.gd — Inventaire grille (sidecar M10 ou stub local)
+# inventory_panel.gd — Inventaire grille (hub :8787 peel natif)
 extends PanelContainer
 class_name InventoryPanel
 const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
 
-const SIDECAR_DEFAULT := "http://192.168.0.246:8791"
+const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 const PLAYER_DEFAULT := "local"
 
 @export var sidecar_base_url: String = SIDECAR_DEFAULT
@@ -30,6 +30,7 @@ const STUB_ITEMS: Array[Dictionary] = [
 func _ready() -> void:
 	visible = panel_visible
 	mouse_filter = Control.MOUSE_FILTER_IGNORE if not panel_visible else Control.MOUSE_FILTER_STOP
+	_apply_hub_runtime_sidecar()
 	_apply_modal_style()
 	_ensure_ui()
 	_http = HTTPRequest.new()
@@ -37,6 +38,22 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_http_done)
 	_fill_from_items(STUB_ITEMS)
 	call_deferred("refresh_inventory")
+
+
+func _apply_hub_runtime_sidecar() -> void:
+	if not HubRuntimeCfg.enabled():
+		return
+	sidecar_base_url = HubRuntimeCfg.http_url(sidecar_base_url)
+	player_id = HubRuntimeCfg.player_name("Voyageur")
+
+
+func toggle() -> void:
+	panel_visible = not panel_visible
+	visible = panel_visible
+	mouse_filter = Control.MOUSE_FILTER_STOP if panel_visible else Control.MOUSE_FILTER_IGNORE
+	if panel_visible:
+		_apply_hub_runtime_sidecar()
+		refresh_inventory()
 
 func _apply_modal_style() -> void:
 	var sb := StyleBoxFlat.new()
@@ -201,10 +218,3 @@ func _fill_from_items(items: Array) -> void:
 func _on_item_slot(_index: int, item_name: String, qty: int) -> void:
 	if _hint:
 		_hint.text = "%s ×%d" % [item_name, qty]
-
-func toggle() -> void:
-	panel_visible = not panel_visible
-	visible = panel_visible
-	mouse_filter = Control.MOUSE_FILTER_STOP if panel_visible else Control.MOUSE_FILTER_IGNORE
-	if panel_visible:
-		refresh_inventory()

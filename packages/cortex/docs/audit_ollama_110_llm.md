@@ -44,7 +44,7 @@ Appels Qwen : **`think: false`** sinon réponses vides / CPU brûlé.
 | Dialogue PNJ (local) | `LBG_DIALOGUE_LLM_MODEL` | `huihui_ai/Qwen3.8-abliterated:27b` |
 | Présentation soft A/B | `maturity_cap` + prompts | même modèle (pas de swap) |
 | Prométhée (contrarian) | `LBG_REASON_MODEL_UNCENSORED` | même tag heavy |
-| Dialogue rapide (cloud) | `LBG_DIALOGUE_FAST_MODEL` (+ `GROQ_MODEL_*`) | Groq ex. `qwen/qwen3.6-27b` — contrôlé par Atlas (`dialogue_fast_groq`) |
+| Dialogue rapide (cloud) | `LBG_DIALOGUE_FAST_MODEL` (+ `GROQ_MODEL_*`) | Groq ex. `qwen/qwen3.8-27b` — contrôlé par Atlas (`dialogue_fast_groq`) |
 | Forge GDScript Iris | `LBG_REASON_MODEL_FORGE` | `gemma4:e2b` |
 | Code | `LBG_REASON_MODEL_CODE` | `huihui_ai/Qwen3.8-abliterated:27b` |
 | Brief PM / synthèse | `LBG_REASON_MODEL_PM` | `huihui_ai/Qwen3.8-abliterated:27b` |

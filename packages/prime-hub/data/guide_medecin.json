@@ -1,0 +1,1 @@
+{"ok":true,"guide":{"playstyle":"medecin","profession_id":"medecin","loop":"clinique → kits terrain → escort blessé (backlog)","hub_actions":["craft/start","talk_npc","quests/accept"],"profession_name":"Médecine de camp"},"tick_cost":"free","requires_tick":false,"context":{"tick_cost":"free","requires_tick":false,"kind":"query","action":"get_guide"}}

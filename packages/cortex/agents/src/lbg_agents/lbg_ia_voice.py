@@ -50,6 +50,14 @@ SKILL_LABELS: dict[str, tuple[str, str]] = {
         "Infra & DevOps",
         "sondes healthz et services locaux",
     ),
+    "morning_brief": (
+        "Brief matinal",
+        "point studio read-only (Self / proactive / infra)",
+    ),
+    "memory_recall": (
+        "Mémoire agent",
+        "Self + leçons (lecture seule, pas RAM VM)",
+    ),
     "devops_probe": (
         "Sonde DevOps",
         "diagnostic réseau / HTTP configuré",

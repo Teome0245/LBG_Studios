@@ -1,0 +1,250 @@
+{
+  "plan_id": "PLAN_PROPOSITIONS_EVOLUTIONS",
+  "source_doc": "docs/PLAN_PROPOSITIONS_EVOLUTIONS.md",
+  "updated_ts": 1791827968.8449936,
+  "notes": "Source de vérité tickets. Rafraîchir: python3 tools/suivi_plan_evolutions.py --refresh",
+  "tickets": [
+    {
+      "id": "1.1",
+      "title": "Barrière sémantique causerie / tool_loop (+ presence_brief T5)",
+      "horizon": "immediat",
+      "perimeter": "O1 Compagnon",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "1.2"
+      ],
+      "evidence": "smoke T1→T5 OK (ab01e3fc) · t5_src=llm · deploy CT100",
+      "keywords": [
+        "presence_brief",
+        "design_brainstorm",
+        "smoke_rejeu_t1t5",
+        "barrière sémantique",
+        "t1→t5"
+      ],
+      "owner_hint": "dev_studio / Métis",
+      "team_signals": []
+    },
+    {
+      "id": "1.2",
+      "title": "Streaming SSE /api/ask/stream + ChatFlow",
+      "horizon": "sprint1",
+      "perimeter": "O1 Compagnon",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "3.1"
+      ],
+      "evidence": "SSE live CT100: POST /ask/stream start+ping+delta+done · UI useApi/ChatFlow · tests askStream+sse_ask · deploy 2026-10-09",
+      "keywords": [
+        "ask/stream",
+        "sse streaming",
+        "ChatFlow.vue",
+        "streaming SSE",
+        "1.2 SSE"
+      ],
+      "owner_hint": "dev_studio / Métis",
+      "team_signals": []
+    },
+    {
+      "id": "1.3",
+      "title": "Modularisation Pilot Web (pilot.js)",
+      "horizon": "sprint3",
+      "perimeter": "O1 Pilot",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [],
+      "evidence": "17 modules ES <1000L (pilot_*.js) · stub pilot.js · gen_chunks --check OK (17 chunks) · build Vite dist/ 957ms OK · pytest test_pilot_static PASS",
+      "keywords": [
+        "modularisation pilot",
+        "pilot.js segment",
+        "pilot_views"
+      ],
+      "owner_hint": "dev_studio",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/pilot_web/pilot_team.js",
+          "packages/cortex/pilot_web/src/modules/team_fleet.js"
+        ]
+      }
+    },
+    {
+      "id": "2.3",
+      "title": "NavigationServer3D navmesh prime-hub",
+      "horizon": "sprint1",
+      "perimeter": "O2 Hub",
+      "status": "done",
+      "blocked_by": [],
+      "blocks": [
+        "2.1"
+      ],
+      "evidence": "navmesh NavigationServer3D LIVE 2026-10-11: hub_nav.gd bake 193 polys/16 empreintes ~0.6s; PATH_BUDGET_PER_TICK supprimé (budget_per_tick=0); selftest 40/40 entités/tick ~34us (nav_selftest.gd); smoke_navmesh_prime_hub.sh OK; /healthz navmesh.ok + /v1/dev/navmesh/probe source=navmesh (fallback A* grille hors bornes)",
+      "keywords": [
+        "navmesh",
+        "NavigationServer3D",
+        "PATH_BUDGET_PER_TICK"
+      ],
+      "owner_hint": "dev_game / Iris",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_nav.gd"
+        ]
+      }
+    },
+    {
+      "id": "2.1",
+      "title": "Persistance SQLite hub_player_store",
+      "horizon": "sprint2",
+      "perimeter": "O2 Hub",
+      "status": "done",
+      "blocked_by": [
+        "2.3"
+      ],
+      "blocks": [
+        "2.2"
+      ],
+      "evidence": "hub_db.gd SQLite threadé WAL + queue async BEGIN IMMEDIATE/COMMIT · hub_player_store.gd table player_positions + auto-migration JSON + miroir périodique · db_selftest.gd OK · smoke_sqlite_prime_hub.sh kill -9 sans corruption",
+      "keywords": [
+        "hub_player_store",
+        "persistance SQLite",
+        "sqlite prime-hub"
+      ],
+      "owner_hint": "dev_game",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_player_store.gd"
+        ]
+      }
+    },
+    {
+      "id": "2.2",
+      "title": "Découpage hub_sim.gd & main.gd",
+      "horizon": "sprint3",
+      "perimeter": "O2 Hub/Client",
+      "status": "done",
+      "blocked_by": [
+        "2.1"
+      ],
+      "blocks": [],
+      "evidence": "Serveur hub_sim.gd scinde en 5 modules <800L (771L, 447L, 185L, 196L, 142L, 103L, sim_selftest OK) et client main.gd scinde en 4 modules <800L (main 707L, gameplay 529L, quest 281L, net 675L, ui 506L, client_modular_selftest OK)",
+      "keywords": [
+        "hub_sim.gd",
+        "UIManager",
+        "découpage hub_sim"
+      ],
+      "owner_hint": "dev_godot / Iris",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_sim.gd",
+          "packages/prime-client/scripts/main.gd"
+        ]
+      }
+    },
+    {
+      "id": "3.1",
+      "title": "Live World Stream Hub → Compagnon",
+      "horizon": "sprint2",
+      "perimeter": "Pont Studio/Jeu",
+      "status": "done",
+      "blocked_by": [
+        "1.2"
+      ],
+      "blocks": [
+        "3.2"
+      ],
+      "evidence": "hub_world_stream.gd ring buffer :8787 · world_stream.py fetch/cache/greeting · router_prompts.py short_social enrichi · character_layer.py contexte Lost Heaven · core.py GET /world/stream · useApi.js fetchWorldStream · test_world_stream.py 7/7 PASS · package CT100 OK",
+      "keywords": [
+        "Live World Stream",
+        "world stream hub",
+        "événements hub compagnon"
+      ],
+      "owner_hint": "dev_studio + Chœur",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/prime-hub/scripts/hub_world_stream.gd",
+          "packages/cortex/compagnon_ui/server_overlay/world_stream.py",
+          "packages/cortex/compagnon_ui/src/composables/useApi.js"
+        ]
+      }
+    },
+    {
+      "id": "3.2",
+      "title": "Mémoire relationnelle jeu ↔ bureau",
+      "horizon": "sprint2+",
+      "perimeter": "Pont Studio/Jeu",
+      "status": "todo",
+      "blocked_by": [],
+      "blocks": [],
+      "evidence": "",
+      "keywords": [
+        "relation_memory",
+        "conversation_memory",
+        "mémoire relationnelle"
+      ],
+      "owner_hint": "dev_studio",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/compagnon_ui/server_overlay/presence_report.py"
+        ]
+      }
+    },
+    {
+      "id": "5.2",
+      "title": "Ruff + tests headless Godot CI",
+      "horizon": "sprint3",
+      "perimeter": "DevOps",
+      "status": "in_progress",
+      "blocked_by": [],
+      "blocks": [
+        "5.1"
+      ],
+      "evidence": "reopen: faux done ops_probe dry-run healthz — relance ide_cli LIVE",
+      "keywords": [
+        "ruff check",
+        "godot --headless",
+        "tests headless godot"
+      ],
+      "owner_hint": "ops / Argus",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "ruff.toml",
+          "pyproject.toml",
+          ".github/workflows/ci.yml",
+          ".github/workflows/godot-headless.yml",
+          "tools/ci_godot_headless.sh"
+        ]
+      }
+    },
+    {
+      "id": "5.1",
+      "title": "Packaging atomique server_overlay CT100",
+      "horizon": "sprint3",
+      "perimeter": "DevOps",
+      "status": "done",
+      "blocked_by": [
+        "5.2"
+      ],
+      "blocks": [],
+      "evidence": "CT100 packaging atomique LIVE 1.0.0+4bcc331: server_overlay/pyproject.toml + overlay.map (33 fichiers); server_overlay_package.py build/verify/apply/rollback; deploy_compagnon_100.sh --smoke OK; marker /opt/orchestrateur/.server_overlay_version package_sha=8128a4e3470abded597b70e855289bab608e23c4fd6acbe273e4062ec272e5a5; smoke tools/smoke_server_overlay_package.sh OK; rollback testé",
+      "keywords": [
+        "packaging atomique",
+        "server_overlay package",
+        "pyproject server_overlay"
+      ],
+      "owner_hint": "ops / Atlas",
+      "team_signals": [],
+      "acceptance": {
+        "paths_any": [
+          "packages/cortex/infra/scripts/deploy_compagnon_100.sh"
+        ]
+      }
+    }
+  ]
+}

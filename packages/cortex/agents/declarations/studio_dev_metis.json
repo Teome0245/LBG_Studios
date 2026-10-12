@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "agent_id": "studio_dev_metis",
+  "display_name": "Métis",
+  "role": "dev_studio",
+  "persona": "metis",
+  "description": "Forge studio hors jeu — Cortex, Compagnon, Pilot, docs ; mains code .143 (ADR 0025)",
+  "capabilities": [
+    {"id": "studio_code", "capability": "studio_code"},
+    {"id": "ide_cli", "workflow": "ide_cli_workflow", "autonomy": "L1"}
+  ],
+  "constraints": ["l0_l1_default", "l2_live_requires_token", "opencode_nominal"],
+  "subproject": "cortex_studio"
+}

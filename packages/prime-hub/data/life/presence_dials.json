@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "presence_dials_ia",
+  "label": "Dials présence joueurs IA — zone d'entraînement Lost Heaven",
+  "notes": [
+    "Phase B1 — aligné Compagnon lab (chaleur≈enthousiasme, humour, initiative≈ego/familiarité).",
+    "Bornes 0–1. hub_sim / dialogue lisent presence_dials sur ai_players ou défauts ici.",
+    "Pas de LLM libre sur prix / combat : seuils B3."
+  ],
+  "dials_meta": {
+    "chaleur": { "low": "froid", "high": "chaleureux", "compagnon_alias": "enthousiasme" },
+    "humeur": { "low": "terne", "high": "enjoué", "compagnon_alias": "piquant" },
+    "humour": { "low": "sérieux", "high": "blagueur", "compagnon_alias": "humour" },
+    "initiative": { "low": "passif", "high": "proactif", "compagnon_alias": "ego" }
+  },
+  "defaults": {
+    "chaleur": 0.45,
+    "humeur": 0.4,
+    "humour": 0.3,
+    "initiative": 0.4
+  },
+  "by_persona": {
+    "Nix": { "chaleur": 0.72, "humeur": 0.55, "humour": 0.35, "initiative": 0.65 },
+    "Lia": { "chaleur": 0.8, "humeur": 0.7, "humour": 0.55, "initiative": 0.5 },
+    "Mira": { "chaleur": 0.35, "humeur": 0.3, "humour": 0.2, "initiative": 0.55 },
+    "Kael": { "chaleur": 0.4, "humeur": 0.45, "humour": 0.25, "initiative": 0.7 },
+    "Renn": { "chaleur": 0.5, "humeur": 0.6, "humour": 0.45, "initiative": 0.45 },
+    "Sola": { "chaleur": 0.65, "humeur": 0.5, "humour": 0.4, "initiative": 0.35 },
+    "Vulcan": { "chaleur": 0.3, "humeur": 0.35, "humour": 0.15, "initiative": 0.75 },
+    "Ori": { "chaleur": 0.55, "humeur": 0.4, "humour": 0.3, "initiative": 0.5 },
+    "Tess": { "chaleur": 0.6, "humeur": 0.55, "humour": 0.4, "initiative": 0.55 },
+    "Vex": { "chaleur": 0.45, "humeur": 0.5, "humour": 0.35, "initiative": 0.6 }
+  },
+  "ambient_templates": {
+    "high_chaleur": "{who} te salue franchement — chaleur haute.",
+    "low_chaleur": "{who} reste à distance, ton mesuré.",
+    "high_initiative": "{who} propose déjà le prochain pas.",
+    "low_initiative": "{who} attend que tu mènes."
+  },
+  "thresholds": {
+    "_meta": "B3 — dial × distance → action (pas de LLM libre sur prix/combat).",
+    "ignore": {
+      "max_chaleur": 0.28,
+      "max_initiative": 0.32,
+      "max_distance_m": 40
+    },
+    "ambient": {
+      "min_chaleur": 0.28,
+      "max_distance_m": 28
+    },
+    "greet": {
+      "min_chaleur": 0.35,
+      "min_initiative": 0.3,
+      "max_distance_m": 32
+    },
+    "escort": {
+      "min_chaleur": 0.55,
+      "min_initiative": 0.5,
+      "max_distance_m": 24,
+      "duration_s_base": 14,
+      "duration_s_high": 28
+    },
+    "tip_ack": {
+      "min_chaleur": 0.4,
+      "max_distance_m": 18
+    }
+  }
+}

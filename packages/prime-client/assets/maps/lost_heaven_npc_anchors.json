@@ -368,7 +368,7 @@
     {
       "id": "anchor:kisreudi",
       "match": { "pilot_id": "npc:core3_kisreudi" },
-      "building_id": "poi:lost_heaven_housing_npc",
+      "building_id": "poi:lost_heaven_lodge_w",
       "role": "resident",
       "poi_slot": "street",
       "offset_m": { "x": 40.0, "z": -180.0 },

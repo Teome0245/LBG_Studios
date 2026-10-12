@@ -126,3 +126,87 @@ def test_meta_status_fields() -> None:
     assert meta["enabled"] is True
     assert "path" in meta
     assert meta["goals_count"] == 0
+
+
+def test_upsert_pending_will_and_route() -> None:
+    st = svc_self.upsert_pending_will(
+        will_id="evo:abc123",
+        title="Ajouter un dial spontanéité",
+        summary="Seed test",
+        kind="evolution",
+        source="spontaneity",
+        meta={"score": 1.0},
+    )
+    assert st is not None
+    wills = st.get("pending_will") or []
+    assert any(w.get("id") == "evo:abc123" for w in wills if isinstance(w, dict))
+
+    from main import app  # noqa: WPS433
+
+    client = TestClient(app)
+    r = client.post(
+        "/v1/self/will",
+        json={
+            "id": "evo:def456",
+            "title": "Micro-évolution toast",
+            "summary": "via API",
+            "kind": "evolution",
+            "source": "spontaneity",
+        },
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert data["ok"] is True
+    wills2 = (data.get("state") or {}).get("pending_will") or []
+    assert any(w.get("id") == "evo:def456" for w in wills2 if isinstance(w, dict))
+
+
+def test_complete_and_dismiss_pending_will() -> None:
+    svc_self.upsert_pending_will(
+        will_id="evo:keep1",
+        title="Garder",
+        kind="evolution",
+    )
+    svc_self.upsert_pending_will(
+        will_id="evo:drop1",
+        title="À consommer",
+        kind="evolution",
+    )
+    st = svc_self.complete_pending_will("evo:drop1", reason="done")
+    assert st is not None
+    ids = {str(w.get("id")) for w in (st.get("pending_will") or []) if isinstance(w, dict)}
+    assert "evo:drop1" not in ids
+    assert "evo:keep1" in ids
+
+    from main import app  # noqa: WPS433
+
+    client = TestClient(app)
+    r = client.post("/v1/self/will/dismiss", json={"will_id": "evo:keep1"})
+    assert r.status_code == 200
+    wills = (r.json().get("state") or {}).get("pending_will") or []
+    assert not any(w.get("id") == "evo:keep1" for w in wills if isinstance(w, dict))
+
+
+def test_smoke_will_blocked_and_purge(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LBG_SELF_WILL_ALLOW_SMOKE", raising=False)
+    with pytest.raises(ValueError, match="smoke"):
+        svc_self.upsert_pending_will(
+            will_id="evo:smoke1",
+            title="Smoke évolution spontanée",
+            kind="evolution",
+        )
+    # Injecte hors upsert (simule état legacy) puis purge
+    with svc_self._lock:  # noqa: SLF001
+        st = svc_self.load_state()
+        st["pending_will"] = [
+            {"id": "evo:smoke2", "title": "Via Pilot proxy", "kind": "evolution", "ts": 1.0},
+            {"id": "evo:real", "title": "Vraie idée", "kind": "evolution", "ts": 2.0},
+            {"id": "morning_brief:2026-09-29", "title": "Brief du matin", "kind": "morning_brief", "ts": 3.0},
+        ]
+        svc_self.persist_state(st)
+    cleaned = svc_self.purge_blocked_pending_wills(day_key="2026-09-30")
+    assert cleaned is not None
+    ids = {str(w.get("id")) for w in (cleaned.get("pending_will") or []) if isinstance(w, dict)}
+    assert "evo:smoke2" not in ids
+    assert "morning_brief:2026-09-29" not in ids
+    assert "evo:real" in ids

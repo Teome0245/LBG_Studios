@@ -3,6 +3,8 @@
  * Source : GET /api/pilot/orchestrator/self/status (slim, ensure_goals=0).
  */
 
+import { intentsForWill, autoValidateMode } from './willPolicy.js'
+
 /**
  * @typedef {{
  *   enabled?: boolean,
@@ -10,6 +12,7 @@
  *   state?: {
  *     drives?: Record<string, number>,
  *     intent?: { primary?: string, narrative?: string, horizon?: string },
+ *     memory_refs?: { lessons_count?: number, last_lesson_id?: string },
  *     pending_will?: Array<Record<string, unknown>>,
  *     goals?: Array<Record<string, unknown>>,
  *     goals_active_count?: number,
@@ -62,13 +65,17 @@ export function formatSelfLine(status) {
   if (will > 0) parts.push(`${will} envie${will > 1 ? 's' : ''}`)
   const gActive = Number(st.goals_active_count)
   if (Number.isFinite(gActive) && gActive > 0) parts.push(`${gActive} but${gActive > 1 ? 's' : ''}`)
+  const lessons = Number(st.memory_refs?.lessons_count)
+  if (Number.isFinite(lessons) && lessons > 0) {
+    parts.push(`${lessons} leçon${lessons > 1 ? 's' : ''}`)
+  }
   return parts.join(' — ')
 }
 
 /**
  * Offre d'initiative depuis Self (si proactive n'offre rien de prioritaire).
  * @param {SelfStatus|null|undefined} status
- * @returns {{ offer: boolean, id?: string, message?: string, kind?: string, intents?: object[], reason?: string }}
+ * @returns {{ offer: boolean, id?: string, message?: string, kind?: string, intents?: object[], reason?: string, willId?: string, willKind?: string, autoValidate?: string|null }}
  */
 export function offerFromSelf(status) {
   if (!status?.enabled) return { offer: false, reason: 'self_disabled' }
@@ -77,27 +84,24 @@ export function offerFromSelf(status) {
   if (will.length) {
     const w = will[0] || {}
     const title = String(w.title || w.summary || w.kind || 'envie interne').slice(0, 120)
-    const id = `self:will:${String(w.id || title).slice(0, 40)}`
+    const willId = String(w.id || '').slice(0, 80)
+    const willKind = String(w.kind || 'evolution')
+    const id = `self:will:${String(willId || title).slice(0, 40)}`
+    const auto = autoValidateMode(w)
+    const kindMsg =
+      willKind === 'morning_brief'
+        ? `Brief du matin prêt (« ${title} »). Je peux le compiler (lecture seule), ou Team L1.`
+        : `Je sens une envie studio : « ${title} ». On en parle, Agir, ou on passe à la Team L1 ?`
     return {
       offer: true,
       id,
       kind: 'self_will',
-      message: `Je sens une envie studio : « ${title} ». On en parle, Agir, ou on passe à la Team L1 ?`,
-      intents: [
-        {
-          id: 'team_l1_will',
-          label: 'Team L1',
-          sourceText: `team: ${title}`,
-          hint: 'crée une tâche qa lecture seule',
-          teamSpawn: true,
-        },
-        {
-          id: 'open_team',
-          label: 'Voir Pilot Team',
-          sourceText: 'ouvre http://192.168.0.140:8080/#/team dans le navigateur',
-          hint: 'navigateur',
-        },
-      ],
+      offerType: 'studio',
+      willId,
+      willKind,
+      autoValidate: auto,
+      message: kindMsg,
+      intents: intentsForWill(w),
     }
   }
 
@@ -187,4 +191,35 @@ export function offerFromSelf(status) {
   }
 
   return { offer: false, reason: 'no_self_signal' }
+}
+
+/**
+ * Offre depuis une seed d'évolution (si Self n'a rien de prioritaire).
+ * @param {{ text?: string, score?: number, will_id?: string, promoted_ts?: number }|null|undefined} seed
+ */
+export function offerFromEvolutionSeed(seed) {
+  if (!seed || typeof seed !== 'object') return { offer: false, reason: 'no_seed' }
+  const text = String(seed.text || '').trim()
+  if (text.length < 12) return { offer: false, reason: 'short' }
+  const score = Number(seed.score)
+  if (!Number.isFinite(score) || score < 0.5) return { offer: false, reason: 'low_score' }
+  const willId = String(seed.will_id || '').slice(0, 80)
+  const id = `self:will:evo:${String(willId || text).slice(0, 40)}`
+  const fakeWill = {
+    id: willId || `evo:${text.slice(0, 12)}`,
+    kind: 'evolution',
+    title: text.slice(0, 120),
+  }
+  return {
+    offer: true,
+    id,
+    kind: 'self_will',
+    offerType: 'studio',
+    fromSelf: true,
+    willId: willId || undefined,
+    willKind: 'evolution',
+    autoValidate: autoValidateMode(fakeWill),
+    message: `Envie d’évolution studio : « ${text.slice(0, 120)} ». On en parle, Team L1, ou plus tard ?`,
+    intents: intentsForWill(fakeWill),
+  }
 }

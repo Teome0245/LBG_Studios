@@ -4,25 +4,68 @@ import { useInitiative } from '@/composables/useInitiative'
 import { useChat } from '@/composables/useChat'
 import { proposeAction } from '@/lib/agir'
 import { spawnTeamL1, teamObjectiveFromInitiative } from '@/lib/teamSpawn'
+import { setMandate } from '@/lib/mandate'
+import { getStudioGoal } from '@/lib/studioGoal'
 
-const { current, dismiss, discussText, proposing, selfLine } = useInitiative()
+const { current, dismiss, discussText, proposing, selfLine, studioGoal } = useInitiative()
 const { addUserMessage, addMessage } = useChat()
 const busyId = ref('')
 
-function discuss() {
+/** Intent « En parler » / discuss — dialogue, jamais Agir. */
+function isDiscussIntent(intent) {
+  if (!intent || intent.teamSpawn || intent.mandatePick) return false
+  if (intent.discuss === true) return true
+  const id = String(intent.id || '').toLowerCase()
+  const hint = String(intent.hint || '').toLowerCase()
+  const label = String(intent.label || '').toLowerCase()
+  return id.includes('discuss') || hint === 'discuss' || label === 'en parler'
+}
+
+function discuss(intent) {
   const msg = current.value?.message || 'initiative'
-  addUserMessage(`À propos de ton initiative : « ${msg} »`)
+  const src = String(intent?.sourceText || '').trim()
+  const opener =
+    src && /^(parle|discut|à propos|a propos)/i.test(src)
+      ? src
+      : `À propos de ton initiative : « ${msg} »`
+  addUserMessage(opener)
   addMessage({
     role: 'assistant',
     content: discussText(),
     source: 'initiative',
     state: 'orchestrateur-happy',
   })
-  dismiss(2, 'dismiss')
+  dismiss(2, 'discuss')
+}
+
+function pickMandate(intent) {
+  if (!intent?.mandatePick || !intent.mandateScope || proposing.value) return
+  setMandate([intent.mandateScope])
+  studioGoal.value = getStudioGoal()
+  addUserMessage(`Mandat · ${intent.label}`)
+  addMessage({
+    role: 'assistant',
+    content:
+      `OK — je veille prioritairement « ${intent.label} » pour ~4 h` +
+      ` (objectif · ${studioGoal.value?.goal?.title || intent.label}).` +
+      `\nJe proposerai des actions dans ce périmètre ; Garde infra reste prioritaire.`,
+    source: 'mandate',
+    state: 'orchestrateur-happy',
+  })
+  dismiss(6, 'accept')
 }
 
 /** Prépare une carte Agir (proposal réelle) sans exécuter. */
 async function runAgir(intent) {
+  if (intent?.mandatePick) {
+    pickMandate(intent)
+    return
+  }
+  // « En parler » ≠ Agir — ouvre le fil, snooze le toast (pas de proposition Réel)
+  if (isDiscussIntent(intent)) {
+    discuss(intent)
+    return
+  }
   if (!intent?.sourceText || proposing.value) return
   if (intent.teamSpawn) {
     await runTeam(intent)
@@ -123,8 +166,15 @@ async function runTeam(intent) {
     >
       <div class="initiative-head">
         <span class="initiative-dot"></span>
-        <span class="initiative-label">Suggestion</span>
+        <span class="initiative-label">{{
+          current.spontaneous ? 'Spontané'
+          : current.offerType === 'mandat' ? 'Mandat'
+          : current.offerType === 'garde' ? 'Garde'
+          : current.offerType === 'studio' ? 'Studio'
+          : 'Suggestion'
+        }}</span>
         <span v-if="current.goal?.title" class="initiative-goal">{{ current.goal.title }}</span>
+        <span v-else-if="current.offerType" class="initiative-kind">{{ current.offerType }}</span>
         <span v-else-if="current.kind" class="initiative-kind">{{ current.kind }}</span>
         <button
           type="button"
@@ -139,11 +189,11 @@ async function runTeam(intent) {
 
       <div v-if="current.intents?.length" class="initiative-intents">
         <button
-          v-for="it in current.intents.slice(0, 2)"
+          v-for="it in (current.offerType === 'mandat' ? current.intents : current.intents.slice(0, 2))"
           :key="it.id"
           type="button"
           class="btn-agir"
-          :class="{ 'btn-team': it.teamSpawn }"
+          :class="{ 'btn-team': it.teamSpawn, 'btn-mandate': it.mandatePick }"
           :disabled="!!busyId"
           @click="runAgir(it)"
         >
@@ -155,6 +205,7 @@ async function runTeam(intent) {
       <div class="initiative-actions">
         <button type="button" class="btn-ghost" @click="discuss">Détails</button>
         <button
+          v-if="current.offerType !== 'mandat'"
           type="button"
           class="btn-ghost"
           :disabled="!!busyId"
@@ -285,6 +336,14 @@ async function runTeam(intent) {
 .btn-agir.btn-team:hover:not(:disabled) {
   background: rgba(14, 165, 233, 0.22);
   border-color: rgba(56, 189, 248, 0.6);
+}
+.btn-agir.btn-mandate {
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(13, 148, 136, 0.14);
+}
+.btn-agir.btn-mandate:hover:not(:disabled) {
+  background: rgba(13, 148, 136, 0.24);
+  border-color: rgba(45, 212, 191, 0.55);
 }
 .btn-agir-title {
   display: block;

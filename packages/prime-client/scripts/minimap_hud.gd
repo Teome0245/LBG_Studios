@@ -3,8 +3,8 @@ extends Control
 class_name MinimapHud
 
 const CONFIG_PATH := "res://config/minimap_config.json"
-const POI_PATH := "res://assets/maps/tatooine_pois.json"
-const MAP_CONFIG_PATH := "res://assets/maps/tatooine_map_config.json"
+const POI_PATH := "res://assets/maps/scrapaltai_pois.json"
+const MAP_CONFIG_PATH := "res://assets/maps/scrapaltai_map_config.json"
 
 @export var camera_path: NodePath = NodePath("../../../Camera2D")
 @export var entity_manager_path: NodePath = NodePath("../../../EntityManager")
@@ -111,7 +111,7 @@ func _load_pois() -> void:
 		_pois = arr if arr is Array else []
 
 func _load_planet_texture() -> void:
-	for path in ["res://assets/maps/tatooine.png", "res://assets/maps/tatooine.svg"]:
+	for path in ["res://assets/maps/scrapaltai_shard_legacy.png", "res://assets/maps/scrapaltai.svg"]:
 		if ResourceLoader.exists(path):
 			_planet_texture = load(path) as Texture2D
 			if _planet_texture:

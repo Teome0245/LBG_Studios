@@ -53,6 +53,13 @@ def run_spawn(*, persist: bool = True, dry_run: bool = False) -> dict[str, Any]:
         result["report"] = report
         result["outcome"] = report.get("outcome") or report.get("acted_as") or "done"
         result["ok"] = bool(report.get("ok", True))
+        # Timer actif mais conductor coupé = file queued bloquée (régression push_secrets).
+        if result.get("outcome") == "disabled" or report.get("enabled") is False:
+            result["ok"] = False
+            result["error"] = (
+                "campus conductor disabled — set LBG_TEAM_CAMPUS_CONDUCTOR_ENABLED=1 "
+                "on orchestrator (env + drop-in campus-conductor.conf)"
+            )
         if persist:
             save_json_state(
                 state_path(),

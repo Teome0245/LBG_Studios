@@ -254,16 +254,22 @@ def _jobs_backlog_signal() -> dict[str, Any]:
 def _infra_signals() -> dict[str, Any]:
     """Signaux légers pour le moteur (pas de scan complet à chaque tick)."""
     core_host = os.environ.get("LBG_LAN_HOST_CORE", "192.168.0.140").split(":")[0]
-    # Préférer le vrai agent desktop Windows (.10:5005) si configuré, ou AGENT_WINDOWS_SRV_AD_URL si non legacy (.100)
-    ad_url = os.environ.get("AGENT_WINDOWS_URL") or os.environ.get("AGENT_WINDOWS_SRV_AD_URL") or "http://192.168.0.10:5005"
-    if "192.168.0.100:5005" in ad_url:
-        ad_url = os.environ.get("AGENT_WINDOWS_URL", "http://192.168.0.10:5005")
-    ad_host = ad_url.split("//")[-1].split(":")[0] if "//" in ad_url else "192.168.0.10"
+    # Agent desktop Windows (.10:5005) — note: aucun contrôleur AD dans le réseau actuel
+    desktop_url = (
+        os.environ.get("LBG_AGENT_DESKTOP_URL")
+        or os.environ.get("AGENT_WINDOWS_URL")
+        or os.environ.get("AGENT_WINDOWS_SRV_AD_URL")
+        or "http://192.168.0.10:5005"
+    )
+    if "192.168.0.100:5005" in desktop_url:
+        desktop_url = os.environ.get("AGENT_WINDOWS_URL", "http://192.168.0.10:5005")
+    desktop_host = desktop_url.split("//")[-1].split(":")[0] if "//" in desktop_url else "192.168.0.10"
     orch_ok = _tcp_open(core_host, 8010)
-    ad_agent_ok = _tcp_open(ad_host, 5005)
+    desktop_agent_ok = _tcp_open(desktop_host, 5005)
     signals: dict[str, Any] = {
         "orchestrator_reachable": orch_ok,
-        "ad_agent_reachable": ad_agent_ok,
+        "desktop_agent_reachable": desktop_agent_ok,
+        "ad_agent_reachable": desktop_agent_ok,  # rétro-compatibilité
     }
     signals.update(_mmo_signals())
     signals.update(_disk_signals())
@@ -271,8 +277,9 @@ def _infra_signals() -> dict[str, Any]:
     if not orch_ok:
         signals["missing_info"] = True
         signals["objectif_flou"] = True
-    if not ad_agent_ok:
-        signals["ad_agent_down"] = True
+    if not desktop_agent_ok:
+        signals["desktop_agent_down"] = True
+        # NOTE: pas d'AD dans l'écosystème — ad_agent_down n'est plus émis comme faux-positif
     if signals.get("mmo_sidecar_reachable"):
         signals["lia_mmo_available"] = True
     return signals
@@ -435,7 +442,12 @@ def _pick_proactive_objective(action: Any) -> tuple[str, str, dict[str, Any]]:
             f"Alerte disque root {pct}% ({level}) — selfcheck L1 puis remédiation "
             "en attente d’approbation L2 (Pilot Jobs). Pas de purge automatique."
         )
-    elif "ad_agent_down" in causes or infra.get("ad_agent_down"):
+    elif (
+        "desktop_agent_down" in causes
+        or "ad_agent_down" in causes
+        or infra.get("desktop_agent_down")
+        or infra.get("ad_agent_down")
+    ):
         infra_objective = (
             "Selfcheck agent desktop Windows (.10:5005) read-only / dry-run — sonde L1."
         )
@@ -584,6 +596,10 @@ def _tick_once() -> None:
                     "tension_causes": list(getattr(st, "tension_causes", None) or []),
                 }
             )
+            try:
+                svc_self.ensure_morning_brief_will()
+            except Exception:
+                pass
     except Exception:
         pass
 

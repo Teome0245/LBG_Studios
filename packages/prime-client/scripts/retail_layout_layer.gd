@@ -2,7 +2,7 @@
 extends Node2D
 class_name RetailLayoutLayer
 
-const RETAIL_DIR := "res://assets/maps/retail/tatooine/"
+const RETAIL_DIR := "res://assets/maps/retail/scrapaltai/"
 
 @export var visible_layout: bool = false
 @export var city_id: String = "mos_eisley"

@@ -2,6 +2,8 @@
 
 Branche les joueurs IA (Lia/Nix/…) sur le même board / progress / complete
 que le prime-client, avec **marche visible** (movement_mode=walk) vers les POI.
+
+C11 SpaceMolt : consomme ``GET /catalog`` + ``/guide`` ; respecte ``429 tick_busy``.
 """
 from __future__ import annotations
 
@@ -42,6 +44,66 @@ _MOVEMENT_MODE_PATHS = [
 _last_progress_at: dict[str, float] = {}
 _last_move_at: dict[str, float] = {}
 _last_move_poi: dict[str, str] = {}
+# playstyle guide cache (C10)
+_guide_cache: dict[str, dict[str, Any]] = {}
+_catalog_poi_ids: set[str] | None = None
+_last_tip_at: dict[str, float] = {}
+
+_DEFAULT_PLAYSTYLE_BY_BOT: dict[str, str] = {
+    "lia": "scene",
+    "nix": "prospecteur",
+    "mira": "artisan",
+    "kael": "scout",
+}
+
+# quest_id préférés par playstyle (ordre)
+_QUEST_PREFER_BY_PLAYSTYLE: dict[str, tuple[str, ...]] = {
+    "prospecteur": (
+        "lh_survey_dunes",
+        "lh_delivery_starport",
+        "lh_enquete_marche",
+        "lh_aide_generale",
+        "lh_escort_gate_clinic",
+        "lh_hunt_chacal",
+        "lh_show_perle",
+    ),
+    "artisan": (
+        "lh_delivery_starport",
+        "lh_enquete_marche",
+        "lh_aide_generale",
+        "lh_survey_dunes",
+        "lh_escort_gate_clinic",
+        "lh_hunt_chacal",
+        "lh_show_perle",
+    ),
+    "scene": (
+        "lh_show_perle",
+        "lh_aide_generale",
+        "lh_enquete_marche",
+        "lh_delivery_starport",
+        "lh_escort_gate_clinic",
+        "lh_survey_dunes",
+        "lh_hunt_chacal",
+    ),
+    "medecin": (
+        "lh_escort_gate_clinic",
+        "lh_aide_generale",
+        "lh_delivery_starport",
+        "lh_enquete_marche",
+        "lh_survey_dunes",
+        "lh_hunt_chacal",
+        "lh_show_perle",
+    ),
+    "scout": (
+        "lh_hunt_chacal",
+        "lh_survey_dunes",
+        "lh_escort_gate_clinic",
+        "lh_delivery_starport",
+        "lh_enquete_marche",
+        "lh_aide_generale",
+        "lh_show_perle",
+    ),
+}
 
 
 def quest_hub_bot_enabled() -> bool:
@@ -60,15 +122,15 @@ def sidecar_base() -> str:
 def ensure_walk_mode() -> str:
     """Force marche visible pour le hub.
 
-    Préfère ``client`` (core3client DataTransform / bot_move.jsonl) quand disponible ;
-    sinon ``walk`` (pas serveur 5 m). Jamais ``teleport`` pour les missions hub.
+    Préfère ``walk`` (pas serveur visible) ; ``client`` (bot_move/DataTransform) si
+    ``LBG_QUEST_HUB_BOT_MOVEMENT=client``. Jamais ``teleport`` pour les missions hub.
     """
-    mode = (os.environ.get("LBG_QUEST_HUB_BOT_MOVEMENT") or "client").strip().lower()
+    mode = (os.environ.get("LBG_QUEST_HUB_BOT_MOVEMENT") or "walk").strip().lower()
     if mode not in {"walk", "client", "teleport"}:
-        mode = "client"
+        mode = "walk"
     # Hub missions : jamais teleport (sortie intérieur = cell→0 puis marche)
     if mode == "teleport":
-        mode = "client"
+        mode = "walk"
     for p in _MOVEMENT_MODE_PATHS:
         if not p or not str(p).strip():
             continue
@@ -80,6 +142,30 @@ def ensure_walk_mode() -> str:
         except OSError:
             continue
     return mode
+
+
+def is_tick_busy(resp: dict[str, Any] | None) -> bool:
+    """True si le sidecar a renvoyé C11 ``tick_busy`` (HTTP 429 ou payload)."""
+    if not isinstance(resp, dict):
+        return False
+    if resp.get("error") == "tick_busy":
+        return True
+    if int(resp.get("http_status") or 0) == 429 and resp.get("reason") in {
+        "cooldown",
+        "queue_full",
+        "tick_busy",
+    }:
+        return True
+    return False
+
+
+def playstyle_for_player(name: str) -> str:
+    key = (name or "").strip().lower()
+    env_key = f"LBG_BOT_PLAYSTYLE_{key.upper()}"
+    raw = (os.environ.get(env_key) or os.environ.get("LBG_BOT_PLAYSTYLE") or "").strip().lower()
+    if raw:
+        return raw
+    return _DEFAULT_PLAYSTYLE_BY_BOT.get(key, "prospecteur")
 
 
 def _load_poi_xz() -> dict[str, tuple[float, float]]:
@@ -128,6 +214,60 @@ def _http_json(method: str, path: str, *, json_body: dict | None = None, timeout
         return data
     except Exception as exc:
         return {"ok": False, "error": str(exc)[:160]}
+
+
+def _tick_busy_outcome(name: str, resp: dict[str, Any], *, quest_id: str = "") -> dict[str, Any]:
+    return {
+        "ok": True,
+        "outcome": "tick_busy",
+        "reason": "tick_busy",
+        "player": name,
+        "quest_id": quest_id or None,
+        "retry_after_s": resp.get("retry_after_s"),
+        "sidecar": resp,
+        "movement": ensure_walk_mode(),
+    }
+
+
+def fetch_playstyle_guide(name: str, *, force: bool = False) -> dict[str, Any] | None:
+    """C10 — ``GET /guide?playstyle=`` (cache par bot)."""
+    style = playstyle_for_player(name)
+    key = f"{name.lower()}::{style}"
+    if not force and key in _guide_cache:
+        return _guide_cache[key]
+    payload = _http_json("GET", f"/guide?playstyle={style}")
+    if not payload.get("ok"):
+        payload = _http_json("GET", f"/v1/guide?playstyle={style}")
+    if payload.get("ok") and isinstance(payload.get("guide"), dict):
+        _guide_cache[key] = payload["guide"]
+        return payload["guide"]
+    return None
+
+
+def ensure_catalog_poi_cache(*, force: bool = False) -> set[str]:
+    """C10 — ``GET /catalog?type=poi`` (ids connus hub)."""
+    global _catalog_poi_ids
+    if _catalog_poi_ids is not None and not force:
+        return _catalog_poi_ids
+    payload = _http_json("GET", "/catalog?type=poi")
+    if not payload.get("ok"):
+        payload = _http_json("GET", "/v1/catalog?type=poi")
+    ids: set[str] = set()
+    items = payload.get("items") if payload.get("ok") else None
+    if isinstance(items, list):
+        for row in items:
+            if isinstance(row, dict) and isinstance(row.get("id"), str):
+                ids.add(row["id"].strip())
+    _catalog_poi_ids = ids
+    return ids
+
+
+def _prefer_quest_ids(name: str) -> tuple[str, ...]:
+    guide = fetch_playstyle_guide(name)
+    style = playstyle_for_player(name)
+    if guide and isinstance(guide.get("playstyle"), str):
+        style = str(guide["playstyle"])
+    return _QUEST_PREFER_BY_PLAYSTYLE.get(style, _QUEST_PREFER_BY_PLAYSTYLE["prospecteur"])
 
 
 def _player_horiz(snap: dict[str, Any]) -> tuple[float, float]:
@@ -216,6 +356,8 @@ def _enqueue_move(
         snapshot=snap,
         target_xyz=xyz,
     )
+    if is_tick_busy(out):
+        return _tick_busy_outcome(name, out, quest_id=quest_id)
     _last_move_at[key] = now
     _last_move_poi[key] = poi
     out["reason"] = reason
@@ -225,6 +367,38 @@ def _enqueue_move(
     out["dist_m"] = round(dist, 1) if dist is not None else None
     out["movement"] = ensure_walk_mode()
     return out
+
+
+def _maybe_tip_stage(name: str, qid: str, step_id: str) -> dict[str, Any] | None:
+    """Mutation tip_stage pour quête scène (playstyle scene / lh_show_perle)."""
+    if qid != "lh_show_perle":
+        return None
+    tip_like = any(k in step_id.lower() for k in ("tip", "show", "danse", "scene", "perle"))
+    if playstyle_for_player(name) != "scene" and not tip_like:
+        return None
+    key = name.lower()
+    now = time.monotonic()
+    if (now - _last_tip_at.get(key, 0.0)) < max(_PROGRESS_COOLDOWN_S, 30.0):
+        return None
+    tip = _http_json(
+        "POST",
+        "/v1/quests/tip",
+        json_body={"player": name, "quest_id": qid, "amount": 5},
+    )
+    _last_tip_at[key] = now
+    if is_tick_busy(tip):
+        return _tick_busy_outcome(name, tip, quest_id=qid)
+    if tip.get("ok"):
+        return {
+            "ok": True,
+            "reason": "hub_tip_stage",
+            "player": name,
+            "quest_id": qid,
+            "step_id": step_id,
+            "sidecar": tip,
+            "movement": ensure_walk_mode(),
+        }
+    return None
 
 
 def deterministic_hub_quest_action(
@@ -241,6 +415,10 @@ def deterministic_hub_quest_action(
     name = _player_name(player)
     if not name:
         return None
+
+    # C10 — warm catalog + guide (queries free)
+    ensure_catalog_poi_cache()
+    fetch_playstyle_guide(name)
 
     # Sortir d'un intérieur hors hub avant de jouer une mission
     in_interior = snap.get("in_interior") in {True, 1, "1", "true", "True"}
@@ -259,6 +437,8 @@ def deterministic_hub_quest_action(
             snapshot=snap,
             target_xyz=plaza,
         )
+        if is_tick_busy(out):
+            return _tick_busy_outcome(name, out)
         out["reason"] = "hub_quest_exit_interior"
         out["movement"] = ensure_walk_mode()
         return out
@@ -273,16 +453,7 @@ def deterministic_hub_quest_action(
         quests = board.get("quests") if board.get("ok") else None
         if not isinstance(quests, list) or not quests:
             return None
-        # Trajets longs visibles en priorité
-        prefer = (
-            "lh_hunt_chacal",
-            "lh_escort_gate_clinic",
-            "lh_delivery_starport",
-            "lh_enquete_marche",
-            "lh_survey_dunes",
-            "lh_aide_generale",
-            "lh_show_perle",
-        )
+        prefer = _prefer_quest_ids(name)
         pick = None
         by_id = {str(q.get("id")): q for q in quests if isinstance(q, dict)}
         for pid in prefer:
@@ -298,6 +469,8 @@ def deterministic_hub_quest_action(
             "/v1/quests/accept",
             json_body={"player": name, "quest_id": pick, "giver_id": "npc:core3_daan_oth"},
         )
+        if is_tick_busy(acc):
+            return _tick_busy_outcome(name, acc, quest_id=pick)
         if not acc.get("ok"):
             return None
         entry = acc.get("accepted") if isinstance(acc.get("accepted"), dict) else {}
@@ -305,6 +478,9 @@ def deterministic_hub_quest_action(
         if isinstance(steps, list) and steps:
             step0 = steps[0] if isinstance(steps[0], dict) else {}
             poi = str(step0.get("poi") or "")
+            catalog_ids = _catalog_poi_ids or set()
+            if poi and catalog_ids and poi not in catalog_ids and f"poi:{poi}" in catalog_ids:
+                poi = f"poi:{poi}"
             xyz = _poi_xyz(poi) if poi else None
             if xyz is not None:
                 return _enqueue_move(
@@ -327,6 +503,7 @@ def deterministic_hub_quest_action(
             "reason": "hub_quest_accept",
             "player": name,
             "quest_id": pick,
+            "playstyle": playstyle_for_player(name),
             "accepted": acc.get("accepted"),
             "movement": ensure_walk_mode(),
         }
@@ -338,6 +515,8 @@ def deterministic_hub_quest_action(
     steps = entry.get("progress_steps") or []
     if not isinstance(steps, list) or not steps:
         done = _http_json("POST", "/v1/quests/complete", json_body={"player": name, "quest_id": qid})
+        if is_tick_busy(done):
+            return _tick_busy_outcome(name, done, quest_id=qid)
         return {
             "ok": bool(done.get("ok")),
             "reason": "hub_quest_complete_no_steps",
@@ -348,7 +527,6 @@ def deterministic_hub_quest_action(
 
     pending = [s for s in steps if isinstance(s, dict) and not s.get("done")]
     if not pending:
-        # Complete seulement si cooldown progress écoulé (pas de multi-étape flash)
         if not _can_progress(name):
             return {
                 "ok": True,
@@ -358,6 +536,8 @@ def deterministic_hub_quest_action(
                 "movement": ensure_walk_mode(),
             }
         done = _http_json("POST", "/v1/quests/complete", json_body={"player": name, "quest_id": qid})
+        if is_tick_busy(done):
+            return _tick_busy_outcome(name, done, quest_id=qid)
         _mark_progress(name)
         return {
             "ok": bool(done.get("ok")),
@@ -392,7 +572,10 @@ def deterministic_hub_quest_action(
             dist=dist,
         )
 
-    # Sur place : attendre le cooldown avant de valider l'étape (marche visible)
+    tipped = _maybe_tip_stage(name, qid, step_id)
+    if tipped is not None:
+        return tipped
+
     if not _can_progress(name):
         return {
             "ok": True,
@@ -410,6 +593,8 @@ def deterministic_hub_quest_action(
         if snap_h.get("status") != "victory":
             _http_json("POST", "/v1/hunt-yard/reset", json_body={"seed": 1})
             run = _http_json("POST", "/v1/hunt-yard/run", json_body={"max_ticks": 120})
+            if is_tick_busy(run):
+                return _tick_busy_outcome(name, run, quest_id=qid)
             if run.get("status") != "victory":
                 return {
                     "ok": True,
@@ -424,6 +609,8 @@ def deterministic_hub_quest_action(
             "/v1/hunt-yard/claim-quest",
             json_body={"player": name, "quest_id": qid},
         )
+        if is_tick_busy(prog):
+            return _tick_busy_outcome(name, prog, quest_id=qid)
         if not prog.get("ok"):
             return {
                 "ok": False,
@@ -477,6 +664,8 @@ def deterministic_hub_quest_action(
             "z": float(_player_horiz(snap)[1]),
         },
     )
+    if is_tick_busy(prog):
+        return _tick_busy_outcome(name, prog, quest_id=qid)
     if not prog.get("ok"):
         return {
             "ok": False,
@@ -489,7 +678,6 @@ def deterministic_hub_quest_action(
     _mark_progress(name)
     _last_move_poi.pop(name.lower(), None)
 
-    # Jamais complete dans le même tick — laisser le temps de voir l'étape
     active2 = prog.get("active") if isinstance(prog.get("active"), list) else None
     if active2:
         entry2 = next((a for a in active2 if str(a.get("id")) == qid), entry)

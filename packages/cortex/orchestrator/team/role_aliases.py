@@ -31,10 +31,20 @@ DEFAULT_ROLE_ALIASES: dict[str, dict[str, str]] = {
         "title": "Dev Godot IA",
         "tagline": "Prime Client 2D — UI, cartes, M9 (persona Hermès pour réseau)",
     },
+    "dev_studio": {
+        "alias": "Métis",
+        "title": "Forge studio hors jeu",
+        "tagline": "Cortex, Compagnon, Pilot, docs — mains code .143",
+    },
     "player_ia": {
         "alias": "Chœur du monde",
-        "title": "Joueurs IA Prime",
-        "tagline": "Lia, Nix… sur Core3 246",
+        "title": "Garant runtime monde",
+        "tagline": "prime-hub :8787 · flotte IA Lost Heaven",
+    },
+    "player_bridge": {
+        "alias": "Pont joueur",
+        "title": "Persona out-game",
+        "tagline": "Salle de jeux — login=persona · suggestions monde/dev",
     },
     "admin_infra": {
         "alias": "Atlas",
@@ -73,6 +83,12 @@ SUBPROJECT_PERSONAS: dict[str, dict[str, str]] = {
         "title": "Godot 2D — UI & cartes",
         "tagline": "Prime Client, M9, minimap, waypoints, scènes GDScript",
         "owner_role": "dev_godot",
+    },
+    "cortex_studio": {
+        "alias": "Métis",
+        "title": "Forge studio hors jeu",
+        "tagline": "Cortex, Compagnon, Pilot, docs — mains code .143",
+        "owner_role": "dev_studio",
     },
     "godot_hermes": {
         "alias": "Hermès",
@@ -122,6 +138,8 @@ def enrich_task_view(data: dict[str, object]) -> dict[str, object]:
         sub = "infographiste_ia"
     if ctx.get("core3_build") and not sub:
         sub = "core3_build"
+    if role == "dev_studio" and not sub:
+        sub = "cortex_studio"
     persona = str(ctx.get("godot_dev_persona") or "").lower()
     if persona == "hermes" and not sub:
         sub = "godot_hermes"

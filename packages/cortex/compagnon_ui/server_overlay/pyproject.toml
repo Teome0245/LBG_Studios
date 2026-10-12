@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lbg-compagnon-server-overlay"
+version = "1.0.0"
+description = "Overlay serveur du Compagnon (surcouches backend orchestrateur CT100) — ticket plan 5.1"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "LBG Studios — ops/Atlas" }]
+keywords = ["lbg", "compagnon", "overlay", "ct100", "atomic-deploy"]
+
+# Source de vérité de version lue par
+# packages/cortex/infra/scripts/server_overlay_package.py (build atomique).
+# Les modules « py-modules » sont copiés tels quels par-dessus le backend
+# orchestrateur ; ils ne sont pas installés comme distribution autonome.
+[tool.setuptools]
+py-modules = [
+    "character_api",
+    "character_layer",
+    "chat_intent",
+    "companion_self_grounding",
+    "core",
+    "desktop_approval",
+    "desktop_dispatch",
+    "ecosystem_grounding",
+    "infra_lan_intent",
+    "llm_chat_phase",
+    "local_llm_provider",
+    "mission_watch_intent",
+    "ollama_audit",
+    "openclaw_markers",
+    "plan_submit",
+    "plan_suivi",
+    "presence_brief",
+    "presence_report",
+    "rag_grounding",
+    "reflection_router",
+    "router_prompts",
+    "spontaneity",
+    "spontaneity_api",
+    "sse_ask",
+    "team_actions",
+    "team_autonomy_plan",
+    "team_proxy",
+    "team_routing",
+    "tool_loop",
+    "tts",
+    "tts_api",
+    "world_stream",
+]
+
+[tool.lbg.overlay]
+# Carte source→cible pour le packaging atomique (une ligne = un fichier).
+map = "overlay.map"
+deploy_root = "/opt/orchestrateur"
+marker = ".server_overlay_version"

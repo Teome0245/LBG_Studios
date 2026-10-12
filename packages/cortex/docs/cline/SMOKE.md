@@ -11,8 +11,10 @@ curl -sS http://192.168.0.111:11434/api/tags | python3 -c 'import sys,json; prin
 
 Attendu (sous-ensemble) :
 
-- 110 : `huihui_ai/gemma-4-abliterated:12b`, `huihui_ai/gemma-4-abliterated:e2b`, `huihui_ai/qwen3.5-abliterated:9b`
+- 110 : `huihui_ai/gemma-4-abliterated:12b-qat` **et** alias `…:12b` (`ollama cp …:12b-qat …:12b`), `…:e2b`, `huihui_ai/qwen3.5-abliterated:9b` (+ optionnel `lbg-cline-plan:9b`)
 - 111 : `huihui_ai/qwen3.5-abliterated:0.8B`, `huihui_ai/qwen3.5-abliterated:2B`
+
+Si `api/show` renvoie *model not found* pour `:12b` : recréer l’alias avant Cline Act.
 
 ## 2. Chat OpenAI-compat
 

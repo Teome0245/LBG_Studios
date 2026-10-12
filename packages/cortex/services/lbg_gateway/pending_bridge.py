@@ -39,16 +39,17 @@ def inject_player_name() -> str:
 
 def _min_interval_s() -> float:
     try:
-        return max(0.05, float(os.environ.get("LBG_GATEWAY_INJECT_MOVE_MIN_INTERVAL_S", "0.4")))
+        # Défaut plus lent : laisse la file IA (Lia/Nix) respirer.
+        return max(0.2, float(os.environ.get("LBG_GATEWAY_INJECT_MOVE_MIN_INTERVAL_S", "1.2")))
     except ValueError:
-        return 0.4
+        return 1.2
 
 
 def _min_delta() -> float:
     try:
-        return max(0.0, float(os.environ.get("LBG_GATEWAY_INJECT_MOVE_MIN_DELTA", "0.8")))
+        return max(0.0, float(os.environ.get("LBG_GATEWAY_INJECT_MOVE_MIN_DELTA", "2.5")))
     except ValueError:
-        return 0.8
+        return 2.5
 
 
 def _coalesce_enabled() -> bool:

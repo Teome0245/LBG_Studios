@@ -2,9 +2,9 @@
 extends Control
 class_name PlanetMapPanel
 
-const POI_PATH := "res://assets/maps/tatooine_pois.json"
+const POI_PATH := "res://assets/maps/scrapaltai_pois.json"
 const LOC_PATH := "res://assets/maps/locations_tree.json"
-const MAP_CONFIG := "res://assets/maps/tatooine_map_config.json"
+const MAP_CONFIG := "res://assets/maps/scrapaltai_map_config.json"
 const PLANET_LORE_PATH := "res://assets/maps/scrapaltai_planet_map.json"
 const HUB := Vector3(4749.0, 0.0, -737.0)
 
@@ -183,7 +183,7 @@ func _load_texture() -> void:
 	for path in [
 		"res://assets/maps/scrapaltai_planet.jpg",
 		"res://assets/maps/scrapaltai_planet.png",
-		"res://assets/maps/tatooine.png",
+		"res://assets/maps/scrapaltai_shard_legacy.png",
 	]:
 		if ResourceLoader.exists(path) or FileAccess.file_exists(path):
 			_texture = load(path) as Texture2D

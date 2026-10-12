@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "chronicle:scribe_session",
+  "ticket": "C5",
+  "scribe_npc_id": "npc:scribe",
+  "title_template": "Chronique du voyageur — {player_name}",
+  "frame_open": [
+    "Arrivée à Lost Heaven : le shuttleport crache encore de la poussière de Scrapaltai.",
+    "Le Scribe de la mairie tient la plume — faits de session, pas de légendes inventées."
+  ],
+  "frame_close": [
+    "Archives à jour. Titre cosmétique optionnel : jamais en Vérité Bible.",
+    "Fin de chronique — le hub continue sans bruit."
+  ],
+  "line_count_min": 5,
+  "line_count_max": 10
+}

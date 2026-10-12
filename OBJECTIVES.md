@@ -5,6 +5,7 @@
 **Étoile du nord produit** (origine, avant le recentrage packaging) :  
 IA incarnée sur **PC/infra** → persona au **cœur du MMO** → évolution **contrôlée** du monde.  
 Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
+**Priorités actuelles** : [`docs/PRIORITES_ACTUELLES.md`](docs/PRIORITES_ACTUELLES.md).  
 **Focus 2026-09-16** : [`docs/FOCUS_COMPAGNON.md`](docs/FOCUS_COMPAGNON.md) — Compagnon Studio (type Jarvis) via Pilot `#/assistant`.  
 *(Archivé jeu)* [`docs/FOCUS_WAHOU.md`](docs/FOCUS_WAHOU.md) — 30 s Lost Heaven.
 
@@ -32,18 +33,19 @@ Cortex opérationnel recentré : **Compagnon Studio** (Pilot `#/assistant`), Tea
 | Smoke LAN surfaces | [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) + `tools/smoke_lan_surfaces.sh` | OK (2026-07-31) |
 | Fil produit d’origine | [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md) | OK (checklist) |
 
-## O2 — Jeu (ensuite)
+## O2 — Jeu
 
-Client **Godot** `prime-client` + Launchpad + serveur **Prime 246**.
-
-**Plan exécutoire** : [`docs/PLAN_MMO_O2.md`](docs/PLAN_MMO_O2.md) (rails produit P0–P5 + autonomie A1–A4).
+Client **Godot** `prime-client` + Launchpad + autorité **`prime-hub` `.246:8787`** (G5).  
+Runtime : [`docs/RUNTIME_GODOT.md`](docs/RUNTIME_GODOT.md) · plan : [`docs/PLAN_MMO_O2.md`](docs/PLAN_MMO_O2.md).
 
 | Critère done | Mesure | État |
 |--------------|--------|------|
 | Client extrait | `packages/prime-client/` + `packages/launchpad` | OK |
+| Hub Godot-first | `packages/prime-hub` G5 — peel natif, HTTP+WS `:8787` | **OK** 2026-10-07 |
+| Core3 / spike Python OFF | `stop_core3_and_spike_246.sh` (chemin joueur) | **OK** 2026-10-07 |
 | Pas de Core3/DB dans Git | `.gitignore` + extract filtré | OK |
-| Smoke documenté | [`packages/prime-client/SMOKE.md`](packages/prime-client/SMOKE.md) + [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) ; patches + `:8792` ready | OK (doc + HTTP 2026-07-31) |
-| Login M11 + Launchpad → `J:` | Smoke M11 + M12 (WS+move) + validation humaine 2026-08-03 | OK |
+| Smoke documenté | [`packages/prime-client/SMOKE.md`](packages/prime-client/SMOKE.md) + [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) + hub `:8787/healthz` | OK |
+| Login M11 + Launchpad → `J:` | Smoke M11 + M12 ; Launchpad ≥2.1.4 Prime-only | OK |
 | Pipeline assets | Lien `Infographiste_IA` dans registre | OK |
 
 ## Hors scope (volontaire)

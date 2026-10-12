@@ -1,8 +1,9 @@
-# VM Omarchy `.143` — lab Linux desktop
+# VM Omarchy `.143` — nœud écosystème LBG (R720)
 
 **Statut** : **installée et joignable** — R720 **`lbgr720` `.201`**, VMID **143**, IP **`192.168.0.143`**, user `lbg` (SSH clé)  
-**Rôle** : bac Omarchy (Arch + Hyprland) 24/7 sur le LAN — **éditeur studio** ; **ne remplace pas** `.10`, `.141`, `.142`.  
-**Date** : 2026-09-15 · **migré NUC → R720** : 2026-10-01 (OOM NUC ; `.245` PreCU en démarrage occasionnel)
+**Rôle** : nœud écosystème 24/7 — **mains** (`linux_agent` `:5005`) + session Hyprland d’**observation** (VS Code / Cline / Chromium). Pas un poste de manipulation humaine.  
+**Migration mains** : absorbé depuis CT `.142` — [`migration_hands_142_to_143.md`](../../../docs/migration_hands_142_to_143.md).  
+**Date** : 2026-09-15 (install) · **migré NUC → R720** : 2026-10-01
 
 > Incident install : le premier cidata pointait `/dev/vda` ; sous VirtIO-SCSI Proxmox le disque est **`/dev/sda`**. Corrigé dans le script + relance `omarchy-iso-install`.
 
@@ -124,6 +125,8 @@ Ne pas confondre avec `id_ed25519_gh_*` (GitHub only).
 |-------|------|
 | Proxmox API | **OK** — token `root@pam!lbg-cursor` dans `secrets/lbg.env` (remplace `lbg-readonly` révoqué) |
 | `.10` SSH (compte admin) | OpenSSH lit `C:\ProgramData\ssh\administrators_authorized_keys` — lancer **une fois** en Admin : Bureau → `LBG_Fix_SSH_Admin_Keys.cmd` |
+| Freebox bail `.143` | **OK** (2026-09-27) — `lbg-omarchy (143)` / `LBG Omarchy` — [`LAN_ADRESSAGE_FREEBOX.md`](../../../docs/LAN_ADRESSAGE_FREEBOX.md) |
+| Freebox OS API | **OK** (2026-09-27) — app `fr.lbg.cortex.freebox` ; smoke `smoke_freebox_lan.sh` : 14/14 lab OK |
 | `.130` | hors ligne / no route — rien à aligner |
 
 
@@ -131,9 +134,9 @@ Ne pas confondre avec `id_ed25519_gh_*` (GitHub only).
 
 | Fait | Ne fait pas |
 |------|-------------|
-| Lab desktop Linux agent-friendly | Remplacer le poste `.10` (GPU / Comfy) |
-| Snapshots Proxmox, console noVNC | Remplacer `lbg-executor` `.141` ou `lbg-hands` `.142` |
-| SSH + tooling Arch (après install) | Porter le stack Studio / Prime |
+| Nœud écosystème : mains `:5005` + observation GUI | Remplacer le poste `.10` (GPU / Comfy) |
+| Snapshots Proxmox, console noVNC | Remplacer `lbg-executor` `.141` |
+| SSH + tooling Arch | Porter le stack Studio / Prime runtime |
 
 ## Déploiement
 
@@ -206,7 +209,7 @@ Sur le core (Pilot / orch) : `LBG_AGENT_OMARCHY_URL` + entrée `omarchy` dans `L
 
 ## Éditeur sans Cursor (VS Code // `.10`)
 
-Poste GUI dédié : même stack que Windows (Continue + Cline → Ollama `.110`/`.111`).
+Poste GUI dédié **écosystème LBG** : VS Code sur Omarchy + **trois composants IDE distincts** (Continue, Cline, Claude Code) → tous vers Ollama **`.110`/`.111`** (pas d’Ollama sur `.143`).
 
 ```bash
 # Depuis WSL / LAN

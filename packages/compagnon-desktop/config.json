@@ -24,5 +24,10 @@
     "minIntervalSec": 600,
     "minSilenceSec": 90,
     "proactiveUrl": "http://192.168.0.100:5174/api/pilot/orchestrator/proactive/status"
+  },
+  "sessionIsland": {
+    "enabled": false,
+    "streamUrl": "http://192.168.0.143:5005/session/stream",
+    "decisionUrl": "http://192.168.0.143:5005/session/decision"
   }
 }

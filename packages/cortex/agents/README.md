@@ -195,20 +195,21 @@ Capability orchestrateur : **`devops_probe`** → handler **`agent.devops`**. Ac
 
 | Variable | Effet |
 |----------|--------|
-| `LBG_DEVOPS_HTTP_ALLOWLIST` | Liste d’URLs **exactes** autorisées pour `http_get`, séparées par des virgules. Si vide : défaut `http://127.0.0.1:8010/healthz` et `http://127.0.0.1:8000/healthz`. |
+| `LBG_DEVOPS_HTTP_ALLOWLIST` | Liste d’URLs **exactes** autorisées pour `http_get`, séparées par des virgules. Si vide : catalogue studio LAN (`.10` desktop, `.100` Compagnon/MCP, `.110`/`.111` Ollama+Piper, `.140` orch/agents + WSL `.141`, `.143` hands, `.246` Prime). |
 | `LBG_DEVOPS_SYSTEMD_UNIT_ALLOWLIST` | Noms d’unités **exactes** autorisées pour `systemd_is_active` (ex. `lbg-backend.service`), virgules. **Vide par défaut** → `systemd_is_active` refusé. |
 | `LBG_DEVOPS_SYSTEMD_RESTART_ALLOWLIST` | Noms d’unités **exactes** autorisées pour `systemd_restart` (ex. `lbg-backend.service`), virgules. **Vide par défaut** → `systemd_restart` refusé. |
 | `LBG_DEVOPS_SYSTEMD_RESTART_MAX_PER_WINDOW` | Nombre max de **tentatives réelles** `systemd_restart` par fenêtre glissante (défaut **8**, plafonné à 50). |
 | `LBG_DEVOPS_SYSTEMD_RESTART_WINDOW_S` | Taille de la fenêtre glissante en secondes (défaut **3600**, min 60 s, max 7 jours). Compteur **par processus** uvicorn (best-effort multi-workers). |
 | `LBG_LOCAL_TIMEZONE` | Fuseau pour timestamps JSON et fenêtres ops (défaut `Europe/Paris`). |
 | `LBG_DEVOPS_SYSTEMD_RESTART_MAINTENANCE_LOCAL` | Si non vide : `HH:MM-HH:MM` en **heure locale** (`LBG_LOCAL_TIMEZONE`) ; les restarts **réels** sont refusés en dehors de cet intervalle (si début > fin, la fenêtre traverse minuit). Alias legacy : `LBG_DEVOPS_SYSTEMD_RESTART_MAINTENANCE_UTC` (mêmes heures, interprétées en local). |
-| `LBG_DEVOPS_SELFCHECK_HTTP` | (Optionnel) URLs healthz **exactes** pour l’action **`selfcheck`**, virgules — chacune doit être dans `LBG_DEVOPS_HTTP_ALLOWLIST`. Si vide : sonde `LBG_DEVOPS_DEFAULT_PROBE_URL` puis `…/healthz` dérivés de `LBG_ORCHESTRATOR_URL` et `MMMORPG_IA_BACKEND_URL` lorsqu’ils sont définis. |
+| `LBG_DEVOPS_SELFCHECK_HTTP` | (Optionnel) URLs health **exactes** pour **`selfcheck`**, virgules — chacune doit être dans l’allowlist. Si vide : catalogue studio (max **24** HTTP). |
 | `LBG_DEVOPS_SELFCHECK_SYSTEMD` | (Optionnel) Sous-ensemble d’unités pour **`selfcheck`** (virgules), toutes devant rester dans `LBG_DEVOPS_SYSTEMD_UNIT_ALLOWLIST`. Si vide : par défaut **`lbg-backend.service`** et **`lbg-orchestrator.service`** s’ils sont dans l’allowlist, sinon les premières unités de l’allowlist. |
 | `LBG_DEVOPS_LOG_ALLOWLIST` | Chemins de fichiers **exactes** pour `read_log_tail` (virgules). **Vide par défaut** → lecture fichier refusée. |
 | `LBG_DEVOPS_DEFAULT_PROBE_URL` | URL utilisée quand le texte déclenche une sonde sans `devops_action` (défaut : healthz orchestrator). |
 | `LBG_DEVOPS_DRY_RUN` | Si `1` / `true` / `yes` / `on` : **aucune** requête HTTP ni lecture fichier ; allowlist et audit inchangés. |
 | `context.devops_dry_run` | Si `true` : même effet dry-run **pour cet appel** (sans redémarrer) ; combiné avec la case « DevOps dry-run » dans `/pilot/`. La variable d’environnement reste prioritaire (si elle active le dry-run, le contexte ne peut pas le désactiver). |
 | `LBG_DEVOPS_APPROVAL_TOKEN` | Si défini (non vide) : toute exécution réelle (`http_get` / `read_log_tail` / `systemd_is_active` / `systemd_restart` / sous-étapes du **`selfcheck`** hors dry-run) exige `context.devops_approval` **égal** au jeton (comparaison `secrets.compare_digest`). Le jeton n’est jamais journalisé dans l’audit. Si non défini : pas de garde (comportement précédent). |
+| Soft-confirm LAB | `LBG_DEVOPS_SOFT_CONFIRM=1` / `LBG_COMPANION_LAB=1` / `LBG_DEVOPS_APPROVAL_MODE=confirm` : accepte aussi `devops_approval=confirmed` ou `devops_confirm=true` (Compagnon ActionCard). |
 | `context.devops_approval` | Chaîne à fournir par l’appelant quand `LBG_DEVOPS_APPROVAL_TOKEN` est actif ; à ne pas logger côté client. |
 | `context.devops_selfcheck` | Si `true` : équivalent à `devops_action: { "kind": "selfcheck" }` lorsque aucune action explicite n’est fournie (pratique pour `/pilot/` ou scripts). |
 | `LBG_DEVOPS_AUDIT_LOG_PATH` | Si défini : chaque audit est **ajouté** (append) dans ce fichier au format **JSONL** (une ligne JSON par action, champ `ts` en heure locale ISO). Les répertoires parents sont créés si besoin. |
@@ -325,7 +326,7 @@ En prod/LAN, ces valeurs sont en général définies via `/etc/lbg-ia-mmo.env` (
 | `LBG_DIALOGUE_BUDGET_MAX_USD` | Plafond **soft** (défaut `0` = désactivé) sur la somme des coûts **estimés** des réponses réussies `fast`/`remote` pour le **process** ; n’affecte que le mode **`auto`**. |
 | `LBG_DIALOGUE_FAST_COST_IN_PER_1K` / `LBG_DIALOGUE_FAST_COST_OUT_PER_1K` | USD / 1K tokens pour estimer le coût **`fast`** (budget + champ `estimated_cost_usd` dans la trace). |
 | `LBG_DIALOGUE_FAST_ENABLED` | Active le provider rapide explicite pour `dialogue_target=fast`. Si désactivé/incomplet, fallback vers `remote` si activé, sinon `local`. |
-| `LBG_DIALOGUE_FAST_BASE_URL` / `LBG_DIALOGUE_FAST_MODEL` / `LBG_DIALOGUE_FAST_API_KEY` | Provider rapide OpenAI-compatible, typiquement Groq (`https://api.groq.com/openai/v1`, ex. `qwen/qwen3.6-27b`). **Mettre à jour `LBG_DIALOGUE_FAST_MODEL` en même temps que `LBG_DIALOGUE_LLM_MODEL`** puis `push_secrets_vm.sh`. Contrôle Atlas : run `admin_infra` → `dialogue_fast_groq` ; sonde orchestrateur `GET /v1/llm/probe`. |
+| `LBG_DIALOGUE_FAST_BASE_URL` / `LBG_DIALOGUE_FAST_MODEL` / `LBG_DIALOGUE_FAST_API_KEY` | Provider rapide OpenAI-compatible, typiquement Groq (`https://api.groq.com/openai/v1`, ex. `qwen/qwen3.8-27b`). **Mettre à jour `LBG_DIALOGUE_FAST_MODEL` en même temps que `LBG_DIALOGUE_LLM_MODEL`** puis `push_secrets_vm.sh`. Contrôle Atlas : run `admin_infra` → `dialogue_fast_groq` ; sonde orchestrateur `GET /v1/llm/probe`. |
 | `LBG_DIALOGUE_DESKTOP_PLAN` | Si `1` / `true` : permet le préfixe `DESKTOP_JSON` lorsque `context._desktop_plan` est vrai (Pilot *Proposer via IA*). Déjà reflété dans `GET /healthz` (`desktop_plan_env_enabled`). |
 
 ### Multi‑LLM (`auto`) et base de suivi (trace)

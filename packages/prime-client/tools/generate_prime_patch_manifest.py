@@ -51,7 +51,7 @@ def main() -> int:
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     schema = 0
-    map_cfg = ROOT / "assets" / "maps" / "tatooine_map_config.json"
+    map_cfg = ROOT / "assets" / "maps" / "scrapaltai_map_config.json"
     if map_cfg.is_file():
         try:
             schema = int(json.loads(map_cfg.read_text(encoding="utf-8")).get("schema_version", 0))
