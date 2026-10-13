@@ -5,7 +5,8 @@
 **Source** : Monorepo [`LBG_Studios`](file:///home/lbg/projects/LBG_Studios)  
 **Ordre stratégique** : **O1 Studio d’abord, O2 Jeu ensuite** — [`OBJECTIVES.md`](file:///home/lbg/projects/LBG_Studios/OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](file:///home/lbg/projects/LBG_Studios/docs/PRIORITES_ACTUELLES.md)  
 **Étoile du nord** : IA incarnée sur PC/infra (Rang 1) → persona au cœur du MMO (Rang 2) → évolution contrôlée du monde et du code (Rang 3) — [`RESTAURATION_PRODUIT.md`](file:///home/lbg/projects/LBG_Studios/docs/RESTAURATION_PRODUIT.md).  
-**Mains code `.143` (ADR 0025)** : OpenCode LIVE Métis ; Claude CLI = dry-run OK (expérimental) ; **Cline CLI installé** sur `.143` — détail [`packages/cortex/docs/cline/CLI_SECOND_AVIS.md`](../packages/cortex/docs/cline/CLI_SECOND_AVIS.md) · smoke live E4b-qat encore ouvert ([`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) O-IDE-1).  
+**Mains code `.143` (ADR 0025)** : OpenCode LIVE Métis (nominal) ; Cline CLI installé sur `.143` (second avis local 0 €) — détail [`packages/cortex/docs/cline/CLI_SECOND_AVIS.md`](../packages/cortex/docs/cline/CLI_SECOND_AVIS.md) · O-IDE-1..3 clos (2026-10-13).  
+**Statut du plan** : **10/10 tickets DONE (100 % réalisé)** — voir [`docs/suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md).  
 **Délégation Team** : mission Campus `f11fa428-6aef-4a61-83e5-5b32fe6feee0` — suivi Pilot [`#/team`](http://192.168.0.140:8080/pilot/#/team).
 
 ---
@@ -89,6 +90,7 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
 - **Done quand** : Aucun script GDScript ne dépasse 800 lignes et les responsabilités sont isolées par modules Godot dédiés.
 
 ### 2.3 Navigation : Intégration du `NavigationServer3D` (Navmesh)
+- **Statut** : **OK validé & clôturé (2026-10-11)** — `NavigationServer3D` LIVE sur `prime-hub` (`hub_nav.gd` bake 193 polygones/16 empreintes ~0.6 s ; `PATH_BUDGET_PER_TICK` supprimé ; selftest 40/40 entités ~34 µs via `nav_selftest.gd` ; sonde `/healthz` `navmesh.ok: true` et `/v1/dev/navmesh/probe` validés).
 - **Problème** : La grille A* AABB actuelle oblige à un bridage artificiel (`PATH_BUDGET_PER_TICK=2`) pour ne pas faire saccader la frame headless.
 - **Solution** :
   1. Pré-calculer un maillage de navigation (*baked navmesh*) pour Lost Heaven (Scrapaltai).
@@ -134,6 +136,7 @@ Les propositions ci-dessous visent à consolider la robustesse, fluidifier l'exp
 ## 5. Phase 4 — Qualité, Infrastructure & Industrialisation
 
 ### 5.1 Packaging propre du `server_overlay` (CT 100)
+- **Statut** : **OK validé & clôturé (2026-10-12)** — Packaging atomique LIVE v1.0.0 sur CT 100 via `server_overlay/pyproject.toml` + `overlay.map` (36 fichiers gérés) ; script atomique `server_overlay_package.py` (build/verify/apply/rollback) ; smoke `tools/smoke_server_overlay_package.sh` 100 % vert ; rollback testé avec succès.
 - **Problème** : [`deploy_compagnon_100.sh`](file:///home/lbg/projects/LBG_Studios/packages/cortex/infra/scripts/deploy_compagnon_100.sh) synchronise 29 fichiers Python individuels via rsync pour surcharger `/opt/orchestrateur/`. Le versioning et les retours arrière sont complexes.
 - **Solution** :
   1. Formaliser `server_overlay` comme un sous-package Python autonome avec son propre `pyproject.toml` ou conteneur dédié sur `.100`.
