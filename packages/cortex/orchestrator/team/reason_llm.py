@@ -525,6 +525,8 @@ def _call_route(
             "think": _ollama_think_enabled(),
             "options": {"temperature": temperature, "num_predict": max_tokens},
         }
+        if route.get("profile") == "json":
+            payload["format"] = "json"
     else:
         url = _chat_completions_url(base)
         payload = {
@@ -536,6 +538,8 @@ def _call_route(
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+        if route.get("profile") == "json":
+            payload["response_format"] = {"type": "json_object"}
 
     with httpx.Client(timeout=httpx.Timeout(call_timeout)) as client:
         resp = client.post(url, headers=headers, json=payload)

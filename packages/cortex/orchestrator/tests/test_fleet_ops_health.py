@@ -59,6 +59,13 @@ def test_fleet_snapshot_shape(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "team_l2_pending" in m
     assert "jobs_waiting_approval" in m
     assert "jobs_by_status" in m
+    assert "metrics_7d" in snap
+    assert "rolling_7d" in m
+    m7 = snap["metrics_7d"]
+    assert m7["window_days"] == 7
+    assert "success_rate_pct" in m7
+    assert "lan_stability" in m7
+    assert m7["dod_verdict"] in ("OK", "WARN")
 
 
 def test_fleet_includes_l2_pending() -> None:

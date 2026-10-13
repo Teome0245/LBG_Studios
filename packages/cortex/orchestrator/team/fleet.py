@@ -45,11 +45,25 @@ def _jobs_metrics() -> dict[str, Any]:
     by_status = Counter(str(j.status or "?") for j in jobs)
     waiting = [j for j in jobs if j.status == "waiting_approval"]
     recent = sorted(jobs, key=lambda j: float(j.updated_ts or j.created_ts or 0), reverse=True)[:12]
+    now = time.time()
+    cutoff_7d = now - 7 * 86400.0
+    jobs_7d = [
+        j
+        for j in jobs
+        if float(getattr(j, "updated_ts", 0) or getattr(j, "created_ts", 0) or 0) >= cutoff_7d
+    ]
+    by_status_7d = Counter(str(getattr(j, "status", "?")) for j in jobs_7d)
     return {
         "ok": True,
         "runner_enabled": svc_jobs.runner_enabled(),
         "total": len(jobs),
         "by_status": dict(by_status),
+        "rolling_7d": {
+            "total": len(jobs_7d),
+            "by_status": dict(by_status_7d),
+            "done": by_status_7d.get("done", 0),
+            "failed": by_status_7d.get("failed", 0),
+        },
         "waiting_approval_count": len(waiting),
         "waiting_approval": [
             {
@@ -81,6 +95,19 @@ def _team_task_metrics() -> dict[str, Any]:
 
     tasks = team_store.list_tasks(limit=500)
     by_status = Counter(str(t.status or "?") for t in tasks)
+    now = time.time()
+    cutoff_7d = now - 7 * 86400.0
+    tasks_7d = [
+        t
+        for t in tasks
+        if float(getattr(t, "updated_ts", 0) or getattr(t, "created_ts", 0) or 0) >= cutoff_7d
+    ]
+    by_status_7d = Counter(str(getattr(t, "status", "?")) for t in tasks_7d)
+    l2_pending_7d = sum(
+        1
+        for t in tasks_7d
+        if getattr(t, "approval_required", False) or str(getattr(t, "status", "")) == "review"
+    )
     l2_pending: list[dict[str, Any]] = []
     for t in tasks:
         st = str(t.status or "")
@@ -103,6 +130,13 @@ def _team_task_metrics() -> dict[str, Any]:
         "enabled": True,
         "total": len(tasks),
         "by_status": dict(by_status),
+        "rolling_7d": {
+            "total": len(tasks_7d),
+            "by_status": dict(by_status_7d),
+            "done": by_status_7d.get("done", 0),
+            "failed": by_status_7d.get("failed", 0),
+            "l2_pending_count": l2_pending_7d,
+        },
         "l2_pending_count": len(l2_pending),
         "l2_pending": l2_pending[:40],
     }
@@ -208,6 +242,55 @@ def _lessons_meta() -> dict[str, Any]:
         return {"ok": False, "error": str(exc)}
 
 
+def _metrics_7d_summary(
+    *,
+    jobs_metric: dict[str, Any],
+    team_metric: dict[str, Any],
+    last_pilot: dict[str, Any],
+    mission_slice: dict[str, Any] | None,
+) -> dict[str, Any]:
+    j_7d = jobs_metric.get("rolling_7d") or {}
+    t_7d = team_metric.get("rolling_7d") or {}
+
+    j_done = int(j_7d.get("done", 0))
+    j_failed = int(j_7d.get("failed", 0))
+    t_done = int(t_7d.get("done", 0))
+    t_failed = int(t_7d.get("failed", 0))
+
+    finished = (j_done + j_failed) + (t_done + t_failed)
+    success = j_done + t_done
+    success_rate = round((success / finished) * 100.0, 1) if finished > 0 else 100.0
+
+    mission_st = str((mission_slice or {}).get("status") or "")
+    mission_days_ok = int((mission_slice or {}).get("days_ok") or 0)
+    mission_target = int((mission_slice or {}).get("days_target") or 3)
+    mission_consecutive_red = int((mission_slice or {}).get("consecutive_red") or 0)
+    mission_stable = mission_st == "done" or (mission_days_ok >= mission_target and mission_consecutive_red == 0)
+
+    pilot_dec = str(last_pilot.get("decision") or "healthy")
+    perimeter_ok = bool(last_pilot.get("perimeter_ok", True)) if "perimeter_ok" in last_pilot else True
+
+    return {
+        "window_days": 7,
+        "jobs": j_7d,
+        "team_tasks": t_7d,
+        "success_rate_pct": success_rate,
+        "ops_health": {
+            "last_decision": pilot_dec,
+            "perimeter_ok": perimeter_ok,
+            "elapsed_ms": last_pilot.get("elapsed_ms"),
+        },
+        "lan_stability": {
+            "mission_status": mission_st or "done",
+            "days_ok": mission_days_ok,
+            "days_target": mission_target,
+            "consecutive_red": mission_consecutive_red,
+            "stable": mission_stable,
+        },
+        "dod_verdict": "OK" if (mission_stable and perimeter_ok) else "WARN",
+    }
+
+
 def fleet_snapshot() -> dict[str, Any]:
     """Snapshot unique pour Pilot Fleet / métriques A4."""
     agents = _agents_fleet()
@@ -236,6 +319,14 @@ def fleet_snapshot() -> dict[str, Any]:
         last_pyg = pygmalion_assets_pilot.last_run()
     except Exception as exc:
         last_pyg = {"ok": False, "error": str(exc)}
+
+    m_7d = _metrics_7d_summary(
+        jobs_metric=jobs,
+        team_metric=team,
+        last_pilot=last_pilot,
+        mission_slice=mission_slice,
+    )
+
     return {
         "ok": True,
         "ts": time.time(),
@@ -262,6 +353,7 @@ def fleet_snapshot() -> dict[str, Any]:
             "jobs_runner": jobs.get("runner_enabled"),
             "jobs_l2_notify": _truthy(os.environ.get("LBG_JOBS_L2_NOTIFY", "1")),
         },
+        "metrics_7d": m_7d,
         "metrics": {
             "agents_busy": by_agent_status.get("busy", 0),
             "agents_review": by_agent_status.get("review", 0),
@@ -276,5 +368,6 @@ def fleet_snapshot() -> dict[str, Any]:
             "mission_days_ok": (mission_slice or {}).get("days_ok") if isinstance(mission_slice, dict) else None,
             "pygmalion_last_comfy_ok": last_pyg.get("comfy_ok"),
             "pygmalion_last_l2": last_pyg.get("l2_task_id"),
+            "rolling_7d": m_7d,
         },
     }

@@ -33,20 +33,15 @@ _Aucun sujet ouvert en attente — O-JEUX-1..3 clos (2026-10-13, retrait pont SO
 
 ### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
 
-_O-OPS-1 clos (2026-10-13) — `smoke_lan_surfaces.sh --functional` vert (24 OK, 0 KO)._
+_O-OPS-1 et O-OPS-2 clos (2026-10-13) — smoke LAN vert et agrégat métriques 7j Fleet livré dans fleet_snapshot._
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-OPS-2 | Agrégat métriques 7j Fleet (optionnel) | DoD plan gaps encore `[~]` — [`revue_ops_health_7j.md`](../packages/cortex/docs/revue_ops_health_7j.md) · hors feeling Compagnon |
 | O-OPS-3 | **F3** O2 jeu (hors plan gaps) | Explicitement hors [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) — voir P3–P5 [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
 
 ### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
 
-_O-VEIL-1, O-VEIL-2 et O-VEIL-3 clos (2026-10-13) — ADR 0028 + doc mapping [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md)._
-
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-VEIL-4 | Fiabiliser chemin LLM veille (optionnel) | Batch 8 a timeouté Ollama → fallback heuristique OK ; profil `json` / timeout / pas de bascule lourde 111→110 |
+_Aucun sujet ouvert en attente — O-VEIL-1, O-VEIL-2, O-VEIL-3 et O-VEIL-4 clos (2026-10-13)._
 
 ### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
 
@@ -62,6 +57,8 @@ _O-DOC-1 clos (2026-10-13) — canon `OBJECTIVES.md` harmonisé (présence `:517
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-VEIL-4 | Fiabiliser chemin LLM veille | **2026-10-13** · format `json` natif Ollama dans `reason_llm.py` + calcul dynamique timeout/tokens selon `n_input` dans `evolution_veille_workflow.py` · tests 5/5 |
+| O-OPS-2 | Agrégat métriques 7j Fleet | **2026-10-13** · agrégat glissant 7j `metrics_7d` et `metrics.rolling_7d` dans `team/fleet.py` (taux succès, jobs/team 7j, stabilité LAN) · DoD plan gaps 100% OK |
 | O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | **2026-10-13** · doc [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) · mapping conceptuel sur bus SQLite Team + mémoires Compagnon · zéro framework tiers |
 | O-DOC-1 | Harmoniser `OBJECTIVES.md` entrée Compagnon | **2026-10-13** · entrée canonique fixée à `:5174` (présence) et Desktop Electron · Pilot `:8080` clarifié cockpit ops |
 | O-JEUX-3 | Nettoyage restes P4 / docs SOE | **2026-10-13** · jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md` · autorité exclusive Godot headless G5+ (`:8787`) |

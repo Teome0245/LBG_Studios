@@ -198,7 +198,7 @@ Le plan est **réalisé** quand, sur LAN 140 pendant **7 jours** :
 - [x] Chat NL ops peut créer un job (opt-in) sans activer les autres intents
 - [x] Vue Fleet Pilot montre agents + pending L2
 - [x] Aucun nouvel outil hors allowlist ; aucun shell libre L1
-- [~] Métriques : décisions + `elapsed_ms` (state/journal) — agrégat dashboard 7j encore partiel (voir revue)
+- [x] Métriques : décisions + `elapsed_ms` (state/journal) — agrégat dashboard 7j opérationnel (`metrics_7d` / `rolling_7d` dans Fleet, voir revue)
 
 ## 7. Risques & garde-fous
 

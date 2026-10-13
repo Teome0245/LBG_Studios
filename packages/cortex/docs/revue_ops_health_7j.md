@@ -1,8 +1,8 @@
 # Revue métriques — pilote Ops Health (LAN 140)
 
-**Date** : 2026-10-08 · **MAJ** 2026-10-12  
-**Périmètre** : plan gaps A–F2 + tick mission L3  
-**Verdict** : **GO** — mission L3 **`done`** (`days_ok=3/3`, `last_ok_day=2026-10-11`) ; F1/F2 livrés ; F3 O2 jeu **hors** ce plan.
+**Date** : 2026-10-08 · **MAJ** 2026-10-13  
+**Périmètre** : plan gaps A–F2 + tick mission L3 + agrégat métriques 7j Fleet (`O-OPS-2`)  
+**Verdict** : **GO** — mission L3 **`done`** (`days_ok=3/3`, `last_ok_day=2026-10-11`) ; F1/F2 livrés ; F3 O2 jeu **hors** ce plan ; DoD 7j 100% OK.
 
 ## Snapshot live (2026-10-08 ~10h)
 
@@ -26,7 +26,7 @@
 | Chat NL ops → job (opt-in) | **OK** — `LBG_CHAT_AGENTIC` allowlist |
 | Vue Fleet agents + L2 | **OK** — `#/team/fleet` |
 | Pas d’outil hors allowlist / pas de shell L1 libre | **OK** — garde-fous C |
-| Métriques smoke / escalade / latence | **Partiel** — décisions + `elapsed_ms` en state/journal ; pas encore dashboard 7j agrégé |
+| Métriques smoke / escalade / latence | **OK** — décisions + `elapsed_ms` en state/journal ; agrégat 7j glissant dans `fleet_snapshot().metrics_7d` et `metrics.rolling_7d` (taux de succès, jobs/team 7j, stabilité LAN) |
 
 ## Chronologie utile
 
@@ -34,6 +34,7 @@
 2. **2026-10-07 soir** : 245 optionnel · sonde 246 → `:8787/healthz` · tick mission sur timer · `days_ok=1`.
 3. **2026-10-08 matin** : `days_ok=2` · périmètre vert · deadline mission trop courte → **extend** (marge jours restants).
 4. **2026-10-09 → 11** : ticks timer live · `days_ok` 1→2→3 · **`status=done`** (confirmé live 2026-10-12).
+5. **2026-10-13** : livraison de l'agrégat métriques 7j Fleet (`O-OPS-2`) dans `team/fleet.py` et validation des tests.
 
 ## Soft-links (ADR 0004)
 
@@ -48,9 +49,9 @@ Fleet expose désormais `mmo_player` / `bridge_agent_id` / `linked_studio_*` (pl
 
 | Décision | |
 |----------|--|
-| **GO** | Pilote live conservé · mission L3 **clôturée** · F1/F2 = cadre assets/PM |
+| **GO** | Pilote live conservé · mission L3 **clôturée** · F1/F2 = cadre assets/PM · agrégat métriques 7j Fleet (`O-OPS-2`) **clos** |
 | **NO-GO** | Ne pas ouvrir F3 O2 jeu depuis ce plan (priorités P3–P5 séparées) |
-| **Suite** | Optionnel : agrégat métriques 7j Fleet (`O-OPS-2`) · feeling Compagnon (`SUJETS_OUVERTS`) |
+| **Suite** | Plan gaps 100% DONE — focus sur priorités actives Studio/Compagnon |
 
 ## Commandes
 

@@ -423,8 +423,10 @@ def execute_evolution_veille_workflow(task: TeamTask, _dispatch: Any = None) -> 
     prev_timeout = os.environ.get("LBG_REASON_TIMEOUT_S")
     prev_max = os.environ.get("LBG_REASON_MAX_TOKENS")
     prev_light_fo = os.environ.get("LBG_REASON_LIGHT_FAILOVER_HEAVY")
-    os.environ["LBG_REASON_TIMEOUT_S"] = os.environ.get("LBG_VEILLE_TIMEOUT_S", "35")
-    os.environ["LBG_REASON_MAX_TOKENS"] = os.environ.get("LBG_VEILLE_MAX_TOKENS", "900")
+    default_timeout = min(150, max(45, n_input * 15)) if n_input > 1 else 45
+    default_max_tokens = min(2048, max(900, n_input * 180)) if n_input > 1 else 900
+    os.environ["LBG_REASON_TIMEOUT_S"] = os.environ.get("LBG_VEILLE_TIMEOUT_S", str(default_timeout))
+    os.environ["LBG_REASON_MAX_TOKENS"] = os.environ.get("LBG_VEILLE_MAX_TOKENS", str(default_max_tokens))
     # évite bascule 111→110 (12b) qui fait timeout sur batch 8 pistes
     os.environ["LBG_REASON_LIGHT_FAILOVER_HEAVY"] = os.environ.get(
         "LBG_VEILLE_LIGHT_FAILOVER_HEAVY", "0"
