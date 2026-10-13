@@ -58,7 +58,7 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 |------|------|
 | **P6** | **fait** 2026-10-07 — `prime-hub` G5+ ([`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md)) |
 | **P3** | Persona en jeu — dialogue + Chœur V50–V53 · **C3–C8 live** (wiki `/v1/wiki`) 2026-10-07 |
-| **P4** | Pont SOE joueur — **de facto retiré** (hub Godot) ; nettoyer restes docs/UI |
+| **P4** | Pont SOE joueur — **retiré (clos)** · autorité exclusive Godot headless G5+ (`:8787`) |
 | **P5** | Cour + densité + hotbar + spawn + engage + **telegraph boss client** **vert** 2026-10-08 |
 
 Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).

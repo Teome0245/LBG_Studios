@@ -28,9 +28,8 @@ _Aucun sujet ouvert en attente — O-CAMP-1, O-CAMP-2 et O-D7-1 clos (2026-10-13
 
 ### O2 — Jeu / pont Studio↔Monde
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-JEUX-3 | Nettoyage restes P4 / docs SOE | Pont SOE retiré de facto — docs/UI à purger au fil de l’eau |
+_Aucun sujet ouvert en attente — O-JEUX-1..3 clos (2026-10-13, retrait pont SOE P4 et autorité Godot G5+ actés)._
+
 
 ### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
 
@@ -52,11 +51,10 @@ _O-VEIL-1 et O-VEIL-2 clos (2026-10-13) — ADR 0028 (NO-GO dsh_headless Team, m
 
 ### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
 
-Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **optionnels** du fil Create PR / review :
+_O-DOC-1 clos (2026-10-13) — canon `OBJECTIVES.md` harmonisé (présence `:5174` vs Pilot ops `:8080`)._
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-DOC-1 | Harmoniser `OBJECTIVES.md` entrée Compagnon | Texte encore « via Pilot `#/assistant` » — canon = présence `:5174`, Pilot = cockpit ops ([`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)) |
 | O-DOC-2 | Review Bugbot formelle du snapshot priorités (optionnel) | Review manuelle OK au fil ; Bugbot / Composer 2.5 hors quota à l’époque — relancer si besoin d’une review outillée |
 
 ---
@@ -65,6 +63,8 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-DOC-1 | Harmoniser `OBJECTIVES.md` entrée Compagnon | **2026-10-13** · entrée canonique fixée à `:5174` (présence) et Desktop Electron · Pilot `:8080` clarifié cockpit ops |
+| O-JEUX-3 | Nettoyage restes P4 / docs SOE | **2026-10-13** · jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md` · autorité exclusive Godot headless G5+ (`:8787`) |
 | O-VEIL-1 | Spike **DeepSeek Harness** `.10` → go/no-go `dsh_headless` | **2026-10-13** · ADR 0028 · NO-GO formel pour `dsh_headless` Team (OpenCode nominal, saturation CPU .110) · .10 exploratoire libre |
 | O-VEIL-2 | Spike **VoiceStudio** (ou équiv.) TTS/ASR LAN Compagnon | **2026-10-13** · ADR 0028 · maintien de la stack nominale Edge TTS + Piper LAN (.111:8098) · pas de surcharge GPU lourde |
 | O-OPS-1 | Smoke LAN surfaces si reprise ops | **2026-10-13** · `tools/smoke_lan_surfaces.sh --functional` 100% vert (24 OK, 1 WARN, 0 KO) · Godot G5+ `:8787` intégré, Core3 legacy offline toléré |
