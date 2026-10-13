@@ -30,9 +30,9 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 3. **Mains code & coûts LLM O-IDE-1..3** : **100 % validé & clôturé** (smoke live cline prouvé, diagnostic CPU Ollama .110 chiffré, OpenCode confirmé nominal ADR 0025).
 4. **Thème 1 — Autonomie Campus / CI / desktop (O-CAMP-1, O-CAMP-2, O-D7-1)** : **100 % validé & clôturé** (tickets plan réconciliés 10/10 DONE, overlay & 140 synchro, Présence Agents D7 actif sur `.143:5005` avec socket `/run/user/1000/lbg-presence-agents.sock`).
 5. **Thème 2 — Ops LAN (O-OPS-1)** : **100 % validé & clôturé** (`smoke_lan_surfaces.sh --functional` 100% vert, 24 OK, 1 WARN, 0 KO ; autorité Godot G5+ `:8787` intégrée, Core3 legacy offline toléré).
-6. **Thème 3 — Veille Évolution (O-VEIL-1, O-VEIL-2)** : **100 % validé & clôturé** (ADR 0028 formalisé : NO-GO pour `dsh_headless` dans Team/Cortex, maintien du stack nominal Compagnon Edge TTS + Piper LAN sans surcharge GPU).
+6. **Thème 3 — Veille Évolution (O-VEIL-1..3)** : **100 % validé & clôturé** (ADR 0028 formalisé pour DSH & VoiceStudio ; doc de cadrage L1 [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) livrée sans framework tiers).
 7. **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3)** : **100 % validé & clôturé** (`OBJECTIVES.md` aligné sur Compagnon présence `:5174` vs Pilot cockpit ops `:8080`, jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md`).
-8. **Reste ouvert** : Restes légers d'inspiration documentés dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (O-VEIL-3 mapping Agentic RAG, O-OPS-2 agrégat 7j).
+8. **Reste ouvert** : Restes optionnels mineurs dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (O-VEIL-4 timeout Ollama veille, O-OPS-2 agrégat 7j).
 
 ## Fichiers / surfaces utiles
 
@@ -55,6 +55,8 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-13 : **Mapping Agentic RAG (O-VEIL-3) — validé & clôturé** —
+  - Rédaction du document de cadrage architectural L1 [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) démontrant la correspondance directe des concepts Agentic RAG sur nos briques natives : routeur d'intentions (`router_prompts.py`), bus SQLite Team (`team_tasks`/`team_messages`), mémoire Compagnon et World Stream (`:8787`). Respect strict de la règle : zéro framework tiers lourd sur le chemin critique.
 - 2026-10-13 : **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3) — validé & clôturé** —
   - **O-DOC-1 ([`OBJECTIVES.md`](../OBJECTIVES.md))** : Canon harmonisé — clarification formelle : le Compagnon Studio (présence) s'incarne sur `:5174` (`compagnon_ui`) et l'application Desktop Electron (`packages/compagnon-desktop`), tandis que Pilot (`:8080`) est le cockpit ops / méta-autonomie. Smoke LAN 24/24 surfaces OK mis à jour.
   - **O-JEUX-3 ([`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) & [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md))** : Jalon P4 formellement clos. Retrait définitif du pont SOE/Core3 et confirmation de l'autorité exclusive du runtime Godot headless G5+ (`:8787` unifié HTTP+WS).

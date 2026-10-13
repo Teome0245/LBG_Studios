@@ -42,11 +42,10 @@ _O-OPS-1 clos (2026-10-13) — `smoke_lan_surfaces.sh --functional` vert (24 OK,
 
 ### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
 
-_O-VEIL-1 et O-VEIL-2 clos (2026-10-13) — ADR 0028 (NO-GO dsh_headless Team, maintien Edge+Piper nominal)._
+_O-VEIL-1, O-VEIL-2 et O-VEIL-3 clos (2026-10-13) — ADR 0028 + doc mapping [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md)._
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | L1 · inspiration seulement · pas de framework externe ([`lbg_agentic_os.md`](../packages/cortex/docs/lbg_agentic_os.md)) |
 | O-VEIL-4 | Fiabiliser chemin LLM veille (optionnel) | Batch 8 a timeouté Ollama → fallback heuristique OK ; profil `json` / timeout / pas de bascule lourde 111→110 |
 
 ### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
@@ -63,6 +62,7 @@ _O-DOC-1 clos (2026-10-13) — canon `OBJECTIVES.md` harmonisé (présence `:517
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | **2026-10-13** · doc [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) · mapping conceptuel sur bus SQLite Team + mémoires Compagnon · zéro framework tiers |
 | O-DOC-1 | Harmoniser `OBJECTIVES.md` entrée Compagnon | **2026-10-13** · entrée canonique fixée à `:5174` (présence) et Desktop Electron · Pilot `:8080` clarifié cockpit ops |
 | O-JEUX-3 | Nettoyage restes P4 / docs SOE | **2026-10-13** · jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md` · autorité exclusive Godot headless G5+ (`:8787`) |
 | O-VEIL-1 | Spike **DeepSeek Harness** `.10` → go/no-go `dsh_headless` | **2026-10-13** · ADR 0028 · NO-GO formel pour `dsh_headless` Team (OpenCode nominal, saturation CPU .110) · .10 exploratoire libre |
