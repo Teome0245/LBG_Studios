@@ -43,12 +43,10 @@ _O-OPS-1 clos (2026-10-13) — `smoke_lan_surfaces.sh --functional` vert (24 OK,
 
 ### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
 
-Infra Team `evolution_veille` + Lyra + mission batch 8 pistes **done** (brief heuristique). Suites = actions top 3 du livrable, pas le fil d’analyse.
+_O-VEIL-1 et O-VEIL-2 clos (2026-10-13) — ADR 0028 (NO-GO dsh_headless Team, maintien Edge+Piper nominal)._
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-VEIL-1 | Spike **DeepSeek Harness** `.10` → go/no-go `dsh_headless` | L2 · ADR [`../packages/cortex/docs/adr/0020-dsh-greffe-peripherique.md`](../packages/cortex/docs/adr/0020-dsh-greffe-peripherique.md) · Ollama `.110` · **pas** sur 140 |
-| O-VEIL-2 | Spike **VoiceStudio** (ou équiv.) TTS/ASR LAN Compagnon | L2 · axe `voice_local` · alternative ElevenLabs · hors cloud |
 | O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | L1 · inspiration seulement · pas de framework externe ([`lbg_agentic_os.md`](../packages/cortex/docs/lbg_agentic_os.md)) |
 | O-VEIL-4 | Fiabiliser chemin LLM veille (optionnel) | Batch 8 a timeouté Ollama → fallback heuristique OK ; profil `json` / timeout / pas de bascule lourde 111→110 |
 
@@ -67,6 +65,8 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-VEIL-1 | Spike **DeepSeek Harness** `.10` → go/no-go `dsh_headless` | **2026-10-13** · ADR 0028 · NO-GO formel pour `dsh_headless` Team (OpenCode nominal, saturation CPU .110) · .10 exploratoire libre |
+| O-VEIL-2 | Spike **VoiceStudio** (ou équiv.) TTS/ASR LAN Compagnon | **2026-10-13** · ADR 0028 · maintien de la stack nominale Edge TTS + Piper LAN (.111:8098) · pas de surcharge GPU lourde |
 | O-OPS-1 | Smoke LAN surfaces si reprise ops | **2026-10-13** · `tools/smoke_lan_surfaces.sh --functional` 100% vert (24 OK, 1 WARN, 0 KO) · Godot G5+ `:8787` intégré, Core3 legacy offline toléré |
 | O-CAMP-1 | Rejouer tickets plan encore ouverts / faux « done » | **2026-10-13** · audit suivi_plan_evolutions.py 10/10 tickets DONE, plan_complete: true, zéro faux done |
 | O-CAMP-2 | Deploy lab overlay Compagnon / orch si drift | **2026-10-13** · CT 100 overlay f346979 à jour, deploy 140 Pilot OK (HTTP 200 /) et orch :8010/healthz OK |

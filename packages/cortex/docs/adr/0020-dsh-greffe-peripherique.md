@@ -1,7 +1,7 @@
 # ADR 0020 — DeepSeek Harness en greffe périphérique
 
-**Statut** : proposé  
-**Date** : 2026-08-24
+**Statut** : **clos par ADR 0028** (NO-GO pour dsh_headless dans Team / Cortex ; poste .10 uniquement)  
+**Date** : 2026-08-24 (clos 2026-10-13)
 
 ## Contexte
 

@@ -28,9 +28,10 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 1. **Plan d'évolutions (10/10 tickets)** : **100 % réalisé & clôturé** (tickets 1.1..1.3, 2.1..2.3, 3.1, 3.2, 5.1, 5.2 DONE).
 2. **Feeling Compagnon O-FEEL-1..3 (rejeux humains `:5174`)** : **100 % validé & clôturé** (C1/C2/PLAN/GO ALL PASS + retour terrain présence naturel).
 3. **Mains code & coûts LLM O-IDE-1..3** : **100 % validé & clôturé** (smoke live cline prouvé, diagnostic CPU Ollama .110 chiffré, OpenCode confirmé nominal ADR 0025).
-4. **Autonomie Campus / CI / desktop (O-CAMP-1, O-CAMP-2, O-D7-1)** : **100 % validé & clôturé** (tickets plan réconciliés 10/10 DONE, overlay & 140 synchro, Présence Agents D7 actif sur `.143:5005` avec socket `/run/user/1000/lbg-presence-agents.sock`).
-5. **Ops LAN (O-OPS-1)** : **100 % validé & clôturé** (`smoke_lan_surfaces.sh --functional` 100% vert, 24 OK, 1 WARN, 0 KO ; autorité Godot G5+ `:8787` intégrée, Core3 legacy offline toléré).
-6. **En cours séquentiel** : **Thème 3 : Veille Évolution** (`O-VEIL-1` DeepSeek Harness L2 / `O-VEIL-2` VoiceStudio TTS/ASR LAN).
+4. **Thème 1 — Autonomie Campus / CI / desktop (O-CAMP-1, O-CAMP-2, O-D7-1)** : **100 % validé & clôturé** (tickets plan réconciliés 10/10 DONE, overlay & 140 synchro, Présence Agents D7 actif sur `.143:5005` avec socket `/run/user/1000/lbg-presence-agents.sock`).
+5. **Thème 2 — Ops LAN (O-OPS-1)** : **100 % validé & clôturé** (`smoke_lan_surfaces.sh --functional` 100% vert, 24 OK, 1 WARN, 0 KO ; autorité Godot G5+ `:8787` intégrée, Core3 legacy offline toléré).
+6. **Thème 3 — Veille Évolution (O-VEIL-1, O-VEIL-2)** : **100 % validé & clôturé** (ADR 0028 formalisé : NO-GO pour `dsh_headless` dans Team/Cortex, maintien du stack nominal Compagnon Edge TTS + Piper LAN sans surcharge GPU).
+7. **Reste ouvert** : Restes optionnels légers documentés dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (O-DOC-1 harmonisation, O-VEIL-3 mapping Agentic RAG).
 
 ## Fichiers / surfaces utiles
 
@@ -53,6 +54,9 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-13 : **Veille Évolution (O-VEIL-1, O-VEIL-2) — validé & clôturé** —
+  - **O-VEIL-1 (DeepSeek Harness / dsh_headless)** : Suite aux résultats de la veille et au constat de charge CPU sur `.110` (O-IDE-2), formalisation de l'ADR 0028 actant un **NO-GO** pour toute greffe `dsh_headless` dans Cortex/Team (OpenCode étant le nominal éprouvé et aucun Node.js n'étant toléré sur 140). DSH reste strictement réservé au poste exploratoire dev `.10`. ADR 0020 clos.
+  - **O-VEIL-2 (VoiceStudio / TTS LAN Compagnon)** : Évaluation de VoiceStudio / modèles de clonage vocal lourds (F5-TTS/Chatterbox) : rejet de tout déploiement lourd sans GPU audio dédié. Maintien et validation de la stack nominale de production existante documentée dans [`voice_local.md`](../voice_local.md) : **Edge TTS** (primaire `fr-FR-DeniseNeural` 0 €) + **Piper** LAN `.111:8098` (fallback local ultra-léger).
 - 2026-10-13 : **Ops LAN (O-OPS-1) — validé & clôturé** —
   - `tools/smoke_lan_surfaces.sh` modernisé : intégration de l'autorité jeu G5+ Godot-first sur `.246:8787` (`/healthz` et `/v1/events/active`) en vérification nominale ; tolérance gracieuse des sondes Core3/PreCU `:8792` dépréciées (OFF par ADR 0026).
   - Validation complète bout-en-bout avec `bash tools/smoke_lan_surfaces.sh --functional` : **24 OK, 1 WARN (clé cloud), 0 KO**. Pilot Studio, Cockpit P03, Orch UI 5174, Orch API :3000, WebUI 3080, Godot Hub :8787, Patches, MCP, Team WSL, Desktop dry-run route, Cockpit Desktop réel, et Team bus (6/6) tous au vert.
