@@ -36,8 +36,8 @@ cd packages/prime-client
 |-----------------|------|
 | `../Infographiste_IA` | Pipeline assets / LoRA |
 | Cockpit `.100:8093` | Ops infra (sources `_shelf/LBG_Project_03`) |
-| Orch UI `.100:5174` | SPA Vue Lyra / carte agents (sources `_archive/LBG_IA`) |
-| Hub Godot `.246:8787` | Autorité joueur Lost Heaven (G5) — Core3 / spike Python **OFF** |
+| Compagnon `.100:5174` | Présence Studio (`packages/cortex/compagnon_ui`) · Desktop `packages/compagnon-desktop` |
+| Hub Godot `.246:8787` | Autorité joueur Lost Heaven (G5+) — Core3 / spike Python **OFF** |
 | Legacy | `../LBG_IA_MMORPG`, `../new_mmo` ; archive `../_archive/avatar_app` |
 
 ## Règle

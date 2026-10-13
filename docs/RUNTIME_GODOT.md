@@ -1,6 +1,7 @@
 # Runtime joueur Lost Heaven — Godot-first (G5+)
 
-**Date** : 2026-10-07  
+**Date** : 2026-10-13 (suite produit réalignée · P3/P5/navmesh faits)  
+**Live depuis** : 2026-10-07  
 **ADR** : [`0026-runtime-hors-core3.md`](../packages/cortex/docs/adr/0026-runtime-hors-core3.md)
 
 ## Autorité actuelle
@@ -79,12 +80,22 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 
 ## Suite produit (post-G5+)
 
-1. **Persona / compagnon en jeu** — rail P3 ([`PLAN_MMO_O2.md`](PLAN_MMO_O2.md))
-2. **Gameplay hub** — quêtes terrain POI, craft UX, dialogue riche
-3. **Combat / cour de chasse** — P5a **sur `prime-hub`** (`/v1/hunt-yard*`, `tools/hunt_yard.py`) · smoke `tools/smoke_p5_hunt_yard_hub.sh`
-4. **Navmesh Godot — FAIT (2026-10-11, ticket 2.3)** — `NavigationServer3D` natif (`packages/prime-hub/scripts/hub_nav.gd`), bake 193 polys / 16 empreintes (~0.6 s au boot), `map_force_update` synchrone ; A* grille AABB conservé **en fallback hors bornes** (dunes / anneau explore). Smoke `tools/smoke_navmesh_prime_hub.sh`, self-test `packages/prime-hub/tools/nav_selftest.gd`.
-5. **Anti-saccade (2026-10-07)** — client : lissage positions remote ; hub : ~~budget A* `PATH_BUDGET_PER_TICK=2`~~ **supprimé (2.3)** — 40 entités/tick ≈ 34 µs/entité via navmesh (`budget_per_tick=0`).
-6. **Anti-saccade v2** — gateway **non-bloquante** (plus de `OS.delay_usec` sur HTTP/WS accept) ; max 1 tick/frame ; `zone_state` ~10 Hz sans doublon `bots[]`
+### Fait (ne plus traiter comme backlog ouvert)
+
+| Item | Clos | Preuve |
+|------|------|--------|
+| **P3** Persona / dialogue / wiki en jeu | 2026-10-07 | C3–C8 live · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) |
+| **P5 / P5a** Combat · cour de chasse · telegraph boss | 2026-10-08 | `/v1/hunt-yard*` · smoke hub · densités + engage |
+| **Navmesh** `NavigationServer3D` | 2026-10-11 | ticket 2.3 · `hub_nav.gd` · smoke `tools/smoke_navmesh_prime_hub.sh` |
+| Anti-saccade v1 | 2026-10-07→11 | lissage client · `PATH_BUDGET_PER_TICK` supprimé · ~34 µs/entité |
+| Anti-saccade v2 | 2026-10-07 | gateway non-bloquante · 1 tick/frame · `zone_state` ~10 Hz |
+| Pont Studio↔Monde | 2026-10-12 | World Stream 3.1 · mémoire relationnelle 3.2 |
+
+### Ouvert (polish / contenu)
+
+1. **Gameplay hub** — quêtes terrain POI enrichies, craft UX, dialogue riche (profondeur, pas le rail P3 de base).
+2. **O-OPS-3 / F3** — suites O2 hors plan gaps — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+3. Unification chemin client Git vs runtime 140 (`LBG_PRIME_CLIENT_ROOT`) — [`REGISTRE.md`](REGISTRE.md).
 
 ## Anti double-build
 

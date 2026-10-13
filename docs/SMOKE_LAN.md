@@ -1,7 +1,8 @@
 # Smoke LAN — surfaces projet LBG Studios
 
-**Date contrôle** : 2026-08-25  
-**Script** : [`tools/smoke_lan_surfaces.sh`](../tools/smoke_lan_surfaces.sh)
+**Date contrôle** : 2026-10-13 (G5+ · résultat ci-dessous) · historique août conservé  
+**Script** : [`tools/smoke_lan_surfaces.sh`](../tools/smoke_lan_surfaces.sh)  
+**Canon runtime** : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · atlas : [`REGISTRE.md`](REGISTRE.md)
 
 Relance :
 
@@ -21,7 +22,7 @@ bash tools/smoke_lan_surfaces.sh --functional   # Desktop dry-run + route + prop
 | | http://192.168.0.140:8080/pilot/#/providers | Catalogue LLM |
 | **Simple Chat** (lab) | http://192.168.0.100:3080/ | Open WebUI — chat LLM seul (pas Cursor) |
 | **Cockpit P03** | http://192.168.0.100:8093/pilot/#/cockpit | Mur infra / équipe |
-| **Orch UI** (chat produit) | http://192.168.0.100:5174/ | SPA Orchestrateur — chat unique (rétabli, plus de redirect forcé) |
+| **Compagnon** (présence Studio) | http://192.168.0.100:5174/ | SPA Compagnon (`compagnon_ui`) — chat unique produit |
 | **Orch API** | http://192.168.0.100:3000/health | Santé providers / Lyra (proxies Pilot) |
 | **Prime Hub Godot** | http://192.168.0.246:8787/healthz · ws://192.168.0.246:8787/ws | Autorité joueur Lost Heaven G5 ([`RUNTIME_GODOT.md`](RUNTIME_GODOT.md)) |
 | **Prime comptes** | http://192.168.0.246:8792/ | Comptes lab (hors chemin joueur) |

@@ -1,7 +1,7 @@
 # Registre LBG Studios
 
-**Date** : 2026-09-27 (plan d’adressage Freebox aligné)  
-**Source de vérité** : ce fichier.
+**Date** : 2026-10-13 (alignement canon G5+ `:8787` · packages monorepo)  
+**Source de vérité** : ce fichier · runtime joueur : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
 
 **Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
 sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
@@ -59,36 +59,40 @@ Nouvelles features client → **Git Studios**. Deploy / sondes VM → respecter 
 
 | Package | Rôle | Point d’entrée |
 |---------|------|----------------|
-| **`packages/cortex`** | Studio : orchestrateur, Team, Pilot, agents | `http://192.168.0.140:8080/` |
-| **`packages/prime-client`** | Jeu : client Godot Prime | Launchpad / Godot → 246 |
-| **`packages/launchpad`** | Lanceur Electron (sources) | build Windows → `J:\swgemu\dist\` |
+| **`packages/cortex`** | Studio : orchestrateur, Team, Pilot, agents | Pilot ops `http://192.168.0.140:8080/` · Compagnon présence `.100:5174` |
+| **`packages/compagnon-desktop`** | Tray Electron + overlay avatar (poste `.10`) | `packages/compagnon-desktop` |
+| **`packages/prime-hub`** | **Autorité monde** Godot headless G5+ (HTTP+WS) | `http://192.168.0.246:8787/healthz` |
+| **`packages/prime-client`** | Jeu : client Godot Prime | Launchpad / Godot → hub `:8787` |
+| **`packages/launchpad`** | Lanceur Electron (sources) ≥ 2.1.4 Prime-only | build Windows → `J:\swgemu\dist\` |
 
-Serveurs jeu (runtime, hors Git) :
+Serveurs jeu (runtime) :
 
 | Hôte | Rôle | Accès |
 |------|------|-------|
-| **`192.168.0.246:8792`** | **Prime** — monde LBG produit (écriture / features) | http://192.168.0.246:8792/ |
-| **`192.168.0.245:8792`** | **PreCU** — **référence SWG Pre-CU** (lecture seule ; ne pas modifier) | http://192.168.0.245:8792/ |
-| **`192.168.0.246:8080`** | Patches Prime | http://192.168.0.246:8080/patches/prime/manifest.json |
+| **`192.168.0.246:8787`** | **Autorité joueur** — `prime-hub` G5+ (HTTP+WS unifiés) | http://192.168.0.246:8787/healthz · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) |
+| **`192.168.0.246:8080`** | Patches / releases Prime + Launchpad | http://192.168.0.246:8080/patches/prime/manifest.json |
+| **`192.168.0.246:8792`** | Core3 comptes **lab** (hors chemin joueur · OFF par ADR 0026) | optionnel `--keep-account-admin` |
+| **`192.168.0.245:8792`** | **PreCU** — référence SWG Pre-CU (lecture seule ; souvent éteint) | http://192.168.0.245:8792/ |
 
-**Règle 245** : modèle le plus proche de l’original Pre-CU pour consulter arbres / craft / datatables. Toute feature LBG = **246** + monorepo. Voir Bible **V4**.
+**Règle chemin joueur** : features LBG = monorepo + **`.246:8787`** (`prime-hub`). Core3 / PreCU `:8792` = lab / référence, pas le runtime joueur.  
+**Règle 245** : modèle le plus proche de l’original Pre-CU pour consulter arbres / craft / datatables. Voir Bible **V4**.
 
 ## LAN — hôtes (Atlas / ops)
 
 | IP | Rôle | Notes |
 |----|------|-------|
 | **`.10`** | Poste Teome | Cursor, ComfyUI, pilotage humain — plus l’executor LAN |
-| **`.100`** | Cockpit / Orch UI / Simple Chat | `:8093` Cockpit · `:3000` API · `:5174` SPA chat · `:3080` Open WebUI lab |
+| **`.100`** | Cockpit / Compagnon / API | `:8093` Cockpit · `:3000` API · `:5174` Compagnon présence · `:3080` Open WebUI lab |
 | **`.110`** | Ollama **heavy** | `:11434` **CPU only** — `gemma-4-abliterated:12b` + `e2b` (+ `qwen3.5-abliterated:9b` disque) ; pas de 27B routé |
 | **`.111`** | Ollama **light** | `:11434` — `qwen3.5-abliterated:2B` / `0.8B` + `gemma-4-abliterated:e2b` (causerie Compagnon) · **Piper TTS** `:8098` (`voice_local`) |
 | **`.140`** | Core Studio | Pilot `:8080`, backend `:8000`, orchestrateur `:8010` |
 | **`.141`** | CT `lbg-executor` | poll `/v1/team/wsl/*` — `lbg-lan-executor.service` |
 | **`.142`** | — | **IP libérée** (CT `lbg-hands` détruit 2026-10-02) — rôles absorbés par `.143` ; [`migration_hands_142_to_143.md`](migration_hands_142_to_143.md) |
-| **`.143`** | VM `lbg-omarchy` | **R720 `.201`** — nœud écosystème : éditeur (VS Code/Cline) + **mains** `linux_agent` `:5005` ; observation humaine ; voir [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) · [`migration_hands_142_to_143.md`](migration_hands_142_to_143.md) |
+| **`.143`** | VM `lbg-omarchy` | **R720 `.201`** — éditeur + **mains** `linux_agent` `:5005` + Présence Agents D7 ; [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
 | **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111) · `.201` = R720 (CT 100 / 110 / 141 · VM 140 / **143** / 245 / 246) |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` — souvent éteint ; Pilot bureau annote Lab SWG **Éteinte** |
-| **`.246`** | Prime | monde produit `:8792` + sidecar IA |
+| **`.246`** | Prime | **autorité joueur** `prime-hub` **`:8787`** · patches `:8080` · Core3 `:8792` lab OFF |
 
 LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).
 
@@ -170,13 +174,15 @@ Source de vérité MAC/IP projet = **cette table** (sondage ARP + `qm`/`pct conf
 flowchart LR
   subgraph studios["LBG_Studios"]
     CX["packages/cortex"]
+    CD["packages/compagnon-desktop"]
+    PH["packages/prime-hub"]
     PC["packages/prime-client"]
     LP["packages/launchpad"]
   end
   subgraph linked["Liés"]
     INFO["Infographiste_IA"]
     CK["Cockpit .100:8093"]
-    ORCH["Orch 5174 → Pilot"]
+    COMP["Compagnon .100:5174"]
   end
   subgraph lan["LAN runtime"]
     H110["Ollama 110 heavy"]
@@ -186,8 +192,8 @@ flowchart LR
     H143["Omarchy+mains 143"]
   end
   subgraph game["Serveurs jeu"]
-    P246["Prime 246:8792"]
-    P245["PreCU 245:8792"]
+    P246["Prime hub 246:8787"]
+    P245["PreCU 245:8792 lab"]
   end
   subgraph arch["Archive"]
     AVA["avatar_app"]
@@ -202,10 +208,13 @@ flowchart LR
   CX -.->|"upstream"| MMO
   PC -.->|"upstream"| NM
   CX --> H140
+  CX --> COMP
+  CD --> COMP
   H140 --> H110
   H140 --> H111
   H140 --> H141
   H140 --> H143
+  PH --> P246
   LP --> P246
   PC --> P246
 ```
@@ -216,11 +225,15 @@ flowchart LR
 
 | Date | Jalon | Où |
 |------|--------|-----|
+| 2026-10-13 | Canon docs : autorité joueur `:8787` · packages `prime-hub` / `compagnon-desktop` au registre | ce fichier · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) |
+| 2026-10-13 | Clôture backlog nominal (ops/veille/IDE/campus) · smoke LAN 24 OK | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
+| 2026-10-12 | Plan évolutions 10/10 DONE · World Stream + mémoire relationnelle · feeling Compagnon | [`suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md) |
+| 2026-10-11 | Navmesh `NavigationServer3D` live · L3 smoke LAN `days_ok=3/3` | [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) |
+| 2026-10-07 | **P6 G5+** `prime-hub` live · Core3/spike Python OFF chemin joueur | ADR 0026 · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) |
 | 2026-08-24 | Recentrage wahou : aboutis archivés, pari 30 s Lost Heaven, mission Team L1 | [`FOCUS_WAHOU.md`](FOCUS_WAHOU.md) |
 | 2026-08-18 | Pilot : modules ES + Vite, Three.js npm (`three@0.128`), import map uvicorn | `packages/cortex/pilot_web` |
 | 2026-08-18 | Orchestrateur démarrable sans legacy : stub local `hybrid_proactive_agent` | `packages/cortex/orchestrator` |
 | 2026-08-18 | Backend : `pydantic-settings`, `response_model` Pilot, `trace_id` E2E | `packages/cortex/backend` |
-| 2026-08-18 | O2 : pipeline assets Prime + persistance inventaire/quêtes via bridge Core3 | `packages/prime-client` |
-| 2026-09-20 | LLM secours free (Groq/OpenRouter) + comparatif Colab/Kaggle + smoke notebooks | `docs/reason_cloud_free_fallback.md`, `docs/llm_cloud_free_vs_local.md` |
-| 2026-09-21 | REASON ephemeral câblé sur `.140` (drop-in `/etc/lbg-ephemeral.env`) + doc PoC Colab/Pinggy | `docs/reason_ephemeral_colab.md`, `infra/systemd/lbg-orchestrator.ephemeral-colab.conf.example` |
-| 2026-09-22 | Laya System One (HTTP) : cascade intent + laya-serve `.111:8097` (LAB) | `docs/laya_system_one.md`, `services/laya_client.py` |
+| 2026-09-20 | LLM secours free (Groq/OpenRouter) + comparatif Colab/Kaggle + smoke notebooks | `packages/cortex/docs/reason_cloud_free_fallback.md` |
+| 2026-09-21 | REASON ephemeral câblé sur `.140` + doc PoC Colab/Pinggy | `packages/cortex/docs/reason_ephemeral_colab.md` |
+| 2026-09-22 | Laya System One (HTTP) : cascade intent + laya-serve `.111:8097` (LAB) | `packages/cortex/docs/laya_system_one.md` |

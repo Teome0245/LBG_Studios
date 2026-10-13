@@ -45,7 +45,7 @@ _Aucun sujet ouvert en attente — O-VEIL-1, O-VEIL-2, O-VEIL-3 et O-VEIL-4 clos
 
 ### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
 
-_O-DOC-1 clos (2026-10-13) — canon `OBJECTIVES.md` harmonisé (présence `:5174` vs Pilot ops `:8080`)._
+_O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre / restauration / RUNTIME suite / smoke / README alignés sur G5+ `:8787`._
 
 | ID | Sujet | Notes |
 |----|--------|--------|
@@ -57,6 +57,7 @@ _O-DOC-1 clos (2026-10-13) — canon `OBJECTIVES.md` harmonisé (présence `:517
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-DOC-ALIGN | Alignement docs périmées (registre / restauration / RUNTIME suite / smoke / README) | **2026-10-13** · canon G5+ `:8787` · packages `prime-hub` / `compagnon-desktop` · P3 Rang 2 vert · suite RUNTIME scindée fait/ouvert |
 | O-VEIL-4 | Fiabiliser chemin LLM veille | **2026-10-13** · format `json` natif Ollama dans `reason_llm.py` + calcul dynamique timeout/tokens selon `n_input` dans `evolution_veille_workflow.py` · tests 5/5 |
 | O-OPS-2 | Agrégat métriques 7j Fleet | **2026-10-13** · agrégat glissant 7j `metrics_7d` et `metrics.rolling_7d` dans `team/fleet.py` (taux succès, jobs/team 7j, stabilité LAN) · DoD plan gaps 100% OK |
 | O-VEIL-3 | Doc mapping **Agentic RAG** → bus Team / mémoire Compagnon | **2026-10-13** · doc [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) · mapping conceptuel sur bus SQLite Team + mémoires Compagnon · zéro framework tiers |

@@ -10,7 +10,8 @@
 ## Objectif actuel
 
 Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
-Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
+Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+**2026-10-13 soir** : alignement docs périmées (`REGISTRE`, `RESTAURATION_PRODUIT`, `RUNTIME_GODOT` suite, `SMOKE_LAN` en-tête, `README`) sur canon G5+ `:8787`.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
@@ -34,6 +35,7 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 7. **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3)** : **100 % validé & clôturé** (`OBJECTIVES.md` aligné sur Compagnon présence `:5174` vs Pilot cockpit ops `:8080`, jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md`).
 8. **Ops — Agrégat 7j Fleet (O-OPS-2)** : **100 % validé & clôturé** (`metrics_7d` et `rolling_7d` intégrés dans `team/fleet.py`, DoD plan combler gaps agentiques 100% OK).
 9. **Reste ouvert** : Backlog nominal épuré dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (O-OPS-3 F3 jeu hors scope gaps, O-DOC-2 review outillée Bugbot éventuelle).
+10. **Docs périmées (O-DOC-ALIGN)** : **fait** 2026-10-13 — registre / restauration / suite RUNTIME / smoke en-tête / README alignés sur `:8787` + packages `prime-hub` / `compagnon-desktop`.
 
 ## Fichiers / surfaces utiles
 
@@ -56,6 +58,11 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-13 : **Alignement docs périmées (audit)** —
+  - [`REGISTRE.md`](REGISTRE.md) : packages `prime-hub` / `compagnon-desktop` ; autorité joueur **`:8787`** ; `:8792` = lab Core3 OFF ; matrice mermaid + jalons oct. ;
+  - [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) : Rang 2 P3/dialogue/hub **vert** ; Core3 sidecar **rouge** ; prochaine traction = backlog léger (O-OPS-3, polish, unification client) ;
+  - [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) : section « suite » scindée **fait** vs **ouvert** (plus de P3/P5 listés comme TODO) ;
+  - [`SMOKE_LAN.md`](SMOKE_LAN.md) en-tête + libellé Compagnon `:5174` ; [`README.md`](../README.md) remotes liés.
 - 2026-10-13 : **Fiabilisation LLM veille (O-VEIL-4) & Agrégat métriques 7j Fleet (O-OPS-2) — validés & clôturés** —
   - **O-VEIL-4 (Route LLM veille)** : Injection du paramètre natif `"format": "json"` pour Ollama et `"response_format": {"type": "json_object"}` dans `reason_llm.py` pour le profil `json` ; calcul dynamique du timeout (`min(150, max(45, n_input * 15))`) et `max_tokens` dans `evolution_veille_workflow.py` proportionnels au nombre de pistes (pour éviter les timeouts constatés sur les batchs de 8 pistes) tout en conservant le fallback heuristique ultra-rapide. Tests 5/5 validés.
   - **O-OPS-2 (Agrégat métriques 7j Fleet)** : Calcul d'une fenêtre glissante de 7 jours sur les jobs Cowork (`jobs_7d`), tâches virtuelles Team (`tasks_7d`, L2 pending), stabilité de la mission L3 LAN et décision du pilote Ops Health. Exposé sous `metrics_7d` et `metrics.rolling_7d` dans `team/fleet.py`. Critère DoD §6 dans [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) et [`revue_ops_health_7j.md`](../packages/cortex/docs/revue_ops_health_7j.md) passés à 100% OK. Tests 6/6 validés.
