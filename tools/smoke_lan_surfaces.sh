@@ -30,6 +30,21 @@ check_http() {
   fi
 }
 
+check_http_optional() {
+  local name="$1" url="$2" expect="${3:-2}"
+  local code
+  code=$(curl -sS -o /tmp/lbg_smoke.body -w "%{http_code}" --connect-timeout 4 --max-time 15 "$url" 2>/tmp/lbg_smoke.err) || {
+    echo "INFO  $name  (legacy/optionnel offline)  $url"
+    return
+  }
+  if [[ "$code" =~ ^${expect} ]]; then
+    echo "OK  $name  HTTP $code  $url"
+    OK=$((OK + 1))
+  else
+    echo "INFO  $name  HTTP $code (legacy/optionnel)  $url"
+  fi
+}
+
 # Redirect Orch UI → Pilot (P3) : attend 3xx + Location vers pilot
 check_redirect() {
   local name="$1" url="$2" needle="${3:-pilot}"
@@ -62,10 +77,14 @@ check_http "Orch UI /agents/map" "http://192.168.0.100:5174/agents/map"
 check_http "Pilot orch agents/map" "$PILOT/v1/pilot/orch/agents/map"
 check_http "Orch API /health" "http://192.168.0.100:3000/health"
 check_http "Simple Chat (Open WebUI)" "http://192.168.0.100:3080/"
-check_http "Prime 246:8792" "http://192.168.0.246:8792/"
-check_http "Prime api/servers" "http://192.168.0.246:8792/api/servers"
-check_http "PreCU 245:8792" "http://192.168.0.245:8792/"
-check_http "PreCU api/servers" "http://192.168.0.245:8792/api/servers"
+# Runtime joueur G5+ (Godot headless .246:8787 — ADR 0026 / RUNTIME_GODOT.md)
+check_http "Prime Hub Godot (G5+) healthz" "http://192.168.0.246:8787/healthz"
+check_http "Prime Hub Godot events" "http://192.168.0.246:8787/v1/events/active"
+# Legacy Core3 / PreCU (OFF par ADR 0026, optionnels)
+check_http_optional "Prime 246:8792 (Core3 legacy)" "http://192.168.0.246:8792/"
+check_http_optional "Prime api/servers (Core3 legacy)" "http://192.168.0.246:8792/api/servers"
+check_http_optional "PreCU 245:8792 (legacy)" "http://192.168.0.245:8792/"
+check_http_optional "PreCU api/servers (legacy)" "http://192.168.0.245:8792/api/servers"
 check_http "Patches manifest" "http://192.168.0.246:8080/patches/prime/manifest.json"
 check_http "MCP healthz" "http://192.168.0.100:8766/healthz"
 check_http "Team WSL bridge" "http://192.168.0.140:8010/v1/team/wsl/health"
@@ -90,16 +109,25 @@ echo
 echo "=== Détail serveurs jeu ==="
 python3 - <<'PY'
 import json, urllib.request
-for host, label in (("246", "Prime UI"), ("245", "PreCU UI")):
+
+# Godot G5+ hub (autorité nominale)
+try:
+    with urllib.request.urlopen("http://192.168.0.246:8787/healthz", timeout=8) as r:
+        d = json.load(r)
+    print(f"  Prime Hub Godot :8787: phase={d.get('phase')} service={d.get('service')} uptime_s={d.get('uptime_s')} pnj={d.get('npc_count')} bots={d.get('bot_count')}")
+except Exception as e:
+    print(f"KO  Prime Hub Godot :8787 healthz: {e}")
+
+# Legacy Core3
+for host, label in (("246", "Prime Core3 (:8792)"), ("245", "PreCU (:8792)")):
     url = f"http://192.168.0.{host}:8792/api/servers"
     try:
-        with urllib.request.urlopen(url, timeout=8) as r:
+        with urllib.request.urlopen(url, timeout=3) as r:
             data = json.load(r)
-    except Exception as e:
-        print(f"KO  {label} api/servers: {e}")
-        continue
-    for s in data:
-        print(f"  {label}: {s.get('id')} status={s.get('status')} ready={s.get('ready')} online={s.get('online')} login_udp={s.get('login_udp')}")
+        for s in data:
+            print(f"  {label}: {s.get('id')} status={s.get('status')} ready={s.get('ready')} online={s.get('online')}")
+    except Exception:
+        print(f"  {label}: offline (Core3 OFF — ADR 0026)")
 PY
 
 if [[ "$FUNCTIONAL" -eq 1 ]]; then
@@ -132,23 +160,22 @@ PY
     KO=$((KO + 1))
   fi
 
-  # 3 Jeu ready (already checked; assert both ready)
+  # 3 Jeu ready (Prime Hub Godot G5+ :8787 — autorité prod joueur)
   if python3 - <<'PY'
 import json, urllib.request
-ok=True
-for host in ("246","245"):
-    data=json.load(urllib.request.urlopen(f"http://192.168.0.{host}:8792/api/servers", timeout=8))
-    if not any(s.get("id")=="prime" and s.get("ready") for s in data):
-        ok=False
-    if not any(s.get("id")=="swgemu" and s.get("ready") for s in data):
-        ok=False
+try:
+    with urllib.request.urlopen("http://192.168.0.246:8787/healthz", timeout=8) as r:
+        d = json.load(r)
+    ok = bool(d.get("ok") and d.get("service") == "prime_hub" and d.get("phase") == "G5+" and d.get("uptime_s", 0) > 0)
+except Exception:
+    ok = False
 raise SystemExit(0 if ok else 1)
 PY
   then
-    echo "OK  Jeu Prime+PreCU ready (via both :8792)"
+    echo "OK  Jeu Prime Hub Godot G5+ ready (:8787/healthz)"
     OK=$((OK + 1))
   else
-    echo "KO  Jeu servers not fully ready"
+    echo "KO  Jeu Prime Hub Godot G5+ not ready (:8787)"
     KO=$((KO + 1))
   fi
 

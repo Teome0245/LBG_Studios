@@ -33,6 +33,24 @@ Pilot Accueil / menus : liens vers toutes ces surfaces (Studio · Campus · Ops 
 
 Ollama / executor (hors smoke HTTP UI) : **`.110:11434`** heavy · **`.111:11434`** light · **`.141`** CT executor — voir [`REGISTRE.md`](REGISTRE.md).
 
+## Résultat 2026-10-13 (G5+ Godot-first) — OK=24 WARN=1 KO=0
+
+| Surface / Contrôle | État | Détails |
+|--------------------|------|---------|
+| Pilot Studio (`/pilot/`, `/healthz`, `/v1/pilot/status`) | **OK** | Backend + agents opérationnels |
+| Cockpit P03 (`/pilot/`, `cockpit/snapshot`) | **OK** | Mur infra opérationnel |
+| Orch UI 5174 (`/`, `/lyra`, `/agents/map`) | **OK** | SPA live |
+| Orch API `:3000/health` & Pilot proxied map | **OK** | Lyra gauges OK |
+| Simple Chat (Open WebUI `:3080`) | **OK** | Live |
+| **Prime Hub Godot :8787 (G5+)** | **OK** | Phase G5+, uptime 433k s, 21 PNJ, 10 bots, events live |
+| Patches manifest & MCP `:8766/healthz` | **OK** | OK |
+| Team WSL bridge (`:8010/v1/team/wsl/health`) | **OK** | OK |
+| Desktop dry-run route (`POST /v1/pilot/route`) | **OK** | OK |
+| Cockpit Desktop réel (`tasks/run`) | **OK** | Exécution sans blocage approval |
+| Team plan + bus (`smoke_team_plan_bus.sh`) | **OK** | Meta, plan heuristic, bus messages, mission closure (6/6 OK) |
+| Core3 / PreCU `:8792` (legacy) | INFO | Offline attendu (Core3 OFF par ADR 0026) |
+| Cursor Cloud Agent | WARN | Clé/SDK non configurés (optionnel cloud) |
+
 ## Résultat 2026-08-25 (HTTP) — cutover P3
 
 | Check | État |

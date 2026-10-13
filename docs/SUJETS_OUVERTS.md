@@ -34,9 +34,10 @@ _Aucun sujet ouvert en attente — O-CAMP-1, O-CAMP-2 et O-D7-1 clos (2026-10-13
 
 ### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
 
+_O-OPS-1 clos (2026-10-13) — `smoke_lan_surfaces.sh --functional` vert (24 OK, 0 KO)._
+
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-OPS-1 | Smoke LAN surfaces si reprise ops | `bash tools/smoke_lan_surfaces.sh --functional` + [`SMOKE_LAN.md`](SMOKE_LAN.md) |
 | O-OPS-2 | Agrégat métriques 7j Fleet (optionnel) | DoD plan gaps encore `[~]` — [`revue_ops_health_7j.md`](../packages/cortex/docs/revue_ops_health_7j.md) · hors feeling Compagnon |
 | O-OPS-3 | **F3** O2 jeu (hors plan gaps) | Explicitement hors [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) — voir P3–P5 [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
 
@@ -66,6 +67,7 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-OPS-1 | Smoke LAN surfaces si reprise ops | **2026-10-13** · `tools/smoke_lan_surfaces.sh --functional` 100% vert (24 OK, 1 WARN, 0 KO) · Godot G5+ `:8787` intégré, Core3 legacy offline toléré |
 | O-CAMP-1 | Rejouer tickets plan encore ouverts / faux « done » | **2026-10-13** · audit suivi_plan_evolutions.py 10/10 tickets DONE, plan_complete: true, zéro faux done |
 | O-CAMP-2 | Deploy lab overlay Compagnon / orch si drift | **2026-10-13** · CT 100 overlay f346979 à jour, deploy 140 Pilot OK (HTTP 200 /) et orch :8010/healthz OK |
 | O-D7-1 | Sync worker **`.143`** Présence Agents D7 | **2026-10-13** · `LBG_SESSION_ISLAND_ENABLED=1`, EnvironmentFile systemd, socket Unix actif `/run/user/1000/lbg-presence-agents.sock`, live :5005/session/status OK |
