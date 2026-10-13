@@ -1,6 +1,6 @@
 # Sujets ouverts — LBG Studios
 
-**Mis à jour** : 2026-10-12  
+**Mis à jour** : 2026-10-13  
 **Rôle** : liste des sujets **pas encore traités** (hors tickets déjà `done`).  
 **Pas** un plan d’exécution détaillé — juste le backlog explicite.  
 Quand un sujet est clos : le déplacer en § Clos (avec date) ou le supprimer.
