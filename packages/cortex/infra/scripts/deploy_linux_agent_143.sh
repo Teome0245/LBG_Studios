@@ -63,6 +63,10 @@ LBG_LINUX_CLI_AGENT_MODEL=opencode/big-pickle
 LBG_LINUX_CLI_AGENT_TIMEOUT_S=1200
 LBG_LINUX_CLI_AGENT_CWD_ALLOWLIST=/home/lbg/projects
 LBG_OMARCHY_STUDIO_WORKSPACE=/home/lbg/projects/LBG_Studios
+# ADR 0027 — Présence Agents (D7)
+LBG_SESSION_ISLAND_ENABLED=1
+LBG_SESSION_ISLAND_FAIL_OPEN=1
+LBG_SESSION_ISLAND_APPROVAL_TIMEOUT_S=60
 ENV
 
 echo "==> Sync Agent_IA → ${USER}@${HOST}:${REMOTE_DIR}"
@@ -114,6 +118,7 @@ Wants=graphical-session.target
 [Service]
 Type=simple
 WorkingDirectory=${REMOTE_DIR}
+EnvironmentFile=${REMOTE_DIR}/linux.env
 Environment=LBG_LINUX_ENV_PATH=${REMOTE_DIR}/linux.env
 Environment=XDG_RUNTIME_DIR=/run/user/\$(id -u)
 ExecStart=${REMOTE_DIR}/.venv/bin/uvicorn main:app --host 0.0.0.0 --port ${PORT}

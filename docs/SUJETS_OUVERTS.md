@@ -23,11 +23,8 @@ _Aucun sujet ouvert en attente — O-IDE-1, O-IDE-2 et O-IDE-3 clos (2026-10-13)
 
 ### O1 — Autonomie Campus / CI / desktop
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-CAMP-1 | Rejouer tickets plan encore ouverts / faux « done » | Gate `plan_ticket_closure` ; sync [`suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md) |
-| O-CAMP-2 | Deploy lab overlay Compagnon / orch si drift | `.100` Compagnon + `.140` orch après overlays récents |
-| O-D7-1 | Sync worker **`.143`** Présence Agents D7 | Code monorepo livré — [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) |
+_Aucun sujet ouvert en attente — O-CAMP-1, O-CAMP-2 et O-D7-1 clos (2026-10-13)._
+
 
 ### O2 — Jeu / pont Studio↔Monde
 
@@ -69,6 +66,9 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-CAMP-1 | Rejouer tickets plan encore ouverts / faux « done » | **2026-10-13** · audit suivi_plan_evolutions.py 10/10 tickets DONE, plan_complete: true, zéro faux done |
+| O-CAMP-2 | Deploy lab overlay Compagnon / orch si drift | **2026-10-13** · CT 100 overlay f346979 à jour, deploy 140 Pilot OK (HTTP 200 /) et orch :8010/healthz OK |
+| O-D7-1 | Sync worker **`.143`** Présence Agents D7 | **2026-10-13** · `LBG_SESSION_ISLAND_ENABLED=1`, EnvironmentFile systemd, socket Unix actif `/run/user/1000/lbg-presence-agents.sock`, live :5005/session/status OK |
 | O-IDE-1 | Smoke **live** Team avec `ide_cli_app=cline` (E4b-qat) | **2026-10-13** · pipeline Orch:8010 → worker:5005 → cline → Ollama:11434 prouvé bout-en-bout |
 | O-IDE-2 | Perf Ollama **`.110`** pour Cline (diagnostic CPU) | **2026-10-13** · mesuré `size_vram: 0` (CPU pur, >350s timeout) · consigné dans `CLI_SECOND_AVIS.md` |
 | O-IDE-3 | Décision ADR : **OpenCode nominal vs Cline défaut** | **2026-10-13** · OpenCode confirmé nominal Team (vélocité/stabilité) · Cline second avis 0 € local · ADR 0025 amendé |

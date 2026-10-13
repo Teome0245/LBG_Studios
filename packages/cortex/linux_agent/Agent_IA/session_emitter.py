@@ -30,8 +30,20 @@ _SOCKET_THREAD: threading.Thread | None = None
 _SOCKET_OUTBOX: queue.Queue[dict[str, Any]] = queue.Queue(maxsize=200)
 
 
+def _get_cfg(key: str, default: str = "") -> str:
+    v = os.environ.get(key)
+    if v is not None and v != "":
+        return v
+    try:
+        import core
+
+        return core.get_cfg(key) or default
+    except Exception:
+        return default
+
+
 def enabled() -> bool:
-    return (os.environ.get("LBG_SESSION_ISLAND_ENABLED") or "0").strip().lower() in {
+    return _get_cfg("LBG_SESSION_ISLAND_ENABLED", "0").strip().lower() in {
         "1",
         "true",
         "yes",
@@ -40,13 +52,13 @@ def enabled() -> bool:
 
 
 def fail_open() -> bool:
-    raw = (os.environ.get("LBG_SESSION_ISLAND_FAIL_OPEN") or "1").strip().lower()
+    raw = _get_cfg("LBG_SESSION_ISLAND_FAIL_OPEN", "1").strip().lower()
     return raw in {"1", "true", "yes", "on", ""}
 
 
 def approval_timeout_s() -> float:
     try:
-        return max(5.0, float(os.environ.get("LBG_SESSION_ISLAND_APPROVAL_TIMEOUT_S") or "60"))
+        return max(5.0, float(_get_cfg("LBG_SESSION_ISLAND_APPROVAL_TIMEOUT_S", "60")))
     except ValueError:
         return 60.0
 

@@ -28,7 +28,8 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 1. **Plan d'évolutions (10/10 tickets)** : **100 % réalisé & clôturé** (tickets 1.1..1.3, 2.1..2.3, 3.1, 3.2, 5.1, 5.2 DONE).
 2. **Feeling Compagnon O-FEEL-1..3 (rejeux humains `:5174`)** : **100 % validé & clôturé** (C1/C2/PLAN/GO ALL PASS + retour terrain présence naturel).
 3. **Mains code & coûts LLM O-IDE-1..3** : **100 % validé & clôturé** (smoke live cline prouvé, diagnostic CPU Ollama .110 chiffré, OpenCode confirmé nominal ADR 0025).
-4. **Prochaines pistes** : Autonomie Campus / CI (`O-CAMP-1..2`, `O-D7-1`) · Ops `smoke_lan_surfaces.sh` · Veille DeepSeek Harness / VoiceStudio (`O-VEIL-1..2`).
+4. **Autonomie Campus / CI / desktop (O-CAMP-1, O-CAMP-2, O-D7-1)** : **100 % validé & clôturé** (tickets plan réconciliés 10/10 DONE, overlay & 140 synchro, Présence Agents D7 actif sur `.143:5005` avec socket `/run/user/1000/lbg-presence-agents.sock`).
+5. **En cours séquentiel** : **Thème 2 : Ops LAN** (`smoke_lan_surfaces.sh --functional` / `O-OPS-1`) puis **Thème 3 : Veille Évolution** (`O-VEIL-1..2`).
 
 ## Fichiers / surfaces utiles
 
@@ -51,6 +52,10 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-13 : **Autonomie Campus / CI / desktop (O-CAMP-1, O-CAMP-2, O-D7-1) — validé & clôturé** —
+  - **O-CAMP-1 (Audit tickets plan)** : `tools/suivi_plan_evolutions.py --audit` exécuté avec succès : 10/10 tickets DONE, `plan_complete: true`, `orphan_failed: []`, aucun faux done.
+  - **O-CAMP-2 (Deploy overlay CT100 & Pilot 140)** : Vérification de cohérence OK, CT 100 à jour, Pilot Web sur `.140` répond 200 OK sur `:8080/` et Orchestrateur `:8010/healthz` OK.
+  - **O-D7-1 (Présence Agents D7 sur worker .143)** : Injection de `LBG_SESSION_ISLAND_ENABLED=1`, `LBG_SESSION_ISLAND_FAIL_OPEN=1`, `LBG_SESSION_ISLAND_APPROVAL_TIMEOUT_S=60` pérennisés dans `deploy_linux_agent_143.sh`, `session_emitter.py` complété pour résolution dynamique via `_get_cfg`, `EnvironmentFile` ajouté dans le service systemd `lbg-omarchy-agent.service`. Tests 4/4 verts. Endpoint `http://192.168.0.143:5005/session/status` vérifié live : `enabled: true`, `socket_alive: true` (`/run/user/1000/lbg-presence-agents.sock`).
 - 2026-10-13 : **mains code Cline / perf Ollama .110 / décision ADR (O-IDE-1..3) — validé & clôturé** —
   - **O-IDE-1 (Smoke live bout-en-bout)** : Preuve d'exécution complète validée depuis l'Orchestrateur Team (`:8010`) vers l'agent Linux `.143:5005` (`run_cli_agent app=cline`) déclenchant `/home/lbg/.local/bin/cline` avec le modèle `huihui_ai/gemma-4-abliterated:E4b-qat` vers Ollama `.110:11434`.
   - **O-IDE-2 (Mesure de perf & diagnostic VRAM)** : Constat chiffré sur `.110` via `ollama ps` : `size_vram: 0` (exécuté 100 % en RAM CPU) avec 32k context. La latence CPU dépasse 350 s par tour, provoquant le timeout du client Cline (`Error: The operation timed out` à 357 s). Respect strict de la matrice locale : interdiction de descendre sous `E4b-qat` (plancher qualité de codage).
