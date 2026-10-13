@@ -172,14 +172,22 @@
           "label": "Eau filtrée (8)",
           "utterance": "Une eau filtrée, prix affiché.",
           "kind": "ui",
-          "action": {"name": "trade_offer", "sku_id": "drink:eau_filtree", "offer_price": 8}
+          "action": {
+            "name": "trade_offer",
+            "sku_id": "drink:eau_filtree",
+            "offer_price": 8
+          }
         },
         {
           "id": "move:perle_nego",
           "label": "Cactus à 22",
           "utterance": "Le Cactus Noir à 22 Cr ?",
           "kind": "ui",
-          "action": {"name": "trade_offer", "sku_id": "drink:cactus_noir", "offer_price": 22}
+          "action": {
+            "name": "trade_offer",
+            "sku_id": "drink:cactus_noir",
+            "offer_price": 22
+          }
         },
         {
           "id": "move:perle_show",
@@ -327,7 +335,9 @@
           "label": "Voir les offres",
           "utterance": "Quelles missions as-tu ?",
           "kind": "ui",
-          "action": {"name": "open_mission_board"}
+          "action": {
+            "name": "open_mission_board"
+          }
         },
         {
           "id": "move:daan_desert",
@@ -1003,7 +1013,9 @@
           "label": "Wiki hub",
           "utterance": "Tu as un guide du hub ?",
           "kind": "ui",
-          "action": {"name": "open_wiki"}
+          "action": {
+            "name": "open_wiki"
+          }
         },
         {
           "id": "move:guide_perle",
@@ -1355,6 +1367,134 @@
         "min_sublot": 3,
         "c1_status": "lot1_sublot_active"
       }
+    },
+    {
+      "id": "npc:capitaine_vael",
+      "name": "Capitaine Vael",
+      "role": "officier_milice",
+      "race_id": "race:human",
+      "zone": "Avant-poste Zalem — route ouest",
+      "faction": "Milice locale",
+      "tone": "vigilant",
+      "summary": "Commande le détachement de la milice contrôlant la route ouest vers la capitale.",
+      "goals": [
+        "surveiller le trafic de convois",
+        "maintenir la ligne de défense ouest"
+      ],
+      "constraints": [
+        "reste sur son secteur",
+        "reponses courtes militaires"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:vael_route",
+          "label": "Route Zalem",
+          "utterance": "La route de Zalem est sûre ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:vael_convoi",
+          "label": "Convois",
+          "utterance": "Des convois récents ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:mecanicien_soren",
+      "name": "Soren Kray",
+      "role": "mecanicien",
+      "race_id": "race:varkoon",
+      "zone": "Avant-poste Zalem — atelier relais",
+      "faction": "Artisans",
+      "tone": "pragmatique",
+      "summary": "Mécanicien chevronné, dépanne les landspeeders et récupère les pièces détachées.",
+      "goals": [
+        "réparer les véhicules de passage",
+        "entretenir le stock de ferraille utile"
+      ],
+      "constraints": [
+        "ne quitte pas l'atelier",
+        "reponses franches d'artisan"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:soren_pieces",
+          "label": "Pièces",
+          "utterance": "Tu as des pièces de rechange ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:soren_speed",
+          "label": "Vitesse",
+          "utterance": "Un conseil pour mon réacteur ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:ancien_nadir",
+      "name": "Ancien Nadir",
+      "role": "chef_nomade",
+      "race_id": "race:sylven",
+      "zone": "Ksar Nomade — dunes est",
+      "faction": "Civils du desert",
+      "tone": "sage",
+      "summary": "Doyen des caravanes du désert oriental, guide les nomades et protège l'oasis.",
+      "goals": [
+        "partager les récits des sables",
+        "veiller sur les réserves d'eau"
+      ],
+      "constraints": [
+        "hospitalité sacrée",
+        "pas de provocation"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:nadir_dunes",
+          "label": "Désert",
+          "utterance": "Comment traverser les dunes ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:nadir_oasis",
+          "label": "Oasis",
+          "utterance": "Depuis quand ce ksar existe ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:guerisseur_miran",
+      "name": "Miran Sael",
+      "role": "guerisseur_desert",
+      "race_id": "race:human",
+      "zone": "Ksar Nomade — tente des soins",
+      "faction": "Confrerie des soins",
+      "tone": "bienveillant",
+      "summary": "Soigneur traditionnel de la Confrérie, distille les racines du désert en antidotes.",
+      "goals": [
+        "soigner les blessures de voyage",
+        "distribuer des filtres et remèdes"
+      ],
+      "constraints": [
+        "neutralité médicale",
+        "reponses calmes"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:miran_soins",
+          "label": "Remèdes",
+          "utterance": "Tu as de quoi soigner le venin ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:miran_herbes",
+          "label": "Herboristerie",
+          "utterance": "Quelles plantes poussent ici ?",
+          "kind": "info"
+        }
+      ]
     }
   ]
 }

@@ -370,19 +370,41 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			return _ok({"ok": false, "error": "stream_unavailable"}, 501)
 		return _ok(wsvc2.snapshot())
 	if method == "GET" and path == "/v1/quests/status":
-		return _ok(economy.status(_query_param(query, "player", "Voyageur")))
+		var st_player := _query_param(query, "player", "Voyageur")
+		var st: Dictionary = economy.status(st_player)
+		_escort_ensure_active(st_player, st)
+		return _ok(st)
 	if method == "POST" and path == "/v1/quests/accept":
 		var qb := _json_body(req_body)
-		var qo: Dictionary = economy.accept(str(qb.get("player", "Voyageur")), str(qb.get("quest_id", "")), str(qb.get("giver_id", "")))
+		var q_player := str(qb.get("player", "Voyageur"))
+		var q_id := str(qb.get("quest_id", ""))
+		var qo: Dictionary = economy.accept(q_player, q_id, str(qb.get("giver_id", "")))
+		if bool(qo.get("ok")):
+			_escort_on_accept(q_player, q_id, qo)
 		return _ok(_attach_tick_flags(qo, path), 200 if bool(qo.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/progress":
 		var qb2 := _json_body(req_body)
-		var qo2: Dictionary = economy.progress(str(qb2.get("player", "Voyageur")), str(qb2.get("quest_id", "")), str(qb2.get("step_id", "")))
+		var q2_player := str(qb2.get("player", "Voyageur"))
+		var q2_id := str(qb2.get("quest_id", ""))
+		var q2_step := str(qb2.get("step_id", ""))
+		_escort_ensure_quest(q2_player, q2_id)
+		var escort_gate := _escort_before_progress(q2_player, q2_id, q2_step)
+		if not bool(escort_gate.get("ok", true)):
+			return _ok(_attach_tick_flags(escort_gate, path), 400)
+		var qo2: Dictionary = economy.progress(q2_player, q2_id, q2_step)
+		if bool(qo2.get("ok")):
+			_escort_after_progress(q2_player, q2_id, q2_step, qo2)
 		return _ok(_attach_tick_flags(qo2, path), 200 if bool(qo2.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/complete":
 		var qb3 := _json_body(req_body)
-		var qo3: Dictionary = economy.complete(str(qb3.get("player", "Voyageur")), str(qb3.get("quest_id", "")))
+		var q3_player := str(qb3.get("player", "Voyageur"))
+		var q3_id := str(qb3.get("quest_id", ""))
+		var qo3: Dictionary = economy.complete(q3_player, q3_id)
+		if bool(qo3.get("ok")):
+			_escort_on_complete(q3_player, q3_id)
 		return _ok(_attach_tick_flags(qo3, path), 200 if bool(qo3.get("ok")) else 400)
+	if method == "GET" and path in ["/v1/quests/escort", "/v1/escort/status"]:
+		return _ok(_escort_snapshot(_query_param(query, "player", "")))
 	if method == "POST" and path == "/v1/quests/tip":
 		var qb4 := _json_body(req_body)
 		var qo4: Dictionary = economy.tip(str(qb4.get("player", "Voyageur")), str(qb4.get("quest_id", "")), int(qb4.get("amount", 2)))
@@ -617,6 +639,89 @@ func _content_length(headers_blob: String) -> int:
 		if lower.begins_with("content-length:"):
 			return int(str(line).substr(15).strip_edges())
 	return 0
+
+
+func _escort_svc():
+	if sim != null and sim.escort != null:
+		return sim.escort
+	return null
+
+
+func _escort_on_accept(player: String, quest_id: String, qo: Dictionary) -> void:
+	var esc = _escort_svc()
+	if esc == null or not esc.is_escort_quest(quest_id):
+		return
+	# already : réhydrate si session absente (reboot hub / rejoin).
+	if not esc.session_for(player).is_empty() and bool(qo.get("already", false)):
+		qo["escort"] = esc.session_for(player)
+		return
+	var spawned: Dictionary = esc.on_accept(sim, player)
+	if bool(spawned.get("ok")):
+		qo["escort"] = spawned
+
+
+func _escort_ensure_quest(player: String, quest_id: String) -> void:
+	var esc = _escort_svc()
+	if esc == null or not esc.is_escort_quest(quest_id):
+		return
+	if not esc.session_for(player).is_empty():
+		return
+	esc.on_accept(sim, player)
+
+
+func _escort_ensure_active(player: String, status: Dictionary) -> void:
+	var esc = _escort_svc()
+	if esc == null:
+		return
+	var active = status.get("active", [])
+	if typeof(active) != TYPE_ARRAY:
+		return
+	for a in active:
+		if typeof(a) != TYPE_DICTIONARY:
+			continue
+		var qid := str(a.get("id", ""))
+		if esc.is_escort_quest(qid):
+			_escort_ensure_quest(player, qid)
+			status["escort"] = esc.session_for(player)
+			return
+
+
+func _escort_before_progress(player: String, quest_id: String, step_id: String) -> Dictionary:
+	var esc = _escort_svc()
+	if esc == null or not esc.is_escort_quest(quest_id):
+		return {"ok": true}
+	# dropoff : civil doit être à la clinique avant d'enregistrer le progress economy.
+	if step_id.strip_edges() == "dropoff":
+		var gate: Dictionary = esc.on_progress(sim, player, step_id)
+		if not bool(gate.get("ok", false)):
+			return gate
+	return {"ok": true}
+
+
+func _escort_after_progress(player: String, quest_id: String, step_id: String, qo: Dictionary) -> void:
+	var esc = _escort_svc()
+	if esc == null or not esc.is_escort_quest(quest_id):
+		return
+	if step_id.strip_edges() == "dropoff":
+		# déjà validé dans before ; annoter la réponse
+		qo["escort"] = esc.session_for(player)
+		return
+	var after: Dictionary = esc.on_progress(sim, player, step_id)
+	qo["escort"] = after
+
+
+func _escort_on_complete(player: String, quest_id: String) -> void:
+	var esc = _escort_svc()
+	if esc == null or not esc.is_escort_quest(quest_id):
+		return
+	esc.on_complete(sim, player)
+
+
+func _escort_snapshot(player: String) -> Dictionary:
+	var esc = _escort_svc()
+	if esc == null:
+		return {"ok": false, "error": "escort_unavailable"}
+	return esc.snapshot(player)
 
 
 func write_response(stream: StreamPeerTCP, code: int, body: String, content_type: String) -> void:

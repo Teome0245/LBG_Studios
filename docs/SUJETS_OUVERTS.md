@@ -33,11 +33,15 @@ _Aucun sujet ouvert en attente — O-JEUX-1..3 clos (2026-10-13, retrait pont SO
 
 ### Ops (suites du fil gaps A–F2 / L3 — fil **clos** 2026-10-12)
 
-_O-OPS-1 et O-OPS-2 clos (2026-10-13) — smoke LAN vert et agrégat métriques 7j Fleet livré dans fleet_snapshot._
+_O-OPS-1 et O-OPS-2 clos (2026-10-13). O-OPS-3 = seau F3 O2 découpé en tickets polish nommés ci-dessous._
+
+### O2 — Polish gameplay hub (ex O-OPS-3 / F3)
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-OPS-3 | **F3** O2 jeu (hors plan gaps) | Explicitement hors [`plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) — voir P3–P5 [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
+| O-JEUX-ESCORT | Escorte civil `lh_escort_gate_clinic` | **en cours** — `hub_escort.gd` · spawn porte · follow · fail 40 m / 8 s · dropoff serveur · selftest |
+| O-JEUX-SHOW | Suite P2c show live La Perle | tip + formation Talen |
+| O-JEUX-HOTBAR | Hotbar slots restants (compétence / objet / emote) | `client_ui_dialogue.gd` · [`UX_BACKLOG_HUB.md`](../packages/prime-client/docs/UX_BACKLOG_HUB.md) |
 
 ### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
 
@@ -57,6 +61,7 @@ _O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre /
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-JEUX-BOTS-POI | Locomotion bots IA (anti-stuck + linger) & 2 POI factions (Avant-poste Zalem & Ksar Nomade) | **2026-10-13** · déblocage boucle stuck 6→12 ticks `hub_sim.gd` · calage carte planétaire Ctrl+M · PNJ Milice, Artisans, Désert, Soins répartis · flip_h et walk bobbing client · live `.246:8787` 10/10 bots mobiles |
 | O-DOC-ALIGN | Alignement docs périmées (registre / restauration / RUNTIME suite / smoke / README) | **2026-10-13** · canon G5+ `:8787` · packages `prime-hub` / `compagnon-desktop` · P3 Rang 2 vert · suite RUNTIME scindée fait/ouvert |
 | O-VEIL-4 | Fiabiliser chemin LLM veille | **2026-10-13** · format `json` natif Ollama dans `reason_llm.py` + calcul dynamique timeout/tokens selon `n_input` dans `evolution_veille_workflow.py` · tests 5/5 |
 | O-OPS-2 | Agrégat métriques 7j Fleet | **2026-10-13** · agrégat glissant 7j `metrics_7d` et `metrics.rolling_7d` dans `team/fleet.py` (taux succès, jobs/team 7j, stabilité LAN) · DoD plan gaps 100% OK |

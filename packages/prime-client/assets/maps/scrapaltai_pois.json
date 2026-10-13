@@ -249,6 +249,28 @@
       "essential": false,
       "active": true,
       "group": "lost_heaven"
+    },
+    {
+      "id": "poi:avant_poste_zalem",
+      "kind": "outpost",
+      "label": "Avant-poste Zalem",
+      "x": 2400.0,
+      "z": -600.0,
+      "detail": false,
+      "essential": true,
+      "active": true,
+      "group": "scrapaltai_west"
+    },
+    {
+      "id": "poi:ksar_nomade",
+      "kind": "village",
+      "label": "Ksar Nomade",
+      "x": 6850.0,
+      "z": -1450.0,
+      "detail": false,
+      "essential": true,
+      "active": true,
+      "group": "scrapaltai_east"
     }
   ]
 }

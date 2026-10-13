@@ -88,6 +88,42 @@
         "half_size_m": 6500,
         "note": "Shard Core3 13×13 km = zoom gameplay local, pas la planète entière"
       }
+    },
+    {
+      "id": "city:avant_poste_zalem",
+      "label": "Avant-poste Zalem",
+      "role": "outpost",
+      "scale": "outpost",
+      "grid": { "col": 7, "row": 2 },
+      "map_uv": { "u": 0.565, "v": 0.405 },
+      "status": "active_gameplay",
+      "region_id": "region:dune_sea_east",
+      "faction": "Milice locale",
+      "environment": "relais fortifié sur la route de Zalem — contrôle des convois et garde porte ouest",
+      "core3_playable_shard": {
+        "zone_id": "tatooine",
+        "anchor": { "x": 2400.0, "y": -600.0, "z": 0.15 },
+        "half_size_m": 450,
+        "note": "Avant-poste militaire et technique — Milice locale"
+      }
+    },
+    {
+      "id": "city:ksar_nomade",
+      "label": "Ksar Nomade",
+      "role": "village",
+      "scale": "settlement",
+      "grid": { "col": 9, "row": 2 },
+      "map_uv": { "u": 0.730, "v": 0.220 },
+      "status": "active_gameplay",
+      "region_id": "region:dune_sea_east",
+      "faction": "Civils du desert",
+      "environment": "campement nomade et oasis de ferraille dans les dunes est — refuge des caravanes et herboristes",
+      "core3_playable_shard": {
+        "zone_id": "tatooine",
+        "anchor": { "x": 6850.0, "y": -1450.0, "z": 0.15 },
+        "half_size_m": 450,
+        "note": "Oasis et campement nomade — Civils du désert et Confrérie des soins"
+      }
     }
   ],
   "deprecated_legacy": [

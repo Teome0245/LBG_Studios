@@ -218,6 +218,13 @@
       "giver_ids": ["npc:sergent_rue", "npc:core3_sergent_rue", "npc:guide_quartier", "npc:core3_daan_oth"],
       "default_giver": "Sergent de rue",
       "objective": "Escorter un civil de la porte de Lost Heaven jusqu'à la clinique (Odo Merr).",
+      "escort": {
+        "civil_name": "Civil blessé",
+        "spawn_poi": "poi:lost_heaven_gate",
+        "fail_radius_m": 40,
+        "fail_grace_s": 8,
+        "runtime": "hub_escort"
+      },
       "rewards": {
         "credits": 28,
         "xp": {"xp_quartier": 25, "xp_prospection": 10},
@@ -225,12 +232,12 @@
       },
       "progress": [
         {"id": "pickup", "label": "Retrouver le civil à la porte est", "poi": "poi:lost_heaven_gate", "radius_m": 70},
-        {"id": "dropoff", "label": "Escorter jusqu'à la clinique", "poi": "poi:lost_heaven_clinic", "radius_m": 55}
+        {"id": "dropoff", "label": "Escorter le civil jusqu'à la clinique", "poi": "poi:lost_heaven_clinic", "radius_m": 55}
       ],
       "next_steps": [
-        "Accepter à la porte ou au bureau des missions.",
-        "Accompagner le civil jusqu'à la clinique.",
-        "Confirmer l'arrivée auprès d'Odo Merr."
+        "Accepter au board — un civil spawn à la porte est.",
+        "Le rejoindre (pickup) puis rester à moins de 40 m pendant le trajet.",
+        "Arriver ensemble à la clinique (dropoff serveur) puis terminer (J)."
       ]
     },
     {

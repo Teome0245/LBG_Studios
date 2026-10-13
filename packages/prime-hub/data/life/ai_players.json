@@ -57,7 +57,8 @@
         "gate_east",
         "dunes_ne",
         "spawn_apron",
-        "gate_west"
+        "gate_west",
+        "ksar_nomade"
       ],
       "suggest_kinds": [
         "poi",
@@ -166,7 +167,8 @@
       "explore_prefer": [
         "gate_east",
         "gate_west",
-        "scrap_e"
+        "scrap_e",
+        "ksar_nomade"
       ],
       "suggest_kinds": [
         "quest",
@@ -221,7 +223,8 @@
         "hunt",
         "gate_east",
         "ridge_n",
-        "watch_zalem"
+        "watch_zalem",
+        "zalem_outpost"
       ],
       "suggest_kinds": [
         "poi",
@@ -274,7 +277,8 @@
         "gate_east",
         "hunt",
         "dunes_se",
-        "spawn_apron"
+        "spawn_apron",
+        "zalem_outpost"
       ],
       "suggest_kinds": [
         "poi",
@@ -325,7 +329,8 @@
       ],
       "explore_prefer": [
         "spawn_apron",
-        "gate_west"
+        "gate_west",
+        "ksar_nomade"
       ],
       "suggest_kinds": [
         "economy",
@@ -382,7 +387,8 @@
         "lh_rumor_perle"
       ],
       "explore_prefer": [
-        "spawn_apron"
+        "spawn_apron",
+        "ksar_nomade"
       ],
       "suggest_kinds": [
         "npc",
@@ -433,7 +439,8 @@
       ],
       "explore_prefer": [
         "gate_east",
-        "spawn_apron"
+        "spawn_apron",
+        "zalem_outpost"
       ],
       "suggest_kinds": [
         "npc",
@@ -493,7 +500,8 @@
         "gate_west",
         "hunt",
         "dunes_nw",
-        "gate_east"
+        "gate_east",
+        "ksar_nomade"
       ],
       "suggest_kinds": [
         "poi",
@@ -544,7 +552,8 @@
       ],
       "explore_prefer": [
         "gate_east",
-        "spawn_apron"
+        "spawn_apron",
+        "zalem_outpost"
       ],
       "suggest_kinds": [
         "npc",
@@ -596,8 +605,18 @@
     "wave10_note": "10 joueurs IA enabled sur prime-hub (hub Godot, pas Core3).",
     "studio_soft_links_at": "2026-10-07",
     "studio_soft_links": [
-      {"studio": "studio_dev_vulcan", "login": "vulcan_bridge", "ig": "Vex", "bridge": "player_bridge_vex"},
-      {"studio": "godot_dev_hermes", "login": "hermes_bridge", "ig": "Tess", "bridge": "player_bridge_tess"}
+      {
+        "studio": "studio_dev_vulcan",
+        "login": "vulcan_bridge",
+        "ig": "Vex",
+        "bridge": "player_bridge_vex"
+      },
+      {
+        "studio": "godot_dev_hermes",
+        "login": "hermes_bridge",
+        "ig": "Tess",
+        "bridge": "player_bridge_tess"
+      }
     ]
   }
 }

@@ -14,6 +14,7 @@ const HubPresenceScript = preload("res://scripts/hub_presence.gd")
 const HubSimViewsScript = preload("res://scripts/hub_sim_views.gd")
 const HubSimAmbientScript = preload("res://scripts/hub_sim_ambient.gd")
 const HubSimDefsScript = preload("res://scripts/hub_sim_defs.gd")
+const HubEscortScript = preload("res://scripts/hub_escort.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -39,6 +40,7 @@ var world_stream = null
 var combat = null
 var presence = null
 var ambient = null
+var escort = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -97,6 +99,9 @@ func reset() -> void:
 	if combat == null:
 		combat = HubCombatScript.new()
 	combat.setup(self)
+	if escort == null:
+		escort = HubEscortScript.new()
+	escort.clear()
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -350,7 +355,9 @@ func _assign_bot_goal(bot: Dictionary, bdef: Dictionary = {}, with_path: bool = 
 	bot["goal"] = goal_id
 	bot["play_mode"] = play_mode
 	bot["quest_id"] = quest_id
-	bot["linger_until"] = 0.0
+	var now_sec := float(Time.get_ticks_msec()) * 0.001
+	if float(bot.get("linger_until", 0.0)) <= now_sec:
+		bot["linger_until"] = 0.0
 	bot["stuck_ticks"] = 0
 	bot["has_waypoint"] = false
 	bot["waypoint"] = Vector2.ZERO
@@ -547,8 +554,9 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 		nz = c.y
 	var moved := Vector2(nx - pos.x, nz - pos.z).length()
 	if moved < step_len * 0.15:
-		bot["stuck_ticks"] = int(bot.get("stuck_ticks", 0)) + 1
-		if int(bot["stuck_ticks"]) >= 6 and collision != null:
+		var st := int(bot.get("stuck_ticks", 0)) + 1
+		bot["stuck_ticks"] = st
+		if st == 6 and collision != null:
 			var final: Vector3 = bot["target"]
 			_apply_path_to_bot(bot, final.x, final.z)
 			if not bool(bot.get("has_waypoint", false)):
@@ -556,8 +564,15 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 				if detour != null:
 					bot["waypoint"] = detour
 					bot["has_waypoint"] = true
-			bot["stuck_ticks"] = 0
-		elif int(bot["stuck_ticks"]) >= 12:
+		elif st >= 12:
+			bot["has_waypoint"] = false
+			bot["path"] = []
+			if collision != null:
+				var free_spot: Vector2 = collision.nearest_walkable(pos.x, pos.z, 20.0)
+				bot["pos"] = Vector3(free_spot.x, pos.y, free_spot.y)
+				pos = bot["pos"]
+				nx = pos.x
+				nz = pos.z
 			_assign_bot_goal(bot)
 			bot["stuck_ticks"] = 0
 	else:
@@ -650,7 +665,13 @@ func step(dt: float) -> void:
 			if combat != null:
 				combat.step_beast(e, dt)
 		elif str(e.get("kind", "")) == "npc":
+			# Escorte : mouvement géré par hub_escort.tick (goal escort_*).
+			var g := str(e.get("goal", ""))
+			if g.begins_with("escort_"):
+				continue
 			_step_npc(e, dt)
+	if escort != null:
+		escort.tick(self, dt, economy)
 	if tick % 40 == 0 and ambient != null:
 		ambient.maybe_ambient()
 	if tick % _persist_every_ticks == 0 and player_store != null:

@@ -619,6 +619,35 @@ func complete(player: String, quest_id: String) -> Dictionary:
 	}
 
 
+func abandon(player: String, quest_id: String, reason: String = "") -> Dictionary:
+	## Retire une quête active sans reward (ex. escorte séparée).
+	var p := _player(player)
+	var qid := quest_id.strip_edges()
+	var found := false
+	var active: Array = []
+	for a in p["active"]:
+		if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) == qid:
+			found = true
+			continue
+		active.append(a)
+	if not found:
+		return {"ok": false, "error": "not_active", "quest_id": qid}
+	p["active"] = active
+	_save_players()
+	var why := reason.strip_edges()
+	var msg := "Mission abandonnée : %s." % qid
+	if why != "":
+		msg = "Mission abandonnée (%s) : %s." % [why, qid]
+	log_session_event(player, "quest_abandon", msg, {"quest_id": qid, "reason": why})
+	return {
+		"ok": true,
+		"quest_id": qid,
+		"reason": why,
+		"active": _normalized_active(p["active"] as Array),
+		"source": "prime_hub",
+	}
+
+
 func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 	var p := _player(player)
 	var amt := maxi(0, amount)

@@ -93,8 +93,8 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 
 ### Ouvert (polish / contenu)
 
-1. **Gameplay hub** — quêtes terrain POI enrichies, craft UX, dialogue riche (profondeur, pas le rail P3 de base).
-2. **O-OPS-3 / F3** — suites O2 hors plan gaps — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+1. **O-JEUX-ESCORT** — escorte civil suivable `lh_escort_gate_clinic` (`hub_escort.gd`) — **code monorepo** 2026-10-13 · selftest `tools/escort_selftest.gd` · smoke `tools/smoke_escort_hub.sh` · **deploy `.246` encore requis**.
+2. **Gameplay hub** — show La Perle (P2c), hotbar restants, craft UX — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 3. Unification chemin client Git vs runtime 140 (`LBG_PRIME_CLIENT_ROOT`) — [`REGISTRE.md`](REGISTRE.md).
 
 ## Anti double-build

@@ -44,6 +44,22 @@ static func in_deprecated_city(x: float, z: float) -> bool:
 			return true
 	return false
 
+const ALLOWED_OUTPOSTS: Array = [
+	{"id": "avant_poste_zalem", "x": 2400.0, "z": -600.0, "radius_m": 450.0},
+	{"id": "ksar_nomade", "x": 6850.0, "z": -1450.0, "radius_m": 450.0},
+]
+
+static func in_outpost_radius(x: float, z: float) -> bool:
+	for out in ALLOWED_OUTPOSTS:
+		var ox := float(out["x"])
+		var oz := float(out["z"])
+		var r := float(out["radius_m"])
+		var dx := x - ox
+		var dz := z - oz
+		if dx * dx + dz * dz <= r * r:
+			return true
+	return false
+
 static func in_hub_radius(x: float, z: float) -> bool:
 	var a := anchor()
 	var r := hub_radius_m()
@@ -60,7 +76,7 @@ static func should_show_entity(core3: Vector3, kind: String, name: String = "", 
 		return true
 	if in_deprecated_city(core3.x, core3.z):
 		return false
-	return in_hub_radius(core3.x, core3.z)
+	return in_hub_radius(core3.x, core3.z) or in_outpost_radius(core3.x, core3.z)
 
 
 ## Navettes / tangibles Core3 (points gris « shuttle fly to tatooine »).

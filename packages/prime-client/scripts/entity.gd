@@ -284,6 +284,8 @@ func _refresh_screen_pos() -> void:
 
 func _bob_offset_px() -> float:
 	if kind == "player":
+		if _smooth_vel.length_squared() > 0.05:
+			return sin(_idle_phase * 12.0) * 1.5
 		return 0.0
 	if not _anchor.has("_bob") or not (_anchor["_bob"] is Dictionary):
 		return 0.0
@@ -374,6 +376,16 @@ func _update_sprite_offset() -> void:
 	var sprite := _sprite_node()
 	if sprite:
 		sprite.position.y = height_offset
+		if _smooth_vel.x < -0.1:
+			sprite.flip_h = true
+		elif _smooth_vel.x > 0.1:
+			sprite.flip_h = false
+		elif absf(facing_angle) > 0.01:
+			var sin_a := sin(facing_angle)
+			if sin_a < -0.2:
+				sprite.flip_h = true
+			elif sin_a > 0.2:
+				sprite.flip_h = false
 
 func _draw() -> void:
 	if kind != "player" and _is_clutter_visual():
