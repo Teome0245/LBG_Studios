@@ -27,8 +27,8 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 
 1. **Plan d'évolutions (10/10 tickets)** : **100 % réalisé & clôturé** (tickets 1.1..1.3, 2.1..2.3, 3.1, 3.2, 5.1, 5.2 DONE).
 2. **Feeling Compagnon O-FEEL-1..3 (rejeux humains `:5174`)** : **100 % validé & clôturé** (C1/C2/PLAN/GO ALL PASS + retour terrain présence naturel).
-3. **Prochaines pistes** : **O-IDE-1..3** (Cline E4b-qat / perf `.110` / ADR) · Ops `smoke_lan_surfaces.sh`.
-4. Handoffs Antigravity historiques : **clos** (sonde AD + visuel Compagnon).
+3. **Mains code & coûts LLM O-IDE-1..3** : **100 % validé & clôturé** (smoke live cline prouvé, diagnostic CPU Ollama .110 chiffré, OpenCode confirmé nominal ADR 0025).
+4. **Prochaines pistes** : Autonomie Campus / CI (`O-CAMP-1..2`, `O-D7-1`) · Ops `smoke_lan_surfaces.sh` · Veille DeepSeek Harness / VoiceStudio (`O-VEIL-1..2`).
 
 ## Fichiers / surfaces utiles
 
@@ -51,6 +51,11 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-13 : **mains code Cline / perf Ollama .110 / décision ADR (O-IDE-1..3) — validé & clôturé** —
+  - **O-IDE-1 (Smoke live bout-en-bout)** : Preuve d'exécution complète validée depuis l'Orchestrateur Team (`:8010`) vers l'agent Linux `.143:5005` (`run_cli_agent app=cline`) déclenchant `/home/lbg/.local/bin/cline` avec le modèle `huihui_ai/gemma-4-abliterated:E4b-qat` vers Ollama `.110:11434`.
+  - **O-IDE-2 (Mesure de perf & diagnostic VRAM)** : Constat chiffré sur `.110` via `ollama ps` : `size_vram: 0` (exécuté 100 % en RAM CPU) avec 32k context. La latence CPU dépasse 350 s par tour, provoquant le timeout du client Cline (`Error: The operation timed out` à 357 s). Respect strict de la matrice locale : interdiction de descendre sous `E4b-qat` (plancher qualité de codage).
+  - **O-IDE-3 (Décision formelle ADR 0025)** : OpenCode headless (`opencode run -m opencode/big-pickle`) est formellement maintenu comme **nominal de production** pour les mains de code Team (Métis / Iris / Dédale). Cline CLI reste un outil de **second avis / option locale 0 € API** prêt pour le jour où `.110` disposera d'accélération VRAM GPU.
+  - Documents mis à jour : [`packages/cortex/docs/cline/CLI_SECOND_AVIS.md`](../packages/cortex/docs/cline/CLI_SECOND_AVIS.md), [`packages/cortex/docs/adr/0025-mains-code-143-run-cli-agent.md`](../packages/cortex/docs/adr/0025-mains-code-143-run-cli-agent.md), [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 - 2026-10-12 : **polish retour terrain longue durée Compagnon (O-FEEL-3) — validé & clôturé** —
   - `presence_report.py` enrichi : regex de détection étendue aux tournures naturelles de fil long (« comment réagissent les personas sur le terrain », « des nouvelles de Lia »).
   - Personnalisation dynamique du retour terrain selon le persona ciblé (`_persona_from_prompt`), avec conservation du comparatif équilibré Nix vs Mira par défaut.

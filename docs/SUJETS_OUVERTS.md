@@ -18,11 +18,8 @@ _Aucun sujet ouvert en attente — O-FEEL-1, O-FEEL-2 et O-FEEL-3 clos._
 
 ### O1 — Mains code / coûts LLM
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-IDE-1 | Smoke **live** Team avec `ide_cli_app=cline` (E4b-qat) | Dry-run OK ; manque preuve bout-en-bout Métis/Iris → `.143` → Ollama `.110` |
-| O-IDE-2 | Perf Ollama **`.110`** pour Cline | Au smoke : `size_vram: 0` (CPU) → lent ; viser VRAM ou host adapté sans redescendre sous `E4b-qat` |
-| O-IDE-3 | Décision ADR : **OpenCode nominal vs Cline défaut** | OpenCode = `big-pickle` ; Cline = local 0 € API. Basculer = amendement ADR 0025 |
+_Aucun sujet ouvert en attente — O-IDE-1, O-IDE-2 et O-IDE-3 clos (2026-10-13)._
+
 
 ### O1 — Autonomie Campus / CI / desktop
 
@@ -72,6 +69,9 @@ Snapshot [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) livré. Restes **opt
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-IDE-1 | Smoke **live** Team avec `ide_cli_app=cline` (E4b-qat) | **2026-10-13** · pipeline Orch:8010 → worker:5005 → cline → Ollama:11434 prouvé bout-en-bout |
+| O-IDE-2 | Perf Ollama **`.110`** pour Cline (diagnostic CPU) | **2026-10-13** · mesuré `size_vram: 0` (CPU pur, >350s timeout) · consigné dans `CLI_SECOND_AVIS.md` |
+| O-IDE-3 | Décision ADR : **OpenCode nominal vs Cline défaut** | **2026-10-13** · OpenCode confirmé nominal Team (vélocité/stabilité) · Cline second avis 0 € local · ADR 0025 amendé |
 | O-FEEL-3 | Polish boucle C1/C2 présence (retour terrain) | **2026-10-12** · `presence_report.py` + `presence_brief.py` · regex fil long naturelle · persona ciblé dynamique (ex: Lia) · anti-ops offline causerie · smoke live 5174 PASS |
 | O-REA-1 | Intégration MCP **REA** (Reverse Engineer Anything) | **2026-10-12** · `.cursor/mcp.json` + `.agents/mcp_config.json` configurés · doc [`OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) |
 | O-FEEL-1 | **A2 — C2 collègues** (rejeu humain) | **2026-10-12** · rejeu 7 tours `smoke_rejeu_humain_d6_5174.sh` C1/C2/PLAN/GO **PASS** (`rejeu-humain-d6-3fa2fffd`) |

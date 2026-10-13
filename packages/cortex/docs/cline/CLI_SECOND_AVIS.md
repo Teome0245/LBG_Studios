@@ -46,9 +46,22 @@ Ou Agir : `lance cline sur omarchy pour …`
 
 **ADR 0023** : ne pas lancer OpenCode + Cline en écriture parallèle sur le même cwd.
 
-## Coûts
+## Coûts & Décision nominale (ADR 0025)
 
-| Chemin | Backend | Coût tokens |
-|--------|---------|-------------|
-| OpenCode headless | `opencode/big-pickle` | catalogue OpenCode (limites compte) |
-| Cline CLI / UI | Ollama `.110` | **0 € API** — charge GPU/CPU LAN |
+| Chemin | Backend | Coût tokens | Latence observée | Statut Team |
+|--------|---------|-------------|------------------|-------------|
+| **OpenCode headless** | `opencode/big-pickle` | catalogue OpenCode | ~5–15 s | **Nominal (Défaut)** |
+| **Cline CLI** | Ollama `.110` (`E4b-qat`) | **0 € API** (LAN) | >350 s (`size_vram: 0` CPU) | **Second avis / Opt-in** |
+
+## Mesure de charge & Smoke live (2026-10-13 — O-IDE-1..3)
+
+1. **Preuve bout-en-bout (O-IDE-1)** :
+   - Déclenchement live vérifié : Team/Orch (`:8010`) → worker `.143:5005` (`run_cli_agent app=cline`) → binaire user `/home/lbg/.local/bin/cline` → Ollama `.110:11434`.
+2. **Diagnostic performance Ollama (O-IDE-2)** :
+   - L'inspection `ollama ps` sur `.110` confirme `size_vram: 0` (exécution 100 % RAM CPU, sans GPU) avec un contexte de 32 768 tokens.
+   - Sur CPU non accéléré, la latence de traitement dépasse les 350 s, déclenchant le timeout HTTP interne du client Cline (`durationMs: 357164` → `Error: The operation timed out`).
+   - Règle de plancher : interdiction de redescendre sous `E4b-qat` pour coder (seuil qualité minimum). L'accélération nécessite un hôte Ollama avec VRAM allouée.
+3. **Décision formelle ADR 0025 (O-IDE-3)** :
+   - **OpenCode** est **maintenu comme exécutant nominal** pour toute la production Team (Métis, Iris, Dédale, Pygmalion).
+   - **Cline CLI** reste un **outil de second avis / analyse locale à la demande**, sans bloquer les workflows studio.
+

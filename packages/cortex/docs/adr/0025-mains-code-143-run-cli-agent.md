@@ -25,8 +25,10 @@ Contraintes ADR 0023 :
 4. **Claude Code CLI** : allowlist **expérimentale** — hang / modèle Ollama non catalogué
    (v2.1.x) ; garder UI / second avis ; réessayer après fix settings / version.
 5. **Cline CLI** : installé `.143` (`~/.local/bin/cline`, 2026-10-11) en **second avis**
-   via Ollama **`.110`** (coûts locaux) — OpenCode reste nominal ; ADR 0023 = pas d’écriture
-   parallèle. Extension VS Code Cline = Plan→Act manuel. Voir [`cline/CLI_SECOND_AVIS.md`](../cline/CLI_SECOND_AVIS.md).
+   via Ollama **`.110`** (coûts locaux). **Amendement 2026-10-13 (O-IDE-1..3)** : smoke live
+   confirmé bout-en-bout (`E4b-qat`). L'exécution CPU sans VRAM sur `.110` (`size_vram: 0`, >350 s)
+   impose de maintenir **OpenCode CLI comme nominal** de production pour la vélocité Team.
+   Cline CLI reste disponible en second avis / opt-in 0 € API. Voir [`cline/CLI_SECOND_AVIS.md`](../cline/CLI_SECOND_AVIS.md).
 6. **Branchement Team** : Iris (`dev_godot`), Dédale (`dev_game`), Pygmalion
    (`infographiste_ia`), **Métis** (`dev_studio`) via `context.ide_cli=true`.
 7. **Rôle hors-jeu** : `dev_studio` (persona **Métis**) — Cortex / Compagnon / Pilot /

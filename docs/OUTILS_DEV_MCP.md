@@ -65,5 +65,5 @@ Via le wrapper monorepo :
 
 ## 5. Règles de sécurité LBG Studios
 
-1. **Local-first absolu** : l'exécution et l'analyse restent 100 % locales sur la machine de dev ; aucun binaire ni jeton n'est envoyé vers des tiers.
+1. **Local-first absolu** : l'exécution et l'analyse restent 100 % locales sur l'infrastructure LBG ; aucun binaire ni jeton n'est envoyé vers des tiers.
 2. **Périmètre Dev/Studio uniquement (O1)** : cet outillage est réservé aux phases d'analyse, d'audit de legacy et d'ingénierie ; il n'est **jamais** embarqué dans le runtime joueur Godot (`prime-hub` / `prime-client`).
