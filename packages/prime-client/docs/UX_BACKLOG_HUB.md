@@ -34,8 +34,8 @@ Doc détaillée : `docs/MAP_TEXTURES_AND_RETAIL.md`
 
 ### Iris / UI
 - ~~Brancher hotbar 1–4, 8–0~~ — **fait** 2026-10-14 (O-JEUX-HOTBAR) : 1 attaque/salvage/chasse · 2 craft kit · 3 objet use · 4 emote · 5 carte · 6 talents · 7 inventaire · 8 chat · 9 compagnon · 0 menu.
-- Inventaire : utilisation objet **OK** (clic + hotbar 3) · drag & drop = suite.
-- Toasts HUD dédiés (ne pas écraser l’état locomotion sur `StateLabel` long terme).
+- Inventaire : utilisation objet **OK** (clic + hotbar 3) · drag & drop = `O-UX-DND` (non bloquant, reporté).
+- ~~Toasts HUD dédiés~~ — **fait** 2026-10-14 : `ToastPanel` bas-centre · `_hotbar_feedback` n’écrase plus `StateLabel`.
 
 ### Gameplay / gateway
 - Patrol PNJ : uniquement via ancre JSON `_patrol` + flag `enabled` (pas de mouvement client si position serveur figée).

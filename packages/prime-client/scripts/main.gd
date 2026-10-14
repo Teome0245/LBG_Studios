@@ -73,6 +73,8 @@ var _selected_entity_id: int = 0
 var _world_entry_done: bool = false
 var _possessed_id: int = 0
 var _beast_telegraph_seen: Dictionary = {}
+var _toast_label: Label = null
+var _toast_timer: Timer = null
 
 # Accesseurs de compatibilité pour sous-modules et vues externes
 var _echo_controller: Node:
@@ -113,6 +115,7 @@ func _ready() -> void:
 	_focus_lost_heaven_hub()
 	_maybe_demo_spawn()
 	_ensure_wiki_panel()
+	_ensure_toast_ui()
 	_apply_debug_hud()
 	_log_build_info()
 	_update_info()
@@ -645,9 +648,56 @@ func _on_hotbar_slot(index: int) -> void:
 	ui_dialogue.on_hotbar_slot(index)
 
 func _hotbar_feedback(msg: String) -> void:
-	if state_label:
-		state_label.text = msg
-		state_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 1))
+	_show_toast(msg)
+
+func _ensure_toast_ui() -> void:
+	if _toast_label != null:
+		return
+	var hud := get_node_or_null("UI/HudLayer") as Control
+	if hud == null:
+		return
+	var panel := PanelContainer.new()
+	panel.name = "ToastPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	panel.offset_left = -220.0
+	panel.offset_right = 220.0
+	panel.offset_top = -118.0
+	panel.offset_bottom = -78.0
+	panel.visible = false
+	var label := Label.new()
+	label.name = "ToastLabel"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color(0.95, 0.88, 0.55, 1.0))
+	panel.add_child(label)
+	hud.add_child(panel)
+	_toast_label = label
+	_toast_timer = Timer.new()
+	_toast_timer.name = "ToastTimer"
+	_toast_timer.one_shot = true
+	_toast_timer.wait_time = 2.5
+	_toast_timer.timeout.connect(_hide_toast)
+	add_child(_toast_timer)
+
+func _show_toast(msg: String) -> void:
+	_ensure_toast_ui()
+	if _toast_label == null:
+		if state_label:
+			state_label.text = msg
+			state_label.add_theme_color_override("font_color", Color(0.95, 0.82, 0.45, 1))
+		return
+	_toast_label.text = msg
+	(_toast_label.get_parent() as CanvasItem).visible = true
+	if _toast_timer:
+		_toast_timer.start()
+
+func _hide_toast() -> void:
+	if _toast_label == null:
+		return
+	var panel := _toast_label.get_parent() as CanvasItem
+	if panel:
+		panel.visible = false
 
 func _ensure_hub_chat_ui() -> void:
 	ui_dialogue.ensure_hub_chat_ui()

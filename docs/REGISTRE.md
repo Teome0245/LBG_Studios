@@ -42,16 +42,16 @@ sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRO
 | Env prod | `.140` `/etc/lbg-ia-mmo.env` (depuis `packages/cortex/infra/secrets/lbg.env`) |
 | Client Windows | Launchpad ≥2.1.4 (Prime only) → `J:\…` ; hub joueur `.246:8787` ; Godot `J:\swgemu\clients\prime-client` |
 
-### Client Godot (deux chemins — ne pas les confondre)
+### Client Godot (chemins)
 
 | Rôle | Chemin |
 |------|--------|
 | **Source Git** (dev, ce repo) | `packages/prime-client` |
-| **Runtime 140** (env actuel) | `/opt/new_mmo/prime-client` (`LBG_PRIME_CLIENT_ROOT`) |
-| Copie Studios sur 140 | `/opt/LBG_Studios/packages/prime-client` (pas encore l’env par défaut) |
+| **Runtime 140** (`LBG_PRIME_CLIENT_ROOT`, canon **2026-10-14**) | `/opt/LBG_Studios/packages/prime-client` |
+| Miroir legacy (sync optionnel) | `/opt/new_mmo/prime-client` — forcer via `LBG_PRIME_ALLOW_LEGACY_NEW_MMO=1` |
 | Joueur Windows | `J:\swgemu\clients\prime-client` (sync depuis le package) |
 
-Nouvelles features client → **Git Studios**. Deploy / sondes VM → respecter `LBG_PRIME_CLIENT_ROOT` jusqu’à unification.
+Nouvelles features client → **Git Studios**. Deploy / sondes VM → `LBG_PRIME_CLIENT_ROOT` Studios ; `bash packages/cortex/infra/scripts/sync_prime_client_assets_vm.sh`.
 
 ---
 
@@ -226,6 +226,7 @@ flowchart LR
 | Date | Jalon | Où |
 |------|--------|-----|
 | 2026-10-13 | Canon docs : autorité joueur `:8787` · packages `prime-hub` / `compagnon-desktop` au registre | ce fichier · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) |
+| 2026-10-14 | Unification `LBG_PRIME_CLIENT_ROOT` Studios · toasts HUD · O-DOC-2 clos · plateau polish O2 | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
 | 2026-10-13 | Clôture backlog nominal (ops/veille/IDE/campus) · smoke LAN 24 OK | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
 | 2026-10-12 | Plan évolutions 10/10 DONE · World Stream + mémoire relationnelle · feeling Compagnon | [`suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md) |
 | 2026-10-11 | Navmesh `NavigationServer3D` live · L3 smoke LAN `days_ok=3/3` | [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) |

@@ -96,7 +96,7 @@ bash packages/cortex/infra/scripts/stop_core3_and_spike_246.sh --keep-account-ad
 1. ~~**O-JEUX-ESCORT**~~ — **live** · smoke `tools/smoke_escort_hub.sh`.
 2. ~~**O-JEUX-SHOW**~~ — **live** · smoke `tools/smoke_show_hub.sh`.
 3. ~~**O-JEUX-HOTBAR**~~ — **code** 2026-10-14 · use-item / emote / compagnon / craft kit · smoke `tools/smoke_hotbar_hub.sh` · deploy hub+client avec ce commit.
-4. Unification chemin client Git vs runtime 140 (`LBG_PRIME_CLIENT_ROOT`) — [`REGISTRE.md`](REGISTRE.md).
+4. ~~Unification `LBG_PRIME_CLIENT_ROOT`~~ — **fait** 2026-10-14 · `/opt/LBG_Studios/packages/prime-client` — [`REGISTRE.md`](REGISTRE.md).
 
 ## Anti double-build
 

@@ -1,9 +1,10 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-13  
+**Mis à jour** : 2026-10-14  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
-**Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)
+**Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
+**Fil** : clôture polish O2 + non-bloquants — **archiver ce fil** ; suite = nouveau fil (contenu / O-UX-DND / feeling).
 
 ---
 
@@ -11,7 +12,7 @@
 
 Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
 Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · plateau gameplay hub.
+**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · non-bloquants (O-DOC-2, root client, toasts) **clos** · plateau net.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
@@ -34,9 +35,10 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 6. **Thème 3 — Veille Évolution (O-VEIL-1..4)** : **100 % validé & clôturé** (ADR 0028 formalisé pour DSH & VoiceStudio ; doc de cadrage L1 [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) ; fiabilisation route LLM veille O-VEIL-4 avec format json Ollama et dimensionnement dynamique timeout/tokens).
 7. **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3)** : **100 % validé & clôturé** (`OBJECTIVES.md` aligné sur Compagnon présence `:5174` vs Pilot cockpit ops `:8080`, jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md`).
 8. **Ops — Agrégat 7j Fleet (O-OPS-2)** : **100 % validé & clôturé** (`metrics_7d` et `rolling_7d` intégrés dans `team/fleet.py`, DoD plan combler gaps agentiques 100% OK).
-9. **Reste ouvert** : optionnel `O-DOC-2` Bugbot · unification `LBG_PRIME_CLIENT_ROOT` — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+9. **O-DOC-2 / root client / toasts HUD** : **clos** 2026-10-14 — Bugbot optionnel abandonné au plateau · `LBG_PRIME_CLIENT_ROOT` → `/opt/LBG_Studios/packages/prime-client` · toasts bas-centre.
 10. **Docs périmées (O-DOC-ALIGN)** : **fait** 2026-10-13.
 11. **O-JEUX-ESCORT / SHOW / HOTBAR** : **clos** 2026-10-14 — escorte · La Perle · hotbar 2/3/4/9 branchés.
+12. **Reste ouvert** : `O-UX-DND` (drag inventaire, non bloquant) — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

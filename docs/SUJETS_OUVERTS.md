@@ -1,6 +1,6 @@
 # Sujets ouverts — LBG Studios
 
-**Mis à jour** : 2026-10-13  
+**Mis à jour** : 2026-10-14  
 **Rôle** : liste des sujets **pas encore traités** (hors tickets déjà `done`).  
 **Pas** un plan d’exécution détaillé — juste le backlog explicite.  
 Quand un sujet est clos : le déplacer en § Clos (avec date) ou le supprimer.
@@ -45,11 +45,13 @@ _Aucun sujet ouvert en attente — O-VEIL-1, O-VEIL-2, O-VEIL-3 et O-VEIL-4 clos
 
 ### Docs — suites fil priorités (PR #4 mergée — fil **clos** 2026-10-12)
 
-_O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre / restauration / RUNTIME suite / smoke / README alignés sur G5+ `:8787`._
+_Aucun sujet ouvert — O-DOC-1 / O-DOC-ALIGN / O-DOC-2 clos._
+
+### O2 — Polish UX client (suite légère)
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-DOC-2 | Review Bugbot formelle du snapshot priorités (optionnel) | Review manuelle OK au fil ; Bugbot / Composer 2.5 hors quota à l’époque — relancer si besoin d’une review outillée |
+| O-UX-DND | Inventaire drag & drop | Non bloquant · clic + hotbar 3 suffisent · reporté volontairement |
 
 ---
 
@@ -57,6 +59,9 @@ _O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre /
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-DOC-2 | Review Bugbot formelle snapshot priorités (optionnel) | **2026-10-14** · review manuelle du fil jugée suffisante au plateau · Bugbot hors quota à l’époque · pas de rejeu outillé requis |
+| O-OPS-ROOT | Unification `LBG_PRIME_CLIENT_ROOT` → Studios sur 140 | **2026-10-14** · env `/opt/LBG_Studios/packages/prime-client` · sync assets canon + miroir legacy · resolver Team déjà Studios-first |
+| O-UX-TOAST | Toasts HUD dédiés (ne pas écraser `StateLabel`) | **2026-10-14** · `ToastPanel` bas-centre · feedback hotbar / inventaire 2,5 s |
 | O-JEUX-HOTBAR | Hotbar slots 2/3/4/9 (craft / objet / emote / compagnon) | **2026-10-14** · `POST /v1/inventory/use` · `/v1/companion/escort` · craft kit · emotes `/v1/say` · inventaire clic utilisable · selftest OK |
 | O-JEUX-SHOW | Show live La Perle + formation Talen (P2c) | **2026-10-14** · `hub_show.gd` cycle idle/live/encore · tip gated live · `POST /v1/show/train` · artiste scène · selftest OK |
 | O-JEUX-ESCORT | Escorte civil `lh_escort_gate_clinic` | **2026-10-14** · `hub_escort.gd` live `:8787` · follow + fail 40 m/8 s · dropoff serveur · `GET /v1/quests/escort` 200 · selftest + smoke OK |

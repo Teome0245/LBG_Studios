@@ -74,10 +74,11 @@ Jalons P1–P6 documentés **faits / clos** — voir [`PLAN_MMO_O2.md`](PLAN_MMO
 
 **Reste produit** (backlog léger) :
 
-1. **O-OPS-3** — F3 O2 jeu (hors plan gaps A–F2) — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
-2. Polish gameplay hub (quêtes terrain POI, craft UX) — suite post-G5 dans [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
-3. Unification chemin client Git vs `/opt/new_mmo/prime-client` sur 140 — [`REGISTRE.md`](REGISTRE.md).
+1. ~~**O-OPS-3** / ESCORT·SHOW·HOTBAR~~ — **clos** 2026-10-14.
+2. Contenu / craft UX / quêtes terrain POI — suite post-G5 dans [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
+3. ~~Unification `LBG_PRIME_CLIENT_ROOT`~~ — **clos** 2026-10-14 · Studios sur 140 — [`REGISTRE.md`](REGISTRE.md).
 4. Dictée micro → STT (Rang 1, reporté).
-5. Optionnel : review Bugbot `O-DOC-2`.
+5. ~~`O-DOC-2` Bugbot~~ — **clos** 2026-10-14 (review manuelle).
+6. `O-UX-DND` inventaire drag & drop (non bloquant) — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 **Rang 1** (déjà largement vert) — dictée STT reste le seul jaune volontaire.
