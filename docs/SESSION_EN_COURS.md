@@ -61,6 +61,21 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-14 : **Repositionnement Géographique & 12 Bâtiments de Village (Ksar Nomade & Avant-poste Zalem) — validé & déployé live `.246:8787`** —
+  - **Éloignement & Recalage géographique** :
+    - *Avant-poste Zalem* déplacé plein Ouest à ~6 km de Lost Heaven : Core3 `(-1200.0, 0.15, -550.0)`, UV carte planétaire `{ "u": 0.525, "v": 0.465 }` (grid col 6, row 2) pile sur le nœud routier rouge menant à la capitale Zalem.
+    - *Ksar Nomade* déplacé plein Sud le long de la boucle routière à ~3.1 km : Core3 `(4950.0, 0.15, -3800.0)`, UV carte planétaire `{ "u": 0.665, "v": 0.150 }` (grid col 8, row 1) sur le relais sud au pied des dunes.
+    - Distance entre les deux villages portée à ~7 km.
+  - **12 Bâtiments de village ajoutés (`lost_heaven_buildings.json`)** :
+    - *Avant-poste Zalem* (6 structures) : Poste de commandement (`town_hall`, 64m), Atelier mécanique relais (`trainer_artisan`, 56m), Caserne de la milice (`trainers_combat`, 56m), Relais des convois (`inn`, 52m), Dépôt de ravitaillement (`shops`, 48m), Barrière ouest (`city_gate`, 40m).
+    - *Ksar Nomade* (6 structures) : Grande Tente de l'Ancien (`town_hall`, 64m), Tente des soins & onguents (`clinic`, 52m), Bazar nomade & troc (`shops`, 60m), Caravansérail de l'Oasis (`inn`, 56m), Forge des sables (`trainer_artisan`, 48m), Arches de ferraille (`city_gate`, 40m).
+    - Les bâtiments intègrent portes, gabarits AABB, toits et enseignes via le moteur de rendu `HubBuildingsLayer` et `BuildingTileRegistry`.
+  - **Collision, Navmesh & Sécurité Recast** :
+    - `hub_nav.gd` protégé : limitation du calcul des bounds de Recast au périmètre Lost Heaven (`3000..7000`, `-2000..100`), évitant l'explosion du temps de bake sur un mesh 8 km × 5 km (bake Recast maintenu à ~699 ms).
+    - `collision_blocks` passe à 26 (tous les bâtiments bloquent le passage et offrent des passages de porte).
+  - **Preuve & Déploiement** :
+    - Tests headless CI Godot 18/18 checks OK en 6s (`ci_godot_headless.sh`), `ruff check .` vert.
+    - Déploiement sur `.246:8787` (`deploy_prime_hub_246.sh`) : 26 collision blocks, PNJ spawnés sur leurs bâtiments respectifs, bots IA (Renn, Ori, Vex) en route active vers les avant-postes.
 - 2026-10-13 : **Locomotion Bots IA & Répartition Factions sur 2 Nouveaux POI (O2 Jeu) — validé & déployé live `.246:8787`** —
   - **Déblocage bots IA (`hub_sim.gd`)** : Correction du bug d'anti-stuck où `stuck_ticks >= 6` réinitialisait systématiquement `stuck_ticks = 0`, empêchant d'atteindre le seuil de dégagement `stuck_ticks >= 12` et bloquant les bots dans une boucle infinie contre les obstacles. Préservation de `linger_until` pour des pauses de rôle naturelles de 3 à 7 s à destination.
   - **2 Nouveaux POI calés sur la carte planétaire** :

@@ -19,8 +19,8 @@ const LODGE_W := Vector3(4305.0, 0.15, -780.0)
 const LODGE_N := Vector3(4749.0, 0.15, -430.0)
 const LODGE_E := Vector3(5245.0, 0.15, -630.0)
 const LODGE_S := Vector3(4860.0, 0.15, -1185.0)
-const OUTPOST_ZALEM := Vector3(2400.0, 0.15, -600.0)
-const KSAR_NOMADE := Vector3(6850.0, 0.15, -1450.0)
+const OUTPOST_ZALEM := Vector3(-1200.0, 0.15, -550.0)
+const KSAR_NOMADE := Vector3(4950.0, 0.15, -3800.0)
 const BOT_SPEED := 12.0
 
 const POIS: Dictionary = {
@@ -106,10 +106,10 @@ const HUB_NPCS: Array = [
 		"ambient": "Pilotage shuttle — apron propre, décollages courts."},
 	{"eid": "npc:capitaine_vael", "oid": 910016, "name": "Capitaine Vael", "pos": OUTPOST_ZALEM, "wander_r": 12.0,
 		"ambient": "Avant-poste Zalem. Route ouest sécurisée — convois en règle."},
-	{"eid": "npc:mecanicien_soren", "oid": 910017, "name": "Soren Kray", "pos": Vector3(2420.0, 0.15, -590.0), "wander_r": 10.0,
+	{"eid": "npc:mecanicien_soren", "oid": 910017, "name": "Soren Kray", "pos": Vector3(-1130.0, 0.15, -520.0), "wander_r": 10.0,
 		"ambient": "Atelier relais. Si votre landspeeder fume avant la capitale, c'est ici."},
 	{"eid": "npc:ancien_nadir", "oid": 910018, "name": "Ancien Nadir", "pos": KSAR_NOMADE, "wander_r": 14.0,
 		"ambient": "Bienvenue au Ksar Nomade, voyageur. L'eau et l'ombre se partagent avec respect."},
-	{"eid": "npc:guerisseur_miran", "oid": 910019, "name": "Miran Sael", "pos": Vector3(6835.0, 0.15, -1430.0), "wander_r": 10.0,
+	{"eid": "npc:guerisseur_miran", "oid": 910019, "name": "Miran Sael", "pos": Vector3(4880.0, 0.15, -3770.0), "wander_r": 10.0,
 		"ambient": "Herbes des dunes et baumes du désert. La Confrérie veille sur les caravaniers."},
 ]

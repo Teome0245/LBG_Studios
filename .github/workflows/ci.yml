@@ -1,0 +1,39 @@
+name: CI
+
+# Ticket 5.2 — Lint Python (Ruff) sur l'ensemble du monorepo.
+# Config de référence : ruff.toml + pyproject.toml racine.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    name: Ruff (lint Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ruff
+        run: pip install "ruff==0.17.0"
+
+      - name: Ruff version
+        run: ruff --version
+
+      - name: Ruff check
+        run: ruff check .

@@ -1,0 +1,47 @@
+name: Godot Headless
+
+# Ticket 5.2 — Tests headless Godot du runtime prime-hub (sim / nav / db).
+# Aucun réseau LAN requis. Voir tools/ci_godot_headless.sh.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: godot-headless-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  godot-headless:
+    name: Tests prime-hub (Godot --headless)
+    runs-on: ubuntu-latest
+    env:
+      GODOT_VERSION: "4.6.3"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer dépendances système
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends unzip libgl1 libxcursor1 libxinerama1 libxrandr2 libxi6
+
+      - name: Télécharger Godot ${GODOT_VERSION} headless (Linux)
+        run: |
+          set -euo pipefail
+          mkdir -p packages/prime-hub/tools
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          echo "Téléchargement: ${URL}"
+          curl -fsSL -o /tmp/godot.zip "${URL}"
+          unzip -o /tmp/godot.zip -d /tmp/godot
+          install -m 0755 "/tmp/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64" packages/prime-hub/tools/godot
+
+      - name: Exécuter les tests headless (sim / nav / db)
+        env:
+          GODOT_BIN: ${{ github.workspace }}/packages/prime-hub/tools/godot
+        run: bash tools/ci_godot_headless.sh

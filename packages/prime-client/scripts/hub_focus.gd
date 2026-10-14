@@ -45,8 +45,8 @@ static func in_deprecated_city(x: float, z: float) -> bool:
 	return false
 
 const ALLOWED_OUTPOSTS: Array = [
-	{"id": "avant_poste_zalem", "x": 2400.0, "z": -600.0, "radius_m": 450.0},
-	{"id": "ksar_nomade", "x": 6850.0, "z": -1450.0, "radius_m": 450.0},
+	{"id": "avant_poste_zalem", "x": -1200.0, "z": -550.0, "radius_m": 550.0},
+	{"id": "ksar_nomade", "x": 4950.0, "z": -3800.0, "radius_m": 550.0},
 ]
 
 static func in_outpost_radius(x: float, z: float) -> bool:

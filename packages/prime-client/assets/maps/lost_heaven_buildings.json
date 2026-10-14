@@ -313,6 +313,124 @@
       "size_m": 48.0,
       "essential": false,
       "role": "route_vers_zalem"
+    },
+    {
+      "id": "poi:zalem_outpost_command",
+      "kind": "town_hall",
+      "label": "Poste de commandement Zalem",
+      "x": -1200.0,
+      "z": -550.0,
+      "size_m": 64.0,
+      "essential": true,
+      "door": { "face": "south", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:zalem_outpost_workshop",
+      "kind": "trainer_artisan",
+      "label": "Atelier mécanique relais",
+      "x": -1130.0,
+      "z": -520.0,
+      "size_m": 56.0,
+      "essential": false,
+      "door": { "face": "west", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:zalem_outpost_barracks",
+      "kind": "trainers_combat",
+      "label": "Caserne de la milice",
+      "x": -1270.0,
+      "z": -520.0,
+      "size_m": 56.0,
+      "essential": false,
+      "door": { "face": "east", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:zalem_outpost_inn",
+      "kind": "inn",
+      "label": "Relais des convois",
+      "x": -1200.0,
+      "z": -470.0,
+      "size_m": 52.0,
+      "essential": false,
+      "door": { "face": "south", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:zalem_outpost_depot",
+      "kind": "shops",
+      "label": "Dépôt de ravitaillement",
+      "x": -1130.0,
+      "z": -590.0,
+      "size_m": 48.0,
+      "essential": false,
+      "door": { "face": "north", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:zalem_outpost_gate",
+      "kind": "city_gate",
+      "label": "Barrière ouest — Zalem",
+      "x": -1350.0,
+      "z": -550.0,
+      "size_m": 40.0,
+      "essential": false
+    },
+    {
+      "id": "poi:ksar_nomade_tent",
+      "kind": "town_hall",
+      "label": "Grande Tente de l'Ancien",
+      "x": 4950.0,
+      "z": -3800.0,
+      "size_m": 64.0,
+      "essential": true,
+      "door": { "face": "north", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:ksar_nomade_dispensary",
+      "kind": "clinic",
+      "label": "Tente des soins & onguents",
+      "x": 4880.0,
+      "z": -3770.0,
+      "size_m": 52.0,
+      "essential": false,
+      "door": { "face": "east", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:ksar_nomade_bazaar",
+      "kind": "shops",
+      "label": "Bazar nomade & troc",
+      "x": 5020.0,
+      "z": -3770.0,
+      "size_m": 60.0,
+      "essential": false,
+      "door": { "face": "west", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:ksar_nomade_inn",
+      "kind": "inn",
+      "label": "Caravansérail de l'Oasis",
+      "x": 4950.0,
+      "z": -3720.0,
+      "size_m": 56.0,
+      "essential": false,
+      "door": { "face": "south", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:ksar_nomade_craft",
+      "kind": "trainer_artisan",
+      "label": "Forge des sables",
+      "x": 5020.0,
+      "z": -3840.0,
+      "size_m": 48.0,
+      "essential": false,
+      "door": { "face": "north", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+    },
+    {
+      "id": "poi:ksar_nomade_gate",
+      "kind": "city_gate",
+      "label": "Arches de ferraille du Ksar",
+      "x": 4950.0,
+      "z": -3640.0,
+      "size_m": 40.0,
+      "essential": false
     }
   ],
   "gabarit_mos_eisley": {

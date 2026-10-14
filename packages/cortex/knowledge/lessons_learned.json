@@ -196,6 +196,23 @@
       "hit_count": 2,
       "last_seen_ts": 1791400267.152261,
       "last_seen": "2026-10-07"
+    },
+    {
+      "id": "lesson_02dafb38c1",
+      "date": "2026-10-14",
+      "agent_role": "dev_game",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur godot_client_workflow: Audit lbg-ws/2 gateway Godot Prime",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "b35af1a5-b7af-42c9-905b-ae62c4916844",
+        "outcome_judge",
+        "75cef784-e404-40ad-b20e-8d13522240ee"
+      ],
+      "hit_count": 2,
+      "last_seen_ts": 1791957089.061359,
+      "last_seen": "2026-10-14"
     }
   ]
 }

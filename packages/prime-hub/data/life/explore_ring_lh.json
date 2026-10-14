@@ -12,7 +12,7 @@
     "y": 0.15,
     "z": -737.0
   },
-  "max_radius_m": 3000.0,
+  "max_radius_m": 6500.0,
   "random_sample_chance": 0.28,
   "waypoints": {
     "gate_east": {
@@ -114,17 +114,17 @@
     "zalem_outpost": {
       "label": "relais avant-poste Zalem",
       "pos": {
-        "x": 2400.0,
+        "x": -1200.0,
         "y": 0.15,
-        "z": -600.0
+        "z": -550.0
       }
     },
     "ksar_nomade": {
       "label": "oasis / ksar nomade",
       "pos": {
-        "x": 6850.0,
+        "x": 4950.0,
         "y": 0.15,
-        "z": -1450.0
+        "z": -3800.0
       }
     }
   }

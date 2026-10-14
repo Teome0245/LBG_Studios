@@ -49,6 +49,10 @@ func build(collision) -> bool:
 	var n_obst := 0
 	if collision != null:
 		for b in collision.blocks:
+			var bx: float = (float(b["min_x"]) + float(b["max_x"])) * 0.5
+			var bz: float = (float(b["min_z"]) + float(b["max_z"])) * 0.5
+			if bx < min_x or bx > max_x or bz < min_z or bz > max_z:
+				continue
 			src.add_projected_obstruction(
 				PackedVector3Array([
 					Vector3(float(b["min_x"]), GROUND_Y, float(b["min_z"])),
@@ -115,6 +119,10 @@ func _compute_bounds(collision) -> void:
 	var n := 0
 	if collision != null:
 		for b in collision.blocks:
+			var bx: float = (float(b["min_x"]) + float(b["max_x"])) * 0.5
+			var bz: float = (float(b["min_z"]) + float(b["max_z"])) * 0.5
+			if bx < 3000.0 or bx > 7000.0 or bz < -2000.0 or bz > 100.0:
+				continue
 			min_x = minf(min_x, float(b["min_x"]))
 			min_z = minf(min_z, float(b["min_z"]))
 			max_x = maxf(max_x, float(b["max_x"]))
