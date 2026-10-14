@@ -2,6 +2,7 @@
 extends PanelContainer
 class_name InventoryPanel
 const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
 
 const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 const PLAYER_DEFAULT := "local"
@@ -172,6 +173,45 @@ func _on_http_done(result: int, code: int, _headers: PackedStringArray, body: Pa
 			else:
 				_hint.text = "I fermer · sync %s (%d stacks)" % [src, inv.size()]
 
+class InventorySlotBtn extends Button:
+	var slot_index: int = -1
+	var item_data: Dictionary = {}
+	var panel: InventoryPanel = null
+
+	func _get_drag_data(_at_position: Vector2) -> Variant:
+		if item_data.is_empty() or int(item_data.get("qty", 0)) <= 0:
+			return null
+		var preview_box := Control.new()
+		var preview := TextureRect.new()
+		preview.texture = icon
+		preview.custom_minimum_size = Vector2(40, 40)
+		preview.size = Vector2(40, 40)
+		preview.position = -Vector2(20, 20)
+		preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		preview.modulate = Color(1.0, 1.0, 1.0, 0.85)
+		preview_box.add_child(preview)
+		if is_inside_tree():
+			set_drag_preview(preview_box)
+		return {
+			"type": "inventory_slot",
+			"from_index": slot_index,
+			"item": item_data
+		}
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		if typeof(data) != TYPE_DICTIONARY:
+			return false
+		if data.get("type") != "inventory_slot":
+			return false
+		return int(data.get("from_index", -1)) != slot_index
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		if typeof(data) == TYPE_DICTIONARY and data.get("type") == "inventory_slot":
+			var from_idx: int = int(data.get("from_index", -1))
+			if from_idx >= 0 and from_idx != slot_index and panel != null:
+				panel.swap_or_move_slots(from_idx, slot_index)
+
 func _fill_from_items(items: Array) -> void:
 	_items = items.duplicate()
 	if _grid == null:
@@ -184,7 +224,10 @@ func _fill_from_items(items: Array) -> void:
 		var item: Dictionary = {}
 		if i < _items.size() and typeof(_items[i]) == TYPE_DICTIONARY:
 			item = _items[i]
-		var slot := Button.new()
+		var slot := InventorySlotBtn.new()
+		slot.slot_index = i
+		slot.item_data = item
+		slot.panel = self
 		slot.custom_minimum_size = Vector2(slot_px, slot_px)
 		slot.focus_mode = Control.FOCUS_NONE
 		slot.theme_type_variation = &"HotbarSlot"
@@ -193,15 +236,15 @@ func _fill_from_items(items: Array) -> void:
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if item.is_empty() or int(item.get("qty", 0)) <= 0:
 			slot.icon = _UiIconRegistry.tex("empty")
-			slot.disabled = true
-			slot.tooltip_text = "Vide"
+			slot.disabled = false
+			slot.tooltip_text = "Vide (glisser un objet ici)"
 		else:
 			used += 1
 			var icon_key := str(item.get("icon", _UiIconRegistry.item_icon(str(item.get("name", "")))))
 			slot.icon = _UiIconRegistry.tex(icon_key)
 			var qty := int(item.get("qty", 1))
 			var item_name := str(item.get("name", item.get("id", "")))
-			slot.tooltip_text = "%s ×%d" % [item_name, qty]
+			slot.tooltip_text = "%s ×%d (glisser pour déplacer · clic pour utiliser)" % [item_name, qty]
 			slot.disabled = false
 			var slot_idx := i
 			var item_id := str(item.get("id", ""))
@@ -221,6 +264,39 @@ func _fill_from_items(items: Array) -> void:
 		_grid.add_child(slot)
 	if _weight:
 		_weight.text = "%d / %d" % [used, total]
+
+func swap_or_move_slots(from_idx: int, to_idx: int) -> void:
+	var total := columns * rows
+	while _items.size() < total:
+		_items.append({})
+	if from_idx < 0 or from_idx >= _items.size() or to_idx < 0 or to_idx >= _items.size():
+		return
+	if from_idx == to_idx:
+		return
+	var item_from: Dictionary = _items[from_idx]
+	if item_from.is_empty():
+		return
+	var item_to: Dictionary = _items[to_idx]
+	var from_name := str(item_from.get("name", item_from.get("id", "Objet")))
+
+	if not item_to.is_empty() and str(item_to.get("id", "")) == str(item_from.get("id", "")) and item_from.get("id") != "":
+		var new_qty := int(item_to.get("qty", 0)) + int(item_from.get("qty", 0))
+		item_to["qty"] = new_qty
+		_items[to_idx] = item_to
+		_items[from_idx] = {}
+		if _hint:
+			_hint.text = "Empilé : %s (total ×%d)" % [from_name, new_qty]
+	else:
+		_items[to_idx] = item_from
+		_items[from_idx] = item_to
+		if _hint:
+			if item_to.is_empty():
+				_hint.text = "Déplacé : %s (slot %d → %d)" % [from_name, from_idx + 1, to_idx + 1]
+			else:
+				var to_name := str(item_to.get("name", item_to.get("id", "Objet")))
+				_hint.text = "Permuté : %s ↔ %s" % [from_name, to_name]
+
+	_fill_from_items(_items)
 
 func _on_item_slot(_index: int, item_name: String, qty: int, item_id: String = "") -> void:
 	if _hint:

@@ -18,6 +18,10 @@ const GREETINGS := {
 	"npc:videur": "Pas de bagarre devant La Perle. Jax s'occupe du verre, moi de la porte.",
 	"npc:sergent_rue": "Sergent de rue. Porte est sous surveillance — meute ou pas.",
 	"npc:rumeuriste": "Au marché on entend tout. Tu veux une rumeur… ou un prix ?",
+	"npc:capitaine_vael": "Capitaine Vael. Avant-poste Zalem. Route ouest sous contrôle de la milice — papiers ou laissez-passer, voyageur.",
+	"npc:mecanicien_soren": "Soren Kray. Si ça roule, ça casse. Si ça fume, je répare. Parle vite, j'ai les mains dans le carbu.",
+	"npc:ancien_nadir": "Ancien Nadir. Paix sur ta route. Le Ksar Nomade accueille ceux qui respectent l'eau et le silence des dunes.",
+	"npc:guerisseur_miran": "Miran Sael. Tente des soins. Le soleil brûle et les venins guettent. Que puis-je soigner pour ta caravane ?",
 }
 
 const DEFAULT_MOVES := {
@@ -41,6 +45,22 @@ const DEFAULT_MOVES := {
 		{"id": "move:guide_map", "label": "Orientation", "utterance": "Où est le marché ?", "kind": "info"},
 		{"id": "move:guide_wiki", "label": "Wiki hub", "utterance": "Tu as un guide du hub ?", "kind": "ui", "action": {"name": "open_wiki"}},
 	],
+	"npc:capitaine_vael": [
+		{"id": "move:vael_patrouille", "label": "Mission route", "utterance": "Une mission pour sécuriser la route ouest ?", "kind": "info"},
+		{"id": "move:vael_convois", "label": "État des convois", "utterance": "Des nouvelles des liaisons avec la capitale ?", "kind": "info"},
+	],
+	"npc:mecanicien_soren": [
+		{"id": "move:soren_pieces", "label": "Besoins d'atelier", "utterance": "Tu cherches des pièces pour l'atelier ?", "kind": "info"},
+		{"id": "move:soren_astuce", "label": "Conseil moteur", "utterance": "Comment éviter la surchauffe dans les dunes ?", "kind": "info"},
+	],
+	"npc:ancien_nadir": [
+		{"id": "move:nadir_source", "label": "Veille de la source", "utterance": "Comment aider à préserver l'oasis du Ksar ?", "kind": "info"},
+		{"id": "move:nadir_dunes", "label": "Sagesse des dunes", "utterance": "Raconte-moi l'histoire des nomades d'Altai.", "kind": "info"},
+	],
+	"npc:guerisseur_miran": [
+		{"id": "move:miran_herbes", "label": "Cueillette de remèdes", "utterance": "Quelles herbes des sables cherches-tu ?", "kind": "info"},
+		{"id": "move:miran_soins", "label": "Demander un soin", "utterance": "J'ai besoin d'un baume ou d'un antidote.", "kind": "info"},
+	],
 }
 
 const FALLBACK_REPLIES := [
@@ -63,6 +83,13 @@ const FALLBACK_REPLIES := [
 	["archive", "Archives à la mairie. Le Scribe note les faits, pas les légendes."],
 	["wiki", "Le Guide de quartier ouvre le wiki hub — PNJ, POI, métiers M10. Menu → Wiki."],
 	["guide", "Guide de quartier au starport — orientation et wiki Lost Heaven."],
+	["zalem", "L'Avant-poste Zalem surveille la passe ouest. Capitaine Vael ne rigole pas avec la sécurité."],
+	["ksar", "Le Ksar Nomade borde les grandes dunes au sud. L'Ancien Nadir et Miran Sael y veillent sur l'oasis."],
+	["oasis", "L'oasis du Ksar est sacrée. Ne polluez pas la nappe phréatique."],
+	["vael", "Capitaine Vael commande le détachement de la milice à l'Avant-poste Zalem."],
+	["soren", "Soren Kray tient l'atelier relais à Zalem. Un as de la mécanique avec un franc-parler de ferrailleur."],
+	["nadir", "L'Ancien Nadir connaît chaque souffle de vent et chaque point d'eau du désert sud."],
+	["miran", "Miran Sael soigne les caravaniers au Ksar avec ses filtres et décoctions des dunes."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry

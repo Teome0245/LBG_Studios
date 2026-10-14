@@ -104,6 +104,8 @@ func _ready() -> void:
 		hotbar.slot_activated.connect(_on_hotbar_slot)
 	if hotbar and hotbar.has_signal("slot_clicked"):
 		hotbar.slot_clicked.connect(_on_hotbar_slot)
+	if hotbar and hotbar.has_signal("item_assigned"):
+		hotbar.item_assigned.connect(_on_hotbar_item_assigned)
 
 	if _creation_panel and _creation_panel.has_signal("character_created"):
 		_creation_panel.character_created.connect(_on_second_character_created_in_game)
@@ -647,6 +649,12 @@ func _toggle_game_menu() -> void:
 
 func _on_hotbar_slot(index: int) -> void:
 	ui_dialogue.on_hotbar_slot(index)
+
+func _on_hotbar_item_assigned(slot_idx: int, item: Dictionary) -> void:
+	var name_item := str(item.get("name", item.get("id", "Objet")))
+	_show_toast("Assigné : %s → Slot %d" % [name_item, (slot_idx + 1) % 10])
+	if slot_idx == 2 and gameplay_ops:
+		gameplay_ops.set_quick_item_id(str(item.get("id", "")))
 
 func _hotbar_feedback(msg: String) -> void:
 	_show_toast(msg)

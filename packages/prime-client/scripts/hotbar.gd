@@ -4,6 +4,7 @@ class_name Hotbar
 const _UiIconRegistry = preload("res://scripts/ui_icon_registry.gd")
 
 signal slot_activated(index: int)
+signal item_assigned(slot_index: int, item_data: Dictionary)
 
 @export var slot_count: int = 10
 @export var slot_size: Vector2 = Vector2(50, 50)
@@ -14,6 +15,21 @@ var _tooltips: PackedStringArray = PackedStringArray([
 	"Talents", "Inventaire", "Chat", "Compagnon (escorte)", "Menu"
 ])
 var _active_index: int = -1
+
+class HotbarSlotBtn extends Button:
+	var slot_index: int = -1
+	var hotbar: Hotbar = null
+
+	func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+		if typeof(data) != TYPE_DICTIONARY:
+			return false
+		return data.get("type") == "inventory_slot"
+
+	func _drop_data(_at_position: Vector2, data: Variant) -> void:
+		if typeof(data) == TYPE_DICTIONARY and data.get("type") == "inventory_slot":
+			var item: Dictionary = data.get("item", {})
+			if hotbar != null:
+				hotbar.assign_item_to_slot(slot_index, item)
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -31,8 +47,10 @@ func _build_slots() -> void:
 		c.queue_free()
 	_slots.clear()
 	for i in range(slot_count):
-		var btn := Button.new()
+		var btn := HotbarSlotBtn.new()
 		btn.name = "Slot%d" % i
+		btn.slot_index = i
+		btn.hotbar = self
 		btn.custom_minimum_size = slot_size
 		btn.focus_mode = Control.FOCUS_NONE
 		btn.theme_type_variation = &"HotbarSlot"
@@ -57,6 +75,17 @@ func _build_slots() -> void:
 		btn.pressed.connect(func() -> void: _activate(idx))
 		row.add_child(btn)
 		_slots.append(btn)
+
+func assign_item_to_slot(index: int, item: Dictionary) -> void:
+	if index < 0 or index >= _slots.size():
+		return
+	var item_name := str(item.get("name", item.get("id", "Objet")))
+	var icon_key := str(item.get("icon", _UiIconRegistry.item_icon(item_name)))
+	var icon_tex := _UiIconRegistry.tex(icon_key)
+	if icon_tex:
+		_slots[index].icon = icon_tex
+	_slots[index].tooltip_text = "%d — %s (%s)" % [(index + 1) % 10, _tooltips[index] if index < _tooltips.size() else "", item_name]
+	item_assigned.emit(index, item)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:

@@ -1332,6 +1332,174 @@
         "min_sublot": 3,
         "c1_status": "lot1_sublot_active"
       }
+    },
+    {
+      "id": "npc:capitaine_vael",
+      "name": "Capitaine Vael",
+      "role": "officier_milice",
+      "race_id": "race:human",
+      "zone": "Avant-poste Zalem — route ouest",
+      "faction": "Milice locale",
+      "tone": "vigilant",
+      "summary": "Commande le détachement de la milice contrôlant la route ouest vers la capitale.",
+      "goals": [
+        "surveiller le trafic de convois",
+        "maintenir la ligne de défense ouest"
+      ],
+      "constraints": [
+        "reste sur son secteur",
+        "reponses courtes militaires"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:vael_patrouille",
+          "label": "Ordre de patrouille",
+          "utterance": "Capitaine, avez-vous une mission pour sécuriser la route ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "zalem_patrouille_route"
+          }
+        },
+        {
+          "id": "move:vael_route",
+          "label": "Route Zalem",
+          "utterance": "La route de Zalem est sûre ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:vael_convoi",
+          "label": "Convois",
+          "utterance": "Des convois récents ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:mecanicien_soren",
+      "name": "Soren Kray",
+      "role": "mecanicien",
+      "race_id": "race:varkoon",
+      "zone": "Avant-poste Zalem — atelier relais",
+      "faction": "Artisans",
+      "tone": "pragmatique",
+      "summary": "Mécanicien chevronné, dépanne les landspeeders et récupère les pièces détachées.",
+      "goals": [
+        "réparer les véhicules de passage",
+        "entretenir le stock de ferraille utile"
+      ],
+      "constraints": [
+        "ne quitte pas l'atelier",
+        "reponses franches d'artisan"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:soren_pieces_quest",
+          "label": "Aider l'atelier",
+          "utterance": "Tu as besoin de pièces pour les turbines ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "zalem_pieces_relais"
+          }
+        },
+        {
+          "id": "move:soren_pieces",
+          "label": "Pièces",
+          "utterance": "Tu as des pièces de rechange ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:soren_speed",
+          "label": "Vitesse",
+          "utterance": "Un conseil pour mon réacteur ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:ancien_nadir",
+      "name": "Ancien Nadir",
+      "role": "chef_nomade",
+      "race_id": "race:sylven",
+      "zone": "Ksar Nomade — dunes est",
+      "faction": "Civils du desert",
+      "tone": "sage",
+      "summary": "Doyen des caravanes du désert oriental, guide les nomades et protège l'oasis.",
+      "goals": [
+        "partager les récits des sables",
+        "veiller sur les réserves d'eau"
+      ],
+      "constraints": [
+        "hospitalité sacrée",
+        "pas de provocation"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:nadir_source_quest",
+          "label": "Veille de la source",
+          "utterance": "Ancien, puis-je veiller sur l'oasis du Ksar ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "ksar_source_oasis"
+          }
+        },
+        {
+          "id": "move:nadir_dunes",
+          "label": "Désert",
+          "utterance": "Comment traverser les dunes ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:nadir_oasis",
+          "label": "Oasis",
+          "utterance": "Depuis quand ce ksar existe ?",
+          "kind": "info"
+        }
+      ]
+    },
+    {
+      "id": "npc:guerisseur_miran",
+      "name": "Miran Sael",
+      "role": "guerisseur_desert",
+      "race_id": "race:human",
+      "zone": "Ksar Nomade — tente des soins",
+      "faction": "Confrerie des soins",
+      "tone": "bienveillant",
+      "summary": "Soigneur traditionnel de la Confrérie, distille les racines du désert en antidotes.",
+      "goals": [
+        "soigner les blessures de voyage",
+        "distribuer des filtres et remèdes"
+      ],
+      "constraints": [
+        "neutralité médicale",
+        "reponses calmes"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:miran_herbes_quest",
+          "label": "Cueillette des sables",
+          "utterance": "Miran, cherches-tu des racines et plantes pour tes remèdes ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "ksar_herbes_sables"
+          }
+        },
+        {
+          "id": "move:miran_soins",
+          "label": "Remèdes",
+          "utterance": "Tu as de quoi soigner le venin ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:miran_herbes",
+          "label": "Herboristerie",
+          "utterance": "Quelles plantes poussent ici ?",
+          "kind": "info"
+        }
+      ]
     }
   ]
 }

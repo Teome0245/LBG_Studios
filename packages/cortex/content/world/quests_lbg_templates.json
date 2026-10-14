@@ -289,6 +289,103 @@
       "initiation": true,
       "requires_max_characters": 1,
       "unlocks": ["echo_amas", "in_game_amas_create"]
+    },
+    {
+      "id": "zalem_patrouille_route",
+      "title": "Patrouille de la Route Ouest",
+      "template": "patrouille",
+      "keywords": ["patrouille", "zalem", "route", "convoi", "vael", "milice", "sécurité", "securite"],
+      "giver_roles": ["officier_milice", "quest_giver"],
+      "giver_ids": ["npc:capitaine_vael", "npc:core3_daan_oth"],
+      "default_giver": "Capitaine Vael",
+      "objective": "Reconnaître la route ouest reliant Lost Heaven à l'Avant-poste Zalem et faire rapport au Capitaine Vael.",
+      "rewards": {
+        "credits": 45,
+        "xp": {"xp_combat": 35, "xp_quartier": 25},
+        "items": [{"id": "scrap_metal", "qty": 3}]
+      },
+      "progress": [
+        {"id": "gate_west", "label": "Franchir la porte ouest de Lost Heaven", "poi": "poi:lost_heaven_gate_west", "radius_m": 80},
+        {"id": "route_mid", "label": "Parcourir la grande route vers l'ouest", "poi": "poi:avant_poste_zalem", "radius_m": 450},
+        {"id": "report", "label": "Faire rapport au Capitaine Vael à l'avant-poste", "poi": "poi:avant_poste_zalem", "radius_m": 70}
+      ],
+      "next_steps": [
+        "Prendre la patrouille auprès du Capitaine Vael ou au bureau des missions.",
+        "Franchir la porte ouest et progresser le long de la voie.",
+        "Rapporter la situation au Capitaine Vael à l'Avant-poste Zalem."
+      ]
+    },
+    {
+      "id": "zalem_pieces_relais",
+      "title": "Pièces pour l'Atelier Relais",
+      "template": "repair",
+      "keywords": ["relais", "pieces", "pièces", "soren", "atelier", "moteur", "mécanique", "mecanique", "zalem"],
+      "giver_roles": ["mecanicien", "artisan_trainer"],
+      "giver_ids": ["npc:mecanicien_soren", "npc:core3_artisan_trainer_c"],
+      "default_giver": "Soren Kray",
+      "objective": "Se procurer des pièces de rechange et du ruban de liaison pour calibrer les générateurs de l'atelier de Zalem.",
+      "rewards": {
+        "credits": 50,
+        "xp": {"xp_artisanat": 50},
+        "items": [{"id": "kit_reparation", "qty": 1}]
+      },
+      "progress": [
+        {"id": "market", "label": "Trouver des composants au marché ou par salvage", "poi": "poi:lost_heaven_market", "radius_m": 60},
+        {"id": "deliver", "label": "Livrer les pièces à l'atelier de Soren Kray", "poi": "poi:avant_poste_zalem", "radius_m": 70}
+      ],
+      "next_steps": [
+        "Consulter Soren Kray à l'Avant-poste Zalem.",
+        "Rassembler les composants de rechange.",
+        "Remettre le matériel à Soren pour calibrer les turbines."
+      ]
+    },
+    {
+      "id": "ksar_source_oasis",
+      "title": "La Veille de la Source",
+      "template": "survey",
+      "keywords": ["ksar", "source", "eau", "nadir", "oasis", "dunes", "nomade"],
+      "giver_roles": ["chef_nomade", "guide"],
+      "giver_ids": ["npc:ancien_nadir", "npc:guide_quartier"],
+      "default_giver": "Ancien Nadir",
+      "objective": "Inspecter les bassins filtrants de l'oasis du Ksar Nomade et rapporter les relevés à l'Ancien Nadir.",
+      "rewards": {
+        "credits": 40,
+        "xp": {"xp_prospection": 40, "xp_quartier": 20},
+        "items": [{"id": "water_capsule", "qty": 3}]
+      },
+      "progress": [
+        {"id": "oasis", "label": "Inspecter les bassins de l'oasis du Ksar", "poi": "poi:ksar_nomade", "radius_m": 120},
+        {"id": "nadir", "label": "Faire part du rapport à l'Ancien Nadir", "poi": "poi:ksar_nomade", "radius_m": 60}
+      ],
+      "next_steps": [
+        "Saluer l'Ancien Nadir au Ksar Nomade.",
+        "Vérifier l'état de la source et des réserves d'eau.",
+        "Recevoir la gratitude des caravaniers du désert sud."
+      ]
+    },
+    {
+      "id": "ksar_herbes_sables",
+      "title": "Herboristerie des Sables",
+      "template": "collect",
+      "keywords": ["herbes", "miran", "soins", "antidote", "ksar", "dunes", "sable"],
+      "giver_roles": ["guerisseur_desert", "medic_trainer"],
+      "giver_ids": ["npc:guerisseur_miran", "npc:core3_medic_trainer_c"],
+      "default_giver": "Miran Sael",
+      "objective": "Récolter des racines des sables aux abords du Ksar et les remettre à Miran Sael pour confectionner des antivenins.",
+      "rewards": {
+        "credits": 40,
+        "xp": {"xp_medecine": 45, "xp_quartier": 20},
+        "items": [{"id": "ration_compacte", "qty": 2}]
+      },
+      "progress": [
+        {"id": "dunes", "label": "Herboriser autour des dunes du Ksar", "poi": "poi:ksar_nomade", "radius_m": 180},
+        {"id": "deliver", "label": "Apporter les racines à la tente des soins", "poi": "poi:ksar_nomade", "radius_m": 60}
+      ],
+      "next_steps": [
+        "Visiter la tente de soins de Miran Sael au Ksar.",
+        "Prélever des sèves et racines dans les dunes environnantes.",
+        "Remettre la cueillette pour préparer les filtres médicaux."
+      ]
     }
   ]
 }

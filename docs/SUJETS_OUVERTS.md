@@ -49,9 +49,7 @@ _Aucun sujet ouvert — O-DOC-1 / O-DOC-ALIGN / O-DOC-2 clos._
 
 ### O2 — Polish UX client (suite légère)
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-UX-DND | Inventaire drag & drop | Non bloquant · clic + hotbar 3 suffisent · reporté volontairement |
+_Aucun sujet ouvert — O-UX-DND clos 2026-10-14._
 
 ---
 
@@ -59,6 +57,7 @@ _Aucun sujet ouvert — O-DOC-1 / O-DOC-ALIGN / O-DOC-2 clos._
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-UX-DND | Inventaire drag & drop & Quêtes des villages (Zalem & Ksar) | **2026-10-14** · Drag & drop natif Godot 4 (`InventorySlotBtn`, `HotbarSlotBtn`), swap de slots, stacking automatique (même id), assignation vers Hotbar slot 3 (objet rapide), feedback toast + préservation clic utilisation directe · 4 quêtes de villages (`zalem_patrouille_route`, `zalem_pieces_relais`, `ksar_source_oasis`, `ksar_herbes_sables`) + dialogues / suggestions complétés pour Capitaine Vael, Soren Kray, Ancien Nadir et Miran Sael · tests headless Godot 100% verts. |
 | O-CTX-HYGIENE | Fil hygiène contexte / monde (A1–A3 · B1 · C1–C2 · D1) | **2026-10-14** · journal + Respire + Studio Brain · prefs monde · nameplates + activité `status`/`activity` · `cost` craft/use · live `:5174` + `:8787` · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) |
 | O-DOC-2 | Review Bugbot formelle snapshot priorités (optionnel) | **2026-10-14** · review manuelle du fil jugée suffisante au plateau · Bugbot hors quota à l’époque · pas de rejeu outillé requis |
 | O-OPS-ROOT | Unification `LBG_PRIME_CLIENT_ROOT` → Studios sur 140 | **2026-10-14** · env `/opt/LBG_Studios/packages/prime-client` · sync assets canon + miroir legacy · resolver Team déjà Studios-first |

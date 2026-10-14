@@ -599,11 +599,19 @@ func try_quick_craft() -> void:
 	_hotbar_post("/v1/craft/combine", {"player": player, "schematic_id": "kit_reparation"}, "craft", "Craft kit…")
 
 
+var _quick_item_id: String = ""
+
+func set_quick_item_id(id: String) -> void:
+	_quick_item_id = id.strip_edges()
+
 func try_use_item(item_id: String = "") -> void:
+	var target_id := item_id.strip_edges()
+	if target_id == "" and _quick_item_id != "":
+		target_id = _quick_item_id
 	var player: String = _HubRuntimeCfg.player_name("Voyageur")
 	var payload := {"player": player}
-	if item_id.strip_edges() != "":
-		payload["item_id"] = item_id.strip_edges()
+	if target_id != "":
+		payload["item_id"] = target_id
 	_hotbar_post("/v1/inventory/use", payload, "use", "Utilisation objet…")
 
 

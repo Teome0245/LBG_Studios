@@ -13,6 +13,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PRIME_HUB_DIR="${REPO_ROOT}/packages/prime-hub"
+PRIME_CLIENT_DIR="${REPO_ROOT}/packages/prime-client"
 
 # Recherche du binaire Godot headless
 GODOT_BIN="${GODOT_BIN:-}"
@@ -54,9 +55,26 @@ run_test() {
   fi
 }
 
+run_client_test() {
+  local name="$1"
+  local script_res="$2"
+  echo ""
+  echo "--- [TEST] ${name} (${script_res}) ---"
+  local t0=$(date +%s)
+  if "${GODOT_BIN}" --headless --path "${PRIME_CLIENT_DIR}" -s "${script_res}"; then
+    local dt=$(( $(date +%s) - t0 ))
+    echo "[+] PASS: ${name} (en ${dt}s)"
+  else
+    local dt=$(( $(date +%s) - t0 ))
+    echo "[-] FAIL: ${name} (en ${dt}s)" >&2
+    FAILED=$((FAILED + 1))
+  fi
+}
+
 run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
 run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
 run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
+run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))
 

@@ -1387,6 +1387,16 @@
       ],
       "suggestion_templates": [
         {
+          "id": "move:vael_patrouille",
+          "label": "Ordre de patrouille",
+          "utterance": "Capitaine, avez-vous une mission pour sécuriser la route ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "zalem_patrouille_route"
+          }
+        },
+        {
           "id": "move:vael_route",
           "label": "Route Zalem",
           "utterance": "La route de Zalem est sûre ?",
@@ -1418,6 +1428,16 @@
         "reponses franches d'artisan"
       ],
       "suggestion_templates": [
+        {
+          "id": "move:soren_pieces_quest",
+          "label": "Aider l'atelier",
+          "utterance": "Tu as besoin de pièces pour les turbines ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "zalem_pieces_relais"
+          }
+        },
         {
           "id": "move:soren_pieces",
           "label": "Pièces",
@@ -1451,6 +1471,16 @@
       ],
       "suggestion_templates": [
         {
+          "id": "move:nadir_source_quest",
+          "label": "Veille de la source",
+          "utterance": "Ancien, puis-je veiller sur l'oasis du Ksar ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "ksar_source_oasis"
+          }
+        },
+        {
           "id": "move:nadir_dunes",
           "label": "Désert",
           "utterance": "Comment traverser les dunes ?",
@@ -1482,6 +1512,16 @@
         "reponses calmes"
       ],
       "suggestion_templates": [
+        {
+          "id": "move:miran_herbes_quest",
+          "label": "Cueillette des sables",
+          "utterance": "Miran, cherches-tu des racines et plantes pour tes remèdes ?",
+          "kind": "quest",
+          "action": {
+            "name": "accept_quest",
+            "quest_id": "ksar_herbes_sables"
+          }
+        },
         {
           "id": "move:miran_soins",
           "label": "Remèdes",
