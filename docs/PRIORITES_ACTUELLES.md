@@ -4,26 +4,32 @@
 **Source de vérité** : ce monorepo (`Teome0245/LBG_Studios`) — toute nouvelle feature.  
 **Legacy** (`LBG_IA_MMORPG`, `new_mmo`) : lecture, correctifs urgents et gel documenté — **pas** de réouverture du client web `/mmo/` ni de `mmo_server` / `mmmorpg_server`.
 
-Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) · [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
+Liens : [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) · [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) · [`design/HUB_AI_PLAYER_BRIDGE.md`](design/HUB_AI_PLAYER_BRIDGE.md) · [`FOCUS_CONCURRENTS_TEAM.md`](FOCUS_CONCURRENTS_TEAM.md) · [`PLAN_72H_CONCURRENTS.md`](PLAN_72H_CONCURRENTS.md) · [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · [`SMOKE_LAN.md`](SMOKE_LAN.md) · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md)
 
 ---
 
 ## Ordre stratégique
 
-**O1 Studio d’abord, O2 Jeu ensuite.**
+**O1 Compagnon → O2 MMO (banc d’essai) → O3 Joueurs IA (portables).**  
+Canon : [`OBJECTIVES.md`](../OBJECTIVES.md).
 
-**Étoile du nord produit** : une IA incarnée sur PC/infra, puis persona au cœur du MMO, avec une évolution contrôlée du monde.  
+| Pilier | Priorité | Rôle |
+|--------|----------|------|
+| **O1 Compagnon** | actuelle | Incarnation hors MMO ; interface humains ↔ Studio / infra / écosystème |
+| **O2 MMO** | parallèle si O1 vert | Terrain d’entraînement / simulation pour les Joueurs IA (+ MMO jouable) |
+| **O3 Joueurs IA** | fondations OK, noyau = suite | Agents = joueurs ; à terme adapters hors Lost Heaven |
+
+**Mutations dures** : pas de LLM libre sur économie / combat / craft / quête / réputation — [`OBJECTIVES.md`](../OBJECTIVES.md) § règle.  
 Checklist de restauration : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).
 
 ---
 
-## O1 — Studio (priorité actuelle)
+## O1 — Compagnon / Studio (priorité actuelle)
 
-Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team, méta-autonomie L3, smoke LAN, sprint d’évolution 7 jours (L1 auto / L2 Pilot).
+**Pilier** : incarnation hors MMO.  
+Cœur ops : `packages/cortex` — Pilot (`.140:8080`), Team, méta-autonomie L3, smoke LAN, sprint évolution 7j (L1 auto / L2 Pilot).
 
-### Focus explicite (depuis sept. 2026) — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)
-
-**Compagnon Studio** (type Jarvis) :
+### Focus explicite — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md)
 
 | Rôle | Surface |
 |------|---------|
@@ -31,28 +37,29 @@ Cœur opérationnel : `packages/cortex` — Pilot sur le LAN (`.140:8080`), Team
 | Ops / Team / approvals L2 | Pilot `.140:8080/pilot/` |
 | Bureau Windows | `packages/compagnon-desktop` (tray, overlay, notifications) |
 
-Jalons **D0–D6** (+ character / voix) : **OK** sur checklist (smoke D6 V6–V8 **PASS** 2026-10-06).  
-Fil **Jarvis / D5** (mandat + soft-confirm + Accueil/Jobs) : **clôturé** — [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md).  
-Gate feeling Compagnon **ouverte** — voir [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
-**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · L3 smoke LAN **DONE** 2026-10-11 (`days_ok=3/3`) · **ouverts** : A2/C2 feeling / polish retour terrain — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.  
-**Fil hygiène contexte / monde** (A1–A3 · B1 · C1–C2 · D1) : **clos** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil hygiène*.  
-**Fil Mods→Compagnon** (Agents live · bus ADR 0019 · routeur L1/L2) : **clos & live** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil Mods Claude*.  
-**D7 Présence Agents** : code monorepo livré — clôture [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) · sync worker `.143` encore ouvert.
+Jalons **D0–D6** (+ character / voix) : **OK** (smoke D6 V6–V8 **PASS** 2026-10-06).  
+Fil **Jarvis / D5** : **clôturé** — [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md).  
+Gate feeling Compagnon **ouverte** — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
+**Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C) · L3 smoke LAN **DONE** 2026-10-11 · **ouverts** : A2/C2 feeling / polish retour terrain — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.  
+**Fil hygiène contexte / monde** : **clos** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil hygiène*.  
+**Fil Mods→Compagnon** : **clos & live** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil Mods Claude*.  
+**D7 Présence Agents** : code livré — [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) · sync worker `.143` encore ouvert.
 
-**Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  
-Pilot reste le cockpit ops ; on n’absorbe **pas** Team/Jobs dans un clone de `:5174`.  
-O2 / hub Godot peut avancer en parallèle tant que D6 reste vert sur `:5174`.
+**Règle produit** : les 30 premières secondes = **compagnon**, pas hub technique.  
+Pilot = cockpit ops ; pas d’absorption Team/Jobs dans un clone de `:5174`.  
+O2 / O3 peuvent avancer en parallèle tant que D6 reste vert sur `:5174`.
 
 Infra LLM locale (`.110` heavy / `.111` light) : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md).
 
-**Règle dev** : nouvelle feature Studio → `packages/cortex`.
+**Règle dev** : feature Compagnon / Studio → `packages/cortex`.
 
 ---
 
-## O2 — Jeu
+## O2 — MMO (banc d’entraînement)
 
+**Pilier** : Lost Heaven = simulation / mises en situation pour Joueurs IA (+ jeu humain).  
 `packages/prime-client` + `packages/prime-hub` + `packages/launchpad` → `.246:8787`.  
-Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
+Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md) · zone entraînement : [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md).
 
 **P6 Godot-first G5+ = live** (peel natif, Triplons + autonomie bots, Core3/Python hors chemin joueur).
 
@@ -62,10 +69,29 @@ Plan : [`PLAN_MMO_O2.md`](PLAN_MMO_O2.md) · runtime : [`RUNTIME_GODOT.md`](RUNT
 | **P3** | Persona en jeu — dialogue + Chœur V50–V53 · **C3–C8 live** (wiki `/v1/wiki`) 2026-10-07 |
 | **P4** | Pont SOE joueur — **retiré (clos)** · autorité exclusive Godot headless G5+ (`:8787`) |
 | **P5** | Cour + densité + hotbar + spawn + engage + **telegraph boss client** **vert** 2026-10-08 |
+| **Zone entraînement** | Dials / seuils B1–B4 + boucle Compagnon C1/C2 **OK** 2026-10-08 |
 
 Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
-**Règle dev** : feature jeu → `packages/prime-client` / `packages/prime-hub` (pas Core3, pas spike Python).
+**Règle dev** : feature jeu / hub → `packages/prime-client` / `packages/prime-hub` (pas Core3, pas spike Python).
+
+---
+
+## O3 — Joueurs IA (portables)
+
+**Pilier** : agents = joueurs (compte + perso IG + pont) ; MMO = 1er adapter ; autres jeux = suite.  
+Canon pont : [`design/HUB_AI_PLAYER_BRIDGE.md`](design/HUB_AI_PLAYER_BRIDGE.md) · data `ai_players.json` · `skill.md` hub.
+
+| Fondations | État |
+|------------|------|
+| Identité `*_bridge` ≠ perso IG | OK |
+| Soft-link Studio ↔ IG (ADR 0004) | OK |
+| Présence différenciée (B3/B4) | OK |
+| Noyau agent découplé + contrat d’environnement | **cible** (voir [`OBJECTIVES.md`](../OBJECTIVES.md) O3) |
+
+**Hors scope immédiat** : 2ᵉ jeu avant contrat adapter stable sur Lost Heaven ; ouverture publique aux LLM internet.
+
+**Règle dev** : contrats / flotte / skill agent → `prime-hub` data + docs design ; pas de logique joueur IA dans le legacy web.
 
 ---
 
@@ -82,14 +108,15 @@ Lore : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md).
 
 | Action | Où |
 |--------|-----|
-| Nouvelle feature Studio | `packages/cortex` |
-| Nouvelle feature jeu (O1 vert) | `packages/prime-client` |
+| Feature Compagnon / Studio (O1) | `packages/cortex` |
+| Feature banc d’essai / hub (O2) | `packages/prime-client` / `packages/prime-hub` |
+| Contrats Joueurs IA (O3) | `prime-hub` data + [`HUB_AI_PLAYER_BRIDGE.md`](design/HUB_AI_PLAYER_BRIDGE.md) |
 | Vérif LAN | `bash tools/smoke_lan_surfaces.sh --functional` — [`SMOKE_LAN.md`](SMOKE_LAN.md) |
 
-**En une phrase** : Compagnon D6 vert sur `:5174` + Pilot/Team Cortex ; O2 hub Godot (P3–P5) sans diluer l’effort dans le legacy ni rouvrir le MMO web.
+**En une phrase** : Compagnon (O1) interface écosystème ; MMO (O2) entraîne les Joueurs IA (O3) sous mutations bornées — sans diluer dans le legacy.
 
 ### Lot Studio ops (2026-10-07)
 
 Pilote gaps agentiques A–F2 + tick L3 ops_health : **livré** (Fleet Pilot, `action_policy`, presence soft-links, Slack HITL, smoke LAN mission).  
 Doc : [`packages/cortex/docs/plan_combler_gaps_agentiques.md`](../packages/cortex/docs/plan_combler_gaps_agentiques.md) · runbook ops health.  
-**Suite immédiate** : voir [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) — **3.1** World Stream **clos** · feeling C2 rejeu · L3 ops **DONE** · optionnel `O-OPS-2` métriques Fleet.
+**Suite immédiate** : voir [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) — World Stream **clos** · feeling C2 rejeu · L3 ops **DONE**.
