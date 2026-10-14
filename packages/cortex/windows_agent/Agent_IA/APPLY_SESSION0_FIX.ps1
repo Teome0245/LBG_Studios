@@ -16,19 +16,37 @@ $files = @(
   "main.py",
   "fix_session0_admin.ps1",
   "install_fix_session0_task.ps1",
-  "fix_agent_to_user_session.ps1"
+  "fix_agent_to_user_session.ps1",
+  "install_agent_ia_scheduled_tasks.ps1",
+  "start_agent.ps1",
+  "restart_agent.ps1",
+  "agent_ia_process.ps1"
 )
 foreach ($f in $files) {
   $url = "$Base/$f"
   $out = Join-Path $Tmp $f
   Write-Host "GET $url"
-  Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
-  Copy-Item $out (Join-Path $Dst $f) -Force
-  Write-Host "OK -> $Dst\$f"
+  try {
+    Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing
+    Copy-Item $out (Join-Path $Dst $f) -Force
+    Write-Host "OK -> $Dst\$f"
+  } catch {
+    Write-Host "WARN skip $f : $_"
+  }
 }
 
-Write-Host "== reinstall task LBG-AgentIA-fix-session0 =="
+Write-Host "== reinstall task LBG-AgentIA-fix-session0 (AtLogOn + Compagnon) =="
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "install_fix_session0_task.ps1")
+
+$logonInstall = Join-Path $Dst "install_agent_ia_scheduled_tasks.ps1"
+if (Test-Path $logonInstall) {
+  Write-Host "== reinstall LBG-AgentIA-logon (session interactive) =="
+  try {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $logonInstall
+  } catch {
+    Write-Host "WARN logon tasks: $_"
+  }
+}
 
 Write-Host "== bascule session utilisateur =="
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "fix_agent_to_user_session.ps1")
@@ -48,5 +66,6 @@ try {
 }
 
 Write-Host ""
-Write-Host "Si OK: Compagnon peut ouvrir vghd. Sinon voir C:\Agent_IA\logs\fix_session0.log"
+Write-Host "Si OK: Compagnon ouvre vghd sans action manuelle le matin (AtLogOn + auto open_app)."
+Write-Host "Sinon voir C:\Agent_IA\logs\fix_session0.log"
 exit $code

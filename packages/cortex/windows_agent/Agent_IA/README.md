@@ -40,11 +40,12 @@ curl -sS -X POST http://192.168.0.10:5005/invoke \
   -d '{"actor_id":"diag","text":"agent session status","context":{"desktop_action":{"kind":"agent_session_status"},"desktop_approval":"confirmed"}}'
 ```
 
-Ensuite depuis Compagnon : « répare session 0 » → Dry-run → Réel.  
-**Important** : `fix_session0` ne se contente plus de `Start-ScheduledTask` + `STATE=Ready` — il **poll** le listener et renvoie `ok=false` / `session0_still` si `:5005` reste en Session 0. Log : `C:\Agent_IA\logs\fix_session0.log`.
+**Compagnon** : avant tout `open_app`, si `session0_risk` → **auto `fix_session0`** puis retry (plus besoin de taper « répare session 0 » chaque matin).  
+La tâche `LBG-AgentIA-fix-session0` a un trigger **AtLogOn** (délai 45 s) pour les postes éteints la nuit.  
+**Important** : `fix_session0` **poll** le listener et renvoie `ok=false` / `session0_still` si `:5005` reste en Session 0. Log : `C:\Agent_IA\logs\fix_session0.log`.
 
 Cause fréquente de régression : service Windows **`AgentLocalV0`** (`start_agent.bat` en SYSTEM) — à laisser **Disabled**.  
-Compagnon refuse `open_app` tant que `session0_risk=true` (garde overlay + worker).
+AGIR manuel « répare session 0 » reste dispo (Dry-run → Réel) si besoin de forcer.
 
 Démarrage auto (logon) + redémarrage 08:00 / 20:00 — **toujours en compte utilisateur Interactive** :
 

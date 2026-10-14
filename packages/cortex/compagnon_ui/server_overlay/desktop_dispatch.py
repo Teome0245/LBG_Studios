@@ -308,7 +308,8 @@ def _format_tasks_reply(data: dict[str, Any], goal: str) -> str:
         return (
             f"Desktop : agent en Session 0 — l'app ne s'affiche pas sur le bureau. "
             f"{(err or reply_s)[:200]}. "
-            "Dis « répare session 0 » puis réessaie d'ouvrir l'app."
+            "Compagnon tente la remédiation auto ; si ça échoue : "
+            "`APPLY_SESSION0_FIX.ps1` (Admin bureau)."
         )
     if re.search(r"WinError\s*2|introuvable|FileNotFound", detail_blob, re.I):
         return (
@@ -356,7 +357,9 @@ def _format_worker_reply(
         isinstance(data.get("session"), dict) and data["session"].get("session0_risk")
     ):
         err = data.get("error") or "Agent en Session 0 (app invisible)"
-        hint = data.get("hint") or "Dis « répare session 0 » puis réessaie."
+        hint = data.get("hint") or (
+            "Remédiation auto échouée — APPLY_SESSION0_FIX.ps1 (Admin bureau) une fois."
+        )
         return f"Desktop worker ({where}) : `{app}` — {err}\n_{hint}_"
     if data.get("ok") is True or outcome in ("ok", "dry_run"):
         extra = ""
@@ -374,6 +377,53 @@ def _format_worker_reply(
     return f"Desktop worker ({where}) : `{app}` — {err}" + (f"\n_{hint}_" if hint else "")
 
 
+def _desktop_ctx_approval(*, approval: str, approval_mode: str) -> dict[str, Any]:
+    ctx: dict[str, Any] = {}
+    if approval_mode in ("confirm", "soft", "lab"):
+        ctx["desktop_approval"] = "confirmed"
+        ctx["desktop_confirm"] = True
+    elif approval:
+        ctx["desktop_approval"] = approval
+    return ctx
+
+
+async def _invoke_worker_desktop(
+    worker: str,
+    *,
+    kind: str,
+    timeout: Any,
+    approval: str,
+    approval_mode: str,
+    text: str,
+    actor_id: str,
+    dry_run: bool = False,
+    extra_action: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """POST ``/invoke`` desktop_action ; ``None`` si transport KO."""
+    action: dict[str, Any] = {"kind": kind}
+    if extra_action:
+        action.update(extra_action)
+    ctx: dict[str, Any] = {
+        "desktop_dry_run": bool(dry_run),
+        "desktop_action": action,
+        **_desktop_ctx_approval(approval=approval, approval_mode=approval_mode),
+    }
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.post(
+                f"{worker.rstrip('/')}/invoke",
+                json={"actor_id": actor_id, "text": text, "context": ctx},
+            )
+        if r.status_code >= 400:
+            logger.info("desktop invoke %s HTTP %s: %s", kind, r.status_code, r.text[:200])
+            return None
+        data = r.json() if r.content else {}
+        return data if isinstance(data, dict) else None
+    except Exception as e:
+        logger.info("desktop invoke %s failed: %s", kind, e)
+        return None
+
+
 async def _probe_worker_session0(
     worker: str,
     *,
@@ -382,32 +432,83 @@ async def _probe_worker_session0(
     approval_mode: str,
 ) -> dict[str, Any] | None:
     """Lit ``agent_session_status`` sur le worker ; ``None`` si indisponible."""
-    ctx: dict[str, Any] = {
-        "desktop_dry_run": False,
-        "desktop_action": {"kind": "agent_session_status"},
-    }
-    if approval_mode in ("confirm", "soft", "lab"):
-        ctx["desktop_approval"] = "confirmed"
-        ctx["desktop_confirm"] = True
-    elif approval:
-        ctx["desktop_approval"] = approval
+    return await _invoke_worker_desktop(
+        worker,
+        kind="agent_session_status",
+        timeout=timeout,
+        approval=approval,
+        approval_mode=approval_mode,
+        text="agent session status",
+        actor_id="orch-ui:desktop-session",
+    )
+
+
+def _session0_risk_from_probe(sess: dict[str, Any] | None) -> bool:
+    if not isinstance(sess, dict):
+        return False
+    sess_info = sess.get("session")
+    return isinstance(sess_info, dict) and sess_info.get("session0_risk") is True
+
+
+async def _auto_remediate_session0(
+    worker: str,
+    *,
+    timeout: Any,
+    approval: str,
+    approval_mode: str,
+    poll_s: float = 55.0,
+) -> dict[str, Any]:
+    """Déclenche ``fix_session0`` puis poll jusqu'à hors Session 0.
+
+    Retourne ``{ok, session, fix, note}``. Le worker peut mourir pendant la
+    remédiation (tâche admin tue le listener S0) — on poll malgré les erreurs.
+    """
+    fix_timeout = timeout
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            r = await client.post(
-                f"{worker.rstrip('/')}/invoke",
-                json={
-                    "actor_id": "orch-ui:desktop-session",
-                    "text": "agent session status",
-                    "context": ctx,
-                },
-            )
-        if r.status_code >= 400:
-            return None
-        data = r.json() if r.content else {}
-        return data if isinstance(data, dict) else None
-    except Exception as e:
-        logger.info("desktop session probe failed: %s", e)
-        return None
+        # fix_session0 peut prendre ~45–90 s côté worker
+        read_s = float(getattr(timeout, "read", 120) or 120)
+        fix_timeout = httpx_timeout(read=max(read_s, 120.0))
+    except Exception:
+        fix_timeout = httpx_timeout(read=120.0)
+
+    fix = await _invoke_worker_desktop(
+        worker,
+        kind="fix_session0",
+        timeout=fix_timeout,
+        approval=approval,
+        approval_mode=approval_mode,
+        text="répare session 0",
+        actor_id="orch-ui:desktop-session0-auto",
+    )
+    # Connexion coupée = souvent succès (process S0 tué) → on poll.
+    deadline = time.monotonic() + max(5.0, float(poll_s))
+    last: dict[str, Any] | None = None
+    while time.monotonic() < deadline:
+        await _async_sleep(1.0)
+        last = await _probe_worker_session0(
+            worker, timeout=timeout, approval=approval, approval_mode=approval_mode
+        )
+        if last is not None and not _session0_risk_from_probe(last):
+            return {
+                "ok": True,
+                "session": last.get("session") if isinstance(last, dict) else None,
+                "fix": fix,
+                "note": "session0_auto_ok",
+            }
+    still = _session0_risk_from_probe(last)
+    return {
+        "ok": not still and last is not None,
+        "session": last.get("session") if isinstance(last, dict) else None,
+        "fix": fix,
+        "note": "session0_still" if still else "session0_unreachable",
+    }
+
+
+async def _async_sleep(seconds: float) -> None:
+    """Sleep awaitable (testable / patchable)."""
+    import asyncio
+
+    await asyncio.sleep(seconds)
 
 
 async def run_desktop_open(
@@ -448,36 +549,57 @@ async def run_desktop_open(
         or ("confirm" if os.getenv("LBG_COMPAGNON_LAB", "").strip() in ("1", "true", "yes", "on") else "")
     )
 
-    # Garde Session 0 : évite le faux « ok » Cockpit alors que l'app est invisible.
+    # Garde Session 0 : remédiation auto (fix_session0) puis retry — pas d'action manuelle matin.
+    session0_auto: dict[str, Any] | None = None
     if not dry_run:
         sess = await _probe_worker_session0(
             worker, timeout=timeout, approval=approval, approval_mode=approval_mode
         )
-        sess_info = sess.get("session") if isinstance(sess, dict) else None
-        if isinstance(sess_info, dict) and sess_info.get("session0_risk") is True:
-            latency = time.monotonic() - t0
-            return {
-                "ok": False,
-                "content": (
-                    f"Desktop ({target_label}) : Agent_IA en **Session 0** — "
-                    f"`{action['app']}` ne s'afficherait pas sur ton bureau. "
-                    "La remédiation auto a déjà été essayée : le listener reste en session 0. "
-                    "Sur le PC `.10`, PowerShell **Admin** (session bureau) :\n"
-                    "`irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex`\n"
-                    "Puis réessaie d'ouvrir l'app."
-                ),
-                "source": "desktop",
-                "via": "session0_guard",
-                "latency": latency,
-                "app": action["app"],
-                "outcome": "session0_invisible",
-                "desktop": {
-                    "target": target_id,
-                    "label": target_label,
-                    "url": worker,
-                    "session": sess_info,
-                },
-            }
+        if _session0_risk_from_probe(sess):
+            logger.warning(
+                "desktop session0_risk on %s — auto fix_session0 before open_app=%s",
+                target_label,
+                action["app"],
+            )
+            session0_auto = await _auto_remediate_session0(
+                worker,
+                timeout=timeout,
+                approval=approval,
+                approval_mode=approval_mode,
+            )
+            if not session0_auto.get("ok"):
+                latency = time.monotonic() - t0
+                sess_info = session0_auto.get("session")
+                if not isinstance(sess_info, dict) and isinstance(sess, dict):
+                    sess_info = sess.get("session")
+                return {
+                    "ok": False,
+                    "content": (
+                        f"Desktop ({target_label}) : Agent_IA restait en **Session 0** — "
+                        f"remédiation auto échouée pour `{action['app']}`. "
+                        "Une fois (Admin, session bureau sur `.10`) :\n"
+                        "`irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex`\n"
+                        "Puis vérifie que `LBG-AgentIA-fix-session0` a un trigger **AtLogOn**."
+                    ),
+                    "source": "desktop",
+                    "via": "session0_auto_failed",
+                    "latency": latency,
+                    "app": action["app"],
+                    "outcome": "session0_invisible",
+                    "desktop": {
+                        "target": target_id,
+                        "label": target_label,
+                        "url": worker,
+                        "session": sess_info,
+                        "session0_auto": {
+                            "note": session0_auto.get("note"),
+                            "fix_ok": (
+                                isinstance(session0_auto.get("fix"), dict)
+                                and session0_auto["fix"].get("ok") is True
+                            ),
+                        },
+                    },
+                }
 
     # 1) Cockpit / P03 tasks/run (poste défaut uniquement)
     token = _pilot_token()
@@ -516,7 +638,7 @@ async def run_desktop_open(
                     content,
                     re.I,
                 )
-                return {
+                payload = {
                     "ok": ok,
                     "content": content,
                     "source": "desktop",
@@ -529,6 +651,7 @@ async def run_desktop_open(
                         if k in data
                     },
                 }
+                return _annotate_session0_auto(payload, session0_auto)
             logger.info("desktop tasks/run HTTP %s: %s", r.status_code, r.text[:200])
         except Exception as e:
             logger.warning("desktop tasks/run failed: %s", e)
@@ -574,7 +697,7 @@ async def run_desktop_open(
                 "app": action["app"],
                 "desktop": {"target": target_id, "label": target_label, "url": worker},
             }
-        return {
+        payload = {
             "ok": data.get("ok") is True,
             "content": _format_worker_reply(data, action, label=target_label),
             "source": "desktop",
@@ -584,6 +707,7 @@ async def run_desktop_open(
             "outcome": data.get("outcome"),
             "desktop": {"target": target_id, "label": target_label, "url": worker},
         }
+        return _annotate_session0_auto(payload, session0_auto)
     except Exception as e:
         latency = time.monotonic() - t0
         return {
@@ -600,3 +724,21 @@ async def run_desktop_open(
             "app": action["app"],
             "desktop": {"target": target_id, "label": target_label, "url": worker},
         }
+
+
+def _annotate_session0_auto(
+    payload: dict[str, Any],
+    session0_auto: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Ajoute une note UI si Compagnon a dû sortir l'agent de Session 0."""
+    if not session0_auto or not session0_auto.get("ok"):
+        return payload
+    content = str(payload.get("content") or "")
+    note = "_(Session 0 : remédiation auto Compagnon OK — agent rétabli en session bureau.)_\n"
+    payload["content"] = note + content
+    desk = payload.get("desktop")
+    if not isinstance(desk, dict):
+        desk = {}
+        payload["desktop"] = desk
+    desk["session0_auto"] = {"note": session0_auto.get("note") or "session0_auto_ok"}
+    return payload

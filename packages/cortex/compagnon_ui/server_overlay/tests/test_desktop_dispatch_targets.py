@@ -72,6 +72,19 @@ class DesktopDispatchTargets(unittest.TestCase):
         self.assertEqual(tid, "pc")
         self.assertIn("192.168.0.10", url)
 
+    def test_session0_risk_from_probe(self) -> None:
+        self.assertFalse(dd._session0_risk_from_probe(None))
+        self.assertFalse(dd._session0_risk_from_probe({"session": {"session0_risk": False}}))
+        self.assertTrue(dd._session0_risk_from_probe({"session": {"session0_risk": True}}))
+
+    def test_annotate_session0_auto(self) -> None:
+        raw = {"ok": True, "content": "ok vghd", "desktop": {"target": "pc"}}
+        out = dd._annotate_session0_auto(raw, {"ok": True, "note": "session0_auto_ok"})
+        self.assertIn("remédiation auto", out["content"])
+        self.assertEqual(out["desktop"]["session0_auto"]["note"], "session0_auto_ok")
+        unchanged = dd._annotate_session0_auto({"ok": True, "content": "x"}, None)
+        self.assertEqual(unchanged["content"], "x")
+
 
 if __name__ == "__main__":
     unittest.main()

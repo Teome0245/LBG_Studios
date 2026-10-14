@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
-# Installe la tâche élevée LBG-AgentIA-fix-session0 (une fois).
-# Ensuite Compagnon / desktop_control peut la déclencher sans UAC :
-#   Start-ScheduledTask -TaskName LBG-AgentIA-fix-session0
+# Installe la tâche élevée LBG-AgentIA-fix-session0.
+# - AtLogOn : chaque matin après login (poste éteint la nuit) → coupe AgentLocalV0 + listener S0
+# - Compagnon / Start-ScheduledTask : remédiation à la demande sans UAC
 #
 # Usage (PowerShell Admin, session bureau) :
 #   powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_fix_session0_task.ps1
@@ -35,9 +35,16 @@ $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -MultipleInstances Parallel
-# Pas de trigger auto — démarrage uniquement via Compagnon / Start-ScheduledTask
 # Parallel : évite IgnoreNew qui no-opait quand un fantôme « Running » bloquait la remédiation.
-Register-ScheduledTask -TaskName $name -Action $action -Principal $principal -Settings $settings | Out-Null
+# AtLogOn + délai : session bureau prête, service S0 déjà éventuellement démarré au boot.
+$logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $domainUser
+$logonTrigger.Delay = "PT45S"
+Register-ScheduledTask `
+    -TaskName $name `
+    -Action $action `
+    -Trigger $logonTrigger `
+    -Principal $principal `
+    -Settings $settings | Out-Null
 
 # Autoriser l'utilisateur courant à démarrer la tâche (même depuis un worker non-admin / Session 0)
 try {
@@ -48,8 +55,10 @@ try {
     Write-Host "WARN ACL: $_"
 }
 
-Write-Host "OK task $name user=$domainUser RunLevel=Highest (manuel / Compagnon)"
+Write-Host "OK task $name user=$domainUser RunLevel=Highest (AtLogOn + Compagnon)"
 Write-Host "Test: Start-ScheduledTask -TaskName $name"
 Get-ScheduledTask -TaskName $name | ForEach-Object {
-    "{0}  user={1}  run={2}  state={3}" -f $_.TaskName, $_.Principal.UserId, $_.Principal.RunLevel, $_.State
+    $tr = ($_ | Get-ScheduledTaskInfo -ErrorAction SilentlyContinue)
+    "{0}  user={1}  run={2}  state={3}  triggers={4}" -f `
+        $_.TaskName, $_.Principal.UserId, $_.Principal.RunLevel, $_.State, ($_.Triggers.Count)
 }

@@ -47,5 +47,5 @@ Overlay `server_overlay/routing.json` + `local_llm_provider.py` : priorise Ollam
 
 ## Desktop + bulles SSE (notes ops)
 
-- **Session 0** (`.10`) : overlay `desktop_dispatch` refuse `open_app` si le worker est en Session 0 ; remède Admin → `APPLY_SESSION0_FIX.ps1` (voir `windows_agent/Agent_IA/README.md`).
+- **Session 0** (`.10`) : overlay `desktop_dispatch` auto-`fix_session0` puis retry `open_app` ; tâche Windows **AtLogOn** pour les reboots nocturnes. Remède one-shot Admin → `APPLY_SESSION0_FIX.ps1` (voir `windows_agent/Agent_IA/README.md`).
 - **Bulles vides** : `useChat.finishStream` / `sse_ask` forcent un contenu de secours ; `ChatFlow` ne peint plus une carte glass vide ; activité → Échec si réponse vraiment vide.

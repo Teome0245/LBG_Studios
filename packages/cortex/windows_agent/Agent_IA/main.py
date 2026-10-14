@@ -2390,27 +2390,34 @@ async def invoke(payload: InvokeRequest):
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
 
-        # Session 0 = CreateProcess « ok » mais fenêtre invisible pour l'utilisateur interactif.
+        # Session 0 = CreateProcess « ok » mais fenêtre invisible — auto-remédiation.
         sess_info = _desktop_listener_session_info()
+        session0_fix: dict[str, object] | None = None
         if sess_info.get("session0_risk") is True:
-            out = {
-                **base,
-                "ok": False,
-                "outcome": "session0_invisible",
-                "app": app_id,
-                "args": args_list,
-                "session": sess_info,
-                "error": (
-                    "Agent_IA tourne en Session 0 : l'app s'ouvrirait hors bureau utilisateur. "
-                    "Demande « répare session 0 » (AGIR / fix_session0) puis réessaie."
-                ),
-                "hint": (
-                    "Une fois en Admin si la tâche manque : "
-                    "powershell -File C:\\Agent_IA\\install_fix_session0_task.ps1"
-                ),
-            }
-            _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
-            return out
+            session0_fix = _run_fix_session0_task(dry_run=False)
+            # La tâche admin tue souvent CE process ; si on survit, re-probe.
+            sess_info = _desktop_listener_session_info()
+            if sess_info.get("session0_risk") is True:
+                out = {
+                    **base,
+                    "ok": False,
+                    "outcome": "session0_invisible",
+                    "app": app_id,
+                    "args": args_list,
+                    "session": sess_info,
+                    "session0_fix": session0_fix,
+                    "error": (
+                        "Agent_IA reste en Session 0 après remédiation auto : "
+                        "l'app s'ouvrirait hors bureau utilisateur."
+                    ),
+                    "hint": (
+                        "Une fois en Admin (session bureau) : "
+                        "irm http://192.168.0.100:8765/APPLY_SESSION0_FIX.ps1 | iex "
+                        "(réinstalle la tâche AtLogOn LBG-AgentIA-fix-session0)."
+                    ),
+                }
+                _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
+                return out
 
         cmd_override = action.get("command") or action.get("exe")
         if isinstance(cmd_override, str) and cmd_override.strip():
@@ -2482,6 +2489,9 @@ async def invoke(payload: InvokeRequest):
             }
             if sidecar_report.get("restored"):
                 out["sidecar"] = sidecar_report
+            if session0_fix is not None:
+                out["session0_fix"] = session0_fix
+                out["session"] = sess_info
             _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
             return out
         except Exception as e:
