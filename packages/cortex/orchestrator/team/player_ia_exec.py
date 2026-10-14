@@ -109,10 +109,15 @@ def _core_online_bots() -> frozenset[str]:
 
 
 def _connectivity_ok(probe: dict[str, object]) -> bool:
-    """Sidecar + Lia/Nix online (ignore Mira/Kael, humanité, truth-guard)."""
+    """Hub G5 (:8787) ou sidecar legacy (:8791) + bots cœur online (ignore humanité / truth-guard)."""
     checks = probe.get("checks")
     rows = list(checks) if isinstance(checks, list) else []
-    health = any(isinstance(c, dict) and c.get("kind") == "sidecar_healthz" and c.get("ok") for c in rows)
+    health = any(
+        isinstance(c, dict)
+        and c.get("kind") in ("hub_healthz", "sidecar_healthz")
+        and c.get("ok")
+        for c in rows
+    )
     if not health:
         return False
     core = _core_online_bots()

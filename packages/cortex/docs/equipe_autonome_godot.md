@@ -60,6 +60,8 @@ LBG_NEW_MMO_ROOT=/home/sdesh/projects/new_mmo
 
 **2026-07-21** : `LBG_TEAM_GODOT_SOE_M3=0` appliqué sur VM **140** — LoginServer `:44553` injoignable / chemin produit = **lbg-ws/2** (pas `soe_handshake`). Les followups « SOE KO » ne doivent plus spammer Element.
 
+**2026-10-14** : re-appliqué `LBG_TEAM_GODOT_SOE_M3=0` (était repassé à `1`). Superviseur aligné hub G5 `:8787` — `_connectivity_ok` accepte `hub_healthz` ; miroir M1 lit `/v1/bots` (plus `:8791` / `player-snapshot`). Docs truth-guard `docs/world/{BIBLE_MMO,INVENTAIRE_PNJ}.md` déployés sur 140.
+
 **2026-08-05** : garde-fous anti-bruit followups (`team/followup_guard.py`) — cooldown signature, profondeur max, pas de cascade depuis tâches `_godot_followup` / `_m9_followup`, auto-run **PM seulement** par défaut (dev opt-in).
 
 ```bash

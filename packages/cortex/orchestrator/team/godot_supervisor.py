@@ -16,7 +16,7 @@ from team.godot_soe_probe import probe_soe_m3_login, probe_soe_m3_zone, probe_so
 from team.lbg_ws2_audit import audit_zb0_readiness
 from team.models import TeamTask
 from team.player_ia_exec import execute_player_ia
-from team.player_ia_probe import managed_bot_ids, required_bot_ids, sidecar_base_url
+from team.player_ia_probe import managed_bot_ids, probe_base_url, required_bot_ids
 
 
 def supervisor_enabled() -> bool:
@@ -74,30 +74,51 @@ def _check_sidecar_track() -> dict[str, Any]:
 
 
 def _check_mirror_track() -> dict[str, Any]:
-    """Valide que le sidecar expose assez de snapshots pour alimenter Godot (équivalent miroir M1)."""
-    base = sidecar_base_url()
+    """Valide que le hub G5 (ou sidecar legacy) expose assez d'entités joueur pour Godot (miroir M1)."""
+    base = probe_base_url()
+    hub_mode = not base.rstrip("/").endswith(":8791")
     entities = 0
     errors: list[str] = []
     try:
         with httpx.Client(timeout=httpx.Timeout(10.0)) as client:
-            for bot in managed_bot_ids()[:4]:
+            if hub_mode:
                 try:
-                    r = client.get(f"{base}/v1/player-snapshot", params={"player": bot.capitalize()})
+                    r = client.get(f"{base}/v1/bots")
+                    payload = r.json() if r.content else {}
+                    rows = payload.get("bots") if isinstance(payload, dict) else []
+                    wanted = {b.lower() for b in managed_bot_ids()[:4]}
+                    if isinstance(rows, list):
+                        for row in rows:
+                            if not isinstance(row, dict):
+                                continue
+                            name = str(row.get("name") or "").strip().lower()
+                            if name in wanted:
+                                entities += 1
                     if r.status_code != 200:
-                        continue
-                    data = r.json() if r.content else {}
-                    snap = data.get("snapshot") if isinstance(data.get("snapshot"), dict) else data
-                    if isinstance(snap, dict) and (snap.get("online") or snap.get("connected")):
-                        entities += 1
+                        errors.append(f"hub_bots:HTTP {r.status_code}")
                 except httpx.HTTPError as e:
-                    errors.append(f"{bot}:{e}")
+                    errors.append(f"hub_bots:{e}")
+            else:
+                for bot in managed_bot_ids()[:4]:
+                    try:
+                        r = client.get(f"{base}/v1/player-snapshot", params={"player": bot.capitalize()})
+                        if r.status_code != 200:
+                            continue
+                        data = r.json() if r.content else {}
+                        snap = data.get("snapshot") if isinstance(data.get("snapshot"), dict) else data
+                        if isinstance(snap, dict) and (snap.get("online") or snap.get("connected")):
+                            entities += 1
+                    except httpx.HTTPError as e:
+                        errors.append(f"{bot}:{e}")
     except httpx.HTTPError as e:
-        return {"track": "godot_mirror_m1", "ok": False, "error": str(e), "entities": 0}
+        return {"track": "godot_mirror_m1", "ok": False, "error": str(e), "entities": 0, "base": base}
     ok = entities >= 1
     return {
         "track": "godot_mirror_m1",
         "ok": ok,
         "entities": entities,
+        "base": base,
+        "mode": "hub" if hub_mode else "sidecar",
         "required_bots": sorted(required_bot_ids()),
         "errors": errors[:3],
     }

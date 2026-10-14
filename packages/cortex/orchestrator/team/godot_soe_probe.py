@@ -45,7 +45,8 @@ def soe_password() -> str:
 
 
 def soe_m3_enabled() -> bool:
-    return _truthy("LBG_TEAM_GODOT_SOE_M3", "1")
+    # Défaut 0 : chemin produit = lbg-ws/2 (LoginServer :44553 souvent absent).
+    return _truthy("LBG_TEAM_GODOT_SOE_M3", "0")
 
 
 def soe_m5_enabled() -> bool:

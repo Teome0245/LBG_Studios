@@ -21,6 +21,7 @@ class _Resp:
 
 
 def test_probe_player_ia_ok(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LBG_PLAYER_IA_PROBE_MODE", "sidecar")
     monkeypatch.setenv("LBG_CORE3_SIDECAR_URL", "http://246.test:8791")
     monkeypatch.setenv("LBG_CORE3_IA_BOTS", "lia,nix")
     monkeypatch.setenv("LBG_TEAM_PLAYER_IA_REQUIRED_BOTS", "lia,nix")
@@ -59,11 +60,13 @@ def test_probe_player_ia_ok(monkeypatch: pytest.MonkeyPatch) -> None:
         out = probe_player_ia()
     assert out["ok"] is True
     assert out["online_count"] == 2
-    assert any(c.get("kind") == "other_players" for c in out["checks"])
+    assert out.get("mode") == "sidecar"
+    assert any(c.get("kind") == "player_snapshot" and c.get("player") == "lia" for c in out["checks"])
 
 
 def test_probe_sidecar_down(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LBG_CORE3_SIDECAR_URL", "http://246.test:8791")
+    monkeypatch.setenv("LBG_PLAYER_IA_PROBE_MODE", "sidecar")
 
     with patch("team.player_ia_probe.httpx.Client") as cls:
         inst = MagicMock()
@@ -73,3 +76,20 @@ def test_probe_sidecar_down(monkeypatch: pytest.MonkeyPatch) -> None:
         cls.return_value = inst
         out = probe_player_ia()
     assert out["ok"] is False
+
+
+def test_connectivity_ok_accepts_hub_healthz() -> None:
+    from team.player_ia_exec import _connectivity_ok
+
+    probe = {
+        "ok": False,
+        "checks": [
+            {"kind": "hub_healthz", "ok": True},
+            {"kind": "player_snapshot", "player": "lia", "online": True, "required": True, "ok": True},
+            {"kind": "player_snapshot", "player": "nix", "online": True, "required": True, "ok": True},
+            {"kind": "player_snapshot", "player": "mira", "online": True, "required": True, "ok": True},
+            {"kind": "player_snapshot", "player": "kael", "online": True, "required": True, "ok": True},
+            {"kind": "world_truth_guard", "ok": False},
+        ],
+    }
+    assert _connectivity_ok(probe) is True
