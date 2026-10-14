@@ -39,7 +39,6 @@ _O-OPS-1 et O-OPS-2 clos (2026-10-13). O-OPS-3 = seau F3 O2 découpé en tickets
 
 | ID | Sujet | Notes |
 |----|--------|--------|
-| O-JEUX-ESCORT | Escorte civil `lh_escort_gate_clinic` | **en cours** — `hub_escort.gd` · spawn porte · follow · fail 40 m / 8 s · dropoff serveur · selftest |
 | O-JEUX-SHOW | Suite P2c show live La Perle | tip + formation Talen |
 | O-JEUX-HOTBAR | Hotbar slots restants (compétence / objet / emote) | `client_ui_dialogue.gd` · [`UX_BACKLOG_HUB.md`](../packages/prime-client/docs/UX_BACKLOG_HUB.md) |
 

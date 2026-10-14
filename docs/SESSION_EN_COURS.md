@@ -11,7 +11,7 @@
 
 Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
 Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-13 soir** : alignement docs périmées OK · **traction O2** : `O-JEUX-ESCORT` (civil suivable `lh_escort_gate_clinic`) — code + selftest verts ; deploy hub `.246` à faire.
+**2026-10-14** : `O-JEUX-ESCORT` **clos & live** sur `.246:8787` · suite polish O2 = `O-JEUX-SHOW` / `O-JEUX-HOTBAR`.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
@@ -66,10 +66,7 @@ _Aucun bloquant documenté pour ce bootstrap._
   - **Intégration moteur & données** : Inscrits dans `scrapaltai_planet_map.json` (Ctrl+M), `scrapaltai_pois.json`, `catalog_poi.json`, `hub_sim_defs.gd` (`POIS` + `HUB_NPCS`), `triplons.json` (solos), `npc_registry.json`, `explore_ring_lh.json` et préférences de voyage des bots dans `ai_players.json`.
   - **Rendu Client (`entity.gd` & `hub_focus.gd`)** : Ajout du micro-bobbing de marche pour les bots en mouvement, orientation `flip_h` automatique selon la vélocité horizontale, et autorisation des rayons outposts dans `hub_focus.gd` pour afficher les PNJ distants sans fuite de clutter legacy.
   - **Preuve & Déploiement Live** : Tests headless CI Godot (`ci_godot_headless.sh`) 100% verts en 3s. Déploiement live sur `.246:8787` via `deploy_prime_hub_246.sh`. Sonde live `/v1/bots` mesurée : **10/10 bots en déplacement actif et exploration fluide** (ex: Mira en route vers Ksar Nomade à 33 m en 3s, Lia libérée vers le sud à 34.5 m).
-- 2026-10-13 : **O-JEUX-ESCORT (polish O2 / ex O-OPS-3)** — en cours monorepo —
-  - Module [`hub_escort.gd`](../packages/prime-hub/scripts/hub_escort.gd) : spawn civil porte est, follow joueur, fail si >40 m pendant 8 s, dropoff exige civil à la clinique.
-  - Hooks `hub_http` accept/progress/complete + `GET /v1/quests/escort` · `economy.abandon` · template quest métadonnées `escort`.
-  - Preuve : `ESCORT_SELFTEST_OK` via `bash tools/smoke_escort_hub.sh` · deploy `deploy_prime_hub_246.sh` encore ouvert pour live `:8787`.
+- 2026-10-14 : **O-JEUX-ESCORT clos & live** — `GET /v1/quests/escort` → 200 sur `.246:8787` · déjà dans `9baecef` (deploy hub) · ticket déplacé en § Clos.
 - 2026-10-13 : **Alignement docs périmées (audit)** —
   - [`REGISTRE.md`](REGISTRE.md) : packages `prime-hub` / `compagnon-desktop` ; autorité joueur **`:8787`** ; `:8792` = lab Core3 OFF ; matrice mermaid + jalons oct. ;
   - [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) : Rang 2 P3/dialogue/hub **vert** ; Core3 sidecar **rouge** ; prochaine traction = backlog léger (O-OPS-3, polish, unification client) ;
