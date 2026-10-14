@@ -78,6 +78,15 @@ export async function spawnTeamL1(opts) {
     /* ignore */
   }
 
+  // Bus ADR 0019 — handoff visible Compagnon → agent (best-effort)
+  let bus = null
+  try {
+    const { announceSpawn } = await import('./teamBus.js')
+    bus = await announceSpawn({ taskId, role, objective })
+  } catch {
+    bus = null
+  }
+
   return {
     ok: true,
     id: taskId,
@@ -86,6 +95,7 @@ export async function spawnTeamL1(opts) {
     objective,
     ran: ran && ran.ok !== false ? ran : null,
     run_error: ran && ran.ok === false ? ran.error || ran.detail : null,
+    bus: bus && bus.ok ? bus.message : null,
   }
 }
 

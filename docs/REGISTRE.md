@@ -226,6 +226,7 @@ flowchart LR
 | Date | Jalon | Où |
 |------|--------|-----|
 | 2026-10-13 | Canon docs : autorité joueur `:8787` · packages `prime-hub` / `compagnon-desktop` au registre | ce fichier · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) |
+| 2026-10-14 | Greffes Mods→Compagnon : Agents live · bus Team · routeur L1/L2 live `:5174` | [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · `compagnon_ui` |
 | 2026-10-14 | Unification `LBG_PRIME_CLIENT_ROOT` Studios · toasts HUD · O-DOC-2 clos · plateau polish O2 | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
 | 2026-10-13 | Clôture backlog nominal (ops/veille/IDE/campus) · smoke LAN 24 OK | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |
 | 2026-10-12 | Plan évolutions 10/10 DONE · World Stream + mémoire relationnelle · feeling Compagnon | [`suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md) |

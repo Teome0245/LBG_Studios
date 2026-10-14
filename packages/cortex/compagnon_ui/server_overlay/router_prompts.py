@@ -512,15 +512,47 @@ def wants_lab_quality_route(prompt: str) -> bool:
     )
 
 
-def lab_preferred_model(prompt: str) -> str:
-    """12b pour média/Agir ; e2b pour causerie (latence)."""
+def lab_route_profile(prompt: str) -> str:
+    """
+    Profil aligné `reason_route_matrix` (ADR route LLM) :
+    - code → heavy .110 (média / Agir / Team outillage)
+    - dialogue → e2b causerie (light .111)
+    - fast → 0.8B courtes consignes
+    - router → 2B défaut LAB
+    """
     p = prompt or ""
     if _MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p):
-        return lab_quality_model()
+        return "code"
     if _EXPLORATORY_QUALITY_RE.search(p):
+        return "dialogue"
+    stripped = p.strip()
+    if len(stripped) < 48 and not re.search(
+        r"(?i)\b(agir|team|deploy|code|script|debug|infra)\b", stripped
+    ):
+        return "fast"
+    return "router"
+
+
+def lab_route_tier(profile: str) -> str:
+    """Tier host_class : seul `code` force heavy (.110)."""
+    return "heavy" if (profile or "").strip().lower() == "code" else "light"
+
+
+def lab_preferred_model(prompt: str) -> str:
+    """Modèle préféré LAB selon profil (env alignée reason_*)."""
+    profile = lab_route_profile(prompt)
+    if profile == "code":
+        return lab_quality_model()
+    if profile == "dialogue":
         return lab_chat_quality_model()
+    if profile == "fast":
+        return (
+            os.getenv("LBG_REASON_MODEL_FAST", "").strip()
+            or "huihui_ai/qwen3.5-abliterated:0.8B"
+        )
     return (
         os.getenv("LBG_COMPAGNON_LAB_MODEL", "").strip()
+        or os.getenv("LBG_REASON_MODEL_ROUTER", "").strip()
         or "huihui_ai/qwen3.5-abliterated:2B"
     )
 

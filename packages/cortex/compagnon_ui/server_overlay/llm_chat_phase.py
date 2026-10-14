@@ -669,10 +669,15 @@ async def run_llm_chat_phase(
                 "LLM monitor sort failed (best-effort)",
             )
 
+    # Méta route L1/L2 (alignée reason_route_matrix) — stampée sur la réponse finale
+    route_meta: dict[str, Any] = {}
+
     if lab_mode:
-        # LAB : local only — chat léger = 2B (.111) ; causerie = gemma-4-abliterated:e2b ; média/Agir = 12b (.110)
+        # LAB : local only — fast/router (.111) ; causerie e2b ; média/Agir = 12b (.110)
         from src.services.router_prompts import (
             lab_preferred_model,
+            lab_route_profile,
+            lab_route_tier,
             wants_lab_quality_route,
             _MEDIA_CUE_RE,
             _QUALITY_ROUTE_RE,
@@ -680,12 +685,14 @@ async def run_llm_chat_phase(
 
         quality = wants_lab_quality_route(prompt)
         preferred = lab_preferred_model(prompt)
+        route_profile = lab_route_profile(prompt)
         # Causerie sticky : forcer modèle chat qualité (pas 2B fallback silencieux)
         if lab_causerie:
             from src.services.router_prompts import lab_chat_quality_model
 
             preferred = lab_chat_quality_model()
             quality = True
+            route_profile = "dialogue"
         before = list(sorted_models)
         local_only = [e for e in sorted_models if e.get("provider") == "local"]
         if not any(e.get("name") == preferred for e in local_only):
@@ -694,6 +701,11 @@ async def run_llm_chat_phase(
         tail = [e for e in local_only if e.get("name") != preferred]
 
         needs_heavy = bool(_MEDIA_CUE_RE.search(prompt or "") or _QUALITY_ROUTE_RE.search(prompt or ""))
+        route_meta = {
+            "route_profile": route_profile,
+            "route_tier": lab_route_tier(route_profile) if not needs_heavy else "heavy",
+            "route_preferred": preferred,
+        }
 
         def _is_heavy(name: str) -> bool:
             n = (name or "").lower()
@@ -727,7 +739,8 @@ async def run_llm_chat_phase(
             sorted_models = (head + tail) or [{"provider": "local", "name": "huihui_ai/qwen3.5-abliterated:2B"}]
 
         logger.info(
-            "LAB mode: local-only cascade preferred=%s quality=%s heavy=%s (from %s → %s)",
+            "LAB mode: local-only cascade profile=%s preferred=%s quality=%s heavy=%s (from %s → %s)",
+            route_profile,
             preferred,
             quality,
             needs_heavy,
@@ -781,6 +794,8 @@ async def run_llm_chat_phase(
             local_out = await _maybe_attach_plan_submit(
                 local_out, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
             )
+            if route_meta:
+                local_out.update(route_meta)
             return _attach_journal(local_out)
         return _attach_journal(local_out)
 
@@ -929,6 +944,8 @@ async def run_llm_chat_phase(
         result = await _maybe_attach_plan_submit(
             result, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
         )
+        if route_meta:
+            result.update(route_meta)
 
     await log_request(
         prompt,

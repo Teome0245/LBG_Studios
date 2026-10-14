@@ -266,6 +266,17 @@ class ChatIntentTests(unittest.TestCase):
         self.assertFalse(ci.wants_ollama_only_audit("audit Team studio"))
         self.assertTrue(ci.wants_ollama_only_audit("audit Ollama .110 .111"))
 
+    def test_lab_route_profile_l1_l2(self) -> None:
+        import router_prompts as rp  # noqa: E402
+
+        self.assertEqual(rp.lab_route_profile("salut"), "fast")
+        self.assertEqual(rp.lab_route_tier("fast"), "light")
+        self.assertEqual(rp.lab_route_tier("code"), "heavy")
+        # Agir / média → code heavy
+        pref = rp.lab_preferred_model("ouvre Agir dry-run sur le poste")
+        self.assertIn("12b", pref.lower())
+        self.assertEqual(rp.lab_route_profile("ouvre Agir dry-run sur le poste"), "code")
+
 
 if __name__ == "__main__":
     unittest.main()

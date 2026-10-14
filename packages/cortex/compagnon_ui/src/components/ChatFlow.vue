@@ -28,6 +28,7 @@ import {
   saveWorldNotifPrefs,
   syncWorldNotifPrefs,
 } from '@/lib/worldNotifPrefs'
+import { resolveRouteTier, routeTierLabel } from '@/lib/modelRoute'
 
 const { messages, loadHistory, addUserMessage, addMessage, breatheConversation, startNewChat } =
   useChat()
@@ -570,6 +571,15 @@ function triggerCtrlK() {
                 <div v-if="msg.model" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300 font-mono">
                   <span class="uppercase font-bold text-emerald-400">Modèle</span>
                   <span>{{ msg.model }}</span>
+                </div>
+                <div
+                  v-if="routeTierLabel(msg)"
+                  class="px-2 py-0.5 rounded-md border font-semibold uppercase tracking-wide"
+                  :class="resolveRouteTier(msg) === 'heavy'
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                    : 'border-sky-500/30 bg-sky-500/10 text-sky-200'"
+                >
+                  {{ routeTierLabel(msg) }}
                 </div>
                 <div v-if="msg.provider" class="text-slate-400 uppercase font-semibold">
                   {{ msg.provider }}

@@ -35,7 +35,8 @@ Jalons **D0–D6** (+ character / voix) : **OK** sur checklist (smoke D6 V6–V8
 Fil **Jarvis / D5** (mandat + soft-confirm + Accueil/Jobs) : **clôturé** — [`lecon_d5_jarvis_proactif_2026-09-27.md`](lecon_d5_jarvis_proactif_2026-09-27.md).  
 Gate feeling Compagnon **ouverte** — voir [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § D6.  
 **Suite Studio** : fil D6.5 / présence **clos** 2026-10-11 (A1–A4c.1 + Phases B/C code) · L3 smoke LAN **DONE** 2026-10-11 (`days_ok=3/3`) · **ouverts** : A2/C2 feeling / polish retour terrain — [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) § *Clôture de fil*.  
-**Fil hygiène contexte / monde** (A1–A3 · B1 · C1 · D1) : **clos** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil hygiène*.  
+**Fil hygiène contexte / monde** (A1–A3 · B1 · C1–C2 · D1) : **clos** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil hygiène*.  
+**Fil Mods→Compagnon** (Agents live · bus ADR 0019 · routeur L1/L2) : **clos & live** 2026-10-14 — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil Mods Claude*.  
 **D7 Présence Agents** : code monorepo livré — clôture [`LECON_PRESENCE_AGENTS_D7_2026-10-09.md`](LECON_PRESENCE_AGENTS_D7_2026-10-09.md) · sync worker `.143` encore ouvert.
 
 **Règle produit** : les 30 premières secondes doivent sentir un **compagnon**, pas un hub technique.  

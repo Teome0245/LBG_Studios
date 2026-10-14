@@ -6,6 +6,7 @@ import ChatFlow from '../components/ChatFlow.vue'
 import ChatInput from '../components/ChatInput.vue'
 import MonitoringPanel from '../components/MonitoringPanel.vue'
 import InfraColumn from '../components/InfraColumn.vue'
+import AgentsLivePanel from '../components/AgentsLivePanel.vue'
 import CharacterDialsPanel from '../components/CharacterDialsPanel.vue'
 import { useLayout } from '../composables/useLayout'
 
@@ -13,13 +14,14 @@ const {
   histCollapsed,
   infraCollapsed,
   monitorCollapsed,
+  agentsLiveCollapsed,
   characterPanelOpen,
   closeCharacterPanel,
 } = useLayout()
 </script>
 
 <template>
-  <!-- Canal chat : rail + hist optionnel + fil ; infra/monitor/caractère uniquement si ouverts -->
+  <!-- Canal chat : rail + hist optionnel + fil ; colonnes droites uniquement si ouvertes -->
   <div class="flex h-full w-full overflow-hidden bg-slate-950 text-slate-200">
     <NavRail />
 
@@ -32,6 +34,14 @@ const {
         <ChatInput />
       </main>
     </div>
+
+    <aside
+      v-if="!agentsLiveCollapsed"
+      class="hidden lg:flex w-64 glass-panel border-l border-white/5 flex-col h-full z-10 shrink-0"
+      aria-label="Agents live"
+    >
+      <AgentsLivePanel />
+    </aside>
 
     <aside
       v-if="!infraCollapsed"

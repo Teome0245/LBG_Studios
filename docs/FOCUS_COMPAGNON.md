@@ -52,9 +52,22 @@ Inspi Lorisia (contexte) + Dynasty Nova (prefs / coûts) — **sans** tags joueu
 | **A3** | Studio Brain court (ci-dessus) | **OK** live |
 | **B1** | Prefs notifs monde (`world_notif_prefs`) | **OK** |
 | **C1** | Nameplates joueur unifiées (humain = IA) | **OK** · [`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md) |
+| **C2** | Signal d’activité (`status` + `activity` zone_state) | **OK** · idle/busy/quest · nameplate `Nom · escorte` |
 | **D1** | Transparence coûts craft/use (`cost` hub + pastille client) | **OK** live `:8787` · pastille aussi en échec use/craft + label recette avant craft |
 
-Hors fil (optionnel) : B2 miroir prefs Godot · C2 signal d’activité.
+Hors fil (optionnel) : B2 miroir prefs Godot.
+
+### Fil Mods Claude → greffes Compagnon (2026-10-14) — **clos & live**
+
+Inspi TikTok @kingarms.ai (Claude Code Mods) — **patterns seulement**, pas de dépendance Anthropic.
+
+| Lot | Livrable | État |
+|-----|----------|------|
+| **1** | Side-panel **Agents live** (`AgentsLivePanel` · `GET /api/pilot/team/fleet`) | **OK** live `:5174` · bouton header **Agents** |
+| **2** | Bus inter-sessions ADR 0019 (`teamBus.js` · spawn announce · inbox `to_agent=compagnon`) | **OK** live |
+| **3** | Routeur L1/L2 (`lab_route_profile` · badge méta bulle light/heavy) | **OK** live |
+
+Deploy : `bash packages/cortex/infra/scripts/deploy_compagnon_100.sh --smoke` (+ rebuild frontend `--no-cache` si layer Docker stale).
 
 **LLM / morale** (infra LAN = LAB, non exposée) :  
 [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md)  

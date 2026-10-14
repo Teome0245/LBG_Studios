@@ -30,6 +30,12 @@ import {
   markNotified,
   nextMissionOffer,
 } from '@/lib/missionWatch'
+import {
+  COMPAGNON_BUS_AGENT,
+  listMessages,
+  markBusSeen,
+  nextBusInboxOffer,
+} from '@/lib/teamBus'
 import { useChat } from '@/composables/useChat'
 
 const current = ref(null)
@@ -203,6 +209,24 @@ async function tick() {
         if (await applyOffer(hit.offer)) return
         return
       }
+    }
+
+    // Bus ADR 0019 — messages destinés au Compagnon (ack / verify)
+    try {
+      const bus = await listMessages({ toAgent: COMPAGNON_BUS_AGENT, limit: 20 })
+      const busHit = nextBusInboxOffer(bus.messages || [])
+      if (busHit?.offer?.offer) {
+        markBusSeen(busHit.msg.id)
+        const { addMessage } = useChat()
+        addMessage({
+          role: 'assistant',
+          content: busHit.offer.message,
+          source: 'team_bus',
+        })
+        if (await applyOffer(busHit.offer)) return
+      }
+    } catch {
+      /* best-effort */
     }
 
     const offer = shouldOfferFromStatus(status)
