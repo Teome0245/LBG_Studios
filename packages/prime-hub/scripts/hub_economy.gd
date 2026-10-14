@@ -683,6 +683,73 @@ func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 	}
 
 
+const CONSUMABLE_IDS := ["water_capsule", "kit_reparation", "dried_grain", "bandage_antivenin"]
+
+
+func use_item(player: String, item_id: String = "") -> Dictionary:
+	## Consomme 1 objet utilisable (hotbar objet / inventaire).
+	var p := _player(player)
+	var want := item_id.strip_edges()
+	var chosen = null
+	for it in p["inventory"]:
+		if typeof(it) != TYPE_DICTIONARY:
+			continue
+		var iid := str(it.get("id", ""))
+		var qty := int(it.get("qty", 0))
+		if qty <= 0:
+			continue
+		if want != "" and iid != want:
+			continue
+		if want == "" and iid not in CONSUMABLE_IDS:
+			continue
+		chosen = it
+		break
+	if chosen == null:
+		return {
+			"ok": false,
+			"error": "no_usable_item",
+			"hint": "Pas d'objet utilisable (eau / kit / grain) — craft ou salvage d'abord.",
+			"inventory": (p["inventory"] as Array).duplicate(true),
+		}
+	var iid2 := str(chosen.get("id", ""))
+	var qty2 := int(chosen.get("qty", 0)) - 1
+	var label := str(chosen.get("name", iid2))
+	if qty2 <= 0:
+		var inv: Array = []
+		for it2 in p["inventory"]:
+			if typeof(it2) == TYPE_DICTIONARY and str(it2.get("id", "")) == iid2:
+				continue
+			inv.append(it2)
+		p["inventory"] = inv
+	else:
+		chosen["qty"] = qty2
+	var effect := "used"
+	match iid2:
+		"water_capsule":
+			effect = "Tu bois une capsule d'eau — gorge moins sèche."
+		"kit_reparation":
+			effect = "Kit de réparation appliqué — tu te remets d'aplomb."
+		"dried_grain":
+			effect = "Grain séché — un peu d'énergie pour la route."
+		"bandage_antivenin":
+			effect = "Bandage antivenin — la brûlure se calme."
+		_:
+			effect = "Tu utilises %s." % label
+	_save_players()
+	log_session_event(player, "item_use", effect, {"item_id": iid2})
+	return {
+		"ok": true,
+		"item_id": iid2,
+		"name": label,
+		"qty_left": maxi(0, qty2),
+		"effect": effect,
+		"message": effect,
+		"inventory": (p["inventory"] as Array).duplicate(true),
+		"chronicle": chronicle(player),
+		"source": "prime_hub",
+	}
+
+
 func _add_item(p: Dictionary, item_id: String, qty: int, item_name: String = "") -> void:
 	for it in p["inventory"]:
 		if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) == item_id:

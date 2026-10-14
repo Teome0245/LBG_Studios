@@ -527,3 +527,121 @@ func ensure_east_gate_hunt_waypoint() -> void:
 		if item is Dictionary and str((item as Dictionary).get("label", "")).findn("porte est") >= 0:
 			return
 	_WaypointStore.add_waypoint(label, gate_x, gate_z)
+
+
+## --- Hotbar (O-JEUX-HOTBAR) : compétence / objet / emote / compagnon ---
+
+var hotbar_http: HTTPRequest = null
+var _hotbar_pending: String = ""
+var _emote_idx: int = 0
+const EMOTES := [
+	{"id": "wave", "text": "*salue la foule*"},
+	{"id": "bow", "text": "*s'incline poliment*"},
+	{"id": "cheer", "text": "*applaudit*"},
+	{"id": "dance", "text": "*esquisse une danse courte*"},
+]
+
+
+func ensure_hotbar_http() -> void:
+	if hotbar_http != null and is_instance_valid(hotbar_http):
+		return
+	if main == null:
+		return
+	hotbar_http = HTTPRequest.new()
+	hotbar_http.name = "HotbarHttp"
+	main.add_child(hotbar_http)
+	hotbar_http.request_completed.connect(on_hotbar_http_done)
+
+
+func _hotbar_post(path: String, payload: Dictionary, pending: String, feedback: String) -> void:
+	if not _HubRuntimeCfg.enabled():
+		if main:
+			main._hotbar_feedback("%s — hub off" % pending)
+		return
+	ensure_hotbar_http()
+	_hotbar_pending = pending
+	var url: String = _HubRuntimeCfg.http_url().rstrip("/") + path
+	var body := JSON.stringify(payload)
+	var headers := PackedStringArray(["Content-Type: application/json"])
+	if hotbar_http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED:
+		hotbar_http.cancel_request()
+	if main:
+		main._hotbar_feedback(feedback)
+	var err := hotbar_http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if err != OK and main:
+		main._hotbar_feedback("%s req_%d" % [pending, err])
+		_hotbar_pending = ""
+
+
+func try_quick_craft() -> void:
+	## Compétence (slot 2) — craft kit_reparation si possible, sinon ouvre Talents.
+	var player: String = _HubRuntimeCfg.player_name("Voyageur")
+	_hotbar_post("/v1/craft/combine", {"player": player, "schematic_id": "kit_reparation"}, "craft", "Craft kit…")
+
+
+func try_use_item(item_id: String = "") -> void:
+	var player: String = _HubRuntimeCfg.player_name("Voyageur")
+	var payload := {"player": player}
+	if item_id.strip_edges() != "":
+		payload["item_id"] = item_id.strip_edges()
+	_hotbar_post("/v1/inventory/use", payload, "use", "Utilisation objet…")
+
+
+func try_emote() -> void:
+	var em: Dictionary = EMOTES[_emote_idx % EMOTES.size()]
+	_emote_idx = (_emote_idx + 1) % EMOTES.size()
+	var player: String = _HubRuntimeCfg.player_name("Voyageur")
+	var text := str(em.get("text", "*salue*"))
+	_hotbar_post("/v1/say", {"player": player, "text": text, "source": "human"}, "emote", str(em.get("id", "emote")))
+	# Affiche aussi en local si WS chat.
+	if main and main.ui_dialogue and main.ui_dialogue.has_method("append_hub_chat_line"):
+		main.ui_dialogue.append_hub_chat_line(player, text, "human")
+
+
+func try_companion_escort() -> void:
+	var player: String = _HubRuntimeCfg.player_name("Voyageur")
+	_hotbar_post("/v1/companion/escort", {"player": player, "duration_s": 28}, "escort", "Appel compagnon…")
+
+
+func on_hotbar_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	var pending := _hotbar_pending
+	_hotbar_pending = ""
+	var parsed = JSON.parse_string(body.get_string_from_utf8()) if body.size() > 0 else null
+	if result != HTTPRequest.RESULT_SUCCESS:
+		if main:
+			main._hotbar_feedback("%s réseau KO" % pending)
+		return
+	if typeof(parsed) != TYPE_DICTIONARY:
+		if main:
+			main._hotbar_feedback("%s parse (%d)" % [pending, code])
+		return
+	if not bool(parsed.get("ok", false)):
+		var hint := str(parsed.get("hint", parsed.get("error", code)))
+		if pending == "craft" and main and main.ui_dialogue:
+			# Fallback : ouvrir le panneau talents.
+			main.ui_dialogue.toggle_talents()
+			main._hotbar_feedback("Craft KO — Talents · %s" % hint)
+			return
+		if main:
+			main._hotbar_feedback("%s — %s" % [pending, hint])
+		return
+	match pending:
+		"craft":
+			if main:
+				main._hotbar_feedback("Craft OK — kit réparation")
+				if main.inventory_panel and main.inventory_panel.has_method("refresh_inventory"):
+					main.inventory_panel.refresh_inventory()
+		"use":
+			if main:
+				main._hotbar_feedback(str(parsed.get("message", parsed.get("effect", "Objet utilisé"))))
+				if main.inventory_panel and main.inventory_panel.has_method("refresh_inventory"):
+					main.inventory_panel.refresh_inventory()
+		"emote":
+			if main:
+				main._hotbar_feedback("Emote OK")
+		"escort":
+			if main:
+				main._hotbar_feedback(str(parsed.get("message", "Compagnon en route")))
+		_:
+			if main:
+				main._hotbar_feedback(str(parsed.get("message", "OK")))

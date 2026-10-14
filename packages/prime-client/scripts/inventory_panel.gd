@@ -198,7 +198,8 @@ func _fill_from_items(items: Array) -> void:
 			slot.tooltip_text = "%s ×%d" % [item_name, qty]
 			slot.disabled = false
 			var slot_idx := i
-			slot.pressed.connect(func() -> void: _on_item_slot(slot_idx, item_name, qty))
+			var item_id := str(item.get("id", ""))
+			slot.pressed.connect(func() -> void: _on_item_slot(slot_idx, item_name, qty, item_id))
 			if qty > 1:
 				var qty_lbl := Label.new()
 				qty_lbl.text = "×%d" % qty
@@ -215,6 +216,15 @@ func _fill_from_items(items: Array) -> void:
 	if _weight:
 		_weight.text = "%d / %d" % [used, total]
 
-func _on_item_slot(_index: int, item_name: String, qty: int) -> void:
+func _on_item_slot(_index: int, item_name: String, qty: int, item_id: String = "") -> void:
 	if _hint:
-		_hint.text = "%s ×%d" % [item_name, qty]
+		_hint.text = "%s ×%d — clic = utiliser si consommable" % [item_name, qty]
+	var ops = null
+	var n: Node = self
+	while n != null:
+		if n.get("gameplay_ops") != null:
+			ops = n.get("gameplay_ops")
+			break
+		n = n.get_parent()
+	if ops != null and ops.has_method("try_use_item"):
+		ops.try_use_item(item_id)

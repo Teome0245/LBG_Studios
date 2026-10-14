@@ -175,11 +175,24 @@ func on_hotbar_slot(index: int) -> void:
 			else:
 				main.gameplay_ops.try_beast_engage(pos)
 		1:
-			main._hotbar_feedback("Compétence — à brancher")
+			# Compétence — craft rapide kit (sinon panneau Talents).
+			if main.gameplay_ops:
+				main.gameplay_ops.try_quick_craft()
+			else:
+				toggle_talents()
+				main._hotbar_feedback("Talents / craft")
 		2:
-			main._hotbar_feedback("Objet rapide — à brancher")
+			# Objet rapide — premier consommable inventaire.
+			if main.gameplay_ops:
+				main.gameplay_ops.try_use_item()
+			else:
+				main._hotbar_feedback("Objet — gameplay off")
 		3:
-			main._hotbar_feedback("Emote — à brancher")
+			# Emote — cycle salue / incline / applaudit / danse.
+			if main.gameplay_ops:
+				main.gameplay_ops.try_emote()
+			else:
+				main._hotbar_feedback("Emote — gameplay off")
 		4:
 			var map_panel: Node = main.get_node_or_null("UI/ModalLayer/PlanetMapPanel")
 			if map_panel and map_panel.has_method("toggle_map"):
@@ -197,7 +210,11 @@ func on_hotbar_slot(index: int) -> void:
 			focus_hub_chat_input()
 			main._hotbar_feedback("Chat — Entrée pour parler")
 		8:
-			main._hotbar_feedback("Monture — à brancher")
+			# Compagnon (ex-monture) — escorte Nix/Lia courte.
+			if main.gameplay_ops:
+				main.gameplay_ops.try_companion_escort()
+			else:
+				main._hotbar_feedback("Compagnon — gameplay off")
 		9:
 			toggle_game_menu()
 			main._hotbar_feedback("Menu")

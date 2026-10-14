@@ -33,8 +33,8 @@ Doc détaillée : `docs/MAP_TEXTURES_AND_RETAIL.md`
 - **Carte planétaire** : `scrapaltai_planet.jpg` + `scrapaltai_planet_map.json` (Ctrl+M) — Zalem capitale, Lost Heaven petite ville.
 
 ### Iris / UI
-- Brancher hotbar 1–4, 8–0 sur vrais panneaux (combat, chat, menu).
-- Inventaire : sync gateway / `inventory` WS, drag & drop, utilisation objet.
+- ~~Brancher hotbar 1–4, 8–0~~ — **fait** 2026-10-14 (O-JEUX-HOTBAR) : 1 attaque/salvage/chasse · 2 craft kit · 3 objet use · 4 emote · 5 carte · 6 talents · 7 inventaire · 8 chat · 9 compagnon · 0 menu.
+- Inventaire : utilisation objet **OK** (clic + hotbar 3) · drag & drop = suite.
 - Toasts HUD dédiés (ne pas écraser l’état locomotion sur `StateLabel` long terme).
 
 ### Gameplay / gateway

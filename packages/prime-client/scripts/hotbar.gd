@@ -10,8 +10,8 @@ signal slot_activated(index: int)
 
 var _slots: Array[Button] = []
 var _tooltips: PackedStringArray = PackedStringArray([
-	"Attaque", "Compétence", "Objet", "Emote", "Carte",
-	"Talents", "Inventaire", "Chat", "Monture", "Menu"
+	"Attaque / salvage / chasse", "Compétence (craft kit)", "Objet rapide", "Emote", "Carte",
+	"Talents", "Inventaire", "Chat", "Compagnon (escorte)", "Menu"
 ])
 var _active_index: int = -1
 

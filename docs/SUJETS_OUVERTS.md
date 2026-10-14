@@ -37,9 +37,7 @@ _O-OPS-1 et O-OPS-2 clos (2026-10-13). O-OPS-3 = seau F3 O2 découpé en tickets
 
 ### O2 — Polish gameplay hub (ex O-OPS-3 / F3)
 
-| ID | Sujet | Notes |
-|----|--------|--------|
-| O-JEUX-HOTBAR | Hotbar slots restants (compétence / objet / emote) | `client_ui_dialogue.gd` · [`UX_BACKLOG_HUB.md`](../packages/prime-client/docs/UX_BACKLOG_HUB.md) |
+_Aucun sujet ouvert — O-JEUX-ESCORT / SHOW / HOTBAR clos 2026-10-14._
 
 ### O1 — Suite veille évolution (batch TikTok — fil **clos** 2026-10-12)
 
@@ -59,6 +57,7 @@ _O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre /
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-JEUX-HOTBAR | Hotbar slots 2/3/4/9 (craft / objet / emote / compagnon) | **2026-10-14** · `POST /v1/inventory/use` · `/v1/companion/escort` · craft kit · emotes `/v1/say` · inventaire clic utilisable · selftest OK |
 | O-JEUX-SHOW | Show live La Perle + formation Talen (P2c) | **2026-10-14** · `hub_show.gd` cycle idle/live/encore · tip gated live · `POST /v1/show/train` · artiste scène · selftest OK |
 | O-JEUX-ESCORT | Escorte civil `lh_escort_gate_clinic` | **2026-10-14** · `hub_escort.gd` live `:8787` · follow + fail 40 m/8 s · dropoff serveur · `GET /v1/quests/escort` 200 · selftest + smoke OK |
 | O-JEUX-BOTS-POI | Locomotion bots IA (anti-stuck + linger) & 2 POI factions (Avant-poste Zalem & Ksar Nomade) | **2026-10-13** · déblocage boucle stuck 6→12 ticks `hub_sim.gd` · calage carte planétaire Ctrl+M · PNJ Milice, Artisans, Désert, Soins répartis · flip_h et walk bobbing client · live `.246:8787` 10/10 bots mobiles |

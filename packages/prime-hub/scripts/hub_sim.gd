@@ -495,6 +495,37 @@ func fleet_greet_human(human_name: String, human_oid: int) -> void:
 		ambient.fleet_greet_human(human_name, human_oid)
 
 
+func start_companion_escort_for(player_name: String, duration_s: float = 28.0) -> Dictionary:
+	## Hotbar « Compagnon » — Nix/Lia escorte le joueur un moment.
+	if ambient == null:
+		return {"ok": false, "error": "ambient_unavailable"}
+	var companion: Dictionary = ambient.pick_companion_bot()
+	if companion.is_empty():
+		return {"ok": false, "error": "no_companion", "hint": "Aucun bot compagnon en flotte"}
+	# Assure un humain suivable (oid synthétique si hors WS).
+	var want := player_name.strip_edges()
+	var found_oid := 0
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("kind", "")) == "player" and not bool(e.get("is_bot", false)):
+			if str(e.get("name", "")).strip_edges().to_lower() == want.to_lower():
+				found_oid = int(e.get("oid", 0))
+				break
+	if found_oid == 0:
+		found_oid = HUMAN_OID
+		ensure_human(found_oid, want if want != "" else "Voyageur")
+	ambient.start_companion_escort(companion, duration_s)
+	var cname := str(companion.get("name", "Nix"))
+	_stream("companion.escort", "%s escorte %s." % [cname, want], cname, "hub")
+	return {
+		"ok": true,
+		"companion": cname,
+		"duration_s": maxf(8.0, duration_s),
+		"message": "%s te suit un moment — reste à proximité." % cname,
+		"source": "prime_hub",
+	}
+
+
 func _step_bot(bot: Dictionary, dt: float) -> void:
 	var now := Time.get_unix_time_from_system()
 	var escort_until := float(bot.get("_escort_until", 0.0))

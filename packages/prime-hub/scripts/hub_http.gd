@@ -33,6 +33,8 @@ const TICK_MUTATION_PATHS := {
 	"/v1/craft/combine": "craft/complete",
 	"/v1/salvage": "salvage/loot",
 	"/v1/salvage/loot": "salvage/loot",
+	"/v1/inventory/use": "inventory/use",
+	"/v1/companion/escort": "companion/escort",
 	"/v1/bots/move_to": "move_to",
 	"/v1/hunt-yard/run": "hunt/engage",
 	"/v1/hunt-yard/claim-quest": "hunt/engage",
@@ -348,6 +350,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 	# --- Economy ---
 	if method == "GET" and path == "/v1/inventory":
 		return _ok(economy.inventory(_query_param(query, "player", "Voyageur")))
+	if method == "POST" and path in ["/v1/inventory/use", "/v1/items/use"]:
+		var ub := _json_body(req_body)
+		var uo: Dictionary = economy.use_item(str(ub.get("player", "Voyageur")), str(ub.get("item_id", ub.get("id", ""))))
+		return _ok(_attach_tick_flags(uo, path), 200 if bool(uo.get("ok")) else 400)
 	if method == "GET" and path == "/v1/quests/board":
 		return _ok(economy.board(_query_param(query, "giver", "npc:core3_daan_oth"), _query_param(query, "player", "Voyageur")))
 	if method == "GET" and path in ["/v1/events/active", "/v1/events"]:
@@ -548,6 +554,15 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		if sim and sim.has_method("enqueue_say"):
 			sim.enqueue_say(sp, int(sb.get("oid", 0)), text, source)
 		return _ok({"ok": true, "chat": {"from": sp, "text": text, "source": source}, "source": "prime_hub"})
+	if method == "POST" and path == "/v1/companion/escort":
+		var eb := _json_body(req_body)
+		if sim == null or not sim.has_method("start_companion_escort_for"):
+			return _ok({"ok": false, "error": "sim_missing"}, 501)
+		var eo: Dictionary = sim.start_companion_escort_for(
+			str(eb.get("player", "Voyageur")),
+			float(eb.get("duration_s", 28.0))
+		)
+		return _ok(_attach_tick_flags(eo, path), 200 if bool(eo.get("ok")) else 400)
 
 	# --- Agent surface (LAN) : skill + bootstrap ---
 	if method == "GET" and path in ["/v1/agent/skill", "/skill.md"]:
