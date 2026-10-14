@@ -12,7 +12,7 @@
 
 Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
 Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · non-bloquants (O-DOC-2, root client, toasts) **clos** · plateau net.
+**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · fil hygiène contexte A1–A3/B1/C1/D1 **clos & déployé** · non-bloquants **clos**.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
@@ -38,7 +38,8 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 9. **O-DOC-2 / root client / toasts HUD** : **clos** 2026-10-14 — Bugbot optionnel abandonné au plateau · `LBG_PRIME_CLIENT_ROOT` → `/opt/LBG_Studios/packages/prime-client` · toasts bas-centre.
 10. **Docs périmées (O-DOC-ALIGN)** : **fait** 2026-10-13.
 11. **O-JEUX-ESCORT / SHOW / HOTBAR** : **clos** 2026-10-14 — escorte · La Perle · hotbar 2/3/4/9 branchés.
-12. **Reste ouvert** : `O-UX-DND` (drag inventaire, non bloquant) — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+12. **O-CTX-HYGIENE (A1–A3 · B1 · C1 · D1)** : **clos & live** 2026-10-14 — journal contexte · Respire · Studio Brain · prefs monde · nameplates · coûts craft/use · deploy CT100 + hub `:8787`.
+13. **Reste ouvert** : `O-UX-DND` (drag inventaire, non bloquant) — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
@@ -61,6 +62,17 @@ _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
 
+- 2026-10-14 : **Attribution & Intégration Remédiation Swap CT 111 à Atlas (`admin_infra`) — validé** —
+  - **Diagnostic & Clôture Incident** : Swap de `ollama-light` (CT 111 sur Proxmox `.200`) tombé de 99.99% (2 Go saturés) à 0.5% (10 Mo). Responsable identifié : `lbg-laya-serve.service` (PyTorch CPU) dont les pages froides étaient envoyées en swap lors des pics en raison de `vm.swappiness=60`. Réglage pérennisé à `vm.swappiness=10` sur l'hôte Proxmox `.200`.
+  - **Gouvernance Team** : Rôle formellement attribué à **Atlas** (`admin_infra`, responsable plateforme LLM locale), pas Dédale (`dev_game`, réservé au gameplay/forge).
+  - **Intégration Moteur & Outillage** :
+    - `remote_targets.py` : Alias `light`, `ollama-light`, `111` ajoutés dans `_ALIASES` et `_ROLE_ENV` (`192.168.0.111`).
+    - `vm_memory_probe.py` : `("light", "111")` ajouté dans `_DEFAULT_HOSTS` pour surveillance continue automatique.
+    - `admin_infra_platform.py` : Nouvelles fonctions `check_light_111_swap()` (détection sticky swap) et `remediate_light_111_swap()` (restart de `lbg-laya-serve` et maintien de `vm.swappiness=10` sur Proxmox .200). Détection de gap swap intégrée à `audit_admin_infra_platform()`.
+    - `admin_infra_workflow.py` : Workstream `surveillance_swap_ram_light_111` actif, et déclenchement automatique de la remédiation si l'objectif de la tâche cible le swap/111.
+    - `studio_admin_atlas.json` : Capacité `light_111_memory_swap` ajoutée au profil d'Atlas.
+    - `lessons_learned.json` : Leçon `lesson_atlas_light_111_swap` consignée.
+  - **Tests** : 16/16 tests unitaires passants (`test_admin_infra_platform.py` + `test_infra_memory_remediation.py`), `ruff check .` 100% vert.
 - 2026-10-14 : **Repositionnement Géographique & 12 Bâtiments de Village (Ksar Nomade & Avant-poste Zalem) — validé & déployé live `.246:8787`** —
   - **Éloignement & Recalage géographique** :
     - *Avant-poste Zalem* déplacé plein Ouest à ~6 km de Lost Heaven : Core3 `(-1200.0, 0.15, -550.0)`, UV carte planétaire `{ "u": 0.525, "v": 0.465 }` (grid col 6, row 2) pile sur le nœud routier rouge menant à la capitale Zalem.
@@ -84,6 +96,7 @@ _Aucun bloquant documenté pour ce bootstrap._
   - **Intégration moteur & données** : Inscrits dans `scrapaltai_planet_map.json` (Ctrl+M), `scrapaltai_pois.json`, `catalog_poi.json`, `hub_sim_defs.gd` (`POIS` + `HUB_NPCS`), `triplons.json` (solos), `npc_registry.json`, `explore_ring_lh.json` et préférences de voyage des bots dans `ai_players.json`.
   - **Rendu Client (`entity.gd` & `hub_focus.gd`)** : Ajout du micro-bobbing de marche pour les bots en mouvement, orientation `flip_h` automatique selon la vélocité horizontale, et autorisation des rayons outposts dans `hub_focus.gd` pour afficher les PNJ distants sans fuite de clutter legacy.
   - **Preuve & Déploiement Live** : Tests headless CI Godot (`ci_godot_headless.sh`) 100% verts en 3s. Déploiement live sur `.246:8787` via `deploy_prime_hub_246.sh`. Sonde live `/v1/bots` mesurée : **10/10 bots en déplacement actif et exploration fluide** (ex: Mira en route vers Ksar Nomade à 33 m en 3s, Lia libérée vers le sud à 34.5 m).
+- 2026-10-14 : **O-CTX-HYGIENE clos & déployé** — A1 journal `context_journal` · A2 Respire/nouveau fil · A3 `studio_brain_v1` (~1,6 Ko) · B1 prefs monde · C1 nameplates joueur unifiées · D1 `cost` craft/use (pastille + sources, aussi en échec / sélection recette) · deploy `deploy_compagnon_100.sh` (`1.0.0+b9aba7c`) + `deploy_prime_hub_246.sh` + sync scripts client `.140` · selftest `HOTBAR_API_SELFTEST_OK`.
 - 2026-10-14 : **O-JEUX-HOTBAR** — slots compétence=craft kit · objet=`/v1/inventory/use` · emote=`/v1/say` · compagnon=`/v1/companion/escort` · inventaire clic utilisable · `HOTBAR_API_SELFTEST_OK`.
 - 2026-10-14 : **O-JEUX-SHOW (P2c)** — `hub_show.gd` · tip live · formation Talen · live `:8787`.
 - 2026-10-14 : **O-JEUX-ESCORT clos & live** — civil suivable porte→clinique.

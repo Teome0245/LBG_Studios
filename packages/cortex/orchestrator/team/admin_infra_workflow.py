@@ -38,6 +38,12 @@ def _workstreams() -> list[dict[str, object]]:
             "status": "planned",
         },
         {
+            "id": "surveillance_swap_ram_light_111",
+            "title": "Surveillance swap/RAM light CT 111 & remédiation sticky swap laya-serve",
+            "owner_role": "admin_infra",
+            "status": "active",
+        },
+        {
             "id": "observabilite_admin_infra",
             "title": "Admin infra / observabilite",
             "owner_role": "ops",
@@ -163,11 +169,19 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
     except Exception as exc:  # noqa: BLE001 — ne pas faire échouer le run Atlas
         perimeter_alert = {"ok": False, "error": str(exc)}
 
+    remediation_swap = None
+    if any(k in text.lower() for k in ("swap", "laya", "111", "remediation")):
+        from team.admin_infra_platform import remediate_light_111_swap
+
+        dry_run = bool(ctx.get("devops_dry_run", False))
+        remediation_swap = remediate_light_111_swap(dry_run=dry_run)
+
     return {
         "kind": "admin_infra_workflow",
         "ok": workflow_ok,
         "brief": brief,
         "platform_audit": platform,
+        "remediation_swap_111": remediation_swap,
         "network_lan": lan_ctx,
         "perimeter_element_alert": perimeter_alert,
         "ollama_audit": ollama,
@@ -206,6 +220,7 @@ def execute_admin_infra_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[s
                 "reprise_auto",
                 "budgets_materiels",
                 "routage_dual_110_111",
+                "swap_ram_remediation_111",
                 "contexte_lan_inventaire",
             ],
         },

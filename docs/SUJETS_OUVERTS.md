@@ -59,6 +59,7 @@ _Aucun sujet ouvert — O-DOC-1 / O-DOC-ALIGN / O-DOC-2 clos._
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-CTX-HYGIENE | Fil hygiène contexte / monde (A1–A3 · B1 · C1 · D1) | **2026-10-14** · journal + Respire + Studio Brain · prefs notifs monde · nameplates joueur = joueur · `cost` craft/use · live `:5174` + `:8787` · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) |
 | O-DOC-2 | Review Bugbot formelle snapshot priorités (optionnel) | **2026-10-14** · review manuelle du fil jugée suffisante au plateau · Bugbot hors quota à l’époque · pas de rejeu outillé requis |
 | O-OPS-ROOT | Unification `LBG_PRIME_CLIENT_ROOT` → Studios sur 140 | **2026-10-14** · env `/opt/LBG_Studios/packages/prime-client` · sync assets canon + miroir legacy · resolver Team déjà Studios-first |
 | O-UX-TOAST | Toasts HUD dédiés (ne pas écraser `StateLabel`) | **2026-10-14** · `ToastPanel` bas-centre · feedback hotbar / inventaire 2,5 s |

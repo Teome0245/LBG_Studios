@@ -52,7 +52,7 @@ Inspi Lorisia (contexte) + Dynasty Nova (prefs / coûts) — **sans** tags joueu
 | **A3** | Studio Brain court (ci-dessus) | **OK** live |
 | **B1** | Prefs notifs monde (`world_notif_prefs`) | **OK** |
 | **C1** | Nameplates joueur unifiées (humain = IA) | **OK** · [`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md) |
-| **D1** | Transparence coûts craft/use (`cost` hub + pastille client) | **OK** live `:8787` |
+| **D1** | Transparence coûts craft/use (`cost` hub + pastille client) | **OK** live `:8787` · pastille aussi en échec use/craft + label recette avant craft |
 
 Hors fil (optionnel) : B2 miroir prefs Godot · C2 signal d’activité.
 

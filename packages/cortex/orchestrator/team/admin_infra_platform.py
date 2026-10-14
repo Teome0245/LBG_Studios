@@ -264,6 +264,147 @@ def _probe_ollama_tags(url: str, *, timeout: float = 6.0) -> dict[str, Any]:
         return {**probe, "kind": "ollama_tags", "model_count": 0, "model_names": [], "parse_error": str(exc)[:120]}
 
 
+def check_light_111_swap(host: str = "192.168.0.111", *, timeout: float = 4.0) -> dict[str, Any]:
+    """Sonde l'état swap/mémoire du CT 111 (NUC ollama-light) sous la gouvernance d'Atlas."""
+    import subprocess
+
+    cmd = [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=3",
+        f"root@{host}",
+        "free -b | awk '/^Mem:/{print \"mem_total=\"$2\" mem_avail=\"$7} /^Swap:/{print \"swap_total=\"$2\" swap_used=\"$3}'",
+    ]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        if proc.returncode != 0:
+            return {"ok": False, "error": (proc.stderr or "").strip()[:160], "host": host}
+        mem_total = mem_avail = swap_total = swap_used = 0
+        for line in proc.stdout.splitlines():
+            for kv in line.strip().split():
+                if "=" in kv:
+                    k, v = kv.split("=", 1)
+                    if k == "mem_total":
+                        mem_total = int(v or 0)
+                    elif k == "mem_avail":
+                        mem_avail = int(v or 0)
+                    elif k == "swap_total":
+                        swap_total = int(v or 0)
+                    elif k == "swap_used":
+                        swap_used = int(v or 0)
+        swap_pct = round(100.0 * swap_used / swap_total, 1) if swap_total else 0.0
+        avail_pct = round(100.0 * mem_avail / mem_total, 1) if mem_total else 0.0
+        sticky = bool(swap_pct >= 85.0 and avail_pct >= 15.0)
+        return {
+            "ok": True,
+            "host": host,
+            "swap_used_b": swap_used,
+            "swap_total_b": swap_total,
+            "swap_used_pct": swap_pct,
+            "mem_avail_pct": avail_pct,
+            "sticky_swap": sticky,
+            "status": "critical" if swap_pct >= 90.0 else ("warn" if swap_pct >= 50.0 else "ok"),
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:160], "host": host}
+
+
+def remediate_light_111_swap(
+    *,
+    host: str = "192.168.0.111",
+    proxmox_host: str = "192.168.0.200",
+    dry_run: bool = False,
+    timeout: float = 12.0,
+) -> dict[str, Any]:
+    """Remédiation du swap saturé sur CT 111 (Atlas admin_infra).
+
+    Action:
+    1. Redémarre lbg-laya-serve.service sur CT 111 (libère immédiatement le swap collé sans toucher à Ollama).
+    2. S'assure que vm.swappiness=10 est appliqué sur l'hôte Proxmox 192.168.0.200 (CT unprivileged = RO).
+    3. Vérifie l'état de libération du swap après intervention.
+    """
+    if dry_run:
+        return {
+            "ok": True,
+            "dry_run": True,
+            "agent": "Atlas",
+            "role": "admin_infra",
+            "action": "remediate_light_111_swap",
+            "steps": [
+                f"ssh root@{host} 'systemctl restart lbg-laya-serve'",
+                f"ssh root@{proxmox_host} 'sysctl -w vm.swappiness=10 && echo vm.swappiness=10 > /etc/sysctl.d/99-swappiness.conf'",
+            ],
+            "note": "Dry-run : aucune commande exécutée.",
+        }
+
+    import subprocess
+
+    results: list[dict[str, Any]] = []
+
+    # 1. Restart lbg-laya-serve sur 111
+    restart_cmd = [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=5",
+        f"root@{host}",
+        "systemctl restart lbg-laya-serve",
+    ]
+    try:
+        proc = subprocess.run(restart_cmd, capture_output=True, text=True, timeout=timeout)
+        restart_ok = proc.returncode == 0
+        results.append({
+            "step": "restart_laya_serve",
+            "target": host,
+            "ok": restart_ok,
+            "error": (proc.stderr or "").strip()[:160] if not restart_ok else "",
+        })
+    except Exception as exc:
+        results.append({"step": "restart_laya_serve", "target": host, "ok": False, "error": str(exc)[:160]})
+
+    # 2. Fix swappiness sur l'hôte Proxmox
+    swp_cmd = [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=5",
+        f"root@{proxmox_host}",
+        "sysctl -w vm.swappiness=10; echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf",
+    ]
+    try:
+        proc = subprocess.run(swp_cmd, capture_output=True, text=True, timeout=timeout)
+        results.append({
+            "step": "set_swappiness_proxmox",
+            "target": proxmox_host,
+            "ok": proc.returncode == 0,
+        })
+    except Exception as exc:
+        results.append({"step": "set_swappiness_proxmox", "target": proxmox_host, "ok": False, "error": str(exc)[:160]})
+
+    # 3. Re-sonde après remédiation
+    post_check = check_light_111_swap(host=host, timeout=5.0)
+
+    overall_ok = all(bool(r.get("ok")) for r in results) and (
+        float(post_check.get("swap_used_pct", 100.0) or 0) < 50.0 if post_check.get("ok") else True
+    )
+    return {
+        "ok": overall_ok,
+        "agent": "Atlas",
+        "role": "admin_infra",
+        "action": "remediate_light_111_swap",
+        "steps": results,
+        "post_check": post_check,
+        "summary": (
+            f"Remédiation swap 111 par Atlas : {'SUCCÈS' if overall_ok else 'ATTENTION'} — "
+            f"swap used={post_check.get('swap_used_pct', '?')}% (mem avail={post_check.get('mem_avail_pct', '?')}%)"
+        ),
+    }
+
+
 def audit_platform_host(spec: dict[str, Any]) -> dict[str, Any]:
     probes_out: list[dict[str, Any]] = []
     for probe in spec.get("probes") or []:
@@ -299,6 +440,14 @@ def audit_platform_host(spec: dict[str, Any]) -> dict[str, Any]:
 
 def audit_admin_infra_platform() -> dict[str, Any]:
     """Audit multi-hôtes Atlas — dual LLM 110/111 + runtime + Groq dialogue fast."""
+    ip111 = _host_ip(
+        "LBG_LAN_HOST_LLM_LIGHT",
+        os.environ.get("LBG_REASON_LIGHT_BASE_URL", "http://192.168.0.111:11434")
+        .replace("http://", "")
+        .replace("https://", "")
+        .split(":")[0]
+        or "192.168.0.111",
+    )
     hosts = [audit_platform_host(spec) for spec in platform_host_specs()]
     ollama = audit_ollama_lan()
     dialogue_fast = audit_dialogue_fast_cloud(probe=True)
@@ -359,6 +508,16 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         "wsl_bridge": f"{orch_url}/v1/team/wsl/health",
     }
 
+    # Sonde swap / mémoire CT 111 sous la gouvernance d'Atlas
+    swap_111 = check_light_111_swap(ip111)
+    if swap_111.get("ok"):
+        if swap_111.get("sticky_swap") or float(swap_111.get("swap_used_pct", 0) or 0) >= 80.0:
+            gaps.append(f"111-swap: swap saturé ({swap_111.get('swap_used_pct')}%) sur CT 111 (ollama-light)")
+            recommendations.append(
+                "Atlas remédiation swap 111 : redémarrer lbg-laya-serve sur CT 111 (libère ~2 Go de swap collé) "
+                "et s'assurer que vm.swappiness=10 sur Proxmox .200."
+            )
+
     return {
         "ok": host_ok == hosts_total
         and bool(ollama.get("ok", False) or not ollama.get("error"))
@@ -371,6 +530,7 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         "topology": topology,
         "ollama_primary": ollama,
         "dialogue_fast_groq": dialogue_fast,
+        "light_111_swap": swap_111,
         "gaps": gaps,
         "recommendations": recommendations,
     }

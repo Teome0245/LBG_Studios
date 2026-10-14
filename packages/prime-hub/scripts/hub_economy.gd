@@ -783,11 +783,15 @@ func use_item(player: String, item_id: String = "") -> Dictionary:
 		chosen = it
 		break
 	if chosen == null:
+		var miss_cost := {}
+		if want != "":
+			miss_cost = _use_cost_block(want)
 		return {
 			"ok": false,
 			"error": "no_usable_item",
 			"hint": "Pas d'objet utilisable (eau / kit / grain) — craft ou salvage d'abord.",
 			"inventory": (p["inventory"] as Array).duplicate(true),
+			"cost": miss_cost,
 		}
 	var iid2 := str(chosen.get("id", ""))
 	var qty2 := int(chosen.get("qty", 0)) - 1

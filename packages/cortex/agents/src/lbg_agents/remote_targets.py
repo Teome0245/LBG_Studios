@@ -44,6 +44,11 @@ _ALIASES: dict[str, str] = {
     "hands": "hands",
     "lbg-hands": "hands",
     "142": "hands",
+    "linux-111": "light",
+    "light": "light",
+    "ollama-light": "light",
+    "llm-light": "light",
+    "111": "light",
 }
 
 # Rôle -> (variable d'env hôte, IP par défaut LAN).
@@ -55,6 +60,7 @@ _ROLE_ENV: dict[str, tuple[str, str]] = {
     "precu": ("LBG_LAN_HOST_PRECU", "192.168.0.245"),
     "executor": ("LBG_LAN_HOST_EXECUTOR", "192.168.0.141"),
     "hands": ("LBG_LAN_HOST_HANDS", "192.168.0.142"),
+    "light": ("LBG_LAN_HOST_LIGHT", "192.168.0.111"),
 }
 
 

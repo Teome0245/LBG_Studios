@@ -117,3 +117,60 @@ def test_audit_admin_infra_platform_structure(monkeypatch) -> None:
     assert "245" in out["perimeter"]
     assert any("optional-245" in g or "245" in g for g in out.get("gaps") or [])
     assert out["topology"]["llm_light"].startswith("192.168.0.111")
+    assert "light_111_swap" in out
+
+
+def test_check_light_111_swap_sticky_detection(monkeypatch) -> None:
+    from unittest.mock import MagicMock
+    import subprocess
+    from team.admin_infra_platform import check_light_111_swap
+
+    # Simule free -b avec swap saturé (2 Go / 2 Go) et 18 Go de RAM disponible
+    fake_stdout = (
+        "mem_total=25769803776 mem_avail=19327352832\n"
+        "swap_total=2147483648 swap_used=2147315712\n"
+    )
+    fake_proc = MagicMock(returncode=0, stdout=fake_stdout, stderr="")
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: fake_proc)
+
+    res = check_light_111_swap("192.168.0.111")
+    assert res["ok"] is True
+    assert res["swap_used_pct"] >= 99.0
+    assert res["mem_avail_pct"] >= 50.0
+    assert res["sticky_swap"] is True
+    assert res["status"] == "critical"
+
+
+def test_remediate_light_111_swap_dry_run() -> None:
+    from team.admin_infra_platform import remediate_light_111_swap
+
+    res = remediate_light_111_swap(dry_run=True)
+    assert res["ok"] is True
+    assert res["dry_run"] is True
+    assert res["agent"] == "Atlas"
+    assert res["role"] == "admin_infra"
+    assert any("lbg-laya-serve" in s for s in res["steps"])
+    assert any("swappiness=10" in s for s in res["steps"])
+
+
+def test_audit_admin_infra_platform_flags_swap_gap(monkeypatch) -> None:
+    from unittest.mock import MagicMock
+    import subprocess
+
+    fake_stdout = (
+        "mem_total=25769803776 mem_avail=19327352832\n"
+        "swap_total=2147483648 swap_used=2147315712\n"
+    )
+    fake_proc = MagicMock(returncode=0, stdout=fake_stdout, stderr="")
+    monkeypatch.setattr(subprocess, "run", lambda *args, **kwargs: fake_proc)
+    monkeypatch.setattr("team.admin_infra_platform.audit_ollama_lan", lambda **kw: {"ok": True, "gaps": []})
+    monkeypatch.setattr("team.admin_infra_platform.audit_dialogue_fast_cloud", lambda **kw: {"ok": True})
+    monkeypatch.setattr(
+        "team.admin_infra_platform.audit_platform_host",
+        lambda spec: {"id": spec["id"], "perimeter_id": spec["perimeter_id"], "required": True, "ok": True, "probes": []},
+    )
+
+    out = audit_admin_infra_platform()
+    assert any("111-swap" in g for g in out.get("gaps", []))
+    assert any("Atlas remédiation swap 111" in r for r in out.get("recommendations", []))
+

@@ -213,6 +213,23 @@
       "hit_count": 2,
       "last_seen_ts": 1791957089.061359,
       "last_seen": "2026-10-14"
+    },
+    {
+      "id": "lesson_atlas_light_111_swap",
+      "date": "2026-10-14",
+      "agent_role": "admin_infra",
+      "context": "CT 111 (ollama-light) NUC .200 — saturation swap 2 Go / 99.99%",
+      "failure_or_success": "success",
+      "pattern": "Sur CT 111, lbg-laya-serve.service (PyTorch CPU) envoie ~2 Go en swap si swappiness=60 lors d'un pic. Le swap reste saturé à 99.99% même avec 18 Go de RAM disponible.",
+      "do_not_repeat": "Déléguer à Dédale (dev_game) ou ignorer le swap 111. C'est Atlas (admin_infra) qui surveille le swap/RAM et remédie en redémarrant lbg-laya-serve et en appliquant vm.swappiness=10 sur l'hôte Proxmox .200.",
+      "refs": [
+        "infra_memory_remediation.py",
+        "admin_infra_platform.py",
+        "studio_admin_atlas.json"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1791985000.0,
+      "last_seen": "2026-10-14"
     }
   ]
 }

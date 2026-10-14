@@ -637,6 +637,9 @@ func on_hotbar_http_done(result: int, code: int, _headers: PackedStringArray, bo
 		return
 	if not bool(parsed.get("ok", false)):
 		var hint := str(parsed.get("hint", parsed.get("error", code)))
+		var cost_fail := _cost_badge(parsed)
+		if cost_fail != "":
+			hint = "%s · %s" % [hint, cost_fail]
 		if pending == "craft" and main and main.ui_dialogue:
 			# Fallback : ouvrir le panneau talents.
 			main.ui_dialogue.toggle_talents()

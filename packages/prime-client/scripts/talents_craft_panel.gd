@@ -318,9 +318,14 @@ func _update_recipe_label(index: int = -1) -> void:
 	if typeof(out) == TYPE_DICTIONARY:
 		out_s = "%s×%s" % [str(out.get("id", sc.get("id", "?"))), str(out.get("qty", 1))]
 	var req := str(sc.get("requires_skill", ""))
-	var line := "Recette: %s → %s" % [", ".join(parts) if parts.size() > 0 else "(sans inputs)", out_s]
+	# D1 — pastille coût avant craft (même forme que hub `cost.summary`).
+	var left := ", ".join(parts) if parts.size() > 0 else "(rien)"
+	var line := "coût %s → %s" % [left, out_s]
 	if req != "":
-		line += " · skill %s" % req
+		line += " · skill:%s" % req
+	var cat := str(sc.get("category", "")).strip_edges()
+	if cat != "":
+		line += " · category:%s" % cat
 	_recipe_label.text = line
 
 func _apply_local_mock(code: Variant) -> void:
