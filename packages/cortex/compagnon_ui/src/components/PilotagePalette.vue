@@ -7,6 +7,7 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { PILOTAGE_CATALOG } from '@/lib/pilotageActions'
 import { PILOT_NAV } from '@/lib/pilotLinks'
 import { proposeAction } from '@/lib/agir'
+import { jobContractToPilotContext } from '@/lib/jobContract'
 import { useChat } from '@/composables/useChat'
 import {
   startActivity,
@@ -21,7 +22,7 @@ const query = ref('')
 const active = ref(0)
 const busy = ref('')
 const inputEl = ref(null)
-const { addUserMessage, addMessage } = useChat()
+const { addUserMessage, addMessage, breatheConversation, startNewChat } = useChat()
 
 const EXTRA = [
   {
@@ -118,7 +119,8 @@ async function runAgir(action) {
   activityLog(action.sourceText.slice(0, 120))
   addUserMessage(`Agir · ${action.label}`)
   try {
-    const { proposal, reason } = await proposeAction(action.sourceText)
+    const ctx = jobContractToPilotContext(action.jobContract)
+    const { proposal, reason } = await proposeAction(action.sourceText, ctx)
     if (!proposal) {
       activityLog(reason || 'aucune action', 'warn')
       endActivity('error')
@@ -137,6 +139,7 @@ async function runAgir(action) {
       source: 'agir',
       actionProposal: proposal,
       actionSourceText: action.sourceText,
+      jobContract: action.jobContract || null,
     })
   } catch (e) {
     endActivity('error', String(e?.message || e))
@@ -153,6 +156,16 @@ async function runAgir(action) {
 
 function run(action) {
   if (!action || busy.value) return
+  if (action.kind === 'breathe') {
+    breatheConversation()
+    closePalette()
+    return
+  }
+  if (action.kind === 'new_thread') {
+    startNewChat()
+    closePalette()
+    return
+  }
   if (action.kind === 'link' && action.href) {
     window.open(action.href, '_blank', 'noopener,noreferrer')
     closePalette()

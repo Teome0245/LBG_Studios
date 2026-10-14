@@ -36,6 +36,26 @@ Voix d’accueil : `lbg_agents/lbg_ia_voice.py`.
 [`packages/cortex/docs/character_layer.md`](../packages/cortex/docs/character_layer.md)  
 — pack `knowledge/character/compagnon_v1.json`, 7 dials lab (UI `:5174`), blacklist anti-IA générique, ego soft, smoke voix V1–V5.
 
+**Studio Brain (A3)** — Company Brain court, pas une bible :  
+pack `knowledge/studio_brain_v1.json` (≤ ~4 Ko) · chargeur `server_overlay/studio_brain.py` · injecté **LAB ops uniquement** (pas causerie).  
+Faits LAN (hub `:8787`, Compagnon `:5174`, Agir L2) + ≤5 leçons + pointeur `compagnon_v1`.  
+Budget dépassé → troncature avec marqueur. Off : `LBG_STUDIO_BRAIN=0`. Visible dans le journal de contexte.
+
+### Fil hygiène contexte / monde (2026-10-14) — **clos**
+
+Inspi Lorisia (contexte) + Dynasty Nova (prefs / coûts) — **sans** tags joueur IA.
+
+| Lot | Livrable | État |
+|-----|----------|------|
+| **A1** | Journal de contexte (`context_journal` + `ContextJournal.vue`) | **OK** live `:5174` |
+| **A2** | Respire / nouveau fil (Ctrl+K / palette) | **OK** |
+| **A3** | Studio Brain court (ci-dessus) | **OK** live |
+| **B1** | Prefs notifs monde (`world_notif_prefs`) | **OK** |
+| **C1** | Nameplates joueur unifiées (humain = IA) | **OK** · [`HUB_LIFE_TRIPLONS.md`](design/HUB_LIFE_TRIPLONS.md) |
+| **D1** | Transparence coûts craft/use (`cost` hub + pastille client) | **OK** live `:8787` |
+
+Hors fil (optionnel) : B2 miroir prefs Godot · C2 signal d’activité.
+
 **LLM / morale** (infra LAN = LAB, non exposée) :  
 [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md)  
 — `LBG_COMPAGNON_LAB=1` → local only, softener média off, modèle `huihui_ai/qwen3.5-abliterated:2B` (`.111`).  

@@ -22,6 +22,7 @@ py-modules = [
     "character_layer",
     "chat_intent",
     "companion_self_grounding",
+    "context_journal",
     "core",
     "desktop_approval",
     "desktop_dispatch",
@@ -42,6 +43,7 @@ py-modules = [
     "spontaneity",
     "spontaneity_api",
     "sse_ask",
+    "studio_brain",
     "team_actions",
     "team_autonomy_plan",
     "team_proxy",
@@ -49,6 +51,7 @@ py-modules = [
     "tool_loop",
     "tts",
     "tts_api",
+    "world_notif_prefs",
     "world_stream",
     "relation_memory",
 ]

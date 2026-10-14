@@ -56,6 +56,14 @@ _FAKE_STREAM = {
 
 
 class WorldStreamTests(unittest.TestCase):
+    def setUp(self) -> None:
+        try:
+            import world_notif_prefs as wnp
+
+            wnp._STATE = dict(wnp._DEFAULTS)
+        except Exception:
+            pass
+
     def test_wants_world_stream(self) -> None:
         self.assertTrue(ws.wants_world_stream("quoi de neuf en jeu ?"))
         self.assertTrue(ws.wants_world_stream("qu'est-ce qui se passe à Lost Heaven ?"))

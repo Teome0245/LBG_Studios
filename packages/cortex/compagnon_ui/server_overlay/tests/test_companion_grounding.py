@@ -23,8 +23,10 @@ class EcosystemGroundingTests(unittest.TestCase):
         self.assertTrue(eco.wants_ecosystem_context(text))
         block = eco.format_ecosystem_grounding()
         self.assertIn("192.168.0.246", block)
+        self.assertIn("8787", block)
         self.assertIn("Lia", block)
         self.assertIn("pas la RAM", block)
+        self.assertNotIn(":8792", block)
 
     def test_no_false_positive_plain_hello(self) -> None:
         self.assertFalse(eco.wants_ecosystem_context("bonjour, comment ça va ?"))

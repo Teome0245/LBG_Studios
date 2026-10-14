@@ -74,6 +74,18 @@ class CharacterLayerTests(unittest.TestCase):
         self.assertIn("Caractère Compagnon", block)
         self.assertIn("Worldview", block)
 
+    def test_format_block_fills_context_journal(self) -> None:
+        journal: list = []
+        block = cl.format_character_block(
+            lab=True, prompt="salut", causerie=True, journal=journal
+        )
+        self.assertTrue(block)
+        ids = [b.get("id") for b in journal]
+        self.assertIn("character_pack", ids)
+        self.assertIn("dials", ids)
+        pack = next(b for b in journal if b["id"] == "character_pack")
+        self.assertIn("compagnon", str(pack.get("summary") or "").lower())
+
     def test_ego_toaster_trigger(self) -> None:
         nudge = cl.ego_nudge_for_prompt("Tu n'es qu'un grille-pain")
         self.assertTrue(nudge)

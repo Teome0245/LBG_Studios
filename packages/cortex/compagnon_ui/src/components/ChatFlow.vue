@@ -3,6 +3,7 @@ import { nextTick, watch, ref, computed, onMounted } from 'vue'
 import { useChat } from '../composables/useChat'
 import ApprovalCard from './ApprovalCard.vue'
 import ActionCard from './ActionCard.vue'
+import ContextJournal from './ContextJournal.vue'
 import ChatBreadcrumbs from './ChatBreadcrumbs.vue'
 import ActivityEncart from './ActivityEncart.vue'
 import { getStudioGoal } from '@/lib/studioGoal'
@@ -12,18 +13,52 @@ import {
   mandateNeedsAsk,
   setMandate,
 } from '@/lib/mandate'
+import { recipesForEmptyState, dispatchRecipeAsk } from '@/lib/recipes'
+import { proposeAction } from '@/lib/agir'
+import { jobContractToPilotContext, formatJobBrief } from '@/lib/jobContract'
+import {
+  startActivity,
+  activityLog,
+  endActivity,
+} from '@/composables/useActivity'
 
-const { messages, loadHistory, addUserMessage, addMessage } = useChat()
+import {
+  WORLD_NOTIF_CATEGORIES,
+  loadWorldNotifPrefs,
+  saveWorldNotifPrefs,
+  syncWorldNotifPrefs,
+} from '@/lib/worldNotifPrefs'
+
+const { messages, loadHistory, addUserMessage, addMessage, breatheConversation, startNewChat } =
+  useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
 const studioGoalTitle = computed(() => getStudioGoal().goal?.title || 'Veiller Jobs L2')
 const showMandateAsk = ref(false)
 const mandateChips = mandateAskIntents()
+const recipeChips = recipesForEmptyState(7)
+const recipeBusy = ref('')
+const worldPrefs = ref(loadWorldNotifPrefs())
 
 onMounted(() => {
   loadHistory()
   showMandateAsk.value = mandateNeedsAsk()
+  void syncWorldNotifPrefs(worldPrefs.value)
 })
+
+function toggleWorldPref(id) {
+  const next = { ...worldPrefs.value, [id]: !worldPrefs.value[id] }
+  worldPrefs.value = saveWorldNotifPrefs(next)
+  void syncWorldNotifPrefs(worldPrefs.value)
+}
+
+function onBreathe() {
+  breatheConversation()
+}
+
+function onNewThread() {
+  startNewChat()
+}
 
 watch(messages, () => {
   nextTick(() => {
@@ -48,6 +83,53 @@ function pickMandate(intent) {
     source: 'mandate',
     state: 'orchestrateur-happy',
   })
+}
+
+async function pickRecipe(recipe) {
+  if (!recipe || recipeBusy.value) return
+  if (recipe.kind === 'ask' && recipe.prompt) {
+    dispatchRecipeAsk(recipe)
+    return
+  }
+  if (recipe.kind !== 'agir' || !recipe.sourceText) return
+  recipeBusy.value = recipe.id
+  startActivity(`Recette · ${recipe.label}`, ['agir', 'recipe'])
+  activityLog(recipe.sourceText.slice(0, 120))
+  addUserMessage(`Recette · ${recipe.label}`)
+  try {
+    const ctx = jobContractToPilotContext(recipe.contract)
+    const { proposal, reason } = await proposeAction(recipe.sourceText, ctx)
+    if (!proposal) {
+      activityLog(reason || 'aucune action', 'warn')
+      endActivity('error')
+      addMessage({
+        role: 'assistant',
+        content: reason || 'Aucune action sûre reconnue pour cette recette.',
+        source: 'agir',
+      })
+      return
+    }
+    activityLog(`${proposal.capability || 'ok'}`, 'ok')
+    endActivity('done', 'Carte prête — Dry-run / Réel')
+    const brief = formatJobBrief(recipe.contract)
+    addMessage({
+      role: 'assistant',
+      content: `${proposal.summary || recipe.label}\n\n${brief}`,
+      source: 'agir',
+      actionProposal: proposal,
+      actionSourceText: recipe.sourceText,
+      jobContract: recipe.contract,
+    })
+  } catch (e) {
+    endActivity('error', String(e?.message || e))
+    addMessage({
+      role: 'assistant',
+      content: `Recette impossible : ${e?.message || e}`,
+      source: 'error',
+    })
+  } finally {
+    recipeBusy.value = ''
+  }
 }
 const crumbCounts = computed(() => {
   let moi = 0
@@ -129,7 +211,33 @@ function msgHasBubbleBody(msg) {
   if (msg.timeline?.length || msg.reflection || msg.actionProposal) return true
   if (msg.approval?.tasks?.length || msg.cursor?.agent_url || msg.images?.length) return true
   if (msg.model || msg.latency || msg.provider) return true
+  if (msg.context_journal) return true
   return false
+}
+
+/** Journal A1 : fusion job_contract client si présent sur la bulle Agir. */
+function journalForMessage(msg) {
+  const base = msg.context_journal
+  const contract = msg.jobContract
+  if (!contract?.objective) return base || null
+  const block = {
+    id: 'job_contract',
+    label: 'Job contract',
+    summary: String(contract.objective).slice(0, 120),
+    chars: 0,
+  }
+  const blocks = Array.isArray(base?.blocks) ? [...base.blocks] : []
+  if (!blocks.some((b) => b?.id === 'job_contract')) {
+    blocks.push(block)
+  }
+  const total = blocks.reduce((n, b) => n + (Number(b?.chars) || 0), 0)
+  return {
+    ...(base && typeof base === 'object' ? base : {}),
+    blocks,
+    count: blocks.length,
+    empty: blocks.length === 0,
+    total_chars: total,
+  }
 }
 
 function isOpsChromeMessage(msg) {
@@ -157,6 +265,29 @@ function triggerCtrlK() {
     <div class="max-w-4xl mx-auto space-y-6 pb-48">
 
       <ChatBreadcrumbs v-if="messages.length > 0" v-model="viewFilter" :counts="crumbCounts" />
+
+      <!-- A2 — Respire / Nouveau fil aussi hors empty state (fil saturé) -->
+      <div
+        v-if="messages.length > 0"
+        class="flex flex-wrap gap-2 justify-end px-1 -mt-2 mb-1"
+      >
+        <button
+          type="button"
+          class="rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1 text-[10px] text-slate-400 hover:border-cyan-400/40 hover:text-cyan-100 transition-colors"
+          title="Compacte le fil, garde mandat"
+          @click="onBreathe"
+        >
+          Respire
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1 text-[10px] text-slate-400 hover:border-cyan-400/40 hover:text-cyan-100 transition-colors"
+          title="Nouvelle conversation"
+          @click="onNewThread"
+        >
+          Nouveau fil
+        </button>
+      </div>
 
       <!-- Empty state chaleureux : les 30 premières secondes sentent un compagnon -->
       <div v-if="messages.length === 0" class="flex flex-col items-center justify-center text-center py-12 sm:py-20 animate-slide-up">
@@ -194,6 +325,65 @@ function triggerCtrlK() {
               {{ chip.label }}
             </button>
           </div>
+        </div>
+
+        <div class="w-full max-w-lg mx-auto mb-6 text-left">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-1">
+            Recettes · job clair
+          </p>
+          <div class="flex flex-wrap gap-2 justify-center">
+            <button
+              v-for="r in recipeChips"
+              :key="r.id"
+              type="button"
+              class="rounded-xl border border-white/15 bg-slate-950/40 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-teal-500/15 hover:border-teal-400/40 hover:text-teal-100 transition-colors disabled:opacity-50"
+              :title="`${r.hint} · ${r.contract.objective}`"
+              :disabled="!!recipeBusy"
+              @click="pickRecipe(r)"
+            >
+              {{ recipeBusy === r.id ? '…' : r.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="w-full max-w-md mx-auto mb-5 text-left">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-2 px-1 text-center">
+            Rapports monde
+          </p>
+          <div class="flex flex-wrap gap-2 justify-center">
+            <button
+              v-for="c in WORLD_NOTIF_CATEGORIES"
+              :key="c.id"
+              type="button"
+              class="rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors"
+              :class="worldPrefs[c.id]
+                ? 'border-teal-400/40 bg-teal-500/15 text-teal-100'
+                : 'border-white/10 bg-slate-950/30 text-slate-500'"
+              :title="c.hint"
+              @click="toggleWorldPref(c.id)"
+            >
+              {{ c.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 justify-center mb-4">
+          <button
+            type="button"
+            class="rounded-xl border border-white/15 bg-slate-950/40 px-3 py-1.5 text-xs text-slate-300 hover:border-cyan-400/40 hover:text-cyan-100 transition-colors"
+            title="Compacte le fil, garde mandat"
+            @click="onBreathe"
+          >
+            Respire
+          </button>
+          <button
+            type="button"
+            class="rounded-xl border border-white/15 bg-slate-950/40 px-3 py-1.5 text-xs text-slate-300 hover:border-cyan-400/40 hover:text-cyan-100 transition-colors"
+            title="Nouvelle conversation"
+            @click="onNewThread"
+          >
+            Nouveau fil
+          </button>
         </div>
 
         <p class="text-[11px] text-slate-500 font-mono">
@@ -240,6 +430,13 @@ function triggerCtrlK() {
                 : 'glass-card text-slate-100 rounded-tl-none'
             ]"
           >
+            <!-- A1 — Contexte injecté ce tour (replié) -->
+            <ContextJournal
+              v-if="msg.role === 'assistant' && journalForMessage(msg) && viewFilter !== 'timeline'"
+              :journal="journalForMessage(msg)"
+              :open-by-default="isOpsChromeMessage(msg)"
+            />
+
             <!-- Timeline — D6.3 : repliée par défaut en mode ask/réponse -->
             <details
               v-if="msg.role === 'assistant' && msg.timeline?.length"
@@ -353,6 +550,7 @@ function triggerCtrlK() {
               v-if="msg.role === 'assistant' && msg.actionProposal && viewFilter !== 'timeline'"
               :proposal="msg.actionProposal"
               :source-text="msg.actionSourceText || ''"
+              :job-contract="msg.jobContract || null"
             />
 
             <!-- Pied modèle/latence — D6.3 : discret / replié en ask -->

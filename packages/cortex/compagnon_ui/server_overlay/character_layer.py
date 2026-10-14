@@ -271,6 +271,7 @@ def format_character_block(
     lab: bool = False,
     prompt: str = "",
     causerie: bool = False,
+    journal: list[dict[str, Any]] | None = None,
 ) -> str:
     if not character_enabled():
         return ""
@@ -279,6 +280,7 @@ def format_character_block(
     personality = pack.get("personality") or {}
     worldview = personality.get("worldview") or []
     nots = personality.get("not") or []
+    pack_id = str(pack.get("id") or "compagnon_v1")
     lines = [
         "## Caractère Compagnon (personnalité ≠ expression)",
         f"Identité : {pack.get('display_name') or 'Compagnon'}.",
@@ -351,6 +353,7 @@ def format_character_block(
         lines.append(f"[Trigger ego soft] {nudge}")
 
     # Live World Stream Lost Heaven (Plan 3.1)
+    wblock = ""
     try:
         from src.services.world_stream import format_world_context_block
     except ImportError:
@@ -361,13 +364,14 @@ def format_character_block(
 
     if format_world_context_block:
         try:
-            wblock = format_world_context_block(limit=2)
+            wblock = format_world_context_block(limit=2) or ""
             if wblock:
                 lines.append(wblock)
         except Exception:
-            pass
+            wblock = ""
 
     # Mémoire relationnelle jeu ↔ bureau (Plan 3.2)
+    rblock = ""
     try:
         from src.services.relation_memory import format_relation_memory_block
     except ImportError:
@@ -378,13 +382,68 @@ def format_character_block(
 
     if format_relation_memory_block:
         try:
-            rblock = format_relation_memory_block(limit=3)
+            rblock = format_relation_memory_block(limit=3) or ""
             if rblock:
                 lines.append(rblock)
         except Exception:
-            pass
+            rblock = ""
 
-    return "\n".join(x for x in lines if x).strip()
+    block = "\n".join(x for x in lines if x).strip()
+
+    # A1 — journal de contexte (métadonnées, pas le texte injecté)
+    if journal is not None and block:
+        try:
+            from src.services.context_journal import make_block
+        except ImportError:
+            try:
+                from context_journal import make_block  # type: ignore
+            except ImportError:
+                make_block = None  # type: ignore
+        if make_block:
+            dial_summary = ", ".join(f"{k}={d[k]:.2f}" for k in DIAL_KEYS)
+            # chars pack ≈ bloc sans world/relation
+            pack_chars = max(0, len(block) - len(wblock) - len(rblock))
+            journal.append(
+                make_block(
+                    "character_pack",
+                    label="Character pack",
+                    summary=pack_id,
+                    chars=pack_chars,
+                    meta={"causerie": bool(causerie), "lab": bool(lab)},
+                )
+            )
+            journal.append(
+                make_block(
+                    "dials",
+                    label="Dials",
+                    summary=dial_summary,
+                    chars=len(dial_summary),
+                )
+            )
+            if wblock:
+                n_ev = sum(1 for ln in wblock.splitlines() if ln.startswith("- "))
+                journal.append(
+                    make_block(
+                        "world_stream",
+                        label="World stream",
+                        summary=f"{n_ev} événement{'s' if n_ev != 1 else ''}",
+                        chars=len(wblock),
+                        meta={"events": n_ev},
+                    )
+                )
+            if rblock:
+                n_rel = sum(1 for ln in rblock.splitlines() if ln.startswith("- "))
+                journal.append(
+                    make_block(
+                        "relation_memory",
+                        label="Relation memory",
+                        summary=f"{n_rel} lien{'s' if n_rel != 1 else ''}",
+                        chars=len(rblock),
+                        meta={"entries": n_rel},
+                    )
+                )
+
+    return block
 
 
 def ego_nudge_for_prompt(prompt: str, *, pack: dict[str, Any] | None = None) -> str:

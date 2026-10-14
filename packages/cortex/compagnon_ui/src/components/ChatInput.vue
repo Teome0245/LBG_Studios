@@ -6,6 +6,12 @@ import { useLayout } from '../composables/useLayout.js'
 import { resolveAgentForPrompt } from '../lib/teamMentions.js'
 import { proposeAction } from '@/lib/agir'
 import {
+  inferJobContractFromText,
+  jobContractToPilotContext,
+  formatJobBrief,
+} from '@/lib/jobContract'
+import { RECIPE_ASK_EVENT } from '@/lib/recipes'
+import {
   isRealizeRequest,
   suggestionsFromHistory,
   isDesktopish,
@@ -198,11 +204,20 @@ function onSendDraftEvent() {
   }, 40)
 }
 
+function onRecipeAsk(ev) {
+  const prompt = String(ev?.detail?.prompt || '').trim()
+  if (!prompt || loading.value || proposing.value) return
+  input.value = prompt
+  send()
+}
+
 onMounted(() => {
   window.addEventListener('compagnon:send-draft', onSendDraftEvent)
+  window.addEventListener(RECIPE_ASK_EVENT, onRecipeAsk)
 })
 onUnmounted(() => {
   window.removeEventListener('compagnon:send-draft', onSendDraftEvent)
+  window.removeEventListener(RECIPE_ASK_EVENT, onRecipeAsk)
 })
 
 watch(mentionInsert, (v) => {
@@ -419,13 +434,17 @@ async function realizeSuggestions(suggestions, agent) {
 const propose = async () => {
   if (!input.value.trim() || loading.value || proposing.value) return
   const userMsg = input.value.trim()
+  const contract = inferJobContractFromText(userMsg)
   addUserMessage(userMsg)
   input.value = ''
   proposing.value = true
   startActivity('Agir · proposition', ['agir', 'pilot'])
   activityLog(`POST /action-proposal · ${userMsg.slice(0, 100)}`)
   try {
-    const { proposal, reason } = await proposeAction(userMsg)
+    const { proposal, reason } = await proposeAction(
+      userMsg,
+      jobContractToPilotContext(contract),
+    )
     if (!proposal) {
       activityLog(reason || 'aucune action', 'warn')
       endActivity('error', 'Pas de proposal')
@@ -433,7 +452,7 @@ const propose = async () => {
         role: 'assistant',
         content:
           (reason || 'Aucune action sûre reconnue.') +
-          '\n\nEssaie Ctrl+K : Selfcheck LAN, mails, inventaire réseau, VGHD, Jobs L2, Cockpit…',
+          '\n\nEssaie Ctrl+K : recettes, Selfcheck LAN, mails, Jobs L2…',
         source: 'agir',
         state: 'orchestrateur-happy',
       })
@@ -441,12 +460,16 @@ const propose = async () => {
     }
     activityLog(`${proposal.capability || 'ok'} · ${proposal.summary || ''}`.slice(0, 160), 'ok')
     endActivity('done', 'Carte Agir prête — Dry-run puis Réel')
+    const brief = formatJobBrief(contract)
     addMessage({
       role: 'assistant',
-      content: proposal.summary || 'Proposition prête — dry-run puis réel si OK.',
+      content:
+        (proposal.summary || 'Proposition prête — dry-run puis réel si OK.') +
+        (brief ? `\n\n${brief}` : ''),
       source: 'agir',
       actionProposal: proposal,
       actionSourceText: userMsg,
+      jobContract: contract,
     })
   } catch (e) {
     endActivity('error', String(e?.message || e))

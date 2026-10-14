@@ -8,6 +8,9 @@ llm_chat_phase.py	backend/src/services/llm_chat_phase.py
 companion_self_grounding.py	backend/src/services/companion_self_grounding.py
 ecosystem_grounding.py	backend/src/services/ecosystem_grounding.py
 rag_grounding.py	backend/src/services/rag_grounding.py
+studio_brain.py	backend/src/services/studio_brain.py
+character/studio_brain_v1.json	backend/src/config/character/studio_brain_v1.json
+character/studio_brain_v1.json	backend/src/services/character/studio_brain_v1.json
 desktop_dispatch.py	backend/src/services/desktop_dispatch.py
 local_llm_provider.py	backend/src/providers/local_llm_provider.py
 routing.json	backend/src/config/routing.json
@@ -29,6 +32,7 @@ team_proxy.py	backend/src/services/team_proxy.py
 team_actions.py	backend/src/services/team_actions.py
 infra_lan_intent.py	backend/src/services/infra_lan_intent.py
 character_layer.py	backend/src/services/character_layer.py
+context_journal.py	backend/src/services/context_journal.py
 character_api.py	backend/src/routers/character_api.py
 desktop_approval.py	backend/src/routers/desktop_approval.py
 spontaneity.py	backend/src/services/spontaneity.py
@@ -36,6 +40,7 @@ spontaneity_api.py	backend/src/routers/spontaneity_api.py
 tts.py	backend/src/services/tts.py
 tts_api.py	backend/src/routers/tts_api.py
 world_stream.py	backend/src/services/world_stream.py
+world_notif_prefs.py	backend/src/services/world_notif_prefs.py
 relation_memory.py	backend/src/services/relation_memory.py
 character/compagnon_v1.json	backend/src/config/character/compagnon_v1.json
 character/compagnon_v1.json	backend/src/services/character/compagnon_v1.json

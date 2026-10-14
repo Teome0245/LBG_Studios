@@ -25,6 +25,7 @@ LOCAL_DIST="${LBG_OVERLAY_OUT:-${CORTEX_ROOT}/dist/server_overlay}"
 RAG_PACKAGE="${CORTEX_ROOT}/orchestrator/services/rag"
 KNOWLEDGE_DIR="${CORTEX_ROOT}/knowledge"
 KNOWLEDGE_PACK="${KNOWLEDGE_DIR}/character/compagnon_v1.json"
+STUDIO_BRAIN_PACK="${KNOWLEDGE_DIR}/studio_brain_v1.json"
 STUDIO_ROOT="$(cd "${CORTEX_ROOT}/../.." && pwd)"
 SUIVI_DOCS="${STUDIO_ROOT}/docs/suivi"
 SUIVI_TOOL="${STUDIO_ROOT}/tools/suivi_plan_evolutions.py"
@@ -173,6 +174,15 @@ if [[ -d "${KNOWLEDGE_DIR}" ]]; then
       "${REMOTE}:${REMOTE_DIR}/backend/src/config/character/compagnon_v1.json"
     rsync -az "${KNOWLEDGE_PACK}" \
       "${REMOTE}:${REMOTE_DIR}/backend/src/services/character/compagnon_v1.json"
+  fi
+  if [[ -f "${STUDIO_BRAIN_PACK}" ]]; then
+    echo "==> Studio Brain pack → knowledge + character"
+    rsync -az "${STUDIO_BRAIN_PACK}" \
+      "${REMOTE}:${REMOTE_DIR}/backend/knowledge/studio_brain_v1.json"
+    rsync -az "${STUDIO_BRAIN_PACK}" \
+      "${REMOTE}:${REMOTE_DIR}/backend/src/config/character/studio_brain_v1.json"
+    rsync -az "${STUDIO_BRAIN_PACK}" \
+      "${REMOTE}:${REMOTE_DIR}/backend/src/services/character/studio_brain_v1.json"
   fi
 fi
 

@@ -133,10 +133,16 @@ func apply_craft_result(result: Dictionary) -> void:
 		_fill_from_items(result.get("inventory"))
 		var crafted = result.get("crafted", {})
 		if typeof(crafted) == TYPE_DICTIONARY and _hint:
-			_hint.text = "Craft OK — %s ×%d" % [
+			var line := "Craft OK — %s ×%d" % [
 				str(crafted.get("name", crafted.get("id", "?"))),
 				int(crafted.get("qty", 1)),
 			]
+			var cost = result.get("cost", {})
+			if typeof(cost) == TYPE_DICTIONARY:
+				var summary := str(cost.get("summary", "")).strip_edges()
+				if summary != "":
+					line = "%s · coût %s" % [line, summary]
+			_hint.text = line
 	else:
 		refresh_inventory()
 

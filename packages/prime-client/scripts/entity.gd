@@ -40,8 +40,9 @@ const SMOOTH_SNAP_M := 28.0
 const SMOOTH_RATE := 11.0
 const SMOOTH_EXTRAP_S := 0.08
 
+## Joueur = joueur (humain ou IA) — même couleur, pas de tag « bot ».
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
-const COLOR_PLAYER_BOT      := Color(0.0, 0.9, 0.4, 1.0)
+const COLOR_PLAYER_BOT      := COLOR_PLAYER_OFFICIAL
 const COLOR_NPC             := Color(1.0, 0.5, 0.1, 1.0)
 const COLOR_OBJECT          := Color(0.7, 0.7, 0.7, 0.8)
 
@@ -165,7 +166,8 @@ func get_display_name() -> String:
 	var s: String = _label_raw.strip_edges() if _label_raw != "" else label_text.strip_edges()
 	if s.is_empty():
 		return "PNJ" if kind == "npc" else "Voyageur"
-	for sep in [" (PNJ", " (Bot", " (bot", " · ", " — ", " - "]:
+	# C1 — nom seul pour dialogue (pas d’activité · ni tag espèce).
+	for sep in [" · ", " (PNJ", " (Bot", " (bot", " (IA", " (ia", " — ", " - "]:
 		var i := s.find(sep)
 		if i > 0:
 			s = s.substr(0, i).strip_edges()
@@ -185,14 +187,20 @@ func _refresh_appearance() -> void:
 
 static func _short_label(raw: String) -> String:
 	var s: String = raw.strip_edges()
-	# "Jax Moro · Fel'Rani (PNJ IA)" → "Jax Moro"
-	for sep in [" (PNJ", " (Bot", " (bot", " · ", " — ", " - "]:
+	# "Jax Moro · Fel'Rani (PNJ IA)" → "Jax Moro" ; "Nix · escorte" garde l'activité.
+	var activity := ""
+	var dot := s.find(" · ")
+	if dot > 0:
+		activity = s.substr(dot)  # inclut « · … »
+		s = s.substr(0, dot).strip_edges()
+	for sep in [" (PNJ", " (Bot", " (bot", " (IA", " (ia", " — ", " - "]:
 		var i := s.find(sep)
 		if i > 0:
 			s = s.substr(0, i).strip_edges()
 			break
-	if s.length() > 18:
-		s = s.substr(0, 16) + "…"
+	s = s + activity
+	if s.length() > 22:
+		s = s.substr(0, 20) + "…"
 	return s
 
 static func toggle_nameplates() -> void:

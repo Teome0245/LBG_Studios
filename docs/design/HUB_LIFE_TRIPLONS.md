@@ -8,6 +8,8 @@ Donner l’impression d’une population vivante **sans** spammer le chat ni fai
 
 **Règle produit** : les **PNJ** maintiennent un monde fonctionnel ; les **joueurs** (humain + IA) le font évoluer. Scope = **LAN / Studio** (pas d’ouverture publique LLM).
 
+**C1 — surface joueur** : humain et IA = **même** nameplate / couleur ; `is_bot` reste interne hub. Pas de tag « bot / IA / soyez tolérants ». Lisibilité = nom + activité courte (ex. « Nix · escorte »).
+
 | Acteur | Comportement |
 |--------|----------------|
 | **Joueurs IA** | Flotte `ai_players.json` (4 actifs, 6 prêts → vague 10) · quête / explore / hub · suggestions → Studio |

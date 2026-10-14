@@ -9,7 +9,8 @@ const _HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
 const _EntityScript = preload("res://scripts/entity.gd")
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
-const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
+## Alias historique — même teinte que joueur officiel (C1).
+const COLOR_PLAYER_BOT := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
 
 const LOST_HEAVEN_HUB := Vector3(4749.0, 0.0, -737.0)
@@ -498,7 +499,8 @@ func apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 		name = str(ent.get("id", ""))
 	var color := COLOR_NPC
 	if kind == "player":
-		color = COLOR_PLAYER_BOT
+		# C1 — joueur = joueur (pas de teinte « bot »)
+		color = COLOR_PLAYER_OFFICIAL
 	elif kind == "beast":
 		color = Color(0.85, 0.55, 0.22, 1.0)
 		if bool(ent.get("is_boss", false)):
@@ -514,6 +516,14 @@ func apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 			if kind == "player" or kind == "npc" or kind == "beast":
 				if not bool(e2.get("force_nameplate")):
 					e2.call("set_force_nameplate", true)
+		# C1 — activité courte sur nameplate joueur (pas de tag IA)
+		if kind == "player" and e2 and e2.has_method("set_label"):
+			var goal := str(ent.get("goal", ent.get("activity", ""))).strip_edges()
+			var shown := name
+			if goal != "" and goal.to_lower() not in ["idle", "none", "null"]:
+				var short_g := goal if goal.length() <= 14 else goal.substr(0, 12) + "…"
+				shown = "%s · %s" % [name, short_g]
+			e2.call("set_label", shown)
 		if kind == "beast" and e2 and e2.has_method("set_beast_combat"):
 			var bg := str(ent.get("goal", "")).strip_edges().to_lower()
 			var boss := bool(ent.get("is_boss", false))
@@ -657,8 +667,8 @@ func demo_spawn() -> void:
 	main.entity_manager.spawn(
 		0x0000_0001_0000_0002,
 		Vector3(4755.0, 0.0, -732.0),
-		COLOR_PLAYER_BOT,
-		"Bot_IA",
+		COLOR_PLAYER_OFFICIAL,
+		"Nix",
 		"player"
 	)
 	main.entity_manager.spawn(

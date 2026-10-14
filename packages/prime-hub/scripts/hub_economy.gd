@@ -686,6 +686,84 @@ func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 const CONSUMABLE_IDS := ["water_capsule", "kit_reparation", "dried_grain", "bandage_antivenin"]
 
 
+func _cost_summary(inputs: Array, outputs: Array) -> String:
+	## Pastille lisible : « a×2 + b×1 → c×1 » (D1 transparence coûts).
+	var in_bits: PackedStringArray = PackedStringArray()
+	for inp in inputs:
+		if typeof(inp) != TYPE_DICTIONARY:
+			continue
+		var iid := str(inp.get("id", "")).strip_edges()
+		if iid.is_empty():
+			continue
+		in_bits.append("%s×%d" % [iid, int(inp.get("qty", 1))])
+	var out_bits: PackedStringArray = PackedStringArray()
+	for out in outputs:
+		if typeof(out) != TYPE_DICTIONARY:
+			continue
+		var oid := str(out.get("id", "")).strip_edges()
+		if oid.is_empty():
+			continue
+		out_bits.append("%s×%d" % [oid, int(out.get("qty", 1))])
+	var left := ", ".join(in_bits) if in_bits.size() > 0 else "(rien)"
+	if out_bits.is_empty():
+		return "consomme %s" % left
+	return "%s → %s" % [left, ", ".join(out_bits)]
+
+
+func _craft_cost_block(recipe: Dictionary) -> Dictionary:
+	## Bloc `cost` attaché aux réponses craft (succès / échec inputs).
+	var inputs: Array = []
+	for inp in recipe.get("inputs", []):
+		if typeof(inp) == TYPE_DICTIONARY:
+			inputs.append({
+				"id": str(inp.get("id", "")),
+				"qty": int(inp.get("qty", 1)),
+			})
+	var outputs: Array = []
+	var out = recipe.get("output", {})
+	if typeof(out) == TYPE_DICTIONARY and str(out.get("id", "")).strip_edges() != "":
+		outputs.append({
+			"id": str(out.get("id", "")),
+			"qty": int(out.get("qty", 1)),
+			"name": str(out.get("name", out.get("id", ""))),
+		})
+	var sources: Array = []
+	var rid := str(recipe.get("id", "")).strip_edges()
+	if not rid.is_empty():
+		sources.append({"kind": "schematic", "id": rid})
+	var skill := str(recipe.get("requires_skill", "")).strip_edges()
+	if not skill.is_empty():
+		sources.append({"kind": "skill", "id": skill})
+	var box := str(recipe.get("requires_box", "")).strip_edges()
+	if not box.is_empty():
+		sources.append({"kind": "box", "id": box})
+	var cat := str(recipe.get("category", "")).strip_edges()
+	if not cat.is_empty():
+		sources.append({"kind": "category", "id": cat})
+	return {
+		"inputs": inputs,
+		"outputs": outputs,
+		"sources": sources,
+		"summary": _cost_summary(inputs, outputs),
+		"ticket": "D1",
+	}
+
+
+func _use_cost_block(item_id: String, item_name: String = "") -> Dictionary:
+	var iid := item_id.strip_edges()
+	var inputs := [{"id": iid, "qty": 1, "name": item_name if not item_name.is_empty() else iid}]
+	var sources: Array = [{"kind": "consumable", "id": iid}]
+	if iid in CONSUMABLE_IDS:
+		sources.append({"kind": "hotbar", "id": "slot_objet"})
+	return {
+		"inputs": inputs,
+		"outputs": [],
+		"sources": sources,
+		"summary": _cost_summary(inputs, []),
+		"ticket": "D1",
+	}
+
+
 func use_item(player: String, item_id: String = "") -> Dictionary:
 	## Consomme 1 objet utilisable (hotbar objet / inventaire).
 	var p := _player(player)
@@ -714,6 +792,7 @@ func use_item(player: String, item_id: String = "") -> Dictionary:
 	var iid2 := str(chosen.get("id", ""))
 	var qty2 := int(chosen.get("qty", 0)) - 1
 	var label := str(chosen.get("name", iid2))
+	var cost := _use_cost_block(iid2, label)
 	if qty2 <= 0:
 		var inv: Array = []
 		for it2 in p["inventory"]:
@@ -744,6 +823,7 @@ func use_item(player: String, item_id: String = "") -> Dictionary:
 		"qty_left": maxi(0, qty2),
 		"effect": effect,
 		"message": effect,
+		"cost": cost,
 		"inventory": (p["inventory"] as Array).duplicate(true),
 		"chronicle": chronicle(player),
 		"source": "prime_hub",
@@ -827,11 +907,17 @@ func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
 			"output": {"id": "kit_reparation", "qty": 1, "name": "Kit de réparation"},
 		}
 		rid = "kit_reparation"
+	var cost := _craft_cost_block(recipe)
 	var req_skill := str(recipe.get("requires_skill", "")).strip_edges()
 	if not req_skill.is_empty():
 		var skills: Array = p.get("skills", [])
 		if req_skill not in skills:
-			return {"ok": false, "error": "missing_skill", "requires_skill": req_skill}
+			return {
+				"ok": false,
+				"error": "missing_skill",
+				"requires_skill": req_skill,
+				"cost": cost,
+			}
 	for inp in recipe.get("inputs", []):
 		if typeof(inp) != TYPE_DICTIONARY:
 			continue
@@ -845,6 +931,7 @@ func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
 				"item_id": iid,
 				"have": have,
 				"need": need,
+				"cost": cost,
 			}
 	for inp2 in recipe.get("inputs", []):
 		if typeof(inp2) != TYPE_DICTIONARY:
@@ -865,6 +952,7 @@ func craft_combine(player: String, recipe_id: String = "") -> Dictionary:
 		"recipe_id": rid,
 		"schematic_id": rid,
 		"crafted": crafted,
+		"cost": cost,
 		"inventory": (p["inventory"] as Array).duplicate(true),
 		"source": "prime_hub",
 	}

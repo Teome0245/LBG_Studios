@@ -70,6 +70,8 @@ const MESSAGE_FIELDS = [
   'campus_meta',
   'actionProposal',
   'actionSourceText',
+  'context_journal',
+  'jobContract',
 ]
 
 function pickFields(msg) {
@@ -380,6 +382,31 @@ export function useChat() {
     loadConversations()
   }
 
+  /**
+   * A2 — Respire : nouveau conversation_id (coupe short_ctx serveur),
+   * garde mandat / objectif studio (localStorage). Pas de « Nouveau fil » vide :
+   * on laisse un ack pour que l’utilisateur voie le contrat.
+   */
+  const breatheConversation = () => {
+    clearStreamTimer()
+    streamedMessage = null
+    const id = newConversationId()
+    conversationId.value = id
+    persistConversationId(id)
+    messages.value = [
+      {
+        role: 'assistant',
+        content:
+          'Fil compacté — on repart léger. Mandat et objectif studio restent actifs ; le pavé ops précédent n’entre plus dans le contexte.',
+        source: 'breathe',
+        state: 'orchestrateur-happy',
+      },
+    ]
+    pendingConfirmation.value = null
+    historyLoaded.value = true
+    void loadConversations()
+  }
+
   const archiveConversation = async (id) => {
     if (!id) return
     await http.post(`/chat/conversations/${encodeURIComponent(id)}/archive`)
@@ -411,6 +438,7 @@ export function useChat() {
     loadConversations,
     switchConversation,
     startNewChat,
+    breatheConversation,
     archiveConversation,
     unarchiveConversation,
     deleteConversation,

@@ -29,9 +29,9 @@ _ECOSYSTEM_FACTS = """\
 ÉCOSYSTÈME LBG (REGISTRE-lite — ne pas inventer hors de cette liste) :
 - Compagnon (présence chat) : http://192.168.0.100:5174/ · API Orch :3000
 - Pilot / Cortex (ops, Team, Self) : http://192.168.0.140:8080/ · orch :8010
-- Prime monde MMO (écriture) : 192.168.0.246:8792 · patches :8080 · sidecar IA :8791
-- PreCU (référence lecture seule) : 192.168.0.245:8792 — ne pas modifier
-- LLM local : heavy .110:11434 · light .111:11434
+- Prime monde MMO (écriture) : 192.168.0.246:8787 (prime-hub HTTP+WS) — Core3 / hub_runtime Python = OFF joueur
+- PreCU (référence lecture seule) : 192.168.0.245 — ne pas modifier
+- LLM local : heavy .110:11434 · light .111:11434 (LAB — pas Groq)
 - Incarnations : studio = Lyra/Compagnon · MMO = Lia (Rang 2 persona)
 - Mémoire à renforcer côté MMO = Self / leçons / session_summary — pas la RAM des VM
 - Source monorepo : LBG_Studios (cortex = O1 Studio · prime-client = O2 Jeu)"""

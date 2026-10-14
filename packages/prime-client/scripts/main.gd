@@ -38,7 +38,8 @@ var net_world: RefCounted = null
 var ui_dialogue: RefCounted = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
-const COLOR_PLAYER_BOT := Color(0.0, 0.9, 0.4, 1.0)
+## Alias historique — même teinte que joueur officiel (C1).
+const COLOR_PLAYER_BOT := Color(0.2, 0.4, 1.0, 1.0)
 const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
 
 const CAM_SPEED:     float   = 400.0

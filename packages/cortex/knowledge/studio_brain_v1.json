@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "studio_brain_v1",
+  "display_name": "Studio Brain LBG",
+  "max_chars": 4000,
+  "character_pack": "compagnon_v1",
+  "facts": [
+    "Autorité joueur Lost Heaven = prime-hub Godot .246:8787 (HTTP+WS). Core3 / hub_runtime Python = OFF chemin joueur.",
+    "Compagnon chat = .100:5174 · API Orch :3000. Pilot ops = .140:8080. Deploy UI = deploy_compagnon_100.sh.",
+    "LLM LAB local : light .111 (2B/e2b) · qualité .110 (12b). Pas de Groq en LAB.",
+    "Agir = dry-run → réel (L2 / contre-pouvoir). Jamais d'auto-exec destructeur.",
+    "Joueurs hub (humain ou IA) = même classe joueur — pas de badge « bot ». PNJ = monde fonctionnel.",
+    "O1 Studio = packages/cortex. O2 Jeu = prime-client + prime-hub. Monorepo LBG_Studios."
+  ],
+  "lessons": [
+    {
+      "id": "godot_g5_runtime_2026-10-07",
+      "summary": "Feature jeu → prime-hub :8787 + prime-client. Ne pas relancer Core3 pour le joueur."
+    },
+    {
+      "id": "lesson_smoke_block_close",
+      "summary": "Ne jamais clôturer une mission en succès si le smoke QA/owner est rouge."
+    },
+    {
+      "id": "lesson_no_second_os",
+      "summary": "Greffer sur Cortex/Team — pas de second orchestrateur opaque (CrewAI etc.)."
+    },
+    {
+      "id": "compagnon_context_hygiene",
+      "summary": "Contexte borné + Respire/nouveau fil ; recettes avec contrat Tâche/Entrée/Sortie."
+    },
+    {
+      "id": "world_notif_prefs",
+      "summary": "Rapports monde filtrables (Monde / Social / Ops) — greeting et stream respectent les prefs."
+    }
+  ]
+}

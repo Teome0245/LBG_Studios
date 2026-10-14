@@ -573,6 +573,26 @@ func _hotbar_post(path: String, payload: Dictionary, pending: String, feedback: 
 		_hotbar_pending = ""
 
 
+func _cost_badge(parsed: Dictionary) -> String:
+	## D1 — pastille coût depuis hub (`cost.summary` + 1ère source).
+	var cost = parsed.get("cost", {})
+	if typeof(cost) != TYPE_DICTIONARY:
+		return ""
+	var summary := str(cost.get("summary", "")).strip_edges()
+	if summary.is_empty():
+		return ""
+	var src_tag := ""
+	var sources = cost.get("sources", [])
+	if typeof(sources) == TYPE_ARRAY and sources.size() > 0:
+		var first = sources[0]
+		if typeof(first) == TYPE_DICTIONARY:
+			var kind := str(first.get("kind", "")).strip_edges()
+			var sid := str(first.get("id", "")).strip_edges()
+			if kind != "" and sid != "":
+				src_tag = " · %s:%s" % [kind, sid]
+	return "coût %s%s" % [summary, src_tag]
+
+
 func try_quick_craft() -> void:
 	## Compétence (slot 2) — craft kit_reparation si possible, sinon ouvre Talents.
 	var player: String = _HubRuntimeCfg.player_name("Voyageur")
@@ -628,12 +648,26 @@ func on_hotbar_http_done(result: int, code: int, _headers: PackedStringArray, bo
 	match pending:
 		"craft":
 			if main:
-				main._hotbar_feedback("Craft OK — kit réparation")
+				var craft_msg := "Craft OK — kit réparation"
+				var crafted = parsed.get("crafted", {})
+				if typeof(crafted) == TYPE_DICTIONARY:
+					craft_msg = "Craft OK — %s ×%d" % [
+						str(crafted.get("name", crafted.get("id", "kit"))),
+						int(crafted.get("qty", 1)),
+					]
+				var cost_s := _cost_badge(parsed)
+				if cost_s != "":
+					craft_msg = "%s · %s" % [craft_msg, cost_s]
+				main._hotbar_feedback(craft_msg)
 				if main.inventory_panel and main.inventory_panel.has_method("refresh_inventory"):
 					main.inventory_panel.refresh_inventory()
 		"use":
 			if main:
-				main._hotbar_feedback(str(parsed.get("message", parsed.get("effect", "Objet utilisé"))))
+				var use_msg := str(parsed.get("message", parsed.get("effect", "Objet utilisé")))
+				var use_cost := _cost_badge(parsed)
+				if use_cost != "":
+					use_msg = "%s · %s" % [use_msg, use_cost]
+				main._hotbar_feedback(use_msg)
 				if main.inventory_panel and main.inventory_panel.has_method("refresh_inventory"):
 					main.inventory_panel.refresh_inventory()
 		"emote":

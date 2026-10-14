@@ -222,7 +222,45 @@ async def world_stream_route(since: int = 0, limit: int = 20):
             from world_stream import fetch_world_stream  # type: ignore
         except ImportError:
             return {"ok": False, "error": "world_stream_unavailable", "events": []}
-    return fetch_world_stream(since=since, limit=limit)
+    data = fetch_world_stream(since=since, limit=limit)
+    try:
+        from src.services.world_notif_prefs import filter_events
+    except ImportError:
+        try:
+            from world_notif_prefs import filter_events  # type: ignore
+        except ImportError:
+            filter_events = None  # type: ignore
+    if filter_events and isinstance(data, dict) and isinstance(data.get("events"), list):
+        data = {**data, "events": filter_events(data["events"])}
+    return data
+
+
+@router.get("/world/notif-prefs")
+@router.get("/world/notif-prefs/")
+async def world_notif_prefs_get():
+    """B1 — préférences rapports monde (greeting / stream)."""
+    try:
+        from src.services.world_notif_prefs import load_prefs
+    except ImportError:
+        try:
+            from world_notif_prefs import load_prefs  # type: ignore
+        except ImportError:
+            return {"ok": False, "error": "world_notif_prefs_unavailable"}
+    return {"ok": True, "prefs": load_prefs()}
+
+
+@router.post("/world/notif-prefs")
+@router.post("/world/notif-prefs/")
+async def world_notif_prefs_post(body: dict[str, Any]):
+    """B1 — sync prefs client → serveur (short_social / world_stream)."""
+    try:
+        from src.services.world_notif_prefs import save_prefs
+    except ImportError:
+        try:
+            from world_notif_prefs import save_prefs  # type: ignore
+        except ImportError:
+            return {"ok": False, "error": "world_notif_prefs_unavailable"}
+    return {"ok": True, "prefs": save_prefs(body if isinstance(body, dict) else {})}
 
 
 @router.get("/relation-memory")

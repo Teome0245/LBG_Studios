@@ -115,7 +115,15 @@ def latest_world_highlight(
     max_age_s: float = 7200.0,
 ) -> dict[str, Any] | None:
     data = stream_data or fetch_world_stream(since=0, limit=20)
-    events = data.get("events") if isinstance(data.get("events"), list) else []
+    raw_events = data.get("events") if isinstance(data.get("events"), list) else []
+    try:
+        from src.services.world_notif_prefs import filter_events
+    except ImportError:
+        try:
+            from world_notif_prefs import filter_events  # type: ignore
+        except ImportError:
+            filter_events = None  # type: ignore
+    events = filter_events(raw_events) if filter_events else raw_events
     if not events:
         return None
 
@@ -170,8 +178,17 @@ def format_world_greeting(
 
 def format_world_context_block(*, limit: int = 3) -> str:
     """Bloc injecté dans le contexte LLM pour la causerie studio."""
-    data = fetch_world_stream(since=0, limit=max(1, limit))
+    data = fetch_world_stream(since=0, limit=max(1, limit * 2))
     events = data.get("events") if isinstance(data.get("events"), list) else []
+    try:
+        from src.services.world_notif_prefs import filter_events
+    except ImportError:
+        try:
+            from world_notif_prefs import filter_events  # type: ignore
+        except ImportError:
+            filter_events = None  # type: ignore
+    if filter_events:
+        events = filter_events(events)
     if not events:
         return ""
     lines = ["[Derniers événements monde Lost Heaven (prime-hub :8787)]"]
@@ -195,6 +212,15 @@ def format_world_stream_report(data: dict[str, Any]) -> str:
             "Vérifie que `prime-hub` tourne sur le port `:8787`."
         )
     events = data.get("events") if isinstance(data.get("events"), list) else []
+    try:
+        from src.services.world_notif_prefs import filter_events
+    except ImportError:
+        try:
+            from world_notif_prefs import filter_events  # type: ignore
+        except ImportError:
+            filter_events = None  # type: ignore
+    if filter_events:
+        events = filter_events(events)
     if not events:
         return "Le flux du monde est calme pour l'instant : aucun événement récent enregistré sur Lost Heaven."
 

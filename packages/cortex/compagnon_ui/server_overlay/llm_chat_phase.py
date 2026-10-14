@@ -67,6 +67,40 @@ async def run_llm_chat_phase(
     """
     logger = logging.getLogger("lbg.router.dispatch")
 
+    # A1 — journal de contexte (blocs injectés, sans secrets)
+    journal_blocks: list[dict[str, Any]] = []
+
+    def _journal_short_circuit(source: str, out: Any) -> Any:
+        try:
+            from src.services.context_journal import attach_context_journal, make_block
+        except ImportError:
+            try:
+                from context_journal import attach_context_journal, make_block  # type: ignore
+            except ImportError:
+                return out
+        return attach_context_journal(
+            out,
+            [
+                make_block(
+                    "short_circuit",
+                    label="Réponse courte",
+                    summary=source,
+                    chars=0,
+                    meta={"source": source},
+                )
+            ],
+        )
+
+    def _attach_journal(out: Any) -> Any:
+        try:
+            from src.services.context_journal import attach_context_journal
+        except ImportError:
+            try:
+                from context_journal import attach_context_journal  # type: ignore
+            except ImportError:
+                return out
+        return attach_context_journal(out, journal_blocks)
+
     # Petites phrases sociales : réponse fixe (évite hang LLM).
     # D6.5 : short_ctx passé — go-ahead sticky / livrable ne short-circuite pas.
     fixed = short_social_reply(prompt, short_ctx=short_ctx)
@@ -76,7 +110,7 @@ async def run_llm_chat_phase(
             out["source"] = "short_social"
             out["model"] = "short_social"
             out["model_used"] = "short_social"
-        return out
+        return _journal_short_circuit("short_social", out)
 
     # A2 — « discutons comme collègues » sans sujet → avis net (pas questionnaire)
     colleague = colleague_open_reply(prompt)
@@ -86,7 +120,7 @@ async def run_llm_chat_phase(
             out["source"] = "colleague_open"
             out["model"] = "colleague_open"
             out["model_used"] = "colleague_open"
-        return out
+        return _journal_short_circuit("colleague_open", out)
 
     # D6.5 — « retour quand la Team a traité » : ack suivi, pas bible Agir
     try:
@@ -107,7 +141,7 @@ async def run_llm_chat_phase(
                 watch_out["model"] = "mission_watch"
                 watch_out["model_used"] = "mission_watch"
                 watch_out["mission_watch"] = {"notify": True}
-            return watch_out
+            return _journal_short_circuit("mission_watch", watch_out)
     except Exception as e:
         logging.getLogger("lbg.router.mission_watch").warning(
             "mission_watch short-circuit failed: %s", e
@@ -131,8 +165,11 @@ async def run_llm_chat_phase(
                 latency=0.0,
             )
             if isinstance(seed, dict):
-                return await attach_plan_suivi_if_needed(
-                    seed, prompt=prompt, lab=lab_mode
+                return _journal_short_circuit(
+                    "plan_suivi",
+                    await attach_plan_suivi_if_needed(
+                        seed, prompt=prompt, lab=lab_mode
+                    ),
                 )
     except Exception as e:
         logging.getLogger("lbg.router.plan_suivi").warning(
@@ -154,8 +191,11 @@ async def run_llm_chat_phase(
                 latency=0.0,
             )
             if isinstance(seed, dict):
-                return await attach_presence_report_if_needed(
-                    seed, prompt=prompt, lab=lab_mode
+                return _journal_short_circuit(
+                    "presence_report",
+                    await attach_presence_report_if_needed(
+                        seed, prompt=prompt, lab=lab_mode
+                    ),
                 )
     except Exception as e:
         logging.getLogger("lbg.router.presence_report").warning(
@@ -178,8 +218,11 @@ async def run_llm_chat_phase(
                 latency=0.0,
             )
             if isinstance(seed, dict):
-                return await attach_presence_brief_if_needed(
-                    seed, prompt=prompt, lab=lab_mode
+                return _journal_short_circuit(
+                    "presence_brief",
+                    await attach_presence_brief_if_needed(
+                        seed, prompt=prompt, lab=lab_mode
+                    ),
                 )
     except Exception as e:
         logging.getLogger("lbg.router.presence_brief").warning(
@@ -201,8 +244,11 @@ async def run_llm_chat_phase(
                 latency=0.0,
             )
             if isinstance(seed, dict):
-                return await attach_world_stream_if_needed(
-                    seed, prompt=prompt, lab=lab_mode
+                return _journal_short_circuit(
+                    "world_stream",
+                    await attach_world_stream_if_needed(
+                        seed, prompt=prompt, lab=lab_mode
+                    ),
                 )
     except Exception as e:
         logging.getLogger("lbg.router.world_stream").warning(
@@ -224,8 +270,11 @@ async def run_llm_chat_phase(
                 latency=0.0,
             )
             if isinstance(seed, dict):
-                return await attach_relation_memory_if_needed(
-                    seed, prompt=prompt, lab=lab_mode, player="Teome"
+                return _journal_short_circuit(
+                    "relation_memory",
+                    await attach_relation_memory_if_needed(
+                        seed, prompt=prompt, lab=lab_mode, player="Teome"
+                    ),
                 )
     except Exception as e:
         logging.getLogger("lbg.router.relation_memory").warning(
@@ -253,8 +302,11 @@ async def run_llm_chat_phase(
                     seed["source"] = "plan_submit"
                     seed["model"] = "plan_submit_reuse"
                     seed["model_used"] = "plan_submit_reuse"
-                    return await _maybe_attach_plan_submit(
-                        seed, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
+                    return _journal_short_circuit(
+                        "plan_submit",
+                        await _maybe_attach_plan_submit(
+                            seed, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
+                        ),
                     )
     except Exception as e:
         logging.getLogger("lbg.router.plan_submit").warning(
@@ -356,7 +408,10 @@ async def run_llm_chat_phase(
             "kit",
         ):
             block = format_character_block(
-                lab=lab_mode, prompt=prompt, causerie=lab_causerie
+                lab=lab_mode,
+                prompt=prompt,
+                causerie=lab_causerie,
+                journal=journal_blocks,
             )
             if block:
                 character_extra = "\n\n" + block
@@ -379,6 +434,35 @@ async def run_llm_chat_phase(
         )
         history = await get_history(limit=1)
 
+    # A1 — fil court + mémoire stable (métadonnées seulement)
+    try:
+        from src.services.context_journal import make_block as _cj_block
+    except ImportError:
+        try:
+            from context_journal import make_block as _cj_block  # type: ignore
+        except ImportError:
+            _cj_block = None  # type: ignore
+
+    if _cj_block and short_ctx:
+        journal_blocks.append(
+            _cj_block(
+                "short_ctx",
+                label="Fil court",
+                summary=f"{len(short_ctx)} tour{'s' if len(short_ctx) != 1 else ''}",
+                chars=sum(len(str(i.get("content") or "")) for i in short_ctx if isinstance(i, dict)),
+                meta={"turns": len(short_ctx)},
+            )
+        )
+    if _cj_block and memory:
+        journal_blocks.append(
+            _cj_block(
+                "memory",
+                label="Mémoire stable",
+                summary="présent",
+                chars=len(json.dumps(memory, ensure_ascii=False)),
+            )
+        )
+
     # Ancrage soft : injecter faits Ollama si la question touche au LAN LLM
     try:
         from src.services.lan_llm_grounding import (
@@ -390,7 +474,17 @@ async def run_llm_chat_phase(
 
         if wants_lan_llm_context(prompt):
             audit = await load_lan_llm_audit(settings=get_settings())
-            system_prompt = system_prompt + "\n\n" + format_audit_grounding(audit)
+            lan_block = format_audit_grounding(audit)
+            system_prompt = system_prompt + "\n\n" + lan_block
+            if _cj_block and lan_block:
+                journal_blocks.append(
+                    _cj_block(
+                        "lan_llm",
+                        label="LAN LLM",
+                        summary="audit Ollama",
+                        chars=len(lan_block),
+                    )
+                )
     except Exception:
         log_exception_throttled(
             logging.getLogger("lbg.router.lan_grounding"),
@@ -415,12 +509,47 @@ async def run_llm_chat_phase(
                 block = format_self_grounding(self_payload, compact=not need_full)
                 if block:
                     system_prompt = system_prompt + "\n\n" + block
+                    if _cj_block:
+                        journal_blocks.append(
+                            _cj_block(
+                                "self_grounding",
+                                label="Self",
+                                summary="compact" if not need_full else "complet",
+                                chars=len(block),
+                                meta={"compact": not need_full},
+                            )
+                        )
     except Exception:
         log_exception_throttled(
             logging.getLogger("lbg.router.self_grounding"),
             router._exc_throttler,
             "companion_self_grounding",
             "Self grounding inject failed (best-effort)",
+        )
+
+    # A3 — Studio Brain court (LAB ops uniquement — pas causerie)
+    try:
+        from src.services.studio_brain import format_studio_brain_block
+
+        if lab_mode and (not lab_causerie):
+            brain = format_studio_brain_block()
+            if brain:
+                system_prompt = system_prompt + "\n\n" + brain
+                if _cj_block:
+                    journal_blocks.append(
+                        _cj_block(
+                            "studio_brain",
+                            label="Studio Brain",
+                            summary="faits + leçons",
+                            chars=len(brain),
+                        )
+                    )
+    except Exception:
+        log_exception_throttled(
+            logging.getLogger("lbg.router.studio_brain"),
+            router._exc_throttler,
+            "studio_brain",
+            "Studio Brain inject failed (best-effort)",
         )
 
     # P2 — REGISTRE-lite (hosts / Prime / incarnations) si la question touche l'écosystème
@@ -434,6 +563,15 @@ async def run_llm_chat_phase(
             eco = format_ecosystem_grounding()
             if eco:
                 system_prompt = system_prompt + "\n\n" + eco
+                if _cj_block:
+                    journal_blocks.append(
+                        _cj_block(
+                            "ecosystem",
+                            label="Écosystème",
+                            summary="REGISTRE-lite",
+                            chars=len(eco),
+                        )
+                    )
     except Exception:
         log_exception_throttled(
             logging.getLogger("lbg.router.ecosystem_grounding"),
@@ -450,6 +588,15 @@ async def run_llm_chat_phase(
             rag_block = await load_rag_block(prompt)
             if rag_block:
                 system_prompt = system_prompt + "\n\n" + rag_block
+                if _cj_block:
+                    journal_blocks.append(
+                        _cj_block(
+                            "rag",
+                            label="RAG",
+                            summary="leçons / knowledge",
+                            chars=len(rag_block),
+                        )
+                    )
     except Exception:
         log_exception_throttled(
             logging.getLogger("lbg.router.rag_grounding"),
@@ -631,10 +778,11 @@ async def run_llm_chat_phase(
         )
         local_out = router.normalize_llm(raw, selected_model, "local", latency=0.0)
         if isinstance(local_out, dict):
-            return await _maybe_attach_plan_submit(
+            local_out = await _maybe_attach_plan_submit(
                 local_out, prompt=prompt, short_ctx=short_ctx, lab_mode=lab_mode
             )
-        return local_out
+            return _attach_journal(local_out)
+        return _attach_journal(local_out)
 
     result = None
 
@@ -792,4 +940,4 @@ async def run_llm_chat_phase(
 
     # Persistance centralisée dans RouterIA.dispatch (conversation_memory.persist_exchange)
 
-    return result
+    return _attach_journal(result)

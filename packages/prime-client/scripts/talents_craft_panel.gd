@@ -251,26 +251,44 @@ func _on_craft_http_done(result: int, code: int, _headers: PackedStringArray, bo
 	var cname := str(crafted.get("name", crafted.get("id", "?"))) if typeof(crafted) == TYPE_DICTIONARY else "?"
 	var cqty := int(crafted.get("qty", 1)) if typeof(crafted) == TYPE_DICTIONARY else 1
 	_status = "craft OK — %s ×%d" % [cname, cqty]
+	var cost_line := _cost_status_suffix(parsed)
+	if cost_line != "":
+		_status = "%s · %s" % [_status, cost_line]
 	_paint_status()
 	craft_completed.emit(parsed)
 
+func _cost_status_suffix(parsed: Dictionary) -> String:
+	## D1 — pastille coût hub.
+	var cost = parsed.get("cost", {})
+	if typeof(cost) != TYPE_DICTIONARY:
+		return ""
+	var summary := str(cost.get("summary", "")).strip_edges()
+	if summary.is_empty():
+		return ""
+	return "coût %s" % summary
+
 func _craft_error_text(parsed: Dictionary, code: int) -> String:
 	var err := str(parsed.get("error", code))
+	var base := ""
 	match err:
 		"missing_inputs":
-			return "manque %s (%s/%s)" % [
+			base = "manque %s (%s/%s)" % [
 				str(parsed.get("item_id", "?")),
 				str(parsed.get("have", 0)),
 				str(parsed.get("need", "?")),
 			]
 		"missing_skill":
-			return "skill requis: %s" % str(parsed.get("requires_skill", "?"))
+			base = "skill requis: %s" % str(parsed.get("requires_skill", "?"))
 		"unknown_schematic":
-			return "schematic inconnu"
+			base = "schematic inconnu"
 		"schematic_draft":
-			return "schematic draft (non craftable)"
+			base = "schematic draft (non craftable)"
 		_:
-			return "craft échec: %s" % err
+			base = "craft échec: %s" % err
+	var cost_line := _cost_status_suffix(parsed)
+	if cost_line != "":
+		return "%s · %s" % [base, cost_line]
+	return base
 
 func _on_schematic_selected(index: int) -> void:
 	_update_recipe_label(index)

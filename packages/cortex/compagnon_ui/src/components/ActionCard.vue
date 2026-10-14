@@ -30,6 +30,8 @@ import {
 const props = defineProps({
   proposal: { type: Object, required: true },
   sourceText: { type: String, default: '' },
+  /** Contrat Tâche/Entrée/Sortie/Format (recette ou inféré). */
+  jobContract: { type: Object, default: null },
 })
 
 const token = ref(loadApprovalToken())
@@ -411,6 +413,22 @@ async function run(mode, opts = {}) {
 
     <p class="text-sm text-slate-100 font-medium leading-relaxed">{{ summary }}</p>
     <p v-if="routedTo" class="text-[11px] text-slate-400 font-mono">Cible : {{ routedTo }}</p>
+
+    <div
+      v-if="jobContract?.objective"
+      class="text-[11px] rounded-xl px-3 py-2 border border-cyan-500/20 bg-cyan-500/5 text-slate-300 space-y-0.5 font-mono leading-snug"
+    >
+      <p class="text-[10px] uppercase tracking-wider text-cyan-300/80 font-semibold font-sans mb-1">
+        Contrat de job
+      </p>
+      <p><span class="text-slate-500">Tâche</span> · {{ jobContract.objective }}</p>
+      <p><span class="text-slate-500">Entrée</span> · {{ jobContract.input }}</p>
+      <p><span class="text-slate-500">Sortie</span> · {{ jobContract.output }}</p>
+      <p><span class="text-slate-500">Format</span> · {{ jobContract.format }}</p>
+      <p v-if="jobContract.gates?.length" class="text-slate-500 pt-0.5">
+        Gardes · {{ jobContract.gates.join(' · ') }}
+      </p>
+    </div>
     <p v-if="showL2Banner" class="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
       Validation L2 requise — Dry-run sans risque ; Réel exige le jeton desktop.
     </p>

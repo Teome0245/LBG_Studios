@@ -5,22 +5,25 @@
 
 import { PILOT_LINKS } from '@/lib/pilotLinks'
 import { USEFUL_AGIR_ACTIONS } from '@/lib/usefulAgirActions'
+import { recipesAsPilotageActions } from '@/lib/recipes'
 
 /**
  * @typedef {{
  *   id: string,
  *   label: string,
  *   hint?: string,
- *   kind: 'agir'|'ask'|'link',
+ *   kind: 'agir'|'ask'|'link'|'breathe'|'new_thread',
  *   sourceText?: string,
  *   prompt?: string,
  *   href?: string,
+ *   jobContract?: import('./jobContract.js').JobContract,
  * }} PilotageAction
  */
 
 /** Catalogue complet — palette Ctrl+K uniquement. */
 /** @type {PilotageAction[]} */
 export const PILOTAGE_CATALOG = [
+  ...recipesAsPilotageActions(),
   ...USEFUL_AGIR_ACTIONS.map((a) => ({
     id: a.id,
     label: a.label,
@@ -28,6 +31,18 @@ export const PILOTAGE_CATALOG = [
     kind: /** @type {'agir'} */ ('agir'),
     sourceText: a.sourceText,
   })),
+  {
+    id: 'breathe',
+    label: 'Respire',
+    hint: 'compacte le fil · garde mandat',
+    kind: 'breathe',
+  },
+  {
+    id: 'new_thread',
+    label: 'Nouveau fil',
+    hint: 'conversation fraîche',
+    kind: 'new_thread',
+  },
   {
     id: 'team_status',
     label: 'Team status',

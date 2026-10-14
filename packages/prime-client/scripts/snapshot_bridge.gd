@@ -249,10 +249,8 @@ func _hash_id(s: String) -> int:
 	return Crc32Util.entity_oid(s)
 
 func _color_for_kind(kind: String, name: String = "") -> Color:
+	# C1 — tous les joueurs (humain / IA) : même couleur. PNJ séparés.
 	if kind == "player":
-		var n := name.to_lower()
-		if n in ["lia", "nix", "mira", "gally", "kael", "bot_ia"]:
-			return Entity.COLOR_PLAYER_BOT
 		return Entity.COLOR_PLAYER_OFFICIAL
 	match kind:
 		"npc":
