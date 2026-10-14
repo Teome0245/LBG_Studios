@@ -34,8 +34,9 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 6. **Thème 3 — Veille Évolution (O-VEIL-1..4)** : **100 % validé & clôturé** (ADR 0028 formalisé pour DSH & VoiceStudio ; doc de cadrage L1 [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) ; fiabilisation route LLM veille O-VEIL-4 avec format json Ollama et dimensionnement dynamique timeout/tokens).
 7. **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3)** : **100 % validé & clôturé** (`OBJECTIVES.md` aligné sur Compagnon présence `:5174` vs Pilot cockpit ops `:8080`, jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md`).
 8. **Ops — Agrégat 7j Fleet (O-OPS-2)** : **100 % validé & clôturé** (`metrics_7d` et `rolling_7d` intégrés dans `team/fleet.py`, DoD plan combler gaps agentiques 100% OK).
-9. **Reste ouvert** : Backlog nominal épuré dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (O-OPS-3 F3 jeu hors scope gaps, O-DOC-2 review outillée Bugbot éventuelle).
+9. **Reste ouvert** : polish O2 `O-JEUX-SHOW` / `O-JEUX-HOTBAR` · optionnel `O-DOC-2` Bugbot — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 10. **Docs périmées (O-DOC-ALIGN)** : **fait** 2026-10-13 — registre / restauration / suite RUNTIME / smoke en-tête / README alignés sur `:8787` + packages `prime-hub` / `compagnon-desktop`.
+11. **O-JEUX-ESCORT** : **clos & live** 2026-10-14 — civil suivable porte→clinique sur `:8787`.
 
 ## Fichiers / surfaces utiles
 

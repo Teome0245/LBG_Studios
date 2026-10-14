@@ -60,6 +60,7 @@ _O-DOC-1 et O-DOC-ALIGN clos (2026-10-13) — canon `OBJECTIVES.md` + registre /
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-JEUX-ESCORT | Escorte civil `lh_escort_gate_clinic` | **2026-10-14** · `hub_escort.gd` live `:8787` · follow + fail 40 m/8 s · dropoff serveur · `GET /v1/quests/escort` 200 · selftest + smoke OK |
 | O-JEUX-BOTS-POI | Locomotion bots IA (anti-stuck + linger) & 2 POI factions (Avant-poste Zalem & Ksar Nomade) | **2026-10-13** · déblocage boucle stuck 6→12 ticks `hub_sim.gd` · calage carte planétaire Ctrl+M · PNJ Milice, Artisans, Désert, Soins répartis · flip_h et walk bobbing client · live `.246:8787` 10/10 bots mobiles |
 | O-DOC-ALIGN | Alignement docs périmées (registre / restauration / RUNTIME suite / smoke / README) | **2026-10-13** · canon G5+ `:8787` · packages `prime-hub` / `compagnon-desktop` · P3 Rang 2 vert · suite RUNTIME scindée fait/ouvert |
 | O-VEIL-4 | Fiabiliser chemin LLM veille | **2026-10-13** · format `json` natif Ollama dans `reason_llm.py` + calcul dynamique timeout/tokens selon `n_input` dans `evolution_veille_workflow.py` · tests 5/5 |
