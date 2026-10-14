@@ -3,9 +3,10 @@ class_name HubSimViews
 ## Formatage et sérialisation des états d'entités, filtres WS et payloads réseau — Ticket 2.2.
 
 const ZONE := "scrapaltai"
+const HubActivityScript := preload("res://scripts/hub_activity.gd")
 
 
-static func entity_list(entities: Dictionary, slim: bool = false) -> Array:
+static func entity_list(entities: Dictionary, slim: bool = false, economy = null) -> Array:
 	var out: Array = []
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
@@ -21,7 +22,19 @@ static func entity_list(entities: Dictionary, slim: bool = false) -> Array:
 				"pos": [snappedf(p.x, 0.01), snappedf(p.y, 0.01), snappedf(p.z, 0.01)],
 				"is_bot": bool(e.get("is_bot", false)),
 			}
-			if str(e.get("kind", "")) == "beast":
+			var kind := str(e.get("kind", ""))
+			if kind == "player":
+				# C2 — activité lisible (humain = IA), pas de tag espèce
+				var act: Dictionary = HubActivityScript.describe_with_economy(e, economy)
+				var status := str(act.get("status", "idle"))
+				var activity := str(act.get("activity", "")).strip_edges()
+				slim_row["status"] = status
+				if activity != "":
+					slim_row["activity"] = activity
+				var g := str(act.get("goal", "")).strip_edges()
+				if g != "" and status != "idle":
+					slim_row["goal"] = g
+			elif kind == "beast":
 				var bg := str(e.get("goal", "")).strip_edges()
 				if not bg.is_empty() and bg != "wander":
 					slim_row["goal"] = bg
@@ -42,6 +55,10 @@ static func entity_list(entities: Dictionary, slim: bool = false) -> Array:
 				"is_bot": bool(e.get("is_bot", false)),
 				"life_phase": str(e.get("life_phase", "")),
 			}
+			if str(e.get("kind", "")) == "player":
+				var act2: Dictionary = HubActivityScript.describe_with_economy(e, economy)
+				row["status"] = str(act2.get("status", "idle"))
+				row["activity"] = str(act2.get("activity", ""))
 			var amb := str(e.get("ambient", "")).strip_edges()
 			if not amb.is_empty():
 				row["ambient"] = amb
@@ -107,13 +124,14 @@ static func npc_count(entities: Dictionary) -> int:
 static func zone_state_payload(sim, your_oid: int) -> Dictionary:
 	var online := online_players(sim.entities)
 	var collision_blocks: int = sim.collision.blocks.size() if (sim != null and sim.collision != null) else 0
+	var eco = sim.economy if (sim != null and "economy" in sim) else null
 	var payload := {
 		"type": "zone_state",
 		"proto": "lbg-ws/2",
 		"zone": ZONE,
 		"tick": sim.tick if sim != null else 0,
 		"server_time_ms": int(Time.get_unix_time_from_system() * 1000.0),
-		"entities": entity_list(sim.entities, true),
+		"entities": entity_list(sim.entities, true, eco),
 		"your_character_id": your_oid,
 		"session_policy": "prime_hub_g4u",
 		"collision_blocks": collision_blocks,

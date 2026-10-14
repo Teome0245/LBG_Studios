@@ -10,6 +10,8 @@ Donner l’impression d’une population vivante **sans** spammer le chat ni fai
 
 **C1 — surface joueur** : humain et IA = **même** nameplate / couleur ; `is_bot` reste interne hub. Pas de tag « bot / IA / soyez tolérants ». Lisibilité = nom + activité courte (ex. « Nix · escorte »).
 
+**C2 — signal d’activité** : chaque joueur (humain ou IA) expose `status` ∈ `idle|busy|quest` + `activity` (libellé court) dans le `zone_state` slim. Nameplate = `Nom · activité` si non-idle. Sources : goal bot / play_mode / quête economy (humain). Module [`hub_activity.gd`](../../packages/prime-hub/scripts/hub_activity.gd).
+
 | Acteur | Comportement |
 |--------|----------------|
 | **Joueurs IA** | Flotte `ai_players.json` (4 actifs, 6 prêts → vague 10) · quête / explore / hub · suggestions → Studio |
