@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:;"
     />
     <title>Compagnon</title>
     <link rel="stylesheet" href="./face_rig/face_rig.css" />
@@ -32,10 +32,9 @@
         gap: 4px;
         -webkit-app-region: drag;
       }
-      /* Bulle type desktop-pet */
       .bubble {
         display: none;
-        max-width: 168px;
+        max-width: 200px;
         margin-bottom: 4px;
         padding: 8px 10px;
         border-radius: 14px 14px 14px 4px;
@@ -51,13 +50,68 @@
       .bubble.visible {
         display: block;
       }
+      .bubble.guide .bubble-actions {
+        display: none;
+      }
       .bubble-msg {
         margin: 0 0 6px;
+      }
+      .bubble.guide .bubble-msg {
+        margin: 0;
       }
       .bubble-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
+      }
+      .pointer {
+        display: none;
+        position: absolute;
+        top: 42%;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.85));
+        animation: point-nudge 0.7s ease-in-out infinite;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .pointer.visible.left {
+        display: block;
+        left: 2px;
+        border-width: 10px 16px 10px 0;
+        border-color: transparent #5eead4 transparent transparent;
+      }
+      .pointer.visible.right {
+        display: block;
+        right: 2px;
+        left: auto;
+        border-width: 10px 0 10px 16px;
+        border-color: transparent transparent transparent #5eead4;
+      }
+      @keyframes point-nudge {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        50% {
+          transform: translateX(-5px);
+        }
+      }
+      .pointer.visible.right {
+        animation-name: point-nudge-r;
+      }
+      @keyframes point-nudge-r {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        50% {
+          transform: translateX(5px);
+        }
+      }
+      body.guiding #face-wrap {
+        animation: alert-pulse 0.85s ease-in-out 4;
       }
       .bubble-actions button {
         font-size: 10px;
@@ -76,6 +130,20 @@
         color: #94a3b8;
         border: 1px solid rgba(255, 255, 255, 0.15);
       }
+      .drag-handle {
+        width: 72px;
+        height: 10px;
+        margin-bottom: 2px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.45);
+        -webkit-app-region: no-drag;
+        cursor: grab;
+        flex-shrink: 0;
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+        background: rgba(94, 234, 212, 0.7);
+      }
       #face-wrap {
         position: relative;
         width: 128px;
@@ -84,20 +152,53 @@
         cursor: pointer;
         animation: idle-bob 3.2s ease-in-out infinite;
       }
+      body.mode-vrm #face-wrap {
+        width: 220px;
+        height: 340px;
+        animation: none;
+      }
+      body.mode-vrm.framing-full #face-wrap {
+        width: 260px;
+        height: 520px;
+      }
+      body.mode-vrm.framing-bust #face-wrap {
+        width: 200px;
+        height: 280px;
+      }
       #face-wrap.alert {
         animation: alert-pulse 0.9s ease-in-out 3;
       }
       #face-host {
-        width: 128px;
-        height: 128px;
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
         overflow: hidden;
         border: 2px solid rgba(94, 234, 212, 0.45);
-        background: radial-gradient(circle at 40% 28%, rgba(30, 58, 95, 0.95), rgba(2, 6, 23, 0.98));
+        background: radial-gradient(
+          circle at 40% 28%,
+          rgba(30, 58, 95, 0.95),
+          rgba(2, 6, 23, 0.98)
+        );
         box-shadow:
           0 0 0 4px rgba(15, 23, 42, 0.35),
           0 0 20px rgba(34, 211, 238, 0.2),
           0 12px 32px rgba(0, 0, 0, 0.55);
+      }
+      body.mode-vrm #face-host {
+        border-radius: 18px;
+        border: 1px solid rgba(94, 234, 212, 0.35);
+        background: radial-gradient(
+          ellipse at 50% 70%,
+          rgba(15, 23, 42, 0.55),
+          rgba(2, 6, 23, 0.15) 70%,
+          transparent
+        );
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      }
+      body.mode-vrm #face-host canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
       }
       .status {
         font-size: 10px;
@@ -105,7 +206,7 @@
         letter-spacing: 0.03em;
         color: #99f6e4;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-        max-width: 150px;
+        max-width: 200px;
         text-align: center;
         white-space: nowrap;
         overflow: hidden;
@@ -113,7 +214,7 @@
       }
       .session-pill {
         display: none;
-        max-width: 168px;
+        max-width: 200px;
         padding: 6px 8px;
         border-radius: 10px;
         background: rgba(15, 23, 42, 0.94);
@@ -191,6 +292,7 @@
   </head>
   <body>
     <div class="stage">
+      <div id="pointer" class="pointer" aria-hidden="true"></div>
       <div id="session-pill" class="session-pill" aria-live="polite">
         <div class="agent" id="session-agent">opencode</div>
         <p class="ticker" id="session-ticker"></p>
@@ -206,12 +308,17 @@
           <button type="button" class="later" id="btn-later">Plus tard</button>
         </div>
       </div>
+      <div id="drag-handle" class="drag-handle" title="Glisser pour deplacer"></div>
       <div id="face-wrap" title="Ouvrir le Compagnon">
         <div id="face-host"></div>
       </div>
       <div id="status" class="status">Compagnon</div>
     </div>
     <script src="./face_rig/face_rig.js"></script>
+    <script src="./vrm/vrm_pet.bundle.js"></script>
     <script src="./overlay.js"></script>
+    <script>
+      if (typeof window.__onVrmPetReady === "function") window.__onVrmPetReady();
+    </script>
   </body>
 </html>

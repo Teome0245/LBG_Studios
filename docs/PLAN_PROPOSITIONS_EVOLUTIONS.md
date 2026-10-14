@@ -3,7 +3,7 @@
 **Date** : 2026-10-08  
 **Auteur** : Antigravity (Analyse & Propositions)  
 **Source** : Monorepo [`LBG_Studios`](file:///home/lbg/projects/LBG_Studios)  
-**Ordre stratégique** : **O1 Studio d’abord, O2 Jeu ensuite** — [`OBJECTIVES.md`](file:///home/lbg/projects/LBG_Studios/OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](file:///home/lbg/projects/LBG_Studios/docs/PRIORITES_ACTUELLES.md)  
+**Ordre stratégique** : **O1 Compagnon → O2 MMO (banc) → O3 Joueurs IA** — [`OBJECTIVES.md`](../OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md)  
 **Étoile du nord** : IA incarnée sur PC/infra (Rang 1) → persona au cœur du MMO (Rang 2) → évolution contrôlée du monde et du code (Rang 3) — [`RESTAURATION_PRODUIT.md`](file:///home/lbg/projects/LBG_Studios/docs/RESTAURATION_PRODUIT.md).  
 **Mains code `.143` (ADR 0025)** : OpenCode LIVE Métis (nominal) ; Cline CLI installé sur `.143` (second avis local 0 €) — détail [`packages/cortex/docs/cline/CLI_SECOND_AVIS.md`](../packages/cortex/docs/cline/CLI_SECOND_AVIS.md) · O-IDE-1..3 clos (2026-10-13).  
 **Statut du plan** : **10/10 tickets DONE (100 % réalisé)** — voir [`docs/suivi/PLAN_EVOLUTIONS_STATUS.md`](suivi/PLAN_EVOLUTIONS_STATUS.md).  

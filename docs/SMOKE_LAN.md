@@ -245,4 +245,4 @@ bash tools/smoke_catalog_poi_hub.sh          # GET /v1/catalog?type=poi + /v1/wo
 
 - [`REGISTRE.md`](REGISTRE.md) — actifs / runtime
 - [`packages/prime-client/SMOKE.md`](../packages/prime-client/SMOKE.md) — sync client / Launchpad
-- [`OBJECTIVES.md`](../OBJECTIVES.md) — O1 / O2
+- [`OBJECTIVES.md`](../OBJECTIVES.md) — O1 Compagnon / O2 MMO / O3 Joueurs IA

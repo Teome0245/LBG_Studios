@@ -19,7 +19,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | [`docs/world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) | Équivalence arbres Pre-CU → LBG |
 | `packages/cortex/content/m10/m10_skills_catalog.json` | Catalogue talents/craft (schema 3, professions) |
 | `RESTAURATION_PRODUIT.md` | Checklist vert/jaune/rouge |
-| `OBJECTIVES.md` | Cadre O1/O2 |
+| `OBJECTIVES.md` | Cadre O1 Compagnon / O2 MMO banc d’essai / O3 Joueurs IA |
 | `packages/prime-client/docs/CLIENT_ONLY_GODOT.md` | Vision joueur Godot-only |
 | [`PLAN_PRESENCE_ZONE_ENTRAINEMENT.md`](PLAN_PRESENCE_ZONE_ENTRAINEMENT.md) | Zone d'entraînement IA (dials B1–B4 · boucle Studio↔jeu C1–C3) · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) D6.5 |
 | ADR 0016 (`new_mmo/…`) | Axe talents/artisanat — **accepté de facto** |

@@ -49,6 +49,7 @@ Dépendance Docker backend : `edge-tts>=6.1.0` (ajoutée idempotente par le depl
 - Bouton **Voix** dans le header `:5174` (off par défaut — opt-in).
 - Si activé : lit les réponses assistant + messages d’initiative (texte sanitizé).
 - FaceRig : `setTalking` approximatif pendant la lecture.
+- Desktop Electron : `compagnonDesktop.notifyPresence({ kind: 'talking', ms })` → bridge SSE `:8765` ([`avatar_presence_events_v1.md`](avatar_presence_events_v1.md)).
 - Headers utiles : `X-LBG-TTS-Provider`, `X-LBG-TTS-Voice`, `X-LBG-TTS-Fallback-From` (si secours).
 
 ## Install / smoke

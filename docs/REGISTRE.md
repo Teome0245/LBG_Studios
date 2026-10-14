@@ -1,12 +1,12 @@
 # Registre LBG Studios
 
-**Date** : 2026-10-13 (alignement canon G5+ `:8787` · packages monorepo)  
+**Date** : 2026-10-14 (piliers O1/O2/O3 · G5+ `:8787`)  
 **Source de vérité** : ce fichier · runtime joueur : [`RUNTIME_GODOT.md`](RUNTIME_GODOT.md).
 
-**Objectif** : recentrer sur **Studio (Cortex)** puis **Jeu (Prime/Godot)** dans `LBG_Studios`,  
-sans perdre l’étoile du nord — [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
-**Priorités actuelles** : [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) (snapshot O1/O2).  
-**Focus compagnon** : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) (O1 Studio).  
+**Objectif** : trois piliers — **O1 Compagnon** · **O2 MMO (banc d’essai)** · **O3 Joueurs IA** —  
+[`OBJECTIVES.md`](../OBJECTIVES.md) · restauration : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
+**Priorités actuelles** : [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) (snapshot O1/O2/O3).  
+**Focus compagnon** : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) (O1 · D8 avatar bridge).  
 **Session en cours (Cursor ↔ Antigravity)** : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md).  
 **Règles Antigravity** : `../.agents/rules/` (+ global `~/.gemini/GEMINI.md`).  
 **Handoff sonde AD (Antigravity)** : [`handoff_antigravity_sonde_ad.md`](handoff_antigravity_sonde_ad.md).  
@@ -60,7 +60,7 @@ Nouvelles features client → **Git Studios**. Deploy / sondes VM → `LBG_PRIME
 | Package | Rôle | Point d’entrée |
 |---------|------|----------------|
 | **`packages/cortex`** | Studio : orchestrateur, Team, Pilot, agents | Pilot ops `http://192.168.0.140:8080/` · Compagnon présence `.100:5174` |
-| **`packages/compagnon-desktop`** | Tray Electron + overlay avatar (poste `.10`) | `packages/compagnon-desktop` |
+| **`packages/compagnon-desktop`** | Tray Electron + overlay VRM/FaceRig + bridge avatar `:8765` (poste `.10`) | `packages/compagnon-desktop` · D8 |
 | **`packages/prime-hub`** | **Autorité monde** Godot headless G5+ (HTTP+WS) | `http://192.168.0.246:8787/healthz` |
 | **`packages/prime-client`** | Jeu : client Godot Prime | Launchpad / Godot → hub `:8787` |
 | **`packages/launchpad`** | Lanceur Electron (sources) ≥ 2.1.4 Prime-only | build Windows → `J:\swgemu\dist\` |
@@ -221,10 +221,12 @@ flowchart LR
 
 ---
 
-## Jalons récents (O1 / O2)
+## Jalons récents (O1 / O2 / O3)
 
 | Date | Jalon | Où |
 |------|--------|-----|
+| 2026-10-14 | Canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** + règle mutations dures | [`OBJECTIVES.md`](../OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
+| 2026-10-14 | **D8** avatar bridge Desktop (SSE `:8765` · VRM overlay · contrat events v1) | [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) |
 | 2026-10-13 | Canon docs : autorité joueur `:8787` · packages `prime-hub` / `compagnon-desktop` au registre | ce fichier · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) |
 | 2026-10-14 | Greffes Mods→Compagnon : Agents live · bus Team · routeur L1/L2 live `:5174` | [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · `compagnon_ui` |
 | 2026-10-14 | Unification `LBG_PRIME_CLIENT_ROOT` Studios · toasts HUD · O-DOC-2 clos · plateau polish O2 | [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) |

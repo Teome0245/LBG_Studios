@@ -31,6 +31,12 @@ powershell -ExecutionPolicy Bypass -File .\desktop\Install-CompagnonShortcut.ps1
 ```
 
 Fenêtre app Edge/Chrome (`--app=`) vers `:5174` — épingler à la barre des tâches.
+
+## Suite D2 / D8
+
+App Electron (tray + FaceRig) : `packages/compagnon-desktop`.  
+Bridge avatar SSE (VRM / Mate Engine) : [`avatar_presence_events_v1.md`](../docs/avatar_presence_events_v1.md).
+
 ## Persona
 
 Profils envoyés à `POST /ask` : `compagnon` (défaut), `jarvis`, `mother`, `kit`, `hal`, …

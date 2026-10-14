@@ -1,6 +1,6 @@
 # AGENTS.md — LBG Studios
 
-Monorepo LBG Studios. Priorité : **O1 Studio** (`packages/cortex`) puis **O2 Jeu**.
+Monorepo LBG Studios. Priorité : **O1 Compagnon** → **O2 MMO (banc d’essai)** → **O3 Joueurs IA**.
 Voir `README.md`, `OBJECTIVES.md`, `docs/REGISTRE.md`, **`docs/RUNTIME_GODOT.md`**, `docs/PRIORITES_ACTUELLES.md`.
 **État vivant (Cursor ↔ Antigravity)** : `docs/SESSION_EN_COURS.md` — le lire au démarrage, le mettre à jour avant de partir.
 Règles Antigravity : `.agents/rules/` (miroir des canons Cursor `.cursor/rules/`).

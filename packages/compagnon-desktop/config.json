@@ -8,11 +8,18 @@
   },
   "overlay": {
     "enabled": true,
-    "width": 188,
-    "height": 280,
-    "marginRight": 16,
-    "marginBottom": 72,
-    "alwaysOnTop": true
+    "mode": "vrm",
+    "width": 300,
+    "height": 620,
+    "marginRight": 8,
+    "marginBottom": 48,
+    "alwaysOnTop": true,
+    "vrmModel": "./vrm/default.vrm",
+    "vrmFraming": "full",
+    "wander": false,
+    "wanderSpeed": 45,
+    "wanderPauseMs": 4000,
+    "guideSpeed": 220
   },
   "tray": {
     "tooltip": "LBG Compagnon"
@@ -29,5 +36,11 @@
     "enabled": false,
     "streamUrl": "http://192.168.0.143:5005/session/stream",
     "decisionUrl": "http://192.168.0.143:5005/session/decision"
+  },
+  "avatarBridge": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8765,
+    "heartbeatMs": 30000
   }
 }

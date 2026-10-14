@@ -2,3 +2,8 @@ node_modules/
 dist/
 *.log
 .DS_Store
+adapters/last_*.txt
+adapters/last_*.log
+# Sample VRM (~11 Mo) — present sur A:/Agent_IA, pas dans git
+overlay/vrm/default.vrm
+

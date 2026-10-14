@@ -4,8 +4,9 @@
 
 | Priorité | Objectif | Package |
 |----------|----------|---------|
-| **O1** | **Studio** — Cortex, Pilot, Campus, agents | [`packages/cortex`](packages/cortex/) |
-| **O2** | **Jeu** — client + hub Godot `.246:8787` | [`packages/prime-client`](packages/prime-client/) · [`packages/prime-hub`](packages/prime-hub/) |
+| **O1** | **Compagnon / Studio** — incarnation hors MMO, interface écosystème | [`packages/cortex`](packages/cortex/) · [`packages/compagnon-desktop`](packages/compagnon-desktop/) |
+| **O2** | **MMO** — banc d’entraînement + jeu · hub `.246:8787` | [`packages/prime-client`](packages/prime-client/) · [`packages/prime-hub`](packages/prime-hub/) |
+| **O3** | **Joueurs IA** — agents portables (MMO = 1er adapter) | pont [`docs/design/HUB_AI_PLAYER_BRIDGE.md`](docs/design/HUB_AI_PLAYER_BRIDGE.md) |
 
 Voir [`OBJECTIVES.md`](OBJECTIVES.md), [`docs/PRIORITES_ACTUELLES.md`](docs/PRIORITES_ACTUELLES.md), [`docs/RUNTIME_GODOT.md`](docs/RUNTIME_GODOT.md) (**G5 live**), [`docs/REGISTRE.md`](docs/REGISTRE.md), [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
 Smoke LAN : [`docs/SMOKE_LAN.md`](docs/SMOKE_LAN.md) — hub `http://192.168.0.246:8787/healthz`.  

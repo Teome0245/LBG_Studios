@@ -26,8 +26,14 @@ $ErrorActionPreference = "Continue"
 function Resolve-SourceRoot {
   $candidates = @(
     $PSScriptRoot,
+    # Poste .10 : partage Omarchy .143 monté en A:
+    "A:\LBG_Studios\packages\compagnon-desktop",
+    "\\192.168.0.143\projects\LBG_Studios\packages\compagnon-desktop",
+    "C:\Agent_IA\compagnon-desktop",
     "\\wsl$\Ubuntu\home\sdesh\projects\LBG_Studios\packages\compagnon-desktop",
-    "\\wsl.localhost\Ubuntu\home\sdesh\projects\LBG_Studios\packages\compagnon-desktop"
+    "\\wsl.localhost\Ubuntu\home\sdesh\projects\LBG_Studios\packages\compagnon-desktop",
+    "\\wsl$\Ubuntu\home\lbg\Projets\LBG_Studios\packages\compagnon-desktop",
+    "\\wsl.localhost\Ubuntu\home\lbg\Projets\LBG_Studios\packages\compagnon-desktop"
   )
   foreach ($c in $candidates) {
     if (-not $c) { continue }

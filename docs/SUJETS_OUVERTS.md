@@ -23,7 +23,8 @@ _Aucun sujet ouvert en attente — O-IDE-1, O-IDE-2 et O-IDE-3 clos (2026-10-13)
 
 ### O1 — Autonomie Campus / CI / desktop
 
-_Aucun sujet ouvert en attente — O-CAMP-1, O-CAMP-2 et O-D7-1 clos (2026-10-13)._
+_Aucun sujet ouvert en attente — O-CAMP-1, O-CAMP-2 et O-D7-1 clos (2026-10-13)._  
+_D8 avatar bridge : **préparé** (code + contrat) — smoke adaptateur externe Mate/liqu = suite optionnelle._
 
 
 ### O2 — Jeu / pont Studio↔Monde
@@ -57,6 +58,8 @@ _Aucun sujet ouvert — O-UX-DND clos 2026-10-14._
 
 | ID | Sujet | Clos |
 |----|--------|------|
+| O-DOC-PILLARS | Canon O1 Compagnon / O2 MMO banc / O3 Joueurs IA | **2026-10-14** · [`OBJECTIVES.md`](../OBJECTIVES.md) + [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) · règle mutations dures · README / REGISTRE / AGENTS alignés |
+| O-D8-AVATAR | Avatar bridge Desktop (SSE loopback + VRM) | **2026-10-14** · `avatar_bridge.js` `:8765` · overlay `vrm`/`face` · contrat [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) · adapters `.10` — **préparé** (smoke Mate/liqu optionnel) |
 | O-UX-DND | Inventaire drag & drop & Quêtes des villages (Zalem & Ksar) | **2026-10-14** · Drag & drop natif Godot 4 (`InventorySlotBtn`, `HotbarSlotBtn`), swap de slots, stacking automatique (même id), assignation vers Hotbar slot 3 (objet rapide), feedback toast + préservation clic utilisation directe · 4 quêtes de villages (`zalem_patrouille_route`, `zalem_pieces_relais`, `ksar_source_oasis`, `ksar_herbes_sables`) + dialogues / suggestions complétés pour Capitaine Vael, Soren Kray, Ancien Nadir et Miran Sael · tests headless Godot 100% verts. |
 | O-CTX-HYGIENE | Fil hygiène contexte / monde (A1–A3 · B1 · C1–C2 · D1) | **2026-10-14** · journal + Respire + Studio Brain · prefs monde · nameplates + activité `status`/`activity` · `cost` craft/use · live `:5174` + `:8787` · [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) |
 | O-DOC-2 | Review Bugbot formelle snapshot priorités (optionnel) | **2026-10-14** · review manuelle du fil jugée suffisante au plateau · Bugbot hors quota à l’époque · pas de rejeu outillé requis |

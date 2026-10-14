@@ -121,6 +121,7 @@ Phasage réaliste :
 | **D2** | App Electron *Compagnon* (tray + fenêtre chat + avatar) | **OK** — `packages/compagnon-desktop` |
 | **D3** | Overlay discret + notifications d’initiative (quota strict) | **OK** (2026-09-16) |
 | **D7** | **Présence Agents** — island live + Allow/Deny (ADR 0027) | **code monorepo OK** · Team live bloqué `approval_denied` (token `.143`) · **à sync worker** (2026-10-09) |
+| **D8** | **Avatar bridge** — SSE loopback mood/TTS/initiative pour FaceRig + VRM externe (Mate Engine / liqu) | **préparé** (2026-10-14) — `avatar_bridge.js` + [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) |
 
 ## Jalons (ordre)
 

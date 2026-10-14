@@ -78,6 +78,16 @@ export function sanitizeForSpeech(text, maxChars = TTS_MAX_CHARS) {
   return s
 }
 
+function notifyDesktopPresence(payload) {
+  try {
+    if (typeof window !== 'undefined' && window.compagnonDesktop?.notifyPresence) {
+      window.compagnonDesktop.notifyPresence(payload)
+    }
+  } catch {
+    /* ignore — hors Electron */
+  }
+}
+
 export function stopTts() {
   try {
     if (currentAudio) {
@@ -97,6 +107,7 @@ export function stopTts() {
     }
     currentObjectUrl = null
   }
+  notifyDesktopPresence({ kind: 'idle', talking: false })
 }
 
 /**
@@ -167,10 +178,10 @@ export async function speakText(text, opts = {}) {
   const audio = new Audio(url)
   currentAudio = audio
 
-  // Lip-sync FaceRig ≈ durée estimée (si dispo)
+  // Lip-sync FaceRig ≈ durée estimée (si dispo) + bridge desktop avatar
+  const estMs = Math.min(12000, Math.max(900, 55 * spoken.length))
   try {
     if (typeof window !== 'undefined' && window.FaceRig?.setTalking) {
-      const estMs = Math.min(12000, Math.max(900, 55 * spoken.length))
       window.FaceRig.setTalking(estMs)
     } else if (typeof window !== 'undefined' && window.FaceRig?.say) {
       window.FaceRig.say(spoken.slice(0, 80))
@@ -178,6 +189,12 @@ export async function speakText(text, opts = {}) {
   } catch {
     /* ignore */
   }
+  notifyDesktopPresence({
+    kind: 'talking',
+    talking: true,
+    text: spoken.slice(0, 140),
+    ms: estMs,
+  })
 
   try {
     await audio.play()

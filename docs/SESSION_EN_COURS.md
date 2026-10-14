@@ -4,23 +4,24 @@
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : clôture polish O2 + non-bloquants — **archiver ce fil** ; suite = nouveau fil (contenu / O-UX-DND / feeling).
+**Fil** : canon O1/O2/O3 + D8 avatar bridge Desktop — **documenté** ; suite = feeling / adapters externes.
 
 ---
 
 ## Objectif actuel
 
-Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
-Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · fil hygiène contexte A1–A3/B1/C1/D1 **clos & déployé** · greffes Mods→Compagnon (Agents live / bus / routeur L1-L2) **clos & live** `:5174` · non-bloquants **clos**.
+Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
+Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · hygiène contexte **clos** · Mods→Compagnon **clos** · **canon O1/O2/O3** · **D8 avatar bridge** (SSE `:8765` + overlay VRM) **préparé**.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
 | Rail | État |
 |------|------|
-| **O1 Compagnon** | D0–D6 OK (smoke D6 V6–V8 PASS 2026-10-06) ; gate *feeling* ouverte — `FOCUS_COMPAGNON.md` |
+| **O1 Compagnon** | D0–D6 OK ; D8 avatar bridge **préparé** — `FOCUS_COMPAGNON.md` · `avatar_presence_events_v1.md` |
 | **O1 ops** | Lot gaps A–F2 + tick L3 livré 2026-10-07 ; L3 **DONE** `days_ok=3/3` (2026-10-11) ; métriques 7j Fleet **OK** |
-| **O2 hub** | P6 Godot-first G5+ **live** (`.246:8787`) ; P3 wiki live ; P5 telegraph boss **vert** 2026-10-08 ; **2.3 navmesh `NavigationServer3D` LIVE** 2026-10-11 |
+| **O2 hub** | P6 Godot-first G5+ **live** (`.246:8787`) ; P3 wiki live ; P5 telegraph boss **vert** 2026-10-08 ; zone entraînement B1–B4 OK |
+| **O3 Joueurs IA** | Pont `*_bridge` + dials OK ; noyau découplé / adapters = **cible** |
 | **Interdit** | Core3 / gateway SOE / `hub_runtime` Python sur chemin joueur |
 
 ## Prochaines actions (à ajuster en fin de session)
@@ -41,7 +42,9 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 12. **O-CTX-HYGIENE (A1–A3 · B1 · C1–C2 · D1)** : **clos & live** 2026-10-14 — journal · Respire · Studio Brain · prefs monde · nameplates + activité idle/busy/quest · coûts craft/use · deploy CT100 + hub `:8787`.
 13. **O-MODS-GRAFT (Agents live · bus ADR 0019 · routeur L1/L2)** : **clos & live** 2026-10-14 — side-panel fleet · `teamBus` · badge méta light/heavy — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil Mods Claude*.
 14. **O-UX-DND & Quêtes des villages** : **clos** 2026-10-14 — Inventaire grille drag & drop natif Godot 4 (`InventorySlotBtn`, `HotbarSlotBtn`), swap, stacking même id, assignation hotbar 3 objet rapide, feedback toast · 4 quêtes immersives des villages (`zalem_patrouille_route`, `zalem_pieces_relais`, `ksar_source_oasis`, `ksar_herbes_sables`) avec dialogues, suggestions et catalogue synchronisés pour Capitaine Vael, Soren Kray, Ancien Nadir et Miran Sael · CI headless Godot 4/4 PASS (<5 s).
-15: **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+15. **Canon O1/O2/O3** : **clos** 2026-10-14 — [`OBJECTIVES.md`](../OBJECTIVES.md) + [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) · Compagnon / MMO banc / Joueurs IA · règle mutations dures.
+16. **D8 Avatar bridge Desktop** : **préparé** 2026-10-14 — `avatar_bridge.js` loopback `:8765` · overlay VRM · contrat [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) · adapters `.10` — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md).
+17. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
