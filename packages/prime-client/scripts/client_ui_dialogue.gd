@@ -441,6 +441,16 @@ func on_dialogue_suggestion_activated(move: Dictionary) -> void:
 				int(action_dict.get("offer_price", 0))
 			)
 		return
+	if action_name == "tip_stage":
+		if main._mission_board and main._mission_board.has_method("_tip_scene"):
+			main._mission_board._tip_scene()
+			print("[Main] C1 suggestion UI → tip_stage")
+		return
+	if action_name == "show_train":
+		if main._mission_board and main._mission_board.has_method("request_show_train"):
+			main._mission_board.request_show_train()
+			print("[Main] C1 suggestion UI → show_train")
+		return
 
 
 func ensure_dialogue_bridge() -> void:

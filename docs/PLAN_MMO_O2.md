@@ -39,7 +39,7 @@ Celui-ci est la **source de vérité courte** pour avancer le client Godot + gat
 | **P1** | M12 durci | Smoke M12 auto vert ; Launchpad → `J:\…\prime-client` ; login→WS→zone→move | Hermès + Argus | **fait** 2026-08-03 (smoke + move ±1.5 m) |
 | **P2** | M10 B2B | UI talents/craft ↔ `:8791` + smoke craft ; critères ADR 0016 ; catalogue schema 3 Pre-CU-LBG | Iris + Dédale | **vert smoke 2026-08-15** ; GET `/v1/inventory` = dump Lua Core3 si perso online, sinon JSON bridge |
 | **P2b** | Missions hub | Board Daan Oth ↔ `:8791` accept/complete stub + UI Godot **J** | Iris + Dédale | **vert smoke 2026-08-15** ; **objectifs terrain POI** (progress sur toutes templates hub + HUD objectif hors J) **fait** ; Core3 journal = suite |
-| **P2c** | Scène cantina | Show La Perle + tip stub (après missions) | Iris | **MVP stub 2026-08-15** — `lh_show_perle` au board + `POST /v1/quests/tip` + bouton Tip Scène ; show live / formation Talen = suite |
+| **P2c** | Scène cantina | Show La Perle + tip + formation Talen | Iris | **live hub** 2026-10-14 — `hub_show.gd` idle/live/encore · tip gated show · `POST /v1/show/train` · artiste scène · (`lh_show_perle` + Tip Scène) |
 | **P3** | Persona en jeu | Dialogue PNJ + session_summary stables ; Chœur = vérif terrain (V50–V53) | Chœur | **vert** 2026-10-07 : invoke + history + C12 · `smoke_p3_hub_dialogue` + `smoke_choeur_terrain` |
 | **P4** | Retrait pont SOE Python | Plus de chemin joueur via `soe_handshake` / retail | Hermès | **clos** — pont SOE définitivement retiré au profit du hub Godot G5+ (`:8787` unifié) |
 | **P5** | World Director / bots | Tracks serveur **sans bloquer** P1–P4 | WD | parallèle |

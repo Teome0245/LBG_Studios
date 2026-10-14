@@ -414,6 +414,11 @@ func _complete_selected() -> void:
 func _tip_scene() -> void:
 	_post_act("/v1/quests/tip", {"player": player_id, "quest_id": "lh_show_perle", "amount": 2}, "tip")
 
+
+func request_show_train() -> void:
+	## Formation courte Talen (O-JEUX-SHOW) — POST /v1/show/train.
+	_post_act("/v1/show/train", {"player": player_id}, "train")
+
 func _post_act(path: String, payload: Dictionary, kind: String) -> void:
 	_pending = kind
 	_status = "%s…" % kind
@@ -509,6 +514,10 @@ func _on_act_done(result: int, code: int, _headers: PackedStringArray, body: Pac
 	elif _pending == "tip":
 		_credits = int(parsed.get("credits", _credits))
 		_status = "tip — %s Cr · %s" % [str(parsed.get("tipped", 0)), str(parsed.get("message", "Scène"))]
+	elif _pending == "train":
+		_status = "formation — %s" % str(parsed.get("lesson", parsed.get("trainer", "Talen")))
+		_paint_status()
+		return
 	elif _pending == "progress":
 		var label := str(parsed.get("label", parsed.get("step_id", "étape")))
 		_status = "étape OK — %s" % label

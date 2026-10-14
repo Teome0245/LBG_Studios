@@ -656,9 +656,17 @@ func tip(player: String, quest_id: String, amount: int = 2) -> Dictionary:
 	p["credits"] = int(p["credits"]) - amt
 	remember_relation(
 		player,
-		"npc:core3_barman_jax",
+		"npc:core3_artiste_scene",
 		"gift",
 		"Tu as tippé %d Cr pour la scène à La Perle." % amt,
+		{"value": amt, "quest_id": quest_id}
+	)
+	# Jax voit passer le geste (comptoir).
+	remember_relation(
+		player,
+		"npc:core3_barman_jax",
+		"gift",
+		"Pourboire scène noté au comptoir (%d Cr)." % amt,
 		{"value": amt, "quest_id": quest_id}
 	)
 	_save_players()

@@ -11,7 +11,7 @@
 
 Continuité multi-outils : même canon O1/O2 pour Antigravity et Cursor.  
 Travail produit sous-jacent (inchangé) : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-14** : `O-JEUX-ESCORT` **clos & live** sur `.246:8787` · suite polish O2 = `O-JEUX-SHOW` / `O-JEUX-HOTBAR`.
+**2026-10-14** : `O-JEUX-ESCORT` live · `O-JEUX-SHOW` livré (show La Perle + Talen) · suite = `O-JEUX-HOTBAR`.
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
@@ -34,9 +34,10 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 6. **Thème 3 — Veille Évolution (O-VEIL-1..4)** : **100 % validé & clôturé** (ADR 0028 formalisé pour DSH & VoiceStudio ; doc de cadrage L1 [`agentic_rag_mapping.md`](../packages/cortex/docs/agentic_rag_mapping.md) ; fiabilisation route LLM veille O-VEIL-4 avec format json Ollama et dimensionnement dynamique timeout/tokens).
 7. **Harmonisation Doc & Retrait SOE (O-DOC-1, O-JEUX-3)** : **100 % validé & clôturé** (`OBJECTIVES.md` aligné sur Compagnon présence `:5174` vs Pilot cockpit ops `:8080`, jalon P4 clos dans `PLAN_MMO_O2.md` et `PRIORITES_ACTUELLES.md`).
 8. **Ops — Agrégat 7j Fleet (O-OPS-2)** : **100 % validé & clôturé** (`metrics_7d` et `rolling_7d` intégrés dans `team/fleet.py`, DoD plan combler gaps agentiques 100% OK).
-9. **Reste ouvert** : polish O2 `O-JEUX-SHOW` / `O-JEUX-HOTBAR` · optionnel `O-DOC-2` Bugbot — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+9. **Reste ouvert** : polish O2 `O-JEUX-HOTBAR` · optionnel `O-DOC-2` Bugbot — [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 10. **Docs périmées (O-DOC-ALIGN)** : **fait** 2026-10-13 — registre / restauration / suite RUNTIME / smoke en-tête / README alignés sur `:8787` + packages `prime-hub` / `compagnon-desktop`.
 11. **O-JEUX-ESCORT** : **clos & live** 2026-10-14 — civil suivable porte→clinique sur `:8787`.
+12. **O-JEUX-SHOW** : **fait** 2026-10-14 — `hub_show` idle/live/encore · tip gated · formation Talen · `SHOW_SELFTEST_OK`.
 
 ## Fichiers / surfaces utiles
 
@@ -67,6 +68,7 @@ _Aucun bloquant documenté pour ce bootstrap._
   - **Intégration moteur & données** : Inscrits dans `scrapaltai_planet_map.json` (Ctrl+M), `scrapaltai_pois.json`, `catalog_poi.json`, `hub_sim_defs.gd` (`POIS` + `HUB_NPCS`), `triplons.json` (solos), `npc_registry.json`, `explore_ring_lh.json` et préférences de voyage des bots dans `ai_players.json`.
   - **Rendu Client (`entity.gd` & `hub_focus.gd`)** : Ajout du micro-bobbing de marche pour les bots en mouvement, orientation `flip_h` automatique selon la vélocité horizontale, et autorisation des rayons outposts dans `hub_focus.gd` pour afficher les PNJ distants sans fuite de clutter legacy.
   - **Preuve & Déploiement Live** : Tests headless CI Godot (`ci_godot_headless.sh`) 100% verts en 3s. Déploiement live sur `.246:8787` via `deploy_prime_hub_246.sh`. Sonde live `/v1/bots` mesurée : **10/10 bots en déplacement actif et exploration fluide** (ex: Mira en route vers Ksar Nomade à 33 m en 3s, Lia libérée vers le sud à 34.5 m).
+- 2026-10-14 : **O-JEUX-SHOW (P2c)** — `hub_show.gd` cycle spectacle La Perle · artiste scène · tip live only · `POST /v1/show/train` Talen · dialogue moves · client tip/train · `SHOW_SELFTEST_OK`.
 - 2026-10-14 : **O-JEUX-ESCORT clos & live** — `GET /v1/quests/escort` → 200 sur `.246:8787` · déjà dans `9baecef` (deploy hub) · ticket déplacé en § Clos.
 - 2026-10-13 : **Alignement docs périmées (audit)** —
   - [`REGISTRE.md`](REGISTRE.md) : packages `prime-hub` / `compagnon-desktop` ; autorité joueur **`:8787`** ; `:8792` = lab Core3 OFF ; matrice mermaid + jalons oct. ;

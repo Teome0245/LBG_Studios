@@ -109,26 +109,29 @@
       "giver_roles": ["performer", "entertainer_trainer", "quest_giver"],
       "giver_ids": ["npc:artiste_scene", "npc:core3_talen_ress", "npc:entertainer_trainer_relief2", "npc:core3_daan_oth"],
       "default_giver": "Artiste de scène",
-      "objective": "Assister au spectacle à La Perle de Scrapaltai (et tipper si le cœur t'en dit).",
+      "objective": "Assister au spectacle live à La Perle de Scrapaltai (tip + option formation Talen).",
       "rewards": {
         "credits": 5,
         "xp": {"xp_scene": 25},
         "items": []
       },
       "progress": [
-        {"id": "arrive", "label": "Entrer à La Perle", "poi": "poi:lost_heaven_cantina", "radius_m": 50}
+        {"id": "arrive", "label": "Entrer à La Perle pendant le show", "poi": "poi:lost_heaven_cantina", "radius_m": 50}
       ],
       "next_steps": [
-        "Aller à La Perle.",
-        "Assister au show (étape auto près de la cantina).",
-        "Option : tipper l'artiste (Tip Scène).",
+        "Aller à La Perle quand le show est live (GET /v1/show/status).",
+        "Assister (arrive) et tipper l'artiste (Tip Scène — show live requis).",
+        "Option : formation courte chez Talen Ress à l'auberge (POST /v1/show/train).",
         "Terminer au board."
       ],
       "scene": {
         "venue": "poi:lost_heaven_cantina",
+        "runtime": "hub_show",
         "tip_credits_min": 1,
         "tip_credits_max": 5,
-        "tip_xp_scene": 5
+        "tip_xp_scene": 5,
+        "formation_npc": "npc:core3_talen_ress",
+        "formation_poi": "poi:lost_heaven_inn"
       }
     },
     {

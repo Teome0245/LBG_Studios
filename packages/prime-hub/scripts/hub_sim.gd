@@ -15,6 +15,7 @@ const HubSimViewsScript = preload("res://scripts/hub_sim_views.gd")
 const HubSimAmbientScript = preload("res://scripts/hub_sim_ambient.gd")
 const HubSimDefsScript = preload("res://scripts/hub_sim_defs.gd")
 const HubEscortScript = preload("res://scripts/hub_escort.gd")
+const HubShowScript = preload("res://scripts/hub_show.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -41,6 +42,7 @@ var combat = null
 var presence = null
 var ambient = null
 var escort = null
+var show = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -102,6 +104,10 @@ func reset() -> void:
 	if escort == null:
 		escort = HubEscortScript.new()
 	escort.clear()
+	if show == null:
+		show = HubShowScript.new()
+	show.clear()
+	show.bootstrap(self)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -665,13 +671,15 @@ func step(dt: float) -> void:
 			if combat != null:
 				combat.step_beast(e, dt)
 		elif str(e.get("kind", "")) == "npc":
-			# Escorte : mouvement géré par hub_escort.tick (goal escort_*).
+			# Escorte / show : mouvement géré par modules dédiés.
 			var g := str(e.get("goal", ""))
-			if g.begins_with("escort_"):
+			if g.begins_with("escort_") or g.begins_with("show_"):
 				continue
 			_step_npc(e, dt)
 	if escort != null:
 		escort.tick(self, dt, economy)
+	if show != null:
+		show.tick(self, dt)
 	if tick % 40 == 0 and ambient != null:
 		ambient.maybe_ambient()
 	if tick % _persist_every_ticks == 0 and player_store != null:

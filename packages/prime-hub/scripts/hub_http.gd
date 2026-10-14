@@ -29,6 +29,7 @@ const TICK_MUTATION_PATHS := {
 	"/v1/quests/progress": "quests/progress",
 	"/v1/quests/complete": "quests/complete",
 	"/v1/quests/tip": "tip_stage",
+	"/v1/show/train": "show/train",
 	"/v1/craft/combine": "craft/complete",
 	"/v1/salvage": "salvage/loot",
 	"/v1/salvage/loot": "salvage/loot",
@@ -267,6 +268,7 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			"collision_blocks": _collision_count(),
 			"navmesh": sim.navmesh_stats() if sim and sim.has_method("navmesh_stats") else {},
 			"persistence": sim.persistence_stats() if sim and sim.has_method("persistence_stats") else {},
+			"show": _show_snapshot(),
 			"uptime_s": uptime,
 			"note": "G5+ vie hub · joueurs IA évoluent · PNJ tiennent ; WS+HTTP :%d" % ws_port,
 		})
@@ -394,6 +396,10 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		var qo2: Dictionary = economy.progress(q2_player, q2_id, q2_step)
 		if bool(qo2.get("ok")):
 			_escort_after_progress(q2_player, q2_id, q2_step, qo2)
+			if q2_id.strip_edges() == "lh_show_perle" and q2_step.strip_edges() == "arrive":
+				var shp = _show_svc()
+				if shp != null:
+					shp.mark_attended(q2_player)
 		return _ok(_attach_tick_flags(qo2, path), 200 if bool(qo2.get("ok")) else 400)
 	if method == "POST" and path == "/v1/quests/complete":
 		var qb3 := _json_body(req_body)
@@ -407,8 +413,23 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		return _ok(_escort_snapshot(_query_param(query, "player", "")))
 	if method == "POST" and path == "/v1/quests/tip":
 		var qb4 := _json_body(req_body)
-		var qo4: Dictionary = economy.tip(str(qb4.get("player", "Voyageur")), str(qb4.get("quest_id", "")), int(qb4.get("amount", 2)))
+		var tip_player := str(qb4.get("player", "Voyageur"))
+		var tip_qid := str(qb4.get("quest_id", "lh_show_perle"))
+		var tip_amt := int(qb4.get("amount", 2))
+		var tip_gate := _show_validate_tip(tip_player, tip_amt)
+		if not bool(tip_gate.get("ok", true)):
+			return _ok(_attach_tick_flags(tip_gate, path), 400)
+		var qo4: Dictionary = economy.tip(tip_player, tip_qid, tip_amt)
+		if bool(qo4.get("ok")):
+			_show_on_tip(tip_player, tip_amt, qo4)
+			_show_mark_quest_progress(tip_player, tip_qid)
 		return _ok(_attach_tick_flags(qo4, path), 200 if bool(qo4.get("ok")) else 400)
+	if method == "GET" and path in ["/v1/show", "/v1/show/status"]:
+		return _ok(_show_snapshot())
+	if method == "POST" and path == "/v1/show/train":
+		var tb := _json_body(req_body)
+		var train_out := _show_train(str(tb.get("player", "Voyageur")))
+		return _ok(_attach_tick_flags(train_out, path), 200 if bool(train_out.get("ok")) else 400)
 	if method == "POST" and path == "/v1/craft/combine":
 		var cb := _json_body(req_body)
 		var rid := str(cb.get("schematic_id", cb.get("recipe_id", "")))
@@ -639,6 +660,58 @@ func _content_length(headers_blob: String) -> int:
 		if lower.begins_with("content-length:"):
 			return int(str(line).substr(15).strip_edges())
 	return 0
+
+
+func _show_svc():
+	if sim != null and sim.show != null:
+		return sim.show
+	return null
+
+
+func _show_snapshot() -> Dictionary:
+	var sh = _show_svc()
+	if sh == null:
+		return {"ok": false, "error": "show_unavailable"}
+	return sh.snapshot()
+
+
+func _show_validate_tip(player: String, amount: int) -> Dictionary:
+	var sh = _show_svc()
+	if sh == null:
+		return {"ok": true}
+	return sh.validate_tip(sim, player, amount)
+
+
+func _show_on_tip(player: String, amount: int, qo: Dictionary) -> void:
+	var sh = _show_svc()
+	if sh == null:
+		return
+	var meta: Dictionary = sh.on_tip_ok(player, amount)
+	qo["show"] = meta.get("show", {})
+	qo["message"] = str(meta.get("message", qo.get("message", "Scène")))
+
+
+func _show_mark_quest_progress(player: String, quest_id: String) -> void:
+	## Tip pendant le show compte comme présence scène (progress arrive si quête active).
+	if quest_id.strip_edges() != "lh_show_perle":
+		return
+	var sh = _show_svc()
+	if sh != null:
+		sh.mark_attended(player)
+	if economy == null:
+		return
+	var st: Dictionary = economy.status(player)
+	for a in st.get("active", []):
+		if typeof(a) == TYPE_DICTIONARY and str(a.get("id", "")) == "lh_show_perle":
+			economy.progress(player, "lh_show_perle", "arrive")
+			return
+
+
+func _show_train(player: String) -> Dictionary:
+	var sh = _show_svc()
+	if sh == null:
+		return {"ok": false, "error": "show_unavailable"}
+	return sh.train(sim, economy, player)
 
 
 func _escort_svc():
