@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-14  
+**Mis à jour** : 2026-10-16  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -43,8 +43,51 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 13. **O-MODS-GRAFT (Agents live · bus ADR 0019 · routeur L1/L2)** : **clos & live** 2026-10-14 — side-panel fleet · `teamBus` · badge méta light/heavy — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) § *Fil Mods Claude*.
 14. **O-UX-DND & Quêtes des villages** : **clos** 2026-10-14 — Inventaire grille drag & drop natif Godot 4 (`InventorySlotBtn`, `HotbarSlotBtn`), swap, stacking même id, assignation hotbar 3 objet rapide, feedback toast · 4 quêtes immersives des villages (`zalem_patrouille_route`, `zalem_pieces_relais`, `ksar_source_oasis`, `ksar_herbes_sables`) avec dialogues, suggestions et catalogue synchronisés pour Capitaine Vael, Soren Kray, Ancien Nadir et Miran Sael · CI headless Godot 4/4 PASS (<5 s).
 15. **Canon O1/O2/O3** : **clos** 2026-10-14 — [`OBJECTIVES.md`](../OBJECTIVES.md) + [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) · Compagnon / MMO banc / Joueurs IA · règle mutations dures.
-16. **D8 Avatar bridge Desktop** : **préparé** 2026-10-14 — `avatar_bridge.js` loopback `:8765` · overlay VRM · contrat [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) · adapters `.10` — [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md).
-17. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+16. **D8 Avatar bridge Desktop & VRM poses / modèles** : **validé visuellement & live sur .10** 2026-10-15 —
+    - Sortie définitive du T-pose (three-vrm 3.x `setNormalizedPose()` + repère d'Euler normalisé Z).
+    - Catalogue complet de poses expressives intégré dans `vrm_pet.js` et rebundlé : `idle`, `wave`, `pointLeft`, `pointRight`, `pointScreen`, `think`, `approve`, `cheer`, `bow`.
+    - Menus Tray Compagnon enrichis avec déclencheurs directs et bridge HTTP `:8765`.
+17. **Compagnon unique, orientation face & Pack d'animations 1** : **clos & déployé live** 2026-10-16 —
+    - **Orientation face caméra** : `Compagnon.vrm` identifié comme VRM 1.0 (`v.meta.metaVersion = "1"`). Fix de `faceTheCamera()` avec `rotation.y = 0` (suppression de l'inversion erronée qui le mettait de dos).
+    - **Modèle unique** : conservation exclusive du modèle `Compagnon.vrm` dans l'interface et le desktop pour cohérence d'identité.
+    - **Pack d'animations 1 intégré** :
+      - `dance` (Danse rythmée / groove) : déhanché `hips`, balancement alterné des bras à 4.8 Hz, hochement de tête rythmé, expression faciale `happy`.
+      - `angry` (Colère / bouderie) : poings sur les hanches, torse bombé, secousse de tête indignée (6.2 Hz), respiration saccadée, expression faciale `tense`.
+      - `walk` (Marche fluide) : cycle complet de marche avec balancement des jambes (`leftUpperLeg`, `rightUpperLeg`), flexion dynamique des genoux (`leftLowerLeg`, `rightLowerLeg`), balancement opposé des bras et bobbing vertical du buste.
+    - **UI & Tray** : boutons dédiés ajoutés dans `LyraPanel.vue` (Web `:5174`) et entrées dans le menu Tray de l'application desktop Windows (`.10`).
+    - **Overlay sans cadre & promenade sur le bureau (Desktop Pet)** :
+      - Suppression intégrale de la bordure, du fond sombre dégradé et de l'ombre portée autour du modèle VRM dans `overlay/index.html`. L'avatar 3D flotte directement sur le fond d'écran et les fenêtres sans aucune boîte visible.
+      - Poignée de glissement et label masqués par défaut, apparaissant discrètement au survol de la souris.
+      - Système de promenade autonome (`wander`) activé par défaut et connecté à l'animation de marche : Compagnon marche physiquement (`walk`) le long de la barre des tâches ou vers des fenêtres, s'arrête à destination en posture de repos (`idle`), marque une pause naturelle, puis repart.
+      - **Orientation directionnelle fluide** : l'avatar pivote dynamiquement dans le sens de son déplacement (profil 3/4 droit `~75°` si elle va à droite, profil 3/4 gauche `~-75°` si elle va à gauche) et revient doucement face caméra dès qu'elle marque un arrêt.
+      - **Pieds calés au ras du sol** : recalcul de la projection de caméra (`lookY = box.min.y - 0.012 + visibleH / 2`) et suppression de tout padding inférieur dans l'overlay pour que ses pieds reposent et marchent directement au niveau du bord inférieur de la fenêtre (posée sur la barre des tâches).
+      - **Démarche naturelle, posture des bras & zéro moonwalk** :
+        - **Bras corrigés** : correction de l'élévation anormale (Z repassé à `-1.25` / `+1.25` pour que les bras pendent le long du corps au lieu de rester écartés en ailes). Suppression intégrale de la torsion axiale X sur l'avant-bras qui tordait le coude vers l'arrière façon "aile de poulet". Flexion naturelle du coude sur l'axe anatomique Z (`-0.20` à gauche, `+0.20` à droite) et oscillation fluide d'avant en arrière sur l'axe Y en opposition aux jambes.
+        - **Élimination du moonwalk / patinage** : calcul exact de la cinématique au sol. L'enjambée a été calibrée à `0.10 rad` (~5.7°) à une cadence de `2.7 rad/s`, ce qui correspond exactement aux `48 px/s` de translation de la fenêtre sur l'écran. Le pied d'appui reste désormais immobile sur la barre des tâches pendant que le corps avance (zéro glissement).
+        - Flexion physiologique des genoux vers l'arrière quand la jambe passe vers l'avant (`stride * 1.5 + 0.03`).
+        - Déroulé des pieds au sol (`leftFoot`, `rightFoot`).
+        - Déhanché souple (`hipsRoll: 0.025`, `hipsYaw: -0.035`) et contre-torsion légère du torse (`chestYaw: 0.03`).
+      - **Verrouillage strict sur la barre des tâches** :
+        - Fix du bug Electron `(marginBottom || 72)` qui forçait 72 px quand `marginBottom = 0`.
+        - `pickWanderTarget()` verrouille l'ordonnée Y à 100% sur le bord supérieur de la barre des tâches du moniteur courant (`targetY = wa.y + wa.height - h`). Déplacements limités à une promenade horizontale de gauche à droite sur toute la largeur de l'écran.
+      - Pilotable via le menu Tray ("Se promener sur le bureau") et via commande bridge HTTP `:8765` (`cmd: wander`). Recompilé et déployé live sur Windows `.10`.
+18. **Thème Mascotte Android Chibi Cyber & Système de Vie Autonome (Desktop Pet)** :
+    - **Optiques cybernétiques (Yeux)** : iris et highlights transformés en optiques luminescentes néon cyan (`#00f5d4` et `#80ffff`, émissif 2.5), globe oculaire sombre cybernétique (`#061320`), suppression du regard humain au profit de l'éclat robotique comme l'illustration.
+    - **Châssis métallique androïde** : carrosserie du visage et du corps teintée en bleu nuit cyber métallique (`#28426b` et `#243d63`, ombre `#121e33`) avec bordure lumineuse néon cyan (rim lighting MToon `#00f0ff`, mix 0.70).
+    - **Chevelure métallique** : bleu nuit profond indigo (`#182846`) avec reflets néon cyan le long des mèches (`#00e5ff`).
+    - **Proportions Chibi** : amplification douce de la tête (+14%) pour une silhouette chibi mignonne et expressive.
+    - **Cadre compact sans vide vertical (220x420)** : réduction drastique de la hauteur de fenêtre de 620 px à 420 px (gain de 200 px d'espace bureau) sans rétrécir l'avatar. Cadrage resserré avec 2% de marge au sommet de la tête (`dist = neededH / (2 * tan(fov/2))`) et pieds calés au bord inférieur.
+    - **Système de vie autonome (fin du mode zombie, plus de vie sur place)** :
+      - **Moins de trajets continus** : les promenades sont désormais courtes (80 à 200 px au lieu de traverser tout l'écran) avec de longues pauses de repos (12 à 22 secondes) sur la barre des tâches.
+      - **Clignements naturels des yeux** : clignement autonome toutes les 2.5 à 6 secondes via l'expression `blink`.
+      - **Micro-gestes autonomes spontanés** : déclenchement aléatoire de postures expressives en pause (`think`, `wave`, `approve`, `cheer`) avec retour fluide en `idle`.
+      - **Regard et observation vivante** : hochements curieux et exploration du regard vers l'écran de l'utilisateur, accompagnés d'un transfert de poids naturel sur les hanches (`weightShift`).
+    - **Feuille de route Option 3** : modélisation ou adaptation 3D dédiée à terme (châssis robotique avec rotules mécaniques physiques en relief, 2 bras uniquement).
+    - Recompilé et déployé sur Windows `.10` (PID 38804), bridge `:8765` opérationnel.
+19. **Plan d'Intégration VRM MMO** : **rédigé et acté** (`docs/PLAN_INTEGRATION_VRM_MMO.md`) —
+    - Phase A : HUD/Inventaire `prime-client` via `SubViewport3D` sans impacter le tick serveur.
+    - Phase B : Avatar 3D in-game et délégation infographie IA (Pygmalion) pour textures et banques d'animations.
+20. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
@@ -66,6 +109,22 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 _Aucun bloquant documenté pour ce bootstrap._
 
 ## Notes de session
+
+- 2026-10-14 : **Élargissement Zone Explorable O2 (NavMesh Multi-Zones, Rayon 9 500 m & Visibilité Client) — validé & testé** —
+  - **Anneau & Autonomie Exploration (`explore_ring_lh.json` & `hub_bot_autonomy.gd`)** :
+    - `max_radius_m` et `RING_RADIUS_FALLBACK` portés de 6 500 m à **9 500 m** (couvrant largement l'Avant-poste Zalem à l'ouest et le Ksar Nomade au sud sans clamp radial artificiel).
+    - Ajout de 6 waypoints d'exploration locaux pour les deux villages (`zalem_route_patrol`, `zalem_dunes_west`, `zalem_relais_nord`, `ksar_oasis_south`, `ksar_dunes_east`, `ksar_route_caravane`).
+    - Échantillonnage d'exploration `_random_ring_pos(bot)` contextualisé : exploration locale à proximité de Zalem (-1200, -550) ou Ksar Nomade (4950, -3800) quand les bots patrouillent ces secteurs.
+  - **NavMesh 3D Multi-Zones Recast (`hub_nav.gd`)** :
+    - Refactorisation de `HubNav` en 3 sous-régions Recast indépendantes (`lost_heaven`, `zalem_outpost`, `ksar_nomade`) unifiées sous la même `map` NavigationServer3D.
+    - Performance Recast préservée : bake synchrone déterministe en **696 ms** au total (3 régions, 309 polygones, 26 obstacles de village), zéro régression CI.
+    - Résolution de trajectoires intra-bourg C++ instantanée (40 entités / tick en 1,7 ms, soit 44 µs/entité).
+    - Sécurisation du fallback A* inter-zones dans `hub_collision.gd` (`max_expand = 800`).
+  - **Visibilité Client (`hub_focus.gd` & `scrapaltai_map_config.json`)** :
+    - Remplacement des 3 bulles isolées étanches par `in_explorable_zone(core3, 9500.0)` : toutes les entités du monde vivant (PNJ de village, bêtes sauvages, patrouilles IA) restent visibles le long des routes et dans le désert, tout en maintenant l'exclusion stricte du clutter et des 3 villes obsolètes SOE (Mos Eisley, Anchorhead, Bestine).
+    - Rayon `hub_focus` aligné à 9 500 m dans `scrapaltai_map_config.json`.
+  - **Tests & Preuves** :
+    - 4/4 suites CI Godot headless validées à 100% en 5s (`ci_godot_headless.sh` : HubSim, NavMesh 3D, Persistance SQLite, Client DnD).
 
 - 2026-10-14 : **Attribution & Intégration Remédiation Swap CT 111 à Atlas (`admin_infra`) — validé** —
   - **Diagnostic & Clôture Incident** : Swap de `ollama-light` (CT 111 sur Proxmox `.200`) tombé de 99.99% (2 Go saturés) à 0.5% (10 Mo). Responsable identifié : `lbg-laya-serve.service` (PyTorch CPU) dont les pages froides étaient envoyées en swap lors des pics en raison de `vm.swappiness=60`. Réglage pérennisé à `vm.swappiness=10` sur l'hôte Proxmox `.200`.

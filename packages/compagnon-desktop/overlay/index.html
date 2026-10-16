@@ -152,18 +152,24 @@
         cursor: pointer;
         animation: idle-bob 3.2s ease-in-out infinite;
       }
+      body.mode-vrm .stage {
+        padding: 0 !important;
+        margin: 0 !important;
+        justify-content: flex-end;
+      }
       body.mode-vrm #face-wrap {
-        width: 220px;
-        height: 340px;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
         animation: none;
       }
       body.mode-vrm.framing-full #face-wrap {
-        width: 260px;
-        height: 520px;
+        width: 100% !important;
+        height: 100% !important;
       }
       body.mode-vrm.framing-bust #face-wrap {
-        width: 200px;
-        height: 280px;
+        width: 220px;
+        height: 320px;
       }
       #face-wrap.alert {
         animation: alert-pulse 0.9s ease-in-out 3;
@@ -185,15 +191,24 @@
           0 12px 32px rgba(0, 0, 0, 0.55);
       }
       body.mode-vrm #face-host {
-        border-radius: 18px;
-        border: 1px solid rgba(94, 234, 212, 0.35);
-        background: radial-gradient(
-          ellipse at 50% 70%,
-          rgba(15, 23, 42, 0.55),
-          rgba(2, 6, 23, 0.15) 70%,
-          transparent
-        );
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0;
+        border: none;
+        background: transparent !important;
+        box-shadow: none;
+      }
+      body.mode-vrm .drag-handle {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        z-index: 10;
+      }
+      body.mode-vrm:hover .drag-handle {
+        opacity: 0.85;
       }
       body.mode-vrm #face-host canvas {
         width: 100% !important;
@@ -211,6 +226,19 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      body.mode-vrm .status {
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        z-index: 10;
+      }
+      body.mode-vrm:hover .status {
+        opacity: 0.9;
       }
       .session-pill {
         display: none;

@@ -40725,61 +40725,192 @@ void main() {
   };
   var POSE_EULERS = {
     idle: {
-      leftUpperArm: [0.12, 0.05, 1.15],
-      rightUpperArm: [0.12, -0.05, -1.15],
-      leftLowerArm: [0.15, 0, 0.08],
-      rightLowerArm: [0.15, 0, -0.08],
-      leftHand: [0.1, 0, 0],
-      rightHand: [0.1, 0, 0],
+      leftUpperArm: [0, 0, -1.28],
+      rightUpperArm: [0, 0, 1.28],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, 0],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
       spine: [0.02, 0, 0],
       chest: [0.03, 0, 0],
       neck: [0, 0, 0],
       head: [0, 0, 0],
-      leftUpperLeg: [0, 0, 0.02],
-      rightUpperLeg: [0, 0, -0.02]
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
     },
-    /** Pointer vers la gauche de l'écran (bras droit du perso → côté +X world souvent). */
+    /** Pointer vers la gauche de l'écran (bras droit du perso tendu à l'horizontale). */
     pointLeft: {
-      leftUpperArm: [0.1, 0.05, 1.1],
-      rightUpperArm: [-0.85, -0.35, -0.25],
-      leftLowerArm: [0.15, 0, 0.08],
-      rightLowerArm: [-0.35, 0.1, -0.15],
-      leftHand: [0.1, 0, 0],
-      rightHand: [0.2, 0.3, 0],
-      spine: [0.04, 0.12, 0],
-      chest: [0.05, 0.1, 0],
+      leftUpperArm: [0, 0, -1.28],
+      rightUpperArm: [0, 0.25, 0.05],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, 0],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.02, 0.1, 0],
+      chest: [0.03, 0.1, 0],
       neck: [0, 0.15, 0],
-      head: [0, 0.2, 0],
-      leftUpperLeg: [0, 0, 0.02],
-      rightUpperLeg: [0, 0, -0.02]
+      head: [0, 0.15, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
     },
+    /** Pointer vers la droite de l'écran (bras gauche du perso tendu à l'horizontale). */
     pointRight: {
-      leftUpperArm: [-0.85, 0.35, 0.25],
-      rightUpperArm: [0.1, -0.05, -1.1],
-      leftLowerArm: [-0.35, -0.1, 0.15],
-      rightLowerArm: [0.15, 0, -0.08],
-      leftHand: [0.2, -0.3, 0],
-      rightHand: [0.1, 0, 0],
-      spine: [0.04, -0.12, 0],
-      chest: [0.05, -0.1, 0],
+      leftUpperArm: [0, -0.25, -0.05],
+      rightUpperArm: [0, 0, 1.28],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, 0],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.02, -0.1, 0],
+      chest: [0.03, -0.1, 0],
       neck: [0, -0.15, 0],
-      head: [0, -0.2, 0],
-      leftUpperLeg: [0, 0, 0.02],
-      rightUpperLeg: [0, 0, -0.02]
+      head: [0, -0.15, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
     },
+    /** Pointer l'écran : bras droit levé vers le haut-gauche (centre de l'écran Windows). */
+    pointScreen: {
+      leftUpperArm: [0, 0, -1.28],
+      rightUpperArm: [0.1, 0.45, -0.25],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, 0],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.02, 0.15, 0],
+      chest: [0.03, 0.12, 0],
+      neck: [0, 0.2, 0],
+      head: [0, 0.22, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Saluer : bras droit levé, avant-bras replié vers le haut et main oscillante. */
     wave: {
-      leftUpperArm: [0.12, 0.05, 1.15],
-      rightUpperArm: [-1.1, -0.2, -0.15],
-      leftLowerArm: [0.15, 0, 0.08],
-      rightLowerArm: [-0.9, 0.2, 0],
-      leftHand: [0.1, 0, 0],
-      rightHand: [0, 0, 0.4],
-      spine: [0.03, -0.08, 0],
-      chest: [0.04, -0.06, 0],
-      neck: [0, -0.08, 0],
-      head: [0, -0.1, 0],
-      leftUpperLeg: [0, 0, 0.02],
-      rightUpperLeg: [0, 0, -0.02]
+      leftUpperArm: [0, 0, -1.28],
+      rightUpperArm: [0.15, -0.2, -0.42],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0.05, 0.25, -1.25],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0.1],
+      spine: [0.02, -0.05, 0],
+      chest: [0.03, -0.05, 0],
+      neck: [0, 0, -0.04],
+      head: [0, 0, -0.08],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Réflexion : main droite sous le menton, tête légèrement penchée. */
+    think: {
+      leftUpperArm: [0, 0, -1.25],
+      rightUpperArm: [0.15, 0.5, 0.6],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, -1.75],
+      leftHand: [0, 0, 0],
+      rightHand: [0.2, 0, 0.3],
+      spine: [0.04, 0.05, 0],
+      chest: [0.04, 0.04, 0],
+      neck: [0.06, 0.08, 0.06],
+      head: [0.08, 0.1, 0.08],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Approbation / hochement : geste affirmatif, tête qui acquiesce. */
+    approve: {
+      leftUpperArm: [0, 0, -1.25],
+      rightUpperArm: [0.1, 0.35, 0.8],
+      leftLowerArm: [0, 0, 0],
+      rightLowerArm: [0, 0, -1.15],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.05, 0, 0],
+      chest: [0.06, 0, 0],
+      neck: [-0.08, 0, 0],
+      head: [-0.14, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Célébration / joie : les deux bras levés en V joyeux. */
+    cheer: {
+      leftUpperArm: [0.1, 0.15, 0.65],
+      rightUpperArm: [0.1, -0.15, -0.65],
+      leftLowerArm: [0, 0, 0.35],
+      rightLowerArm: [0, 0, -0.35],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.03, 0, 0],
+      chest: [0.05, 0, 0],
+      neck: [-0.05, 0, 0],
+      head: [-0.08, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Révérence / salutation polie. */
+    bow: {
+      leftUpperArm: [0, 0, -1.15],
+      rightUpperArm: [0, 0, 1.15],
+      leftLowerArm: [0, 0, -0.15],
+      rightLowerArm: [0, 0, 0.15],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      spine: [0.22, 0, 0],
+      chest: [0.15, 0, 0],
+      neck: [0.12, 0, 0],
+      head: [0.12, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Danse rythmée / groove avec balancement et déhanché. */
+    dance: {
+      leftUpperArm: [0.25, 0.2, -0.65],
+      rightUpperArm: [0.25, -0.2, 0.65],
+      leftLowerArm: [0, 0, -1.15],
+      rightLowerArm: [0, 0, 1.15],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      hips: [0, 0, 0],
+      spine: [0.03, 0, 0],
+      chest: [0.04, 0, 0],
+      neck: [0, 0, 0],
+      head: [0, 0, 0],
+      leftUpperLeg: [0, 0, -0.05],
+      rightUpperLeg: [0, 0, 0.05],
+      leftLowerLeg: [0.1, 0, 0],
+      rightLowerLeg: [0.1, 0, 0]
+    },
+    /** Colère / bouderie expressive : poings sur les hanches, torse gonflé. */
+    angry: {
+      leftUpperArm: [0.18, 0.4, -0.75],
+      rightUpperArm: [0.18, -0.4, 0.75],
+      leftLowerArm: [0, 0, -1.55],
+      rightLowerArm: [0, 0, 1.55],
+      leftHand: [-0.25, 0, 0],
+      rightHand: [-0.25, 0, 0],
+      hips: [0, 0, 0],
+      spine: [0.06, 0, 0],
+      chest: [0.08, 0, 0],
+      neck: [-0.04, 0, 0],
+      head: [-0.06, 0, 0],
+      leftUpperLeg: [0, 0, -0.08],
+      rightUpperLeg: [0, 0, 0.08]
+    },
+    /** Cycle de marche naturel et souple. */
+    walk: {
+      leftUpperArm: [0, 0, -1.25],
+      rightUpperArm: [0, 0, 1.25],
+      leftLowerArm: [0, 0, -0.2],
+      rightLowerArm: [0, 0, 0.2],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      hips: [0.02, 0, 0],
+      spine: [0.03, 0, 0],
+      chest: [0.03, 0, 0],
+      neck: [0, 0, 0],
+      head: [0.01, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02],
+      leftLowerLeg: [0.02, 0, 0],
+      rightLowerLeg: [0.02, 0, 0],
+      leftFoot: [0, 0, 0],
+      rightFoot: [0, 0, 0]
     }
   };
   var BONE_NAMES = [
@@ -40796,7 +40927,11 @@ void main() {
     "rightLowerArm",
     "rightHand",
     "leftUpperLeg",
-    "rightUpperLeg"
+    "rightUpperLeg",
+    "leftLowerLeg",
+    "rightLowerLeg",
+    "leftFoot",
+    "rightFoot"
   ];
   function lerpEulerMap(a, b, t) {
     const out = {};
@@ -40839,6 +40974,11 @@ void main() {
     let ready = false;
     let disposed = false;
     let loadError = null;
+    let targetHeadingY = 0;
+    let currentHeadingY = 0;
+    let nextBlinkTime = 2;
+    let blinkProgress = 0;
+    let nextIdleFidgetTime = 6;
     let poseFrom = "idle";
     let poseTo = "idle";
     let poseBlend = 1;
@@ -40846,12 +40986,25 @@ void main() {
     let poseReturnTo = "idle";
     const _euler = new Euler();
     const _quat = new Quaternion();
+    function setHeading(dir) {
+      if (typeof dir === "number") {
+        if (dir > 0.05) targetHeadingY = 1.3;
+        else if (dir < -0.05) targetHeadingY = -1.3;
+        else targetHeadingY = 0;
+      } else if (typeof dir === "string") {
+        const s = dir.toLowerCase();
+        if (s === "right" || s === "droite") targetHeadingY = 1.3;
+        else if (s === "left" || s === "gauche") targetHeadingY = -1.3;
+        else targetHeadingY = 0;
+      }
+    }
     function resize() {
       const w = Math.max(64, hostEl.clientWidth || 220);
       const h = Math.max(64, hostEl.clientHeight || 360);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      if (vrm) frameVrm(vrm);
     }
     function setExpressionWeights(weights) {
       if (!vrm?.expressionManager) return;
@@ -40892,9 +41045,31 @@ void main() {
       setPose("wave", 1800);
       setTimeout(() => setMood("tense"), 900);
     }
-    function setPose(name, holdMs) {
-      const n = String(name || "idle");
-      const key2 = n === "point" || n === "point_left" || n === "pointLeft" ? "pointLeft" : n === "point_right" || n === "pointRight" ? "pointRight" : n === "wave" || n === "hello" ? "wave" : n === "idle" ? "idle" : POSE_EULERS[n] ? n : "idle";
+    function setPose(name, holdMs, heading) {
+      const raw = String(name || "idle");
+      const n = raw.toLowerCase().replace(/[-_\s]/g, "");
+      let key2 = "idle";
+      if (n === "point" || n === "pointleft") key2 = "pointLeft";
+      else if (n === "pointright") key2 = "pointRight";
+      else if (n === "pointscreen" || n === "screen" || n === "desktop") key2 = "pointScreen";
+      else if (n === "think" || n === "reflect" || n === "ponder") key2 = "think";
+      else if (n === "approve" || n === "nod" || n === "ok" || n === "yes") key2 = "approve";
+      else if (n === "cheer" || n === "happy" || n === "joy") key2 = "cheer";
+      else if (n === "bow" || n === "greet" || n === "welcome") key2 = "bow";
+      else if (n === "wave" || n === "hello" || n === "salute") key2 = "wave";
+      else if (n === "dance" || n === "danse" || n === "groove") key2 = "dance";
+      else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key2 = "angry";
+      else if (n === "walk" || n === "marche" || n === "step") key2 = "walk";
+      else if (POSE_EULERS[raw]) key2 = raw;
+      else if (POSE_EULERS[n]) key2 = n;
+      if (heading !== void 0) {
+        setHeading(heading);
+      } else if (key2 === "idle") {
+        setHeading(0);
+      }
+      if (key2 === "angry") setMood("tense");
+      else if (key2 === "dance" || key2 === "cheer") setMood("happy");
+      else if (key2 === "think") setMood("curious");
       poseFrom = poseTo;
       poseTo = key2;
       poseBlend = 0;
@@ -40934,37 +41109,128 @@ void main() {
         ];
       }
       if (animated.head && poseTo === "idle") {
+        const headNod = Math.sin(t * 0.55) * 0.04 + Math.sin(t * 1.4) * 0.02;
+        const headTurn = Math.sin(t * 0.25) * 0.09 + Math.cos(t * 0.11) * 0.06;
+        const headTilt = Math.sin(t * 0.18) * 0.035;
         animated.head = [
-          animated.head[0] + Math.sin(t * 0.45) * 0.03,
-          animated.head[1] + Math.sin(t * 0.35) * 0.06,
-          animated.head[2]
+          animated.head[0] + headNod,
+          animated.head[1] + headTurn,
+          animated.head[2] + headTilt
         ];
       }
       if (poseTo === "idle") {
+        const weightShift = Math.sin(t * 0.32) * 0.025;
+        if (animated.hips) {
+          animated.hips = [animated.hips[0], animated.hips[1], weightShift];
+        }
+        if (animated.spine) {
+          animated.spine = [animated.spine[0], animated.spine[1], -weightShift * 0.5];
+        }
         if (animated.leftUpperArm) {
           animated.leftUpperArm = [
             animated.leftUpperArm[0],
             animated.leftUpperArm[1],
-            animated.leftUpperArm[2] + armBob
+            animated.leftUpperArm[2] + armBob * 0.6
           ];
         }
         if (animated.rightUpperArm) {
           animated.rightUpperArm = [
             animated.rightUpperArm[0],
             animated.rightUpperArm[1],
-            animated.rightUpperArm[2] - armBob * 0.9
+            animated.rightUpperArm[2] - armBob * 0.6
           ];
         }
       }
       if (poseTo === "wave") {
-        const flap = Math.sin(t * 9) * 0.35;
-        if (animated.rightLowerArm) {
-          animated.rightLowerArm = [
-            animated.rightLowerArm[0] + flap,
-            animated.rightLowerArm[1],
-            animated.rightLowerArm[2]
+        const flap = Math.sin(t * 8.5) * 0.35;
+        if (animated.rightHand) {
+          animated.rightHand = [
+            animated.rightHand[0],
+            animated.rightHand[1],
+            animated.rightHand[2] + flap
           ];
         }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [
+            animated.rightLowerArm[0],
+            animated.rightLowerArm[1],
+            animated.rightLowerArm[2] + flap * 0.12
+          ];
+        }
+      }
+      if (poseTo === "approve") {
+        const nod = Math.sin(t * 5.5) * 0.05;
+        if (animated.head) animated.head = [animated.head[0] + nod, animated.head[1], animated.head[2]];
+        if (animated.neck) animated.neck = [animated.neck[0] + nod * 0.5, animated.neck[1], animated.neck[2]];
+      }
+      if (poseTo === "think") {
+        const swayThink = Math.sin(t * 0.8) * 0.03;
+        if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
+      }
+      if (poseTo === "dance") {
+        const beat = t * 4.8;
+        const sway2 = Math.sin(beat) * 0.14;
+        const bounce = Math.abs(Math.sin(beat * 2)) * 0.04;
+        if (animated.hips) animated.hips = [animated.hips[0], sway2 * 0.6, sway2];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [
+            animated.leftUpperArm[0] + Math.sin(beat) * 0.22,
+            animated.leftUpperArm[1],
+            animated.leftUpperArm[2] + Math.cos(beat) * 0.18
+          ];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [
+            animated.rightUpperArm[0] - Math.sin(beat) * 0.22,
+            animated.rightUpperArm[1],
+            animated.rightUpperArm[2] + Math.cos(beat) * 0.18
+          ];
+        }
+        if (animated.head) {
+          animated.head = [
+            animated.head[0] + bounce,
+            animated.head[1] + Math.sin(beat) * 0.1,
+            animated.head[2] - Math.sin(beat) * 0.08
+          ];
+        }
+      }
+      if (poseTo === "angry") {
+        const pout = Math.sin(t * 6.2) * 0.08;
+        const puff = Math.sin(t * 4.5) * 0.035;
+        if (animated.head) animated.head = [animated.head[0] + puff * 0.5, animated.head[1] + pout, animated.head[2]];
+        if (animated.chest) animated.chest = [animated.chest[0] + puff, animated.chest[1], animated.chest[2]];
+      }
+      if (poseTo === "walk") {
+        const stepFreq = t * 2.7;
+        const stride = Math.sin(stepFreq) * 0.1;
+        const armSwing = Math.sin(stepFreq) * 0.12;
+        const hipsYaw = -Math.sin(stepFreq) * 0.035;
+        const hipsRoll = Math.sin(stepFreq) * 0.025;
+        const chestYaw = Math.sin(stepFreq) * 0.03;
+        const leftKnee = Math.max(0, stride * 1.5 + 0.03);
+        const rightKnee = Math.max(0, -stride * 1.5 + 0.03);
+        if (animated.leftUpperLeg) animated.leftUpperLeg = [stride, 0, animated.leftUpperLeg[2]];
+        if (animated.rightUpperLeg) animated.rightUpperLeg = [-stride, 0, animated.rightUpperLeg[2]];
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [leftKnee, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [rightKnee, 0, 0];
+        if (animated.leftFoot) animated.leftFoot = [-stride * 0.25, 0, 0];
+        if (animated.rightFoot) animated.rightFoot = [stride * 0.25, 0, 0];
+        if (animated.hips) animated.hips = [0.02, hipsYaw, hipsRoll];
+        if (animated.spine) animated.spine = [animated.spine[0], -hipsYaw * 0.5, 0];
+        if (animated.chest) animated.chest = [animated.chest[0], chestYaw, -hipsRoll * 0.5];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0, armSwing, -1.25];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0, armSwing, 1.25];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -0.2 - Math.max(0, -armSwing) * 0.1];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, 0.2 + Math.max(0, armSwing) * 0.1];
+        }
+        if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.3];
       }
       const poseObj = {};
       for (const name of BONE_NAMES) {
@@ -40974,22 +41240,19 @@ void main() {
         _quat.setFromEuler(_euler);
         poseObj[name] = { rotation: [_quat.x, _quat.y, _quat.z, _quat.w] };
       }
+      const h = vrm.humanoid;
       try {
-        vrm.humanoid.setPose(poseObj);
-      } catch (_) {
-        try {
-          vrm.humanoid.resetPose();
-        } catch (_2) {
+        if (typeof h.setNormalizedPose === "function") {
+          h.setNormalizedPose(poseObj);
+        } else if (typeof h.setPose === "function") {
+          h.setPose(poseObj);
         }
+      } catch (_) {
         for (const name of Object.keys(poseObj)) {
           const node = bone(name);
           if (!node) continue;
-          node.quaternion.set(
-            poseObj[name].rotation[0],
-            poseObj[name].rotation[1],
-            poseObj[name].rotation[2],
-            poseObj[name].rotation[3]
-          );
+          const r = poseObj[name].rotation;
+          node.quaternion.set(r[0], r[1], r[2], r[3]);
         }
       }
     }
@@ -41001,6 +41264,7 @@ void main() {
         poseTo = poseReturnTo || "idle";
         poseBlend = 0;
         poseHoldUntil = 0;
+        setMood("serene");
       }
       if (poseBlend < 1) {
         poseBlend = Math.min(1, poseBlend + dt / 0.35);
@@ -41033,7 +41297,7 @@ void main() {
         camera.lookAt(focus.x, focus.y, focus.z);
         return;
       }
-      camera.fov = 30;
+      camera.fov = 28;
       camera.updateProjectionMatrix();
       const box = new Box3().setFromObject(v.scene);
       const size = new Vector3();
@@ -41042,18 +41306,19 @@ void main() {
       box.getCenter(center);
       if (!Number.isFinite(size.y) || size.y < 0.2) {
         center.set(0, 0.9, 0);
-        size.set(0.5, 1.7, 0.4);
+        size.set(0.45, 1.45, 0.4);
       }
-      const lookY = box.min.y + size.y * 0.52;
       const fovRad = camera.fov * Math.PI / 180;
-      const fitH = size.y * 0.58 / Math.tan(fovRad / 2);
-      const fitW = size.x * 0.55 / Math.tan(fovRad / 2) / Math.max(0.2, camera.aspect);
-      const dist = Math.max(2, fitH, fitW) * 1.08;
+      const neededH = size.y * 1.02;
+      const dist = neededH / (2 * Math.tan(fovRad / 2));
+      const visibleH = 2 * dist * Math.tan(fovRad / 2);
+      const lookY = box.min.y - 5e-3 + visibleH / 2;
       camera.position.set(center.x, lookY, center.z + dist);
       camera.lookAt(center.x, lookY, center.z);
     }
     function faceTheCamera(v) {
-      VRMUtils.rotateVRM0?.(v);
+      targetHeadingY = 0;
+      currentHeadingY = 0;
       v.scene.rotation.y = 0;
       v.scene.position.set(0, 0, 0);
       v.scene.updateMatrixWorld(true);
@@ -41061,6 +41326,84 @@ void main() {
     function setFraming(next) {
       framing = String(next || "").toLowerCase() === "bust" ? "bust" : "full";
       if (vrm) frameVrm(vrm);
+    }
+    function makeSolidColorTexture(hexColor) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 4;
+      canvas.height = 4;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = hexColor;
+      ctx.fillRect(0, 0, 4, 4);
+      const tex = new CanvasTexture(canvas);
+      tex.colorSpace = SRGBColorSpace;
+      tex.needsUpdate = true;
+      return tex;
+    }
+    function applyAndroidTheme(v) {
+      if (!v?.scene) return;
+      const cyanTexture = makeSolidColorTexture("#00f5d4");
+      const cyanBrightTexture = makeSolidColorTexture("#80ffff");
+      const darkSocketTexture = makeSolidColorTexture("#061320");
+      v.scene.traverse((child) => {
+        if (!child.isMesh) return;
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        for (const m of materials) {
+          const name = (m.name || "").toLowerCase();
+          if (name.includes("iris") || name.includes("eyeiris")) {
+            if (m.color) m.color.setHex(62932);
+            if (m.shadeColor) m.shadeColor.setHex(54442);
+            m.map = cyanTexture;
+            m.shadeMultiplyTexture = cyanTexture;
+            if (m.emissive) {
+              m.emissive.setHex(62932);
+              m.emissiveIntensity = 2.5;
+            }
+            m.needsUpdate = true;
+          } else if (name.includes("eyehighlight")) {
+            if (m.color) m.color.setHex(10551295);
+            if (m.shadeColor) m.shadeColor.setHex(8454143);
+            m.map = cyanBrightTexture;
+            m.shadeMultiplyTexture = cyanBrightTexture;
+            m.needsUpdate = true;
+          } else if (name.includes("eyewhite")) {
+            if (m.color) m.color.setHex(398112);
+            if (m.shadeColor) m.shadeColor.setHex(199184);
+            m.map = darkSocketTexture;
+            m.shadeMultiplyTexture = darkSocketTexture;
+            m.needsUpdate = true;
+          } else if (name.includes("eyeline") || name.includes("eyelash")) {
+            if (m.color) m.color.setHex(528928);
+            if (m.shadeColor) m.shadeColor.setHex(264464);
+            m.needsUpdate = true;
+          } else if (name.includes("brow")) {
+            if (m.color) m.color.setHex(1584200);
+            m.needsUpdate = true;
+          } else if (name.includes("mouth")) {
+            if (m.color) m.color.setHex(1187376);
+            m.needsUpdate = true;
+          } else if (name.includes("skin") || name.includes("body") || name.includes("face")) {
+            if (m.color) m.color.setHex(2638443);
+            if (m.shadeColor) m.shadeColor.setHex(1187379);
+            if (m.parametricRimColor) m.parametricRimColor.setHex(61695);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.7;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
+            m.needsUpdate = true;
+          } else if (name.includes("hair")) {
+            if (m.color) m.color.setHex(1583174);
+            if (m.shadeColor) m.shadeColor.setHex(792102);
+            if (m.parametricRimColor) m.parametricRimColor.setHex(58879);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.65;
+            m.needsUpdate = true;
+          }
+        }
+      });
+      try {
+        const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
+        if (headBone) {
+          headBone.scale.set(1.14, 1.14, 1.14);
+        }
+      } catch (_) {
+      }
     }
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -41075,6 +41418,7 @@ void main() {
           VRMUtils.combineSkeletons?.(gltf.scene);
           scene.add(vrm.scene);
           faceTheCamera(vrm);
+          applyAndroidTheme(vrm);
           poseFrom = "idle";
           poseTo = "idle";
           poseBlend = 1;
@@ -41084,7 +41428,7 @@ void main() {
           setMood("serene");
           ready = true;
           resize();
-          console.info("[vrm_pet] VRM ready", modelUrl, "pose idle");
+          console.info("[vrm_pet] VRM ready", modelUrl, "pose idle, android theme applied");
         } catch (e) {
           loadError = String(e?.message || e);
           console.warn("[vrm_pet] setup", e);
@@ -41103,7 +41447,32 @@ void main() {
       const t = clock.elapsedTime;
       if (vrm) {
         updatePoseSystem(t, dt);
-        vrm.scene.position.y = Math.sin(t * 1.25) * (framing === "full" ? 3e-3 : 6e-3);
+        const turnSpeed = 6;
+        const diff = targetHeadingY - currentHeadingY;
+        currentHeadingY += diff * Math.min(1, dt * turnSpeed);
+        vrm.scene.rotation.y = currentHeadingY;
+        if (t > nextBlinkTime) {
+          blinkProgress += dt * 10;
+          const blinkVal = Math.sin(Math.min(Math.PI, blinkProgress));
+          try {
+            vrm.expressionManager?.setValue("blink", blinkVal);
+          } catch (_) {
+          }
+          if (blinkProgress >= Math.PI) {
+            blinkProgress = 0;
+            nextBlinkTime = t + 2.5 + Math.random() * 3.5;
+          }
+        }
+        if (poseTo === "idle" && poseHoldUntil === 0) {
+          if (t > nextIdleFidgetTime) {
+            nextIdleFidgetTime = t + 7.5 + Math.random() * 7.5;
+            const gestures = ["think", "wave", "approve", "cheer"];
+            const pick = gestures[Math.floor(Math.random() * gestures.length)];
+            const holdMs = pick === "think" ? 2800 : pick === "wave" ? 1800 : 2e3;
+            setPose(pick, holdMs);
+          }
+        }
+        vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
         if (vrm.lookAt) {
           try {
             vrm.lookAt.lookAt(camera.position);
@@ -41132,7 +41501,9 @@ void main() {
     animate();
     function flip() {
       if (!vrm) return;
-      vrm.scene.rotation.y += Math.PI;
+      targetHeadingY = (targetHeadingY + Math.PI) % (Math.PI * 2);
+      currentHeadingY = targetHeadingY;
+      vrm.scene.rotation.y = currentHeadingY;
       vrm.scene.updateMatrixWorld(true);
       frameVrm(vrm);
     }
@@ -41150,6 +41521,7 @@ void main() {
       flip,
       setFraming,
       setPose,
+      setHeading,
       get pose() {
         return poseTo;
       },
@@ -41244,5 +41616,3 @@ three/build/three.module.js:
    * https://github.com/pixiv/three-vrm/blob/release/LICENSE
    *)
 */
-
-try{window.__createVrmPet=VrmPetMod.createVrmPet||window.__createVrmPet;}catch(e){}

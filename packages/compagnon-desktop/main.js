@@ -30,18 +30,18 @@ const DEFAULT_CONFIG = {
     enabled: true,
     /** face = FaceRig 2D (Lyra) · vrm = perso 3D */
     mode: "vrm",
-    width: 240,
+    width: 220,
     height: 420,
-    marginRight: 12,
-    marginBottom: 56,
+    marginRight: 16,
+    marginBottom: 0,
     alwaysOnTop: true,
-    vrmModel: "./vrm/default.vrm",
+    vrmModel: "./vrm/Compagnon.vrm",
     /** bust = visage · full = corps entier */
     vrmFraming: "full",
     /** Deplacement autonome sur le bureau */
-    wander: false,
-    wanderSpeed: 45,
-    wanderPauseMs: 4000,
+    wander: true,
+    wanderSpeed: 48,
+    wanderPauseMs: 15000,
     /** Guide vers fenêtre / icônes (px/s) */
     guideSpeed: 220,
   },
@@ -242,10 +242,12 @@ function overlayBounds() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
   const display = screen.getPrimaryDisplay();
   const wa = display.workArea;
-  const width = o.width || 168;
-  const height = o.height || 200;
-  const x = wa.x + wa.width - width - (o.marginRight || 16);
-  const y = wa.y + wa.height - height - (o.marginBottom || 72);
+  const width = o.width || 220;
+  const height = o.height || 420;
+  const marginRight = Number.isFinite(o.marginRight) ? o.marginRight : 16;
+  const marginBottom = Number.isFinite(o.marginBottom) ? o.marginBottom : 0;
+  const x = wa.x + wa.width - width - marginRight;
+  const y = wa.y + wa.height - height - marginBottom;
   return { x, y, width, height };
 }
 
@@ -295,7 +297,7 @@ function createOverlayWindow() {
 
 function clampOverlayPos(x, y) {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 240;
+  const w = o.width || 220;
   const h = o.height || 420;
   const display = screen.getDisplayNearestPoint({ x, y });
   const wa = display.workArea;
@@ -313,14 +315,40 @@ function moveOverlayTo(x, y) {
 
 function pickWanderTarget() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 240;
+  const w = o.width || 220;
   const h = o.height || 420;
-  const displays = screen.getAllDisplays();
-  const d = displays[Math.floor(Math.random() * displays.length)] || screen.getPrimaryDisplay();
+
+  // Reste sur l'écran où se trouve actuellement l'avatar
+  let d = screen.getPrimaryDisplay();
+  let curX = 0;
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    const pos = overlayWindow.getPosition();
+    curX = pos[0];
+    d = screen.getDisplayNearestPoint({ x: curX + w / 2, y: pos[1] + h / 2 }) || d;
+  }
   const wa = d.workArea;
+
+  // STRICTEMENT sur la barre des tâches (100% du temps) :
+  const floorY = wa.y + wa.height - h;
+
+  // Petits déplacements vivants et mesurés (80 à 200 px) au lieu de traverser l'écran en automate
+  const minX = wa.x + 10;
+  const maxX = wa.x + wa.width - w - 10;
+
+  const strollDist = 80 + Math.random() * 120;
+  const dir = Math.random() < 0.5 ? -1 : 1;
+  let targetX = curX + dir * strollDist;
+
+  // Rebond doux si elle s'approche des bords de l'écran
+  if (targetX < minX) {
+    targetX = minX + 30 + Math.random() * 80;
+  } else if (targetX > maxX) {
+    targetX = maxX - 30 - Math.random() * 80;
+  }
+
   return {
-    x: wa.x + Math.random() * Math.max(1, wa.width - w),
-    y: wa.y + Math.random() * Math.max(1, wa.height - h),
+    x: Math.round(targetX),
+    y: Math.round(floorY),
   };
 }
 
@@ -328,6 +356,10 @@ function stopMotion() {
   if (motionTimer) {
     clearInterval(motionTimer);
     motionTimer = null;
+  }
+  if (motionState && motionState.isWalking) {
+    sendVrmPose("idle", 0);
+    sendVrmHeading(0);
   }
   motionState = null;
   wanderState = null;
@@ -346,14 +378,40 @@ function ensureMotionTick() {
       return;
     }
     const now = Date.now();
-    if (now < motionState.pauseUntil) return;
+    if (now < motionState.pauseUntil) {
+      if (motionState.isWalking) {
+        motionState.isWalking = false;
+        sendVrmPose("idle", 0);
+        sendVrmHeading(0); // Face caméra pendant la pause
+      }
+      return;
+    }
     const dx = motionState.tx - motionState.x;
     const dy = motionState.ty - motionState.y;
     const dist = Math.hypot(dx, dy);
-    if (dist < 5) {
+
+    // Orientation gauche (-1) ou droite (+1) selon dx
+    const heading = dx > 8 ? 1 : (dx < -8 ? -1 : 0);
+
+    if (!motionState.isWalking) {
+      motionState.isWalking = true;
+      sendVrmPose("walk", 0);
+      sendVrmHeading(heading);
+      motionState.lastHeading = heading;
+    } else if (motionState.lastHeading !== heading && Math.abs(dx) > 12) {
+      motionState.lastHeading = heading;
+      sendVrmHeading(heading);
+    }
+
+    if (dist < 6) {
       motionState.x = motionState.tx;
       motionState.y = motionState.ty;
       moveOverlayTo(motionState.x, motionState.y);
+      if (motionState.isWalking) {
+        motionState.isWalking = false;
+        sendVrmPose("idle", 0);
+        sendVrmHeading(0); // Face caméra à l'arrêt
+      }
       const arrive = motionState.onArrive;
       motionState.onArrive = null;
       if (typeof arrive === "function") {
@@ -363,7 +421,9 @@ function ensureMotionTick() {
       }
       if (motionState && motionState.mode === "wander") {
         const o = config.overlay || DEFAULT_CONFIG.overlay;
-        const pauseMs = Math.max(1000, Number(o.wanderPauseMs) || 4000);
+        // Pause plus longue et naturelle sur la barre des tâches (12 à 22s de vie sur place)
+        const basePause = Math.max(6000, Number(o.wanderPauseMs) || 15000);
+        const pauseMs = Math.round(basePause * (0.8 + Math.random() * 0.5));
         motionState.pauseUntil = now + pauseMs;
         const n = pickWanderTarget();
         motionState.tx = n.x;
@@ -405,6 +465,7 @@ function animateOverlayTo(tx, ty, opts) {
     speed,
     mode,
     pauseUntil: 0,
+    isWalking: false,
     onArrive: typeof options.onArrive === "function" ? options.onArrive : null,
   };
   wanderState = mode === "wander" ? motionState : null;
@@ -564,6 +625,47 @@ async function guideDemo(kind) {
   });
 }
 
+function getVrmDir() {
+  return path.join(__dirname, "overlay", "vrm");
+}
+
+function getVrmModels() {
+  try {
+    const dir = getVrmDir();
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter((f) => f.toLowerCase().endsWith(".vrm"))
+      .map((f) => ({
+        filename: f,
+        relPath: `./vrm/${f}`,
+        name: f.replace(/\.vrm$/i, ""),
+      }));
+  } catch (e) {
+    console.warn("[compagnon] getVrmModels", e.message);
+    return [];
+  }
+}
+
+function setVrmModel(modelRelPath) {
+  persistOverlayConfig({ vrmModel: modelRelPath });
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:vrm-model", modelRelPath);
+  }
+  rebuildTrayMenu().catch(() => {});
+}
+
+function sendVrmPose(pose, holdMs = 3000) {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:vrm-pose", { pose, holdMs });
+  }
+}
+
+function sendVrmHeading(heading = 0) {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:vrm-heading", heading);
+  }
+}
+
 async function rebuildTrayMenu() {
   if (!tray) return;
   const windows = await listWindows();
@@ -600,6 +702,40 @@ async function rebuildTrayMenu() {
       },
     },
   ];
+
+  const currentModel = String((config.overlay || {}).vrmModel || "./vrm/default.vrm");
+  const models = getVrmModels();
+  const modelsSub = [
+    ...(models.length
+      ? models.map((m) => ({
+          label: m.name + (m.filename === "default.vrm" ? " (défaut)" : ""),
+          type: "radio",
+          checked: currentModel === m.relPath || currentModel === m.filename,
+          click: () => setVrmModel(m.relPath),
+        }))
+      : [{ label: "(aucun .vrm trouvé)", enabled: false }]),
+    { type: "separator" },
+    {
+      label: "Ouvrir dossier VRM (déposer un .vrm)...",
+      click: () => shell.openPath(getVrmDir()),
+    },
+  ];
+
+  const posesSub = [
+    { label: "Repos (idle)", click: () => sendVrmPose("idle", 0) },
+    { label: "Saluer (wave)", click: () => sendVrmPose("wave", 2500) },
+    { label: "Danse (dance)", click: () => sendVrmPose("dance", 8000) },
+    { label: "Colère / boudage (angry)", click: () => sendVrmPose("angry", 4000) },
+    { label: "Marche (walk)", click: () => sendVrmPose("walk", 6000) },
+    { label: "Réflexion (think)", click: () => sendVrmPose("think", 4000) },
+    { label: "Approbation (approve)", click: () => sendVrmPose("approve", 3500) },
+    { label: "Pointer écran (pointScreen)", click: () => sendVrmPose("pointScreen", 4000) },
+    { label: "Pointer à gauche (pointLeft)", click: () => sendVrmPose("pointLeft", 4000) },
+    { label: "Pointer à droite (pointRight)", click: () => sendVrmPose("pointRight", 4000) },
+    { label: "Célébrer (cheer)", click: () => sendVrmPose("cheer", 3500) },
+    { label: "Révérence (bow)", click: () => sendVrmPose("bow", 3000) },
+  ];
+
   const menu = Menu.buildFromTemplate([
     { label: "Ouvrir Compagnon", click: () => showChat() },
     { label: "Afficher / masquer chat", click: () => toggleChat() },
@@ -633,28 +769,16 @@ async function rebuildTrayMenu() {
       checked: String((config.overlay || {}).vrmFraming || "full") === "bust",
       click: () => setVrmFraming("bust"),
     },
+    { type: "separator" },
     {
-      label: "Pose : saluer",
-      click: () => {
-        if (overlayWindow && !overlayWindow.isDestroyed()) {
-          overlayWindow.webContents.send("compagnon:vrm-pose", {
-            pose: "wave",
-            holdMs: 2200,
-          });
-        }
-      },
+      label: "Poses VRM",
+      submenu: posesSub,
     },
     {
-      label: "Pose : pointer (gauche)",
-      click: () => {
-        if (overlayWindow && !overlayWindow.isDestroyed()) {
-          overlayWindow.webContents.send("compagnon:vrm-pose", {
-            pose: "pointLeft",
-            holdMs: 4000,
-          });
-        }
-      },
+      label: "Modèles VRM (VRoid)",
+      submenu: modelsSub,
     },
+    { type: "separator" },
     {
       label: "Se promener (aléatoire)",
       type: "checkbox",
@@ -731,7 +855,7 @@ function toggleOverlay() {
 
 function vrmOverlaySize(framing) {
   const full = String(framing || "").toLowerCase() !== "bust";
-  return full ? { width: 300, height: 620 } : { width: 240, height: 420 };
+  return full ? { width: 220, height: 420 } : { width: 190, height: 260 };
 }
 
 function persistOverlayConfig(patch) {
@@ -1295,6 +1419,16 @@ if (!gotLock) {
             return { ok: true, pose, holdMs };
           }
           return { ok: false, error: "overlay absent" };
+        }
+        if (cmd === "set_model" || cmd === "vrm_model" || cmd === "model") {
+          const model = d.model || d.path || "./vrm/default.vrm";
+          setVrmModel(model);
+          return { ok: true, model };
+        }
+        if (cmd === "wander" || cmd === "set_wander") {
+          const on = d.enabled !== undefined ? Boolean(d.enabled) : true;
+          setWanderEnabled(on);
+          return { ok: true, wander: on };
         }
         return { ok: false, error: `cmd inconnu: ${cmd}` };
       },

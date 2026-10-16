@@ -403,8 +403,30 @@
         if (!face || typeof face.setPose !== "function") return;
         const pose = (payload && payload.pose) || "idle";
         const hold = payload && Number(payload.holdMs);
-        face.setPose(pose, Number.isFinite(hold) ? hold : 2500);
+        face.setPose(pose, Number.isFinite(hold) ? hold : 2500, payload && payload.heading);
       } catch (_) {}
+    });
+  }
+
+  if (window.compagnonDesktop && window.compagnonDesktop.onVrmHeading) {
+    window.compagnonDesktop.onVrmHeading(function (heading) {
+      try {
+        const face = window.__petFace;
+        if (face && typeof face.setHeading === "function") {
+          face.setHeading(heading);
+        }
+      } catch (_) {}
+    });
+  }
+
+  if (window.compagnonDesktop && window.compagnonDesktop.onVrmModel) {
+    window.compagnonDesktop.onVrmModel(function (modelUrl) {
+      if (modelUrl) {
+        vrmModelUrl = String(modelUrl);
+        if (overlayMode === "vrm") {
+          initVrm();
+        }
+      }
     });
   }
 

@@ -13,7 +13,9 @@ const EXPLORE_FALLBACK: Dictionary = {
 }
 
 const RING_CENTER_FALLBACK := Vector3(4749.0, 0.15, -737.0)
-const RING_RADIUS_FALLBACK := 3000.0
+const RING_RADIUS_FALLBACK := 9500.0
+const OUTPOST_ZALEM_CENTER := Vector3(-1200.0, 0.15, -550.0)
+const OUTPOST_KSAR_CENTER := Vector3(4950.0, 0.15, -3800.0)
 
 var personas: Dictionary = {}
 var economy = null
@@ -162,7 +164,7 @@ func _hub_goal(bot: Dictionary, prefer: Array, persona: Dictionary) -> Dictionar
 func _explore_goal(bot: Dictionary, persona: Dictionary) -> Dictionary:
 	# Point libre dans l'anneau (désert vide OK) — sinon waypoint catalogué
 	if explore.size() > 0 and _rng.randf() < random_sample_chance:
-		var rnd := _random_ring_pos()
+		var rnd := _random_ring_pos(bot)
 		return {
 			"target": rnd,
 			"goal_id": "ring_sample",
@@ -189,10 +191,24 @@ func _explore_goal(bot: Dictionary, persona: Dictionary) -> Dictionary:
 	}
 
 
-func _random_ring_pos() -> Vector3:
-	## Anneau 35–100 % du rayon — hors cœur hub, dans le désert.
+func _random_ring_pos(bot: Dictionary = {}) -> Vector3:
+	var bpos: Vector3 = bot.get("pos", ring_center) if bot.has("pos") and typeof(bot["pos"]) == TYPE_VECTOR3 else ring_center
+	var d_zalem := Vector2(bpos.x - OUTPOST_ZALEM_CENTER.x, bpos.z - OUTPOST_ZALEM_CENTER.z).length()
+	var d_ksar := Vector2(bpos.x - OUTPOST_KSAR_CENTER.x, bpos.z - OUTPOST_KSAR_CENTER.z).length()
+	
+	# Échantillonnage local si le bot patrouille ou explore près d'un village
+	if d_zalem < 1400.0:
+		var ang_z := _rng.randf() * TAU
+		var dist_z := _rng.randf_range(160.0, 750.0)
+		return Vector3(OUTPOST_ZALEM_CENTER.x + cos(ang_z) * dist_z, 0.15, OUTPOST_ZALEM_CENTER.z + sin(ang_z) * dist_z)
+	elif d_ksar < 1400.0:
+		var ang_k := _rng.randf() * TAU
+		var dist_k := _rng.randf_range(160.0, 750.0)
+		return Vector3(OUTPOST_KSAR_CENTER.x + cos(ang_k) * dist_k, 0.15, OUTPOST_KSAR_CENTER.z + sin(ang_k) * dist_k)
+
+	## Grand anneau désert global (30–95 % du rayon)
 	var ang := _rng.randf() * TAU
-	var dist := _rng.randf_range(ring_radius_m * 0.35, ring_radius_m)
+	var dist := _rng.randf_range(ring_radius_m * 0.30, ring_radius_m * 0.95)
 	return Vector3(
 		ring_center.x + cos(ang) * dist,
 		0.15,

@@ -22,11 +22,14 @@ export_presets.cfg.bak
 # Binaires / assets lourds
 *.glb
 *.GLB
+*.vrm
+*.VRM
 *.tre
 *.TRE
 *.zip
 *.7z
 *.pak
+scratch/
 *.exe
 *.dll
 *.so

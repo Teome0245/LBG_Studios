@@ -52,7 +52,7 @@
       "enabled": true,
       "anchor_x": 4749.0,
       "anchor_z": -737.0,
-      "radius_m": 980.0,
+      "radius_m": 9500.0,
       "suppress_deprecated_cities": true,
       "deprecated_cities": [
         {

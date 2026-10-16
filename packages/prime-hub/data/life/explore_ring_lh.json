@@ -12,7 +12,7 @@
     "y": 0.15,
     "z": -737.0
   },
-  "max_radius_m": 6500.0,
+  "max_radius_m": 9500.0,
   "random_sample_chance": 0.28,
   "waypoints": {
     "gate_east": {
@@ -119,12 +119,60 @@
         "z": -550.0
       }
     },
+    "zalem_route_patrol": {
+      "label": "patrouille route de Zalem",
+      "pos": {
+        "x": 100.0,
+        "y": 0.15,
+        "z": -600.0
+      }
+    },
+    "zalem_dunes_west": {
+      "label": "dunes ouest Zalem",
+      "pos": {
+        "x": -1800.0,
+        "y": 0.15,
+        "z": -700.0
+      }
+    },
+    "zalem_relais_nord": {
+      "label": "relais des antennes nord Zalem",
+      "pos": {
+        "x": -1100.0,
+        "y": 0.15,
+        "z": -1200.0
+      }
+    },
     "ksar_nomade": {
       "label": "oasis / ksar nomade",
       "pos": {
         "x": 4950.0,
         "y": 0.15,
         "z": -3800.0
+      }
+    },
+    "ksar_oasis_south": {
+      "label": "source sud de l'oasis",
+      "pos": {
+        "x": 4900.0,
+        "y": 0.15,
+        "z": -4400.0
+      }
+    },
+    "ksar_dunes_east": {
+      "label": "dunes de ferraille du Ksar",
+      "pos": {
+        "x": 5600.0,
+        "y": 0.15,
+        "z": -3700.0
+      }
+    },
+    "ksar_route_caravane": {
+      "label": "piste des caravanes sud",
+      "pos": {
+        "x": 4850.0,
+        "y": 0.15,
+        "z": -2500.0
       }
     }
   }

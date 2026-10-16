@@ -42,6 +42,20 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
       } catch (_) {}
     });
   },
+  onVrmHeading: (cb) => {
+    ipcRenderer.on("compagnon:vrm-heading", (_e, heading) => {
+      try {
+        cb(heading);
+      } catch (_) {}
+    });
+  },
+  onVrmModel: (cb) => {
+    ipcRenderer.on("compagnon:vrm-model", (_e, modelPath) => {
+      try {
+        cb(modelPath);
+      } catch (_) {}
+    });
+  },
   onGuide: (cb) => {
     ipcRenderer.on("compagnon:guide", (_e, payload) => {
       try {

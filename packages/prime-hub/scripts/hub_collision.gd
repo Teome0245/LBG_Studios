@@ -126,7 +126,7 @@ func clamp_move(from_x: float, from_z: float, to_x: float, to_z: float) -> Vecto
 	return Vector2(from_x, from_z)
 
 
-func find_path(sx: float, sz: float, tx: float, tz: float, cell: float = 16.0, max_expand: int = 400) -> Array:
+func find_path(sx: float, sz: float, tx: float, tz: float, cell: float = 16.0, max_expand: int = 800) -> Array:
 	## A* grille AABB — Array de Vector2 (x,z). Budget CPU borné (headless).
 	var start_w := nearest_walkable(sx, sz)
 	var goal_w := nearest_walkable(tx, tz)

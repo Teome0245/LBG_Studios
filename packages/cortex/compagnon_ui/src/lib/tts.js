@@ -178,10 +178,12 @@ export async function speakText(text, opts = {}) {
   const audio = new Audio(url)
   currentAudio = audio
 
-  // Lip-sync FaceRig ≈ durée estimée (si dispo) + bridge desktop avatar
+  // Lip-sync VRM / FaceRig ≈ durée estimée (si dispo) + bridge desktop avatar
   const estMs = Math.min(12000, Math.max(900, 55 * spoken.length))
   try {
-    if (typeof window !== 'undefined' && window.FaceRig?.setTalking) {
+    if (typeof window !== 'undefined' && window.__vrmPetInstance?.setTalking) {
+      window.__vrmPetInstance.setTalking(estMs)
+    } else if (typeof window !== 'undefined' && window.FaceRig?.setTalking) {
       window.FaceRig.setTalking(estMs)
     } else if (typeof window !== 'undefined' && window.FaceRig?.say) {
       window.FaceRig.say(spoken.slice(0, 80))

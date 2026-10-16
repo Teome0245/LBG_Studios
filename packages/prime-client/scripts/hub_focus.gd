@@ -45,8 +45,8 @@ static func in_deprecated_city(x: float, z: float) -> bool:
 	return false
 
 const ALLOWED_OUTPOSTS: Array = [
-	{"id": "avant_poste_zalem", "x": -1200.0, "z": -550.0, "radius_m": 550.0},
-	{"id": "ksar_nomade", "x": 4950.0, "z": -3800.0, "radius_m": 550.0},
+	{"id": "avant_poste_zalem", "x": -1200.0, "z": -550.0, "radius_m": 1200.0},
+	{"id": "ksar_nomade", "x": 4950.0, "z": -3800.0, "radius_m": 1200.0},
 ]
 
 static func in_outpost_radius(x: float, z: float) -> bool:
@@ -67,6 +67,12 @@ static func in_hub_radius(x: float, z: float) -> bool:
 	var dz := z - a.y
 	return dx * dx + dz * dz <= r * r
 
+static func in_explorable_zone(x: float, z: float) -> bool:
+	var a := anchor()
+	var dx := x - a.x
+	var dz := z - a.y
+	return dx * dx + dz * dz <= 9500.0 * 9500.0
+
 static func should_show_entity(core3: Vector3, kind: String, name: String = "", entity_key: String = "") -> bool:
 	if kind == "player":
 		return true
@@ -76,7 +82,8 @@ static func should_show_entity(core3: Vector3, kind: String, name: String = "", 
 		return true
 	if in_deprecated_city(core3.x, core3.z):
 		return false
-	return in_hub_radius(core3.x, core3.z) or in_outpost_radius(core3.x, core3.z)
+	# Affiche les entités dans toute la zone explorable active
+	return in_explorable_zone(core3.x, core3.z)
 
 
 ## Navettes / tangibles Core3 (points gris « shuttle fly to tatooine »).
