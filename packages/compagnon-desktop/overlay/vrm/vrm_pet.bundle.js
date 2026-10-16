@@ -41324,7 +41324,7 @@ void main() {
         size.set(0.45, 1.45, 0.4);
       }
       const fovRad = camera.fov * Math.PI / 180;
-      const neededH = size.y * 1.02;
+      const neededH = size.y * 1.05;
       const dist = neededH / (2 * Math.tan(fovRad / 2));
       const visibleH = 2 * dist * Math.tan(fovRad / 2);
       const lookY = box.min.y - 5e-3 + visibleH / 2;
@@ -41353,47 +41353,6 @@ void main() {
       tex.colorSpace = SRGBColorSpace;
       tex.needsUpdate = true;
       return tex;
-    }
-    function createRobotizedBodyTexture(origTexture) {
-      if (!origTexture || !origTexture.image) return null;
-      const img = origTexture.image;
-      const w = img.width || 2048;
-      const h = img.height || 2048;
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
-      try {
-        ctx.drawImage(img, 0, 0, w, h);
-        const imgData = ctx.getImageData(0, 0, w, h);
-        const data = imgData.data;
-        const len = data.length;
-        for (let i = 0; i < len; i += 4) {
-          const a = data[i + 3];
-          if (a < 50) continue;
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          if (r < 65 && g < 65 && b < 65) {
-            data[i] = 238;
-            data[i + 1] = 202;
-            data[i + 2] = 192;
-            data[i + 3] = 255;
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        const newTex = new CanvasTexture(canvas);
-        newTex.flipY = origTexture.flipY !== void 0 ? origTexture.flipY : false;
-        newTex.colorSpace = origTexture.colorSpace || SRGBColorSpace;
-        newTex.wrapS = origTexture.wrapS || RepeatWrapping;
-        newTex.wrapT = origTexture.wrapT || RepeatWrapping;
-        newTex.needsUpdate = true;
-        return newTex;
-      } catch (e) {
-        console.warn("[vrm_pet] createRobotizedBodyTexture error", e);
-        return null;
-      }
     }
     function applyAndroidTheme(v) {
       if (!v?.scene) return;
@@ -41443,13 +41402,6 @@ void main() {
             if (m.parametricRimColor) m.parametricRimColor.setHex(61695);
             if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.7;
             if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
-            if (name.includes("body") && m.map) {
-              const robotTex = createRobotizedBodyTexture(m.map);
-              if (robotTex) {
-                m.map = robotTex;
-                m.shadeMultiplyTexture = robotTex;
-              }
-            }
             m.needsUpdate = true;
           } else if (name.includes("hair")) {
             if (m.color) m.color.setHex(1583174);
@@ -41528,10 +41480,10 @@ void main() {
         }
         if (poseTo === "idle" && poseHoldUntil === 0) {
           if (t > nextIdleFidgetTime) {
-            nextIdleFidgetTime = t + 8 + Math.random() * 8;
-            const gestures = ["think", "crossArms", "approve", "wave", "cheer"];
+            nextIdleFidgetTime = t + 9 + Math.random() * 9;
+            const gestures = ["crossArms", "think", "approve"];
             const pick = gestures[Math.floor(Math.random() * gestures.length)];
-            const holdMs = pick === "think" ? 2800 : pick === "crossArms" ? 3600 : pick === "wave" ? 1800 : 2200;
+            const holdMs = pick === "crossArms" ? 4e3 : pick === "think" ? 2800 : 2e3;
             setPose(pick, holdMs);
           }
         }

@@ -697,8 +697,8 @@ export function createVrmPet(hostEl, opts = {}) {
       size.set(0.45, 1.45, 0.4);
     }
     const fovRad = (camera.fov * Math.PI) / 180;
-    // Cadrage compact sans vide inutile : l'avatar remplit 98% de la hauteur du cadre
-    const neededH = size.y * 1.02;
+    // Cadrage compact sans vide inutile : l'avatar remplit 95% de la hauteur du cadre
+    const neededH = size.y * 1.05;
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
@@ -731,58 +731,6 @@ export function createVrmPet(hostEl, opts = {}) {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.needsUpdate = true;
     return tex;
-  }
-
-  function createRobotizedBodyTexture(origTexture) {
-    if (!origTexture || !origTexture.image) return null;
-    const img = origTexture.image;
-    const w = img.width || 2048;
-    const h = img.height || 2048;
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    try {
-      ctx.drawImage(img, 0, 0, w, h);
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-      const len = data.length;
-
-      // Détection et effacement complet des sous-vêtements noirs (soutien-gorge + culotte)
-      // La peau VRoid originale est blanc/beige (r > 160, g > 120, b > 100).
-      // Les sous-vêtements noirs sont r < 65, g < 65, b < 65 avec a > 80.
-      // On remplace les pixels de sous-vêtement par la teinte chair de référence (238, 202, 192),
-      // ce qui produit une carrosserie métallique cyber blue (0x28426b) parfaitement uniforme
-      // sans aucune démarcation de sous-vêtements.
-      for (let i = 0; i < len; i += 4) {
-        const a = data[i + 3];
-        if (a < 50) continue;
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-
-        if (r < 65 && g < 65 && b < 65) {
-          data[i] = 238;
-          data[i + 1] = 202;
-          data[i + 2] = 192;
-          data[i + 3] = 255;
-        }
-      }
-      ctx.putImageData(imgData, 0, 0);
-
-      const newTex = new THREE.CanvasTexture(canvas);
-      newTex.flipY = origTexture.flipY !== undefined ? origTexture.flipY : false;
-      newTex.colorSpace = origTexture.colorSpace || THREE.SRGBColorSpace;
-      newTex.wrapS = origTexture.wrapS || THREE.RepeatWrapping;
-      newTex.wrapT = origTexture.wrapT || THREE.RepeatWrapping;
-      newTex.needsUpdate = true;
-      return newTex;
-    } catch (e) {
-      console.warn("[vrm_pet] createRobotizedBodyTexture error", e);
-      return null;
-    }
   }
 
   function applyAndroidTheme(v) {
@@ -843,15 +791,6 @@ export function createVrmPet(hostEl, opts = {}) {
           if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f0ff);
           if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.70;
           if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.0;
-
-          // Invisibilisation des sous-vêtements sur le corps au profit d'un skin robotisé uniforme
-          if (name.includes("body") && m.map) {
-            const robotTex = createRobotizedBodyTexture(m.map);
-            if (robotTex) {
-              m.map = robotTex;
-              m.shadeMultiplyTexture = robotTex;
-            }
-          }
           m.needsUpdate = true;
         }
         // 3. Chevelure métallique : Bleu nuit profond / indigo avec reflets cyan
@@ -942,12 +881,13 @@ export function createVrmPet(hostEl, opts = {}) {
       }
 
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
+      // Uniquement des postures calmes et contenues qui ne sortent jamais du cadre (bras croisés, réflexion, acquiescement)
       if (poseTo === "idle" && poseHoldUntil === 0) {
         if (t > nextIdleFidgetTime) {
-          nextIdleFidgetTime = t + 8.0 + Math.random() * 8.0;
-          const gestures = ["think", "crossArms", "approve", "wave", "cheer"];
+          nextIdleFidgetTime = t + 9.0 + Math.random() * 9.0;
+          const gestures = ["crossArms", "think", "approve"];
           const pick = gestures[Math.floor(Math.random() * gestures.length)];
-          const holdMs = pick === "think" ? 2800 : (pick === "crossArms" ? 3600 : (pick === "wave" ? 1800 : 2200));
+          const holdMs = pick === "crossArms" ? 4000 : (pick === "think" ? 2800 : 2000);
           setPose(pick, holdMs);
         }
       }

@@ -88,15 +88,15 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
     - Phase A : HUD/Inventaire `prime-client` via `SubViewport3D` sans impacter le tick serveur.
     - Phase B : Avatar 3D in-game et délégation infographie IA (Pygmalion) pour textures et banques d'animations.
 20. **Invisibilisation des sous-vêtements & Poses contenues dans le cadre (Desktop Pet)** : **live & validé sur .10** 2026-10-16 —
-    - **Invisibilisation des sous-vêtements (Skin robotisé unifié)** :
-      - Algorithme Canvas 2D au chargement du modèle (`createRobotizedBodyTexture`) remplaçant les 161 041 pixels noirs du soutien-gorge et de la culotte par la teinte de base de la carrosserie.
-      - Résultat visuel : carrosserie d'armure robotique bleu nuit métallique (`#28426b`) uniforme sur tout le corps, avec bordure néon cyan (`#00f0ff`), sans aucune trace de sous-vêtements humains.
+    - **Invisibilisation totale des sous-vêtements (Skin robotisé natif)** :
+      - Correction de la teinte : la peau originale du modèle était bleu/cyan (`RGBA [126, 189, 214]`) et non chair. Remplacement complet des 162 303 pixels sombres du soutien-gorge et de la culotte.
+      - **Carrosserie robotique haute fidélité** : génération et injection directe dans le binaire `Compagnon.vrm` (Image 11) et export de `body_skin_android.png` avec plaques d'armure pectorales sculptées, jointures de sternum, segmentations abdominales métalliques, rotules mécaniques de hanches et circuits luminescents néon cyan (`#00f5d4`), fidèle à l'illustration androïde.
+      - Aucun bikini ou sous-vêtement résiduel : carrosserie cyber bleu nuit (`#28426b`) uniforme sur l'ensemble du châssis.
     - **Fin des mains hors cadre (Poses contenues)** :
-      - Fenêtre dimensionnée à 270x420 px (donnant une largeur visible de 0.95 m pour une silhouette de 0.35 m).
-      - **Posture `crossArms` ajoutée** : bras croisés fiers et confiants (comme sur la capture VRoid Studio de l'utilisateur), coudes repliés sur le torse, 100% contenue dans la silhouette. Intégrée au catalogue bridge et au cycle de vie autonome idle.
-      - **Recalibrage des gestes** : `wave` (coude le long des côtes, main oscillant près de l'épaule), `cheer` (double fist pump compact), `pointLeft`/`pointRight` (avant-bras orienté vers l'avant-diagonale sans extension horizontale latérale).
-      - **Marche naturelle conservée** : maintien rigoureux de la cinématique de marche naturelle validée (stride 0.10 rad @ 2.7 rad/s, balancement des bras en opposition, genoux fléchis, zéro moonwalk).
-    - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), synchronisé SMB et redémarré sur Windows `.10` (PID 40972).
+      - Cadrage sécurisé à 95% de la hauteur de fenêtre (`neededH = size.y * 1.05`), pieds sur la barre des tâches, avec marge latérale confortable (largeur 270 px).
+      - **Micro-gestes autonomes apaisés** : restriction du roulement d'animation idle aléatoire aux seules postures calmes qui ne sortent jamais du cadre (`crossArms` bras croisés, `think` main au menton, `approve` hochement). Suppression des gestes d'agitation de bras spontanés.
+      - **Marche naturelle conservée** : foulée et cadence impeccables (`stride = 0.10 rad` @ 2.7 rad/s, 48 px/s sans aucun moonwalk).
+    - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), modèle et texture synchronisés via robocopy et Electron redémarré sur Windows `.10` (PID 15856).
 21. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
