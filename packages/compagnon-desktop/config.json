@@ -9,7 +9,7 @@
   "overlay": {
     "enabled": true,
     "mode": "vrm",
-    "width": 220,
+    "width": 270,
     "height": 420,
     "marginRight": 8,
     "marginBottom": 0,

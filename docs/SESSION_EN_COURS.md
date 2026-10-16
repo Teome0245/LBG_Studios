@@ -87,7 +87,17 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
 19. **Plan d'Intégration VRM MMO** : **rédigé et acté** (`docs/PLAN_INTEGRATION_VRM_MMO.md`) —
     - Phase A : HUD/Inventaire `prime-client` via `SubViewport3D` sans impacter le tick serveur.
     - Phase B : Avatar 3D in-game et délégation infographie IA (Pygmalion) pour textures et banques d'animations.
-20. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+20. **Invisibilisation des sous-vêtements & Poses contenues dans le cadre (Desktop Pet)** : **live & validé sur .10** 2026-10-16 —
+    - **Invisibilisation des sous-vêtements (Skin robotisé unifié)** :
+      - Algorithme Canvas 2D au chargement du modèle (`createRobotizedBodyTexture`) remplaçant les 161 041 pixels noirs du soutien-gorge et de la culotte par la teinte de base de la carrosserie.
+      - Résultat visuel : carrosserie d'armure robotique bleu nuit métallique (`#28426b`) uniforme sur tout le corps, avec bordure néon cyan (`#00f0ff`), sans aucune trace de sous-vêtements humains.
+    - **Fin des mains hors cadre (Poses contenues)** :
+      - Fenêtre dimensionnée à 270x420 px (donnant une largeur visible de 0.95 m pour une silhouette de 0.35 m).
+      - **Posture `crossArms` ajoutée** : bras croisés fiers et confiants (comme sur la capture VRoid Studio de l'utilisateur), coudes repliés sur le torse, 100% contenue dans la silhouette. Intégrée au catalogue bridge et au cycle de vie autonome idle.
+      - **Recalibrage des gestes** : `wave` (coude le long des côtes, main oscillant près de l'épaule), `cheer` (double fist pump compact), `pointLeft`/`pointRight` (avant-bras orienté vers l'avant-diagonale sans extension horizontale latérale).
+      - **Marche naturelle conservée** : maintien rigoureux de la cinématique de marche naturelle validée (stride 0.10 rad @ 2.7 rad/s, balancement des bras en opposition, genoux fléchis, zéro moonwalk).
+    - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), synchronisé SMB et redémarré sur Windows `.10` (PID 40972).
+21. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

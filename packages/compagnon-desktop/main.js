@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
     enabled: true,
     /** face = FaceRig 2D (Lyra) · vrm = perso 3D */
     mode: "vrm",
-    width: 220,
+    width: 270,
     height: 420,
     marginRight: 16,
     marginBottom: 0,
@@ -242,7 +242,7 @@ function overlayBounds() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
   const display = screen.getPrimaryDisplay();
   const wa = display.workArea;
-  const width = o.width || 220;
+  const width = o.width || 270;
   const height = o.height || 420;
   const marginRight = Number.isFinite(o.marginRight) ? o.marginRight : 16;
   const marginBottom = Number.isFinite(o.marginBottom) ? o.marginBottom : 0;
@@ -297,7 +297,7 @@ function createOverlayWindow() {
 
 function clampOverlayPos(x, y) {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 220;
+  const w = o.width || 270;
   const h = o.height || 420;
   const display = screen.getDisplayNearestPoint({ x, y });
   const wa = display.workArea;
@@ -315,7 +315,7 @@ function moveOverlayTo(x, y) {
 
 function pickWanderTarget() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 220;
+  const w = o.width || 270;
   const h = o.height || 420;
 
   // Reste sur l'écran où se trouve actuellement l'avatar
@@ -855,7 +855,7 @@ function toggleOverlay() {
 
 function vrmOverlaySize(framing) {
   const full = String(framing || "").toLowerCase() !== "bust";
-  return full ? { width: 220, height: 420 } : { width: 190, height: 260 };
+  return full ? { width: 270, height: 420 } : { width: 200, height: 280 };
 }
 
 function persistOverlayConfig(patch) {
