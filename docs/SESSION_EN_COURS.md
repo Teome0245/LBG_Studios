@@ -102,7 +102,15 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
     - **Fluidification de la marche procédurale (`walk`)** : levée de genou progressive et continue d'ordre supérieur (suppression des à-coups angulaires), micro-rebond vertical des hanches (bobbing à double fréquence), déroulé souple des chevilles et balancement rigoureux des bras en opposition alternée.
     - **Architecture VRoid Studio vs format VRM/VRMA** : cadrage technique documenté sur le standard VRM (modèle 3D géométrique sans pistes d'animation, animations internes Unity de VRoid Studio) et feuille de route pour le format officiel VRMA via `@pixiv/three-vrm-animation`.
     - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), synchronisé via robocopy et Electron redémarré sur Windows SDS `.10` (PID 25944, bridge OK).
-22. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+22. **Synchronisation vue portrait CT100, pont d'actions Web ↔ Bureau & Roadmap VRMA** : **live & validé** 2026-10-18 —
+    - **Vue portrait CT100 (`192.168.0.100:5174`)** : synchronisation du modèle `Compagnon.vrm` (14.8 MB) sur CT100 et rebuild du conteneur Docker `orchestrateur-frontend`. La vue portrait dans le volet monitoring est désormais identique au modèle androïde du bureau (yeux cyber cyan, cheveux sombres, plaques robotiques).
+    - **Passerelle d'actions Web ↔ Bureau** :
+      - Exposition de `setPose` dans `preload.js` et écouteur IPC dans `main.js` relayé vers `sendVrmPose()`.
+      - Dans `LyraPanel.vue`, `triggerPose()` anime le portrait local ET commande instantanément le Desktop Pet sur Windows (via IPC Electron ou fallback HTTP bridge `:8765`).
+      - Ajout des boutons "🦾 Confiante" (`crossArms`) et "🙇 Révérence" (`bow`) dans la grille d'actions rapides.
+    - **Roadmap VRMA & Références Hoyoverse** : cadrage validé pour l'intégration de `@pixiv/three-vrm-animation` (clips de mocap haute fidélité style Honkai Star Rail / Genshin Impact).
+    - Déployé live sur Windows SDS `.10` (PID 26308) et conteneur Docker CT100 (version `1.0.0+5a0e594`).
+23. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

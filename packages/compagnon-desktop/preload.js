@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
   openChat: () => ipcRenderer.send("compagnon:open-chat"),
   openChatWithAgir: (payload) => ipcRenderer.send("compagnon:open-chat-agir", payload || {}),
   setMood: (mood) => ipcRenderer.send("compagnon:overlay-mood", mood),
+  setPose: (pose, holdMs) => ipcRenderer.send("compagnon:set-pose", { pose, holdMs }),
   /** SPA chat → bridge avatar (TTS lip-sync, say, idle). */
   notifyPresence: (payload) => ipcRenderer.send("compagnon:avatar-presence", payload || {}),
   onMood: (cb) => {

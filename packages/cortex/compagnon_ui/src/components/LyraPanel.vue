@@ -59,7 +59,7 @@
           </div>
 
           <!-- Poses expressives rapides -->
-          <div class="grid grid-cols-3 gap-1 pt-1">
+          <div class="grid grid-cols-4 gap-1 pt-1">
             <button
               type="button"
               class="py-1 rounded border border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 text-[10px] text-slate-300 transition"
@@ -86,6 +86,14 @@
             </button>
             <button
               type="button"
+              class="py-1 rounded border border-emerald-500/30 bg-emerald-950/30 hover:bg-emerald-900/50 text-[10px] text-emerald-200 transition"
+              title="Bras croisés confiants"
+              @click="triggerPose('crossArms', 5000)"
+            >
+              🦾 Confiante
+            </button>
+            <button
+              type="button"
               class="py-1 rounded border border-pink-500/30 bg-pink-950/30 hover:bg-pink-900/50 text-[10px] text-pink-200 transition"
               title="Danse rythmée"
               @click="triggerPose('dance', 8000)"
@@ -107,6 +115,14 @@
               @click="triggerPose('walk', 6000)"
             >
               🚶 Marche
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-indigo-500/30 bg-indigo-950/30 hover:bg-indigo-900/50 text-[10px] text-indigo-200 transition"
+              title="Révérence polie"
+              @click="triggerPose('bow', 3500)"
+            >
+              🙇 Révérence
             </button>
           </div>
         </div>
@@ -411,9 +427,22 @@ function onModelChange() {
 }
 
 function triggerPose(pose, holdMs) {
+  // 1. Anime la vue locale (buste WebGL)
   if (vrmInst?.setPose) {
     vrmInst.setPose(pose, holdMs)
   }
+  // 2. Transmet instantanément l'action au Desktop Pet (modèle du bureau Windows)
+  try {
+    if (window.compagnonDesktop && typeof window.compagnonDesktop.setPose === 'function') {
+      window.compagnonDesktop.setPose(pose, holdMs)
+    } else {
+      fetch('http://127.0.0.1:8765/avatar/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: 'set_pose', pose, holdMs }),
+      }).catch(() => {})
+    }
+  } catch (_) {}
 }
 
 function syncFace(g) {

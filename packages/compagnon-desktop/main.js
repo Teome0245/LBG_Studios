@@ -1202,6 +1202,12 @@ ipcMain.on("compagnon:overlay-mood", (_e, mood) => {
   setOverlayMood(mood);
 });
 
+ipcMain.on("compagnon:set-pose", (_e, payload) => {
+  const pose = payload && payload.pose;
+  const holdMs = payload && payload.holdMs;
+  if (pose) sendVrmPose(pose, holdMs);
+});
+
 ipcMain.on("compagnon:avatar-presence", (_e, payload) => {
   publishAvatarPresence(payload || {});
 });
