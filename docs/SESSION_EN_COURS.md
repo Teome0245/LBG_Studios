@@ -131,7 +131,21 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Compilation esbuild de `overlay/vrm/vrm_pet.bundle.js` (2.2 MB autonome).
       - Déploiement robocopy vers Windows SDS `.10` : 17 clips `.vrma` présents, Electron redémarré (PID 11904), bridge `:8765` opérationnel.
       - Déploiement CT100 via `deploy_compagnon_100.sh` : conteneur `lbg-frontend` rebuildé, Nginx sert les 17 animations sous `/vrm/animations/` (HTTP 200 OK vérifié).
-24. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+24. **Correction de la synchronisation de marche & déplacement réel du Desktop Pet** : **live & validé** 2026-10-18 —
+    - **Diagnostic du patinage "marche sur place"** :
+      - Le clip mocap brut `walk.vrma` bouclait très vite (0.766s par cycle, soit 2.6 pas/sec), tandis que la fenêtre Electron rampait à 48 px/s (seulement 18 px par pas).
+      - Sur commande de marche (bouton Web, Tray ou API bridge), la fenêtre restait figée à 0 px/s sans bouger.
+      - En vue frontale (face caméra à 0°), l'absence de parallaxe accentuait l'illusion d'un tapis de course sur place.
+    - **Calibrage kinésiologique & physique** :
+      - **Cadence `timeScale` à 0.72x** : allongement doux du cycle à 1.06s (~0.53s par pas) pour une démarche calme, fluide et altière ("marche gracieuse").
+      - **Vitesse de translation à 92 px/s** : augmentation de 48 px/s à 92 px/s dans `config.json` et `main.js`. Chaque pas avance la fenêtre de ~48 px, synchronisant exactement la propulsion des jambes avec le sol de la barre des tâches (zéro patinage).
+      - **Orientation 3/4 profil automatique** : dès que la marche est ordonnée sans direction explicite, l'avatar pivote en 3/4 profil droit (`targetHeadingY = 1.25 rad`) pour mettre en valeur le déroulé de jambe, avant de revenir face caméra à l'arrêt.
+      - **Déplacement physique sur commande de marche (`startWalkingMovement`)** : que la marche soit déclenchée depuis le bouton "🚶 Marche" de `LyraPanel.vue`, le menu Tray ou le bridge `:8765`, l'avatar entame un vrai déplacement continu (jusqu'à 550 px) le long de la barre des tâches.
+    - **Recompilation & Déploiement live** :
+      - Compilation esbuild `overlay/vrm/vrm_pet.bundle.js` (2.22 MB).
+      - Déploiement robocopy vers Windows SDS `.10` et redémarrage Electron (PID 40200, bridge OK).
+      - Déploiement CT100 (`192.168.0.100:5174`) via `deploy_compagnon_100.sh` avec rebuild Docker.
+25. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

@@ -17,8 +17,8 @@
     "vrmModel": "./vrm/Compagnon.vrm",
     "vrmFraming": "full",
     "wander": true,
-    "wanderSpeed": 48,
-    "wanderPauseMs": 15000,
+    "wanderSpeed": 92,
+    "wanderPauseMs": 14000,
     "guideSpeed": 220
   },
   "tray": {

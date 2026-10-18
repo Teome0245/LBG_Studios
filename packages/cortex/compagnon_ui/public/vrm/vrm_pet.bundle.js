@@ -53429,6 +53429,11 @@ void main() {
       } else {
         action.setLoop(LoopRepeat, Infinity);
       }
+      if (key2 === "walk" || key2 === "marche" || key2 === "step" || key2 === "run") {
+        action.timeScale = Number(opts2.timeScale ?? 0.72);
+      } else {
+        action.timeScale = Number(opts2.timeScale ?? 1);
+      }
       action.reset();
       action.fadeIn(fadeSec);
       action.play();
@@ -53528,6 +53533,8 @@ void main() {
       else if (POSE_EULERS[n]) key2 = n;
       if (heading !== void 0) {
         setHeading(heading);
+      } else if (key2 === "walk") {
+        setHeading(1);
       } else if (key2 === "idle") {
         setHeading(0);
       }
@@ -53958,7 +53965,11 @@ void main() {
             setPose(pick, holdMs);
           }
         }
-        vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
+        if (!activeVrmaAction) {
+          vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
+        } else {
+          vrm.scene.position.y = 0;
+        }
         if (vrm.lookAt) {
           try {
             vrm.lookAt.lookAt(camera.position);

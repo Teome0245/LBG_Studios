@@ -417,6 +417,13 @@ export function createVrmPet(hostEl, opts = {}) {
     } else {
       action.setLoop(THREE.LoopRepeat, Infinity);
     }
+    // Cadence d'animation adaptée : la marche mocap brute (0.76s/cycle) est ralentie à 0.72x
+    // pour un pas plus gracieux, élégant et parfaitement calé sur les 92 px/s de translation fenêtre
+    if (key === "walk" || key === "marche" || key === "step" || key === "run") {
+      action.timeScale = Number(opts.timeScale ?? 0.72);
+    } else {
+      action.timeScale = Number(opts.timeScale ?? 1.0);
+    }
     action.reset();
     action.fadeIn(fadeSec);
     action.play();
@@ -530,6 +537,8 @@ export function createVrmPet(hostEl, opts = {}) {
 
     if (heading !== undefined) {
       setHeading(heading);
+    } else if (key === "walk") {
+      setHeading(1); // Profil 3/4 droit gracieux lors de la marche
     } else if (key === "idle") {
       setHeading(0);
     }
@@ -1036,8 +1045,12 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       }
 
-      // Micro bob très subtil
-      vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 0.002 : 0.005);
+      // Micro bob très subtil uniquement si aucune animation VRMA n'est active
+      if (!activeVrmaAction) {
+        vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 0.002 : 0.005);
+      } else {
+        vrm.scene.position.y = 0;
+      }
       if (vrm.lookAt) {
         try {
           vrm.lookAt.lookAt(camera.position);

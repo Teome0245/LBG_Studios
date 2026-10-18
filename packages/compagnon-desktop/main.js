@@ -40,8 +40,8 @@ const DEFAULT_CONFIG = {
     vrmFraming: "full",
     /** Deplacement autonome sur le bureau */
     wander: true,
-    wanderSpeed: 48,
-    wanderPauseMs: 15000,
+    wanderSpeed: 92,
+    wanderPauseMs: 14000,
     /** Guide vers fenêtre / icônes (px/s) */
     guideSpeed: 220,
   },
@@ -331,11 +331,11 @@ function pickWanderTarget() {
   // STRICTEMENT sur la barre des tâches (100% du temps) :
   const floorY = wa.y + wa.height - h;
 
-  // Petits déplacements vivants et mesurés (80 à 200 px) au lieu de traverser l'écran en automate
+  // Déplacements vivants et calibrés (~140 à 320 px) synchronisés avec le cycle de marche mocap
   const minX = wa.x + 10;
   const maxX = wa.x + wa.width - w - 10;
 
-  const strollDist = 80 + Math.random() * 120;
+  const strollDist = 140 + Math.random() * 180;
   const dir = Math.random() < 0.5 ? -1 : 1;
   let targetX = curX + dir * strollDist;
 
@@ -479,6 +479,45 @@ function startWander() {
   if (o.wander === false) return;
   const t = pickWanderTarget();
   animateOverlayTo(t.x, t.y, { mode: "wander" });
+}
+
+/** Fait marcher physiquement l'avatar sur la barre des tâches lors d'une commande de marche. */
+function startWalkingMovement(holdMs = 6000) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const o = config.overlay || DEFAULT_CONFIG.overlay;
+  const w = o.width || 270;
+  const h = o.height || 420;
+
+  const [curX, curY] = overlayWindow.getPosition();
+  const d = screen.getDisplayNearestPoint({ x: curX + w / 2, y: curY + h / 2 }) || screen.getPrimaryDisplay();
+  const wa = d.workArea;
+
+  const floorY = wa.y + wa.height - h;
+  const minX = wa.x + 10;
+  const maxX = wa.x + wa.width - w - 10;
+
+  const speed = Math.max(70, Number(o.wanderSpeed) || 92);
+  const durationSec = Math.max(1, Number(holdMs) || 6000) / 1000;
+  const totalDist = durationSec * speed;
+
+  const spaceRight = maxX - curX;
+  const spaceLeft = curX - minX;
+
+  let targetX;
+  if (spaceRight >= 120 && (spaceRight >= spaceLeft || spaceLeft < 100)) {
+    targetX = Math.min(maxX, curX + Math.min(totalDist, spaceRight));
+  } else {
+    targetX = Math.max(minX, curX - Math.min(totalDist, spaceLeft));
+  }
+
+  animateOverlayTo(Math.round(targetX), floorY, {
+    speed,
+    mode: "wander",
+    onArrive: () => {
+      sendVrmPose("idle", 0);
+      sendVrmHeading(0);
+    },
+  });
 }
 
 function setWanderEnabled(on) {
@@ -723,10 +762,12 @@ async function rebuildTrayMenu() {
 
   const posesSub = [
     { label: "Repos (idle)", click: () => sendVrmPose("idle", 0) },
+    { label: "Repos posé (relax)", click: () => sendVrmPose("relax", 6000) },
+    { label: "Observation (lookaround)", click: () => sendVrmPose("lookaround", 5000) },
     { label: "Saluer (wave)", click: () => sendVrmPose("wave", 2500) },
     { label: "Danse (dance)", click: () => sendVrmPose("dance", 8000) },
     { label: "Colère / boudage (angry)", click: () => sendVrmPose("angry", 4000) },
-    { label: "Marche (walk)", click: () => sendVrmPose("walk", 6000) },
+    { label: "Marche (walk)", click: () => startWalkingMovement(6000) },
     { label: "Réflexion (think)", click: () => sendVrmPose("think", 4000) },
     { label: "Approbation (approve)", click: () => sendVrmPose("approve", 3500) },
     { label: "Pointer écran (pointScreen)", click: () => sendVrmPose("pointScreen", 4000) },
@@ -1205,7 +1246,13 @@ ipcMain.on("compagnon:overlay-mood", (_e, mood) => {
 ipcMain.on("compagnon:set-pose", (_e, payload) => {
   const pose = payload && payload.pose;
   const holdMs = payload && payload.holdMs;
-  if (pose) sendVrmPose(pose, holdMs);
+  if (pose) {
+    if (pose === "walk") {
+      startWalkingMovement(holdMs);
+    } else {
+      sendVrmPose(pose, holdMs);
+    }
+  }
 });
 
 ipcMain.on("compagnon:avatar-presence", (_e, payload) => {
@@ -1421,7 +1468,11 @@ if (!gotLock) {
           const pose = d.pose || d.name || "wave";
           const holdMs = Number(d.holdMs) || 2500;
           if (overlayWindow && !overlayWindow.isDestroyed()) {
-            overlayWindow.webContents.send("compagnon:vrm-pose", { pose, holdMs });
+            if (pose === "walk") {
+              startWalkingMovement(holdMs);
+            } else {
+              sendVrmPose(pose, holdMs);
+            }
             return { ok: true, pose, holdMs };
           }
           return { ok: false, error: "overlay absent" };
