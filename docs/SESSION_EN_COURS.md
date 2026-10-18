@@ -97,7 +97,12 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - **Micro-gestes autonomes apaisés** : restriction du roulement d'animation idle aléatoire aux seules postures calmes qui ne sortent jamais du cadre (`crossArms` bras croisés, `think` main au menton, `approve` hochement). Suppression des gestes d'agitation de bras spontanés.
       - **Marche naturelle conservée** : foulée et cadence impeccables (`stride = 0.10 rad` @ 2.7 rad/s, 48 px/s sans aucun moonwalk).
     - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), modèle et texture synchronisés via robocopy et Electron redémarré sur Windows `.10` (PID 15856).
-21. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+21. **Polish posture crossArms, fluidité de la marche & cadrage animations VRoid/VRMA** : **live & validé sur .10** 2026-10-18 —
+    - **Correction pose crossArms** : correction anatomique des angles d'Euler et de la flexion des coudes dans `vrm_pet.js` — les bras se croisent naturellement sur la poitrine au lieu de partir dans le dos (suppression de l'inversion de signe sur `rightLowerArm`).
+    - **Fluidification de la marche procédurale (`walk`)** : levée de genou progressive et continue d'ordre supérieur (suppression des à-coups angulaires), micro-rebond vertical des hanches (bobbing à double fréquence), déroulé souple des chevilles et balancement rigoureux des bras en opposition alternée.
+    - **Architecture VRoid Studio vs format VRM/VRMA** : cadrage technique documenté sur le standard VRM (modèle 3D géométrique sans pistes d'animation, animations internes Unity de VRoid Studio) et feuille de route pour le format officiel VRMA via `@pixiv/three-vrm-animation`.
+    - Recompilé (`overlay/vrm/vrm_pet.bundle.js`), synchronisé via robocopy et Electron redémarré sur Windows SDS `.10` (PID 25944, bridge OK).
+22. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

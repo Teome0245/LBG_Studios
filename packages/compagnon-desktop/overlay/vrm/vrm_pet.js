@@ -54,18 +54,18 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
-  /** Bras croisés confiants (posture robotique fière, comme sur la capture VRoid Studio). */
+  /** Bras croisés confiants (posture robotique fière, coudes et avant-bras croisés devant la poitrine). */
   crossArms: {
-    leftUpperArm: [0.35, -0.40, -0.92],
-    rightUpperArm: [0.35, 0.40, 0.90],
-    leftLowerArm: [0, -0.25, -1.58],
-    rightLowerArm: [0, 0.25, 1.58],
-    leftHand: [0, 0, 0],
-    rightHand: [0, 0, 0],
+    leftUpperArm: [0.45, -0.22, -0.82],
+    rightUpperArm: [0.38, 0.22, 0.82],
+    leftLowerArm: [0.15, 0.10, -1.55],
+    rightLowerArm: [-0.15, -0.10, -1.55],
+    leftHand: [0, 0, 0.12],
+    rightHand: [0, 0, -0.12],
     spine: [0.03, 0, 0],
-    chest: [0.05, 0, 0],
-    neck: [-0.02, 0.04, 0],
-    head: [-0.04, 0.06, 0.02],
+    chest: [0.06, 0, 0],
+    neck: [-0.02, 0.03, 0],
+    head: [-0.03, 0.04, 0.01],
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
@@ -566,51 +566,59 @@ export function createVrmPet(hostEl, opts = {}) {
       if (animated.chest) animated.chest = [animated.chest[0] + puff, animated.chest[1], animated.chest[2]];
     }
     if (poseTo === "walk") {
-      // Synchronisation physique exacte : stride 0.10 rad @ 2.7 rad/s = 48 px/s (zéro patinage / moonwalk)
+      // Cadence et phase de marche lissée (2.7 rad/s)
       const stepFreq = t * 2.7;
-      const stride = Math.sin(stepFreq) * 0.10;
-      const armSwing = Math.sin(stepFreq) * 0.12;
-      const hipsYaw = -Math.sin(stepFreq) * 0.035;
-      const hipsRoll = Math.sin(stepFreq) * 0.025;
-      const chestYaw = Math.sin(stepFreq) * 0.03;
+      const phaseL = stepFreq;
+      const phaseR = stepFreq + Math.PI;
 
-      // Flexion naturelle des genoux vers l'arrière quand la jambe passe vers l'avant
-      const leftKnee = Math.max(0, stride * 1.5 + 0.03);
-      const rightKnee = Math.max(0, -stride * 1.5 + 0.03);
+      // Foulée souple sinusoïdale
+      const stride = Math.sin(stepFreq) * 0.10;
+      // Balancement des bras en opposition rigoureuse (jambe gauche avance -> bras droit avance)
+      const armSwing = Math.sin(stepFreq) * 0.14;
+
+      // Rebond vertical naturel (bobbing à double fréquence, 2 montées/descentes par cycle de marche)
+      const walkBounce = Math.sin(stepFreq * 2) * 0.012;
+      const hipsYaw = -Math.sin(stepFreq) * 0.035;
+      const hipsRoll = Math.sin(stepFreq) * 0.030;
+      const chestYaw = Math.sin(stepFreq) * 0.025;
+
+      // Flexion des genoux continue et lissée (courbe d'ordre supérieur évitant les à-coups du Math.max brutal)
+      // Le genou fléchit pendant la phase de suspension (swing) et se détend doucement à la pose
+      const leftKnee = 0.05 + Math.pow(Math.max(0, -Math.cos(phaseL)), 1.6) * 0.35;
+      const rightKnee = 0.05 + Math.pow(Math.max(0, -Math.cos(phaseR)), 1.6) * 0.35;
 
       if (animated.leftUpperLeg) animated.leftUpperLeg = [stride, 0, animated.leftUpperLeg[2]];
       if (animated.rightUpperLeg) animated.rightUpperLeg = [-stride, 0, animated.rightUpperLeg[2]];
       if (animated.leftLowerLeg) animated.leftLowerLeg = [leftKnee, 0, 0];
       if (animated.rightLowerLeg) animated.rightLowerLeg = [rightKnee, 0, 0];
 
-      // Déroulé des pieds au sol
-      if (animated.leftFoot) animated.leftFoot = [-stride * 0.25, 0, 0];
-      if (animated.rightFoot) animated.rightFoot = [stride * 0.25, 0, 0];
+      // Déroulé souple des chevilles (talon au contact, propulsion à l'arrière)
+      if (animated.leftFoot) animated.leftFoot = [-stride * 0.35, 0, 0];
+      if (animated.rightFoot) animated.rightFoot = [stride * 0.35, 0, 0];
 
-      // Déhanché et torsion souple du tronc
-      if (animated.hips) animated.hips = [0.02, hipsYaw, hipsRoll];
-      if (animated.spine) animated.spine = [animated.spine[0], -hipsYaw * 0.5, 0];
-      if (animated.chest) animated.chest = [animated.chest[0], chestYaw, -hipsRoll * 0.5];
+      // Bassin et torse : déhanchement organique et micro-rebond
+      if (animated.hips) animated.hips = [0.02 + walkBounce, hipsYaw, hipsRoll];
+      if (animated.spine) animated.spine = [animated.spine[0], -hipsYaw * 0.4, 0];
+      if (animated.chest) animated.chest = [animated.chest[0], chestYaw, -hipsRoll * 0.4];
 
-      // Bras naturels : le long du corps (Z = -1.25 / +1.25), oscillation en Y (avant/arrière)
-      // AUCUNE torsion sur l'axe X pour éviter toute rotation du coude vers l'extérieur/arrière
+      // Balancement souple des bras le long du corps avec légère flexion d'amorti des coudes
       if (animated.leftUpperArm) {
-        animated.leftUpperArm = [0, armSwing, -1.25];
+        animated.leftUpperArm = [0, -armSwing, -1.25];
       }
       if (animated.rightUpperArm) {
         animated.rightUpperArm = [0, armSwing, 1.25];
       }
       if (animated.leftLowerArm) {
-        // Coude gauche fléchi vers l'avant sur l'axe Z (négatif), s'accentuant légèrement en avant
-        animated.leftLowerArm = [0, 0, -0.20 - Math.max(0, -armSwing) * 0.10];
+        // Coude gauche fléchit légèrement quand le bras avance
+        animated.leftLowerArm = [0, 0, -0.18 - Math.max(0, armSwing) * 0.15];
       }
       if (animated.rightLowerArm) {
-        // Coude droit fléchi vers l'avant sur l'axe Z (positif), s'accentuant légèrement en avant
-        animated.rightLowerArm = [0, 0, 0.20 + Math.max(0, armSwing) * 0.10];
+        // Coude droit fléchit légèrement quand le bras avance
+        animated.rightLowerArm = [0, 0, -0.18 - Math.max(0, -armSwing) * 0.15];
       }
 
-      // Tête stable
-      if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.3];
+      // Tête stable compensant le roulis des hanches
+      if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
     }
 
     // Important three-vrm 3.x :

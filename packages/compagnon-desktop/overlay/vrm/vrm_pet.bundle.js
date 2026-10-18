@@ -40738,18 +40738,18 @@ void main() {
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
-    /** Bras croisés confiants (posture robotique fière, comme sur la capture VRoid Studio). */
+    /** Bras croisés confiants (posture robotique fière, coudes et avant-bras croisés devant la poitrine). */
     crossArms: {
-      leftUpperArm: [0.35, -0.4, -0.92],
-      rightUpperArm: [0.35, 0.4, 0.9],
-      leftLowerArm: [0, -0.25, -1.58],
-      rightLowerArm: [0, 0.25, 1.58],
-      leftHand: [0, 0, 0],
-      rightHand: [0, 0, 0],
+      leftUpperArm: [0.45, -0.22, -0.82],
+      rightUpperArm: [0.38, 0.22, 0.82],
+      leftLowerArm: [0.15, 0.1, -1.55],
+      rightLowerArm: [-0.15, -0.1, -1.55],
+      leftHand: [0, 0, 0.12],
+      rightHand: [0, 0, -0.12],
       spine: [0.03, 0, 0],
-      chest: [0.05, 0, 0],
-      neck: [-0.02, 0.04, 0],
-      head: [-0.04, 0.06, 0.02],
+      chest: [0.06, 0, 0],
+      neck: [-0.02, 0.03, 0],
+      head: [-0.03, 0.04, 0.01],
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
@@ -41217,35 +41217,38 @@ void main() {
       }
       if (poseTo === "walk") {
         const stepFreq = t * 2.7;
+        const phaseL = stepFreq;
+        const phaseR = stepFreq + Math.PI;
         const stride = Math.sin(stepFreq) * 0.1;
-        const armSwing = Math.sin(stepFreq) * 0.12;
+        const armSwing = Math.sin(stepFreq) * 0.14;
+        const walkBounce = Math.sin(stepFreq * 2) * 0.012;
         const hipsYaw = -Math.sin(stepFreq) * 0.035;
-        const hipsRoll = Math.sin(stepFreq) * 0.025;
-        const chestYaw = Math.sin(stepFreq) * 0.03;
-        const leftKnee = Math.max(0, stride * 1.5 + 0.03);
-        const rightKnee = Math.max(0, -stride * 1.5 + 0.03);
+        const hipsRoll = Math.sin(stepFreq) * 0.03;
+        const chestYaw = Math.sin(stepFreq) * 0.025;
+        const leftKnee = 0.05 + Math.pow(Math.max(0, -Math.cos(phaseL)), 1.6) * 0.35;
+        const rightKnee = 0.05 + Math.pow(Math.max(0, -Math.cos(phaseR)), 1.6) * 0.35;
         if (animated.leftUpperLeg) animated.leftUpperLeg = [stride, 0, animated.leftUpperLeg[2]];
         if (animated.rightUpperLeg) animated.rightUpperLeg = [-stride, 0, animated.rightUpperLeg[2]];
         if (animated.leftLowerLeg) animated.leftLowerLeg = [leftKnee, 0, 0];
         if (animated.rightLowerLeg) animated.rightLowerLeg = [rightKnee, 0, 0];
-        if (animated.leftFoot) animated.leftFoot = [-stride * 0.25, 0, 0];
-        if (animated.rightFoot) animated.rightFoot = [stride * 0.25, 0, 0];
-        if (animated.hips) animated.hips = [0.02, hipsYaw, hipsRoll];
-        if (animated.spine) animated.spine = [animated.spine[0], -hipsYaw * 0.5, 0];
-        if (animated.chest) animated.chest = [animated.chest[0], chestYaw, -hipsRoll * 0.5];
+        if (animated.leftFoot) animated.leftFoot = [-stride * 0.35, 0, 0];
+        if (animated.rightFoot) animated.rightFoot = [stride * 0.35, 0, 0];
+        if (animated.hips) animated.hips = [0.02 + walkBounce, hipsYaw, hipsRoll];
+        if (animated.spine) animated.spine = [animated.spine[0], -hipsYaw * 0.4, 0];
+        if (animated.chest) animated.chest = [animated.chest[0], chestYaw, -hipsRoll * 0.4];
         if (animated.leftUpperArm) {
-          animated.leftUpperArm = [0, armSwing, -1.25];
+          animated.leftUpperArm = [0, -armSwing, -1.25];
         }
         if (animated.rightUpperArm) {
           animated.rightUpperArm = [0, armSwing, 1.25];
         }
         if (animated.leftLowerArm) {
-          animated.leftLowerArm = [0, 0, -0.2 - Math.max(0, -armSwing) * 0.1];
+          animated.leftLowerArm = [0, 0, -0.18 - Math.max(0, armSwing) * 0.15];
         }
         if (animated.rightLowerArm) {
-          animated.rightLowerArm = [0, 0, 0.2 + Math.max(0, armSwing) * 0.1];
+          animated.rightLowerArm = [0, 0, -0.18 - Math.max(0, -armSwing) * 0.15];
         }
-        if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.3];
+        if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
       }
       const poseObj = {};
       for (const name of BONE_NAMES) {
