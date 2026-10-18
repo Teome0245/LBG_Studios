@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
+import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from "@pixiv/three-vrm-animation";
 
 /** Guard: three-vrm parfois assigne colorSpace sur texture undefined. */
 function installColorSpaceGuard(THREE) {
@@ -328,6 +329,115 @@ export function createVrmPet(hostEl, opts = {}) {
   let poseHoldUntil = 0;
   let poseReturnTo = "idle";
 
+  /** Système d'animation VRMA officiel (@pixiv/three-vrm-animation) */
+  let mixer = null;
+  let activeVrmaAction = null;
+  let activeVrmaName = null;
+  const vrmaClips = new Map();
+  const vrmaLoading = new Map();
+
+  const VRMA_MAP = {
+    walk: "walk.vrma",
+    marche: "walk.vrma",
+    step: "walk.vrma",
+    run: "walk.vrma",
+    relax: "relax.vrma",
+    repos: "relax.vrma",
+    pose: "relax.vrma",
+    sit: "sit.vrma",
+    sitwave: "sitWave.vrma",
+    lookaround: "lookaround.vrma",
+    look: "lookaround.vrma",
+    observe: "lookaround.vrma",
+    idleloop: "idle_loop.vrma",
+    stretch: "idle_stretch.vrma",
+    thinking: "thinking.vrma",
+    think: "thinking.vrma",
+    goodbye: "goodbye.vrma",
+    wave: "wave_right.vrma",
+    waveright: "wave_right.vrma",
+    clapping: "clapping.vrma",
+    clap: "clapping.vrma",
+    cheer: "clapping.vrma",
+    dance: "clapping.vrma",
+    danse: "clapping.vrma",
+    blush: "blush.vrma",
+    sleepy: "sleepy.vrma",
+    surprised: "surprised.vrma",
+    sad: "sad.vrma",
+    angry: "angry.vrma",
+  };
+
+  function getVrmaUrl(filename) {
+    const base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
+    return (base ? base + "/animations/" : "animations/") + filename;
+  }
+
+  async function loadVRMA(name, filename) {
+    if (vrmaClips.has(name)) return vrmaClips.get(name);
+    if (vrmaLoading.has(name)) return vrmaLoading.get(name);
+    const targetFile = filename || (name.endsWith(".vrma") ? name : `${name}.vrma`);
+    const url = getVrmaUrl(targetFile);
+
+    const promise = (async () => {
+      try {
+        const gltf = await loader.loadAsync(url);
+        const vrmAnimations = gltf.userData.vrmAnimations || (gltf.userData.vrmAnimation ? [gltf.userData.vrmAnimation] : []);
+        const animData = vrmAnimations[0];
+        if (!animData) throw new Error("No vrmAnimation in file");
+        const clip = createVRMAnimationClip(animData, vrm);
+        clip.name = name;
+        vrmaClips.set(name, clip);
+        console.info(`[vrm_pet] VRMA "${name}" loaded (${clip.duration.toFixed(2)}s)`);
+        return clip;
+      } catch (err) {
+        console.warn(`[vrm_pet] VRMA load failed "${name}" (${url}):`, err);
+        return null;
+      } finally {
+        vrmaLoading.delete(name);
+      }
+    })();
+    vrmaLoading.set(name, promise);
+    return promise;
+  }
+
+  async function playVRMA(name, opts = {}) {
+    if (!vrm || !mixer) return false;
+    const key = name.toLowerCase().replace(/[-_\s]/g, "");
+    const filename = VRMA_MAP[key] || (name.endsWith(".vrma") ? name : `${name}.vrma`);
+    const clip = await loadVRMA(key, filename);
+    if (!clip || disposed) return false;
+
+    const loop = opts.loop !== false;
+    const fadeSec = Number(opts.fadeSec ?? 0.35);
+    const action = mixer.clipAction(clip);
+    if (!loop) {
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+    } else {
+      action.setLoop(THREE.LoopRepeat, Infinity);
+    }
+    action.reset();
+    action.fadeIn(fadeSec);
+    action.play();
+
+    if (activeVrmaAction && activeVrmaAction !== action) {
+      activeVrmaAction.fadeOut(fadeSec);
+    }
+    activeVrmaAction = action;
+    activeVrmaName = name;
+    return true;
+  }
+
+  function stopVRMA(fadeSec = 0.35) {
+    if (activeVrmaAction) {
+      activeVrmaAction.fadeOut(fadeSec);
+      activeVrmaAction = null;
+    }
+    activeVrmaName = null;
+    poseBlend = 0;
+  }
+
   const _euler = new THREE.Euler();
   const _quat = new THREE.Quaternion();
 
@@ -437,6 +547,13 @@ export function createVrmPet(hostEl, opts = {}) {
       poseReturnTo = "idle";
     } else {
       poseHoldUntil = 0;
+    }
+
+    // Déclenchement automatique du clip VRMA officiel si disponible
+    if (VRMA_MAP[n]) {
+      playVRMA(n, { loop: !(hold > 0) });
+    } else {
+      stopVRMA(0.25);
     }
   }
 
@@ -653,12 +770,16 @@ export function createVrmPet(hostEl, opts = {}) {
     if (!vrm?.humanoid) return;
     const now = performance.now();
     if (poseHoldUntil > 0 && now >= poseHoldUntil && poseTo !== poseReturnTo) {
+      if (activeVrmaAction) stopVRMA(0.35);
       poseFrom = poseTo;
       poseTo = poseReturnTo || "idle";
       poseBlend = 0;
       poseHoldUntil = 0;
       setMood("serene");
     }
+    // Si une animation VRMA est active, l'AnimationMixer contrôle les bones en mocap native
+    if (activeVrmaAction) return;
+
     // Blend ~0.35s
     if (poseBlend < 1) {
       poseBlend = Math.min(1, poseBlend + dt / 0.35);
@@ -823,6 +944,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
   const loader = new GLTFLoader();
   loader.register((parser) => new VRMLoaderPlugin(parser));
+  loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
   loader.load(
     modelUrl,
@@ -834,6 +956,17 @@ export function createVrmPet(hostEl, opts = {}) {
 
         VRMUtils.removeUnnecessaryVertices(gltf.scene);
         VRMUtils.combineSkeletons?.(gltf.scene);
+
+        // Initialisation de l'AnimationMixer pour les clips VRMA
+        mixer = new THREE.AnimationMixer(vrm.scene);
+        mixer.addEventListener("finished", (e) => {
+          if (e.action === activeVrmaAction) {
+            stopVRMA(0.35);
+            poseFrom = poseTo;
+            poseTo = "idle";
+            poseBlend = 0;
+          }
+        });
 
         scene.add(vrm.scene);
         faceTheCamera(vrm);
@@ -868,6 +1001,9 @@ export function createVrmPet(hostEl, opts = {}) {
     const dt = Math.min(0.05, clock.getDelta());
     const t = clock.elapsedTime;
     if (vrm) {
+      if (mixer) {
+        mixer.update(dt);
+      }
       updatePoseSystem(t, dt);
       // Rotation fluide vers targetHeadingY
       const turnSpeed = 6.0;
@@ -889,13 +1025,13 @@ export function createVrmPet(hostEl, opts = {}) {
       }
 
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
-      // Uniquement des postures calmes et contenues qui ne sortent jamais du cadre (bras croisés, réflexion, acquiescement)
-      if (poseTo === "idle" && poseHoldUntil === 0) {
+      // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos)
+      if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
         if (t > nextIdleFidgetTime) {
           nextIdleFidgetTime = t + 9.0 + Math.random() * 9.0;
-          const gestures = ["crossArms", "think", "approve"];
+          const gestures = ["crossArms", "think", "lookaround", "relax"];
           const pick = gestures[Math.floor(Math.random() * gestures.length)];
-          const holdMs = pick === "crossArms" ? 4000 : (pick === "think" ? 2800 : 2000);
+          const holdMs = pick === "crossArms" ? 4000 : (pick === "think" ? 3200 : 4500);
           setPose(pick, holdMs);
         }
       }
@@ -951,6 +1087,12 @@ export function createVrmPet(hostEl, opts = {}) {
     setFraming,
     setPose,
     setHeading,
+    playVRMA,
+    stopVRMA,
+    loadVRMA,
+    get activeVRMA() {
+      return activeVrmaName;
+    },
     get pose() {
       return poseTo;
     },

@@ -111,7 +111,7 @@
             <button
               type="button"
               class="py-1 rounded border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/50 text-[10px] text-cyan-200 transition"
-              title="Cycle de marche"
+              title="Cycle de marche (VRMA)"
               @click="triggerPose('walk', 6000)"
             >
               🚶 Marche
@@ -123,6 +123,22 @@
               @click="triggerPose('bow', 3500)"
             >
               🙇 Révérence
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-teal-500/30 bg-teal-950/30 hover:bg-teal-900/50 text-[10px] text-teal-200 transition"
+              title="Pose de repos posée (VRMA)"
+              @click="triggerPose('relax', 6000)"
+            >
+              🧘 Repos
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-amber-500/30 bg-amber-950/30 hover:bg-amber-900/50 text-[10px] text-amber-200 transition"
+              title="Observation vivante (VRMA)"
+              @click="triggerPose('lookaround', 5000)"
+            >
+              👁️ Observer
             </button>
           </div>
         </div>

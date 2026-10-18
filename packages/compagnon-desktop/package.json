@@ -35,12 +35,20 @@
       }
     ],
     "win": {
-      "target": ["dir", "portable"],
+      "target": [
+        "dir",
+        "portable"
+      ],
       "icon": "assets/icon.png"
     }
   },
   "devDependencies": {
     "electron": "^30.0.0",
     "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "three": "^0.180.0",
+    "@pixiv/three-vrm": "^3.5.5",
+    "@pixiv/three-vrm-animation": "^3.5.5"
   }
 }

@@ -110,7 +110,28 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Ajout des boutons "🦾 Confiante" (`crossArms`) et "🙇 Révérence" (`bow`) dans la grille d'actions rapides.
     - **Roadmap VRMA & Références Hoyoverse** : cadrage validé pour l'intégration de `@pixiv/three-vrm-animation` (clips de mocap haute fidélité style Honkai Star Rail / Genshin Impact).
     - Déployé live sur Windows SDS `.10` (PID 26308) et conteneur Docker CT100 (version `1.0.0+5a0e594`).
-23. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+23. **Passage au format VRMA officiel (`@pixiv/three-vrm-animation`) & Pack mocap haute fidélité** : **live & validé** 2026-10-18 —
+    - **Installation de la bibliothèque officielle** : ajout de `@pixiv/three-vrm-animation` (^0.1.x) avec `three` (^0.180.0) et `@pixiv/three-vrm` (^3.5.5) dans `packages/compagnon-desktop/package.json`.
+    - **Intégration VRMAnimationLoaderPlugin & THREE.AnimationMixer dans `vrm_pet.js`** :
+      - Enregistrement du plugin `VRMAnimationLoaderPlugin` sur le `GLTFLoader`.
+      - Instanciation du `THREE.AnimationMixer(vrm.scene)` au chargement du modèle avec écouteur d'événement `finished` pour retour automatique et fondu doux vers `idle`.
+      - Fonction `loadVRMA(name, filename)` avec mise en cache dynamique des `AnimationClip` Three.js via `createVRMAnimationClip(animData, vrm)`.
+      - Fonctions `playVRMA(name, opts)` et `stopVRMA(fadeSec)` avec transition fluide (`fadeIn`/`fadeOut`).
+      - Coexistence harmonieuse mocap VRMA / procédural : `updatePoseSystem()` cède la main sans conflit au mixer pendant la lecture d'un clip mocap et reprend instantanément les poses procédurales (ex: `crossArms`) dès l'arrêt du clip.
+      - `mixer.update(dt)` synchronisé dans la boucle de rendu `animate()`.
+      - Exposition publique de `playVRMA`, `stopVRMA`, `loadVRMA` et du getter `activeVRMA`.
+    - **Pack initial de clips VRMA de référence (17 animations mocap)** :
+      - **1 idle vivante élégante** : `lookaround.vrma` / `idle_loop.vrma` (observation fluide de l'environnement).
+      - **1 marche gracieuse** : `walk.vrma` (cycle de marche naturel fluide, sans saccade ni moonwalk).
+      - **1 pose de repos posée** : `relax.vrma` (posture d'attente relaxée et naturelle) et `sit.vrma` / `sitWave.vrma` (pose assise).
+      - Clips complémentaires : `thinking.vrma`, `goodbye.vrma`, `wave_right.vrma`, `clapping.vrma`, `blush.vrma`, `sleepy.vrma`, `surprised.vrma`, `angry.vrma`, `sad.vrma`, `idle_stretch.vrma`.
+      - Déployés dans `packages/compagnon-desktop/overlay/vrm/animations/` et `packages/cortex/compagnon_ui/public/vrm/animations/`.
+    - **Interface de test Web (`LyraPanel.vue`)** : ajout des boutons d'action rapide "🧘 Repos" (`relax`) et "👁️ Observer" (`lookaround`).
+    - **Compilation et déploiement live validés** :
+      - Compilation esbuild de `overlay/vrm/vrm_pet.bundle.js` (2.2 MB autonome).
+      - Déploiement robocopy vers Windows SDS `.10` : 17 clips `.vrma` présents, Electron redémarré (PID 11904), bridge `:8765` opérationnel.
+      - Déploiement CT100 via `deploy_compagnon_100.sh` : conteneur `lbg-frontend` rebuildé, Nginx sert les 17 animations sous `/vrm/animations/` (HTTP 200 OK vérifié).
+24. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
