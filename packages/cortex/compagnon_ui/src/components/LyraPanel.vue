@@ -140,6 +140,38 @@
             >
               👁️ Observer
             </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-purple-500/30 bg-purple-950/30 hover:bg-purple-900/50 text-[10px] text-purple-200 transition"
+              title="Pirouette 360°"
+              @click="triggerPose('spin', 4000)"
+            >
+              💫 Pirouette
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-yellow-500/30 bg-yellow-950/30 hover:bg-yellow-900/50 text-[10px] text-yellow-200 transition"
+              title="Saut de joie / Victoire"
+              @click="triggerPose('jump', 4000)"
+            >
+              🎉 Victoire
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-emerald-500/30 bg-emerald-950/30 hover:bg-emerald-900/50 text-[10px] text-emerald-200 transition"
+              title="Étirement décontracté"
+              @click="triggerPose('stretch', 5000)"
+            >
+              🙆‍♀️ Étirement
+            </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-sky-500/30 bg-sky-950/30 hover:bg-sky-900/50 text-[10px] text-sky-200 transition"
+              title="Applaudissements rythmés"
+              @click="triggerPose('clapping', 4500)"
+            >
+              👏 Applaudir
+            </button>
           </div>
         </div>
       </div>
@@ -314,7 +346,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js'
+    script.src = '/vrm/vrm_pet.bundle.js?v=chibi_v3'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)

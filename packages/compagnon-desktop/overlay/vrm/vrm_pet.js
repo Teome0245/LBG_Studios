@@ -70,14 +70,14 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
-  /** Pointer vers la gauche (bras contenu, dirigé vers l'avant-gauche sans sortir du cadre). */
+  /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
   pointLeft: {
     leftUpperArm: [0, 0, -1.28],
-    rightUpperArm: [0.40, 0.35, 0.65],
+    rightUpperArm: [0.25, 0.20, 0.95],
     leftLowerArm: [0, 0, 0],
-    rightLowerArm: [0, 0.20, -0.65],
+    rightLowerArm: [0.10, 0.15, -1.25],
     leftHand: [0, 0, 0],
-    rightHand: [0, 0, 0],
+    rightHand: [0, 0, 0.12],
     spine: [0.02, 0.08, 0],
     chest: [0.03, 0.08, 0],
     neck: [0, 0.12, 0],
@@ -85,13 +85,13 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
-  /** Pointer vers la droite (bras contenu, dirigé vers l'avant-droite sans sortir du cadre). */
+  /** Pointer vers la droite (geste doux et courtois de la main, coude souple vers l'avant). */
   pointRight: {
-    leftUpperArm: [0.40, -0.35, -0.65],
+    leftUpperArm: [0.25, -0.20, -0.95],
     rightUpperArm: [0, 0, 1.28],
-    leftLowerArm: [0, -0.20, 0.65],
+    leftLowerArm: [0.10, -0.15, -1.25],
     rightLowerArm: [0, 0, 0],
-    leftHand: [0, 0, 0],
+    leftHand: [0, 0, -0.12],
     rightHand: [0, 0, 0],
     spine: [0.02, -0.08, 0],
     chest: [0.03, -0.08, 0],
@@ -165,7 +165,7 @@ const POSE_EULERS = {
     leftUpperArm: [0.30, 0.10, -1.05],
     rightUpperArm: [0.30, -0.10, 1.05],
     leftLowerArm: [0, 0, -1.35],
-    rightLowerArm: [0, 0, 1.35],
+    rightLowerArm: [0, 0, -1.35],
     leftHand: [0, 0, 0],
     rightHand: [0, 0, 0],
     spine: [0.03, 0, 0],
@@ -180,7 +180,7 @@ const POSE_EULERS = {
     leftUpperArm: [0, 0, -1.15],
     rightUpperArm: [0, 0, 1.15],
     leftLowerArm: [0, 0, -0.15],
-    rightLowerArm: [0, 0, 0.15],
+    rightLowerArm: [0, 0, -0.15],
     leftHand: [0, 0, 0],
     rightHand: [0, 0, 0],
     spine: [0.22, 0, 0],
@@ -192,28 +192,80 @@ const POSE_EULERS = {
   },
   /** Danse rythmée / groove avec balancement et déhanché. */
   dance: {
-    leftUpperArm: [0.25, 0.2, -0.65],
-    rightUpperArm: [0.25, -0.2, 0.65],
+    leftUpperArm: [0.20, 0.15, -1.05],
+    rightUpperArm: [0.20, -0.15, 1.05],
     leftLowerArm: [0, 0, -1.15],
-    rightLowerArm: [0, 0, 1.15],
+    rightLowerArm: [0, 0, -1.15],
     leftHand: [0, 0, 0],
     rightHand: [0, 0, 0],
     hips: [0, 0, 0],
-    spine: [0.03, 0, 0],
-    chest: [0.04, 0, 0],
+    spine: [0.02, 0, 0],
+    chest: [0.03, 0, 0],
     neck: [0, 0, 0],
     head: [0, 0, 0],
-    leftUpperLeg: [0, 0, -0.05],
-    rightUpperLeg: [0, 0, 0.05],
-    leftLowerLeg: [0.1, 0, 0],
-    rightLowerLeg: [0.1, 0, 0],
+    leftUpperLeg: [0, 0, -0.03],
+    rightUpperLeg: [0, 0, 0.03],
+    leftLowerLeg: [0.05, 0, 0],
+    rightLowerLeg: [0.05, 0, 0],
+  },
+  /** Pirouette 360° gracieuse (rotation complète avec bras déployés). */
+  spin: {
+    leftUpperArm: [0.10, 0, -0.85],
+    rightUpperArm: [0.10, 0, 0.85],
+    leftLowerArm: [0, 0, -0.45],
+    rightLowerArm: [0, 0, -0.45],
+    leftHand: [0, 0, 0.1],
+    rightHand: [0, 0, -0.1],
+    hips: [0, 0, 0],
+    spine: [0.04, 0, 0],
+    chest: [0.06, 0, 0],
+    neck: [0, 0, 0],
+    head: [0.02, 0, 0],
+    leftUpperLeg: [0, 0, -0.02],
+    rightUpperLeg: [0, 0, 0.02],
+    leftLowerLeg: [0.04, 0, 0],
+    rightLowerLeg: [0.04, 0, 0],
+  },
+  /** Saut de joie / célébration chibi avec bras levés en V triomphal. */
+  jump: {
+    leftUpperArm: [0.20, 0.10, -2.35],
+    rightUpperArm: [0.20, -0.10, 2.35],
+    leftLowerArm: [0, 0, -0.55],
+    rightLowerArm: [0, 0, -0.55],
+    leftHand: [0, 0, 0.15],
+    rightHand: [0, 0, -0.15],
+    hips: [0, 0, 0],
+    spine: [0.03, 0, 0],
+    chest: [0.06, 0, 0],
+    neck: [0.04, 0, 0],
+    head: [0.06, 0, 0],
+    leftUpperLeg: [0, 0, -0.04],
+    rightUpperLeg: [0, 0, 0.04],
+    leftLowerLeg: [0.08, 0, 0],
+    rightLowerLeg: [0.08, 0, 0],
+  },
+  /** Étirement relaxant vers le haut. */
+  stretch: {
+    leftUpperArm: [0.05, 0, -2.60],
+    rightUpperArm: [0.05, 0, 2.60],
+    leftLowerArm: [0, 0, -0.15],
+    rightLowerArm: [0, 0, -0.15],
+    leftHand: [0, 0, 0],
+    rightHand: [0, 0, 0],
+    hips: [0, 0, 0],
+    spine: [0.08, 0, 0],
+    chest: [0.12, 0, 0],
+    neck: [0.08, 0, 0],
+    head: [0.10, 0, 0],
+    leftUpperLeg: [0, 0, -0.02],
+    rightUpperLeg: [0, 0, 0.02],
   },
   /** Colère / bouderie expressive : poings sur les hanches, torse gonflé. */
   angry: {
     leftUpperArm: [0.18, 0.4, -0.75],
     rightUpperArm: [0.18, -0.4, 0.75],
     leftLowerArm: [0, 0, -1.55],
-    rightLowerArm: [0, 0, 1.55],
+    rightLowerArm: [0, 0, -1.55],
     leftHand: [-0.25, 0, 0],
     rightHand: [-0.25, 0, 0],
     hips: [0, 0, 0],
@@ -229,7 +281,7 @@ const POSE_EULERS = {
     leftUpperArm: [0, 0, -1.25],
     rightUpperArm: [0, 0, 1.25],
     leftLowerArm: [0, 0, -0.20],
-    rightLowerArm: [0, 0, 0.20],
+    rightLowerArm: [0, 0, -0.20],
     leftHand: [0, 0, 0],
     rightHand: [0, 0, 0],
     hips: [0.02, 0, 0],
@@ -321,6 +373,8 @@ export function createVrmPet(hostEl, opts = {}) {
   let nextBlinkTime = 2.0;
   let blinkProgress = 0;
   let nextIdleFidgetTime = 6.0;
+  let walkYOffset = 0;
+  let spinAngle = 0;
 
   /** Pose courante / cible pour blend */
   let poseFrom = "idle";
@@ -341,6 +395,10 @@ export function createVrmPet(hostEl, opts = {}) {
     marche: "walk.vrma",
     step: "walk.vrma",
     run: "walk.vrma",
+    jump: "jump.vrma",
+    saut: "jump.vrma",
+    victory: "jump.vrma",
+    victoire: "jump.vrma",
     relax: "relax.vrma",
     repos: "relax.vrma",
     pose: "relax.vrma",
@@ -351,6 +409,7 @@ export function createVrmPet(hostEl, opts = {}) {
     observe: "lookaround.vrma",
     idleloop: "idle_loop.vrma",
     stretch: "idle_stretch.vrma",
+    etirement: "idle_stretch.vrma",
     thinking: "thinking.vrma",
     think: "thinking.vrma",
     goodbye: "goodbye.vrma",
@@ -359,8 +418,6 @@ export function createVrmPet(hostEl, opts = {}) {
     clapping: "clapping.vrma",
     clap: "clapping.vrma",
     cheer: "clapping.vrma",
-    dance: "clapping.vrma",
-    danse: "clapping.vrma",
     blush: "blush.vrma",
     sleepy: "sleepy.vrma",
     surprised: "surprised.vrma",
@@ -417,10 +474,10 @@ export function createVrmPet(hostEl, opts = {}) {
     } else {
       action.setLoop(THREE.LoopRepeat, Infinity);
     }
-    // Cadence d'animation adaptée : la marche mocap brute (0.76s/cycle) est ralentie à 0.72x
-    // pour un pas plus gracieux, élégant et parfaitement calé sur les 92 px/s de translation fenêtre
+    // Cadence d'animation adaptée : la marche mocap est calée à 0.55x
+    // pour un pas posé et majestueux, parfaitement synchronisé avec les 165 px/s de translation fenêtre
     if (key === "walk" || key === "marche" || key === "step" || key === "run") {
-      action.timeScale = Number(opts.timeScale ?? 0.72);
+      action.timeScale = Number(opts.timeScale ?? 0.55);
     } else {
       action.timeScale = Number(opts.timeScale ?? 1.0);
     }
@@ -530,6 +587,10 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "bow" || n === "greet" || n === "welcome") key = "bow";
     else if (n === "wave" || n === "hello" || n === "salute") key = "wave";
     else if (n === "dance" || n === "danse" || n === "groove") key = "dance";
+    else if (n === "spin" || n === "tourner" || n === "pirouette") key = "spin";
+    else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key = "jump";
+    else if (n === "stretch" || n === "etirement") key = "stretch";
+    else if (n === "clap" || n === "clapping") key = "clapping";
     else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key = "angry";
     else if (n === "walk" || n === "marche" || n === "step") key = "walk";
     else if (POSE_EULERS[raw]) key = raw;
@@ -659,30 +720,70 @@ export function createVrmPet(hostEl, opts = {}) {
       if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
     }
     if (poseTo === "dance") {
-      const beat = t * 4.8;
-      const sway = Math.sin(beat) * 0.14;
-      const bounce = Math.abs(Math.sin(beat * 2)) * 0.04;
-      if (animated.hips) animated.hips = [animated.hips[0], sway * 0.6, sway];
+      // Tempo groove doux et posé à ~1.05 Hz (63 BPM, détendu et gracieux)
+      const tempo = t * 6.5;
+      const tempoHalf = tempo * 0.5;
+      const swayHips = Math.sin(tempoHalf) * 0.07;
+      const rollHips = Math.cos(tempoHalf) * 0.05;
+      const armWave = Math.sin(tempoHalf) * 0.14;
+      const elbowBounce = Math.sin(tempo) * 0.10;
+
+      // Bassin : ondulation douce et déhanché fluide (zéro secousse axiale X)
+      if (animated.hips) animated.hips = [0, swayHips, rollHips];
+      if (animated.spine) animated.spine = [animated.spine[0], -swayHips * 0.4, -rollHips * 0.3];
+      if (animated.chest) animated.chest = [animated.chest[0], -swayHips * 0.3, -rollHips * 0.2];
+
+      // Genoux : flexion souple en absorption naturelle
+      const kneeBounce = 0.04 + Math.abs(Math.sin(tempo)) * 0.05;
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBounce, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBounce, 0, 0];
+
+      // Bras : balancement gracieux avec coudes pliés naturellement vers l'avant (Z négatif)
       if (animated.leftUpperArm) {
-        animated.leftUpperArm = [
-          animated.leftUpperArm[0] + Math.sin(beat) * 0.22,
-          animated.leftUpperArm[1],
-          animated.leftUpperArm[2] + Math.cos(beat) * 0.18,
-        ];
+        animated.leftUpperArm = [0.18 + armWave, 0.12, -1.05 + Math.cos(tempoHalf) * 0.10];
       }
       if (animated.rightUpperArm) {
-        animated.rightUpperArm = [
-          animated.rightUpperArm[0] - Math.sin(beat) * 0.22,
-          animated.rightUpperArm[1],
-          animated.rightUpperArm[2] + Math.cos(beat) * 0.18,
-        ];
+        animated.rightUpperArm = [0.18 - armWave, -0.12, 1.05 - Math.cos(tempoHalf) * 0.10];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -1.15 - elbowBounce];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [0, 0, -1.15 + elbowBounce];
       }
       if (animated.head) {
         animated.head = [
-          animated.head[0] + bounce,
-          animated.head[1] + Math.sin(beat) * 0.1,
-          animated.head[2] - Math.sin(beat) * 0.08,
+          animated.head[0] + Math.sin(tempo) * 0.035,
+          swayHips * 0.5,
+          -rollHips * 0.4,
         ];
+      }
+    }
+    if (poseTo === "spin") {
+      const spinFlutter = Math.sin(t * 4.0) * 0.04;
+      if (animated.leftUpperArm) animated.leftUpperArm[2] = -0.85 + spinFlutter;
+      if (animated.rightUpperArm) animated.rightUpperArm[2] = 0.85 - spinFlutter;
+      if (animated.leftLowerArm) animated.leftLowerArm = [0, 0, -0.45];
+      if (animated.rightLowerArm) animated.rightLowerArm = [0, 0, -0.45];
+    }
+    if (poseTo === "jump") {
+      // Célébration / Victoire : saut joyeux harmonieux avec élan des bras et amorti
+      const jumpPhase = t * 4.0;
+      const jumpWave = Math.sin(jumpPhase);
+      const isAscending = jumpWave > 0;
+      const armPulse = jumpWave * 0.08;
+
+      if (animated.leftUpperArm) animated.leftUpperArm[2] = -2.35 - armPulse;
+      if (animated.rightUpperArm) animated.rightUpperArm[2] = 2.35 + armPulse;
+      if (animated.leftLowerArm) animated.leftLowerArm = [0, 0, -0.55 + armPulse * 0.3];
+      if (animated.rightLowerArm) animated.rightLowerArm = [0, 0, -0.55 + armPulse * 0.3];
+
+      const landingCushion = Math.max(0, -jumpWave) * 0.10;
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [0.06 + landingCushion, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [0.06 + landingCushion, 0, 0];
+
+      if (animated.head) {
+        animated.head = [animated.head[0] + (isAscending ? 0.05 : -0.02), animated.head[1], animated.head[2]];
       }
     }
     if (poseTo === "angry") {
@@ -835,8 +936,8 @@ export function createVrmPet(hostEl, opts = {}) {
       size.set(0.45, 1.45, 0.4);
     }
     const fovRad = (camera.fov * Math.PI) / 180;
-    // Cadrage compact sans vide inutile : l'avatar remplit 95% de la hauteur du cadre
-    const neededH = size.y * 1.05;
+    // Cadrage compact avec respiration latérale et supérieure (+8% marge tête et mains)
+    const neededH = size.y * 1.08;
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
@@ -878,6 +979,40 @@ export function createVrmPet(hostEl, opts = {}) {
     const cyanBrightTexture = makeSolidColorTexture("#80ffff");
     const darkSocketTexture = makeSolidColorTexture("#061320");
 
+    const textureLoader = new THREE.TextureLoader();
+    const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
+    const vrmDir = base || "./vrm";
+    const androidBodyTex = textureLoader.load(
+      `${vrmDir}/body_skin_android.png?v=chibi_v3`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        tex.needsUpdate = true;
+      },
+      undefined,
+      (err) => console.warn("[vrm_pet] err loading body texture:", err)
+    );
+    const androidFaceTex = textureLoader.load(
+      `${vrmDir}/face_skin_android.png?v=chibi_v3`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        tex.needsUpdate = true;
+      },
+      undefined,
+      (err) => console.warn("[vrm_pet] err loading face texture:", err)
+    );
+    const androidHairTex = textureLoader.load(
+      `${vrmDir}/hair_android.png?v=chibi_v3`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.flipY = false;
+        tex.needsUpdate = true;
+      },
+      undefined,
+      (err) => console.warn("[vrm_pet] err loading hair texture:", err)
+    );
+
     v.scene.traverse((child) => {
       if (!child.isMesh) return;
       const materials = Array.isArray(child.material) ? child.material : [child.material];
@@ -888,7 +1023,7 @@ export function createVrmPet(hostEl, opts = {}) {
         // 1. Optiques cybernétiques : Yeux néon cyan lumineux (comme l'illustration mascotte)
         if (name.includes("iris") || name.includes("eyeiris")) {
           if (m.color) m.color.setHex(0x00f5d4);
-          if (m.shadeColor) m.shadeColor.setHex(0x00d4aa);
+          if (m.shadeColor) m.shadeColor.setHex(0x00b894);
           m.map = cyanTexture;
           m.shadeMultiplyTexture = cyanTexture;
           if (m.emissive) {
@@ -897,8 +1032,8 @@ export function createVrmPet(hostEl, opts = {}) {
           }
           m.needsUpdate = true;
         } else if (name.includes("eyehighlight")) {
-          if (m.color) m.color.setHex(0xa0ffff);
-          if (m.shadeColor) m.shadeColor.setHex(0x80ffff);
+          if (m.color) m.color.setHex(0xffffff);
+          if (m.shadeColor) m.shadeColor.setHex(0xa0ffff);
           m.map = cyanBrightTexture;
           m.shadeMultiplyTexture = cyanBrightTexture;
           m.needsUpdate = true;
@@ -915,28 +1050,42 @@ export function createVrmPet(hostEl, opts = {}) {
           if (m.shadeColor) m.shadeColor.setHex(0x040910);
           m.needsUpdate = true;
         } else if (name.includes("brow")) {
-          if (m.color) m.color.setHex(0x182c48);
+          if (m.color) m.color.setHex(0x102038);
           m.needsUpdate = true;
         } else if (name.includes("mouth")) {
-          if (m.color) m.color.setHex(0x121e30);
+          if (m.color) m.color.setHex(0x182c4a);
           m.needsUpdate = true;
         }
-        // 2. Châssis métallique androïde : Corps et visage bleu nuit métallique avec halo néon cyan
-        else if (name.includes("skin") || name.includes("body") || name.includes("face")) {
-          if (m.color) m.color.setHex(0x28426b);
-          if (m.shadeColor) m.shadeColor.setHex(0x121e33);
-          // Bordure lumineuse néon cyan le long de la silhouette (rim lighting)
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f0ff);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.70;
-          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.0;
+        // 2a. Carrosserie mécanique du corps (Texture Canon Châssis Androïde)
+        else if (name.includes("body")) {
+          if (m.color) m.color.setHex(0xffffff);
+          if (m.shadeColor) m.shadeColor.setHex(0x38547a);
+          m.map = androidBodyTex;
+          m.shadeMultiplyTexture = androidBodyTex;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.35;
+          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.5;
           m.needsUpdate = true;
         }
-        // 3. Chevelure métallique : Bleu nuit profond / indigo avec reflets cyan
+        // 2b. Visage androïde : Teint azur doux & détails expressifs préservés
+        else if (name.includes("face") || name.includes("skin")) {
+          if (m.color) m.color.setHex(0xffffff);
+          if (m.shadeColor) m.shadeColor.setHex(0x486c9c);
+          m.map = androidFaceTex;
+          m.shadeMultiplyTexture = androidFaceTex;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.25;
+          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 3.0;
+          m.needsUpdate = true;
+        }
+        // 3. Chevelure métallique indigo -> cyan (Texture Cheveux fluide)
         else if (name.includes("hair")) {
-          if (m.color) m.color.setHex(0x182846);
-          if (m.shadeColor) m.shadeColor.setHex(0x0c1626);
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00e5ff);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.65;
+          if (m.color) m.color.setHex(0xffffff);
+          if (m.shadeColor) m.shadeColor.setHex(0x182846);
+          m.map = androidHairTex;
+          m.shadeMultiplyTexture = androidHairTex;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f0ff);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.50;
           m.needsUpdate = true;
         }
       }
@@ -1014,11 +1163,17 @@ export function createVrmPet(hostEl, opts = {}) {
         mixer.update(dt);
       }
       updatePoseSystem(t, dt);
-      // Rotation fluide vers targetHeadingY
+      // Rotation fluide vers targetHeadingY (+ rotation continue si pirouette)
       const turnSpeed = 6.0;
       const diff = targetHeadingY - currentHeadingY;
       currentHeadingY += diff * Math.min(1, dt * turnSpeed);
-      vrm.scene.rotation.y = currentHeadingY;
+      if (poseTo === "spin") {
+        spinAngle = (spinAngle + dt * 4.2) % (Math.PI * 2);
+        vrm.scene.rotation.y = currentHeadingY + spinAngle;
+      } else {
+        spinAngle = 0;
+        vrm.scene.rotation.y = currentHeadingY;
+      }
 
       // 1. Clignements naturels des yeux cyber
       if (t > nextBlinkTime) {
@@ -1034,22 +1189,35 @@ export function createVrmPet(hostEl, opts = {}) {
       }
 
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
-      // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos)
+      // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos, étirement)
       if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
         if (t > nextIdleFidgetTime) {
-          nextIdleFidgetTime = t + 9.0 + Math.random() * 9.0;
-          const gestures = ["crossArms", "think", "lookaround", "relax"];
+          nextIdleFidgetTime = t + 12.0 + Math.random() * 12.0;
+          const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
           const pick = gestures[Math.floor(Math.random() * gestures.length)];
-          const holdMs = pick === "crossArms" ? 4000 : (pick === "think" ? 3200 : 4500);
+          const holdMs = pick === "crossArms" ? 4500 : (pick === "think" ? 3500 : 5000);
           setPose(pick, holdMs);
         }
       }
 
-      // Micro bob très subtil uniquement si aucune animation VRMA n'est active
-      if (!activeVrmaAction) {
+      // Compensation dynamique de la descente du bassin (hips) dans walk.vrma (+8.8cm)
+      // pour que les pieds restent exactement alignés sur le sol de la barre des tâches sans s'enfoncer
+      const isWalking = (activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk");
+      const targetWalkY = isWalking ? 0.088 : 0.0;
+      const lerpSpeed = isWalking ? 16.0 : 6.0;
+      walkYOffset += (targetWalkY - walkYOffset) * Math.min(1, dt * lerpSpeed);
+
+      // Micro bob / jump / dance / walk offset
+      if (poseTo === "jump") {
+        const jumpBounce = Math.max(0, Math.sin(t * 4.0)) * 0.038;
+        vrm.scene.position.y = walkYOffset + jumpBounce;
+      } else if (poseTo === "dance") {
+        const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
+        vrm.scene.position.y = walkYOffset + danceBounce;
+      } else if (!activeVrmaAction && poseTo === "idle") {
         vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 0.002 : 0.005);
       } else {
-        vrm.scene.position.y = 0;
+        vrm.scene.position.y = walkYOffset;
       }
       if (vrm.lookAt) {
         try {

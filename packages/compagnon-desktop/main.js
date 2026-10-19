@@ -30,7 +30,7 @@ const DEFAULT_CONFIG = {
     enabled: true,
     /** face = FaceRig 2D (Lyra) · vrm = perso 3D */
     mode: "vrm",
-    width: 270,
+    width: 320,
     height: 420,
     marginRight: 16,
     marginBottom: 0,
@@ -40,8 +40,8 @@ const DEFAULT_CONFIG = {
     vrmFraming: "full",
     /** Deplacement autonome sur le bureau */
     wander: true,
-    wanderSpeed: 92,
-    wanderPauseMs: 14000,
+    wanderSpeed: 165,
+    wanderPauseMs: 45000,
     /** Guide vers fenêtre / icônes (px/s) */
     guideSpeed: 220,
   },
@@ -242,7 +242,7 @@ function overlayBounds() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
   const display = screen.getPrimaryDisplay();
   const wa = display.workArea;
-  const width = o.width || 270;
+  const width = o.width || 320;
   const height = o.height || 420;
   const marginRight = Number.isFinite(o.marginRight) ? o.marginRight : 16;
   const marginBottom = Number.isFinite(o.marginBottom) ? o.marginBottom : 0;
@@ -283,7 +283,7 @@ function createOverlayWindow() {
 
   overlayWindow.once("ready-to-show", () => {
     if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.showInactive();
-    if ((config.overlay || {}).wander) startWander();
+    if ((config.overlay || {}).wander !== false) scheduleNextDesktopInteraction();
   });
 
   overlayWindow.on("closed", () => {
@@ -297,7 +297,7 @@ function createOverlayWindow() {
 
 function clampOverlayPos(x, y) {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 270;
+  const w = o.width || 320;
   const h = o.height || 420;
   const display = screen.getDisplayNearestPoint({ x, y });
   const wa = display.workArea;
@@ -315,7 +315,7 @@ function moveOverlayTo(x, y) {
 
 function pickWanderTarget() {
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 270;
+  const w = o.width || 320;
   const h = o.height || 420;
 
   // Reste sur l'écran où se trouve actuellement l'avatar
@@ -331,11 +331,11 @@ function pickWanderTarget() {
   // STRICTEMENT sur la barre des tâches (100% du temps) :
   const floorY = wa.y + wa.height - h;
 
-  // Déplacements vivants et calibrés (~140 à 320 px) synchronisés avec le cycle de marche mocap
+  // Déplacements vivants et calibrés (~180 à 400 px) synchronisés avec le cycle de marche mocap
   const minX = wa.x + 10;
   const maxX = wa.x + wa.width - w - 10;
 
-  const strollDist = 140 + Math.random() * 180;
+  const strollDist = 180 + Math.random() * 220;
   const dir = Math.random() < 0.5 ? -1 : 1;
   let targetX = curX + dir * strollDist;
 
@@ -365,7 +365,13 @@ function stopMotion() {
   wanderState = null;
 }
 
+let desktopInteractionTimer = null;
+
 function stopWander() {
+  if (desktopInteractionTimer) {
+    clearTimeout(desktopInteractionTimer);
+    desktopInteractionTimer = null;
+  }
   if (motionState && motionState.mode === "wander") stopMotion();
 }
 
@@ -420,14 +426,8 @@ function ensureMotionTick() {
         } catch (_) {}
       }
       if (motionState && motionState.mode === "wander") {
-        const o = config.overlay || DEFAULT_CONFIG.overlay;
-        // Pause plus longue et naturelle sur la barre des tâches (12 à 22s de vie sur place)
-        const basePause = Math.max(6000, Number(o.wanderPauseMs) || 15000);
-        const pauseMs = Math.round(basePause * (0.8 + Math.random() * 0.5));
-        motionState.pauseUntil = now + pauseMs;
-        const n = pickWanderTarget();
-        motionState.tx = n.x;
-        motionState.ty = n.y;
+        stopMotion();
+        scheduleNextDesktopInteraction();
         return;
       }
       // guide : rester sur place
@@ -472,20 +472,63 @@ function animateOverlayTo(tx, ty, opts) {
   ensureMotionTick();
 }
 
+function returnToTaskbar() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const o = config.overlay || DEFAULT_CONFIG.overlay;
+  const w = o.width || 320;
+  const h = o.height || 420;
+  const d = screen.getPrimaryDisplay();
+  const wa = d.workArea;
+  const targetX = wa.x + wa.width - w - (Number.isFinite(o.marginRight) ? o.marginRight : 16);
+  const targetY = wa.y + wa.height - h;
+  animateOverlayTo(targetX, targetY, {
+    mode: "guide",
+    onArrive: () => {
+      sendVrmPose("relax", 5000);
+      sendVrmHeading(0);
+    },
+  });
+}
+
+function scheduleNextDesktopInteraction() {
+  if (desktopInteractionTimer) {
+    clearTimeout(desktopInteractionTimer);
+    desktopInteractionTimer = null;
+  }
+  const o = config.overlay || DEFAULT_CONFIG.overlay;
+  if (o.wander === false) return;
+
+  // Pause sereine et vivante sur la barre des tâches (45s à 90s)
+  const delayMs = Math.round(45000 + Math.random() * 45000);
+  desktopInteractionTimer = setTimeout(async () => {
+    desktopInteractionTimer = null;
+    if (!overlayWindow || overlayWindow.isDestroyed()) return;
+    if (motionState && motionState.isWalking) return;
+
+    // En autonomie : Compagnon vit et reste posée sur la barre des tâches (sa base naturelle).
+    // Les déplacements vers les fenêtres ne sont activés qu'à la demande explicite de l'utilisateur (menu Tray ou API).
+    const moves = ["lookaround", "relax", "stretch", "think", "spin", "jump"];
+    const pick = moves[Math.floor(Math.random() * moves.length)];
+    const holdMs = (pick === "lookaround" || pick === "relax") ? 6000 : 4000;
+    sendVrmPose(pick, holdMs);
+
+    scheduleNextDesktopInteraction();
+  }, delayMs);
+}
+
 function startWander() {
   stopMotion();
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   const o = config.overlay || DEFAULT_CONFIG.overlay;
   if (o.wander === false) return;
-  const t = pickWanderTarget();
-  animateOverlayTo(t.x, t.y, { mode: "wander" });
+  scheduleNextDesktopInteraction();
 }
 
 /** Fait marcher physiquement l'avatar sur la barre des tâches lors d'une commande de marche. */
 function startWalkingMovement(holdMs = 6000) {
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   const o = config.overlay || DEFAULT_CONFIG.overlay;
-  const w = o.width || 270;
+  const w = o.width || 320;
   const h = o.height || 420;
 
   const [curX, curY] = overlayWindow.getPosition();
@@ -496,7 +539,7 @@ function startWalkingMovement(holdMs = 6000) {
   const minX = wa.x + 10;
   const maxX = wa.x + wa.width - w - 10;
 
-  const speed = Math.max(70, Number(o.wanderSpeed) || 92);
+  const speed = Math.max(80, Number(o.wanderSpeed) || 165);
   const durationSec = Math.max(1, Number(holdMs) || 6000) / 1000;
   const totalDist = durationSec * speed;
 
@@ -599,16 +642,20 @@ function guideToTarget(target) {
   animateOverlayTo(place.x, place.y, {
     mode: "guide",
     onArrive: () => {
+      const hold = Number(target.holdMs) || 5000;
       sendOverlayGuide({
         message,
         label,
         pointSide: place.pointSide,
-        holdMs: Number(target.holdMs) || 8000,
+        holdMs: hold,
       });
       setOverlayMood({ tone: "curious", label: "Guide" });
       if (avatarBridge) {
         avatarBridge.publishSay(message.slice(0, 100));
       }
+      setTimeout(() => {
+        returnToTaskbar();
+      }, hold + 1200);
     },
   });
   return { ok: true, target: label, x: place.x, y: place.y };
@@ -764,17 +811,23 @@ async function rebuildTrayMenu() {
     { label: "Repos (idle)", click: () => sendVrmPose("idle", 0) },
     { label: "Repos posé (relax)", click: () => sendVrmPose("relax", 6000) },
     { label: "Observation (lookaround)", click: () => sendVrmPose("lookaround", 5000) },
-    { label: "Saluer (wave)", click: () => sendVrmPose("wave", 2500) },
-    { label: "Danse (dance)", click: () => sendVrmPose("dance", 8000) },
-    { label: "Colère / boudage (angry)", click: () => sendVrmPose("angry", 4000) },
-    { label: "Marche (walk)", click: () => startWalkingMovement(6000) },
+    { label: "Étirement (stretch)", click: () => sendVrmPose("stretch", 5000) },
+    { label: "Saluer (wave)", click: () => sendVrmPose("wave", 3000) },
+    { label: "Confiante (crossArms)", click: () => sendVrmPose("crossArms", 5000) },
     { label: "Réflexion (think)", click: () => sendVrmPose("think", 4000) },
     { label: "Approbation (approve)", click: () => sendVrmPose("approve", 3500) },
+    { type: "separator" },
+    { label: "💃 Danse rythmée (dance)", click: () => sendVrmPose("dance", 8000) },
+    { label: "💫 Pirouette 360° (spin)", click: () => sendVrmPose("spin", 4000) },
+    { label: "🎉 Saut de joie / Victoire (jump)", click: () => sendVrmPose("jump", 4000) },
+    { label: "👏 Applaudissements (clapping)", click: () => sendVrmPose("clapping", 4500) },
+    { label: "🙇 Révérence (bow)", click: () => sendVrmPose("bow", 3000) },
+    { label: "Colère / boudage (angry)", click: () => sendVrmPose("angry", 4000) },
+    { type: "separator" },
+    { label: "🚶 Marche (walk)", click: () => startWalkingMovement(6000) },
     { label: "Pointer écran (pointScreen)", click: () => sendVrmPose("pointScreen", 4000) },
     { label: "Pointer à gauche (pointLeft)", click: () => sendVrmPose("pointLeft", 4000) },
     { label: "Pointer à droite (pointRight)", click: () => sendVrmPose("pointRight", 4000) },
-    { label: "Célébrer (cheer)", click: () => sendVrmPose("cheer", 3500) },
-    { label: "Révérence (bow)", click: () => sendVrmPose("bow", 3000) },
   ];
 
   const menu = Menu.buildFromTemplate([
@@ -821,14 +874,31 @@ async function rebuildTrayMenu() {
     },
     { type: "separator" },
     {
-      label: "Se promener (aléatoire)",
+      label: "Interactions bureau autonomes",
       type: "checkbox",
       checked: Boolean((config.overlay || {}).wander),
       click: (item) => setWanderEnabled(Boolean(item.checked)),
     },
     {
-      label: "Guider vers…",
-      submenu: guideSub,
+      label: "Interagir avec le bureau…",
+      submenu: [
+        {
+          label: "🪟 Inspecter une fenêtre active",
+          click: () => guideDemo("window"),
+        },
+        {
+          label: "🖥️ Aller voir les icônes bureau",
+          click: () => guideDemo("icons"),
+        },
+        {
+          label: "🕒 Aller voir la barre des tâches",
+          click: () => guideDemo("taskbar"),
+        },
+        {
+          label: "🧘 Reprendre position sur barre des tâches",
+          click: () => returnToTaskbar(),
+        },
+      ],
     },
     {
       label: "Ouvrir dans le navigateur",
@@ -896,7 +966,7 @@ function toggleOverlay() {
 
 function vrmOverlaySize(framing) {
   const full = String(framing || "").toLowerCase() !== "bust";
-  return full ? { width: 270, height: 420 } : { width: 200, height: 280 };
+  return full ? { width: 320, height: 420 } : { width: 220, height: 280 };
 }
 
 function persistOverlayConfig(patch) {

@@ -145,7 +145,85 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Compilation esbuild `overlay/vrm/vrm_pet.bundle.js` (2.22 MB).
       - Déploiement robocopy vers Windows SDS `.10` et redémarrage Electron (PID 40200, bridge OK).
       - Déploiement CT100 (`192.168.0.100:5174`) via `deploy_compagnon_100.sh` avec rebuild Docker.
-25. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+25. **Correction de l'enfoncement dans la barre des tâches, vitesse de marche & Cadrage textures Pygmalion** : **live & validé** 2026-10-19 —
+    - **Arbitrage d'architecture Mascotte (2 bras uniquement)** :
+      - Confirmation formelle : aucun bras additionnel. Conservation exclusive du squelette humanoïde standard bipède VRM 1.0 garantissant la compatibilité pleine et entière avec l'ensemble des animations VRMA officielles (17 clips mocap) et les poses procédurales sans conflit de bones.
+    - **Élimination de la descente dans la barre des tâches (`walkYOffset`)** :
+      - Découverte : dans `walk.vrma`, la piste `hips.translation` Y descend jusqu'à `0.7514` (drop de `7.3 cm` par rapport au T-pose de repos `0.8242` de `Compagnon.vrm`), ce qui faisait plonger les pieds sous le bas du cadre dans la barre des tâches.
+      - Solution : compensation verticale dynamique `targetWalkY = 0.088m` (+8.8 cm) avec montée rapide (`lerpSpeed = 16.0`, ~80 ms) dès que la marche démarre, et descente douce (`lerpSpeed = 6.0`) à l'arrêt. Les semelles restent parfaitement tangentes au sol sans jamais s'enfoncer.
+    - **Synchronisation dynamique de la marche (zéro patinage)** :
+      - Cadence mocap adoucie à `timeScale = 0.55x` (cycle complet de 1.39s, soit ~0.70s par pas) pour une démarche calme, altière et élégante.
+      - Vitesse de translation augmentée à `165 px/s` dans `config.json` et `main.js`. Chaque pas propulse la fenêtre de `~115 px`, en phase exacte avec l'extension de jambe 3D : le pied d'appui reste scellé au sol sans aucun moonwalk ni patinage "sur place".
+    - **Délégation Infographie IA (Pygmalion)** :
+      - Rédaction du ticket complet de cadrage et spécifications graphiques [`docs/handoff_pygmalion_textures_compagnon.md`](handoff_pygmalion_textures_compagnon.md) : textures 2048×2048 RGBA (`Body_00_SKIN`, `Face_00_SKIN`, `Hair_00_HAIR`), rotules mécaniques 3D en trompe-l'œil, armure pectorale biseautée, segmentations abdominales et liserés lumineux cyan néon `#00f5d4`.
+    - **Compilation & Déploiements validés** :
+      - Recompilation esbuild `overlay/vrm/vrm_pet.bundle.js` (2.22 MB).
+      - Déploiement robocopy vers Windows SDS `.10` : Electron redémarré (PID 37868), test live de marche `:8765` validé.
+      - Déploiement CT100 (`192.168.0.100:5174`) via `deploy_compagnon_100.sh` : conteneurs Docker backend et frontend rebuildés et démarrés.
+26. **Élargissement du cadre, Interactions de bureau ciblées & Nouvelles animations/danses** : **live & validé sur .10** 2026-10-19 —
+    - **Élargissement du cadre de l'overlay (320×420 px)** :
+      - Fin des mains qui sortent du cadre à droite : la largeur de fenêtre passe de 270 px à **320 px** (+50 px de marge latérale, soit +18.5% de champ horizontal en projection Three.js).
+      - Marge verticale portée à `neededH = size.y * 1.08` dans `frameVrm()` (+8% de respiration au-dessus de la tête) pour contenir les mains levées lors des gestes amples (`wave_right`, `spin`, `jump`, `clapping`).
+    - **Interactions de bureau ciblées (Desktop Pet vivant)** :
+      - Fin de l'errance perpétuelle et des allers-retours continus sans but : dès son arrivée sur la barre des tâches, l'avatar marque une pause sereine prolongée (60 à 120 secondes).
+      - Système `scheduleNextDesktopInteraction()` dans `main.js` : planifie des interactions intelligentes espacées (aller inspecter une fenêtre ouverte détectée via `listWindows()`, aller saluer les icônes du bureau ou l'horloge système), puis retour automatique et fluide à sa position de repos sur la barre des tâches via `returnToTaskbar()`.
+      - Menu Tray enrichi avec sous-menu **"Interagir avec le bureau…"** (inspecter fenêtre active, voir icônes, voir barre des tâches, reprendre position) et option toggle "Interactions bureau autonomes".
+    - **Nouvelles animations, Danses & Pirouettes** :
+      - Suppression du court-circuitage dans `VRMA_MAP` où `dance: "clapping.vrma"` écrasait la danse au profit d'applaudissements.
+      - 💃 **Danse rythmée (`dance`/`groove`)** : chorégraphie procédurale avec tempo à 2.2 Hz, déhanchement en huit (`hipsRoll`, `hipsYaw`), rebond vertical cadencé ("bounce"), balancement alterné des bras, pulsation des coudes et hochement de tête complice.
+      - 💫 **Pirouette 360° (`spin`)** : rotation complète fluide sur l'axe Y (`spinAngle`), bras déployés avec grâce et retour face caméra souriant.
+      - 🎉 **Victoire / Saut (`jump`/`victory`)** : saut d'impulsion vertical (+4.5 cm en parabole) avec bras levés en V triomphal.
+      - 🙆‍♀️ **Étirement (`stretch`)** : étirement relaxant vers le haut branché sur le clip mocap `idle_stretch.vrma`.
+      - 👏 **Applaudissements (`clapping`)** : battement de mains joyeux.
+      - Boutons interactifs intégrés dans la grille d'actions de `LyraPanel.vue` (Web `:5174`) et dans le menu Tray de la barre des tâches Windows.
+    - Recompilé avec esbuild (`vrm_pet.bundle.js`), hotfix syntaxique dans `main.js` (suppression d'un résidu orphelin dans le menu Tray), synchronisé via robocopy et Electron redémarré avec succès sur Windows SDS `.10` (PID 20524, pont HTTP `:8765` opérationnel et vérifié : `event=avatar.idle`, `mood=serene`).
+27. **Harmonisation kinésiologique & Refonte des animations Danse, Victoire et Pirouette** : **live & validé sur .10** 2026-10-19 —
+    - **Diagnostic du désordre gestuel (inversion anatomique des coudes)** :
+      - Découverte majeure : dans le rig standard three-vrm (VRM 1.0 normalized humanoid), la flexion antérieure des deux avant-bras (`leftLowerArm` et `rightLowerArm`) se fait TOUJOURS en **Z négatif**.
+      - Dans `dance`, `jump`, `spin`, `cheer`, `angry` et `stretch`, `rightLowerArm` avait été erronément configuré avec un Z positif (`+1.15`, `+0.35`, `+1.35`, `+1.55`), ce qui forçait une hyperextension vers l'arrière / l'extérieur (coude droit luxé/tordu) pendant que le bras gauche pliait normalement.
+      - Inversion également corrigée pour `leftLowerArm` dans `pointRight`.
+    - **Refonte de la Danse (`dance`)** :
+      - Cadence apaisée de 132 BPM frénétique à **63 BPM** (~1.05 Hz, tempo lofi / groove détendu et gracieux).
+      - Élimination des secousses axiales brutales du bassin (`hips[0]` = 0, rebond vertical transféré sur la translation physique `vrm.scene.position.y`).
+      - Déhanchement doux en huit (`swayHips: 0.07`, `rollHips: 0.05`), contre-ondulation naturelle du torse (`spine`, `chest`), flexion souple des genoux en absorption et balancement coordonné des avant-bras avec coudes naturellement pliés vers l'avant.
+    - **Refonte de la Victoire / Saut (`jump`)** :
+      - Saut de célébration harmonieux et synchronisé à 4.0 rad/s (au lieu de 8.5 rad/s haché).
+      - Trajectoire parabolique avec amorti d'atterrissage absorbé par les genoux (`landingCushion`).
+      - Élan triomphal des bras levés en V avec flexion anatomique naturelle des deux coudes (`-0.55` rad) et hochement joyeux de la tête.
+    - **Refonte de la Pirouette (`spin`)** : rotation 360° fluide avec bras déployés gracieusement et coudes symétriques en Z négatif (`-0.45`).
+    - Recompilé avec esbuild (`vrm_pet.bundle.js` 2.23 MB), déployé par robocopy et Electron redémarré sur Windows SDS `.10` (PID 11720, bridge `:8765` validé).
+28. **Travail Pygmalion (Infographiste_IA) & Texture Châssis Androïde Option 1** : **live & validé sur .10** 2026-10-19 —
+    - **Pygmalion (`Infographiste_IA`) activé en live** :
+      - Connexion au backend ComfyUI actif sur Windows SDS `.10:8188` (GTX 1050 Ti lowvram).
+      - Soumission du workflow conforme au handoff [`docs/handoff_pygmalion_textures_compagnon.md`](handoff_pygmalion_textures_compagnon.md) : DreamShaper 8 + LoRA `mmorpg_insp_lora.safetensors`, androïde mascotte chibi 2 bras uniquement, carrosserie titane bleu nuit, plastron et optiques cyan néon `#00f5d4`, rotules mécaniques, épaulettes argentées.
+      - Génération réussie du concept de référence : `scratch/pygmalion_compagnon_concept_00001_.png` (398 KB).
+    - **Option 1 (Texture 2048×2048 haute définition & intégration 3D)** :
+      - Synthèse de la texture complète du corps `body_skin_android.png` (2048×2048) alignée sur le concept Pygmalion : plastron pectoral biseauté néon cyan éclatant avec cœur lumineux, actuators hydrauliques sombres sur l'abdomen, carapace pelvienne, rotules mécaniques concentriques en trompe-l'œil 3D aux épaules, coudes, poignets, hanches et genoux, épaulettes argentées, et bottes magnétiques nettes sans orteils humains.
+      - Intégration dans `applyAndroidTheme(v)` de `vrm_pet.js` avec chargement dynamique Three.js MToon et base color blanche `0xffffff` pour une brillance 100% pure des néons cyan sans atténuation sombre.
+      - Recompilé avec esbuild (`vrm_pet.bundle.js` 2.23 MB) et déployé en live sur Windows SDS `.10` (PID 40988, `bridge_ok event=avatar.idle mood=serene`).
+29. **Textures Canon Mascotte Haute Fidélité 360° (Face expressive, Buste sculpté & Dos mécatronique complet)** : **live & validé sur .10** 2026-10-19 —
+    - **Intégration intégrale du Dos (360°)** :
+      - **Colonne vertébrale cybernétique (Spine)** : Jonction 3D sans couture le long des bords de texture (X=500 et X=1545) formant une colonne vertébrale mécatronique continue avec 10 vertèbres biseautées et cœurs néon cyan émissifs (`#00f5d4`).
+      - **Plaques d'armure scapulaires (Omoplates)** : Épaulières dorsales biseautées profilées en bleu titane satiné (`#2e4872` / `#385888`) avec liseré cyan néon et grilles d'aération thermique / heat sink intercalées.
+      - **Carapace fessière et lombaire** : Découpes d'armure galbées sous chaque fesse soulignées de cyan néon, connecteur sacré central au bas du dos et conduits lombaires reliant les flancs.
+    - **Face avant & Visage** :
+      - Buste en armure bleu titane satinée couvrant les anciens pointillés, galbe souligné d'un double liseré cyan néon 2.5px (`#00f5d4` + cœur `#c0fff6`), sternum en Y inversé et rivets discrets.
+      - Visage expressif et lumineux préservant tout le modelé 3D (arête du nez, paupières, pommettes, lèvres glossy framboise-cyber nacrées).
+    - **Cheveux** : Dégradé soyeux validé conservé (racines indigo profond -> corps cobalt -> pointes cyan éclatantes).
+30. **Assainissement des Prompts Compagnon & Posture JARVIS (élimination boucles dry-run / deploy_* / chatbot isolé + routage E4b-qat / 12b-qat)** : **fait** 2026-10-19 —
+    - **Éradication des boucles perroquet dans `router_prompts.py`** : refonte de `BASE_GUARDRAILS`, `LAB_GUARDRAILS`, `LAB_CAUSERIE_GUARDRAILS`, `lab_ops_system_prompt()` et `build_profiles()` ; suppression de toutes les mentions rigides de « deploy_* », « dry-run » et « pas un chatbot isolé » ; recentrage sur une posture naturelle, réactive et courtoise façon JARVIS.
+    - **Nettoyage des catchphrases et worldview (`character/compagnon_v1.json`)** : élimination des slogans « Agir d'abord en dry-run » et « Je suis le Compagnon du studio — pas un chatbot isolé » qui étaient injectés systématiquement à chaque tour ; remplacés par des formules naturelles et discrètes.
+31. **Application & Synchronisation de l'identité Android 360° sur la vue Buste (`CT100:5174`)** : **live & validé** 2026-10-19 —
+    - **Diagnostic du décalage vue buste** : le conteneur Docker `lbg-frontend` servait une image antérieure non reconstruite (absence de `hair_android.png` et `face_skin_android.png` provoquant des erreurs 404 dans la console du navigateur et un repli sur la texture d'origine violette et le corps uni sans plaques).
+    - **Résolution dynamique des chemins de texture (`vrm_pet.js`)** : remplacement du chemin relatif `./vrm/...` par la dérivation contextuelle de `vrmDir` à partir de `modelUrl` (`const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm"; const vrmDir = base || "./vrm";`) garantissant un chargement fluide quel que soit le contexte (Web `:5174` ou Overlay Desktop).
+    - **Anti-cache & Cache-busting** : injection de paramètres de versioning `?v=chibi_v3` sur les textures dans `vrm_pet.js` et sur `vrm_pet.bundle.js` dans `LyraPanel.vue`.
+    - **Recompilation & Déploiement CT100** :
+      - Compilation esbuild de `overlay/vrm/vrm_pet.bundle.js` (2.23 MB) et réplication dans `compagnon_ui/public/vrm/`.
+      - Synchronisation des textures 360° (`body_skin_android.png`, `face_skin_android.png`, `hair_android.png`) et du bundle vers `/opt/orchestrateur/frontend/public/vrm/` sur CT100 (`192.168.0.100`).
+      - Rebuild Docker de l'image `orchestrateur-frontend` et recréation à chaud du conteneur `lbg-frontend`.
+      - Vérification HTTP curl complète : 200 OK sur toutes les textures et le bundle avec en-têtes `Cache-Control: no-cache`. La vue buste et l'overlay desktop partagent désormais exactement la même apparence androïde.
+    - **Mise à disposition des assets 3D & textures (`N:\Upload\IA\`)** : synchronisation directe des fichiers `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png` et `hair_android.png` vers le lecteur réseau de travail `N:\Upload\IA\` via l'agent Windows (`.10:5005`).
+32. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

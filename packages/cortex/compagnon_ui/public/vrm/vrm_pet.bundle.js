@@ -53102,14 +53102,14 @@ void main() {
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
-    /** Pointer vers la gauche (bras contenu, dirigé vers l'avant-gauche sans sortir du cadre). */
+    /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
     pointLeft: {
       leftUpperArm: [0, 0, -1.28],
-      rightUpperArm: [0.4, 0.35, 0.65],
+      rightUpperArm: [0.25, 0.2, 0.95],
       leftLowerArm: [0, 0, 0],
-      rightLowerArm: [0, 0.2, -0.65],
+      rightLowerArm: [0.1, 0.15, -1.25],
       leftHand: [0, 0, 0],
-      rightHand: [0, 0, 0],
+      rightHand: [0, 0, 0.12],
       spine: [0.02, 0.08, 0],
       chest: [0.03, 0.08, 0],
       neck: [0, 0.12, 0],
@@ -53117,13 +53117,13 @@ void main() {
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
-    /** Pointer vers la droite (bras contenu, dirigé vers l'avant-droite sans sortir du cadre). */
+    /** Pointer vers la droite (geste doux et courtois de la main, coude souple vers l'avant). */
     pointRight: {
-      leftUpperArm: [0.4, -0.35, -0.65],
+      leftUpperArm: [0.25, -0.2, -0.95],
       rightUpperArm: [0, 0, 1.28],
-      leftLowerArm: [0, -0.2, 0.65],
+      leftLowerArm: [0.1, -0.15, -1.25],
       rightLowerArm: [0, 0, 0],
-      leftHand: [0, 0, 0],
+      leftHand: [0, 0, -0.12],
       rightHand: [0, 0, 0],
       spine: [0.02, -0.08, 0],
       chest: [0.03, -0.08, 0],
@@ -53197,7 +53197,7 @@ void main() {
       leftUpperArm: [0.3, 0.1, -1.05],
       rightUpperArm: [0.3, -0.1, 1.05],
       leftLowerArm: [0, 0, -1.35],
-      rightLowerArm: [0, 0, 1.35],
+      rightLowerArm: [0, 0, -1.35],
       leftHand: [0, 0, 0],
       rightHand: [0, 0, 0],
       spine: [0.03, 0, 0],
@@ -53212,7 +53212,7 @@ void main() {
       leftUpperArm: [0, 0, -1.15],
       rightUpperArm: [0, 0, 1.15],
       leftLowerArm: [0, 0, -0.15],
-      rightLowerArm: [0, 0, 0.15],
+      rightLowerArm: [0, 0, -0.15],
       leftHand: [0, 0, 0],
       rightHand: [0, 0, 0],
       spine: [0.22, 0, 0],
@@ -53224,28 +53224,80 @@ void main() {
     },
     /** Danse rythmée / groove avec balancement et déhanché. */
     dance: {
-      leftUpperArm: [0.25, 0.2, -0.65],
-      rightUpperArm: [0.25, -0.2, 0.65],
+      leftUpperArm: [0.2, 0.15, -1.05],
+      rightUpperArm: [0.2, -0.15, 1.05],
       leftLowerArm: [0, 0, -1.15],
-      rightLowerArm: [0, 0, 1.15],
+      rightLowerArm: [0, 0, -1.15],
       leftHand: [0, 0, 0],
       rightHand: [0, 0, 0],
       hips: [0, 0, 0],
-      spine: [0.03, 0, 0],
-      chest: [0.04, 0, 0],
+      spine: [0.02, 0, 0],
+      chest: [0.03, 0, 0],
       neck: [0, 0, 0],
       head: [0, 0, 0],
-      leftUpperLeg: [0, 0, -0.05],
-      rightUpperLeg: [0, 0, 0.05],
-      leftLowerLeg: [0.1, 0, 0],
-      rightLowerLeg: [0.1, 0, 0]
+      leftUpperLeg: [0, 0, -0.03],
+      rightUpperLeg: [0, 0, 0.03],
+      leftLowerLeg: [0.05, 0, 0],
+      rightLowerLeg: [0.05, 0, 0]
+    },
+    /** Pirouette 360° gracieuse (rotation complète avec bras déployés). */
+    spin: {
+      leftUpperArm: [0.1, 0, -0.85],
+      rightUpperArm: [0.1, 0, 0.85],
+      leftLowerArm: [0, 0, -0.45],
+      rightLowerArm: [0, 0, -0.45],
+      leftHand: [0, 0, 0.1],
+      rightHand: [0, 0, -0.1],
+      hips: [0, 0, 0],
+      spine: [0.04, 0, 0],
+      chest: [0.06, 0, 0],
+      neck: [0, 0, 0],
+      head: [0.02, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02],
+      leftLowerLeg: [0.04, 0, 0],
+      rightLowerLeg: [0.04, 0, 0]
+    },
+    /** Saut de joie / célébration chibi avec bras levés en V triomphal. */
+    jump: {
+      leftUpperArm: [0.2, 0.1, -2.35],
+      rightUpperArm: [0.2, -0.1, 2.35],
+      leftLowerArm: [0, 0, -0.55],
+      rightLowerArm: [0, 0, -0.55],
+      leftHand: [0, 0, 0.15],
+      rightHand: [0, 0, -0.15],
+      hips: [0, 0, 0],
+      spine: [0.03, 0, 0],
+      chest: [0.06, 0, 0],
+      neck: [0.04, 0, 0],
+      head: [0.06, 0, 0],
+      leftUpperLeg: [0, 0, -0.04],
+      rightUpperLeg: [0, 0, 0.04],
+      leftLowerLeg: [0.08, 0, 0],
+      rightLowerLeg: [0.08, 0, 0]
+    },
+    /** Étirement relaxant vers le haut. */
+    stretch: {
+      leftUpperArm: [0.05, 0, -2.6],
+      rightUpperArm: [0.05, 0, 2.6],
+      leftLowerArm: [0, 0, -0.15],
+      rightLowerArm: [0, 0, -0.15],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, 0],
+      hips: [0, 0, 0],
+      spine: [0.08, 0, 0],
+      chest: [0.12, 0, 0],
+      neck: [0.08, 0, 0],
+      head: [0.1, 0, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
     },
     /** Colère / bouderie expressive : poings sur les hanches, torse gonflé. */
     angry: {
       leftUpperArm: [0.18, 0.4, -0.75],
       rightUpperArm: [0.18, -0.4, 0.75],
       leftLowerArm: [0, 0, -1.55],
-      rightLowerArm: [0, 0, 1.55],
+      rightLowerArm: [0, 0, -1.55],
       leftHand: [-0.25, 0, 0],
       rightHand: [-0.25, 0, 0],
       hips: [0, 0, 0],
@@ -53261,7 +53313,7 @@ void main() {
       leftUpperArm: [0, 0, -1.25],
       rightUpperArm: [0, 0, 1.25],
       leftLowerArm: [0, 0, -0.2],
-      rightLowerArm: [0, 0, 0.2],
+      rightLowerArm: [0, 0, -0.2],
       leftHand: [0, 0, 0],
       rightHand: [0, 0, 0],
       hips: [0.02, 0, 0],
@@ -53343,6 +53395,8 @@ void main() {
     let nextBlinkTime = 2;
     let blinkProgress = 0;
     let nextIdleFidgetTime = 6;
+    let walkYOffset = 0;
+    let spinAngle = 0;
     let poseFrom = "idle";
     let poseTo = "idle";
     let poseBlend = 1;
@@ -53358,6 +53412,10 @@ void main() {
       marche: "walk.vrma",
       step: "walk.vrma",
       run: "walk.vrma",
+      jump: "jump.vrma",
+      saut: "jump.vrma",
+      victory: "jump.vrma",
+      victoire: "jump.vrma",
       relax: "relax.vrma",
       repos: "relax.vrma",
       pose: "relax.vrma",
@@ -53368,6 +53426,7 @@ void main() {
       observe: "lookaround.vrma",
       idleloop: "idle_loop.vrma",
       stretch: "idle_stretch.vrma",
+      etirement: "idle_stretch.vrma",
       thinking: "thinking.vrma",
       think: "thinking.vrma",
       goodbye: "goodbye.vrma",
@@ -53376,8 +53435,6 @@ void main() {
       clapping: "clapping.vrma",
       clap: "clapping.vrma",
       cheer: "clapping.vrma",
-      dance: "clapping.vrma",
-      danse: "clapping.vrma",
       blush: "blush.vrma",
       sleepy: "sleepy.vrma",
       surprised: "surprised.vrma",
@@ -53430,7 +53487,7 @@ void main() {
         action.setLoop(LoopRepeat, Infinity);
       }
       if (key2 === "walk" || key2 === "marche" || key2 === "step" || key2 === "run") {
-        action.timeScale = Number(opts2.timeScale ?? 0.72);
+        action.timeScale = Number(opts2.timeScale ?? 0.55);
       } else {
         action.timeScale = Number(opts2.timeScale ?? 1);
       }
@@ -53527,6 +53584,10 @@ void main() {
       else if (n === "bow" || n === "greet" || n === "welcome") key2 = "bow";
       else if (n === "wave" || n === "hello" || n === "salute") key2 = "wave";
       else if (n === "dance" || n === "danse" || n === "groove") key2 = "dance";
+      else if (n === "spin" || n === "tourner" || n === "pirouette") key2 = "spin";
+      else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key2 = "jump";
+      else if (n === "stretch" || n === "etirement") key2 = "stretch";
+      else if (n === "clap" || n === "clapping") key2 = "clapping";
       else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key2 = "angry";
       else if (n === "walk" || n === "marche" || n === "step") key2 = "walk";
       else if (POSE_EULERS[raw]) key2 = raw;
@@ -53643,30 +53704,59 @@ void main() {
         if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
       }
       if (poseTo === "dance") {
-        const beat = t * 4.8;
-        const sway2 = Math.sin(beat) * 0.14;
-        const bounce = Math.abs(Math.sin(beat * 2)) * 0.04;
-        if (animated.hips) animated.hips = [animated.hips[0], sway2 * 0.6, sway2];
+        const tempo = t * 6.5;
+        const tempoHalf = tempo * 0.5;
+        const swayHips = Math.sin(tempoHalf) * 0.07;
+        const rollHips = Math.cos(tempoHalf) * 0.05;
+        const armWave = Math.sin(tempoHalf) * 0.14;
+        const elbowBounce = Math.sin(tempo) * 0.1;
+        if (animated.hips) animated.hips = [0, swayHips, rollHips];
+        if (animated.spine) animated.spine = [animated.spine[0], -swayHips * 0.4, -rollHips * 0.3];
+        if (animated.chest) animated.chest = [animated.chest[0], -swayHips * 0.3, -rollHips * 0.2];
+        const kneeBounce = 0.04 + Math.abs(Math.sin(tempo)) * 0.05;
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBounce, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBounce, 0, 0];
         if (animated.leftUpperArm) {
-          animated.leftUpperArm = [
-            animated.leftUpperArm[0] + Math.sin(beat) * 0.22,
-            animated.leftUpperArm[1],
-            animated.leftUpperArm[2] + Math.cos(beat) * 0.18
-          ];
+          animated.leftUpperArm = [0.18 + armWave, 0.12, -1.05 + Math.cos(tempoHalf) * 0.1];
         }
         if (animated.rightUpperArm) {
-          animated.rightUpperArm = [
-            animated.rightUpperArm[0] - Math.sin(beat) * 0.22,
-            animated.rightUpperArm[1],
-            animated.rightUpperArm[2] + Math.cos(beat) * 0.18
-          ];
+          animated.rightUpperArm = [0.18 - armWave, -0.12, 1.05 - Math.cos(tempoHalf) * 0.1];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -1.15 - elbowBounce];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, -1.15 + elbowBounce];
         }
         if (animated.head) {
           animated.head = [
-            animated.head[0] + bounce,
-            animated.head[1] + Math.sin(beat) * 0.1,
-            animated.head[2] - Math.sin(beat) * 0.08
+            animated.head[0] + Math.sin(tempo) * 0.035,
+            swayHips * 0.5,
+            -rollHips * 0.4
           ];
+        }
+      }
+      if (poseTo === "spin") {
+        const spinFlutter = Math.sin(t * 4) * 0.04;
+        if (animated.leftUpperArm) animated.leftUpperArm[2] = -0.85 + spinFlutter;
+        if (animated.rightUpperArm) animated.rightUpperArm[2] = 0.85 - spinFlutter;
+        if (animated.leftLowerArm) animated.leftLowerArm = [0, 0, -0.45];
+        if (animated.rightLowerArm) animated.rightLowerArm = [0, 0, -0.45];
+      }
+      if (poseTo === "jump") {
+        const jumpPhase = t * 4;
+        const jumpWave = Math.sin(jumpPhase);
+        const isAscending = jumpWave > 0;
+        const armPulse = jumpWave * 0.08;
+        if (animated.leftUpperArm) animated.leftUpperArm[2] = -2.35 - armPulse;
+        if (animated.rightUpperArm) animated.rightUpperArm[2] = 2.35 + armPulse;
+        if (animated.leftLowerArm) animated.leftLowerArm = [0, 0, -0.55 + armPulse * 0.3];
+        if (animated.rightLowerArm) animated.rightLowerArm = [0, 0, -0.55 + armPulse * 0.3];
+        const landingCushion = Math.max(0, -jumpWave) * 0.1;
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [0.06 + landingCushion, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [0.06 + landingCushion, 0, 0];
+        if (animated.head) {
+          animated.head = [animated.head[0] + (isAscending ? 0.05 : -0.02), animated.head[1], animated.head[2]];
         }
       }
       if (poseTo === "angry") {
@@ -53789,7 +53879,7 @@ void main() {
         size.set(0.45, 1.45, 0.4);
       }
       const fovRad = camera.fov * Math.PI / 180;
-      const neededH = size.y * 1.05;
+      const neededH = size.y * 1.08;
       const dist = neededH / (2 * Math.tan(fovRad / 2));
       const visibleH = 2 * dist * Math.tan(fovRad / 2);
       const lookY = box.min.y - 5e-3 + visibleH / 2;
@@ -53824,6 +53914,39 @@ void main() {
       const cyanTexture = makeSolidColorTexture("#00f5d4");
       const cyanBrightTexture = makeSolidColorTexture("#80ffff");
       const darkSocketTexture = makeSolidColorTexture("#061320");
+      const textureLoader = new TextureLoader();
+      const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
+      const vrmDir = base || "./vrm";
+      const androidBodyTex = textureLoader.load(
+        `${vrmDir}/body_skin_android.png?v=chibi_v3`,
+        (tex) => {
+          tex.colorSpace = SRGBColorSpace;
+          tex.flipY = false;
+          tex.needsUpdate = true;
+        },
+        void 0,
+        (err) => console.warn("[vrm_pet] err loading body texture:", err)
+      );
+      const androidFaceTex = textureLoader.load(
+        `${vrmDir}/face_skin_android.png?v=chibi_v3`,
+        (tex) => {
+          tex.colorSpace = SRGBColorSpace;
+          tex.flipY = false;
+          tex.needsUpdate = true;
+        },
+        void 0,
+        (err) => console.warn("[vrm_pet] err loading face texture:", err)
+      );
+      const androidHairTex = textureLoader.load(
+        `${vrmDir}/hair_android.png?v=chibi_v3`,
+        (tex) => {
+          tex.colorSpace = SRGBColorSpace;
+          tex.flipY = false;
+          tex.needsUpdate = true;
+        },
+        void 0,
+        (err) => console.warn("[vrm_pet] err loading hair texture:", err)
+      );
       v.scene.traverse((child) => {
         if (!child.isMesh) return;
         const materials = Array.isArray(child.material) ? child.material : [child.material];
@@ -53831,7 +53954,7 @@ void main() {
           const name = (m.name || "").toLowerCase();
           if (name.includes("iris") || name.includes("eyeiris")) {
             if (m.color) m.color.setHex(62932);
-            if (m.shadeColor) m.shadeColor.setHex(54442);
+            if (m.shadeColor) m.shadeColor.setHex(47252);
             m.map = cyanTexture;
             m.shadeMultiplyTexture = cyanTexture;
             if (m.emissive) {
@@ -53840,8 +53963,8 @@ void main() {
             }
             m.needsUpdate = true;
           } else if (name.includes("eyehighlight")) {
-            if (m.color) m.color.setHex(10551295);
-            if (m.shadeColor) m.shadeColor.setHex(8454143);
+            if (m.color) m.color.setHex(16777215);
+            if (m.shadeColor) m.shadeColor.setHex(10551295);
             m.map = cyanBrightTexture;
             m.shadeMultiplyTexture = cyanBrightTexture;
             m.needsUpdate = true;
@@ -53856,23 +53979,36 @@ void main() {
             if (m.shadeColor) m.shadeColor.setHex(264464);
             m.needsUpdate = true;
           } else if (name.includes("brow")) {
-            if (m.color) m.color.setHex(1584200);
+            if (m.color) m.color.setHex(1056824);
             m.needsUpdate = true;
           } else if (name.includes("mouth")) {
-            if (m.color) m.color.setHex(1187376);
+            if (m.color) m.color.setHex(1584202);
             m.needsUpdate = true;
-          } else if (name.includes("skin") || name.includes("body") || name.includes("face")) {
-            if (m.color) m.color.setHex(2638443);
-            if (m.shadeColor) m.shadeColor.setHex(1187379);
-            if (m.parametricRimColor) m.parametricRimColor.setHex(61695);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.7;
-            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
+          } else if (name.includes("body")) {
+            if (m.color) m.color.setHex(16777215);
+            if (m.shadeColor) m.shadeColor.setHex(3691642);
+            m.map = androidBodyTex;
+            m.shadeMultiplyTexture = androidBodyTex;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.35;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.5;
+            m.needsUpdate = true;
+          } else if (name.includes("face") || name.includes("skin")) {
+            if (m.color) m.color.setHex(16777215);
+            if (m.shadeColor) m.shadeColor.setHex(4746396);
+            m.map = androidFaceTex;
+            m.shadeMultiplyTexture = androidFaceTex;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.25;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 3;
             m.needsUpdate = true;
           } else if (name.includes("hair")) {
-            if (m.color) m.color.setHex(1583174);
-            if (m.shadeColor) m.shadeColor.setHex(792102);
-            if (m.parametricRimColor) m.parametricRimColor.setHex(58879);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.65;
+            if (m.color) m.color.setHex(16777215);
+            if (m.shadeColor) m.shadeColor.setHex(1583174);
+            m.map = androidHairTex;
+            m.shadeMultiplyTexture = androidHairTex;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(61695);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.5;
             m.needsUpdate = true;
           }
         }
@@ -53943,7 +54079,13 @@ void main() {
         const turnSpeed = 6;
         const diff = targetHeadingY - currentHeadingY;
         currentHeadingY += diff * Math.min(1, dt * turnSpeed);
-        vrm.scene.rotation.y = currentHeadingY;
+        if (poseTo === "spin") {
+          spinAngle = (spinAngle + dt * 4.2) % (Math.PI * 2);
+          vrm.scene.rotation.y = currentHeadingY + spinAngle;
+        } else {
+          spinAngle = 0;
+          vrm.scene.rotation.y = currentHeadingY;
+        }
         if (t > nextBlinkTime) {
           blinkProgress += dt * 10;
           const blinkVal = Math.sin(Math.min(Math.PI, blinkProgress));
@@ -53958,17 +54100,27 @@ void main() {
         }
         if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
           if (t > nextIdleFidgetTime) {
-            nextIdleFidgetTime = t + 9 + Math.random() * 9;
-            const gestures = ["crossArms", "think", "lookaround", "relax"];
+            nextIdleFidgetTime = t + 12 + Math.random() * 12;
+            const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
             const pick = gestures[Math.floor(Math.random() * gestures.length)];
-            const holdMs = pick === "crossArms" ? 4e3 : pick === "think" ? 3200 : 4500;
+            const holdMs = pick === "crossArms" ? 4500 : pick === "think" ? 3500 : 5e3;
             setPose(pick, holdMs);
           }
         }
-        if (!activeVrmaAction) {
+        const isWalking = activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk";
+        const targetWalkY = isWalking ? 0.088 : 0;
+        const lerpSpeed = isWalking ? 16 : 6;
+        walkYOffset += (targetWalkY - walkYOffset) * Math.min(1, dt * lerpSpeed);
+        if (poseTo === "jump") {
+          const jumpBounce = Math.max(0, Math.sin(t * 4)) * 0.038;
+          vrm.scene.position.y = walkYOffset + jumpBounce;
+        } else if (poseTo === "dance") {
+          const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
+          vrm.scene.position.y = walkYOffset + danceBounce;
+        } else if (!activeVrmaAction && poseTo === "idle") {
           vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
         } else {
-          vrm.scene.position.y = 0;
+          vrm.scene.position.y = walkYOffset;
         }
         if (vrm.lookAt) {
           try {

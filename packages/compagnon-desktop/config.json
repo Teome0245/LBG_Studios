@@ -9,7 +9,7 @@
   "overlay": {
     "enabled": true,
     "mode": "vrm",
-    "width": 270,
+    "width": 320,
     "height": 420,
     "marginRight": 8,
     "marginBottom": 0,
@@ -17,8 +17,8 @@
     "vrmModel": "./vrm/Compagnon.vrm",
     "vrmFraming": "full",
     "wander": true,
-    "wanderSpeed": 92,
-    "wanderPauseMs": 14000,
+    "wanderSpeed": 165,
+    "wanderPauseMs": 45000,
     "guideSpeed": 220
   },
   "tray": {

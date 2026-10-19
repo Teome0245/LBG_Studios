@@ -79,10 +79,18 @@ def _model_needs_heavy(model: str | None) -> bool:
     """Route vers Ollama heavy (.110).
 
     e2b (abliterated) vit sur light ``.111`` — causerie Compagnon.
-    Heavy = 9b / 12b / 12b-qat / E4b uniquement.
+    Heavy = 9b / 12b / 12b-qat / E4b (sauf si E4b configuré sur light .111 via LBG_OLLAMA_E4B_HOST).
     """
     m = (model or "").lower()
-    return any(x in m for x in (":9b", ":12b", "12b-qat", ":e4b"))
+    if "e4b" in m:
+        if os.getenv("LBG_OLLAMA_E4B_HOST", "").lower() in (
+            "light",
+            "111",
+            "http://192.168.0.111:11434",
+        ):
+            return False
+        return True
+    return any(x in m for x in (":9b", ":12b", "12b-qat", "e4b"))
 
 
 def _model_needs_long_timeout(model: str | None) -> bool:
@@ -164,11 +172,13 @@ class LocalLLMProvider:
     def __init__(
         self,
         base_url: str | None = None,
-        default_model: str = "huihui_ai/gemma-4-abliterated:e2b",
+        default_model: str = "huihui_ai/gemma-4-abliterated:E4b-qat",
     ):
         settings = get_settings()
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
-        self.default_model = default_model
+        self.default_model = (
+            os.getenv("LBG_COMPAGNON_LOCAL_MODEL", "").strip() or default_model
+        )
         # cache par hôte (light .111 / heavy .110)
         self._tags_cache: dict[str, tuple[float, list[str]]] = {}
 

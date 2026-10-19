@@ -2,20 +2,20 @@
   "routing_rules": {
     "fallback": {
       "provider": "local",
-      "name": "huihui_ai/qwen3.5-abliterated:2B"
+      "name": "huihui_ai/gemma-4-abliterated:E4b-qat"
     }
   },
-  "_comment": "Local only — pas de Groq. OLLAMA=.111 (2B). Qualité média/outillage → gemma-4:12b sur .110 (LBG_REASON_HEAVY_BASE_URL).",
+  "_comment": "Modèles locaux 111 light / 110 heavy. E4b-qat pour dialogue vif et concis, 12b-qat pour raisonnement approfondi.",
   "tasks": {
     "general_qa": {
       "models": [
         {
           "provider": "local",
-          "name": "huihui_ai/qwen3.5-abliterated:2B"
+          "name": "huihui_ai/gemma-4-abliterated:E4b-qat"
         },
         {
           "provider": "local",
-          "name": "huihui_ai/qwen3.5-abliterated:0.8B"
+          "name": "huihui_ai/gemma-4-abliterated:12b-qat"
         },
         {
           "provider": "local",
@@ -28,6 +28,10 @@
         {
           "provider": "local",
           "name": "huihui_ai/gemma-4-abliterated:e2b"
+        },
+        {
+          "provider": "local",
+          "name": "huihui_ai/qwen3.5-abliterated:2B"
         }
       ]
     },
@@ -35,6 +39,14 @@
       "models": [
         {
           "provider": "local",
+          "name": "huihui_ai/gemma-4-abliterated:12b-qat"
+        },
+        {
+          "provider": "local",
+          "name": "huihui_ai/gemma-4-abliterated:E4b-qat"
+        },
+        {
+          "provider": "local",
           "name": "huihui_ai/gemma-4-abliterated:12b"
         },
         {
@@ -43,11 +55,11 @@
         },
         {
           "provider": "local",
-          "name": "huihui_ai/qwen3.5-abliterated:2B"
+          "name": "huihui_ai/gemma-4-abliterated:e2b"
         },
         {
           "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:e2b"
+          "name": "huihui_ai/qwen3.5-abliterated:2B"
         }
       ]
     },
