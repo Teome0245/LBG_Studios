@@ -210,9 +210,11 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Buste en armure bleu titane satinée couvrant les anciens pointillés, galbe souligné d'un double liseré cyan néon 2.5px (`#00f5d4` + cœur `#c0fff6`), sternum en Y inversé et rivets discrets.
       - Visage expressif et lumineux préservant tout le modelé 3D (arête du nez, paupières, pommettes, lèvres glossy framboise-cyber nacrées).
     - **Cheveux** : Dégradé soyeux validé conservé (racines indigo profond -> corps cobalt -> pointes cyan éclatantes).
-30. **Assainissement des Prompts Compagnon & Posture JARVIS (élimination boucles dry-run / deploy_* / chatbot isolé + routage E4b-qat / 12b-qat)** : **fait** 2026-10-19 —
+30. **Assainissement des Prompts Compagnon & Posture JARVIS (élimination boucles dry-run / deploy_* / chatbot isolé + routage E4b-qat / 12b-qat)** : **live & déployé sur CT100 (`1.0.0+9d126f0`)** 2026-10-19 —
     - **Éradication des boucles perroquet dans `router_prompts.py`** : refonte de `BASE_GUARDRAILS`, `LAB_GUARDRAILS`, `LAB_CAUSERIE_GUARDRAILS`, `lab_ops_system_prompt()` et `build_profiles()` ; suppression de toutes les mentions rigides de « deploy_* », « dry-run » et « pas un chatbot isolé » ; recentrage sur une posture naturelle, réactive et courtoise façon JARVIS.
     - **Nettoyage des catchphrases et worldview (`character/compagnon_v1.json`)** : élimination des slogans « Agir d'abord en dry-run » et « Je suis le Compagnon du studio — pas un chatbot isolé » qui étaient injectés systématiquement à chaque tour ; remplacés par des formules naturelles et discrètes.
+    - **Alignement routage modèles (`routing.json` & `local_llm_provider.py`)** : promotion de `huihui_ai/gemma-4-abliterated:E4b-qat` (sweet spot interactif réactif, configurable sur .111 ou .110 via `LBG_OLLAMA_E4B_HOST`) et `huihui_ai/gemma-4-abliterated:12b-qat` (qualité max sur .110) en tête de liste, avec support de `LBG_COMPAGNON_LOCAL_MODEL`.
+    - **Déploiement atomique CT100 validé** : build paquet `server_overlay-1.0.0+9d126f0.tar.gz` (41 fichiers), upload, vérification checksum sha256 et application atomique réussie ; conteneurs `orchestrateur-backend` et `lbg-frontend` recréés et redémarrés avec succès sur `192.168.0.100:5174`.
 31. **Application & Synchronisation de l'identité Android 360° sur la vue Buste (`CT100:5174`)** : **live & validé** 2026-10-19 —
     - **Diagnostic du décalage vue buste** : le conteneur Docker `lbg-frontend` servait une image antérieure non reconstruite (absence de `hair_android.png` et `face_skin_android.png` provoquant des erreurs 404 dans la console du navigateur et un repli sur la texture d'origine violette et le corps uni sans plaques).
     - **Résolution dynamique des chemins de texture (`vrm_pet.js`)** : remplacement du chemin relatif `./vrm/...` par la dérivation contextuelle de `vrmDir` à partir de `modelUrl` (`const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm"; const vrmDir = base || "./vrm";`) garantissant un chargement fluide quel que soit le contexte (Web `:5174` ou Overlay Desktop).
@@ -223,7 +225,11 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Rebuild Docker de l'image `orchestrateur-frontend` et recréation à chaud du conteneur `lbg-frontend`.
       - Vérification HTTP curl complète : 200 OK sur toutes les textures et le bundle avec en-têtes `Cache-Control: no-cache`. La vue buste et l'overlay desktop partagent désormais exactement la même apparence androïde.
     - **Mise à disposition des assets 3D & textures (`N:\Upload\IA\`)** : synchronisation directe des fichiers `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png` et `hair_android.png` vers le lecteur réseau de travail `N:\Upload\IA\` via l'agent Windows (`.10:5005`).
-32. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+32. **Sculpture des Plaques Costales & Cintrage de la Taille (Châssis 360°)** : **live & validé** 2026-10-19 —
+    - **Plaques costales latérales (côtes)** : 3 paires de plaques profilées en biais descendant du dos latéral vers l'abdomen avant (`Y: 630..880`, `X: 700..850` à gauche et `1200..1350` à droite), remplies en bleu titane satiné avec biseaux clairs, rainures sombres mécatroniques, liserés néon cyan et rivets mécaniques discrets.
+    - **Cintrage de la taille & crête iliaque** : plaques galbées marquant le creux de la taille (`Y: 890..975`), avec ligne lumineuse néon cyan verticale reliant les flancs et affinant la silhouette androïde en 3D sous tous les angles.
+    - **Déploiement multi-surfaces immédiat** : texture `body_skin_android.png` (309 ko) injectée en direct sur CT100 (`lbg-frontend`), synchronisée sur `N:\Upload\IA\` et déployée sur Windows SDS `.10` avec redémarrage de l'overlay (PID 23308).
+33. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
