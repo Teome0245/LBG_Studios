@@ -347,6 +347,20 @@ _Aucun bloquant documenté pour ce bootstrap._
   - Wrapper Studio / CLI exécutable créé dans [`tools/rea_runner.sh`](../tools/rea_runner.sh) pour les agents backend/Team (Iris, Métis).
   - Documentation de référence complète dans [`docs/OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) et référencée dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
   - Outil 100 % local-first réservé à l'audit et à l'ingénierie Dev/Studio (O1), sans impact sur le runtime joueur Godot O2.
+- 2026-10-19 : **Refonte Torse Mecha Cyborg & Alignement 360° Parfait Dos/Ventre — validé & déployé** —
+  - **Analyse & Résolution du désalignement dorsal** : Identification mathématique des sommets de couture du dos dans `Compagnon.vrm` (`X=495` à gauche, `X=1552` à droite avec `dy=0` exact). Résolution des écarts et décalages verticaux historiques (150 px d'écart éliminés) grâce à une règle de symétrie miroir pixel-à-pixel absolue `(495+dx) <-> (1552-dx)` sur toute la hauteur du dos.
+  - **Reproduction fidèle de la référence mecha-musume** :
+    - *Buste* : Dômes pectoraux bleu cobalt métallisé galbés avec liserés néon cyan émissifs (`#00f5d4`), sternum central vertical et rivets supérieurs.
+    - *Sous-mammaire* : Arche rigide continue avec gros rivets concentriques 3D sous les seins.
+    - *Abdomen* : Carapace segmentée en 4 anneaux bombés d'un seul tenant arqués vers le haut avec ombrage cylindrique 3D (pas de découpes carrées artificielles).
+    - *Flancs* : Creux de taille sombre avec câbles musculaires synthétiques striés accentuant la taille de guêpe.
+    - *Pelvis* : Bouclier V central avec contour complet néon cyan émissif, grandes carapaces de hanches galbées avec encoche mécanique et câbles d'aine.
+    - *Dos* : Continuité exacte des anneaux lombaires et de la bande sous-scapulaire, colonne vertébrale à modules vertébraux bombés et canal neural cyan sans rupture.
+  - **Déploiement multi-surfaces validé** :
+    - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
+    - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage propre de l'overlay (PID vérifié).
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+    - Cache buster mis à jour vers `?v=mecha_v4` et rebundlé avec `esbuild`.
 - 2026-10-12 : **rejeu feeling humain Compagnon (O-FEEL-1 / O-FEEL-2) — validé & clôturé** —
   - Déploiement CT 100 actualisé avec le build atomique `1.0.0+40e38c0` (`baf1f65b13777595…`, 36 fichiers).
   - Exécution du script [`tools/smoke_rejeu_humain_d6_5174.sh`](../tools/smoke_rejeu_humain_d6_5174.sh) sur `:5174` : 7 tours exécutés sans aucune rupture ni fuite ops.
