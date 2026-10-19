@@ -225,10 +225,11 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Rebuild Docker de l'image `orchestrateur-frontend` et recréation à chaud du conteneur `lbg-frontend`.
       - Vérification HTTP curl complète : 200 OK sur toutes les textures et le bundle avec en-têtes `Cache-Control: no-cache`. La vue buste et l'overlay desktop partagent désormais exactement la même apparence androïde.
     - **Mise à disposition des assets 3D & textures (`N:\Upload\IA\`)** : synchronisation directe des fichiers `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png` et `hair_android.png` vers le lecteur réseau de travail `N:\Upload\IA\` via l'agent Windows (`.10:5005`).
-32. **Sculpture des Plaques Costales & Cintrage de la Taille (Châssis 360°)** : **live & validé** 2026-10-19 —
-    - **Plaques costales latérales (côtes)** : 3 paires de plaques profilées en biais descendant du dos latéral vers l'abdomen avant (`Y: 630..880`, `X: 700..850` à gauche et `1200..1350` à droite), remplies en bleu titane satiné avec biseaux clairs, rainures sombres mécatroniques, liserés néon cyan et rivets mécaniques discrets.
-    - **Cintrage de la taille & crête iliaque** : plaques galbées marquant le creux de la taille (`Y: 890..975`), avec ligne lumineuse néon cyan verticale reliant les flancs et affinant la silhouette androïde en 3D sous tous les angles.
-    - **Déploiement multi-surfaces immédiat** : texture `body_skin_android.png` (309 ko) injectée en direct sur CT100 (`lbg-frontend`), synchronisée sur `N:\Upload\IA\` et déployée sur Windows SDS `.10` avec redémarrage de l'overlay (PID 23308).
+32. **Sculpture Étendue des Plaques (Ventre, Côtes & Dos 360°)** : **live & validé** 2026-10-19 —
+    - **Cuirasse abdominale complète (Ventre)** : 6 grandes plaques abdominales pleines biseautées (3 étages gauche/droite + carénage pelvien en V, `Y: 630..980`), teintées en bleu titane satiné avec reflets supérieurs bombés, séparées par une Linea alba sombre à liseré néon cyan fin et connectées directement aux plaques costales.
+    - **Armure dorsale étendue (Dos complet)** : 3 étages de grandes plaques dorsales sous-scapulaires et lombaires (`Y: 475..930`) encadrant la cyber-spine de part et d'autre, bordées de liserés néon cyan et de rainures mécatroniques sombres, rejoignant les flancs.
+    - **Plaques costales & taille cintrée** : 3 paires de plaques costales obliques épousant la cambrure de la taille et affinant la silhouette.
+    - **Déploiement multi-surfaces immédiat** : texture `body_skin_android.png` (304 ko) injectée sur CT100 (`lbg-frontend`), déployée sur Windows SDS `.10` (overlay relancé PID 3312) et répliquée à chaud sur `N:\Upload\IA\` avec `Compagnon.vrm`, `face_skin_android.png` et `hair_android.png`.
 33. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
