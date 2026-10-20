@@ -53384,6 +53384,9 @@ void main() {
     key.position.set(1, 1.8, 2.2);
     scene.add(key);
     scene.add(new DirectionalLight(10086898, 0.45).translateX(-2).translateY(1));
+    const metallicRimLight = new DirectionalLight(8448255, 0.75);
+    metallicRimLight.position.set(-1, 1.8, -2);
+    scene.add(metallicRimLight);
     let vrm = null;
     let talkingUntil = 0;
     let mouthAmp = 0;
@@ -53918,7 +53921,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_v11`,
+        `${vrmDir}/body_skin_android.png?v=mecha_v12`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53928,7 +53931,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading body texture:", err)
       );
       const androidFaceTex = textureLoader.load(
-        `${vrmDir}/face_skin_android.png?v=mecha_v11`,
+        `${vrmDir}/face_skin_android.png?v=mecha_v12`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53938,7 +53941,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading face texture:", err)
       );
       const androidHairTex = textureLoader.load(
-        `${vrmDir}/hair_android.png?v=mecha_v11`,
+        `${vrmDir}/hair_android.png?v=mecha_v12`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53986,29 +53989,31 @@ void main() {
             m.needsUpdate = true;
           } else if (name.includes("body")) {
             if (m.color) m.color.setHex(16777215);
-            if (m.shadeColor) m.shadeColor.setHex(3691642);
+            if (m.shadeColor) m.shadeColor.setHex(1583166);
             m.map = androidBodyTex;
             m.shadeMultiplyTexture = androidBodyTex;
-            if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.35;
-            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.5;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(8454143);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.65;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
+            if (m.parametricRimLift !== void 0) m.parametricRimLift = 0.12;
             m.needsUpdate = true;
           } else if (name.includes("face") || name.includes("skin")) {
             if (m.color) m.color.setHex(16777215);
-            if (m.shadeColor) m.shadeColor.setHex(4746396);
+            if (m.shadeColor) m.shadeColor.setHex(3691640);
             m.map = androidFaceTex;
             m.shadeMultiplyTexture = androidFaceTex;
-            if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.25;
-            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 3;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(8454143);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.4;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.5;
             m.needsUpdate = true;
           } else if (name.includes("hair")) {
             if (m.color) m.color.setHex(16777215);
-            if (m.shadeColor) m.shadeColor.setHex(1583174);
+            if (m.shadeColor) m.shadeColor.setHex(1318966);
             m.map = androidHairTex;
             m.shadeMultiplyTexture = androidHairTex;
-            if (m.parametricRimColor) m.parametricRimColor.setHex(61695);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.5;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.6;
+            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.2;
             m.needsUpdate = true;
           }
         }
@@ -54016,7 +54021,7 @@ void main() {
       try {
         const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
         if (headBone) {
-          headBone.scale.set(1.14, 1.14, 1.14);
+          headBone.scale.set(1.24, 1.24, 1.24);
         }
       } catch (_) {
       }

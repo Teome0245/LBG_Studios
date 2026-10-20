@@ -360,6 +360,9 @@ export function createVrmPet(hostEl, opts = {}) {
   key.position.set(1.0, 1.8, 2.2);
   scene.add(key);
   scene.add(new THREE.DirectionalLight(0x99e9f2, 0.45).translateX(-2).translateY(1));
+  const metallicRimLight = new THREE.DirectionalLight(0x80e8ff, 0.75);
+  metallicRimLight.position.set(-1.0, 1.8, -2.0);
+  scene.add(metallicRimLight);
 
   /** @type {import('@pixiv/three-vrm').VRM | null} */
   let vrm = null;
@@ -983,7 +986,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_v11`,
+      `${vrmDir}/body_skin_android.png?v=mecha_v12`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -993,7 +996,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading body texture:", err)
     );
     const androidFaceTex = textureLoader.load(
-      `${vrmDir}/face_skin_android.png?v=mecha_v11`,
+      `${vrmDir}/face_skin_android.png?v=mecha_v12`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1003,7 +1006,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading face texture:", err)
     );
     const androidHairTex = textureLoader.load(
-      `${vrmDir}/hair_android.png?v=mecha_v11`,
+      `${vrmDir}/hair_android.png?v=mecha_v12`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1056,46 +1059,48 @@ export function createVrmPet(hostEl, opts = {}) {
           if (m.color) m.color.setHex(0x182c4a);
           m.needsUpdate = true;
         }
-        // 2a. Carrosserie mécanique du corps (Texture Canon Châssis Androïde)
+        // 2a. Carrosserie mécanique du corps (Texture Canon Châssis Androïde Métallique Spéculaire)
         else if (name.includes("body")) {
           if (m.color) m.color.setHex(0xffffff);
-          if (m.shadeColor) m.shadeColor.setHex(0x38547a);
+          if (m.shadeColor) m.shadeColor.setHex(0x18283e); // Ombre titane contrastée
           m.map = androidBodyTex;
           m.shadeMultiplyTexture = androidBodyTex;
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.35;
-          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.5;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x80ffff); // Reflet spéculaire métallique cyan-chrome
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.65; // Lustre métallique prononcé
+          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.0; // Courbure de réflexion élargie
+          if (m.parametricRimLift !== undefined) m.parametricRimLift = 0.12;
           m.needsUpdate = true;
         }
         // 2b. Visage androïde : Teint azur doux & détails expressifs préservés
         else if (name.includes("face") || name.includes("skin")) {
           if (m.color) m.color.setHex(0xffffff);
-          if (m.shadeColor) m.shadeColor.setHex(0x486c9c);
+          if (m.shadeColor) m.shadeColor.setHex(0x385478);
           m.map = androidFaceTex;
           m.shadeMultiplyTexture = androidFaceTex;
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.25;
-          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 3.0;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x80ffff);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.40;
+          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.5;
           m.needsUpdate = true;
         }
         // 3. Chevelure métallique indigo -> cyan (Texture Cheveux fluide)
         else if (name.includes("hair")) {
           if (m.color) m.color.setHex(0xffffff);
-          if (m.shadeColor) m.shadeColor.setHex(0x182846);
+          if (m.shadeColor) m.shadeColor.setHex(0x142036);
           m.map = androidHairTex;
           m.shadeMultiplyTexture = androidHairTex;
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f0ff);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.50;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.60;
+          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.2;
           m.needsUpdate = true;
         }
       }
     });
 
-    // 4. Proportions Chibi mignonnes : tête légèrement agrandie (+14%)
+    // 4. Proportions Chibi mignonnes : tête agrandie (+24%)
     try {
       const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
       if (headBone) {
-        headBone.scale.set(1.14, 1.14, 1.14);
+        headBone.scale.set(1.24, 1.24, 1.24);
       }
     } catch (_) {}
   }

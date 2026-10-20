@@ -296,7 +296,22 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (150 219 octets).
       - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 16904).
       - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
-39. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+39. **Châssis Métallique Spéculaire v12 & Tête Chibi Agrandie** : **live & déployé sur toutes les surfaces** 2026-10-21 —
+    - **Contrôle & Application du Nouveau Skin Utilisateur** :
+      - Intégration des sangles croisées en X en bas au centre (`Y: 700..1024`), de la pointe de carénage pelvien descendante avec needle cyan, des ongles magenta/cyan et des segments de doigts mécatroniques.
+      - Suréchantillonnage net en 2048×2048 avec micro-biseautage spéculaire le long des arêtes supérieures des plaques pectorales, abdominales et pelviennes (brossage titane).
+    - **Proportions Chibi Accentuees** :
+      - Amplification de l'échelle du bone `head` portée de `1.14` à **`1.24` (+24%)** dans `vrm_pet.js` pour une silhouette anime chibi encore plus expressive et mignonne.
+    - **Rendu Métallique Three.js & MToon Shader** :
+      - *Rim Lighting spéculaire chrome-cyan* : `parametricRimColor = 0x80ffff`, blend factor `rimLightingMix = 0.65` (effet métal poli lustré), fresnel élargi `parametricRimFresnelPower = 2.0` et `parametricRimLift = 0.12`.
+      - *Ombres contrastées acier* : `shadeColor = 0x18283e` (contraste dynamique accru typique du métal poli).
+      - *Éclairage contre-jour directionnel* : ajout d'un spot spéculaire de rétro-éclairage `DirectionalLight(0x80e8ff, 0.75)` à `(-1.0, 1.8, -2.0)`.
+    - **Rebundle & Cache Buster** : passage à `?v=mecha_v12` dans `vrm_pet.js` et compilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+    - **Déploiement multi-surfaces immédiat** :
+      - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (231 683 octets).
+      - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 37976).
+      - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
+40. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
