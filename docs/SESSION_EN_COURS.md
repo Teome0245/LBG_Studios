@@ -286,7 +286,17 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (260 298 octets).
       - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 16364).
       - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
-38. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+38. **Mixte Châssis v11 (Haut Original + Centre Échancré _5 + Bas _5)** : **live & déployé sur toutes les surfaces** 2026-10-21 —
+    - **Composition chirurgicale selon la demande utilisateur** :
+      - *Haut de l'original (`Y: 0..324`)* : col mécatronique à cornes, servomoteur cervical sombre, plastron pectoral biseauté avec fente en Y et liserés cyan, plaques de mains propres aux angles supérieurs.
+      - *Partie centrale échancrée de la _5 (`Y: 324..625`)* : segments abdominaux et cambrure des hanches en découpe haute échancrée (`\  /` diagonales) avec pointe de carénage pelvien descendante.
+      - *Bas de la _5 (`Y: 625..1024`)* : fond uni sombre sans bloc nuque parasite central, extrémités et phalanges nettes de la _5.
+    - **Rebundle & Cache Buster** : passage à `?v=mecha_v11` dans `vrm_pet.js` et compilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+    - **Déploiement multi-surfaces immédiat** :
+      - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (150 219 octets).
+      - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 16904).
+      - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
+39. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
