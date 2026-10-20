@@ -271,8 +271,22 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
     - **Déploiement multi-surfaces immédiat** :
       - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (247 104 octets).
       - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 9080).
+37. **Harmonisation Mecha Skin v10 (Mains, Doigts, Ongles Cyber & Carénage Pelvien)** : **live & déployé sur toutes les surfaces** 2026-10-21 —
+    - **Identification précise des îlots UV (Retour utilisateur)** :
+      - Les 2 plaques du haut de part et d'autre du cou sont les **mains** (dos et paume de mains avec poignets/cuff mécatroniques).
+      - Les 5 paires de pavés rectangulaires du bas sont les **doigts** (anciens tracés verts transformés en segments robotiques articulés bleu titane satiné).
+      - Les gélules verticales adjacentes sont les **ongles de mains** (anciens tracés roses transformés en ongles cybernétiques néon cyan `#00f5d4` avec cœur émissif `#c0fff6`).
+      - Les gélules extérieures sont les **ongles de pieds** (harmonisés en cyan éclatant).
+    - **Sculpture & Intégration du Châssis** :
+      - Raccordement et affinement du carénage pelvien en pointe biseautée au centre du bassin.
+      - Préservation du col de nuque 360° sur la pièce en cloche du bas pour un tour de cou complet sans rupture à l'arrière.
+      - Suréchantillonnage net en 2048×2048 pour une netteté maximale des circuits néon et des rivets.
+    - **Rebundle & Cache Buster** : passage à `?v=mecha_v10` dans `vrm_pet.js` et compilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+    - **Déploiement multi-surfaces immédiat** :
+      - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (260 298 octets).
+      - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 16364).
       - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
-37. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+38. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 

@@ -983,7 +983,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_v9`,
+      `${vrmDir}/body_skin_android.png?v=mecha_v10`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -993,7 +993,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading body texture:", err)
     );
     const androidFaceTex = textureLoader.load(
-      `${vrmDir}/face_skin_android.png?v=mecha_v9`,
+      `${vrmDir}/face_skin_android.png?v=mecha_v10`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1003,7 +1003,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading face texture:", err)
     );
     const androidHairTex = textureLoader.load(
-      `${vrmDir}/hair_android.png?v=mecha_v9`,
+      `${vrmDir}/hair_android.png?v=mecha_v10`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
