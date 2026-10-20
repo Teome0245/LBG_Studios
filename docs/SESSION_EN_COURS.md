@@ -244,12 +244,14 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Rebuild Docker des conteneurs `orchestrateur-backend` et `lbg-frontend` avec compilation Vite client.
       - Tests live vérifiés sur `:5174` : « et donc tu peux vérifier ? » et « tu peux regarder pour intégré plus de danse différentes pour l'avatar ? fait travailler la team sur le sujet » répondent tous deux en mode dialogue naturel (JARVIS) fluide sans dump d'outils.
 34. **Plaque Torse, Épaules & Omoplates 360° (Haut du Buste Mecha & Cou Réaligné)** : **live & déployé sur toutes les surfaces** 2026-10-20 —
-    - **Identification & Rectification du Cou sur `face_skin_android.png`** : identification de la topologie VRM où le cou avant (sous le menton jusqu'aux clavicules, `Y_3d: 1.24..1.40`) dépend du mesh visage (`face_skin`, `Y: 800..1024`, centré en 512). Application du servomoteur mécanique sombre (`CHASSIS_DARK`), des anneaux horizontaux (`FIBER_LIGHT`), des câbles musculaires latéraux et de l'échancrure concave en U avec son liseré cyan éclatant (`#00f5d4`) directement sur le cou visible.
-    - **Repositionnement Haut du Torse sur `body_skin_android.png`** : suppression du faux cou dessiné trop bas. Le plastron claviculaire démarre désormais dès la base du cou (`Y: 140..380`), la fente centrale en 'Y' sombre sépare les dômes des seins (`Y: 360..605`), les gros rivets concentriques signature sont placés au-dessus des seins (`Y: 310`) et les découpes d'accent se situent à `Y: 460`.
+    - **Ajustement Fin des Proportions du Cou (Menton Dégagé & Report sur Body)** :
+      - *Face Skin* : le menton et le haut de la gorge retrouvent leur teinte androïde claire (`Y: 790..890`). La zone sombre du cou mécanique est réduite à la portion médiane (`Y: 895..1024`, centré en 512) avec ses anneaux de servomoteur et sa démarcation supérieure incurvée douce.
+      - *Body Skin* : report direct de la base du cou mécanique sombre (`Y: 110..220`), raccordé exactement sous le col du visage. L'échancrure concave en 'U' se place au creux anatomique des clavicules (`Y: 215..265`) avec son liseré néon cyan et ses deux vis de précision.
+      - *Plastron & Seins* : plastron claviculaire (`Y: 230..385`), fente centrale en 'Y' (`Y: 270..605`), rivets signature au-dessus des seins (`Y: 345`) et dômes des seins à `Y: 390..605`.
     - **Épaulières Dômes & Omoplates Remontées** : capsules d'épaules semi-sphériques bleu cobalt métal avec arête supérieure/externe néon cyan éclatant (`#00f5d4` + cœur `#c0fff5`), collerette inférieure articulée et rotule mécanique centrale ; plaques scapulaires au dos avec symétrie miroir pixel-à-pixel absolue sur la couture dorsale (`X=495` et `X=1552`).
     - **Déploiement multi-surfaces immédiat** :
       - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
-      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 37812, cache buster `?v=mecha_v6`).
+      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 3828, cache buster `?v=mecha_v7`).
       - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `face_skin_android.png`, `vrm_pet.bundle.js`).
 35. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
