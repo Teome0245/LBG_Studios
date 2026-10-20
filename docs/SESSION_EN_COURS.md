@@ -230,7 +230,29 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
     - **Armure dorsale étendue (Dos complet)** : 3 étages de grandes plaques dorsales sous-scapulaires et lombaires (`Y: 475..930`) encadrant la cyber-spine de part et d'autre, bordées de liserés néon cyan et de rainures mécatroniques sombres, rejoignant les flancs.
     - **Plaques costales & taille cintrée** : 3 paires de plaques costales obliques épousant la cambrure de la taille et affinant la silhouette.
     - **Déploiement multi-surfaces immédiat** : texture `body_skin_android.png` (304 ko) injectée sur CT100 (`lbg-frontend`), déployée sur Windows SDS `.10` (overlay relancé PID 3312) et répliquée à chaud sur `N:\Upload\IA\` avec `Compagnon.vrm`, `face_skin_android.png` et `hair_android.png`.
-33. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+33. **Correction Réactivité Streaming UI & Filtrage Intentions (Bulle vide + Détournement Diagnostic/Team)** : **live & déployé sur CT100 (`1.0.0+b1aeb85`)** 2026-10-19 —
+    - **Correction du bug d'affichage UI de la bulle vide (`useChat.js`)** :
+      - *Cause racine* : `beginStream()` conservait la référence de l'objet JS brut (`streamedMessage = msg`), alors que `messages.value.push(msg)` stockait un proxy réactif Vue 3 dans le tableau. Les mutations dans `appendStream` (`msg.content += delta`) et `finishStream` ne déclenchaient aucun setter réactif, maintenant la bulle vide jusqu'à ce qu'un nouveau message utilisateur (`addUserMessage`) provoque un re-render complet.
+      - *Résolution* : assignation directe `streamedMessage = messages.value[messages.value.length - 1]` et fiabilisation des vérifications de présence via `toRaw(m) === toRaw(streamedMessage)` dans `finishStream`, `failStream` et `addMessage`. Les deltas SSE s'affichent désormais en temps réel sans latence ni bulle vide.
+    - **Éradication des détournements d'intentions vers les outils (`reflection_router.py` & `chat_intent.py`)** :
+      - *Vérification conversationnelle* : ajout du filtre `_CONVERSATIONAL_CHECK_RE` (« tu peux vérifier ? », « regarde pourquoi ») orientant directement vers `answer` au lieu de déclencher la boucle d'outils cockpit `## Diagnostic cockpit (boucle outils)`.
+      - *Avatar, danses et fonctionnalités créatives* : ajout de `_AVATAR_OR_UI_RE` (danses, animations, VRM, interface, textures, bulle) et assainissement de `_OPS_OVERRIDE_RE` (fin du mot-clé nu « team » qui détournait les phrases créatives comme « fait travailler la team sur les danses » vers le dump SQLite du campus Lyra).
+      - *Clarification du prompt système LLM light (`_REFLECT_SYSTEM`)* : instructions strictes interdisant de choisir `tools` ou `team` pour des discussions d'avatar, de design, de bugs ou de vérification courtoise.
+    - **Validation & Déploiement CT100** :
+      - Suite de tests `test_reflection_router.py` (10 tests) et `test_chat_intent.py` (13 tests) 100% verte.
+      - Déploiement atomique du paquet `server_overlay-1.0.0+b1aeb85.tar.gz` sur CT100 via `deploy_compagnon_100.sh`.
+      - Rebuild Docker des conteneurs `orchestrateur-backend` et `lbg-frontend` avec compilation Vite client.
+      - Tests live vérifiés sur `:5174` : « et donc tu peux vérifier ? » et « tu peux regarder pour intégré plus de danse différentes pour l'avatar ? fait travailler la team sur le sujet » répondent tous deux en mode dialogue naturel (JARVIS) fluide sans dump d'outils.
+34. **Plaque Torse, Épaules & Omoplates 360° (Haut du Buste Mecha)** : **live & déployé sur toutes les surfaces** 2026-10-20 —
+    - **Plastron Claviculaire & Encolure en U** : cou mécanique avec servomoteur strié, col échancré en U concave avec liseré cyan émissif (`#00f5d4`), deux vis de fixation de précision, fente centrale en 'Y' sombre et deux gros rivets concentriques claviculaires signature au-dessus des seins.
+    - **Plaques Mammaires & Découpes Stylisées** : coques pectorales lisses en dôme avec ligne de découpe mécanique cyan en biais et contour inférieur néon.
+    - **Épaulières Dômes Bombées** : capsules d'épaules semi-sphériques bleu cobalt métal avec arête supérieure/externe néon cyan éclatant (`#00f5d4` + cœur `#c0fff5`), collerette inférieure articulée et rotule mécanique centrale.
+    - **Grandes Plaques d'Omoplates (Dos)** : deux grandes plaques scapulaires galbées épousant les omoplates avec rivets concentriques doubles, continuité parfaite avec la bande sous-scapulaire et symétrie miroir pixel-à-pixel absolue sur la couture dorsale (`X=495` et `X=1552`).
+    - **Déploiement multi-surfaces immédiat** :
+      - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
+      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 22176, cache buster `?v=mecha_v5`).
+      - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+35. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
