@@ -260,7 +260,19 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
     - **Déploiement multi-surfaces immédiat** :
       - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et relance de l'overlay (PID 41176).
       - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `face_skin_android.png`, `vrm_pet.bundle.js`).
-36. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+36. **Alignement 360° Cou & Nuque (Body_00_SKIN Pièce Bas-Centre)** : **live & déployé sur toutes les surfaces** 2026-10-20 —
+    - **Topologie 3D de la Nuque résolue** : l'analyse 3D de `Compagnon.vrm` a démontré que le mesh du visage (`Face_00_SKIN`) possède 0 vertice sur l'axe arrière de la nuque (`abs(X) < 0.03, Z < -0.01`). La nuque entière (`Y_3d: 1.243 .. 1.471`) est gouvernée par le mesh `Body_00_SKIN` et correspond à l'îlot en dôme / cloche tout en bas au centre (`U: 800..1250, V: 1650..2045`).
+    - **Application du Col Mécanique sur la Nuque** :
+      - Peinture du servomoteur mécanique sombre (`CHASSIS_DARK`, rayures horizontales `FIBER_LIGHT` et rainures sombres) directement sur la cloche de la nuque (`Y: 1740..2045`), synchronisé en hauteur avec le devant du cou.
+      - Colonne cervicale centrale à `X=1024` et câbles d'actionneurs latéraux symétriques à `X=959` et `X=1089`.
+      - Liseré supérieur néon cyan éclatant (`#00f5d4` + cœur blanc-cyan `#c8fffa`) incurvé doux à `Y ~ 1748` épousant la base du crâne / naissance des cheveux.
+      - Raccordement continu avec la couture dorsale haute (`X: 495.5` et `X: 1552.5`, `Y: 118..220`).
+    - **Rebundle & Cache Buster** : passage à `?v=mecha_v9` dans `vrm_pet.js` et compilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+    - **Déploiement multi-surfaces immédiat** :
+      - `N:\Upload\IA\` : `body_skin_android.png` mis à jour (247 104 octets).
+      - `Desktop SDS .10` : synchronisé dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et overlay relancé (PID 9080).
+      - `CT100 (192.168.0.100)` : injecté dans le conteneur Docker `lbg-frontend:/usr/share/nginx/html/vrm/`.
+37. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
