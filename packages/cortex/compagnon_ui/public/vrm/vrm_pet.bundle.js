@@ -53918,7 +53918,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_v7`,
+        `${vrmDir}/body_skin_android.png?v=mecha_v8`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53928,7 +53928,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading body texture:", err)
       );
       const androidFaceTex = textureLoader.load(
-        `${vrmDir}/face_skin_android.png?v=mecha_v7`,
+        `${vrmDir}/face_skin_android.png?v=mecha_v8`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53938,7 +53938,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading face texture:", err)
       );
       const androidHairTex = textureLoader.load(
-        `${vrmDir}/hair_android.png?v=mecha_v7`,
+        `${vrmDir}/hair_android.png?v=mecha_v8`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;

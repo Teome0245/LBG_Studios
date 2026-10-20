@@ -253,7 +253,14 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
       - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 3828, cache buster `?v=mecha_v7`).
       - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `face_skin_android.png`, `vrm_pet.bundle.js`).
-35. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
+35. **Application du Visage Utilisateur (`N:\Upload\IA\face_skin_android.png`) & Découpage UV VRoid** : **live & déployé sur toutes les surfaces** 2026-10-20 —
+    - **Importation du Visage Custom Utilisateur** : récupération et application directe de `N:\Upload\IA\face_skin_android.png` (68 957 octets) sur `packages/compagnon-desktop/overlay/vrm/face_skin_android.png` et `packages/cortex/compagnon_ui/public/vrm/face_skin_android.png`.
+    - **Carte UV Body Skin VRoid Studio** : capture du patron wireframe fournie par l'utilisateur (buste central, seins en dômes concaves, découpe du col trapézoïdal, bras gauche/droit latéraux, jambes inférieures, pieds/orteils) intégrée comme référence anatomique exacte pour le calage du modèle.
+    - **Cache Buster & Rebundle** : passage du cache buster de textures à `?v=mecha_v8` dans `vrm_pet.js` et compilation avec `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+    - **Déploiement multi-surfaces immédiat** :
+      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et relance de l'overlay (PID 41176).
+      - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `face_skin_android.png`, `vrm_pet.bundle.js`).
+36. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
 
