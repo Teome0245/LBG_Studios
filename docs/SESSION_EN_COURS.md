@@ -243,15 +243,14 @@ Backlog explicite : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md) (mis à jour 2026-1
       - Déploiement atomique du paquet `server_overlay-1.0.0+b1aeb85.tar.gz` sur CT100 via `deploy_compagnon_100.sh`.
       - Rebuild Docker des conteneurs `orchestrateur-backend` et `lbg-frontend` avec compilation Vite client.
       - Tests live vérifiés sur `:5174` : « et donc tu peux vérifier ? » et « tu peux regarder pour intégré plus de danse différentes pour l'avatar ? fait travailler la team sur le sujet » répondent tous deux en mode dialogue naturel (JARVIS) fluide sans dump d'outils.
-34. **Plaque Torse, Épaules & Omoplates 360° (Haut du Buste Mecha)** : **live & déployé sur toutes les surfaces** 2026-10-20 —
-    - **Plastron Claviculaire & Encolure en U** : cou mécanique avec servomoteur strié, col échancré en U concave avec liseré cyan émissif (`#00f5d4`), deux vis de fixation de précision, fente centrale en 'Y' sombre et deux gros rivets concentriques claviculaires signature au-dessus des seins.
-    - **Plaques Mammaires & Découpes Stylisées** : coques pectorales lisses en dôme avec ligne de découpe mécanique cyan en biais et contour inférieur néon.
-    - **Épaulières Dômes Bombées** : capsules d'épaules semi-sphériques bleu cobalt métal avec arête supérieure/externe néon cyan éclatant (`#00f5d4` + cœur `#c0fff5`), collerette inférieure articulée et rotule mécanique centrale.
-    - **Grandes Plaques d'Omoplates (Dos)** : deux grandes plaques scapulaires galbées épousant les omoplates avec rivets concentriques doubles, continuité parfaite avec la bande sous-scapulaire et symétrie miroir pixel-à-pixel absolue sur la couture dorsale (`X=495` et `X=1552`).
+34. **Plaque Torse, Épaules & Omoplates 360° (Haut du Buste Mecha & Cou Réaligné)** : **live & déployé sur toutes les surfaces** 2026-10-20 —
+    - **Identification & Rectification du Cou sur `face_skin_android.png`** : identification de la topologie VRM où le cou avant (sous le menton jusqu'aux clavicules, `Y_3d: 1.24..1.40`) dépend du mesh visage (`face_skin`, `Y: 800..1024`, centré en 512). Application du servomoteur mécanique sombre (`CHASSIS_DARK`), des anneaux horizontaux (`FIBER_LIGHT`), des câbles musculaires latéraux et de l'échancrure concave en U avec son liseré cyan éclatant (`#00f5d4`) directement sur le cou visible.
+    - **Repositionnement Haut du Torse sur `body_skin_android.png`** : suppression du faux cou dessiné trop bas. Le plastron claviculaire démarre désormais dès la base du cou (`Y: 140..380`), la fente centrale en 'Y' sombre sépare les dômes des seins (`Y: 360..605`), les gros rivets concentriques signature sont placés au-dessus des seins (`Y: 310`) et les découpes d'accent se situent à `Y: 460`.
+    - **Épaulières Dômes & Omoplates Remontées** : capsules d'épaules semi-sphériques bleu cobalt métal avec arête supérieure/externe néon cyan éclatant (`#00f5d4` + cœur `#c0fff5`), collerette inférieure articulée et rotule mécanique centrale ; plaques scapulaires au dos avec symétrie miroir pixel-à-pixel absolue sur la couture dorsale (`X=495` et `X=1552`).
     - **Déploiement multi-surfaces immédiat** :
       - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
-      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 22176, cache buster `?v=mecha_v5`).
-      - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+      - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay (PID 37812, cache buster `?v=mecha_v6`).
+      - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `face_skin_android.png`, `vrm_pet.bundle.js`).
 35. **Backlog ouvert** : 0 sujet ouvert dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
 
 ## Fichiers / surfaces utiles
