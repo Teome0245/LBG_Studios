@@ -58,12 +58,12 @@ Choisis UNE action JSON strict, sans markdown. Exemple answer :
 {"action":"answer","reason":"chat","clarify":null}
 
 Règles :
-- answer : TOUTE conversation, question, causerie, idée de jeu, avatar, animations, danses, questions d'interface, bugs d'affichage, exploration, recherche, salutation. Préfère answer dès qu'il y a un sujet.
+- answer : TOUTE conversation, question, causerie, idée de jeu, avatar, animations, danses, questions d'interface, bugs d'affichage, exploration, recherche, salutation, questions factuelles sur les serveurs, machines, IP, architecture ou topologie LAN, recadrage sur des entités ou serveurs. Préfère answer dès qu'il y a un sujet.
 - team : UNIQUEMENT infra/ops réels : status Cortex/Pilot, smoke, deploy, mission Campus, sondes, disk/RAM hôtes, @hephaistos, @argus. Ne JAMAIS choisir team pour des demandes d'avatar, de fonctionnalités, d'animations, ou de jeu.
 - audit : UNIQUEMENT modèles/providers Ollama .110/.111 / topo LLM LAN (jamais Team/studio)
 - cursor : tâche code/repo GitHub (résumer un fichier, refactor, PR, OBJECTIVES.md)
 - desktop : ouvrir/lancer une application sur le PC Windows (vghd, notepad, vlc…)
-- tools : UNIQUEMENT diagnostic multi-outils LAN explicite (« fais un diagnostic », « bilan complet », « auto-audit »). Ne JAMAIS choisir tools pour une question ordinaire, un bug d'affichage ou « tu peux vérifier ? ».
+- tools : UNIQUEMENT diagnostic multi-outils LAN explicite (« fais un diagnostic complet », « bilan complet », « auto-audit »). Ne JAMAIS choisir tools pour une question ordinaire, un bug d'affichage, une question sur les serveurs, la topologie réseau, ou « tu peux vérifier ? ».
 - ask_user : UNIQUEMENT fragment sans sujet (ex. « ok ? », « aide », « ça ») ; clarify = question courte FR
 Interdit :
 - ask_user si le message a déjà un sujet (même exploratoire)
@@ -106,6 +106,18 @@ _CONVERSATIONAL_CHECK_RE = re.compile(
     r"on\s+peut\s+(?:v[ée]rifier|regarder|voir|checker)|"
     r"regarde\s+pourquoi|v[ée]rifie\s+pourquoi|"
     r"tu\s+peux\s+(?:m['\u2019 ]?)aider|aide[- ]?moi"
+    r")\b"
+)
+
+_INFRA_QUESTIONS_OR_REBUTTAL_RE = re.compile(
+    r"(?i)\b("
+    r"vrais?\s+noms?\s+des\s+serveurs|noms?\s+des\s+serveurs|liste\s+des\s+serveurs|"
+    r"quels?\s+sont\s+les\s+serveurs|serveurs?\s+du\s+studio|"
+    r"topologie\s+(?:r[ée]seau|lan|studio)|architecture\s+r[ée]seau|"
+    r"analyse\s+r[ée]seaux?|nom\s+des\s+machines|adresses?\s+ip\s+des\s+serveurs|"
+    r"serveurs?\s+l[12]|serveur\s+l[12]|"
+    r"n['\u2019 ]?ont\s+jamais\s+exist[ée]s?|n['\u2019 ]?existe\s+pas|"
+    r"tu\s+inventes?|tu\s+divagues?|divagations?|hallucinations?"
     r")\b"
 )
 
@@ -243,6 +255,10 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
     # Demande de vérification conversationnelle (ex. « tu peux vérifier ? ») → answer (pas tools)
     if _CONVERSATIONAL_CHECK_RE.search(text) and not any(t in low for t in ("lan", "disk", "ram", "sondes", "ip", "healthz", "proxmox")):
         return ReflectionDecision("answer", "vérification conversationnelle", None, "heuristic", 0.0, 0.92)
+
+    # Questions sur les serveurs réels ou recadrage d'hallucinations d'infrastructure → answer (pas tools)
+    if _INFRA_QUESTIONS_OR_REBUTTAL_RE.search(text) and not any(t in low for t in ("deploy", "smoke", "healthz", "proxmox")):
+        return ReflectionDecision("answer", "question topologie / recadrage serveurs → answer", None, "heuristic", 0.0, 0.95)
 
     # Identité / causerie Compagnon (avant infra / tools / LLM light)
     if is_companion_chat(text):

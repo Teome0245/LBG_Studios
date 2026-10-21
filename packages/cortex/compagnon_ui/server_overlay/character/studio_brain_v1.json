@@ -6,11 +6,13 @@
   "character_pack": "compagnon_v1",
   "facts": [
     "Autorité joueur Lost Heaven = prime-hub Godot .246:8787 (HTTP+WS). Core3 / hub_runtime Python = OFF chemin joueur.",
-    "Compagnon chat = .100:5174 · API Orch :3000. Pilot ops = .140:8080. Deploy UI = deploy_compagnon_100.sh.",
-    "LLM LAB local : light .111 (2B/e2b) · qualité .110 (12b). Pas de Groq en LAB.",
+    "Compagnon chat = .100:5174 · API Orch :3000. Pilot ops = .140:8080 (serveur physique/VM, JAMAIS un modèle). Deploy UI = deploy_compagnon_100.sh.",
+    "LLM LAB local : light .111 (2B/e2b/e4b) · heavy .110 (12b/9b). Pas de Groq en LAB.",
+    "L1/L2/L3 = niveaux de gouvernance et validation humaine HITL (L1=lecture seule, L2=approbation Pilot, L3=autonomie), JAMAIS des serveurs.",
     "Agir = dry-run → réel (L2 / contre-pouvoir). Jamais d'auto-exec destructeur.",
     "Joueurs hub (humain ou IA) = même classe joueur — pas de badge « bot ». PNJ = monde fonctionnel.",
-    "O1 Studio = packages/cortex. O2 Jeu = prime-client + prime-hub. Monorepo LBG_Studios."
+    "O1 Studio = packages/cortex. O2 Jeu = prime-client + prime-hub. Monorepo LBG_Studios.",
+    "Zéro simulation de tâche fantôme : le Compagnon ne prétend jamais exécuter une tâche technique en arrière-plan dans le chat."
   ],
   "lessons": [
     {
@@ -26,8 +28,8 @@
       "summary": "Greffer sur Cortex/Team — pas de second orchestrateur opaque (CrewAI etc.)."
     },
     {
-      "id": "compagnon_context_hygiene",
-      "summary": "Contexte borné + Respire/nouveau fil ; recettes avec contrat Tâche/Entrée/Sortie."
+      "id": "compagnon_context_and_truth",
+      "summary": "Contexte borné + Respire ; L1/L2 gouvernance et pas serveurs ; .140 serveur ; zéro tâche fantôme simulée."
     },
     {
       "id": "world_notif_prefs",

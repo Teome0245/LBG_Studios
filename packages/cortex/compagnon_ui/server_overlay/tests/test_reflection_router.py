@@ -120,6 +120,30 @@ class ReflectionHeuristicTests(unittest.TestCase):
         assert d is not None
         self.assertEqual(d.action, "answer")
 
+    def test_network_analysis_real_servers_answer_not_tools(self) -> None:
+        p = "ce n'est pas qu'il sont eteind, c'est qu'il n'on jamais existés. fais une analyse réseaux si besoin, pour avoir le vrais nom des serveurs."
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+        self.assertNotEqual(d.action, "tools")
+
+    def test_rebuttal_fake_servers_answer(self) -> None:
+        p = "toujours pas de serveurs L1 et L2, mais fait le nécessaire pour ne pas \"divaguer\"."
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+        self.assertNotEqual(d.action, "tools")
+
+    def test_servers_dont_exist_rebuttal(self) -> None:
+        p = "Serveur L1 et L2 n'existe pas et le model '.140' non plus, .140 est l'abréviation pour l'un des serveur serveur, et non un model, tu invente et divague."
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+
 
 if __name__ == "__main__":
     unittest.main()
+
