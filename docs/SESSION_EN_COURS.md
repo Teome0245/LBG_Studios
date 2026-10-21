@@ -488,6 +488,13 @@ _Aucun bloquant documenté pour ce bootstrap._
     - `Desktop SDS .10` : `C:\Agent_IA\executor.py` mis à jour, synchronisation locale de toutes les textures et du bundle dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\`, overlay Electron relancé avec succès (nouveau PID vérifié : **10764**).
     - `N:\Upload\IA\` : `body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js` exportés via l'agent.
     - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js`).
+- 2026-10-21 : **Agrandissement Tête Chibi (+52%, scale 1.52) — validé & déployé** —
+  - **Agrandissement de la tête** : Passage de `headBone.scale` de 1.38 à **1.52** dans `vrm_pet.js`, renforçant davantage la silhouette chibi mignonne et expressive demandée par l'utilisateur.
+  - **Cadrage dynamique** : Marge supérieure portée à 1.10 (`neededH = size.y * 1.10`) pour assurer une respiration confortable au-dessus des cheveux sans clipping.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : bundle recompilé avec `esbuild`, déployé via l'agent Windows et Electron redémarré avec succès (PID vérifié : **42696**).
+    - `N:\Upload\IA\` : export direct du bundle synchronisé.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
 - 2026-10-21 : **Jonction et Lissage des Plaques du Haut de Cuisse v26 — validé & déployé** —
   - **Suppression du gap de 20 px et fusion des plaques supérieures de cuisse** : Comblement continu de Y=497 à Y=523 dans les colonnes gauche (X: 66..178) et droite (X: 846..958) par une interpolation Hermite fluide (smoothstep).
   - **Lissage morphologique (rayon 2.5 px)** de la zone de raccordement pour éliminer toute démarcation ou rupture visuelle.
