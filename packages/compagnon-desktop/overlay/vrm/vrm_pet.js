@@ -986,7 +986,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_v15`,
+      `${vrmDir}/body_skin_android.png?v=mecha_v19`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -996,7 +996,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading body texture:", err)
     );
     const androidFaceTex = textureLoader.load(
-      `${vrmDir}/face_skin_android.png?v=mecha_v15`,
+      `${vrmDir}/face_skin_android.png?v=mecha_v17`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1006,7 +1006,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading face texture:", err)
     );
     const androidHairTex = textureLoader.load(
-      `${vrmDir}/hair_android.png?v=mecha_v15`,
+      `${vrmDir}/hair_android.png?v=mecha_v17`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1016,13 +1016,23 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading hair texture:", err)
     );
     const metallicMatcapTex = textureLoader.load(
-      `${vrmDir}/metallic_matcap.png?v=mecha_v15`,
+      `${vrmDir}/metallic_matcap.png?v=mecha_v17`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
       },
       undefined,
       (err) => console.warn("[vrm_pet] err loading matcap texture:", err)
+    );
+    const rimMultiplyMaskTex = textureLoader.load(
+      `${vrmDir}/rim_multiply_mask.png?v=mecha_v17`,
+      (tex) => {
+        tex.colorSpace = THREE.NoColorSpace;
+        tex.flipY = false;
+        tex.needsUpdate = true;
+      },
+      undefined,
+      (err) => console.warn("[vrm_pet] err loading rim multiply mask:", err)
     );
 
     v.scene.traverse((child) => {
@@ -1068,21 +1078,17 @@ export function createVrmPet(hostEl, opts = {}) {
           if (m.color) m.color.setHex(0x182c4a);
           m.needsUpdate = true;
         }
-        // 2a. Carrosserie mécanique du corps (Vrai MatCap Chrome + Chanfreins Spéculaires Mecha)
+        // 2a. Carrosserie mécanique du corps (Fidélité 2D directe : zéro bavure, reflets peints dans la texture)
         else if (name.includes("body")) {
           if (m.color) m.color.setHex(0xffffff);
-          if (m.shadeColor) m.shadeColor.setHex(0x18283e); // Ombre titane contrastée
+          if (m.shadeColor) m.shadeColor.setHex(0x223348); // Ombre cel-shade titane propre
           m.map = androidBodyTex;
           m.shadeMultiplyTexture = androidBodyTex;
-          m.matcapTexture = metallicMatcapTex; // VRAI MATCAP METALLIQUE MTOON
-          if (m.matcapFactor) {
-            if (m.matcapFactor.setHex) m.matcapFactor.setHex(0xffffff);
-            else if (m.matcapFactor.set) m.matcapFactor.set(1.0, 1.0, 1.0);
-          }
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0xa0f5ff); // Reflet spéculaire métallique cyan-chrome
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.0; // 0.0 = MatCap pur actif à 100% sur tout le galbe 3D
-          if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.0; // Courbure de réflexion élargie
-          if (m.parametricRimLift !== undefined) m.parametricRimLift = 0.15;
+          // Zéro matcap ni rim dynamique pour éliminer toute bavure hors des plaques
+          m.matcapTexture = null;
+          m.rimMultiplyTexture = null;
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0x000000);
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 1.0;
           if (m.shadingToonyFactor !== undefined) m.shadingToonyFactor = 0.95; // Découpe nette d'armure mecha
           m.needsUpdate = true;
         }

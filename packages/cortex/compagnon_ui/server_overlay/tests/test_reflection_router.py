@@ -97,7 +97,28 @@ class ReflectionHeuristicTests(unittest.TestCase):
         self.assertIsNotNone(d)
         assert d is not None
         self.assertEqual(d.action, "answer")
+    def test_avatar_dances_answer_not_team(self) -> None:
+        p = "tu peux regarder pour intégré plus de danse différentes pour l'avatar ? fait travailler la team sur le sujet."
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+        self.assertNotEqual(d.action, "team")
+
+    def test_conversational_check_answer_not_tools(self) -> None:
+        p = "et donc tu peux vérifier ?"
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
         self.assertNotEqual(d.action, "tools")
+
+    def test_ui_empty_bubble_answer(self) -> None:
+        p = "j'ai une bulle vide dans l'interface, elle ne se remplis qu'apres que j'ai écrit une nouvelle question ..."
+        d = rr._heuristic(p)
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
 
 
 if __name__ == "__main__":

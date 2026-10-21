@@ -428,6 +428,66 @@ _Aucun bloquant documenté pour ce bootstrap._
   - Wrapper Studio / CLI exécutable créé dans [`tools/rea_runner.sh`](../tools/rea_runner.sh) pour les agents backend/Team (Iris, Métis).
   - Documentation de référence complète dans [`docs/OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) et référencée dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
   - Outil 100 % local-first réservé à l'audit et à l'ingénierie Dev/Studio (O1), sans impact sur le runtime joueur Godot O2.
+- 2026-10-21 : **Rendu Métallique Multi-Plaques & Réharmonisation Complète (Bras, Jambes, Buste v19) — validé & déployé** —
+  - **Prise en compte des nouvelles plaques d'armure mecha** :
+    - Intégration de l'ensemble des plaques créées par l'utilisateur : coiffes d'épaules, brassards hexagonaux à rivets, plaques de biceps, avant-bras/coudes, cuisses et mollets (130 218 pixels de plaques ombrés au micron près).
+    - Nettoyage et symétrisation parfaite du dôme gauche de poitrine (élimination de la zone sombre mouchetée manuelle, alignement symétrique strict avec le dôme droit autour de `X = 512`).
+  - **Réapplication des couleurs et du galbe 3D métallique** :
+    - Calcul des normales de surface 3D sur chaque plaque (heightmap multi-échelle et dégradés sphériques Blinn-Phong pour les seins).
+    - Application de la texture titane satiné mecha : highlights spéculaires zénithaux doux (`RGB 190..235, 220..245, 240..255`), corps de pièce titane poli (`RGB 60..110, 95..160, 145..215`) et ombres de chanfrein.
+    - Zéro bavure : les délimitations entre plaques et combinaison restent découpées au rasoir.
+  - **Protection absolue des composants technologiques** :
+    - 0 pixel altéré sur les liserés néon cyan (`#00f5d4`), les rivets circulaires, les connectiques noires, et les ongles bicolores magenta/cyan.
+  - **Shader & Déploiement multi-surfaces synchronisé** :
+    - Recompilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB) avec cache-buster `?v=mecha_v19`.
+    - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay Electron (PID validé : **33004**).
+    - `N:\Upload\IA\` : `body_skin_android.png` réharmonisé et bundle exportés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+- 2026-10-21 : **Rendu Métallique sur `body_skin_android_5b.png` (Zonage Vert Clair Exclusif v18) — validé & déployé** —
+  - **Précision chirurgicale sur les zones Vert Clair (`Lime Green`)** :
+    - Détection chromatique exacte (`R: 136..181, G: 187..234, B: 29..75`) à partir du calque d'annotation fourni par l'utilisateur (99 521 pixels de plaques ciblés).
+    - Application de la texture métallique 3D cuite (lustre titane satiné avec reflets zénithaux spéculaires) **exclusivement** sur ces 99 521 pixels.
+    - Élimination de 100 % des risques de bavure : l'algorithme ne touche à aucun pixel en dehors de ce zonage.
+    - Préservation intégrale et absolue de tous les autres éléments de `body_skin_android_5b.png` : épaulières, sangles en X au centre bas, ongles de mains et de pieds (magenta/cyan), liserés néon cyan (`#00f5d4`), joints noirs de découpe, abdomen central sombre et flancs.
+  - **Shader MToon** :
+    - Maintien du cel-shading direct haute fidélité (`rimLightingMix = 1.0`, zéro matcap/rim 3D qui bave).
+    - Cache-buster mis à jour à `?v=mecha_v18` et bundle `vrm_pet.bundle.js` recompilé avec `esbuild`.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay Electron (PID validé : **31816**).
+    - `N:\Upload\IA\` : `body_skin_android.png` (métallisé sur zones vert clair), `body_skin_android_5b.png` (source d'origine), `metallic_matcap.png`, `vrm_pet.bundle.js` exportés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+- 2026-10-21 : **Rendu Métallique Direct sur Skin 2D (Masque Utilisateur au Pixel Près, Zéro Bavure v17) — validé & déployé** —
+  - **Application directe du lustre métallique dans `body_skin_android.png`** :
+    - Intégration du pochoir nettoyé par l'utilisateur (`media_1792579921395.png`, 524 016 pixels de plaques au pixel près).
+    - Cuisson du reflet 3D (baking des normales de surface et courbures de dômes du modèle `Compagnon.vrm`) directement dans les teintes de la texture 2D diffuse.
+    - Élimination de 100 % des bavures : les délimitations entre les plaques titane et la combinaison noire ou la peau sont désormais au rasoir.
+    - Préservation intégrale des liserés néon cyan (`#00f5d4`), des joints noirs d'armure, des rivets, des ongles magenta/cyan et de la texture mate des bras et des jambes.
+  - **Shader MToon épuré** :
+    - Retrait du MatCap et du Rim dynamique additif sur le corps (`m.matcapTexture = null`, `m.rimMultiplyTexture = null`, `m.parametricRimColor = 0x000000`, `rimLightingMix = 1.0`).
+    - L'avatar s'affiche en cel-shading ultra-net, avec des plaques métalliques riches en reflets 2D intégrés sans aucune lueur parasite.
+  - **Cache-Buster & Recompilation** :
+    - Cache-buster mis à jour à `?v=mecha_v17`.
+    - Recompilation `esbuild` de `vrm_pet.bundle.js` (2.1 MB).
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay Electron (PID validé : **41948**).
+    - `N:\Upload\IA\` : `body_skin_android.png` directement métallisé, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js` exportés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
+- 2026-10-21 : **Rendu Métallique Sélectif sur Plaques Uniquement & Élimination des Rayures (v16) — validé & déployé** —
+  - **Masque de modulation sélective géométrique (`rim_multiply_mask.png`)** :
+    - Extraction directe de la géométrie 3D de `Compagnon.vrm` (primitives, indices et weights de bones) pour isoler les coordonnées UV du tronc (poitrine/dômes, sternum, abdomen, dos/scapula, hanches/pelvis).
+    - Exclusion géométrique à 100 % de tous les membres : bras, mains, jambes, pieds, ongles et combinaison noire sous-jacente.
+    - Génération du masque HD 2048×2048 (`white = 1.0` sur les plaques de blindage, `black = 0.0` sur les bras, jambes et tissu).
+    - Branchement shader natif MToon via Three.js : `m.rimMultiplyTexture = rimMultiplyMaskTex` dans `vrm_pet.js`. Le shader calcule `rim *= texture2D(rimMultiplyTexture, uv)`, annulant à 100 % le matcap et les reflets spéculaires sur les bras et les jambes (qui redeviennent mats en cel-shading doux) tout en magnifiant le lustre métallique miroir sur les plaques de blindage.
+  - **Suppression des rayures sur le MatCap Chrome (`metallic_matcap.png`)** :
+    - Remplacement du matcap à méridien coupé par un dégradé sphérique continu Blinn-Phong studio (titane satiné, reflet zénithal doux et halo Fresnel sur les chanfreins).
+    - Élimination complète de la sensation de rayure horizontale en travers de la poitrine.
+  - **Recompilation & Cache-Buster** :
+    - Passage au cache-buster `?v=mecha_v16` sur l'ensemble des textures.
+    - Recompilation `esbuild` de `overlay/vrm/vrm_pet.bundle.js` (2.1 MB) et réplication dans `packages/cortex/compagnon_ui/public/vrm/`.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : `C:\Agent_IA\executor.py` mis à jour, synchronisation locale de toutes les textures et du bundle dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\`, overlay Electron relancé avec succès (nouveau PID vérifié : **10764**).
+    - `N:\Upload\IA\` : `body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js` exportés via l'agent.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js`).
 - 2026-10-21 : **Rendu Métallique Mecha Master v15 (Suppression des rayures & Lustre Lisse Harmonisé) — validé & déployé** —
   - **Correction des rayures** : Élimination complète des formules de micro-brossage sinusoïdal et des biseaux 1-pixel qui généraient un aspect de rayures / griffures sur les plaques du torse et de l'abdomen.
   - **Harmonisation Plaques ↔ Bras/Jambes** : Texture 2D rétablie sur une surface parfaitement lisse et soyeuse, identique au galbe des bras et des jambes, permettant au MatCap Chrome HD 512×512 Three.js de glisser avec un lustre miroir continu et homogène sur l'ensemble de la carrosserie.

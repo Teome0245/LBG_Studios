@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, reactive, toRaw } from 'vue'
 import { http } from '@/api/http'
 import { presenceTalk } from '@/lib/presence'
 import { speakText } from '@/lib/tts'
@@ -145,7 +145,8 @@ export function useChat() {
 
     // Bulle déjà rendue par le flux SSE (1.2) : on fusionne le payload final, sans doublon.
     if (backendMessage.__streamed) {
-      if (streamedMessage && messages.value.includes(streamedMessage)) {
+      const live = Boolean(streamedMessage && messages.value.some((m) => m === streamedMessage || toRaw(m) === toRaw(streamedMessage)))
+      if (live) {
         const prev = String(streamedMessage.content || '')
         const next = backendMessage.content != null ? String(backendMessage.content) : ''
         const content = next.trim() ? next : prev.trim() ? prev : 'Réponse vide — réessaie.'
@@ -209,7 +210,7 @@ export function useChat() {
 
   const beginStream = () => {
     clearStreamTimer()
-    const msg = {
+    const msg = reactive({
       role: 'assistant',
       content: '',
       source: 'streaming',
@@ -218,16 +219,17 @@ export function useChat() {
       // Masqué les 300 ms premières (indicateur de réflexion discret ensuite)
       streamPending: true,
       streamThinking: false,
-    }
+    })
     messages.value.push(msg)
-    streamedMessage = msg
+    const liveMsg = messages.value[messages.value.length - 1] || msg
+    streamedMessage = liveMsg
     streamTimer = setTimeout(() => {
-      if (streamedMessage === msg && msg.streaming) {
-        msg.streamPending = false
-        msg.streamThinking = true
+      if (streamedMessage === liveMsg && liveMsg.streaming) {
+        liveMsg.streamPending = false
+        liveMsg.streamThinking = true
       }
     }, 300)
-    return msg
+    return liveMsg
   }
 
   const appendStream = (delta) => {
@@ -237,14 +239,14 @@ export function useChat() {
       msg.streamPending = false
       msg.streamThinking = false
     }
-    msg.content += String(delta)
+    msg.content = (msg.content || '') + String(delta)
   }
 
   /** Fusionne le payload final dans la bulle ; renvoie le message à passer à addMessage. */
   const finishStream = (final) => {
     clearStreamTimer()
     const msg = streamedMessage
-    const live = msg && messages.value.includes(msg)
+    const live = Boolean(msg && messages.value.some((m) => m === msg || toRaw(m) === toRaw(msg)))
     const payload = final && typeof final === 'object' ? final : { content: String(final ?? '') }
     // Ne jamais écraser les deltas avec un done vide / mal parsé (bulle « Terminé » sans texte).
     const fromDelta = live ? String(msg.content || '') : ''
@@ -296,7 +298,8 @@ export function useChat() {
     clearStreamTimer()
     const text = `Erreur : ${message}`
     const msg = streamedMessage
-    if (!msg || !messages.value.includes(msg)) {
+    const live = Boolean(msg && messages.value.some((m) => m === msg || toRaw(m) === toRaw(msg)))
+    if (!msg || !live) {
       return { role: 'assistant', content: text, source: 'error' }
     }
     Object.assign(msg, {
@@ -318,7 +321,7 @@ export function useChat() {
     const msg = streamedMessage
     streamedMessage = null
     if (!msg) return
-    const i = messages.value.indexOf(msg)
+    const i = messages.value.findIndex((m) => m === msg || toRaw(m) === toRaw(msg))
     if (i >= 0) messages.value.splice(i, 1)
   }
 

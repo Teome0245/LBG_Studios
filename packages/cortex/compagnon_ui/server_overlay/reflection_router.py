@@ -58,12 +58,12 @@ Choisis UNE action JSON strict, sans markdown. Exemple answer :
 {"action":"answer","reason":"chat","clarify":null}
 
 Règles :
-- answer : TOUTE conversation compréhensible (causerie, exploration, recherche, film, aide, salutation). Préfère answer dès qu'il y a un sujet. Engage — ne renvoie pas ask_user pour « chatter / échanger / maturité / écosystème ».
-- team : infra, status Cortex/Pilot, smoke, deploy, mission Campus, sondes, disk/RAM hôtes, @hephaistos — ET audit Team/studio/Campus/Atlas/plateforme/écosystème (pas Ollama)
+- answer : TOUTE conversation, question, causerie, idée de jeu, avatar, animations, danses, questions d'interface, bugs d'affichage, exploration, recherche, salutation. Préfère answer dès qu'il y a un sujet.
+- team : UNIQUEMENT infra/ops réels : status Cortex/Pilot, smoke, deploy, mission Campus, sondes, disk/RAM hôtes, @hephaistos, @argus. Ne JAMAIS choisir team pour des demandes d'avatar, de fonctionnalités, d'animations, ou de jeu.
 - audit : UNIQUEMENT modèles/providers Ollama .110/.111 / topo LLM LAN (jamais Team/studio)
 - cursor : tâche code/repo GitHub (résumer un fichier, refactor, PR, OBJECTIVES.md)
 - desktop : ouvrir/lancer une application sur le PC Windows (vghd, notepad, vlc…)
-- tools : auto-audit / diagnostic multi-outils / bilan large — PAS disk/hôte ciblé (→ team), PAS Ollama seul (→ audit)
+- tools : UNIQUEMENT diagnostic multi-outils LAN explicite (« fais un diagnostic », « bilan complet », « auto-audit »). Ne JAMAIS choisir tools pour une question ordinaire, un bug d'affichage ou « tu peux vérifier ? ».
 - ask_user : UNIQUEMENT fragment sans sujet (ex. « ok ? », « aide », « ça ») ; clarify = question courte FR
 Interdit :
 - ask_user si le message a déjà un sujet (même exploratoire)
@@ -88,6 +88,25 @@ _BAD_CLARIFY = frozenset(
 _PROMPT_LEAK_RE = re.compile(
     r"(?i)(trop\s+vague\s+pour\s+agir|clarify\s*=|vraie\s+question\s+courte|"
     r"si\s+ask_user|préfère\s+answer|réponds\s+uniquement\s+le\s+json)"
+)
+
+_AVATAR_OR_UI_RE = re.compile(
+    r"(?i)\b("
+    r"avatar|vrm|danse|danses|danser|anim(?:ation|ations)?|"
+    r"texture|textures|shader|tenue|costume|visage|expression|"
+    r"interface|bulle|affichage|css|chat\b|web\b|vue\b|composant|"
+    r"client\b|rendu|streaming|sse\b"
+    r")\b"
+)
+
+_CONVERSATIONAL_CHECK_RE = re.compile(
+    r"(?i)\b("
+    r"tu\s+peux\s+(?:v[ée]rifier|regarder|voir|checker)|"
+    r"peux[- ]?tu\s+(?:v[ée]rifier|regarder|voir|checker)|"
+    r"on\s+peut\s+(?:v[ée]rifier|regarder|voir|checker)|"
+    r"regarde\s+pourquoi|v[ée]rifie\s+pourquoi|"
+    r"tu\s+peux\s+(?:m['\u2019 ]?)aider|aide[- ]?moi"
+    r")\b"
 )
 
 
@@ -127,6 +146,10 @@ def _contextual_followup(
         f"{action} {source} {meta.get('reason') or ''} "
         f"{meta.get('reflection_reason') or ''} {meta.get('clarify') or ''}"
     ).lower()
+
+    # Pas de relance mémoire Team si la phrase parle d'avatar, d'UI ou est une vérification conversationnelle
+    if _AVATAR_OR_UI_RE.search(text) or _CONVERSATIONAL_CHECK_RE.search(text):
+        return None
 
     # Relance périmètre après clarif audit (« la partie Team, studio ») — sans cue « suite »
     if len(text) < 90 and re.search(r"(?i)\b(team|studio|campus|atlas|plateforme)\b", text):
@@ -210,6 +233,16 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
                 0.92,
             )
         return ReflectionDecision("team", "préfixe team:/mission:/campus:", None, "heuristic", 0.0, 1.0)
+
+    low = text.lower()
+
+    # Avatar, animation, danse, interface, bulle, affichage → Compagnon (answer)
+    if _AVATAR_OR_UI_RE.search(text) and not any(t in low for t in ("deploy", "smoke", "sondes", "healthz", "status campus")):
+        return ReflectionDecision("answer", "avatar / interface / feature studio", None, "heuristic", 0.0, 0.95)
+
+    # Demande de vérification conversationnelle (ex. « tu peux vérifier ? ») → answer (pas tools)
+    if _CONVERSATIONAL_CHECK_RE.search(text) and not any(t in low for t in ("lan", "disk", "ram", "sondes", "ip", "healthz", "proxmox")):
+        return ReflectionDecision("answer", "vérification conversationnelle", None, "heuristic", 0.0, 0.92)
 
     # Identité / causerie Compagnon (avant infra / tools / LLM light)
     if is_companion_chat(text):

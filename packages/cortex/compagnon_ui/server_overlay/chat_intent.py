@@ -125,21 +125,28 @@ _EXPLORATORY_CHAT_RE = re.compile(
 
 _OPS_OVERRIDE_RE = re.compile(
     r"(?i)\b("
-    r"team|mission|smoke|deploy|d[ée]ploy|proxmox|healthz|selfcheck|"
-    r"sondes?|disk|disque|ram|cpu|status|statut|compte\s+rendu|@hephaistos|"
+    r"team\s*:|team\s+(?:status|statut|mission|spawn|jobs?|audit|fleet|office)|"
+    r"status\s+team|statut\s+team|"
+    r"smoke|deploy|d[ée]ploy|proxmox|healthz|selfcheck|"
+    r"sondes?|disk|disque|ram|cpu|status|statut|compte\s+rendu\s+ops|@hephaistos|"
     r"@argus|@themis|pilot|orchestrateur|"
     r"campus\s+(?:status|statut|mission|spawn|jobs?)|"
     r"(?:status|statut|mission|spawn)\s+campus|"
+    r"mission\s+(?:campus|ops|infra)|"
     r"auto[\s-]?audit|\baudit\b|diagnostic|bilan"
     r")\b"
 )
 
-# Game design / lore / gameplay — causerie collègue (interdit tool_loop sans impératif ops)
+# Game design / lore / gameplay / avatar / UI — causerie collègue (interdit tool_loop sans impératif ops)
 _DESIGN_BRAINSTORM_RE = re.compile(
     r"(?i)\b("
     r"zone\s+d['\u2019 ]?entra[iî]nement|"
     r"game\s*design|gameplay|\blore\b|"
     r"personas?|incarnation|"
+    r"avatar|vrm|danse|danses|danser|anim(?:ation|ations)?|"
+    r"texture|textures|shader|tenue|costume|visage|expression|"
+    r"interface|bulle|affichage|css|chat\b|web\b|vue\b|composant|"
+    r"client\b|rendu|streaming|sse\b|"
     r"environnement\s+jeu|monde\s+(?:jeu|vivant)|"
     r"feeling|pr[ée]sence\s+(?:hub|jeu|studio|mesurable)|"
     r"scrapaltai|lost\s+heaven|"
@@ -155,10 +162,13 @@ _DESIGN_HANDOFF_RE = re.compile(
     r"(?i)\b("
     r"soumet(?:s|tre)?|"
     r"pr[ée]pa(?:re|rer|prer|pre)\s+(?:le\s+|un\s+)?plan|"
-    r"plan\s+(?:game\s*design|lore|faction)|"
+    r"plan\s+(?:game\s*design|lore|faction|avatar|danse)|"
     r"au\s+(?:studio|bureau)|"
     r"studio\s*/\s*team|"
-    r"bureau\s*/\s*team"
+    r"bureau\s*/\s*team|"
+    r"fait\s+travailler\s+la\s+team|"
+    r"fais\s+travailler\s+la\s+team|"
+    r"demande\s+[àa]\s+la\s+team"
     r")\b"
 )
 

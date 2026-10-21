@@ -53921,7 +53921,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_v15`,
+        `${vrmDir}/body_skin_android.png?v=mecha_v19`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53931,7 +53931,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading body texture:", err)
       );
       const androidFaceTex = textureLoader.load(
-        `${vrmDir}/face_skin_android.png?v=mecha_v15`,
+        `${vrmDir}/face_skin_android.png?v=mecha_v17`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53941,7 +53941,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading face texture:", err)
       );
       const androidHairTex = textureLoader.load(
-        `${vrmDir}/hair_android.png?v=mecha_v15`,
+        `${vrmDir}/hair_android.png?v=mecha_v17`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53951,13 +53951,23 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading hair texture:", err)
       );
       const metallicMatcapTex = textureLoader.load(
-        `${vrmDir}/metallic_matcap.png?v=mecha_v15`,
+        `${vrmDir}/metallic_matcap.png?v=mecha_v17`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.needsUpdate = true;
         },
         void 0,
         (err) => console.warn("[vrm_pet] err loading matcap texture:", err)
+      );
+      const rimMultiplyMaskTex = textureLoader.load(
+        `${vrmDir}/rim_multiply_mask.png?v=mecha_v17`,
+        (tex) => {
+          tex.colorSpace = NoColorSpace;
+          tex.flipY = false;
+          tex.needsUpdate = true;
+        },
+        void 0,
+        (err) => console.warn("[vrm_pet] err loading rim multiply mask:", err)
       );
       v.scene.traverse((child) => {
         if (!child.isMesh) return;
@@ -53998,18 +54008,13 @@ void main() {
             m.needsUpdate = true;
           } else if (name.includes("body")) {
             if (m.color) m.color.setHex(16777215);
-            if (m.shadeColor) m.shadeColor.setHex(1583166);
+            if (m.shadeColor) m.shadeColor.setHex(2241352);
             m.map = androidBodyTex;
             m.shadeMultiplyTexture = androidBodyTex;
-            m.matcapTexture = metallicMatcapTex;
-            if (m.matcapFactor) {
-              if (m.matcapFactor.setHex) m.matcapFactor.setHex(16777215);
-              else if (m.matcapFactor.set) m.matcapFactor.set(1, 1, 1);
-            }
-            if (m.parametricRimColor) m.parametricRimColor.setHex(10548735);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0;
-            if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
-            if (m.parametricRimLift !== void 0) m.parametricRimLift = 0.15;
+            m.matcapTexture = null;
+            m.rimMultiplyTexture = null;
+            if (m.parametricRimColor) m.parametricRimColor.setHex(0);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 1;
             if (m.shadingToonyFactor !== void 0) m.shadingToonyFactor = 0.95;
             m.needsUpdate = true;
           } else if (name.includes("face") || name.includes("skin")) {
