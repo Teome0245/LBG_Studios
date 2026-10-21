@@ -428,6 +428,17 @@ _Aucun bloquant documenté pour ce bootstrap._
   - Wrapper Studio / CLI exécutable créé dans [`tools/rea_runner.sh`](../tools/rea_runner.sh) pour les agents backend/Team (Iris, Métis).
   - Documentation de référence complète dans [`docs/OUTILS_DEV_MCP.md`](OUTILS_DEV_MCP.md) et référencée dans [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md).
   - Outil 100 % local-first réservé à l'audit et à l'ingénierie Dev/Studio (O1), sans impact sur le runtime joueur Godot O2.
+- 2026-10-21 : **Rendu Métallique Mecha Master v14 (MatCap Chrome HD, Biseaux Spéculaires & Déploiement Multi-Surfaces) — validé & déployé** —
+  - **Diagnostic cause racine** : Les shaders MToon (VRM) sont des cel-shaders qui apparaissent plastiques mats sans réflexion de surface. En outre, le script `sync_vrm_desktop` sur l'agent Windows (`.10`) n'incluait pas `metallic_matcap.png`, ce qui provoquait un 404 local empêchant l'activation du MatCap Three.js.
+  - **MatCap Métallique Chrome HD (`metallic_matcap.png`)** : Sphère de réflexion miroir 512×512 combinant dégradé d'horizon ciel/sol titane, éclat spéculaire miroir pur 100 %, reflet secondaire cyber-cyan et rim Fresnel périphérique.
+  - **Shader MToon libéré dans `vrm_pet.js`** : Réglage de `rimLightingMix = 0.0` sur `body` et `hair` pour que la réflexion MatCap s'exprime à 100 % de sa dynamique miroir sans être atténuée par la lumière diffuse. `shadingToonyFactor = 0.95` pour des arêtes d'ombres tranchées.
+  - **Texture Master v14 (`body_skin_android.png` 2048×2048)** : Intégration stricte du design utilisateur (sangles en X au centre bas, échancrures pelviennes, aiguillon cyber cyan, phalanges mécatroniques et ongles bicolores magenta/cyan) avec biseaux spéculaires d'usinage (`#ffffff` / `#d8ebff`), rainures d'occlusion sombres et micro-brossage anisotrope.
+  - **Proportions Chibi** : Tête agrandie à +24% (`scale.set(1.24, 1.24, 1.24)`).
+  - **Déploiement complet & synchronisation validée** :
+    - `C:/Agent_IA/executor.py` patché via l'agent Windows pour synchroniser `metallic_matcap.png` et exporter vers `N:/Upload/IA/`.
+    - `Desktop SDS .10` : synchronisé avec succès et overlay Electron redémarré (PID 31264).
+    - `N:\Upload\IA\` : `body_skin_android.png`, `metallic_matcap.png`, `face_skin_android.png`, `hair_android.png`, `vrm_pet.bundle.js` synchronisés.
+    - `CT100 (192.168.0.100)` : injecté dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
 - 2026-10-19 : **Refonte Torse Mecha Cyborg & Alignement 360° Parfait Dos/Ventre — validé & déployé** —
   - **Analyse & Résolution du désalignement dorsal** : Identification mathématique des sommets de couture du dos dans `Compagnon.vrm` (`X=495` à gauche, `X=1552` à droite avec `dy=0` exact). Résolution des écarts et décalages verticaux historiques (150 px d'écart éliminés) grâce à une règle de symétrie miroir pixel-à-pixel absolue `(495+dx) <-> (1552-dx)` sur toute la hauteur du dos.
   - **Reproduction fidèle de la référence mecha-musume** :

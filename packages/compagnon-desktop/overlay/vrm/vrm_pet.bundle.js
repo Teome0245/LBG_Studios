@@ -53921,7 +53921,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_v12`,
+        `${vrmDir}/body_skin_android.png?v=mecha_v14`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53931,7 +53931,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading body texture:", err)
       );
       const androidFaceTex = textureLoader.load(
-        `${vrmDir}/face_skin_android.png?v=mecha_v12`,
+        `${vrmDir}/face_skin_android.png?v=mecha_v14`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53941,7 +53941,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading face texture:", err)
       );
       const androidHairTex = textureLoader.load(
-        `${vrmDir}/hair_android.png?v=mecha_v12`,
+        `${vrmDir}/hair_android.png?v=mecha_v14`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -53949,6 +53949,15 @@ void main() {
         },
         void 0,
         (err) => console.warn("[vrm_pet] err loading hair texture:", err)
+      );
+      const metallicMatcapTex = textureLoader.load(
+        `${vrmDir}/metallic_matcap.png?v=mecha_v14`,
+        (tex) => {
+          tex.colorSpace = SRGBColorSpace;
+          tex.needsUpdate = true;
+        },
+        void 0,
+        (err) => console.warn("[vrm_pet] err loading matcap texture:", err)
       );
       v.scene.traverse((child) => {
         if (!child.isMesh) return;
@@ -53992,10 +54001,16 @@ void main() {
             if (m.shadeColor) m.shadeColor.setHex(1583166);
             m.map = androidBodyTex;
             m.shadeMultiplyTexture = androidBodyTex;
-            if (m.parametricRimColor) m.parametricRimColor.setHex(8454143);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.65;
+            m.matcapTexture = metallicMatcapTex;
+            if (m.matcapFactor) {
+              if (m.matcapFactor.setHex) m.matcapFactor.setHex(16777215);
+              else if (m.matcapFactor.set) m.matcapFactor.set(1, 1, 1);
+            }
+            if (m.parametricRimColor) m.parametricRimColor.setHex(10548735);
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0;
             if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2;
-            if (m.parametricRimLift !== void 0) m.parametricRimLift = 0.12;
+            if (m.parametricRimLift !== void 0) m.parametricRimLift = 0.15;
+            if (m.shadingToonyFactor !== void 0) m.shadingToonyFactor = 0.95;
             m.needsUpdate = true;
           } else if (name.includes("face") || name.includes("skin")) {
             if (m.color) m.color.setHex(16777215);
@@ -54003,7 +54018,7 @@ void main() {
             m.map = androidFaceTex;
             m.shadeMultiplyTexture = androidFaceTex;
             if (m.parametricRimColor) m.parametricRimColor.setHex(8454143);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.4;
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.35;
             if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.5;
             m.needsUpdate = true;
           } else if (name.includes("hair")) {
@@ -54011,8 +54026,13 @@ void main() {
             if (m.shadeColor) m.shadeColor.setHex(1318966);
             m.map = androidHairTex;
             m.shadeMultiplyTexture = androidHairTex;
+            m.matcapTexture = metallicMatcapTex;
+            if (m.matcapFactor) {
+              if (m.matcapFactor.setHex) m.matcapFactor.setHex(10079487);
+              else if (m.matcapFactor.set) m.matcapFactor.set(0.65, 0.8, 1);
+            }
             if (m.parametricRimColor) m.parametricRimColor.setHex(62932);
-            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0.6;
+            if (m.rimLightingMix !== void 0) m.rimLightingMix = 0;
             if (m.parametricRimFresnelPower !== void 0) m.parametricRimFresnelPower = 2.2;
             m.needsUpdate = true;
           }

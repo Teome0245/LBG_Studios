@@ -986,7 +986,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_v12`,
+      `${vrmDir}/body_skin_android.png?v=mecha_v14`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -996,7 +996,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading body texture:", err)
     );
     const androidFaceTex = textureLoader.load(
-      `${vrmDir}/face_skin_android.png?v=mecha_v12`,
+      `${vrmDir}/face_skin_android.png?v=mecha_v14`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1006,7 +1006,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading face texture:", err)
     );
     const androidHairTex = textureLoader.load(
-      `${vrmDir}/hair_android.png?v=mecha_v12`,
+      `${vrmDir}/hair_android.png?v=mecha_v14`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1014,6 +1014,15 @@ export function createVrmPet(hostEl, opts = {}) {
       },
       undefined,
       (err) => console.warn("[vrm_pet] err loading hair texture:", err)
+    );
+    const metallicMatcapTex = textureLoader.load(
+      `${vrmDir}/metallic_matcap.png?v=mecha_v14`,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
+      },
+      undefined,
+      (err) => console.warn("[vrm_pet] err loading matcap texture:", err)
     );
 
     v.scene.traverse((child) => {
@@ -1059,16 +1068,22 @@ export function createVrmPet(hostEl, opts = {}) {
           if (m.color) m.color.setHex(0x182c4a);
           m.needsUpdate = true;
         }
-        // 2a. Carrosserie mécanique du corps (Texture Canon Châssis Androïde Métallique Spéculaire)
+        // 2a. Carrosserie mécanique du corps (Vrai MatCap Chrome + Chanfreins Spéculaires Mecha)
         else if (name.includes("body")) {
           if (m.color) m.color.setHex(0xffffff);
           if (m.shadeColor) m.shadeColor.setHex(0x18283e); // Ombre titane contrastée
           m.map = androidBodyTex;
           m.shadeMultiplyTexture = androidBodyTex;
-          if (m.parametricRimColor) m.parametricRimColor.setHex(0x80ffff); // Reflet spéculaire métallique cyan-chrome
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.65; // Lustre métallique prononcé
+          m.matcapTexture = metallicMatcapTex; // VRAI MATCAP METALLIQUE MTOON
+          if (m.matcapFactor) {
+            if (m.matcapFactor.setHex) m.matcapFactor.setHex(0xffffff);
+            else if (m.matcapFactor.set) m.matcapFactor.set(1.0, 1.0, 1.0);
+          }
+          if (m.parametricRimColor) m.parametricRimColor.setHex(0xa0f5ff); // Reflet spéculaire métallique cyan-chrome
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.0; // 0.0 = MatCap pur actif à 100% sur tout le galbe 3D
           if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.0; // Courbure de réflexion élargie
-          if (m.parametricRimLift !== undefined) m.parametricRimLift = 0.12;
+          if (m.parametricRimLift !== undefined) m.parametricRimLift = 0.15;
+          if (m.shadingToonyFactor !== undefined) m.shadingToonyFactor = 0.95; // Découpe nette d'armure mecha
           m.needsUpdate = true;
         }
         // 2b. Visage androïde : Teint azur doux & détails expressifs préservés
@@ -1078,18 +1093,23 @@ export function createVrmPet(hostEl, opts = {}) {
           m.map = androidFaceTex;
           m.shadeMultiplyTexture = androidFaceTex;
           if (m.parametricRimColor) m.parametricRimColor.setHex(0x80ffff);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.40;
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.35;
           if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.5;
           m.needsUpdate = true;
         }
-        // 3. Chevelure métallique indigo -> cyan (Texture Cheveux fluide)
+        // 3. Chevelure métallique indigo -> cyan (Reflet chrome fluide)
         else if (name.includes("hair")) {
           if (m.color) m.color.setHex(0xffffff);
           if (m.shadeColor) m.shadeColor.setHex(0x142036);
           m.map = androidHairTex;
           m.shadeMultiplyTexture = androidHairTex;
+          m.matcapTexture = metallicMatcapTex;
+          if (m.matcapFactor) {
+            if (m.matcapFactor.setHex) m.matcapFactor.setHex(0x99ccff);
+            else if (m.matcapFactor.set) m.matcapFactor.set(0.65, 0.8, 1.0);
+          }
           if (m.parametricRimColor) m.parametricRimColor.setHex(0x00f5d4);
-          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.60;
+          if (m.rimLightingMix !== undefined) m.rimLightingMix = 0.0; // Reflet chrome vif non atténué
           if (m.parametricRimFresnelPower !== undefined) m.parametricRimFresnelPower = 2.2;
           m.needsUpdate = true;
         }
