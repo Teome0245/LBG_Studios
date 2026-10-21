@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-16  
+**Mis à jour** : 2026-10-21  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -488,6 +488,84 @@ _Aucun bloquant documenté pour ce bootstrap._
     - `Desktop SDS .10` : `C:\Agent_IA\executor.py` mis à jour, synchronisation locale de toutes les textures et du bundle dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\`, overlay Electron relancé avec succès (nouveau PID vérifié : **10764**).
     - `N:\Upload\IA\` : `body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js` exportés via l'agent.
     - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js`).
+- 2026-10-21 : **Jonction et Lissage des Plaques du Haut de Cuisse v26 — validé & déployé** —
+  - **Suppression du gap de 20 px et fusion des plaques supérieures de cuisse** : Comblement continu de Y=497 à Y=523 dans les colonnes gauche (X: 66..178) et droite (X: 846..958) par une interpolation Hermite fluide (smoothstep).
+  - **Lissage morphologique (rayon 2.5 px)** de la zone de raccordement pour éliminer toute démarcation ou rupture visuelle.
+  - **Prolongation continue du liseré néon cyan** sur toute la bordure extérieure de la grande plaque de cuisse unifiée.
+  - **Recalcul du galbe cylindrique 3D Blinn-Phong** continu sur la plaque fusionnée pour assurer une réflexion spéculaire satinée ininterrompue.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : texture et bundle recompilés avec `esbuild`, déployés via l'agent Windows et Electron redémarré avec succès (PID vérifié : **35984**).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=mecha_thigh_joined_v26`.
+- 2026-10-21 : **Carrosserie Mecha Master v25 (Correspondance Complète Torse <-> Membres) — validé & déployé** —
+  - **Prise pour référence absolue du design de l'utilisateur (`media_1792615448352.png`)** :
+    - Préservation à 100% du travail sur le torse : col montant avec néon, seins galbés, 5 segments d'abdominaux centraux, 6 plaques de côtes latérales gauche et droite avec rivets et néons cyan, coque pelvienne en V, et épaulettes hexagonales.
+  - **Correspondance stylistique complète sur tous les membres** :
+    - *Avant-bras* : Liserés néon cyan sur les arêtes et fente médiane horizontale assortie aux épaulettes.
+    - *Cuisses* : Liseré néon cyan de contour et fente aérodynamique le long du muscle vaste externe.
+    - *Rotules de genoux* : Rotules circulaires mécaniques cerclées de néon cyan avec rivet d'ancrage central (assorties aux rivets d'épaules et de hanches).
+    - *Tibias / Mollets* : Liserés néon cyan le long de l'arête tibiale descendante.
+  - **Lustre Titane 3D Blinn-Phong unifié** : Rendu volumétrique avec galbe cylindrique et sphérique continu sur les 296 548 pixels de plaques, reflets métalliques satinés Three.js sans aucune disparité entre les membres et le torse.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : texture et bundle recompilés avec `esbuild`, déployés via l'agent Windows et Electron redémarré avec succès (PID vérifié : **36724**).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=mecha_master_v25`.
+- 2026-10-21 : **Carrosserie Full Cyborg Armor 360° (Bustier Leotard, Rotules de Hanches & Plaques Enveloppantes) — validé & déployé** —
+  - **Transformation complète d'après les références (Images 4 & 5)** : Élimination définitive de l'effet "pastilles isolées collées sur combinaison". L'armure enveloppe maintenant 70% du corps avec des pièces maîtresses continues et fonctionnelles.
+  - **Sculpture Mecha Haut de Gamme 360°** :
+    - *Bustier Leotard Mecha Continu* : Col montant sous la gorge, plastron rigide réunissant les seins d'un seul tenant avec arche sous-mammaire, 5 tablettes de blindage abdominales mécatroniques sculptées avec fentes de séparation, liserés néon cyan verticaux le long des flancs (style Image 4), et coque pelvienne haute en ogive protectrice.
+    - *Rotules Circulaires de Hanches (Hip Pivots)* : Deux gros pivots mécaniques concentriques sur les têtes de fémurs avec gorge d'ombre circulaire et anneau néon (détail signature cyborg des images 4 et 5).
+    - *Cuisses Enveloppantes avec Panel Lines Industrielles* : Grandes plaques fémorales couvrant 70% de la cuisse avec rainures de découpe aérodynamiques le long du muscle vaste externe (style Robocop/Image 5).
+    - *Rotules de Genoux et Coudes Concentriques* : Articulations circulaires mécaniques doubles avec bague de gorge et anneau néon.
+    - *Dos 360° Complet* : Grandes carapaces scapulaires continues, colonne vertébrale en exosquelette de modules vertébraux titane avec disques d'amortissement et diodes neurales cyan, et double coque galbée d'armure fessière.
+    - *Fillet Morphologique (rayon 3.5 px)* : aucun angle vif, aspect de métal coulé liquide poli.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : texture et bundle recompilés avec `esbuild`, déployés via l'agent Windows et Electron redémarré avec succès (PID vérifié : **47724**).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=cyborg_armor_v3`.
+- 2026-10-21 : **Carrosserie Sorayama Curves Master 360° (Courbes Pures & Zéro Carré) — validé & déployé** —
+  - **Élimination complète des formes carrées et arêtes dures** : Recalcul intégral des contours par des équations de courbes continues (S-curves de sablier, fuseaux hermitiens, super-ellipses et arcs concaves).
+  - **Sculpture anatomique sensuelle & fluide (Style Sorayama pur)** :
+    - *Buste & Décolleté* : Dômes pectoraux en goutte d'eau galbée, plastron en cloche douce descendant du cou, et arceau sous-mammaire concave continu.
+    - *Taille de guêpe en S-Curve* : Cambrure de sablier continue (largeur passant de 132 px sous les seins à 72 px au creux de la taille, puis s'évasant à 144 px sur le bassin), dégageant les flancs en composite sombre à fibres synthétiques.
+    - *Pelvis en ogive gothique adoucie* : Coque en goutte d'eau descendante vers l'entrejambe avec liseré cyan galbé, flanquée d'ailes iliaques arquées.
+    - *Membres en fuseaux aérodynamiques* : Épaules sphériques, biceps et avant-bras en amandes galbées, rotules de coudes et de genoux circulaires concentriques parfaites, carénage fémoral en goutte d'eau voluptueuse et lames tibiales effilées.
+    - *Dos 360°* : Omoplates ailées, chaîne vertébrale de modules ovoïdes bombés avec diodes cyan, et double coque fessière voluptueuse aux contours parfaitement arrondis.
+    - *Fillet morphologique (rayon 3 px)* : élimination de toute arête vive par lissage gaussien et ré-échantillonnage pour un aspect de métal coulé liquide.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : texture et bundle recompilés avec `esbuild`, déployés via l'agent Windows et Electron redémarré avec succès (PID vérifié : **5888**).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=sorayama_curves_v2`.
+- 2026-10-21 : **Carrosserie Sorayama Chrome Master 360° Face & Dos (207 788 px chromés) — validé & déployé** —
+  - **Finition Chrome Argenté Miroir / Titane Liquide (Style Sorayama)** : Remplacement complet des aplats bleus par une carrosserie argentée haut de gamme (`RGB ~ [205, 218, 230]` à `[248, 252, 255]`), sculptée selon les courbes anatomiques sensuelles de Hajime Sorayama, avec reflets spéculaires étirés et dégradés de modelé volumétrique.
+  - **Couverture 360° Face & Dos complète (à partir du gabarit UV vert)** :
+    - *Face* : Dômes pectoraux sphériques galbés d'un seul tenant, plastron sternal rigide, arceau sous-mammaire continu, abdomen fuselé à 3 anneaux aérodynamiques, coque pelvienne en V, épaulettes deltoïdes, biceps/avant-bras fuselés avec rotules de coude articulées, carénage fémoral avant, rotules de genoux cerclées et plaques tibiales élancées avec crête saillante.
+    - *Dos (360°)* : Colonne vertébrale mécatronique articulée avec disques intervertébraux noirs et canal neural cyan le long de la couture médiane, grandes plaques d'omoplates (scapula) galbées, double coque fessière carénée galbée, et carénage postérieur des mollets.
+    - *Châssis sombre mécatronique* : Flancs de la taille, plis des coudes et genoux, aine et cou en composite anthracite sombre texturé avec striures musculaires synthétiques (taille de guêpe ultra contrastée).
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : texture et bundle recompilés avec `esbuild`, déployés via l'agent Windows et Electron redémarré avec succès (PID vérifié : **21036**).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=sorayama_v1`.
+- 2026-10-21 : **Redistribution Mecha Anatomique & Agrandissement Chibi v22 (138 238 px de plaques) — validé & déployé** —
+  - **Agrandissement tête Chibi (+38%)** : Passage de `headBone.scale` à 1.38 (`vrm_pet.js`), renforçant la silhouette chibi mignonne et expressive, avec cadrage dynamique préservant la marge supérieure (+8%).
+  - **Redistribution fidèle aux références mecha/cyborg** :
+    - *Buste & Sternum* : Dômes pectoraux galbés avec liserés néon cyan émissifs (`#00f5d4`) et plastron central rigide.
+    - *Abdomen fuselé & Flancs libres* : Plaque ventrale centrale effilée en flèche vers le bas, dégageant intégralement les flancs en sous-combinaison sombre texturée avec câbles musculaires synthétiques (taille de guêpe svelte).
+    - *Pelvis en V & Hanches* : Coque pelvienne centrale en V avec liseré cyan, rotules de hanches et creux de l'aine en mécanique sombre.
+    - *Bras & Coudes* : Épaulettes deltoïdes et plaques externes de biceps et avant-bras, avec articulation du coude (bande sombre de 66 px) et poignet dégagés.
+    - *Jambes & Genoux* : Plaques fémorales (avant cuisses) s'arrêtant au-dessus du genou, genouillères/rotules articulées indépendantes avec anneau néon, plaques tibiales élancées et plaques de mollets externes.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : textures et bundle recompilé avec `esbuild` déployés, overlay Electron relancé (PID 46204).
+    - `N:\Upload\IA\` : export direct des fichiers synchronisés.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=mecha_v22`.
+- 2026-10-21 : **Harmonisation Intégrale de la Carrosserie & Plaques Mecha v20 (316 346 px unifiés) — validé & déployé** —
+  - **Unification totale des plaques torse & membres** : Résolution du filtre néon trop permissif qui excluait accidentellement les membres (bras/jambes restés plats à luminance ~161). Réintégration complète de l'ensemble des 316 346 pixels de plaques d'armure avec une luminance harmonisée cible (~139-143 sur le torse/épaules/pelvis/biceps, ~146-154 sur les membres).
+  - **Heightmap 3D et Normales Blinn-Phong homogènes** : Galbe sphérique continu sur les seins et modelé cylindrique doux sur les membres (radius 85 px), conférant un lustre titane satiné mecha 3D parfaitement unifié sans rupture visuelle.
+  - **Préservation stricte au pixel près** : 100 % des néons cyan luminescents (`#00f5d4`), rivets circulaires 3D, coutures mécaniques sombres et ongles des mains/pieds préservés sans aucune bavure.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage de l'overlay Electron (PID 47252).
+    - `N:\Upload\IA\` : export direct des assets (`body_skin_android.png`, bundle `vrm_pet.bundle.js`).
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` avec cache-buster `?v=mecha_v20`.
 - 2026-10-21 : **Rendu Métallique Mecha Master v15 (Suppression des rayures & Lustre Lisse Harmonisé) — validé & déployé** —
   - **Correction des rayures** : Élimination complète des formules de micro-brossage sinusoïdal et des biseaux 1-pixel qui généraient un aspect de rayures / griffures sur les plaques du torse et de l'abdomen.
   - **Harmonisation Plaques ↔ Bras/Jambes** : Texture 2D rétablie sur une surface parfaitement lisse et soyeuse, identique au galbe des bras et des jambes, permettant au MatCap Chrome HD 512×512 Three.js de glisser avec un lustre miroir continu et homogène sur l'ensemble de la carrosserie.

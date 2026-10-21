@@ -986,7 +986,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_v19`,
+      `${vrmDir}/body_skin_android.png?v=mecha_thigh_joined_v26`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1122,11 +1122,11 @@ export function createVrmPet(hostEl, opts = {}) {
       }
     });
 
-    // 4. Proportions Chibi mignonnes : tête agrandie (+24%)
+    // 4. Proportions Chibi mignonnes : tête agrandie (+38%)
     try {
       const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
       if (headBone) {
-        headBone.scale.set(1.24, 1.24, 1.24);
+        headBone.scale.set(1.38, 1.38, 1.38);
       }
     } catch (_) {}
   }

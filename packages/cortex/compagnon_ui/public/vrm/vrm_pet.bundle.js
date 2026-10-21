@@ -1,29 +1,11 @@
-var VrmPetMod = (() => {
+(() => {
   var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // overlay/vrm/vrm_pet.js
-  var vrm_pet_exports = {};
-  __export(vrm_pet_exports, {
-    createVrmPet: () => createVrmPet
-  });
-
-  // node_modules/three/build/three.module.js
+  // packages/compagnon-desktop/node_modules/three/build/three.module.js
   var three_module_exports = {};
   __export(three_module_exports, {
     ACESFilmicToneMapping: () => ACESFilmicToneMapping,
@@ -450,7 +432,7 @@ var VrmPetMod = (() => {
     createCanvasElement: () => createCanvasElement
   });
 
-  // node_modules/three/build/three.core.js
+  // packages/compagnon-desktop/node_modules/three/build/three.core.js
   var REVISION = "180";
   var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
   var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31796,7 +31778,7 @@ var VrmPetMod = (() => {
     }
   }
 
-  // node_modules/three/build/three.module.js
+  // packages/compagnon-desktop/node_modules/three/build/three.module.js
   function WebGLAnimation() {
     let context = null;
     let isAnimating = false;
@@ -41902,7 +41884,7 @@ void main() {
     }
   };
 
-  // node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+  // packages/compagnon-desktop/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
   function toTrianglesDrawMode(geometry, drawMode) {
     if (drawMode === TrianglesDrawMode) {
       console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
@@ -41958,7 +41940,7 @@ void main() {
     }
   }
 
-  // node_modules/three/examples/jsm/loaders/GLTFLoader.js
+  // packages/compagnon-desktop/node_modules/three/examples/jsm/loaders/GLTFLoader.js
   var GLTFLoader = class extends Loader {
     /**
      * Constructs a new glTF loader.
@@ -44525,7 +44507,7 @@ void main() {
     });
   }
 
-  // node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
+  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -47601,12 +47583,12 @@ void main() {
   };
   var __defProp2 = Object.defineProperty;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp2.call(b, prop))
+      if (__hasOwnProp.call(b, prop))
         __defNormalProp(a, prop, b[prop]);
     if (__getOwnPropSymbols)
       for (var prop of __getOwnPropSymbols(b)) {
@@ -48451,12 +48433,12 @@ void main() {
   var __defProps = Object.defineProperties;
   var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
-  var __hasOwnProp22 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
   var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
   var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp22(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues2 = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp22.call(b, prop))
+      if (__hasOwnProp2.call(b, prop))
         __defNormalProp2(a, prop, b[prop]);
     if (__getOwnPropSymbols2)
       for (var prop of __getOwnPropSymbols2(b)) {
@@ -51067,7 +51049,7 @@ void main() {
   VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
   VRMUtils.rotateVRM0 = rotateVRM0;
 
-  // node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
+  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
   var __async8 = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -53044,7 +53026,7 @@ void main() {
     }
   };
 
-  // overlay/vrm/vrm_pet.js
+  // packages/compagnon-desktop/overlay/vrm/vrm_pet.js
   function installColorSpaceGuard(THREE) {
     try {
       const desc = Object.getOwnPropertyDescriptor(THREE.Texture.prototype, "colorSpace");
@@ -53921,7 +53903,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_v19`,
+        `${vrmDir}/body_skin_android.png?v=mecha_thigh_joined_v26`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -54046,7 +54028,7 @@ void main() {
       try {
         const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
         if (headBone) {
-          headBone.scale.set(1.24, 1.24, 1.24);
+          headBone.scale.set(1.38, 1.38, 1.38);
         }
       } catch (_) {
       }
@@ -54230,7 +54212,6 @@ void main() {
   if (typeof window !== "undefined") {
     window.__createVrmPet = createVrmPet;
   }
-  return __toCommonJS(vrm_pet_exports);
 })();
 /*! Bundled license information:
 
