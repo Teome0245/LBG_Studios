@@ -939,8 +939,8 @@ export function createVrmPet(hostEl, opts = {}) {
       size.set(0.45, 1.45, 0.4);
     }
     const fovRad = (camera.fov * Math.PI) / 180;
-    // Cadrage compact avec respiration latérale et supérieure (+10% marge tête et mains)
-    const neededH = size.y * 1.10;
+    // Cadrage compact avec respiration latérale et supérieure (+12% marge tête et mains)
+    const neededH = size.y * 1.12;
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
@@ -1122,11 +1122,11 @@ export function createVrmPet(hostEl, opts = {}) {
       }
     });
 
-    // 4. Proportions Chibi mignonnes : tête agrandie (+52%)
+    // 4. Proportions Chibi mignonnes : tête agrandie (+68%)
     try {
       const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
       if (headBone) {
-        headBone.scale.set(1.52, 1.52, 1.52);
+        headBone.scale.set(1.68, 1.68, 1.68);
       }
     } catch (_) {}
   }

@@ -488,6 +488,14 @@ _Aucun bloquant documenté pour ce bootstrap._
     - `Desktop SDS .10` : `C:\Agent_IA\executor.py` mis à jour, synchronisation locale de toutes les textures et du bundle dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\`, overlay Electron relancé avec succès (nouveau PID vérifié : **10764**).
     - `N:\Upload\IA\` : `body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js` exportés via l'agent.
     - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`body_skin_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`, `vrm_pet.bundle.js`).
+- 2026-10-21 : **Agrandissement Tête Chibi (+68%, scale 1.68) & Roadmap 3D Découpage Réel — validé & déployé** —
+  - **Agrandissement supplémentaire de la tête** : Passage de `headBone.scale` de 1.52 à **1.68** (+68%) dans `vrm_pet.js`, pour un look chibi encore plus affirmé et proportionné.
+  - **Cadrage dynamique** : Marge supérieure portée à 1.12 (`neededH = size.y * 1.12`) pour une respiration parfaite au-dessus de la chevelure.
+  - **Roadmap 3D notée** : Prévoir ultérieurement sous Blender un véritable découpage géométrique en pièces indépendantes de carrosserie mecha (inspiré Robocop / Gynoïde) avec fentes creuses physiques et volumes biseautés réels dans le maillage 3D.
+  - **Déploiement multi-surfaces synchronisé** :
+    - `Desktop SDS .10` : bundle recompilé avec `esbuild`, déployé via l'agent Windows et Electron redémarré avec succès (PID vérifié : **26236**).
+    - `N:\Upload\IA\` : export direct du bundle synchronisé.
+    - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
 - 2026-10-21 : **Agrandissement Tête Chibi (+52%, scale 1.52) — validé & déployé** —
   - **Agrandissement de la tête** : Passage de `headBone.scale` de 1.38 à **1.52** dans `vrm_pet.js`, renforçant davantage la silhouette chibi mignonne et expressive demandée par l'utilisateur.
   - **Cadrage dynamique** : Marge supérieure portée à 1.10 (`neededH = size.y * 1.10`) pour assurer une respiration confortable au-dessus des cheveux sans clipping.

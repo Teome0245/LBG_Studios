@@ -53864,7 +53864,7 @@ void main() {
         size.set(0.45, 1.45, 0.4);
       }
       const fovRad = camera.fov * Math.PI / 180;
-      const neededH = size.y * 1.1;
+      const neededH = size.y * 1.12;
       const dist = neededH / (2 * Math.tan(fovRad / 2));
       const visibleH = 2 * dist * Math.tan(fovRad / 2);
       const lookY = box.min.y - 5e-3 + visibleH / 2;
@@ -54028,7 +54028,7 @@ void main() {
       try {
         const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
         if (headBone) {
-          headBone.scale.set(1.52, 1.52, 1.52);
+          headBone.scale.set(1.68, 1.68, 1.68);
         }
       } catch (_) {
       }
