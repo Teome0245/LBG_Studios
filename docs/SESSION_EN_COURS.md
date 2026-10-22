@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-21  
+**Mis à jour** : 2026-10-22  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -12,13 +12,19 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-14** : polish O2 ESCORT + SHOW + HOTBAR **clos** · hygiène contexte **clos** · Mods→Compagnon **clos** · **canon O1/O2/O3** · **D8 avatar bridge** (SSE `:8765` + overlay VRM) **préparé**.
+**2026-10-22** :
+- **Pack danses VRM Desktop & Web** : assainissement `vrm_pet.js`, élimination des requêtes VRMA fantômes (HTML SPA), `stopVRMA(0)` synchrone, cinématiques procédurales des danses à 60 FPS, rebundle esbuild déployé sur Windows SDS `.10` et CT100 `lbg-frontend`.
+- **Routage Compagnon & barrière anti-déraillement** :
+  * Élimination du déraillement absurde vers `AI · TOOL_LOOP` (Diagnostic cockpit) sur les confirmations courtes (« c'est bien ça. », « ok faity », « vas-y », etc.) via `_CONFIRMATION_RE` (confiance 0.98), rétrogradation automatique de toute hallucination `tools` du SLM sans mot-clé explicite de diagnostic, et neutralisation de la relance mémoire dans `_contextual_followup`.
+  * Suppression de l'injection artificielle `Réponds uniquement en français. Voici ma question : ` dans `llm_chat_phase.py` qui incitait le modèle à répéter bêtement les consignes système (« Je prends note de la consigne... »).
+  * Recadrage anti-bluff sur les sites web et services distants dans `_OPS_TRUTH` (pas de fausse prétention de gestion de prod magique sans code source/repo/accès) et directive de compréhension du français familier (« fais-y », « ok faity »).
+  * 16/16 tests passants dans `test_reflection_router.py` et déploiement live validé sur CT100 (`192.168.0.100:5174`).
 
 ## Snapshot priorités (voir détail dans PRIORITES_ACTUELLES)
 
 | Rail | État |
 |------|------|
-| **O1 Compagnon** | D0–D6 OK ; D8 avatar bridge **préparé** — `FOCUS_COMPAGNON.md` · `avatar_presence_events_v1.md` |
+| **O1 Compagnon** | D0–D6 OK ; D8 avatar bridge **live sur .10** ; routage causerie & anti-divagation **déployé sur CT100** |
 | **O1 ops** | Lot gaps A–F2 + tick L3 livré 2026-10-07 ; L3 **DONE** `days_ok=3/3` (2026-10-11) ; métriques 7j Fleet **OK** |
 | **O2 hub** | P6 Godot-first G5+ **live** (`.246:8787`) ; P3 wiki live ; P5 telegraph boss **vert** 2026-10-08 ; zone entraînement B1–B4 OK |
 | **O3 Joueurs IA** | Pont `*_bridge` + dials OK ; noyau découplé / adapters = **cible** |
@@ -603,7 +609,25 @@ _Aucun bloquant documenté pour ce bootstrap._
     - `N:\Upload\IA\` : `Compagnon.vrm`, `body_skin_android.png`, `face_skin_android.png`, `hair_android.png` mis à disposition via l'agent Windows (`.10:5005`).
     - `Desktop SDS .10` : synchronisation locale dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et redémarrage propre de l'overlay (PID vérifié).
     - `CT100 (192.168.0.100)` : injection docker dans `lbg-frontend:/usr/share/nginx/html/vrm/`.
-    - Cache buster mis à jour vers `?v=mecha_v4` et rebundlé avec `esbuild`.
+- 2026-10-22 : **Cuisson intégrale (Baking) des Textures Mecha & Tête Chibi dans le binaire `Compagnon.vrm` — validé & déployé** —
+  - **Problème initial** : Les textures cyber (`body_skin_android.png` v26, `face_skin_android.png`, `hair_android.png`) et le grossissement de la tête chibi (+68%) étaient appliqués uniquement au runtime dans Three.js (`vrm_pet.js`). Lors de l'import dans un logiciel 3D externe (Blender via le plugin VRM), le binaire contenait encore les anciennes textures de base et les proportions d'origine.
+  - **Reconstruction et injection dans le conteneur glTF/GLB binaire** :
+    - Image 11 (`Body_00_SKIN`) : remplacée directement dans le buffer GLB par la texture finale mecha v26 (plaques titane mecha, cuisses jointes sans couture, néons cyan `#00f5d4`, rotules et rivets).
+    - Image 5 (`Face_00_SKIN`) : injectée avec le visage cyber.
+    - Images 13 et 15 (`Hair`) : injectées avec la texture de chevelure cyber.
+    - Squelette humanoïde : node 10 (`J_Bip_C_Head`) nativement mis à l'échelle `[1.68, 1.68, 1.68]` (+68%) pour reproduire les proportions Chibi directement dans le rig.
+    - Reconstruction binaire propre avec alignement 4-octets glTF (taille finale : 14.1 MB).
+  - **Synchronisation immédiate sur `N:\Upload\IA\Compagnon.vrm`** :
+    - Fichier `Compagnon.vrm` mis à jour sur le partage de travail `N:\Upload\IA\` (prêt pour import immédiat dans Blender avec toutes les dernières évolutions visibles).
+    - Fichiers `.vroid` d'origine (`model_Compagnon.vroid`, `model_Compagnon_Bhead.vroid`, etc.) également confirmés présents sur `N:\Upload\IA\`.
+- 2026-10-22 : **Pack de Danses 1 & Recadrage Comportement Compagnon (anti-questionnaire) — validé & déployé live** —
+  - **Correction du bug d'animation VRM ("avatar figé qui sautille")** :
+    - *Cause racine identifiée* : `VRMA_MAP` contenait des alias vers des fichiers `dance_*.vrma` inexistants. En mode SPA Nginx, les requêtes 404 étaient servies en 200 avec la page HTML, provoquant l'échec de `GLTFLoader` et bloquant le mixer three.js. De plus, `mixer.stopAllAction()` n'était pas exécuté de façon synchrone, ce qui laissait les os figés dans la dernière frame du mixer pendant que seul le rebond Y s'exécutait.
+    - *Résolution* : `VRMA_MAP` épuré des fichiers fantômes, `stopVRMA(0)` synchrone avec `mixer.stopAllAction()`, libérant 100 % du squelette pour la cinématique procédurale 60 FPS.
+    - Rebuild et redéploiement effectués sur CT100 (`192.168.0.100`) et Windows SDS (`.10`).
+  - **Recadrage du comportement du Compagnon (posture pair studio façon Antigravity)** :
+    - *Suppression du piège Campus* : `team_proxy.py` délesté des mots-clés de conversation courante (`créer`, `creer`) qui déclenchaient une fausse mission Campus au lieu de dialoguer.
+    - *Éradication du questionnaire marketing* : Interdiction formelle dans `router_prompts.py` des questionnaires de coaching creux (« Cible ? Valeur ? »). Obligation pour le Compagnon de répondre avec une vision studio concrète et technique (avatar VRM, bureau Windows .10, OBS/streaming, Lost Heaven) et d'avancer en force de proposition.
 - 2026-10-12 : **rejeu feeling humain Compagnon (O-FEEL-1 / O-FEEL-2) — validé & clôturé** —
   - Déploiement CT 100 actualisé avec le build atomique `1.0.0+40e38c0` (`baf1f65b13777595…`, 36 fichiers).
   - Exécution du script [`tools/smoke_rejeu_humain_d6_5174.sh`](../tools/smoke_rejeu_humain_d6_5174.sh) sur `:5174` : 7 tours exécutés sans aucune rupture ni fuite ops.
