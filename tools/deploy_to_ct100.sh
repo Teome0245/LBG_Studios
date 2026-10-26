@@ -12,6 +12,14 @@ if ssh -o BatchMode=yes -o ConnectTimeout=3 root@192.168.0.100 "docker ps --form
         ssh root@192.168.0.100 "docker cp /tmp/$f lbg-frontend:/usr/share/nginx/html/vrm/$f && rm /tmp/$f"
         echo " - $f injecté dans lbg-frontend"
     done
+    ANIM_FILES="dance.vrma samba.vrma hiphop.vrma"
+    for a in $ANIM_FILES; do
+        if [ -f "$DIR/animations/$a" ]; then
+            scp -q "$DIR/animations/$a" "root@192.168.0.100:/tmp/$a"
+            ssh root@192.168.0.100 "docker cp /tmp/$a lbg-frontend:/usr/share/nginx/html/vrm/animations/$a && rm /tmp/$a"
+            echo " - animations/$a injecté dans lbg-frontend"
+        fi
+    done
     echo "Déploiement CT100 réussi !"
 elif ssh -o BatchMode=yes -o ConnectTimeout=3 lbg@192.168.0.100 "docker ps" 2>/dev/null; then
     echo "CT100 lbg accessible..."

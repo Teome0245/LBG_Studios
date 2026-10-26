@@ -14,6 +14,7 @@ _INFRA_LAN_STRONG_RE = re.compile(
     r"infra\s*lan|proxmox|disk|disque|stockage|local-lvm|"
     r"occupation|espace\s+disque|guest\s*metrics|\bdf\b|"
     r"hephaistos|watchdog\s+infra|thin\s*pool|"
+    r"\bnas\b|\bsynology\b|\biscsi\b|\blun\b|\bbackup\b|"
     r"\bram\b|\bswap\b|mémoire\s+(?:vm|hôte|hote|serveur)|"
     r"memoire\s+(?:vm|hôte|hote|serveur)"
     r")"
@@ -22,7 +23,8 @@ _INFRA_LAN_STRONG_RE = re.compile(
 # Ancres hôte — nécessitent un signal ops (sinon : localisation MMO / studio).
 _INFRA_LAN_HOST_RE = re.compile(
     r"(?i)("
-    r"\bprime\b|\b246\b|\.100\b|192\.168\.0\.(?:100|246)"
+    r"\bprime\b|\b246\b|\.100\b|\.140\b|\.51\b|\.200\b|\.201\b|"
+    r"192\.168\.0\.(?:51|100|140|200|201|246)"
     r")"
 )
 
@@ -33,6 +35,7 @@ _INFRA_LAN_OPS_RE = re.compile(
     r"occupation|espace|utilisation|usage|"
     r"proxmox|sond|supervis|surveill|watchdog|"
     r"état|etat|status|santé|sante|metrics?|"
+    r"slack|alerte|notif|notification|cr\b|"
     r"point\s+sur|nettoie|prune|agrand"
     r")\b"
 )

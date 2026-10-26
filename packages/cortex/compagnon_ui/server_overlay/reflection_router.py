@@ -121,6 +121,26 @@ _INFRA_QUESTIONS_OR_REBUTTAL_RE = re.compile(
     r")\b"
 )
 
+_CONFIRMATION_RE = re.compile(
+    r"(?i)^\s*("
+    r"c['’]est\s+(?:bien\s+)?(?:[çc]a|exactement|vrai|le\s+cas)|"
+    r"tout\s+[àa]\s+fait|"
+    r"exactement|"
+    r"absolument|"
+    r"voil[àa]|"
+    r"parfait(?:ement)?|"
+    r"oui(?:\s+(?:c['’]est\s+(?:bien\s+)?[çc]a|voil[àa]|exactement|tout\s+[àa]\s+fait))?|"
+    r"ok\s*(?:faity?|fais[- ](?:le|y)|vas[- ]y|roule|c['’]est\s+parti|go)?|"
+    r"faity?|"
+    r"fais[- ](?:le|y)|"
+    r"vas[- ]y|"
+    r"d['’]accord|"
+    r"entendu|"
+    r"bien\s+s[ûu]r|"
+    r"[çc]a\s+marche"
+    r")[\s.!?]*$"
+)
+
 
 @dataclass(frozen=True)
 class ReflectionDecision:
@@ -159,8 +179,12 @@ def _contextual_followup(
         f"{meta.get('reflection_reason') or ''} {meta.get('clarify') or ''}"
     ).lower()
 
-    # Pas de relance mémoire Team si la phrase parle d'avatar, d'UI ou est une vérification conversationnelle
-    if _AVATAR_OR_UI_RE.search(text) or _CONVERSATIONAL_CHECK_RE.search(text):
+    # Pas de relance mémoire Team si la phrase parle d'avatar, d'UI, d'une vérif ou d'une confirmation
+    if (
+        _AVATAR_OR_UI_RE.search(text)
+        or _CONVERSATIONAL_CHECK_RE.search(text)
+        or _CONFIRMATION_RE.match(text)
+    ):
         return None
 
     # Relance périmètre après clarif audit (« la partie Team, studio ») — sans cue « suite »
@@ -247,6 +271,10 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
         return ReflectionDecision("team", "préfixe team:/mission:/campus:", None, "heuristic", 0.0, 1.0)
 
     low = text.lower()
+
+    # Confirmations ou acquiescements conversationnels (« c'est bien ça. », « ok faity », « vas-y », etc.)
+    if _CONFIRMATION_RE.match(text):
+        return ReflectionDecision("answer", "confirmation conversationnelle", None, "heuristic", 0.0, 0.98)
 
     # Avatar, animation, danse, interface, bulle, affichage → Compagnon (answer)
     if _AVATAR_OR_UI_RE.search(text) and not any(t in low for t in ("deploy", "smoke", "sondes", "healthz", "status campus")):
@@ -475,7 +503,7 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
     return None
 
 
-def _parse_llm_json(raw: str) -> ReflectionDecision | None:
+def _parse_llm_json(raw: str, prompt: str = "") -> ReflectionDecision | None:
     s = (raw or "").strip()
     if not s:
         return None
@@ -505,6 +533,28 @@ def _parse_llm_json(raw: str) -> ReflectionDecision | None:
             return ReflectionDecision("answer", "ask_user sans clarify→answer", None, "llm", 0.0, 0.55)
     if action == "ask_user" and clarify_s and _PROMPT_LEAK_RE.search(clarify_s):
         return ReflectionDecision("answer", "clarify leak→answer", None, "llm", 0.0, 0.55)
+
+    # Garde-fou anti-hallucination tools : ne jamais activer les outils multi-sondes
+    # si le prompt ne demande pas explicitement de diagnostic ou de bilan large
+    if action == "tools" and prompt:
+        try:
+            from src.services.tool_loop import wants_tool_loop
+            from src.services.chat_intent import wants_broad_audit
+        except ImportError:
+            try:
+                from tool_loop import wants_tool_loop  # type: ignore
+                from chat_intent import wants_broad_audit  # type: ignore
+            except ImportError:
+                wants_tool_loop = lambda _p: False  # type: ignore
+                wants_broad_audit = lambda _p: False  # type: ignore
+        if not wants_tool_loop(prompt) and not wants_broad_audit(prompt):
+            logger.warning(
+                "LLM hallucination: action='tools' sur prompt sans diagnostic (%r) -> answer",
+                prompt[:60],
+            )
+            action = "answer"
+            reason = "downgrade tools sans mot-clé diag"
+
     return ReflectionDecision(action, reason, clarify_s, "llm", 0.0, 0.7)  # type: ignore[arg-type]
 
 
@@ -555,7 +605,7 @@ async def _ollama_light_reflect(prompt: str, *, settings: Settings) -> Reflectio
             content = str(msg.get("content") or "")
         elif isinstance(data, dict):
             content = str(data.get("response") or "")
-        decision = _parse_llm_json(content)
+        decision = _parse_llm_json(content, prompt=prompt)
         if decision is None:
             return None
         ms = (time.monotonic() - t0) * 1000
@@ -597,7 +647,7 @@ async def _groq_reflect(prompt: str, *, settings: Settings) -> ReflectionDecisio
         r.raise_for_status()
         data = r.json()
         content = data["choices"][0]["message"]["content"]
-        decision = _parse_llm_json(content)
+        decision = _parse_llm_json(content, prompt=prompt)
         if decision is None:
             return None
         ms = (time.monotonic() - t0) * 1000

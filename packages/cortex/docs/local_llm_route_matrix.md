@@ -73,6 +73,7 @@ ollama pull huihui_ai/gemma-4-abliterated:e2b
 | `pm` | `LBG_REASON_MODEL_PM` | `huihui_ai/gemma-4-abliterated:12b` | 110 |
 | `dialogue` | `LBG_REASON_MODEL_DIALOGUE` | `huihui_ai/gemma-4-abliterated:12b` | 110 |
 | `uncensored` | `LBG_REASON_MODEL_UNCENSORED` | même tag heavy | 110 |
+| `chill` / Philo | `LBG_REASON_MODEL_CHILL` | `huihui_ai/gemma-4-abliterated:E4b-qat` | 110 |
 
 ### Dialogue maturité + Prométhée
 

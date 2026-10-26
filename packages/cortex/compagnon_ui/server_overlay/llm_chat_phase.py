@@ -406,6 +406,9 @@ async def run_llm_chat_phase(
             "jarvis",
             "mother",
             "kit",
+            "mec_chill",
+            "chill",
+            "philo",
         ):
             block = format_character_block(
                 lab=lab_mode,
@@ -580,12 +583,13 @@ async def run_llm_chat_phase(
             "Ecosystem grounding inject failed (best-effort)",
         )
 
-    # P3 — RAG (leçons / expériences / knowledge) si LBG_RAG_ENABLED + indices mémoire
+    # P3 — RAG (leçons / expériences / knowledge / philo) si LBG_RAG_ENABLED + indices mémoire ou profil chill
     try:
         from src.services.rag_grounding import load_rag_block
 
-        if not lab_causerie:
-            rag_block = await load_rag_block(prompt)
+        is_chill_profile = chat_profile in ("mec_chill", "chill", "philo")
+        if (not lab_causerie) or is_chill_profile:
+            rag_block = await load_rag_block(prompt, profile=chat_profile, force=is_chill_profile)
             if rag_block:
                 system_prompt = system_prompt + "\n\n" + rag_block
                 if _cj_block:
@@ -593,7 +597,7 @@ async def run_llm_chat_phase(
                         _cj_block(
                             "rag",
                             label="RAG",
-                            summary="leçons / knowledge",
+                            summary="philosophie / leçons" if is_chill_profile else "leçons / knowledge",
                             chars=len(rag_block),
                         )
                     )
@@ -626,7 +630,7 @@ async def run_llm_chat_phase(
         *context_messages,
         {
             "role": "user",
-            "content": f"Réponds uniquement en français. Voici ma question : {prompt}",
+            "content": prompt,
         },
     ]
 
@@ -683,16 +687,20 @@ async def run_llm_chat_phase(
             _QUALITY_ROUTE_RE,
         )
 
-        quality = wants_lab_quality_route(prompt)
-        preferred = lab_preferred_model(prompt)
-        route_profile = lab_route_profile(prompt)
-        # Causerie sticky : forcer modèle chat qualité (pas 2B fallback silencieux)
-        if lab_causerie:
+        is_chill_profile = chat_profile in ("mec_chill", "chill", "philo")
+        quality = wants_lab_quality_route(prompt) or is_chill_profile
+        preferred = lab_preferred_model(prompt, profile=chat_profile)
+        route_profile = lab_route_profile(prompt, profile=chat_profile)
+        # Causerie sticky : forcer modèle chat qualité si causerie ordinaire hors chill
+        if lab_causerie and not is_chill_profile:
             from src.services.router_prompts import lab_chat_quality_model
 
             preferred = lab_chat_quality_model()
             quality = True
             route_profile = "dialogue"
+        elif is_chill_profile:
+            quality = True
+            route_profile = "chill"
         before = list(sorted_models)
         local_only = [e for e in sorted_models if e.get("provider") == "local"]
         if not any(e.get("name") == preferred for e in local_only):
@@ -700,7 +708,12 @@ async def run_llm_chat_phase(
         head = [e for e in local_only if e.get("name") == preferred]
         tail = [e for e in local_only if e.get("name") != preferred]
 
-        needs_heavy = bool(_MEDIA_CUE_RE.search(prompt or "") or _QUALITY_ROUTE_RE.search(prompt or ""))
+        needs_heavy = bool(
+            _MEDIA_CUE_RE.search(prompt or "")
+            or _QUALITY_ROUTE_RE.search(prompt or "")
+            or is_chill_profile
+            or "e4b" in (preferred or "").lower()
+        )
         route_meta = {
             "route_profile": route_profile,
             "route_tier": lab_route_tier(route_profile) if not needs_heavy else "heavy",
@@ -710,12 +723,13 @@ async def run_llm_chat_phase(
         def _is_heavy(name: str) -> bool:
             n = (name or "").lower()
             # e2b reste light (.111) — pas de forçage heavy
-            return any(x in n for x in (":9b", ":12b", "12b-qat", ":e4b"))
+            return any(x in n for x in (":9b", ":12b", "12b-qat", ":e4b", "e4b"))
 
         if needs_heavy:
-            # Média / Agir : 12b puis 9b — pas de file d'attente light→heavy
+            # Média / Agir / Chill : E4b-qat (.110) puis 12b puis 9b
             allow_h = {
                 preferred,
+                "huihui_ai/gemma-4-abliterated:E4b-qat",
                 "huihui_ai/gemma-4-abliterated:12b",
                 "huihui_ai/gemma-4-abliterated:12b-qat",
                 "huihui_ai/qwen3.5-abliterated:9b",

@@ -72,7 +72,7 @@ _STATUS_RE = re.compile(
     r"\b(team|équipe|equipe)\b.{0,40}\b(status|état|etat|en\s+cours|compte\s+rendu)\b"
 )
 _MISSION_RE = re.compile(
-    r"(?i)\b(mission|propose|spawn|automatiser|planif|créer|creer)\b"
+    r"(?i)\b(mission|spawn\s+mission|lancer\s+mission|lance\s+une\s+mission|nouvelle\s+mission)\b"
 )
 _DISK_WARN_PCT = 80
 

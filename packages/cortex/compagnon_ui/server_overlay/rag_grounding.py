@@ -20,7 +20,10 @@ _RAG_HINTS = re.compile(
     r"\bce\s+que\s+tu\s+(sais|retiens|connais|te\s+souviens)\b|"
     r"\b(rappelle[- ]toi|selon\s+(nos|tes)\s+leçons)\b|"
     r"\b(rag|contexte\s+récupéré|base\s+de\s+connaissances)\b|"
-    r"\b(échecs?\s+passés|ne\s+pas\s+répéter)\b"
+    r"\b(échecs?\s+passés|ne\s+pas\s+répéter)\b|"
+    r"\b(philosophie|philo|stoïcisme|stoicisme|stoïcien|stoicien|marc\s+aurèle|aurele|épictète|epictete|sénèque|seneque)\b|"
+    r"\b(bouddhisme|buddhism|lâcher[- ]prise|lacher[- ]prise|impermanence|wu\s*wei|taoïsme|taoisme)\b|"
+    r"\b(descartes|emerson|spinoza|montaigne|dichotomie\s+du\s+contrôle|dichotomie\s+du\s+controle|mec\s+chill|chill)\b"
     r")"
 )
 
@@ -35,7 +38,7 @@ def rag_enabled() -> bool:
 
 
 def wants_rag_context(prompt: str) -> bool:
-    """Heuristique : questions mémoire / leçons / souvenirs → RAG."""
+    """Heuristique : questions mémoire / leçons / souvenirs / philosophie → RAG."""
     if not rag_enabled():
         return False
     return bool(_RAG_HINTS.search(prompt or ""))
@@ -64,11 +67,17 @@ def _import_retrieve():
         return None
 
 
-async def load_rag_block(prompt: str, *, force: bool = False) -> str:
+async def load_rag_block(
+    prompt: str,
+    *,
+    profile: str | None = None,
+    force: bool = False,
+) -> str:
     """Retourne le bloc à injecter, ou ''."""
     if not rag_enabled():
         return ""
-    if not force and not wants_rag_context(prompt):
+    is_chill = (profile or "").strip().lower() in ("mec_chill", "chill", "philo")
+    if not force and not is_chill and not wants_rag_context(prompt):
         return ""
     retrieve_for_prompt = _import_retrieve()
     if retrieve_for_prompt is None:

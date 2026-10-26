@@ -1,11 +1,29 @@
-(() => {
+var VrmPetMod = (() => {
   var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // overlay/vrm/vrm_pet.js
+  var vrm_pet_exports = {};
+  __export(vrm_pet_exports, {
+    createVrmPet: () => createVrmPet
+  });
+
+  // node_modules/three/build/three.module.js
   var three_module_exports = {};
   __export(three_module_exports, {
     ACESFilmicToneMapping: () => ACESFilmicToneMapping,
@@ -432,7 +450,7 @@
     createCanvasElement: () => createCanvasElement
   });
 
-  // packages/compagnon-desktop/node_modules/three/build/three.core.js
+  // node_modules/three/build/three.core.js
   var REVISION = "180";
   var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
   var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31778,7 +31796,7 @@
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // node_modules/three/build/three.module.js
   function WebGLAnimation() {
     let context = null;
     let isAnimating = false;
@@ -41884,7 +41902,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+  // node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
   function toTrianglesDrawMode(geometry, drawMode) {
     if (drawMode === TrianglesDrawMode) {
       console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
@@ -41940,7 +41958,7 @@ void main() {
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/loaders/GLTFLoader.js
+  // node_modules/three/examples/jsm/loaders/GLTFLoader.js
   var GLTFLoader = class extends Loader {
     /**
      * Constructs a new glTF loader.
@@ -44507,7 +44525,7 @@ void main() {
     });
   }
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
+  // node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -47583,12 +47601,12 @@ void main() {
   };
   var __defProp2 = Object.defineProperty;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp.call(b, prop))
+      if (__hasOwnProp2.call(b, prop))
         __defNormalProp(a, prop, b[prop]);
     if (__getOwnPropSymbols)
       for (var prop of __getOwnPropSymbols(b)) {
@@ -48433,12 +48451,12 @@ void main() {
   var __defProps = Object.defineProperties;
   var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp22 = Object.prototype.hasOwnProperty;
   var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
   var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp22(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues2 = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp2.call(b, prop))
+      if (__hasOwnProp22.call(b, prop))
         __defNormalProp2(a, prop, b[prop]);
     if (__getOwnPropSymbols2)
       for (var prop of __getOwnPropSymbols2(b)) {
@@ -51049,7 +51067,7 @@ void main() {
   VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
   VRMUtils.rotateVRM0 = rotateVRM0;
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
+  // node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
   var __async8 = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -53026,7 +53044,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/overlay/vrm/vrm_pet.js
+  // overlay/vrm/vrm_pet.js
   function installColorSpaceGuard(THREE) {
     try {
       const desc = Object.getOwnPropertyDescriptor(THREE.Texture.prototype, "colorSpace");
@@ -53222,6 +53240,78 @@ void main() {
       leftLowerLeg: [0.05, 0, 0],
       rightLowerLeg: [0.05, 0, 0]
     },
+    /** Danse Samba / Salsa latino énergique avec déhanché en huit. */
+    samba: {
+      leftUpperArm: [0.35, 0.2, -1.35],
+      rightUpperArm: [0.15, -0.2, 0.85],
+      leftLowerArm: [0, 0, -1.4],
+      rightLowerArm: [0, 0, -0.8],
+      leftHand: [0, 0, 0.2],
+      rightHand: [0, 0, -0.2],
+      hips: [0, 0.08, 0.05],
+      spine: [0.04, -0.04, -0.03],
+      chest: [0.05, -0.03, -0.02],
+      neck: [0, 0, 0],
+      head: [0.04, 0.05, -0.04],
+      leftUpperLeg: [0, 0, -0.06],
+      rightUpperLeg: [0, 0, 0.06],
+      leftLowerLeg: [0.08, 0, 0],
+      rightLowerLeg: [0.08, 0, 0]
+    },
+    /** Danse Hip-Hop / B-Boy street bounce avec attitude penchée et coudes ouverts. */
+    hiphop: {
+      leftUpperArm: [0.45, 0.3, -1.25],
+      rightUpperArm: [0.45, -0.3, 1.25],
+      leftLowerArm: [0, 0, -1.5],
+      rightLowerArm: [0, 0, -1.5],
+      leftHand: [0.1, 0, 0.2],
+      rightHand: [0.1, 0, -0.2],
+      hips: [0.06, 0, 0],
+      spine: [0.14, 0, 0],
+      chest: [0.1, 0, 0],
+      neck: [0.08, 0, 0],
+      head: [0.12, 0, 0],
+      leftUpperLeg: [-0.08, 0.1, -0.1],
+      rightUpperLeg: [-0.08, -0.1, 0.1],
+      leftLowerLeg: [0.16, 0, 0],
+      rightLowerLeg: [0.16, 0, 0]
+    },
+    /** Danse Wave / Robot avec ondulation fluide et arrêts robotiques. */
+    robot: {
+      leftUpperArm: [0.1, 0, -1.5],
+      rightUpperArm: [0.1, 0, 0.6],
+      leftLowerArm: [0, 0, -0.2],
+      rightLowerArm: [0, 0, -1.3],
+      leftHand: [0, 0, 0.3],
+      rightHand: [0, 0, 0],
+      hips: [0, 0, 0],
+      spine: [0.02, 0, 0],
+      chest: [0.04, 0, 0],
+      neck: [0, 0, 0],
+      head: [0, 0.08, 0],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02],
+      leftLowerLeg: [0.02, 0, 0],
+      rightLowerLeg: [0.02, 0, 0]
+    },
+    /** Danse Disco / Twist Fever avec pose iconique bras vers le ciel. */
+    disco: {
+      leftUpperArm: [0.15, 0.25, -0.85],
+      rightUpperArm: [-0.55, -0.2, 2.45],
+      leftLowerArm: [0, 0, -1.65],
+      rightLowerArm: [0, 0, -0.25],
+      leftHand: [0, 0, 0],
+      rightHand: [0, 0, -0.2],
+      hips: [0, 0.12, 0.06],
+      spine: [0.04, -0.1, -0.04],
+      chest: [0.06, -0.08, -0.03],
+      neck: [-0.04, 0.06, 0],
+      head: [-0.06, 0.1, 0.04],
+      leftUpperLeg: [0, 0.05, -0.04],
+      rightUpperLeg: [0, -0.05, 0.04],
+      leftLowerLeg: [0.06, 0, 0],
+      rightLowerLeg: [0.06, 0, 0]
+    },
     /** Pirouette 360° gracieuse (rotation complète avec bras déployés). */
     spin: {
       leftUpperArm: [0.1, 0, -0.85],
@@ -53397,6 +53487,16 @@ void main() {
       marche: "walk.vrma",
       step: "walk.vrma",
       run: "walk.vrma",
+      dance: "dance.vrma",
+      danse: "dance.vrma",
+      groove: "dance.vrma",
+      samba: "samba.vrma",
+      salsa: "samba.vrma",
+      latina: "samba.vrma",
+      hiphop: "hiphop.vrma",
+      bboy: "hiphop.vrma",
+      street: "hiphop.vrma",
+      bounce: "hiphop.vrma",
       jump: "jump.vrma",
       saut: "jump.vrma",
       victory: "jump.vrma",
@@ -53424,7 +53524,9 @@ void main() {
       sleepy: "sleepy.vrma",
       surprised: "surprised.vrma",
       sad: "sad.vrma",
-      angry: "angry.vrma"
+      angry: "angry.vrma",
+      hello: "wave_right.vrma",
+      salute: "wave_right.vrma"
     };
     function getVrmaUrl(filename) {
       const base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
@@ -53486,10 +53588,19 @@ void main() {
       activeVrmaName = name;
       return true;
     }
-    function stopVRMA(fadeSec = 0.35) {
+    function stopVRMA(fadeSec = 0.25) {
       if (activeVrmaAction) {
-        activeVrmaAction.fadeOut(fadeSec);
+        try {
+          activeVrmaAction.fadeOut(fadeSec);
+        } catch (_) {
+        }
         activeVrmaAction = null;
+      }
+      if (mixer) {
+        try {
+          mixer.stopAllAction();
+        } catch (_) {
+        }
       }
       activeVrmaName = null;
       poseBlend = 0;
@@ -53567,8 +53678,12 @@ void main() {
       else if (n === "cheer" || n === "happy" || n === "joy") key2 = "cheer";
       else if (n === "crossarms" || n === "cross" || n === "arms") key2 = "crossArms";
       else if (n === "bow" || n === "greet" || n === "welcome") key2 = "bow";
-      else if (n === "wave" || n === "hello" || n === "salute") key2 = "wave";
+      else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key2 = "wave";
       else if (n === "dance" || n === "danse" || n === "groove") key2 = "dance";
+      else if (n === "samba" || n === "salsa" || n === "latina") key2 = "samba";
+      else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key2 = "hiphop";
+      else if (n === "robot" || n === "popping" || n === "wavedance") key2 = "robot";
+      else if (n === "disco" || n === "twist" || n === "fever") key2 = "disco";
       else if (n === "spin" || n === "tourner" || n === "pirouette") key2 = "spin";
       else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key2 = "jump";
       else if (n === "stretch" || n === "etirement") key2 = "stretch";
@@ -53585,7 +53700,7 @@ void main() {
         setHeading(0);
       }
       if (key2 === "angry") setMood("tense");
-      else if (key2 === "dance" || key2 === "cheer") setMood("happy");
+      else if (key2 === "dance" || key2 === "samba" || key2 === "hiphop" || key2 === "robot" || key2 === "disco" || key2 === "spin" || key2 === "cheer") setMood("happy");
       else if (key2 === "think") setMood("curious");
       poseFrom = poseTo;
       poseTo = key2;
@@ -53597,10 +53712,13 @@ void main() {
       } else {
         poseHoldUntil = 0;
       }
-      if (VRMA_MAP[n]) {
-        playVRMA(n, { loop: !(hold > 0) });
+      const vrmaFile = VRMA_MAP[key2] || VRMA_MAP[n];
+      if (vrmaFile) {
+        playVRMA(key2, { loop: !(hold > 0) }).then((ok) => {
+          if (!ok) stopVRMA(0);
+        });
       } else {
-        stopVRMA(0.25);
+        stopVRMA(0);
       }
     }
     function bone(name) {
@@ -53720,6 +53838,122 @@ void main() {
             -rollHips * 0.4
           ];
         }
+      }
+      if (poseTo === "samba") {
+        const tempo = t * 11;
+        const swayHips = Math.sin(tempo) * 0.12;
+        const rollHips = Math.sin(tempo * 2) * 0.08;
+        const yawHips = Math.cos(tempo) * 0.06;
+        if (animated.hips) animated.hips = [0, yawHips, swayHips];
+        if (animated.spine) animated.spine = [0.04, -yawHips * 0.5, -swayHips * 0.4];
+        if (animated.chest) animated.chest = [0.05, -yawHips * 0.3, -swayHips * 0.3];
+        const kneeL = 0.08 + Math.max(0, Math.sin(tempo)) * 0.15;
+        const kneeR = 0.08 + Math.max(0, -Math.sin(tempo)) * 0.15;
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeL, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeR, 0, 0];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.35 + Math.sin(tempo) * 0.15, 0.2, -1.35 + Math.cos(tempo) * 0.12];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.15 - Math.sin(tempo) * 0.15, -0.2, 0.85 - Math.cos(tempo) * 0.12];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -1.4 + Math.sin(tempo) * 0.18];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, -0.8 - Math.sin(tempo) * 0.18];
+        }
+        if (animated.head) {
+          animated.head = [0.04, yawHips * 0.6, -swayHips * 0.4];
+        }
+      }
+      if (poseTo === "hiphop") {
+        const tempo = t * 9;
+        const bounce = Math.abs(Math.sin(tempo));
+        const nod = Math.sin(tempo) * 0.12;
+        if (animated.hips) animated.hips = [0.08 + bounce * 0.03, 0, Math.sin(tempo * 0.5) * 0.04];
+        if (animated.spine) animated.spine = [0.14, 0, 0];
+        if (animated.chest) animated.chest = [0.1, 0, 0];
+        if (animated.head) animated.head = [0.12 + nod, 0, 0];
+        const kneeBend = 0.18 + bounce * 0.12;
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBend, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBend, 0, 0];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.45 + nod * 0.4, 0.3, -1.25];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.45 + nod * 0.4, -0.3, 1.25];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -1.5 - bounce * 0.18];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, -1.5 - bounce * 0.18];
+        }
+      }
+      if (poseTo === "robot") {
+        const tempo = t * 4.5;
+        const phaseLeftHand = Math.sin(tempo);
+        const phaseLeftElbow = Math.sin(tempo - 0.4);
+        const phaseLeftArm = Math.sin(tempo - 0.8);
+        const phaseChest = Math.sin(tempo - 1.2);
+        const phaseRightArm = Math.sin(tempo - 1.6);
+        const phaseRightElbow = Math.sin(tempo - 2);
+        const phaseRightHand = Math.sin(tempo - 2.4);
+        const stepPop = (Math.floor(tempo * 2) % 2 === 0 ? 0.04 : -0.04) * Math.exp(-(tempo * 2 % 1) * 3);
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.1, 0, -1.45 + phaseLeftArm * 0.25 + stepPop];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -0.4 + phaseLeftElbow * 0.35];
+        }
+        if (animated.leftHand) {
+          animated.leftHand = [0, 0, 0.2 + phaseLeftHand * 0.3];
+        }
+        if (animated.chest) {
+          animated.chest = [0.04, phaseChest * 0.08, 0];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.1, 0, 1.45 - phaseRightArm * 0.25 - stepPop];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, -0.4 + phaseRightElbow * 0.35];
+        }
+        if (animated.rightHand) {
+          animated.rightHand = [0, 0, -0.2 - phaseRightHand * 0.3];
+        }
+        if (animated.head) {
+          animated.head = [0, phaseChest * 0.1, 0];
+        }
+      }
+      if (poseTo === "disco") {
+        const tempo = t * 8;
+        const phase = tempo % (Math.PI * 4);
+        const isUp = phase < Math.PI * 2;
+        const reach = isUp ? 1 : 0;
+        const twist = Math.sin(tempo) * 0.14;
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [
+            -0.55 * reach + 0.3 * (1 - reach),
+            -0.2,
+            2.45 * reach + 0.9 * (1 - reach)
+          ];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [0, 0, -0.25 * reach - 1.45 * (1 - reach)];
+        }
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.15, 0.25, -0.85];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -1.65];
+        }
+        if (animated.hips) animated.hips = [0, twist, Math.cos(tempo) * 0.07];
+        if (animated.spine) animated.spine = [0.04, -twist * 0.6, -Math.cos(tempo) * 0.04];
+        if (animated.chest) animated.chest = [0.06, -twist * 0.4, 0];
+        if (animated.head) animated.head = [-0.05, twist * 0.4, 0];
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [0.06 + Math.abs(Math.sin(tempo)) * 0.06, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [0.06 + Math.abs(Math.sin(tempo + Math.PI)) * 0.06, 0, 0];
       }
       if (poseTo === "spin") {
         const spinFlutter = Math.sin(t * 4) * 0.04;
@@ -54123,12 +54357,26 @@ void main() {
         const targetWalkY = isWalking ? 0.088 : 0;
         const lerpSpeed = isWalking ? 16 : 6;
         walkYOffset += (targetWalkY - walkYOffset) * Math.min(1, dt * lerpSpeed);
-        if (poseTo === "jump") {
+        if (activeVrmaAction) {
+          vrm.scene.position.y = walkYOffset;
+        } else if (poseTo === "jump") {
           const jumpBounce = Math.max(0, Math.sin(t * 4)) * 0.038;
           vrm.scene.position.y = walkYOffset + jumpBounce;
         } else if (poseTo === "dance") {
           const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
           vrm.scene.position.y = walkYOffset + danceBounce;
+        } else if (poseTo === "samba") {
+          const sambaBounce = Math.abs(Math.sin(t * 11)) * 0.01;
+          vrm.scene.position.y = walkYOffset + sambaBounce;
+        } else if (poseTo === "hiphop") {
+          const hiphopBounce = Math.abs(Math.sin(t * 9)) * 0.018;
+          vrm.scene.position.y = walkYOffset + hiphopBounce;
+        } else if (poseTo === "disco") {
+          const discoBounce = Math.abs(Math.sin(t * 8)) * 0.014;
+          vrm.scene.position.y = walkYOffset + discoBounce;
+        } else if (poseTo === "robot") {
+          const robotBounce = Math.floor(t * 4.5 * 2) % 2 === 0 ? 4e-3 : 0;
+          vrm.scene.position.y = walkYOffset + robotBounce;
         } else if (!activeVrmaAction && poseTo === "idle") {
           vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
         } else {
@@ -54212,6 +54460,7 @@ void main() {
   if (typeof window !== "undefined") {
     window.__createVrmPet = createVrmPet;
   }
+  return __toCommonJS(vrm_pet_exports);
 })();
 /*! Bundled license information:
 

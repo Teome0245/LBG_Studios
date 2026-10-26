@@ -20,6 +20,9 @@ LIGHT_CLEAN_DEFAULT = "huihui_ai/qwen3.5-abliterated:2B"
 LIGHT_FAST_DEFAULT = "huihui_ai/qwen3.5-abliterated:0.8B"
 
 
+CHILL_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"
+
+
 def reason_route_matrix() -> dict[str, dict[str, str]]:
     """Table de routage local prioritaire par usage."""
     return {
@@ -84,6 +87,13 @@ def reason_route_matrix() -> dict[str, dict[str, str]]:
             "default": HEAVY_REASON_DEFAULT,
             "tier": "local",
             "usage": "avis_complementaires_hors_cadre",
+            "host_class": "heavy",
+        },
+        "chill": {
+            "env": "LBG_REASON_MODEL_CHILL",
+            "default": CHILL_REASON_DEFAULT,
+            "tier": "local",
+            "usage": "philosophie_et_posture_chill",
             "host_class": "heavy",
         },
     }

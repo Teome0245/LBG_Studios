@@ -181,6 +181,41 @@ def load_knowledge_snippets() -> list[IngestItem]:
         except OSError:
             pass
 
+    # --- philo_corpus.jsonl ---
+    philo_path = root / "philo_corpus.jsonl"
+    if philo_path.is_file():
+        try:
+            for line in philo_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(row, dict):
+                    continue
+                fid = str(row.get("id") or "").strip()
+                text = str(row.get("text") or "").strip()
+                if not fid or not text:
+                    continue
+                school = str(row.get("school") or "philosophie").strip()
+                author = str(row.get("author") or "").strip()
+                items.append(
+                    IngestItem(
+                        source_id=f"philo_{fid}",
+                        source_kind="philosophy",
+                        content=text[:1200],
+                        metadata={
+                            "path": str(philo_path),
+                            "school": school,
+                            "author": author,
+                        },
+                    )
+                )
+        except OSError:
+            pass
+
     # --- character pack (plusieurs chunks) ---
     pack = root / "character" / "compagnon_v1.json"
     if pack.is_file():

@@ -56,6 +56,26 @@
         <div v-if="avatarMode === 'vrm'" class="space-y-1.5 bg-slate-950/40 p-2 rounded-lg border border-slate-800/60">
           <div class="flex items-center justify-between text-[11px] pb-0.5">
             <span class="text-slate-400 font-medium">Modèle : <strong class="text-teal-300 font-normal">Compagnon</strong></span>
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                :class="vrmFraming === 'bust' ? 'bg-teal-600/40 text-teal-200 border-teal-500/50' : 'bg-slate-900/60 text-slate-400 border-slate-800'"
+                class="px-1.5 py-0.5 rounded text-[10px] border transition"
+                title="Cadrage portrait / buste"
+                @click="toggleFraming('bust')"
+              >
+                Buste
+              </button>
+              <button
+                type="button"
+                :class="vrmFraming === 'full' ? 'bg-teal-600/40 text-teal-200 border-teal-500/50' : 'bg-slate-900/60 text-slate-400 border-slate-800'"
+                class="px-1.5 py-0.5 rounded text-[10px] border transition"
+                title="Cadrage corps entier (danses & marche)"
+                @click="toggleFraming('full')"
+              >
+                Corps
+              </button>
+            </div>
           </div>
 
           <!-- Poses expressives rapides -->
@@ -91,14 +111,6 @@
               @click="triggerPose('crossArms', 5000)"
             >
               🦾 Confiante
-            </button>
-            <button
-              type="button"
-              class="py-1 rounded border border-pink-500/30 bg-pink-950/30 hover:bg-pink-900/50 text-[10px] text-pink-200 transition"
-              title="Danse rythmée"
-              @click="triggerPose('dance', 8000)"
-            >
-              💃 Danse
             </button>
             <button
               type="button"
@@ -142,14 +154,6 @@
             </button>
             <button
               type="button"
-              class="py-1 rounded border border-purple-500/30 bg-purple-950/30 hover:bg-purple-900/50 text-[10px] text-purple-200 transition"
-              title="Pirouette 360°"
-              @click="triggerPose('spin', 4000)"
-            >
-              💫 Pirouette
-            </button>
-            <button
-              type="button"
               class="py-1 rounded border border-yellow-500/30 bg-yellow-950/30 hover:bg-yellow-900/50 text-[10px] text-yellow-200 transition"
               title="Saut de joie / Victoire"
               @click="triggerPose('jump', 4000)"
@@ -172,6 +176,64 @@
             >
               👏 Applaudir
             </button>
+          </div>
+
+          <!-- Pack Danses VRM -->
+          <div class="pt-2 border-t border-slate-800/80">
+            <div class="flex items-center justify-between text-[11px] pb-1">
+              <span class="text-pink-300 font-medium flex items-center gap-1">💃 Pack Danses</span>
+              <span class="text-[9px] text-slate-500 font-mono">VRMA / Kinematic 60fps</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <button
+                type="button"
+                class="py-1 rounded border border-pink-500/30 bg-pink-950/30 hover:bg-pink-900/50 text-[10px] text-pink-200 transition"
+                title="Danse Groove fluide & détendue"
+                @click="triggerPose('dance', 8000)"
+              >
+                🎵 Groove
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-rose-500/30 bg-rose-950/30 hover:bg-rose-900/50 text-[10px] text-rose-200 transition"
+                title="Samba / Salsa latino avec déhanché en huit"
+                @click="triggerPose('samba', 8000)"
+              >
+                💃 Samba
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-orange-500/30 bg-orange-950/30 hover:bg-orange-900/50 text-[10px] text-orange-200 transition"
+                title="Hip-Hop / Street Bounce athlétique"
+                @click="triggerPose('hiphop', 8000)"
+              >
+                🧢 Hip-Hop
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/50 text-[10px] text-cyan-200 transition"
+                title="Robot / Popping avec onde cinématique"
+                @click="triggerPose('robot', 8000)"
+              >
+                🤖 Robot
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-amber-500/30 bg-amber-950/30 hover:bg-amber-900/50 text-[10px] text-amber-200 transition"
+                title="Disco Fever 70s avec bras vers le ciel"
+                @click="triggerPose('disco', 8000)"
+              >
+                🪩 Disco
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-purple-500/30 bg-purple-950/30 hover:bg-purple-900/50 text-[10px] text-purple-200 transition"
+                title="Pirouette 360° continue gracieuse"
+                @click="triggerPose('spin', 6000)"
+              >
+                💫 Pirouette
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -346,7 +408,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=chibi_v3'
+    script.src = '/vrm/vrm_pet.bundle.js?v=mocap_v2'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)
@@ -474,8 +536,21 @@ function onModelChange() {
   }
 }
 
+function toggleFraming(f) {
+  vrmFraming.value = f
+  if (vrmInst?.setFraming) {
+    vrmInst.setFraming(f)
+  }
+}
+
 function triggerPose(pose, holdMs) {
-  // 1. Anime la vue locale (buste WebGL)
+  // Les danses et la marche nécessitent la vue corps entier pour être appréciées
+  const fullBodyPoses = ['dance', 'danse', 'samba', 'salsa', 'hiphop', 'walk', 'marche', 'spin', 'jump']
+  if (fullBodyPoses.includes(String(pose || '').toLowerCase())) {
+    toggleFraming('full')
+  }
+
+  // 1. Anime la vue locale (buste ou corps WebGL)
   if (vrmInst?.setPose) {
     vrmInst.setPose(pose, holdMs)
   }

@@ -143,6 +143,25 @@ class ReflectionHeuristicTests(unittest.TestCase):
         assert d is not None
         self.assertEqual(d.action, "answer")
 
+    def test_confirmation_cest_bien_ca_answer(self) -> None:
+        for phrase in ("c'est bien ça.", "c'est ça", "exactement", "tout à fait", "voilà", "ok faity", "vas-y", "oui c'est ça."):
+            d = rr._heuristic(phrase)
+            self.assertIsNotNone(d, f"failed on {phrase}")
+            assert d is not None
+            self.assertEqual(d.action, "answer", f"action not answer on {phrase}")
+
+    def test_tools_downgrade_without_diag_keywords(self) -> None:
+        d = rr._parse_llm_json('{"action":"tools","reason":"confused"}', prompt="c'est bien ça.")
+        self.assertIsNotNone(d)
+        assert d is not None
+        self.assertEqual(d.action, "answer")
+        self.assertIn("downgrade", d.reason)
+
+    def test_contextual_followup_no_tools_on_confirmation(self) -> None:
+        mem = {"last_action": '{"source":"tool_loop","action":"tools"}'}
+        d = rr._contextual_followup("c'est bien ça.", mem)
+        self.assertIsNone(d)
+
 
 if __name__ == "__main__":
     unittest.main()

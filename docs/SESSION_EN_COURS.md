@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-22  
+**Mis à jour** : 2026-10-26  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -12,7 +12,37 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-22** :
+**2026-10-26** :
+- **Intégration Danses Mocap VRMA Haute Fidélité & Cadrage Dynamique** :
+  * Mise en place du pipeline de conversion Mixamo FBX vers le standard officiel VRMA 1.0 (`@pixiv/three-vrm-animation`, 52 os avec translation et rotation du bassin).
+  * Génération et intégration de 2 animations mocap complètes de haute fidélité :
+    - `samba.vrma` / `dance.vrma` : Danse festive latino / samba / salsa (18.16s, déhanché, balancement des bras, fluidité complète).
+    - `hiphop.vrma` : Danse hip-hop / street bounce (15.33s, cadence rythmée, rebond athlétique, attitudes et gestes de mains).
+  * Mise à jour de `VRMA_MAP` et de `setPose()` dans `vrm_pet.js` pour jouer directement les clips mocap VRMA natifs sans interruption ni fallback procédural forcé.
+  * Neutralisation des faux rebonds verticaux parasites dans `vrm.scene.position.y` lorsque la mocap VRMA est active (préservation du root motion natif).
+  * Rebundle esbuild (`vrm_pet.bundle.js` 2.1 MB) et déploiement immédiat dans `compagnon-desktop` et `compagnon_ui/public/vrm/`.
+  * Déploiement live validé sur CT100 (`192.168.0.100:5174`, injection dans `lbg-frontend`, HTTP 200 vérifié sur `/vrm/animations/samba.vrma`, `hiphop.vrma`, `dance.vrma`).
+  * Ajout des déclencheurs directs dans le menu Tray de `compagnon-desktop/main.js`.
+- **Intégration du Compagnon « Mec Chill » (MC) & Corpus Philosophique RAG (Modèle E4b-qat sur .110)** :
+  * **Inspiration TikTok (@justeunmecchill123)** : Transposition de l'IA « MC » (Mec Chill) pour ancrer le compagnon dans un corpus philosophique solide et une personnalité flegmatique, sage et détendue.
+  * **Corpus RAG philosophique dédié** (`packages/cortex/knowledge/philo_corpus.jsonl`) : 18 fragments structurés couvrant le Stoïcisme (Épictète, Marc Aurèle, Sénèque), le Bouddhisme/Taoïsme (impermanence, lâcher-prise, Wu Wei), le Rationalisme serein (Descartes, Spinoza), le Transcendantalisme (Emerson) et la sagesse d'atelier (résolution calme des bugs/pannes, anti-panique, gestion des trolls).
+  * **Ingestion RAG enrichie** : extension de `load_knowledge_snippets()` dans `orchestrator/services/rag/ingest.py` pour indexer `philo_corpus.jsonl` et `rag_facts.jsonl`.
+  * **Profil système Mec Chill** dans `compagnon_ui/server_overlay/router_prompts.py` (`mec_chill`, `chill`, `philo`) : posture calme, bienveillante et flegmatique, dichotomie du contrôle, esprit complice face aux aléas techniques du studio.
+  * **Routage modèle dédié sur .110** : configuration automatique de `huihui_ai/gemma-4-abliterated:E4b-qat` sur l'hôte heavy `.110` (`LAB_CHILL_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"`, tier heavy, profile chill) dans `router_prompts.py`, `llm_chat_phase.py` et la matrice canonique `reason_route_matrix()`.
+  * **Déclenchement RAG continu** dans `rag_grounding.py` et `llm_chat_phase.py` : injection du contexte philosophique dès que le profil chill est actif ou lors d'échanges sur la sérénité/philosophie en causerie.
+
+**2026-10-23** :
+- **Restauration Canal Ops Slack (#lbg-ops)** :
+  * Diagnostic de la perte des notifications depuis le 14/10 à 13:09 suite à écrasement de `/etc/lbg-ia-mmo.env` sur `.140`.
+  * Restauration des variables `LBG_SLACK_WEBHOOK_OPS`, `LBG_SLACK_BOT_TOKEN`, `LBG_SLACK_APP_TOKEN`, `LBG_SLACK_CHANNEL_OPS` depuis le backup `.bak.20261005084818`.
+  * Redémarrage et validation opérationnelle de `lbg-slack-hitl-poll.service` et message de test émis avec succès (status 200).
+- **Auto-diagnostic NAS & Prévention saturation Proxmox** :
+  * Détection panne matérielle / réseau du NAS Synology DS1815+ (`192.168.0.51`) : 100% loss, absent table L2 Freebox OS.
+  * Identification du risque critique Proxmox : iSCSI déconnecté sur `.201`, bascule de `/mnt/pve/nas-lun-backup` sur `/dev/mapper/pve-root` (suspension des `vzdump` nécessaire).
+- **Apprentissage et outillage Compagnon / Studio** :
+  * Script canonique d'auto-diagnostic créé : [`tools/diag_nas_and_slack.sh`](../tools/diag_nas_and_slack.sh) (Freebox L2, NAS, iSCSI/Proxmox, Slack, surfaces LAN).
+  * Ancrage écosystème enrichi dans `router_prompts.py` (`_OPS_TRUTH`), `ecosystem_grounding.py` (faits + hints), `infra_lan_intent.py` (regex NAS/iSCSI/Slack) et `studio_brain_v1.json` (leçons & faits).
+  * 35/35 tests passants et déploiement atomique live sur CT100 (`192.168.0.100:5174`, version `1.0.0+c14a10f`).
 - **Pack danses VRM Desktop & Web** : assainissement `vrm_pet.js`, élimination des requêtes VRMA fantômes (HTML SPA), `stopVRMA(0)` synchrone, cinématiques procédurales des danses à 60 FPS, rebundle esbuild déployé sur Windows SDS `.10` et CT100 `lbg-frontend`.
 - **Routage Compagnon & barrière anti-déraillement** :
   * Élimination du déraillement absurde vers `AI · TOOL_LOOP` (Diagnostic cockpit) sur les confirmations courtes (« c'est bien ça. », « ok faity », « vas-y », etc.) via `_CONFIRMATION_RE` (confiance 0.98), rétrogradation automatique de toute hallucination `tools` du SLM sans mot-clé explicite de diagnostic, et neutralisation de la relance mémoire dans `_contextual_followup`.

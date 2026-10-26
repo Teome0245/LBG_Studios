@@ -208,6 +208,78 @@ const POSE_EULERS = {
     leftLowerLeg: [0.05, 0, 0],
     rightLowerLeg: [0.05, 0, 0],
   },
+  /** Danse Samba / Salsa latino énergique avec déhanché en huit. */
+  samba: {
+    leftUpperArm: [0.35, 0.20, -1.35],
+    rightUpperArm: [0.15, -0.20, 0.85],
+    leftLowerArm: [0, 0, -1.40],
+    rightLowerArm: [0, 0, -0.80],
+    leftHand: [0, 0, 0.2],
+    rightHand: [0, 0, -0.2],
+    hips: [0, 0.08, 0.05],
+    spine: [0.04, -0.04, -0.03],
+    chest: [0.05, -0.03, -0.02],
+    neck: [0, 0, 0],
+    head: [0.04, 0.05, -0.04],
+    leftUpperLeg: [0, 0, -0.06],
+    rightUpperLeg: [0, 0, 0.06],
+    leftLowerLeg: [0.08, 0, 0],
+    rightLowerLeg: [0.08, 0, 0],
+  },
+  /** Danse Hip-Hop / B-Boy street bounce avec attitude penchée et coudes ouverts. */
+  hiphop: {
+    leftUpperArm: [0.45, 0.30, -1.25],
+    rightUpperArm: [0.45, -0.30, 1.25],
+    leftLowerArm: [0, 0, -1.50],
+    rightLowerArm: [0, 0, -1.50],
+    leftHand: [0.1, 0, 0.2],
+    rightHand: [0.1, 0, -0.2],
+    hips: [0.06, 0, 0],
+    spine: [0.14, 0, 0],
+    chest: [0.10, 0, 0],
+    neck: [0.08, 0, 0],
+    head: [0.12, 0, 0],
+    leftUpperLeg: [-0.08, 0.1, -0.10],
+    rightUpperLeg: [-0.08, -0.1, 0.10],
+    leftLowerLeg: [0.16, 0, 0],
+    rightLowerLeg: [0.16, 0, 0],
+  },
+  /** Danse Wave / Robot avec ondulation fluide et arrêts robotiques. */
+  robot: {
+    leftUpperArm: [0.10, 0, -1.50],
+    rightUpperArm: [0.10, 0, 0.60],
+    leftLowerArm: [0, 0, -0.20],
+    rightLowerArm: [0, 0, -1.30],
+    leftHand: [0, 0, 0.3],
+    rightHand: [0, 0, 0],
+    hips: [0, 0, 0],
+    spine: [0.02, 0, 0],
+    chest: [0.04, 0, 0],
+    neck: [0, 0, 0],
+    head: [0, 0.08, 0],
+    leftUpperLeg: [0, 0, -0.02],
+    rightUpperLeg: [0, 0, 0.02],
+    leftLowerLeg: [0.02, 0, 0],
+    rightLowerLeg: [0.02, 0, 0],
+  },
+  /** Danse Disco / Twist Fever avec pose iconique bras vers le ciel. */
+  disco: {
+    leftUpperArm: [0.15, 0.25, -0.85],
+    rightUpperArm: [-0.55, -0.20, 2.45],
+    leftLowerArm: [0, 0, -1.65],
+    rightLowerArm: [0, 0, -0.25],
+    leftHand: [0, 0, 0],
+    rightHand: [0, 0, -0.2],
+    hips: [0, 0.12, 0.06],
+    spine: [0.04, -0.10, -0.04],
+    chest: [0.06, -0.08, -0.03],
+    neck: [-0.04, 0.06, 0],
+    head: [-0.06, 0.10, 0.04],
+    leftUpperLeg: [0, 0.05, -0.04],
+    rightUpperLeg: [0, -0.05, 0.04],
+    leftLowerLeg: [0.06, 0, 0],
+    rightLowerLeg: [0.06, 0, 0],
+  },
   /** Pirouette 360° gracieuse (rotation complète avec bras déployés). */
   spin: {
     leftUpperArm: [0.10, 0, -0.85],
@@ -398,6 +470,16 @@ export function createVrmPet(hostEl, opts = {}) {
     marche: "walk.vrma",
     step: "walk.vrma",
     run: "walk.vrma",
+    dance: "dance.vrma",
+    danse: "dance.vrma",
+    groove: "dance.vrma",
+    samba: "samba.vrma",
+    salsa: "samba.vrma",
+    latina: "samba.vrma",
+    hiphop: "hiphop.vrma",
+    bboy: "hiphop.vrma",
+    street: "hiphop.vrma",
+    bounce: "hiphop.vrma",
     jump: "jump.vrma",
     saut: "jump.vrma",
     victory: "jump.vrma",
@@ -426,6 +508,8 @@ export function createVrmPet(hostEl, opts = {}) {
     surprised: "surprised.vrma",
     sad: "sad.vrma",
     angry: "angry.vrma",
+    hello: "wave_right.vrma",
+    salute: "wave_right.vrma",
   };
 
   function getVrmaUrl(filename) {
@@ -496,10 +580,13 @@ export function createVrmPet(hostEl, opts = {}) {
     return true;
   }
 
-  function stopVRMA(fadeSec = 0.35) {
+  function stopVRMA(fadeSec = 0.25) {
     if (activeVrmaAction) {
-      activeVrmaAction.fadeOut(fadeSec);
+      try { activeVrmaAction.fadeOut(fadeSec); } catch (_) {}
       activeVrmaAction = null;
+    }
+    if (mixer) {
+      try { mixer.stopAllAction(); } catch (_) {}
     }
     activeVrmaName = null;
     poseBlend = 0;
@@ -588,8 +675,12 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "cheer" || n === "happy" || n === "joy") key = "cheer";
     else if (n === "crossarms" || n === "cross" || n === "arms") key = "crossArms";
     else if (n === "bow" || n === "greet" || n === "welcome") key = "bow";
-    else if (n === "wave" || n === "hello" || n === "salute") key = "wave";
+    else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key = "wave";
     else if (n === "dance" || n === "danse" || n === "groove") key = "dance";
+    else if (n === "samba" || n === "salsa" || n === "latina") key = "samba";
+    else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key = "hiphop";
+    else if (n === "robot" || n === "popping" || n === "wavedance") key = "robot";
+    else if (n === "disco" || n === "twist" || n === "fever") key = "disco";
     else if (n === "spin" || n === "tourner" || n === "pirouette") key = "spin";
     else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key = "jump";
     else if (n === "stretch" || n === "etirement") key = "stretch";
@@ -608,7 +699,15 @@ export function createVrmPet(hostEl, opts = {}) {
     }
 
     if (key === "angry") setMood("tense");
-    else if (key === "dance" || key === "cheer") setMood("happy");
+    else if (
+      key === "dance" ||
+      key === "samba" ||
+      key === "hiphop" ||
+      key === "robot" ||
+      key === "disco" ||
+      key === "spin" ||
+      key === "cheer"
+    ) setMood("happy");
     else if (key === "think") setMood("curious");
 
     poseFrom = poseTo;
@@ -622,11 +721,15 @@ export function createVrmPet(hostEl, opts = {}) {
       poseHoldUntil = 0;
     }
 
-    // Déclenchement automatique du clip VRMA officiel si disponible
-    if (VRMA_MAP[n]) {
-      playVRMA(n, { loop: !(hold > 0) });
+    // Déclenchement clip VRMA officiel si disponible (ex: dance, samba, hiphop, walk, lookaround)
+    // Sinon repli procédural immédiat (ex: robot, disco, spin, crossArms, bow)
+    const vrmaFile = VRMA_MAP[key] || VRMA_MAP[n];
+    if (vrmaFile) {
+      playVRMA(key, { loop: !(hold > 0) }).then((ok) => {
+        if (!ok) stopVRMA(0);
+      });
     } else {
-      stopVRMA(0.25);
+      stopVRMA(0);
     }
   }
 
@@ -761,6 +864,146 @@ export function createVrmPet(hostEl, opts = {}) {
           -rollHips * 0.4,
         ];
       }
+    }
+    if (poseTo === "samba") {
+      // Cadence festive latino à ~1.75 Hz (105 BPM, vivante et entraînante)
+      const tempo = t * 11.0;
+      const swayHips = Math.sin(tempo) * 0.12;
+      const rollHips = Math.sin(tempo * 2.0) * 0.08;
+      const yawHips = Math.cos(tempo) * 0.06;
+
+      // Bassin en figure-8 fluide
+      if (animated.hips) animated.hips = [0, yawHips, swayHips];
+      if (animated.spine) animated.spine = [0.04, -yawHips * 0.5, -swayHips * 0.4];
+      if (animated.chest) animated.chest = [0.05, -yawHips * 0.3, -swayHips * 0.3];
+
+      // Genoux : flexion alternée marquée synchronisée sur le déhanché
+      const kneeL = 0.08 + Math.max(0, Math.sin(tempo)) * 0.15;
+      const kneeR = 0.08 + Math.max(0, -Math.sin(tempo)) * 0.15;
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeL, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeR, 0, 0];
+
+      // Bras aériens asymétriques en mouvement gracieux
+      if (animated.leftUpperArm) {
+        animated.leftUpperArm = [0.35 + Math.sin(tempo) * 0.15, 0.20, -1.35 + Math.cos(tempo) * 0.12];
+      }
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [0.15 - Math.sin(tempo) * 0.15, -0.20, 0.85 - Math.cos(tempo) * 0.12];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -1.40 + Math.sin(tempo) * 0.18];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [0, 0, -0.80 - Math.sin(tempo) * 0.18];
+      }
+      if (animated.head) {
+        animated.head = [0.04, yawHips * 0.6, -swayHips * 0.4];
+      }
+    }
+    if (poseTo === "hiphop") {
+      // Cadence street bounce à ~1.43 Hz (86 BPM, attitude posée)
+      const tempo = t * 9.0;
+      const bounce = Math.abs(Math.sin(tempo));
+      const nod = Math.sin(tempo) * 0.12;
+
+      // Hanches et torse penchés vers l'avant avec bounce
+      if (animated.hips) animated.hips = [0.08 + bounce * 0.03, 0, Math.sin(tempo * 0.5) * 0.04];
+      if (animated.spine) animated.spine = [0.14, 0, 0];
+      if (animated.chest) animated.chest = [0.10, 0, 0];
+      if (animated.head) animated.head = [0.12 + nod, 0, 0];
+
+      // Genoux fléchis en absorption street
+      const kneeBend = 0.18 + bounce * 0.12;
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBend, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBend, 0, 0];
+
+      // Coudes ouverts, bras qui pulsent avec le beat
+      if (animated.leftUpperArm) {
+        animated.leftUpperArm = [0.45 + nod * 0.4, 0.30, -1.25];
+      }
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [0.45 + nod * 0.4, -0.30, 1.25];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -1.50 - bounce * 0.18];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [0, 0, -1.50 - bounce * 0.18];
+      }
+    }
+    if (poseTo === "robot") {
+      // Onde de wave / popping robotique à ~0.72 Hz
+      const tempo = t * 4.5;
+      const phaseLeftHand = Math.sin(tempo);
+      const phaseLeftElbow = Math.sin(tempo - 0.4);
+      const phaseLeftArm = Math.sin(tempo - 0.8);
+      const phaseChest = Math.sin(tempo - 1.2);
+      const phaseRightArm = Math.sin(tempo - 1.6);
+      const phaseRightElbow = Math.sin(tempo - 2.0);
+      const phaseRightHand = Math.sin(tempo - 2.4);
+
+      // Micro-pulsation / stop robotique sec
+      const stepPop = (Math.floor(tempo * 2.0) % 2 === 0 ? 0.04 : -0.04) * Math.exp(-((tempo * 2) % 1) * 3);
+
+      if (animated.leftUpperArm) {
+        animated.leftUpperArm = [0.10, 0, -1.45 + phaseLeftArm * 0.25 + stepPop];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -0.40 + phaseLeftElbow * 0.35];
+      }
+      if (animated.leftHand) {
+        animated.leftHand = [0, 0, 0.20 + phaseLeftHand * 0.30];
+      }
+      if (animated.chest) {
+        animated.chest = [0.04, phaseChest * 0.08, 0];
+      }
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [0.10, 0, 1.45 - phaseRightArm * 0.25 - stepPop];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [0, 0, -0.40 + phaseRightElbow * 0.35];
+      }
+      if (animated.rightHand) {
+        animated.rightHand = [0, 0, -0.20 - phaseRightHand * 0.30];
+      }
+      if (animated.head) {
+        animated.head = [0, phaseChest * 0.10, 0];
+      }
+    }
+    if (poseTo === "disco") {
+      // Cadence disco rythmée à ~1.27 Hz (76 BPM / demi-temps 152)
+      const tempo = t * 8.0;
+      const phase = tempo % (Math.PI * 4);
+      const isUp = phase < Math.PI * 2;
+      const reach = isUp ? 1 : 0;
+      const twist = Math.sin(tempo) * 0.14;
+
+      // Bras droit iconique disco pointé vers le ciel / redescendant vers la hanche
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [
+          -0.55 * reach + 0.30 * (1 - reach),
+          -0.20,
+          2.45 * reach + 0.90 * (1 - reach),
+        ];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [0, 0, -0.25 * reach - 1.45 * (1 - reach)];
+      }
+      // Bras gauche posé sur la hanche
+      if (animated.leftUpperArm) {
+        animated.leftUpperArm = [0.15, 0.25, -0.85];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -1.65];
+      }
+
+      // Twist hanches et buste en opposition
+      if (animated.hips) animated.hips = [0, twist, Math.cos(tempo) * 0.07];
+      if (animated.spine) animated.spine = [0.04, -twist * 0.6, -Math.cos(tempo) * 0.04];
+      if (animated.chest) animated.chest = [0.06, -twist * 0.4, 0];
+      if (animated.head) animated.head = [-0.05, twist * 0.4, 0];
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [0.06 + Math.abs(Math.sin(tempo)) * 0.06, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [0.06 + Math.abs(Math.sin(tempo + Math.PI)) * 0.06, 0, 0];
     }
     if (poseTo === "spin") {
       const spinFlutter = Math.sin(t * 4.0) * 0.04;
@@ -1238,13 +1481,27 @@ export function createVrmPet(hostEl, opts = {}) {
       const lerpSpeed = isWalking ? 16.0 : 6.0;
       walkYOffset += (targetWalkY - walkYOffset) * Math.min(1, dt * lerpSpeed);
 
-      // Micro bob / jump / dance / walk offset
-      if (poseTo === "jump") {
+      // Micro bob / jump / dance / walk offset (repli procédural uniquement si pas de clip VRMA actif)
+      if (activeVrmaAction) {
+        vrm.scene.position.y = walkYOffset;
+      } else if (poseTo === "jump") {
         const jumpBounce = Math.max(0, Math.sin(t * 4.0)) * 0.038;
         vrm.scene.position.y = walkYOffset + jumpBounce;
       } else if (poseTo === "dance") {
         const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
         vrm.scene.position.y = walkYOffset + danceBounce;
+      } else if (poseTo === "samba") {
+        const sambaBounce = Math.abs(Math.sin(t * 11.0)) * 0.010;
+        vrm.scene.position.y = walkYOffset + sambaBounce;
+      } else if (poseTo === "hiphop") {
+        const hiphopBounce = Math.abs(Math.sin(t * 9.0)) * 0.018;
+        vrm.scene.position.y = walkYOffset + hiphopBounce;
+      } else if (poseTo === "disco") {
+        const discoBounce = Math.abs(Math.sin(t * 8.0)) * 0.014;
+        vrm.scene.position.y = walkYOffset + discoBounce;
+      } else if (poseTo === "robot") {
+        const robotBounce = (Math.floor(t * 4.5 * 2.0) % 2 === 0 ? 0.004 : 0);
+        vrm.scene.position.y = walkYOffset + robotBounce;
       } else if (!activeVrmaAction && poseTo === "idle") {
         vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 0.002 : 0.005);
       } else {

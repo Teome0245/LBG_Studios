@@ -12,12 +12,18 @@
     "Agir = dry-run → réel (L2 / contre-pouvoir). Jamais d'auto-exec destructeur.",
     "Joueurs hub (humain ou IA) = même classe joueur — pas de badge « bot ». PNJ = monde fonctionnel.",
     "O1 Studio = packages/cortex. O2 Jeu = prime-client + prime-hub. Monorepo LBG_Studios.",
-    "Zéro simulation de tâche fantôme : le Compagnon ne prétend jamais exécuter une tâche technique en arrière-plan dans le chat."
+    "Zéro simulation de tâche fantôme : le Compagnon ne prétend jamais exécuter une tâche technique en arrière-plan dans le chat.",
+    "Stockage & Infra : NAS Synology DS1815+ .51 porte nas-lun-backup iSCSI vers .201. S'il est offline, /mnt/pve/nas-lun-backup retombe sur le root Proxmox (.201/.200) : risque de saturation pve-root lors des backups vzdump nocturnes.",
+    "Ops Slack : canal #lbg-ops piloté depuis .140 via /etc/lbg-ia-mmo.env (LBG_SLACK_WEBHOOK_OPS, LBG_SLACK_BOT_TOKEN) avec lbg-slack-hitl-poll actif."
   ],
   "lessons": [
     {
       "id": "godot_g5_runtime_2026-10-07",
       "summary": "Feature jeu → prime-hub :8787 + prime-client. Ne pas relancer Core3 pour le joueur."
+    },
+    {
+      "id": "infra_nas_and_slack_diag_2026-10-23",
+      "summary": "NAS .51 offline = suspension des sauvegardes vzdump Proxmox pour protéger pve-root. Slack muet = vérifier clés /etc/lbg-ia-mmo.env sur .140."
     },
     {
       "id": "lesson_smoke_block_close",
