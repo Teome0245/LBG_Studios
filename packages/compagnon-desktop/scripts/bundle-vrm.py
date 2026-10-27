@@ -1,4 +1,6 @@
-import subprocess, sys, os
+import subprocess
+import sys
+import os
 
 cd_dir = "/home/lbg/projects/LBG_Studios/packages/compagnon-desktop"
 cmd = [

@@ -8,6 +8,9 @@ import pytest
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
 if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
+M10_STUB = TOOLS / "m10_craft_stub"
+if str(M10_STUB) not in sys.path:
+    sys.path.insert(0, str(M10_STUB))
 
 import m10_craft_runtime as craft  # noqa: E402
 import quest_hub_runtime as quests  # noqa: E402

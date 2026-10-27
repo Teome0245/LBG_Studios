@@ -14,6 +14,14 @@ Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
 
 **2026-10-27** :
+- **Intégration & Promotion de Qwen2.5-Coder-14B Abliterated (Rôle Code Studio & Claude Code)** :
+  * **Téléchargement & Validation Ollama .110** : installation réussie de `huihui_ai/qwen2.5-coder-abliterate:14b` (Q4_K_M, 9.0 Go, décensuré) sur `.110`. Smoke test validé en ~2.8 tok/s sur CPU Xeon.
+  * **Promotion Rôle Code Studio (Cortex / Pilot)** :
+    - `packages/cortex/orchestrator/team/reason_llm.py` : `CODE_REASON_DEFAULT = "huihui_ai/qwen2.5-coder-abliterate:14b"`, assigné au profil `"code"` (`LBG_REASON_MODEL_CODE`).
+    - `packages/cortex/compagnon_ui/server_overlay/ollama_audit.py` & orchestrateur : rôle `reason_code` configuré par défaut sur `qwen2.5-coder-abliterate:14b`.
+    - `packages/cortex/compagnon_ui/server_overlay/routing.json` : promotion en tête des modèles de raisonnement technique (`technical_reasoning`).
+    - Matrice canonique mise à jour dans `.agents/rules/local-llm-route-matrix.md` et `docs/local_llm_route_matrix.md`.
+  * **Configuration Claude Code** : mise à jour de `~/.claude/settings.json` avec `model: "huihui_ai/qwen2.5-coder-abliterate:14b"`, `ANTHROPIC_DEFAULT_SONNET_MODEL` et `OPUS` pointés sur `14b`.
 - **Ajustement de la Morphologie (Échelle Tête 1.15) & Recentrage Cadrage Buste (Web & Desktop)** :
   * **Échelle de la tête réduite à 1.15** (`updateHeadScale`) : passage de 1.28 à 1.15 pour affiner le port de tête, éliminer l'effet bobblehead excessif et rétablir des proportions élancées et harmonieuses avec le corps mecha sur les deux environnements (fenêtre Compagnon et pet bureau).
   * **Recentrage vertical de la tête dans la fenêtre Compagnon** (`framing === 'bust'`) : visée repositionnée au niveau du pont du nez / yeux (`lookY = headPos.y + 0.015`, `dist = 1.12`) pour centrer parfaitement le visage dans le cadre avec une marge aérée au-dessus des cheveux, tout en dévoilant le cou, les épaulières mecha et le haut du buste.
@@ -38,9 +46,23 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - Bouton *⚡ Impulsion Synaptique* déclenchant une décharge visuelle d'ondes à travers tout le cerveau.
     - Filtres d'affichage par hémisphère (*Vue globale*, *Hémisphère Analytique*, *Hémisphère RAG & Humeur*).
     - Bouton de bascule Veille / Éveil connecté à `/v1/pilot/orchestrator/brain/toggle`.
-  * **Routing & Intégration Pilot Web** :
-    - Accessible immédiatement via `#/team/brain` (et alias `#/brain`), entrée dédiée dans le menu Campus de la barre de navigation.
-    - Configuration Vite enrichie (`STATIC_DIRS` incluant `brain_3d`) et bundle de production `dist/` recompilé avec succès.
+  * **V2 Hyper-Dynamique & Télémétrie Cérébrale Infra en Temps Réel** :
+    - Réponse au retour utilisateur sur le manque d'activité : transformation de la scène statique en un véritable réseau cérébral effervescent reflétant en continu l'activité des VMs et des agents IA.
+    - **300 Influx Synaptiques Vifs 3D (Action Potentials / Sparks)** : particules or et cyan circulant à grande vitesse le long des axones avec redistribution continue.
+    - **Arcs Électriques Crépitants (Neural Lightning)** : décharges fractales entre les pôles majeurs avec crépitement électrique dynamique.
+    - **Ondes Cérébrales EEG (Gamma 36–54 Hz)** : modulation volumétrique de la luminosité sur l'ensemble des 1500 neurones du cortex.
+    - **Connexion Télémétrique Directe aux Serveurs & Agents de l'Infra** :
+      * Sondage en temps réel de `/v1/pilot/status` (santé Core .140, Orchestrateur, LLM .110, Hub Godot .246) et `/v1/pilot/team/fleet` (les 7 agents).
+      * **Flux d'Activité Cérébrale & Signaux Infra Live** (`#brain-activity-feed`) : affichage horodaté des cycles de contrôle, cœurs LLM, ticks Godot Hub et veille cognitive des agents.
+      * À chaque signal reçu, le pôle concerné s'illumine (halo x2, rotation accélérée) et projette une décharge d'influx à travers le cerveau.
+    - **HUD Télémétrique Enrichi** : affichage en direct de la fréquence EEG (Hz), du débit d'influx synaptiques/s et des puces de statut des 4 nœuds d'infrastructure.
+    - **Bouton « 🔥 Surcharge Cognitive »** (`#brain-btn-surge`) : stimulation immédiate à x3.2 pour tester les décharges maximales du cerveau.
+    - Fichiers mis à jour et synchronisés : `brain_3d/brain_3d.js`, `src/modules/team_brain.js`, `index.html` (cache buster v3), `brain_3d.css`, et bundles `dist/`.
+- **Assainissement Qualité, Lint & Validation CI Locale (2026-10-27)** :
+  * `packages/compagnon-desktop/scripts/bundle-vrm.py` : correction de l'import multi-lignes pour conformité Ruff E401 (`ruff check .` 100% vert).
+  * `packages/cortex/backend/tests/test_bridge_sidecar_runtime.py` : injection de `m10_craft_stub` dans `sys.path` pour importer proprement `hunt_yard_bridge`.
+  * **Tests Cortex Backend** : 124/124 tests passants en 10.6s (`pytest backend/tests`).
+  * **Tests Headless Godot (Jeu)** : 5/5 tests passants en 7s (`ci_godot_headless.sh` — HubSim, Navigation 3D, Bâtiments CAO & Portes découpées, SQLite WAL, Client Prime modulaire & DnD).
 
 **2026-10-26** :
 - **Rééquilibrage des Proportions Tête & Cadrage Buste 3D (Web CT100 & Desktop .10)** :
