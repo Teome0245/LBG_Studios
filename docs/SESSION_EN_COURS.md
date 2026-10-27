@@ -14,6 +14,17 @@ Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
 
 **2026-10-27** :
+- **Animation Spontanée « Finger Heart » K-Pop & Particules Cyber-Cœurs (1 à 2 fois par heure)** :
+  * **Pose Corporelle & Doigts Articulés** (`POSE_EULERS.fingerHeart`) :
+    - Squelette des doigts étendu dans `BONE_NAMES` (`rightThumb*`, `rightIndex*`, `rightMiddle*`, etc.).
+    - Pouce et index droits croisés en mini cœur près de la joue/menton (`rightHand: [0.15, -0.22, 0.22]`, coude fléchi `rightLowerArm: [-0.42, -0.35, -1.92]`), les 3 autres doigts repliés dans la paume.
+    - Buste cambré, hanches féminines et tête penchée espiègle vers l'épaule (`head: [-0.05, -0.08, 0.22]`).
+  * **Micro-animation & Expression « Tehepero »** :
+    - Pulsation battement de cœur organique du geste (`heartPulse`) et micro-balancement de tête (`headSway`).
+    - Expression coquine avec grand sourire bouche ouverte montrant les dents/langue (`happy: 0.90`, `aa: 0.42`) et clin d'œil malicieux périodique (`blinkRight`).
+  * **Effet Cyberpunk Visuel** : émission de 3 sprites de mini-cœurs néon roses luminescents (`#ff2a8d`, rendu additif `AdditiveBlending`) flottant doucement vers le haut au-dessus des doigts.
+  * **Déclenchement Autonome Périodique (sans bouton)** : intervalle programmé entre 30 et 45 minutes (`t + 1800s + Math.random() * 900s`), soit exactement 1 à 2 fois par heure (avec un premier essai à ~75s après chargement pour validation visuelle immédiate).
+  * **Déploiement synchronisé** : bundle `vrm_pet.bundle.js` recompilé (`finger_heart_v5`), déployé sur CT100 (`lbg-frontend`) et synchronisé sur Windows SDS `.10` (`sync_vrm_desktop` + restart overlay).
 - **Intégration & Promotion de Qwen2.5-Coder-14B Abliterated (Rôle Code Studio & Claude Code)** :
   * **Téléchargement & Validation Ollama .110** : installation réussie de `huihui_ai/qwen2.5-coder-abliterate:14b` (Q4_K_M, 9.0 Go, décensuré) sur `.110`. Smoke test validé en ~2.8 tok/s sur CPU Xeon.
   * **Promotion Rôle Code Studio (Cortex / Pilot)** :

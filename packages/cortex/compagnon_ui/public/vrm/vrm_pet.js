@@ -55,6 +55,42 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
+  /** Finger Heart (geste coréen K-Pop / anime idol : pouce et index croisés en mini cœur près de la joue, tête penchée, attitude espiègle). */
+  fingerHeart: {
+    rightShoulder: [0.02, 0, 0.06],
+    rightUpperArm: [0.75, -0.32, 0.62],
+    rightLowerArm: [-0.42, -0.35, -1.92],
+    rightHand: [0.15, -0.22, 0.22],
+    // Doigts articulés de la main droite : pouce et index croisés en mini cœur
+    rightThumbMetacarpal: [0.15, 0.12, -0.10],
+    rightThumbProximal: [0.35, 0.38, -0.25],
+    rightThumbDistal: [0.12, 0.15, 0.08],
+    rightIndexProximal: [0.65, 0.02, 0.08],
+    rightIndexIntermediate: [0.75, 0.02, 0.02],
+    rightIndexDistal: [0.28, 0, 0],
+    // Autres doigts repliés souplement dans la paume
+    rightMiddleProximal: [1.35, 0, -0.05],
+    rightMiddleIntermediate: [1.40, 0, 0],
+    rightMiddleDistal: [0.60, 0, 0],
+    rightRingProximal: [1.35, 0, -0.05],
+    rightRingIntermediate: [1.40, 0, 0],
+    rightRingDistal: [0.60, 0, 0],
+    rightLittleProximal: [1.35, 0, -0.05],
+    rightLittleIntermediate: [1.40, 0, 0],
+    rightLittleDistal: [0.60, 0, 0],
+    // Bras gauche relâché le long du corps
+    leftUpperArm: [0.08, 0.10, -1.22],
+    leftLowerArm: [0.05, 0, -0.25],
+    leftHand: [0, 0, 0.05],
+    // Buste cambré et tête inclinée espiègle vers l'épaule droite
+    hips: [0, 0.03, -0.03],
+    spine: [0.02, 0.03, -0.03],
+    chest: [0.04, 0.04, -0.04],
+    neck: [-0.04, -0.05, 0.14],
+    head: [-0.05, -0.08, 0.22],
+    leftUpperLeg: [0, 0, -0.03],
+    rightUpperLeg: [0, 0, 0.03],
+  },
   /** Bras croisés confiants (posture robotique fière, coudes et avant-bras croisés devant la poitrine). */
   crossArms: {
     leftUpperArm: [0.45, -0.22, -0.82],
@@ -389,6 +425,39 @@ const BONE_NAMES = [
   "rightLowerLeg",
   "leftFoot",
   "rightFoot",
+  // Doigts articulés & épaules pour gestuelle expressive
+  "rightShoulder",
+  "leftShoulder",
+  "rightThumbMetacarpal",
+  "rightThumbProximal",
+  "rightThumbDistal",
+  "rightIndexProximal",
+  "rightIndexIntermediate",
+  "rightIndexDistal",
+  "rightMiddleProximal",
+  "rightMiddleIntermediate",
+  "rightMiddleDistal",
+  "rightRingProximal",
+  "rightRingIntermediate",
+  "rightRingDistal",
+  "rightLittleProximal",
+  "rightLittleIntermediate",
+  "rightLittleDistal",
+  "leftThumbMetacarpal",
+  "leftThumbProximal",
+  "leftThumbDistal",
+  "leftIndexProximal",
+  "leftIndexIntermediate",
+  "leftIndexDistal",
+  "leftMiddleProximal",
+  "leftMiddleIntermediate",
+  "leftMiddleDistal",
+  "leftRingProximal",
+  "leftRingIntermediate",
+  "leftRingDistal",
+  "leftLittleProximal",
+  "leftLittleIntermediate",
+  "leftLittleDistal",
 ];
 
 function lerpEulerMap(a, b, t) {
@@ -460,8 +529,51 @@ export function createVrmPet(hostEl, opts = {}) {
   let nextBlinkTime = 2.0;
   let blinkProgress = 0;
   let nextIdleFidgetTime = 6.0;
+  // Déclenchement autonome du fingerHeart 1 à 2 fois par heure (30-45 min, 1er test à ~75s)
+  let nextHeartPoseTime = 75.0 + Math.random() * 45.0;
   let walkYOffset = 0;
   let spinAngle = 0;
+
+  // Particules néon cyber-cœurs roses émis lors du fingerHeart
+  function createHeartTexture() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.fillStyle = "#ff2a8d";
+    ctx.shadowColor = "#ff2a8d";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(32, 22);
+    ctx.bezierCurveTo(32, 16, 22, 10, 14, 18);
+    ctx.bezierCurveTo(4, 28, 12, 42, 32, 54);
+    ctx.bezierCurveTo(52, 42, 60, 28, 50, 18);
+    ctx.bezierCurveTo(42, 10, 32, 16, 32, 22);
+    ctx.fill();
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    createdTextures.push(tex);
+    return tex;
+  }
+
+  const heartMat = new THREE.SpriteMaterial({
+    map: createHeartTexture(),
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const heartSprites = [
+    new THREE.Sprite(heartMat),
+    new THREE.Sprite(heartMat),
+    new THREE.Sprite(heartMat),
+  ];
+  for (const s of heartSprites) {
+    s.scale.set(0.065, 0.065, 1);
+    s.visible = false;
+    scene.add(s);
+  }
 
   /** Pose courante / cible pour blend */
   let poseFrom = "idle";
@@ -700,6 +812,14 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "clap" || n === "clapping") key = "clapping";
     else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key = "angry";
     else if (n === "walk" || n === "marche" || n === "step") key = "walk";
+    else if (
+      n === "fingerheart" ||
+      n === "heart" ||
+      n === "kpopheart" ||
+      n === "love" ||
+      n === "miniheart" ||
+      n === "coeur"
+    ) key = "fingerHeart";
     else if (POSE_EULERS[raw]) key = raw;
     else if (POSE_EULERS[n]) key = n;
 
@@ -719,7 +839,8 @@ export function createVrmPet(hostEl, opts = {}) {
       key === "robot" ||
       key === "disco" ||
       key === "spin" ||
-      key === "cheer"
+      key === "cheer" ||
+      key === "fingerHeart"
     ) setMood("happy");
     else if (key === "think") setMood("curious");
 
@@ -1121,6 +1242,34 @@ export function createVrmPet(hostEl, opts = {}) {
 
       // Tête stable compensant le roulis des hanches
       if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
+    }
+    if (poseTo === "fingerHeart") {
+      // 1. Pulsation battement de cœur du geste (pulsation subtile de la main et de l'avant-bras)
+      const heartPulse = Math.sin(t * 5.2) * 0.035;
+      if (animated.rightHand) {
+        animated.rightHand = [
+          animated.rightHand[0] + heartPulse * 0.8,
+          animated.rightHand[1],
+          animated.rightHand[2] + heartPulse * 0.5,
+        ];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [
+          animated.rightLowerArm[0] + heartPulse * 0.3,
+          animated.rightLowerArm[1],
+          animated.rightLowerArm[2] - heartPulse * 0.4,
+        ];
+      }
+
+      // 2. Micro-balancement espiègle de la tête
+      const headSway = Math.sin(t * 2.8) * 0.025;
+      if (animated.head) {
+        animated.head = [
+          animated.head[0] + headSway * 0.4,
+          animated.head[1] + headSway * 0.6,
+          animated.head[2] + headSway * 0.3,
+        ];
+      }
     }
 
     // Important three-vrm 3.x :
@@ -1548,13 +1697,54 @@ export function createVrmPet(hostEl, opts = {}) {
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
       // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos, étirement)
       if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
-        if (t > nextIdleFidgetTime) {
+        if (t > nextHeartPoseTime) {
+          // Pose spontanée "Finger Heart" K-Pop 1 à 2 fois par heure (30 à 45 minutes)
+          nextHeartPoseTime = t + 1800.0 + Math.random() * 900.0;
+          setPose("fingerHeart", 5500);
+        } else if (t > nextIdleFidgetTime) {
           nextIdleFidgetTime = t + 12.0 + Math.random() * 12.0;
           const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
           const pick = gestures[Math.floor(Math.random() * gestures.length)];
           const holdMs = pick === "crossArms" ? 4500 : (pick === "think" ? 3500 : 5000);
           setPose(pick, holdMs);
         }
+      }
+
+      // Gestion visuelle des particules de cœurs et expression lors du fingerHeart
+      if (poseTo === "fingerHeart" && vrm) {
+        let handPos = new THREE.Vector3(0.14, 1.25, 0.25);
+        try {
+          const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
+          if (rh) rh.getWorldPosition(handPos);
+        } catch (_) {}
+
+        heartSprites.forEach((sp, i) => {
+          sp.visible = true;
+          const phase = (t * 1.5 + i * 0.65) % 2.0;
+          const life = phase / 2.0;
+          const yOffset = life * 0.16;
+          const xOffset = Math.sin(life * Math.PI * 2.0 + i) * 0.03;
+          sp.position.set(handPos.x + 0.02 + xOffset, handPos.y + 0.03 + yOffset, handPos.z + 0.05);
+          const scale = 0.045 + Math.sin(life * Math.PI) * 0.035;
+          sp.scale.set(scale, scale, 1);
+          sp.material.opacity = Math.sin(life * Math.PI) * 0.90;
+        });
+
+        // Expression espiègle / tehepero : grands yeux pétillants, bouche ouverte en sourire
+        try {
+          const em = vrm.expressionManager;
+          if (em) {
+            em.setValue("happy", 0.90);
+            em.setValue("aa", 0.42);
+            const winkCycle = (t * 0.8) % 3.0;
+            const winkVal = winkCycle < 0.6 ? Math.sin((winkCycle / 0.6) * Math.PI) * 0.95 : 0;
+            em.setValue("blinkRight", winkVal);
+          }
+        } catch (_) {}
+      } else {
+        heartSprites.forEach((sp) => {
+          sp.visible = false;
+        });
       }
 
       // Compensation dynamique de la descente du bassin (hips) dans walk.vrma (+8.8cm)
@@ -1600,7 +1790,12 @@ export function createVrmPet(hostEl, opts = {}) {
         if (mouthAmp < 0.02) mouthAmp = 0;
       }
       if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
-        vrm.expressionManager.setValue("aa", mouthAmp);
+        if (poseTo === "fingerHeart") {
+          // Pendant le fingerHeart, maintenir le sourire espiègle bouche ouverte (tehepero)
+          vrm.expressionManager.setValue("aa", Math.max(mouthAmp, 0.42));
+        } else {
+          vrm.expressionManager.setValue("aa", mouthAmp);
+        }
       }
       if (typeof vrm.update === "function") {
         vrm.update(dt);
@@ -1685,7 +1880,15 @@ export function createVrmPet(hostEl, opts = {}) {
       vrmaClips.clear();
       vrmaLoading.clear();
 
-      // 3. Libération des textures créées dynamiquement
+      // 3. Libération des textures créées dynamiquement et particules
+      for (const sp of heartSprites) {
+        try {
+          scene.remove(sp);
+          sp.geometry?.dispose();
+        } catch (_) {}
+      }
+      try { heartMat.dispose(); } catch (_) {}
+
       for (const tex of createdTextures) {
         try {
           tex.dispose();

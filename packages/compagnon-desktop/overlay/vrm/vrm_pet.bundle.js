@@ -53087,6 +53087,42 @@ void main() {
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
+    /** Finger Heart (geste coréen K-Pop / anime idol : pouce et index croisés en mini cœur près de la joue, tête penchée, attitude espiègle). */
+    fingerHeart: {
+      rightShoulder: [0.02, 0, 0.06],
+      rightUpperArm: [0.75, -0.32, 0.62],
+      rightLowerArm: [-0.42, -0.35, -1.92],
+      rightHand: [0.15, -0.22, 0.22],
+      // Doigts articulés de la main droite : pouce et index croisés en mini cœur
+      rightThumbMetacarpal: [0.15, 0.12, -0.1],
+      rightThumbProximal: [0.35, 0.38, -0.25],
+      rightThumbDistal: [0.12, 0.15, 0.08],
+      rightIndexProximal: [0.65, 0.02, 0.08],
+      rightIndexIntermediate: [0.75, 0.02, 0.02],
+      rightIndexDistal: [0.28, 0, 0],
+      // Autres doigts repliés souplement dans la paume
+      rightMiddleProximal: [1.35, 0, -0.05],
+      rightMiddleIntermediate: [1.4, 0, 0],
+      rightMiddleDistal: [0.6, 0, 0],
+      rightRingProximal: [1.35, 0, -0.05],
+      rightRingIntermediate: [1.4, 0, 0],
+      rightRingDistal: [0.6, 0, 0],
+      rightLittleProximal: [1.35, 0, -0.05],
+      rightLittleIntermediate: [1.4, 0, 0],
+      rightLittleDistal: [0.6, 0, 0],
+      // Bras gauche relâché le long du corps
+      leftUpperArm: [0.08, 0.1, -1.22],
+      leftLowerArm: [0.05, 0, -0.25],
+      leftHand: [0, 0, 0.05],
+      // Buste cambré et tête inclinée espiègle vers l'épaule droite
+      hips: [0, 0.03, -0.03],
+      spine: [0.02, 0.03, -0.03],
+      chest: [0.04, 0.04, -0.04],
+      neck: [-0.04, -0.05, 0.14],
+      head: [-0.05, -0.08, 0.22],
+      leftUpperLeg: [0, 0, -0.03],
+      rightUpperLeg: [0, 0, 0.03]
+    },
     /** Bras croisés confiants (posture robotique fière, coudes et avant-bras croisés devant la poitrine). */
     crossArms: {
       leftUpperArm: [0.45, -0.22, -0.82],
@@ -53419,7 +53455,40 @@ void main() {
     "leftLowerLeg",
     "rightLowerLeg",
     "leftFoot",
-    "rightFoot"
+    "rightFoot",
+    // Doigts articulés & épaules pour gestuelle expressive
+    "rightShoulder",
+    "leftShoulder",
+    "rightThumbMetacarpal",
+    "rightThumbProximal",
+    "rightThumbDistal",
+    "rightIndexProximal",
+    "rightIndexIntermediate",
+    "rightIndexDistal",
+    "rightMiddleProximal",
+    "rightMiddleIntermediate",
+    "rightMiddleDistal",
+    "rightRingProximal",
+    "rightRingIntermediate",
+    "rightRingDistal",
+    "rightLittleProximal",
+    "rightLittleIntermediate",
+    "rightLittleDistal",
+    "leftThumbMetacarpal",
+    "leftThumbProximal",
+    "leftThumbDistal",
+    "leftIndexProximal",
+    "leftIndexIntermediate",
+    "leftIndexDistal",
+    "leftMiddleProximal",
+    "leftMiddleIntermediate",
+    "leftMiddleDistal",
+    "leftRingProximal",
+    "leftRingIntermediate",
+    "leftRingDistal",
+    "leftLittleProximal",
+    "leftLittleIntermediate",
+    "leftLittleDistal"
   ];
   function lerpEulerMap(a, b, t) {
     const out = {};
@@ -53481,8 +53550,47 @@ void main() {
     let nextBlinkTime = 2;
     let blinkProgress = 0;
     let nextIdleFidgetTime = 6;
+    let nextHeartPoseTime = 75 + Math.random() * 45;
     let walkYOffset = 0;
     let spinAngle = 0;
+    function createHeartTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, 64, 64);
+      ctx.fillStyle = "#ff2a8d";
+      ctx.shadowColor = "#ff2a8d";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(32, 22);
+      ctx.bezierCurveTo(32, 16, 22, 10, 14, 18);
+      ctx.bezierCurveTo(4, 28, 12, 42, 32, 54);
+      ctx.bezierCurveTo(52, 42, 60, 28, 50, 18);
+      ctx.bezierCurveTo(42, 10, 32, 16, 32, 22);
+      ctx.fill();
+      const tex = new CanvasTexture(canvas);
+      tex.colorSpace = SRGBColorSpace;
+      createdTextures.push(tex);
+      return tex;
+    }
+    const heartMat = new SpriteMaterial({
+      map: createHeartTexture(),
+      transparent: true,
+      opacity: 0,
+      blending: AdditiveBlending,
+      depthWrite: false
+    });
+    const heartSprites = [
+      new Sprite(heartMat),
+      new Sprite(heartMat),
+      new Sprite(heartMat)
+    ];
+    for (const s of heartSprites) {
+      s.scale.set(0.065, 0.065, 1);
+      s.visible = false;
+      scene.add(s);
+    }
     let poseFrom = "idle";
     let poseTo = "idle";
     let poseBlend = 1;
@@ -53702,6 +53810,7 @@ void main() {
       else if (n === "clap" || n === "clapping") key2 = "clapping";
       else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key2 = "angry";
       else if (n === "walk" || n === "marche" || n === "step") key2 = "walk";
+      else if (n === "fingerheart" || n === "heart" || n === "kpopheart" || n === "love" || n === "miniheart" || n === "coeur") key2 = "fingerHeart";
       else if (POSE_EULERS[raw]) key2 = raw;
       else if (POSE_EULERS[n]) key2 = n;
       if (heading !== void 0) {
@@ -53712,7 +53821,7 @@ void main() {
         setHeading(0);
       }
       if (key2 === "angry") setMood("tense");
-      else if (key2 === "dance" || key2 === "samba" || key2 === "hiphop" || key2 === "robot" || key2 === "disco" || key2 === "spin" || key2 === "cheer") setMood("happy");
+      else if (key2 === "dance" || key2 === "samba" || key2 === "hiphop" || key2 === "robot" || key2 === "disco" || key2 === "spin" || key2 === "cheer" || key2 === "fingerHeart") setMood("happy");
       else if (key2 === "think") setMood("curious");
       poseFrom = poseTo;
       poseTo = key2;
@@ -54064,6 +54173,31 @@ void main() {
           animated.rightLowerArm = [0, 0, -0.18 - Math.max(0, -armSwing) * 0.15];
         }
         if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
+      }
+      if (poseTo === "fingerHeart") {
+        const heartPulse = Math.sin(t * 5.2) * 0.035;
+        if (animated.rightHand) {
+          animated.rightHand = [
+            animated.rightHand[0] + heartPulse * 0.8,
+            animated.rightHand[1],
+            animated.rightHand[2] + heartPulse * 0.5
+          ];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [
+            animated.rightLowerArm[0] + heartPulse * 0.3,
+            animated.rightLowerArm[1],
+            animated.rightLowerArm[2] - heartPulse * 0.4
+          ];
+        }
+        const headSway = Math.sin(t * 2.8) * 0.025;
+        if (animated.head) {
+          animated.head = [
+            animated.head[0] + headSway * 0.4,
+            animated.head[1] + headSway * 0.6,
+            animated.head[2] + headSway * 0.3
+          ];
+        }
       }
       const poseObj = {};
       for (const name of BONE_NAMES) {
@@ -54435,13 +54569,50 @@ void main() {
           }
         }
         if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
-          if (t > nextIdleFidgetTime) {
+          if (t > nextHeartPoseTime) {
+            nextHeartPoseTime = t + 1800 + Math.random() * 900;
+            setPose("fingerHeart", 5500);
+          } else if (t > nextIdleFidgetTime) {
             nextIdleFidgetTime = t + 12 + Math.random() * 12;
             const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
             const pick = gestures[Math.floor(Math.random() * gestures.length)];
             const holdMs = pick === "crossArms" ? 4500 : pick === "think" ? 3500 : 5e3;
             setPose(pick, holdMs);
           }
+        }
+        if (poseTo === "fingerHeart" && vrm) {
+          let handPos = new Vector3(0.14, 1.25, 0.25);
+          try {
+            const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
+            if (rh) rh.getWorldPosition(handPos);
+          } catch (_) {
+          }
+          heartSprites.forEach((sp, i) => {
+            sp.visible = true;
+            const phase = (t * 1.5 + i * 0.65) % 2;
+            const life = phase / 2;
+            const yOffset = life * 0.16;
+            const xOffset = Math.sin(life * Math.PI * 2 + i) * 0.03;
+            sp.position.set(handPos.x + 0.02 + xOffset, handPos.y + 0.03 + yOffset, handPos.z + 0.05);
+            const scale = 0.045 + Math.sin(life * Math.PI) * 0.035;
+            sp.scale.set(scale, scale, 1);
+            sp.material.opacity = Math.sin(life * Math.PI) * 0.9;
+          });
+          try {
+            const em = vrm.expressionManager;
+            if (em) {
+              em.setValue("happy", 0.9);
+              em.setValue("aa", 0.42);
+              const winkCycle = t * 0.8 % 3;
+              const winkVal = winkCycle < 0.6 ? Math.sin(winkCycle / 0.6 * Math.PI) * 0.95 : 0;
+              em.setValue("blinkRight", winkVal);
+            }
+          } catch (_) {
+          }
+        } else {
+          heartSprites.forEach((sp) => {
+            sp.visible = false;
+          });
         }
         const isWalking = activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk";
         const targetWalkY = isWalking ? 0.088 : 0;
@@ -54482,7 +54653,11 @@ void main() {
           if (mouthAmp < 0.02) mouthAmp = 0;
         }
         if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
-          vrm.expressionManager.setValue("aa", mouthAmp);
+          if (poseTo === "fingerHeart") {
+            vrm.expressionManager.setValue("aa", Math.max(mouthAmp, 0.42));
+          } else {
+            vrm.expressionManager.setValue("aa", mouthAmp);
+          }
         }
         if (typeof vrm.update === "function") {
           vrm.update(dt);
@@ -54557,6 +54732,17 @@ void main() {
         }
         vrmaClips.clear();
         vrmaLoading.clear();
+        for (const sp of heartSprites) {
+          try {
+            scene.remove(sp);
+            sp.geometry?.dispose();
+          } catch (_) {
+          }
+        }
+        try {
+          heartMat.dispose();
+        } catch (_) {
+        }
         for (const tex of createdTextures) {
           try {
             tex.dispose();
