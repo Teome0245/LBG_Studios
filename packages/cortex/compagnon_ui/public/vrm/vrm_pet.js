@@ -1186,8 +1186,8 @@ export function createVrmPet(hostEl, opts = {}) {
     try {
       const headBone = v.humanoid.getNormalizedBoneNode?.("head");
       if (headBone) {
-        // Morphologie unifiée (échelle 1.28) : même forme et proportions identiques sur le bureau et dans la fenêtre
-        const targetScale = 1.28;
+        // Morphologie unifiée (échelle 1.15) : tête légèrement réduite pour un profil plus élancé et harmonieux
+        const targetScale = 1.15;
         headBone.scale.set(targetScale, targetScale, targetScale);
       }
     } catch (_) {}
@@ -1210,13 +1210,12 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       } catch (_) {}
 
-      // Cadrage portrait centré sur le visage et le haut du buste :
-      // Centre vertical au niveau du menton / gorge (headPos.y - 0.05),
-      // plaçant le visage au centre supérieur avec respiration au-dessus des cheveux,
-      // et le haut du buste (épaules mecha titane, clavicules, décolleté) au centre inférieur.
-      const lookY = headPos.y - 0.05;
-      const dist = 1.05;
-      targetCamPos.set(headPos.x, lookY + 0.01, headPos.z + dist);
+      // Cadrage portrait centré sur la tête et le haut du buste :
+      // On vise le milieu du visage (pont du nez / yeux à headPos.y + 0.015) pour centrer parfaitement la tête,
+      // laissant une belle marge au-dessus de la chevelure tout en révélant le cou, les épaules mecha et le haut du buste.
+      const lookY = headPos.y + 0.015;
+      const dist = 1.12;
+      targetCamPos.set(headPos.x, lookY, headPos.z + dist);
       targetLookAt.set(headPos.x, lookY, headPos.z);
       targetFov = 24;
 

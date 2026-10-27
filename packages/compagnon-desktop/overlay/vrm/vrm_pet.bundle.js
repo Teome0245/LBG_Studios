@@ -54119,7 +54119,7 @@ void main() {
       try {
         const headBone = v.humanoid.getNormalizedBoneNode?.("head");
         if (headBone) {
-          const targetScale = 1.28;
+          const targetScale = 1.15;
           headBone.scale.set(targetScale, targetScale, targetScale);
         }
       } catch (_) {
@@ -54141,9 +54141,9 @@ void main() {
           }
         } catch (_) {
         }
-        const lookY2 = headPos.y - 0.05;
-        const dist2 = 1.05;
-        targetCamPos.set(headPos.x, lookY2 + 0.01, headPos.z + dist2);
+        const lookY2 = headPos.y + 0.015;
+        const dist2 = 1.12;
+        targetCamPos.set(headPos.x, lookY2, headPos.z + dist2);
         targetLookAt.set(headPos.x, lookY2, headPos.z);
         targetFov = 24;
         if (!cameraInitialized) {

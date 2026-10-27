@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-26  
+**Mis à jour** : 2026-10-27  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -12,20 +12,35 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-- **Harmonisation morphologique des modèles (Fenêtre & Desktop) & Cadrage Buste avec Zoom/Dézoom fluide** :
-  * **Diagnostic & Unification des formes** :
-    - Sur le bureau Windows SDS `.10`, le fichier local `Compagnon.vrm` n'avait pas été synchronisé avec la version cuite récente (MD5 divergent). Copie effectuée : les deux environnements utilisent désormais le même modèle cuit 14.1 Mo.
-    - Échelle du bone de tête fixée à une valeur constante unifiée de `1.28` (`updateHeadScale`) : morphologie 100% identique entre l'overlay transparent du bureau et le viewport de la fenêtre de monitoring, sans aucune modification d'échelle ou déformation lors des zooms.
-  * **Cadrage par défaut « Visage et haut du buste »** :
-    - Cadrage portrait resserré et centré sur le visage et le haut du buste (`framing: 'bust'`, `lookY = headPos.y - 0.05`, `dist = 1.05`) : visée au niveau du menton/gorge, tête dégagée avec une marge agréable au-dessus des cheveux, visage centré au tiers supérieur, et haut du buste (épaules mecha titane, clavicules, décolleté) mis en valeur au centre inférieur sans couper les traits.
-  * **Zoom / Dézoom dynamique cinématographique lors des danses** :
-    - Interpolation fluide de la caméra dans `animate()` (`currentCamPos`, `currentLookAt`, `currentFov` avec lerp progressif).
-    - Dézoom automatique vers la vue corps entier (`framing: 'full'`) dès qu'une danse ou animation complète est jouée (`dance`, `samba`, `hiphop`, `robot`, `disco`, `spin`, `walk`).
-    - Retour automatique en zoom avant vers la vue « visage et haut du buste » dès que la danse s'achève (`poseHoldUntil` expiré ou retour à `idle`).
-  * **Déploiement multi-surfaces synchronisé** :
-    - Rebundle `esbuild` de `vrm_pet.bundle.js` (2.1 Mo) avec cache-buster `?v=face_bust_focus_v3`.
-    - Déploiement validé sur CT100 (`lbg-frontend:/usr/share/nginx/html/vrm/` et patch de l'asset JS).
-    - Déploiement sur Windows SDS `.10` (`C:/Agent_IA/` et `E:/IA/`) et redémarrage de l'overlay Electron (PID vérifié : **37048**, bridge local `:8765` opérationnel).
+
+**2026-10-27** :
+- **Ajustement de la Morphologie (Échelle Tête 1.15) & Recentrage Cadrage Buste (Web & Desktop)** :
+  * **Échelle de la tête réduite à 1.15** (`updateHeadScale`) : passage de 1.28 à 1.15 pour affiner le port de tête, éliminer l'effet bobblehead excessif et rétablir des proportions élancées et harmonieuses avec le corps mecha sur les deux environnements (fenêtre Compagnon et pet bureau).
+  * **Recentrage vertical de la tête dans la fenêtre Compagnon** (`framing === 'bust'`) : visée repositionnée au niveau du pont du nez / yeux (`lookY = headPos.y + 0.015`, `dist = 1.12`) pour centrer parfaitement le visage dans le cadre avec une marge aérée au-dessus des cheveux, tout en dévoilant le cou, les épaulières mecha et le haut du buste.
+  * **Déploiement synchronisé** : bundle `vrm_pet.bundle.js` recompilé (`head_scale_v4`), déployé sur CT100 (`lbg-frontend`) et synchronisé sur Windows SDS `.10` avec redémarrage de l'overlay Electron.
+- **Intégration du Cerveau 3D & Réseau Synaptique (Option 1 — Inspiration TikTok @ccodelabfr)** :
+  * **Contexte & Inspiration** : Transposition de l'univers 3D de @ccodelabfr (*« J'ai donné un cerveau à mon IA 🧠⚡ »*) pour doter le Studio d'une représentation volumétrique vivante de la conscience et des mémoires de l'IA.
+  * **Moteur 3D procédural Three.js WebGL autonome** ([`brain_3d/brain_3d.js`](../packages/cortex/pilot_web/brain_3d/brain_3d.js), 0 asset binaire externe) :
+    - Double hémisphère anatomique avec scissure centrale, gyri et sulci ondulants, tronc cérébral et cervelet.
+    - ~1500 particules neuronales luminescentes aux couleurs thématiques (cyan/cobalt pour la logique et la simulation, or/magenta/rose pour le RAG, l'émotion et Lyra).
+    - Réseau synaptique d'axones interconnectés (`LineSegments` additifs) avec train d'impulsions lumineuses circulant en temps réel.
+  * **6 Pôles Cognitifs Interactifs cliquables avec anneaux de données orbitaux** :
+    - ⚡ *Cortex Frontal* : Orchestrateur & Planification des intentions (`intent: monitor / chat / jobs`).
+    - 💖 *Système Limbique* : Homéostasie et humeur en direct (`confidence`, `curiosity`, `stress`, `fatigue`).
+    - 📚 *Hippocampe & RAG* : Corpus philosophique Mec Chill / Stoïcisme et grounding d'atelier.
+    - 🤖 *Noyau Campus & Fleet* : Supervision des agents spécialisés de la Team.
+    - 🌐 *Perception Monde* : Simulation Godot Prime `.246:8787` et signaux du monde.
+    - 🎭 *Lobe Compagnon* : Lyra Desktop Pet SDS `.10` et posture d'incarnation.
+  * **HUD Cybernétique & Télémétrie en direct** ([`src/modules/team_brain.js`](../packages/cortex/pilot_web/src/modules/team_brain.js) & [`brain_3d/brain_3d.css`](../packages/cortex/pilot_web/brain_3d/brain_3d.css)) :
+    - Polling régulier de `GET /v1/pilot/orchestrator/brain/status` avec jauges animées et boîte de flux de conscience (« narrative »).
+    - Raycasting Three.js au survol avec tooltips HUD dynamiques projetées en 2D.
+    - Clic sur un pôle avec focus caméra fluide (lerp) et inspection de sa fiche détaillée.
+    - Bouton *⚡ Impulsion Synaptique* déclenchant une décharge visuelle d'ondes à travers tout le cerveau.
+    - Filtres d'affichage par hémisphère (*Vue globale*, *Hémisphère Analytique*, *Hémisphère RAG & Humeur*).
+    - Bouton de bascule Veille / Éveil connecté à `/v1/pilot/orchestrator/brain/toggle`.
+  * **Routing & Intégration Pilot Web** :
+    - Accessible immédiatement via `#/team/brain` (et alias `#/brain`), entrée dédiée dans le menu Campus de la barre de navigation.
+    - Configuration Vite enrichie (`STATIC_DIRS` incluant `brain_3d`) et bundle de production `dist/` recompilé avec succès.
 
 **2026-10-26** :
 - **Rééquilibrage des Proportions Tête & Cadrage Buste 3D (Web CT100 & Desktop .10)** :
