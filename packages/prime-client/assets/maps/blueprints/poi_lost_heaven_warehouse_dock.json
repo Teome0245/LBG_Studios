@@ -1,0 +1,291 @@
+{
+  "id": "poi:lost_heaven_warehouse_dock",
+  "kind": "warehouse",
+  "label": "Entrepôt Docks & Ferraille",
+  "world_pos": [
+    4850.0,
+    0.0,
+    -920.0
+  ],
+  "footprint_width_m": 36.0,
+  "footprint_depth_m": 28.0,
+  "floors": [
+    {
+      "floor_index": 0,
+      "elevation_m": 0.0,
+      "height_m": 5.5,
+      "rooms": [
+        {
+          "id": "room_hangar",
+          "name": "Zone de stockage & quais",
+          "purpose": "hangar",
+          "floor_index": 0,
+          "polygon": [
+            [
+              -18.0,
+              -14.0
+            ],
+            [
+              6.0,
+              -14.0
+            ],
+            [
+              6.0,
+              -4.0
+            ],
+            [
+              18.0,
+              -4.0
+            ],
+            [
+              18.0,
+              14.0
+            ],
+            [
+              -18.0,
+              14.0
+            ]
+          ],
+          "area_m2": 888.0,
+          "ambient_audio": "amb_warehouse_wind"
+        },
+        {
+          "id": "room_workshop",
+          "name": "Atelier mécanique & pièces détachées",
+          "purpose": "workshop",
+          "floor_index": 0,
+          "polygon": [
+            [
+              6.0,
+              -14.0
+            ],
+            [
+              18.0,
+              -14.0
+            ],
+            [
+              18.0,
+              -4.0
+            ],
+            [
+              6.0,
+              -4.0
+            ]
+          ],
+          "area_m2": 120.0,
+          "ambient_audio": "amb_machinery_clink"
+        }
+      ],
+      "walls": [
+        {
+          "id": "wall_north",
+          "start": [
+            -18.0,
+            -14.0
+          ],
+          "end": [
+            18.0,
+            -14.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 5.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 11.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 17.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 23.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 29.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_east",
+          "start": [
+            18.0,
+            -14.0
+          ],
+          "end": [
+            18.0,
+            14.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 6.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 13.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 20.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_south",
+          "start": [
+            18.0,
+            14.0
+          ],
+          "end": [
+            -18.0,
+            14.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [
+            {
+              "offset_m": 15.75,
+              "width_m": 4.5,
+              "height_m": 4.0,
+              "is_exterior": true,
+              "leads_to_room": null
+            }
+          ],
+          "windows": [
+            {
+              "offset_m": 1.2,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 33.4,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_west",
+          "start": [
+            -18.0,
+            14.0
+          ],
+          "end": [
+            -18.0,
+            -14.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 6.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 13.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 20.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_int_workshop_front",
+          "start": [
+            6.0,
+            -4.0
+          ],
+          "end": [
+            18.0,
+            -4.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": false,
+          "material": "concrete_scrap",
+          "doors": [
+            {
+              "offset_m": 2.0,
+              "width_m": 1.6,
+              "height_m": 2.4,
+              "is_exterior": false,
+              "leads_to_room": "workshop"
+            }
+          ],
+          "windows": []
+        },
+        {
+          "id": "wall_int_workshop_side",
+          "start": [
+            6.0,
+            -14.0
+          ],
+          "end": [
+            6.0,
+            -4.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 5.5,
+          "is_exterior": false,
+          "material": "concrete_scrap",
+          "doors": [],
+          "windows": []
+        }
+      ]
+    }
+  ],
+  "roof_style": "industrial_pitched",
+  "rotation_deg": 0.0,
+  "schema_version": 1,
+  "description": "Grand hangar de pièces de rechange et containers sécurisés de Lost Heaven.",
+  "metadata": {
+    "essential": false,
+    "forklift_nav_enabled": true
+  }
+}

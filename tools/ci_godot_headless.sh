@@ -73,6 +73,7 @@ run_client_test() {
 
 run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
 run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
+run_test "Bâtiments CAO & Portes découpées (HubBlueprintBuilder)" "res://tools/building_cad_selftest.gd"
 run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 

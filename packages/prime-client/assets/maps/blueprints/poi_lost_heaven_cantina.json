@@ -1,0 +1,317 @@
+{
+  "id": "poi:lost_heaven_cantina",
+  "kind": "cantina",
+  "label": "La Perle de Scrapaltai",
+  "world_pos": [
+    5028.3,
+    0.0,
+    -784.1
+  ],
+  "footprint_width_m": 32.0,
+  "footprint_depth_m": 24.0,
+  "floors": [
+    {
+      "floor_index": 0,
+      "elevation_m": 0.0,
+      "height_m": 3.8,
+      "rooms": [
+        {
+          "id": "room_main_hall",
+          "name": "Salle principale",
+          "purpose": "cantina_hall",
+          "floor_index": 0,
+          "polygon": [
+            [
+              -16.0,
+              -4.5
+            ],
+            [
+              16.0,
+              -4.5
+            ],
+            [
+              16.0,
+              12.0
+            ],
+            [
+              -16.0,
+              12.0
+            ]
+          ],
+          "area_m2": 528.0,
+          "ambient_audio": "amb_cantina_chatter"
+        },
+        {
+          "id": "room_storage",
+          "name": "Réserve de contrebande",
+          "purpose": "storage",
+          "floor_index": 0,
+          "polygon": [
+            [
+              -16.0,
+              -12.0
+            ],
+            [
+              4.0,
+              -12.0
+            ],
+            [
+              4.0,
+              -4.5
+            ],
+            [
+              -16.0,
+              -4.5
+            ]
+          ],
+          "area_m2": 150.0,
+          "ambient_audio": "amb_hum_generators"
+        },
+        {
+          "id": "room_boss_office",
+          "name": "Bureau feutré du gérant",
+          "purpose": "office",
+          "floor_index": 0,
+          "polygon": [
+            [
+              4.0,
+              -12.0
+            ],
+            [
+              16.0,
+              -12.0
+            ],
+            [
+              16.0,
+              -4.5
+            ],
+            [
+              4.0,
+              -4.5
+            ]
+          ],
+          "area_m2": 90.0,
+          "ambient_audio": "amb_low_fan"
+        }
+      ],
+      "walls": [
+        {
+          "id": "wall_north",
+          "start": [
+            -16.0,
+            -12.0
+          ],
+          "end": [
+            16.0,
+            -12.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 3.8,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 2.5,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 8.9,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 15.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 21.7,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 28.1,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_east",
+          "start": [
+            16.0,
+            -12.0
+          ],
+          "end": [
+            16.0,
+            12.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 3.8,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 3.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 9.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 15.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_south",
+          "start": [
+            16.0,
+            12.0
+          ],
+          "end": [
+            -16.0,
+            12.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 3.8,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [
+            {
+              "offset_m": 14.6,
+              "width_m": 2.8,
+              "height_m": 2.6,
+              "is_exterior": true,
+              "leads_to_room": null
+            }
+          ],
+          "windows": [
+            {
+              "offset_m": 1.2,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 29.4,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_west",
+          "start": [
+            -16.0,
+            12.0
+          ],
+          "end": [
+            -16.0,
+            -12.0
+          ],
+          "thickness_m": 0.3,
+          "height_m": 3.8,
+          "is_exterior": true,
+          "material": "scrap_metal_corrugated",
+          "doors": [],
+          "windows": [
+            {
+              "offset_m": 3.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 9.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 15.3,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            }
+          ]
+        },
+        {
+          "id": "wall_int_backstage",
+          "start": [
+            -16.0,
+            -4.5
+          ],
+          "end": [
+            16.0,
+            -4.5
+          ],
+          "thickness_m": 0.25,
+          "height_m": 3.8,
+          "is_exterior": false,
+          "material": "metal_partition",
+          "doors": [
+            {
+              "offset_m": 4.0,
+              "width_m": 1.4,
+              "height_m": 2.2,
+              "is_exterior": false,
+              "leads_to_room": "storage"
+            },
+            {
+              "offset_m": 26.5,
+              "width_m": 1.2,
+              "height_m": 2.2,
+              "is_exterior": false,
+              "leads_to_room": "boss_office"
+            }
+          ],
+          "windows": []
+        },
+        {
+          "id": "wall_int_office_divider",
+          "start": [
+            4.0,
+            -12.0
+          ],
+          "end": [
+            4.0,
+            -4.5
+          ],
+          "thickness_m": 0.25,
+          "height_m": 3.8,
+          "is_exterior": false,
+          "material": "reinforced_steel",
+          "doors": [],
+          "windows": []
+        }
+      ]
+    }
+  ],
+  "roof_style": "flat",
+  "rotation_deg": 0.0,
+  "schema_version": 1,
+  "description": "Cantina emblématique de Lost Heaven avec comptoir de ferrailleur et alcôves de jeu.",
+  "metadata": {
+    "essential": false,
+    "lore_ref": "docs/world/BIBLE_MMO.md#V13",
+    "capacity_players": 40
+  }
+}

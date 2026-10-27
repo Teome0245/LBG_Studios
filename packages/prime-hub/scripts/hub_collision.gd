@@ -2,6 +2,8 @@ extends RefCounted
 class_name HubCollision
 ## AABB bâtiments + clamp_move (port mince de hub_collision.py — même JSON client).
 
+const HubBlueprintBuilderScript := preload("res://scripts/hub_blueprint_builder.gd")
+
 var blocks: Array = []  # {id, min_x, max_x, min_z, max_z, door?}
 var size_mul: float = 1.0
 
@@ -31,6 +33,16 @@ func reload(buildings_path: String = "") -> void:
 			continue
 		var cx := float(item.get("x", 0.0))
 		var cz := float(item.get("z", 0.0))
+		var bp_rel: String = str(item.get("cad_blueprint_ref", "")).strip_edges()
+		if not bp_rel.is_empty():
+			var bp_path := path.get_base_dir().path_join(bp_rel)
+			if FileAccess.file_exists(bp_path):
+				var bp: Dictionary = HubBlueprintBuilderScript.load_blueprint(bp_path)
+				var bp_blocks: Array = HubBlueprintBuilderScript.blueprint_to_collision_blocks(bp, cx, cz)
+				if not bp_blocks.is_empty():
+					blocks.append_array(bp_blocks)
+					continue
+
 		var size_m := float(item.get("size_m", 32.0))
 		var half := size_m * 0.5 * size_mul
 		var door_raw = item.get("door")

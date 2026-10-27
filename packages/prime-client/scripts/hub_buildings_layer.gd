@@ -11,6 +11,7 @@ const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 @export var size_multiplier: float = 1.0
 
 var _buildings: Array = []
+var _blueprint_cache: Dictionary = {}
 
 func _ready() -> void:
 	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", size_multiplier))
@@ -20,6 +21,7 @@ func _ready() -> void:
 
 func reload() -> void:
 	_buildings.clear()
+	_blueprint_cache.clear()
 	if not FileAccess.file_exists(BUILDINGS_PATH):
 		push_warning("HubBuildingsLayer: %s absent" % BUILDINGS_PATH)
 		return
@@ -55,6 +57,14 @@ func _draw_building(b: Dictionary) -> void:
 	else:
 		draw_rect(rect, Color(fill.r * 0.55, fill.g * 0.55, fill.b * 0.55, 0.75))
 		draw_rect(rect, Color(fill.r, fill.g, fill.b, 0.95), false, 2.5)
+
+	# Si un blueprint CAO est associé, dessiner les cloisons intérieures et pièces
+	var bp_rel: String = str(b.get("cad_blueprint_ref", "")).strip_edges()
+	if not bp_rel.is_empty():
+		var bp := _get_or_load_blueprint(bp_rel)
+		if not bp.is_empty():
+			_draw_blueprint_interior(bp, cx, cz)
+
 	if show_doors and kind != "city_gate" and b.get("door") is Dictionary:
 		_draw_door(b, cx, cz, size_m, fill)
 	if show_labels:
@@ -193,3 +203,75 @@ func _color_for_kind(kind: String) -> Color:
 func set_visible_buildings(on: bool) -> void:
 	visible_buildings = on
 	queue_redraw()
+
+func _get_or_load_blueprint(rel_path: String) -> Dictionary:
+	if _blueprint_cache.has(rel_path):
+		return _blueprint_cache[rel_path]
+	var full_path := "res://assets/maps/".path_join(rel_path)
+	if not FileAccess.file_exists(full_path):
+		_blueprint_cache[rel_path] = {}
+		return {}
+	var f := FileAccess.open(full_path, FileAccess.READ)
+	if f == null:
+		_blueprint_cache[rel_path] = {}
+		return {}
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	if raw is Dictionary:
+		_blueprint_cache[rel_path] = raw
+		return raw
+	_blueprint_cache[rel_path] = {}
+	return {}
+
+func _draw_blueprint_interior(bp: Dictionary, cx: float, cz: float) -> void:
+	var floors: Variant = bp.get("floors", [])
+	if not (floors is Array) or floors.is_empty():
+		return
+	var floor_zero: Dictionary = floors[0]
+	var walls: Variant = floor_zero.get("walls", [])
+	if not (walls is Array):
+		return
+
+	for w_item: Variant in walls:
+		if not (w_item is Dictionary):
+			continue
+		var w: Dictionary = w_item
+		if bool(w.get("is_exterior", false)):
+			continue
+
+		var start: Array = w.get("start", [0.0, 0.0])
+		var end: Array = w.get("end", [0.0, 0.0])
+		var p1 := Vector2(float(start[0]), float(start[1]))
+		var p2 := Vector2(float(end[0]), float(end[1]))
+		var dir := p2 - p1
+		var length := dir.length()
+		if length <= 0.01:
+			continue
+		var norm := dir.normalized()
+		var doors: Variant = w.get("doors", [])
+		var col_wall := Color(0.92, 0.92, 0.88, 0.85)
+
+		if not (doors is Array) or doors.is_empty():
+			var s1 := Projection3D2D.to_screen(Vector3(cx + p1.x, 0.0, cz + p1.y))
+			var s2 := Projection3D2D.to_screen(Vector3(cx + p2.x, 0.0, cz + p2.y))
+			draw_line(s1, s2, col_wall, 2.0)
+		else:
+			var cur_dist := 0.0
+			for d_item: Variant in doors:
+				if not (d_item is Dictionary):
+					continue
+				var d: Dictionary = d_item
+				var d_off := clampf(float(d.get("offset_m", 0.0)), 0.0, length)
+				var d_w := clampf(float(d.get("width_m", 1.2)), 0.0, length - d_off)
+				if d_off > cur_dist + 0.05:
+					var pt_a := p1 + norm * cur_dist
+					var pt_b := p1 + norm * d_off
+					var sa := Projection3D2D.to_screen(Vector3(cx + pt_a.x, 0.0, cz + pt_a.y))
+					var sb := Projection3D2D.to_screen(Vector3(cx + pt_b.x, 0.0, cz + pt_b.y))
+					draw_line(sa, sb, col_wall, 2.0)
+				cur_dist = d_off + d_w
+			if cur_dist < length - 0.05:
+				var pt_a := p1 + norm * cur_dist
+				var sa := Projection3D2D.to_screen(Vector3(cx + pt_a.x, 0.0, cz + pt_a.y))
+				var sb := Projection3D2D.to_screen(Vector3(cx + p2.x, 0.0, cz + p2.y))
+				draw_line(sa, sb, col_wall, 2.0)

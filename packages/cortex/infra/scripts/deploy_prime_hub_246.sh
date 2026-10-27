@@ -77,6 +77,8 @@ rsync -az --delete \
 
 ssh -o BatchMode=yes "${REMOTE}" "mkdir -p '${REMOTE_DIR}/data' '${REMOTE_DIR}/tools'"
 rsync -az "${BUILDINGS_SRC}" "${REMOTE}:${REMOTE_DIR}/data/lost_heaven_buildings.json"
+BLUEPRINTS_SRC="${STUDIOS_ROOT}/packages/prime-client/assets/maps/blueprints"
+[[ -d "${BLUEPRINTS_SRC}" ]] && rsync -az "${BLUEPRINTS_SRC}/" "${REMOTE}:${REMOTE_DIR}/data/blueprints/"
 [[ -f "${QUESTS_SRC}" ]] && rsync -az "${QUESTS_SRC}" "${REMOTE}:${REMOTE_DIR}/data/quests_lbg_templates.json"
 
 # Migrer état peel Python → Godot si absent côté prime-hub
