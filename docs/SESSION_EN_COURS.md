@@ -16,14 +16,14 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
   * **Diagnostic & Unification des formes** :
     - Sur le bureau Windows SDS `.10`, le fichier local `Compagnon.vrm` n'avait pas été synchronisé avec la version cuite récente (MD5 divergent). Copie effectuée : les deux environnements utilisent désormais le même modèle cuit 14.1 Mo.
     - Échelle du bone de tête fixée à une valeur constante unifiée de `1.28` (`updateHeadScale`) : morphologie 100% identique entre l'overlay transparent du bureau et le viewport de la fenêtre de monitoring, sans aucune modification d'échelle ou déformation lors des zooms.
-  * **Cadrage par défaut « Buste et tête »** :
-    - Cadrage portrait équilibré réactivé par défaut (`framing: 'bust'`) : visée au niveau du haut du sternum / clavicules, tête dégagée avec de l'air au-dessus, épaules mecha et buste valorisés.
+  * **Cadrage par défaut « Visage et haut du buste »** :
+    - Cadrage portrait resserré et centré sur le visage et le haut du buste (`framing: 'bust'`, `lookY = headPos.y - 0.05`, `dist = 1.05`) : visée au niveau du menton/gorge, tête dégagée avec une marge agréable au-dessus des cheveux, visage centré au tiers supérieur, et haut du buste (épaules mecha titane, clavicules, décolleté) mis en valeur au centre inférieur sans couper les traits.
   * **Zoom / Dézoom dynamique cinématographique lors des danses** :
     - Interpolation fluide de la caméra dans `animate()` (`currentCamPos`, `currentLookAt`, `currentFov` avec lerp progressif).
     - Dézoom automatique vers la vue corps entier (`framing: 'full'`) dès qu'une danse ou animation complète est jouée (`dance`, `samba`, `hiphop`, `robot`, `disco`, `spin`, `walk`).
-    - Retour automatique en zoom avant vers la vue « buste et tête » dès que la danse s'achève (`poseHoldUntil` expiré ou retour à `idle`).
+    - Retour automatique en zoom avant vers la vue « visage et haut du buste » dès que la danse s'achève (`poseHoldUntil` expiré ou retour à `idle`).
   * **Déploiement multi-surfaces synchronisé** :
-    - Rebundle `esbuild` de `vrm_pet.bundle.js` (2.1 Mo) avec cache-buster `?v=smooth_framing_v2`.
+    - Rebundle `esbuild` de `vrm_pet.bundle.js` (2.1 Mo) avec cache-buster `?v=face_bust_focus_v3`.
     - Déploiement validé sur CT100 (`lbg-frontend:/usr/share/nginx/html/vrm/` et patch de l'asset JS).
     - Déploiement sur Windows SDS `.10` (`C:/Agent_IA/` et `E:/IA/`) et redémarrage de l'overlay Electron (PID vérifié : **37048**, bridge local `:8765` opérationnel).
 

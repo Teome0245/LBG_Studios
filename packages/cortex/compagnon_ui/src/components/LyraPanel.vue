@@ -408,7 +408,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=smooth_framing_v2'
+    script.src = '/vrm/vrm_pet.bundle.js?v=face_bust_focus_v3'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)

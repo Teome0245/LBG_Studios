@@ -54141,9 +54141,9 @@ void main() {
           }
         } catch (_) {
         }
-        const lookY2 = headPos.y - 0.2;
-        const dist2 = 1.38;
-        targetCamPos.set(headPos.x, lookY2 + 0.02, headPos.z + dist2);
+        const lookY2 = headPos.y - 0.05;
+        const dist2 = 1.05;
+        targetCamPos.set(headPos.x, lookY2 + 0.01, headPos.z + dist2);
         targetLookAt.set(headPos.x, lookY2, headPos.z);
         targetFov = 24;
         if (!cameraInitialized) {

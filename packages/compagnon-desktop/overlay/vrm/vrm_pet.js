@@ -1210,13 +1210,13 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       } catch (_) {}
 
-      // Cadrage portrait/buste et tête équilibré :
-      // On centre la visée (lookAt) au niveau du haut du sternum / clavicules (headPos.y - 0.20),
-      // ce qui place la tête dans le tiers supérieur avec de la respiration au-dessus des cheveux,
-      // tout en dévoilant harmonieusement la poitrine, les épaules mecha et les bras.
-      const lookY = headPos.y - 0.20;
-      const dist = 1.38;
-      targetCamPos.set(headPos.x, lookY + 0.02, headPos.z + dist);
+      // Cadrage portrait centré sur le visage et le haut du buste :
+      // Centre vertical au niveau du menton / gorge (headPos.y - 0.05),
+      // plaçant le visage au centre supérieur avec respiration au-dessus des cheveux,
+      // et le haut du buste (épaules mecha titane, clavicules, décolleté) au centre inférieur.
+      const lookY = headPos.y - 0.05;
+      const dist = 1.05;
+      targetCamPos.set(headPos.x, lookY + 0.01, headPos.z + dist);
       targetLookAt.set(headPos.x, lookY, headPos.z);
       targetFov = 24;
 
