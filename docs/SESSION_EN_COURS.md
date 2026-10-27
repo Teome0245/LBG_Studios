@@ -12,7 +12,38 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+**2026-10-27** :
+- **Bascule du partage d'assets 3D de `N:\Upload\IA` vers `E:\IA`** :
+  * Suite à l'indisponibilité du lecteur réseau `N:\`, copie intégrale de tous les modèles VRM compilés et textures mecha vers le disque local `E:\IA` via l'agent Windows SDS `.10:5005`.
+  * Fichiers vérifiés et synchronisés dans `E:\IA\` :
+    - `Compagnon.vrm` (14.1 Mo, modèle cuit avec carrosserie mecha titane v26, circuits néon cyan, visage/cheveux cyber et échelle tête Chibi).
+    - Textures sources : `body_skin_android.png` (547 ko), `body_skin_android_5b.png`, `face_skin_android.png`, `hair_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`.
+    - Modèles secondaires : `Anna.vrm`, `Aurora.vrm`, `LadyKoi.vrm`, `default.vrm`.
+    - Runtimes client : `vrm_pet.bundle.js` et `vrm_pet.js`.
+
 **2026-10-26** :
+- **Rééquilibrage des Proportions Tête & Cadrage Buste 3D (Web CT100 & Desktop .10)** :
+  * **Diagnostic du décalage Buste vs Corps** :
+    - L'échelle de tête était fixée statiquement à `1.68` (+68% Chibi), et le cadrage buste (`framing === 'bust'`) visait directement les yeux à courte distance (`dist = 1.15`, FOV 25°), ce qui écrasait le champ de vision, masquait la poitrine et les épaules, et produisait un effet de tête énorme en gros plan.
+    - À l'inverse, en vue corps entier (en pied sur le bureau Windows), la grande silhouette élancée avec de longues jambes donnait l'impression d'une tête menue par comparaison.
+  * **Harmonisation dynamique (`updateHeadScale`)** :
+    - En **vue buste** : échelle ajustée à `1.15` pour un port de tête fin, naturel et parfaitement proportionné aux épaules et au décolleté mecha.
+    - En **vue corps entier** : échelle calée à `1.28` pour offrir une présence visuelle harmonieuse sans paraître trop petite face au reste du corps.
+    - Cadrage caméra portrait/buste recentré sur le haut du sternum (`headPos.y - 0.20`, distance `1.38m`, FOV 24°) : dégage les épaules mecha, la poitrine et les bras dans les 60% inférieurs tout en maintenant la tête avec de l'air dans les 40% supérieurs.
+  * **Rebundle & Déploiement multi-surfaces** :
+    - Recompilation esbuild de `vrm_pet.bundle.js` (2.1 MB) avec cache-buster `?v=head_balance_v1` dans `LyraPanel.vue`.
+    - Déploiement validé sur CT100 (`192.168.0.100:5174`, injection dans `lbg-frontend:/usr/share/nginx/html/vrm/` et mise à jour de `index-CNZnjJ_B.js`).
+    - Synchronisation locale via `sync_vrm_desktop` et redémarrage de l'overlay Electron sur Windows `.10` (PID 4880).
+- **Intégration Vue Campus Pixel Art « Bureau des Agents » (Option B — Inspiration TikTok @alexisdubain.ai)** :
+  * Habillage complet de la carte interactive du campus (`packages/cortex/pilot_web/office_map/office_map.js`) inspiré du projet *Bureau des Agents* / *VibesMoney* :
+    - Rendu 100% procédural Canvas 2D (autonome, aucun asset binaire externe manquant).
+    - Robots cubiques animés avec visière sombre, yeux dorés luminescents et carrosserie aux couleurs du rôle (Chef violet, Infra vert/titane, Front cyan, LLM ambre/or, Prime saphir, Pont rose out-game, Lyra cyan androïde).
+    - Bureaux individuels avec plateau bois, ordinateur portable, reflets d'écran allumés, clavier et tasse de café.
+    - Props décoratifs par zone : racks serveurs aux LEDs animées Core/LLM, machine à espresso au Café, borne d'arcade rétro dans la Salle de jeux.
+    - Animations dynamiques en temps réel : frappe effrénée au clavier (`typing`) en statut `busy`, respiration douce en `idle`, alerte lumineuse en `review`, et marche animée (`walk1`/`walk2`) lors des déplacements inter-zones.
+    - Bulles de pensée/action affichant la tâche en cours au-dessus de chaque agent.
+  * Déploiement et validation en direct sur `192.168.0.140:8080` (fichiers `/opt/LBG_IA_MMO/pilot_web/office_map/office_map.js` et `/opt/LBG_IA_MMO/pilot_web/dist/`).
+  * Accessible immédiatement dans le Pilot via l'URL : `http://192.168.0.140:8080/#/team/office?view=map`.
 - **Intégration Danses Mocap VRMA Haute Fidélité & Cadrage Dynamique** :
   * Mise en place du pipeline de conversion Mixamo FBX vers le standard officiel VRMA 1.0 (`@pixiv/three-vrm-animation`, 52 os avec translation et rotation du bassin).
   * Génération et intégration de 2 animations mocap complètes de haute fidélité :
@@ -30,6 +61,42 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
   * **Profil système Mec Chill** dans `compagnon_ui/server_overlay/router_prompts.py` (`mec_chill`, `chill`, `philo`) : posture calme, bienveillante et flegmatique, dichotomie du contrôle, esprit complice face aux aléas techniques du studio.
   * **Routage modèle dédié sur .110** : configuration automatique de `huihui_ai/gemma-4-abliterated:E4b-qat` sur l'hôte heavy `.110` (`LAB_CHILL_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"`, tier heavy, profile chill) dans `router_prompts.py`, `llm_chat_phase.py` et la matrice canonique `reason_route_matrix()`.
   * **Déclenchement RAG continu** dans `rag_grounding.py` et `llm_chat_phase.py` : injection du contexte philosophique dès que le profil chill est actif ou lors d'échanges sur la sérénité/philosophie en causerie.
+- **Génération & Modélisation CAO de Bâtiments Lost Heaven (Inspiration CADCraft + Claude)** :
+  * **Inspiration TikTok (@luis.cardenas.c / CADCraft + Claude)** : Adoption de l'approche CAO vectorielle et paramétrique (plutôt que maillage 3D polygonal brut sans intérieur) pour concevoir des bâtiments cohérents, praticables et rigoureusement cotés pour le MMO.
+  * **Spécification & Module Studio CAO** (`packages/cortex/services/building_cad/`) :
+    - `blueprint_model.py` : modèle de données complet (empreinte au sol, étages, cloisons, portes, fenêtres, pièces praticables, matériaux, export legacy).
+    - `procedural_architect.py` : algorithmes de tracé architectural (murs porteurs, fenêtres régulières, subdivision de pièces, corridors de dégagement).
+    - `lost_heaven_presets.py` & `blueprint_exporter.py` : catalogue d'archétypes (Cantina « La Perle de Scrapaltai », Hangar Docks & Ferraille) et pipeline d'export d'assets.
+    - CLI d'exportation : `packages/prime-client/tools/procedural_building/generate_blueprints.py`.
+  * **Compilateur de Collision & Découpe de Portes (`prime-hub`)** :
+    - Création de `packages/prime-hub/scripts/hub_blueprint_builder.gd` : décompose les murs en segments AABB individuels et découpe physiquement les ouvertures de portes pour laisser le passage totalement libre aux joueurs et PNJ dans la simulation headless.
+    - Extension de `packages/prime-hub/scripts/hub_collision.gd` : résolution automatique de `cad_blueprint_ref` et intégration native des pièces intérieures navigables sans altérer les collisions historiques AABB.
+  * **Rendu Vectoriel des Pièces & Cloisons (`prime-client`)** :
+    - Mise à niveau de `packages/prime-client/scripts/hub_buildings_layer.gd` : cache de blueprints, traçage des cloisons intérieures et découpes de portes en 2.5D projetée (`Projection3D2D`).
+    - Blueprints canoniques instanciés : `packages/prime-client/assets/maps/blueprints/poi_lost_heaven_cantina.json` et `poi_lost_heaven_warehouse_dock.json`, liés dans `lost_heaven_buildings.json`.
+  * **Validation & CI Headless** :
+    - Test unitaire complet Python : `packages/cortex/backend/tests/test_building_cad.py` (roundtrip JSON, génération procédurale cantina/hangar, export).
+    - Self-test headless Godot : `packages/prime-hub/tools/building_cad_selftest.gd` (validation du passage libre à travers la porte et du blocage par les murs).
+    - Intégration dans `tools/ci_godot_headless.sh`.
+    - Documentation d'architecture complète : [`docs/architecture/BUILDING_CAD_GENERATOR.md`](../docs/architecture/BUILDING_CAD_GENERATOR.md).
+- **Nettoyage Inventaire Ollama & Migration Routage (12b-qat & E4b-qat)** :
+  * **Suppression `e2b` sur .110 et .111** : retrait de `huihui_ai/gemma-4-abliterated:e2b` via l'API Ollama DELETE sur les deux hôtes (libération de ~13.3 Go de RAM/disque).
+  * **Redirection canonique `12b` -> `12b-qat`** : aliasing vérifié sur `.110` (même digest SHA256) et synchronisation via l'API `copy`.
+  * **Bascule du code vers `E4b-qat` et `12b-qat`** :
+    - `packages/cortex/orchestrator/team/reason_llm.py` : `FORGE_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"`.
+    - `packages/cortex/compagnon_ui/server_overlay/router_prompts.py` : `LAB_CHAT_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"`.
+    - `packages/cortex/compagnon_ui/server_overlay/routing.json` : suppression de l'ancien `e2b` et déduplication `12b`.
+    - `packages/cortex/compagnon_ui/server_overlay/ollama_audit.py` & orchestrator : mise à jour des rôles `reason_forge`, `reason_default` et `jobs_planner` vers `E4b-qat`.
+    - `packages/prime-hub/scripts/hub_dialogue.gd` : fallback dialogue Godot pointé sur `E4b-qat`.
+    - `~/.claude/settings.json` : Claude Code configuré avec `model: E4b-qat`, Sonnet: `12b-qat`, Opus/Haiku: `E4b-qat`.
+    - Canon mis à jour dans `.agents/rules/local-llm-route-matrix.md` et `packages/cortex/docs/local_llm_route_matrix.md`.
+- **Durcissement Cycle de Vie & Fuites Mémoire WebGL (`vrm_pet.js`)** :
+  * **Libération VRAM GPU (`destroy`)** : appel de `VRMUtils.deepDispose(vrm.scene)` et `renderer.forceContextLoss()`.
+  * **Purge des Textures Dynamiques** : enregistrement et `tex.dispose()` de toutes les textures procédurales et chargées par `applyAndroidTheme`.
+  * **Désallocation Animation & Mixers** : arrêt `mixer.stopAllAction()`, `mixer.uncacheRoot(vrm.scene)`, `vrmaClips.clear()`, et `cancelAnimationFrame(animId)`.
+  * **Optimisation de la Boucle de Rendu** : élimination des 3 `try/catch` silencieux par frame (60 FPS) remplacés par des vérifications directes de type/existence.
+  * **Sécurisation Asynchrone** : vérification de disponibilité de `vrm` dans `loadVRMA` et ajout d'un `.catch(...)` pour éviter les `UnhandledPromiseRejection`.
+  * **Recompilation & Déploiement** : recompilation esbuild `vrm_pet.bundle.js` (2.1 MB) et réplication immédiate dans `packages/cortex/compagnon_ui/public/vrm/`.
 
 **2026-10-23** :
 - **Restauration Canal Ops Slack (#lbg-ops)** :
