@@ -524,8 +524,8 @@ def causerie_lab_nudge(prompt: str, *, lab: bool, short_ctx: list | None = None)
     )
 
 LAB_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:12b-qat"
-# Causerie : gemma-4-abliterated:e2b sur .111 (light) — évite le hang CPU du e2b/.110
-LAB_CHAT_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:e2b"
+# Causerie : gemma-4-abliterated:E4b-qat sur .111 (light)
+LAB_CHAT_QUALITY_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"
 # Mec Chill / Philo : E4b-qat sur .110 (heavy CPU) — sweet spot interactif philosophique
 LAB_CHILL_MODEL_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"
 

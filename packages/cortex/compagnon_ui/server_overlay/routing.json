@@ -19,15 +19,7 @@
         },
         {
           "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:12b"
-        },
-        {
-          "provider": "local",
           "name": "huihui_ai/qwen3.5-abliterated:9b"
-        },
-        {
-          "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:e2b"
         },
         {
           "provider": "local",
@@ -39,6 +31,10 @@
       "models": [
         {
           "provider": "local",
+          "name": "huihui_ai/qwen2.5-coder-abliterate:14b"
+        },
+        {
+          "provider": "local",
           "name": "huihui_ai/gemma-4-abliterated:12b-qat"
         },
         {
@@ -47,15 +43,7 @@
         },
         {
           "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:12b"
-        },
-        {
-          "provider": "local",
           "name": "huihui_ai/qwen3.5-abliterated:9b"
-        },
-        {
-          "provider": "local",
-          "name": "huihui_ai/gemma-4-abliterated:e2b"
         },
         {
           "provider": "local",

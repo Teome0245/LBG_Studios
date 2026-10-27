@@ -55,10 +55,10 @@ ollama pull huihui_ai/gemma-4-abliterated:e2b
 
 | Hôte | Rôle | Modèles routés |
 |------|------|----------------|
-| **110** heavy | code / PM / forge / dialogue — **CPU only** (pas de GPU) | `huihui_ai/gemma-4-abliterated:12b`, `huihui_ai/gemma-4-abliterated:e2b` (+ `qwen3.5-abliterated:9b` disque) |
-| **111** light (NUC) | délestage latence / **Compagnon LAB** | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast), **`huihui_ai/gemma-4-abliterated:e2b`** (causerie) |
+| **110** heavy | code / PM / dialogue — **CPU only** (pas de GPU) | `huihui_ai/qwen2.5-coder-abliterate:14b` (code), `huihui_ai/gemma-4-abliterated:12b-qat` (PM/dialogue, alias `:12b`), `huihui_ai/gemma-4-abliterated:E4b-qat` (chill/forge) |
+| **111** light (NUC) | délestage latence / **Compagnon LAB** | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast), **`huihui_ai/gemma-4-abliterated:E4b-qat`** (causerie/chill) |
 
-> `.110` sans GPU : préférer **2B/9b** pour l’interactif ; **12b** = batch / patient. Qualité type heavy en PoC → Colab T4 (`LBG_REASON_EPHEMERAL_*`, défaut `qwen3.5-abliterated:9b`).
+> `.110` sans GPU : préférer **E4b/2B/9b** pour l’interactif ; **14B/12b-qat** = batch / patient. Qualité type heavy en PoC → Colab T4 (`LBG_REASON_EPHEMERAL_*`, défaut `qwen3.5-abliterated:9b`).
 
 ## Profils REASON
 
@@ -67,12 +67,13 @@ ollama pull huihui_ai/gemma-4-abliterated:e2b
 | `router` / Clean | `LBG_REASON_MODEL_ROUTER` | `huihui_ai/qwen3.5-abliterated:2B` | 111 |
 | `json` / Clean | `LBG_REASON_MODEL_JSON` | `huihui_ai/qwen3.5-abliterated:2B` | 111 |
 | `fast` | `LBG_REASON_MODEL_FAST` | `huihui_ai/qwen3.5-abliterated:0.8B` | 111 |
-| `forge` | `LBG_REASON_MODEL_FORGE` | `huihui_ai/gemma-4-abliterated:e2b` | 110 |
-| `default` | `LBG_REASON_LOCAL_MODEL` | `huihui_ai/gemma-4-abliterated:e2b` | 110 |
-| `code` | `LBG_REASON_MODEL_CODE` | `huihui_ai/gemma-4-abliterated:12b` | 110 |
-| `pm` | `LBG_REASON_MODEL_PM` | `huihui_ai/gemma-4-abliterated:12b` | 110 |
-| `dialogue` | `LBG_REASON_MODEL_DIALOGUE` | `huihui_ai/gemma-4-abliterated:12b` | 110 |
-| `uncensored` | `LBG_REASON_MODEL_UNCENSORED` | même tag heavy | 110 |
+| `forge` | `LBG_REASON_MODEL_FORGE` | `huihui_ai/gemma-4-abliterated:E4b-qat` | 110 |
+| `default` | `LBG_REASON_LOCAL_MODEL` | `huihui_ai/gemma-4-abliterated:E4b-qat` | 110 |
+| `chill` | `LBG_REASON_MODEL_CHILL` | `huihui_ai/gemma-4-abliterated:E4b-qat` | 110 |
+| `code` | `LBG_REASON_MODEL_CODE` | `huihui_ai/qwen2.5-coder-abliterate:14b` | 110 |
+| `pm` | `LBG_REASON_MODEL_PM` | `huihui_ai/gemma-4-abliterated:12b-qat` | 110 |
+| `dialogue` | `LBG_REASON_MODEL_DIALOGUE` | `huihui_ai/gemma-4-abliterated:12b-qat` | 110 |
+| `uncensored` | `LBG_REASON_MODEL_UNCENSORED` | même tag heavy (`:12b-qat`) | 110 |
 | `chill` / Philo | `LBG_REASON_MODEL_CHILL` | `huihui_ai/gemma-4-abliterated:E4b-qat` | 110 |
 
 ### Dialogue maturité + Prométhée

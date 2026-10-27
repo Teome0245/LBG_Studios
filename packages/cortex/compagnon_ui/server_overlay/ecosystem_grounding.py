@@ -38,7 +38,7 @@ _ECOSYSTEM_FACTS = """\
 ÉCOSYSTÈME LBG (REGISTRE canonique — vérité stricte d'infrastructure) :
 - Compagnon (présence chat) : http://192.168.0.100:5174/ · API Orch :3000
 - Pilot / Cortex (ops, Team, Self) : http://192.168.0.140:8080/ · orch :8010 (.140 est un SERVEUR, JAMAIS un modèle IA)
-- NAS Synology DS1815+ (stockage, LUN nas-lun-backup iSCSI sur .201, SMB N:\ sur .10, DSM 7.1.1) : 192.168.0.51
+- NAS Synology DS1815+ (stockage, LUN nas-lun-backup iSCSI sur .201, SMB N:\\ sur .10, DSM 7.1.1) : 192.168.0.51
 - Hyperviseurs Proxmox VE : .200 (NUC) et .201 (R720) hébergeant VMs et CTs
 - LLM local heavy : http://192.168.0.110:11434 (RTX : gemma-4 12b, qwen3.5 9b)
 - LLM local light : http://192.168.0.111:11434 (e4b-qat, 2B, qwen2.5:3b)

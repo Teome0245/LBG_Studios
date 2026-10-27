@@ -24,17 +24,17 @@ _LIGHT_ROLES = frozenset({"reason_router", "reason_json", "reason_fast", "compan
 _ROLE_DEFAULTS: dict[str, dict[str, str]] = {
     "reason_default": {
         "model_env": "LBG_REASON_LOCAL_MODEL",
-        "default": "huihui_ai/gemma-4-abliterated:e2b",
+        "default": "huihui_ai/gemma-4-abliterated:E4b-qat",
         "host": "heavy",
     },
     "reason_forge": {
         "model_env": "LBG_REASON_MODEL_FORGE",
-        "default": "huihui_ai/gemma-4-abliterated:e2b",
+        "default": "huihui_ai/gemma-4-abliterated:E4b-qat",
         "host": "heavy",
     },
     "reason_code": {
         "model_env": "LBG_REASON_MODEL_CODE",
-        "default": "huihui_ai/gemma-4-abliterated:12b-qat",
+        "default": "huihui_ai/qwen2.5-coder-abliterate:14b",
         "host": "heavy",
     },
     "reason_pm": {
@@ -74,7 +74,7 @@ _ROLE_DEFAULTS: dict[str, dict[str, str]] = {
     },
     "jobs_planner": {
         "model_env": "LBG_JOBS_PLANNER_LLM_MODEL",
-        "default": "huihui_ai/gemma-4-abliterated:e2b",
+        "default": "huihui_ai/gemma-4-abliterated:E4b-qat",
         "host": "heavy",
     },
     "companion": {
@@ -257,13 +257,17 @@ def _recommendations(
         )
 
     heavy_l = {str(n).lower() for n in heavy_names}
-    if any("e2b" in n and "gemma" in n for n in heavy_l):
+    if any("e4b-qat" in n and "gemma" in n for n in heavy_l):
         recs.append(
-            "Forge/Iris : LBG_REASON_MODEL_FORGE=huihui_ai/gemma-4-abliterated:e2b (heavy 110)."
+            "Forge/Iris : LBG_REASON_MODEL_FORGE=huihui_ai/gemma-4-abliterated:E4b-qat (heavy 110)."
+        )
+    if any("qwen2.5-coder" in n for n in heavy_l):
+        recs.append(
+            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen2.5-coder-abliterate:14b sur heavy 110."
         )
     if any("12b-qat" in n and "gemma" in n for n in heavy_l):
         recs.append(
-            "Code/PM/dialogue : huihui_ai/gemma-4-abliterated:12b-qat sur heavy 110."
+            "PM/dialogue : huihui_ai/gemma-4-abliterated:12b-qat sur heavy 110."
         )
     if any("e4b-qat" in n and "gemma" in n for n in heavy_l):
         recs.append(

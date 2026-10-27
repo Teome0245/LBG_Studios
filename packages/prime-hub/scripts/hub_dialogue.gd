@@ -266,7 +266,7 @@ func _llm_line(
 	if model.is_empty():
 		model = OS.get_environment("LBG_DIALOGUE_LLM_MODEL").strip_edges()
 	if model.is_empty():
-		model = "huihui_ai/gemma-4-abliterated:e2b"
+		model = "huihui_ai/gemma-4-abliterated:E4b-qat"
 	var system := (
 		"Tu es %s, %s à %s (Lost Heaven). Réponds en français, 1 phrase courte, ton PNJ, pas de markdown."
 		% [npc_name, role_hint, place]

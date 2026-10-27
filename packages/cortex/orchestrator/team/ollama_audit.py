@@ -182,12 +182,10 @@ def _recommendations(
             "Ne pas réintroduire gemma3:4b (écarté). Voir docs/local_llm_route_matrix.md."
         )
 
-    if has_e2b:
+    has_e4b = any("e4b-qat" in n.lower() for n in heavy_names)
+    if has_e4b:
         recs.append(
-            "Forge/Iris : LBG_REASON_MODEL_FORGE=huihui_ai/gemma-4-abliterated:e2b (heavy 110)."
-        )
-        recs.append(
-            "Failover light→heavy : LBG_REASON_LIGHT_FAILOVER_HEAVY=1 + gemma-4-abliterated:e2b."
+            "Forge/Iris : LBG_REASON_MODEL_FORGE=huihui_ai/gemma-4-abliterated:E4b-qat (heavy 110)."
         )
     has_ablit_12 = any(
         "gemma-4-abliterated" in n and "12b" in n for n in heavy_names_l
@@ -203,9 +201,14 @@ def _recommendations(
     has_qwen38_plain = any(
         "qwen3.8" in n and "abliterated" not in n for n in heavy_names_l
     )
+    has_qwen_coder = any("qwen2.5-coder" in n for n in heavy_names_l)
+    if has_qwen_coder:
+        recs.append(
+            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen2.5-coder-abliterate:14b sur heavy 110."
+        )
     if has_ablit_12:
         recs.append(
-            "Code/PM/dialogue : huihui_ai/gemma-4-abliterated:12b-qat sur heavy 110 "
+            "PM/dialogue : huihui_ai/gemma-4-abliterated:12b-qat sur heavy 110 "
             "(≤12B uncensored — garde-fous maturité A/B/C ; pas d'alias :12b)."
         )
     elif has_ablit_9:
