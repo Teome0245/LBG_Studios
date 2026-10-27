@@ -19,6 +19,7 @@
       const jobsPage = document.getElementById("pilot-page-jobs");
       const teamPage = document.getElementById("pilot-page-team");
       const teamOfficePage = document.getElementById("pilot-page-team-office");
+      const teamBrainPage = document.getElementById("pilot-page-team-brain");
       const teamMetricsPage = document.getElementById("pilot-page-team-metrics");
       const pm = document.getElementById("pilot-page-pm");
       const ly = document.getElementById("pilot-page-lyra");
@@ -33,6 +34,7 @@
       if (jobsPage) jobsPage.hidden = r !== "jobs";
       if (teamPage) teamPage.hidden = r !== "team";
       if (teamOfficePage) teamOfficePage.hidden = r !== "team_office";
+      if (teamBrainPage) teamBrainPage.hidden = r !== "team_brain";
       if (teamMetricsPage) teamMetricsPage.hidden = r !== "team_metrics";
       if (pm) pm.hidden = r !== "pm";
       if (ly) ly.hidden = r !== "lyra";
@@ -63,6 +65,11 @@
         try { officeBindPage(); } catch (_) {}
       } else {
         try { officeStop(); } catch (_) {}
+      }
+      if (r === "team_brain") {
+        try { if (typeof teamBrainBindPage === "function") teamBrainBindPage(); } catch (_) {}
+      } else {
+        try { if (typeof teamBrainStop === "function") teamBrainStop(); } catch (_) {}
       }
       if (r === "desktop") {
         try { pilotDesktopRefreshConfigHint(); } catch (_) {}
@@ -123,6 +130,7 @@
         let active = false;
         if (route === "home") active = r === "home";
         else if (route === "team_office") active = r === "team_office";
+        else if (route === "team_brain") active = r === "team_brain";
         else if (route === "team_metrics") active = r === "team_metrics";
         else if (route) active = r === route;
         a.classList.toggle("pilot-nav-active", !!active);
@@ -134,6 +142,7 @@
         providers: "studio",
         team: "campus",
         team_office: "campus",
+        team_brain: "campus",
         team_metrics: "campus",
         agents_map: "campus",
         ops: "ops",

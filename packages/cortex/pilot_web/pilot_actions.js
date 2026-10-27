@@ -440,6 +440,8 @@
       if (seg === "assistant") return "assistant";
       if (seg === "jobs") return "jobs";
       if (seg === "team" && parts[1] === "office") return "team_office";
+      if (seg === "team" && parts[1] === "brain") return "team_brain";
+      if (seg === "brain") return "team_brain";
       if (seg === "team" && parts[1] === "metrics") return "team_metrics";
       if (seg === "team") return "team";
       if (seg === "ops") return "ops";

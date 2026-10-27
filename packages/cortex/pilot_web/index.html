@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="pilot.css?v=20260825-orch-p4d" />
   <link rel="stylesheet" href="orchestrator_avatar/orchestrator_avatar.css" />
   <link rel="stylesheet" href="face_rig/face_rig.css" />
+  <link rel="stylesheet" href="brain_3d/brain_3d.css" />
 </head>
 <body>
   <div class="pilot-shell-bar">
@@ -32,6 +33,7 @@
         <div class="pilot-nav-menu">
           <a href="#/team" data-nav-route="team">File tâches</a>
           <a href="#/team/office" data-nav-route="team_office">Bureau</a>
+          <a href="#/team/brain" data-nav-route="team_brain">Cerveau 3D 🧠</a>
           <a href="#/team/fleet" data-nav-route="team_fleet">Fleet</a>
           <a href="#/team/metrics" data-nav-route="team_metrics">Métriques</a>
           <a href="#/agents/map" data-nav-route="agents_map" title="Carte agents (proxy Orch)">Carte agents</a>
@@ -1215,6 +1217,182 @@
     </div>
   </div>
 
+  <div id="pilot-page-team-brain" class="pilot-page" hidden>
+    <div class="brain-hero">
+      <div>
+        <h1>Cerveau 3D &amp; Réseau Synaptique</h1>
+        <p class="brain-sub">
+          Visualisation volumétrique du Studio Brain — homéostasie, flux d'intentions et mémoires RAG en temps réel.
+          <a href="#/team/office">← Bureau des agents</a> · <a href="#/ops">Santé Ops →</a>
+        </p>
+      </div>
+      <div class="brain-live-pill" id="brain-conn" title="État de conscience">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="brain-conn-text">connexion…</span>
+      </div>
+    </div>
+
+    <div class="brain-toolbar">
+      <button type="button" class="brain-btn brain-btn--pulse" id="brain-btn-pulse" title="Envoyer une onde de stimulation synaptique">⚡ Impulsion synaptique</button>
+      <button type="button" class="brain-btn brain-btn--surge" id="brain-btn-surge" title="Déclencher une hyper-activité synaptique (Surge x3.2)">🔥 Surcharge Cognitive</button>
+      <button type="button" class="brain-btn brain-filter-btn is-active" data-filter="all" title="Vue globale des deux hémisphères">Vue globale</button>
+      <button type="button" class="brain-btn brain-filter-btn" data-filter="analytical" title="Focus Hémisphère gauche (Logique, Fleet &amp; Simulation)">Hémisphère Analytique</button>
+      <button type="button" class="brain-btn brain-filter-btn" data-filter="emotional" title="Focus Hémisphère droit (RAG Philo, Limbique &amp; Compagnon)">Hémisphère RAG &amp; Humeur</button>
+      <button type="button" class="brain-btn" id="brain-btn-refresh" title="Actualiser la télémétrie">🔄 Actualiser</button>
+      <button type="button" class="brain-btn" id="brain-btn-toggle" title="Activer ou suspendre la conscience du Brain">Veille / Éveil</button>
+    </div>
+
+    <div class="brain-view-layout">
+      <div class="brain-canvas-wrap">
+        <div id="brain-canvas-host" style="width:100%; height:100%;"></div>
+        <div class="brain-hud-overlay">
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div class="brain-hud-badge" id="brain-hud-intent">INTENT: MONITOR</div>
+            <div class="brain-hud-badge" id="brain-hud-eeg"><span>⚡</span> EEG: 42.4 Hz · Ondes Gamma</div>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div class="brain-hud-badge" style="border-color: rgba(0, 245, 212, 0.4); color: #00f5d4;">
+              <span>🧠</span> 1500 neurones · 300 influx/s · 6 pôles
+            </div>
+            <div class="brain-hud-badge brain-hud-infra-bar" id="brain-hud-infra">
+              <span class="infra-chip ok">VM 140 Core</span>
+              <span class="infra-chip ok">Orch 8010</span>
+              <span class="infra-chip ok">Hub 246</span>
+              <span class="infra-chip ok">Fleet 7</span>
+            </div>
+          </div>
+        </div>
+        <div class="brain-hud-controls-hint">
+          Glisser pour pivoter 360° · Molette pour zoomer · Clic sur un pôle pour focaliser
+        </div>
+      </div>
+
+      <aside class="brain-side">
+        <div class="brain-side-section">
+          <div class="brain-side-title">
+            <span>Flux de conscience</span>
+            <span style="font-size:0.7rem; color:#00f5d4;">● LIVE</span>
+          </div>
+          <div class="brain-narrative-box" id="brain-narrative-text">
+            « Surveillance et veille passive du studio. »
+          </div>
+        </div>
+
+        <div class="brain-side-section">
+          <div class="brain-side-title">
+            <span>Activité Cérébrale &amp; Signaux Infra</span>
+            <span style="font-size:0.7rem; color:#38bdf8;">● TEMPS RÉEL</span>
+          </div>
+          <div class="brain-activity-feed" id="brain-activity-feed">
+            <div class="brain-feed-empty">Connexion aux synapses de l'infrastructure…</div>
+          </div>
+        </div>
+
+        <div class="brain-side-section">
+          <div class="brain-side-title">
+            <span>Jauges d'Homéostasie</span>
+            <span style="font-size:0.7rem; color:#94a3b8;">GET /v1/brain/status</span>
+          </div>
+          
+          <div class="brain-gauge-row">
+            <div class="brain-gauge-header">
+              <span class="brain-gauge-label">Confiance</span>
+              <span class="brain-gauge-val" id="brain-val-confidence">70%</span>
+            </div>
+            <div class="brain-gauge-track">
+              <div class="brain-gauge-fill gauge-confidence" id="brain-bar-confidence" style="width: 70%;"></div>
+            </div>
+          </div>
+
+          <div class="brain-gauge-row">
+            <div class="brain-gauge-header">
+              <span class="brain-gauge-label">Curiosité</span>
+              <span class="brain-gauge-val" id="brain-val-curiosity">45%</span>
+            </div>
+            <div class="brain-gauge-track">
+              <div class="brain-gauge-fill gauge-curiosity" id="brain-bar-curiosity" style="width: 45%;"></div>
+            </div>
+          </div>
+
+          <div class="brain-gauge-row">
+            <div class="brain-gauge-header">
+              <span class="brain-gauge-label">Stress</span>
+              <span class="brain-gauge-val" id="brain-val-stress">15%</span>
+            </div>
+            <div class="brain-gauge-track">
+              <div class="brain-gauge-fill gauge-stress" id="brain-bar-stress" style="width: 15%;"></div>
+            </div>
+          </div>
+
+          <div class="brain-gauge-row">
+            <div class="brain-gauge-header">
+              <span class="brain-gauge-label">Fatigue</span>
+              <span class="brain-gauge-val" id="brain-val-fatigue">10%</span>
+            </div>
+            <div class="brain-gauge-track">
+              <div class="brain-gauge-fill gauge-fatigue" id="brain-bar-fatigue" style="width: 10%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="brain-side-section">
+          <div class="brain-side-title">
+            <span id="brain-side-pole-title">⚡ Cortex Frontal</span>
+            <span style="font-size:0.7rem; color:#38bdf8;" id="brain-side-pole-tag">Orchestrateur &amp; Intent</span>
+          </div>
+          <p id="brain-side-pole-desc" style="font-size:0.78rem; color:#cbd5e1; line-height:1.4; margin:0 0 0.75rem 0;">
+            Centre décisionnel et planification des intentions Studio (POST /v1/pilot/route).
+          </p>
+
+          <div class="brain-poles-list">
+            <div class="brain-pole-item is-selected" data-pole="cortex">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#00f5d4; box-shadow:0 0 6px #00f5d4;"></span>
+                <span>Cortex Frontal</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">Orchestrateur</span>
+            </div>
+            <div class="brain-pole-item" data-pole="limbic">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#f59e0b; box-shadow:0 0 6px #f59e0b;"></span>
+                <span>Système Limbique</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">Homéostasie</span>
+            </div>
+            <div class="brain-pole-item" data-pole="hippo">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#a855f7; box-shadow:0 0 6px #a855f7;"></span>
+                <span>Hippocampe RAG</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">Corpus Philo</span>
+            </div>
+            <div class="brain-pole-item" data-pole="fleet">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#10b981; box-shadow:0 0 6px #10b981;"></span>
+                <span>Noyau Campus</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">Fleet Agents</span>
+            </div>
+            <div class="brain-pole-item" data-pole="world">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span>
+                <span>Perception Monde</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">SWG &amp; Godot</span>
+            </div>
+            <div class="brain-pole-item" data-pole="lyra">
+              <div class="brain-pole-tag">
+                <span class="brain-pole-indicator" style="background:#f43f5e; box-shadow:0 0 6px #f43f5e;"></span>
+                <span>Lobe Compagnon</span>
+              </div>
+              <span class="muted" style="font-size:0.7rem;">Lyra Desktop</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
   <div id="pilot-page-work" class="pilot-page" hidden>
     <header>
       <h1 id="pilot-work-title">Pilotage</h1>
@@ -1548,6 +1726,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20261007-phase-f2"></script>
+  <script type="module" src="src/main.js?v=20261027-brain3d-v3"></script>
 </body>
 </html>

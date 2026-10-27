@@ -23,6 +23,7 @@ import { installOrchSurfaces } from "./modules/orch_surfaces.js";
 import { installAssistantOrchChat } from "./modules/assistant_orch_chat.js";
 import { installAssistantChannelMode } from "./modules/assistant_channel_mode.js";
 import { installTeamFleet } from "./modules/team_fleet.js";
+import { installTeamBrain } from "./modules/team_brain.js";
 import { installAgenticUi } from "./modules/agentic_ui.js";
 import { register as register_init } from "./chunks/pilot_init.js";
 
@@ -49,6 +50,7 @@ installOrchSurfaces();
 installAssistantOrchChat();
 installAssistantChannelMode();
 installTeamFleet();
+installTeamBrain();
 installAgenticUi();
 register_init();
 
