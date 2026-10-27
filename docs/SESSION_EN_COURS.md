@@ -12,14 +12,20 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
-**2026-10-27** :
-- **Bascule du partage d'assets 3D de `N:\Upload\IA` vers `E:\IA`** :
-  * Suite à l'indisponibilité du lecteur réseau `N:\`, copie intégrale de tous les modèles VRM compilés et textures mecha vers le disque local `E:\IA` via l'agent Windows SDS `.10:5005`.
-  * Fichiers vérifiés et synchronisés dans `E:\IA\` :
-    - `Compagnon.vrm` (14.1 Mo, modèle cuit avec carrosserie mecha titane v26, circuits néon cyan, visage/cheveux cyber et échelle tête Chibi).
-    - Textures sources : `body_skin_android.png` (547 ko), `body_skin_android_5b.png`, `face_skin_android.png`, `hair_android.png`, `metallic_matcap.png`, `rim_multiply_mask.png`.
-    - Modèles secondaires : `Anna.vrm`, `Aurora.vrm`, `LadyKoi.vrm`, `default.vrm`.
-    - Runtimes client : `vrm_pet.bundle.js` et `vrm_pet.js`.
+- **Harmonisation morphologique des modèles (Fenêtre & Desktop) & Cadrage Buste avec Zoom/Dézoom fluide** :
+  * **Diagnostic & Unification des formes** :
+    - Sur le bureau Windows SDS `.10`, le fichier local `Compagnon.vrm` n'avait pas été synchronisé avec la version cuite récente (MD5 divergent). Copie effectuée : les deux environnements utilisent désormais le même modèle cuit 14.1 Mo.
+    - Échelle du bone de tête fixée à une valeur constante unifiée de `1.28` (`updateHeadScale`) : morphologie 100% identique entre l'overlay transparent du bureau et le viewport de la fenêtre de monitoring, sans aucune modification d'échelle ou déformation lors des zooms.
+  * **Cadrage par défaut « Buste et tête »** :
+    - Cadrage portrait équilibré réactivé par défaut (`framing: 'bust'`) : visée au niveau du haut du sternum / clavicules, tête dégagée avec de l'air au-dessus, épaules mecha et buste valorisés.
+  * **Zoom / Dézoom dynamique cinématographique lors des danses** :
+    - Interpolation fluide de la caméra dans `animate()` (`currentCamPos`, `currentLookAt`, `currentFov` avec lerp progressif).
+    - Dézoom automatique vers la vue corps entier (`framing: 'full'`) dès qu'une danse ou animation complète est jouée (`dance`, `samba`, `hiphop`, `robot`, `disco`, `spin`, `walk`).
+    - Retour automatique en zoom avant vers la vue « buste et tête » dès que la danse s'achève (`poseHoldUntil` expiré ou retour à `idle`).
+  * **Déploiement multi-surfaces synchronisé** :
+    - Rebundle `esbuild` de `vrm_pet.bundle.js` (2.1 Mo) avec cache-buster `?v=smooth_framing_v2`.
+    - Déploiement validé sur CT100 (`lbg-frontend:/usr/share/nginx/html/vrm/` et patch de l'asset JS).
+    - Déploiement sur Windows SDS `.10` (`C:/Agent_IA/` et `E:/IA/`) et redémarrage de l'overlay Electron (PID vérifié : **37048**, bridge local `:8765` opérationnel).
 
 **2026-10-26** :
 - **Rééquilibrage des Proportions Tête & Cadrage Buste 3D (Web CT100 & Desktop .10)** :

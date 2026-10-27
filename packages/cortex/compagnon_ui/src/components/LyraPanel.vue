@@ -408,7 +408,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=mocap_v2'
+    script.src = '/vrm/vrm_pet.bundle.js?v=smooth_framing_v2'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)
@@ -543,11 +543,31 @@ function toggleFraming(f) {
   }
 }
 
+let returnToBustTimer = null
+
 function triggerPose(pose, holdMs) {
-  // Les danses et la marche nécessitent la vue corps entier pour être appréciées
-  const fullBodyPoses = ['dance', 'danse', 'samba', 'salsa', 'hiphop', 'walk', 'marche', 'spin', 'jump']
-  if (fullBodyPoses.includes(String(pose || '').toLowerCase())) {
-    toggleFraming('full')
+  const fullBodyPoses = ['dance', 'danse', 'samba', 'salsa', 'hiphop', 'walk', 'marche', 'spin', 'jump', 'disco', 'robot', 'twist', 'popping', 'fever']
+  const isFullBody = fullBodyPoses.includes(String(pose || '').toLowerCase())
+
+  if (returnToBustTimer) {
+    clearTimeout(returnToBustTimer)
+    returnToBustTimer = null
+  }
+
+  // Si on est en cadrage buste et qu'une danse démarre : zoom arrière pour voir le corps entier, puis retour en buste
+  if (isFullBody && vrmFraming.value === 'bust') {
+    vrmFraming.value = 'full'
+    if (vrmInst?.setFraming) {
+      vrmInst.setFraming('full')
+    }
+    const duration = (Number(holdMs) > 0) ? Number(holdMs) : 8000
+    returnToBustTimer = setTimeout(() => {
+      vrmFraming.value = 'bust'
+      if (vrmInst?.setFraming) {
+        vrmInst.setFraming('bust')
+      }
+      returnToBustTimer = null
+    }, duration + 350)
   }
 
   // 1. Anime la vue locale (buste ou corps WebGL)
@@ -607,6 +627,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (pollTimer) clearInterval(pollTimer)
+  if (returnToBustTimer) clearTimeout(returnToBustTimer)
   if (vrmInst?.destroy) {
     try {
       vrmInst.destroy()

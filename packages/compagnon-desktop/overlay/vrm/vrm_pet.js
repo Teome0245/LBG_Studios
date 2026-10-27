@@ -409,13 +409,23 @@ function lerpEulerMap(a, b, t) {
 export function createVrmPet(hostEl, opts = {}) {
   installColorSpaceGuard(THREE);
   const modelUrl = opts.modelUrl || "./vrm/default.vrm";
-  /** bust = gros plan visage · full = corps entier */
-  let framing = String(opts.framing || opts.vrmFraming || "full").toLowerCase() === "bust"
+  /** bust = gros plan buste & tête · full = corps entier */
+  let framing = String(opts.framing || opts.vrmFraming || "bust").toLowerCase() === "bust"
     ? "bust"
     : "full";
+  let baseFraming = framing;
+  let isDanceFraming = false;
   const clock = new THREE.Clock();
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(framing === "full" ? 30 : 25, 1, 0.05, 40);
+  const camera = new THREE.PerspectiveCamera(framing === "full" ? 28 : 24, 1, 0.05, 40);
+
+  const targetCamPos = new THREE.Vector3(0, 0.9, 2.0);
+  const currentCamPos = new THREE.Vector3(0, 0.9, 2.0);
+  const targetLookAt = new THREE.Vector3(0, 0.9, 0);
+  const currentLookAt = new THREE.Vector3(0, 0.9, 0);
+  let targetFov = framing === "full" ? 28 : 24;
+  let currentFov = targetFov;
+  let cameraInitialized = false;
 
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -442,6 +452,8 @@ export function createVrmPet(hostEl, opts = {}) {
   let mouthAmp = 0;
   let ready = false;
   let disposed = false;
+  let animId = null;
+  const createdTextures = [];
   let loadError = null;
   let targetHeadingY = 0;
   let currentHeadingY = 0;
@@ -529,6 +541,7 @@ export function createVrmPet(hostEl, opts = {}) {
         const vrmAnimations = gltf.userData.vrmAnimations || (gltf.userData.vrmAnimation ? [gltf.userData.vrmAnimation] : []);
         const animData = vrmAnimations[0];
         if (!animData) throw new Error("No vrmAnimation in file");
+        if (!vrm) throw new Error("VRM model not ready yet for animation");
         const clip = createVRMAnimationClip(animData, vrm);
         clip.name = name;
         vrmaClips.set(name, clip);
@@ -721,13 +734,29 @@ export function createVrmPet(hostEl, opts = {}) {
       poseHoldUntil = 0;
     }
 
+    // Dézoom dynamique vers le corps entier lors d'une danse/mouvement global si en mode buste
+    const fullBodyDances = [
+      "dance", "danse", "groove", "samba", "salsa", "latina", "hiphop", "bboy", "street", "bounce",
+      "robot", "popping", "wavedance", "disco", "twist", "fever", "spin", "tourner", "pirouette", "jump", "saut", "victory", "walk", "marche"
+    ];
+    if (fullBodyDances.includes(key) && baseFraming === "bust") {
+      framing = "full";
+      isDanceFraming = true;
+      if (vrm) frameVrm(vrm);
+    }
+
     // Déclenchement clip VRMA officiel si disponible (ex: dance, samba, hiphop, walk, lookaround)
     // Sinon repli procédural immédiat (ex: robot, disco, spin, crossArms, bow)
     const vrmaFile = VRMA_MAP[key] || VRMA_MAP[n];
     if (vrmaFile) {
-      playVRMA(key, { loop: !(hold > 0) }).then((ok) => {
-        if (!ok) stopVRMA(0);
-      });
+      playVRMA(key, { loop: !(hold > 0) })
+        .then((ok) => {
+          if (!ok) stopVRMA(0);
+        })
+        .catch((err) => {
+          console.warn(`[vrm_pet] playVRMA failed for "${key}":`, err);
+          stopVRMA(0);
+        });
     } else {
       stopVRMA(0);
     }
@@ -1132,6 +1161,12 @@ export function createVrmPet(hostEl, opts = {}) {
       poseBlend = 0;
       poseHoldUntil = 0;
       setMood("serene");
+      // Retour automatique fluide en vue buste après la fin d'une danse
+      if (isDanceFraming && baseFraming === "bust") {
+        framing = "bust";
+        isDanceFraming = false;
+        if (vrm) frameVrm(vrm);
+      }
     }
     // Si une animation VRMA est active, l'AnimationMixer contrôle les bones en mocap native
     if (activeVrmaAction) return;
@@ -1146,32 +1181,58 @@ export function createVrmPet(hostEl, opts = {}) {
     applyBoneEulers(lerpEulerMap(a, b, smooth), t);
   }
 
+  function updateHeadScale(v) {
+    if (!v?.humanoid) return;
+    try {
+      const headBone = v.humanoid.getNormalizedBoneNode?.("head");
+      if (headBone) {
+        // Morphologie unifiée (échelle 1.28) : même forme et proportions identiques sur le bureau et dans la fenêtre
+        const targetScale = 1.28;
+        headBone.scale.set(targetScale, targetScale, targetScale);
+      }
+    } catch (_) {}
+  }
+
   function frameVrm(v) {
+    updateHeadScale(v);
     v.scene.updateMatrixWorld(true);
 
     if (framing === "bust") {
-      camera.fov = 25;
-      camera.updateProjectionMatrix();
-      let focus = new THREE.Vector3(0, 1.4, 0);
+      let headPos = new THREE.Vector3(0, 1.4, 0);
       try {
         const head = v.humanoid?.getNormalizedBoneNode?.("head");
         const hips = v.humanoid?.getNormalizedBoneNode?.("hips");
         if (head) {
-          focus = new THREE.Vector3();
-          head.getWorldPosition(focus);
+          head.getWorldPosition(headPos);
         } else if (hips) {
-          hips.getWorldPosition(focus);
-          focus.y += 0.5;
+          hips.getWorldPosition(headPos);
+          headPos.y += 0.5;
         }
       } catch (_) {}
-      const dist = 1.15;
-      camera.position.set(focus.x, focus.y + 0.02, focus.z + dist);
-      camera.lookAt(focus.x, focus.y, focus.z);
+
+      // Cadrage portrait/buste et tête équilibré :
+      // On centre la visée (lookAt) au niveau du haut du sternum / clavicules (headPos.y - 0.20),
+      // ce qui place la tête dans le tiers supérieur avec de la respiration au-dessus des cheveux,
+      // tout en dévoilant harmonieusement la poitrine, les épaules mecha et les bras.
+      const lookY = headPos.y - 0.20;
+      const dist = 1.38;
+      targetCamPos.set(headPos.x, lookY + 0.02, headPos.z + dist);
+      targetLookAt.set(headPos.x, lookY, headPos.z);
+      targetFov = 24;
+
+      if (!cameraInitialized) {
+        currentCamPos.copy(targetCamPos);
+        currentLookAt.copy(targetLookAt);
+        currentFov = targetFov;
+        camera.fov = currentFov;
+        camera.position.copy(currentCamPos);
+        camera.lookAt(currentLookAt);
+        camera.updateProjectionMatrix();
+        cameraInitialized = true;
+      }
       return;
     }
 
-    camera.fov = 28;
-    camera.updateProjectionMatrix();
     const box = new THREE.Box3().setFromObject(v.scene);
     const size = new THREE.Vector3();
     const center = new THREE.Vector3();
@@ -1181,15 +1242,27 @@ export function createVrmPet(hostEl, opts = {}) {
       center.set(0, 0.9, 0);
       size.set(0.45, 1.45, 0.4);
     }
-    const fovRad = (camera.fov * Math.PI) / 180;
+    const fovRad = (28 * Math.PI) / 180;
     // Cadrage compact avec respiration latérale et supérieure (+12% marge tête et mains)
     const neededH = size.y * 1.12;
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
     const lookY = box.min.y - 0.005 + (visibleH / 2);
-    camera.position.set(center.x, lookY, center.z + dist);
-    camera.lookAt(center.x, lookY, center.z);
+    targetCamPos.set(center.x, lookY, center.z + dist);
+    targetLookAt.set(center.x, lookY, center.z);
+    targetFov = 28;
+
+    if (!cameraInitialized) {
+      currentCamPos.copy(targetCamPos);
+      currentLookAt.copy(targetLookAt);
+      currentFov = targetFov;
+      camera.fov = currentFov;
+      camera.position.copy(currentCamPos);
+      camera.lookAt(currentLookAt);
+      camera.updateProjectionMatrix();
+      cameraInitialized = true;
+    }
   }
 
   function faceTheCamera(v) {
@@ -1201,8 +1274,13 @@ export function createVrmPet(hostEl, opts = {}) {
   }
 
   function setFraming(next) {
-    framing = String(next || "").toLowerCase() === "bust" ? "bust" : "full";
-    if (vrm) frameVrm(vrm);
+    baseFraming = String(next || "").toLowerCase() === "bust" ? "bust" : "full";
+    framing = baseFraming;
+    isDanceFraming = false;
+    if (vrm) {
+      updateHeadScale(vrm);
+      frameVrm(vrm);
+    }
   }
 
   function makeSolidColorTexture(hexColor) {
@@ -1276,6 +1354,17 @@ export function createVrmPet(hostEl, opts = {}) {
       },
       undefined,
       (err) => console.warn("[vrm_pet] err loading rim multiply mask:", err)
+    );
+
+    createdTextures.push(
+      cyanTexture,
+      cyanBrightTexture,
+      darkSocketTexture,
+      androidBodyTex,
+      androidFaceTex,
+      androidHairTex,
+      metallicMatcapTex,
+      rimMultiplyMaskTex
     );
 
     v.scene.traverse((child) => {
@@ -1365,13 +1454,8 @@ export function createVrmPet(hostEl, opts = {}) {
       }
     });
 
-    // 4. Proportions Chibi mignonnes : tête agrandie (+68%)
-    try {
-      const headBone = v.humanoid?.getNormalizedBoneNode?.("head");
-      if (headBone) {
-        headBone.scale.set(1.68, 1.68, 1.68);
-      }
-    } catch (_) {}
+    // 4. Proportions harmonisées : tête équilibrée selon le cadrage (buste vs corps)
+    updateHeadScale(v);
   }
 
   const loader = new GLTFLoader();
@@ -1429,7 +1513,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
   function animate() {
     if (disposed) return;
-    requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
     const dt = Math.min(0.05, clock.getDelta());
     const t = clock.elapsedTime;
     if (vrm) {
@@ -1507,10 +1591,8 @@ export function createVrmPet(hostEl, opts = {}) {
       } else {
         vrm.scene.position.y = walkYOffset;
       }
-      if (vrm.lookAt) {
-        try {
-          vrm.lookAt.lookAt(camera.position);
-        } catch (_) {}
+      if (vrm.lookAt && typeof vrm.lookAt.lookAt === "function") {
+        vrm.lookAt.lookAt(camera.position);
       }
       if (performance.now() < talkingUntil) {
         mouthAmp = 0.3 + 0.5 * Math.abs(Math.sin(t * 13));
@@ -1518,13 +1600,26 @@ export function createVrmPet(hostEl, opts = {}) {
         mouthAmp *= 0.85;
         if (mouthAmp < 0.02) mouthAmp = 0;
       }
-      try {
-        vrm.expressionManager?.setValue("aa", mouthAmp);
-      } catch (_) {}
-      try {
+      if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
+        vrm.expressionManager.setValue("aa", mouthAmp);
+      }
+      if (typeof vrm.update === "function") {
         vrm.update(dt);
-      } catch (_) {}
+      }
     }
+
+    // Interpolation fluide de la caméra (zoom/dézoom cinématographique entre buste et corps entier)
+    if (cameraInitialized) {
+      const camLerp = Math.min(1, dt * 5.0);
+      currentCamPos.lerp(targetCamPos, camLerp);
+      currentLookAt.lerp(targetLookAt, camLerp);
+      currentFov += (targetFov - currentFov) * camLerp;
+      camera.fov = currentFov;
+      camera.updateProjectionMatrix();
+      camera.position.copy(currentCamPos);
+      camera.lookAt(currentLookAt);
+    }
+
     renderer.render(scene, camera);
   }
 
@@ -1570,9 +1665,51 @@ export function createVrmPet(hostEl, opts = {}) {
     },
     destroy() {
       disposed = true;
+      if (animId !== null) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
       window.removeEventListener("resize", resize);
+
+      // 1. Arrêt du mixer et détachement de la scène
+      if (mixer) {
+        try {
+          mixer.stopAllAction();
+          if (vrm?.scene) {
+            mixer.uncacheRoot(vrm.scene);
+          }
+        } catch (_) {}
+        mixer = null;
+      }
+
+      // 2. Nettoyage du cache VRMA
+      vrmaClips.clear();
+      vrmaLoading.clear();
+
+      // 3. Libération des textures créées dynamiquement
+      for (const tex of createdTextures) {
+        try {
+          tex.dispose();
+        } catch (_) {}
+      }
+      createdTextures.length = 0;
+
+      // 4. Libération profonde du modèle VRM (VRAM GPU, géométries, buffers)
+      if (vrm?.scene) {
+        try {
+          scene.remove(vrm.scene);
+          VRMUtils.deepDispose(vrm.scene);
+        } catch (e) {
+          console.warn("[vrm_pet] deepDispose error:", e);
+        }
+      }
+
+      // 5. Destruction du renderer WebGL et détachement du DOM
       try {
         renderer.dispose();
+        if (renderer.forceContextLoss) {
+          renderer.forceContextLoss();
+        }
       } catch (_) {}
       if (renderer.domElement?.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
