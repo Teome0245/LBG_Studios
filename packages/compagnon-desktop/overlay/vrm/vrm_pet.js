@@ -529,8 +529,10 @@ export function createVrmPet(hostEl, opts = {}) {
   let nextBlinkTime = 2.0;
   let blinkProgress = 0;
   let nextIdleFidgetTime = 6.0;
-  // Déclenchement autonome du fingerHeart 1 à 2 fois par heure (30-45 min, 1er test à ~75s)
-  let nextHeartPoseTime = 75.0 + Math.random() * 45.0;
+  // Déclenchement autonome de la petite danse fingerHeart 1 à 2 fois par heure (toutes les 25 à 35 min)
+  // 1er déclenchement test à 25s pour vérification immédiate après le démarrage
+  let nextHeartPoseTime = 25.0;
+  let wasInHeartPose = false;
   let walkYOffset = 0;
   let spinAngle = 0;
 
@@ -745,7 +747,7 @@ export function createVrmPet(hostEl, opts = {}) {
   function setExpressionWeights(weights) {
     if (!vrm?.expressionManager) return;
     const em = vrm.expressionManager;
-    for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa"]) {
+    for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa", "blinkRight", "blinkLeft"]) {
       try {
         em.setValue(n, 0);
       } catch (_) {}
@@ -858,7 +860,8 @@ export function createVrmPet(hostEl, opts = {}) {
     // Dézoom dynamique vers le corps entier lors d'une danse/mouvement global si en mode buste
     const fullBodyDances = [
       "dance", "danse", "groove", "samba", "salsa", "latina", "hiphop", "bboy", "street", "bounce",
-      "robot", "popping", "wavedance", "disco", "twist", "fever", "spin", "tourner", "pirouette", "jump", "saut", "victory", "walk", "marche"
+      "robot", "popping", "wavedance", "disco", "twist", "fever", "spin", "tourner", "pirouette", "jump", "saut", "victory", "walk", "marche",
+      "fingerheart", "heart", "kpopheart", "miniheart"
     ];
     if (fullBodyDances.includes(key) && baseFraming === "bust") {
       framing = "full";
@@ -1244,8 +1247,30 @@ export function createVrmPet(hostEl, opts = {}) {
       if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
     }
     if (poseTo === "fingerHeart") {
-      // 1. Pulsation battement de cœur du geste (pulsation subtile de la main et de l'avant-bras)
-      const heartPulse = Math.sin(t * 5.2) * 0.035;
+      // Cadence entraînante K-Pop Idol à ~1.1 Hz (demi-temps) / 2.2 Hz (temps) (~105 BPM)
+      const tempo = t * 7.0;
+      const tempoHalf = tempo * 0.5;
+      const swayHips = Math.sin(tempoHalf) * 0.09;
+      const rollHips = Math.cos(tempoHalf) * 0.06;
+      const heartPulse = Math.sin(tempo) * 0.04;
+      const kneeBounce = 0.03 + Math.abs(Math.sin(tempo)) * 0.05;
+
+      // 1. Déhanché et rebond pop fluide du bassin et du torse
+      if (animated.hips) animated.hips = [0, swayHips * 0.7, rollHips];
+      if (animated.spine) animated.spine = [0.03, -swayHips * 0.35, -rollHips * 0.3];
+      if (animated.chest) animated.chest = [0.04, -swayHips * 0.25, -rollHips * 0.2];
+
+      // 2. Genoux souples absorbant le tempo pop
+      if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBounce, 0, 0];
+      if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBounce, 0, 0];
+
+      // 3. Bras droit : geste Mini Heart K-Pop vers la caméra avec pulsation
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [0.75, -0.30 + swayHips * 0.3, 0.60];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [-0.42, -0.32, -1.90 - heartPulse * 0.4];
+      }
       if (animated.rightHand) {
         animated.rightHand = [
           animated.rightHand[0] + heartPulse * 0.8,
@@ -1253,21 +1278,22 @@ export function createVrmPet(hostEl, opts = {}) {
           animated.rightHand[2] + heartPulse * 0.5,
         ];
       }
-      if (animated.rightLowerArm) {
-        animated.rightLowerArm = [
-          animated.rightLowerArm[0] + heartPulse * 0.3,
-          animated.rightLowerArm[1],
-          animated.rightLowerArm[2] - heartPulse * 0.4,
-        ];
+
+      // 4. Bras gauche : main sur la hanche qui ondule avec le déhanché
+      if (animated.leftUpperArm) {
+        animated.leftUpperArm = [0.15 + Math.cos(tempoHalf) * 0.08, 0.18, -1.15];
+      }
+      if (animated.leftLowerArm) {
+        animated.leftLowerArm = [0, 0, -0.35 - Math.sin(tempoHalf) * 0.10];
       }
 
-      // 2. Micro-balancement espiègle de la tête
-      const headSway = Math.sin(t * 2.8) * 0.025;
+      // 5. Tête penchée espiègle qui dodeline au rythme du tempo
+      const headNod = Math.sin(tempo) * 0.035;
       if (animated.head) {
         animated.head = [
-          animated.head[0] + headSway * 0.4,
-          animated.head[1] + headSway * 0.6,
-          animated.head[2] + headSway * 0.3,
+          -0.04 + headNod,
+          swayHips * 0.4,
+          0.18 + Math.cos(tempoHalf) * 0.06,
         ];
       }
     }
@@ -1309,6 +1335,10 @@ export function createVrmPet(hostEl, opts = {}) {
       poseTo = poseReturnTo || "idle";
       poseBlend = 0;
       poseHoldUntil = 0;
+      try {
+        vrm?.expressionManager?.setValue("blinkRight", 0);
+        vrm?.expressionManager?.setValue("blinkLeft", 0);
+      } catch (_) {}
       setMood("serene");
       // Retour automatique fluide en vue buste après la fin d'une danse
       if (isDanceFraming && baseFraming === "bust") {
@@ -1335,8 +1365,8 @@ export function createVrmPet(hostEl, opts = {}) {
     try {
       const headBone = v.humanoid.getNormalizedBoneNode?.("head");
       if (headBone) {
-        // Morphologie unifiée (échelle 1.15) : tête légèrement réduite pour un profil plus élancé et harmonieux
-        const targetScale = 1.15;
+        // Morphologie naturelle proportionnée (échelle 1.0) : profil équilibré et élancé
+        const targetScale = 1.0;
         headBone.scale.set(targetScale, targetScale, targetScale);
       }
     } catch (_) {}
@@ -1359,11 +1389,12 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       } catch (_) {}
 
-      // Cadrage portrait centré sur la tête et le haut du buste :
-      // On vise le milieu du visage (pont du nez / yeux à headPos.y + 0.015) pour centrer parfaitement la tête,
-      // laissant une belle marge au-dessus de la chevelure tout en révélant le cou, les épaules mecha et le haut du buste.
-      const lookY = headPos.y + 0.015;
-      const dist = 1.12;
+      // Cadrage portrait aéré centré sur la tête et le haut du buste :
+      // On vise légèrement sous le nez (headPos.y - 0.02) avec recul (dist = 1.30)
+      // pour que toute la chevelure soit entièrement visible dans l'encart avec une belle marge au-dessus,
+      // tout en révélant le cou, les épaulières mecha et le buste.
+      const lookY = headPos.y - 0.02;
+      const dist = 1.30;
       targetCamPos.set(headPos.x, lookY, headPos.z + dist);
       targetLookAt.set(headPos.x, lookY, headPos.z);
       targetFov = 24;
@@ -1698,9 +1729,9 @@ export function createVrmPet(hostEl, opts = {}) {
       // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos, étirement)
       if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
         if (t > nextHeartPoseTime) {
-          // Pose spontanée "Finger Heart" K-Pop 1 à 2 fois par heure (30 à 45 minutes)
-          nextHeartPoseTime = t + 1800.0 + Math.random() * 900.0;
-          setPose("fingerHeart", 5500);
+          // Petite danse spontanée "Finger Heart" K-Pop 1 à 2 fois par heure (toutes les 25 à 35 minutes)
+          nextHeartPoseTime = t + 1500.0 + Math.random() * 600.0;
+          setPose("fingerHeart", 8500);
         } else if (t > nextIdleFidgetTime) {
           nextIdleFidgetTime = t + 12.0 + Math.random() * 12.0;
           const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
@@ -1712,6 +1743,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
       // Gestion visuelle des particules de cœurs et expression lors du fingerHeart
       if (poseTo === "fingerHeart" && vrm) {
+        wasInHeartPose = true;
         let handPos = new THREE.Vector3(0.14, 1.25, 0.25);
         try {
           const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
@@ -1720,12 +1752,12 @@ export function createVrmPet(hostEl, opts = {}) {
 
         heartSprites.forEach((sp, i) => {
           sp.visible = true;
-          const phase = (t * 1.5 + i * 0.65) % 2.0;
+          const phase = (t * 2.0 + i * 0.65) % 2.0;
           const life = phase / 2.0;
-          const yOffset = life * 0.16;
-          const xOffset = Math.sin(life * Math.PI * 2.0 + i) * 0.03;
+          const yOffset = life * 0.18;
+          const xOffset = Math.sin(life * Math.PI * 2.0 + i) * 0.035;
           sp.position.set(handPos.x + 0.02 + xOffset, handPos.y + 0.03 + yOffset, handPos.z + 0.05);
-          const scale = 0.045 + Math.sin(life * Math.PI) * 0.035;
+          const scale = 0.05 + Math.sin(life * Math.PI) * 0.035;
           sp.scale.set(scale, scale, 1);
           sp.material.opacity = Math.sin(life * Math.PI) * 0.90;
         });
@@ -1736,8 +1768,9 @@ export function createVrmPet(hostEl, opts = {}) {
           if (em) {
             em.setValue("happy", 0.90);
             em.setValue("aa", 0.42);
-            const winkCycle = (t * 0.8) % 3.0;
-            const winkVal = winkCycle < 0.6 ? Math.sin((winkCycle / 0.6) * Math.PI) * 0.95 : 0;
+            // Clin d'œil joueur en rythme qui se ferme et se réouvre parfaitement
+            const winkCycle = (t * 0.9) % 2.5;
+            const winkVal = winkCycle < 0.5 ? Math.sin((winkCycle / 0.5) * Math.PI) * 0.95 : 0;
             em.setValue("blinkRight", winkVal);
           }
         } catch (_) {}
@@ -1745,6 +1778,19 @@ export function createVrmPet(hostEl, opts = {}) {
         heartSprites.forEach((sp) => {
           sp.visible = false;
         });
+        if (wasInHeartPose) {
+          wasInHeartPose = false;
+          try {
+            const em = vrm?.expressionManager;
+            if (em) {
+              em.setValue("blinkRight", 0);
+              em.setValue("blinkLeft", 0);
+              em.setValue("happy", 0);
+              em.setValue("aa", 0);
+            }
+          } catch (_) {}
+          setMood("serene");
+        }
       }
 
       // Compensation dynamique de la descente du bassin (hips) dans walk.vrma (+8.8cm)
@@ -1763,6 +1809,9 @@ export function createVrmPet(hostEl, opts = {}) {
       } else if (poseTo === "dance") {
         const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
         vrm.scene.position.y = walkYOffset + danceBounce;
+      } else if (poseTo === "fingerHeart") {
+        const heartBounce = Math.abs(Math.sin(t * 7.0)) * 0.014;
+        vrm.scene.position.y = walkYOffset + heartBounce;
       } else if (poseTo === "samba") {
         const sambaBounce = Math.abs(Math.sin(t * 11.0)) * 0.010;
         vrm.scene.position.y = walkYOffset + sambaBounce;

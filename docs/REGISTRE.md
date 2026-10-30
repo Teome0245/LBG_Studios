@@ -16,6 +16,7 @@
 **Adressage Freebox** : [`LAN_ADRESSAGE_FREEBOX.md`](LAN_ADRESSAGE_FREEBOX.md).  
 **NAS Synology `.51`** : [`NAS_SYNOLOGY_51.md`](NAS_SYNOLOGY_51.md).  
 **LLM local** : [`packages/cortex/docs/local_llm_route_matrix.md`](../packages/cortex/docs/local_llm_route_matrix.md) · règle Cursor `local-llm-route-matrix.mdc`.  
+**Forge modèles décensurés (PNJ / Compagnon)** : [`packages/cortex/docs/forge_modeles_dialogue_pnj_compagnon.md`](../packages/cortex/docs/forge_modeles_dialogue_pnj_compagnon.md) — pipeline Heretic, Optuna KL, GGUF, Ollama `.110`/`.111`.  
 **Compagnon LLM / morale LAB** : [`packages/cortex/docs/compagnon_llm_moral_policy.md`](../packages/cortex/docs/compagnon_llm_moral_policy.md).  
 **Spontanéité / évolution initiatives** : [`packages/cortex/docs/spontaneity.md`](../packages/cortex/docs/spontaneity.md).  
 **Voix TTS (`voice_local`)** : [`packages/cortex/docs/voice_local.md`](../packages/cortex/docs/voice_local.md) — **Edge** `fr-FR-DeniseNeural` (défaut) + fallback Piper `.111:8098`.  

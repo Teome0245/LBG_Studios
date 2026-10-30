@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-27  
+**Mis à jour** : 2026-10-28  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -12,6 +12,32 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+
+**2026-10-30** :
+- **Ajustement Morphologie & Cadrage Encart Buste (Fenêtre Compagnon)** :
+  * **Échelle de la tête ramenée à 1.0 (taille naturelle)** : passage de 1.15 à 1.0 dans `updateHeadScale()` pour des proportions parfaitement naturelles et élancées avec le corps mecha.
+  * **Cadrage Buste Aéré & Non Tronqué** : recul caméra (`dist = 1.30` au lieu de `1.12`) et visée centrée légèrement plus bas (`lookY = headPos.y - 0.02`), garantissant une marge généreuse au-dessus de la chevelure (zéro coupure en haut) tout en montrant le cou, les épaulières et le buste dans l'encart 220px.
+- **Correction Bug Œil Bloqué / Fermé (Bureau & Web)** :
+  * **Identification de la cause racine** : lors du clin d'œil de l'animation `fingerHeart`, `em.setValue("blinkRight", winkVal)` n'était jamais remis à 0 à la sortie de la pose, et `setExpressionWeights` ne réinitialisait pas les canaux de clignements unilatéraux.
+  * **Correctif appliqué** : ajout de `blinkRight` et `blinkLeft` dans le reset universel de `setExpressionWeights()`, remise à zéro explicite de `blinkRight = 0` dès que la pose se termine ou revient en `idle`.
+- **Petite Danse Idol « Finger Heart » K-Pop Bouncy & Rythmée (1 à 2 fois par heure)** :
+  * **Chorégraphie Pop Complète (8,5 s)** : rebond vertical au tempo (`danceBounce`), déhanché fluide (`swayHips`, `rollHips`), flexion souple des genoux (`kneeBounce`), tête dodelinante en rythme, bras gauche ondulant avec la hanche et bras droit formant le Mini Heart avec pulsation cardiaque et cyber-cœurs roses. Clin d'œil joueur en rythme qui se réouvre parfaitement.
+  * **Cadence & Vérification Immédiate** : intervalle programmé toutes les ~25 à 35 minutes (`t + 1500s + Math.random() * 600s`), avec un 1er passage test à 25 secondes après le chargement pour vérification visuelle immédiate.
+  * **Bouton dédié dans l'UI** : ajout de `💖 Mini Heart` dans la grille du Pack Danses de `LyraPanel.vue` pour déclenchement à la demande.
+- **Déploiement Synchronisé Multi-surfaces** :
+  * Bundle `vrm_pet.bundle.js` recompilé (`finger_heart_v6`).
+  * Déployé sur **CT100** (`lbg-frontend`) avec patch du bundle et du bouton dans `index.js`.
+  * Synchronisé sur Windows SDS `.10` (secours HTTP LAN port 5174 intégré dans `sync_vrm_desktop` si `A:` non monté) et overlay Electron redémarré (PID 8880).
+
+**2026-10-28** :
+- **Spécification & Runbook de Forge LLM Décensurée (Dialogue PNJ MMO & Compagnon)** :
+  * **Inspiration & Source de Veille** : analyse de la vidéo TikTok @madameb0nplan introduisant l'outil open-source [Heretic](https://github.com/p-e-w/heretic) (`p-e-w/heretic`) pour l'ablation directionnelle (décensure chirurgicale) automatique par Optuna/TPE.
+  * **Document de référence rédigé** : [`packages/cortex/docs/forge_modeles_dialogue_pnj_compagnon.md`](../packages/cortex/docs/forge_modeles_dialogue_pnj_compagnon.md) (et indexé dans [`docs/REGISTRE.md`](REGISTRE.md)).
+  * **Runbook opérationnel complet** :
+    - Matrice de sélection : modèles compacts (Qwen 0.8B/2B) pour les foules et l'interactif rapide sur `.111`, modèles intermédiaires (7B/9B/E4B) pour quêtes MMO et Compagnon chill, modèles lourds (14B) pour le code et l'atelier sur `.110`.
+    - Station de forge : utilisation des environnements GPU (Colab T4 / A100 éphémère ou SDS Windows `.10` 1050 Ti avec `--quantization bnb_4bit`) sans impacter les nœuds CPU de prod `.110`/`.111`.
+    - Pipeline 6 étapes : `heretic` (co-minimisation des refus et de la divergence KL) → conversion GGUF (`convert_hf_to_gguf.py`) → quantisation `Q4_K_M` → Modelfile Ollama custom (stop tokens, system prompt sans refus, `think false`) → push LAN → déclaration dans `reason_route_matrix()`.
+    - Rappel strict des règles `OBJECTIVES.md` : aucune mutation dure en LLM libre (l'économie, l'inventaire et les combats restent sous l'autorité absolue du Godot Hub `.246:8787`).
 
 **2026-10-27** :
 - **Animation Spontanée « Finger Heart » K-Pop & Particules Cyber-Cœurs (1 à 2 fois par heure)** :

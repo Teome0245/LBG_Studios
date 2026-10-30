@@ -53550,7 +53550,8 @@ void main() {
     let nextBlinkTime = 2;
     let blinkProgress = 0;
     let nextIdleFidgetTime = 6;
-    let nextHeartPoseTime = 75 + Math.random() * 45;
+    let nextHeartPoseTime = 25;
+    let wasInHeartPose = false;
     let walkYOffset = 0;
     let spinAngle = 0;
     function createHeartTexture() {
@@ -53750,7 +53751,7 @@ void main() {
     function setExpressionWeights(weights) {
       if (!vrm?.expressionManager) return;
       const em = vrm.expressionManager;
-      for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa"]) {
+      for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa", "blinkRight", "blinkLeft"]) {
         try {
           em.setValue(n, 0);
         } catch (_) {
@@ -53857,7 +53858,11 @@ void main() {
         "saut",
         "victory",
         "walk",
-        "marche"
+        "marche",
+        "fingerheart",
+        "heart",
+        "kpopheart",
+        "miniheart"
       ];
       if (fullBodyDances.includes(key2) && baseFraming === "bust") {
         framing = "full";
@@ -54175,7 +54180,23 @@ void main() {
         if (animated.head) animated.head = [animated.head[0], 0, -hipsRoll * 0.25];
       }
       if (poseTo === "fingerHeart") {
-        const heartPulse = Math.sin(t * 5.2) * 0.035;
+        const tempo = t * 7;
+        const tempoHalf = tempo * 0.5;
+        const swayHips = Math.sin(tempoHalf) * 0.09;
+        const rollHips = Math.cos(tempoHalf) * 0.06;
+        const heartPulse = Math.sin(tempo) * 0.04;
+        const kneeBounce = 0.03 + Math.abs(Math.sin(tempo)) * 0.05;
+        if (animated.hips) animated.hips = [0, swayHips * 0.7, rollHips];
+        if (animated.spine) animated.spine = [0.03, -swayHips * 0.35, -rollHips * 0.3];
+        if (animated.chest) animated.chest = [0.04, -swayHips * 0.25, -rollHips * 0.2];
+        if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBounce, 0, 0];
+        if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBounce, 0, 0];
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.75, -0.3 + swayHips * 0.3, 0.6];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [-0.42, -0.32, -1.9 - heartPulse * 0.4];
+        }
         if (animated.rightHand) {
           animated.rightHand = [
             animated.rightHand[0] + heartPulse * 0.8,
@@ -54183,19 +54204,18 @@ void main() {
             animated.rightHand[2] + heartPulse * 0.5
           ];
         }
-        if (animated.rightLowerArm) {
-          animated.rightLowerArm = [
-            animated.rightLowerArm[0] + heartPulse * 0.3,
-            animated.rightLowerArm[1],
-            animated.rightLowerArm[2] - heartPulse * 0.4
-          ];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.15 + Math.cos(tempoHalf) * 0.08, 0.18, -1.15];
         }
-        const headSway = Math.sin(t * 2.8) * 0.025;
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0, 0, -0.35 - Math.sin(tempoHalf) * 0.1];
+        }
+        const headNod = Math.sin(tempo) * 0.035;
         if (animated.head) {
           animated.head = [
-            animated.head[0] + headSway * 0.4,
-            animated.head[1] + headSway * 0.6,
-            animated.head[2] + headSway * 0.3
+            -0.04 + headNod,
+            swayHips * 0.4,
+            0.18 + Math.cos(tempoHalf) * 0.06
           ];
         }
       }
@@ -54232,6 +54252,11 @@ void main() {
         poseTo = poseReturnTo || "idle";
         poseBlend = 0;
         poseHoldUntil = 0;
+        try {
+          vrm?.expressionManager?.setValue("blinkRight", 0);
+          vrm?.expressionManager?.setValue("blinkLeft", 0);
+        } catch (_) {
+        }
         setMood("serene");
         if (isDanceFraming && baseFraming === "bust") {
           framing = "bust";
@@ -54253,7 +54278,7 @@ void main() {
       try {
         const headBone = v.humanoid.getNormalizedBoneNode?.("head");
         if (headBone) {
-          const targetScale = 1.15;
+          const targetScale = 1;
           headBone.scale.set(targetScale, targetScale, targetScale);
         }
       } catch (_) {
@@ -54275,8 +54300,8 @@ void main() {
           }
         } catch (_) {
         }
-        const lookY2 = headPos.y + 0.015;
-        const dist2 = 1.12;
+        const lookY2 = headPos.y - 0.02;
+        const dist2 = 1.3;
         targetCamPos.set(headPos.x, lookY2, headPos.z + dist2);
         targetLookAt.set(headPos.x, lookY2, headPos.z);
         targetFov = 24;
@@ -54570,8 +54595,8 @@ void main() {
         }
         if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
           if (t > nextHeartPoseTime) {
-            nextHeartPoseTime = t + 1800 + Math.random() * 900;
-            setPose("fingerHeart", 5500);
+            nextHeartPoseTime = t + 1500 + Math.random() * 600;
+            setPose("fingerHeart", 8500);
           } else if (t > nextIdleFidgetTime) {
             nextIdleFidgetTime = t + 12 + Math.random() * 12;
             const gestures = ["crossArms", "think", "lookaround", "relax", "stretch"];
@@ -54581,6 +54606,7 @@ void main() {
           }
         }
         if (poseTo === "fingerHeart" && vrm) {
+          wasInHeartPose = true;
           let handPos = new Vector3(0.14, 1.25, 0.25);
           try {
             const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
@@ -54589,12 +54615,12 @@ void main() {
           }
           heartSprites.forEach((sp, i) => {
             sp.visible = true;
-            const phase = (t * 1.5 + i * 0.65) % 2;
+            const phase = (t * 2 + i * 0.65) % 2;
             const life = phase / 2;
-            const yOffset = life * 0.16;
-            const xOffset = Math.sin(life * Math.PI * 2 + i) * 0.03;
+            const yOffset = life * 0.18;
+            const xOffset = Math.sin(life * Math.PI * 2 + i) * 0.035;
             sp.position.set(handPos.x + 0.02 + xOffset, handPos.y + 0.03 + yOffset, handPos.z + 0.05);
-            const scale = 0.045 + Math.sin(life * Math.PI) * 0.035;
+            const scale = 0.05 + Math.sin(life * Math.PI) * 0.035;
             sp.scale.set(scale, scale, 1);
             sp.material.opacity = Math.sin(life * Math.PI) * 0.9;
           });
@@ -54603,8 +54629,8 @@ void main() {
             if (em) {
               em.setValue("happy", 0.9);
               em.setValue("aa", 0.42);
-              const winkCycle = t * 0.8 % 3;
-              const winkVal = winkCycle < 0.6 ? Math.sin(winkCycle / 0.6 * Math.PI) * 0.95 : 0;
+              const winkCycle = t * 0.9 % 2.5;
+              const winkVal = winkCycle < 0.5 ? Math.sin(winkCycle / 0.5 * Math.PI) * 0.95 : 0;
               em.setValue("blinkRight", winkVal);
             }
           } catch (_) {
@@ -54613,6 +54639,20 @@ void main() {
           heartSprites.forEach((sp) => {
             sp.visible = false;
           });
+          if (wasInHeartPose) {
+            wasInHeartPose = false;
+            try {
+              const em = vrm?.expressionManager;
+              if (em) {
+                em.setValue("blinkRight", 0);
+                em.setValue("blinkLeft", 0);
+                em.setValue("happy", 0);
+                em.setValue("aa", 0);
+              }
+            } catch (_) {
+            }
+            setMood("serene");
+          }
         }
         const isWalking = activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk";
         const targetWalkY = isWalking ? 0.088 : 0;
@@ -54626,6 +54666,9 @@ void main() {
         } else if (poseTo === "dance") {
           const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
           vrm.scene.position.y = walkYOffset + danceBounce;
+        } else if (poseTo === "fingerHeart") {
+          const heartBounce = Math.abs(Math.sin(t * 7)) * 0.014;
+          vrm.scene.position.y = walkYOffset + heartBounce;
         } else if (poseTo === "samba") {
           const sambaBounce = Math.abs(Math.sin(t * 11)) * 0.01;
           vrm.scene.position.y = walkYOffset + sambaBounce;

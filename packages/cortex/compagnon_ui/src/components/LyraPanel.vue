@@ -184,7 +184,15 @@
               <span class="text-pink-300 font-medium flex items-center gap-1">💃 Pack Danses</span>
               <span class="text-[9px] text-slate-500 font-mono">VRMA / Kinematic 60fps</span>
             </div>
-            <div class="grid grid-cols-3 gap-1">
+            <div class="grid grid-cols-4 gap-1">
+              <button
+                type="button"
+                class="py-1 rounded border border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 text-[10px] text-rose-200 transition font-medium"
+                title="Petite danse Idol K-Pop avec Finger Heart et cyber-cœurs"
+                @click="triggerPose('fingerHeart', 8500)"
+              >
+                💖 Mini Heart
+              </button>
               <button
                 type="button"
                 class="py-1 rounded border border-pink-500/30 bg-pink-950/30 hover:bg-pink-900/50 text-[10px] text-pink-200 transition"
@@ -408,7 +416,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=finger_heart_v5'
+    script.src = '/vrm/vrm_pet.bundle.js?v=finger_heart_v6'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)
