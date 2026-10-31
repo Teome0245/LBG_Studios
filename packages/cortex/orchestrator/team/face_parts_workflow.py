@@ -42,7 +42,7 @@ def execute_face_parts_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[st
         **ctx,
         "desktop_action": action,
         "desktop_dry_run": ctx.get("desktop_dry_run", True),
-        # Mains 24/7 (.142) si LBG_AGENT_HANDS_URL est défini ; sinon fallback default (.10).
+        # Mains 24/7 Omarchy (.143:5005) si LBG_AGENT_HANDS_URL est défini ; sinon fallback default (.10).
         "desktop_target": ctx.get("desktop_target") or "hands",
     }
     remote = dispatch(
@@ -60,7 +60,7 @@ def execute_face_parts_workflow(task: TeamTask, dispatch: Dispatcher) -> dict[st
         "subproject": "infographiste_ia",
         "persona": "Pygmalion",
         "hint": (
-            "Cible Team : CT hands .142 (LBG_AGENT_HANDS_URL) inbox /var/lib/lbg-hands/inbox. "
+            "Cible Team : VM Omarchy .143:5005 (LBG_AGENT_HANDS_URL) inbox /var/lib/lbg-hands/inbox. "
             "Poste .10 (C:\\Agent_IA) : LBG_DESKTOP_FACE_PARTS_ENABLED=1 + inbox N:\\…\\Expressions. "
             "Dry-run par défaut ; deploy réel = context.face_parts_deploy + approval."
         ),

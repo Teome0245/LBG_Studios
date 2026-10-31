@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "event:lh_sandstorm",
+  "title": "Tempête de ferraille et de sable",
+  "ticket": "3.2",
+  "event_kind": "weather_sandstorm",
+  "bible_safe": true,
+  "duration_s": [600, 1200],
+  "cooldown_s": [900, 1800],
+  "weight": 1.0,
+  "announce": {
+    "from": "Guet de Scrapaltai",
+    "oid": 910002,
+    "text": "Alerte Météo : Bourrasques de silice et fragments tranchants en approche. Tout le monde à l'abri dans les bâtiments !"
+  },
+  "board_quest_id": "lh_storm_shelter_watch",
+  "rumor_hint": "Le ciel vire à l'ambre sombre vers les dunes est — les filtres à sable vont souffrir.",
+  "anchor_poi": "poi:lost_heaven_town_hall",
+  "weather": {
+    "kind": "sandstorm",
+    "warning_s": 45,
+    "storm_s": 240,
+    "clearing_s": 45,
+    "wind_speed": 45.0,
+    "visibility_m": 25.0
+  }
+}
+

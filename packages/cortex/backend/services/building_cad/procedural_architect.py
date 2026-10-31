@@ -10,6 +10,7 @@ from .blueprint_model import (
     BuildingBlueprint,
     DoorSpec,
     FloorSpec,
+    FurnitureSpec,
     RoomSpec,
     WallSegment,
     WindowSpec,
@@ -197,12 +198,133 @@ def build_cantina_blueprint(
         ),
     ]
 
+    # 4. Mobilier fonctionnel et points d'ancrage d'interaction de la Cantina (Ticket 3.1)
+    furniture = [
+        # Grand comptoir en ferraille de Jax dans la salle principale
+        FurnitureSpec(
+            id="cantina_bar_counter",
+            kind="bar_counter",
+            label="Comptoir en ferraille de Jax",
+            pos=(0.0, -1.0),
+            width_m=8.0,
+            depth_m=1.2,
+            room_id="room_main_hall",
+            interaction_type="drink",
+            capacity=4,
+        ),
+        # 4 tabourets le long du comptoir
+        FurnitureSpec(
+            id="cantina_stool_1",
+            kind="seat",
+            label="Tabouret de bar 1",
+            pos=(-2.5, 0.4),
+            width_m=0.6,
+            depth_m=0.6,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=1,
+        ),
+        FurnitureSpec(
+            id="cantina_stool_2",
+            kind="seat",
+            label="Tabouret de bar 2",
+            pos=(-0.8, 0.4),
+            width_m=0.6,
+            depth_m=0.6,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=1,
+        ),
+        FurnitureSpec(
+            id="cantina_stool_3",
+            kind="seat",
+            label="Tabouret de bar 3",
+            pos=(0.8, 0.4),
+            width_m=0.6,
+            depth_m=0.6,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=1,
+        ),
+        FurnitureSpec(
+            id="cantina_stool_4",
+            kind="seat",
+            label="Tabouret de bar 4",
+            pos=(2.5, 0.4),
+            width_m=0.6,
+            depth_m=0.6,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=1,
+        ),
+        # Tables d'alcôve pour les négociations et le jeu de dés
+        FurnitureSpec(
+            id="cantina_table_1",
+            kind="cantina_table",
+            label="Table d'alcôve Ouest",
+            pos=(-8.0, 4.0),
+            width_m=2.4,
+            depth_m=2.4,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=4,
+        ),
+        FurnitureSpec(
+            id="cantina_table_2",
+            kind="cantina_table",
+            label="Table d'alcôve Est",
+            pos=(8.0, 4.0),
+            width_m=2.4,
+            depth_m=2.4,
+            room_id="room_main_hall",
+            interaction_type="sit",
+            capacity=4,
+        ),
+        # Bureau du gérant / boss
+        FurnitureSpec(
+            id="cantina_boss_desk",
+            kind="office_desk",
+            label="Bureau de direction",
+            pos=(10.0, -8.0),
+            width_m=2.4,
+            depth_m=1.2,
+            room_id="room_boss_office",
+            interaction_type="inspect",
+            capacity=1,
+        ),
+        # Couchette de repos dans l'arrière-salle
+        FurnitureSpec(
+            id="cantina_bunk_bed",
+            kind="bunk_bed",
+            label="Couchette de repos",
+            pos=(-10.0, -8.0),
+            width_m=1.4,
+            depth_m=2.4,
+            room_id="room_storage",
+            interaction_type="rest",
+            capacity=2,
+        ),
+        # Caisse de stockage / réserve
+        FurnitureSpec(
+            id="cantina_storage_crate",
+            kind="storage_crate",
+            label="Caisse de contrebande scellée",
+            pos=(-5.0, -8.0),
+            width_m=1.6,
+            depth_m=1.6,
+            room_id="room_storage",
+            interaction_type="loot",
+            capacity=1,
+        ),
+    ]
+
     floor = FloorSpec(
         floor_index=0,
         elevation_m=0.0,
         height_m=height_m,
         rooms=rooms,
         walls=ext_walls + int_walls,
+        furniture=furniture,
     )
 
     return BuildingBlueprint(
@@ -291,12 +413,76 @@ def build_warehouse_blueprint(
         ),
     ]
 
+    # 4. Mobilier fonctionnel et points d'ancrage d'interaction du Hangar (Ticket 3.1)
+    furniture = [
+        # Grand établi d'artisanat et découpe ferraille dans l'atelier
+        FurnitureSpec(
+            id="warehouse_craft_bench",
+            kind="craft_bench",
+            label="Établi de découpe et soudure lourde",
+            pos=(hw - workshop_w * 0.5, -hd + 3.0),
+            width_m=4.0,
+            depth_m=1.6,
+            room_id="room_workshop",
+            interaction_type="craft",
+            capacity=2,
+        ),
+        # Pupitre / bureau du contremaître
+        FurnitureSpec(
+            id="warehouse_foreman_desk",
+            kind="office_desk",
+            label="Pupitre du contremaître",
+            pos=(hw - 2.5, -hd + workshop_d - 2.5),
+            width_m=2.2,
+            depth_m=1.2,
+            room_id="room_workshop",
+            interaction_type="inspect",
+            capacity=1,
+        ),
+        # Rayonnages industriels de pièces détachées dans la baie
+        FurnitureSpec(
+            id="warehouse_storage_rack_north",
+            kind="storage_rack",
+            label="Rayonnage de carlingues et plaques",
+            pos=(-hw * 0.4, -hd + 3.5),
+            width_m=6.0,
+            depth_m=1.8,
+            room_id="room_hangar",
+            interaction_type="loot",
+            capacity=4,
+        ),
+        FurnitureSpec(
+            id="warehouse_storage_rack_south",
+            kind="storage_rack",
+            label="Rayonnage de tuyères et réacteurs",
+            pos=(-hw * 0.4, hd - 3.5),
+            width_m=6.0,
+            depth_m=1.8,
+            room_id="room_hangar",
+            interaction_type="loot",
+            capacity=4,
+        ),
+        # Conteneur lourd de pièces de récupération
+        FurnitureSpec(
+            id="warehouse_container_central",
+            kind="storage_crate",
+            label="Conteneur de pièces scellé",
+            pos=(0.0, 0.0),
+            width_m=3.0,
+            depth_m=2.0,
+            room_id="room_hangar",
+            interaction_type="loot",
+            capacity=2,
+        ),
+    ]
+
     floor = FloorSpec(
         floor_index=0,
         elevation_m=0.0,
         height_m=height_m,
         rooms=rooms,
         walls=ext_walls + int_walls,
+        furniture=furniture,
     )
 
     return BuildingBlueprint(

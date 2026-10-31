@@ -5,11 +5,13 @@ class_name HubCollision
 const HubBlueprintBuilderScript := preload("res://scripts/hub_blueprint_builder.gd")
 
 var blocks: Array = []  # {id, min_x, max_x, min_z, max_z, door?}
+var furniture_anchors: Array = []  # [{id, kind, label, pos: Vector3, interaction_type, capacity, ...}]
 var size_mul: float = 1.0
 
 
 func reload(buildings_path: String = "") -> void:
 	blocks.clear()
+	furniture_anchors.clear()
 	var path := buildings_path
 	if path.is_empty():
 		path = _default_buildings_path()
@@ -39,6 +41,9 @@ func reload(buildings_path: String = "") -> void:
 			if FileAccess.file_exists(bp_path):
 				var bp: Dictionary = HubBlueprintBuilderScript.load_blueprint(bp_path)
 				var bp_blocks: Array = HubBlueprintBuilderScript.blueprint_to_collision_blocks(bp, cx, cz)
+				var bp_anchors: Array = HubBlueprintBuilderScript.blueprint_to_furniture_anchors(bp, cx, cz)
+				if not bp_anchors.is_empty():
+					furniture_anchors.append_array(bp_anchors)
 				if not bp_blocks.is_empty():
 					blocks.append_array(bp_blocks)
 					continue
@@ -282,3 +287,30 @@ func detour_waypoint(x: float, z: float, tx: float, tz: float) -> Variant:
 	if absf(w.x - x) + absf(w.y - z) > 1.0:
 		return w
 	return null
+
+
+func get_furniture_anchors(filter_interaction: String = "") -> Array:
+	## Retourne les points d'ancrage de mobilier avec filtre optionnel par type d'interaction.
+	if filter_interaction.is_empty():
+		return furniture_anchors
+	var filtered: Array = []
+	for a: Variant in furniture_anchors:
+		if a is Dictionary and str(a.get("interaction_type", "")) == filter_interaction:
+			filtered.append(a)
+	return filtered
+
+
+func find_anchor_near(pos: Vector3, max_dist: float = 35.0, filter_interaction: String = "") -> Dictionary:
+	## Trouve le point d'ancrage de mobilier le plus proche d'une position donnée.
+	var candidates: Array = get_furniture_anchors(filter_interaction)
+	var best: Dictionary = {}
+	var best_d: float = max_dist
+	for a: Variant in candidates:
+		if not (a is Dictionary):
+			continue
+		var a_pos: Vector3 = a.get("pos", Vector3.ZERO)
+		var d := pos.distance_to(a_pos)
+		if d < best_d:
+			best_d = d
+			best = a
+	return best

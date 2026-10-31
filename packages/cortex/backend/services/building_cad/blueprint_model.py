@@ -66,6 +66,22 @@ class RoomSpec:
 
 
 @dataclass
+class FurnitureSpec:
+    """Élément de mobilier ou point d'ancrage interactif dans une pièce (Ticket 3.1)."""
+    id: str
+    kind: str  # "bar_counter", "cantina_table", "seat", "bunk_bed", "craft_bench", "storage_crate", "office_desk"
+    label: str
+    pos: tuple[float, float]  # (x, z) relatif au centre du bâtiment
+    width_m: float = 1.0
+    depth_m: float = 1.0
+    rotation_deg: float = 0.0
+    room_id: str | None = None
+    interaction_type: str = "inspect"  # "drink", "sit", "rest", "craft", "loot", "inspect"
+    capacity: int = 1
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class FloorSpec:
     """Étage complet d'un bâtiment."""
     floor_index: int
@@ -73,6 +89,7 @@ class FloorSpec:
     height_m: float     # hauteur sous plafond
     rooms: list[RoomSpec] = field(default_factory=list)
     walls: list[WallSegment] = field(default_factory=list)
+    furniture: list[FurnitureSpec] = field(default_factory=list)
 
 
 @dataclass
@@ -95,6 +112,19 @@ class BuildingBlueprint:
     def total_height_m(self) -> float:
         return sum(f.height_m for f in self.floors)
 
+    def get_furniture(self, room_id: str | None = None) -> list[FurnitureSpec]:
+        """Retourne les meubles d'une pièce ou de tout le bâtiment."""
+        items: list[FurnitureSpec] = []
+        for f in self.floors:
+            for furn in f.furniture:
+                if room_id is None or furn.room_id == room_id:
+                    items.append(furn)
+        return items
+
+    def get_furniture_by_interaction(self, interaction_type: str) -> list[FurnitureSpec]:
+        """Retourne les meubles correspondant à une interaction donnée (ex: drink, rest, craft)."""
+        return [furn for f in self.floors for furn in f.furniture if furn.interaction_type == interaction_type]
+
     def to_dict(self) -> dict[str, Any]:
         """Convertit l'instance en dictionnaire compatible JSON."""
         return asdict(self)
@@ -116,6 +146,11 @@ class BuildingBlueprint:
                 w_copy["start"] = tuple(w_copy["start"])
                 w_copy["end"] = tuple(w_copy["end"])
                 walls.append(WallSegment(**w_copy))
+            furniture = []
+            for furn in f.get("furniture", []):
+                furn_copy = dict(furn)
+                furn_copy["pos"] = tuple(furn_copy["pos"])
+                furniture.append(FurnitureSpec(**furn_copy))
             parsed_floors.append(
                 FloorSpec(
                     floor_index=f["floor_index"],
@@ -123,6 +158,7 @@ class BuildingBlueprint:
                     height_m=f["height_m"],
                     rooms=rooms,
                     walls=walls,
+                    furniture=furniture,
                 )
             )
 

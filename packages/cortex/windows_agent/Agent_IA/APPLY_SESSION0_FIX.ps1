@@ -14,6 +14,9 @@ New-Item -ItemType Directory -Force -Path $Dst, $Tmp | Out-Null
 
 $files = @(
   "main.py",
+  "executor.py",
+  "repair_vghd_deps.ps1",
+  "backup_vghd_deps.ps1",
   "fix_session0_admin.ps1",
   "install_fix_session0_task.ps1",
   "fix_agent_to_user_session.ps1",

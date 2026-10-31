@@ -736,6 +736,10 @@ async def run_llm_chat_phase(
             }
             tail = [e for e in tail if e.get("name") in allow_h][:2]
             sorted_models = (head + tail) or local_only[:1]
+            # Secours ultime light .111 si les nœuds heavy .110 ne répondent pas
+            light_backup = {"provider": "local", "name": "huihui_ai/qwen3.5-abliterated:2B"}
+            if not any(e.get("name") == light_backup["name"] for e in sorted_models):
+                sorted_models.append(light_backup)
         else:
             # Causerie / social / général : UNIQUEMENT light .111 (évite hang 12b CPU)
             light_ok = {
@@ -810,6 +814,16 @@ async def run_llm_chat_phase(
             )
             if route_meta:
                 local_out.update(route_meta)
+            raw_val = local_out.get("raw")
+            is_err = bool(local_out.get("error") or (isinstance(raw_val, dict) and raw_val.get("error")))
+            c = str(local_out.get("content") or "").strip()
+            if is_err or not c or c.startswith("{'model_used':") or c.startswith('{"model_used":'):
+                clean_msg = (
+                    "Désolé, les serveurs d'inférence locaux (.110 / .111) sont actuellement indisponibles ou occupés. "
+                    "Impossible de générer la réponse complète pour le moment."
+                )
+                local_out["content"] = clean_msg
+                local_out["response"] = clean_msg
             return _attach_journal(local_out)
         return _attach_journal(local_out)
 
@@ -960,6 +974,18 @@ async def run_llm_chat_phase(
         )
         if route_meta:
             result.update(route_meta)
+
+        # Anti-leak dictionnaire brut si échec total des modèles locaux
+        raw_val = result.get("raw")
+        is_err = bool(result.get("error") or (isinstance(raw_val, dict) and raw_val.get("error")))
+        c = str(result.get("content") or "").strip()
+        if is_err or not c or c.startswith("{'model_used':") or c.startswith('{"model_used":'):
+            clean_msg = (
+                "Désolé, les serveurs d'inférence locaux (.110 / .111) sont actuellement indisponibles ou occupés. "
+                "Impossible de générer la réponse complète pour le moment."
+            )
+            result["content"] = clean_msg
+            result["response"] = clean_msg
 
     await log_request(
         prompt,

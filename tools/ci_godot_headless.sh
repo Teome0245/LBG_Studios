@@ -75,6 +75,8 @@ run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftes
 run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
 run_test "Bâtiments CAO & Portes découpées (HubBlueprintBuilder)" "res://tools/building_cad_selftest.gd"
 run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
+run_test "Contrat Joueurs IA & Adaptateur Universel (O3 AgentEnvironmentAdapter)" "res://tools/agent_adapter_selftest.gd"
+run_test "Météo Dynamique & Repli Bâtiments (HubEvents, Sandstorm, Abri)" "res://tools/weather_storm_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

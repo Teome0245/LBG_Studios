@@ -232,6 +232,51 @@ class PlanSubmitTests(unittest.TestCase):
         self.assertIn("Objectif", out["content"])
         self.assertIn("Mission Campus", out["content"])
 
+    def test_attach_fallback_plan_when_content_not_plan(self) -> None:
+        """Si LLM local échoue / content vide mais intention soumission explicite -> plan de secours généré."""
+        async def _run() -> dict:
+            with patch.dict("os.environ", {"LBG_COMPAGNON_PLAN_SUBMIT": "1"}):
+                with patch.object(
+                    ps,
+                    "submit_plan_mission",
+                    new=AsyncMock(
+                        return_value={
+                            "ok": True,
+                            "mission": {"id": "m-fallback"},
+                            "created": [{"task_id": "tf1"}],
+                        }
+                    ),
+                ):
+                    with patch(
+                        "src.services.team_proxy._format_campus_mission",
+                        return_value="**Mission Campus lancée**\n- **mission_id** : `m-fallback`",
+                    ):
+                        with patch(
+                            "src.services.campus_recall.campus_snapshot_from_mission_data",
+                            return_value={"mission_id": "m-fallback", "task_ids": ["tf1"]},
+                        ):
+                            with patch(
+                                "src.services.team_actions.fetch_tasks_by_ids",
+                                new=AsyncMock(return_value=[]),
+                            ):
+                                with patch(
+                                    "src.services.team_actions.approval_payload_from_tasks",
+                                    return_value=None,
+                                ):
+                                    return await ps.attach_team_plan_if_needed(
+                                        {"content": "", "response": "", "error": True},
+                                        prompt="Prépare un plan pour la team et soumets-le au studio",
+                                        short_ctx=None,
+                                        lab=True,
+                                    )
+
+        out = asyncio.run(_run())
+        self.assertTrue(out.get("plan_submit", {}).get("ok"))
+        self.assertEqual(out["plan_submit"]["mission_id"], "m-fallback")
+        self.assertIn("## Objectif", out["content"])
+        self.assertIn("## Phases", out["content"])
+        self.assertIn("Mission Campus", out["content"])
+
 
 if __name__ == "__main__":
     unittest.main()

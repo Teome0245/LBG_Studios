@@ -3,6 +3,15 @@
 
 . "$PSScriptRoot\agent_ia_process.ps1"
 
+# Best-effort immediat des l'ouverture de session : restaure Qt5Sql.dll VGHD et neutralise updater.exe
+# meme si :5005 est temporairement occupe par Session 0.
+$repair = "C:\Agent_IA\repair_vghd_deps.ps1"
+if (Test-Path $repair) {
+    try {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $repair 2>&1 | Out-Null
+    } catch {}
+}
+
 $sid = Get-CurrentInteractiveSessionId
 if ($sid -le 0) {
     Write-Error "Refuse de demarrer Agent_IA depuis Session 0 / service. Lancer depuis une session interactive."

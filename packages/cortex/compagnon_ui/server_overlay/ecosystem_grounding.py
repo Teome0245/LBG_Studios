@@ -43,7 +43,7 @@ _ECOSYSTEM_FACTS = """\
 - LLM local heavy : http://192.168.0.110:11434 (RTX : gemma-4 12b, qwen3.5 9b)
 - LLM local light : http://192.168.0.111:11434 (e4b-qat, 2B, qwen2.5:3b)
 - Windows SDS (Bureau / Pygmalion ComfyUI / Pet / pont HTTP) : 192.168.0.10:8765
-- VMs agents spécialisés : .141 (executor), .142 (hands), .143 (dev)
+- VMs agents spécialisés : .141 (executor), .143 (Omarchy — hands & dev :5005 ; ex-.142 détruit)
 - Routeur Freebox v7 (API Freebox OS, baux statiques, topologie réseau L2) : 192.168.0.254
 - Canal ops : Slack #lbg-ops (alertes santé, HITL L2, digests midi/soir) + Matrix/Element en backup
 - Prime monde MMO (écriture) : 192.168.0.246:8787 (prime-hub Godot HTTP+WS) — Core3 / hub_runtime Python = OFF joueur

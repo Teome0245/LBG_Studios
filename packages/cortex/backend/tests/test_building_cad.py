@@ -8,6 +8,7 @@ from services.building_cad import (
     BuildingBlueprint,
     DoorSpec,
     FloorSpec,
+    FurnitureSpec,
     RoomSpec,
     WallSegment,
     build_cantina_blueprint,
@@ -35,7 +36,26 @@ def test_blueprint_serialization_roundtrip():
         polygon=[(0.0, 0.0), (10.0, 0.0), (10.0, 5.0), (0.0, 5.0)],
         area_m2=50.0,
     )
-    floor = FloorSpec(floor_index=0, elevation_m=0.0, height_m=3.0, rooms=[room], walls=[wall])
+    floor = FloorSpec(
+        floor_index=0,
+        elevation_m=0.0,
+        height_m=3.0,
+        rooms=[room],
+        walls=[wall],
+        furniture=[
+            FurnitureSpec(
+                id="furn_1",
+                kind="bar_counter",
+                label="Comptoir test",
+                pos=(2.0, 1.0),
+                width_m=3.0,
+                depth_m=1.0,
+                room_id="room_1",
+                interaction_type="drink",
+                capacity=3,
+            )
+        ],
+    )
     bp = BuildingBlueprint(
         id="poi:test_building",
         kind="cantina",
@@ -57,6 +77,10 @@ def test_blueprint_serialization_roundtrip():
     assert restored.footprint_width_m == 10.0
     assert len(restored.floors[0].walls[0].doors) == 1
     assert restored.floors[0].walls[0].doors[0].width_m == 1.2
+    assert len(restored.floors[0].furniture) == 1
+    assert restored.floors[0].furniture[0].kind == "bar_counter"
+    assert restored.floors[0].furniture[0].interaction_type == "drink"
+    assert len(restored.get_furniture_by_interaction("drink")) == 1
 
 
 def test_cantina_procedural_generation():
@@ -87,6 +111,17 @@ def test_cantina_procedural_generation():
     ext_doors = [d for w in exterior_walls for d in w.doors if d.is_exterior]
     assert len(ext_doors) >= 1
 
+    # Mobilier procédural Cantina (Ticket 3.1)
+    assert len(floor.furniture) >= 8
+    drink_furn = cantina.get_furniture_by_interaction("drink")
+    assert len(drink_furn) >= 1
+    assert drink_furn[0].kind == "bar_counter"
+    sit_furn = cantina.get_furniture_by_interaction("sit")
+    assert len(sit_furn) >= 4  # tabourets et tables d'alcôve
+    rest_furn = cantina.get_furniture_by_interaction("rest")
+    assert len(rest_furn) >= 1
+    assert rest_furn[0].kind == "bunk_bed"
+
     # Format de transition AABB
     entry = cantina.to_legacy_hub_entry()
     assert entry["id"] == "poi:lost_heaven_cantina"
@@ -105,6 +140,13 @@ def test_warehouse_procedural_generation():
     assert warehouse.kind == "warehouse"
     assert len(warehouse.floors[0].rooms) == 2
     assert warehouse.total_height_m == 5.5
+
+    # Mobilier Hangar (Ticket 3.1)
+    craft_furn = warehouse.get_furniture_by_interaction("craft")
+    assert len(craft_furn) >= 1
+    assert craft_furn[0].kind == "craft_bench"
+    loot_furn = warehouse.get_furniture_by_interaction("loot")
+    assert len(loot_furn) >= 2
 
 
 def test_export_pipeline():

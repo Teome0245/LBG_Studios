@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-28  
+**Mis à jour** : 2026-10-31  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -12,6 +12,88 @@
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+
+**2026-10-31** :
+- **Assainissement Périmètre Atlas (Retrait définitif `.142` → `.143:5005` & Alignement Modèles Ollama sur `.140`)** :
+  * **Diagnostic** : `packages/cortex/orchestrator/team/admin_infra_platform.py` et `/etc/lbg-ia-mmo.env` sur `.140` (ainsi que `packages/cortex/infra/secrets/lbg.env`) pointaient encore sur l'ex-CT détruit `.142:6001` (`hands_142`) et sur l'ancien modèle `qwen3.8:27b` (au lieu de `qwen2.5-coder-abliterate:14b` et `gemma-4-abliterated:12b-qat` / `E4b-qat`), provoquant de fausses alertes Slack `:danger: Atlas — périmètre LLM / runtime KO (5/6)`.
+  * **Correctifs appliqués** :
+    - `admin_infra_platform.py` & `test_admin_infra_platform.py` : périmètre Atlas aligné sur `110, 111, 140, 141, 143, 245, 246` (`hands_143` sur `192.168.0.143:5005/healthz`, avec garde-fou automatique contre tout résidu `.142:6001`).
+    - `remote_targets.py`, `test_ssh_run.py`, `face_parts_workflow.py`, `ecosystem_grounding.py`, `router_prompts.py` : résolution `hands` / `omarchy` consolidée sur `192.168.0.143`.
+    - `lbg.env` & `/etc/lbg-ia-mmo.env` (sur `.140`) : `LBG_AGENT_HANDS_URL` / `LBG_LAN_HOST_HANDS` / `LBG_DESKTOP_TARGETS` / `LBG_NETWORK_KNOWN_DEVICES` basculés sur `.143:5005`, et modèles alignés sur `huihui_ai/qwen2.5-coder-abliterate:14b` (code), `huihui_ai/gemma-4-abliterated:12b-qat` (PM/dialogue), `huihui_ai/gemma-4-abliterated:E4b-qat` (local/forge) et `qwen/qwen3.8-27b` (Groq fast).
+  * **Validation live sur `.140`** : services `lbg-orchestrator` et `lbg-agent-dialogue` redémarrés ; audit Atlas `OK: True`, `hosts_ok: 6/6`, `perimeter_has_ko: False`, `0` écart bloquant Ollama/Groq, état d'alerte purgé (`perimeter_ok`).
+- **Recadrage Fidèle de la Petite Danse « Mini Heart » & Posture K-Pop Idol (Image de Référence)** :
+  * **Analyse des écarts visuels** : l'ancienne version présentait le bras droit levé trop haut au-dessus de l'oreille (`rightUpperArm` Z=0.62 au lieu de 1.05), le bras gauche ballant sans posture, les deux yeux plissés fermés en continu (`happy: 0.9` en VRM ferme les deux yeux en `^ ^`), la bouche grande ouverte comme un trou noir béant (`aa: 0.42`), et l'encart 3D défilait hors champ lors du scroll des boutons dans la fenêtre Compagnon.
+  * **Alignement Posture & Doigts (Snap sur la Référence)** :
+    - Bras droit : coude maintenu près des côtes/torse (`rightUpperArm: [0.38, 0.18, 1.05]`), avant-bras relevé vers le haut du buste/menton (`rightLowerArm: [0.10, 0.25, -1.80]`), main formant le mini-cœur coréen 🫰 (`rightHand: [0.18, -0.15, 0.22]`, pouce et index croisés, autres doigts repliés dans la paume).
+    - Bras gauche : main posée avec style sur la hanche (`leftUpperArm: [0.18, -0.15, -0.92]`, `leftLowerArm: [0.08, 0.15, -1.05]`) pour une silhouette idol vivante et asymétrique.
+    - Posture & Déhanché : hanches en appui contrapposto pop avec rebond souple des genoux au tempo ~105 BPM, tête penchée vers la main droite.
+  * **Expression Espiègle Idol (« Tehepero » & Regard Vif)** :
+    - Éradication de `happy` (0.0) : les deux yeux restent **grands ouverts** avec regard vif et brillant (`surprised: 0.12`).
+    - Sourire éclatant avec dents : `relaxed: 0.75` (pommettes hautes, sourire chaleureux) + `ih: 0.32` (dents visibles) + `aa: 0.14` (lèvres entrouvertes naturelles, non béantes).
+    - Clin d'œil joueur unilatéral : œil droit clignant en rythme toutes les 3,2 s (`blinkRight: 0.95`, `blinkLeft: 0` - l'œil gauche reste toujours grand ouvert et souriant).
+  * **Particules de Cœurs** : projection dynamique émise depuis le bout des doigts au niveau du buste/menton montant vers la joue.
+  * **Fix Interface Compagnon (`LyraPanel.vue`)** : ancrage fixe de la zone 3D `#lyra-face-host` en haut du panneau (séparée du conteneur défilant des boutons de poses/danses), évitant que l'avatar ne disparaisse lors du défilement des boutons.
+  * **Déploiement Multi-Surfaces & Relance Session 1** :
+    - Rebundle esbuild `vrm_pet.bundle.js` synchronisé dans `compagnon-desktop` et `compagnon_ui`.
+    - Conteneur `lbg-frontend` rebuildé et redémarré sur CT100 (`:5174`).
+    - Synchronisation sur Windows SDS `.10` et correction de la tâche `LBG-Compagnon-Desktop` pour appeler directement `electron.exe` (5 processus vérifiés en `SessionId: 1`).
+- **Correctif Définitif `vghd.exe - Qt5Sql.dll introuvable` & Tâche `AgentLocalV0` Session 0 (`Agent_IA` Windows `.10`)** :
+  * **Réparation immédiate à distance** : déclenchement de `repair_app_deps` sur `.10:5005` -> `Qt5Sql.dll` et `sqldrivers/` restaurés dans `C:\Users\sdesh\AppData\Local\vghd\bin\`.
+  * **Causes racines identifiées** :
+    1. Un nouveau `updater.exe` avait été recréé à côté de `updater.exe.disabled_by_lbg`, et la condition `if ((Test-Path $updater) -and -not (Test-Path $disabled))` empêchait sa suppression/renommage.
+    2. La tâche planifiée `AgentLocalV0` démarrait toujours `Agent_IA` en Session 0 au boot, faisant échouer `start_agent.ps1` à l'étape du port `:5005` avant même d'atteindre `repair_vghd_deps.ps1` (placé en fin de script).
+  * **Correctifs appliqués** :
+    - `repair_vghd_deps.ps1`, `backup_vghd_deps.ps1` et `_disable_vghd_updater()` dans `main.py` : suppression systématique de tout `updater.exe` recréé si `updater.exe.disabled_by_lbg` existe déjà.
+    - `start_agent.ps1` : exécution de `repair_vghd_deps.ps1` tout en haut du script dès l'ouverture de session utilisateur (avant la vérification du port `:5005`).
+    - `fix_session0_admin.ps1` : arrêt et désactivation de la tâche planifiée `AgentLocalV0` (`Disable-ScheduledTask`) en plus du service Windows, et appel immédiat de `repair_vghd_deps.ps1`.
+    - Staging de `APPLY_SESSION0_FIX.ps1` et des scripts sur `192.168.0.100:8765` pour application en une ligne PowerShell Admin.
+
+- **Résilience Compagnon / Cortex — Tolérance aux Pannes LLM & Délégation Studio Sans Crash** :
+  * **Secours Automatique Light 2B** : si le modèle d'analyse/chill (`gemma-4:E4b-qat` sur `.110`) échoue, est déchargé ou timeout, `LocalLLMProvider` retente immédiatement sur `huihui_ai/qwen3.5-abliterated:2B` sur `.111` avant tout abandon.
+  * **Fallback Routing Global Fiabilisé** : mise à jour de la règle de fallback dans `routing.json` vers `qwen3.5:2B` (au lieu de reboucler sur `E4b-qat`).
+  * **Éradication des Fuites de Dictionnaires d'Erreur dans le Chat** : garde-fou dans `llm_chat_phase.py` pour interdire l'affichage brut de `{'model_used': ..., 'error': True}` dans l'UI en cas de panne totale d'inférence.
+  * **Synthèse de Plan de Secours pour Campus (`plan_submit.py`)** : si l'humain demande explicitement de soumettre un plan à la Team/Studio mais que l'inférence LLM cale, un plan de cadrage structuré est généré automatiquement afin d'assurer l'appel `POST /v1/pilot/team/campus/mission` sans bloquer le studio. Test unitaire dédié 100% PASS (9/9).
+- **Résolution Incident Relance Compagnon (Verrou d'Instance Electron Session 0 sur SDS `.10`)** :
+  * Processus Electron orphelins en Session 0 (service Windows SYSTEM) purgés (`taskkill /F /IM electron.exe`).
+  * Mise en place de la tâche planifiée interactive Windows `LBG-Compagnon-Desktop` (`InteractiveToken`, utilisateur `sdesh`) et adaptation de `restart_desktop_overlay` dans `executor.py`.
+  * Relance interactive validée avec succès sur le bureau et l'interface Web Compagnon.
+- **Plan d'Évolutions Phase 2 — Livrables Tickets 2.1 & 4.1 Déployés & Validés** :
+  * **Ticket 4.1 (Forge LLM — Banc d'Évaluation de Non-Refus Heretic)** :
+    - Dataset de test canonique : `packages/cortex/knowledge/eval_prompts_dialogue.jsonl` (30 prompts de mise à l'épreuve couvrant contrebande, ferraille volée, dettes de jeu chez Jax, cartels, argot de bordure et ruses contre la milice de Zalem).
+    - Moteur d'évaluation automatisé : `tools/eval_heretic_dialogue.py` (détection rigoureuse des refus moralisateurs, analyse des hallucinations de mutations d'inventaire/crédits, mesure de latence et rapport JSON).
+    - Suite de tests unitaires : `packages/cortex/backend/tests/test_eval_heretic.py` (5/5 tests unitaires passants).
+    - Validation locale : 30/30 prompts validés en mode benchmark mock, vérification Ruff 100% propre, 129/129 tests backend Cortex passants en 9.7s.
+  * **Ticket 2.1 (O3 Joueurs IA — Contrat d'Environnement Universel & Découplage)** :
+    - Contrat d'environnement abstrait : `packages/prime-hub/scripts/adapters/agent_environment_adapter.gd` définissant les types d'actions normalisées (`MOVE`, `SAY`, `EMOTE`, `INTERACT_POI`, `TRADE`, `CRAFT`, `IDLE`) et la structure universelle `AgentObservation` (espace, entités proches, POIs, événements, dials et inventaire).
+    - Adaptateur concret Lost Heaven : `packages/prime-hub/scripts/adapters/godot_hub_adapter.gd` (résolution d'entités, perception spatiale 60m, exécution des actions avec simulation et émission des signaux).
+    - Test unitaire & intégration headless : `packages/prime-hub/tools/agent_adapter_selftest.gd` (validation du contrat de base, de l'adaptateur mock pour la portabilité O3 hors Godot, et de l'intégration avec `HubSimScript`).
+    - Intégration CI : ajouté dans `tools/ci_godot_headless.sh` — 6/6 tests headless Godot passants en 8s (<10s DoD).
+  * **Ticket 3.1 (O2 Jeu — Mobilier Procédural & Vie Intérieure des Bâtiments CAO)** :
+    - Modèle CAO vectoriel enrichi (`FurnitureSpec`, `FloorSpec.furniture`) dans `packages/cortex/services/building_cad/blueprint_model.py` et synchronisé dans `backend/services/building_cad/`.
+    - Architecte procédural (`procedural_architect.py`) : ameublement complet de la Cantina « La Perle de Scrapaltai » (comptoir ferraille Jax, tabourets, tables d'alcôve, bureau, couchette, caisse de contrebande) et du Hangar Dépôt Nord (établi soudure lourde, bureau contremaître, racks de stockage).
+    - Décomposition serveur Godot hub : `HubBlueprintBuilder.blueprint_to_furniture_anchors()` et ancrages de collision dans `HubCollision.furniture_anchors` (`drink`, `sit`, `rest`, `craft`, `inspect`, `loot`).
+    - Cycles de vie Triplon (`hub_life.gd`) : snap automatique des PNJ vers les ancrages selon leur phase de vie (`drink`/`sit` en loisir, `rest` en couchette, `craft` à l'établi).
+    - Rendu client 2.5D dans `packages/prime-client/scripts/hub_buildings_layer.gd` (`_draw_blueprint_furniture`) : comptoir avec liseré laiton, tables d'alcôve avec arcades, couchettes avec oreillers, établis lourd avec liseré cyan, bureaux avec mini-terminal, caisses avec renforts croisés X.
+    - Tests & CI : `packages/prime-hub/tools/building_cad_selftest.gd` validé à 100%, 6/6 tests headless Godot passants en 7s.
+  * **Ticket 1.1 (O1 Compagnon — Interaction Vocale Mains-Libres Voice-In / STT)** :
+    - Service et API Backend STT : `packages/cortex/backend/services/stt_service.py` et routes `GET /v1/stt`, `POST /v1/stt` dans `api/v1/routes/stt.py` (détection amont Whisper OpenAI-compatible sur `.111`, mode mock, recommandation client Web Speech API).
+    - Tests unitaires backend : `packages/cortex/backend/tests/test_stt.py` (5/5 tests passants, 134/134 tests backend Cortex passants en 9.7s).
+    - Bibliothèque STT frontend : `packages/cortex/compagnon_ui/src/lib/stt.js` et tests `stt.test.js` (contrôleur `createVoiceInputController`, formatage et ponctuation automatique `cleanTranscript`, 71/71 tests JS passants).
+    - Interface utilisateur `ChatInput.vue` : bouton microphone avec retour visuel réactif (repos, écoute pulsée avec halo rose `animate-pulse`, transcription injectée directement dans la zone de texte).
+    - Push-to-Talk Desktop (`compagnon-desktop`) : raccourci global configurable `CommandOrControl+Shift+Space` dans `main.js`, pont IPC `compagnon:voice-toggle` dans `preload.js` déclenchant la saisie vocale et la posture `listening` de l'avatar.
+    - Conformité & Lint : `ruff check .` 100% propre sans avertissement.
+  * **Ticket 1.2 (O1 Compagnon — Conscience Contextuelle de l'Espace de Travail / Focus Awareness)** :
+    - Catégorisation intelligente de l'activité utilisateur (`packages/compagnon-desktop/desktop_targets.js`) : mapping des fenêtres de premier plan vers des ambiances de posture et d'état du compagnon (`coding`/`think`, `gamedev`/`curious`, `terminal`/`alert`, `gaming`/`cheer`, `browsing`/`serene`, `idle`/`relax`).
+    - Suite de tests unitaires : `packages/compagnon-desktop/test/focus_awareness.test.js` (6/6 tests passants).
+    - Boucle de polling et API IPC Electron : `pollFocusAwareness()`, `startFocusAwareness()` et canal IPC `compagnon:get-focus-context` dans `main.js`, exposé via `preload.js`.
+    - Capacité agent local Windows `.10` : action `get_active_window_context` ajoutée dans `packages/cortex/windows_agent/Agent_IA/executor.py` avec `GetForegroundWindow` / `GetWindowTextW`.
+    - Module d'état réactif frontend : `packages/cortex/compagnon_ui/src/lib/focusContext.js` et tests `focusContext.test.js` (73/73 tests unitaires passants).
+  * **Ticket 3.2 (O2 Jeu — Météo Dynamique : Tempête de Sable sur Scrapaltai & Repli Bâtiments)** :
+    - Définition d'événement MMO : `packages/prime-hub/data/events/event_lh_sandstorm.json` (durée d'alerte 180s, durée tempête 900s, accalmie 120s, rayon 1800m).
+    - Machine d'état météo serveur Godot : cycle complet dans `packages/prime-hub/scripts/hub_events.gd` (`calm` → `warning` → `storm` → `clearing`), calcul de l'intensité et du flag `weather_shelter_required`.
+    - Autonomie des Joueurs IA (`HubBotAutonomy.assign_goal` dans `hub_bot_autonomy.gd`) : dès l'alerte tempête (`is_weather_shelter_active()`), les bots interrompent toute exploration/chasse/patrouille pour se replier vers l'intérieur du bâtiment abrité le plus proche (`cantina`, `inn`, `hall`, `craft`, `clinic`).
+    - Intégration simulation & diffusion réseau : synchronisation dans `HubSim._step_bot` et diffusion du bloc `weather` dans le payload `zone_state` (`hub_sim_views.gd`).
+    - Test headless & Intégration CI : `packages/prime-hub/tools/weather_storm_selftest.gd` créé et validé, intégré dans `tools/ci_godot_headless.sh` (7/7 tests headless Godot passants en 10s, <10s DoD).
 
 **2026-10-30** :
 - **Ajustement Morphologie & Cadrage Encart Buste (Fenêtre Compagnon)** :

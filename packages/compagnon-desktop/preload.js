@@ -81,4 +81,22 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
     });
   },
   sessionDecision: (body) => ipcRenderer.invoke("compagnon:session-decision", body || {}),
+  /** Push-to-talk / Voice-In (Ticket 1.1) */
+  onVoiceToggle: (cb) => {
+    ipcRenderer.on("compagnon:voice-toggle", (_e, payload) => {
+      try {
+        cb(payload);
+      } catch (_) {}
+    });
+  },
+  triggerVoiceInput: () => ipcRenderer.send("compagnon:voice-trigger"),
+  /** Focus Awareness (Ticket 1.2) */
+  onFocusContext: (cb) => {
+    ipcRenderer.on("compagnon:focus-context", (_e, payload) => {
+      try {
+        cb(payload);
+      } catch (_) {}
+    });
+  },
+  getFocusContext: () => ipcRenderer.invoke("compagnon:get-focus-context"),
 });

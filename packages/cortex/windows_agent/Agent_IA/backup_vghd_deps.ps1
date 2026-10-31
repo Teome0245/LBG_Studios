@@ -29,9 +29,14 @@ if (Test-Path $plugins) {
 # Neutralise l'updater qui re-casse l'install au reboot (renommage reversible)
 $updater = Join-Path $bin "updater.exe"
 $disabled = Join-Path $bin "updater.exe.disabled_by_lbg"
-if ((Test-Path $updater) -and -not (Test-Path $disabled)) {
-    Rename-Item -LiteralPath $updater -NewName "updater.exe.disabled_by_lbg"
-    Write-Host "OK updater.exe renomme en updater.exe.disabled_by_lbg (evite wipe post-reboot)"
+if (Test-Path $updater) {
+    if (Test-Path $disabled) {
+        Remove-Item -LiteralPath $updater -Force -ErrorAction SilentlyContinue
+        Write-Host "OK updater.exe recree supprime (disabled_by_lbg deja present)"
+    } else {
+        Rename-Item -LiteralPath $updater -NewName "updater.exe.disabled_by_lbg" -Force
+        Write-Host "OK updater.exe renomme en updater.exe.disabled_by_lbg (evite wipe post-reboot)"
+    }
 } elseif (Test-Path $disabled) {
     Write-Host "OK updater deja desactive"
 } else {

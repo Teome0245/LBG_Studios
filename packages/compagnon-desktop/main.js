@@ -10,6 +10,8 @@ const {
   shell,
   screen,
   Notification,
+  globalShortcut,
+  powerMonitor,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -21,6 +23,8 @@ const {
   findWindowByTitle,
   desktopIconsZone,
   taskbarZone,
+  getActiveWindow,
+  categorizeFocus,
 } = require("./desktop_targets");
 
 const DEFAULT_CONFIG = {
@@ -68,6 +72,17 @@ const DEFAULT_CONFIG = {
     port: 8765,
     heartbeatMs: 30_000,
   },
+  /** Ticket 1.1 — Push-to-Talk / Voice-In */
+  stt: {
+    enabled: true,
+    hotkey: "CommandOrControl+Shift+Space",
+  },
+  /** Ticket 1.2 — Conscience Contextuelle de l'Espace de Travail (Focus Awareness) */
+  focusAwareness: {
+    enabled: true,
+    intervalMs: 45_000,
+    idleThresholdSec: 300,
+  },
 };
 
 let mainWindow = null;
@@ -76,6 +91,8 @@ let tray = null;
 let config = { ...DEFAULT_CONFIG };
 let quitting = false;
 let initiativeTimer = null;
+let focusTimer = null;
+let currentFocusState = { category: "idle", app: "unknown", attitude: "relax", ts: Date.now() };
 /** @type {{ ts: number, id: string }[]} */
 let initiativeShown = [];
 let lastNotifiedId = "";
@@ -1344,6 +1361,123 @@ ipcMain.on("compagnon:overlay-move", (_e, payload) => {
   moveOverlayTo(x, y);
 });
 
+/** Ticket 1.1 — Push-to-Talk / Voice-In (IPC & Raccourci Global) */
+ipcMain.on("compagnon:voice-trigger", () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("compagnon:voice-toggle", { source: "ipc_trigger" });
+  }
+});
+
+function registerVoiceShortcuts() {
+  const sttCfg = config.stt || DEFAULT_CONFIG.stt;
+  if (!sttCfg || sttCfg.enabled === false) return;
+  const hotkey = sttCfg.hotkey || "CommandOrControl+Shift+Space";
+
+  try {
+    const ok = globalShortcut.register(hotkey, () => {
+      showChat();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("compagnon:voice-toggle", { source: "global_hotkey", hotkey });
+      }
+      setOverlayMood("listening");
+    });
+    if (ok) {
+      console.log("[desktop] Hotkey Push-to-Talk enregistré :", hotkey);
+    } else {
+      console.warn("[desktop] Échec enregistrement hotkey Push-to-Talk :", hotkey);
+    }
+  } catch (err) {
+    console.warn("[desktop] Erreur enregistrement hotkey STT :", hotkey, err);
+  }
+}
+
+/** Ticket 1.2 — Conscience Contextuelle de l'Espace de Travail (Focus Awareness) */
+ipcMain.handle("compagnon:get-focus-context", () => currentFocusState);
+
+async function pollFocusAwareness() {
+  const cfg = config.focusAwareness || DEFAULT_CONFIG.focusAwareness;
+  if (!cfg || cfg.enabled === false) return;
+
+  try {
+    let isIdle = false;
+    let idleSec = 0;
+    if (powerMonitor && typeof powerMonitor.getSystemIdleTime === "function") {
+      idleSec = powerMonitor.getSystemIdleTime();
+      if (idleSec >= (cfg.idleThresholdSec || 300)) {
+        isIdle = true;
+      }
+    }
+
+    if (isIdle) {
+      if (currentFocusState.category !== "idle") {
+        currentFocusState = {
+          category: "idle",
+          app: "system",
+          attitude: "relax",
+          label: "Inactif / Pause",
+          idleSec,
+          ts: Date.now(),
+        };
+        sendVrmPose("relax", 8000);
+        notifyFocusContext(currentFocusState);
+      }
+      return;
+    }
+
+    const win = await getActiveWindow();
+    const focus = categorizeFocus(win);
+
+    if (focus.category !== currentFocusState.category) {
+      const prev = currentFocusState.category;
+      currentFocusState = {
+        ...focus,
+        idleSec,
+        ts: Date.now(),
+      };
+      console.log(`[desktop] Focus contextuel changé : ${prev} → ${focus.category} (${focus.attitude})`);
+
+      if (focus.attitude === "think") {
+        sendVrmPose("think", 4000);
+      } else if (focus.attitude === "curious") {
+        sendVrmPose("lookaround", 5000);
+      } else if (focus.attitude === "alert") {
+        sendVrmPose("crossArms", 4500);
+      } else if (focus.attitude === "cheer") {
+        sendVrmPose("approve", 3500);
+      }
+
+      notifyFocusContext(currentFocusState);
+    }
+  } catch (err) {
+    console.warn("[desktop] Erreur sondage focus awareness :", err);
+  }
+}
+
+function notifyFocusContext(context) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("compagnon:focus-context", context);
+  }
+  if (avatarBridge) {
+    avatarBridge.publishSay(`[focus:${context.category}]`);
+  }
+}
+
+function startFocusAwareness() {
+  if (focusTimer) clearInterval(focusTimer);
+  const cfg = config.focusAwareness || DEFAULT_CONFIG.focusAwareness;
+  if (!cfg || cfg.enabled === false) return;
+  const interval = Math.max(15_000, Number(cfg.intervalMs) || 45_000);
+  focusTimer = setInterval(pollFocusAwareness, interval);
+  setTimeout(pollFocusAwareness, 8_000);
+}
+
+function stopFocusAwareness() {
+  if (focusTimer) {
+    clearInterval(focusTimer);
+    focusTimer = null;
+  }
+}
+
 ipcMain.handle("compagnon:overlay-get-bounds", () => {
   if (!overlayWindow || overlayWindow.isDestroyed()) return null;
   const [x, y] = overlayWindow.getPosition();
@@ -1564,13 +1698,19 @@ if (!gotLock) {
     });
     avatarBridge.start();
     showChat();
+    registerVoiceShortcuts();
     startInitiativePolling();
     startSessionIslandStream();
+    startFocusAwareness();
   });
 
   app.on("before-quit", () => {
     quitting = true;
+    try {
+      globalShortcut.unregisterAll();
+    } catch (_) {}
     if (initiativeTimer) clearInterval(initiativeTimer);
+    stopFocusAwareness();
     stopSessionIslandStream();
     if (avatarBridge) {
       avatarBridge.stop();

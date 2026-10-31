@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col">
 
-    <header class="px-4 py-2 border-b border-slate-800 bg-slate-900/40 backdrop-blur flex items-center justify-between">
+    <header class="px-4 py-2 border-b border-slate-800 bg-slate-900/40 backdrop-blur flex items-center justify-between flex-shrink-0">
       <h2 class="text-xs font-semibold tracking-wide uppercase">
         {{ avatarMode === 'vrm' ? 'Compagnon — Avatar 3D' : 'Lyra — Personnalisation' }}
       </h2>
@@ -10,8 +10,8 @@
       </span>
     </header>
 
-    <div class="flex-1 px-4 py-3 space-y-4 text-xs overflow-y-auto">
-
+    <!-- Zone Avatar 3D / 2D fixe (ne défile pas, toujours visible quand on clique sur les danses/poses) -->
+    <div class="px-4 pt-2.5 pb-1 border-b border-slate-800/80 bg-slate-950/20 flex-shrink-0">
       <!-- Avatar Host (3D VRM ou 2D FaceRig) -->
       <div
         id="lyra-face-host"
@@ -24,9 +24,12 @@
         :aria-label="avatarMode === 'vrm' ? 'Avatar 3D VRM' : 'Visage expressif Lyra'"
       />
 
-      <p class="text-[10px] text-slate-500 text-center leading-snug">
+      <p class="text-[10px] text-slate-500 text-center leading-snug pt-1">
         {{ avatarMode === 'vrm' ? 'Avatar 3D WebGL (Three.js / three-vrm) · lip-sync TTS actif' : 'Présence CSS (sheets collage gelés) · résultat Agir = bulle pet' }}
       </p>
+    </div>
+
+    <div class="flex-1 px-4 py-3 space-y-4 text-xs overflow-y-auto">
 
       <!-- Sélecteur Mode & Modèle VRM -->
       <div class="space-y-2 pt-0.5">

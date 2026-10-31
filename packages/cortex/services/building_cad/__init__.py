@@ -5,6 +5,7 @@ from .blueprint_model import (
     BuildingBlueprint,
     DoorSpec,
     FloorSpec,
+    FurnitureSpec,
     RoomSpec,
     WallSegment,
     WindowSpec,
@@ -15,6 +16,7 @@ from .procedural_architect import build_cantina_blueprint, build_warehouse_bluep
 __all__ = [
     "BuildingBlueprint",
     "FloorSpec",
+    "FurnitureSpec",
     "RoomSpec",
     "WallSegment",
     "DoorSpec",

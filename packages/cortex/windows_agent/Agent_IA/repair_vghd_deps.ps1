@@ -30,9 +30,14 @@ if ((Test-Path $pluginsSrc) -and -not (Test-Path $pluginsDst)) {
 
 $updater = Join-Path $bin "updater.exe"
 $disabled = Join-Path $bin "updater.exe.disabled_by_lbg"
-if ((Test-Path $updater) -and -not (Test-Path $disabled)) {
-    Rename-Item -LiteralPath $updater -NewName "updater.exe.disabled_by_lbg"
-    Write-Host "OK updater.exe desactive"
+if (Test-Path $updater) {
+    if (Test-Path $disabled) {
+        Remove-Item -LiteralPath $updater -Force -ErrorAction SilentlyContinue
+        Write-Host "OK updater.exe recree supprime (disabled_by_lbg deja present)"
+    } else {
+        Rename-Item -LiteralPath $updater -NewName "updater.exe.disabled_by_lbg" -Force
+        Write-Host "OK updater.exe desactive"
+    }
 }
 
 Write-Host "Done."

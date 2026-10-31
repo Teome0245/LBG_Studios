@@ -1,7 +1,8 @@
-"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/142/245/246).
+"""Périmètre plateforme Atlas — LLM dual (110 heavy / 111 light) + runtime (140/141/143/245/246).
 
 246 = prime-hub Godot G5+ ``:8787/healthz`` (pas Core3 gateway/sidecar).
 245 PreCU = optionnel (sandbox).
+143 = VM Omarchy + mains (absorbe l'ex-CT .142 détruit).
 """
 
 from __future__ import annotations
@@ -23,8 +24,8 @@ def _host_ip(env_key: str, default: str) -> str:
 
 
 def admin_infra_perimeter() -> list[str]:
-    """Hôtes obligatoires Atlas (front legacy .112 hors périmètre critique)."""
-    return ["110", "111", "140", "141", "142", "245", "246"]
+    """Hôtes obligatoires Atlas (front legacy .112 et ex-CT .142 hors périmètre)."""
+    return ["110", "111", "140", "141", "143", "245", "246"]
 
 
 def platform_host_specs() -> list[dict[str, Any]]:
@@ -39,14 +40,21 @@ def platform_host_specs() -> list[dict[str, Any]]:
     )
     ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
     ip141 = _host_ip("LBG_LAN_HOST_EXECUTOR", "192.168.0.141")
-    ip142 = _host_ip(
-        "LBG_LAN_HOST_HANDS",
-        os.environ.get("LBG_AGENT_HANDS_URL", "http://192.168.0.142:6001")
-        .replace("http://", "")
-        .replace("https://", "")
-        .split(":")[0]
-        or "192.168.0.142",
+    raw_hands_url = (
+        os.environ.get("LBG_AGENT_OMARCHY_URL", "").strip()
+        or os.environ.get("LBG_AGENT_HANDS_URL", "").strip()
+        or "http://192.168.0.143:5005"
     )
+    # Garde-fou anti-résidu .142:6001 (CT détruit → absorbé par Omarchy .143:5005)
+    if "192.168.0.142" in raw_hands_url or ":6001" in raw_hands_url:
+        raw_hands_url = "http://192.168.0.143:5005"
+    ip143 = _host_ip(
+        "LBG_LAN_HOST_HANDS",
+        raw_hands_url.replace("http://", "").replace("https://", "").split(":")[0]
+        or "192.168.0.143",
+    )
+    if ip143 == "192.168.0.142":
+        ip143 = "192.168.0.143"
     ip245 = _host_ip("LBG_LAN_HOST_PRECU", _host_ip("LBG_LAN_HOST_MMO_SERVER", "192.168.0.245"))
     ip246 = _host_ip("LBG_LAN_HOST_CORE3_PRIME", _host_ip("LBG_LAN_HOST_MMO", "192.168.0.246"))
 
@@ -129,18 +137,17 @@ def platform_host_specs() -> list[dict[str, Any]]:
             ],
         },
         {
-            "id": "hands_142",
-            "label": "LAN hands CT (linux_agent :6001 — import_face_parts / fichiers)",
-            "host": ip142,
-            "perimeter_id": "142",
+            "id": "hands_143",
+            "label": "LAN hands / Omarchy VM (agent_ia_linux :5005 — import_face_parts / fichiers)",
+            "host": ip143,
+            "perimeter_id": "143",
             "role": "lan_hands",
             "required": True,
             "probes": [
                 {"kind": "tcp", "port": 22},
                 {
                     "kind": "http",
-                    "url": os.environ.get("LBG_AGENT_HANDS_URL", f"http://{ip142}:6001").rstrip("/")
-                    + "/healthz",
+                    "url": raw_hands_url.rstrip("/") + "/healthz",
                 },
             ],
         },
@@ -480,9 +487,9 @@ def audit_admin_infra_platform() -> dict[str, Any]:
         recommendations.append(
             "141 executor : vérifier CT lbg-executor (SSH :22) et service lbg-lan-executor (poll Team WSL)."
         )
-    if not any(h.get("id") == "hands_142" and h.get("ok") for h in hosts):
+    if not any(h.get("id") == "hands_143" and h.get("ok") for h in hosts):
         recommendations.append(
-            "142 hands : vérifier CT lbg-hands sur Proxmox 200 (SSH :22) et lbg-linux-agent :6001/healthz."
+            "143 hands (Omarchy) : vérifier VM lbg-omarchy sur Proxmox 201 (SSH :22) et lbg-omarchy-agent :5005/healthz."
         )
     if not any(h.get("id") == "precu_245" and h.get("ok") for h in hosts):
         recommendations.append(
@@ -498,11 +505,11 @@ def audit_admin_infra_platform() -> dict[str, Any]:
     ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
     orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
     topology = {
-        "llm_heavy": "192.168.0.110:11434 (CT ollama, code/pm/dialogue=gemma-4-abliterated:12b, forge=e2b)",
+        "llm_heavy": "192.168.0.110:11434 (CT ollama, code=qwen2.5-coder-abliterate:14b, pm/dialogue=gemma-4-abliterated:12b-qat, forge=E4b-qat)",
         "llm_light": "192.168.0.111:11434 (NUC CT, Clean qwen3.5:2B / Fast qwen3.5:0.8B)",
         "pilot": "192.168.0.140:8080 (Nginx Pilot canonique — proxy API locale)",
         "lan_executor": "192.168.0.141 (CT lbg-executor — poll /v1/team/wsl/poll, remplace WSL .10)",
-        "lan_hands": "192.168.0.142 (CT lbg-hands — linux_agent :6001, inbox /var/lib/lbg-hands/inbox)",
+        "lan_hands": "192.168.0.143 (VM lbg-omarchy — agent_ia_linux :5005, inbox /var/lib/lbg-hands/inbox)",
         "front_legacy": "décommissionné (.112 retiré — Pilot Nginx = .140:8080)",
         "routing": "LBG_REASON_LIGHT_BASE_URL → 111 ; LBG_REASON_LOCAL_BASE_URL → 110",
         "wsl_bridge": f"{orch_url}/v1/team/wsl/health",

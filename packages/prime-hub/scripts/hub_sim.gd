@@ -60,6 +60,8 @@ func attach_economy(economy_svc) -> void:
 
 func attach_events(events_svc) -> void:
 	events = events_svc
+	if autonomy != null:
+		autonomy.events = events_svc
 
 
 func attach_world_stream(stream_svc) -> void:
@@ -111,10 +113,10 @@ func reset() -> void:
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
-	life.setup(POIS)
+	life.setup(POIS, collision)
 	if autonomy == null:
 		autonomy = HubBotAutonomyScript.new()
-	autonomy.setup(economy, suggest, POIS)
+	autonomy.setup(economy, suggest, POIS, events)
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	if combat != null:
@@ -543,6 +545,12 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	elif str(bot.get("goal", "")) == "companion_escort":
 		bot.erase("_escort_until")
 		_assign_bot_goal(bot)
+	elif events != null and events.has_method("is_weather_shelter_active") and events.is_weather_shelter_active() and str(bot.get("play_mode", "")) != "shelter":
+		# Réflexe immédiat : repli d'urgence vers un bâtiment abrité
+		_assign_bot_goal(bot)
+	elif events != null and events.has_method("is_weather_shelter_active") and not events.is_weather_shelter_active() and str(bot.get("play_mode", "")) == "shelter":
+		# Fin de la tempête : reprise du cours normal des activités
+		_assign_bot_goal(bot)
 	if float(bot.get("linger_until", 0.0)) > now:
 		return
 	var target: Vector3 = bot["target"]
@@ -573,6 +581,10 @@ func _step_bot(bot: Dictionary, dt: float) -> void:
 	if not bool(bot.get("has_waypoint", false)) and dist < 4.0:
 		if escorting:
 			bot["linger_until"] = now + 1.2
+			return
+		if events != null and events.has_method("is_weather_shelter_active") and events.is_weather_shelter_active():
+			# Reste à l'abri tant que la tempête souffle !
+			bot["linger_until"] = now + 10.0
 			return
 		if autonomy != null:
 			autonomy.on_arrival(bot)

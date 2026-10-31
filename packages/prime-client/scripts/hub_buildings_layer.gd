@@ -275,3 +275,69 @@ func _draw_blueprint_interior(bp: Dictionary, cx: float, cz: float) -> void:
 				var sa := Projection3D2D.to_screen(Vector3(cx + pt_a.x, 0.0, cz + pt_a.y))
 				var sb := Projection3D2D.to_screen(Vector3(cx + p2.x, 0.0, cz + p2.y))
 				draw_line(sa, sb, col_wall, 2.0)
+
+	_draw_blueprint_furniture(floor_zero, cx, cz)
+
+func _draw_blueprint_furniture(floor_zero: Dictionary, cx: float, cz: float) -> void:
+	var furniture: Variant = floor_zero.get("furniture", [])
+	if not (furniture is Array):
+		return
+	var s := Projection3D2D.SCALE * size_multiplier
+	for f_item: Variant in furniture:
+		if not (f_item is Dictionary):
+			continue
+		var f: Dictionary = f_item
+		var f_pos: Array = f.get("pos", [0.0, 0.0])
+		var lx := float(f_pos[0]) if f_pos.size() > 0 else 0.0
+		var lz := float(f_pos[1]) if f_pos.size() > 1 else 0.0
+		var w_m := float(f.get("width_m", 1.0))
+		var d_m := float(f.get("depth_m", 1.0))
+		var kind := str(f.get("kind", ""))
+
+		var hw := w_m * 0.5
+		var hd := d_m * 0.5
+		var rect := _core3_rect_to_screen(cx + lx - hw, cz + lz - hd, cx + lx + hw, cz + lz + hd, s)
+		var center := Projection3D2D.to_screen(Vector3(cx + lx, 0.0, cz + lz))
+
+		match kind:
+			"bar_counter":
+				# Comptoir en ferraille/bois sombre avec liseré laiton/cuivre
+				draw_rect(rect, Color(0.38, 0.24, 0.14, 0.95))
+				draw_rect(rect, Color(0.85, 0.70, 0.40, 0.9), false, 1.5)
+			"cantina_table":
+				# Table ronde d'alcôve avec liseré
+				var radius := minf(rect.size.x, rect.size.y) * 0.48
+				draw_circle(center, radius, Color(0.32, 0.22, 0.14, 0.95))
+				draw_arc(center, radius, 0.0, TAU, 16, Color(0.75, 0.60, 0.40, 0.9), 1.2)
+			"seat":
+				# Petit tabouret
+				var seat_r := maxf(1.5, minf(rect.size.x, rect.size.y) * 0.45)
+				draw_circle(center, seat_r, Color(0.65, 0.45, 0.25, 0.95))
+				draw_arc(center, seat_r, 0.0, TAU, 12, Color(0.2, 0.15, 0.1, 0.8), 1.0)
+			"bunk_bed":
+				# Couchette de repos
+				draw_rect(rect, Color(0.22, 0.32, 0.42, 0.95))
+				draw_rect(rect, Color(0.5, 0.65, 0.8, 0.85), false, 1.2)
+				var pillow := Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, maxf(2.0, rect.size.y * 0.22)))
+				draw_rect(pillow, Color(0.75, 0.8, 0.85, 0.8))
+			"craft_bench":
+				# Établi lourd d'artisanat / ferrailleur
+				draw_rect(rect, Color(0.28, 0.34, 0.32, 0.95))
+				draw_rect(rect, Color(0.45, 0.85, 0.70, 0.9), false, 1.5)
+				draw_line(center - Vector2(rect.size.x * 0.3, 0), center + Vector2(rect.size.x * 0.3, 0), Color(0.8, 0.9, 0.85, 0.7), 1.0)
+			"office_desk":
+				# Bureau de direction
+				draw_rect(rect, Color(0.35, 0.24, 0.18, 0.95))
+				draw_rect(rect, Color(0.6, 0.45, 0.3, 0.9), false, 1.2)
+				var screen_pos := center + Vector2(rect.size.x * 0.2, -rect.size.y * 0.2)
+				draw_circle(screen_pos, 1.5, Color(0.2, 0.85, 0.95, 0.9))
+			"storage_crate", "storage_rack":
+				# Caisse ou rayonnage de fret
+				draw_rect(rect, Color(0.52, 0.38, 0.20, 0.95))
+				draw_rect(rect, Color(0.25, 0.18, 0.10, 0.9), false, 1.2)
+				draw_line(rect.position, rect.position + rect.size, Color(0.3, 0.2, 0.1, 0.6), 1.0)
+				draw_line(Vector2(rect.position.x + rect.size.x, rect.position.y), Vector2(rect.position.x, rect.position.y + rect.size.y), Color(0.3, 0.2, 0.1, 0.6), 1.0)
+			_:
+				draw_rect(rect, Color(0.4, 0.4, 0.4, 0.85))
+				draw_rect(rect, Color(0.7, 0.7, 0.7, 0.8), false, 1.0)
+

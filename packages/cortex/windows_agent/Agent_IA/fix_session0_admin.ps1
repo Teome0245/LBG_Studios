@@ -15,7 +15,7 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
 )
 W "begin self_session=$selfSid user=$env:USERNAME elevated=$isAdmin"
 
-# 1) Couper le service qui remet Agent_IA en Session 0
+# 1) Couper le service ET la tache planifiee qui remettent Agent_IA en Session 0
 foreach ($svcName in @("AgentLocalV0", "Agent_IA", "LBG-AgentIA")) {
   try {
     $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
@@ -26,6 +26,26 @@ foreach ($svcName in @("AgentLocalV0", "Agent_IA", "LBG-AgentIA")) {
     }
   } catch {
     W "service $svcName : $_"
+  }
+  try {
+    $st = Get-ScheduledTask -TaskName $svcName -ErrorAction SilentlyContinue
+    if ($st) {
+      Stop-ScheduledTask -TaskName $svcName -ErrorAction SilentlyContinue
+      Disable-ScheduledTask -TaskName $svcName -ErrorAction SilentlyContinue | Out-Null
+      W "scheduled_task $svcName stopped+disabled (was $($st.State))"
+    }
+  } catch {
+    W "scheduled_task $svcName : $_"
+  }
+}
+
+# 1b) Restaurer immediatement les DLL VGHD (Qt5Sql.dll) et neutraliser updater.exe
+if (Test-Path "C:\Agent_IA\repair_vghd_deps.ps1") {
+  try {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Agent_IA\repair_vghd_deps.ps1" 2>&1 | Out-Null
+    W "repair_vghd_deps.ps1 executed"
+  } catch {
+    W "repair_vghd_deps.ps1 err: $_"
   }
 }
 

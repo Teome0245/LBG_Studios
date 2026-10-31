@@ -15,9 +15,12 @@ var _sched: Dictionary = {}
 ## Rotation des logements si home_poi absent.
 const _LODGE_KEYS: Array = ["lodge_w", "lodge_n", "lodge_e", "lodge_s", "inn"]
 
+var collision = null
 
-func setup(poi_map: Dictionary) -> void:
+
+func setup(poi_map: Dictionary, collision_svc = null) -> void:
 	pois = poi_map
+	collision = collision_svc
 	_rng.randomize()
 	triplons.clear()
 	solos.clear()
@@ -228,6 +231,28 @@ func _pos_for_phase(sch: Dictionary, phase: String) -> Vector3:
 	elif phase == "rest":
 		key = str(sch.get("home_poi", "lodge_w"))
 	var base: Vector3 = pois.get(key, Vector3(4749.0, 0.15, -737.0))
+
+	# Si un meuble interactif correspondant est disponible près du POI (Ticket 3.1)
+	if collision != null and collision.has_method("find_anchor_near"):
+		var req_interaction := ""
+		if phase == "leisure":
+			req_interaction = "drink" if _rng.randf() < 0.6 else "sit"
+		elif phase == "rest":
+			req_interaction = "rest"
+		elif phase == "work" and ("artisan" in key or "craft" in key or "warehouse" in key):
+			req_interaction = "craft"
+
+		if not req_interaction.is_empty():
+			var anchor: Dictionary = collision.find_anchor_near(base, 35.0, req_interaction)
+			if not anchor.is_empty() and anchor.get("pos") is Vector3:
+				var a_pos: Vector3 = anchor["pos"]
+				var slot_m := int(sch.get("member_idx", 0))
+				return Vector3(
+					a_pos.x + float(slot_m % 2) * 0.8 - 0.4,
+					0.15,
+					a_pos.z + float((slot_m / 2) % 2) * 0.8 - 0.4
+				)
+
 	var off = meta.get("work_offset", null)
 	if phase == "work" and typeof(off) == TYPE_ARRAY and off.size() >= 2:
 		base = Vector3(base.x + float(off[0]), 0.15, base.z + float(off[1]))

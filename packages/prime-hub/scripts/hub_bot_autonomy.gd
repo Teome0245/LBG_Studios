@@ -21,6 +21,7 @@ var personas: Dictionary = {}
 var economy = null
 var suggest = null
 var pois: Dictionary = {}
+var events = null
 var explore: Dictionary = {}
 var ring_center: Vector3 = RING_CENTER_FALLBACK
 var ring_radius_m: float = RING_RADIUS_FALLBACK
@@ -30,10 +31,11 @@ var _last_suggest: Dictionary = {}  # name -> unix
 var _quest_cd: Dictionary = {}
 
 
-func setup(economy_svc, suggest_svc, poi_map: Dictionary) -> void:
+func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> void:
 	economy = economy_svc
 	suggest = suggest_svc
 	pois = poi_map
+	events = events_svc
 	_rng.randomize()
 	_load_explore_ring()
 	personas.clear()
@@ -127,6 +129,15 @@ func assign_goal(bot: Dictionary, prefer: Array = []) -> Dictionary:
 	## Retourne {target: Vector3, goal_id, goal_label, play_mode, quest_id, maybe_suggest?}
 	var name := str(bot.get("name", ""))
 	var persona: Dictionary = personas.get(name, {}) if personas.has(name) else {}
+
+	# Priorité d'urgence météo : repli sous les bâtiments abrités si tempête active
+	if events != null and events.has_method("is_weather_shelter_active") and events.is_weather_shelter_active():
+		var shelter_g := _shelter_goal(bot)
+		bot["obj_short"] = str(shelter_g.get("goal_label", "se mettre à l'abri"))
+		bot["obj_medium"] = "se protéger de la tempête"
+		bot["obj_long"] = "survie environnementale"
+		return shelter_g
+
 	var roll := _rng.randf()
 	var out: Dictionary
 	if roll < 0.45 and economy != null:
@@ -141,6 +152,28 @@ func assign_goal(bot: Dictionary, prefer: Array = []) -> Dictionary:
 	bot["obj_long"] = str(persona.get("long", ""))
 	_maybe_world_suggest(bot, persona, out)
 	return out
+
+
+func _shelter_goal(bot: Dictionary) -> Dictionary:
+	var bpos: Vector3 = bot.get("pos", Vector3(4749.0, 0.15, -737.0))
+	var shelters := ["cantina", "inn", "hall", "craft", "clinic"]
+	var best_key := "cantina"
+	var best_dist := INF
+	for k in shelters:
+		if pois.has(k):
+			var p: Vector3 = pois[k]
+			var d := Vector2(bpos.x - p.x, bpos.z - p.z).length()
+			if d < best_dist:
+				best_dist = d
+				best_key = k
+	var target_pos: Vector3 = pois.get(best_key, Vector3(5028.3, 0.15, -784.1))
+	return {
+		"target": target_pos,
+		"goal_id": "shelter_storm",
+		"goal_label": "se mettre à l'abri à la %s" % best_key,
+		"play_mode": "shelter",
+		"quest_id": "",
+	}
 
 
 func _hub_goal(bot: Dictionary, prefer: Array, persona: Dictionary) -> Dictionary:

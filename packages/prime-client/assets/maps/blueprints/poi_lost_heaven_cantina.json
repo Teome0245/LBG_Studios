@@ -112,31 +112,49 @@
           "doors": [],
           "windows": [
             {
-              "offset_m": 2.5,
+              "offset_m": 2.86,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 8.9,
+              "offset_m": 6.41,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 15.3,
+              "offset_m": 9.97,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 21.7,
+              "offset_m": 13.52,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 28.1,
+              "offset_m": 17.08,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 20.63,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 24.19,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 27.74,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
@@ -160,19 +178,37 @@
           "doors": [],
           "windows": [
             {
-              "offset_m": 3.3,
+              "offset_m": 2.73,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 9.3,
+              "offset_m": 6.16,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 15.3,
+              "offset_m": 9.59,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 13.01,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 16.44,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 19.87,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
@@ -234,19 +270,37 @@
           "doors": [],
           "windows": [
             {
-              "offset_m": 3.3,
+              "offset_m": 2.73,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 9.3,
+              "offset_m": 6.16,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
             },
             {
-              "offset_m": 15.3,
+              "offset_m": 9.59,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 13.01,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 16.44,
+              "width_m": 1.4,
+              "height_m": 1.5,
+              "sill_height_m": 1.0
+            },
+            {
+              "offset_m": 19.87,
               "width_m": 1.4,
               "height_m": 1.5,
               "sill_height_m": 1.0
@@ -301,6 +355,168 @@
           "material": "reinforced_steel",
           "doors": [],
           "windows": []
+        }
+      ],
+      "furniture": [
+        {
+          "id": "cantina_bar_counter",
+          "kind": "bar_counter",
+          "label": "Comptoir en ferraille de Jax",
+          "pos": [
+            0.0,
+            -1.0
+          ],
+          "width_m": 8.0,
+          "depth_m": 1.2,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "drink",
+          "capacity": 4,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_stool_1",
+          "kind": "seat",
+          "label": "Tabouret de bar 1",
+          "pos": [
+            -2.5,
+            0.4
+          ],
+          "width_m": 0.6,
+          "depth_m": 0.6,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 1,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_stool_2",
+          "kind": "seat",
+          "label": "Tabouret de bar 2",
+          "pos": [
+            -0.8,
+            0.4
+          ],
+          "width_m": 0.6,
+          "depth_m": 0.6,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 1,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_stool_3",
+          "kind": "seat",
+          "label": "Tabouret de bar 3",
+          "pos": [
+            0.8,
+            0.4
+          ],
+          "width_m": 0.6,
+          "depth_m": 0.6,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 1,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_stool_4",
+          "kind": "seat",
+          "label": "Tabouret de bar 4",
+          "pos": [
+            2.5,
+            0.4
+          ],
+          "width_m": 0.6,
+          "depth_m": 0.6,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 1,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_table_1",
+          "kind": "cantina_table",
+          "label": "Table d'alcôve Ouest",
+          "pos": [
+            -8.0,
+            4.0
+          ],
+          "width_m": 2.4,
+          "depth_m": 2.4,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 4,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_table_2",
+          "kind": "cantina_table",
+          "label": "Table d'alcôve Est",
+          "pos": [
+            8.0,
+            4.0
+          ],
+          "width_m": 2.4,
+          "depth_m": 2.4,
+          "rotation_deg": 0.0,
+          "room_id": "room_main_hall",
+          "interaction_type": "sit",
+          "capacity": 4,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_boss_desk",
+          "kind": "office_desk",
+          "label": "Bureau de direction",
+          "pos": [
+            10.0,
+            -8.0
+          ],
+          "width_m": 2.4,
+          "depth_m": 1.2,
+          "rotation_deg": 0.0,
+          "room_id": "room_boss_office",
+          "interaction_type": "inspect",
+          "capacity": 1,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_bunk_bed",
+          "kind": "bunk_bed",
+          "label": "Couchette de repos",
+          "pos": [
+            -10.0,
+            -8.0
+          ],
+          "width_m": 1.4,
+          "depth_m": 2.4,
+          "rotation_deg": 0.0,
+          "room_id": "room_storage",
+          "interaction_type": "rest",
+          "capacity": 2,
+          "metadata": {}
+        },
+        {
+          "id": "cantina_storage_crate",
+          "kind": "storage_crate",
+          "label": "Caisse de contrebande scellée",
+          "pos": [
+            -5.0,
+            -8.0
+          ],
+          "width_m": 1.6,
+          "depth_m": 1.6,
+          "rotation_deg": 0.0,
+          "room_id": "room_storage",
+          "interaction_type": "loot",
+          "capacity": 1,
+          "metadata": {}
         }
       ]
     }

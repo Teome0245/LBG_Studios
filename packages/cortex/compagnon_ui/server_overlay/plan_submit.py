@@ -160,6 +160,31 @@ def extract_plan_from_ctx(short_ctx: list | None = None) -> str:
     return ""
 
 
+def build_fallback_plan_content(prompt: str, short_ctx: list | None = None) -> str:
+    """Génère un plan minimal structuré à partir de la demande quand le LLM local n'a pas pu formaliser."""
+    user_bit = re.sub(r"\s+", " ", (prompt or "").strip())[:300]
+    topic = user_bit
+    if short_ctx:
+        for item in reversed(list(short_ctx)[-6:]):
+            if not isinstance(item, dict):
+                continue
+            txt = str(item.get("content") or item.get("prompt") or item.get("text") or "").strip()
+            if txt and len(txt) > 25 and not _TEAM_SUBMIT_RE.search(txt):
+                topic = re.sub(r"\s+", " ", txt)[:200]
+                break
+
+    return (
+        f"## Objectif\n"
+        f"Prise en charge et structuration studio : {topic}\n\n"
+        f"## Phases\n"
+        f"1. Cadrage du besoin et découpage des tâches — Hermès\n"
+        f"2. Modélisation et implémentation studio — Iris & Chœur\n"
+        f"3. Validation opérationnelle et retours — Bureau\n\n"
+        f"## Prochaine action concrète\n"
+        f"Enregistrer la mission Campus sur Pilot et initialiser la prise en charge."
+    )
+
+
 def wants_submit_existing_plan(prompt: str, short_ctx: list | None = None) -> bool:
     """True → soumettre le plan déjà dans le fil, sans repasser par le LLM."""
     text = (prompt or "").strip()
@@ -230,6 +255,14 @@ async def attach_team_plan_if_needed(
         reused = extract_plan_from_ctx(short_ctx)
         if reused:
             content = reused
+            result = {**result, "content": content, "response": content}
+        elif wants_team_plan_submit(prompt, short_ctx):
+            # Fallback plan synthétique : l'humain a demandé un plan pour la Team/Studio
+            # mais le LLM local n'a pas pu structurer la réponse (erreur/timeout/vide).
+            # On synthétise un plan de cadrage direct pour ne pas bloquer l'envoi Campus.
+            logger.info("plan_submit: génération plan de secours pour mission Campus")
+            fallback_plan = build_fallback_plan_content(prompt, short_ctx)
+            content = fallback_plan
             result = {**result, "content": content, "response": content}
         else:
             logger.info(

@@ -1354,8 +1354,11 @@ def _ensure_app_sidecars(app_id: str, exe_path: str) -> dict[str, object]:
 def _disable_vghd_updater(bin_dir: Path) -> str | None:
     updater = bin_dir / "updater.exe"
     disabled = bin_dir / "updater.exe.disabled_by_lbg"
-    if updater.is_file() and not disabled.is_file():
+    if updater.is_file():
         try:
+            if disabled.is_file():
+                updater.unlink()
+                return "removed_recreated_updater"
             updater.rename(disabled)
             return "disabled"
         except Exception as exc:

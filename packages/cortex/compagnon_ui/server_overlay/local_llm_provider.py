@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import Any
@@ -17,6 +18,9 @@ import httpx
 
 from src.http_timeouts import httpx_timeout, httpx_timeout_stream
 from src.settings import get_settings
+
+logger = logging.getLogger("lbg.provider.local_llm")
+LIGHT_FALLBACK_MODEL = "huihui_ai/qwen3.5-abliterated:2B"
 
 
 def _flatten_messages(messages: list[Any]) -> str:
@@ -210,6 +214,76 @@ class LocalLLMProvider:
         except Exception:
             return []
 
+    async def _execute_generate(
+        self,
+        messages: list[dict[str, Any]],
+        selected_model: str,
+        host: str,
+        read_s: float,
+        n_predict: int,
+        prefer_generate: bool,
+    ) -> tuple[str, dict[str, Any], str]:
+        """Exécute un appel Ollama (generate ou chat). Retourne (content, data, err_msg)."""
+        async def _via_generate() -> str:
+            flat = _flatten_messages(messages)
+            async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
+                r2 = await client.post(
+                    f"{host}/api/generate",
+                    json={
+                        "model": selected_model,
+                        "prompt": flat,
+                        "stream": False,
+                        "think": False,
+                        "keep_alive": "30m",
+                        "options": {"num_predict": n_predict, "temperature": 0.3},
+                    },
+                )
+            if r2.status_code != 200:
+                return ""
+            d2 = r2.json()
+            return str((d2 or {}).get("response") or "").strip()
+
+        content = ""
+        data: dict[str, Any] = {}
+        err_msg = ""
+
+        try:
+            if prefer_generate:
+                content = await _via_generate()
+
+            if not content:
+                payload: dict[str, Any] = {
+                    "model": selected_model,
+                    "messages": messages,
+                    "stream": False,
+                    "think": False,
+                    "keep_alive": "30m",
+                    "options": {
+                        "num_predict": n_predict,
+                        "temperature": 0.3,
+                    },
+                }
+                try:
+                    async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
+                        r = await client.post(f"{host}/api/chat", json=payload)
+                    if r.status_code == 200:
+                        data = r.json() if r.content else {}
+                        msg = data.get("message") if isinstance(data, dict) else None
+                        content = _extract_assistant_text(msg if isinstance(msg, dict) else None)
+                    else:
+                        data = {"http_status": r.status_code, "body": (r.text or "")[:300]}
+                        err_msg = f"HTTP {r.status_code}"
+                except Exception as ex_chat:
+                    content = ""
+                    err_msg = str(ex_chat)
+
+            if not content:
+                content = await _via_generate()
+        except Exception as exc:
+            err_msg = str(exc)
+
+        return content, data, err_msg
+
     async def generate(self, prompt: str | list[Any] | None = None, model: str | None = None) -> dict:
         """Accepte un prompt str OU une liste messages (comme les providers cloud)."""
         selected_model = model or self.default_model
@@ -235,77 +309,45 @@ class LocalLLMProvider:
             "on",
         )
 
-        async def _via_generate() -> str:
-            flat = _flatten_messages(messages)
-            async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
-                r2 = await client.post(
-                    f"{host}/api/generate",
-                    json={
-                        "model": selected_model,
-                        "prompt": flat,
-                        "stream": False,
-                        "think": False,
-                        "keep_alive": "30m",
-                        "options": {"num_predict": n_predict, "temperature": 0.3},
-                    },
-                )
-            if r2.status_code != 200:
-                return ""
-            d2 = r2.json()
-            return str((d2 or {}).get("response") or "").strip()
+        content, data, err_msg = await self._execute_generate(
+            messages, selected_model, host, read_s, n_predict, prefer_generate
+        )
 
-        try:
-            content = ""
-            data: dict[str, Any] = {}
-
-            if prefer_generate:
-                content = await _via_generate()
-
-            if not content:
-                payload: dict[str, Any] = {
-                    "model": selected_model,
-                    "messages": messages,
-                    "stream": False,
-                    "think": False,
-                    "keep_alive": "30m",
-                    "options": {
-                        "num_predict": n_predict,
-                        "temperature": 0.3,
-                    },
-                }
-                try:
-                    async with httpx.AsyncClient(timeout=httpx_timeout(read=read_s)) as client:
-                        r = await client.post(f"{host}/api/chat", json=payload)
-                    if r.status_code == 200:
-                        data = r.json() if r.content else {}
-                        msg = data.get("message") if isinstance(data, dict) else None
-                        content = _extract_assistant_text(msg if isinstance(msg, dict) else None)
-                    else:
-                        data = {"http_status": r.status_code, "body": (r.text or "")[:300]}
-                except Exception:
-                    # /api/chat hang fréquent sur certains tags Qwen — bascule generate
-                    content = ""
-
-            if not content:
-                content = await _via_generate()
-
-            if not content:
+        # Si échec sur le modèle sélectionné (ex. .110 heavy en timeout/vide) :
+        # tentative immédiate de secours sur le modèle light .111 (qwen3.5:2B)
+        if not content and selected_model != LIGHT_FALLBACK_MODEL:
+            light_host = self.base_url
+            logger.warning(
+                "LocalLLMProvider: échec %s sur %s (%s) — bascule de secours sur %s (%s)",
+                selected_model,
+                host,
+                err_msg or "content vide",
+                LIGHT_FALLBACK_MODEL,
+                light_host,
+            )
+            fallback_read_s = _chat_read_timeout_s(LIGHT_FALLBACK_MODEL)
+            fb_content, fb_data, fb_err = await self._execute_generate(
+                messages, LIGHT_FALLBACK_MODEL, light_host, fallback_read_s, n_predict, prefer_generate
+            )
+            if fb_content:
                 return {
-                    "model_used": selected_model,
-                    "content": "",
-                    "error": True,
-                    "message": f"Ollama content vide (think/timeout) host={host} — failover",
+                    "model_used": LIGHT_FALLBACK_MODEL,
+                    "content": fb_content,
+                    "raw": fb_data if isinstance(fb_data, dict) else {},
+                    "ollama_host": light_host,
+                    "fallback_from": selected_model,
                 }
-            return {
-                "model_used": selected_model,
-                "content": content,
-                "raw": data if isinstance(data, dict) else {},
-                "ollama_host": host,
-            }
-        except Exception as exc:
+
+        if not content:
             return {
                 "model_used": selected_model,
                 "content": "",
                 "error": True,
-                "message": str(exc),
+                "message": f"Ollama content vide host={host} ({err_msg or 'think/timeout'}) — failover",
             }
+        return {
+            "model_used": selected_model,
+            "content": content,
+            "raw": data if isinstance(data, dict) else {},
+            "ollama_host": host,
+        }

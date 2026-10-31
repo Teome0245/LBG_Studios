@@ -30,6 +30,7 @@ import {
   ackNotifyMessage,
   fetchCampusSnapshot,
 } from '@/lib/missionWatch'
+import { createVoiceInputController, isSttSupported } from '@/lib/stt'
 import PilotagePalette from './PilotagePalette.vue'
 
 /** Arme / ré-arme le watch sur la mission Campus *ouverte* (évite un vieux id notified). */
@@ -62,6 +63,40 @@ const { sendPrompt } = useApi()
 const { chatInputOffsetClass } = useLayout()
 const loading = ref(false)
 const proposing = ref(false)
+
+const voiceState = ref('idle')
+const voiceSupported = ref(isSttSupported())
+let voiceController = null
+
+if (typeof window !== 'undefined') {
+  voiceController = createVoiceInputController({
+    lang: 'fr-FR',
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal) {
+        if (input.value.trim()) {
+          input.value = `${input.value.trim()} ${transcript}`
+        } else {
+          input.value = transcript
+        }
+      }
+    },
+    onStateChange: (st) => {
+      voiceState.value = st
+    },
+    onError: (err) => {
+      addMessage({
+        role: 'assistant',
+        content: `Microphone / Saisie vocale : ${err}`,
+        source: 'error',
+      })
+    },
+  })
+}
+
+function toggleVoice() {
+  if (!voiceController) return
+  voiceController.toggle()
+}
 
 const MAX_IMAGES = 3
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024
@@ -214,10 +249,20 @@ function onRecipeAsk(ev) {
 onMounted(() => {
   window.addEventListener('compagnon:send-draft', onSendDraftEvent)
   window.addEventListener(RECIPE_ASK_EVENT, onRecipeAsk)
+  try {
+    if (typeof window !== 'undefined' && window.compagnonDesktop?.onVoiceToggle) {
+      window.compagnonDesktop.onVoiceToggle(() => {
+        toggleVoice()
+      })
+    }
+  } catch (_) {}
 })
 onUnmounted(() => {
   window.removeEventListener('compagnon:send-draft', onSendDraftEvent)
   window.removeEventListener(RECIPE_ASK_EVENT, onRecipeAsk)
+  if (voiceController && voiceState.value === 'listening') {
+    voiceController.stop()
+  }
 })
 
 watch(mentionInsert, (v) => {
@@ -598,6 +643,21 @@ function onPilotageAsk(prompt) {
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
+        </button>
+        <button
+          type="button"
+          :title="voiceState === 'listening' ? 'Écoute vocale en cours… (Clique pour couper)' : 'Parler au Compagnon (Push-to-Talk / Micro)'"
+          class="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl border transition-all cursor-pointer relative"
+          :class="voiceState === 'listening'
+            ? 'border-rose-500 bg-rose-500/20 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.4)] animate-pulse'
+            : 'border-white/10 text-slate-300 hover:bg-white/5 hover:border-emerald-500/40'"
+          :disabled="loading || proposing"
+          @click="toggleVoice"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+          <span v-if="voiceState === 'listening'" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 animate-ping"></span>
         </button>
         <textarea
           v-model="input"
