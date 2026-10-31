@@ -27,7 +27,8 @@
 **Sprint évolution 7j** (Team, L1 auto / L2 Pilot) : [`packages/cortex/docs/team_evolution_sprint.md`](../packages/cortex/docs/team_evolution_sprint.md).  
 **Pont Cloud↔LAN** : [`packages/cortex/docs/pont_cloud_local.md`](../packages/cortex/docs/pont_cloud_local.md).  
 **NotebookLM (POC poste)** : [`packages/cortex/docs/notebooklm_poste.md`](../packages/cortex/docs/notebooklm_poste.md) · seed `packages/cortex/tools/notebooklm/seed_lbg_docs.sh`.  
-**Lore / âme jeu** : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md) · [`world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) · [`world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) · [`world/BOITE_IDEES_GAMEPLAY.md`](world/BOITE_IDEES_GAMEPLAY.md) · maturité A/B/C ([`maturity_content.md`](../packages/cortex/docs/maturity_content.md), V60–V65) · garant runtime **Chœur du monde**.
+**Lore / âme jeu** : [`world/BIBLE_MMO.md`](world/BIBLE_MMO.md) · [`world/INVENTAIRE_PNJ.md`](world/INVENTAIRE_PNJ.md) · [`world/ARBRES_TALENTS_PRECU.md`](world/ARBRES_TALENTS_PRECU.md) · [`world/BOITE_IDEES_GAMEPLAY.md`](world/BOITE_IDEES_GAMEPLAY.md) · maturité A/B/C ([`maturity_content.md`](../packages/cortex/docs/maturity_content.md), V60–V65) · garant runtime **Chœur du monde**.  
+**Doctrine technologique / anti-recodage** : [`packages/cortex/docs/adr/0029-doctrine-anti-recodage-rust-pragmatisme.md`](../packages/cortex/docs/adr/0029-doctrine-anti-recodage-rust-pragmatisme.md) — ADR 0029 (Python IA, Godot spatiale, Rust scalpel ciblé sur benchmark).
 
 **Règle** : dépôt **legacy / archive / étagère** = pas de nouvelle feature produit ; correctifs OK.
 

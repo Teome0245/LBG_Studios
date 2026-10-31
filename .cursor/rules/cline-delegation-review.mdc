@@ -1,0 +1,15 @@
+---
+description: Protocole de délégation de code à Cline (génération) et contrôle par Antigravity/Cursor (supervision/revue)
+globs: *
+alwaysApply: true
+---
+
+# Protocole de Cocréation : Cline (Codeur) ↔ Superviseur (Revue & CI)
+
+- **Cline (`qwen2.5-coder-abliterate:14b` sur `.110`)** : Produit le code pour les mandats ciblés.
+- **Superviseur (Antigravity / Cursor)** :
+  1. Inspecte le `git diff`.
+  2. Effectue la revue critique (null/undefined, robustesse, fuites mémoires, règles LBG).
+  3. Lance la CI et les suites de tests locales.
+  4. Valide et rapporte le résultat à l'utilisateur.
+

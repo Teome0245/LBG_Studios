@@ -13,6 +13,8 @@ let _bound = false;
 let _lastBrainData = null;
 let _lastPilotStatus = null;
 let _lastFleet = null;
+let _lastPlayerIa = null;
+let _lastProcessedWorldEvtId = "";
 let _cycleCount = 0;
 
 // Historique glissant des signaux synaptiques réels de l'infra
@@ -61,6 +63,16 @@ async function fetchTeamFleet() {
     return await r.json();
   } catch (e) {
     return { ok: false, error: String(e) };
+  }
+}
+
+async function fetchPlayerIaRuntime() {
+  try {
+    const base = getBase();
+    const r = await fetch(base + "/v1/pilot/player-ia/runtime");
+    return await r.json();
+  } catch (e) {
+    return { ok: false, bots: [], events: [] };
   }
 }
 
@@ -134,10 +146,11 @@ function renderSignals() {
     .join("");
 }
 
-function updateUi(brainData, pilotStatus, fleetData) {
+function updateUi(brainData, pilotStatus, fleetData, playerIaData) {
   _lastBrainData = brainData;
   _lastPilotStatus = pilotStatus;
   _lastFleet = fleetData;
+  _lastPlayerIa = playerIaData;
   _cycleCount++;
 
   const connText = document.getElementById("brain-conn-text");
@@ -201,17 +214,18 @@ function updateUi(brainData, pilotStatus, fleetData) {
     const backOk = pilotStatus.backend === "ok";
     const mmoOk = pilotStatus.mmo_server === "ok" || pilotStatus.mmo_server === "online";
     const agentCount = fleetData && fleetData.fleet ? Object.keys(fleetData.fleet).length : 7;
+    const botCount = playerIaData && (playerIaData.online_count || (playerIaData.bots && playerIaData.bots.length)) || 0;
 
     infraStatusBadge.innerHTML = `
       <span class="infra-chip ${backOk ? "ok" : "err"}">VM 140 Core</span>
       <span class="infra-chip ${orchOk ? "ok" : "warn"}">Orch 8010</span>
-      <span class="infra-chip ${mmoOk ? "ok" : "ok"}">Hub 246 Godot</span>
+      <span class="infra-chip ${mmoOk ? "ok" : "ok"}">Hub 246 ${botCount > 0 ? `(${botCount} bots)` : "Godot"}</span>
       <span class="infra-chip ok">Fleet ${agentCount} Agents</span>
     `;
   }
 
   // Génération rythmée des signaux d'activité réelle de l'infra
-  dispatchInfraSignals(brainData, pilotStatus, fleetData);
+  dispatchInfraSignals(brainData, pilotStatus, fleetData, playerIaData);
 
   // Synchronisation Three.js
   if (window.LbgBrain3d && typeof window.LbgBrain3d.sync === "function") {
@@ -227,7 +241,7 @@ function updateUi(brainData, pilotStatus, fleetData) {
 /**
  * Traduit les états réels de l'infra en impulsions cérébrales
  */
-function dispatchInfraSignals(brainData, pilotStatus, fleetData) {
+function dispatchInfraSignals(brainData, pilotStatus, fleetData, playerIaData) {
   // 1. Cortex Frontal (Orchestrateur & Backend)
   if (pilotStatus && pilotStatus.backend === "ok") {
     if (_cycleCount % 3 === 0) {
@@ -252,8 +266,27 @@ function dispatchInfraSignals(brainData, pilotStatus, fleetData) {
     addSignal("hippo", "Hippocampe RAG", `Mémoire long-terme prête · ${memStatus}`);
   }
 
-  // 4. Perception Monde (Godot Hub .246:8787)
-  if (_cycleCount % 4 === 3) {
+  // 4. Perception Monde & Cognition des Joueurs IA (Godot Hub .246:8787)
+  if (playerIaData && playerIaData.events && playerIaData.events.length > 0) {
+    const latestEvt = playerIaData.events[playerIaData.events.length - 1];
+    if (latestEvt && latestEvt.id !== _lastProcessedWorldEvtId) {
+      _lastProcessedWorldEvtId = latestEvt.id;
+      const bTag = latestEvt.bot_name ? `Joueur IA [${latestEvt.bot_name}]` : "Monde Lost Heaven";
+      addSignal(latestEvt.target_pole || "world", bTag, latestEvt.message, "boost");
+    }
+  } else if (playerIaData && playerIaData.bots && playerIaData.bots.length > 0 && _cycleCount % 3 === 0) {
+    const bots = playerIaData.bots;
+    const bot = bots[Math.floor(Math.random() * bots.length)];
+    const bName = bot.display_name || bot.name || "Nix";
+    const bGoal = bot.goal || bot.play_mode || "reconnaissance";
+    const bZone = bot.zone_label || bot.zone || "Scrapaltai";
+    addSignal(
+      "world",
+      "Perception Monde",
+      `Joueur IA [${bName}] : cognition « ${bGoal} » vers ${bZone}`,
+      "boost"
+    );
+  } else if (_cycleCount % 4 === 3) {
     addSignal("world", "Perception Monde", "Godot Headless .246:8787 cadencé à 60 TPS");
   }
 
@@ -347,12 +380,13 @@ function bindButtons() {
 }
 
 async function fetchAllData() {
-  const [bData, pStatus, fData] = await Promise.all([
+  const [bData, pStatus, fData, pIaData] = await Promise.all([
     fetchBrainStatus(),
     fetchPilotStatus(),
     fetchTeamFleet(),
+    fetchPlayerIaRuntime(),
   ]);
-  updateUi(bData, pStatus, fData);
+  updateUi(bData, pStatus, fData, pIaData);
 }
 
 function startLoop() {

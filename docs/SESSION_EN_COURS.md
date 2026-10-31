@@ -13,7 +13,24 @@
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
 
+**Plan d'Évolutions Phase 2 (100 % ACHEVÉ & VALIDÉ — 8/8 Tickets DONE)** :
+- [x] **Ticket 2.1** : Contrat d'Environnement Universel O3 (`AgentEnvironmentAdapter`)
+- [x] **Ticket 4.1** : Banc d'Évaluation de Non-Refus Heretic (`tools/eval_heretic_dialogue.py`)
+- [x] **Ticket 3.1** : Mobilier Procédural & Vie Intérieure des Bâtiments CAO
+- [x] **Ticket 1.1** : Interaction Vocale Mains-Libres STT (*Voice-In*)
+- [x] **Ticket 1.2** : Conscience Contextuelle de l'Espace de Travail (*Focus Awareness*)
+- [x] **Ticket 3.2** : Météo Dynamique & Repli Bâtiments (Tempête de sable)
+- [x] **Ticket 2.2** : Émergence Sociale : Propagation des Rumeurs Inter-Villages
+- [x] **Ticket 5.1** : Projection Cognitive des Joueurs IA dans le Cerveau 3D
+
 **2026-10-31** :
+- **Formalisation ADR 0029 — Doctrine Anti-Recodage Global (Rust & Hype vs Pragmatisme Produit)** :
+  * **Décision architecturale** : refus catégorique du piège du « Big Bang Rewrite » en Rust.
+  * **Répartition des rôles** : Python (cerveau/orchestration O1), Godot 4 (corps/espace/physique/client O2), Rust (scalpel réservé aux optimisations chirurgicales isolées sur preuve de benchmark, ex. GDExtension ou relay binaire).
+  * **Documents actés** : [`packages/cortex/docs/adr/0029-doctrine-anti-recodage-rust-pragmatisme.md`](../packages/cortex/docs/adr/0029-doctrine-anti-recodage-rust-pragmatisme.md), indexé dans `docs/REGISTRE.md` et dans les règles Antigravity `.agents/rules/lbg-studios.md`.
+- **Protocole de Production Hybride : Cline (Codeur Local) ↔ Antigravity (Supervision & Contrôle)** :
+  * **Décision opérationnelle** : à la demande de l'utilisateur, Cline (`huihui_ai/qwen2.5-coder-abliterate:14b` sur `.110`) prend en charge l'écriture/génération du code source local 0 €, tandis qu'Antigravity assure le rôle de superviseur/gatekeeper (cadrage des mandats, inspection `git diff`, revue critique de robustesse, et exécution des tests CI).
+  * **Règle persistée** : formalisée dans `.agents/rules/cline-delegation-review.md` et `.cursor/rules/cline-delegation-review.mdc`.
 - **Alignement Agents Locaux Mains Code (`.143` Omarchy ↔ Ollama `.110`)** :
   * **Diagnostic Tool-Calling Claude Code vs Ollama** : Claude Code attend le format propriétaire Anthropic `tool_use`. En local avec Ollama, le modèle génère du JSON brut qui s'affiche comme texte sans exécuter les outils.
   * **Configuration Cline CLI & VS Code** :
@@ -104,8 +121,15 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - Test unitaire & intégration headless : `packages/prime-hub/tools/agent_adapter_selftest.gd` (validation du contrat de base, de l'adaptateur mock pour la portabilité O3 hors Godot, et de l'intégration avec `HubSimScript`).
     - Intégration CI : ajouté dans `tools/ci_godot_headless.sh` — 6/6 tests headless Godot passants en 8s (<10s DoD).
   * **Ticket 2.2 (O3 Joueurs IA — Émergence Sociale : Propagation des Rumeurs Inter-Villages)** :
-    - Buffer et mémoire de voyage partagée dans `packages/prime-hub/scripts/hub_wiki.gd` (`add_rumor()`, `get_rumors()`, `get_latest_rumor()`, `clear_rumors()`).
-    - Section dynamique « Rumeurs & Échos des Caravanes » intégrée dans le rendu Markdown du wiki (`_render_markdown`) et snapshot data-driven.
+    - Buffer et mémoire de voyage dans `packages/prime-hub/scripts/hub_bot_autonomy.gd` (`_record_travel_observation`, `share_rumor_at_hub`) : les bots en patrouille à l'Avant-poste Zalem, au Ksar Nomade ou dans les Dunes orientales accumulent des faits contextuels réels.
+    - Transfert social au hub : dès que le bot arrive à La Perle (Cantina), à la Plaza ou à l'Auberge, il transfère son souvenir vers le pool partagé `HubWiki` (`add_rumor()`, `get_rumors()`, `get_latest_rumor()`).
+    - Dialogue PNJ dynamique (`hub_dialogue.gd`) : Jax et le Rumeuriste intègrent ces rumeurs fraîches lors des salutations ou questions de rumeurs/nouvelles, avec répliques ciblées par village (Zalem, Ksar).
+    - Guide joueur et rendu Markdown (`hub_wiki.gd`) : section « Rumeurs & Échos des Caravanes » dans `_render_markdown` et champ `rumors` dans le snapshot `/v1/wiki`.
+    - Test unitaire headless : `packages/prime-hub/tools/rumor_propagation_selftest.gd` validé à 100%, intégré dans la CI Godot (8/8 tests passants en 10s).
+  * **Ticket 5.1 (Studio 3D — Projection Cognitive des Joueurs IA dans le Cerveau 3D)** :
+    - API Backend événements cognitifs : routes `POST /v1/pilot/world/events` et `GET /v1/pilot/world/events` dans `packages/cortex/backend/api/v1/routes/pilot/status.py`, avec injection d'événements dans le snapshot `GET /v1/pilot/player-ia/runtime`.
+    - Suite de tests unitaires : `packages/cortex/backend/tests/test_pilot_world_events.py` (135/135 tests backend Cortex passants).
+    - Visualisation volumétrique Three.js (`team_brain.js`) : interrogation de la télémétrie des Joueurs IA, projection des micro-décisions vers le pôle *Perception Monde* (`injectInfraSignal("world", ...)`), illumination des anneaux d'action potentials et affichage des pensées synthétiques dans `#brain-activity-feed`.
   * **Ticket 3.1 (O2 Jeu — Mobilier Procédural & Vie Intérieure des Bâtiments CAO)** :
     - Modèle CAO vectoriel enrichi (`FurnitureSpec`, `FloorSpec.furniture`) dans `packages/cortex/services/building_cad/blueprint_model.py` et synchronisé dans `backend/services/building_cad/`.
     - Architecte procédural (`procedural_architect.py`) : ameublement complet de la Cantina « La Perle de Scrapaltai » (comptoir ferraille Jax, tabourets, tables d'alcôve, bureau, couchette, caisse de contrebande) et du Hangar Dépôt Nord (établi soudure lourde, bureau contremaître, racks de stockage).

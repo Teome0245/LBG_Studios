@@ -192,9 +192,9 @@ flowchart TD
 | **1.1** | **O1 Compagnon** | Interaction Vocale Mains-Libres (*Voice-In / STT*) | P2 | **DONE** | M | `Métis` & `dev_studio` |
 | **3.1** | **O2 Jeu** | Mobilier Procédural & Vie Intérieure des Bâtiments CAO | P2 | **DONE** | M | `Hermès` & `Pygmalion` |
 | **1.2** | **O1 Compagnon** | Conscience Contextuelle de l'Espace de Travail (Focus `.10`) | P3 | **DONE** | S | `dev_studio` |
-| **2.2** | **O3 Joueurs IA** | Émergence Sociale : Propagation des Rumeurs Inter-Villages | P3 | À faire | S | `Chœur` & `Iris` |
+| **2.2** | **O3 Joueurs IA** | Émergence Sociale : Propagation des Rumeurs Inter-Villages | P3 | **DONE** | S | `Chœur` & `Iris` |
 | **3.2** | **O2 Jeu** | Météo Dynamique (Tempête de sable & repli) | P3 | **DONE** | M | `Iris` & `Hermès` |
-| **5.1** | **Studio 3D** | Projection Cognitive des Joueurs IA dans le Cerveau 3D | P4 | À faire | S | `Métis` & `dev_studio` |
+| **5.1** | **Studio 3D** | Projection Cognitive des Joueurs IA dans le Cerveau 3D | P4 | **DONE** | S | `Métis` & `dev_studio` |
 
 ---
 

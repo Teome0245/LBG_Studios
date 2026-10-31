@@ -19,6 +19,19 @@ from ._models import LbgIaStatusResponse, OkEnvelope, PilotStatusResponse
 router = APIRouter()
 
 
+class WorldEventPayload(BaseModel):
+    source: str = "prime_hub"
+    bot_name: str | None = None
+    event_type: str = "decision"
+    message: str
+    target_pole: str = "world"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+_world_events: list[dict[str, Any]] = []
+_MAX_WORLD_EVENTS = 50
+
+
 async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
     """
     Lecture seule prime-hub (:8787) — flotte joueurs IA (Nix/Lia/…).
@@ -38,6 +51,7 @@ async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
         "ts": time.time(),
         "planet_display": PLANET_DISPLAY,
         "hub_city": HUB_CITY,
+        "events": list(_world_events[-10:]) if _world_events else [],
     }
     try:
         async with httpx.AsyncClient(timeout=timeout_s) as client:
@@ -135,6 +149,33 @@ async def pilot_player_ia_runtime() -> dict[str, object]:
     """Snapshots joueurs IA Prime (lecture seule) pour le bureau Campus."""
     runtime = await _fetch_player_ia_runtime(timeout_s=2.0)
     return {"ok": True, **runtime}
+
+
+@router.post("/world/events", tags=["pilot"], response_model=OkEnvelope)
+async def post_world_event(event: WorldEventPayload) -> dict[str, object]:
+    """Micro-événement décisionnel ou cognitif du monde (Godot prime-hub, Joueurs IA)."""
+    now = time.time()
+    evt = {
+        "id": f"evt_{int(now * 1000)}",
+        "source": event.source,
+        "bot_name": event.bot_name,
+        "event_type": event.event_type,
+        "message": event.message,
+        "target_pole": event.target_pole,
+        "metadata": event.metadata,
+        "ts": now,
+    }
+    _world_events.append(evt)
+    while len(_world_events) > _MAX_WORLD_EVENTS:
+        _world_events.pop(0)
+    return {"ok": True, "event": evt, "total_events": len(_world_events)}
+
+
+@router.get("/world/events", tags=["pilot"], response_model=OkEnvelope)
+async def get_world_events(limit: int = 15) -> dict[str, object]:
+    """Historique récent des événements cognitifs du monde Lost Heaven."""
+    slice_events = _world_events[-limit:] if _world_events else []
+    return {"ok": True, "events": slice_events, "total_events": len(_world_events)}
 
 @router.get("/ollama/tags", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_ollama_tags() -> dict[str, object]:
