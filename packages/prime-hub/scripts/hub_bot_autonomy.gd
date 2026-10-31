@@ -3,6 +3,7 @@ class_name HubBotAutonomy
 ## Flotte IA : choix quête / explore (anneau LH) / hub + suggestions monde occasionnelles.
 
 const _HubPaths = preload("res://scripts/hub_paths.gd")
+const HubWikiScript = preload("res://scripts/hub_wiki.gd")
 
 ## Fallback si explore_ring_lh.json absent
 const EXPLORE_FALLBACK: Dictionary = {
@@ -308,11 +309,112 @@ func _quest_goal(bot: Dictionary, name: String, persona: Dictionary) -> Dictiona
 func on_arrival(bot: Dictionary) -> void:
 	var qid := str(bot.get("_pending_quest", ""))
 	var sid := str(bot.get("_pending_step", ""))
-	if qid.is_empty() or sid.is_empty() or economy == null:
-		return
-	economy.progress(str(bot.get("name", "")), qid, sid)
-	bot.erase("_pending_quest")
-	bot.erase("_pending_step")
+	if not qid.is_empty() and not sid.is_empty() and economy != null:
+		economy.progress(str(bot.get("name", "")), qid, sid)
+		bot.erase("_pending_quest")
+		bot.erase("_pending_step")
+
+	# Ticket 2.2 — Mémoire de voyage et propagation des rumeurs
+	_update_travel_observations(bot)
+
+
+func _update_travel_observations(bot: Dictionary) -> void:
+	var bpos: Vector3 = bot.get("pos", Vector3.ZERO)
+	var d_zalem := Vector2(bpos.x - OUTPOST_ZALEM_CENTER.x, bpos.z - OUTPOST_ZALEM_CENTER.z).length()
+	var d_ksar := Vector2(bpos.x - OUTPOST_KSAR_CENTER.x, bpos.z - OUTPOST_KSAR_CENTER.z).length()
+	var goal_id := str(bot.get("goal_id", bot.get("goal", "")))
+
+	# Détection de visite d'un avant-poste ou zone distante
+	if d_zalem < 1600.0 or goal_id in ["gate_west", "outpost_zalem", "zalem"]:
+		record_travel_observation(bot, "outpost_zalem")
+	elif d_ksar < 1600.0 or goal_id in ["outpost_ksar", "ksar"]:
+		record_travel_observation(bot, "outpost_ksar")
+	elif bpos.x > 5600.0 or goal_id in ["gate_east", "hunt"]:
+		record_travel_observation(bot, "dunes_east")
+
+	# Détection d'arrivée sur un lieu social du hub central
+	var p_cantina: Vector3 = pois.get("cantina", Vector3(5075.0, 0.15, -835.0))
+	var p_plaza: Vector3 = pois.get("plaza", Vector3(4939.0, 0.15, -932.0))
+	var p_inn: Vector3 = pois.get("inn", Vector3(5120.0, 0.15, -780.0))
+	var is_social_spot := (
+		bpos.distance_to(p_cantina) < 70.0
+		or bpos.distance_to(p_plaza) < 90.0
+		or bpos.distance_to(p_inn) < 70.0
+		or goal_id in ["cantina", "plaza", "inn", "social", "rest"]
+	)
+	if is_social_spot:
+		share_rumor_at_hub(bot)
+
+
+func record_travel_observation(bot: Dictionary, origin: String) -> Dictionary:
+	if not bot.has("travel_memory") or typeof(bot["travel_memory"]) != TYPE_ARRAY:
+		bot["travel_memory"] = []
+	var mem: Array = bot["travel_memory"]
+	# Ne pas empiler plus de 3 souvenirs
+	if mem.size() >= 3:
+		return {}
+	# Éviter de dupliquer la même origine immédiatement
+	for item in mem:
+		if typeof(item) == TYPE_DICTIONARY and str(item.get("origin", "")) == origin:
+			return {}
+
+	var bot_name := str(bot.get("name", "Voyageur"))
+	var obs := _generate_observation(origin, bot_name)
+	mem.append(obs)
+	return obs
+
+
+func share_rumor_at_hub(bot: Dictionary) -> Dictionary:
+	var mem: Array = bot.get("travel_memory", [])
+	if mem.is_empty():
+		return {}
+	var rumor: Dictionary = mem.pop_front()
+	HubWikiScript.add_rumor(rumor)
+	bot["last_rumor_shared"] = Time.get_unix_time_from_system()
+	return rumor
+
+
+func _generate_observation(origin: String, bot_name: String) -> Dictionary:
+	var label := "Zone sauvage"
+	var text := "Rien de particulier à signaler."
+	var topic := "exploration"
+	match origin:
+		"outpost_zalem":
+			label = "Avant-poste Zalem"
+			topic = "zalem"
+			var zalem_facts := [
+				"La milice du Capitaine Vael renforce la surveillance de la passe ouest.",
+				"Soren Kray recherche activement des pièces de carbu à l'atelier de transit.",
+				"Un convoi de minerai sécurisé s'apprête à traverser vers Lost Heaven.",
+			]
+			text = zalem_facts[_rng.randi() % zalem_facts.size()]
+		"outpost_ksar":
+			label = "Ksar Nomade"
+			topic = "ksar"
+			var ksar_facts := [
+				"L'Ancien Nadir signale que l'oasis est paisible et les réserves d'eau stables.",
+				"Miran Sael a préparé de nouveaux baumes contre les piqûres des bêtes des sables.",
+				"Une caravane de marchands nomades fait étape sous les tentes du sud.",
+			]
+			text = ksar_facts[_rng.randi() % ksar_facts.size()]
+		"dunes_east":
+			label = "Dunes de l'Est"
+			topic = "dunes"
+			var dunes_facts := [
+				"Une carcasse de transporteur offre encore de belles plaques de ferraille intactes.",
+				"Des bêtes sauvages ont été aperçues rôdant à distance de la palissade est.",
+				"Les vents d'est soulèvent de fines rafales de poussière abrasive sur l'anneau.",
+			]
+			text = dunes_facts[_rng.randi() % dunes_facts.size()]
+	return {
+		"id": "rumor_%s_%d" % [bot_name.to_lower(), int(Time.get_unix_time_from_system() * 1000.0)],
+		"source_bot": bot_name,
+		"origin": origin,
+		"origin_label": label,
+		"topic": topic,
+		"text": text,
+		"timestamp": Time.get_unix_time_from_system(),
+	}
 
 
 func _pick_quest_id(name: String, persona: Dictionary) -> String:

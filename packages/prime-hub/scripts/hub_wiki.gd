@@ -3,6 +3,43 @@ class_name HubWiki
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 ## C6 — wiki / guide joueur data-driven (PNJ + M10 + POI). Pas de lore inventé.
+## Ticket 2.2 — Rumeurs inter-villages colportées par les Joueurs IA itinérants.
+
+static var _shared_rumors: Array = []
+const MAX_RUMORS: int = 25
+
+
+static func add_rumor(rumor: Dictionary) -> void:
+	if rumor.is_empty():
+		return
+	var entry := rumor.duplicate(true)
+	if not entry.has("timestamp"):
+		entry["timestamp"] = Time.get_unix_time_from_system()
+	if not entry.has("id"):
+		entry["id"] = "rumor_%d" % int(entry["timestamp"] * 1000.0)
+	_shared_rumors.insert(0, entry)
+	while _shared_rumors.size() > MAX_RUMORS:
+		_shared_rumors.pop_back()
+
+
+static func get_rumors(max_count: int = 10) -> Array:
+	if _shared_rumors.is_empty():
+		return []
+	var count := mini(max_count, _shared_rumors.size())
+	return _shared_rumors.slice(0, count)
+
+
+static func get_latest_rumor(origin_filter: String = "") -> Dictionary:
+	for r in _shared_rumors:
+		if typeof(r) != TYPE_DICTIONARY:
+			continue
+		if origin_filter.is_empty() or str(r.get("origin", "")) == origin_filter:
+			return (r as Dictionary).duplicate(true)
+	return {}
+
+
+static func clear_rumors() -> void:
+	_shared_rumors.clear()
 
 
 func snapshot() -> Dictionary:
@@ -11,12 +48,14 @@ func snapshot() -> Dictionary:
 	var professions := _professions()
 	var recipes := _recipes()
 	var guides := _guide_index()
-	var md := _render_markdown(npcs, pois, professions, recipes, guides)
+	var rumors := get_rumors()
+	var md := _render_markdown(npcs, pois, professions, recipes, guides, rumors)
 	var drift := {
 		"npc_count": npcs.size(),
 		"poi_count": pois.size(),
 		"profession_count": professions.size(),
 		"recipe_count": recipes.size(),
+		"rumor_count": rumors.size(),
 		"ok": npcs.size() >= 12 and professions.size() >= 4 and pois.size() >= 6,
 		"rule": "npc>=12 · profession>=4 · poi>=6 (hub Lost Heaven)",
 	}
@@ -31,6 +70,7 @@ func snapshot() -> Dictionary:
 		"professions": professions,
 		"recipes": recipes,
 		"guides": guides,
+		"rumors": rumors,
 		"markdown": md,
 		"drift": drift,
 		"source": "prime_hub",
@@ -171,13 +211,26 @@ func _guide_index() -> Array:
 	return out
 
 
-func _render_markdown(npcs: Array, pois: Array, professions: Array, recipes: Array, guides: Array) -> String:
+func _render_markdown(npcs: Array, pois: Array, professions: Array, recipes: Array, guides: Array, rumors: Array = []) -> String:
 	var lines: PackedStringArray = PackedStringArray()
 	lines.append("# Wiki hub — Lost Heaven")
 	lines.append("")
 	lines.append("**Ticket** : C6 · **Source** : prime-hub (registry + M10 catalog + POI buildings)")
 	lines.append("")
 	lines.append("> Guide joueur data-driven — pas de lore inventé hors inventaire / M10 / POI.")
+	if not rumors.is_empty():
+		lines.append("")
+		lines.append("## Rumeurs & Échos des Caravanes")
+		lines.append("")
+		lines.append("> Faits marquants rapportés par les Joueurs IA itinérants de retour au hub.")
+		lines.append("")
+		for r in rumors:
+			if typeof(r) != TYPE_DICTIONARY:
+				continue
+			var orig := str(r.get("origin_label", r.get("origin", "Région inconnue")))
+			var bot_name := str(r.get("source_bot", "Un voyageur"))
+			var txt := str(r.get("text", ""))
+			lines.append("- **[%s]** *(via %s)* : %s" % [orig, bot_name, txt])
 	lines.append("")
 	lines.append("## PNJ hub")
 	lines.append("")
