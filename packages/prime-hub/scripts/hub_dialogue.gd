@@ -430,6 +430,16 @@ func _pick_reply(
 		if npc_id == "npc:sergent_rue":
 			return "Sergent : %s Porte est, puis pile de ferraille — ne traîne pas." % rumor
 		return "%s : %s" % [npc_name if not npc_name.is_empty() else "PNJ", rumor]
+	# Rumeurs spécifiques par village / destination
+	if ("zalem" in t or "passe" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
+		var tz := _travel_rumor("outpost_zalem")
+		if not tz.is_empty():
+			return "%s : Échos de Zalem (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tz.get("source_bot"), tz.get("text")]
+	if ("ksar" in t or "oasis" in t or "nomade" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
+		var tk := _travel_rumor("outpost_ksar")
+		if not tk.is_empty():
+			return "%s : Échos du Ksar Nomade (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tk.get("source_bot"), tk.get("text")]
+
 	if not tr.is_empty() and npc_id in rumor_npcs and wants_rumor:
 		var orig := str(tr.get("origin_label", tr.get("origin", "l'extérieur")))
 		var sbot := str(tr.get("source_bot", "un voyageur"))
@@ -454,14 +464,6 @@ func _pick_reply(
 			var txt := str(tr.get("text", ""))
 			return "%s Un mot frais de %s via %s : %s" % [greet, orig, sbot, txt]
 		return greet
-	if ("zalem" in t or "passe" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
-		var tz := _travel_rumor("outpost_zalem")
-		if not tz.is_empty():
-			return "%s : Échos de Zalem (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tz.get("source_bot"), tz.get("text")]
-	if ("ksar" in t or "oasis" in t or "nomade" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
-		var tk := _travel_rumor("outpost_ksar")
-		if not tk.is_empty():
-			return "%s : Échos du Ksar Nomade (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tk.get("source_bot"), tk.get("text")]
 	for pair in FALLBACK_REPLIES:
 		if str(pair[0]) in t:
 			return str(pair[1])
