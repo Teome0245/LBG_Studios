@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 from fastapi import APIRouter
+from pydantic import BaseModel, Field
 
 from config import get_settings
 from world_display import HUB_CITY, PLANET_DISPLAY, enrich_bot_zone_fields
