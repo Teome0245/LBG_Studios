@@ -24,7 +24,7 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
 - [x] **Ticket 5.1** : Projection Cognitive des Joueurs IA dans le Cerveau 3D
 
 **Plan d'Évolutions Phase 3 ([`PLAN_EVOLUTIONS_PHASE3.md`](PLAN_EVOLUTIONS_PHASE3.md) — EN COURS D'AMORÇAGE)** :
-- [ ] **Ticket 1.1** (O1) : Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM
+- [x] **Ticket 1.1** (O1) : Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM
 - [x] **Ticket 2.1** (O2) : Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO
 - [x] **Ticket 3.1** (O3) : Coordination Tactique en Binôme (`AgentEnvironmentAdapter`)
 - [ ] **Ticket 2.2** (O2) : Métier Récupérateur : Établis d'Assemblage Mécatronique
@@ -33,6 +33,10 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
 - [ ] **Ticket 5.1** (Studio) : Replay Chronologique & Timeline Synaptique Pilot Web
 
 **2026-10-31** :
+- **Phase 3 Ticket 1.1 — Synthèse Vocale TTS Locale & Visèmes VRM (`packages/cortex/backend`)** :
+  * Création de `packages/cortex/backend/services/tts_service.py` : moteur TTS avec support des voix locales (Kokoro/Piper sur `.111`), fallback déterministe mock/WebSpeech, et générateur de visèmes VRM synchronisés (`aa`, `ih`, `ou`, `ee`, `oh`).
+  * Endpoints REST dans `packages/cortex/backend/api/v1/routes/tts.py` : `/v1/tts/health`, `/v1/tts/voices`, `/v1/tts/synthesize`.
+  * Suite de tests unitaires complète `backend/tests/test_tts.py` (6/6 tests passants).
 - **Volume Temporaire de Sauvegarde Proxmox 300 Go (R720 — `192.168.0.201`)** :
   * **Contexte & Risque** : Panne matérielle du NAS Synology DS1815+ (`192.168.0.51`). Le montage VZDump `/mnt/pve/nas-lun-backup` retombait sur la racine `pve-root` des hyperviseurs, provoquant la saturation de `.200` (NUC) et risquant celle de `.201` (R720).
   * **Solution déployée** :
