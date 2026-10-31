@@ -1616,6 +1616,15 @@ if (!gotLock) {
     loadConfig();
     if (process.platform === "win32") {
       app.setAppUserModelId("lbg.compagnon.desktop");
+      // Synchronisation automatique transparente des assets overlay depuis A: vers C: au demarrage
+      try {
+        const shareOverlay = "A:\\LBG_Studios\\packages\\compagnon-desktop\\overlay";
+        const localOverlay = path.join(__dirname, "overlay");
+        if (fs.existsSync(shareOverlay) && fs.existsSync(localOverlay) && shareOverlay.toLowerCase() !== localOverlay.toLowerCase()) {
+          const { execSync } = require("child_process");
+          execSync(`robocopy "${shareOverlay}" "${localOverlay}" /MIR /NFL /NDL /NJH /NJS /nc /ns /np`, { stdio: "ignore" });
+        }
+      } catch (_) {}
     }
     // Purge partitions Chromium (ancienne + courante) — plus de chips fantômes
     try {
