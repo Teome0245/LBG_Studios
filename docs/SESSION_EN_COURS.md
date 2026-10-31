@@ -40,6 +40,9 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - Mise à jour de `loadVRMA()` dans `vrm_pet.js` : en cas d'absence ou 404 d'un fichier local sur le bureau Windows Electron, chargement automatique via le fallback LAN `http://192.168.0.100:5174/vrm/animations/${targetFile}` — plus aucun freeze ou fallback inerte en T-pose.
     - Neutralisation des artefacts : suppression des rebonds et rotations procédurales parasites (`spinAngle`) lorsque les clips mocap VRMA sont actifs.
     - Extension de `sync_vrm_desktop()` dans `executor.py` pour synchroniser automatiquement l'ensemble des 24 animations `.vrma` vers le bureau Windows.
+    - Élargissement de la CSP dans `overlay/index.html` (`connect-src` autorisant CT100 et le loopback) pour débloquer le chargement réseau des animations sous Electron.
+    - Ajout de l'auto-synchronisation transparente au démarrage de `main.js` (copie automatique de `A:\` vers `C:\Agent_IA\compagnon-desktop` sous Windows).
+    - Création du script en 1 clic `MAJ_COMPAGNON.cmd` à la racine de `A:\LBG_Studios` pour synchroniser et redémarrer l'avatar du bureau immédiatement.
   * **Déploiement live CT100 (`192.168.0.100:5174`) & Tests** :
     - Rebundle esbuild `vrm_pet.bundle.js` (2.2 MB).
     - Déploiement direct via `tools/deploy_to_ct100.sh` dans le conteneur `lbg-frontend` sur CT100 (tous les endpoints HTTP 200 vérifiés).
