@@ -16,6 +16,7 @@ const HubSimAmbientScript = preload("res://scripts/hub_sim_ambient.gd")
 const HubSimDefsScript = preload("res://scripts/hub_sim_defs.gd")
 const HubEscortScript = preload("res://scripts/hub_escort.gd")
 const HubShowScript = preload("res://scripts/hub_show.gd")
+const HubWorldClockScript = preload("res://scripts/hub_world_clock.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -43,6 +44,7 @@ var presence = null
 var ambient = null
 var escort = null
 var show = null
+var world_clock = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -60,12 +62,16 @@ func attach_economy(economy_svc) -> void:
 
 func attach_events(events_svc) -> void:
 	events = events_svc
+	if events != null and world_clock != null and events.has_method("attach_world_clock"):
+		events.attach_world_clock(world_clock)
 	if autonomy != null:
 		autonomy.events = events_svc
 
 
 func attach_world_stream(stream_svc) -> void:
 	world_stream = stream_svc
+	if world_clock != null:
+		world_clock.attach_world_stream(stream_svc)
 
 
 func _stream(kind: String, text: String, actor: String = "", zone: String = "", detail: Dictionary = {}) -> void:
@@ -114,9 +120,18 @@ func reset() -> void:
 	if life == null:
 		life = HubLifeScript.new()
 	life.setup(POIS, collision)
+	if world_clock == null:
+		world_clock = HubWorldClockScript.new()
+	world_clock.setup(10.0, 60.0, Callable(self, "_on_world_clock_announce"))
+	if world_stream != null:
+		world_clock.attach_world_stream(world_stream)
+	if events != null and events.has_method("attach_world_clock"):
+		events.attach_world_clock(world_clock)
 	if autonomy == null:
 		autonomy = HubBotAutonomyScript.new()
 	autonomy.setup(economy, suggest, POIS, events)
+	if autonomy != null and autonomy.has_method("attach_world_clock"):
+		autonomy.attach_world_clock(world_clock)
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	if combat != null:
@@ -694,6 +709,10 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	npc["pos"] = Vector3(nx, pos.y, nz)
 
 
+func _on_world_clock_announce(from_name: String, oid: int, text: String, source: String = "ia") -> void:
+	enqueue_say(from_name, oid, text, source)
+
+
 func step(dt: float) -> void:
 	_ensure_fleet()
 	_ensure_hub_npcs()
@@ -702,6 +721,8 @@ func step(dt: float) -> void:
 		combat.revive_density_beasts()
 	tick += 1
 	dt = clampf(dt, 0.001, 0.25)
+	if world_clock != null:
+		world_clock.tick(dt)
 	if events != null and tick % _life_tick_every == 0 and events.has_method("tick"):
 		events.tick(Time.get_unix_time_from_system())
 	if life != null and tick % _life_tick_every == 0:

@@ -143,6 +143,8 @@ static func zone_state_payload(sim, your_oid: int) -> Dictionary:
 	}
 	if sim != null and "events" in sim and sim.events != null and sim.events.has_method("get_weather_state"):
 		payload["weather"] = sim.events.get_weather_state()
+	if sim != null and "world_clock" in sim and sim.world_clock != null and sim.world_clock.has_method("get_time_state"):
+		payload["world_clock"] = sim.world_clock.get_time_state()
 	var eid := "player:%d" % your_oid
 	if sim != null and sim.entities.has(eid):
 		var p: Vector3 = sim.entities[eid]["pos"]

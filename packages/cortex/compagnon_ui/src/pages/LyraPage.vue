@@ -6,6 +6,9 @@ import ChatHeader from "../components/ChatHeader.vue";
 import LyraGauge from "../components/lyra/LyraGauge.vue";
 import LyraStylePreview from "../components/lyra/LyraStylePreview.vue";
 import LyraHistory from "../components/lyra/LyraHistory.vue";
+import LyraConscience3D from "../components/lyra/LyraConscience3D.vue";
+
+const show3D = ref(true);
 
 const state = reactive({
   gauges: {
@@ -153,11 +156,37 @@ onMounted(() => {
         <div class="max-w-6xl mx-auto space-y-8 animate-slide-up">
           
           <!-- Page Header -->
-          <div class="flex items-end justify-between border-b border-white/5 pb-6">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-white/5 pb-6 gap-4">
             <div>
               <h1 class="text-3xl font-bold font-outfit text-white mb-2">Centre de contrôle Lyra</h1>
               <p class="text-slate-500 text-sm">Ajustez la personnalité et les paramètres cognitifs de l'IA en temps réel.</p>
             </div>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                @click="show3D = !show3D"
+                class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all"
+                :class="show3D ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10' : 'bg-slate-800 text-slate-300 border-white/10 hover:bg-slate-700'"
+              >
+                <span>🧠</span>
+                <span>{{ show3D ? 'Vue Conscience 3D : ON' : 'Activer Vue 3D' }}</span>
+              </button>
+              <router-link
+                to="/brain"
+                class="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/30 hover:bg-blue-500/25 transition-all flex items-center gap-1.5"
+              >
+                <span>Plein écran ↗</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- 3D Conscience Box (si actif) -->
+          <div v-if="show3D" class="h-[420px] rounded-3xl overflow-hidden relative shadow-2xl border border-white/5 animate-fade-in">
+            <LyraConscience3D
+              :gauges="state.gauges"
+              :style-mode="state.style"
+              :interactive="true"
+            />
           </div>
 
           <!-- Dashboard Grid -->

@@ -23,7 +23,49 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
 - [x] **Ticket 2.2** : Émergence Sociale : Propagation des Rumeurs Inter-Villages
 - [x] **Ticket 5.1** : Projection Cognitive des Joueurs IA dans le Cerveau 3D
 
+**Plan d'Évolutions Phase 3 ([`PLAN_EVOLUTIONS_PHASE3.md`](PLAN_EVOLUTIONS_PHASE3.md) — EN COURS D'AMORÇAGE)** :
+- [ ] **Ticket 1.1** (O1) : Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM
+- [x] **Ticket 2.1** (O2) : Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO
+- [x] **Ticket 3.1** (O3) : Coordination Tactique en Binôme (`AgentEnvironmentAdapter`)
+- [ ] **Ticket 2.2** (O2) : Métier Récupérateur : Établis d'Assemblage Mécatronique
+- [ ] **Ticket 3.2** (O3) : Économie de Troc P2P & Négociations d'Échanges
+- [ ] **Ticket 1.2** (O1) : Vision Contextuelle Ponctuelle sur Demande (OCR / VLM)
+- [ ] **Ticket 5.1** (Studio) : Replay Chronologique & Timeline Synaptique Pilot Web
+
 **2026-10-31** :
+- **Volume Temporaire de Sauvegarde Proxmox 300 Go (R720 — `192.168.0.201`)** :
+  * **Contexte & Risque** : Panne matérielle du NAS Synology DS1815+ (`192.168.0.51`). Le montage VZDump `/mnt/pve/nas-lun-backup` retombait sur la racine `pve-root` des hyperviseurs, provoquant la saturation de `.200` (NUC) et risquant celle de `.201` (R720).
+  * **Solution déployée** :
+    - Allocation d'un LV Thin de 300 Go `/dev/pve/backup_temp` dans le thin-pool `pve/data` de `lbgr720` (ext4, label `BACKUP_TEMP`).
+    - Montage système persistant sur `/mnt/backup-temp` (inscrit dans `/etc/fstab`, 292 Go disponibles réels).
+    - Déclaration dans le cluster Proxmox (`pvesm add dir backup-temp --path /mnt/backup-temp --content backup --nodes lbgr720`).
+    - Statut vérifié : `backup-temp` actif et opérationnel pour recevoir les sauvegardes de machines sans toucher au disque système.
+  * **Nettoyage préventif `.200`** : Suppression de l'archive orpheline du CT 111 (28 Go), racine stabilisée à 41% (38 Go libres).
+- **Phase 3 Ticket 2.1 — Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO (`prime-hub` & `prime-client`)** :
+  * Création de `packages/prime-hub/scripts/hub_world_clock.gd` : gestionnaire d'horloge circadienne (24 min réelles = 24h jeu, 4 phases : aube, zénith, crépuscule, nuit profonde).
+  * Intégration dans `hub_events.gd` et `hub_sim_views.gd` (diffusion de `world_time`, `day_phase` et `sun_intensity`).
+  * Interaction gameplay : allumage automatique des lanternes nocturnes sur les bâtiments CAO (`hub_buildings_layer.gd`), et amplification du rayon d'agressivité des prédateurs nocturnes (+60% de nuit).
+  * Self-test unitaire headless : `packages/prime-hub/tools/day_night_selftest.gd` validé en CI.
+- **Phase 3 Ticket 3.1 — Coordination Tactique en Binôme & Escorte Coopérative (`prime-hub`)** :
+  * Extension du contrat `AgentEnvironmentAdapter` et de `GodotHubAdapter` : actions de groupe (`FORMATION_FOLLOW`, `COVER_TARGET`, `TACTICAL_RETREAT`).
+  * Logique de binôme dans `hub_bot_autonomy.gd` : formation dynamique de paires (leader / escort), suivi spatial avec maintien de distance tactique et riposte coordonnée face aux menaces.
+  * Self-test unitaire headless : `packages/prime-hub/tools/tactical_escort_selftest.gd` validé en CI.
+- **Intégration Visualisation Cerveau 3D & Conscience Synaptique (Pilot Web & Compagnon Lyra)** :
+  * **Étape 1 — Interactions Avancées Cerveau 3D Pilot Web (`packages/cortex/pilot_web`)** :
+    - `brain_3d.js` : implémentation de `tempFocusPole(poleKey, durationSec)` pour zoom cinématique fluide temporaire avec retour automatique à l'orbite 360°, fonction `resetView()` et signal infra enrichi.
+    - `team_brain.js` : détection fine des transitions d'état (`detectStateChanges`) réagissant aux reconnexions des VMs (140, Orchestrateur, Godot Hub `.246`) et à l'activité des agents (`busy`, `review`), clics interactifs sur chaque ligne du flux d'activité déclenchant focus et pulsation, table contextuelle `POLE_ACTIONS` avec boutons d'actions directes vers le Studio (`#brain-pole-action-btn`, `#brain-pole-pulse-btn`), et bascule Auto-focus (`#brain-btn-autofocus`).
+    - Build Vite validé (`dist/`) et déployé sur la VM 140 (`http://192.168.0.140:8080/`, HTTP 200).
+  * **Étape 2 — Visualisation de Conscience 3D pour Lyra (`compagnon_ui` & `compagnon-desktop`)** :
+    - Composant `LyraConscience3D.vue` : sphère/tore knot de conscience holographique Three.js réactif en temps réel aux 4 piliers cognitifs de Lyra (`chaleur`, `energie`, `patience`, `confiance` depuis `/lyra/state`). Couleur du cœur modulée par la Chaleur (bleu froid -> cyan -> ambre doré), vitesse d'onde/rotation pilotée par l'Énergie, stabilité par la Patience, densité du halo externe par la Confiance. Toolbar interactive (orbite 360°, recentrage, pulsion synaptique, focus cinématique par pôle).
+    - Page dédiée `BrainConsciencePage.vue` (`/brain`) : grand écran immersif avec réglage interactif des jauges en temps réel, presets express (Chaleureuse, Créative, Neutre, Concise) et flux cognitif.
+    - Intégration dans `NavRail.vue` (icône d'accès direct 🧠) et dans `LyraPage.vue` (vue 3D commutable en direct).
+    - Intégration bureau `compagnon-desktop` (`main.js`) : raccourci « 🧠 Conscience 3D de Lyra » dans le menu Tray ouvrant l'interface.
+- **Lancement Phase 3 d'Évolutions ([`PLAN_EVOLUTIONS_PHASE3.md`](PLAN_EVOLUTIONS_PHASE3.md)) & Déploiement Validé des Surfaces LAN** :
+  * **Surfaces LAN & Runtime Live** :
+    - Déploiement overlay CT100 (`192.168.0.100:5174`, API `:3000`) et assets VRMA complets (`tools/deploy_to_ct100.sh` et `deploy_compagnon_100.sh --smoke`).
+    - Redémarrage et synchronisation de `prime-hub` sur `.246:8787` (`deploy_prime_hub_246.sh`). 10 bots, 24 PNJ, 7 bêtes, météo et rumeurs live.
+    - Audit global LAN : 18/18 surfaces opérationnelles (`smoke_lan_surfaces.sh --quick`).
+  * **Formalisation du Plan Phase 3** : 7 tickets structurés et chiffrés articulant TTS/visèmes VRM, cycle jour/nuit circadien, escorte tactique IA, établis de craft, troc P2P et timeline Cerveau 3D.
 - **Formalisation ADR 0029 — Doctrine Anti-Recodage Global (Rust & Hype vs Pragmatisme Produit)** :
   * **Décision architecturale** : refus catégorique du piège du « Big Bang Rewrite » en Rust.
   * **Répartition des rôles** : Python (cerveau/orchestration O1), Godot 4 (corps/espace/physique/client O2), Rust (scalpel réservé aux optimisations chirurgicales isolées sur preuve de benchmark, ex. GDExtension ou relay binaire).

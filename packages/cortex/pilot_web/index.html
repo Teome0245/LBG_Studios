@@ -1235,6 +1235,8 @@
     <div class="brain-toolbar">
       <button type="button" class="brain-btn brain-btn--pulse" id="brain-btn-pulse" title="Envoyer une onde de stimulation synaptique">⚡ Impulsion synaptique</button>
       <button type="button" class="brain-btn brain-btn--surge" id="brain-btn-surge" title="Déclencher une hyper-activité synaptique (Surge x3.2)">🔥 Surcharge Cognitive</button>
+      <button type="button" class="brain-btn" id="brain-btn-autofocus" title="Activer le zoom automatique de caméra lors d'un événement infra">🎯 Auto-focus : OFF</button>
+      <button type="button" class="brain-btn" id="brain-btn-reset-view" title="Recentrer la caméra en vue globale 360°">👁️ Recentrer</button>
       <button type="button" class="brain-btn brain-filter-btn is-active" data-filter="all" title="Vue globale des deux hémisphères">Vue globale</button>
       <button type="button" class="brain-btn brain-filter-btn" data-filter="analytical" title="Focus Hémisphère gauche (Logique, Fleet &amp; Simulation)">Hémisphère Analytique</button>
       <button type="button" class="brain-btn brain-filter-btn" data-filter="emotional" title="Focus Hémisphère droit (RAG Philo, Limbique &amp; Compagnon)">Hémisphère RAG &amp; Humeur</button>
@@ -1340,9 +1342,14 @@
             <span id="brain-side-pole-title">⚡ Cortex Frontal</span>
             <span style="font-size:0.7rem; color:#38bdf8;" id="brain-side-pole-tag">Orchestrateur &amp; Intent</span>
           </div>
-          <p id="brain-side-pole-desc" style="font-size:0.78rem; color:#cbd5e1; line-height:1.4; margin:0 0 0.75rem 0;">
+          <p id="brain-side-pole-desc" style="font-size:0.78rem; color:#cbd5e1; line-height:1.4; margin:0 0 0.5rem 0;">
             Centre décisionnel et planification des intentions Studio (POST /v1/pilot/route).
           </p>
+
+          <div class="brain-pole-actions" style="display:flex; gap:0.4rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+            <button type="button" class="brain-btn" id="brain-pole-action-btn" style="flex:1; background:rgba(0,245,212,0.15); border-color:#00f5d4; color:#00f5d4;">🚀 Assistant Studio</button>
+            <button type="button" class="brain-btn brain-btn--pulse" id="brain-pole-pulse-btn" title="Envoyer une décharge sur ce pôle">⚡ Stimuler</button>
+          </div>
 
           <div class="brain-poles-list">
             <div class="brain-pole-item is-selected" data-pole="cortex">
@@ -1726,6 +1733,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20261027-brain3d-v3"></script>
+  <script type="module" src="src/main.js?v=20261031-brain3d-v5"></script>
 </body>
 </html>

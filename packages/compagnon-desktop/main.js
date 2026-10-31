@@ -855,6 +855,10 @@ async function rebuildTrayMenu() {
   const menu = Menu.buildFromTemplate([
     { label: "Ouvrir Compagnon", click: () => showChat() },
     { label: "Afficher / masquer chat", click: () => toggleChat() },
+    {
+      label: "🧠 Conscience 3D de Lyra",
+      click: () => shell.openExternal(compagnonUrl() + "brain"),
+    },
     { type: "separator" },
     { label: "Avatar (overlay)", click: () => toggleOverlay() },
     {

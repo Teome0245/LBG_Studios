@@ -69,6 +69,8 @@
   // Caméra lerp focus
   let _targetLookAt = { x: 0, y: 0, z: 0 };
   let _currentLookAt = { x: 0, y: 0, z: 0 };
+  let _tempFocusTimer = 0;
+  let _isTempFocused = false;
 
   // Dynamique cérébrale & Activité
   let _activityLevel = 1.0; // 1.0 = nominal, 2.5 = surge, 0.4 = veille
@@ -568,6 +570,22 @@
       if (_surgeTimer <= 0) _activityLevel = 1.0;
     }
 
+    // Décroissance douce du focus temporaire
+    if (_isTempFocused && _tempFocusTimer > 0) {
+      _tempFocusTimer -= 0.016;
+      if (_tempFocusTimer <= 0) {
+        _isTempFocused = false;
+        _targetLookAt.x = 0;
+        _targetLookAt.y = 0;
+        _targetLookAt.z = 0;
+        _targetCameraDist = 5.6;
+        _autoRotate = true;
+        if (_selectedPoleKey && _polesMap.has(_selectedPoleKey)) {
+          _polesMap.get(_selectedPoleKey).baseScale = 1.0;
+        }
+      }
+    }
+
     // Rotation automatique douce
     if (_autoRotate && (Date.now() - _lastInteractionTs > 2800)) {
       _targetRot.y += 0.0035 * _activityLevel;
@@ -801,7 +819,7 @@
   }
 
   /**
-   * Sélectionne et focalise un Pôle
+   * Sélectionne et focalise un Pôle de façon persistante
    */
   function selectPole(poleKey) {
     const pole = _polesMap.get(poleKey);
@@ -812,18 +830,68 @@
     }
 
     _selectedPoleKey = poleKey;
+    _isTempFocused = false;
+    _tempFocusTimer = 0;
     pole.baseScale = 1.45;
     triggerPulse(poleKey);
 
     const pos = pole.def.pos;
-    _targetLookAt.x = pos[0] * 0.5;
-    _targetLookAt.y = pos[1] * 0.5;
-    _targetLookAt.z = pos[2] * 0.5;
+    _targetLookAt.x = pos[0] * 0.45;
+    _targetLookAt.y = pos[1] * 0.45;
+    _targetLookAt.z = pos[2] * 0.45;
     _targetCameraDist = 4.2;
 
     if (typeof _onSelectPole === "function") {
       _onSelectPole(pole.def);
     }
+  }
+
+  /**
+   * Focalise temporairement un Pôle lors d'un événement infra puis revient en vue globale
+   */
+  function tempFocusPole(poleKey, durationSec = 3.5) {
+    const pole = _polesMap.get(poleKey);
+    if (!pole) return;
+
+    if (_selectedPoleKey && _polesMap.has(_selectedPoleKey) && _selectedPoleKey !== poleKey) {
+      _polesMap.get(_selectedPoleKey).baseScale = 1.0;
+    }
+
+    _selectedPoleKey = poleKey;
+    pole.baseScale = 1.45;
+    triggerPulse(poleKey);
+
+    const pos = pole.def.pos;
+    _targetLookAt.x = pos[0] * 0.45;
+    _targetLookAt.y = pos[1] * 0.45;
+    _targetLookAt.z = pos[2] * 0.45;
+    _targetCameraDist = 4.2;
+    _autoRotate = false;
+    _lastInteractionTs = Date.now();
+
+    _tempFocusTimer = durationSec;
+    _isTempFocused = true;
+
+    if (typeof _onSelectPole === "function") {
+      _onSelectPole(pole.def);
+    }
+  }
+
+  /**
+   * Recentrer la vue globale
+   */
+  function resetView() {
+    if (_selectedPoleKey && _polesMap.has(_selectedPoleKey)) {
+      _polesMap.get(_selectedPoleKey).baseScale = 1.0;
+      _selectedPoleKey = null;
+    }
+    _isTempFocused = false;
+    _tempFocusTimer = 0;
+    _targetLookAt = { x: 0, y: 0, z: 0 };
+    _targetCameraDist = 5.6;
+    _targetRot = { x: 0.15, y: -0.4 };
+    _autoRotate = true;
+    _lastInteractionTs = Date.now();
   }
 
   /**
@@ -870,8 +938,9 @@
    * Injection d'un signal d'activité réel depuis l'infrastructure
    * @param {string} poleKey - clé du pôle concerné (cortex, hippo, world, fleet, limbic, lyra)
    * @param {string} [label] - description de l'événement (pour télémétrie)
+   * @param {boolean} [autoFocus] - déclenche un focus caméra temporaire vers le pôle
    */
-  function injectInfraSignal(poleKey, label) {
+  function injectInfraSignal(poleKey, label, autoFocus = false) {
     if (!poleKey || !_polesMap.has(poleKey)) return;
 
     // Déclencher le boost du pôle (halo x2, anneaux accélérés)
@@ -881,6 +950,10 @@
     _activityLevel = Math.min(2.8, _activityLevel + 0.35);
     _surgeTimer = Math.max(_surgeTimer, 1.5);
     _eegHz = Math.min(58, _eegHz + 1.8);
+
+    if (autoFocus) {
+      tempFocusPole(poleKey, 3.5);
+    }
 
     // Faire converger une gerbe d'influx synaptiques depuis ce pôle
     const pole = _polesMap.get(poleKey);
@@ -1043,6 +1116,8 @@
     triggerSurge,
     injectInfraSignal,
     focusPole: selectPole,
+    tempFocusPole,
+    resetView,
     setFilter,
     isRunning: () => _running,
     POLES,

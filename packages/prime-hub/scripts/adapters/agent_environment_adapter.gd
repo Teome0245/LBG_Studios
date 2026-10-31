@@ -12,6 +12,9 @@ const ACTION_TYPE_INTERACT := "INTERACT_POI"
 const ACTION_TYPE_TRADE := "TRADE"
 const ACTION_TYPE_CRAFT := "CRAFT"
 const ACTION_TYPE_IDLE := "IDLE"
+const ACTION_TYPE_FORMATION_FOLLOW := "FORMATION_FOLLOW"
+const ACTION_TYPE_COVER_TARGET := "COVER_TARGET"
+const ACTION_TYPE_TACTICAL_RETREAT := "TACTICAL_RETREAT"
 
 ## Émetteur d'événements observables par les agents
 signal observation_updated(bot_id: String, observation: Dictionary)
@@ -57,7 +60,8 @@ static func make_observation(
 	nearby_pois: Array = [],
 	active_events: Array = [],
 	dials: Dictionary = {},
-	inventory: Array = []
+	inventory: Array = [],
+	team_context: Dictionary = {}
 ) -> Dictionary:
 	return {
 		"agent_id": bot_id,
@@ -71,6 +75,7 @@ static func make_observation(
 		"active_events": active_events,
 		"presence_dials": dials,
 		"inventory": inventory,
+		"team_context": team_context,
 		"timestamp": Time.get_unix_time_from_system()
 	}
 

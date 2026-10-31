@@ -406,6 +406,16 @@
   border-radius: 0 4px 4px 0;
   font-size: 0.72rem;
   animation: feedSlideIn 0.25s ease-out;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.brain-feed-item:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-left-color: #00f5d4;
+  border-left-width: 4px;
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes feedSlideIn {

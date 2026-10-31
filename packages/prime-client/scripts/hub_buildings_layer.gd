@@ -12,6 +12,15 @@ const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 
 var _buildings: Array = []
 var _blueprint_cache: Dictionary = {}
+var world_clock_data: Dictionary = {}
+var night_lanterns_active: bool = false
+
+func set_world_clock(wc: Dictionary) -> void:
+	world_clock_data = wc
+	var prev_lanterns := night_lanterns_active
+	night_lanterns_active = bool(wc.get("night_lanterns_active", false))
+	if prev_lanterns != night_lanterns_active:
+		queue_redraw()
 
 func _ready() -> void:
 	var mul := float(MapTextureLoader.world_render_cfg().get("building_size_multiplier", size_multiplier))
@@ -152,6 +161,13 @@ func _draw_door(b: Dictionary, cx: float, cz: float, size_m: float, fill: Color)
 		(apron_min_z + apron_max_z) * 0.5
 	))
 	draw_circle(mid, 2.4, Color(1.0, 0.9, 0.55, 0.9))
+	if night_lanterns_active:
+		var lp1 := Projection3D2D.to_screen(Vector3(apron_min_x, 0.0, apron_min_z if face in ["north", "south"] else min_z))
+		var lp2 := Projection3D2D.to_screen(Vector3(apron_max_x, 0.0, apron_max_z if face in ["north", "south"] else max_z))
+		draw_circle(lp1, 7.5, Color(1.0, 0.65, 0.20, 0.28))
+		draw_circle(lp1, 2.5, Color(1.0, 0.92, 0.55, 0.95))
+		draw_circle(lp2, 7.5, Color(1.0, 0.65, 0.20, 0.28))
+		draw_circle(lp2, 2.5, Color(1.0, 0.92, 0.55, 0.95))
 	# Coupe visuelle du mur sur la face porte (trait sombre = ouverture)
 	match face:
 		"north":

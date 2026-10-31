@@ -63,6 +63,15 @@ function onNew() {
     </router-link>
 
     <router-link
+      to="/brain"
+      class="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-emerald-400"
+      active-class="!text-emerald-400 bg-emerald-500/10"
+      title="Conscience 3D de Lyra"
+    >
+      <span class="text-base select-none">🧠</span>
+    </router-link>
+
+    <router-link
       to="/agents/map"
       class="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-violet-300"
       active-class="!text-violet-300 bg-violet-500/10"

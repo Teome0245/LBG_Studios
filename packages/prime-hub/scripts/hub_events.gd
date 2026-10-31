@@ -12,6 +12,7 @@ var ends_at: float = 0.0
 var cooldown_until: float = 0.0
 var _on_announce: Callable = Callable()
 var world_stream = null
+var world_clock = null
 
 var weather_phase: String = "calm"  # "calm", "warning", "storm", "clearing"
 var weather_intensity: float = 0.0  # 0.0 à 1.0
@@ -23,6 +24,10 @@ var _weather_cfg: Dictionary = {}
 
 func attach_world_stream(stream_svc) -> void:
 	world_stream = stream_svc
+
+
+func attach_world_clock(clock_svc) -> void:
+	world_clock = clock_svc
 
 
 func _stream(kind: String, text: String, actor: String = "", zone: String = "", detail: Dictionary = {}) -> void:
@@ -175,6 +180,7 @@ func snapshot() -> Dictionary:
 		"board_quest_id": str(active.get("board_quest_id", "")),
 		"rumor_hint": rumor_hint(),
 		"weather": get_weather_state(),
+		"world_clock": world_clock.get_time_state() if (world_clock != null and world_clock.has_method("get_time_state")) else {},
 		"source": "prime_hub",
 	}
 

@@ -181,6 +181,8 @@ func step_beast(beast: Dictionary, dt: float) -> void:
 	var home_x := float(beast.get("home_x", pos.x))
 	var home_z := float(beast.get("home_z", pos.z))
 	var aggro_r := float(beast.get("aggro_r", 28.0))
+	if sim != null and "world_clock" in sim and sim.world_clock != null and sim.world_clock.has_method("get_beast_aggro_mult"):
+		aggro_r *= float(sim.world_clock.get_beast_aggro_mult())
 	var leash_r := float(beast.get("leash_r", 45.0))
 	var telegraph_s := float(beast.get("telegraph_s", 0.0))
 	var from_home := Vector2(pos.x - home_x, pos.z - home_z).length()

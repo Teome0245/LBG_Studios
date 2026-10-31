@@ -23,6 +23,7 @@ var economy = null
 var suggest = null
 var pois: Dictionary = {}
 var events = null
+var world_clock = null
 var explore: Dictionary = {}
 var ring_center: Vector3 = RING_CENTER_FALLBACK
 var ring_radius_m: float = RING_RADIUS_FALLBACK
@@ -39,6 +40,10 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> 
 	events = events_svc
 	_rng.randomize()
 	_load_explore_ring()
+
+
+func attach_world_clock(clock_svc) -> void:
+	world_clock = clock_svc
 	personas.clear()
 	# Source primaire : ai_players.json (personas inline) ; fallback bot_personas.json
 	var fleet: Variant = _HubPaths.read_json(_HubPaths.data_file("life/ai_players.json"))
@@ -141,12 +146,25 @@ func assign_goal(bot: Dictionary, prefer: Array = []) -> Dictionary:
 
 	var roll := _rng.randf()
 	var out: Dictionary
-	if roll < 0.45 and economy != null:
-		out = _quest_goal(bot, name, persona)
-	elif roll < 0.70:
-		out = _explore_goal(bot, persona)
+	var is_night_time: bool = false
+	if world_clock != null and world_clock.has_method("is_night_time"):
+		is_night_time = bool(world_clock.is_night_time())
+
+	if is_night_time:
+		# De nuit : préférence marquée pour rester sous les lanternes et abris du Hub
+		if roll < 0.20 and economy != null:
+			out = _quest_goal(bot, name, persona)
+		elif roll < 0.35:
+			out = _explore_goal(bot, persona)
+		else:
+			out = _hub_goal(bot, prefer, persona)
 	else:
-		out = _hub_goal(bot, prefer, persona)
+		if roll < 0.45 and economy != null:
+			out = _quest_goal(bot, name, persona)
+		elif roll < 0.70:
+			out = _explore_goal(bot, persona)
+		else:
+			out = _hub_goal(bot, prefer, persona)
 	# Objectifs persona (méta, pas annoncé chat)
 	bot["obj_short"] = str(persona.get("short", out.get("goal_label", "")))
 	bot["obj_medium"] = str(persona.get("medium", ""))

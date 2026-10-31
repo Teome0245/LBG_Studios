@@ -14,8 +14,12 @@ let _lastBrainData = null;
 let _lastPilotStatus = null;
 let _lastFleet = null;
 let _lastPlayerIa = null;
+let _prevPilotStatus = null;
+let _prevFleet = null;
 let _lastProcessedWorldEvtId = "";
 let _cycleCount = 0;
+let _autoFocusEvents = false;
+let _currentSelectedPole = "cortex";
 
 // Historique glissant des signaux synaptiques réels de l'infra
 const MAX_SIGNALS = 8;
@@ -117,9 +121,10 @@ function addSignal(poleKey, tag, text, level = "normal") {
 
   renderSignals();
 
-  // Déclencher le flash synaptique 3D dans le cerveau
+  // Déclencher le flash synaptique 3D dans le cerveau (avec auto-focus si activé)
   if (window.LbgBrain3d && typeof window.LbgBrain3d.injectInfraSignal === "function") {
-    window.LbgBrain3d.injectInfraSignal(poleKey, text);
+    const shouldFocus = _autoFocusEvents && (level === "boost" || level === "surge");
+    window.LbgBrain3d.injectInfraSignal(poleKey, text, shouldFocus);
   }
 }
 
@@ -135,7 +140,7 @@ function renderSignals() {
   feedEl.innerHTML = _signals
     .map(
       (s) => `
-      <div class="brain-feed-item level-${s.level}" data-pole="${s.poleKey}">
+      <div class="brain-feed-item level-${s.level}" data-pole="${s.poleKey}" title="Cliquer pour focaliser ${s.tag}">
         <span class="brain-feed-time">${s.time}</span>
         <span class="brain-feed-icon">${s.icon}</span>
         <span class="brain-feed-tag">${s.tag}</span>
@@ -144,6 +149,16 @@ function renderSignals() {
     `
     )
     .join("");
+
+  feedEl.querySelectorAll(".brain-feed-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      const pKey = item.getAttribute("data-pole");
+      if (pKey && window.LbgBrain3d) {
+        window.LbgBrain3d.focusPole(pKey);
+        window.LbgBrain3d.triggerPulse(pKey);
+      }
+    });
+  });
 }
 
 function updateUi(brainData, pilotStatus, fleetData, playerIaData) {
@@ -239,9 +254,40 @@ function updateUi(brainData, pilotStatus, fleetData, playerIaData) {
 }
 
 /**
- * Traduit les états réels de l'infra en impulsions cérébrales
+ * Traduit les états réels de l'infra en impulsions cérébrales et détecte les transitions
  */
+function detectStateChanges(pilotStatus, fleetData) {
+  if (_prevPilotStatus && pilotStatus) {
+    if (_prevPilotStatus.backend !== pilotStatus.backend && pilotStatus.backend === "ok") {
+      addSignal("cortex", "Cortex Frontal", "Backend VM 140 rétabli", "boost");
+    }
+    if (_prevPilotStatus.orchestrator !== pilotStatus.orchestrator && pilotStatus.orchestrator === "ok") {
+      addSignal("cortex", "Cortex Frontal", "Orchestrateur .100:8010 opérationnel", "boost");
+    }
+    if (_prevPilotStatus.mmo_server !== pilotStatus.mmo_server && (pilotStatus.mmo_server === "ok" || pilotStatus.mmo_server === "online")) {
+      addSignal("world", "Perception Monde", "Hub Godot .246 reconnecté à l'infrastructure", "boost");
+    }
+  }
+
+  if (_prevFleet && _prevFleet.fleet && fleetData && fleetData.fleet) {
+    for (const [agentKey, agent] of Object.entries(fleetData.fleet)) {
+      const prevAgent = _prevFleet.fleet[agentKey];
+      if (prevAgent && prevAgent.status !== agent.status) {
+        if (agent.status === "busy") {
+          addSignal("fleet", "Noyau Campus", `Agent [${agentKey}] : tâche démarrée (« ${agent.action || 'traitement'} »)`, "surge");
+        } else if (agent.status === "review") {
+          addSignal("fleet", "Noyau Campus", `Agent [${agentKey}] : validation requise`, "boost");
+        }
+      }
+    }
+  }
+
+  _prevPilotStatus = pilotStatus ? { ...pilotStatus } : null;
+  _prevFleet = fleetData ? JSON.parse(JSON.stringify(fleetData)) : null;
+}
+
 function dispatchInfraSignals(brainData, pilotStatus, fleetData, playerIaData) {
+  detectStateChanges(pilotStatus, fleetData);
   // 1. Cortex Frontal (Orchestrateur & Backend)
   if (pilotStatus && pilotStatus.backend === "ok") {
     if (_cycleCount % 3 === 0) {
@@ -304,7 +350,48 @@ function setGauge(name, val) {
   if (bar) bar.style.width = Math.max(0, Math.min(100, val)) + "%";
 }
 
+const POLE_ACTIONS = {
+  cortex: {
+    label: "🚀 Assistant Studio",
+    handler: () => { location.hash = "#/assistant"; },
+  },
+  limbic: {
+    label: "💖 Équilibrer l'Homéostasie",
+    handler: () => {
+      toggleBrainState(true);
+      if (window.LbgBrain3d) window.LbgBrain3d.triggerPulse("limbic");
+      addSignal("limbic", "Système Limbique", "Homéostasie recalibrée (stress apaisé)", "boost");
+    },
+  },
+  hippo: {
+    label: "📚 Explorer Mémoire & LLM",
+    handler: () => { location.hash = "#/providers"; },
+  },
+  fleet: {
+    label: "🤖 Bureau des 7 Agents",
+    handler: () => { location.hash = "#/team/office"; },
+  },
+  world: {
+    label: "🌐 Santé Ops & Godot Hub",
+    handler: () => { location.hash = "#/ops"; },
+  },
+  lyra: {
+    label: "💬 Compagnon Lyra 5174",
+    handler: () => { window.open("http://192.168.0.100:5174/", "_blank"); },
+  },
+};
+
+function updatePoleActions(poleKey) {
+  _currentSelectedPole = poleKey || "cortex";
+  const btn = document.getElementById("brain-pole-action-btn");
+  if (!btn) return;
+  const act = POLE_ACTIONS[_currentSelectedPole] || POLE_ACTIONS.cortex;
+  btn.textContent = act.label;
+  btn.onclick = act.handler;
+}
+
 function renderPoleDetail(def) {
+  _currentSelectedPole = def.key;
   const title = document.getElementById("brain-side-pole-title");
   const desc = document.getElementById("brain-side-pole-desc");
   const tag = document.getElementById("brain-side-pole-tag");
@@ -316,11 +403,44 @@ function renderPoleDetail(def) {
   document.querySelectorAll(".brain-pole-item").forEach((el) => {
     el.classList.toggle("is-selected", el.getAttribute("data-pole") === def.key);
   });
+
+  updatePoleActions(def.key);
 }
 
 function bindButtons() {
   if (_bound) return;
   _bound = true;
+
+  // Auto-focus événements toggle
+  const autoFocusBtn = document.getElementById("brain-btn-autofocus");
+  if (autoFocusBtn) {
+    autoFocusBtn.addEventListener("click", () => {
+      _autoFocusEvents = !_autoFocusEvents;
+      autoFocusBtn.textContent = _autoFocusEvents ? "🎯 Auto-focus : ON" : "🎯 Auto-focus : OFF";
+      autoFocusBtn.classList.toggle("is-active", _autoFocusEvents);
+    });
+  }
+
+  // Recentrer la caméra
+  const resetBtn = document.getElementById("brain-btn-reset-view");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (window.LbgBrain3d && typeof window.LbgBrain3d.resetView === "function") {
+        window.LbgBrain3d.resetView();
+      }
+    });
+  }
+
+  // Décharge ciblée sur le pôle actif
+  const polePulseBtn = document.getElementById("brain-pole-pulse-btn");
+  if (polePulseBtn) {
+    polePulseBtn.addEventListener("click", () => {
+      if (window.LbgBrain3d) window.LbgBrain3d.triggerPulse(_currentSelectedPole);
+    });
+  }
+
+  // Initialisation du bouton d'action contextuelle du pôle
+  updatePoleActions(_currentSelectedPole);
 
   // Impulsion synaptique manuelle
   const pulseBtn = document.getElementById("brain-btn-pulse");

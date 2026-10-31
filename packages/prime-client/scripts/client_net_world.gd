@@ -342,6 +342,13 @@ func on_ws_zone_state(payload: Dictionary) -> void:
 	if payload.has("online_players") and payload.get("online_players") is Array:
 		main._online_players = payload.get("online_players")
 		main._refresh_connection_hud()
+	if payload.has("world_clock") and payload.get("world_clock") is Dictionary:
+		var wc: Dictionary = payload.get("world_clock")
+		var wm_clock: Node = main.get_node_or_null("WorldMap")
+		if wm_clock:
+			var bl_clock: Node = wm_clock.get_node_or_null("HubBuildingsLayer")
+			if bl_clock and bl_clock.has_method("set_world_clock"):
+				bl_clock.set_world_clock(wc)
 	var zone := str(payload.get("zone", payload.get("map", main._planet_name)))
 	if zone != "":
 		var z_norm := zone.to_lower()

@@ -10,6 +10,24 @@ var economy = null
 var pois: Dictionary = {}
 var dials: Dictionary = {}
 var perception_radius: float = 60.0
+var partner_pairs: Dictionary = {
+	"nix": "lia",
+	"lia": "nix",
+	"mira": "jax",
+	"jax": "mira",
+	"soren": "vael",
+	"vael": "soren"
+}
+
+
+func register_partner_pair(bot_a: String, bot_b: String) -> void:
+	partner_pairs[bot_a.to_lower()] = bot_b.to_lower()
+	partner_pairs[bot_b.to_lower()] = bot_a.to_lower()
+
+
+func get_partner_id(bot_id: String) -> String:
+	var clean := bot_id.replace("player:", "").to_lower()
+	return str(partner_pairs.get(clean, ""))
 
 
 func setup(sim_node, economy_svc = null, pois_map: Dictionary = {}, dials_map: Dictionary = {}, p_radius: float = 60.0) -> void:
@@ -95,6 +113,36 @@ func get_observation(bot_id: String) -> Dictionary:
 	# 5. Dials de présence persona
 	var bot_dials: Dictionary = dials.get(bot_name, {})
 
+	# 6. Contexte d'équipe & partenaire d'escorte
+	var team_context: Dictionary = {}
+	var partner_id := get_partner_id(bot_name)
+	if not partner_id.is_empty():
+		var p_ent := _resolve_entity(partner_id)
+		if not p_ent.is_empty():
+			var p_pos: Vector3 = p_ent.get("pos", Vector3.ZERO)
+			var p_dist := pos.distance_to(p_pos)
+			var p_eid := str(p_ent.get("eid", ""))
+			var threatened := false
+			var threat_key := ""
+			if sim != null and sim.entities is Dictionary:
+				for eid in sim.entities.keys():
+					var other: Dictionary = sim.entities[eid]
+					if str(other.get("kind", "")) == "beast" and bool(other.get("active", true)):
+						if str(other.get("aggro_eid", "")) == p_eid:
+							threatened = true
+							threat_key = eid
+							break
+			team_context = {
+				"has_partner": true,
+				"partner_id": partner_id,
+				"partner_name": str(p_ent.get("name", partner_id)),
+				"partner_pos": [p_pos.x, p_pos.y, p_pos.z],
+				"partner_pos_v3": p_pos,
+				"partner_distance": round(p_dist * 10.0) / 10.0,
+				"partner_under_threat": threatened,
+				"threat_eid": threat_key
+			}
+
 	var obs := make_observation(
 		bot_id,
 		pos,
@@ -105,7 +153,8 @@ func get_observation(bot_id: String) -> Dictionary:
 		nearby_pois,
 		active_events,
 		bot_dials,
-		inventory_items
+		inventory_items,
+		team_context
 	)
 	observation_updated.emit(bot_id, obs)
 	return obs
@@ -192,6 +241,69 @@ func perform_action(bot_id: String, action: Dictionary) -> Dictionary:
 			ent["moving"] = false
 			ent["target"] = ent.get("pos", Vector3.ZERO)
 			result["idle"] = true
+
+		ACTION_TYPE_FORMATION_FOLLOW:
+			var target_partner := str(action.get("target_partner_id", action.get("partner_id", get_partner_id(bot_name))))
+			var p_ent := _resolve_entity(target_partner)
+			if p_ent.is_empty():
+				return {"ok": false, "action": act_type, "error": "partner_not_found"}
+			var p_pos: Vector3 = p_ent.get("pos", Vector3.ZERO)
+			var offset: Vector3 = Vector3(-3.0, 0.0, -3.0)
+			if action.has("formation_offset") and action["formation_offset"] is Vector3:
+				offset = action["formation_offset"]
+			elif action.has("offset") and action["offset"] is Array and action["offset"].size() == 3:
+				offset = Vector3(action["offset"][0], action["offset"][1], action["offset"][2])
+
+			var target_v3 := p_pos + offset
+			if sim != null and sim.has_method("_walkable_xz"):
+				var wz: Vector2 = sim._walkable_xz(target_v3.x, target_v3.z)
+				target_v3 = Vector3(wz.x, p_pos.y, wz.y)
+
+			ent["target"] = target_v3
+			ent["moving"] = true
+			ent["goal"] = "formation_escort"
+			ent["play_mode"] = "escort_follower"
+			ent["partner_id"] = target_partner
+			result["partner_id"] = target_partner
+			result["formation_target"] = [target_v3.x, target_v3.y, target_v3.z]
+
+		ACTION_TYPE_COVER_TARGET:
+			var threat_id := str(action.get("threat_eid", action.get("threat_id", "")))
+			var target_partner := str(action.get("target_partner_id", action.get("partner_id", get_partner_id(bot_name))))
+			var p_ent := _resolve_entity(target_partner)
+			var t_ent := _resolve_entity(threat_id)
+			if p_ent.is_empty():
+				return {"ok": false, "action": act_type, "error": "partner_not_found"}
+
+			var p_pos: Vector3 = p_ent.get("pos", Vector3.ZERO)
+			var cover_pos := p_pos
+			if not t_ent.is_empty():
+				var t_pos: Vector3 = t_ent.get("pos", Vector3.ZERO)
+				cover_pos = p_pos.lerp(t_pos, 0.45)
+			else:
+				cover_pos = p_pos + Vector3(2.0, 0.0, 2.0)
+
+			if sim != null and sim.has_method("_walkable_xz"):
+				var wz2: Vector2 = sim._walkable_xz(cover_pos.x, cover_pos.z)
+				cover_pos = Vector3(wz2.x, p_pos.y, wz2.y)
+
+			ent["target"] = cover_pos
+			ent["moving"] = true
+			ent["goal"] = "cover_partner"
+			ent["play_mode"] = "defense"
+			ent["ambient"] = "Couverture tactique : je couvre les arrières de %s !" % str(p_ent.get("name", target_partner))
+			result["threat_eid"] = threat_id
+			result["cover_pos"] = [cover_pos.x, cover_pos.y, cover_pos.z]
+
+		ACTION_TYPE_TACTICAL_RETREAT:
+			var shelter_poi := str(action.get("shelter_poi", "cantina"))
+			var shelter_pos: Vector3 = pois.get(shelter_poi, Vector3(5028.3, 0.15, -784.1))
+			ent["target"] = shelter_pos
+			ent["moving"] = true
+			ent["goal"] = "tactical_retreat"
+			ent["play_mode"] = "retreat"
+			result["shelter_poi"] = shelter_poi
+			result["retreat_target"] = [shelter_pos.x, shelter_pos.y, shelter_pos.z]
 
 		_:
 			return {"ok": false, "action": act_type, "error": "unknown_action_type"}
