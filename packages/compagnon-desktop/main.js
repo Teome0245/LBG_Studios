@@ -524,9 +524,9 @@ function scheduleNextDesktopInteraction() {
 
     // En autonomie : Compagnon vit et reste posée sur la barre des tâches (sa base naturelle).
     // Les déplacements vers les fenêtres ne sont activés qu'à la demande explicite de l'utilisateur (menu Tray ou API).
-    const moves = ["lookaround", "relax", "stretch", "think", "spin", "jump"];
+    const moves = ["lookaround", "relax", "stretch", "think", "spin", "jump", "fingerHeart"];
     const pick = moves[Math.floor(Math.random() * moves.length)];
-    const holdMs = (pick === "lookaround" || pick === "relax") ? 6000 : 4000;
+    const holdMs = (pick === "lookaround" || pick === "relax") ? 6000 : (pick === "fingerHeart" ? 8500 : 4000);
     sendVrmPose(pick, holdMs);
 
     scheduleNextDesktopInteraction();
