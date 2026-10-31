@@ -12,7 +12,7 @@ if ssh -o BatchMode=yes -o ConnectTimeout=3 root@192.168.0.100 "docker ps --form
         ssh root@192.168.0.100 "docker cp /tmp/$f lbg-frontend:/usr/share/nginx/html/vrm/$f && rm /tmp/$f"
         echo " - $f injecté dans lbg-frontend"
     done
-    ANIM_FILES="dance.vrma samba.vrma hiphop.vrma"
+    ANIM_FILES="dance.vrma samba.vrma hiphop.vrma robot.vrma disco.vrma spin.vrma salsa.vrma"
     for a in $ANIM_FILES; do
         if [ -f "$DIR/animations/$a" ]; then
             scp -q "$DIR/animations/$a" "root@192.168.0.100:/tmp/$a"

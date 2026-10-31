@@ -606,12 +606,21 @@ export function createVrmPet(hostEl, opts = {}) {
     danse: "dance.vrma",
     groove: "dance.vrma",
     samba: "samba.vrma",
-    salsa: "samba.vrma",
+    salsa: "salsa.vrma",
     latina: "samba.vrma",
     hiphop: "hiphop.vrma",
     bboy: "hiphop.vrma",
     street: "hiphop.vrma",
     bounce: "hiphop.vrma",
+    robot: "robot.vrma",
+    popping: "robot.vrma",
+    wavedance: "robot.vrma",
+    disco: "disco.vrma",
+    twist: "disco.vrma",
+    fever: "disco.vrma",
+    spin: "spin.vrma",
+    tourner: "spin.vrma",
+    pirouette: "spin.vrma",
     jump: "jump.vrma",
     saut: "jump.vrma",
     victory: "jump.vrma",
@@ -653,11 +662,24 @@ export function createVrmPet(hostEl, opts = {}) {
     if (vrmaClips.has(name)) return vrmaClips.get(name);
     if (vrmaLoading.has(name)) return vrmaLoading.get(name);
     const targetFile = filename || (name.endsWith(".vrma") ? name : `${name}.vrma`);
-    const url = getVrmaUrl(targetFile);
+    const primaryUrl = getVrmaUrl(targetFile);
 
     const promise = (async () => {
+      let gltf = null;
       try {
-        const gltf = await loader.loadAsync(url);
+        gltf = await loader.loadAsync(primaryUrl);
+      } catch (err) {
+        console.warn(`[vrm_pet] Local VRMA load failed "${name}" (${primaryUrl}), trying LAN CT100 fallback...`, err);
+        try {
+          const remoteUrl = `http://192.168.0.100:5174/vrm/animations/${targetFile}`;
+          gltf = await loader.loadAsync(remoteUrl);
+        } catch (err2) {
+          console.warn(`[vrm_pet] VRMA LAN fallback failed "${name}":`, err2);
+          return null;
+        }
+      }
+
+      try {
         const vrmAnimations = gltf.userData.vrmAnimations || (gltf.userData.vrmAnimation ? [gltf.userData.vrmAnimation] : []);
         const animData = vrmAnimations[0];
         if (!animData) throw new Error("No vrmAnimation in file");
@@ -668,7 +690,7 @@ export function createVrmPet(hostEl, opts = {}) {
         console.info(`[vrm_pet] VRMA "${name}" loaded (${clip.duration.toFixed(2)}s)`);
         return clip;
       } catch (err) {
-        console.warn(`[vrm_pet] VRMA load failed "${name}" (${url}):`, err);
+        console.warn(`[vrm_pet] VRMA clip creation failed "${name}":`, err);
         return null;
       } finally {
         vrmaLoading.delete(name);
@@ -1710,7 +1732,7 @@ export function createVrmPet(hostEl, opts = {}) {
       const turnSpeed = 6.0;
       const diff = targetHeadingY - currentHeadingY;
       currentHeadingY += diff * Math.min(1, dt * turnSpeed);
-      if (poseTo === "spin") {
+      if (poseTo === "spin" && !activeVrmaAction) {
         spinAngle = (spinAngle + dt * 4.2) % (Math.PI * 2);
         vrm.scene.rotation.y = currentHeadingY + spinAngle;
       } else {
