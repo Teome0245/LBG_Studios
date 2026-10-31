@@ -1,6 +1,7 @@
 extends RefCounted
 class_name HubDialogue
 const _HubPaths = preload("res://scripts/hub_paths.gd")
+const HubWikiScript = preload("res://scripts/hub_wiki.gd")
 
 ## Dialogue PNJ — stubs + LLM Ollama optionnel (timeout court).
 
@@ -126,6 +127,10 @@ func _event_rumor() -> String:
 	if events.has_method("rumor_hint"):
 		return str(events.rumor_hint()).strip_edges()
 	return ""
+
+
+func _travel_rumor(origin_filter: String = "") -> Dictionary:
+	return HubWikiScript.get_latest_rumor(origin_filter)
 
 
 func _normalize_npc_id(raw: String) -> String:
@@ -411,12 +416,13 @@ func _pick_reply(
 	if not llm.is_empty():
 		return llm
 	var rumor := _event_rumor()
+	var tr := _travel_rumor()
 	var rumor_npcs := [
 		"npc:core3_daan_oth", "npc:core3_barman_jax", "npc:rumeuriste", "npc:sergent_rue",
 	]
 	var wants_rumor := (
 		"rumeur" in t or "scrap" in t or "ferraille" in t or "convoi" in t
-		or "débris" in t or "debris" in t
+		or "débris" in t or "debris" in t or "nouvelle" in t or "bruit" in t
 	)
 	if not rumor.is_empty() and npc_id in rumor_npcs and wants_rumor:
 		if npc_id == "npc:core3_daan_oth":
@@ -424,6 +430,15 @@ func _pick_reply(
 		if npc_id == "npc:sergent_rue":
 			return "Sergent : %s Porte est, puis pile de ferraille — ne traîne pas." % rumor
 		return "%s : %s" % [npc_name if not npc_name.is_empty() else "PNJ", rumor]
+	if not tr.is_empty() and npc_id in rumor_npcs and wants_rumor:
+		var orig := str(tr.get("origin_label", tr.get("origin", "l'extérieur")))
+		var sbot := str(tr.get("source_bot", "un voyageur"))
+		var txt := str(tr.get("text", ""))
+		if npc_id == "npc:core3_barman_jax":
+			return "Jax : %s rentre tout juste de %s. Il dit : %s" % [sbot, orig, txt]
+		if npc_id == "npc:rumeuriste":
+			return "Rumeuriste : Les échos de %s rapportés par %s : %s" % [orig, sbot, txt]
+		return "%s : D'après %s (%s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", sbot, orig, txt]
 	if is_greet and GREETINGS.has(npc_id):
 		var greet := str(GREETINGS[npc_id])
 		# Salut : une accroche utile max — jamais de parenthèse « au fait » ni de recycle.
@@ -433,7 +448,20 @@ func _pick_reply(
 			return "%s Tu tournes sur le hub — je t'écoute." % greet
 		if not rumor.is_empty() and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste"]:
 			return "%s On dit : %s" % [greet, rumor]
+		if not tr.is_empty() and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste"]:
+			var orig := str(tr.get("origin_label", tr.get("origin", "l'extérieur")))
+			var sbot := str(tr.get("source_bot", "un voyageur"))
+			var txt := str(tr.get("text", ""))
+			return "%s Un mot frais de %s via %s : %s" % [greet, orig, sbot, txt]
 		return greet
+	if ("zalem" in t or "passe" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
+		var tz := _travel_rumor("outpost_zalem")
+		if not tz.is_empty():
+			return "%s : Échos de Zalem (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tz.get("source_bot"), tz.get("text")]
+	if ("ksar" in t or "oasis" in t or "nomade" in t) and npc_id in ["npc:core3_barman_jax", "npc:rumeuriste", "npc:guide_quartier"]:
+		var tk := _travel_rumor("outpost_ksar")
+		if not tk.is_empty():
+			return "%s : Échos du Ksar Nomade (via %s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", tk.get("source_bot"), tk.get("text")]
 	for pair in FALLBACK_REPLIES:
 		if str(pair[0]) in t:
 			return str(pair[1])
