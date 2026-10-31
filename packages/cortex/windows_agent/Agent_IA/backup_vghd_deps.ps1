@@ -9,7 +9,7 @@ $dest = "C:\Agent_IA\app_deps\vghd"
 $sql = Join-Path $bin "Qt5Sql.dll"
 
 if (-not (Test-Path $sql)) {
-    throw "Qt5Sql.dll absent de $bin — reinstalle VGHD d'abord, puis relance ce script."
+    throw "Qt5Sql.dll absent de $bin - reinstalle VGHD d'abord, puis relance ce script."
 }
 
 New-Item -ItemType Directory -Path $dest -Force | Out-Null
@@ -23,7 +23,7 @@ if (Test-Path $plugins) {
     Copy-Item -Recurse -Force $plugins $destPlugins
     Write-Host "OK backup sqldrivers\ -> $destPlugins"
 } else {
-    Write-Host "WARN sqldrivers\ absent (souvent fourni avec Qt Sql) — backup DLL seule."
+    Write-Host "WARN sqldrivers\ absent (souvent fourni avec Qt Sql) - backup DLL seule."
 }
 
 # Neutralise l'updater qui re-casse l'install au reboot (renommage reversible)

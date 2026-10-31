@@ -49,7 +49,7 @@ if (Test-Path "C:\Agent_IA\repair_vghd_deps.ps1") {
   }
 }
 
-# 2) Tuer TOUT ce qui écoute :5005 (toutes sessions)
+# 2) Tuer TOUT ce qui ecoute :5005 (toutes sessions)
 function Get-Listeners5005 {
   @(
     Get-NetTCPConnection -LocalPort 5005 -State Listen -ErrorAction SilentlyContinue |
@@ -80,7 +80,7 @@ if ($still.Count -gt 0) {
   Start-Sleep -Seconds 2
 }
 
-# 3) Relancer en session utilisateur via tâche logon (Interactive)
+# 3) Relancer en session utilisateur via tache logon (Interactive)
 $started = $false
 foreach ($taskName in @("LBG-AgentIA-logon", "LBG-AgentIA-restart-morning")) {
   try {
@@ -89,7 +89,7 @@ foreach ($taskName in @("LBG-AgentIA-logon", "LBG-AgentIA-restart-morning")) {
       W "task missing: $taskName"
       continue
     }
-    # Éviter IgnoreNew fantôme
+    # Eviter IgnoreNew fantome
     if ($t.State -eq "Running") {
       Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
       Start-Sleep -Seconds 1
@@ -104,7 +104,7 @@ foreach ($taskName in @("LBG-AgentIA-logon", "LBG-AgentIA-restart-morning")) {
 }
 
 if (-not $started) {
-  # Fallback : start_agent.ps1 dans CETTE session (si on est déjà interactif > 0)
+  # Fallback : start_agent.ps1 dans CETTE session (si on est deja interactif > 0)
   if ([int]$selfSid -gt 0) {
     W "fallback start_agent.ps1 in session $selfSid"
     try {
@@ -114,7 +114,7 @@ if (-not $started) {
       W "start_agent: $_"
     }
   } else {
-    W "FAIL: pas de tâche logon et self encore Session 0 — impossible de démarrer un GUI agent ici."
+    W "FAIL: pas de tache logon et self encore Session 0 - impossible de demarrer un GUI agent ici."
     W "ACTION: depuis le bureau, Admin PowerShell: powershell -File C:\Agent_IA\fix_agent_to_user_session.ps1"
     exit 2
   }
@@ -146,6 +146,6 @@ if ($ok) {
   exit 0
 }
 
-W "FAIL still Session 0 or no listener — $info"
+W "FAIL still Session 0 or no listener - $info"
 W "ACTION manuelle (bureau Admin): powershell -File C:\Agent_IA\fix_agent_to_user_session.ps1"
 exit 1

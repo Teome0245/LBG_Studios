@@ -55,7 +55,7 @@ Write-Host "== bascule session utilisateur =="
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "fix_agent_to_user_session.ps1")
 $code = $LASTEXITCODE
 if ($code -ne 0) {
-  Write-Host "WARN fix_agent exit=$code — tente fix_session0_admin"
+  Write-Host "WARN fix_agent exit=$code - tente fix_session0_admin"
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Dst "fix_session0_admin.ps1")
   $code = $LASTEXITCODE
 }

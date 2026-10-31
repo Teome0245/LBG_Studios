@@ -362,26 +362,48 @@ def copier_vrm_upload_ia(**kwargs):
 
 
 # --- Capability auto-installée ---
-# Description : Synchronise les textures et bundles VRM vers C:/Agent_IA/compagnon-desktop/overlay/vrm
+# Description : Synchronise les textures, bundles VRM et animations vers C:/Agent_IA/compagnon-desktop/overlay/vrm
 def sync_vrm_desktop(**kwargs):
     import shutil
     import os
     import urllib.request
     dst_dir = "C:/Agent_IA/compagnon-desktop/overlay/vrm"
     os.makedirs(dst_dir, exist_ok=True)
+    dst_anim_dir = os.path.join(dst_dir, "animations")
+    os.makedirs(dst_anim_dir, exist_ok=True)
     files = ["body_skin_android.png", "body_skin_android_5b.png", "face_skin_android.png", "hair_android.png", "metallic_matcap.png", "rim_multiply_mask.png", "vrm_pet.bundle.js", "vrm_pet.js"]
+    anim_files = [
+        "dance.vrma", "samba.vrma", "hiphop.vrma", "robot.vrma", "disco.vrma", "spin.vrma", "salsa.vrma",
+        "idle_loop.vrma", "idle_stretch.vrma", "clapping.vrma", "jump.vrma", "lookaround.vrma",
+        "look_around.vrma", "relax.vrma", "sad.vrma", "angry.vrma", "blush.vrma", "goodbye.vrma",
+        "sit.vrma", "sitWave.vrma", "sleepy.vrma", "surprised.vrma", "thinking.vrma", "walk.vrma", "wave_right.vrma"
+    ]
     res = []
+    errs = []
     src_dir = "A:/LBG_Studios/packages/compagnon-desktop/overlay/vrm"
+    src_anim_dir = os.path.join(src_dir, "animations")
     if os.path.exists(src_dir):
         for f in files:
             s = os.path.join(src_dir, f)
             d = os.path.join(dst_dir, f)
             if os.path.exists(s):
-                shutil.copy2(s, d)
-                res.append(f)
+                try:
+                    shutil.copy2(s, d)
+                    res.append(f)
+                except Exception as e:
+                    errs.append(f"{f}: {e}")
+        if os.path.exists(src_anim_dir):
+            for af in anim_files:
+                s = os.path.join(src_anim_dir, af)
+                d = os.path.join(dst_anim_dir, af)
+                if os.path.exists(s):
+                    try:
+                        shutil.copy2(s, d)
+                        res.append(f"animations/{af}")
+                    except Exception as e:
+                        errs.append(f"animations/{af}: {e}")
     if not res:
         base_url = "http://192.168.0.100:5174/vrm/"
-        errs = []
         for f in files:
             url = base_url + f
             d = os.path.join(dst_dir, f)
@@ -390,8 +412,16 @@ def sync_vrm_desktop(**kwargs):
                 res.append(f)
             except Exception as e:
                 errs.append(f"{f}: {e}")
-        if errs:
-            return {"status": "partial", "synced": res, "errors": errs}
+        for af in anim_files:
+            url = base_url + "animations/" + af
+            d = os.path.join(dst_anim_dir, af)
+            try:
+                urllib.request.urlretrieve(url, d)
+                res.append(f"animations/{af}")
+            except Exception as e:
+                errs.append(f"animations/{af}: {e}")
+    if errs:
+        return {"status": "partial", "synced": res, "errors": errs}
     return {"status": "ok", "synced": res}
 
 

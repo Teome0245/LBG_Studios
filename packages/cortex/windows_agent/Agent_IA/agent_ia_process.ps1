@@ -15,7 +15,7 @@ function Get-AgentPython {
     if (Test-Path $venvPy) { return $venvPy }
     $venvPy2 = Join-Path $AgentDir ".venv\Scripts\python.exe"
     if (Test-Path $venvPy2) { return $venvPy2 }
-    # Installs silencieux typiques (éviter le stub Microsoft Store "python")
+    # Installs silencieux typiques (eviter le stub Microsoft Store "python")
     foreach ($candidate in @(
             "C:\Python\Python314\python.exe",
             "C:\Python\Python313\python.exe",

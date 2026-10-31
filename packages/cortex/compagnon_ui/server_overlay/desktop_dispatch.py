@@ -21,8 +21,22 @@ from src.settings import Settings
 logger = logging.getLogger("lbg.router.desktop")
 
 _OPEN_APP_VERB_RE = re.compile(
-    r"\b(?:ouvrir|ouvre|ouvrez|lancer|lance|lancez|demarrer|démarrer|demarre|démarre|"
-    r"demarrez|démarrez|start|launch|open|exécute|execute|exécuter|executer)\b",
+    r"\b(?:ouvrir|ouvre|ouvrez|rouvrir|rouvre|rouvrez|r[eé]ouvrir|r[eé]ouvre|r[eé]ouvrez|"
+    r"lancer|lance|lancez|relancer|relance|relancez|"
+    r"demarrer|démarrer|demarre|démarre|demarrez|démarrez|"
+    r"redemarrer|redémarrer|redemarre|redémarre|redemarrez|redémarrez|"
+    r"start|restart|relaunch|launch|open|reopen|"
+    r"exécute|execute|exécuter|executer|r[eé]ex[eé]cute[rz]?)\b",
+    re.IGNORECASE,
+)
+
+_REPAIR_APP_RE = re.compile(
+    r"\b(?:r[eé]pare[rz]?|r[eé]parer|fix|repair|restaure[rz]?|restaurer|restauration)\b",
+    re.IGNORECASE,
+)
+
+_KNOWN_EXPLICIT_APP_RE = re.compile(
+    r"\b(notepad\+\+|notepadplusplus|notepadpp|notepad|vghd|vqhd|vphd|vhgd|swgemu|vlc|firefox|word|excel)\b(?:\.exe)?",
     re.IGNORECASE,
 )
 
@@ -81,12 +95,12 @@ def desktop_dispatch_enabled() -> bool:
 
 
 def _sanitize_app_slug(raw_tail: str) -> str | None:
-    t = (raw_tail or "").strip().strip("\"'«»")
+    t = (raw_tail or "").strip().strip("\"'«»?!,;:")
     if not t or re.search(r"https?://", t):
         return None
     if "\\" in t or "/" in t or ".." in t:
         return None
-    first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»")
+    first = re.split(r"\s+", t, maxsplit=1)[0].strip("\"'«»?!,;:)").rstrip(".")
     if not first:
         return None
     if len(first) > 80:
@@ -95,7 +109,7 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
     if not re.match(r"^[A-Za-z0-9_.+\-]+$", first):
         return None
     # « vghd.exe » → id logique « vghd » (APP_MAP / allowlist)
-    first = re.sub(r"\.(exe|bat|cmd|com)$", "", first, flags=re.IGNORECASE)
+    first = re.sub(r"\.(exe|bat|cmd|com|lnk)$", "", first, flags=re.IGNORECASE).rstrip(".")
     if not first:
         return None
     if first.lower() in _OPEN_APP_STOP_TOKENS:
@@ -108,24 +122,46 @@ def _sanitize_app_slug(raw_tail: str) -> str | None:
 
 
 def infer_open_app_from_text(text: str) -> dict[str, Any] | None:
-    """Infère ``{kind:open_app, app, args, learn}`` — aligné Cortex/P03."""
+    """Infère ``{kind:open_app, app, args, learn}`` ou ``{kind:repair_app_deps, app}`` — aligné Cortex/P03."""
     raw = (text or "").strip()
     if not raw:
         return None
+    low = raw.lower()
+    if _REPAIR_APP_RE.search(raw) and (
+        re.search(r"\b(?:vghd|vqhd|vphd|vhgd)\b", low)
+        or "qt5sql" in low
+        or "qt5 sql" in low
+        or (re.search(r"\b(?:deps?|d[eé]pendances?|dll)\b", low) and "vghd" in low)
+    ):
+        return {"kind": "repair_app_deps", "app": "vghd"}
     if not _OPEN_APP_VERB_RE.search(raw):
         return None
     matches = list(_OPEN_APP_VERB_RE.finditer(raw))
     if not matches:
         return None
     tail = raw[matches[-1].end() :].strip()
-    tail = re.sub(
-        r"^\s*(?:l['′'])?\s*(?:application|appli|prog|programme)\s+",
-        "",
-        tail,
-        flags=re.IGNORECASE,
-    ).strip()
+    # Nettoyer les pronoms/déterminants/noms génériques (« -moi le programme vghd », « mon vghd », etc.)
+    for _ in range(4):
+        new_tail = re.sub(
+            r"^\s*(?:[-–—]?\s*(?:moi|nous|stp|svp|vite|donc)\b\s*|"
+            r"(?:le|la|les|un|une|mon|ma|mes|ton|ta|tes|ce|cet|cette)\b\s*|"
+            r"l['′']\s*|"
+            r"(?:application|appli|app|prog|programme|logiciel|jeu|client)\b\s*)",
+            "",
+            tail,
+            flags=re.IGNORECASE,
+        ).strip()
+        if new_tail == tail:
+            break
+        tail = new_tail
     tail_chunk = re.split(r"\s+(?:sur|on|avec|pour|dans)\s+", tail, maxsplit=1)[0].strip()
     slug = _sanitize_app_slug(tail_chunk)
+    if not slug:
+        # Fallback : si un verbe d'ouverture est présent et qu'une app connue est citée ailleurs
+        # (ex. « vghd a planté, tu peux le relancer ? » ou « ouvre sur mon pc vghd »)
+        m_known = _KNOWN_EXPLICIT_APP_RE.search(raw)
+        if m_known:
+            slug = _sanitize_app_slug(m_known.group(1))
     if not slug:
         return None
     # Garder ``notepad`` (bloc-notes Windows). ``notepad++`` → ``notepadpp``
@@ -539,14 +575,17 @@ async def run_desktop_open(
     t0 = time.monotonic()
     timeout = httpx_timeout(read=min(float(settings.httpx_agent_execute_read_s), 60.0))
     worker, target_label, target_id = resolve_desktop_worker(cleaned, settings=settings)
-    # Cockpit P03 historiquement ancré sur le PC `.10` — cible explicite (portable, omarchy…)
-    # → worker direct pour ne pas ouvrir l'app sur la mauvaise machine.
-    prefer_direct = target_id.lower() not in ("pc", "default", "")
-
     approval = _desktop_approval()
     approval_mode = (
         os.getenv("LBG_DESKTOP_APPROVAL_MODE", "").strip().lower()
         or ("confirm" if os.getenv("LBG_COMPAGNON_LAB", "").strip() in ("1", "true", "yes", "on") else "")
+    )
+    # Cockpit P03 historiquement ancré sur le PC `.10` — si jeton/confirm worker dispo ou cible explicite,
+    # appeler directement le worker `.10:5005` / `.77:5005` / `.143:5005` (évite 9s de latence et faux échecs P03).
+    prefer_direct = (
+        target_id.lower() not in ("pc", "default", "")
+        or bool(approval)
+        or approval_mode in ("confirm", "soft", "lab")
     )
 
     # Garde Session 0 : remédiation auto (fix_session0) puis retry — pas d'action manuelle matin.
@@ -638,20 +677,22 @@ async def run_desktop_open(
                     content,
                     re.I,
                 )
-                payload = {
-                    "ok": ok,
-                    "content": content,
-                    "source": "desktop",
-                    "via": "cockpit_tasks_run",
-                    "latency": latency,
-                    "app": action["app"],
-                    "raw": {
-                        k: data.get(k)
-                        for k in ("ok", "error", "reply", "plan_source", "status")
-                        if k in data
-                    },
-                }
-                return _annotate_session0_auto(payload, session0_auto)
+                if ok:
+                    payload = {
+                        "ok": True,
+                        "content": content,
+                        "source": "desktop",
+                        "via": "cockpit_tasks_run",
+                        "latency": latency,
+                        "app": action["app"],
+                        "raw": {
+                            k: data.get(k)
+                            for k in ("ok", "error", "reply", "plan_source", "status")
+                            if k in data
+                        },
+                    }
+                    return _annotate_session0_auto(payload, session0_auto)
+                logger.info("desktop tasks/run returned ok=False (%s), falling back to direct worker invoke", content[:120])
             logger.info("desktop tasks/run HTTP %s: %s", r.status_code, r.text[:200])
         except Exception as e:
             logger.warning("desktop tasks/run failed: %s", e)

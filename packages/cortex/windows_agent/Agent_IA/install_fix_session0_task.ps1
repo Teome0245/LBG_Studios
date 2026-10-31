@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
-# Installe la tâche élevée LBG-AgentIA-fix-session0.
-# - AtLogOn : chaque matin après login (poste éteint la nuit) → coupe AgentLocalV0 + listener S0
-# - Compagnon / Start-ScheduledTask : remédiation à la demande sans UAC
+# Installe la tache elevee LBG-AgentIA-fix-session0.
+# - AtLogOn : chaque matin apres login (poste eteint la nuit) → coupe AgentLocalV0 + listener S0
+# - Compagnon / Start-ScheduledTask : remediation a la demande sans UAC
 #
 # Usage (PowerShell Admin, session bureau) :
 #   powershell -NoProfile -ExecutionPolicy Bypass -File C:\Agent_IA\install_fix_session0_task.ps1
@@ -27,7 +27,7 @@ if ($existing) {
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument (
     "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$fixPs1`""
 )
-# Highest = peut tuer le listener Session 0 / désactiver AgentLocalV0
+# Highest = peut tuer le listener Session 0 / desactiver AgentLocalV0
 $principal = New-ScheduledTaskPrincipal -UserId $domainUser -LogonType Interactive -RunLevel Highest
 $settings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
@@ -35,8 +35,8 @@ $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -MultipleInstances Parallel
-# Parallel : évite IgnoreNew qui no-opait quand un fantôme « Running » bloquait la remédiation.
-# AtLogOn + délai : session bureau prête, service S0 déjà éventuellement démarré au boot.
+# Parallel : evite IgnoreNew qui no-opait quand un fantome " Running " bloquait la remediation.
+# AtLogOn + delai : session bureau prete, service S0 deja eventuellement demarre au boot.
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $domainUser
 $logonTrigger.Delay = "PT45S"
 Register-ScheduledTask `
@@ -46,10 +46,10 @@ Register-ScheduledTask `
     -Principal $principal `
     -Settings $settings | Out-Null
 
-# Autoriser l'utilisateur courant à démarrer la tâche (même depuis un worker non-admin / Session 0)
+# Autoriser l'utilisateur courant a demarrer la tache (meme depuis un worker non-admin / Session 0)
 try {
     $task = Get-ScheduledTask -TaskName $name
-    # SDDL : owner + Authenticated Users peuvent exécuter
+    # SDDL : owner + Authenticated Users peuvent executer
     Export-ScheduledTask -TaskName $name | Out-Null
 } catch {
     Write-Host "WARN ACL: $_"
