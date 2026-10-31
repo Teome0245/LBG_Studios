@@ -60,6 +60,13 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - Élargissement de la CSP dans `overlay/index.html` (`connect-src` autorisant CT100 et le loopback) pour débloquer le chargement réseau des animations sous Electron.
     - Ajout de l'auto-synchronisation transparente au démarrage de `main.js` (copie automatique de `A:\` vers `C:\Agent_IA\compagnon-desktop` sous Windows).
     - Création du script en 1 clic `MAJ_COMPAGNON.cmd` à la racine de `A:\LBG_Studios` pour synchroniser et redémarrer l'avatar du bureau immédiatement.
+    - **Poussée & Exécution Directe sur Windows SDS `.10` (sans intervention utilisateur)** :
+      * Via `Agent_IA` (`http://192.168.0.10:5005`) en Session 1 interactive (`sdesh`).
+      * Synchronisation complète des 25 fichiers `.vrma` d'animations mocap dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\animations\` (dont `dance.vrma` Pop Groove hash `84e4cdba1884` 100% distinct de la samba `b74b4cee0805`, `robot.vrma`, `disco.vrma`, `spin.vrma`, `hiphop.vrma`).
+      * Déploiement de `vrm_pet.bundle.js` (2.26 MB), `overlay/index.html` (CSP élargie) et `executor.py` dans `C:\Agent_IA\`.
+      * Fermeture propre des anciens processus Electron orphelins (`taskkill /F /IM electron.exe /T`) et redémarrage interactif via la tâche planifiée `LBG-Compagnon-Desktop` en Session 1.
+      * Intégration de la petite danse idol (`fingerHeart`) dans les interactions spontanées de `main.js` (1 à 2 fois par heure) en complément de la boucle `vrm_pet.js`.
+      * Vérification live : 5 processus Electron actifs en Session 1 (`sdesh`), hashes binaires vérifiés, 0 erreur.
   * **Déploiement live CT100 (`192.168.0.100:5174`) & Tests** :
     - Rebundle esbuild `vrm_pet.bundle.js` (2.2 MB).
     - Déploiement direct via `tools/deploy_to_ct100.sh` dans le conteneur `lbg-frontend` sur CT100 (tous les endpoints HTTP 200 vérifiés).
