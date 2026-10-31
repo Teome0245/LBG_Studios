@@ -14,6 +14,36 @@ Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs
 Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
 
 **2026-10-31** :
+- **Alignement Agents Locaux Mains Code (`.143` Omarchy ↔ Ollama `.110`)** :
+  * **Diagnostic Tool-Calling Claude Code vs Ollama** : Claude Code attend le format propriétaire Anthropic `tool_use`. En local avec Ollama, le modèle génère du JSON brut qui s'affiche comme texte sans exécuter les outils.
+  * **Configuration Cline CLI & VS Code** :
+    - Fichiers `~/.cline/data/settings/providers.json` et `~/.cline/data/globalState.json` mis à jour pour cibler directement `huihui_ai/qwen2.5-coder-abliterate:14b` sur `http://192.168.0.110:11434`.
+    - Cline supporte nativement le protocole d'outils Ollama (Plan/Act) et s'utilise soit en terminal (`cline -P ollama`), soit via l'extension VS Code (`saoudrizwan.claude-dev`).
+  * **Rappels d'Architecture (ADR 0025 & ADR 0028)** :
+    - **OpenCode** (`opencode run`) : nominal Team Studio (Métis).
+    - **Cline** : second avis local 0 € API.
+    - Contrainte CPU `.110` : toujours cibler des fichiers précis (1 à 3 fichiers), éviter les scans exhaustifs de monorepo.
+- **Pack Danses Mocap VRMA Réalistes (Différenciation Groove/Samba, Robot, Disco & Pirouette)** :
+  * **Diagnostic initial & causes racines** :
+    1. *Doublon binaire Groove / Samba* : `dance.vrma` et `samba.vrma` possédaient le même hash SHA256 (`b74b4cee08...`), issu d'une copie identique lors de l'intégration initiale.
+    2. *Danses procédurales rigides (« très loin de ressembler à des danses réelles »)* : `Robot`, `Disco` et `Pirouette` étaient animés via de simples équations trigonométriques `Math.sin(tempo)` dans `vrm_pet.js` (les jambes restaient immobiles en T-pose, seuls les bras bougeaient de façon saccadée, et la pirouette tournait le modèle comme une toupie sans animation du corps).
+    3. *Échec silencieux sur le bureau Windows SDS `.10`* : les fichiers `.vrma` n'étaient pas physiquement synchronisés dans `C:\Agent_IA\compagnon-desktop\overlay\vrm\animations\`. Lorsque Electron essayait de charger les clips, l'échec 404 local forçait un repli procédural où l'avatar restait coincé debout avec un simple sautillement vertical inerte.
+  * **Intégration de véritables animations Mocap VRMA 52/53 os** :
+    - *🎵 Groove (`dance.vrma`)* : Nouvelle animation pop/groove 52 os (8.21s, conversion Three.js mocap) — **100% distincte de la Samba** (`dance.vrma`: `84e4cdba...` vs `samba.vrma`: `b74b4cee...`).
+    - *💃 Samba (`samba.vrma`)* : Danse festive latino/samba mocap 52 os (18.16s, déhanché ample et balancement fluide).
+    - *🧢 Hip-Hop (`hiphop.vrma`)* : Danse street/hip-hop athlétique mocap 52 os (15.33s, cadence rythmée et rebonds).
+    - *🤖 Robot (`robot.vrma`)* : Véritable danse robotique / popping mocap 52 os (15.42s, conversion Mixamo HF `Robot_Hip_Hop_Dance.fbx` avec blocages d'articulations et onde corporelle complète).
+    - *🪩 Disco (`disco.vrma`)* : Véritable danse funk/soul/disco 70s mocap 52 os (16.04s, conversion Mixamo HF `Northern_Soul_Dance.fbx` avec pas de danse, jeu de jambes et tours).
+    - *💫 Pirouette (`spin.vrma`)* : Véritable pirouette mocap 53 os (tour complet avec impulsion corporelle, cambrure et retombée gracieuse sur les appuis).
+    - *💃 Salsa (`salsa.vrma`)* : Danse salsa latino mocap 52 os (28.08s, conversion Mixamo HF `Salsa_Dancing.fbx`).
+  * **Résilience & Fallback Transparent Desktop Pet** :
+    - Mise à jour de `loadVRMA()` dans `vrm_pet.js` : en cas d'absence ou 404 d'un fichier local sur le bureau Windows Electron, chargement automatique via le fallback LAN `http://192.168.0.100:5174/vrm/animations/${targetFile}` — plus aucun freeze ou fallback inerte en T-pose.
+    - Neutralisation des artefacts : suppression des rebonds et rotations procédurales parasites (`spinAngle`) lorsque les clips mocap VRMA sont actifs.
+    - Extension de `sync_vrm_desktop()` dans `executor.py` pour synchroniser automatiquement l'ensemble des 24 animations `.vrma` vers le bureau Windows.
+  * **Déploiement live CT100 (`192.168.0.100:5174`) & Tests** :
+    - Rebundle esbuild `vrm_pet.bundle.js` (2.2 MB).
+    - Déploiement direct via `tools/deploy_to_ct100.sh` dans le conteneur `lbg-frontend` sur CT100 (tous les endpoints HTTP 200 vérifiés).
+    - Tests de non-régression validés : CI Godot headless 100% verte (9s) et tests unitaires Cortex backend 100% verts (134 passés).
 - **Assainissement Périmètre Atlas (Retrait définitif `.142` → `.143:5005` & Alignement Modèles Ollama sur `.140`)** :
   * **Diagnostic** : `packages/cortex/orchestrator/team/admin_infra_platform.py` et `/etc/lbg-ia-mmo.env` sur `.140` (ainsi que `packages/cortex/infra/secrets/lbg.env`) pointaient encore sur l'ex-CT détruit `.142:6001` (`hands_142`) et sur l'ancien modèle `qwen3.8:27b` (au lieu de `qwen2.5-coder-abliterate:14b` et `gemma-4-abliterated:12b-qat` / `E4b-qat`), provoquant de fausses alertes Slack `:danger: Atlas — périmètre LLM / runtime KO (5/6)`.
   * **Correctifs appliqués** :
@@ -46,7 +76,9 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - `repair_vghd_deps.ps1`, `backup_vghd_deps.ps1` et `_disable_vghd_updater()` dans `main.py` : suppression systématique de tout `updater.exe` recréé si `updater.exe.disabled_by_lbg` existe déjà.
     - `start_agent.ps1` : exécution de `repair_vghd_deps.ps1` tout en haut du script dès l'ouverture de session utilisateur (avant la vérification du port `:5005`).
     - `fix_session0_admin.ps1` : arrêt et désactivation de la tâche planifiée `AgentLocalV0` (`Disable-ScheduledTask`) en plus du service Windows, et appel immédiat de `repair_vghd_deps.ps1`.
-    - Staging de `APPLY_SESSION0_FIX.ps1` et des scripts sur `192.168.0.100:8765` pour application en une ligne PowerShell Admin.
+    - Purge des caractères UTF-8 spéciaux (`—`) dans tous les `.ps1` de `Agent_IA` qui causaient `MissingEndCurlyBrace` sous PowerShell 5.1 Windows-1252.
+    - `desktop_dispatch.py` (Compagnon CT100 `server_overlay`) & `desktop_apps.py` : ajout des verbes `relancer`/`relance`/`rouvrir`/`redémarrer`/`restart`/`relaunch`, prise en charge directe de `repair_app_deps` (« répare vghd »), nettoyage des pronoms/déterminants/ponctuation collée (`vghd?`, `VGHD.exe`, `-moi le programme vghd`) et repli sur les apps connues dans la phrase.
+    - Validation live sur `.10:5005` : `listener_session_id: 1`, `self_session_id: 1`, `session0_risk: false`, tâche `AgentLocalV0` désactivée (`State: 1`), `Qt5Sql.dll` restauré et `updater.exe` supprimé.
 
 - **Résilience Compagnon / Cortex — Tolérance aux Pannes LLM & Délégation Studio Sans Crash** :
   * **Secours Automatique Light 2B** : si le modèle d'analyse/chill (`gemma-4:E4b-qat` sur `.110`) échoue, est déchargé ou timeout, `LocalLLMProvider` retente immédiatement sur `huihui_ai/qwen3.5-abliterated:2B` sur `.111` avant tout abandon.
@@ -68,6 +100,9 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
     - Adaptateur concret Lost Heaven : `packages/prime-hub/scripts/adapters/godot_hub_adapter.gd` (résolution d'entités, perception spatiale 60m, exécution des actions avec simulation et émission des signaux).
     - Test unitaire & intégration headless : `packages/prime-hub/tools/agent_adapter_selftest.gd` (validation du contrat de base, de l'adaptateur mock pour la portabilité O3 hors Godot, et de l'intégration avec `HubSimScript`).
     - Intégration CI : ajouté dans `tools/ci_godot_headless.sh` — 6/6 tests headless Godot passants en 8s (<10s DoD).
+  * **Ticket 2.2 (O3 Joueurs IA — Émergence Sociale : Propagation des Rumeurs Inter-Villages)** :
+    - Buffer et mémoire de voyage partagée dans `packages/prime-hub/scripts/hub_wiki.gd` (`add_rumor()`, `get_rumors()`, `get_latest_rumor()`, `clear_rumors()`).
+    - Section dynamique « Rumeurs & Échos des Caravanes » intégrée dans le rendu Markdown du wiki (`_render_markdown`) et snapshot data-driven.
   * **Ticket 3.1 (O2 Jeu — Mobilier Procédural & Vie Intérieure des Bâtiments CAO)** :
     - Modèle CAO vectoriel enrichi (`FurnitureSpec`, `FloorSpec.furniture`) dans `packages/cortex/services/building_cad/blueprint_model.py` et synchronisé dans `backend/services/building_cad/`.
     - Architecte procédural (`procedural_architect.py`) : ameublement complet de la Cantina « La Perle de Scrapaltai » (comptoir ferraille Jax, tabourets, tables d'alcôve, bureau, couchette, caisse de contrebande) et du Hangar Dépôt Nord (établi soudure lourde, bureau contremaître, racks de stockage).
