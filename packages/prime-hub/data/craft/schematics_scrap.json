@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "ticket": "2.2",
+  "profession": "recuperateur_mecatronique",
+  "schematics": [
+    {
+      "id": "mechatronic_repair_kit",
+      "name": "Kit de réparation mécatronique",
+      "description": "Ensemble de servomoteurs recalibrés et de soudures haute densité pour réparer les équipements endommagés.",
+      "requires_skill": "artisan_rue_r1",
+      "requires_bench": true,
+      "bench_interaction": "craft",
+      "craft_time_sec": 4.0,
+      "inputs": [
+        {"id": "scrap_metal", "qty": 3, "name": "Ferraille"},
+        {"id": "used_capacitor", "qty": 1, "name": "Condensateur usé"}
+      ],
+      "output": {
+        "id": "mechatronic_repair_kit",
+        "qty": 1,
+        "name": "Kit de réparation mécatronique",
+        "icon": "kit"
+      }
+    },
+    {
+      "id": "oasis_condensate_filter",
+      "name": "Filtre à condensat d'oasis",
+      "description": "Cartouche filtrante assemblée à partir de mailles métalliques et de ruban d'étanchéité pour purifier l'eau saumâtre.",
+      "requires_skill": "artisan_rue_r1",
+      "requires_bench": true,
+      "bench_interaction": "craft",
+      "craft_time_sec": 3.5,
+      "inputs": [
+        {"id": "scrap_metal", "qty": 2, "name": "Ferraille"},
+        {"id": "binding_tape", "qty": 2, "name": "Ruban de liaison"}
+      ],
+      "output": {
+        "id": "oasis_condensate_filter",
+        "qty": 1,
+        "name": "Filtre à condensat d'oasis",
+        "icon": "kit"
+      }
+    },
+    {
+      "id": "regulated_scrap_battery",
+      "name": "Batterie régulée de ferraille",
+      "description": "Accumulateur stabilisé combinant deux condensateurs de récupération sous châssis blindé.",
+      "requires_skill": "artisan_rue_r1",
+      "requires_bench": true,
+      "bench_interaction": "craft",
+      "craft_time_sec": 5.0,
+      "inputs": [
+        {"id": "scrap_metal", "qty": 2, "name": "Ferraille"},
+        {"id": "used_capacitor", "qty": 2, "name": "Condensateur usé"},
+        {"id": "binding_tape", "qty": 1, "name": "Ruban de liaison"}
+      ],
+      "output": {
+        "id": "regulated_scrap_battery",
+        "qty": 1,
+        "name": "Batterie régulée de ferraille",
+        "icon": "copper"
+      }
+    },
+    {
+      "id": "night_prospecting_torch",
+      "name": "Torche de prospection nocturne",
+      "description": "Lampe directionnelle robuste permettant de repérer les gisements et de tenir les rôdeurs à distance la nuit.",
+      "requires_skill": "prospecteur_r1",
+      "requires_bench": false,
+      "bench_interaction": "craft",
+      "craft_time_sec": 2.5,
+      "inputs": [
+        {"id": "scrap_metal", "qty": 1, "name": "Ferraille"},
+        {"id": "binding_tape", "qty": 1, "name": "Ruban de liaison"},
+        {"id": "dried_grain", "qty": 1, "name": "Grain séché"}
+      ],
+      "output": {
+        "id": "night_prospecting_torch",
+        "qty": 1,
+        "name": "Torche de prospection nocturne",
+        "icon": "screw"
+      }
+    }
+  ]
+}
+

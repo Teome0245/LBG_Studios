@@ -191,6 +191,7 @@
       "size_m": 84.0,
       "essential": false,
       "size_baked_from": 28.0,
+      "cad_blueprint_ref": "blueprints/poi_lost_heaven_warehouse_dock.json",
       "footprint_source": "visual_mul_3_baked_2026-08-14",
       "layout_spread": 1.3500000000000003,
       "layout_organic": true,

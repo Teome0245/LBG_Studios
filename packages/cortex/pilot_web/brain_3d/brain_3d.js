@@ -1107,6 +1107,26 @@
     _lastInteractionTs = Date.now();
   }
 
+  /**
+   * Reconstitue l'état visuel du cerveau à un instant passé de la timeline (Ticket 5.1 Phase 3)
+   * @param {Object} frame - { poleKey/pole_key, message, cognitive_load, gauges, level }
+   */
+  function replaySnapshot(frame) {
+    if (!frame || typeof frame !== "object") return;
+    const poleKey = frame.poleKey || frame.pole_key || "cortex";
+    if (frame.gauges && typeof frame.gauges === "object") {
+      sync({ gauges: frame.gauges });
+    }
+    const load = Number(frame.cognitive_load || 0.6);
+    _activityLevel = 1.0 + load * 1.8;
+    if (_polesMap.has(poleKey)) {
+      injectInfraSignal(poleKey, frame.message || "Replay synaptique", false);
+      selectPole(poleKey);
+    } else {
+      triggerPulse();
+    }
+  }
+
   // API publique
   global.LbgBrain3d = {
     start,
@@ -1115,6 +1135,7 @@
     triggerPulse,
     triggerSurge,
     injectInfraSignal,
+    replaySnapshot,
     focusPole: selectPole,
     tempFocusPole,
     resetView,

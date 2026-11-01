@@ -838,3 +838,80 @@ def get_active_window_context(**kwargs):
     except Exception as exc:
         return {"status": "error", "message": str(exc), "category": "unknown", "attitude": "serene"}
 
+
+def capture_active_window_snippet(**kwargs):
+    """Vision Contextuelle Ponctuelle (Phase 3 Ticket 1.2) :
+    Capture exclusivement le rectangle de la fenêtre active au premier plan en mémoire vive (MemoryStream -> Base64).
+    Confidentialité stricte : aucun fichier image n'est écrit sur le disque."""
+    import json
+    import subprocess
+
+    ps_script = """
+    Add-Type -AssemblyName System.Drawing
+    Add-Type @"
+    using System;
+    using System.Text;
+    using System.Runtime.InteropServices;
+    public class User32Snippet {
+      [StructLayout(LayoutKind.Sequential)]
+      public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+      [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+      [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+      [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+      [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+    }
+    "@
+    $hwnd = [User32Snippet]::GetForegroundWindow()
+    if ($hwnd -ne [IntPtr]::Zero) {
+      $rect = New-Object User32Snippet+RECT
+      [void][User32Snippet]::GetWindowRect($hwnd, [ref]$rect)
+      $w = [Math]::Max(64, [Math]::Min(1600, $rect.Right - $rect.Left))
+      $h = [Math]::Max(64, [Math]::Min(1000, $rect.Bottom - $rect.Top))
+      $bmp = New-Object System.Drawing.Bitmap $w, $h
+      $gfx = [System.Drawing.Graphics]::FromImage($bmp)
+      $gfx.CopyFromScreen($rect.Left, $rect.Top, 0, 0, $bmp.Size)
+      $ms = New-Object System.IO.MemoryStream
+      $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
+      $b64 = [Convert]::ToBase64String($ms.ToArray())
+      $gfx.Dispose()
+      $bmp.Dispose()
+      $ms.Dispose()
+      $sb = New-Object System.Text.StringBuilder 256
+      [void][User32Snippet]::GetWindowText($hwnd, $sb, 256)
+      $pidVal = 0
+      [void][User32Snippet]::GetWindowThreadProcessId($hwnd, [ref]$pidVal)
+      $proc = Get-Process -Id $pidVal -ErrorAction SilentlyContinue
+      [PSCustomObject]@{
+        title = $sb.ToString()
+        process = if ($proc) { $proc.ProcessName } else { "" }
+        width = $w
+        height = $h
+        image_b64 = $b64
+        persisted_to_disk = $false
+      } | ConvertTo-Json -Compress
+    }
+    """
+    try:
+        res = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+        out = res.stdout.strip()
+        if not out:
+            return {"status": "error", "message": "Aucune fenêtre active détectée."}
+        parsed = json.loads(out)
+        return {
+            "status": "ok",
+            "scope": "active_window_only",
+            "persisted_to_disk": False,
+            "title": str(parsed.get("title", ""))[:120],
+            "process": str(parsed.get("process", "")),
+            "width": int(parsed.get("width", 0)),
+            "height": int(parsed.get("height", 0)),
+            "image_b64": str(parsed.get("image_b64", "")),
+        }
+    except Exception as exc:
+        return {"status": "error", "message": str(exc), "persisted_to_disk": False}
+

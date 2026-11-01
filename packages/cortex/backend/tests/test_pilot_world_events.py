@@ -2,8 +2,14 @@ from backend.main import app
 from fastapi.testclient import TestClient
 
 
-def test_pilot_world_events_flow() -> None:
+def test_pilot_world_events_flow(monkeypatch) -> None:
     client = TestClient(app)
+
+    async def mock_fetch_runtime(*args, **kwargs):
+        from api.v1.routes.pilot.status import _world_events
+        return {"ok": True, "bots": [], "online_count": 0, "events": list(_world_events[-10:])}
+
+    monkeypatch.setattr("api.v1.routes.pilot.status._fetch_player_ia_runtime", mock_fetch_runtime)
 
     # 1. Post a world cognitive decision event
     post_res = client.post(

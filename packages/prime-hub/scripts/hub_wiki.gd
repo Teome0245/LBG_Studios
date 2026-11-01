@@ -42,6 +42,33 @@ static func clear_rumors() -> void:
 	_shared_rumors.clear()
 
 
+static func record_barter_rumor(
+	sender: String,
+	receiver: String,
+	give_label: String,
+	give_qty: int,
+	recv_label: String,
+	recv_qty: int,
+	location_label: String = "Cantina La Perle"
+) -> Dictionary:
+	## Ticket 3.2 — Consigne une rumeur de troc P2P dans HubWiki.
+	var text := "%s a troqué %d %s contre %d %s avec %s (%s)." % [
+		sender, give_qty, give_label, recv_qty, recv_label, receiver, location_label
+	]
+	var rumor := {
+		"id": "rumor_barter_%s_%s_%d" % [sender.to_lower(), receiver.to_lower(), int(Time.get_unix_time_from_system() * 1000.0)],
+		"source_bot": sender,
+		"partner_bot": receiver,
+		"origin": "hub_cantina",
+		"origin_label": location_label,
+		"topic": "barter",
+		"text": text,
+		"timestamp": Time.get_unix_time_from_system(),
+	}
+	add_rumor(rumor)
+	return rumor
+
+
 func snapshot() -> Dictionary:
 	var npcs := _hub_npcs()
 	var pois := _hub_pois()

@@ -29,14 +29,24 @@ CREATE INDEX IF NOT EXISTS idx_team_messages_ts ON team_messages(created_ts);
 """
 
 
+_schema_ensured = False
+
+
 def messages_enabled() -> bool:
     return team_store.team_enabled()
 
 
 def ensure_schema() -> None:
-    conn = team_store.get_connection()
-    conn.executescript(_MESSAGES_SCHEMA)
-    conn.commit()
+    global _schema_ensured
+    if _schema_ensured:
+        return
+    with team_store._db_lock:
+        if _schema_ensured:
+            return
+        conn = team_store.get_connection()
+        conn.executescript(_MESSAGES_SCHEMA)
+        conn.commit()
+        _schema_ensured = True
 
 
 def _row_to_message(row: Any) -> TeamMessage:
@@ -74,25 +84,26 @@ def append_message(
     now = time.time()
     clean_payload = sanitize_payload(payload or {})
     tid = (task_id or "").strip()
-    conn = team_store.get_connection()
-    conn.execute(
-        """
-        INSERT INTO team_messages (
-            id, from_agent, to_agent, kind, payload_json, task_id, actor_id, created_ts
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            msg_id,
-            fa,
-            ta,
-            k,
-            json.dumps(clean_payload, ensure_ascii=False),
-            tid,
-            (actor_id or "system:team").strip() or "system:team",
-            now,
-        ),
-    )
-    conn.commit()
+    with team_store._db_lock:
+        conn = team_store.get_connection()
+        conn.execute(
+            """
+            INSERT INTO team_messages (
+                id, from_agent, to_agent, kind, payload_json, task_id, actor_id, created_ts
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                msg_id,
+                fa,
+                ta,
+                k,
+                json.dumps(clean_payload, ensure_ascii=False),
+                tid,
+                (actor_id or "system:team").strip() or "system:team",
+                now,
+            ),
+        )
+        conn.commit()
     return TeamMessage(
         id=msg_id,
         from_agent=fa,
@@ -130,11 +141,12 @@ def list_messages(
         params.append(to_agent.strip())
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     params.append(max(1, min(int(limit), 500)))
-    conn = team_store.get_connection()
-    rows = conn.execute(
-        f"SELECT * FROM team_messages{where} ORDER BY created_ts DESC LIMIT ?",
-        params,
-    ).fetchall()
+    with team_store._db_lock:
+        conn = team_store.get_connection()
+        rows = conn.execute(
+            f"SELECT * FROM team_messages{where} ORDER BY created_ts DESC LIMIT ?",
+            params,
+        ).fetchall()
     return [_row_to_message(r) for r in rows]
 
 
@@ -143,8 +155,9 @@ def get_message(message_id: str) -> TeamMessage | None:
     if not mid:
         return None
     ensure_schema()
-    conn = team_store.get_connection()
-    row = conn.execute("SELECT * FROM team_messages WHERE id = ?", (mid,)).fetchone()
+    with team_store._db_lock:
+        conn = team_store.get_connection()
+        row = conn.execute("SELECT * FROM team_messages WHERE id = ?", (mid,)).fetchone()
     if row is None:
         return None
     return _row_to_message(row)

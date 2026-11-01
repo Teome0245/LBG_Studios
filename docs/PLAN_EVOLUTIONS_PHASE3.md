@@ -186,13 +186,13 @@ flowchart TD
 
 | ID | Domaine | Intitulé | Priorité | Statut | Effort | Responsable Team |
 |:---:|:---|:---|:---:|:---:|:---:|:---|
-| **1.1** | **O1 Compagnon** | Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM | P1 | **À FAIRE** | M | `Métis` & `dev_studio` |
-| **2.1** | **O2 Jeu** | Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO | P1 | **À FAIRE** | M | `Hermès` & `Iris` |
-| **3.1** | **O3 Joueurs IA** | Coordination Tactique en Binôme (`AgentEnvironmentAdapter`) | P1 | **À FAIRE** | M | `Iris` & `Hermès` |
-| **2.2** | **O2 Jeu** | Métier Récupérateur : Établis d'Assemblage Mécatronique | P2 | **À FAIRE** | S | `Hermès` & `Chœur` |
-| **3.2** | **O3 Joueurs IA** | Économie de Troc P2P & Négociations d'Échanges | P2 | **À FAIRE** | S | `Chœur` & `Iris` |
-| **1.2** | **O1 Compagnon** | Vision Contextuelle Ponctuelle sur Demande (OCR / VLM) | P2 | **À FAIRE** | S | `dev_studio` & `Métis` |
-| **5.1** | **Studio 3D** | Replay Chronologique & Timeline Synaptique Pilot Web | P3 | **À FAIRE** | S | `Métis` & `dev_studio` |
+| **1.1** | **O1 Compagnon** | Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM | P1 | **DONE** | M | `Métis` & `dev_studio` |
+| **2.1** | **O2 Jeu** | Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO | P1 | **DONE** | M | `Hermès` & `Iris` |
+| **3.1** | **O3 Joueurs IA** | Coordination Tactique en Binôme (`AgentEnvironmentAdapter`) | P1 | **DONE** | M | `Iris` & `Hermès` |
+| **2.2** | **O2 Jeu** | Métier Récupérateur : Établis d'Assemblage Mécatronique | P2 | **DONE** | S | `Hermès` & `Chœur` |
+| **3.2** | **O3 Joueurs IA** | Économie de Troc P2P & Négociations d'Échanges | P2 | **DONE** | S | `Chœur` & `Iris` |
+| **1.2** | **O1 Compagnon** | Vision Contextuelle Ponctuelle sur Demande (OCR / VLM) | P2 | **DONE** | S | `dev_studio` & `Métis` |
+| **5.1** | **Studio 3D** | Replay Chronologique & Timeline Synaptique Pilot Web | P3 | **DONE** | S | `Métis` & `dev_studio` |
 
 ---
 

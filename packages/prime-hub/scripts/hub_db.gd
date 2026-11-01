@@ -147,8 +147,27 @@ func _worker() -> void:
 func _run_batch(batch: Array) -> void:
 	if batch.is_empty():
 		return
-	var sql: String = "PRAGMA busy_timeout=5000;\nBEGIN IMMEDIATE;\n"
+	# Découpe en sous-lots de max 8 requêtes ou max 24 KB pour ne jamais dépasser
+	# la limite MAX_ARG_STRLEN (128 KB) d'execve sous Linux.
+	var chunk: Array = []
+	var chunk_len := 0
 	for s in batch:
+		var stmt := str(s)
+		if chunk.size() >= 8 or (chunk_len + stmt.length()) > 24576:
+			_exec_sql_chunk(chunk)
+			chunk.clear()
+			chunk_len = 0
+		chunk.append(stmt)
+		chunk_len += stmt.length()
+	if not chunk.is_empty():
+		_exec_sql_chunk(chunk)
+
+
+func _exec_sql_chunk(chunk: Array) -> void:
+	if chunk.is_empty():
+		return
+	var sql: String = "PRAGMA busy_timeout=5000;\nBEGIN IMMEDIATE;\n"
+	for s in chunk:
 		sql += str(s) + "\n"
 	sql += "COMMIT;\n"
 	var out: Array = []
@@ -160,7 +179,7 @@ func _run_batch(batch: Array) -> void:
 		push_warning("[prime-hub][db] write failed rc=%d %s" % [rc, last_error])
 	else:
 		_flushes += 1
-		_writes += batch.size()
+		_writes += chunk.size()
 		last_error = ""
 
 

@@ -314,3 +314,20 @@ func find_anchor_near(pos: Vector3, max_dist: float = 35.0, filter_interaction: 
 			best_d = d
 			best = a
 	return best
+
+
+func is_near_craft_bench(pos: Vector3, max_dist: float = 8.0) -> Dictionary:
+	## Ticket 2.2 — Vérifie si une entité est à portée d'interaction d'un établi CAO (`craft`).
+	var anchor := find_anchor_near(pos, max_dist, "craft")
+	if anchor.is_empty():
+		return {
+			"near": false,
+			"anchor": {},
+			"distance": INF,
+		}
+	var a_pos: Vector3 = anchor.get("pos", Vector3.ZERO)
+	return {
+		"near": true,
+		"anchor": anchor,
+		"distance": pos.distance_to(a_pos),
+	}

@@ -505,3 +505,47 @@ func _maybe_world_suggest(bot: Dictionary, persona: Dictionary, goal: Dictionary
 		"admin_level": int(persona.get("admin_level", 0)),
 		"account_login": str(persona.get("account_login", "")),
 	})
+
+
+func evaluate_barter_needs(bot_name: String) -> Dictionary:
+	## Ticket 3.2 — Évalue les surplus et les manques d'inventaire d'un Joueur IA pour le troc P2P.
+	var nm := bot_name.strip_edges()
+	if economy == null or nm.is_empty():
+		return {"bot": nm, "surplus": [], "deficits": []}
+	var inv_res: Dictionary = economy.inventory(nm)
+	var items: Array = inv_res.get("inventory", []) if typeof(inv_res.get("inventory")) == TYPE_ARRAY else []
+	var counts: Dictionary = {
+		"scrap_metal": 0,
+		"water_capsule": 0,
+		"dried_grain": 0,
+		"binding_tape": 0,
+		"oasis_condensate_filter": 0,
+	}
+	for it in items:
+		if typeof(it) == TYPE_DICTIONARY:
+			var iid := str(it.get("id", ""))
+			counts[iid] = int(it.get("qty", 0))
+
+	# Seuils d'équilibre de survie
+	var target_mins := {
+		"scrap_metal": 3,
+		"water_capsule": 2,
+		"dried_grain": 2,
+		"binding_tape": 2,
+	}
+	var surplus: Array = []
+	var deficits: Array = []
+	for k in target_mins.keys():
+		var have := int(counts.get(k, 0))
+		var target := int(target_mins[k])
+		if have >= target + 2:
+			surplus.append({"id": k, "qty": have - target, "have": have})
+		elif have < target:
+			deficits.append({"id": k, "qty": target - have, "have": have})
+
+	return {
+		"bot": nm,
+		"counts": counts,
+		"surplus": surplus,
+		"deficits": deficits,
+	}

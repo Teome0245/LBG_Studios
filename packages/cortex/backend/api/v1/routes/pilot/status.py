@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import socket
 import time
 from typing import Any
 
@@ -28,8 +27,28 @@ class WorldEventPayload(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class BrainTimelineImpulsePayload(BaseModel):
+    pole_key: str = "cortex"
+    tag: str = "Synapse"
+    message: str
+    level: str = "normal"
+    cognitive_load: float = 0.5
+    gauges: dict[str, float] = Field(default_factory=dict)
+    ts: float | None = None
+
+
 _world_events: list[dict[str, Any]] = []
 _MAX_WORLD_EVENTS = 50
+
+_brain_timeline_buffer: list[dict[str, Any]] = []
+_MAX_TIMELINE_IMPULSES = 1000
+
+
+def _append_timeline_impulse(entry: dict[str, Any]) -> dict[str, Any]:
+    _brain_timeline_buffer.append(entry)
+    while len(_brain_timeline_buffer) > _MAX_TIMELINE_IMPULSES:
+        _brain_timeline_buffer.pop(0)
+    return entry
 
 
 async def _fetch_player_ia_runtime(*, timeout_s: float = 2.0) -> dict[str, Any]:
@@ -168,6 +187,19 @@ async def post_world_event(event: WorldEventPayload) -> dict[str, object]:
     _world_events.append(evt)
     while len(_world_events) > _MAX_WORLD_EVENTS:
         _world_events.pop(0)
+    _append_timeline_impulse(
+        {
+            "id": f"tl_{int(now * 1000)}_{len(_brain_timeline_buffer)}",
+            "pole_key": event.target_pole or "world",
+            "tag": event.bot_name or event.source or "Monde",
+            "message": event.message,
+            "level": "boost" if event.event_type in ("storm", "alert", "combat") else "normal",
+            "cognitive_load": 0.78 if event.event_type in ("storm", "alert", "combat") else 0.52,
+            "gauges": {"confidence": 75.0, "curiosity": 68.0, "stress": 25.0, "fatigue": 18.0},
+            "ts": now,
+            "source_event_id": evt["id"],
+        }
+    )
     return {"ok": True, "event": evt, "total_events": len(_world_events)}
 
 
@@ -176,6 +208,63 @@ async def get_world_events(limit: int = 15) -> dict[str, object]:
     """Historique récent des événements cognitifs du monde Lost Heaven."""
     slice_events = _world_events[-limit:] if _world_events else []
     return {"ok": True, "events": slice_events, "total_events": len(_world_events)}
+
+
+@router.post("/brain/timeline", tags=["pilot"], response_model=OkEnvelope)
+async def post_brain_timeline_impulse(payload: BrainTimelineImpulsePayload) -> dict[str, object]:
+    """Ticket 5.1 (Phase 3) : Enregistre une impulsion synaptique dans le buffer circulaire (max 1000 / ~15 min)."""
+    now = float(payload.ts) if payload.ts is not None else time.time()
+    entry = _append_timeline_impulse(
+        {
+            "id": f"tl_{int(now * 1000)}_{len(_brain_timeline_buffer)}",
+            "pole_key": payload.pole_key,
+            "tag": payload.tag,
+            "message": payload.message,
+            "level": payload.level,
+            "cognitive_load": max(0.0, min(1.0, float(payload.cognitive_load))),
+            "gauges": payload.gauges or {"confidence": 72.0, "curiosity": 65.0, "stress": 18.0, "fatigue": 15.0},
+            "ts": now,
+        }
+    )
+    return {
+        "ok": True,
+        "impulse": entry,
+        "buffer_size": len(_brain_timeline_buffer),
+        "max_capacity": _MAX_TIMELINE_IMPULSES,
+    }
+
+
+@router.get("/brain/timeline", tags=["pilot"], response_model=OkEnvelope)
+async def get_brain_timeline(
+    window_sec: float = 900.0,
+    offset_sec: float = 0.0,
+    limit: int = 120,
+) -> dict[str, object]:
+    """Ticket 5.1 (Phase 3) : Récupère la timeline synaptique et l'état reconstitué à `now - abs(offset_sec)`."""
+    now = time.time()
+    cutoff = now - max(10.0, float(window_sec))
+    recent = [e for e in _brain_timeline_buffer if float(e.get("ts", 0.0)) >= cutoff]
+    sliced = recent[-max(1, min(1000, int(limit))) :] if recent else []
+
+    target_ts = now - abs(float(offset_sec))
+    snapshot_at_offset: dict[str, Any] | None = None
+    if _brain_timeline_buffer:
+        snapshot_at_offset = min(
+            _brain_timeline_buffer,
+            key=lambda e: abs(float(e.get("ts", now)) - target_ts),
+        )
+
+    return {
+        "ok": True,
+        "now": now,
+        "window_sec": window_sec,
+        "offset_sec": offset_sec,
+        "target_ts": target_ts,
+        "buffer_size": len(_brain_timeline_buffer),
+        "max_capacity": _MAX_TIMELINE_IMPULSES,
+        "impulses": sliced,
+        "snapshot": snapshot_at_offset,
+    }
 
 @router.get("/ollama/tags", tags=["pilot"], response_model=OkEnvelope)
 async def pilot_proxy_ollama_tags() -> dict[str, object]:
@@ -432,11 +521,13 @@ async def pilot_aggregate_status() -> dict[str, object]:
         "mmo_server_detail": mmo_detail,
     }
 
-    # Sondes TCP rapides sur le LAN pour l'infra et le jeu (pastilles)
-    def check_port(h: str, p: int) -> bool:
+    # Sondes TCP rapides asynchrones sur le LAN pour l'infra et le jeu (non-bloquantes)
+    async def check_port_async(h: str, p: int, timeout: float = 0.5) -> bool:
         try:
-            with socket.create_connection((h, p), timeout=0.8):
-                return True
+            _, writer = await asyncio.wait_for(asyncio.open_connection(h, p), timeout=timeout)
+            writer.close()
+            await writer.wait_closed()
+            return True
         except Exception:
             return False
 
@@ -444,16 +535,24 @@ async def pilot_aggregate_status() -> dict[str, object]:
     prime_ip = get_settings().lbg_lan_host_mmo.split(":")[0]
     front_ip = get_settings().lbg_lan_host_front.split(":")[0]
 
+    tcp_vm110, tcp_vm245, tcp_vm246, tcp_precu_game, tcp_prime_game = await asyncio.gather(
+        check_port_async(front_ip, 11434),
+        check_port_async(precu_ip, 3306),
+        check_port_async(prime_ip, 8787),
+        check_port_async(precu_ip, 44453),
+        check_port_async(prime_ip, 44553),
+    )
+
     res["infra_status"] = {
         "vm140": "ok" if orch_state == "ok" else "error",
-        "vm110": "ok" if check_port(front_ip, 11434) else "error",
-        "vm245": "ok" if check_port(precu_ip, 3306) else "error",
+        "vm110": "ok" if tcp_vm110 else "error",
+        "vm245": "ok" if tcp_vm245 else "error",
         # G5+ : prime-hub Godot unifié (:8787). Sidecar Core3 :8791 = legacy OFF.
-        "vm246": "ok" if check_port(prime_ip, 8787) else "error",
+        "vm246": "ok" if tcp_vm246 else "error",
     }
     res["game_status"] = {
-        "precu_game": "ok" if check_port(precu_ip, 44453) else "offline",
-        "prime_game": "ok" if check_port(prime_ip, 44553) else "offline",
+        "precu_game": "ok" if tcp_precu_game else "offline",
+        "prime_game": "ok" if tcp_prime_game else "offline",
     }
     # Joueurs IA via prime-hub (:8787) — pas LBG_MMO_SERVER_URL (souvent PreCU).
     player_ia = await _fetch_player_ia_runtime(timeout_s=1.8)

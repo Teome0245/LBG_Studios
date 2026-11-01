@@ -25,6 +25,12 @@ let _currentSelectedPole = "cortex";
 const MAX_SIGNALS = 8;
 const _signals = [];
 
+// Ticket 5.1 (Phase 3) — Buffer circulaire chronologique (1000 impulsions / ~15 min)
+const MAX_TIMELINE_BUFFER = 1000;
+const _timelineBuffer = [];
+let _isTimelinePaused = false;
+let _timelineOffsetSec = 0;
+
 function getBase() {
   const App = globalThis.PilotApp;
   if (App && typeof App.getBase === "function") {
@@ -106,13 +112,30 @@ function addSignal(poleKey, tag, text, level = "normal") {
 
   const sig = {
     id: Date.now() + Math.random(),
+    ts: now.getTime() / 1000.0,
     time: timeStr,
     poleKey,
     icon: poleDef.icon || "⚡",
     tag,
     text,
     level,
+    cognitive_load: level === "surge" ? 0.95 : level === "boost" ? 0.78 : 0.48,
+    gauges: (_lastBrainData && _lastBrainData.gauges) || {
+      confidence: 74,
+      curiosity: 66,
+      stress: 18,
+      fatigue: 15,
+    },
   };
+
+  _timelineBuffer.push(sig);
+  while (_timelineBuffer.length > MAX_TIMELINE_BUFFER) {
+    _timelineBuffer.shift();
+  }
+
+  if (_isTimelinePaused) {
+    return;
+  }
 
   _signals.unshift(sig);
   if (_signals.length > MAX_SIGNALS) {
@@ -497,6 +520,110 @@ function bindButtons() {
       if (window.LbgBrain3d) window.LbgBrain3d.focusPole(key);
     });
   });
+
+  // Ticket 5.1 — Contrôles de Replay Chronologique & Timeline Synaptique
+  const pauseBtn = document.getElementById("brain-btn-timeline-pause");
+  const liveBtn = document.getElementById("brain-btn-timeline-live");
+  const sliderEl = document.getElementById("brain-timeline-slider");
+  const labelEl = document.getElementById("brain-timeline-label");
+
+  const updateTimelineHud = () => {
+    if (pauseBtn) {
+      pauseBtn.textContent = _isTimelinePaused ? "▶️ Reprendre" : "⏸️ Pause";
+      pauseBtn.classList.toggle("is-active", _isTimelinePaused);
+    }
+    if (liveBtn) {
+      liveBtn.classList.toggle("is-active", !_isTimelinePaused && _timelineOffsetSec === 0);
+    }
+    if (labelEl) {
+      if (!_isTimelinePaused && _timelineOffsetSec === 0) {
+        labelEl.textContent = "DIRECT (0s)";
+      } else {
+        const absSec = Math.abs(_timelineOffsetSec);
+        const mins = Math.floor(absSec / 60);
+        const secs = absSec % 60;
+        labelEl.textContent = `REPLAY -${mins}m ${String(secs).padStart(2, "0")}s`;
+      }
+    }
+  };
+
+  const applyTimelineScrub = async (offsetSec) => {
+    _timelineOffsetSec = Number(offsetSec) || 0;
+    _isTimelinePaused = _timelineOffsetSec < 0;
+    updateTimelineHud();
+
+    const targetTs = Date.now() / 1000.0 - Math.abs(_timelineOffsetSec);
+    let snap = null;
+    if (_timelineBuffer.length > 0) {
+      let bestDiff = Infinity;
+      for (const item of _timelineBuffer) {
+        const d = Math.abs((item.ts || 0) - targetTs);
+        if (d < bestDiff) {
+          bestDiff = d;
+          snap = item;
+        }
+      }
+    }
+
+    try {
+      const base = getBase();
+      const r = await fetch(`${base}/v1/pilot/brain/timeline?window_sec=900&offset_sec=${_timelineOffsetSec}`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.snapshot) {
+          snap = {
+            poleKey: data.snapshot.pole_key || "cortex",
+            tag: data.snapshot.tag || "Replay",
+            text: data.snapshot.message || "",
+            message: data.snapshot.message || "",
+            level: data.snapshot.level || "boost",
+            cognitive_load: data.snapshot.cognitive_load || 0.65,
+            gauges: data.snapshot.gauges || {},
+            time: new Date((data.snapshot.ts || targetTs) * 1000).toTimeString().split(" ")[0],
+            icon: "⏪",
+          };
+        }
+      }
+    } catch (_) {
+      /* fallback sur _timelineBuffer local */
+    }
+
+    if (snap && window.LbgBrain3d && typeof window.LbgBrain3d.replaySnapshot === "function") {
+      window.LbgBrain3d.replaySnapshot(snap);
+      const narrativeEl = document.getElementById("brain-narrative-box");
+      if (narrativeEl) {
+        narrativeEl.textContent = `[REPLAY ${labelEl ? labelEl.textContent : ""}] ${snap.tag} : ${snap.text || snap.message}`;
+      }
+    }
+  };
+
+  if (pauseBtn) {
+    pauseBtn.addEventListener("click", () => {
+      _isTimelinePaused = !_isTimelinePaused;
+      if (!_isTimelinePaused) {
+        _timelineOffsetSec = 0;
+        if (sliderEl) sliderEl.value = "0";
+        fetchAllData();
+      }
+      updateTimelineHud();
+    });
+  }
+
+  if (liveBtn) {
+    liveBtn.addEventListener("click", () => {
+      _isTimelinePaused = false;
+      _timelineOffsetSec = 0;
+      if (sliderEl) sliderEl.value = "0";
+      updateTimelineHud();
+      fetchAllData();
+    });
+  }
+
+  if (sliderEl) {
+    sliderEl.addEventListener("input", (e) => {
+      applyTimelineScrub(Number(e.target.value || 0));
+    });
+  }
 }
 
 async function fetchAllData() {

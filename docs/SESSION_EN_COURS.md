@@ -23,16 +23,58 @@ Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.
 - [x] **Ticket 2.2** : Émergence Sociale : Propagation des Rumeurs Inter-Villages
 - [x] **Ticket 5.1** : Projection Cognitive des Joueurs IA dans le Cerveau 3D
 
-**Plan d'Évolutions Phase 3 ([`PLAN_EVOLUTIONS_PHASE3.md`](PLAN_EVOLUTIONS_PHASE3.md) — EN COURS D'AMORÇAGE)** :
+**Plan d'Évolutions Phase 3 ([`PLAN_EVOLUTIONS_PHASE3.md`](PLAN_EVOLUTIONS_PHASE3.md) — 100 % ACHEVÉ & VALIDÉ — 7/7 Tickets DONE)** :
 - [x] **Ticket 1.1** (O1) : Synthèse Vocale TTS Locale & Lip-Sync Visèmes VRM
 - [x] **Ticket 2.1** (O2) : Cycle Jour / Nuit Circadien & Éclairage Bâtiments CAO
 - [x] **Ticket 3.1** (O3) : Coordination Tactique en Binôme (`AgentEnvironmentAdapter`)
-- [ ] **Ticket 2.2** (O2) : Métier Récupérateur : Établis d'Assemblage Mécatronique
-- [ ] **Ticket 3.2** (O3) : Économie de Troc P2P & Négociations d'Échanges
-- [ ] **Ticket 1.2** (O1) : Vision Contextuelle Ponctuelle sur Demande (OCR / VLM)
-- [ ] **Ticket 5.1** (Studio) : Replay Chronologique & Timeline Synaptique Pilot Web
+- [x] **Ticket 2.2** (O2) : Métier Récupérateur : Établis d'Assemblage Mécatronique
+- [x] **Ticket 3.2** (O3) : Économie de Troc P2P & Négociations d'Échanges
+- [x] **Ticket 1.2** (O1) : Vision Contextuelle Ponctuelle sur Demande (OCR / VLM)
+- [x] **Ticket 5.1** (Studio) : Replay Chronologique & Timeline Synaptique Pilot Web
 
 **2026-10-31** :
+- **Phase 3 Ticket 1.2 — Vision Contextuelle Ponctuelle sur Demande / Incident (`packages/cortex/backend`, `Agent_IA`, `compagnon_ui`)** :
+  * Action `capture_active_window_snippet` dans `packages/cortex/windows_agent/Agent_IA/executor.py` : capture ciblée en mémoire (`MemoryStream` -> Base64) de la seule fenêtre de premier plan (`GetForegroundWindow` / `GetWindowRect`), zéro stockage disque.
+  * Service `packages/cortex/backend/services/vision_service.py` et routes `/v1/vision/health`, `/v1/vision/analyze` dans `api/v1/routes/vision.py` (purge mémoire immédiate après analyse, heuristique OCR d'erreurs + fallback mini-VLM local `.111`).
+  * Injection du contexte visuel dans `packages/cortex/compagnon_ui/server_overlay/router_prompts.py` (`is_vision_intent_prompt`, `format_vision_context_block`).
+  * Suite de tests unitaires `packages/cortex/backend/tests/test_vision_service.py` (3/3 passants).
+- **Phase 3 Ticket 5.1 — Replay Chronologique & Timeline Synaptique Pilot Web (`packages/cortex/backend` & `pilot_web`)** :
+  * Buffer circulaire temporel (`_brain_timeline_buffer`, 1000 impulsions / ~15 min) et endpoints `POST/GET /v1/pilot/brain/timeline` dans `packages/cortex/backend/api/v1/routes/pilot/status.py`.
+  * Suite de tests unitaires `packages/cortex/backend/tests/test_pilot_brain_timeline.py` (2/2 passants).
+  * Contrôleur de Scrubber temporel (`#brain-timeline-bar` : Pause, Direct, curseur `-15 min ... 0s`) dans `pilot_web/index.html`, `src/modules/team_brain.js` et méthode `replaySnapshot()` dans `brain_3d/brain_3d.js`.
+- **Phase 3 Ticket 1.1 (Unification Frontend TTS & Visèmes VRM)** :
+  * Consolidation dans `packages/cortex/compagnon_ui/src/lib/tts.js` des fonctions historiques (`speakText`, `stopTts`, `fetchTtsHealth`, `sanitizeForSpeech`) et du contrôleur Lip-Sync (`createSpeechOutputController`, `generateClientVisemes`, `playVisemes` dans `vrm_pet.js`). 76/76 tests JS et build Vite `compagnon_ui` verts.
+- **Résolution des Blocages de Connexion & Latence Pilot Web (Campus Team / Presence / Joueurs IA)** :
+  * **Causes racines identifiées** :
+    1. *Course critique SQLite multi-threads* : `ensure_schema()` réexécutait `executescript(_MESSAGES_SCHEMA)` à chaque lecture de messages sans verrou, provoquant `sqlite3.DatabaseError: another row available` et des deadlocks en cascade.
+    2. *Absence d'index sur `updated_ts`* : dans `team_tasks.db` (281 Mo, 35 474 tâches accumulées), chaque requête `ORDER BY updated_ts DESC` scannait toute la table (1,06 s par requête) avec saturation de la file d'attente d'Uvicorn.
+    3. *Sondes réseau synchrones bloquantes* : `check_port` exécutait 5 `socket.create_connection` synchrones de 0,8s bloquant l'event loop principal de FastAPI pendant 2,4s à chaque requête `GET /v1/pilot/status`.
+    4. *Dépendance manquante* : `python-multipart` manquant dans le venv de la VM 140 (requis par `stt.py`).
+  * **Correctifs appliqués & Déployés** :
+    - `messages.py` & `store.py` : protection stricte de toutes les requêtes SQLite par `_db_lock`, flag `_schema_ensured` pour n'exécuter `ensure_schema` qu'une seule fois, et création des index B-tree composites `idx_team_tasks_updated`, `idx_team_tasks_status_updated` et `idx_team_tasks_role_updated` (requêtes accélérées de 1,06 s à 0,5 ms — gain x590).
+    - `status.py` : conversion des sondes de ports en coroutines asynchrones parallèles (`check_port_async` via `asyncio.gather`), éliminant tout blocage de l'event loop.
+    - Installation de `python-multipart` sur la VM 140 et redémarrage propre des services `lbg-orchestrator` et `lbg-backend`.
+  * **Résultats vérifiés** :
+    - `/v1/pilot/team/presence/snapshot` : **70 ms** (badge snapshot OK vert, 23 agents affichés).
+    - `/v1/pilot/player-ia/runtime` : **73 ms** (10 bots online affichés).
+    - `/v1/pilot/team/campus/status` : **0,66 s** (délai dépassé 15s éradiqué).
+- **Phase 3 Ticket 2.2 — Métier Récupérateur : Établis d'Assemblage Mécatronique & Recettes de Terrain (`prime-hub`)** :
+  * Création de `packages/prime-hub/scripts/hub_crafting.gd` et `packages/prime-hub/data/craft/schematics_scrap.json` : 4 recettes de terrain canoniques (*Kit de réparation mécatronique*, *Filtre à condensat d'oasis*, *Batterie régulée de ferraille*, *Torche de prospection nocturne*).
+  * Validation stricte d'ancrage CAO de proximité `is_near_craft_bench(pos, 8.0)` via `hub_collision.gd` au Hangar Dépôt Nord (`warehouse_craft_bench`), refus déterministe à distance.
+  * Consommation atomique d'ingrédients sous autorité serveur (`craft_combine`) et snap en posture Triplon `craft`.
+  * Self-test unitaire headless : `packages/prime-hub/tools/crafting_schematics_selftest.gd` validé en CI.
+- **Phase 3 Ticket 3.2 — Économie de Troc P2P & Négociations d'Échanges entre Joueurs IA (`prime-hub`)** :
+  * Création de `packages/prime-hub/scripts/hub_trade.gd` : matrice de valeur relative bornée (garde-fou anti-déséquilibre, ex. 2 ferrailles = 1 capsule d'eau), protocole d'offre et acceptation sans intermédiaire PNJ.
+  * Estimation autonome des surplus et déficits d'inventaire dans `hub_bot_autonomy.gd` (`evaluate_barter_needs`).
+  * Échange bilatéral atomique sous autorité Godot Hub (zéro duplication, zéro mutation libre LLM).
+  * Intégration rumeur dynamique dans `HubWiki` suite aux trocs réalisés au Cantina (*« Nix_BarterTest a troqué 2 Ferraille contre 1 Capsule d'eau avec Lia_BarterTest (Cantina La Perle) »*).
+  * Résolution SQLite transactionnelle dans `hub_db.gd` : segmentation automatique des lots SQL (`_exec_sql_chunk`) pour respecter la limite `MAX_ARG_STRLEN` (128 KB) d'execve sous Linux.
+  * Self-test unitaire headless : `packages/prime-hub/tools/barter_trade_selftest.gd` validé en CI.
+- **CI & Qualité Globale** :
+  * CI Godot Headless : **12/12 tests PASS en 18s** (`bash tools/ci_godot_headless.sh`).
+  * Pytest Cortex Backend : **144/144 tests PASS en 6.93s** (`packages/cortex/.venv/bin/pytest packages/cortex/backend/tests`).
+  * Compagnon UI Frontend : **76/76 tests PASS en 1.54s** (`node --test packages/cortex/compagnon_ui/src/lib/*.test.js`).
+  * Linter Ruff : **All checks passed** (`ruff check .`).
 - **Phase 3 Ticket 1.1 — Synthèse Vocale TTS Locale & Visèmes VRM (`packages/cortex/backend`)** :
   * Création de `packages/cortex/backend/services/tts_service.py` : moteur TTS avec support des voix locales (Kokoro/Piper sur `.111`), fallback déterministe mock/WebSpeech, et générateur de visèmes VRM synchronisés (`aa`, `ih`, `ou`, `ee`, `oh`).
   * Endpoints REST dans `packages/cortex/backend/api/v1/routes/tts.py` : `/v1/tts/health`, `/v1/tts/voices`, `/v1/tts/synthesize`.

@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS team_tasks (
 );
 CREATE INDEX IF NOT EXISTS idx_team_tasks_status ON team_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_team_tasks_role ON team_tasks(role);
+CREATE INDEX IF NOT EXISTS idx_team_tasks_updated ON team_tasks(updated_ts DESC);
+CREATE INDEX IF NOT EXISTS idx_team_tasks_status_updated ON team_tasks(status, updated_ts DESC);
+CREATE INDEX IF NOT EXISTS idx_team_tasks_role_updated ON team_tasks(role, updated_ts DESC);
 CREATE TABLE IF NOT EXISTS team_messages (
     id TEXT PRIMARY KEY,
     from_agent TEXT NOT NULL,

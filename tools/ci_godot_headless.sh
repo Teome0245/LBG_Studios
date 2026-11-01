@@ -80,6 +80,8 @@ run_test "Propagation des Rumeurs & Wiki Hub (O3 Ticket 2.2)" "res://tools/rumor
 run_test "Météo Dynamique & Repli Bâtiments (HubEvents, Sandstorm, Abri)" "res://tools/weather_storm_selftest.gd"
 run_test "Cycle Jour/Nuit Circadien & Lanternes (O2 Ticket 2.1)" "res://tools/day_night_selftest.gd"
 run_test "Escorte Tactique & Binômes IA (O3 Ticket 3.1)" "res://tools/tactical_escort_selftest.gd"
+run_test "Métier Récupérateur & Établis Mécatroniques (O2 Ticket 2.2)" "res://tools/crafting_schematics_selftest.gd"
+run_test "Économie de Troc P2P & Négociations IA (O3 Ticket 3.2)" "res://tools/barter_trade_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

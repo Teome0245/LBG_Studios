@@ -57,14 +57,19 @@ func _load_salvage() -> void:
 func _load_recipes() -> void:
 	_recipes_by_id.clear()
 	var raw: Variant = _HubPaths.read_json(_HubPaths.data_file("catalog_recipes.json"))
-	if typeof(raw) != TYPE_DICTIONARY:
-		return
-	var items = raw.get("items", [])
-	if typeof(items) != TYPE_ARRAY:
-		return
-	for it in items:
-		if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) != "":
-			_recipes_by_id[str(it["id"])] = it
+	if typeof(raw) == TYPE_DICTIONARY:
+		var items = raw.get("items", [])
+		if typeof(items) == TYPE_ARRAY:
+			for it in items:
+				if typeof(it) == TYPE_DICTIONARY and str(it.get("id", "")) != "":
+					_recipes_by_id[str(it["id"])] = it
+	var scrap_raw: Variant = _HubPaths.read_json(_HubPaths.data_file("craft/schematics_scrap.json"))
+	if typeof(scrap_raw) == TYPE_DICTIONARY:
+		var schematics = scrap_raw.get("schematics", [])
+		if typeof(schematics) == TYPE_ARRAY:
+			for sc in schematics:
+				if typeof(sc) == TYPE_DICTIONARY and str(sc.get("id", "")) != "":
+					_recipes_by_id[str(sc["id"])] = sc
 
 
 func _load_chronicle() -> void:
@@ -1347,3 +1352,86 @@ func relation_memory_hint(player: String, npc_id: String, max_len: int = 160, ma
 	if text.length() > max_len:
 		text = text.substr(0, max_len - 1) + "…"
 	return text
+
+
+func item_quantity(player: String, item_id: String) -> int:
+	var p := _player(player)
+	return _inv_qty(p, item_id.strip_edges())
+
+
+func atomic_barter_swap(
+	sender: String,
+	receiver: String,
+	give_item_id: String,
+	give_qty: int,
+	receive_item_id: String,
+	receive_qty: int,
+	give_item_name: String = "",
+	receive_item_name: String = ""
+) -> Dictionary:
+	## Ticket 3.2 — Échange P2P atomique sous autorité serveur (zéro duplication, zéro mutation libre).
+	var s_name := sender.strip_edges()
+	var r_name := receiver.strip_edges()
+	var g_id := give_item_id.strip_edges()
+	var r_id := receive_item_id.strip_edges()
+	if s_name.is_empty() or r_name.is_empty() or s_name == r_name:
+		return {"ok": false, "error": "invalid_participants"}
+	if g_id.is_empty() or r_id.is_empty() or give_qty <= 0 or receive_qty <= 0:
+		return {"ok": false, "error": "invalid_trade_quantities"}
+
+	var p_sender := _player(s_name)
+	var p_receiver := _player(r_name)
+
+	var have_give := _inv_qty(p_sender, g_id)
+	if have_give < give_qty:
+		return {
+			"ok": false,
+			"error": "sender_insufficient_items",
+			"player": s_name,
+			"item_id": g_id,
+			"have": have_give,
+			"need": give_qty,
+		}
+
+	var have_recv := _inv_qty(p_receiver, r_id)
+	if have_recv < receive_qty:
+		return {
+			"ok": false,
+			"error": "receiver_insufficient_items",
+			"player": r_name,
+			"item_id": r_id,
+			"have": have_recv,
+			"need": receive_qty,
+		}
+
+	var g_label := give_item_name if not give_item_name.is_empty() else g_id
+	var r_label := receive_item_name if not receive_item_name.is_empty() else r_id
+
+	# Retrait bilatéral puis ajout bilatéral atomique + persistance SQLite
+	_consume(p_sender, g_id, give_qty)
+	_consume(p_receiver, r_id, receive_qty)
+	_add_item(p_sender, r_id, receive_qty, r_label)
+	_add_item(p_receiver, g_id, give_qty, g_label)
+
+	_save_players()
+	log_session_event(
+		s_name,
+		"barter_p2p",
+		"Troc P2P avec %s : -%d %s / +%d %s." % [r_name, give_qty, g_label, receive_qty, r_label],
+		{"partner": r_name, "give_id": g_id, "give_qty": give_qty, "recv_id": r_id, "recv_qty": receive_qty}
+	)
+	log_session_event(
+		r_name,
+		"barter_p2p",
+		"Troc P2P avec %s : -%d %s / +%d %s." % [s_name, receive_qty, r_label, give_qty, g_label],
+		{"partner": s_name, "give_id": r_id, "give_qty": receive_qty, "recv_id": g_id, "recv_qty": give_qty}
+	)
+	return {
+		"ok": true,
+		"sender": s_name,
+		"receiver": r_name,
+		"gave": {"id": g_id, "qty": give_qty, "name": g_label},
+		"received": {"id": r_id, "qty": receive_qty, "name": r_label},
+		"sender_inventory": (p_sender["inventory"] as Array).duplicate(true),
+		"receiver_inventory": (p_receiver["inventory"] as Array).duplicate(true),
+	}

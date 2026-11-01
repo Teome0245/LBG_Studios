@@ -53546,6 +53546,10 @@ void main() {
     let vrm = null;
     let talkingUntil = 0;
     let mouthAmp = 0;
+    let activeVisemes = [];
+    let visemesStartTime = 0;
+    const VISEME_KEYS = ["aa", "ih", "ou", "ee", "oh"];
+    const currentVisemeWeights = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
     let ready = false;
     let disposed = false;
     let animId = null;
@@ -53801,10 +53805,26 @@ void main() {
       if (msOrBool === false || msOrBool === 0) {
         talkingUntil = 0;
         mouthAmp = 0;
+        activeVisemes = [];
+        for (const vk of VISEME_KEYS) {
+          currentVisemeWeights[vk] = 0;
+        }
         return;
       }
       const ms = typeof msOrBool === "number" && Number.isFinite(msOrBool) ? msOrBool : 2500;
       talkingUntil = performance.now() + Math.max(400, Math.min(2e4, ms));
+    }
+    function playVisemes(visemeList, durationMs) {
+      if (Array.isArray(visemeList) && visemeList.length > 0) {
+        activeVisemes = visemeList;
+        visemesStartTime = performance.now();
+        const last = visemeList[visemeList.length - 1];
+        const calcDurMs = last ? (last.time_offset + last.duration) * 1e3 : 3e3;
+        setTalking(durationMs || calcDurMs);
+      } else {
+        activeVisemes = [];
+        setTalking(durationMs || 2500);
+      }
     }
     function say(text) {
       setTalking(Math.min(12e3, Math.max(900, 55 * String(text || "").length)));
@@ -54723,17 +54743,47 @@ void main() {
         if (vrm.lookAt && typeof vrm.lookAt.lookAt === "function") {
           vrm.lookAt.lookAt(camera.position);
         }
-        if (performance.now() < talkingUntil) {
+        const nowMs = performance.now();
+        const hasVisemes = activeVisemes && activeVisemes.length > 0;
+        const targetWeights = { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 };
+        if (hasVisemes && nowMs < talkingUntil) {
+          const elapsedSec = (nowMs - visemesStartTime) / 1e3;
+          let matched = false;
+          for (let vi = 0; vi < activeVisemes.length; vi++) {
+            const frame = activeVisemes[vi];
+            const start = frame.time_offset;
+            const end = start + frame.duration;
+            if (elapsedSec >= start && elapsedSec <= end) {
+              const vKey = frame.viseme;
+              if (targetWeights[vKey] !== void 0) {
+                targetWeights[vKey] = frame.weight || 0.85;
+                matched = true;
+              }
+              break;
+            }
+          }
+          if (!matched && elapsedSec < (talkingUntil - visemesStartTime) / 1e3) {
+            targetWeights.aa = 0.12;
+          }
+        } else if (nowMs < talkingUntil) {
           mouthAmp = 0.3 + 0.5 * Math.abs(Math.sin(t * 13));
+          targetWeights.aa = mouthAmp;
         } else {
           mouthAmp *= 0.85;
           if (mouthAmp < 0.02) mouthAmp = 0;
         }
+        const vLerp = Math.min(1, dt * 18);
+        for (const vk of VISEME_KEYS) {
+          currentVisemeWeights[vk] += (targetWeights[vk] - currentVisemeWeights[vk]) * vLerp;
+          if (currentVisemeWeights[vk] < 0.01) currentVisemeWeights[vk] = 0;
+        }
         if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
           if (poseTo === "fingerHeart") {
-            vrm.expressionManager.setValue("aa", Math.max(mouthAmp, 0.14));
+            vrm.expressionManager.setValue("aa", Math.max(currentVisemeWeights.aa, 0.14));
           } else {
-            vrm.expressionManager.setValue("aa", mouthAmp);
+            for (const vk of VISEME_KEYS) {
+              vrm.expressionManager.setValue(vk, currentVisemeWeights[vk]);
+            }
           }
         }
         if (typeof vrm.update === "function") {
@@ -54772,6 +54822,7 @@ void main() {
       },
       setMood,
       setTalking,
+      playVisemes,
       say,
       pulse,
       flip,

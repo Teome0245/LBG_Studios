@@ -764,3 +764,47 @@ def soften_media_hard_refuse(prompt: str, content: str) -> str | None:
     if any(x in low for x in ("makemkv", "handbrake", "boutique", "échange", "echanger", "vod", "agir")):
         return None
     return _MEDIA_SOFT_REPLY
+
+
+_VISION_INTENT_RE = re.compile(
+    r"(?i)\b("
+    r"regarde\s+(?:mon\s+[eé]cran|cette\s+erreur|ce\s+bug|la\s+fen[eê]tre|mon\s+code)|"
+    r"inspecte\s+(?:ce\s+bug|cette\s+erreur|mon\s+[eé]cran|la\s+fen[eê]tre)|"
+    r"analyse\s+(?:cette\s+erreur|mon\s+[eé]cran|la\s+fen[eê]tre\s+active)|"
+    r"vois[-\s]tu\s+l['\u2019]erreur|"
+    r"qu['\u2019]est[-\s]ce\s+qui\s+cloche\s+sur\s+mon\s+[eé]cran"
+    r")\b"
+)
+
+
+def is_vision_intent_prompt(prompt: str) -> bool:
+    """Ticket 1.2 (Phase 3) : Détecte si l'utilisateur demande explicitement d'inspecter sa fenêtre active."""
+    return bool(_VISION_INTENT_RE.search(prompt or ""))
+
+
+def format_vision_context_block(vision_payload: dict | None) -> str:
+    """Ticket 1.2 (Phase 3) : Injecte l'analyse visuelle / OCR de la fenêtre active dans le prompt du Compagnon."""
+    if not isinstance(vision_payload, dict) or not vision_payload.get("ok"):
+        return ""
+    title = str(vision_payload.get("window_title") or "Fenêtre active").strip()
+    process = str(vision_payload.get("process_name") or "app").strip()
+    summary = str(vision_payload.get("analysis") or vision_payload.get("summary") or "").strip()
+    ocr_text = str(vision_payload.get("ocr_excerpt") or "").strip()
+    diagnosis = str(vision_payload.get("diagnosis_hint") or "").strip()
+    if not (summary or ocr_text):
+        return ""
+    lines = [
+        "\n\n## Contexte Visuel Ponctuel (Fenêtre Active Inspectée sur Demande — Ticket 1.2)",
+        f"- Application au premier plan : `{process}` — « {title} »",
+        "- Confidentialité : capture éphémère en mémoire tampon purgée après lecture.",
+    ]
+    if ocr_text:
+        lines.append(f"- Texte / Erreur détecté à l'écran : {ocr_text[:400]}")
+    if summary:
+        lines.append(f"- Analyse visuelle : {summary[:500]}")
+    if diagnosis:
+        lines.append(f"- Piste de résolution technique : {diagnosis[:350]}")
+    lines.append(
+        "Utilise directement ces éléments visuels pour expliquer la cause du problème et guider l'utilisateur."
+    )
+    return "\n".join(lines)
