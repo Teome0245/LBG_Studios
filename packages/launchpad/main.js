@@ -6,15 +6,30 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const LAUNCHPAD_VERSION = '2.1.4';
+const LAUNCHPAD_VERSION = '2.1.5';
 const STATUS_API_TIMEOUT_MS = 12000;
 const STATUS_API_FAIL_THRESHOLD = 2;
 const PRECU_HOST_LAN = '192.168.0.245';
 const PRIME_HOST_LAN = '192.168.0.246';
 
-/** Chemins Windows — Godot 4.6 + prime-client (J: syncé = runtime ; WSL = source). */
-const DEFAULT_GODOT_EXE = 'J:\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64.exe';
+/** Chemins Windows candidats pour Godot 4.6 + prime-client (J: syncé = runtime dev ; C: = runtime 2nd PC ; WSL = source). */
+const CANDIDATE_GODOT_EXES = [
+  'J:\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64.exe',
+  'C:\\LBG_MMO\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64.exe',
+];
+
+function resolveDefaultGodotExe() {
+  if (process.platform === 'win32') {
+    for (const exe of CANDIDATE_GODOT_EXES) {
+      if (fs.existsSync(exe)) return exe;
+    }
+  }
+  return CANDIDATE_GODOT_EXES[0];
+}
+
+const DEFAULT_GODOT_EXE = resolveDefaultGodotExe();
 const J_PRIME_CLIENT_DIR = 'J:\\swgemu\\clients\\prime-client';
+const C_PRIME_CLIENT_DIR = 'C:\\LBG_MMO\\clients\\prime-client';
 const WSL_LBG_STUDIOS_PRIME =
   '\\\\wsl.localhost\\Ubuntu\\home\\sdesh\\projects\\LBG_Studios\\packages\\prime-client';
 const WSL_NEW_MMO_PRIME =
@@ -55,9 +70,13 @@ function resolvePrimeClientDir() {
     }
   }
   if (process.platform === 'win32') {
-    // Préférer le client syncé J: (cache .godot régénéré par sync_prime_client_to_j.sh)
+    // Préférer le client syncé J: (dev principal)
     if (fs.existsSync(path.join(J_PRIME_CLIENT_DIR, 'project.godot'))) {
       return J_PRIME_CLIENT_DIR;
+    }
+    // Client standard C: (ex: second PC)
+    if (fs.existsSync(path.join(C_PRIME_CLIENT_DIR, 'project.godot'))) {
+      return C_PRIME_CLIENT_DIR;
     }
     if (fs.existsSync(path.join(WSL_LBG_STUDIOS_PRIME, 'project.godot'))) {
       return WSL_LBG_STUDIOS_PRIME;
@@ -210,21 +229,20 @@ function isGodotProfile(profile) {
   return exe.includes('godot') || exe.endsWith('primeclient.exe') || exe.endsWith('prime-client.exe');
 }
 
-/** Migre un profil Prime encore pointé sur lbgemu.exe / new_mmo → client J: syncé. */
+/** Initialise les chemins du profil Prime Godot s'ils sont vides, sans écraser les choix de l'utilisateur. */
 function migratePrimeClientPath(cfg) {
-  const dir = resolvePrimeClientDir();
-  const expectedArgs = ['--path', dir];
   let changed = false;
   for (const profile of cfg.profiles || []) {
     if (profile.id !== 'prime') continue;
-    if (profile.gameDir !== dir) {
-      profile.gameDir = dir;
+    if (!profile.gameDir || typeof profile.gameDir !== 'string' || !profile.gameDir.trim()) {
+      profile.gameDir = resolvePrimeClientDir();
       changed = true;
     }
-    if (profile.gameExe && !fs.existsSync(profile.gameExe)) {
-      profile.gameExe = DEFAULT_GODOT_EXE;
+    if (!profile.gameExe || typeof profile.gameExe !== 'string' || !profile.gameExe.trim()) {
+      profile.gameExe = resolveDefaultGodotExe();
       changed = true;
     }
+    const expectedArgs = ['--path', profile.gameDir];
     const args = Array.isArray(profile.launchArgs) ? profile.launchArgs : [];
     const argsOk =
       args.length === expectedArgs.length &&
@@ -1002,6 +1020,7 @@ ipcMain.on('save-path-settings', (event, payload) => {
     profile.clientKind = 'godot';
     profile.skipPatch = true;
     profile.configFile = '';
+    profile.launchArgs = ['--path', profile.gameDir];
     if (payload.godotFullscreen != null) {
       profile.godotFullscreen = Boolean(payload.godotFullscreen);
     }
@@ -1200,6 +1219,139 @@ ipcMain.on('manual-update-check', () => {
   checkUpdates();
 });
 
+ipcMain.on('apply-launchpad-update', () => {
+  applyLaunchpadUpdateAndRestart();
+});
+
+function compareVersions(v1, v2) {
+  const parts1 = String(v1 || '')
+    .replace(/^v/i, '')
+    .split('.')
+    .map((n) => parseInt(n, 10) || 0);
+  const parts2 = String(v2 || '')
+    .replace(/^v/i, '')
+    .split('.')
+    .map((n) => parseInt(n, 10) || 0);
+  const len = Math.max(parts1.length, parts2.length);
+  for (let i = 0; i < len; i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+}
+
+function getAppAsarPaths() {
+  if (!app.isPackaged) return null;
+  const execDir = path.dirname(process.execPath);
+  const resourcesDir = path.join(execDir, 'resources');
+  const asarPath = path.join(resourcesDir, 'app.asar');
+  const updatePath = path.join(resourcesDir, 'app.asar.update');
+  return { resourcesDir, asarPath, updatePath };
+}
+
+async function checkAndUpdateLaunchpad() {
+  const patchBase = (config.patchServerUrl || '').replace(/\/$/, '');
+  if (!patchBase) return null;
+  let remoteVer = null;
+  let asarUrl = `${patchBase}/releases/launchpad/app.asar`;
+
+  try {
+    try {
+      const vInfo = await httpGetJson(`${patchBase}/releases/launchpad/version.json`, 4000);
+      remoteVer = vInfo?.version || vInfo?.launchpad_version;
+      if (vInfo?.asar_path) asarUrl = `${patchBase}${vInfo.asar_path}`;
+    } catch (_) {
+      const inst = await httpGetJson(`${patchBase}/releases/installer-manifest.json`, 4000);
+      remoteVer = inst?.launchpad_version;
+      if (inst?.urls?.launchpad_asar) asarUrl = `${patchBase}${inst.urls.launchpad_asar}`;
+    }
+  } catch (err) {
+    return null;
+  }
+
+  if (!remoteVer) return null;
+
+  if (compareVersions(remoteVer, LAUNCHPAD_VERSION) <= 0) {
+    return { updated: false, version: LAUNCHPAD_VERSION, remoteVer };
+  }
+
+  if (!app.isPackaged) {
+    return { updated: false, devMode: true, remoteVer };
+  }
+
+  const paths = getAppAsarPaths();
+  if (!paths) return null;
+
+  mainWindow?.webContents.send('patch-status', {
+    status: 'patching',
+    message: `Launchpad : téléchargement mise à jour v${remoteVer}…`,
+  });
+
+  try {
+    await downloadFile(asarUrl, paths.updatePath, (percent) => {
+      mainWindow?.webContents.send('patch-progress', {
+        percent,
+        file: `Launchpad v${remoteVer}`,
+      });
+    });
+
+    if (fs.existsSync(paths.updatePath) && fs.statSync(paths.updatePath).size > 10000) {
+      return { updated: true, version: remoteVer };
+    }
+  } catch (err) {
+    console.warn('[Launchpad] Erreur téléchargement app.asar:', err.message);
+  }
+  return null;
+}
+
+function applyLaunchpadUpdateAndRestart() {
+  const paths = getAppAsarPaths();
+  if (!paths || !fs.existsSync(paths.updatePath)) {
+    return false;
+  }
+  if (process.platform === 'win32') {
+    const batPath = path.join(app.getPath('temp'), 'lbg_update_launchpad.bat');
+    const execPath = process.execPath;
+    const batContent = [
+      '@echo off',
+      'chcp 65001 >nul',
+      'timeout /t 1 /nobreak >nul',
+      ':retry',
+      `move /y "${paths.updatePath}" "${paths.asarPath}" >nul 2>&1`,
+      'if errorlevel 1 (',
+      '  timeout /t 1 /nobreak >nul',
+      '  goto retry',
+      ')',
+      `start "" "${execPath}"`,
+      'exit',
+    ].join('\r\n');
+
+    fs.writeFileSync(batPath, batContent, 'utf8');
+
+    const child = spawn('cmd.exe', ['/c', batPath], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    child.unref();
+    app.quit();
+    return true;
+  }
+
+  try {
+    fs.copyFileSync(paths.updatePath, paths.asarPath);
+    fs.unlinkSync(paths.updatePath);
+    app.relaunch();
+    app.quit();
+    return true;
+  } catch (err) {
+    console.error('applyLaunchpadUpdate error:', err);
+    return false;
+  }
+}
+
 function getFileHash(filePath) {
   return new Promise((resolve) => {
     const hash = crypto.createHash('md5');
@@ -1321,8 +1473,22 @@ async function checkGodotClientUpdates(profile) {
 
   mainWindow.webContents.send('patch-status', {
     status: 'checking',
-    message: `Prime — comparaison version locale / référence (${channel})…`,
+    message: `Vérification des mises à jour (Prime & Launchpad)…`,
   });
+
+  let lpUpdateResult = null;
+  try {
+    lpUpdateResult = await checkAndUpdateLaunchpad();
+  } catch (err) {
+    console.warn('[Launchpad] checkAndUpdateLaunchpad:', err.message);
+  }
+  if (lpUpdateResult?.updated) {
+    mainWindow.webContents.send('launchpad-update-ready', { version: lpUpdateResult.version });
+  }
+
+  const lpNotice = lpUpdateResult?.updated
+    ? `\n★ Mise à jour Launchpad v${lpUpdateResult.version} prête — clique sur « Redémarrer Launchpad ».`
+    : '';
 
   const targetDir = profile.gameDir;
   const localBuild = readLocalBuildInfo(targetDir);
@@ -1346,7 +1512,8 @@ async function checkGodotClientUpdates(profile) {
       message:
         `Manifeste Prime indisponible (${err.message}).\n` +
         `Local : ${localStamp}\n` +
-        `Publiez : python3 tools/generate_prime_patch_manifest.py puis déployez sur ${config.patchServerUrl}/patches/${channel}/`,
+        `Publiez : python3 tools/generate_prime_patch_manifest.py puis déployez sur ${config.patchServerUrl}/patches/${channel}/` +
+        lpNotice,
     });
     return;
   }
@@ -1373,7 +1540,8 @@ async function checkGodotClientUpdates(profile) {
       status: 'ready',
       message:
         `Prime à jour (${filesToUpdate.length} diff). Local ${formatStampLocal(localStamp)} · référence ${formatStampLocal(remoteStamp)}` +
-        (sameStamp ? ' ✓' : ' (fichiers OK, tampon différent)'),
+        (sameStamp ? ' ✓' : ' (fichiers OK, tampon différent)') +
+        lpNotice,
     });
     return;
   }
@@ -1384,7 +1552,8 @@ async function checkGodotClientUpdates(profile) {
       message:
         `Patch ignoré — référence ${remoteStamp} plus ancienne que le client local ${localStamp}. ` +
         `${filesToUpdate.length} fichier(s) diffèrent. Publiez un manifeste à jour sur le serveur patch ` +
-        `(generate_prime_patch_manifest.py + deploy_prime_client_patch_246.sh) ou resynchronisez depuis WSL.`,
+        `(generate_prime_patch_manifest.py + deploy_prime_client_patch_246.sh) ou resynchronisez depuis WSL.` +
+        lpNotice,
     });
     return;
   }
@@ -1436,14 +1605,18 @@ async function checkGodotClientUpdates(profile) {
     const imported = await runGodotImport(profile);
     mainWindow.webContents.send('patch-status', {
       status: 'ready',
-      message: imported
-        ? `Prime mis à jour — ${filesToUpdate.length} fichier(s). Référence ${remoteStamp}. Relance Godot.`
-        : `Prime fichiers OK (${filesToUpdate.length}) mais import Godot incomplet — ouvre une fois l’éditeur puis relance.`,
+      message:
+        (imported
+          ? `Prime mis à jour — ${filesToUpdate.length} fichier(s). Référence ${remoteStamp}. Relance Godot.`
+          : `Prime fichiers OK (${filesToUpdate.length}) mais import Godot incomplet — ouvre une fois l’éditeur puis relance.`) +
+        lpNotice,
     });
   } catch (error) {
     mainWindow.webContents.send('patch-status', {
       status: 'error',
-      message: `Échec patch Prime : ${error.message}\nLocal ${localStamp} · ref ${remoteStamp}${remoteErr ? `\n(${remoteErr})` : ''}`,
+      message:
+        `Échec patch Prime : ${error.message}\nLocal ${localStamp} · ref ${remoteStamp}${remoteErr ? `\n(${remoteErr})` : ''}` +
+        lpNotice,
     });
   }
 }

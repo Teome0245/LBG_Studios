@@ -10,269 +10,364 @@
     {
       "id": "poi:lost_heaven_starport",
       "kind": "starport_shuttle",
-      "label": "Port shuttle",
-      "x": 4832.8,
-      "z": -819.8,
-      "size_m": 142.8,
+      "label": "Terminal Starport",
+      "x": 4260.0,
+      "z": -737.0,
+      "size_m": 120.0,
       "essential": true,
-      "size_from_gabarit_me": true,
-      "size_baked_from": 47.6,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
-        "face": "west",
-        "width_m": 20.0,
-        "depth_m": 28.6,
-        "apron_m": 11.4
-      }
+        "face": "east",
+        "width_m": 26.0,
+        "depth_m": 22.0,
+        "apron_m": 14.0
+      },
+      "doors": [
+        {
+          "face": "east",
+          "width_m": 26.0,
+          "depth_m": 22.0,
+          "apron_m": 14.0
+        },
+        {
+          "face": "west",
+          "width_m": 22.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_cantina",
       "kind": "cantina",
       "label": "La Perle de Scrapaltai",
       "display_name": "La Perle de Scrapaltai",
-      "x": 5028.3,
-      "z": -784.1,
-      "size_m": 96.0,
+      "x": 5080.0,
+      "z": -737.0,
+      "size_m": 160.0,
       "essential": false,
       "lore_ref": "docs/world/BIBLE_MMO.md#V13",
-      "size_baked_from": 32.0,
-      "cad_blueprint_ref": "blueprints/poi_lost_heaven_cantina.json",
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "west",
-        "width_m": 13.4,
-        "depth_m": 19.2,
-        "apron_m": 7.7
-      }
+        "width_m": 28.0,
+        "depth_m": 24.0,
+        "apron_m": 16.0
+      },
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 28.0,
+          "depth_m": 24.0,
+          "apron_m": 16.0
+        },
+        {
+          "face": "east",
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ],
+      "cad_blueprint_ref": "blueprints/poi_lost_heaven_cantina.json"
     },
     {
       "id": "poi:lost_heaven_bank",
       "kind": "bank",
       "label": "Banque",
-      "x": 4633.4,
-      "z": -791.1,
-      "size_m": 120.0,
+      "x": 4460.0,
+      "z": -737.0,
+      "size_m": 110.0,
       "essential": true,
-      "size_baked_from": 40.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "east",
-        "width_m": 16.8,
-        "depth_m": 24.0,
-        "apron_m": 9.6
-      }
+        "width_m": 24.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "east",
+          "width_m": 24.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_inn",
       "kind": "inn",
       "label": "Auberge",
-      "x": 4811.3,
-      "z": -594.2,
-      "size_m": 96.0,
+      "x": 4749.0,
+      "z": -520.0,
+      "size_m": 110.0,
       "essential": false,
-      "size_baked_from": 32.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "south",
-        "width_m": 13.4,
-        "depth_m": 19.2,
-        "apron_m": 7.7
-      }
+        "width_m": 24.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 24.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_market",
       "kind": "shops",
-      "label": "Marché / commerces",
-      "x": 4859.3,
-      "z": -1008.3,
-      "size_m": 144.0,
+      "label": "Grand Marché",
+      "x": 4749.0,
+      "z": -980.0,
+      "size_m": 150.0,
       "essential": true,
-      "size_baked_from": 48.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "north",
-        "width_m": 20.2,
-        "depth_m": 28.8,
-        "apron_m": 11.5
-      }
+        "width_m": 28.0,
+        "depth_m": 24.0,
+        "apron_m": 16.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 28.0,
+          "depth_m": 24.0,
+          "apron_m": 16.0
+        },
+        {
+          "face": "east",
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_training_hall",
       "kind": "trainers_combat",
       "label": "Hall d'entraînement",
-      "x": 5036.9,
-      "z": -636.2,
-      "size_m": 108.0,
+      "x": 5020.0,
+      "z": -530.0,
+      "size_m": 110.0,
       "essential": false,
-      "size_baked_from": 36.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
-        "face": "west",
-        "width_m": 15.1,
-        "depth_m": 21.6,
-        "apron_m": 8.6
-      }
+        "face": "south",
+        "width_m": 22.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 22.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        },
+        {
+          "face": "west",
+          "width_m": 18.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_clinic",
       "kind": "clinic",
       "label": "Clinique",
-      "x": 4620.8,
-      "z": -610.6,
-      "size_m": 84.0,
+      "x": 4480.0,
+      "z": -530.0,
+      "size_m": 105.0,
       "essential": false,
-      "size_baked_from": 28.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "south",
-        "width_m": 11.8,
-        "depth_m": 16.8,
-        "apron_m": 6.7
-      }
+        "width_m": 22.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 22.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        },
+        {
+          "face": "east",
+          "width_m": 18.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_mission_post",
       "kind": "mission_terminal",
       "label": "Bureau des missions",
-      "x": 5028.3,
-      "z": -1008.8,
-      "size_m": 72.0,
+      "x": 5020.0,
+      "z": -950.0,
+      "size_m": 95.0,
       "essential": false,
-      "size_baked_from": 24.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
-        "face": "west",
-        "width_m": 10.1,
-        "depth_m": 14.4,
-        "apron_m": 6.0
-      }
+        "face": "north",
+        "width_m": 20.0,
+        "depth_m": 18.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 20.0,
+          "depth_m": 18.0,
+          "apron_m": 12.0
+        },
+        {
+          "face": "west",
+          "width_m": 18.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_town_hall",
       "kind": "town_hall",
       "label": "Mairie",
-      "x": 4622.3,
-      "z": -999.8,
-      "size_m": 120.0,
+      "x": 4480.0,
+      "z": -950.0,
+      "size_m": 110.0,
       "essential": false,
-      "size_baked_from": 40.0,
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "north",
-        "width_m": 16.8,
-        "depth_m": 24.0,
-        "apron_m": 9.6
-      }
+        "width_m": 24.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 24.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_artisan_hall",
       "kind": "trainer_artisan",
       "label": "Atelier artisan",
-      "x": 5199.3,
-      "z": -769.5,
-      "size_m": 84.0,
+      "x": 5320.0,
+      "z": -737.0,
+      "size_m": 90.0,
       "essential": false,
-      "size_baked_from": 28.0,
-      "cad_blueprint_ref": "blueprints/poi_lost_heaven_warehouse_dock.json",
-      "footprint_source": "visual_mul_3_baked_2026-08-14",
-      "layout_spread": 1.3500000000000003,
-      "layout_organic": true,
       "door": {
         "face": "west",
-        "width_m": 11.8,
-        "depth_m": 16.8,
-        "apron_m": 6.7
-      }
+        "width_m": 22.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      },
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 22.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
+        }
+      ],
+      "cad_blueprint_ref": "blueprints/poi_lost_heaven_warehouse_dock.json"
     },
     {
       "id": "poi:lost_heaven_lodge_w",
       "kind": "npc_housing_block",
       "label": "Logements ouest",
-      "x": 4305.0,
-      "z": -780.0,
-      "size_m": 64.0,
+      "x": 4060.0,
+      "z": -737.0,
+      "size_m": 70.0,
       "essential": false,
-      "size_baked_from": 21.0,
-      "footprint_source": "lodges_outward_2026-10-07",
-      "layout_organic": true,
       "door": {
         "face": "east",
-        "width_m": 10.0,
-        "depth_m": 12.0,
-        "apron_m": 6.0
-      }
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "east",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_lodge_n",
       "kind": "npc_housing_block",
       "label": "Logements nord",
       "x": 4749.0,
-      "z": -430.0,
-      "size_m": 64.0,
+      "z": -370.0,
+      "size_m": 70.0,
       "essential": false,
-      "size_baked_from": 21.0,
-      "footprint_source": "lodges_outward_2026-10-07",
-      "layout_organic": true,
       "door": {
         "face": "south",
-        "width_m": 10.0,
-        "depth_m": 12.0,
-        "apron_m": 6.0
-      }
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_lodge_e",
       "kind": "npc_housing_block",
       "label": "Logements est",
-      "x": 5245.0,
-      "z": -630.0,
-      "size_m": 64.0,
+      "x": 5460.0,
+      "z": -540.0,
+      "size_m": 70.0,
       "essential": false,
-      "size_baked_from": 21.0,
-      "footprint_source": "lodges_outward_2026-10-07",
-      "layout_organic": true,
       "door": {
         "face": "west",
-        "width_m": 10.0,
-        "depth_m": 12.0,
-        "apron_m": 6.0
-      }
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_lodge_s",
       "kind": "npc_housing_block",
       "label": "Logements sud",
-      "x": 4860.0,
-      "z": -1185.0,
-      "size_m": 64.0,
+      "x": 4749.0,
+      "z": -1160.0,
+      "size_m": 70.0,
       "essential": false,
-      "size_baked_from": 21.0,
-      "footprint_source": "lodges_outward_2026-10-07",
-      "layout_organic": true,
       "door": {
         "face": "north",
-        "width_m": 10.0,
-        "depth_m": 12.0,
-        "apron_m": 6.0
-      }
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:lost_heaven_gate",
@@ -324,53 +419,118 @@
       "z": -550.0,
       "size_m": 64.0,
       "essential": true,
-      "door": { "face": "south", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:zalem_outpost_workshop",
       "kind": "trainer_artisan",
       "label": "Atelier mécanique relais",
-      "x": -1130.0,
-      "z": -520.0,
+      "x": -1060.0,
+      "z": -470.0,
       "size_m": 56.0,
       "essential": false,
-      "door": { "face": "west", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+      "door": {
+        "face": "west",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:zalem_outpost_barracks",
       "kind": "trainers_combat",
       "label": "Caserne de la milice",
-      "x": -1270.0,
-      "z": -520.0,
+      "x": -1340.0,
+      "z": -470.0,
       "size_m": 56.0,
       "essential": false,
-      "door": { "face": "east", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+      "door": {
+        "face": "east",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "east",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:zalem_outpost_inn",
       "kind": "inn",
       "label": "Relais des convois",
       "x": -1200.0,
-      "z": -470.0,
+      "z": -370.0,
       "size_m": 52.0,
       "essential": false,
-      "door": { "face": "south", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:zalem_outpost_depot",
       "kind": "shops",
       "label": "Dépôt de ravitaillement",
-      "x": -1130.0,
-      "z": -590.0,
+      "x": -1060.0,
+      "z": -630.0,
       "size_m": 48.0,
       "essential": false,
-      "door": { "face": "north", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+      "door": {
+        "face": "north",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:zalem_outpost_gate",
       "kind": "city_gate",
       "label": "Barrière ouest — Zalem",
-      "x": -1350.0,
+      "x": -1460.0,
       "z": -550.0,
       "size_m": 40.0,
       "essential": false
@@ -378,61 +538,204 @@
     {
       "id": "poi:ksar_nomade_tent",
       "kind": "town_hall",
-      "label": "Grande Tente de l'Ancien",
+      "label": "Demeure de l'Ancien — Ksar de l'Oasis",
       "x": 4950.0,
       "z": -3800.0,
       "size_m": 64.0,
       "essential": true,
-      "door": { "face": "north", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+      "door": {
+        "face": "north",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:ksar_nomade_dispensary",
       "kind": "clinic",
-      "label": "Tente des soins & onguents",
-      "x": 4880.0,
-      "z": -3770.0,
+      "label": "Dispensaire des baumes — Oasis",
+      "x": 4800.0,
+      "z": -3730.0,
       "size_m": 52.0,
       "essential": false,
-      "door": { "face": "east", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+      "door": {
+        "face": "east",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "east",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:ksar_nomade_bazaar",
       "kind": "shops",
-      "label": "Bazar nomade & troc",
-      "x": 5020.0,
-      "z": -3770.0,
+      "label": "Grand Bazar du Ksar — Comptoir de troc",
+      "x": 5100.0,
+      "z": -3730.0,
       "size_m": 60.0,
       "essential": false,
-      "door": { "face": "west", "width_m": 12.0, "depth_m": 14.0, "apron_m": 6.0 }
+      "door": {
+        "face": "west",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:ksar_nomade_inn",
       "kind": "inn",
       "label": "Caravansérail de l'Oasis",
       "x": 4950.0,
-      "z": -3720.0,
+      "z": -3600.0,
       "size_m": 56.0,
       "essential": false,
-      "door": { "face": "south", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "south",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:ksar_nomade_craft",
       "kind": "trainer_artisan",
-      "label": "Forge des sables",
-      "x": 5020.0,
-      "z": -3840.0,
+      "label": "Forge et Métallerie de l'Oasis",
+      "x": 5100.0,
+      "z": -3900.0,
       "size_m": 48.0,
       "essential": false,
-      "door": { "face": "north", "width_m": 10.0, "depth_m": 12.0, "apron_m": 6.0 }
+      "door": {
+        "face": "north",
+        "width_m": 16.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      },
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 16.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ]
     },
     {
       "id": "poi:ksar_nomade_gate",
       "kind": "city_gate",
-      "label": "Arches de ferraille du Ksar",
+      "label": "Arches de pierre du Ksar",
       "x": 4950.0,
-      "z": -3640.0,
+      "z": -3470.0,
       "size_m": 40.0,
       "essential": false
+    },
+    {
+      "id": "poi:dune_lookout",
+      "kind": "town_hall",
+      "label": "Poste de Guet des Dunes — Vigie Est",
+      "display_name": "Poste de Guet des Dunes",
+      "x": 6650.0,
+      "z": -1380.0,
+      "size_m": 44.0,
+      "essential": false,
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 16.0,
+          "depth_m": 16.0,
+          "apron_m": 10.0
+        }
+      ],
+      "door": {
+        "face": "west",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:oasis_al_khali",
+      "kind": "inn",
+      "label": "Oasis d'Al-Khali — Étape des Caravanes",
+      "display_name": "Oasis d'Al-Khali",
+      "x": 6550.0,
+      "z": -2480.0,
+      "size_m": 56.0,
+      "essential": false,
+      "doors": [
+        {
+          "face": "west",
+          "width_m": 20.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        },
+        {
+          "face": "north",
+          "width_m": 18.0,
+          "depth_m": 18.0,
+          "apron_m": 10.0
+        }
+      ],
+      "door": {
+        "face": "west",
+        "width_m": 20.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:salvage_canyon",
+      "kind": "trainer_artisan",
+      "label": "Atelier du Canyon des Épaves",
+      "display_name": "Canyon des Épaves",
+      "x": 5650.0,
+      "z": -3250.0,
+      "size_m": 48.0,
+      "essential": false,
+      "doors": [
+        {
+          "face": "north",
+          "width_m": 18.0,
+          "depth_m": 16.0,
+          "apron_m": 10.0
+        }
+      ],
+      "door": {
+        "face": "north",
+        "width_m": 18.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
     }
   ],
   "gabarit_mos_eisley": {

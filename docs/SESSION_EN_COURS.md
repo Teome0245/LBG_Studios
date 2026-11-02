@@ -1,17 +1,88 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-10-31  
+**Mis à jour** : 2026-11-02  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + D8 avatar bridge Desktop — **documenté** ; suite = feeling / adapters externes.
+**Fil** : canon O1/O2/O3 + Phase 4 SWG Pre-CU dans Lost Heaven + Launchpad v2.1.5 + Rendu 3D VRM — **100 % livré & validé CI**.
 
 ---
 
 ## Objectif actuel
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
-Travail produit : Compagnon D6 vert + hub Godot P3–P5 sans rouvrir le legacy.  
+Travail produit : Compagnon D6 vert + hub Godot P3–P5 + Boucle Majeure SWG Pre-CU sans rouvrir le legacy.  
+
+**Plan d'Évolutions Phase 4 — Boucle Majeure SWG Pre-CU ([`PLAN_EVOLUTIONS_PHASE4_SWG_PRECU.md`](PLAN_EVOLUTIONS_PHASE4_SWG_PRECU.md) — 100 % ACHEVÉ & VALIDÉ — 5/5 Tickets DONE)** :
+- [x] **Ticket 4.1** (O2) : Arbres de Compétences `Novice → 4×4 Boxes → Master` & Plafond `250 Skill Points` (`hub_skills.gd`, `catalog_skills.json`, `talents_craft_panel.gd`)
+- [x] **Ticket 4.2** (O2) : Prospection Dynamique (`Survey Tool`) & Spawns de Ressources à Statistiques `1..1000` (`OQ/CD/PE/MA/SR`) (`hub_survey.gd`, `resources_spawns_lh.json`)
+- [x] **Ticket 4.3** (O2) : Artisanat Profond : Assemblage Pondéré par Ressources & Phase d'Expérimentation (`hub_crafting.gd`)
+- [x] **Ticket 4.4** (O2) : Boucle Sociale & Médicale : Pools `HAM`, `Wounds` (Medcenter) & `Battle Fatigue` (Cantina La Perle) (`hub_ham_medical.gd`)
+- [x] **Ticket 4.5** (O2/O3) : Extracteurs de Terrain (`Harvesters`), Trémies `Hopper` & Arbitrage Autonome IA O3 (`hub_harvesters.gd`, `hub_bot_autonomy.gd`)
+- [x] **Ticket 4.6** (O2 Client 2D Top-Down) : Interface Joueur SWG Pre-CU & Refonte Monde Style Battlemap VTT / TTRPG (Téléportation Dev dans le radial menu, collision infranchissable des remparts/palissades pour Nix et les bots, désencombrement adaptatif des nameplates PNJ, remparts crénelés épais avec bastions d'angle, croissants de dunes barkhanes et rochers encrés avec ombres portées douces) dans `packages/prime-client` et `prime-hub`.
+
+**2026-11-02** :
+- **Intégration Aperçu 3D du Compagnon / Joueur dans le HUD SWG (`prime-client`) — Ticket 1 Priorité Utilisateur** :
+  - **Module `SwgPortrait3D` (`SubViewport3D`)** : Création de `packages/prime-client/scripts/swg_portrait_3d.gd` (`SubViewportContainer` 48×48 px) avec rendu 3D haute fidélité (96×96 suréchantillonné), caméra buste/visage calibrée (`fov: 34°`, 3/4 face), éclairage studio à trois points (Key light zénithale, Fill light chaude et Rim light cyan holographique caractéristique de Scrapaltai).
+  - **Import VRM direct & Fallback procédural autonome** : Chargement direct du modèle officiel `Compagnon.vrm` via `GLTFDocument` (57 blendshapes détectés dont `Fcl_EYE_Close`, `Fcl_ALL_Joy`, `Fcl_ALL_Sorrow`). Fallback mécanique complet en géométrie procédurale si le binaire n'est pas présent.
+  - **Micro-animations & Réaction vivante au HAM** : Respiration idle oscillante, inclinaison subtile de la tête / regard vivant, clignement naturel automatique des yeux (160ms toutes les 3.5 à 5s). Bascule d'expression faciale et pulsation d'alerte sur la rim light lorsque la santé est basse ou la fatigue élevée.
+  - **Cadre holographique & Badge Posture** : Encadrement net cyan `#3dd2f0` avec badge textuel translucide de posture (« Debout », « Combat ») intégré au bas du médaillon 3D sans chevauchement.
+  - **Validation & Déploiement** : Suite `client_modular_selftest.gd` enrichie et validée, patch client `2026-11-02T10:56:16Z` (272 fichiers) publié et vérifié sur `.246:8080/patches/prime/`.
+- **Launchpad v2.1.5 — Affichage Version, Auto-Mise à Jour Intégrée & Fix Chemins Persistants** :
+  - **Affichage de la version** : Version affichée dans la barre de titre (`LBG MMO v2.1.5`) et dans le panneau d'information à gauche (`Version Launchpad : v2.1.5`).
+  - **Auto-Mise à Jour transparente** : Au clic sur « Vérifier Mises à Jour », le Launchpad interroge `http://192.168.0.246:8080/releases/launchpad/version.json`. Si une version plus récente est publiée sur le serveur de patch, il télécharge automatiquement `app.asar` (~76 Ko) sans retélécharger tout le runtime Electron de 100 Mo.
+  - **Application en 1 clic** : Dès le téléchargement terminé, un bouton vert `★ Redémarrer Launchpad (v2.1.5 prête)` apparaît. Au clic, un script batch transparent applique le nouveau package et relance immédiatement le Launchpad.
+  - **Packaging & Déploiement LAN** : Script `packages/launchpad/scripts/pack_asar.js` intégré dans `publish_client_bootstrap_246.sh`. Fichiers `version.json`, `app.asar` et `installer-manifest.json` déployés et vérifiés sur `.246:8080`.
+  - **Correction du bug d'écrasement des chemins** : Dans `packages/launchpad/main.js`, `migratePrimeClientPath` préserve fidèlement les dossiers configurés par l'utilisateur (`C:\LBG_MMO\...`) et synchronise `launchArgs = ['--path', profile.gameDir]`. Fallbacks automatiques si `J:` n'existe pas.
+- **Géographie 2D style Dyson Logos, Oasis vivante du Ksar, Falaises Hachurées, Fond Infini & Caravane Déployée (.246)** :
+  - **Falaises et Crêtes Hachurées Style Dyson Logos** : implémentation dans `hub_props_layer.gd` du rendu procédural des falaises géologiques (`kind: "cliff"`) avec crêtes marquées et hachures régulières (Cratère de Zalem, Canyon des Épaves, Promontoire rocheux du Ksar).
+  - **Oasis Vivante du Ksar & Al-Khali** : bassins d'eau turquoise miroitante (`oasis_pool`), bosquets de palmiers en éventail (`palm_tree`), et arches monumentales en pierre (`stone_arch`).
+  - **Fond de Carte Infini & Suppression des Dalles Carrées** : adaptabilité dynamique de `planet_backdrop.gd` à la caméra et au dézoom sans coupure visible, clear color fixée sur le sable de Scrapaltai (`Color(0.70, 0.60, 0.46)`), et neutralisation des sprites fantômes.
+- **Urbanisme & Architecture Lost Heaven, Agrandissement Cantina (160m), Ancrage sur les Allées & Déploiement .246** :
+  - **Agrandissement Majeur de La Cantina La Perle (160m / 80px)** : surface presque triplée, grand comptoir en U au Nord-Ouest pour Jax Moro, grande scène surélevée à l'Est avec projecteurs pour l'artiste, 4 salons intimes avec banquettes en demi-cercle (booths SWG) le long des murs, et immense piste centrale pour danser et circuler librement.
+  - **Urbanisme Radial en Étoile** : réorientation de tous les bâtiments face à la Plaza centrale (`4749, -737`) et aux avenues.
+    - Cantina : à l'Est, porte Ouest face à la Plaza.
+    - Banque : à l'Ouest, porte Est face à la Plaza.
+    - Auberge : au Nord, porte Sud face à la Plaza.
+    - Grand Marché : au Sud, porte Nord face à la Plaza.
+    - Clinique : au Nord-Ouest, porte Sud.
+    - Hall d'entraînement : au Nord-Est, porte Sud.
+    - Mairie : au Sud-Ouest, porte Nord.
+    - Bureau des Missions : au Sud-Est, porte Nord.
+    - Terminal Starport : déplacé sur l'aile Ouest comme terminal d'arrivée, dégageant complètement le centre-ville.
+  - **Allées Pavées & Lanternes Dorées Synchronisées** : dans `hub_ground_layer.gd`, les allées mènent au pixel près sur le parvis de chaque bâtiment, et un halo de lanterne dorée éclaire chaque seuil de porte.
+  - **Ancrages PNJ & Show Live** : `lost_heaven_npc_anchors.json`, `hub_sim_defs.gd` et `hub_show.gd` synchronisés. Jax est derrière son bar, l'artiste sur sa scène, le videur devant la porte Ouest.
+  - **Validation & Déploiement** : 18/18 suites de tests headless Godot passées avec succès. Patch client (272 fichiers) publié sur `:8080/patches/prime/`, serveur `prime-hub` redémarré sur `:8787`.
+  - **CI & Qualité Globale (2026-11-02)** :
+    * **CI Godot Headless** : **18/18 suites PASS en 45s** (`bash tools/ci_godot_headless.sh` couvrant simulation, navigation, bâtiments CAO, persistance SQLite, contrats O3, météo, troc, métiers, arbre compétences SWG, prospection ressources, expérimentation craft, boucles HAM cantina/medcenter, extracteurs harvesters, inventaire DnD et modules client).
+    * **Tests Cortex Backend** : **146/146 tests PASS en 8.17s** (`python -m pytest backend/tests`).
+    * **Tests Joueurs IA Kernel (O3)** : **5/5 tests PASS en 0.17s** (`python -m pytest agents/tests/test_player_ia_kernel.py`).
+    * **Linter Ruff** : **All checks passed** (`ruff check .`).
+  - **Suppression du résidu de route sud** : retrait de la ligne coupant le rempart sud dans `hub_ground_layer.gd`, confirmation de la sortie unique et sinueuse par la Porte Est.
+  - **Caravane Marchande & PNJs de Garnison** : intégration dans `hub_sim_defs.gd` de la Vigie des Dunes, du Gardien de la Source et du Ferrailleur du Canyon.
+  - **Déploiement LAN .246 validé** : patch client (270 fichiers) publié sur `:8080/patches/prime/`, serveur `prime-hub` redémarré sur `:8787` avec la caravane active (diffusion de l'étape Porte Est confirmée dans le stream mondial). CI 18/18 headless Godot validée.
+
+
+  * **Échelle canonique physique `size_m` (72m à 144m)** : Rétablissement de la vraie taille canonique des bâtiments dans `hub_buildings_layer.gd` (36px à 72px de demi-taille), alignée au pixel près sur la boîte de collision de `HubCollision` et `ZoneLayers`. Plus aucun mur invisible à 30 mètres en dehors des bâtiments : l'entrée dessinée correspond exactement au seuil de passage.
+  * **Intérieurs visitables et spacieux** : Les surfaces au sol sont triplées avec de larges couloirs entre les tables, le comptoir et les lits d'examen.
+  * **Hitbox PNJ précise (`radius_px` réduit de 28px/18px à 8px)** : Cliquer à côté d'un PNJ sur le sol fait maintenant marcher le personnage au lieu de déclencher une sélection ou un dialogue intempestif.
+  * **Clic gauche intelligent** : Un simple clic cible et fait marcher le personnage vers sa destination ; le dialogue modal ne s'ouvre que si le joueur est au contact immédiat (< 4.5m) ou ré-appuie sur sa cible, ou via le Radial Menu (clic droit -> Discuter).
+  * Patch Prime Client `2026-11-02T07:07:06Z` déployé sur `.246:8080/patches/prime/`.
+
+**2026-11-01** :
+- **Patch Client & Serveur — Téléportation Dev, Fix Collision Remparts & Désencombrement UI** :
+  * **⚡ Téléportation Dev / Admin** : Ajout dans le menu radial SWG (clic droit terrain) de l'option `⚡ Téléporter ici (Dev)`. Téléporte instantanément le joueur aux coordonnées ciblées, met à jour le serveur WS/UDP et recentre la caméra.
+  * **Fix Remparts & Palissades (anti-traversée Nix)** : Intégration dans `HubCollision` (serveur) du tracé de la palissade (`lost_heaven_props.json`) avec détection des segments bloqués et corridors de portes. Activation stricte côté client (`enforce_hub_fence = true`), bloquant tout bot ou compagnon de traverser les murs d'enceinte en dehors des portes ouvertes.
+  * **Désencombrement des noms & étiquettes de PNJ** : Les étiquettes ne sont plus forcées globalement. Affichage adaptatif : joueur local, compagnons de groupe (Nix, Lia), cible active et monstres en combat sont affichés, tandis que les PNJ distants sont épurés au dézoom pour éliminer l'empilement illisible.
+  * **Rendu Battlemap VTT / Dyson Logos** : Remplacement des pointillés par de vrais remparts épais crénelés avec merlons, bastions de pierre et ombres portées douces ; ajout de croissants de dunes naturels, affleurements de rochers de grès et foyers de feux de camp avec halos chaleureux.
+  * Patch Prime Client `2026-11-01T22:43:50Z` déployé sur `.246:8080/patches/prime/`.
+- **Phase 4 (Tickets 4.1 à 4.5) — Transposition complète de la boucle Star Wars Galaxies Pre-CU dans Lost Heaven (`prime-hub` & `prime-client`)** :
+  * **Ticket 4.1 (`hub_skills.gd` & `catalog_skills.json`)** : 8 professions complètes en structure `Novice → 4 branches × 4 boxes → Master`, plafond de 250 Skill Points, jauges d'XP spécialisées, `learn_box` / `surrender_box` et modificateurs passifs (`experimentation_points`, `survey_range`, `wound_heal_efficiency`, `fatigue_heal_power`, `harvester_slots`).
+  * **Ticket 4.2 (`hub_survey.gd` & `resources_spawns_lh.json`)** : Gisements dynamiques rotatifs dotés de statistiques `1..1000` (`oq`, `cd`, `pe`, `ma`, `sr`), sondage radar `survey_ping` et extraction `sample_resource` conservant les statistiques de la veine dans l'inventaire joueur.
+  * **Ticket 4.3 (`hub_crafting.gd`)** : Calcul pondéré de la qualité d'assemblage selon les statistiques des ressources consommées, numérotation de série `LH-xxxx`, signature `crafted_by` et sessions d'expérimentation multi-tentatives (`amazing_success` à `critical_failure`).
+  * **Ticket 4.4 (`hub_ham_medical.gd`)** : Triple barre `HAM` (`Health`, `Action`, `Mind`), accumulation de `Wounds` et `Battle Fatigue` en combat, guérison sociale de la fatigue et buff d'Esprit à la Cantina La Perle (`watch_entertainer`), et traitement des blessures au Medcenter (`treat_wounds`).
+  * **Ticket 4.5 (`hub_harvesters.gd` & `hub_bot_autonomy.gd`)** : Pose d'extracteurs sur gisements (`>= 25%` hors bâtiments CAO), cycles de maintenance et remplissage de trémie (`Hopper`), collecte vers l'inventaire et arbitrage autonome O3 (`evaluate_swg_precu_priority`).
+  * **Validation CI Headless Godot** : 5 nouvelles suites unitaires (`precu_skills_tree_selftest.gd`, `survey_resources_selftest.gd`, `craft_experimentation_selftest.gd`, `ham_cantina_medcenter_selftest.gd`, `harvesters_outpost_selftest.gd`) intégrées à `tools/ci_godot_headless.sh` (**17/17 PASS**).  
 
 **Plan d'Évolutions Phase 2 (100 % ACHEVÉ & VALIDÉ — 8/8 Tickets DONE)** :
 - [x] **Ticket 2.1** : Contrat d'Environnement Universel O3 (`AgentEnvironmentAdapter`)

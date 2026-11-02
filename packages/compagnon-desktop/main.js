@@ -1368,6 +1368,98 @@ ipcMain.on("compagnon:overlay-move", (_e, payload) => {
   moveOverlayTo(x, y);
 });
 
+ipcMain.on("compagnon:poke-avatar", () => {
+  const pokes = [
+    { pose: "wave", holdMs: 3000, msg: "Coucou ! 👋" },
+    { pose: "fingerHeart", holdMs: 6500, msg: "Je suis là pour toi ! 💖" },
+    { pose: "approve", holdMs: 3500, msg: "Tout roule ! 👍" },
+    { pose: "jump", holdMs: 3500, msg: "Toujours prête ! 🎉" },
+    { pose: "stretch", holdMs: 4500, msg: "Une pause ferait du bien ? 🙆" },
+  ];
+  const pick = pokes[Math.floor(Math.random() * pokes.length)];
+  sendVrmPose(pick.pose, pick.holdMs);
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:initiative", {
+      message: pick.msg,
+      body: pick.msg,
+      label: "Compagnon",
+    });
+    setTimeout(() => {
+      if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send("compagnon:initiative", null);
+      }
+    }, pick.holdMs);
+  }
+});
+
+ipcMain.on("compagnon:show-overlay-context-menu", () => {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+
+  const currentFraming = (config.overlay && config.overlay.vrmFraming) || "full";
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "💬 Ouvrir Compagnon (Chat)",
+      click: () => showChat(),
+    },
+    { type: "separator" },
+    {
+      label: "👋 Saluer",
+      click: () => sendVrmPose("wave", 3000),
+    },
+    {
+      label: "💖 Mini Heart Idol",
+      click: () => sendVrmPose("fingerHeart", 8500),
+    },
+    {
+      label: "🦾 Confiante",
+      click: () => sendVrmPose("crossArms", 5000),
+    },
+    {
+      label: "🤔 Réfléchir",
+      click: () => sendVrmPose("think", 4000),
+    },
+    {
+      label: "🧘 Repos posé",
+      click: () => sendVrmPose("relax", 6000),
+    },
+    {
+      label: "💃 Pack Danses",
+      submenu: [
+        { label: "🎵 Pop / Groove", click: () => sendVrmPose("dance", 8000) },
+        { label: "💃 Samba Latino", click: () => sendVrmPose("samba", 10000) },
+        { label: "🧢 Hip-Hop Street", click: () => sendVrmPose("hiphop", 10000) },
+        { label: "🤖 Robot / Popping", click: () => sendVrmPose("robot", 10000) },
+        { label: "🪩 Disco 70s", click: () => sendVrmPose("disco", 10000) },
+        { label: "💫 Pirouette 360°", click: () => sendVrmPose("spin", 6000) },
+      ],
+    },
+    { type: "separator" },
+    {
+      label: "📐 Cadrage : Buste",
+      type: "radio",
+      checked: currentFraming === "bust",
+      click: () => setOverlayFraming("bust"),
+    },
+    {
+      label: "📐 Cadrage : Corps entier",
+      type: "radio",
+      checked: currentFraming === "full",
+      click: () => setOverlayFraming("full"),
+    },
+    { type: "separator" },
+    {
+      label: "🚶 Marche sur la barre des tâches",
+      click: () => startWalkingMovement(8000),
+    },
+    {
+      label: "👁 Masquer l'avatar",
+      click: () => overlayWindow.hide(),
+    },
+  ]);
+
+  contextMenu.popup({ window: overlayWindow });
+});
+
 /** Ticket 1.1 — Push-to-Talk / Voice-In (IPC & Raccourci Global) */
 ipcMain.on("compagnon:voice-trigger", () => {
   if (mainWindow && !mainWindow.isDestroyed()) {

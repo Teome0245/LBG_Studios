@@ -134,6 +134,12 @@ ipcRenderer.on('config', (event, cfg) => {
   if (cfg.defaultProfileId) {
     activeProfileId = cfg.defaultProfileId;
   }
+  if (cfg.launchpadVersion) {
+    const vEl = document.getElementById('lp-version-display');
+    if (vEl) vEl.textContent = `v${cfg.launchpadVersion}`;
+    const vTitle = document.getElementById('titlebar-version');
+    if (vTitle) vTitle.textContent = `v${cfg.launchpadVersion}`;
+  }
   renderDiskWarning(cfg.diskSpace);
 });
 
@@ -244,4 +250,18 @@ ipcRenderer.on('patch-status', (event, data) => {
 ipcRenderer.on('patch-progress', (event, data) => {
   document.getElementById('progress-bar').style.width = `${data.percent}%`;
   document.getElementById('progress-text').textContent = `${data.percent}% (${data.file})`;
+});
+
+const restartLpBtn = document.getElementById('restart-lp-btn');
+ipcRenderer.on('launchpad-update-ready', (event, data) => {
+  if (restartLpBtn) {
+    restartLpBtn.style.display = 'block';
+    restartLpBtn.textContent = `★ Redémarrer Launchpad (v${data.version || 'récente'} prête)`;
+  }
+});
+
+restartLpBtn?.addEventListener('click', () => {
+  restartLpBtn.disabled = true;
+  restartLpBtn.textContent = 'Application de la mise à jour…';
+  ipcRenderer.send('apply-launchpad-update');
 });

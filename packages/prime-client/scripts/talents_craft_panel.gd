@@ -59,7 +59,7 @@ func _ensure_ui() -> void:
 	if _title == null:
 		_title = Label.new()
 		_title.name = "Title"
-		_title.text = "Talents & Craft (M10)"
+		_title.text = "Talents Pre-CU (250 SP) & Craft (M10)"
 		root.add_child(_title)
 	_status_label = root.get_node_or_null("Status") as Label
 	if _status_label == null:
@@ -380,6 +380,11 @@ func _paint_lists() -> void:
 			var label := str(s.get("name", s)) if typeof(s) == TYPE_DICTIONARY else str(s)
 			if typeof(s) == TYPE_DICTIONARY and str(s.get("tree", "")) != "":
 				label = "%s  [%s]" % [label, str(s.get("tree"))]
+			if typeof(s) == TYPE_DICTIONARY and typeof(s.get("boxes")) == TYPE_DICTIONARY:
+				var b_dict: Dictionary = s["boxes"]
+				var br_arr: Variant = b_dict.get("branches", [])
+				var br_count := (br_arr as Array).size() if typeof(br_arr) == TYPE_ARRAY else 4
+				label = "%s · Pre-CU %d×4 → %s" % [label, br_count, str(b_dict.get("master", "master"))]
 			_skills_list.add_item(label)
 	_schematics_list.clear()
 	if _schematics.is_empty():

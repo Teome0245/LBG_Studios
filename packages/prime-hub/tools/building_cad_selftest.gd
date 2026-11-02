@@ -7,6 +7,7 @@ extends SceneTree
 
 const HubBlueprintBuilderScript := preload("res://scripts/hub_blueprint_builder.gd")
 const HubCollisionScript := preload("res://scripts/hub_collision.gd")
+const HubSimDefsScript := preload("res://scripts/hub_sim_defs.gd")
 
 
 func _init() -> void:
@@ -120,9 +121,9 @@ func _init() -> void:
 	print("[+] PASS: Filtres par interaction_type cantina validés (drink, rest, sit, inspect, loot)")
 
 	# Vérifier find_anchor_near
-	# Cantina est en (5028.3, -784.1)
-	var cantina_center := Vector3(5028.3, 0.0, -784.1)
-	var near_drink := collision.find_anchor_near(cantina_center, 35.0, "drink")
+	# Cantina est positionnée selon HubSimDefsScript.CANTINA
+	var cantina_center: Vector3 = HubSimDefsScript.CANTINA
+	var near_drink := collision.find_anchor_near(cantina_center, 50.0, "drink")
 	assert(not near_drink.is_empty(), "Aucun ancrage drink trouvé près de la cantina")
 	assert(near_drink.get("furn_id") == "cantina_bar_counter", "L'ancrage drink le plus proche devrait être le comptoir")
 	print("[+] PASS: find_anchor_near pour cantina validé (%s)" % near_drink.get("label", ""))

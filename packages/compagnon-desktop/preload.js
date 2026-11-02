@@ -99,4 +99,6 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
     });
   },
   getFocusContext: () => ipcRenderer.invoke("compagnon:get-focus-context"),
+  showOverlayContextMenu: () => ipcRenderer.send("compagnon:show-overlay-context-menu"),
+  pokeAvatar: () => ipcRenderer.send("compagnon:poke-avatar"),
 });

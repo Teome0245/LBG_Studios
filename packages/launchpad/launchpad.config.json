@@ -1,5 +1,5 @@
 {
-  "launchpadVersion": "2.1.4",
+  "launchpadVersion": "2.1.5",
   "statusApiUrl": "http://192.168.0.246:8792/api/servers",
   "statusApiUrls": [
     "http://192.168.0.246:8792/api/servers"

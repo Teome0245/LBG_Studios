@@ -47,7 +47,7 @@ script = ExtResource("7_poi")
 z_index = -8
 show_water = false
 show_collision = false
-enforce_hub_fence = false
+enforce_hub_fence = true
 script = ExtResource("8_zones")
 
 [node name="WsObjectsLayer" type="Node2D" parent="WorldMap"]

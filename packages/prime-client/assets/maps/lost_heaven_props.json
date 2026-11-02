@@ -636,10 +636,10 @@
       ]
     },
     {
-      "id": "path:lh_west_gate_to_zalem_road",
+      "id": "path:road_lh_to_zalem_sinuous",
       "kind": "road",
-      "label": "Route porte ouest → piste Zalem",
-      "width_m": 9.0,
+      "label": "Piste Impériale Ouest : Lost Heaven — Avant-poste Zalem",
+      "width_m": 11.0,
       "closed": false,
       "points": [
         {
@@ -647,24 +647,84 @@
           "z": -760.0
         },
         {
-          "x": 4320.0,
-          "z": -745.0
+          "x": 4000.0,
+          "z": -680.0
         },
         {
-          "x": 4150.0,
+          "x": 3688.9,
+          "z": -675.9
+        },
+        {
+          "x": 3450.0,
           "z": -710.0
         },
         {
-          "x": 4000.0,
+          "x": 3150.0,
           "z": -680.0
+        },
+        {
+          "x": 2800.0,
+          "z": -630.0
+        },
+        {
+          "x": 2450.0,
+          "z": -660.0
+        },
+        {
+          "x": 2100.0,
+          "z": -700.0
+        },
+        {
+          "x": 1750.0,
+          "z": -670.0
+        },
+        {
+          "x": 1400.0,
+          "z": -610.0
+        },
+        {
+          "x": 1050.0,
+          "z": -580.0
+        },
+        {
+          "x": 700.0,
+          "z": -630.0
+        },
+        {
+          "x": 350.0,
+          "z": -600.0
+        },
+        {
+          "x": 0.0,
+          "z": -560.0
+        },
+        {
+          "x": -350.0,
+          "z": -540.0
+        },
+        {
+          "x": -700.0,
+          "z": -580.0
+        },
+        {
+          "x": -1060.0,
+          "z": -550.0
+        },
+        {
+          "x": -1200.0,
+          "z": -550.0
+        },
+        {
+          "x": -1460.0,
+          "z": -550.0
         }
       ]
     },
     {
-      "id": "path:lh_east_gate_to_wilds",
+      "id": "path:road_lh_east_to_ksar_caravan",
       "kind": "road",
-      "label": "Route porte est → désert",
-      "width_m": 9.0,
+      "label": "Grand Circuit des Caravanes : Porte Est — Oasis d'Al-Khali — Ksar",
+      "width_m": 13.0,
       "closed": false,
       "points": [
         {
@@ -672,21 +732,280 @@
           "z": -900.0
         },
         {
-          "x": 5280.0,
-          "z": -920.0
-        },
-        {
           "x": 5450.0,
-          "z": -980.0
+          "z": -950.0
         },
         {
-          "x": 5600.0,
-          "z": -1050.0
+          "x": 5813.6,
+          "z": -982.5
+        },
+        {
+          "x": 6050.0,
+          "z": -1060.0
+        },
+        {
+          "x": 6350.0,
+          "z": -1180.0
+        },
+        {
+          "x": 6650.0,
+          "z": -1380.0
+        },
+        {
+          "x": 6820.0,
+          "z": -1680.0
+        },
+        {
+          "x": 6800.0,
+          "z": -2050.0
+        },
+        {
+          "x": 6550.0,
+          "z": -2480.0
+        },
+        {
+          "x": 6250.0,
+          "z": -2820.0
+        },
+        {
+          "x": 5850.0,
+          "z": -3100.0
+        },
+        {
+          "x": 5650.0,
+          "z": -3250.0
+        },
+        {
+          "x": 5350.0,
+          "z": -3450.0
+        },
+        {
+          "x": 5100.0,
+          "z": -3580.0
+        },
+        {
+          "x": 4950.0,
+          "z": -3470.0
+        },
+        {
+          "x": 4950.0,
+          "z": -3700.0
         }
+      ]
+    },
+    {
+      "id": "path:road_ksar_to_zalem_traverse",
+      "kind": "road",
+      "label": "Piste Traversière : Ksar de l'Oasis — Avant-poste Zalem",
+      "width_m": 10.0,
+      "closed": false,
+      "points": [
+        {
+          "x": 4950.0,
+          "z": -3700.0
+        },
+        {
+          "x": 4550.0,
+          "z": -3620.0
+        },
+        {
+          "x": 3900.0,
+          "z": -3400.0
+        },
+        {
+          "x": 3100.0,
+          "z": -3050.0
+        },
+        {
+          "x": 2300.0,
+          "z": -2650.0
+        },
+        {
+          "x": 1400.0,
+          "z": -2150.0
+        },
+        {
+          "x": 500.0,
+          "z": -1650.0
+        },
+        {
+          "x": -400.0,
+          "z": -1100.0
+        },
+        {
+          "x": -900.0,
+          "z": -750.0
+        },
+        {
+          "x": -1200.0,
+          "z": -630.0
+        }
+      ]
+    },
+    {
+      "id": "path:cliff_zalem_crater_rim",
+      "kind": "cliff",
+      "label": "Paroi rocheuse du Cratère de Zalem",
+      "hatch_len": 18.0,
+      "flip_hatch": false,
+      "closed": false,
+      "points": [
+        {"x": -1450.0, "z": -120.0},
+        {"x": -1440.0, "z": -280.0},
+        {"x": -1415.0, "z": -450.0},
+        {"x": -1425.0, "z": -620.0},
+        {"x": -1455.0, "z": -820.0},
+        {"x": -1480.0, "z": -1050.0}
+      ]
+    },
+    {
+      "id": "path:cliff_shipwreck_canyon_north",
+      "kind": "cliff",
+      "label": "Paroi Nord — Canyon des Épaves",
+      "hatch_len": 15.0,
+      "flip_hatch": false,
+      "closed": false,
+      "points": [
+        {"x": 5950.0, "z": -3120.0},
+        {"x": 5800.0, "z": -3180.0},
+        {"x": 5650.0, "z": -3210.0},
+        {"x": 5500.0, "z": -3220.0},
+        {"x": 5350.0, "z": -3320.0}
+      ]
+    },
+    {
+      "id": "path:cliff_shipwreck_canyon_south",
+      "kind": "cliff",
+      "label": "Paroi Sud — Canyon des Épaves",
+      "hatch_len": 15.0,
+      "flip_hatch": true,
+      "closed": false,
+      "points": [
+        {"x": 5950.0, "z": -3260.0},
+        {"x": 5800.0, "z": -3310.0},
+        {"x": 5650.0, "z": -3330.0},
+        {"x": 5480.0, "z": -3350.0},
+        {"x": 5320.0, "z": -3430.0}
+      ]
+    },
+    {
+      "id": "path:cliff_ksar_oasis_bluff",
+      "kind": "cliff",
+      "label": "Promontoire rocheux du Ksar",
+      "hatch_len": 16.0,
+      "flip_hatch": true,
+      "closed": false,
+      "points": [
+        {"x": 4720.0, "z": -3880.0},
+        {"x": 4850.0, "z": -3920.0},
+        {"x": 5050.0, "z": -3930.0},
+        {"x": 5250.0, "z": -3880.0},
+        {"x": 5380.0, "z": -3780.0}
       ]
     }
   ],
   "props": [
+    {
+      "id": "prop:ksar_oasis_pool",
+      "kind": "oasis_pool",
+      "label": "Bassin de l'Oasis du Ksar",
+      "x": 5020.0,
+      "z": -3670.0,
+      "radius_m": 25.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:ksar_palm_1",
+      "kind": "palm_tree",
+      "label": "Palmier de l'Oasis",
+      "x": 5045.0,
+      "z": -3645.0,
+      "scale": 1.25,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_2",
+      "kind": "palm_tree",
+      "label": "Palmier de l'Oasis",
+      "x": 4995.0,
+      "z": -3685.0,
+      "scale": 1.1,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_3",
+      "kind": "palm_tree",
+      "label": "Palmier de l'Oasis",
+      "x": 5040.0,
+      "z": -3695.0,
+      "scale": 1.3,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_4",
+      "kind": "palm_tree",
+      "label": "Palmier de l'Oasis",
+      "x": 4990.0,
+      "z": -3650.0,
+      "scale": 1.05,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_5",
+      "kind": "palm_tree",
+      "label": "Palmier de l'Oasis",
+      "x": 5055.0,
+      "z": -3670.0,
+      "scale": 1.15,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:al_khali_oasis_pool",
+      "kind": "oasis_pool",
+      "label": "Source d'Al-Khali",
+      "x": 6550.0,
+      "z": -2480.0,
+      "radius_m": 20.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:al_khali_palm_1",
+      "kind": "palm_tree",
+      "label": "Palmier d'Al-Khali",
+      "x": 6565.0,
+      "z": -2465.0,
+      "scale": 1.15,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:al_khali_palm_2",
+      "kind": "palm_tree",
+      "label": "Palmier d'Al-Khali",
+      "x": 6535.0,
+      "z": -2495.0,
+      "scale": 1.2,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_stone_arch_north",
+      "kind": "stone_arch",
+      "label": "Arches du Ksar",
+      "x": 4950.0,
+      "z": -3470.0,
+      "width_m": 16.0,
+      "rot_deg": 0.0,
+      "z_draw": 14
+    },
+    {
+      "id": "prop:ksar_stone_arch_east",
+      "kind": "stone_arch",
+      "label": "Arche Orientale du Ksar",
+      "x": 5120.0,
+      "z": -3600.0,
+      "width_m": 14.0,
+      "rot_deg": -35.0,
+      "z_draw": 14
+    },
     {
       "id": "prop:lh_plaza_marker",
       "kind": "monument",
@@ -720,8 +1039,8 @@
       "id": "prop:lh_cantina_bench",
       "kind": "bench",
       "label": "Banc cantina",
-      "x": 4910.0,
-      "z": -785.0,
+      "x": 4985.0,
+      "z": -715.0,
       "footprint": {
         "shape": "rect",
         "w_m": 4.0,
@@ -889,8 +1208,8 @@
     {
       "id": "prop:lh_cantina_table_a",
       "kind": "table",
-      "x": 4920.0,
-      "z": -790.0,
+      "x": 4985.0,
+      "z": -760.0,
       "footprint": {
         "shape": "circle",
         "radius_m": 1.4
@@ -902,8 +1221,8 @@
     {
       "id": "prop:lh_cantina_table_b",
       "kind": "table",
-      "x": 4955.0,
-      "z": -815.0,
+      "x": 4970.0,
+      "z": -755.0,
       "footprint": {
         "shape": "circle",
         "radius_m": 1.4
@@ -915,13 +1234,13 @@
     {
       "id": "prop:lh_bank_steps",
       "kind": "barrier",
-      "x": 4679.0,
-      "z": -775.0,
+      "x": 4520.0,
+      "z": -737.0,
       "footprint": {
         "shape": "rect",
         "w_m": 10.0,
         "h_m": 3.0,
-        "yaw_deg": 0.0
+        "yaw_deg": 90.0
       },
       "color": "#8A7048",
       "near_building": "poi:lost_heaven_bank",
@@ -954,6 +1273,53 @@
       "color": "#59BFD9",
       "near_building": "poi:lost_heaven_starport",
       "z_draw": 8
+    },
+    {
+      "id": "lamp:zalem_gate_w",
+      "kind": "lamp",
+      "x": -1460.0,
+      "z": -540.0,
+      "color": "#ffea88"
+    },
+    {
+      "id": "lamp:zalem_gate_w2",
+      "kind": "lamp",
+      "x": -1460.0,
+      "z": -560.0,
+      "color": "#ffea88"
+    },
+    {
+      "id": "lamp:zalem_command",
+      "kind": "lamp",
+      "x": -1200.0,
+      "z": -520.0,
+      "color": "#ffea88"
+    },
+    {
+      "id": "lamp:zalem_workshop",
+      "kind": "lamp",
+      "x": -1060.0,
+      "z": -440.0,
+      "color": "#ffea88"
+    },
+    {
+      "id": "lamp:zalem_barracks",
+      "kind": "lamp",
+      "x": -1340.0,
+      "z": -440.0,
+      "color": "#ffea88"
+    },
+    {
+      "id": "barrier:zalem_chk_1",
+      "kind": "barrier",
+      "x": -1440.0,
+      "z": -535.0
+    },
+    {
+      "id": "barrier:zalem_chk_2",
+      "kind": "barrier",
+      "x": -1440.0,
+      "z": -565.0
     }
   ],
   "topology_version": 2,

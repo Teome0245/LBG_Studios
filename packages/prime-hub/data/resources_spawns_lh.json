@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "zone": "lost_heaven",
+  "rotation_epoch": "2026-11-W44",
+  "spawns": [
+    {
+      "spawn_id": "res_lh_copper_kovess",
+      "spawn_name": "Cuivre Kovessien",
+      "resource_class": "mineral_copper",
+      "base_item_id": "scrap_metal",
+      "label": "Ferraille & Cuivre Conducteur (Kovessien)",
+      "icon": "copper",
+      "hotspot_x": 4795.0,
+      "hotspot_z": -565.0,
+      "radius": 65.0,
+      "peak_density": 94,
+      "stats": {
+        "oq": 860,
+        "cd": 920,
+        "pe": 640,
+        "ma": 780,
+        "sr": 710
+      }
+    },
+    {
+      "spawn_id": "res_lh_silica_oris",
+      "spawn_name": "Silice d'Oris",
+      "resource_class": "crystal_silica",
+      "base_item_id": "quartz_dust",
+      "label": "Poussière de Quartz & Silice (Oris)",
+      "icon": "screw",
+      "hotspot_x": 4842.0,
+      "hotspot_z": -612.0,
+      "radius": 58.0,
+      "peak_density": 89,
+      "stats": {
+        "oq": 910,
+        "cd": 845,
+        "pe": 880,
+        "ma": 620,
+        "sr": 890
+      }
+    },
+    {
+      "spawn_id": "res_lh_polymer_vael",
+      "spawn_name": "Polymère Vaelite",
+      "resource_class": "chemical_polymer",
+      "base_item_id": "binding_tape",
+      "label": "Ruban & Polymère de Liaison (Vaelite)",
+      "icon": "screw",
+      "hotspot_x": 4738.0,
+      "hotspot_z": -520.0,
+      "radius": 70.0,
+      "peak_density": 86,
+      "stats": {
+        "oq": 790,
+        "cd": 540,
+        "pe": 720,
+        "ma": 935,
+        "sr": 830
+      }
+    },
+    {
+      "spawn_id": "res_lh_water_perle",
+      "spawn_name": "Condensat de La Perle",
+      "resource_class": "water_vapor",
+      "base_item_id": "water_capsule",
+      "label": "Condensat d'Oasis Purifié (Perle)",
+      "icon": "kit",
+      "hotspot_x": 4762.0,
+      "hotspot_z": -542.0,
+      "radius": 55.0,
+      "peak_density": 92,
+      "stats": {
+        "oq": 940,
+        "cd": 600,
+        "pe": 950,
+        "ma": 700,
+        "sr": 800
+      }
+    },
+    {
+      "spawn_id": "res_lh_flora_sable",
+      "spawn_name": "Fibre Xérophyte Dorée",
+      "resource_class": "flora_xerophyte",
+      "base_item_id": "dried_grain",
+      "label": "Grain & Fibre Xérophyte (Dorée)",
+      "icon": "ration",
+      "hotspot_x": 4815.0,
+      "hotspot_z": -510.0,
+      "radius": 75.0,
+      "peak_density": 88,
+      "stats": {
+        "oq": 875,
+        "cd": 480,
+        "pe": 910,
+        "ma": 820,
+        "sr": 760
+      }
+    }
+  ]
+}
+

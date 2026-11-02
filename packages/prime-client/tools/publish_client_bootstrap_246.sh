@@ -69,6 +69,7 @@ data = {
         "bootstrap_ps1": "/bootstrap/install_lbg_prime_client.ps1",
         "bootstrap_cmd": "/bootstrap/install.cmd",
         "launchpad_zip": "/releases/launchpad/LBG-Launchpad-win.zip",
+        "launchpad_asar": "/releases/launchpad/app.asar",
         "godot_zip": "/releases/godot/Godot_v4.6.1-stable_win64.zip",
         "prime_manifest": "/patches/prime/manifest.json",
         "prime_build_info": "/patches/prime/build_info.json",
@@ -84,7 +85,22 @@ data = {
 }
 out.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 print("OK", out)
+
+lp_version_file = Path(stage) / "releases" / "launchpad" / "version.json"
+lp_version_file.parent.mkdir(parents=True, exist_ok=True)
+lp_version_data = {
+    "version": lp_ver,
+    "synced_at": synced_at,
+    "asar_path": "/releases/launchpad/app.asar",
+    "zip_path": "/releases/launchpad/LBG-Launchpad-win.zip",
+}
+lp_version_file.write_text(json.dumps(lp_version_data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print("OK", lp_version_file)
 PY
+
+echo "==> Build app.asar pour auto-update Launchpad"
+node "${LP_ROOT}/scripts/pack_asar.js" "${STAGE}/releases/launchpad"
+node "${LP_ROOT}/scripts/pack_asar.js" "${LP_ROOT}/dist/win-unpacked/resources"
 
 if [[ "${INCLUDE_LAUNCHPAD_ZIP}" == "1" && -d "${LP_ROOT}/dist/win-unpacked" ]]; then
   echo "==> Zip Launchpad dist/win-unpacked"

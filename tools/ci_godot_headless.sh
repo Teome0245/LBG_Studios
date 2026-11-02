@@ -82,6 +82,11 @@ run_test "Cycle Jour/Nuit Circadien & Lanternes (O2 Ticket 2.1)" "res://tools/da
 run_test "Escorte Tactique & Binômes IA (O3 Ticket 3.1)" "res://tools/tactical_escort_selftest.gd"
 run_test "Métier Récupérateur & Établis Mécatroniques (O2 Ticket 2.2)" "res://tools/crafting_schematics_selftest.gd"
 run_test "Économie de Troc P2P & Négociations IA (O3 Ticket 3.2)" "res://tools/barter_trade_selftest.gd"
+run_test "Arbres de Compétences SWG Pre-CU 4x4 & Skill Points (O2 Ticket 4.1)" "res://tools/precu_skills_tree_selftest.gd"
+run_test "Prospection Dynamique Survey Tool & Spawns 1..1000 (O2 Ticket 4.2)" "res://tools/survey_resources_selftest.gd"
+run_test "Artisanat Pondéré & Phase d'Expérimentation Pre-CU (O2 Ticket 4.3)" "res://tools/craft_experimentation_selftest.gd"
+run_test "Boucle HAM, Wounds Medcenter & Battle Fatigue Cantina (O2 Ticket 4.4)" "res://tools/ham_cantina_medcenter_selftest.gd"
+run_test "Extracteurs de Terrain Harvesters & Autonomie O3 (O2/O3 Ticket 4.5)" "res://tools/harvesters_outpost_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

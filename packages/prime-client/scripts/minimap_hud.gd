@@ -1,4 +1,4 @@
-# minimap_hud.gd — Minimap HUD coin écran (M9b, style SWG)
+# minimap_hud.gd — Radar Circulaire SWG Pre-CU en Bas-Gauche + Coordonnées X Y Z
 extends Control
 class_name MinimapHud
 
@@ -10,8 +10,8 @@ const MAP_CONFIG_PATH := "res://assets/maps/scrapaltai_map_config.json"
 @export var entity_manager_path: NodePath = NodePath("../../../EntityManager")
 @export var player_controller_path: NodePath = NodePath("../../../PlayerController")
 
-var _size_px: float = 180.0
-var _view_radius_m: float = 420.0
+var _size_px: float = 148.0
+var _view_radius_m: float = 340.0
 var _show_poi: bool = true
 var _show_entities: bool = true
 var _essential_poi_only: bool = true
@@ -20,7 +20,7 @@ var _visible_hud: bool = true
 var _show_coords: bool = true
 var _show_altitude: bool = true
 var _coord_compact: bool = true
-var _coord_strip_h: float = 22.0
+var _coord_strip_h: float = 20.0
 
 var _half_size: float = 6500.0
 var _coord_label: Label = null
@@ -33,6 +33,8 @@ var _player_controller: PlayerController
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_load_config()
+	_size_px = 148.0
+	_coord_strip_h = 20.0
 	_load_map_meta()
 	_load_pois()
 	_load_planet_texture()
@@ -48,8 +50,8 @@ func _setup_coord_label() -> void:
 	_coord_label.name = "CoordLabel"
 	_coord_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_coord_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_coord_label.add_theme_font_size_override("font_size", 11)
-	_coord_label.add_theme_color_override("font_color", Color(0.82, 0.88, 0.96, 0.98))
+	_coord_label.add_theme_font_size_override("font_size", 10)
+	_coord_label.add_theme_color_override("font_color", Color(0.62, 0.96, 1.0, 0.98))
 	add_child(_coord_label)
 
 func _apply_layout_size() -> void:
@@ -58,8 +60,8 @@ func _apply_layout_size() -> void:
 	size = custom_minimum_size
 	if _coord_label:
 		_coord_label.visible = _show_coords
-		_coord_label.position = Vector2(0.0, _size_px + 1.0)
-		_coord_label.size = Vector2(_size_px, _coord_strip_h - 1.0)
+		_coord_label.position = Vector2(0.0, _size_px + 2.0)
+		_coord_label.size = Vector2(_size_px, _coord_strip_h - 2.0)
 
 func _resolve_refs() -> void:
 	_camera = get_node_or_null(camera_path) as Camera2D
@@ -75,20 +77,12 @@ func _load_config() -> void:
 	if not raw is Dictionary:
 		return
 	var cfg: Dictionary = raw
-	_size_px = float(cfg.get("size_px", _size_px))
 	_view_radius_m = float(cfg.get("view_radius_m", _view_radius_m))
 	_show_poi = bool(cfg.get("show_poi", _show_poi))
 	_show_entities = bool(cfg.get("show_entities", _show_entities))
 	_essential_poi_only = bool(cfg.get("show_essential_poi_only", _essential_poi_only))
 	_click_pan = bool(cfg.get("click_pan_camera", _click_pan))
 	_show_coords = bool(cfg.get("show_coordinates", _show_coords))
-	_coord_strip_h = float(cfg.get("coord_strip_px", _coord_strip_h))
-	var coords_cfg: Variant = cfg.get("coordinates", null)
-	if coords_cfg is Dictionary:
-		var cc: Dictionary = coords_cfg
-		_show_altitude = bool(cc.get("show_altitude", _show_altitude))
-		_coord_compact = bool(cc.get("compact", _coord_compact))
-	_apply_layout_size()
 
 func _load_map_meta() -> void:
 	if not FileAccess.file_exists(MAP_CONFIG_PATH):
@@ -141,7 +135,8 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var local := get_local_mouse_position()
-		if local.y > _size_px:
+		var c := Vector2(_size_px * 0.5, _size_px * 0.5)
+		if local.distance_to(c) > _size_px * 0.48:
 			return
 		var core3 := _minimap_to_core3(local)
 		_camera.position = Projection3D2D.to_screen(core3)
@@ -152,14 +147,9 @@ func _process(_delta: float) -> void:
 		return
 	var center := _center_core3()
 	if _show_coords and _coord_label:
-		_coord_label.text = _format_coords(center)
+		var pos := Projection3D2D.normalize_core3_pos(center)
+		_coord_label.text = "%d    %d    %d" % [int(round(pos.x)), int(round(pos.y)), int(round(pos.z))]
 	queue_redraw()
-
-func _format_coords(core3: Vector3) -> String:
-	var pos := Projection3D2D.normalize_core3_pos(core3)
-	if not _show_altitude:
-		return Projection3D2D.format_hud_plan(pos, _coord_compact)
-	return Projection3D2D.format_hud_coordinates(pos, _coord_compact)
 
 func _center_core3() -> Vector3:
 	if _player_controller and _player_controller.enabled and _player_controller.get_player_id() > 0:
@@ -174,14 +164,14 @@ func _center_core3() -> Vector3:
 
 func _world_to_minimap(core3: Vector3, center: Vector3) -> Vector2:
 	var rel := Vector2(core3.x - center.x, -(core3.z - center.z))
-	var half := _size_px * 0.46
+	var half := _size_px * 0.43
 	var span_m := _view_radius_m * 2.0
 	var scale := half / span_m
 	return Vector2(_size_px * 0.5, _size_px * 0.5) + rel * scale
 
 func _minimap_to_core3(local: Vector2) -> Vector3:
 	var center := _center_core3()
-	var half := _size_px * 0.46
+	var half := _size_px * 0.43
 	var span_m := _view_radius_m * 2.0
 	var scale := half / span_m
 	var rel := (local - Vector2(_size_px * 0.5, _size_px * 0.5)) / scale
@@ -190,56 +180,59 @@ func _minimap_to_core3(local: Vector2) -> Vector3:
 func _draw() -> void:
 	if not _visible_hud:
 		return
-	var map_rect := Rect2(Vector2.ZERO, Vector2(_size_px, _size_px))
-	draw_rect(map_rect, Color(0.04, 0.05, 0.09, 0.82))
-	draw_rect(map_rect, Color(0.35, 0.55, 0.85, 0.55), false, 2.0)
-	if _show_coords and _coord_strip_h > 0.0:
-		var strip := Rect2(0.0, _size_px, _size_px, _coord_strip_h)
-		draw_rect(strip, Color(0.03, 0.04, 0.07, 0.92))
-		draw_line(Vector2(0.0, _size_px), Vector2(_size_px, _size_px), Color(0.35, 0.55, 0.85, 0.45), 1.0)
+	var c := Vector2(_size_px * 0.5, _size_px * 0.5)
+	var r := _size_px * 0.45
+
+	# 1. Disque Radar Circulaire SWG (fond topographique sable/ocre + grille polaire)
+	draw_circle(c, r + 4.0, Color(0.015, 0.09, 0.12, 0.92))
+	draw_circle(c, r, Color(0.46, 0.38, 0.26, 0.88))
+	draw_circle(c, r * 0.72, Color(0.52, 0.43, 0.30, 0.55))
+
+	# Cône de vision caméra/joueur (style radar SWG)
+	var cone_pts := PackedVector2Array([
+		c,
+		c + Vector2(-r * 0.52, -r * 0.84),
+		c + Vector2(0.0, -r * 0.98),
+		c + Vector2(r * 0.52, -r * 0.84),
+	])
+	draw_colored_polygon(cone_pts, Color(0.85, 0.96, 1.0, 0.14))
+
+	# Cercles et axes de portée radar
+	draw_arc(c, r * 0.66, 0.0, TAU, 36, Color(0.18, 0.56, 0.66, 0.42), 1.0)
+	draw_arc(c, r * 0.33, 0.0, TAU, 24, Color(0.18, 0.56, 0.66, 0.32), 1.0)
+	draw_line(Vector2(c.x - r, c.y), Vector2(c.x + r, c.y), Color(0.15, 0.48, 0.58, 0.35), 1.0)
+	draw_line(Vector2(c.x, c.y - r), Vector2(c.x, c.y + r), Color(0.15, 0.48, 0.58, 0.35), 1.0)
 
 	var center := _center_core3()
-	_draw_map_region(center)
 	if _show_poi:
-		_draw_pois(center)
+		_draw_pois(center, c, r - 4.0)
 	if _show_entities and _entity_manager:
-		_draw_entities(center)
-	_draw_player_marker(center)
+		_draw_entities(center, c, r - 4.0)
+	_draw_player_marker(c)
 
-	# Nord
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(_size_px * 0.5 - 4.0, 12.0),
-		"N",
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		11,
-		Color(0.75, 0.85, 1.0, 0.9)
-	)
+	# Couronne extérieure biseautée SWG (Cyan Holo-Teal + graduations d'azimut)
+	draw_arc(c, r, 0.0, TAU, 64, Color(0.24, 0.84, 0.94, 0.96), 2.5)
+	draw_arc(c, r + 3.5, 0.0, TAU, 64, Color(0.14, 0.52, 0.62, 0.80), 1.2)
+	for deg in [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]:
+		var a: float = deg_to_rad(float(deg))
+		var dir := Vector2(cos(a), sin(a))
+		draw_line(c + dir * (r - 4.0), c + dir * (r + 3.0), Color(0.68, 0.96, 1.0, 0.90), 1.5)
 
-func _draw_map_region(center: Vector3) -> void:
-	if _planet_texture == null:
-		return
-	var tex_size := _planet_texture.get_size()
-	if tex_size.x <= 0.0:
-		return
-	var world_span_px := 2.0 * _half_size * Projection3D2D.SCALE
-	var uv_center_x := (center.x + _half_size) / (2.0 * _half_size)
-	var uv_center_y := (-center.z + _half_size) / (2.0 * _half_size)
-	var view_world_px := _view_radius_m * 2.0 * Projection3D2D.SCALE
-	var uv_w := clampf(view_world_px / world_span_px, 0.01, 1.0)
-	var uv_h := uv_w * (_size_px / _size_px)
-	var src := Rect2(
-		(uv_center_x - uv_w * 0.5) * tex_size.x,
-		(uv_center_y - uv_h * 0.5) * tex_size.y,
-		uv_w * tex_size.x,
-		uv_h * tex_size.y
-	)
-	src = src.intersection(Rect2(Vector2.ZERO, tex_size))
-	var dst := Rect2(Vector2(_size_px * 0.04, _size_px * 0.04), Vector2(_size_px * 0.92, _size_px * 0.92))
-	draw_texture_rect_region(_planet_texture, dst, src, Color(1, 1, 1, 0.88))
+	# Points cardinaux en français (N, S, E, O)
+	var font := ThemeDB.fallback_font
+	if font:
+		draw_string(font, Vector2(c.x - 4.0, c.y - r + 10.0), "N", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.98, 0.88, 0.38, 1.0))
+		draw_string(font, Vector2(c.x - 3.5, c.y + r - 3.0), "S", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.75, 0.94, 1.0, 0.9))
+		draw_string(font, Vector2(c.x + r - 10.0, c.y + 3.0), "E", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.75, 0.94, 1.0, 0.9))
+		draw_string(font, Vector2(c.x - r + 3.0, c.y + 3.0), "O", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.75, 0.94, 1.0, 0.9))
 
-func _draw_pois(center: Vector3) -> void:
+	# Bandeau coordonnées X Y Z sous le disque radar (comme en bas à gauche de SWG)
+	if _show_coords and _coord_strip_h > 0.0:
+		var strip := Rect2(4.0, _size_px, _size_px - 8.0, _coord_strip_h)
+		draw_rect(strip, Color(0.015, 0.10, 0.13, 0.92), true)
+		draw_rect(strip, Color(0.22, 0.78, 0.88, 0.88), false, 1.0)
+
+func _draw_pois(center: Vector3, disc_c: Vector2, max_r: float) -> void:
 	for item: Variant in _pois:
 		if not item is Dictionary:
 			continue
@@ -249,44 +242,42 @@ func _draw_pois(center: Vector3) -> void:
 		if _essential_poi_only and not bool(p.get("essential", false)):
 			continue
 		var pos := Vector3(float(p.get("x", 0.0)), 0.0, float(p.get("z", 0.0)))
-		if absf(pos.x - center.x) > _view_radius_m or absf(pos.z - center.z) > _view_radius_m:
-			continue
 		var mp := _world_to_minimap(pos, center)
+		if mp.distance_to(disc_c) > max_r:
+			continue
 		var kind := str(p.get("kind", ""))
-		var col := _poi_color(kind)
-		draw_circle(mp, 3.5, col)
+		draw_circle(mp, 3.0, _poi_color(kind))
 
-func _draw_entities(center: Vector3) -> void:
+func _draw_entities(center: Vector3, disc_c: Vector2, max_r: float) -> void:
 	for entity in _entity_manager.get_all_entities():
 		if entity == null:
 			continue
 		var pos: Vector3 = entity.core3_pos
 		if not HubFocus.should_show_entity(pos, str(entity.kind), str(entity.label_text), str(entity.entity_key)):
 			continue
-		if absf(pos.x - center.x) > _view_radius_m or absf(pos.z - center.z) > _view_radius_m:
-			continue
 		var mp := _world_to_minimap(pos, center)
-		draw_circle(mp, 2.5, Color(entity.color.r, entity.color.g, entity.color.b, 0.85))
+		if mp.distance_to(disc_c) > max_r:
+			continue
+		draw_circle(mp, 2.5, Color(entity.color.r, entity.color.g, entity.color.b, 0.92))
 
-func _draw_player_marker(center: Vector3) -> void:
-	var mp := _world_to_minimap(center, center)
+func _draw_player_marker(disc_c: Vector2) -> void:
 	var tri := PackedVector2Array([
-		mp + Vector2(0, -7),
-		mp + Vector2(-5, 5),
-		mp + Vector2(5, 5),
+		disc_c + Vector2(0, -6),
+		disc_c + Vector2(-4.5, 4.5),
+		disc_c + Vector2(4.5, 4.5),
 	])
-	draw_colored_polygon(tri, Color(0.95, 0.95, 0.3, 1.0))
-	draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.1, 0.1, 0.1, 0.9), 1.0)
+	draw_colored_polygon(tri, Color(0.45, 0.98, 1.0, 1.0))
+	draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.05, 0.15, 0.2, 0.95), 1.0)
 
 func _poi_color(kind: String) -> Color:
 	match kind:
 		"hub", "spawn":
-			return Color(0.45, 0.95, 0.5, 1.0)
+			return Color(0.35, 0.95, 0.65, 1.0)
 		"starport_shuttle":
-			return Color(0.35, 0.75, 1.0, 1.0)
+			return Color(0.35, 0.82, 1.0, 1.0)
 		"bank":
-			return Color(0.95, 0.82, 0.25, 1.0)
+			return Color(0.98, 0.84, 0.28, 1.0)
 		"shops", "market":
-			return Color(1.0, 0.55, 0.2, 1.0)
+			return Color(1.0, 0.58, 0.22, 1.0)
 		_:
-			return Color(0.7, 0.7, 0.8, 0.9)
+			return Color(0.75, 0.85, 0.92, 0.9)

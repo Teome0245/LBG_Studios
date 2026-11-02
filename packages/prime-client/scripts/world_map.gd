@@ -225,7 +225,7 @@ func set_planet(name: String, new_half_size: float = HALF_SIZE_DEFAULT) -> void:
 	_has_texture = false
 	if _sprite:
 		_sprite.texture = null
-		_sprite.visible = true
+		_sprite.visible = false
 	_load_map_config()
 	_load_map_texture()
 	_apply_scale()

@@ -91,5 +91,61 @@ func _init() -> void:
 	hotbar.assign_item_to_slot(2, {"id": "ferraille", "name": "Ferraille", "icon": "copper", "qty": 7})
 	assert(tracker["received"], "Signal item_assigned non reçu sur Hotbar")
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD (move/swap/stack) + Hotbar assign vérifiés avec succès")
+	# Test Interface Joueur SWG Pre-CU (2D Top-Down) : 5 composants
+	var SwgHamHudScript := preload("res://scripts/swg_ham_hud.gd")
+	var ham_hud = SwgHamHudScript.new()
+	ham_hud.apply_ham_payload({
+		"ham": {
+			"health": {"base_max": 1000, "wounds": 150, "buff": 200, "effective_max": 1050, "current": 980},
+			"action": {"base_max": 1000, "wounds": 50, "buff": 0, "effective_max": 950, "current": 900},
+			"mind": {"base_max": 1000, "wounds": 0, "buff": 300, "effective_max": 1300, "current": 1300},
+			"battle_fatigue": 220,
+		},
+		"medical_efficiency_ratio": 0.82,
+	})
+	assert(ham_hud._bar_health.wounds == 150 and ham_hud._bar_mind.buff == 300, "Barres HAM SWG Wounds/Buffs incorrectes")
+	assert(ham_hud._portrait_3d != null, "SwgPortrait3D doit être instancié dans SwgHamHud")
+	assert(ham_hud._portrait_3d._viewport != null, "SubViewport 3D doit être présent")
+	ham_hud.set_posture("Combat")
+	assert(ham_hud._posture_label == "Combat", "Posture joueur doit être mise à jour")
+	ham_hud.set_target_entity("Odo Merr", "npc", 6.4)
+	assert(ham_hud._target_box.visible == true, "Target Frame SWG doit être visible")
+
+	var SwgRadialMenuScript := preload("res://scripts/swg_radial_menu.gd")
+	var radial = SwgRadialMenuScript.new()
+	var radial_tracker := {"action": ""}
+	radial.radial_action_selected.connect(func(act: String, _ctx: Dictionary) -> void:
+		radial_tracker["action"] = act
+	)
+	radial.open_at(Vector2(200, 200), {"kind": "npc", "name": "Lia (Cantina La Perle)"})
+	assert(radial._current_options.size() >= 3, "Le menu radial SWG sur Lia doit proposer Examiner/Converse/Watch")
+	radial.trigger_option(2)
+	assert(radial_tracker["action"] == "watch_entertainer", "L'action radiale 3 sur Lia doit être watch_entertainer")
+
+	var SwgSkillsPanelScript := preload("res://scripts/swg_skills_panel.gd")
+	var skills_ui = SwgSkillsPanelScript.new()
+	skills_ui._ensure_ui()
+	skills_ui._apply_local_fallback()
+	assert(skills_ui._grid_4x4.get_child_count() == 16, "La grille SWG Pre-CU doit afficher 4x4 = 16 boxes")
+
+	var SwgSurveyPanelScript := preload("res://scripts/swg_survey_panel.gd")
+	var survey_ui = SwgSurveyPanelScript.new()
+	survey_ui._ensure_ui()
+	survey_ui._apply_local_fallback()
+	assert(survey_ui._spawns_list.item_count >= 2, "Le Survey Tool SWG doit lister les gisements actifs")
+
+	var SwgExperimentPanelScript := preload("res://scripts/swg_experiment_panel.gd")
+	var exp_ui = SwgExperimentPanelScript.new()
+	exp_ui.open_with_session({
+		"session_id": "exp_local_test",
+		"schematic_id": "mechatronic_repair_kit",
+		"serial": "LH-2001",
+		"remaining_points": 4,
+		"max_points": 4,
+		"attributes": {"quality_pct": 66.0, "power": 90, "durability": 410},
+	})
+	var exp_out: Dictionary = exp_ui.spend_points("power", 2)
+	assert(bool(exp_out.get("ok", false)) == true and int(exp_out.get("remaining_points", -1)) == 2, "L'atelier d'expérimentation SWG doit dépenser 2 points et augmenter power")
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 5 Composants UI SWG Pre-CU 2D vérifiés avec succès")
 	quit(0)

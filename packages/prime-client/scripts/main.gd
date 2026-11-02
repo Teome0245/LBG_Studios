@@ -31,11 +31,23 @@ const _Crc32Util = preload("res://scripts/crc32_util.gd")
 const _EntityScript = preload("res://scripts/entity.gd")
 const _LastPos = preload("res://scripts/last_position_store.gd")
 const _HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
+const _SwgHamHudScript = preload("res://scripts/swg_ham_hud.gd")
+const _SwgRadialMenuScript = preload("res://scripts/swg_radial_menu.gd")
+const _SwgSkillsPanelScript = preload("res://scripts/swg_skills_panel.gd")
+const _SwgSurveyPanelScript = preload("res://scripts/swg_survey_panel.gd")
+const _SwgExperimentPanelScript = preload("res://scripts/swg_experiment_panel.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
 var net_world: RefCounted = null
 var ui_dialogue: RefCounted = null
+
+var swg_ham_hud: Node = null
+var swg_radial_menu: Node = null
+var swg_skills_panel: Node = null
+var swg_survey_panel: Node = null
+var swg_experiment_panel: Node = null
+var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
 ## Alias historique — même teinte que joueur officiel (C1).
@@ -118,6 +130,7 @@ func _ready() -> void:
 	_focus_lost_heaven_hub()
 	_maybe_demo_spawn()
 	_ensure_wiki_panel()
+	_ensure_swg_ui()
 	_ensure_toast_ui()
 	_apply_debug_hud()
 	_log_build_info()
@@ -207,23 +220,220 @@ func _set_selected_entity(oid: int) -> void:
 			prev.set_selected(false)
 	_selected_entity_id = oid
 	if oid == 0:
+		if swg_ham_hud and swg_ham_hud.has_method("set_target_entity"):
+			swg_ham_hud.set_target_entity("")
 		return
 	var e: Node = entity_manager.get_entity(oid)
 	if e:
 		e.set_selected(true)
+		if swg_ham_hud and swg_ham_hud.has_method("set_target_entity"):
+			var t_name := str(e.get_display_name()) if e.has_method("get_display_name") else str(e.get("label_text"))
+			var t_kind := str(e.get("kind"))
+			var dist := -1.0
+			var my_xz := _player_world_xz()
+			if my_xz != Vector2.INF and "core3_pos" in e:
+				var ep: Vector3 = e.core3_pos
+				dist = my_xz.distance_to(Vector2(ep.x, ep.z))
+			swg_ham_hud.set_target_entity(t_name, t_kind, dist)
+
+
+func _ensure_swg_ui() -> void:
+	var hud_layer := get_node_or_null("UI/HudLayer") as Control
+	var modal_layer := get_node_or_null("UI/ModalLayer") as Control
+	var old_state := get_node_or_null("UI/HudLayer/StatePanel") as Control
+	if old_state:
+		old_state.visible = false
+	if hud_layer and swg_ham_hud == null:
+		swg_ham_hud = _SwgHamHudScript.new()
+		swg_ham_hud.name = "SwgHamHud"
+		swg_ham_hud.position = Vector2(12, 12)
+		hud_layer.add_child(swg_ham_hud)
+		if swg_ham_hud.has_signal("quick_panel_requested"):
+			swg_ham_hud.quick_panel_requested.connect(_on_swg_quick_panel_requested)
+	if modal_layer and swg_radial_menu == null:
+		swg_radial_menu = _SwgRadialMenuScript.new()
+		swg_radial_menu.name = "SwgRadialMenu"
+		modal_layer.add_child(swg_radial_menu)
+		swg_radial_menu.radial_action_selected.connect(_on_swg_radial_action)
+	if modal_layer and swg_skills_panel == null:
+		swg_skills_panel = _SwgSkillsPanelScript.new()
+		swg_skills_panel.name = "SwgSkillsPanel"
+		modal_layer.add_child(swg_skills_panel)
+	if modal_layer and swg_survey_panel == null:
+		swg_survey_panel = _SwgSurveyPanelScript.new()
+		swg_survey_panel.name = "SwgSurveyPanel"
+		modal_layer.add_child(swg_survey_panel)
+	if modal_layer and swg_experiment_panel == null:
+		swg_experiment_panel = _SwgExperimentPanelScript.new()
+		swg_experiment_panel.name = "SwgExperimentPanel"
+		modal_layer.add_child(swg_experiment_panel)
+	if _swg_action_http == null:
+		_swg_action_http = HTTPRequest.new()
+		_swg_action_http.name = "SwgActionHttp"
+		add_child(_swg_action_http)
+		_swg_action_http.request_completed.connect(_on_swg_action_http_done)
+
+
+func _on_swg_quick_panel_requested(panel_key: String) -> void:
+	_ensure_swg_ui()
+	match panel_key:
+		"skills":
+			if swg_skills_panel and swg_skills_panel.has_method("toggle"):
+				swg_skills_panel.toggle()
+		"survey":
+			if swg_survey_panel and swg_survey_panel.has_method("toggle"):
+				var xz: Vector2 = _player_world_xz()
+				if xz != Vector2.INF:
+					swg_survey_panel.player_pos_xz = xz
+				swg_survey_panel.toggle()
+		"experiment":
+			if swg_experiment_panel and swg_experiment_panel.has_method("toggle"):
+				swg_experiment_panel.toggle()
+		"inventory":
+			_toggle_inventory()
+		"talents":
+			_toggle_talents()
+		"missions":
+			_toggle_missions()
+		"map":
+			var map_panel: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
+			if map_panel and map_panel.has_method("toggle_map"):
+				map_panel.call("toggle_map")
+
+
+func _handle_world_right_click(screen_pos: Vector2) -> void:
+	_ensure_swg_ui()
+	if swg_radial_menu == null:
+		return
+	var ui_pos := get_viewport().get_mouse_position() if get_viewport() else screen_pos
+	var picked: Node = entity_manager.pick_entity_at_screen(screen_pos) if entity_manager else null
+	if picked:
+		_set_selected_entity(picked.object_id)
+		var e_name := str(picked.get_display_name()) if picked.has_method("get_display_name") else str(picked.get("label_text"))
+		var ctx := {
+			"kind": str(picked.get("kind")),
+			"name": e_name,
+			"object_id": int(picked.object_id),
+			"entity_key": str(picked.get("entity_key")),
+		}
+		swg_radial_menu.open_at(ui_pos, ctx)
+		return
+	var c3 := _screen_click_to_core3(screen_pos)
+	var g_ctx := {
+		"kind": "ground",
+		"name": "Terrain (%.0f, %.0f)" % [c3.x, c3.z],
+		"x": c3.x,
+		"z": c3.z,
+	}
+	swg_radial_menu.open_at(ui_pos, g_ctx)
+
+
+func _on_swg_radial_action(action_id: String, ctx: Dictionary) -> void:
+	var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+	var p_name := _local_character_name if not _local_character_name.is_empty() else _HubRuntimeCfg.player_name("Voyageur")
+	match action_id:
+		"examine":
+			_hotbar_feedback("Inspection SWG : %s (%s)" % [str(ctx.get("name", "?")), str(ctx.get("kind", "entité"))])
+		"converse":
+			var oid := int(ctx.get("object_id", 0))
+			var ent: Node = entity_manager.get_entity(oid) if (entity_manager and oid > 0) else null
+			if ent:
+				_open_npc_dialogue(ent)
+		"watch_entertainer":
+			var perf := str(ctx.get("name", "Lia"))
+			_hotbar_feedback("Cantina : écoute %s (soin Battle Fatigue)..." % perf)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/show/watch",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"listener": p_name, "performer": perf, "ticks": 3, "in_cantina": true})
+				)
+		"treat_wounds":
+			var target_p := str(ctx.get("name", p_name))
+			if str(ctx.get("kind", "")) == "npc":
+				target_p = p_name
+			_hotbar_feedback("Medcenter : soin des blessures (Wounds) sur %s..." % target_p)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/medical/treat_wounds",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"medic": p_name, "patient": target_p, "pool": "health", "in_medcenter": true})
+				)
+		"open_skills":
+			if swg_skills_panel and swg_skills_panel.has_method("toggle"):
+				swg_skills_panel.toggle()
+		"survey_ping", "survey_sample", "deploy_harvester":
+			if swg_survey_panel:
+				if ctx.has("x") and ctx.has("z"):
+					swg_survey_panel.player_pos_xz = Vector2(float(ctx.get("x", 4795.0)), float(ctx.get("z", -565.0)))
+				if not swg_survey_panel.visible and swg_survey_panel.has_method("toggle"):
+					swg_survey_panel.toggle()
+				if action_id == "survey_ping" and swg_survey_panel.has_method("ping_selected_spawn"):
+					swg_survey_panel.ping_selected_spawn()
+				elif action_id == "survey_sample" and swg_survey_panel.has_method("sample_selected_spawn"):
+					swg_survey_panel.sample_selected_spawn()
+				elif action_id == "deploy_harvester" and swg_survey_panel.has_method("deploy_harvester_on_selected"):
+					swg_survey_panel.deploy_harvester_on_selected()
+		"move_here":
+			var pc: Node = get_node_or_null("PlayerController")
+			if pc and pc.enabled and _play_mode:
+				pc.request_move_to(float(ctx.get("x", 4758.0)), float(ctx.get("z", -545.0)))
+		"teleport_here":
+			var pc: Node = get_node_or_null("PlayerController")
+			if pc and pc.enabled and _play_mode and pc.has_method("teleport_to"):
+				var tx := float(ctx.get("x", 4758.0))
+				var tz := float(ctx.get("z", -545.0))
+				pc.teleport_to(tx, tz)
+				_hotbar_feedback("⚡ Téléportation (Dev) : %.0f, %.0f" % [tx, tz])
+
+
+func _on_swg_action_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or body.is_empty():
+		return
+	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return
+	var d := parsed as Dictionary
+	if bool(d.get("ok", false)):
+		if d.has("fatigue_cured"):
+			_hotbar_feedback("Cantina : -%d Battle Fatigue, +%d Buff Mind" % [int(d.get("fatigue_cured", 0)), int(d.get("mind_buff", 0))])
+		elif d.has("wounds_cured"):
+			_hotbar_feedback("Medcenter : -%d Wounds soignées !" % int(d.get("wounds_cured", 0)))
+		if d.has("status") and typeof(d.get("status")) == TYPE_DICTIONARY and swg_ham_hud:
+			swg_ham_hud.apply_ham_payload(d["status"] as Dictionary)
+	else:
+		_hotbar_feedback("Action SWG refusée : %s" % str(d.get("error", code)))
 
 
 func _handle_world_left_click(screen_pos: Vector2) -> void:
 	var picked: Node = entity_manager.pick_entity_at_screen(screen_pos)
 	if picked:
+		var was_already_selected: bool = (_selected_entity_id == int(picked.get("object_id")))
 		_set_selected_entity(picked.object_id)
-		if picked.is_interactable():
-			_open_npc_dialogue(picked)
-		elif str(picked.kind) == "player":
-			_open_player_inspect(picked)
-		elif _dialogue_panel and _dialogue_panel.visible:
-			_dialogue_panel.hide_portrait()
+		var my_xz := _player_world_xz()
+		var dist := 999.0
+		if my_xz != Vector2.INF and "core3_pos" in picked:
+			var ep: Vector3 = picked.core3_pos
+			dist = my_xz.distance_to(Vector2(ep.x, ep.z))
+
+		# Ouvre le dialogue UNIQUEMENT au contact immédiat (< 5.0m)
+		if dist <= 5.0:
+			if picked.is_interactable():
+				_open_npc_dialogue(picked)
+				return
+			elif str(picked.kind) == "player" and was_already_selected:
+				_open_player_inspect(picked)
+				return
+
+		# À distance (> 5.0m) : sélectionne et fait marcher le joueur vers le PNJ/joueur sans bloquer avec une fenêtre intempestive
+		var pc_walk: Node = get_node_or_null("PlayerController")
+		if pc_walk and pc_walk.enabled and _play_mode and "core3_pos" in picked:
+			var target_pos: Vector3 = picked.core3_pos
+			pc_walk.request_move_to(target_pos.x, target_pos.z)
 		return
+
 	_set_selected_entity(0)
 	if _dialogue_panel and _dialogue_panel.visible:
 		_dialogue_panel.hide_portrait()
@@ -390,11 +600,8 @@ func _possess_local_player(obj_id: int, planet: String, force_camera: bool = fal
 			if e:
 				e.queue_redraw()
 	if _hub_runtime_enabled():
-		_EntityScript.show_nameplates = true
-		for e in entity_manager.get_all_entities():
-			if e and e.has_method("set_force_nameplate"):
-				e.call("set_force_nameplate", true)
-				e.queue_redraw()
+		# Ne pas forcer les étiquettes de tous les PNJ distants pour éviter l'empilement illisible
+		_EntityScript.show_nameplates = false
 	if (first or force_camera) and bool(cfg.get("auto_focus_on_connect", true)):
 		var e: Node = entity_manager.get_entity(obj_id)
 		if e and camera:

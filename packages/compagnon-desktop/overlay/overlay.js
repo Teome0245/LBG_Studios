@@ -288,9 +288,36 @@
   }
 
   if (wrap) {
-    wrap.addEventListener("click", function () {
-      if (window.compagnonDesktop && window.compagnonDesktop.openChat) {
-        window.compagnonDesktop.openChat();
+    let clickTimeout = null;
+    wrap.addEventListener("click", function (e) {
+      // Ignorer si le clic provient de la poignée de déplacement ou d'un bouton de bulle
+      if (e.target.closest(".drag-handle") || e.target.closest(".bubble")) return;
+      if (clickTimeout) {
+        // Double-clic : ouvrir la fenêtre de chat principal
+        clearTimeout(clickTimeout);
+        clickTimeout = null;
+        if (window.compagnonDesktop && window.compagnonDesktop.openChat) {
+          window.compagnonDesktop.openChat();
+        }
+      } else {
+        // Simple-clic : réaction vivante (poke / interaction amicale)
+        clickTimeout = setTimeout(function () {
+          clickTimeout = null;
+          if (window.compagnonDesktop && window.compagnonDesktop.pokeAvatar) {
+            window.compagnonDesktop.pokeAvatar();
+          }
+        }, 260);
+      }
+    });
+
+    wrap.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        clickTimeout = null;
+      }
+      if (window.compagnonDesktop && window.compagnonDesktop.showOverlayContextMenu) {
+        window.compagnonDesktop.showOverlayContextMenu();
       }
     });
   }

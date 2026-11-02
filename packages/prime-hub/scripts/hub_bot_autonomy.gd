@@ -549,3 +549,47 @@ func evaluate_barter_needs(bot_name: String) -> Dictionary:
 		"surplus": surplus,
 		"deficits": deficits,
 	}
+
+
+func evaluate_swg_precu_priority(bot_name: String, ham_medical_svc = null, harvesters_svc = null) -> Dictionary:
+	## Ticket 4.5 (O3 SWG Pre-CU) — Arbitrage autonome d'un Joueur IA entre Cantina (Battle Fatigue),
+	## Medcenter (Wounds) et vidange d'Extracteur (Harvester Hopper).
+	var nm := bot_name.strip_edges()
+	var decision := "patrol_or_survey"
+	var reason := "nominal"
+	var bf := 0
+	var wounds_h := 0
+	var hopper_ready := 0
+
+	if ham_medical_svc != null and ham_medical_svc.has_method("status"):
+		var st: Dictionary = ham_medical_svc.status(nm)
+		var ham: Dictionary = st.get("ham", {}) if typeof(st.get("ham")) == TYPE_DICTIONARY else {}
+		bf = int(ham.get("battle_fatigue", 0))
+		var h_bar: Dictionary = ham.get("health", {}) if typeof(ham.get("health")) == TYPE_DICTIONARY else {}
+		wounds_h = int(h_bar.get("wounds", 0))
+
+	if harvesters_svc != null and harvesters_svc.has_method("list_harvesters"):
+		var owned: Array = harvesters_svc.list_harvesters(nm)
+		for h in owned:
+			if typeof(h) == TYPE_DICTIONARY:
+				hopper_ready += int(h.get("hopper_qty", 0))
+
+	if bf >= 200:
+		decision = "visit_cantina_perle"
+		reason = "high_battle_fatigue"
+	elif wounds_h >= 120:
+		decision = "visit_medcenter_odo"
+		reason = "high_combat_wounds"
+	elif hopper_ready >= 40:
+		decision = "collect_harvester_hopper"
+		reason = "hopper_threshold_reached"
+
+	return {
+		"bot": nm,
+		"decision": decision,
+		"reason": reason,
+		"battle_fatigue": bf,
+		"health_wounds": wounds_h,
+		"hopper_ready_qty": hopper_ready,
+	}
+

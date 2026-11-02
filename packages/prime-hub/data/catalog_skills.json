@@ -1,1 +1,169 @@
-{"ok":true,"type":"skills","count":14,"items":[{"id":"artisan","name":"Artisan de rue","tree":"crafting","priority":"P0","boxes":{"novice":"artisan_novice","branches":[{"id":"outils","boxes":["artisan_outils_01","artisan_outils_02","artisan_outils_03","artisan_outils_04"]},{"id":"conso","boxes":["artisan_conso_01","artisan_conso_02","artisan_conso_03","artisan_conso_04"]},{"id":"pieces","boxes":["artisan_pieces_01","artisan_pieces_02","artisan_pieces_03","artisan_pieces_04"]},{"id":"survey","boxes":["artisan_survey_01","artisan_survey_02","artisan_survey_03","artisan_survey_04"]}],"master":"artisan_master"},"kind":"profession"},{"id":"prospecteur","name":"Prospecteur","tree":"gathering","priority":"P0","boxes":{"novice":"prospecteur_novice","branches":[{"id":"survey","boxes":["prospecteur_survey_01","prospecteur_survey_02","prospecteur_survey_03","prospecteur_survey_04"]},{"id":"piste","boxes":["prospecteur_piste_01","prospecteur_piste_02","prospecteur_piste_03","prospecteur_piste_04"]},{"id":"camp","boxes":["prospecteur_camp_01","prospecteur_camp_02","prospecteur_camp_03","prospecteur_camp_04"]},{"id":"faune","boxes":["prospecteur_faune_01","prospecteur_faune_02","prospecteur_faune_03","prospecteur_faune_04"]}],"master":"prospecteur_master"},"kind":"profession"},{"id":"medecin","name":"Médecine de camp","tree":"medicine","priority":"P1","boxes":{"novice":"medecin_novice","branches":[{"id":"soin","boxes":["medecin_soin_01","medecin_soin_02","medecin_soin_03","medecin_soin_04"]},{"id":"kits","boxes":["medecin_kits_01","medecin_kits_02","medecin_kits_03","medecin_kits_04"]},{"id":"terrain","boxes":["medecin_terrain_01","medecin_terrain_02","medecin_terrain_03","medecin_terrain_04"]},{"id":"toxines","boxes":["medecin_toxines_01","medecin_toxines_02","medecin_toxines_03","medecin_toxines_04"]}],"master":"medecin_master"},"kind":"profession"},{"id":"scene","name":"Scène","tree":"scene","priority":"P1","boxes":{"novice":"scene_novice","branches":[{"id":"danse","boxes":["scene_danse_01","scene_danse_02","scene_danse_03","scene_danse_04"]},{"id":"musique","boxes":["scene_musique_01","scene_musique_02","scene_musique_03","scene_musique_04"]},{"id":"soin_morale","boxes":["scene_soin_01","scene_soin_02","scene_soin_03","scene_soin_04"]},{"id":"spectacle","boxes":["scene_spectacle_01","scene_spectacle_02","scene_spectacle_03","scene_spectacle_04"]}],"master":"scene_master"},"kind":"profession"},{"id":"poing","name":"Poing","tree":"brawler","priority":"P2","boxes":null,"kind":"profession"},{"id":"visee","name":"Visée","tree":"marksman","priority":"P2","boxes":null,"kind":"profession"},{"id":"citoyen","name":"Citoyen de quartier","tree":"social","priority":"P1","boxes":{"novice":"citoyen_novice","branches":[{"id":"badge","boxes":["citoyen_badge_01","citoyen_badge_02","citoyen_badge_03","citoyen_badge_04"]},{"id":"reseau","boxes":["citoyen_reseau_01","citoyen_reseau_02","citoyen_reseau_03","citoyen_reseau_04"]},{"id":"mairie","boxes":["citoyen_mairie_01","citoyen_mairie_02","citoyen_mairie_03","citoyen_mairie_04"]},{"id":"rumeur","boxes":["citoyen_rumeur_01","citoyen_rumeur_02","citoyen_rumeur_03","citoyen_rumeur_04"]}],"master":"citoyen_notable"},"kind":"profession"},{"id":"shuttle","name":"Pilotage shuttle","tree":"pilot","priority":"P1","boxes":{"novice":"shuttle_novice","branches":[{"id":"apron","boxes":["shuttle_apron_01","shuttle_apron_02","shuttle_apron_03","shuttle_apron_04"]},{"id":"nav","boxes":["shuttle_nav_01","shuttle_nav_02","shuttle_nav_03","shuttle_nav_04"]},{"id":"cargo","boxes":["shuttle_cargo_01","shuttle_cargo_02","shuttle_cargo_03","shuttle_cargo_04"]},{"id":"escorte","boxes":["shuttle_escorte_01","shuttle_escorte_02","shuttle_escorte_03","shuttle_escorte_04"]}],"master":"shuttle_as"},"kind":"profession"},{"id":"prospecteur_r1","name":"Prospecteur · rang 1","box":"prospecteur_novice","unlocks_schematics":[],"kind":"skill_box"},{"id":"artisan_rue_r1","name":"Artisan de rue · rang 1","box":"artisan_novice","unlocks_schematics":["kit_reparation","ration_compacte","plaque_carapace","lame_obsidienne"],"kind":"skill_box"},{"id":"medecine_camp_r1","name":"Médecine de camp · rang 1","box":"medecin_novice","unlocks_schematics":["bandage_antivenin"],"kind":"skill_box"},{"id":"pilotage_shuttle_r1","name":"Pilotage shuttle · rang 1","box":"shuttle_novice","unlocks_schematics":[],"kind":"skill_box"},{"id":"scene_danse_r1","name":"Scène · danse rang 1","box":"scene_danse_01","unlocks_schematics":[],"kind":"skill_box"},{"id":"quartier_r1","name":"Citoyen de quartier · rang 1","box":"citoyen_novice","unlocks_schematics":["badge_quartier"],"kind":"skill_box"}],"tick_cost":"free","requires_tick":false,"context":{"tick_cost":"free","requires_tick":false,"kind":"query","action":"catalog"}}
+{
+  "ok": true,
+  "type": "skills",
+  "max_skill_points": 250,
+  "count": 14,
+  "items": [
+    {
+      "id": "artisan",
+      "name": "Artisan de rue",
+      "tree": "crafting",
+      "priority": "P0",
+      "xp": "xp_artisanat",
+      "trainer_npc": "Kell Asa",
+      "boxes": {
+        "novice": "artisan_novice",
+        "branches": [
+          {"id": "outils", "label": "Ingénierie & Outils", "boxes": ["artisan_outils_01", "artisan_outils_02", "artisan_outils_03", "artisan_outils_04"]},
+          {"id": "conso", "label": "Rations & Synthèse", "boxes": ["artisan_conso_01", "artisan_conso_02", "artisan_conso_03", "artisan_conso_04"]},
+          {"id": "pieces", "label": "Composants Mécatroniques", "boxes": ["artisan_pieces_01", "artisan_pieces_02", "artisan_pieces_03", "artisan_pieces_04"]},
+          {"id": "survey", "label": "Raffinage & Étalonnage", "boxes": ["artisan_survey_01", "artisan_survey_02", "artisan_survey_03", "artisan_survey_04"]}
+        ],
+        "master": "artisan_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "prospecteur",
+      "name": "Prospecteur",
+      "tree": "gathering",
+      "priority": "P0",
+      "xp": "xp_prospection",
+      "trainer_npc": "Yara Nis",
+      "boxes": {
+        "novice": "prospecteur_novice",
+        "branches": [
+          {"id": "survey", "label": "Sondage Géologique", "boxes": ["prospecteur_survey_01", "prospecteur_survey_02", "prospecteur_survey_03", "prospecteur_survey_04"]},
+          {"id": "piste", "label": "Pistes du Désert", "boxes": ["prospecteur_piste_01", "prospecteur_piste_02", "prospecteur_piste_03", "prospecteur_piste_04"]},
+          {"id": "camp", "label": "Survie & Campement", "boxes": ["prospecteur_camp_01", "prospecteur_camp_02", "prospecteur_camp_03", "prospecteur_camp_04"]},
+          {"id": "faune", "label": "Prélèvement Faunique", "boxes": ["prospecteur_faune_01", "prospecteur_faune_02", "prospecteur_faune_03", "prospecteur_faune_04"]}
+        ],
+        "master": "prospecteur_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "medecin",
+      "name": "Médecine de camp",
+      "tree": "medicine",
+      "priority": "P1",
+      "xp": "xp_medecine",
+      "trainer_npc": "Odo Merr",
+      "boxes": {
+        "novice": "medecin_novice",
+        "branches": [
+          {"id": "soin", "label": "Traitement des Blessures", "boxes": ["medecin_soin_01", "medecin_soin_02", "medecin_soin_03", "medecin_soin_04"]},
+          {"id": "kits", "label": "Pharmacologie & Medpacks", "boxes": ["medecin_kits_01", "medecin_kits_02", "medecin_kits_03", "medecin_kits_04"]},
+          {"id": "terrain", "label": "Urgence de Terrain", "boxes": ["medecin_terrain_01", "medecin_terrain_02", "medecin_terrain_03", "medecin_terrain_04"]},
+          {"id": "toxines", "label": "Antivenins & Stimulants HAM", "boxes": ["medecin_toxines_01", "medecin_toxines_02", "medecin_toxines_03", "medecin_toxines_04"]}
+        ],
+        "master": "medecin_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "scene",
+      "name": "Scène",
+      "tree": "scene",
+      "priority": "P1",
+      "xp": "xp_scene",
+      "trainer_npc": "Talen Ress",
+      "boxes": {
+        "novice": "scene_novice",
+        "branches": [
+          {"id": "danse", "label": "Chorégraphie de Scène", "boxes": ["scene_danse_01", "scene_danse_02", "scene_danse_03", "scene_danse_04"]},
+          {"id": "musique", "label": "Acoustique & Rythme", "boxes": ["scene_musique_01", "scene_musique_02", "scene_musique_03", "scene_musique_04"]},
+          {"id": "soin_morale", "label": "Soin de Fatigue & Esprit", "boxes": ["scene_soin_01", "scene_soin_02", "scene_soin_03", "scene_soin_04"]},
+          {"id": "spectacle", "label": "Inspiration & Panache", "boxes": ["scene_spectacle_01", "scene_spectacle_02", "scene_spectacle_03", "scene_spectacle_04"]}
+        ],
+        "master": "scene_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "poing",
+      "name": "Poing",
+      "tree": "brawler",
+      "priority": "P2",
+      "xp": "xp_combat",
+      "trainer_npc": "Tobin Ress",
+      "boxes": {
+        "novice": "poing_novice",
+        "branches": [
+          {"id": "mains_nues", "label": "Lutte à Mains Nues", "boxes": ["poing_mains_01", "poing_mains_02", "poing_mains_03", "poing_mains_04"]},
+          {"id": "lame_courte", "label": "Escrime à Une Main", "boxes": ["poing_lame_01", "poing_lame_02", "poing_lame_03", "poing_lame_04"]},
+          {"id": "lame_lourde", "label": "Frappe Lourde à Deux Mains", "boxes": ["poing_lourd_01", "poing_lourd_02", "poing_lourd_03", "poing_lourd_04"]},
+          {"id": "hast", "label": "Maîtrise des Lances d'Acier", "boxes": ["poing_hast_01", "poing_hast_02", "poing_hast_03", "poing_hast_04"]}
+        ],
+        "master": "poing_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "visee",
+      "name": "Visée",
+      "tree": "marksman",
+      "priority": "P2",
+      "xp": "xp_combat",
+      "trainer_npc": "Unar Tek",
+      "boxes": {
+        "novice": "visee_novice",
+        "branches": [
+          {"id": "pistolet", "label": "Armes de Poing", "boxes": ["visee_pistolet_01", "visee_pistolet_02", "visee_pistolet_03", "visee_pistolet_04"]},
+          {"id": "carabine", "label": "Carabines d'Escorte", "boxes": ["visee_carabine_01", "visee_carabine_02", "visee_carabine_03", "visee_carabine_04"]},
+          {"id": "fusil", "label": "Tir de Précision Longue Portée", "boxes": ["visee_fusil_01", "visee_fusil_02", "visee_fusil_03", "visee_fusil_04"]},
+          {"id": "appui", "label": "Appui Tactique & Couverture", "boxes": ["visee_appui_01", "visee_appui_02", "visee_appui_03", "visee_appui_04"]}
+        ],
+        "master": "visee_master"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "citoyen",
+      "name": "Citoyen de quartier",
+      "tree": "social",
+      "priority": "P1",
+      "xp": "xp_civique",
+      "trainer_npc": "Vorn Thess",
+      "boxes": {
+        "novice": "citoyen_novice",
+        "branches": [
+          {"id": "badge", "label": "Charte & Urbanisme", "boxes": ["citoyen_badge_01", "citoyen_badge_02", "citoyen_badge_03", "citoyen_badge_04"]},
+          {"id": "reseau", "label": "Réseaux d'Échange", "boxes": ["citoyen_reseau_01", "citoyen_reseau_02", "citoyen_reseau_03", "citoyen_reseau_04"]},
+          {"id": "mairie", "label": "Intendance Civique", "boxes": ["citoyen_mairie_01", "citoyen_mairie_02", "citoyen_mairie_03", "citoyen_mairie_04"]},
+          {"id": "rumeur", "label": "Diplomatie & Chroniques", "boxes": ["citoyen_rumeur_01", "citoyen_rumeur_02", "citoyen_rumeur_03", "citoyen_rumeur_04"]}
+        ],
+        "master": "citoyen_notable"
+      },
+      "kind": "profession"
+    },
+    {
+      "id": "shuttle",
+      "name": "Pilotage shuttle",
+      "tree": "pilot",
+      "priority": "P1",
+      "xp": "xp_pilotage",
+      "trainer_npc": "Kaelen Oris",
+      "boxes": {
+        "novice": "shuttle_novice",
+        "branches": [
+          {"id": "apron", "label": "Manœuvres Apron", "boxes": ["shuttle_apron_01", "shuttle_apron_02", "shuttle_apron_03", "shuttle_apron_04"]},
+          {"id": "nav", "label": "Navigation Suborbitale", "boxes": ["shuttle_nav_01", "shuttle_nav_02", "shuttle_nav_03", "shuttle_nav_04"]},
+          {"id": "cargo", "label": "Fret & Soutes", "boxes": ["shuttle_cargo_01", "shuttle_cargo_02", "shuttle_cargo_03", "shuttle_cargo_04"]},
+          {"id": "escorte", "label": "Contre-mesures & Escorte", "boxes": ["shuttle_escorte_01", "shuttle_escorte_02", "shuttle_escorte_03", "shuttle_escorte_04"]}
+        ],
+        "master": "shuttle_as"
+      },
+      "kind": "profession"
+    },
+    {"id": "prospecteur_r1", "name": "Prospecteur · rang 1", "box": "prospecteur_novice", "unlocks_schematics": [], "kind": "skill_box"},
+    {"id": "artisan_rue_r1", "name": "Artisan de rue · rang 1", "box": "artisan_novice", "unlocks_schematics": ["kit_reparation", "ration_compacte", "plaque_carapace", "lame_obsidienne"], "kind": "skill_box"},
+    {"id": "medecine_camp_r1", "name": "Médecine de camp · rang 1", "box": "medecin_novice", "unlocks_schematics": ["bandage_antivenin"], "kind": "skill_box"},
+    {"id": "pilotage_shuttle_r1", "name": "Pilotage shuttle · rang 1", "box": "shuttle_novice", "unlocks_schematics": [], "kind": "skill_box"},
+    {"id": "scene_danse_r1", "name": "Scène · danse rang 1", "box": "scene_danse_01", "unlocks_schematics": [], "kind": "skill_box"},
+    {"id": "quartier_r1", "name": "Citoyen de quartier · rang 1", "box": "citoyen_novice", "unlocks_schematics": ["badge_quartier"], "kind": "skill_box"}
+  ],
+  "tick_cost": "free",
+  "requires_tick": false,
+  "context": {"tick_cost": "free", "requires_tick": false, "kind": "query", "action": "catalog"}
+}

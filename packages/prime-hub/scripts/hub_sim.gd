@@ -16,7 +16,13 @@ const HubSimAmbientScript = preload("res://scripts/hub_sim_ambient.gd")
 const HubSimDefsScript = preload("res://scripts/hub_sim_defs.gd")
 const HubEscortScript = preload("res://scripts/hub_escort.gd")
 const HubShowScript = preload("res://scripts/hub_show.gd")
+const HubCaravanScript = preload("res://scripts/hub_caravan.gd")
 const HubWorldClockScript = preload("res://scripts/hub_world_clock.gd")
+const HubSkillsScript = preload("res://scripts/hub_skills.gd")
+const HubSurveyScript = preload("res://scripts/hub_survey.gd")
+const HubCraftingScript = preload("res://scripts/hub_crafting.gd")
+const HubHamMedicalScript = preload("res://scripts/hub_ham_medical.gd")
+const HubHarvestersScript = preload("res://scripts/hub_harvesters.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -44,7 +50,13 @@ var presence = null
 var ambient = null
 var escort = null
 var show = null
+var caravan = null
 var world_clock = null
+var skills = null
+var survey = null
+var crafting = null
+var ham_medical = null
+var harvesters = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -58,6 +70,16 @@ func attach_economy(economy_svc) -> void:
 	economy = economy_svc
 	if autonomy != null:
 		autonomy.economy = economy_svc
+	if skills != null:
+		skills.setup(economy_svc)
+	if survey != null:
+		survey.setup(economy_svc, skills)
+	if crafting != null:
+		crafting.setup(economy_svc, collision, skills)
+	if ham_medical != null:
+		ham_medical.setup(economy_svc, skills, show)
+	if harvesters != null:
+		harvesters.setup(economy_svc, survey, skills, collision)
 
 
 func attach_events(events_svc) -> void:
@@ -116,6 +138,25 @@ func reset() -> void:
 		show = HubShowScript.new()
 	show.clear()
 	show.bootstrap(self)
+	if caravan == null:
+		caravan = HubCaravanScript.new()
+	caravan.clear()
+	caravan.setup(self)
+	if skills == null:
+		skills = HubSkillsScript.new()
+	skills.setup(economy)
+	if survey == null:
+		survey = HubSurveyScript.new()
+	survey.setup(economy, skills)
+	if crafting == null:
+		crafting = HubCraftingScript.new()
+	crafting.setup(economy, collision, skills)
+	if ham_medical == null:
+		ham_medical = HubHamMedicalScript.new()
+	ham_medical.setup(economy, skills, show)
+	if harvesters == null:
+		harvesters = HubHarvestersScript.new()
+	harvesters.setup(economy, survey, skills, collision)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -737,13 +778,15 @@ func step(dt: float) -> void:
 		elif str(e.get("kind", "")) == "npc":
 			# Escorte / show : mouvement géré par modules dédiés.
 			var g := str(e.get("goal", ""))
-			if g.begins_with("escort_") or g.begins_with("show_"):
+			if g.begins_with("escort_") or g.begins_with("show_") or g.begins_with("caravan_"):
 				continue
 			_step_npc(e, dt)
 	if escort != null:
 		escort.tick(self, dt, economy)
 	if show != null:
 		show.tick(self, dt)
+	if caravan != null:
+		caravan.tick(self, dt)
 	if tick % 40 == 0 and ambient != null:
 		ambient.maybe_ambient()
 	if tick % _persist_every_ticks == 0 and player_store != null:

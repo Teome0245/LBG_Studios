@@ -7,6 +7,10 @@ const HubBlueprintBuilderScript := preload("res://scripts/hub_blueprint_builder.
 var blocks: Array = []  # {id, min_x, max_x, min_z, max_z, door?}
 var furniture_anchors: Array = []  # [{id, kind, label, pos: Vector3, interaction_type, capacity, ...}]
 var size_mul: float = 1.0
+var enforce_fence: bool = true
+var fence_ring: Array = []
+var gate_exits: Array = []
+var open_fence_segments: Dictionary = {}
 
 
 func reload(buildings_path: String = "") -> void:
@@ -44,25 +48,26 @@ func reload(buildings_path: String = "") -> void:
 				var bp_anchors: Array = HubBlueprintBuilderScript.blueprint_to_furniture_anchors(bp, cx, cz)
 				if not bp_anchors.is_empty():
 					furniture_anchors.append_array(bp_anchors)
-				if not bp_blocks.is_empty():
-					blocks.append_array(bp_blocks)
-					continue
 
 		var size_m := float(item.get("size_m", 32.0))
 		var half := size_m * 0.5 * size_mul
-		var door_raw = item.get("door")
-		var door = null
-		if typeof(door_raw) == TYPE_DICTIONARY:
-			door = _door_corridor(door_raw, cx, cz, half)
+		var doors_list: Array = []
+		if item.get("doors") is Array:
+			for d_raw in item.get("doors"):
+				if typeof(d_raw) == TYPE_DICTIONARY:
+					doors_list.append(_door_corridor(d_raw, cx, cz, half))
+		elif typeof(item.get("door")) == TYPE_DICTIONARY:
+			doors_list.append(_door_corridor(item["door"], cx, cz, half))
 		blocks.append({
 			"id": str(item.get("id", item.get("kind", "building"))),
 			"min_x": cx - half,
 			"max_x": cx + half,
 			"min_z": cz - half,
 			"max_z": cz + half,
-			"door": door,
+			"doors": doors_list,
 		})
-	print("[prime-hub] collision blocks=%d path=%s" % [blocks.size(), path])
+	_load_fence_and_gates()
+	print("[prime-hub] collision blocks=%d fence_pts=%d path=%s" % [blocks.size(), fence_ring.size(), path])
 
 
 func _default_buildings_path() -> String:
@@ -81,6 +86,56 @@ func _default_buildings_path() -> String:
 	return candidates[0]
 
 
+func _default_props_path() -> String:
+	var env := OS.get_environment("LBG_HUB_PROPS_JSON").strip_edges()
+	if not env.is_empty() and FileAccess.file_exists(env):
+		return env
+	var root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var candidates := [
+		root.path_join("../prime-client/assets/maps/lost_heaven_props.json"),
+		"/opt/lbg-hub-runtime/data/lost_heaven_props.json",
+		root.path_join("data/lost_heaven_props.json"),
+	]
+	for p in candidates:
+		if FileAccess.file_exists(p):
+			return p
+	return candidates[0]
+
+
+func _load_fence_and_gates(props_path: String = "") -> void:
+	fence_ring.clear()
+	gate_exits.clear()
+	open_fence_segments.clear()
+	var path := props_path
+	if path.is_empty():
+		path = _default_props_path()
+	if path.is_empty() or not FileAccess.file_exists(path):
+		return
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return
+	var data: Variant = JSON.parse_string(f.get_as_text())
+	if typeof(data) != TYPE_DICTIONARY:
+		return
+	var d: Dictionary = data
+	var gates: Variant = d.get("gate_exits", [])
+	if typeof(gates) == TYPE_ARRAY:
+		gate_exits = gates
+		for g in gates:
+			if typeof(g) == TYPE_DICTIONARY:
+				for idx in g.get("fence_open_segment_indices", []):
+					open_fence_segments[int(idx)] = true
+	for item in d.get("paths", []):
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		if str(item.get("id", "")) != "path:lh_perimeter_fence":
+			continue
+		for pt in item.get("points", []):
+			if typeof(pt) == TYPE_DICTIONARY:
+				fence_ring.append(Vector2(float(pt.get("x", 0.0)), float(pt.get("z", 0.0))))
+		break
+
+
 func _door_corridor(door: Dictionary, cx: float, cz: float, half: float) -> Dictionary:
 	var face := str(door.get("face", "south")).to_lower()
 	var hw := float(door.get("width_m", 12.0)) * 0.5
@@ -97,17 +152,36 @@ func _door_corridor(door: Dictionary, cx: float, cz: float, half: float) -> Dict
 			return {"min_x": cx - half - apron, "max_x": cx - half + depth, "min_z": cz - hw, "max_z": cz + hw}
 
 
-func _in_door(door, x: float, z: float) -> bool:
-	if door == null or typeof(door) != TYPE_DICTIONARY:
+func _in_door(doors, x: float, z: float) -> bool:
+	if doors == null:
 		return false
-	return float(door["min_x"]) <= x and x <= float(door["max_x"]) and float(door["min_z"]) <= z and z <= float(door["max_z"])
+	if typeof(doors) == TYPE_ARRAY:
+		for d in doors:
+			if typeof(d) == TYPE_DICTIONARY:
+				if float(d["min_x"]) <= x and x <= float(d["max_x"]) and float(d["min_z"]) <= z and z <= float(d["max_z"]):
+					return true
+		return false
+	elif typeof(doors) == TYPE_DICTIONARY:
+		return float(doors["min_x"]) <= x and x <= float(doors["max_x"]) and float(doors["min_z"]) <= z and z <= float(doors["max_z"])
+	return false
 
 
 func allows(x: float, z: float) -> bool:
 	for b in blocks:
-		if float(b["min_x"]) <= x and x <= float(b["max_x"]) and float(b["min_z"]) <= z and z <= float(b["max_z"]):
-			if not _in_door(b.get("door"), x, z):
-				return false
+		var min_x: float = float(b["min_x"])
+		var max_x: float = float(b["max_x"])
+		var min_z: float = float(b["min_z"])
+		var max_z: float = float(b["max_z"])
+		if min_x <= x and x <= max_x and min_z <= z and z <= max_z:
+			var wall_th := 2.2
+			# Pièce creuse visitable : l'intérieur du bâtiment est praticable pour les joueurs et les PNJ
+			if x > min_x + wall_th and x < max_x - wall_th and z > min_z + wall_th and z < max_z - wall_th:
+				continue
+			# Ouverture des portes : franchissable
+			if _in_door(b.get("doors", b.get("door")), x, z):
+				continue
+			# Mur extérieur périphérique : bloqué
+			return false
 	return true
 
 
@@ -133,7 +207,91 @@ func nearest_walkable(x: float, z: float, radius: float = 120.0) -> Vector2:
 	return Vector2(x, z)
 
 
+func _in_gate_corridor(x: float, z: float) -> bool:
+	for ge in gate_exits:
+		if typeof(ge) != TYPE_DICTIONARY:
+			continue
+		var g: Dictionary = ge
+		var c = g.get("center")
+		if typeof(c) != TYPE_DICTIONARY:
+			continue
+		var gx := float(c.get("x", 0.0))
+		var gz := float(c.get("z", 0.0))
+		var hw := float(g.get("width_m", 16.0)) * 0.55
+		var axis := str(g.get("axis", "z")).to_lower()
+		if axis == "x":
+			var east := float(g.get("depth_east_m", g.get("depth_m", 32.0)))
+			var west := float(g.get("depth_west_m", g.get("depth_m", 32.0)))
+			if absf(z - gz) <= hw and gx - west <= x and x <= gx + east:
+				return true
+		else:
+			var north := float(g.get("depth_north_m", g.get("depth_m", 32.0)))
+			var south := float(g.get("depth_south_m", g.get("depth_m", 32.0)))
+			if absf(x - gx) <= hw and gz - south <= z and z <= gz + north:
+				return true
+	return false
+
+
+func _fence_segment_open(seg_index: int) -> bool:
+	if open_fence_segments.has(seg_index):
+		return true
+	var n := fence_ring.size()
+	if n < 2:
+		return false
+	var i := seg_index % n
+	var j := (i + 1) % n
+	var mx: float = (fence_ring[i].x + fence_ring[j].x) * 0.5
+	var mz: float = (fence_ring[i].y + fence_ring[j].y) * 0.5
+	for ge in gate_exits:
+		if typeof(ge) != TYPE_DICTIONARY:
+			continue
+		var g: Dictionary = ge
+		var c = g.get("center")
+		if typeof(c) != TYPE_DICTIONARY:
+			continue
+		var gx := float(c.get("x", 0.0))
+		var gz := float(c.get("z", 0.0))
+		var hw := float(g.get("width_m", 16.0)) * 0.55
+		if absf(mx - gx) <= hw and absf(mz - gz) <= 55.0:
+			return true
+	return false
+
+
+func _orient(a: Vector2, b: Vector2, c: Vector2) -> float:
+	return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+
+
+func _segments_intersect(a: Vector2, b: Vector2, c: Vector2, d: Vector2) -> bool:
+	return _orient(a, b, c) * _orient(a, b, d) < 0.0 and _orient(c, d, a) * _orient(c, d, b) < 0.0
+
+
+func _crosses_blocked_fence(from_x: float, from_z: float, to_x: float, to_z: float) -> bool:
+	if not enforce_fence or fence_ring.size() < 3:
+		return false
+	var a := Vector2(from_x, from_z)
+	var b := Vector2(to_x, to_z)
+	var n := fence_ring.size()
+	for i in range(n):
+		if _fence_segment_open(i):
+			continue
+		var p1: Vector2 = fence_ring[i]
+		var p2: Vector2 = fence_ring[(i + 1) % n]
+		if _segments_intersect(a, b, p1, p2):
+			if _in_gate_corridor(to_x, to_z):
+				continue
+			return true
+	return false
+
+
 func clamp_move(from_x: float, from_z: float, to_x: float, to_z: float) -> Vector2:
+	if _crosses_blocked_fence(from_x, from_z, to_x, to_z):
+		# Essai glissement X
+		if not _crosses_blocked_fence(from_x, from_z, to_x, from_z) and allows(to_x, from_z):
+			return Vector2(to_x, from_z)
+		# Essai glissement Z
+		if not _crosses_blocked_fence(from_x, from_z, from_x, to_z) and allows(from_x, to_z):
+			return Vector2(from_x, to_z)
+		return Vector2(from_x, from_z)
 	if allows(to_x, to_z):
 		return Vector2(to_x, to_z)
 	if allows(to_x, from_z):

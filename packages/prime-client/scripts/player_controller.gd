@@ -220,6 +220,26 @@ func send_initial_position(x: float, y: float, z: float) -> void:
 func request_move_to(x: float, z: float) -> void:
 	set_click_target(Vector3(x, 0.0, z))
 
+func teleport_to(x: float, z: float) -> void:
+	_click_target = Vector3.INF
+	var core3 := Vector3(x, 0.0, z)
+	if _zones:
+		core3 = _zones.clamp_move(core3, core3)
+	if _player_id != 0 and _em:
+		var e: Entity = _em.get_entity(_player_id)
+		if e:
+			if e.has_method("set_core3_position"):
+				e.set_core3_position(core3)
+			else:
+				_em.move(_player_id, core3)
+			if _camera:
+				_camera.position = e.position
+	if _ws_open() and _ws.has_method("send_move"):
+		_ws.send_move(core3)
+	if not _ws_open():
+		_send({"t": "pos", "x": core3.x, "y": core3.y, "z": core3.z})
+	_LastPos.save(_player_id, core3)
+
 func _exit_tree() -> void:
 	if not _ws_open():
 		_send({"t": "stop"})

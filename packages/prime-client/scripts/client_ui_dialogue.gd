@@ -43,7 +43,12 @@ func unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			main._zoom_camera(-main.CAM_ZOOM_STEP)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
+			if main.swg_radial_menu and main.swg_radial_menu.visible:
+				main.swg_radial_menu.close_menu()
 			main._handle_world_left_click(main._canvas_mouse_pos())
+			main.get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			main._handle_world_right_click(main._canvas_mouse_pos())
 			main.get_viewport().set_input_as_handled()
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
@@ -65,6 +70,24 @@ func unhandled_input(event: InputEvent) -> void:
 					main.camera.position = e.position
 			KEY_T:
 				toggle_talents()
+			KEY_K:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_skills_panel and main.swg_skills_panel.has_method("toggle"):
+					main.swg_skills_panel.toggle()
+			KEY_U:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_survey_panel and main.swg_survey_panel.has_method("toggle"):
+					var xz: Vector2 = main._player_world_xz()
+					if xz != Vector2.INF:
+						main.swg_survey_panel.player_pos_xz = xz
+					main.swg_survey_panel.toggle()
+			KEY_X:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_experiment_panel and main.swg_experiment_panel.has_method("toggle"):
+					main.swg_experiment_panel.toggle()
 			KEY_I:
 				toggle_inventory()
 			KEY_J:
@@ -199,8 +222,14 @@ func on_hotbar_slot(index: int) -> void:
 				map_panel.call("toggle_map")
 				main._hotbar_feedback("Carte planétaire")
 		5:
-			toggle_talents()
-			main._hotbar_feedback("Talents / craft")
+			if main.has_method("_ensure_swg_ui"):
+				main._ensure_swg_ui()
+			if main.swg_skills_panel and main.swg_skills_panel.has_method("toggle"):
+				main.swg_skills_panel.toggle()
+				main._hotbar_feedback("Arbres de Compétences (4×4)")
+			else:
+				toggle_talents()
+				main._hotbar_feedback("Talents / Artisanat")
 		6:
 			toggle_inventory()
 			main._hotbar_feedback("Inventaire")
@@ -208,18 +237,33 @@ func on_hotbar_slot(index: int) -> void:
 			if main._dialogue_panel and main._dialogue_panel.get("visible") and main._dialogue_panel.has_method("hide_portrait"):
 				main._dialogue_panel.hide_portrait()
 			focus_hub_chat_input()
-			main._hotbar_feedback("Chat — Entrée pour parler")
+			main._hotbar_feedback("Canal Spatial — Entrée pour parler")
 		8:
 			# Compagnon (ex-monture) — escorte Nix/Lia courte.
 			if main.gameplay_ops:
 				main.gameplay_ops.try_companion_escort()
 			else:
-				main._hotbar_feedback("Compagnon — gameplay off")
+				main._hotbar_feedback("Compagnon — hors ligne")
 		9:
+			if main.has_method("_ensure_swg_ui"):
+				main._ensure_swg_ui()
+			if main.swg_survey_panel and main.swg_survey_panel.has_method("toggle"):
+				var xz: Vector2 = main._player_world_xz()
+				if xz != Vector2.INF:
+					main.swg_survey_panel.player_pos_xz = xz
+				main.swg_survey_panel.toggle()
+				main._hotbar_feedback("Outil de Prospection (Survey)")
+		10:
+			if main.has_method("_ensure_swg_ui"):
+				main._ensure_swg_ui()
+			if main.swg_experiment_panel and main.swg_experiment_panel.has_method("toggle"):
+				main.swg_experiment_panel.toggle()
+				main._hotbar_feedback("Atelier d'Expérimentation")
+		11:
 			toggle_game_menu()
-			main._hotbar_feedback("Menu")
+			main._hotbar_feedback("Menu Système")
 		_:
-			main._hotbar_feedback("Slot %d" % index)
+			main._hotbar_feedback("Emplacement F%d" % (index + 1))
 
 
 func ensure_hub_chat_ui() -> void:
@@ -232,32 +276,92 @@ func ensure_hub_chat_ui() -> void:
 		return
 	var root := PanelContainer.new()
 	root.name = "HubChatPanel"
-	root.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	root.offset_left = 8.0
-	root.offset_top = -220.0
-	root.offset_right = 420.0
-	root.offset_bottom = -72.0
+	# Positionné en Bas-Centre (entre le Radar Circulaire à gauche et le Datapad à droite, comme sur SWG)
+	root.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	root.offset_left = -280.0
+	root.offset_top = -156.0
+	root.offset_right = 260.0
+	root.offset_bottom = -8.0
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var sb_chat := StyleBoxFlat.new()
+	sb_chat.bg_color = Color(0.015, 0.11, 0.14, 0.88)
+	sb_chat.set_border_width_all(2)
+	sb_chat.border_color = Color(0.24, 0.84, 0.94, 0.92)
+	sb_chat.set_corner_radius_all(5)
+	sb_chat.content_margin_left = 8
+	sb_chat.content_margin_right = 8
+	sb_chat.content_margin_top = 4
+	sb_chat.content_margin_bottom = 6
+	root.add_theme_stylebox_override("panel", sb_chat)
+
 	var vbox := VBoxContainer.new()
 	vbox.name = "VBox"
+	vbox.add_theme_constant_override("separation", 3)
 	root.add_child(vbox)
+
+	# Barre d'onglets de canal style SWG (Spatial, Combat, Planète, Quête, Commerce, Groupe)
+	var tabs_row := HBoxContainer.new()
+	tabs_row.add_theme_constant_override("separation", 3)
+	vbox.add_child(tabs_row)
+	var tab_names := ["Spatial", "Combat", "Planète", "Quête", "Commerce", "Groupe"]
+	for i in range(tab_names.size()):
+		var t_lbl := Label.new()
+		t_lbl.text = " %s " % str(tab_names[i])
+		t_lbl.add_theme_font_size_override("font_size", 9)
+		var sb_t := StyleBoxFlat.new()
+		if i == 0:
+			sb_t.bg_color = Color(0.08, 0.36, 0.44, 0.96)
+			sb_t.border_color = Color(0.55, 0.96, 1.0, 0.98)
+			t_lbl.add_theme_color_override("font_color", Color(0.95, 1.0, 1.0, 1.0))
+		else:
+			sb_t.bg_color = Color(0.02, 0.14, 0.18, 0.88)
+			sb_t.border_color = Color(0.18, 0.58, 0.68, 0.80)
+			t_lbl.add_theme_color_override("font_color", Color(0.62, 0.88, 0.94, 0.90))
+		sb_t.set_border_width_all(1)
+		sb_t.set_corner_radius_all(3)
+		t_lbl.add_theme_stylebox_override("normal", sb_t)
+		tabs_row.add_child(t_lbl)
+
 	var log := RichTextLabel.new()
 	log.name = "ChatLog"
 	log.bbcode_enabled = true
 	log.fit_content = false
 	log.scroll_following = true
-	log.custom_minimum_size = Vector2(0, 120)
+	log.custom_minimum_size = Vector2(0, 92)
 	log.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	log.add_theme_font_size_override("normal_font_size", 13)
-	log.text = "[center][color=#8899aa]Chat hub — Entrée[/color][/center]"
+	log.add_theme_font_size_override("normal_font_size", 11)
+	log.text = "[color=#6ce6f5][Système] Canal Spatial Lost Heaven connecté — Appuie sur Entrée pour discuter.[/color]"
 	vbox.add_child(log)
+
+	var inp_row := HBoxContainer.new()
+	inp_row.add_theme_constant_override("separation", 6)
+	vbox.add_child(inp_row)
+
+	var chan_tag := Label.new()
+	chan_tag.text = "Spatial"
+	chan_tag.add_theme_font_size_override("font_size", 10)
+	chan_tag.add_theme_color_override("font_color", Color(0.58, 0.95, 1.0, 1.0))
+	inp_row.add_child(chan_tag)
+
 	var inp := LineEdit.new()
 	inp.name = "ChatInput"
-	inp.placeholder_text = "Dire quelque chose…"
+	inp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inp.placeholder_text = "Écrire un message dans le canal Spatial…"
 	inp.max_length = 200
 	inp.clear_button_enabled = true
+	inp.add_theme_font_size_override("font_size", 11)
+	var sb_inp := StyleBoxFlat.new()
+	sb_inp.bg_color = Color(0.01, 0.06, 0.08, 0.95)
+	sb_inp.set_border_width_all(1)
+	sb_inp.border_color = Color(0.22, 0.74, 0.84, 0.88)
+	sb_inp.set_corner_radius_all(3)
+	sb_inp.content_margin_left = 6
+	sb_inp.content_margin_right = 6
+	inp.add_theme_stylebox_override("normal", sb_inp)
 	inp.text_submitted.connect(on_hub_chat_submitted)
-	vbox.add_child(inp)
+	inp_row.add_child(inp)
+
 	hud.add_child(root)
 	hub_chat_root = root
 	hub_chat_log = log

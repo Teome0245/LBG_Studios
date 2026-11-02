@@ -614,6 +614,145 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		)
 		return _ok(wout, 200 if bool(wout.get("ok")) else 400)
 
+	# --- Phase 4 SWG Pre-CU : 4.1 Arbres de compétences 4x4 & Skill Points ---
+	if method == "GET" and path == "/v1/skills/tree":
+		if sim == null or sim.skills == null:
+			return _ok({"ok": false, "error": "skills_unavailable"}, 501)
+		var sp_player := _query_param(query, "player", "Voyageur")
+		return _ok(sim.skills.player_tree_snapshot(sp_player))
+	if method == "POST" and path == "/v1/skills/learn":
+		if sim == null or sim.skills == null:
+			return _ok({"ok": false, "error": "skills_unavailable"}, 501)
+		var skb := _json_body(req_body)
+		var sk_out: Dictionary = sim.skills.learn_box(
+			str(skb.get("player", "Voyageur")),
+			str(skb.get("box_id", "")),
+			bool(skb.get("bypass_xp", false))
+		)
+		return _ok(sk_out, 200 if bool(sk_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/skills/surrender":
+		if sim == null or sim.skills == null:
+			return _ok({"ok": false, "error": "skills_unavailable"}, 501)
+		var srb := _json_body(req_body)
+		var sr_out: Dictionary = sim.skills.surrender_box(
+			str(srb.get("player", "Voyageur")),
+			str(srb.get("box_id", ""))
+		)
+		return _ok(sr_out, 200 if bool(sr_out.get("ok")) else 400)
+
+	# --- Phase 4 SWG Pre-CU : 4.2 Prospection dynamique (Survey) & Spawns 1..1000 ---
+	if method == "GET" and path == "/v1/survey/spawns":
+		if sim == null or sim.survey == null:
+			return _ok({"ok": false, "error": "survey_unavailable"}, 501)
+		var sp_list: Array = sim.survey.list_spawns()
+		return _ok({"ok": true, "spawns": sp_list, "count": sp_list.size()})
+	if method == "POST" and path == "/v1/survey/ping":
+		if sim == null or sim.survey == null:
+			return _ok({"ok": false, "error": "survey_unavailable"}, 501)
+		var svb := _json_body(req_body)
+		return _ok(sim.survey.survey_ping(
+			str(svb.get("player", "Voyageur")),
+			str(svb.get("filter", "")),
+			float(svb.get("x", 4795.0)),
+			float(svb.get("z", -565.0))
+		))
+	if method == "POST" and path == "/v1/survey/sample":
+		if sim == null or sim.survey == null:
+			return _ok({"ok": false, "error": "survey_unavailable"}, 501)
+		var smb := _json_body(req_body)
+		var sm_out: Dictionary = sim.survey.sample_resource(
+			str(smb.get("player", "Voyageur")),
+			str(smb.get("spawn_id", "res_lh_copper_kovess")),
+			float(smb.get("x", 4795.0)),
+			float(smb.get("z", -565.0))
+		)
+		return _ok(sm_out, 200 if bool(sm_out.get("ok")) else 400)
+
+	# --- Phase 4 SWG Pre-CU : 4.3 Artisanat pondéré & Expérimentation ---
+	if method == "POST" and path == "/v1/craft/assemble":
+		if sim == null or sim.crafting == null:
+			return _ok({"ok": false, "error": "crafting_unavailable"}, 501)
+		var crb := _json_body(req_body)
+		var cpos := Vector3(float(crb.get("x", 4755.5)), float(crb.get("y", 0.15)), float(crb.get("z", -518.0)))
+		var cr_out: Dictionary = sim.crafting.assemble_at_bench(
+			str(crb.get("player", "Voyageur")),
+			str(crb.get("schematic_id", "")),
+			cpos,
+			float(crb.get("max_bench_dist", 8.0))
+		)
+		return _ok(cr_out, 200 if bool(cr_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/craft/experiment":
+		if sim == null or sim.crafting == null:
+			return _ok({"ok": false, "error": "crafting_unavailable"}, 501)
+		var exb := _json_body(req_body)
+		var ex_out: Dictionary = sim.crafting.experiment(
+			str(exb.get("player", "Voyageur")),
+			str(exb.get("session_id", "")),
+			str(exb.get("attribute", "quality_pct")),
+			int(exb.get("points", 1)),
+			float(exb.get("deterministic_roll", -1.0))
+		)
+		return _ok(ex_out, 200 if bool(ex_out.get("ok")) else 400)
+
+	# --- Phase 4 SWG Pre-CU : 4.4 Boucle HAM / Wounds (Medcenter) / Battle Fatigue (Cantina) ---
+	if method == "GET" and path == "/v1/medical/status":
+		if sim == null or sim.ham_medical == null:
+			return _ok({"ok": false, "error": "ham_medical_unavailable"}, 501)
+		var m_player := _query_param(query, "player", "Voyageur")
+		return _ok(sim.ham_medical.status(m_player))
+	if method == "POST" and path == "/v1/medical/treat_wounds":
+		if sim == null or sim.ham_medical == null:
+			return _ok({"ok": false, "error": "ham_medical_unavailable"}, 501)
+		var mdb := _json_body(req_body)
+		var md_out: Dictionary = sim.ham_medical.treat_wounds(
+			str(mdb.get("medic", "Voyageur")),
+			str(mdb.get("patient", mdb.get("player", "Voyageur"))),
+			str(mdb.get("pool", "health")),
+			str(mdb.get("medpack_item_id", "")),
+			bool(mdb.get("in_medcenter", true))
+		)
+		return _ok(md_out, 200 if bool(md_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/show/watch":
+		if sim == null or sim.ham_medical == null:
+			return _ok({"ok": false, "error": "ham_medical_unavailable"}, 501)
+		var wtb := _json_body(req_body)
+		var wt_out: Dictionary = sim.ham_medical.watch_entertainer(
+			str(wtb.get("listener", wtb.get("player", "Voyageur"))),
+			str(wtb.get("performer", "Lia")),
+			int(wtb.get("ticks", 3)),
+			bool(wtb.get("in_cantina", true))
+		)
+		return _ok(wt_out, 200 if bool(wt_out.get("ok")) else 400)
+
+	# --- Phase 4 SWG Pre-CU : 4.5 Extracteurs de terrain (Harvesters) ---
+	if method == "GET" and path == "/v1/harvesters/list":
+		if sim == null or sim.harvesters == null:
+			return _ok({"ok": false, "error": "harvesters_unavailable"}, 501)
+		var h_owner := _query_param(query, "owner", "")
+		var h_list: Array = sim.harvesters.list_harvesters(h_owner)
+		return _ok({"ok": true, "harvesters": h_list, "count": h_list.size()})
+	if method == "POST" and path == "/v1/harvesters/deploy":
+		if sim == null or sim.harvesters == null:
+			return _ok({"ok": false, "error": "harvesters_unavailable"}, 501)
+		var hdb := _json_body(req_body)
+		var hd_out: Dictionary = sim.harvesters.deploy_harvester(
+			str(hdb.get("player", "Voyageur")),
+			str(hdb.get("spawn_id", "res_lh_copper_kovess")),
+			float(hdb.get("x", 4795.0)),
+			float(hdb.get("z", -565.0)),
+			float(hdb.get("ber", 12.0))
+		)
+		return _ok(hd_out, 200 if bool(hd_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/harvesters/collect":
+		if sim == null or sim.harvesters == null:
+			return _ok({"ok": false, "error": "harvesters_unavailable"}, 501)
+		var hcb := _json_body(req_body)
+		var hc_out: Dictionary = sim.harvesters.collect_hopper(
+			str(hcb.get("player", "Voyageur")),
+			str(hcb.get("harvester_id", ""))
+		)
+		return _ok(hc_out, 200 if bool(hc_out.get("ok")) else 400)
+
 	return _ok({"ok": false, "error": "not_found", "path": path}, 404)
 
 

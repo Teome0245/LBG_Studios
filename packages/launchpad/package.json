@@ -1,6 +1,6 @@
 {
   "name": "lbg-mmo-launchpad",
-  "version": "2.1.0",
+  "version": "2.1.5",
   "description": "Custom Launchpad for LBG MMO",
   "main": "main.js",
   "scripts": {

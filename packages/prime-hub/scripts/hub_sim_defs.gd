@@ -4,21 +4,21 @@ class_name HubSimDefs
 
 const HUMAN_OID := 100001
 const ZONE := "scrapaltai"
-const SPAWN_HUMAN := Vector3(4758.0, 0.15, -545.0)
+const SPAWN_HUMAN := Vector3(4749.0, 0.15, -650.0)
 const PLAZA := Vector3(4749.0, 0.15, -737.0)
-const MARKET := Vector3(4809.0, 0.15, -932.0)
-const STARPORT := Vector3(4740.0, 0.15, -820.0)
-const CANTINA := Vector3(4939.0, 0.15, -802.0)
-const MISSION := Vector3(4939.0, 0.15, -932.0)
-const CLINIC := Vector3(4679.0, 0.15, -672.0)
-const TRAINING := Vector3(4939.0, 0.15, -672.0)
-const INN := Vector3(4809.0, 0.15, -672.0)
-const TOWN_HALL := Vector3(4679.0, 0.15, -932.0)
-const ARTISAN := Vector3(5069.0, 0.15, -802.0)
-const LODGE_W := Vector3(4305.0, 0.15, -780.0)
-const LODGE_N := Vector3(4749.0, 0.15, -430.0)
-const LODGE_E := Vector3(5245.0, 0.15, -630.0)
-const LODGE_S := Vector3(4860.0, 0.15, -1185.0)
+const MARKET := Vector3(4749.0, 0.15, -980.0)
+const STARPORT := Vector3(4260.0, 0.15, -737.0)
+const CANTINA := Vector3(5080.0, 0.15, -737.0)
+const MISSION := Vector3(5020.0, 0.15, -950.0)
+const CLINIC := Vector3(4480.0, 0.15, -530.0)
+const TRAINING := Vector3(5020.0, 0.15, -530.0)
+const INN := Vector3(4749.0, 0.15, -520.0)
+const TOWN_HALL := Vector3(4480.0, 0.15, -950.0)
+const ARTISAN := Vector3(5320.0, 0.15, -737.0)
+const LODGE_W := Vector3(4060.0, 0.15, -737.0)
+const LODGE_N := Vector3(4749.0, 0.15, -370.0)
+const LODGE_E := Vector3(5460.0, 0.15, -540.0)
+const LODGE_S := Vector3(4749.0, 0.15, -1160.0)
 const OUTPOST_ZALEM := Vector3(-1200.0, 0.15, -550.0)
 const KSAR_NOMADE := Vector3(4950.0, 0.15, -3800.0)
 const BOT_SPEED := 12.0
@@ -92,24 +92,30 @@ const HUB_NPCS: Array = [
 		"ambient": "Chroniques de session. Pas de légendes inventées."},
 	{"eid": "npc:habitue_cantina", "oid": 910009, "name": "Habitué", "pos": CANTINA, "wander_r": 9.0,
 		"ambient": "Toujours la même table à La Perle…"},
-	{"eid": "npc:videur", "oid": 910010, "name": "Videur", "pos": Vector3(4920.0, 0.15, -790.0), "wander_r": 7.0,
+	{"eid": "npc:videur", "oid": 910010, "name": "Videur", "pos": Vector3(4995.0, 0.15, -737.0), "wander_r": 6.0,
 		"ambient": "Pas de bagarre devant La Perle."},
-	{"eid": "npc:sergent_rue", "oid": 910011, "name": "Sergent de rue", "pos": Vector3(4880.0, 0.15, -880.0), "wander_r": 16.0,
+	{"eid": "npc:sergent_rue", "oid": 910011, "name": "Sergent de rue", "pos": Vector3(5180.0, 0.15, -737.0), "wander_r": 14.0,
 		"ambient": "Porte est surveillée. Meute ou pas — on tient."},
 	{"eid": "npc:rumeuriste", "oid": 910012, "name": "Rumeuriste", "pos": MARKET, "wander_r": 14.0,
 		"ambient": "Au marché on entend tout — et on répète la moitié."},
 	{"eid": "npc:core3_brawler_trainer_c", "oid": 910013, "name": "Tobin Ress", "pos": TRAINING, "wander_r": 11.0,
 		"ambient": "Poing avant paroles. Hall d'entraînement."},
-	{"eid": "npc:core3_marksman_trainer_c", "oid": 910014, "name": "Unar Tek", "pos": Vector3(4960.0, 0.15, -690.0), "wander_r": 11.0,
+	{"eid": "npc:core3_marksman_trainer_c", "oid": 910014, "name": "Unar Tek", "pos": TRAINING, "wander_r": 11.0,
 		"ambient": "Visée. Respire, tire, ne rate pas le désert."},
 	{"eid": "npc:core3_pilot_imperial_a", "oid": 910015, "name": "Garr Vek", "pos": STARPORT, "wander_r": 12.0,
 		"ambient": "Pilotage shuttle — apron propre, décollages courts."},
 	{"eid": "npc:capitaine_vael", "oid": 910016, "name": "Capitaine Vael", "pos": OUTPOST_ZALEM, "wander_r": 12.0,
 		"ambient": "Avant-poste Zalem. Route ouest sécurisée — convois en règle."},
-	{"eid": "npc:mecanicien_soren", "oid": 910017, "name": "Soren Kray", "pos": Vector3(-1130.0, 0.15, -520.0), "wander_r": 10.0,
+	{"eid": "npc:mecanicien_soren", "oid": 910017, "name": "Soren Kray", "pos": Vector3(-1060.0, 0.15, -470.0), "wander_r": 10.0,
 		"ambient": "Atelier relais. Si votre landspeeder fume avant la capitale, c'est ici."},
 	{"eid": "npc:ancien_nadir", "oid": 910018, "name": "Ancien Nadir", "pos": KSAR_NOMADE, "wander_r": 14.0,
-		"ambient": "Bienvenue au Ksar Nomade, voyageur. L'eau et l'ombre se partagent avec respect."},
-	{"eid": "npc:guerisseur_miran", "oid": 910019, "name": "Miran Sael", "pos": Vector3(4880.0, 0.15, -3770.0), "wander_r": 10.0,
-		"ambient": "Herbes des dunes et baumes du désert. La Confrérie veille sur les caravaniers."},
+		"ambient": "Bienvenue au Ksar de l'Oasis, voyageur. L'eau fraîche et l'ombre de nos murs de pierre se partagent avec respect."},
+	{"eid": "npc:guerisseur_miran", "oid": 910019, "name": "Miran Sael", "pos": Vector3(4800.0, 0.15, -3730.0), "wander_r": 10.0,
+		"ambient": "Dispensaire de l'Oasis. Nos baumes et infusions de racines soignent les brûlures du désert."},
+	{"eid": "npc:guetteur_dunes", "oid": 910020, "name": "Vigie des Dunes", "pos": Vector3(6650.0, 0.15, -1380.0), "wander_r": 8.0,
+		"ambient": "Horizon dégagé. Les convois de ferraille passent sans encombre le long des crêtes."},
+	{"eid": "npc:gardien_source", "oid": 910021, "name": "Gardien de la Source", "pos": Vector3(6550.0, 0.15, -2480.0), "wander_r": 10.0,
+		"ambient": "Prenez de l'eau fraîche pour vos bêtes à l'Oasis d'Al-Khali avant la traversée vers le Ksar."},
+	{"eid": "npc:ferrailleur_canyon", "oid": 910022, "name": "Ferrailleur du Canyon", "pos": Vector3(5650.0, 0.15, -3250.0), "wander_r": 8.0,
+		"ambient": "Une carcasse de cargo impérial gît dans la faille — encore des pièces à dessouder."},
 ]

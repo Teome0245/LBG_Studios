@@ -502,6 +502,24 @@ export function createVrmPet(hostEl, opts = {}) {
   let currentFov = targetFov;
   let cameraInitialized = false;
 
+  // Mouse tracking interactif (suivi du regard vers la souris)
+  const mouseNdc = new THREE.Vector2(0, 0);
+  const targetMouseNdc = new THREE.Vector2(0, 0);
+  let mouseActive = false;
+  let mouseActiveTimer = null;
+  window.addEventListener("mousemove", (e) => {
+    targetMouseNdc.x = (e.clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+    targetMouseNdc.y = -(e.clientY / Math.max(1, window.innerHeight)) * 2 + 1;
+    mouseActive = true;
+    if (mouseActiveTimer) clearTimeout(mouseActiveTimer);
+    mouseActiveTimer = setTimeout(() => {
+      mouseActive = false;
+    }, 3500);
+  });
+  window.addEventListener("mouseleave", () => {
+    mouseActive = false;
+  });
+
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
     antialias: true,
@@ -1887,8 +1905,13 @@ export function createVrmPet(hostEl, opts = {}) {
       } else {
         vrm.scene.position.y = walkYOffset;
       }
+      // Mouse tracking interactif : regard qui suit doucement le curseur de la souris
+      mouseNdc.lerp(mouseActive ? targetMouseNdc : new THREE.Vector2(0, 0), Math.min(1.0, dt * 6.0));
+      const lookTarget = camera.position.clone();
+      lookTarget.x += mouseNdc.x * 0.40;
+      lookTarget.y += mouseNdc.y * 0.30;
       if (vrm.lookAt && typeof vrm.lookAt.lookAt === "function") {
-        vrm.lookAt.lookAt(camera.position);
+        vrm.lookAt.lookAt(lookTarget);
       }
       const nowMs = performance.now();
       const hasVisemes = activeVisemes && activeVisemes.length > 0;

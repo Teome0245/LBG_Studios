@@ -413,8 +413,8 @@ func _draw() -> void:
 	elif tri_style and (kind == "player" or kind == "npc"):
 		_draw_marker_triangle(draw_pos, color, kind == "player")
 		if _selected:
-			draw_arc(draw_pos, 14.0, 0.0, TAU, 32, Color(1.0, 0.92, 0.35, 0.98), 2.5, true)
-			draw_arc(draw_pos, 17.0, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.35), 1.0, true)
+			draw_arc(draw_pos, 13.0, 0.0, TAU, 32, Color(0.24, 0.90, 0.98, 0.98), 2.0, true)
+			draw_arc(draw_pos, 16.5, 0.0, TAU, 32, Color(0.98, 0.84, 0.32, 0.85), 1.2, true)
 	elif kind == "player":
 		draw_circle(draw_pos + Vector2(1, 1), radius, Color(0, 0, 0, 0.3))
 		draw_circle(draw_pos, radius, color)
@@ -442,15 +442,38 @@ func _draw() -> void:
 			Color(color.r, color.g, color.b, 0.45),
 			1.0
 		)
-	if (show_nameplates or force_nameplate) and label_text != "":
-		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 4.0
+	var should_draw_nameplate := false
+	if label_text != "":
+		var is_companion := ("nix" in label_text.to_lower() or "lia" in label_text.to_lower())
+		var is_in_combat := (kind == "beast" and combat_goal != "idle" and combat_goal != "")
+		var vp := get_viewport()
+		var cam := vp.get_camera_2d() if vp else null
+		var z_val: float = cam.zoom.x if cam else 1.0
+		
+		if _selected or kind == "player" or is_companion or is_in_combat:
+			should_draw_nameplate = true
+		elif (show_nameplates or force_nameplate) and z_val >= 1.25:
+			should_draw_nameplate = true
+		elif z_val >= 1.8:
+			should_draw_nameplate = true
+
+	if should_draw_nameplate:
+		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 6.0
 		var shown := label_text
-		var col := Color(1, 1, 1, 0.92) if kind == "player" else Color(0.95, 0.88, 0.75, 0.82)
+		var col := Color(0.68, 0.96, 1.0, 0.98) if kind == "player" else Color(0.96, 0.92, 0.78, 0.95)
 		if kind == "beast" and combat_goal == "telegraph":
 			shown = "%s !" % label_text
-			col = Color(1.0, 0.9, 0.35, 0.95)
+			col = Color(1.0, 0.9, 0.35, 0.98)
 		elif kind == "beast" and combat_goal == "aggro":
-			col = Color(1.0, 0.45, 0.35, 0.95)
+			col = Color(1.0, 0.45, 0.35, 0.98)
+		# Barre rouge au-dessus de la tête STRICTEMENT réservée aux bêtes agressives en combat (le joueur et les cibles ont le HUD HAM SWG en haut d'écran)
+		if kind == "beast" and (combat_goal == "aggro" or combat_goal == "attack" or combat_goal == "telegraph"):
+			var bw := 24.0
+			var bh := 3.0
+			var bx := draw_pos.x - bw * 0.5
+			var by := draw_pos.y + label_y - 8.0
+			draw_rect(Rect2(bx - 1, by - 1, bw + 2, bh + 2), Color(0.01, 0.06, 0.08, 0.92), true)
+			draw_rect(Rect2(bx, by, bw, bh), Color(0.88, 0.16, 0.20, 0.96), true)
 		draw_string(
 			ThemeDB.fallback_font,
 			draw_pos + Vector2(-shown.length() * 2.8, label_y),
@@ -499,9 +522,9 @@ func screen_anchor() -> Vector2:
 func hit_test_screen(mouse_pos: Vector2) -> bool:
 	if not visible:
 		return false
-	if kind != "npc" and kind != "player":
+	if kind != "npc" and kind != "player" and kind != "beast":
 		return false
-	var tri: bool = _MapTextureLoader.debug_triangle_markers_enabled()
 	var token_px: float = float(_SpriteRegistry.display_px())
-	var radius_px := maxf(28.0, token_px * 0.85) if tri else maxf(18.0, token_px * 0.55)
+	# Hitbox précise ajustée sur la figurine (évite d'intercepter les clics au sol pour marcher)
+	var radius_px := clampf(token_px * 0.28, 6.0, 11.0)
 	return screen_anchor().distance_squared_to(mouse_pos) <= radius_px * radius_px

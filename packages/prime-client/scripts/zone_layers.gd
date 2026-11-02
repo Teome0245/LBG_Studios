@@ -6,7 +6,7 @@ const ZONES_PATH := "res://assets/maps/scrapaltai_zones.json"
 const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
 const PROPS_PATH := "res://assets/maps/lost_heaven_props.json"
 
-@export var enforce_hub_fence: bool = false
+@export var enforce_hub_fence: bool = true
 @export var show_water: bool = false
 @export var show_collision: bool = false
 @export var enforce_building_blocks: bool = true
@@ -121,6 +121,14 @@ func _load_hub_building_blocks() -> void:
 		var cz := float(b.get("z", 0.0))
 		var size_m := float(b.get("size_m", 32.0))
 		var half := size_m * 0.5 * mul
+		var doors_list: Array = []
+		if b.get("doors") is Array:
+			for d_item: Variant in b["doors"] as Array:
+				if d_item is Dictionary:
+					doors_list.append(_door_corridor(d_item as Dictionary, cx, cz, half))
+		elif b.get("door") is Dictionary:
+			doors_list.append(_door_corridor(b["door"] as Dictionary, cx, cz, half))
+
 		var block := {
 			"id": str(b.get("id", b.get("kind", "building"))),
 			"cx": cx,
@@ -130,9 +138,8 @@ func _load_hub_building_blocks() -> void:
 			"max_x": cx + half,
 			"min_z": cz - half,
 			"max_z": cz + half,
+			"doors": doors_list,
 		}
-		if b.get("door") is Dictionary:
-			block["door"] = _door_corridor(b["door"] as Dictionary, cx, cz, half)
 		_building_blocks.append(block)
 
 ## Vestibule + tablier walkable (même géométrie que HubBuildingsLayer).
@@ -169,10 +176,18 @@ func _door_corridor(door: Dictionary, cx: float, cz: float, half: float) -> Dict
 	return {"face": face, "min_x": min_x, "max_x": max_x, "min_z": min_z, "max_z": max_z}
 
 func _in_door_corridor(box: Dictionary, x: float, z: float) -> bool:
-	if not box.has("door") or not box["door"] is Dictionary:
+	var d_list: Variant = box.get("doors", [])
+	if d_list is Array and not (d_list as Array).is_empty():
+		for d_item: Variant in d_list as Array:
+			if d_item is Dictionary:
+				var d: Dictionary = d_item
+				if x >= float(d["min_x"]) and x <= float(d["max_x"]) and z >= float(d["min_z"]) and z <= float(d["max_z"]):
+					return true
 		return false
-	var d: Dictionary = box["door"]
-	return x >= float(d["min_x"]) and x <= float(d["max_x"]) and z >= float(d["min_z"]) and z <= float(d["max_z"])
+	elif box.get("door") is Dictionary:
+		var d: Dictionary = box["door"]
+		return x >= float(d["min_x"]) and x <= float(d["max_x"]) and z >= float(d["min_z"]) and z <= float(d["max_z"])
+	return false
 
 func _inside_hub_area(x: float, z: float) -> bool:
 	if _fence_ring.size() < 3:
@@ -248,15 +263,24 @@ func _crosses_blocked_fence(from: Vector3, to: Vector3) -> bool:
 func allows_core3(x: float, z: float) -> bool:
 	if not _allows_global_zones(x, z):
 		return false
-	if _inside_hub_area(x, z) or _in_gate_corridor(x, z):
-		for block: Variant in _building_blocks:
-			if not block is Dictionary:
+	for block: Variant in _building_blocks:
+		if not block is Dictionary:
+			continue
+		var box: Dictionary = block
+		var min_x := float(box["min_x"])
+		var max_x := float(box["max_x"])
+		var min_z := float(box["min_z"])
+		var max_z := float(box["max_z"])
+		if x >= min_x and x <= max_x and z >= min_z and z <= max_z:
+			var wall_th := 2.2
+			# Pièce creuse visitable : l'intérieur du bâtiment est entièrement praticable pour circuler et rejoindre les PNJ
+			if x > min_x + wall_th and x < max_x - wall_th and z > min_z + wall_th and z < max_z - wall_th:
 				continue
-			var box: Dictionary = block
-			if x >= float(box["min_x"]) and x <= float(box["max_x"]) and z >= float(box["min_z"]) and z <= float(box["max_z"]):
-				if _in_door_corridor(box, x, z):
-					continue
-				return false
+			# Passage de la porte ouvert : permet de franchir le seuil
+			if _in_door_corridor(box, x, z):
+				continue
+			# Mur extérieur périphérique : bloqué
+			return false
 	return true
 
 func clamp_move(from: Vector3, to: Vector3) -> Vector3:

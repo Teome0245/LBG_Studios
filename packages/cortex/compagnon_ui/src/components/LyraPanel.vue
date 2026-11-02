@@ -16,16 +16,17 @@
       <div
         id="lyra-face-host"
         ref="faceHost"
-        class="face-rig-host mx-auto"
+        class="face-rig-host mx-auto transition-all duration-300"
         :class="[
           avatarMode === 'vrm' ? 'vrm-host' : '',
+          vrmFraming === 'full' && avatarMode === 'vrm' ? 'framing-full-host' : '',
           { 'ring-2 ring-amber-400/50 rounded-full': !!initiative && avatarMode === 'face' }
         ]"
         :aria-label="avatarMode === 'vrm' ? 'Avatar 3D VRM' : 'Visage expressif Lyra'"
       />
 
       <p class="text-[10px] text-slate-500 text-center leading-snug pt-1">
-        {{ avatarMode === 'vrm' ? 'Avatar 3D WebGL (Three.js / three-vrm) · lip-sync TTS actif' : 'Présence CSS (sheets collage gelés) · résultat Agir = bulle pet' }}
+        {{ avatarMode === 'vrm' ? (vrmFraming === 'full' ? 'Avatar 3D WebGL · Corps entier (danses & marche)' : 'Avatar 3D WebGL (Three.js / three-vrm) · lip-sync TTS actif') : 'Présence CSS (sheets collage gelés) · résultat Agir = bulle pet' }}
       </p>
     </div>
 
@@ -312,7 +313,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { http } from '@/api/http'
 import { useInitiative } from '@/composables/useInitiative'
 import { useChat } from '@/composables/useChat'
@@ -344,7 +345,37 @@ let faceInst = null
 let faceReady = false
 
 const { current: initiative, dismiss, proposing } = useInitiative()
-const { addUserMessage, addMessage } = useChat()
+const { addUserMessage, addMessage, messages } = useChat()
+
+// Réaction vivante et synchronisation de parole avec le Chat
+watch(
+  () => (messages.value ? messages.value.length : 0),
+  (newLen, oldLen) => {
+    if (newLen > oldLen && newLen > 0 && messages.value) {
+      const last = messages.value[newLen - 1]
+      if (last && last.role === 'assistant' && last.content) {
+        onAssistantReply(last.content)
+      }
+    }
+  }
+)
+
+function onAssistantReply(text) {
+  const t = String(text).toLowerCase()
+  if (vrmInst && typeof vrmInst.say === 'function') {
+    vrmInst.say(text)
+  }
+  // Détection expressive spontanée selon le ton du dialogue
+  if (t.includes('bonjour') || t.includes('salut') || t.includes('coucou') || t.includes('quoi de neuf')) {
+    triggerPose('wave', 3000)
+  } else if (t.includes('réfléch') || t.includes('analys') || t.includes('voyons') || t.includes('vérifi') || t.includes('propose')) {
+    triggerPose('think', 4000)
+  } else if (t.includes('parfait') || t.includes('d\'accord') || t.includes('validé') || t.includes('super')) {
+    triggerPose('approve', 3500)
+  } else if (t.includes('attention') || t.includes('alerte') || t.includes('danger') || t.includes('piège')) {
+    triggerPose('crossArms', 4500)
+  }
+}
 
 async function runInitiativeAgir() {
   const intent = initiative.value?.primary
@@ -678,6 +709,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), max-width 0.3s ease;
+}
+
+.vrm-host.framing-full-host {
+  height: 285px !important;
+  max-width: 15rem !important;
 }
 
 :deep(.vrm-host canvas) {
