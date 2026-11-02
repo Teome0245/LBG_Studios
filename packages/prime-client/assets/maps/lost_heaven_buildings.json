@@ -305,8 +305,8 @@
       "kind": "npc_housing_block",
       "label": "Logements nord",
       "x": 4749.0,
-      "z": -370.0,
-      "size_m": 70.0,
+      "z": -430.0,
+      "size_m": 60.0,
       "essential": false,
       "door": {
         "face": "south",
@@ -327,9 +327,9 @@
       "id": "poi:lost_heaven_lodge_e",
       "kind": "npc_housing_block",
       "label": "Logements est",
-      "x": 5460.0,
-      "z": -540.0,
-      "size_m": 70.0,
+      "x": 5245.0,
+      "z": -630.0,
+      "size_m": 60.0,
       "essential": false,
       "door": {
         "face": "west",
@@ -416,21 +416,21 @@
       "kind": "town_hall",
       "label": "Poste de commandement Zalem",
       "x": -1200.0,
-      "z": -550.0,
-      "size_m": 64.0,
+      "z": -600.0,
+      "size_m": 84.0,
       "essential": true,
       "door": {
         "face": "south",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 22.0,
+        "depth_m": 22.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "south",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 22.0,
+          "depth_m": 22.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -438,22 +438,22 @@
       "id": "poi:zalem_outpost_workshop",
       "kind": "trainer_artisan",
       "label": "Atelier mécanique relais",
-      "x": -1060.0,
-      "z": -470.0,
-      "size_m": 56.0,
+      "x": -980.0,
+      "z": -440.0,
+      "size_m": 76.0,
       "essential": false,
       "door": {
         "face": "west",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "west",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -461,22 +461,22 @@
       "id": "poi:zalem_outpost_barracks",
       "kind": "trainers_combat",
       "label": "Caserne de la milice",
-      "x": -1340.0,
-      "z": -470.0,
-      "size_m": 56.0,
+      "x": -1420.0,
+      "z": -440.0,
+      "size_m": 76.0,
       "essential": false,
       "door": {
         "face": "east",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "east",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -485,21 +485,21 @@
       "kind": "inn",
       "label": "Relais des convois",
       "x": -1200.0,
-      "z": -370.0,
-      "size_m": 52.0,
+      "z": -300.0,
+      "size_m": 72.0,
       "essential": false,
       "door": {
-        "face": "south",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "face": "north",
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
-          "face": "south",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "face": "north",
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -507,54 +507,45 @@
       "id": "poi:zalem_outpost_depot",
       "kind": "shops",
       "label": "Dépôt de ravitaillement",
-      "x": -1060.0,
-      "z": -630.0,
-      "size_m": 48.0,
+      "x": -980.0,
+      "z": -700.0,
+      "size_m": 72.0,
       "essential": false,
       "door": {
-        "face": "north",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "face": "south",
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
-          "face": "north",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "face": "south",
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
-    },
-    {
-      "id": "poi:zalem_outpost_gate",
-      "kind": "city_gate",
-      "label": "Barrière ouest — Zalem",
-      "x": -1460.0,
-      "z": -550.0,
-      "size_m": 40.0,
-      "essential": false
     },
     {
       "id": "poi:ksar_nomade_tent",
       "kind": "town_hall",
       "label": "Demeure de l'Ancien — Ksar de l'Oasis",
       "x": 4950.0,
-      "z": -3800.0,
-      "size_m": 64.0,
+      "z": -3840.0,
+      "size_m": 80.0,
       "essential": true,
       "door": {
         "face": "north",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 22.0,
+        "depth_m": 22.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "north",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 22.0,
+          "depth_m": 22.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -562,22 +553,22 @@
       "id": "poi:ksar_nomade_dispensary",
       "kind": "clinic",
       "label": "Dispensaire des baumes — Oasis",
-      "x": 4800.0,
+      "x": 4760.0,
       "z": -3730.0,
-      "size_m": 52.0,
+      "size_m": 68.0,
       "essential": false,
       "door": {
         "face": "east",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "east",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -585,22 +576,22 @@
       "id": "poi:ksar_nomade_bazaar",
       "kind": "shops",
       "label": "Grand Bazar du Ksar — Comptoir de troc",
-      "x": 5100.0,
+      "x": 5160.0,
       "z": -3730.0,
-      "size_m": 60.0,
+      "size_m": 76.0,
       "essential": false,
       "door": {
         "face": "west",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "west",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -609,21 +600,21 @@
       "kind": "inn",
       "label": "Caravansérail de l'Oasis",
       "x": 4950.0,
-      "z": -3600.0,
-      "size_m": 56.0,
+      "z": -3540.0,
+      "size_m": 72.0,
       "essential": false,
       "door": {
         "face": "south",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "south",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -631,22 +622,22 @@
       "id": "poi:ksar_nomade_craft",
       "kind": "trainer_artisan",
       "label": "Forge et Métallerie de l'Oasis",
-      "x": 5100.0,
-      "z": -3900.0,
-      "size_m": 48.0,
+      "x": 5160.0,
+      "z": -3920.0,
+      "size_m": 68.0,
       "essential": false,
       "door": {
         "face": "north",
-        "width_m": 16.0,
-        "depth_m": 18.0,
-        "apron_m": 10.0
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
       },
       "doors": [
         {
           "face": "north",
-          "width_m": 16.0,
-          "depth_m": 18.0,
-          "apron_m": 10.0
+          "width_m": 20.0,
+          "depth_m": 20.0,
+          "apron_m": 12.0
         }
       ]
     },
@@ -655,8 +646,8 @@
       "kind": "city_gate",
       "label": "Arches de pierre du Ksar",
       "x": 4950.0,
-      "z": -3470.0,
-      "size_m": 40.0,
+      "z": -3420.0,
+      "size_m": 48.0,
       "essential": false
     },
     {

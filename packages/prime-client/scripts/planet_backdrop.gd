@@ -16,13 +16,8 @@ func _ready() -> void:
 func _draw() -> void:
 	if not draw_enabled:
 		return
-	# Couverture adaptative infinie basée sur le viewport et la caméra
-	var cam := get_viewport().get_camera_2d()
-	var center := cam.global_position if cam else Vector2.ZERO
-	var zoom_factor := cam.zoom.x if (cam and cam.zoom.x > 0.001) else 1.0
-	var vp_size := get_viewport_rect().size / zoom_factor
-	var span := maxf(vp_size.length() * 1.5, 30000.0)
-	var rect := Rect2(center - Vector2(span, span), Vector2(span * 2.0, span * 2.0))
+	# Couverture globale statique de toute la planète (36 km × 36 km, aucune couture quel que soit le zoom)
+	var rect := Rect2(-18000.0, -18000.0, 36000.0, 36000.0)
 
 	# 1. Base chaude style grès / parchemin désertique
 	draw_rect(rect, Color(0.70, 0.60, 0.46, 1.0))
@@ -35,8 +30,7 @@ func _draw() -> void:
 	_draw_rock_outcrops(rect)
 	_draw_canyons_and_cliffs(rect)
 
-	# 4. Sentiers de caravanes sinueux et végétation aride
-	_draw_dirt_paths(rect)
+	# 4. Végétation aride et grain de sable du désert
 	_draw_desert_shrubs(rect)
 	_draw_grain_texture(rect)
 
@@ -145,21 +139,6 @@ func _draw_canyons_and_cliffs(rect: Rect2) -> void:
 			pts.append(p)
 		draw_polyline(pts, Color(0.30, 0.22, 0.15, 0.45), w, false)
 		draw_polyline(pts, Color(0.85, 0.76, 0.60, 0.38), maxf(1.0, w * 0.3), false)
-
-
-func _draw_dirt_paths(rect: Rect2) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 4749023
-	for _p in range(12):
-		var y := rng.randf_range(rect.position.y + 400.0, rect.end.y - 400.0)
-		var pts := PackedVector2Array()
-		var x := rect.position.x
-		while x <= rect.end.x:
-			var dy := sin(x * 0.003 + rng.randf() * 2.0) * 45.0
-			pts.append(Vector2(x, y + dy))
-			x += 60.0
-		draw_polyline(pts, Color(0.58, 0.48, 0.34, 0.28), 9.0, false)
-		draw_polyline(pts, Color(0.50, 0.40, 0.28, 0.38), 5.0, false)
 
 
 func _draw_grain_texture(rect: Rect2) -> void:

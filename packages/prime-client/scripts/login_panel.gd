@@ -2,6 +2,8 @@ extends Control
 ## LoginPanel — écran connexion compte LBG (M11). Branche LbgAuthClient + handoff WS M12.
 ## Le LoginPanel PILOTE le connect WS (ne délègue plus à Main) pour éviter l’UI figée « WS … ».
 
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
+
 signal enter_world_requested(ws_url: String, character_id: int, session_token: String)
 
 @onready var _user: LineEdit = %Username

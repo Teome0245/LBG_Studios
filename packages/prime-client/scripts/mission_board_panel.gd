@@ -5,6 +5,8 @@ class_name MissionBoardPanel
 signal quest_accepted(result: Dictionary)
 signal quest_completed(result: Dictionary)
 
+const HubRuntimeCfg = preload("res://scripts/hub_runtime_cfg.gd")
+
 const SIDECAR_DEFAULT := "http://192.168.0.246:8787"
 const PLAYER_DEFAULT := "local"
 const GIVER_DEFAULT := "npc:core3_daan_oth"

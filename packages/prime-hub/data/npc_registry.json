@@ -1039,14 +1039,36 @@
       "zone": "Lost Heaven — La Perle de Scrapaltai",
       "faction": "Civils du desert",
       "tone": "desabusé",
-      "summary": "Client regulier ; commentaires sur la ville, les prix et les figures locales.",
+      "summary": "Client regulier de La Perle en quete de contacts fiables ; recherche activement des Joueurs pour echanger des informations et former des alliances sur les caravanes d Al-Khali et les convois Zalem.",
       "goals": [
-        "partager des anecdotes locales",
+        "rechercher des informations et alliances aupres des Joueurs",
+        "surveiller les mouvements de caravanes et convois vers Al-Khali et Zalem",
+        "partager des rumeurs strategiques en echange d indices du terrain",
         "eviter les ennuis avec le videur"
       ],
       "constraints": [
         "pas de quetes engageantes sans hook serveur",
         "reponses courtes sans accents"
+      ],
+      "suggestion_templates": [
+        {
+          "id": "move:habitue_caravanes",
+          "label": "Caravanes Al-Khali",
+          "utterance": "Tu as des nouvelles de la caravane vers l'Oasis d'Al-Khali ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:habitue_convois",
+          "label": "Convois Zalem",
+          "utterance": "Qu'est-ce qui circule sur la route ouest vers Zalem en ce moment ?",
+          "kind": "info"
+        },
+        {
+          "id": "move:habitue_alliance",
+          "label": "Alliances Joueurs",
+          "utterance": "Tu cherches des alliancés fiables parmi les joueurs ?",
+          "kind": "info"
+        }
       ],
       "core3_reference": {
         "pilot_id": "npc:core3_habitue_cantina",

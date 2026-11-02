@@ -110,7 +110,7 @@
         if (window.__petFace && window.__petFace.destroy) {
           try {
             window.__petFace.destroy();
-          } catch (_) {}
+          } catch (_) { }
         }
         host.innerHTML = "";
         document.body.classList.toggle("framing-bust", vrmFraming === "bust");
@@ -241,7 +241,7 @@
         }
         if (face.say) face.say(String(msg).slice(0, 80));
       }
-    } catch (_) {}
+    } catch (_) { }
     if (guideHideTimer) clearTimeout(guideHideTimer);
     const hold = Math.max(2500, Number(payload && payload.holdMs) || 8000);
     guideHideTimer = setTimeout(function () {
@@ -257,7 +257,7 @@
           if (face.setPose) face.setPose("idle");
           if (face.setMood) face.setMood("serene");
         }
-      } catch (_) {}
+      } catch (_) { }
     }, hold);
   }
 
@@ -284,7 +284,7 @@
         if (face.pulse) face.pulse("alert");
         if (face.say) face.say(String(msg).slice(0, 80));
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   if (wrap) {
@@ -329,7 +329,7 @@
       try {
         const face = window.__petFace || window.FaceRig;
         if (face && face.setMood) face.setMood("serene");
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -364,7 +364,7 @@
             ? mood.tone || mood.mood || "serene"
             : mood || "serene";
         face.setMood(tone);
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -380,7 +380,7 @@
         }
         if (face.setTalking && Number.isFinite(ms)) face.setTalking(ms);
         else if (face.say && payload && payload.text) face.say(String(payload.text).slice(0, 80));
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -407,7 +407,7 @@
       try {
         const face = window.__petFace;
         if (face && typeof face.flip === "function") face.flip();
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -419,7 +419,7 @@
       try {
         const face = window.__petFace;
         if (face && typeof face.setFraming === "function") face.setFraming(vrmFraming);
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -431,7 +431,7 @@
         const pose = (payload && payload.pose) || "idle";
         const hold = payload && Number(payload.holdMs);
         face.setPose(pose, Number.isFinite(hold) ? hold : 2500, payload && payload.heading);
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 
@@ -442,7 +442,7 @@
         if (face && typeof face.setHeading === "function") {
           face.setHeading(heading);
         }
-      } catch (_) {}
+      } catch (_) { }
     });
   }
 

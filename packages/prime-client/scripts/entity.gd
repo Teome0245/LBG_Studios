@@ -454,8 +454,6 @@ func _draw() -> void:
 			should_draw_nameplate = true
 		elif (show_nameplates or force_nameplate) and z_val >= 1.25:
 			should_draw_nameplate = true
-		elif z_val >= 1.8:
-			should_draw_nameplate = true
 
 	if should_draw_nameplate:
 		var label_y: float = -token_px * 0.52 if _use_sprite else -radius - 6.0
@@ -474,15 +472,18 @@ func _draw() -> void:
 			var by := draw_pos.y + label_y - 8.0
 			draw_rect(Rect2(bx - 1, by - 1, bw + 2, bh + 2), Color(0.01, 0.06, 0.08, 0.92), true)
 			draw_rect(Rect2(bx, by, bw, bh), Color(0.88, 0.16, 0.20, 0.96), true)
-		draw_string(
-			ThemeDB.fallback_font,
-			draw_pos + Vector2(-shown.length() * 2.8, label_y),
-			shown,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			9,
-			col
-		)
+		var font := ThemeDB.fallback_font
+		if font:
+			var fsize := 9
+			var str_w := font.get_string_size(shown, HORIZONTAL_ALIGNMENT_CENTER, -1, fsize).x
+			var t_pos := draw_pos + Vector2(-str_w * 0.5, label_y)
+			# Cartouche de lisibilité SWG discret sous le nom
+			var pad_x := 4.0
+			var pad_y := 1.0
+			var bg_rect := Rect2(t_pos.x - pad_x, t_pos.y - fsize + pad_y, str_w + pad_x * 2.0, fsize + pad_y * 2.0)
+			draw_rect(bg_rect, Color(0.05, 0.04, 0.03, 0.75), true)
+			draw_string(font, t_pos + Vector2(1, 1), shown, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0.02, 0.02, 0.02, 0.95))
+			draw_string(font, t_pos, shown, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
 
 func _draw_marker_triangle(center: Vector2, col: Color, is_player: bool) -> void:
 	var tip := Vector2(0.0, -5.5)

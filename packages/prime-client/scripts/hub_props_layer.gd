@@ -343,6 +343,18 @@ func _draw_prop(p: Dictionary) -> void:
 			_draw_palm_tree(center, p)
 		"stone_arch":
 			_draw_stone_arch(center, p)
+		"krayt_skeleton":
+			_draw_krayt_skeleton(center, p)
+		"starship_wreck":
+			_draw_starship_wreck(center, p)
+		"boulder_cluster":
+			_draw_boulder_cluster(center, p)
+		"nomad_tent":
+			_draw_nomad_tent(center, p)
+		"mine_silo":
+			_draw_mine_silo(center, p)
+		"cargo_container":
+			_draw_cargo_container(center, p)
 		_:
 			var fp: Variant = p.get("footprint", null)
 			if fp is Dictionary:
@@ -509,6 +521,292 @@ func _draw_stone_arch(center: Vector2, p: Dictionary) -> void:
 	# Arche
 	draw_line(p1, p2, Color(0.48, 0.38, 0.26, 0.95), 4.5)
 	draw_line(p1, p2, Color(0.72, 0.62, 0.46, 0.85), 2.0)
+
+func _draw_krayt_skeleton(center: Vector2, p: Dictionary) -> void:
+	# Immense squelette de Léviathan / Dragon Krayt du désert (style SWG Tatooine Canon)
+	var length_m := float(p.get("length_m", 45.0))
+	var len_px := length_m * Projection3D2D.SCALE
+	var yaw := deg_to_rad(float(p.get("yaw_deg", 0.0)))
+	var xf := Transform2D(yaw, center)
+	var col_bone := Color(0.90, 0.86, 0.76, 0.98) # Ivoire fossilisé
+	var col_shadow := Color(0.18, 0.12, 0.08, 0.30)
+	var col_dark := Color(0.38, 0.30, 0.22, 0.90)
+
+	var rib_count := maxi(6, int(length_m / 4.0))
+	var rib_max_span := float(p.get("width_m", 24.0)) * 0.5 * Projection3D2D.SCALE
+
+	# 1. Ombre portée générale sous la cage thoracique
+	var shadow_poly := PackedVector2Array()
+	for i in range(rib_count + 1):
+		var t := float(i) / float(rib_count)
+		var lx := lerpf(-len_px * 0.5, len_px * 0.5, t)
+		var span := sin(t * PI) * rib_max_span
+		shadow_poly.append(xf * (Vector2(lx, span) + Vector2(4.0, 6.0)))
+	for i in range(rib_count, -1, -1):
+		var t := float(i) / float(rib_count)
+		var lx := lerpf(-len_px * 0.5, len_px * 0.5, t)
+		var span := sin(t * PI) * rib_max_span
+		shadow_poly.append(xf * (Vector2(lx, -span) + Vector2(4.0, 6.0)))
+	if shadow_poly.size() >= 3:
+		draw_colored_polygon(shadow_poly, col_shadow)
+
+	# 2. Paires de côtes émergeant du sable (arches osseuses recourbées)
+	for i in range(rib_count):
+		var t := float(i) / float(rib_count - 1)
+		var lx := lerpf(-len_px * 0.45, len_px * 0.35, t)
+		var span := sin(t * PI) * rib_max_span
+		var spine_pt := xf * Vector2(lx, 0.0)
+
+		# Côte gauche
+		var tip_left := xf * Vector2(lx + span * 0.25, -span)
+		var mid_left := xf * Vector2(lx - span * 0.1, -span * 0.6)
+		draw_line(spine_pt, mid_left, col_dark, 2.5)
+		draw_line(mid_left, tip_left, col_dark, 2.0)
+		draw_line(spine_pt, mid_left, col_bone, 1.4)
+		draw_line(mid_left, tip_left, col_bone, 1.0)
+		draw_circle(tip_left, 1.8, col_bone)
+
+		# Côte droite
+		var tip_right := xf * Vector2(lx + span * 0.25, span)
+		var mid_right := xf * Vector2(lx - span * 0.1, span * 0.6)
+		draw_line(spine_pt, mid_right, col_dark, 2.5)
+		draw_line(mid_right, tip_right, col_dark, 2.0)
+		draw_line(spine_pt, mid_right, col_bone, 1.4)
+		draw_line(mid_right, tip_right, col_bone, 1.0)
+		draw_circle(tip_right, 1.8, col_bone)
+
+	# 3. Colonne vertébrale (épine dorsale épaisse segmentée)
+	for i in range(rib_count + 2):
+		var t := float(i) / float(rib_count + 1)
+		var lx := lerpf(-len_px * 0.5, len_px * 0.38, t)
+		var p_vert := xf * Vector2(lx, 0.0)
+		draw_circle(p_vert + Vector2(1.5, 2.0), 3.0, col_shadow)
+		draw_circle(p_vert, 2.8, col_dark)
+		draw_circle(p_vert, 2.0, col_bone)
+
+	# 4. Crâne colossal fossilisé avec cornes de Léviathan
+	var skull_pos := xf * Vector2(len_px * 0.48, 0.0)
+	var skull_pts := PackedVector2Array([
+		xf * Vector2(len_px * 0.38, -6.0),
+		xf * Vector2(len_px * 0.55, -4.5),
+		xf * Vector2(len_px * 0.60, 0.0),
+		xf * Vector2(len_px * 0.55, 4.5),
+		xf * Vector2(len_px * 0.38, 6.0)
+	])
+	draw_colored_polygon(skull_pts, col_bone)
+	draw_polyline(skull_pts, col_dark, 1.5, true)
+	# Orbites oculaires
+	draw_circle(xf * Vector2(len_px * 0.48, -2.8), 1.8, col_dark)
+	draw_circle(xf * Vector2(len_px * 0.48, 2.8), 1.8, col_dark)
+	# Cornes recourbées
+	var horn_l1 := xf * Vector2(len_px * 0.44, -5.0)
+	var horn_l2 := xf * Vector2(len_px * 0.52, -12.0)
+	var horn_r1 := xf * Vector2(len_px * 0.44, 5.0)
+	var horn_r2 := xf * Vector2(len_px * 0.52, 12.0)
+	draw_line(horn_l1, horn_l2, col_dark, 2.5)
+	draw_line(horn_l1, horn_l2, col_bone, 1.5)
+	draw_line(horn_r1, horn_r2, col_dark, 2.5)
+	draw_line(horn_r1, horn_r2, col_bone, 1.5)
+
+func _draw_starship_wreck(center: Vector2, p: Dictionary) -> void:
+	# Épave de vaisseau spatial / carcasse industrielle (Scrapaltai)
+	var length_m := float(p.get("length_m", 32.0))
+	var len_px := length_m * Projection3D2D.SCALE
+	var yaw := deg_to_rad(float(p.get("yaw_deg", 0.0)))
+	var xf := Transform2D(yaw, center)
+	var col_hull := Color(0.62, 0.42, 0.28, 0.98) # Métal rouillé délavé
+	var col_trim := Color(0.25, 0.48, 0.58, 0.95) # Peinture de blindage bleu pétrole écaillée
+	var col_dark := Color(0.18, 0.12, 0.08, 0.98)
+	var col_shadow := Color(0.14, 0.10, 0.06, 0.35)
+
+	# 1. Cratère d'impact / sable expulsé
+	draw_circle(center + Vector2(4.0, 5.0), len_px * 0.55, Color(0.48, 0.38, 0.24, 0.35))
+
+	# 2. Fuselage principal écrasé en biseau
+	var body := PackedVector2Array([
+		xf * Vector2(-len_px * 0.5, -len_px * 0.22),
+		xf * Vector2(len_px * 0.45, -len_px * 0.12),
+		xf * Vector2(len_px * 0.55, 0.0),
+		xf * Vector2(len_px * 0.45, len_px * 0.12),
+		xf * Vector2(-len_px * 0.5, len_px * 0.22)
+	])
+	draw_colored_polygon(body, col_hull)
+	draw_polyline(body, col_dark, 1.8, true)
+
+	# Bandeau de livrée écaillée
+	var stripe := PackedVector2Array([
+		xf * Vector2(-len_px * 0.1, -len_px * 0.18),
+		xf * Vector2(len_px * 0.2, -len_px * 0.14),
+		xf * Vector2(len_px * 0.2, len_px * 0.14),
+		xf * Vector2(-len_px * 0.1, len_px * 0.18)
+	])
+	draw_colored_polygon(stripe, col_trim)
+	draw_polyline(stripe, col_dark, 1.2, true)
+
+	# 3. Tuyères de moteurs circulaires brisées à l'arrière
+	var nozz1 := xf * Vector2(-len_px * 0.5, -len_px * 0.10)
+	var nozz2 := xf * Vector2(-len_px * 0.5, len_px * 0.10)
+	draw_circle(nozz1, 4.5, col_dark)
+	draw_circle(nozz1, 3.0, Color(0.08, 0.06, 0.04, 0.98))
+	draw_circle(nozz2, 4.5, col_dark)
+	draw_circle(nozz2, 3.0, Color(0.08, 0.06, 0.04, 0.98))
+
+	# 4. Aile brisée détachée dans le sable
+	var wing := PackedVector2Array([
+		xf * Vector2(-len_px * 0.1, len_px * 0.26),
+		xf * Vector2(len_px * 0.15, len_px * 0.55),
+		xf * Vector2(len_px * 0.05, len_px * 0.60),
+		xf * Vector2(-len_px * 0.25, len_px * 0.32)
+	])
+	draw_colored_polygon(wing, col_hull.darkened(0.1))
+	draw_polyline(wing, col_dark, 1.4, true)
+	# Câblages / ferrailles tordues
+	draw_line(xf * Vector2(0.0, len_px * 0.24), xf * Vector2(len_px * 0.08, len_px * 0.35), col_dark, 1.5)
+
+func _draw_boulder_cluster(center: Vector2, p: Dictionary) -> void:
+	# Amas de rochers massifs de grès style Dyson Logos
+	var radius_m := float(p.get("radius_m", 12.0))
+	var rad_px := radius_m * Projection3D2D.SCALE
+	var col_rock := Color(0.52, 0.42, 0.30, 0.98)
+	var col_edge := Color(0.18, 0.12, 0.08, 0.98)
+	var col_light := Color(0.74, 0.64, 0.48, 0.98)
+	var col_shadow := Color(0.14, 0.10, 0.06, 0.32)
+
+	# 3 à 5 roches superposées
+	var offsets := [
+		Vector2.ZERO,
+		Vector2(-rad_px * 0.5, -rad_px * 0.3),
+		Vector2(rad_px * 0.45, -rad_px * 0.25),
+		Vector2(-rad_px * 0.35, rad_px * 0.4),
+		Vector2(rad_px * 0.4, rad_px * 0.35)
+	]
+	var scales := [1.0, 0.75, 0.8, 0.65, 0.7]
+
+	for i in range(offsets.size()):
+		var b_pos: Vector2 = center + (offsets[i] as Vector2)
+		var b_rad: float = rad_px * 0.55 * float(scales[i])
+
+		# Ombre portée
+		draw_circle(b_pos + Vector2(3.5, 5.0), b_rad * 1.15, col_shadow)
+
+		# Polygone rocheux taillé (6 sommets)
+		var rock_pts := PackedVector2Array()
+		var n_verts := 6
+		for v in range(n_verts):
+			var a := (float(v) / float(n_verts)) * TAU + float(i) * 0.8
+			var r_sub: float = b_rad * (1.15 if (v % 2 == 0) else 0.85)
+			rock_pts.append(b_pos + Vector2(cos(a) * r_sub, sin(a) * r_sub * 0.85))
+
+		draw_colored_polygon(rock_pts, col_rock)
+		draw_polyline(rock_pts, col_edge, 1.5, true)
+
+		# Arête éclairée supérieure
+		draw_circle(b_pos - Vector2(b_rad * 0.2, b_rad * 0.2), b_rad * 0.45, col_light)
+
+func _draw_nomad_tent(center: Vector2, p: Dictionary) -> void:
+	# Grande tente bédouine circulaire / octogonale du Ksar
+	var size_m := float(p.get("size_m", 18.0))
+	var rad_px := size_m * 0.5 * Projection3D2D.SCALE
+	var col_cloth1 := Color(0.68, 0.26, 0.22, 0.98) # Tente rouge garance / bordeaux
+	var col_cloth2 := Color(0.78, 0.68, 0.50, 0.98) # Toile écrue du désert
+	var col_dark := Color(0.18, 0.10, 0.06, 0.98)
+	var col_shadow := Color(0.14, 0.10, 0.06, 0.35)
+
+	# 1. Ombre portée douce
+	draw_circle(center + Vector2(4.0, 6.0), rad_px * 1.1, col_shadow)
+
+	# 2. Piquets et cordelettes de tension rayonnantes
+	var segs := 8
+	for i in range(segs):
+		var a := (float(i) / float(segs)) * TAU
+		var p_rim := center + Vector2(cos(a), sin(a)) * rad_px
+		var p_peg := center + Vector2(cos(a), sin(a)) * (rad_px * 1.35)
+		draw_line(p_rim, p_peg, col_dark, 1.0)
+		draw_circle(p_peg, 1.8, col_dark)
+
+	# 3. Segments alternés de toile
+	for i in range(segs):
+		var a1 := (float(i) / float(segs)) * TAU
+		var a2 := (float(i + 1) / float(segs)) * TAU
+		var p1 := center + Vector2(cos(a1), sin(a1)) * rad_px
+		var p2 := center + Vector2(cos(a2), sin(a2)) * rad_px
+		var poly := PackedVector2Array([center, p1, p2])
+		var col := col_cloth1 if (i % 2 == 0) else col_cloth2
+		draw_colored_polygon(poly, col)
+		draw_line(center, p1, col_dark, 1.2)
+		draw_line(p1, p2, col_dark, 1.4)
+
+	# 4. Mât central et chapeau de tente
+	draw_circle(center, rad_px * 0.22, col_dark)
+	draw_circle(center, rad_px * 0.15, Color(0.85, 0.75, 0.45, 0.98))
+	draw_arc(center, rad_px * 0.22, 0.0, TAU, 12, col_dark, 1.2)
+
+	# 5. Auvent d'entrée déployé au Sud
+	var awning := PackedVector2Array([
+		center + Vector2(-rad_px * 0.45, rad_px * 0.85),
+		center + Vector2(rad_px * 0.45, rad_px * 0.85),
+		center + Vector2(rad_px * 0.65, rad_px * 1.4),
+		center + Vector2(-rad_px * 0.65, rad_px * 1.4)
+	])
+	draw_colored_polygon(awning, col_cloth2)
+	draw_polyline(awning, col_dark, 1.4, true)
+	# Intérieur ombragé du seuil
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-rad_px * 0.35, rad_px * 0.85),
+		center + Vector2(rad_px * 0.35, rad_px * 0.85),
+		center + Vector2(rad_px * 0.25, rad_px * 0.6),
+		center + Vector2(-rad_px * 0.25, rad_px * 0.6)
+	]), col_dark)
+
+func _draw_mine_silo(center: Vector2, p: Dictionary) -> void:
+	# Cuve industrielle / silo de minerai pour Zalem
+	var radius_m := float(p.get("radius_m", 14.0))
+	var rad_px := radius_m * Projection3D2D.SCALE
+	var col_metal := Color(0.45, 0.48, 0.52, 0.98) # Acier industriel
+	var col_dark := Color(0.16, 0.14, 0.12, 0.98)
+	var col_shadow := Color(0.14, 0.10, 0.06, 0.35)
+
+	# Ombre
+	draw_circle(center + Vector2(4.0, 6.0), rad_px * 1.05, col_shadow)
+	# Base circulaire
+	draw_circle(center, rad_px, col_metal)
+	draw_arc(center, rad_px, 0.0, TAU, 28, col_dark, 2.0)
+	# Passerelle périphérique
+	draw_arc(center, rad_px * 0.75, 0.0, TAU, 24, col_dark, 1.2)
+	# Dôme supérieur avec rivets
+	draw_circle(center, rad_px * 0.45, col_metal.lightened(0.15))
+	draw_arc(center, rad_px * 0.45, 0.0, TAU, 16, col_dark, 1.4)
+	# Valve centrale
+	draw_circle(center, 3.0, Color(0.85, 0.45, 0.20, 0.98))
+
+func _draw_cargo_container(center: Vector2, p: Dictionary) -> void:
+	var w_m := float(p.get("w_m", 12.0))
+	var h_m := float(p.get("h_m", 6.0))
+	var w := w_m * Projection3D2D.SCALE
+	var h := h_m * Projection3D2D.SCALE
+	var yaw := deg_to_rad(float(p.get("yaw_deg", 0.0)))
+	var xf := Transform2D(yaw, center)
+	var rect_pts := PackedVector2Array([
+		xf * Vector2(-w * 0.5, -h * 0.5),
+		xf * Vector2(w * 0.5, -h * 0.5),
+		xf * Vector2(w * 0.5, h * 0.5),
+		xf * Vector2(-w * 0.5, h * 0.5)
+	])
+	var col_cont := Color(0.72, 0.45, 0.22, 0.98) if p.get("color") == null else Color.html(str(p.get("color")))
+	var col_dark := Color(0.16, 0.12, 0.08, 0.98)
+	# Ombre
+	var shadow_pts := PackedVector2Array([
+		rect_pts[0] + Vector2(3.0, 4.0), rect_pts[1] + Vector2(3.0, 4.0),
+		rect_pts[2] + Vector2(3.0, 4.0), rect_pts[3] + Vector2(3.0, 4.0)
+	])
+	draw_colored_polygon(shadow_pts, Color(0.14, 0.10, 0.06, 0.30))
+	draw_colored_polygon(rect_pts, col_cont)
+	draw_polyline(rect_pts, col_dark, 1.5, true)
+	# Nervures de container
+	for i in range(1, 4):
+		var t := float(i) / 4.0
+		var lx := lerpf(-w * 0.5, w * 0.5, t)
+		draw_line(xf * Vector2(lx, -h * 0.5), xf * Vector2(lx, h * 0.5), col_dark, 1.0)
 
 func _color_for_kind(kind: String) -> Color:
 	match kind:

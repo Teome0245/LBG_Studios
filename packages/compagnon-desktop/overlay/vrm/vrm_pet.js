@@ -20,10 +20,10 @@ function installColorSpaceGuard(THREE) {
         if (this == null || typeof this !== "object") return;
         try {
           desc.set.call(this, v);
-        } catch (_) {}
+        } catch (_) { }
       },
     });
-  } catch (_) {}
+  } catch (_) { }
 }
 
 const MOOD_EXPR = {
@@ -759,11 +759,11 @@ export function createVrmPet(hostEl, opts = {}) {
 
   function stopVRMA(fadeSec = 0.25) {
     if (activeVrmaAction) {
-      try { activeVrmaAction.fadeOut(fadeSec); } catch (_) {}
+      try { activeVrmaAction.fadeOut(fadeSec); } catch (_) { }
       activeVrmaAction = null;
     }
     if (mixer) {
-      try { mixer.stopAllAction(); } catch (_) {}
+      try { mixer.stopAllAction(); } catch (_) { }
     }
     activeVrmaName = null;
     poseBlend = 0;
@@ -800,12 +800,12 @@ export function createVrmPet(hostEl, opts = {}) {
     for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa", "blinkRight", "blinkLeft"]) {
       try {
         em.setValue(n, 0);
-      } catch (_) {}
+      } catch (_) { }
     }
     for (const [k, v] of Object.entries(weights || {})) {
       try {
         em.setValue(k, Math.max(0, Math.min(1, Number(v) || 0)));
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -1405,7 +1405,7 @@ export function createVrmPet(hostEl, opts = {}) {
       try {
         vrm?.expressionManager?.setValue("blinkRight", 0);
         vrm?.expressionManager?.setValue("blinkLeft", 0);
-      } catch (_) {}
+      } catch (_) { }
       setMood("serene");
       // Retour automatique fluide en vue buste après la fin d'une danse
       if (isDanceFraming && baseFraming === "bust") {
@@ -1436,7 +1436,7 @@ export function createVrmPet(hostEl, opts = {}) {
         const targetScale = 1.0;
         headBone.scale.set(targetScale, targetScale, targetScale);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function frameVrm(v) {
@@ -1454,7 +1454,7 @@ export function createVrmPet(hostEl, opts = {}) {
           hips.getWorldPosition(headPos);
           headPos.y += 0.5;
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // Cadrage portrait aéré centré sur la tête et le haut du buste :
       // On vise légèrement sous le nez (headPos.y - 0.02) avec recul (dist = 1.30)
@@ -1785,7 +1785,7 @@ export function createVrmPet(hostEl, opts = {}) {
         const blinkVal = Math.sin(Math.min(Math.PI, blinkProgress));
         try {
           vrm.expressionManager?.setValue("blink", blinkVal);
-        } catch (_) {}
+        } catch (_) { }
         if (blinkProgress >= Math.PI) {
           blinkProgress = 0;
           nextBlinkTime = t + 2.5 + Math.random() * 3.5;
@@ -1815,7 +1815,7 @@ export function createVrmPet(hostEl, opts = {}) {
         try {
           const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
           if (rh) rh.getWorldPosition(handPos);
-        } catch (_) {}
+        } catch (_) { }
 
         heartSprites.forEach((sp, i) => {
           sp.visible = true;
@@ -1846,7 +1846,7 @@ export function createVrmPet(hostEl, opts = {}) {
             em.setValue("blinkRight", winkVal);
             em.setValue("blinkLeft", 0); // L'œil gauche reste toujours grand ouvert
           }
-        } catch (_) {}
+        } catch (_) { }
       } else {
         heartSprites.forEach((sp) => {
           sp.visible = false;
@@ -1864,7 +1864,7 @@ export function createVrmPet(hostEl, opts = {}) {
               em.setValue("ih", 0);
               em.setValue("aa", 0);
             }
-          } catch (_) {}
+          } catch (_) { }
           setMood("serene");
         }
       }
@@ -2036,7 +2036,7 @@ export function createVrmPet(hostEl, opts = {}) {
           if (vrm?.scene) {
             mixer.uncacheRoot(vrm.scene);
           }
-        } catch (_) {}
+        } catch (_) { }
         mixer = null;
       }
 
@@ -2049,14 +2049,14 @@ export function createVrmPet(hostEl, opts = {}) {
         try {
           scene.remove(sp);
           sp.geometry?.dispose();
-        } catch (_) {}
+        } catch (_) { }
       }
-      try { heartMat.dispose(); } catch (_) {}
+      try { heartMat.dispose(); } catch (_) { }
 
       for (const tex of createdTextures) {
         try {
           tex.dispose();
-        } catch (_) {}
+        } catch (_) { }
       }
       createdTextures.length = 0;
 
@@ -2076,7 +2076,7 @@ export function createVrmPet(hostEl, opts = {}) {
         if (renderer.forceContextLoss) {
           renderer.forceContextLoss();
         }
-      } catch (_) {}
+      } catch (_) { }
       if (renderer.domElement?.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }

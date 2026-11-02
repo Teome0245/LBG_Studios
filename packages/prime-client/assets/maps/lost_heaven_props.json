@@ -1320,6 +1320,219 @@
       "kind": "barrier",
       "x": -1440.0,
       "z": -565.0
+    },
+    {
+      "id": "prop:krayt_skeleton_canyon",
+      "kind": "krayt_skeleton",
+      "label": "Squelette du Grand Léviathan des Sables",
+      "x": 5650.0,
+      "z": -3270.0,
+      "length_m": 52.0,
+      "width_m": 26.0,
+      "yaw_deg": 22.0,
+      "z_draw": 6
+    },
+    {
+      "id": "prop:krayt_skeleton_south_dunes",
+      "kind": "krayt_skeleton",
+      "label": "Fossile de Krayt des Dunes",
+      "x": 5250.0,
+      "z": -1850.0,
+      "length_m": 42.0,
+      "width_m": 22.0,
+      "yaw_deg": -35.0,
+      "z_draw": 6
+    },
+    {
+      "id": "prop:starship_wreck_east",
+      "kind": "starship_wreck",
+      "label": "Épave du Cargo Stellaire Ikaros",
+      "x": 6700.0,
+      "z": -1650.0,
+      "length_m": 38.0,
+      "yaw_deg": 40.0,
+      "z_draw": 6
+    },
+    {
+      "id": "prop:starship_wreck_canyon",
+      "kind": "starship_wreck",
+      "label": "Chasseur stellaire accidenté",
+      "x": 5820.0,
+      "z": -3130.0,
+      "length_m": 28.0,
+      "yaw_deg": -15.0,
+      "z_draw": 6
+    },
+    {
+      "id": "prop:boulders_canyon_1",
+      "kind": "boulder_cluster",
+      "label": "Éperon rocheux du Canyon Nord",
+      "x": 5550.0,
+      "z": -3320.0,
+      "radius_m": 18.0,
+      "z_draw": 7
+    },
+    {
+      "id": "prop:boulders_canyon_2",
+      "kind": "boulder_cluster",
+      "label": "Éperon rocheux du Canyon Sud",
+      "x": 5750.0,
+      "z": -3230.0,
+      "radius_m": 18.0,
+      "z_draw": 7
+    },
+    {
+      "id": "prop:boulders_ksar_north",
+      "kind": "boulder_cluster",
+      "label": "Rochers de garde du Ksar",
+      "x": 4900.0,
+      "z": -3520.0,
+      "radius_m": 16.0,
+      "z_draw": 7
+    },
+    {
+      "id": "prop:boulders_gate_east",
+      "kind": "boulder_cluster",
+      "label": "Rochers de la Porte Est",
+      "x": 6050.0,
+      "z": -980.0,
+      "radius_m": 20.0,
+      "z_draw": 7
+    },
+    {
+      "id": "prop:boulders_gate_west",
+      "kind": "boulder_cluster",
+      "label": "Rochers de la Porte Ouest",
+      "x": 3850.0,
+      "z": -740.0,
+      "radius_m": 22.0,
+      "z_draw": 7
+    },
+    {
+      "id": "prop:ksar_tent_bedouin_1",
+      "kind": "nomad_tent",
+      "label": "Grande tente bédouine du Ksar",
+      "x": 4920.0,
+      "z": -3760.0,
+      "size_m": 22.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:ksar_tent_bedouin_2",
+      "kind": "nomad_tent",
+      "label": "Tente de troc bédouine",
+      "x": 5120.0,
+      "z": -3710.0,
+      "size_m": 18.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:ksar_tent_bedouin_3",
+      "kind": "nomad_tent",
+      "label": "Tente des tisseurs de laine",
+      "x": 4820.0,
+      "z": -3650.0,
+      "size_m": 16.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:ksar_tent_bedouin_4",
+      "kind": "nomad_tent",
+      "label": "Tente d'hospitalité du Ksar",
+      "x": 5180.0,
+      "z": -3620.0,
+      "size_m": 16.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:ksar_palm_extra_1",
+      "kind": "palm_tree",
+      "label": "Palmier d'Oasis",
+      "x": 4995.0,
+      "z": -3695.0,
+      "scale": 1.25,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_extra_2",
+      "kind": "palm_tree",
+      "label": "Palmier d'Oasis",
+      "x": 5045.0,
+      "z": -3640.0,
+      "scale": 1.4,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:ksar_palm_extra_3",
+      "kind": "palm_tree",
+      "label": "Palmier d'Oasis",
+      "x": 5010.0,
+      "z": -3635.0,
+      "scale": 1.1,
+      "z_draw": 12
+    },
+    {
+      "id": "prop:zalem_silo_1",
+      "kind": "mine_silo",
+      "label": "Silo de raffinage minier A",
+      "x": -1050.0,
+      "z": -530.0,
+      "radius_m": 16.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:zalem_silo_2",
+      "kind": "mine_silo",
+      "label": "Silo de raffinage minier B",
+      "x": -1010.0,
+      "z": -530.0,
+      "radius_m": 14.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:zalem_silo_3",
+      "kind": "mine_silo",
+      "label": "Cuve de gaz d'extraction C",
+      "x": -970.0,
+      "z": -530.0,
+      "radius_m": 14.0,
+      "z_draw": 8
+    },
+    {
+      "id": "prop:zalem_container_1",
+      "kind": "cargo_container",
+      "label": "Conteneur minier lourd",
+      "x": -1140.0,
+      "z": -440.0,
+      "w_m": 14.0,
+      "h_m": 7.0,
+      "yaw_deg": 15.0,
+      "color": "#B55A2A",
+      "z_draw": 8
+    },
+    {
+      "id": "prop:zalem_container_2",
+      "kind": "cargo_container",
+      "label": "Conteneur minier scellé",
+      "x": -1155.0,
+      "z": -450.0,
+      "w_m": 14.0,
+      "h_m": 7.0,
+      "yaw_deg": 15.0,
+      "color": "#386878",
+      "z_draw": 8
+    },
+    {
+      "id": "prop:zalem_container_3",
+      "kind": "cargo_container",
+      "label": "Caisse d'outillage minier",
+      "x": -1125.0,
+      "z": -430.0,
+      "w_m": 12.0,
+      "h_m": 6.0,
+      "yaw_deg": 105.0,
+      "color": "#C48A2C",
+      "z_draw": 8
     }
   ],
   "topology_version": 2,

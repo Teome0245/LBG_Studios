@@ -503,3 +503,25 @@ def test_action_proposal_vm_memory_probe_explicit() -> None:
     proposal = r.json()["proposal"]
     assert proposal is not None
     assert proposal["action"]["kind"] == "vm_memory_probe"
+
+
+def test_action_proposal_cline_delegation() -> None:
+    client = TestClient(app)
+    r = client.post(
+        "/v1/action-proposal",
+        json={
+            "actor_id": "user:1",
+            "text": "confie la tâche à cline pour modifier npc_registry.json",
+            "context": {},
+        },
+    )
+    assert r.status_code == 200
+    proposal = r.json()["proposal"]
+    assert proposal is not None
+    assert proposal["capability"] == "desktop_control"
+    assert proposal["action"]["kind"] == "run_cli_agent"
+    assert proposal["action"]["app"] == "cline"
+    assert "modifier npc_registry.json" in proposal["action"]["prompt"]
+    assert proposal["context_patch"]["ide_cli"] is True
+    assert proposal["context_patch"]["gatekeeper"]["review_required"] is True
+

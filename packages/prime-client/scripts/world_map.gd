@@ -32,10 +32,10 @@ func _ready() -> void:
 	_load_map_texture()
 	_apply_scale()
 	_apply_world_render()
-	set_process(MapTextureLoader.use_procedural_backdrop())
+	set_process(false)
 
 func _process(_delta: float) -> void:
-	_sync_backdrop_to_camera()
+	pass
 
 func _sync_backdrop_to_camera() -> void:
 	if _backdrop == null:

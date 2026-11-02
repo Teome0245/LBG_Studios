@@ -15,7 +15,7 @@ const GREETINGS := {
 	"npc:core3_talen_ress": "Talen Ress. Formation scène à l'auberge — danse, musique, moral. Après un show à La Perle, demande une courte formation.",
 	"npc:core3_artiste_scene": "Artiste de scène. La Perle — sets live, bis, pause. Tip si ça te parle.",
 	"npc:scribe": "Scribe de la mairie. Dis « chronique » — j'archive ta session. Pas de légendes inventées.",
-	"npc:habitue_cantina": "Toujours la même table à La Perle. Qu'est-ce que tu bois ?",
+	"npc:habitue_cantina": "Toujours la même table à La Perle. Je cherche des voyageurs et des joueurs fiables — tu as des nouvelles des pistes et des caravanes ?",
 	"npc:videur": "Pas de bagarre devant La Perle. Jax s'occupe du verre, moi de la porte.",
 	"npc:sergent_rue": "Sergent de rue. Porte est sous surveillance — meute ou pas.",
 	"npc:rumeuriste": "Au marché on entend tout. Tu veux une rumeur… ou un prix ?",
@@ -62,6 +62,11 @@ const DEFAULT_MOVES := {
 		{"id": "move:miran_herbes", "label": "Cueillette de remèdes", "utterance": "Quelles herbes des sables cherches-tu ?", "kind": "info"},
 		{"id": "move:miran_soins", "label": "Demander un soin", "utterance": "J'ai besoin d'un baume ou d'un antidote.", "kind": "info"},
 	],
+	"npc:habitue_cantina": [
+		{"id": "move:habitue_caravanes", "label": "Caravanes Al-Khali", "utterance": "Tu as des nouvelles de la caravane vers l'Oasis d'Al-Khali ?", "kind": "info"},
+		{"id": "move:habitue_convois", "label": "Convois Zalem", "utterance": "Qu'est-ce qui circule sur la route ouest vers Zalem en ce moment ?", "kind": "info"},
+		{"id": "move:habitue_alliance", "label": "Alliances Joueurs", "utterance": "Tu cherches des alliancés fiables parmi les joueurs ?", "kind": "info"},
+	],
 }
 
 const FALLBACK_REPLIES := [
@@ -91,6 +96,9 @@ const FALLBACK_REPLIES := [
 	["soren", "Soren Kray tient l'atelier relais à Zalem. Un as de la mécanique avec un franc-parler de ferrailleur."],
 	["nadir", "L'Ancien Nadir connaît chaque souffle de vent et chaque point d'eau du désert sud."],
 	["miran", "Miran Sael soigne les caravaniers au Ksar avec ses filtres et décoctions des dunes."],
+	["caravane", "Les caravanes entre Lost Heaven et Al-Khali prennent des risques énormes — les habitués guettent leur arrivée."],
+	["al-khali", "L'Oasis d'Al-Khali — la caravane tarde, et entre les pillards et la chaleur, chaque info vaut de l'eau."],
+	["joueur", "À La Perle, les habitués cherchent des joueurs prêts à lier observation du terrain et discrétion."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry

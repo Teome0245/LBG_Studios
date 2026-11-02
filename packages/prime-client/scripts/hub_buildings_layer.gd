@@ -47,13 +47,16 @@ func _draw() -> void:
 			_draw_building(item as Dictionary)
 
 func _draw_building(b: Dictionary) -> void:
+	var kind := str(b.get("kind", ""))
+	# Ne pas dessiner les POI de chasse, de débris ou de portes en tant que maisons d'habitation
+	if kind == "hunt_yard" or kind == "salvage_scrap" or kind == "city_gate" or kind == "spawn":
+		return
 	var cx := float(b.get("x", 0.0))
 	var cz := float(b.get("z", 0.0))
 	var size_m := float(b.get("size_m", 72.0))
 	var half_px := size_m * 0.5 * Projection3D2D.SCALE * size_multiplier
 	var center := Projection3D2D.to_screen(Vector3(cx, 0.0, cz))
 	var rect := Rect2(center - Vector2(half_px, half_px), Vector2(half_px * 2.0, half_px * 2.0))
-	var kind := str(b.get("kind", ""))
 
 	# 1. Ombre portée douce vers le Sud-Ouest (soleil rasant du désert)
 	var shadow_off := Vector2(-6.0, 8.0)
@@ -79,19 +82,26 @@ func _draw_building(b: Dictionary) -> void:
 		elif b.get("door") is Dictionary:
 			_draw_single_door_cutaway(b["door"] as Dictionary, rect, wall_th)
 
-	# 6. Étiquette de bâtiment sobre et élégante (titre calligraphié d'architecte sans cadre fluo géant)
+	# 6. Étiquette de bâtiment sobre et élégante (titre calligraphié d'architecte avec cartouche lisible)
 	if show_labels:
-		var raw_label := str(b.get("label", ""))
-		if raw_label != "":
-			var short_lbl := _compact_french_building_label(raw_label)
-			var font := ThemeDB.fallback_font
-			if font:
-				var fsize := 10
-				var str_w := font.get_string_size(short_lbl, HORIZONTAL_ALIGNMENT_CENTER, -1, fsize).x
-				var text_pos := Vector2(center.x - str_w * 0.5, rect.position.y - 7.0)
-				# Ombre portée couleur encre pour lisibilité maximale sur le sable
-				draw_string(font, text_pos + Vector2(1, 1), short_lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0.08, 0.05, 0.03, 0.90))
-				draw_string(font, text_pos, short_lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0.96, 0.92, 0.82, 0.98))
+		var vp := get_viewport()
+		var cam := vp.get_camera_2d() if vp else null
+		var z_val: float = cam.zoom.x if cam else 1.0
+		# Ne pas polluer l'écran au grand dézoom stratégique (laisse respirer la vue d'ensemble)
+		if z_val >= 0.7:
+			var raw_label := str(b.get("label", ""))
+			if raw_label != "":
+				var short_lbl := _compact_french_building_label(raw_label)
+				var font := ThemeDB.fallback_font
+				if font:
+					var fsize := 10
+					var str_w := font.get_string_size(short_lbl, HORIZONTAL_ALIGNMENT_CENTER, -1, fsize).x
+					var text_pos := Vector2(center.x - str_w * 0.5, rect.position.y - 8.0)
+					var cartouche := Rect2(text_pos.x - 5.0, text_pos.y - fsize + 1.0, str_w + 10.0, fsize + 3.0)
+					draw_rect(cartouche, Color(0.12, 0.08, 0.05, 0.85), true)
+					draw_rect(cartouche, Color(0.68, 0.58, 0.44, 0.90), false, 1.0)
+					draw_string(font, text_pos + Vector2(1, 1), short_lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0.04, 0.02, 0.01, 0.95))
+					draw_string(font, text_pos, short_lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, Color(0.98, 0.94, 0.86, 0.98))
 
 
 func _draw_interior_floor(rect: Rect2, kind: String) -> void:
@@ -207,17 +217,17 @@ func _draw_generic_procedural_interior(rect: Rect2, center: Vector2, kind: Strin
 			draw_circle(stage_rect.get_center(), 2.0, Color(0.85, 0.88, 0.95, 0.95)) # Pied micro
 
 			# 3. Salons / Alcôves avec banquettes en U (Booth Seating SWG) le long des murs
-			var booths := [
+			var booths: Array[Vector2] = [
 				Vector2(center.x - w * 0.08, rect.position.y + h * 0.18), # Nord-Centre
 				Vector2(center.x + w * 0.16, rect.position.y + h * 0.18), # Nord-Est
 				Vector2(center.x - w * 0.08, rect.end.y - h * 0.18),     # Sud-Centre
 				Vector2(center.x + w * 0.16, rect.end.y - h * 0.18),     # Sud-Est
 			]
-			for bp in booths:
-				var is_north := bp.y < center.y
+			for bp: Vector2 in booths:
+				var is_north: bool = bp.y < center.y
 				# Banquette en arc de cercle le long du mur
-				var arc_start := PI if is_north else 0.0
-				var arc_end := TAU if is_north else PI
+				var arc_start: float = PI if is_north else 0.0
+				var arc_end: float = TAU if is_north else PI
 				draw_arc(bp, 11.0, arc_start, arc_end, 16, Color(0.55, 0.22, 0.18, 0.95), 4.0)
 				# Table ronde centrale
 				draw_circle(bp, 4.5, col_wood)
@@ -385,9 +395,11 @@ func _compact_french_building_label(lbl: String) -> String:
 			return "Logements N"
 		if "sud" in low or " s" in low:
 			return "Logements S"
+		if "ouest" in low or " o" in low or " w" in low:
+			return "Logements O"
 		if "est" in low or " e" in low:
 			return "Logements E"
-		return "Logements O"
+		return "Logements"
 	if "ancien" in low or "demeure" in low:
 		return "Demeure Ancien"
 	if "dispensaire" in low or "onguent" in low or "soins" in low:

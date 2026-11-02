@@ -350,16 +350,21 @@ def _propose_update_vscode(raw: str, normalized: str) -> ActionProposal | None:
 
 
 def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
-    """Mains code headless .143 — ADR 0025 (OpenCode nominal · Claude expérimental · Cline hors scope)."""
+    """Mains code headless .143 — ADR 0025 (OpenCode nominal · Cline second avis / délégation locale 0 €)."""
     if not re.search(
-        r"\b(run_cli_agent|ide.?cli|mains?\s+code|"
-        r"lance\s+(?:claude|cline|opencode)\s+(?:sur\s+)?omarchy|"
-        r"claude\s+code\s+headless|"
-        r"(?:fais|lance)\s+(?:un\s+)?(?:patch|fix)\s+(?:via\s+)?(?:claude|cline|opencode)\s+(?:sur\s+)?omarchy)\b",
+        r"\b("
+        r"run_cli_agent|ide.?cli|mains?\s+code|"
+        r"lance\s+(?:claude|cline|opencode)|"
+        r"(?:demande|confie|d[eé]l[eè]gue|passe|donne)\s+(?:la\s+t[aâ]che\s+)?(?:[aà]|vers)\s+(?:claude|cline|opencode)|"
+        r"(?:fais|laisse)\s+(?:faire|coder|appliquer|ex[eé]cuter|modifier|[eé]crire|patcher)\s+(?:par|via|avec)\s+(?:claude|cline|opencode)|"
+        r"(?:fais|lance|applique)\s+(?:un\s+)?(?:patch|fix|t[aâ]che|script|code|modif\w*)\s+(?:via|avec|par)\s+(?:claude|cline|opencode)|"
+        r"(?:claude|cline|opencode)\s*[:\-]\s*.+|"
+        r"claude\s+code\s+headless"
+        r")\b",
         normalized,
     ):
         return None
-    # Défaut OpenCode (ADR 0025 amendé 2026-10-06)
+    # Choix de l'app CLI (défaut OpenCode, ou Cline / Claude si mentionné)
     app = "opencode"
     if re.search(r"\bcline\b", normalized):
         app = "cline"
@@ -367,20 +372,35 @@ def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
         app = "claude"
     elif re.search(r"\bopencode\b", normalized):
         app = "opencode"
-    # Extraire un mandat après « pour » / « : »
+    # Extraire un mandat après l'application ou après « pour » / « : » / « de »
     prompt = raw
-    m = re.search(r"(?i)(?:pour|mandate|mandat)\s*[:\-]?\s*(.+)$", raw.strip())
-    if m:
-        prompt = m.group(1).strip()
-    elif re.search(r"(?i)lance\s+(?:claude|cline|opencode)", raw):
-        # garder le texte entier comme prompt métier
-        prompt = re.sub(
-            r"(?i)^\s*lance\s+(?:claude|cline|opencode)(?:\s+code)?(?:\s+sur\s+omarchy)?\s*(?:pour|:)?\s*",
-            "",
-            raw,
-        ).strip() or raw
+    app_pattern = r"(?i)\b(?:run_cli_agent|claude|cline|opencode)\b"
+    m_app = list(re.finditer(app_pattern, raw))
+    if m_app:
+        last_app_end = m_app[-1].end()
+        remainder = raw[last_app_end:].strip()
+        remainder = re.sub(r"(?i)^sur\s+omarchy\b", "", remainder).strip()
+        cleaned = re.sub(r"^(?:[:\-\s]|pour\b|de\b|d['’]|la\s+t[aâ]che\s+de\b|[aà]\b)+", "", remainder).strip()
+        if cleaned:
+            prompt = cleaned
+    else:
+        m = re.search(r"(?i)\b(?:pour|mandate?|mandat)\s*[:\-]?\s*(.+)$", raw.strip())
+        if m:
+            prompt = m.group(1).strip()
     text = raw if re.search(r"\bomarchy\b", normalized) else f"{raw} sur omarchy"
     from lbg_agents.desktop_apps import OMARCHY_STUDIO_WORKSPACE
+
+    if app == "cline":
+        summary = (
+            f"Mains code .143 : Cline CLI (Ollama .110 local 0 €) — Mandat : « {prompt[:100]} ». "
+            "Contrôle git diff et tests CI prévus après application."
+        )
+    elif app == "opencode":
+        summary = (
+            f"Mains code .143 : OpenCode CLI (nominal rapide) — Mandat : « {prompt[:100]} »."
+        )
+    else:
+        summary = f"Mains code .143 : {app} CLI headless (ADR 0025) — « {prompt[:100]} »."
 
     proposal = _desktop_proposal(
         action={
@@ -389,11 +409,8 @@ def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
             "prompt": prompt[:4000],
             "cwd": OMARCHY_STUDIO_WORKSPACE,
         },
-        summary=(
-            f"Mains code .143 : {app} CLI headless (ADR 0025) — dry-run jusqu’à confirm. "
-            "OpenCode = nominal ; Claude = expérimental ; Cline CLI hors scope."
-        ),
-        confidence=0.88,
+        summary=summary,
+        confidence=0.90,
         text=text,
     )
     if not proposal.context_patch.get("desktop_target"):
@@ -402,6 +419,7 @@ def _propose_run_cli_agent(raw: str, normalized: str) -> ActionProposal | None:
         **proposal.context_patch,
         "ide_cli": True,
         "ide_session": {"primary_hint": app, "mode": "cli_headless"},
+        "gatekeeper": {"review_required": True, "check_ci": True, "app": app},
     }
     return proposal
 
