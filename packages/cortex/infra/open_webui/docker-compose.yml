@@ -24,6 +24,17 @@ services:
     networks:
       - lbg-owui
 
+  watchtower:
+    image: containrrr/watchtower
+    container_name: lbg-open-webui-watchtower
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: lbg-open-webui
+
 volumes:
   open_webui_data:
 

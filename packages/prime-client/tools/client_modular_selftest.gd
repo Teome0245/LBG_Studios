@@ -180,5 +180,63 @@ func _init() -> void:
 	var exp_out: Dictionary = exp_ui.spend_points("power", 2)
 	assert(bool(exp_out.get("ok", false)) == true and int(exp_out.get("remaining_points", -1)) == 2, "L'atelier d'expérimentation SWG doit dépenser 2 points et augmenter power")
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 5 Composants UI SWG Pre-CU 2D vérifiés avec succès")
+	# Test Datapad SWG (Waypoints, Familiers/Droïdes PCD, Schémas)
+	var SwgDatapadPanelScript := preload("res://scripts/swg_datapad_panel.gd")
+	var datapad_ui = SwgDatapadPanelScript.new()
+	assert(datapad_ui != null, "Échec instanciation SwgDatapadPanel")
+	datapad_ui._ensure_ui()
+	assert(datapad_ui._waypoints.size() >= 3, "Le Datapad doit contenir au moins 3 waypoints d'origine")
+	assert(datapad_ui._pets.size() >= 1, "Le Datapad doit gérer les familiers PCD (Pet Control Device)")
+	assert(datapad_ui._schematics.size() >= 2, "Le Datapad doit lister les schémas d'artisanat débloqués")
+	datapad_ui._switch_tab(1)
+	assert(datapad_ui._current_tab == 1, "La bascule d'onglet Datapad PCD doit fonctionner")
+
+	# Test Fiche de Personnage SWG (9 Attributs HAM, Wounds, Battle Fatigue)
+	var SwgCharacterSheetScript := preload("res://scripts/swg_character_sheet.gd")
+	var char_sheet = SwgCharacterSheetScript.new()
+	assert(char_sheet != null, "Échec instanciation SwgCharacterSheet")
+	char_sheet._ensure_ui()
+	char_sheet.apply_character_data({
+		"player_name": "Testeur Lost Heaven",
+		"title": "Maître Éclaireur",
+		"citizenship": "Citoyen d'Odo",
+		"posture": "Accroupi",
+		"battle_fatigue": 350,
+		"medical_efficiency_ratio": 0.65,
+		"stats": {
+			"health": {"current": 800, "base_max": 1000, "wounds": 200, "buff": 0},
+			"strength": {"current": 600, "base_max": 650, "wounds": 50, "buff": 0},
+			"constitution": {"current": 650, "base_max": 650, "wounds": 0, "buff": 0},
+			"action": {"current": 950, "base_max": 1000, "wounds": 50, "buff": 0},
+			"quickness": {"current": 650, "base_max": 650, "wounds": 0, "buff": 0},
+			"stamina": {"current": 650, "base_max": 650, "wounds": 0, "buff": 0},
+			"mind": {"current": 700, "base_max": 1000, "wounds": 300, "buff": 0},
+			"focus": {"current": 650, "base_max": 650, "wounds": 0, "buff": 0},
+			"willpower": {"current": 650, "base_max": 650, "wounds": 0, "buff": 0},
+		}
+	})
+	assert(char_sheet.player_name == "Testeur Lost Heaven", "Nom joueur dans fiche perso incorrect")
+	assert(char_sheet._battle_fatigue == 350, "Battle fatigue dans fiche perso incorrecte")
+	assert(char_sheet._stats["mind"]["wounds"] == 300, "Wounds Mind dans 9 stats HAM incorrect")
+
+	# Test Terminal de Bazar SWG (Arborescence catégories, Achat, Vente capée à 20k cr)
+	var SwgBazaarPanelScript := preload("res://scripts/swg_bazaar_panel.gd")
+	var bazaar_ui = SwgBazaarPanelScript.new()
+	assert(bazaar_ui != null, "Échec instanciation SwgBazaarPanel")
+	bazaar_ui._ensure_ui()
+	assert(bazaar_ui._market_items.size() >= 4, "Le Bazar SWG doit contenir des lots marchands de fallback")
+	bazaar_ui._selected_category = "organics"
+	bazaar_ui._populate_items_list()
+	assert(bazaar_ui._items_list.item_count >= 1, "Le filtrage des catégories SWG doit retourner des lots")
+
+	# Test Terminal de Gestion Foncière & Housing SWG (Maintenance Pool, ACL)
+	var SwgStructurePanelScript := preload("res://scripts/swg_structure_panel.gd")
+	var struct_ui = SwgStructurePanelScript.new()
+	assert(struct_ui != null, "Échec instanciation SwgStructurePanel")
+	struct_ui._ensure_ui()
+	assert(int(struct_ui._structure_data.get("maintenance_credits", 0)) > 0, "Le pool de maintenance crédits doit être initialisé")
+	struct_ui._toggle_privacy()
+	assert(bool(struct_ui._structure_data.get("is_public")) == false, "La bascule ACL Public/Privé doit fonctionner")
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 9 Composants UI SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad, Fiche HAM 9-stats, Bazar, Housing) vérifiés avec succès")
 	quit(0)

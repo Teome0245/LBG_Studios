@@ -4,15 +4,29 @@
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + SWG Pre-CU Soul (Séquence 4 ➔ 3 ➔ 2 ➔ 1) — **Séquence 100 % Achevée & Validée CI (4/4 Chantiers Livrés)**.
+**Fil** : canon O1/O2/O3 + Boucle d'Évolution Fermée (Séquence 4 Arbitrage ➔ 1 Économie ➔ 2 Quêtes ➔ 3 Combat/HAM) — **100 % Livré, Validé CI & Déployé sur .246:8787**.
 
 ---
 
 ## Objectif actuel
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
-Travail produit : Réimplémentation complète de « l'Âme de SWG » en Godot pur (`prime-hub` headless & `prime-client`) sur Lost Heaven.  
-Ordre de séquence validé : **4 (Faune / Scout / Creature Handler) ➔ 3 (Commerce / Vendeurs Joueurs / Usines) ➔ 2 (Housing Libre / Villes) ➔ 1 (Combat HAM / Postures)**.
+Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et déploiement du MMO Lost Heaven.
+
+**Boucle d'Évolution Réalisée & Déployée (Séquence 4 ➔ 1 ➔ 2 ➔ 3)** :
+- [x] **Point 4 : La Boucle d'Arbitrage & Moissonnage Automatique** :
+  - *SuperAgent Router déployé sur Cortex .140* : Activation des routes `/v1/pilot/team/super-agent/*` pour la gestion des événements critiques et demandes d'arbitrage.
+  - *Outil d'analyse `tools/mmo_evolution_analyst.py`* : Moissonnage en direct des suggestions des bots (`/v1/dev/world_suggestions`) et télémétrie du hub .246, classification par volets, génération de RFC et émission d'alertes `session.approval_needed` vers l'Overlay Bureau (Lyra) et Pilot.
+  - *Gatekeeper CI & Déploiement* : Automatisation du passage de `tools/ci_godot_headless.sh` (18 suites Godot) et du déploiement via `deploy_prime_hub_246.sh`.
+- [x] **Point 1 : Économie, Artisanat & Ressources (`EVO-ECO-20261103-01`)** :
+  - *Composants d'Atelier* : Ajout de la recette de recyclage `used_capacitor` (Condensateur recyclé à partir de Ferraille) dans `catalog_recipes.json` pour débloquer le craft des kits de réparation par Sola, Lia et Mira.
+  - *Troc Cantina La Perle* : Intégration de condensateurs au catalogue de Jax Moro et bonification de la marge de négociation de troc à 20% dans `vendor_negotiation_jax.json`.
+- [x] **Point 2 : Quêtes, Expérience & Compétences (`EVO-QST-20261103-02`)** :
+  - *Piste Ouest vers le Ksar Nomade* : Template de quête `lh_recon_ksar_ouest` ajouté dans `quests_lbg_templates.json` pour diversifier les flux de bots et de joueurs vers la Porte Ouest (`poi:lost_heaven_gate_west`) et le Ksar (`poi:ksar_nomade`) avec récompenses équilibrées (35 cr, 50 XP prospection, 25 XP quartier, rations, eau).
+- [x] **Point 3 : Combat, HAM & Survie Médicale (`EVO-CBT-20261103-03`)** :
+  - *Stabilisation HAM Hors les Murs* : Déverrouillage dans `hub_ham_medical.gd` des soins d'urgence en milieu hostile si le soignant utilise un baume de terrain ou un bandage antivenin. Dissipation immédiate de 25 points de Battle Fatigue en expédition.
+  - *Recette artisanale* : Création de la recette `baume_urgence_terrain` (eau + ruban de liaison sous `medecin_novice`) dans `catalog_recipes.json`.
+  - *Fiabilisation CI* : Résolution de la collision de seed d'ID joueur dans `ham_cantina_medcenter_selftest.gd`. 18/18 suites de tests headless Godot PASS en 136s. Déploiement validé sur `.246:8787`.
 
 **Chantiers « Âme de SWG Pre-CU »** :
 - [x] **Étape 4 (O2/O3) : Faune, Métier Scout & Domptage Creature Handler** :
@@ -39,6 +53,33 @@ Ordre de séquence validé : **4 (Faune / Scout / Creature Handler) ➔ 3 (Comme
   - *Le Combo Fatal SWG Pre-CU* : État `Dizzy` (vertige) + `Knockdown` (au sol) interdisant strictement de se relever sans purger le vertige (`dizzy_fall`), état `Stun` (réduction d'armure de 50%), état `Blind` (malus de visée de 45%), état `Intimidate` (dégâts divisés par 2).
   - *Encombrement d'Armure (Armor Encumbrance)* : Calcul en temps réel des pénalités d'armure sur les réserves Health, Action et Mind.
   - *Intégration & Tests* : Service `hub_swg_combat.gd`, câblage dans `hub_sim.gd` et `hub_http.gd`, selftest `swg_combat_selftest.gd` 100 % vert et intégré à `tools/ci_godot_headless.sh`.
+- [x] **Instance Parallèle SWG Pre-CU 3D Dédiée (`packages/swg-client` & `packages/swg-hub`) — Étapes 1, 2 & 3 Livrées + Lancement Launcher** :
+  - *Projets Godot 4 Dédiés* : `packages/swg-client` (Client 3D TPS) et `packages/swg-hub` (Serveur autoritaire 3D headless), découplés de `prime-client` / `prime-hub` pour préserver le banc d'essai existant et donner carte blanche à la 3D pure.
+  - *Étape 1 — Contrôleur Joueur 3D TPS SWG (`swg_player_controller_3d.gd`)* :
+    - Caméra orbitale 3ème personne avec `SpringArm3D` anti-collision décor, zoom molette progressif (vue 1ère personne 0.8m à vue MMO 16m), double mode de contrôle SWG (curseur libre pour interfaces ou mouselook au maintien clic-droit).
+    - Déplacements 3D fluides (marche 3.5 m/s, course 7.0 m/s, sprint 10.0 m/s, saut).
+    - 3 Postures 3D physiques : Debout (1.8m), Accroupi (1.15m, vitesse 2.4 m/s), Couché / Prone (0.55m, vitesse 1.2 m/s) avec redimensionnement temps réel de la `CapsuleShape3D` et du mesh.
+    - Combo fatal *Dizzy Fall* physique (se relever en état Dizzy force une chute au sol en prone).
+  - *Étape 2 — Terrain 3D Grande Échelle 16x16km & Pipeline d'Assets POB (`swg_terrain_system_3d.gd`, `swg_asset_pipeline.gd`)* :
+    - *Terrain Continu par Chunks 64m* : Générateur de hauteur fractale FastNoiseLite simulant les dunes de Lost Heaven, streaming dynamique de chunks autour du joueur avec mesh 3D et collision physique exacte `create_trimesh_shape()`.
+    - *Affecteurs d'Aplanissement Urbain (City Flat Affectors)* : Lissage progressif et aplanissement automatique sous les villes (Lost Heaven aplanie à Y=0.0m avec blend de 40m).
+    - *Architecture POB Multi-Cellules* : Bâtiments SWG à cellules intérieures communicantes (Cantina La Perle avec dôme extérieur, cellule Bar avec comptoir en fer à cheval et néons, cellule Scène des danseurs avec spots directionnels).
+    - *Palettes de Teintes 4 Canaux* : Pipeline de matériaux teintés SWG (couleurs primaires/secondaires configurables pour armures et vêtements).
+    - *Miroir Altitudes Serveur Autoritaire* : Calcul d'altitude déterministe identique sur `swg_server_main.gd` pour validation physique et anti-triche.
+  - *Étape 3 — Les 33 Professions SWG Pre-CU & 250 Skill Points (`swg_precu_professions.json`, `swg_professions_service.gd`)* :
+    - *33 Professions Authentiques* : 6 professions de base (Artisan, Brawler, Marksman, Scout, Medic, Entertainer) + 26 professions avancées/élites (Rifleman, Teras Kasi, Creature Handler, Armorsmith, Doctor, Architect, Bio-Engineer, Smuggler, etc.) + Politician.
+    - *594 Boîtes de Compétences Indexées* : Arbres 4x4 complets, vérification stricte des prérequis d'accès aux élites (ex: Marksman Rifles IV requis pour Rifleman Novice).
+    - *Plafond Strict de 250 Skill Points* : Gestion des points dépensés/restants et abandon sécurisé (`surrender_skill`) avec remboursement intégral et contrôle de non-dépendance.
+  - *Lancement Direct via Launcher & Scripts Dédiés* :
+    - Profil `swg-3d` intégré dans `packages/launchpad/launchpad.config.json` et `packages/launchpad/main.js`.
+    - Scripts de lancement direct fournis : `tools/launch_swg_client_3d.sh` (Linux) et `tools/launch_swg_client_3d.bat` (Windows).
+  - *Tests de Validation* : `swg_client_3d_selftest.gd`, `swg_hub_selftest.gd` et `swg_professions_selftest.gd` **100% verts**.
+- [x] **Restitution Complète de l'Ergonomie, Menus & UI de SWG Pre-CU (Lost Heaven, Godot 4 Client)** :
+  - *Datapad Personnel Authentique (`swg_datapad_panel.gd`)* : 3 onglets physiques : Waypoints planétaires avec puces de couleur (activer/boussole/supprimer), Familiers & Droïdes PCD (*Pet Control Device*) avec cartes d'état et commandes d'invocation `/call`, `/store`, ordres `/follow`, `/stay`, `/trick`, et onglet Schémas d'artisanat.
+  - *Fiche de Personnage SWG & 9 Attributs HAM (`swg_character_sheet.gd`)* : Structure 3 colonnes iconique (Santé: Health, Strength, Constitution ; Action: Action, Quickness, Stamina ; Esprit: Mind, Focus, Willpower), barres de Wounds noires réduisant le pool effectif max, jauge de Battle Fatigue (0–1000) influençant l'efficacité des soins, titre honorifique et citoyenneté.
+  - *Terminal de Marché / Bazar & Boutiques Joueurs (`swg_bazaar_panel.gd`)* : Arborescence des catégories SWG (Minéraux, Chimiques, Organiques, Composants, Armes/Armures, Mobilier), tableau des lots avec prix immédiats / enchères, vendeur et localisation, panneau d'inspection de qualité, et onglet de mise en vente au bazar (plafonné à 20 000 cr conformément aux règles SWG).
+  - *Terminal de Gestion Foncière & Cités de Joueurs (`swg_structure_panel.gd`)* : Suivi du Réservoir de Maintenance (Maintenance Pool en crédits, coût horaire, jours restants, versements bancaires), gestion des accès ACL (bascule Public / Privé, Entry List des résidents, Ban List), et données municipales (rang civique, maire, impôts fonciers).
+  - *Câblage Ergonomique Global (`main.gd`, `client_ui_dialogue.gd`, `swg_ham_hud.gd`)* : Raccourcis claviers canoniques SWG (`C` pour Fiche Perso, `D` pour Datapad, `B` pour Bazar, `Ctrl+H` pour Propriétés, `Échap` pour fermeture en cascade), boutons dédiés dans le dock Datapad Système en bas-droite, et couverture complète dans `client_modular_selftest.gd`.
 - [x] **Connexions Client GUI & Autonomie O3 SWG Pre-CU (« Les deux » - Livré & Validé)** :
   - *Client GUI (`packages/prime-client`)* :
     - Menu Radial (`swg_radial_menu.gd`) : contextes pour cadavres (dépeçage viande/cuir/os), créatures (apprivoisement tame, attaque), familiers (ordres stay/follow, nourrissage, chenil), vendeurs (boutique, gestion stock/caisse), housing (entrer, droits ACL, maintenance, déco 3D) et terrain (campement scout, postures accroupi/couché/debout).

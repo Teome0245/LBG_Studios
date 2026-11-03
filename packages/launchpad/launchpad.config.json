@@ -33,6 +33,30 @@
           "loginPort": 44553
         }
       ]
+    },
+    {
+      "id": "swg-3d",
+      "label": "SWG Pre-CU 3D (Godot)",
+      "clientKind": "godot",
+      "gameDir": "J:\\swgemu\\clients\\swg-client",
+      "gameExe": "J:\\mmmorpg\\Godot_v4.6.1-stable_win64\\Godot_v4.6.1-stable_win64.exe",
+      "configFile": "",
+      "patchChannel": "swg-3d",
+      "skipPatch": true,
+      "godotPatchEnabled": false,
+      "godotFullscreen": false,
+      "launchArgs": [
+        "--path",
+        "J:\\swgemu\\clients\\swg-client"
+      ],
+      "servers": [
+        {
+          "id": "swg-3d",
+          "label": "SWG 3D Hub (Lost Heaven)",
+          "ip": "192.168.0.246",
+          "loginPort": 8787
+        }
+      ]
     }
   ]
 }

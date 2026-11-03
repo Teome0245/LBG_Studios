@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "planet": "Scrapaltai",
+  "hub": "lost_heaven",
+  "source": "SWG Pre-CU Scout & Creature Handler — Ticket 4",
+  "creatures": [
+    {
+      "id": "beast:chacal_dore",
+      "name": "Chacal Doré",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "meute",
+      "danger_level": 2,
+      "harvest": {
+        "meat": {"id": "viande_chacal", "name": "Viande de chacal", "base_qty": 4, "oq": 450, "nutrition": 50},
+        "hide": {"id": "fourrure_doree", "name": "Fourrure dorée", "base_qty": 3, "oq": 580, "pe": 450},
+        "bone": {"id": "os_chacal", "name": "Os de chacal", "base_qty": 2, "oq": 380, "ma": 420}
+      },
+      "is_tameable": false
+    },
+    {
+      "id": "beast:chacal_dore_chiot",
+      "name": "Chiot de Chacal Doré",
+      "biome": "desert",
+      "size": "tres_petit",
+      "behavior": "curieux",
+      "danger_level": 1,
+      "harvest": {
+        "meat": {"id": "viande_chacal", "name": "Viande de chacal", "base_qty": 1, "oq": 400, "nutrition": 40},
+        "hide": {"id": "fourrure_doree", "name": "Fourrure dorée", "base_qty": 1, "oq": 500, "pe": 400},
+        "bone": {"id": "os_chacal", "name": "Os de chacal", "base_qty": 1, "oq": 300, "ma": 350}
+      },
+      "is_tameable": true,
+      "taming_difficulty": 1,
+      "taming_skill_required": "prospecteur_faune_01",
+      "base_health": 120,
+      "base_damage": 8
+    },
+    {
+      "id": "beast:scarabee_obsidien",
+      "name": "Scarabée Obsidien",
+      "biome": "desert",
+      "size": "moyen",
+      "behavior": "blinde",
+      "danger_level": 2,
+      "harvest": {
+        "meat": {"id": "chair_insectoide", "name": "Chair d'insectoïde", "base_qty": 3, "oq": 350, "nutrition": 40},
+        "hide": {"id": "carapace_obsidienne", "name": "Carapace d'obsidienne", "base_qty": 5, "oq": 720, "pe": 820, "ma": 750},
+        "bone": {"id": "mandibule_renforcee", "name": "Mandibule renforcée", "base_qty": 2, "oq": 650, "cd": 600}
+      },
+      "is_tameable": false
+    },
+    {
+      "id": "beast:scarabee_jeune",
+      "name": "Jeune Scarabée",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "craintif",
+      "danger_level": 1,
+      "harvest": {
+        "meat": {"id": "chair_insectoide", "name": "Chair d'insectoïde", "base_qty": 1, "oq": 300, "nutrition": 30},
+        "hide": {"id": "carapace_obsidienne", "name": "Carapace d'obsidienne", "base_qty": 2, "oq": 600, "pe": 700},
+        "bone": {"id": "mandibule_renforcee", "name": "Mandibule renforcée", "base_qty": 1, "oq": 500, "cd": 450}
+      },
+      "is_tameable": true,
+      "taming_difficulty": 2,
+      "taming_skill_required": "prospecteur_faune_02",
+      "base_health": 180,
+      "base_damage": 6
+    },
+    {
+      "id": "beast:fennec_mirage",
+      "name": "Fennec Mirage",
+      "biome": "desert",
+      "size": "petit",
+      "behavior": "fuite_illusion",
+      "danger_level": 1,
+      "harvest": {
+        "meat": {"id": "viande_tendre", "name": "Viande tendre", "base_qty": 2, "oq": 620, "nutrition": 75},
+        "hide": {"id": "pelage_mirage", "name": "Pelage mirage", "base_qty": 3, "oq": 860, "pe": 650},
+        "bone": {"id": "os_fins", "name": "Os fins", "base_qty": 1, "oq": 420, "ma": 320}
+      },
+      "is_tameable": true,
+      "taming_difficulty": 3,
+      "taming_skill_required": "prospecteur_faune_02",
+      "base_health": 90,
+      "base_damage": 12
+    },
+    {
+      "id": "beast:marcheur_dunes",
+      "name": "Marcheur des Dunes",
+      "biome": "desert",
+      "size": "enorme",
+      "behavior": "lent_massif",
+      "danger_level": 4,
+      "harvest": {
+        "meat": {"id": "viande_lourde", "name": "Viande lourde de marcheur", "base_qty": 18, "oq": 700, "nutrition": 90},
+        "hide": {"id": "cuir_epais_dunes", "name": "Cuir épais des dunes", "base_qty": 14, "oq": 760, "pe": 880, "sr": 720},
+        "bone": {"id": "os_geants", "name": "Os géants", "base_qty": 8, "oq": 820, "ma": 910}
+      },
+      "is_tameable": false
+    },
+    {
+      "id": "beast:bebe_marcheur",
+      "name": "Bébé Marcheur",
+      "biome": "desert",
+      "size": "moyen",
+      "behavior": "joueur",
+      "danger_level": 2,
+      "harvest": {
+        "meat": {"id": "viande_lourde", "name": "Viande lourde de marcheur", "base_qty": 5, "oq": 650, "nutrition": 80},
+        "hide": {"id": "cuir_epais_dunes", "name": "Cuir épais des dunes", "base_qty": 4, "oq": 700, "pe": 800},
+        "bone": {"id": "os_geants", "name": "Os géants", "base_qty": 2, "oq": 750, "ma": 800}
+      },
+      "is_tameable": true,
+      "taming_difficulty": 4,
+      "taming_skill_required": "prospecteur_faune_03",
+      "base_health": 400,
+      "base_damage": 15
+    },
+    {
+      "id": "beast:scorpion_titan",
+      "name": "Scorpion-Titan",
+      "biome": "desert",
+      "size": "grand",
+      "behavior": "embuscade",
+      "danger_level": 4,
+      "harvest": {
+        "meat": {"id": "chair_toxique", "name": "Chair toxique de titan", "base_qty": 6, "oq": 360, "nutrition": 20},
+        "hide": {"id": "chitine_titan", "name": "Chitine de titan", "base_qty": 8, "oq": 840, "pe": 910},
+        "bone": {"id": "aiguillon_venimeux", "name": "Aiguillon venimeux", "base_qty": 3, "oq": 890, "cd": 760}
+      },
+      "is_tameable": false
+    },
+    {
+      "id": "beast:serpent_sable",
+      "name": "Serpent de Sable",
+      "biome": "desert",
+      "size": "tres_grand",
+      "behavior": "sous_sable",
+      "danger_level": 5,
+      "is_boss": true,
+      "harvest": {
+        "meat": {"id": "chair_serpent_ancestral", "name": "Chair de serpent ancestral", "base_qty": 25, "oq": 930, "nutrition": 100},
+        "hide": {"id": "ecailles_dorees_antiques", "name": "Écailles dorées antiques", "base_qty": 18, "oq": 970, "pe": 960, "sr": 940},
+        "bone": {"id": "vertebres_colossales", "name": "Vertèbres colossales", "base_qty": 12, "oq": 950, "ma": 960}
+      },
+      "is_tameable": false
+    }
+  ]
+}
+

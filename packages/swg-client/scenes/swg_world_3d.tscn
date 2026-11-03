@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://swg_world_3d_main"]
+
+[ext_resource type="Script" path="res://scripts/swg_world_3d.gd" id="1_world"]
+
+[node name="SwgWorld3D" type="Node3D"]
+script = ExtResource("1_world")
+

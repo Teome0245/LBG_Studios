@@ -58,9 +58,34 @@ func unhandled_input(event: InputEvent) -> void:
 				main._focus_bot("Nix")
 			KEY_F3:
 				main._focus_bot("Mira")
+			KEY_C:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_character_sheet and main.swg_character_sheet.has_method("toggle"):
+					main.swg_character_sheet.toggle()
+			KEY_D:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_datapad_panel and main.swg_datapad_panel.has_method("toggle"):
+					main.swg_datapad_panel.toggle()
+			KEY_B:
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_bazaar_panel and main.swg_bazaar_panel.has_method("toggle"):
+					main.swg_bazaar_panel.toggle()
 			KEY_H:
-				if main.quest_ops:
+				if event.is_command_or_control_pressed():
+					if main.has_method("_ensure_swg_ui"):
+						main._ensure_swg_ui()
+					if main.swg_structure_panel and main.swg_structure_panel.has_method("toggle"):
+						main.swg_structure_panel.toggle()
+				elif main.quest_ops:
 					main.quest_ops.toggle_echo_hammat()
+				else:
+					if main.has_method("_ensure_swg_ui"):
+						main._ensure_swg_ui()
+					if main.swg_structure_panel and main.swg_structure_panel.has_method("toggle"):
+						main.swg_structure_panel.toggle()
 			KEY_R:
 				if main.net_world:
 					main.net_world.focus_lost_heaven_hub()
@@ -122,7 +147,23 @@ func unhandled_input(event: InputEvent) -> void:
 					hub_chat_input.text = ""
 					main.get_viewport().set_input_as_handled()
 					return
-				if main._game_menu and main._game_menu.get("visible") and main._game_menu.has_method("close_menu"):
+				if main.swg_radial_menu and main.swg_radial_menu.visible:
+					main.swg_radial_menu.close_menu()
+				elif main.swg_character_sheet and main.swg_character_sheet.visible:
+					main.swg_character_sheet.close_panel()
+				elif main.swg_datapad_panel and main.swg_datapad_panel.visible:
+					main.swg_datapad_panel.close_panel()
+				elif main.swg_bazaar_panel and main.swg_bazaar_panel.visible:
+					main.swg_bazaar_panel.close_panel()
+				elif main.swg_structure_panel and main.swg_structure_panel.visible:
+					main.swg_structure_panel.close_panel()
+				elif main.swg_skills_panel and main.swg_skills_panel.visible:
+					main.swg_skills_panel.close_panel()
+				elif main.swg_survey_panel and main.swg_survey_panel.visible:
+					main.swg_survey_panel.close_panel()
+				elif main.swg_experiment_panel and main.swg_experiment_panel.visible:
+					main.swg_experiment_panel.close_panel()
+				elif main._game_menu and main._game_menu.get("visible") and main._game_menu.has_method("close_menu"):
 					main._game_menu.close_menu()
 				elif main._mission_board and main._mission_board.get("visible") and main._mission_board.has_method("toggle"):
 					main._mission_board.toggle()

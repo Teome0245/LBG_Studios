@@ -312,6 +312,8 @@ func _ensure_ui() -> void:
 	vbox.add_child(hdr)
 
 	var buttons := [
+		{"k": "character", "lbl": "👤 Fiche Perso HAM [C]"},
+		{"k": "datapad", "lbl": "📟 Datapad & PCD [P]"},
 		{"k": "skills", "lbl": "◈ Compétences [K]"},
 		{"k": "survey", "lbl": "◎ Prospection [U]"},
 		{"k": "experiment", "lbl": "⚙ Expérimenter [X]"},
@@ -346,8 +348,8 @@ func _reposition_dock() -> void:
 	var vp := get_viewport_rect().size
 	if vp.x < 400.0:
 		vp = Vector2(1280, 720)
-	# Positionné en bas à droite de l'écran (tenant compte des 9 boutons)
-	_sys_dock.position = Vector2(vp.x - 166.0 - position.x, vp.y - 258.0 - position.y)
+	# Positionné en bas à droite de l'écran (tenant compte des 11 boutons)
+	_sys_dock.position = Vector2(vp.x - 166.0 - position.x, vp.y - 308.0 - position.y)
 	if _canvas_draw:
 		_canvas_draw.size = Vector2(vp.x, 220.0)
 

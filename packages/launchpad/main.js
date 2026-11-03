@@ -121,6 +121,22 @@ function defaultProfiles() {
         { id: 'prime', label: 'LBG MMO Serveur', ip: PRIME_HOST_LAN, loginPort: 44553 },
       ],
     },
+    {
+      id: 'swg-3d',
+      label: 'SWG Pre-CU 3D (Godot)',
+      clientKind: 'godot',
+      gameDir: 'J:\\swgemu\\clients\\swg-client',
+      gameExe: DEFAULT_GODOT_EXE,
+      configFile: '',
+      patchChannel: 'swg-3d',
+      skipPatch: true,
+      godotPatchEnabled: false,
+      godotFullscreen: false,
+      launchArgs: ['--path', 'J:\\swgemu\\clients\\swg-client'],
+      servers: [
+        { id: 'swg-3d', label: 'SWG 3D Hub (Lost Heaven)', ip: PRIME_HOST_LAN, loginPort: 8787 },
+      ],
+    },
   ];
 }
 
@@ -160,7 +176,7 @@ function stripPrecuProfiles(cfg) {
     cfg.profiles = defaultProfiles();
     changed = true;
   }
-  if (cfg.defaultProfileId !== 'prime') {
+  if (cfg.defaultProfileId !== 'prime' && cfg.defaultProfileId !== 'swg-3d') {
     cfg.defaultProfileId = 'prime';
     changed = true;
   }

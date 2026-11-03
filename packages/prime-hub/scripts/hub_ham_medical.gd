@@ -187,11 +187,12 @@ func treat_wounds(
 			"error": "missing_medic_skill",
 			"requires_skill": "medecin_novice",
 		}
-	if not in_medcenter:
+	var is_field_kit := medpack_item_id.strip_edges() in ["baume_urgence_terrain", "bandage_antivenin"]
+	if not in_medcenter and not is_field_kit:
 		return {
 			"ok": false,
 			"error": "not_in_medcenter",
-			"hint": "Le traitement lourd des blessures (Wounds) requiert la proximité du Poste Médical (Odo Merr).",
+			"hint": "Le traitement des blessures en milieu hostile requiert un baume d'urgence ou le Poste Médical (Odo Merr).",
 		}
 
 	var target_bar := pool_name.strip_edges().to_lower()
@@ -225,6 +226,8 @@ func treat_wounds(
 	var old_wounds := int(bar.get("wounds", 0))
 	var cured := mini(old_wounds, maxi(10, raw_cure))
 	bar["wounds"] = maxi(0, old_wounds - cured)
+	if is_field_kit:
+		ham["battle_fatigue"] = maxi(0, int(ham.get("battle_fatigue", 0)) - 25)
 
 	_ensure_ham(patient)
 	bar["current"] = int(bar["effective_max"])

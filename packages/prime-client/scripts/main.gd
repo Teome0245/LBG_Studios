@@ -36,6 +36,10 @@ const _SwgRadialMenuScript = preload("res://scripts/swg_radial_menu.gd")
 const _SwgSkillsPanelScript = preload("res://scripts/swg_skills_panel.gd")
 const _SwgSurveyPanelScript = preload("res://scripts/swg_survey_panel.gd")
 const _SwgExperimentPanelScript = preload("res://scripts/swg_experiment_panel.gd")
+const _SwgDatapadPanelScript = preload("res://scripts/swg_datapad_panel.gd")
+const _SwgCharacterSheetScript = preload("res://scripts/swg_character_sheet.gd")
+const _SwgBazaarPanelScript = preload("res://scripts/swg_bazaar_panel.gd")
+const _SwgStructurePanelScript = preload("res://scripts/swg_structure_panel.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
@@ -47,6 +51,10 @@ var swg_radial_menu: Node = null
 var swg_skills_panel: Node = null
 var swg_survey_panel: Node = null
 var swg_experiment_panel: Node = null
+var swg_datapad_panel: Node = null
+var swg_character_sheet: Node = null
+var swg_bazaar_panel: Node = null
+var swg_structure_panel: Node = null
 var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
@@ -267,6 +275,22 @@ func _ensure_swg_ui() -> void:
 		swg_experiment_panel = _SwgExperimentPanelScript.new()
 		swg_experiment_panel.name = "SwgExperimentPanel"
 		modal_layer.add_child(swg_experiment_panel)
+	if modal_layer and swg_datapad_panel == null:
+		swg_datapad_panel = _SwgDatapadPanelScript.new()
+		swg_datapad_panel.name = "SwgDatapadPanel"
+		modal_layer.add_child(swg_datapad_panel)
+	if modal_layer and swg_character_sheet == null:
+		swg_character_sheet = _SwgCharacterSheetScript.new()
+		swg_character_sheet.name = "SwgCharacterSheet"
+		modal_layer.add_child(swg_character_sheet)
+	if modal_layer and swg_bazaar_panel == null:
+		swg_bazaar_panel = _SwgBazaarPanelScript.new()
+		swg_bazaar_panel.name = "SwgBazaarPanel"
+		modal_layer.add_child(swg_bazaar_panel)
+	if modal_layer and swg_structure_panel == null:
+		swg_structure_panel = _SwgStructurePanelScript.new()
+		swg_structure_panel.name = "SwgStructurePanel"
+		modal_layer.add_child(swg_structure_panel)
 	if _swg_action_http == null:
 		_swg_action_http = HTTPRequest.new()
 		_swg_action_http.name = "SwgActionHttp"
@@ -277,6 +301,12 @@ func _ensure_swg_ui() -> void:
 func _on_swg_quick_panel_requested(panel_key: String) -> void:
 	_ensure_swg_ui()
 	match panel_key:
+		"character", "sheet":
+			if swg_character_sheet and swg_character_sheet.has_method("toggle"):
+				swg_character_sheet.toggle()
+		"datapad":
+			if swg_datapad_panel and swg_datapad_panel.has_method("toggle"):
+				swg_datapad_panel.toggle()
 		"skills":
 			if swg_skills_panel and swg_skills_panel.has_method("toggle"):
 				swg_skills_panel.toggle()
@@ -300,16 +330,22 @@ func _on_swg_quick_panel_requested(panel_key: String) -> void:
 			if map_panel and map_panel.has_method("toggle_map"):
 				map_panel.call("toggle_map")
 		"vendors":
-			var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
-			_hotbar_feedback("Datapad : Consultation du Réseau Commercial & Bazar...")
-			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-				_swg_action_http.request(base_url.rstrip("/") + "/v1/bazaar/browse?category=all&limit=5", [], HTTPClient.METHOD_GET)
+			if swg_bazaar_panel and swg_bazaar_panel.has_method("toggle"):
+				swg_bazaar_panel.toggle()
+			else:
+				var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+				_hotbar_feedback("Datapad : Consultation du Réseau Commercial & Bazar...")
+				if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+					_swg_action_http.request(base_url.rstrip("/") + "/v1/bazaar/browse?category=all&limit=5", [], HTTPClient.METHOD_GET)
 		"housing":
-			var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
-			var p_name := _local_character_name if not _local_character_name.is_empty() else _HubRuntimeCfg.player_name("Voyageur")
-			_hotbar_feedback("Datapad : Registre Foncier & Villes de Joueurs...")
-			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-				_swg_action_http.request(base_url.rstrip("/") + "/v1/housing/structures?owner=" + p_name.uri_encode(), [], HTTPClient.METHOD_GET)
+			if swg_structure_panel and swg_structure_panel.has_method("toggle"):
+				swg_structure_panel.toggle()
+			else:
+				var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+				var p_name := _local_character_name if not _local_character_name.is_empty() else _HubRuntimeCfg.player_name("Voyageur")
+				_hotbar_feedback("Datapad : Registre Foncier & Villes de Joueurs...")
+				if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+					_swg_action_http.request(base_url.rstrip("/") + "/v1/housing/structures?owner=" + p_name.uri_encode(), [], HTTPClient.METHOD_GET)
 
 
 func _handle_world_right_click(screen_pos: Vector2) -> void:

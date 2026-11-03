@@ -8,8 +8,8 @@
   "poi": "cantina",
   "action": "trade/offer",
   "bounds": {
-    "price_delta_pct_max": 15,
-    "price_delta_pct_max_low_rep": 8,
+    "price_delta_pct_max": 20,
+    "price_delta_pct_max_low_rep": 10,
     "reputation_delta_min": -5,
     "reputation_delta_max": 5,
     "low_reputation_threshold": 0,
@@ -29,6 +29,13 @@
       "list_price": 8,
       "currency": "credits",
       "item_id": "drink_eau_filtree"
+    },
+    {
+      "sku_id": "part:used_capacitor",
+      "label": "Condensateur usé",
+      "list_price": 12,
+      "currency": "credits",
+      "item_id": "used_capacitor"
     }
   ]
 }

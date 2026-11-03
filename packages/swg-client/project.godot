@@ -1,0 +1,76 @@
+; Engine configuration file for swg-client (Godot 4.6 3D TPS).
+; Reproduction fidèle de Star Wars Galaxies (Pre-CU) en 3D libre TPS.
+
+config_version=5
+
+[application]
+
+config/name="SWG Pre-CU Client 3D"
+config/description="Clone authentique de Star Wars Galaxies (Pre-CU) en Godot 4 — Caméra TPS, HAM 9-stats, Housing libre, Villes, Métiers"
+config/version="1.0.0"
+run/main_scene="res://scenes/swg_world_3d.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[input]
+
+move_forward={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":90), ; Z
+	Object(InputEventKey,"keycode":87), ; W
+	Object(InputEventKey,"keycode":4194320) ; Up
+]
+}
+move_backward={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":83), ; S
+	Object(InputEventKey,"keycode":4194322) ; Down
+]
+}
+move_left={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":81), ; Q
+	Object(InputEventKey,"keycode":65), ; A
+	Object(InputEventKey,"keycode":4194319) ; Left
+]
+}
+move_right={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":68), ; D
+	Object(InputEventKey,"keycode":4194321) ; Right
+]
+}
+jump={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":32) ; Space
+]
+}
+posture_kneel={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":88) ; X
+]
+}
+posture_prone={
+"deadzone": 0.5,
+"events": [
+	Object(InputEventKey,"keycode":87) ; W / Prone
+]
+}
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+anti_aliasing/quality/msaa_3d=2
+

@@ -26,6 +26,11 @@ Modèles attendus (matrice locale) :
 - `.110` : `huihui_ai/Qwen3.8-abliterated:27b`, `gemma4:e2b`
 - `.111` : `qwen2.5:3b`, `llama3.2:3b`
 
+## Mises à jour
+
+- **Automatiques** : un conteneur dédié `lbg-open-webui-watchtower` surveille et met à jour uniquement `lbg-open-webui` toutes les 24h avec nettoyage auto (`--cleanup`) des anciennes images pour préserver l'espace disque de la VM `.100`.
+- **Manuelle** : relancer `bash packages/cortex/infra/open_webui/deploy_100.sh`.
+
 ## Arrêt
 
 ```bash

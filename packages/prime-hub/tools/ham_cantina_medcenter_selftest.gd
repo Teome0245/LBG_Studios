@@ -18,9 +18,10 @@ func _init() -> void:
 	var ham_med := HubHamMedicalScript.new()
 	ham_med.setup(economy, skills)
 
-	var fighter := "Kael_Fighter_%d" % (Time.get_ticks_msec() % 100000)
-	var dancer := "Lia_Dancer_%d" % (Time.get_ticks_msec() % 100000)
-	var medic := "Odo_Medic_%d" % (Time.get_ticks_msec() % 100000)
+	var ts := int(Time.get_unix_time_from_system() * 1000.0) + (Time.get_ticks_msec() % 10000)
+	var fighter := "Kael_Fighter_%d" % ts
+	var dancer := "Lia_Dancer_%d" % ts
+	var medic := "Odo_Medic_%d" % ts
 
 	skills.learn_box(dancer, "scene_novice", true)
 	skills.learn_box(dancer, "scene_soin_01", true)

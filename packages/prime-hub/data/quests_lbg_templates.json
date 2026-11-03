@@ -423,6 +423,35 @@
         "Prélever des sèves et racines dans les dunes environnantes.",
         "Remettre la cueillette pour préparer les filtres médicaux."
       ]
+    },
+    {
+      "id": "lh_recon_ksar_ouest",
+      "title": "Piste Ouest vers le Ksar Nomade",
+      "template": "recon",
+      "keywords": ["reconnaissance", "ouest", "ksar", "piste", "nomade", "porte", "dunes", "caravane"],
+      "giver_roles": ["scout_trainer", "quest_giver"],
+      "giver_ids": ["npc:core3_daan_oth", "npc:core3_scout_trainer_c"],
+      "default_giver": "Daan Oth",
+      "objective": "Ouvrir une piste sécurisée vers l'ouest : franchir la Porte Ouest, rallier le Ksar Nomade à travers les dunes, et consigner le tracé au Bureau des Missions.",
+      "rewards": {
+        "credits": 35,
+        "xp": {"xp_prospection": 50, "xp_quartier": 25},
+        "items": [
+          {"id": "ration_compacte", "qty": 1},
+          {"id": "water_capsule", "qty": 1}
+        ]
+      },
+      "progress": [
+        {"id": "gate_west", "label": "Franchir la Porte Ouest de Lost Heaven", "poi": "poi:lost_heaven_gate_west", "radius_m": 80},
+        {"id": "ksar", "label": "Atteindre l'enceinte du Ksar Nomade", "poi": "poi:ksar_nomade", "radius_m": 120},
+        {"id": "return", "label": "Consigner le rapport à Daan Oth au bureau", "poi": "poi:lost_heaven_mission_post", "radius_m": 50}
+      ],
+      "next_steps": [
+        "Accepter la mission de reconnaissance auprès de Daan Oth.",
+        "Sortir de Lost Heaven par la Porte Ouest.",
+        "Suivre les balises des caravanes jusqu'au Ksar Nomade.",
+        "Revenir faire valider la route au Bureau des Missions."
+      ]
     }
   ]
 }

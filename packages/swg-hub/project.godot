@@ -1,0 +1,28 @@
+; Engine configuration file for swg-hub (Godot 4.6 headless server authority).
+; Serveur de jeu autoritaire pour SWG Pre-CU 3D.
+
+config_version=5
+
+[application]
+
+config/name="SWG Pre-CU Hub Server"
+config/description="Serveur autoritaire SWG Pre-CU (Headless Godot 4) — Physique 3D, HAM, Vendeurs, Housing, Faune"
+config/version="1.0.0"
+run/main_scene="res://scenes/swg_server_main.tscn"
+config/features=PackedStringArray("4.6", "Forward Plus")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/mode=0
+
+[network]
+
+limits/websocket/max_in_buffer_kb=16384
+limits/websocket/max_out_buffer_kb=16384
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+
