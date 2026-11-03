@@ -1,0 +1,5 @@
+node_modules/
+FBX2glTF-*
+*.fbx
+*.vrma
+

@@ -424,6 +424,10 @@ func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 
 	if sim.economy != null and sim.economy.has_method("grant_world_loot"):
 		sim.economy.grant_world_loot(player, loot, credits)
 	var who := player if not player.is_empty() else "Voyageur"
+	var corpse_info := {}
+	if sim != null and "creatures" in sim and sim.creatures != null:
+		var death_pos = Vector3(hx, 0.15, hz)
+		corpse_info = sim.creatures.create_corpse(beast_id, name, death_pos, who, zone_id)
 	var is_boss := bool(best.get("is_boss", false))
 	_stream(
 		"beast.defeated",
@@ -442,6 +446,7 @@ func engage_nearest_beast(player: String, x: float, z: float, radius_m: float = 
 		"zone_id": zone_id,
 		"distance_m": snappedf(best_d, 0.1),
 		"loot": loot,
+		"corpse": corpse_info,
 		"credits_gained": credits,
 		"respawn_s": delay,
 		"beast_count": beast_count(),

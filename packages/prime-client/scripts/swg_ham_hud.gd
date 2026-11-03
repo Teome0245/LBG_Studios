@@ -24,6 +24,8 @@ var _target_name: String = ""
 var _target_kind: String = ""
 var _target_dist_m: float = -1.0
 var _posture_label: String = "Debout"
+var _combat_posture: String = "upright"
+var _combat_statuses: Dictionary = {}
 
 var _http: HTTPRequest = null
 var _poll_timer: float = 0.0
@@ -166,6 +168,43 @@ class _SwgHamCanvas extends Control:
 		_draw_swg_bar(Rect2(62, 37, 206, 13), ba.current, ba.base_max, ba.wounds, ba.buff, ba.fill_color, "A")
 		_draw_swg_bar(Rect2(62, 53, 206, 13), bm.current, bm.base_max, bm.wounds, bm.buff, bm.fill_color, "E")
 
+		# Posture et Statuts Tactiques SWG (sous le cadre HAM)
+		var post_str: String = owner_hud._posture_label.to_upper()
+		var post_col := Color(0.24, 0.88, 0.98, 0.95)
+		if owner_hud._combat_posture == "kneeling":
+			post_col = Color(0.98, 0.85, 0.25, 0.95)
+		elif owner_hud._combat_posture == "prone":
+			post_col = Color(0.95, 0.35, 0.25, 0.95)
+
+		var bx := 282.0
+		var by := 6.0
+		# Badge Posture
+		draw_rect(Rect2(bx, by, 72, 18), Color(0.02, 0.12, 0.16, 0.92), true)
+		draw_rect(Rect2(bx, by, 72, 18), post_col, false, 1.2)
+		if font:
+			draw_string(font, Vector2(bx + 4, by + 13), post_str, HORIZONTAL_ALIGNMENT_CENTER, 64, 8, post_col)
+
+		# Badges Statuts Combat Actifs (Dizzy, Knockdown, Stun, Blind, Intimidate)
+		var stat_keys := ["knockdown", "stun", "dizzy", "blind", "intimidate"]
+		var stat_colors := {
+			"knockdown": Color(0.98, 0.32, 0.18, 1.0),
+			"stun": Color(0.92, 0.15, 0.15, 1.0),
+			"dizzy": Color(0.95, 0.84, 0.22, 1.0),
+			"blind": Color(0.65, 0.65, 0.75, 1.0),
+			"intimidate": Color(0.72, 0.35, 0.95, 1.0),
+		}
+		var sx := bx
+		var sy := by + 22.0
+		for sk in stat_keys:
+			if owner_hud._combat_statuses.has(sk) and float(owner_hud._combat_statuses[sk]) > 0.0:
+				var col: Color = stat_colors.get(sk, Color.WHITE)
+				draw_rect(Rect2(sx, sy, 72, 16), Color(0.08, 0.02, 0.02, 0.94), true)
+				draw_rect(Rect2(sx, sy, 72, 16), col, false, 1.0)
+				if font:
+					var sk_lbl: String = str(sk).to_upper().substr(0, 8)
+					draw_string(font, Vector2(sx + 2, sy + 11), sk_lbl, HORIZONTAL_ALIGNMENT_CENTER, 68, 8, col)
+				sy += 18.0
+
 		# 2. Mini-cadres Groupe sous le joueur (comme sur le screenshot 1 SWG)
 		_draw_group_member(78.0, "Nix · Escorte", "6m", 0.96, 0.88, 0.94)
 		_draw_group_member(118.0, "Lia · La Perle", "14m", 1.0, 0.92, 1.0)
@@ -278,6 +317,8 @@ func _ensure_ui() -> void:
 		{"k": "experiment", "lbl": "⚙ Expérimenter [X]"},
 		{"k": "inventory", "lbl": "🎒 Inventaire [I]"},
 		{"k": "talents", "lbl": "🛠 Artisanat [T]"},
+		{"k": "vendors", "lbl": "🏪 Bazar & Boutiques [B]"},
+		{"k": "housing", "lbl": "🏠 Propriétés & Villes [H]"},
 		{"k": "missions", "lbl": "📜 Missions [J]"},
 		{"k": "map", "lbl": "🗺 Carte [M]"},
 	]
@@ -305,8 +346,8 @@ func _reposition_dock() -> void:
 	var vp := get_viewport_rect().size
 	if vp.x < 400.0:
 		vp = Vector2(1280, 720)
-	# Positionné en bas à droite de l'écran (tenant compte de l'offset (12,12) du HUD)
-	_sys_dock.position = Vector2(vp.x - 166.0 - position.x, vp.y - 208.0 - position.y)
+	# Positionné en bas à droite de l'écran (tenant compte des 9 boutons)
+	_sys_dock.position = Vector2(vp.x - 166.0 - position.x, vp.y - 258.0 - position.y)
 	if _canvas_draw:
 		_canvas_draw.size = Vector2(vp.x, 220.0)
 
@@ -363,11 +404,33 @@ func apply_ham_payload(payload: Dictionary) -> void:
 
 
 func set_posture(posture_name: String) -> void:
-	_posture_label = posture_name.strip_edges()
+	var raw := posture_name.strip_edges().to_lower()
+	if raw in ["kneeling", "accroupi"]:
+		_combat_posture = "kneeling"
+		_posture_label = "Accroupi"
+	elif raw in ["prone", "couche", "couché"]:
+		_combat_posture = "prone"
+		_posture_label = "Couché"
+	else:
+		_combat_posture = "upright"
+		_posture_label = "Debout"
+
 	if _portrait_3d and _bar_health:
 		var total_cap := float(maxi(1, _bar_health.base_max + _bar_health.buff - _bar_health.wounds))
 		var h_ratio := float(_bar_health.current) / total_cap
 		_portrait_3d.update_ham_state(h_ratio, int(_ham.get("battle_fatigue", 0)), _posture_label)
+	if _canvas_draw:
+		_canvas_draw.queue_redraw()
+
+
+func apply_combat_status(payload: Dictionary) -> void:
+	_ensure_ui()
+	if payload.has("posture"):
+		set_posture(str(payload["posture"]))
+	if payload.has("statuses") and typeof(payload["statuses"]) == TYPE_DICTIONARY:
+		_combat_statuses = (payload["statuses"] as Dictionary).duplicate()
+	elif payload.has("active_statuses") and typeof(payload["active_statuses"]) == TYPE_DICTIONARY:
+		_combat_statuses = (payload["active_statuses"] as Dictionary).duplicate()
 	if _canvas_draw:
 		_canvas_draw.queue_redraw()
 

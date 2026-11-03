@@ -150,6 +150,18 @@ func _ensure_player_skill_state(player: String) -> Dictionary:
 	return p
 
 
+func has_box(player: String, box_id: String) -> bool:
+	var p := _ensure_player_skill_state(player)
+	if p.is_empty():
+		return false
+	var sk_list: Array = p.get("skills", [])
+	return box_id in sk_list or str(box_id) in sk_list
+
+
+func add_xp(player: String, xp_type: String, amount: int) -> Dictionary:
+	return grant_xp(player, xp_type, amount)
+
+
 func used_skill_points(player: String) -> int:
 	var p := _ensure_player_skill_state(player)
 	if p.is_empty():

@@ -48,6 +48,9 @@ const DEFAULT_CONFIG = {
     wanderPauseMs: 45000,
     /** Guide vers fenêtre / icônes (px/s) */
     guideSpeed: 220,
+    /** Mode fantôme : clics traversants (VSeeFace canon) */
+    clickThrough: false,
+    clickThroughHotkey: "CommandOrControl+Shift+F",
   },
   tray: { tooltip: "LBG Compagnon" },
   /** D3 — initiatives (quota strict, jamais d'auto-exec) */
@@ -99,6 +102,7 @@ let lastNotifiedId = "";
 /** @type {import("http").IncomingMessage | null} */
 let sessionStreamReq = null;
 let sessionStreamRetry = null;
+let clickThrough = false;
 /** @type {ReturnType<typeof createAvatarBridge> | null} */
 let avatarBridge = null;
 /** @type {ReturnType<typeof setInterval> | null} */
@@ -309,6 +313,9 @@ function createOverlayWindow() {
   });
 
   overlayWindow.loadFile(path.join(__dirname, "overlay", "index.html"));
+  if (clickThrough) {
+    overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+  }
   return overlayWindow;
 }
 
@@ -895,10 +902,26 @@ async function rebuildTrayMenu() {
       submenu: posesSub,
     },
     {
+      label: "🎭 Spectacles & Shows (iStripper)",
+      submenu: [
+        { label: "✨ Show K-Pop Idol (~45s)", click: () => triggerShow("idol") },
+        { label: "🪩 Show Club Electro (~40s)", click: () => triggerShow("club") },
+        { label: "💃 Show Fiesta Latina (~40s)", click: () => triggerShow("latino") },
+        { type: "separator" },
+        { label: "⏹ Arrêter le spectacle", click: () => stopOverlayShow() },
+      ],
+    },
+    {
       label: "Modèles VRM (VRoid)",
       submenu: modelsSub,
     },
     { type: "separator" },
+    {
+      label: clickThrough ? "👻 Désactiver Mode Fantôme (clics actifs)" : "👻 Activer Mode Fantôme (clic traversant) [Ctrl+Shift+F]",
+      type: "checkbox",
+      checked: clickThrough,
+      click: () => setOverlayClickThrough(!clickThrough),
+    },
     {
       label: "Interactions bureau autonomes",
       type: "checkbox",
@@ -1433,6 +1456,16 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
         { label: "💫 Pirouette 360°", click: () => sendVrmPose("spin", 6000) },
       ],
     },
+    {
+      label: "🎭 Spectacles & Shows (iStripper)",
+      submenu: [
+        { label: "✨ Show K-Pop Idol (~45s)", click: () => triggerShow("idol") },
+        { label: "🪩 Show Club Electro (~40s)", click: () => triggerShow("club") },
+        { label: "💃 Show Fiesta Latina (~40s)", click: () => triggerShow("latino") },
+        { type: "separator" },
+        { label: "⏹ Arrêter le spectacle", click: () => stopOverlayShow() },
+      ],
+    },
     { type: "separator" },
     {
       label: "📐 Cadrage : Buste",
@@ -1448,6 +1481,12 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
     },
     { type: "separator" },
     {
+      label: clickThrough ? "👻 Désactiver Mode Fantôme" : "👻 Mode Fantôme (clic traversant) [Ctrl+Shift+F]",
+      type: "checkbox",
+      checked: clickThrough,
+      click: () => setOverlayClickThrough(!clickThrough),
+    },
+    {
       label: "🚶 Marche sur la barre des tâches",
       click: () => startWalkingMovement(8000),
     },
@@ -1459,6 +1498,56 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
 
   contextMenu.popup({ window: overlayWindow });
 });
+
+/** Mode Fantôme / Clic traversant (VSeeFace canon) */
+function setOverlayClickThrough(enable) {
+  clickThrough = !!enable;
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayWindow.setIgnoreMouseEvents(clickThrough, { forward: true });
+  overlayWindow.webContents.send("compagnon:click-through-changed", clickThrough);
+  rebuildTrayMenu().catch(() => {});
+  if (clickThrough) {
+    if (Notification.isSupported()) {
+      new Notification({
+        title: "Compagnon — Mode Fantôme",
+        body: "Clics traversants activés. Raccourci Ctrl+Shift+F (ou clic Tray) pour réactiver l'interaction.",
+        silent: true,
+      }).show();
+    }
+  }
+}
+
+function registerGhostShortcuts() {
+  const o = config.overlay || DEFAULT_CONFIG.overlay;
+  const hotkey = (o && o.clickThroughHotkey) || "CommandOrControl+Shift+F";
+  try {
+    const ok = globalShortcut.register(hotkey, () => {
+      setOverlayClickThrough(!clickThrough);
+    });
+    if (ok) {
+      console.log("[desktop] Hotkey Mode Fantôme (clic traversant) enregistré :", hotkey);
+    }
+  } catch (err) {
+    console.warn("[desktop] Erreur enregistrement hotkey ghost mode :", hotkey, err);
+  }
+}
+
+ipcMain.on("compagnon:set-click-through", (_e, enable) => setOverlayClickThrough(enable));
+ipcMain.handle("compagnon:get-click-through", () => clickThrough);
+
+/** Show Routine Manager (iStripper / vghd canon) */
+function triggerShow(routine = "idol") {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayWindow.webContents.send("compagnon:show-event", { action: "start", routine });
+}
+
+function stopOverlayShow() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayWindow.webContents.send("compagnon:show-event", { action: "stop" });
+}
+
+ipcMain.on("compagnon:start-show", (_e, routine) => triggerShow(routine));
+ipcMain.on("compagnon:stop-show", () => stopOverlayShow());
 
 /** Ticket 1.1 — Push-to-Talk / Voice-In (IPC & Raccourci Global) */
 ipcMain.on("compagnon:voice-trigger", () => {
@@ -1807,6 +1896,7 @@ if (!gotLock) {
     avatarBridge.start();
     showChat();
     registerVoiceShortcuts();
+    registerGhostShortcuts();
     startInitiativePolling();
     startSessionIslandStream();
     startFocusAwareness();

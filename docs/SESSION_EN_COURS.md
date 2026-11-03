@@ -1,27 +1,99 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-02  
+**Mis à jour** : 2026-11-03  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + Phase 4 SWG Pre-CU dans Lost Heaven + Launchpad v2.1.5 + Rendu 3D VRM — **100 % livré & validé CI**.
+**Fil** : canon O1/O2/O3 + SWG Pre-CU Soul (Séquence 4 ➔ 3 ➔ 2 ➔ 1) — **Séquence 100 % Achevée & Validée CI (4/4 Chantiers Livrés)**.
 
 ---
 
 ## Objectif actuel
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
-Travail produit : Compagnon D6 vert + hub Godot P3–P5 + Boucle Majeure SWG Pre-CU sans rouvrir le legacy.  
+Travail produit : Réimplémentation complète de « l'Âme de SWG » en Godot pur (`prime-hub` headless & `prime-client`) sur Lost Heaven.  
+Ordre de séquence validé : **4 (Faune / Scout / Creature Handler) ➔ 3 (Commerce / Vendeurs Joueurs / Usines) ➔ 2 (Housing Libre / Villes) ➔ 1 (Combat HAM / Postures)**.
 
-**Plan d'Évolutions Phase 4 — Boucle Majeure SWG Pre-CU ([`PLAN_EVOLUTIONS_PHASE4_SWG_PRECU.md`](PLAN_EVOLUTIONS_PHASE4_SWG_PRECU.md) — 100 % ACHEVÉ & VALIDÉ — 5/5 Tickets DONE)** :
-- [x] **Ticket 4.1** (O2) : Arbres de Compétences `Novice → 4×4 Boxes → Master` & Plafond `250 Skill Points` (`hub_skills.gd`, `catalog_skills.json`, `talents_craft_panel.gd`)
-- [x] **Ticket 4.2** (O2) : Prospection Dynamique (`Survey Tool`) & Spawns de Ressources à Statistiques `1..1000` (`OQ/CD/PE/MA/SR`) (`hub_survey.gd`, `resources_spawns_lh.json`)
-- [x] **Ticket 4.3** (O2) : Artisanat Profond : Assemblage Pondéré par Ressources & Phase d'Expérimentation (`hub_crafting.gd`)
-- [x] **Ticket 4.4** (O2) : Boucle Sociale & Médicale : Pools `HAM`, `Wounds` (Medcenter) & `Battle Fatigue` (Cantina La Perle) (`hub_ham_medical.gd`)
-- [x] **Ticket 4.5** (O2/O3) : Extracteurs de Terrain (`Harvesters`), Trémies `Hopper` & Arbitrage Autonome IA O3 (`hub_harvesters.gd`, `hub_bot_autonomy.gd`)
-- [x] **Ticket 4.6** (O2 Client 2D Top-Down) : Interface Joueur SWG Pre-CU & Refonte Monde Style Battlemap VTT / TTRPG (Téléportation Dev dans le radial menu, collision infranchissable des remparts/palissades pour Nix et les bots, désencombrement adaptatif des nameplates PNJ, remparts crénelés épais avec bastions d'angle, croissants de dunes barkhanes et rochers encrés avec ombres portées douces) dans `packages/prime-client` et `prime-hub`.
+**Chantiers « Âme de SWG Pre-CU »** :
+- [x] **Étape 4 (O2/O3) : Faune, Métier Scout & Domptage Creature Handler** :
+  - *Bestiaire Lost Heaven* : 9 espèces indexées dans `bestiaire_lh.json` (chacal doré, scarabée obsidien, fennec mirage, marcheur des dunes, chiot chacal, jeune scarabée, bébé marcheur, scorpion titan, serpent de sable) avec tables de dépeçage et paramètres de domptage.
+  - *Dépeçage Scout (Harvesting)* : Extraction sélective Viande (`Meat`), Peau/Cuir (`Hide`), Os (`Bone`) sur cadavres de bêtes fraîches avec bonus multiplicateur lié à la compétence `prospecteur_faune` (jusqu'à ×3.0 en Master), sécurité anti-duplication et attribution d'XP prospection.
+  - *Camps de Survie (Scout Camps)* : Déploiement d'abris de toile et camps de chasseurs dans les terres sauvages (rayon 15–30m, régénération HAM boostée ×1.5 à ×2.2, répulsion des prédateurs, interdiction intra-muros).
+  - *Camouflage d'odeur (Mask Scent)* : Dissimulation olfactive réduisant la détection des bêtes sauvages.
+  - *Creature Handler* : Domptage d'animaux juvéniles basé sur la portée, le jet de difficulté et la compétence, transformation en familier lié (`loyalty`, `hunger`, `health`), invocation terrain (`call_pet`), ordres tactiques (`follow`, `stay`, `attack`, `guard`), nourrissage (`feed_pet`) et stockage (`store_pet`).
+  - *Intégration & Tests* : Service `hub_creatures.gd`, câblage dans `hub_sim.gd`, `hub_combat.gd` et `hub_http.gd`, selftest `creatures_scout_selftest.gd` 100 % vert et intégré dans `tools/ci_godot_headless.sh`.
+- [x] **Étape 3 (O2/O3) : Commerce & Vendeurs Joueurs (Player Vendors) & Usines (Factories)** :
+  - *Player Vendors* : Déploiement de marchands PNJ personnalisés (caution 100 cr, espacement urbain ≥3m), gestion de stock SKU avec prix libres, descriptions et statistiques d'artisanat fidèles, transactions directes avec taxe commerciale de 5% reversée et coffre bancaire sécurisé pour encaissement par le propriétaire.
+  - *Usines de fabrication en série (Factories)* : Déploiement d'usines (équipement, consommables, structures), chargement de Schémas Manufacturés (*Manufacturing Schematics*) figeant les recettes et stats, trémies d'ingrédients et d'énergie, cycles de production en série et conditionnement automatique en Caisses Manufacturées (*Factory Crates*).
+  - *Bazar public & Bourse locale* : Panneau d'affichage public avec plafond de prix (max 20 000 cr pour préserver l'utilité des boutiques personnelles), frais d'inscription de 20 cr et transactions atomiques instantanées.
+  - *Intégration & Tests* : Service `hub_vendors_factories.gd`, câblage dans `hub_sim.gd` et `hub_http.gd`, selftest `vendors_factories_selftest.gd` 100 % vert et intégré à `tools/ci_godot_headless.sh`.
+- [x] **Étape 2 (O2/O3) : Housing Libre & Villes de Joueurs (Player Cities)** :
+  - *Housing Libre & Actes de Propriété* : Modèles de structures (`tente nomade`, `petite maison en pisé`, `bunker métallique moyen`, `cantina privée`, `hall de guilde`) avec empreinte physique, contrôle de distance urbaine (protection intra-muros Lost Heaven), détection et rejet des chevauchements de fondations.
+  - *Permissions & ACL* : Gestion fine des droits de propriété (`is_public`, liste d'administration, liste d'invités `entry_list`, bannissement strict `ban_list` avec expulsion automatique), et compte de maintenance pour éviter la dégradation.
+  - *Décoration Intérieure Libre* : Pose libre de meubles et trophées au sol (`local_x, local_y, local_z`, orientation `yaw`), micro-ajustement de déplacement et rotation, verrouillage anti-vol et reprise dans l'inventaire.
+  - *Cités de Joueurs & Municipalités* : Détection automatique des regroupements d'habitations (≥3 structures), élévation de rang civique (*Campement* ➔ *Hameau* ➔ *Village* ➔ *Bourgade* ➔ *Cité Métropolitaine*), organisation d'élections de maire par vote des résidents, fixation des impôts fonciers et commerciaux, et pose d'infrastructures civiques municipales (`shuttleport`, `cloning_facility`, etc.).
+  - *Intégration & Tests* : Service `hub_housing_cities.gd`, câblage dans `hub_sim.gd` et `hub_http.gd`, selftest `housing_cities_selftest.gd` 100 % vert et intégré à `tools/ci_godot_headless.sh`.
+- [x] **Étape 1 (O2) : Combat Tactique SWG (HAM Targeted Hits, Postures & Combos d'États)** :
+  - *Postures SWG* : États dynamiques `Upright`, `Kneeling` (+15% précision), `Prone` (+25% précision, -20% vulnérabilité distante, +35% dégâts reçus au corps-à-corps).
+  - *Ciblage des 3 pools HAM* : `Head Shot` (cible le Mental / Mind), `Leg Sweep` (cible l'Action, force Knockdown au sol), `Body Hit` (cible la Santé / Health). Incapacitation complète si l'un quelconque des 3 pools tombe à 0 !
+  - *Le Combo Fatal SWG Pre-CU* : État `Dizzy` (vertige) + `Knockdown` (au sol) interdisant strictement de se relever sans purger le vertige (`dizzy_fall`), état `Stun` (réduction d'armure de 50%), état `Blind` (malus de visée de 45%), état `Intimidate` (dégâts divisés par 2).
+  - *Encombrement d'Armure (Armor Encumbrance)* : Calcul en temps réel des pénalités d'armure sur les réserves Health, Action et Mind.
+  - *Intégration & Tests* : Service `hub_swg_combat.gd`, câblage dans `hub_sim.gd` et `hub_http.gd`, selftest `swg_combat_selftest.gd` 100 % vert et intégré à `tools/ci_godot_headless.sh`.
+- [x] **Connexions Client GUI & Autonomie O3 SWG Pre-CU (« Les deux » - Livré & Validé)** :
+  - *Client GUI (`packages/prime-client`)* :
+    - Menu Radial (`swg_radial_menu.gd`) : contextes pour cadavres (dépeçage viande/cuir/os), créatures (apprivoisement tame, attaque), familiers (ordres stay/follow, nourrissage, chenil), vendeurs (boutique, gestion stock/caisse), housing (entrer, droits ACL, maintenance, déco 3D) et terrain (campement scout, postures accroupi/couché/debout).
+    - HUD HAM (`swg_ham_hud.gd`) : badges de postures dynamiques et statuts de combat actifs (`DIZZY`, `KNOCKDOWN`, `STUN`, `BLIND`, `INTIMIDATE`), Datapad Système avec boutons *Bazar & Boutiques [B]* et *Propriétés & Villes [H]*.
+    - Raccordement réseau (`main.gd`) avec requêtes HTTP dédiées et retours hotbar instantanés.
+    - Selftest `client_modular_selftest.gd` 100% vert.
+  - *Autonomie Flotte IA O3 (`packages/prime-hub`)* :
+    - Arbitrage autonome complet dans `hub_bot_autonomy.gd` (`evaluate_swg_precu_priority`) : survie/campement en milieu hostile si blessé, dépeçage autonome de cadavres de faune, retrait bancaire de boutique, réapprovisionnement de maintenance foncière.
+    - Combat tactique IA (`evaluate_tactical_combat_step`) : choix de posture optimale (prone défensif si danger mortel, kneeling si tir/cible à terre) et combos tactiques (Leg Sweep knockdown, Head Shot sur cible au sol, Intimidate).
+    - Selftest `bot_autonomy_swg_selftest.gd` 100% vert et intégré dans la CI `tools/ci_godot_headless.sh`.
+    - CI complète Godot Headless (23/23 suites) 100% verte en 121s ; tests Cortex Backend (152/152) 100% verts ; Ruff linter All checks passed.
 
 **2026-11-02** :
+- **Séquence Utilisateur « 1 puis 2 » Déployée & Validée (Portrait 3D HUD SWG + Polish Textures Châssis VRM)** :
+  - **1. Volet 1 (O2 Prime Client) — Aperçu 3D Vivant dans l'encart HAM (Haut-Gauche)** :
+    - *Composant `SwgPortrait3D` (`SubViewportContainer` 48×48 px)* : Rendu 3D haute fidélité (96×96 suréchantillonné), caméra buste/visage calibrée (`_camera.current = true`, `fov: 34°`, 3/4 face), éclairage studio à trois points + `WorldEnvironment` avec lumière ambiante douce pour déboucher les ombres du visage.
+    - *Animations dynamiques & SAE* : Respiration idle oscillante, inclinaison subtile de la tête, clignement automatique des yeux (160ms toutes les 3.5 à 5s). Réaction en temps réel aux jauges HAM (expression faciale de détresse et pulsation d'alerte rouge sur la rim light si Santé < 25% ou fatigue critique).
+    - *Synchronisation & Déploiement* : Code `swg_portrait_3d.gd` et `swg_ham_hud.gd` injectés en direct sur `J:/swgemu/clients/prime-client/` sur le poste Windows `.10`. Patch client `2026-11-02T21:14:38Z` (272 fichiers) et bootstrap Launchpad publiés sur `.246:8080`.
+  - **2. Volet 2 (O1 Compagnon) — Polish Textures Châssis Androïde VRM (Pygmalion)** :
+    - *Texture Carrosserie & Châssis (`body_skin_android.png` 1024×1024)* : Intégration de la texture mecha complète avec plaques pectorales biseautées, chanfreins métalliques titane satiné, 19 473 pixels de liserés néon cyan actifs (`#00f5d4`), rotules mécaniques concentriques aux jointures et col mécanique à servomoteurs 360°.
+    - *Texture Visage (`face_skin_android.png`)* : Teint azur doux avec fines gravures cybernétiques et démarcations androïdes sous les orbites.
+    - *Injection binaire `Compagnon.vrm`* : Textures injectées directement dans les buffers d'images GLB du modèle VRM (Image 11 Body, Image 5 Face), permettant un affichage unifié sous Three.js et Godot sans dépendance de surcouche.
+    - *Déploiement Multi-Surfaces* :
+      * *Windows `.10` (Bureau RDP)* : Synchronisation locale `sync_vrm_desktop` vers `C:\Agent_IA\compagnon-desktop\overlay\vrm\` et relance interactive de l'overlay Electron (5 processus actifs en Session 1).
+      * *CT100 (`192.168.0.100`)* : Injection Docker de `body_skin_android.png`, `face_skin_android.png` et `Compagnon.vrm` dans `lbg-frontend:/usr/share/nginx/html/vrm/` (`:5174`).
+- **Implémentation Canons Super-Agent & Équipe Visuelle (Inspirations Pentiminax & Axial Studio / Blobs)** :
+  - **1. Super-Agent Event Filter & Routeur Étanche (Canon Pentiminax)** :
+    - *Service déterministe par code* : Création de `packages/cortex/backend/services/super_agent_filter.py` implémentant le `SuperAgentRouter`. Séparation hermétique entre le Routeur de médiation humaine et les Workers spécialisés (`code`, `game`, `studio`, `ops`).
+    - *Contextes étanches & zéro fuite* : Chaque worker dispose d'un contexte mémoire propre et borné sans pollution transversale.
+    - *Filtrage déterministe & assainissement* : Masquage automatique des secrets (`[REDACTED_SECRET]`), détection stricte des besoins d'approbation humaine (`requires_human_approval`) et priorisation (`CRITICAL`, `HIGH`, `NORMAL`, `LOW`) avant toute transmission au modèle ou à l'orchestrateur.
+    - *Endpoints Pilot Team* : Ajout de `GET /v1/pilot/team/super-agent/status` (synthèse temps réel des workers) et `POST /v1/pilot/team/super-agent/event` dans `packages/cortex/backend/api/v1/routes/pilot/team.py`.
+    - *Tests & Qualité* : Suite unitaire `backend/tests/test_super_agent_filter.py` (5 tests passants), enrichissement de `test_pilot_team.py`, 152/152 tests backend PASS, Ruff check 100 % vert.
+  - **2. Mini Agent Office & Boucle Interactive « They ask. You answer » (Canon Axial Studio / Blobs)** :
+    - *Team Bar dans l'Overlay Bureau* : Intégration dans `packages/compagnon-desktop/overlay/index.html` d'une barre d'équipe visuelle (`#team-bar`) avec puces d'agents réactives (`Lyra` Studio, `Cline` Code, `Hub` MMO .246) affichant leur statut via des pastilles lumineuses pulsantes (`idle`, `active`, `asking`).
+    - *Réactions expressives VRM & Lip-sync* : Dans `packages/compagnon-desktop/overlay/overlay.js`, lorsqu'un agent sollicite une validation (`session.approval_needed`), l'avatar adopte une pose de réflexion (`think`), exprime la requête via lip-sync vocal (`say("Cline demande ton arbitrage")`) et met en surbrillance la puce de l'agent.
+    - *Arbitrage interactif* : Au clic sur `Allow`, l'avatar confirme d'une pose d'approbation (`approve`) avec expression joyeuse (`happy`) et confirmation vocale (`say("C'est validé !")`). Au clic sur `Deny`, il croise les bras (`crossArms`) avec expression sobre (`tense`).
+  - **3. Mode Fantôme & Clic Traversant (Inspiration VSeeFace / Desktop Click-Through)** :
+    - *Passage transparent des clics* : Implémentation de `setIgnoreMouseEvents(clickThrough, { forward: true })` dans `packages/compagnon-desktop/main.js` pour permettre de cliquer au travers de l'avatar et d'interagir directement avec ses fenêtres (IDE, navigateur) sans interférence.
+    - *Raccourci Global & Bascule Rapide* : Raccourci global `Ctrl+Shift+F` (`CommandOrControl+Shift+F`) enregistrable via `registerGhostShortcuts()`, entrée dédiée dans le menu contextuel clic-droit et dans le menu de la barre des tâches (Tray).
+    - *Feedback visuel* : Classes `mode-ghost` dans l'overlay avec lueur cyan douce et statut textuel `👻 Mode Fantôme (Ctrl+Shift+F)` informant l'utilisateur. IPC `setClickThrough` et `onClickThroughChanged` exposés dans `preload.js`.
+  - **4. Séquenceur de Spectacle Continu `ShowRoutineManager` (Inspiration iStripper / vghd.exe)** :
+    - *Routines continues multi-danses* : Implémentation dans `packages/compagnon-desktop/overlay/vrm/vrm_pet.js` du moteur de spectacle enchaînant fluidement chorégraphies mocap (`dance.vrma`, `samba.vrma`, `disco.vrma`, `robot.vrma`, `spin.vrma`), poses clés (`fingerHeart`, `wave`, `bow`), expressions faciales et répliques vocales lip-sync (`say(...)`).
+    - *Trois shows intégrés* : `Show K-Pop Idol (~45s)`, `Show Club Electro (~40s)` et `Show Fiesta Latina (~40s)`.
+    - *Éclairage de scène dynamique (Show FX)* : 2 projecteurs Three.js colorés (Cyan néon `#00f5d4` & Magenta néon `#ff007f`) pulsant au rythme de la musique et s'éteignant en fondu à la fin de la routine.
+    - *Menus & Déclenchement direct* : Entrée dédiée `🎭 Spectacles & Shows (iStripper)` dans le menu clic-droit sur l'avatar et dans le menu Tray de la barre des tâches, avec option d'arrêt immédiat.
+    - *Déploiement live Windows SDS `.10`* : Bundle recompilé avec `esbuild` (`vrm_pet.bundle.js` 2.2 Mo), déployé via `Agent_IA` et Electron redémarré en Session 1 (5 processus actifs).
+  - **5. Polish & Stabilisation Spectacles & Mode Fantôme (Correction Dérive & Opacité)** :
+    - *Verrouillage In-Place des Danses (Root Motion Lock)* : Correction dans `packages/compagnon-desktop/overlay/vrm/vrm_pet.js` (fonction `loadVRMA`). La dérive latérale (axe X pouvant atteindre +1.16m dans certains clips Mixamo) et en profondeur (axe Z) est désormais neutralisée à 0 pour toute animation de danse. L'axe Y est harmonisé autour de la hauteur de repos naturelle (`restHipsY`) avec rebond maîtrisé (`* 0.45`). L'avatar ne dérive plus et ne peut plus jamais sortir de son cadre.
+    - *Réinitialisation Propre des Poses & Pas de Figeage en l'Air* : Dans `playVRMA`, `clampWhenFinished` est passé à `false` pour éviter que les sauts restent bloqués sur la dernière frame suspendue. Dans `stopVRMA` et à la fin des spectacles (`endShow`), appel systématique à `vrm.humanoid.resetNormalizedPose()` garantissant que l'avatar retombe instantanément les deux pieds sur terre au repos.
+    - *Cadrage Caméra Inébranlable* : Dans `frameVrm`, la visée de la caméra corps entier est verrouillée au centre absolu (`targetCamPos.set(0, lookY, dist)` et `targetLookAt.set(0, lookY, 0)`).
+    - *Mode Fantôme 100 % Opaque* : Dans `packages/compagnon-desktop/overlay/index.html`, passage de `body.mode-ghost` à `opacity: 1 !important; pointer-events: none !important;`. L'avatar reste parfaitement solide et net à l'écran, sans aucune transparence délavée, tout en laissant passer tous les clics de souris vers le bureau et les fenêtres arrière.
+    - *Déploiement Live Windows `.10`* : Bundle réédité avec esbuild (2.2 Mo), uploadé sur `C:\Agent_IA\compagnon-desktop\overlay\` via l'API `:5005`, et overlay Electron redémarré avec succès.
+  - **6. Pipeline de Conversion Automatisée de Nouvelles Danses (`FBX` -> `.vrma`)** :
+    - *Outil `tools/convert_fbx_to_vrma.sh` & `tools/fbx2vrma/`* : Intégration du moteur de conversion Mixamo/DeepMotion FBX vers VRMA 1.0 officiel (52 os humanoïdes, 30 os de doigts, suppression des échelles et translations non-hips non conformes, GLB binaire).
+    - *Conversion Unitaire & Batch* : Supporte aussi bien un fichier unique (`./tools/convert_fbx_to_vrma.sh ma_danse.fbx`) qu'un dossier complet (`./tools/convert_fbx_to_vrma.sh ~/dossier_danses/ --deploy`). Copie automatique dans `compagnon-desktop` et `compagnon_ui` + option de synchronisation directe sur le frontend CT100 (`:5174`).
 - **Correction Urbanisme Remparts Lost Heaven & POI Hors Enceinte** :
   - *Bâtiments à cheval sur les remparts replacés à l'intérieur* :
     - `Logements N` (`poi:lost_heaven_lodge_n`) : replacé de `z: -370.0` à `z: -430.0` (au lieu de couper le rempart Nord à `-358.3`, il est désormais bien en retrait à l'intérieur avec une rue dégagée).

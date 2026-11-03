@@ -101,4 +101,24 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
   getFocusContext: () => ipcRenderer.invoke("compagnon:get-focus-context"),
   showOverlayContextMenu: () => ipcRenderer.send("compagnon:show-overlay-context-menu"),
   pokeAvatar: () => ipcRenderer.send("compagnon:poke-avatar"),
+  /** Mode fantôme / Clic traversant */
+  setClickThrough: (enable) => ipcRenderer.send("compagnon:set-click-through", enable),
+  getClickThrough: () => ipcRenderer.invoke("compagnon:get-click-through"),
+  onClickThroughChanged: (cb) => {
+    ipcRenderer.on("compagnon:click-through-changed", (_e, active) => {
+      try {
+        cb(active);
+      } catch (_) {}
+    });
+  },
+  /** Show Routine Manager (iStripper / vghd canon) */
+  startShow: (routine) => ipcRenderer.send("compagnon:start-show", routine),
+  stopShow: () => ipcRenderer.send("compagnon:stop-show"),
+  onShowEvent: (cb) => {
+    ipcRenderer.on("compagnon:show-event", (_e, payload) => {
+      try {
+        cb(payload);
+      } catch (_) {}
+    });
+  },
 });

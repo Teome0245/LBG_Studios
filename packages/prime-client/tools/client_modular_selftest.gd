@@ -106,8 +106,14 @@ func _init() -> void:
 	assert(ham_hud._bar_health.wounds == 150 and ham_hud._bar_mind.buff == 300, "Barres HAM SWG Wounds/Buffs incorrectes")
 	assert(ham_hud._portrait_3d != null, "SwgPortrait3D doit être instancié dans SwgHamHud")
 	assert(ham_hud._portrait_3d._viewport != null, "SubViewport 3D doit être présent")
-	ham_hud.set_posture("Combat")
-	assert(ham_hud._posture_label == "Combat", "Posture joueur doit être mise à jour")
+	ham_hud.set_posture("Accroupi")
+	assert(ham_hud._posture_label == "Accroupi" and ham_hud._combat_posture == "kneeling", "Posture joueur doit être mise à jour")
+	ham_hud.apply_combat_status({
+		"posture": "prone",
+		"statuses": {"knockdown": 3.0, "dizzy": 5.0}
+	})
+	assert(ham_hud._combat_posture == "prone" and ham_hud._combat_statuses.has("knockdown"), "Statuts de combat SWG doivent être enregistrés")
+	assert(ham_hud._sys_dock != null, "Dock Système Datapad doit être présent")
 	ham_hud.set_target_entity("Odo Merr", "npc", 6.4)
 	assert(ham_hud._target_box.visible == true, "Target Frame SWG doit être visible")
 
@@ -121,6 +127,33 @@ func _init() -> void:
 	assert(radial._current_options.size() >= 3, "Le menu radial SWG sur Lia doit proposer Examiner/Converse/Watch")
 	radial.trigger_option(2)
 	assert(radial_tracker["action"] == "watch_entertainer", "L'action radiale 3 sur Lia doit être watch_entertainer")
+
+	# Test Radial Menu : Cadavres de bêtes (Harvesting Scout)
+	var corpse_opts := radial.build_options_for_context({"kind": "corpse", "name": "Cadavre de Dune Crawler"})
+	var corpse_actions := []
+	for o in corpse_opts:
+		corpse_actions.append(o.get("id"))
+	assert("harvest_meat" in corpse_actions and "harvest_hide" in corpse_actions and "harvest_bone" in corpse_actions, "Menu radial cadavre doit proposer Dépecer Viande/Cuir/Os")
+
+	# Test Radial Menu : Vendeur joueur & Structures
+	var vendor_opts := radial.build_options_for_context({"kind": "vendor", "name": "Boutique d'Armures"})
+	var vendor_actions := []
+	for o in vendor_opts:
+		vendor_actions.append(o.get("id"))
+	assert("vendor_browse" in vendor_actions and "vendor_manage" in vendor_actions, "Menu radial vendeur doit proposer Boutique et Gestion")
+
+	var house_opts := radial.build_options_for_context({"kind": "structure", "name": "Maison en pisé"})
+	var house_actions := []
+	for o in house_opts:
+		house_actions.append(o.get("id"))
+	assert("house_enter" in house_actions and "house_maintenance" in house_actions, "Menu radial maison doit proposer Entrer et Maintenance")
+
+	# Test Radial Menu : Terrain (Camp scout et Postures)
+	var ground_opts := radial.build_options_for_context({"kind": "ground", "name": "Dunes"})
+	var ground_actions := []
+	for o in ground_opts:
+		ground_actions.append(o.get("id"))
+	assert("deploy_camp" in ground_actions and "posture_kneel" in ground_actions and "posture_prone" in ground_actions, "Menu radial sol doit proposer Camp et Postures")
 
 	var SwgSkillsPanelScript := preload("res://scripts/swg_skills_panel.gd")
 	var skills_ui = SwgSkillsPanelScript.new()

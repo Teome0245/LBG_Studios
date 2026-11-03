@@ -299,6 +299,17 @@ func _on_swg_quick_panel_requested(panel_key: String) -> void:
 			var map_panel: Node = get_node_or_null("UI/ModalLayer/PlanetMapPanel")
 			if map_panel and map_panel.has_method("toggle_map"):
 				map_panel.call("toggle_map")
+		"vendors":
+			var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+			_hotbar_feedback("Datapad : Consultation du Réseau Commercial & Bazar...")
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(base_url.rstrip("/") + "/v1/bazaar/browse?category=all&limit=5", [], HTTPClient.METHOD_GET)
+		"housing":
+			var base_url := _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+			var p_name := _local_character_name if not _local_character_name.is_empty() else _HubRuntimeCfg.player_name("Voyageur")
+			_hotbar_feedback("Datapad : Registre Foncier & Villes de Joueurs...")
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(base_url.rstrip("/") + "/v1/housing/structures?owner=" + p_name.uri_encode(), [], HTTPClient.METHOD_GET)
 
 
 func _handle_world_right_click(screen_pos: Vector2) -> void:
@@ -387,6 +398,93 @@ func _on_swg_radial_action(action_id: String, ctx: Dictionary) -> void:
 				var tz := float(ctx.get("z", -545.0))
 				pc.teleport_to(tx, tz)
 				_hotbar_feedback("⚡ Téléportation (Dev) : %.0f, %.0f" % [tx, tz])
+		"harvest_meat", "harvest_hide", "harvest_bone":
+			var res_type := "meat" if action_id == "harvest_meat" else ("hide" if action_id == "harvest_hide" else "bone")
+			var cid := str(ctx.get("corpse_id", ctx.get("entity_key", "corpse_default")))
+			_hotbar_feedback("Dépeçage Scout : prélèvement de %s sur %s..." % [res_type, str(ctx.get("name", "bête"))])
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/harvest",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "corpse_id": cid, "resource_type": res_type})
+				)
+		"tame_creature":
+			var beast_id := str(ctx.get("entity_key", ctx.get("object_id", "beast_01")))
+			_hotbar_feedback("Creature Handler : tentative d'apprivoisement sur %s..." % str(ctx.get("name", "bête")))
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/tame",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "creature_id": beast_id})
+				)
+		"pet_follow", "pet_stay", "pet_store":
+			var order_name := "follow" if action_id == "pet_follow" else ("stay" if action_id == "pet_stay" else "store")
+			var pet_id := str(ctx.get("pet_id", ctx.get("name", "compagnon")))
+			_hotbar_feedback("Ordre Bête (%s) : %s" % [pet_id, order_name.to_upper()])
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/pet_order",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "pet_id": pet_id, "order": order_name})
+				)
+		"pet_feed":
+			var pet_id := str(ctx.get("pet_id", ctx.get("name", "compagnon")))
+			_hotbar_feedback("Nourrissage du compagnon %s..." % pet_id)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/pet_feed",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "pet_id": pet_id, "food_item": "meat_dune_crawler", "qty": 1})
+				)
+		"deploy_camp":
+			var xz: Vector2 = _player_world_xz()
+			if xz == Vector2.INF:
+				xz = Vector2(float(ctx.get("x", 4758.0)), float(ctx.get("z", -545.0)))
+			_hotbar_feedback("Dresseur / Scout : montage du campement de survie...")
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/camp/deploy",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "pos": [xz.x, 0.15, xz.y], "camp_tier": 1})
+				)
+		"posture_kneel", "posture_prone", "posture_stand":
+			var post := "kneeling" if action_id == "posture_kneel" else ("prone" if action_id == "posture_prone" else "upright")
+			var post_lbl := "Accroupi" if post == "kneeling" else ("Couché" if post == "prone" else "Debout")
+			if swg_ham_hud:
+				swg_ham_hud.set_posture(post_lbl)
+			_hotbar_feedback("Changement de Posture SWG : %s" % post_lbl)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/combat/posture",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "posture": post})
+				)
+		"tactical_strike":
+			var tgt := str(ctx.get("name", "cible"))
+			_hotbar_feedback("⚔ Frappe Tactique HAM engagée contre %s..." % tgt)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/combat/strike",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"attacker": p_name, "target": tgt, "strike_id": "leg_sweep", "force_hit": true})
+				)
+		"vendor_browse", "vendor_manage":
+			var v_id := str(ctx.get("entity_key", ctx.get("name", "vendeur")))
+			_hotbar_feedback("Boutique / Vendeur %s : consultation du stock..." % v_id)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(base_url.rstrip("/") + "/v1/vendors/catalog?vendor_id=" + v_id.uri_encode(), [], HTTPClient.METHOD_GET)
+		"house_enter", "house_manage", "house_maintenance", "house_decorate":
+			var s_id := str(ctx.get("entity_key", ctx.get("name", "structure")))
+			_hotbar_feedback("Housing SWG : %s sur %s" % [action_id.to_upper(), s_id])
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(base_url.rstrip("/") + "/v1/housing/structure?structure_id=" + s_id.uri_encode(), [], HTTPClient.METHOD_GET)
 
 
 func _on_swg_action_http_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -401,8 +499,29 @@ func _on_swg_action_http_done(result: int, code: int, _headers: PackedStringArra
 			_hotbar_feedback("Cantina : -%d Battle Fatigue, +%d Buff Mind" % [int(d.get("fatigue_cured", 0)), int(d.get("mind_buff", 0))])
 		elif d.has("wounds_cured"):
 			_hotbar_feedback("Medcenter : -%d Wounds soignées !" % int(d.get("wounds_cured", 0)))
+		elif d.has("harvested"):
+			_hotbar_feedback("Dépeçage réussi : +%d %s ! Expérience Scout reçue." % [int(d.get("qty", 0)), str(d.get("item", "ressource"))])
+		elif d.has("pet"):
+			_hotbar_feedback("🐾 Créature apprivoisée avec succès ! Ajoutée à votre datapad.")
+		elif d.has("camp_id"):
+			_hotbar_feedback("⛺ Campement établi ! Régénération accélérée à proximité.")
+		elif d.has("posture"):
+			_hotbar_feedback("Posture confirmée par le serveur : %s" % str(d.get("posture")).to_upper())
+			if swg_ham_hud:
+				swg_ham_hud.set_posture(str(d.get("posture")))
+		elif d.has("strike"):
+			var st: Dictionary = d.get("strike", {}) if typeof(d.get("strike")) == TYPE_DICTIONARY else {}
+			_hotbar_feedback("⚔ Frappe %s infligée ! Dégâts: %s" % [str(st.get("strike_id", "")), str(st.get("raw_damage", 0))])
+		elif d.has("items") and typeof(d.get("items")) == TYPE_ARRAY:
+			var it_arr: Array = d.get("items", [])
+			_hotbar_feedback("Bazar Public : %d lots disponibles à la vente" % it_arr.size())
+		elif d.has("structure"):
+			var st_dict: Dictionary = d.get("structure", {}) if typeof(d.get("structure")) == TYPE_DICTIONARY else {}
+			_hotbar_feedback("Structure : %s (%s) — Solde: %d cr" % [str(st_dict.get("id", "")), str(st_dict.get("kind", "")), int(st_dict.get("maintenance_credits", 0))])
 		if d.has("status") and typeof(d.get("status")) == TYPE_DICTIONARY and swg_ham_hud:
 			swg_ham_hud.apply_ham_payload(d["status"] as Dictionary)
+		if d.has("active_statuses") and typeof(d.get("active_statuses")) == TYPE_DICTIONARY and swg_ham_hud:
+			swg_ham_hud.apply_combat_status(d)
 	else:
 		_hotbar_feedback("Action SWG refusée : %s" % str(d.get("error", code)))
 

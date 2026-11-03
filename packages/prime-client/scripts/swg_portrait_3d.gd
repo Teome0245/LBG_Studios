@@ -66,12 +66,24 @@ func _setup_viewport_3d() -> void:
 	# 1. Caméra de cadrage buste / 3/4 face
 	_camera = Camera3D.new()
 	_camera.name = "PortraitCam"
+	_camera.current = true
 	_camera.position = Vector3(0.045, 1.34, 0.42)
 	_camera.rotation_degrees = Vector3(-5.4, 6.1, 0.0)
 	_camera.fov = 34.0
 	_camera.near = 0.05
 	_camera.far = 10.0
 	_world_root.add_child(_camera)
+
+	# 1b. Environnement Studio (Lumière ambiante pour déboucher les ombres)
+	var env_node := WorldEnvironment.new()
+	env_node.name = "PortraitEnv"
+	var env := Environment.new()
+	env.background_mode = Environment.BG_CLEAR_COLOR
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.20, 0.28, 0.42)
+	env.ambient_light_energy = 0.85
+	env_node.environment = env
+	_world_root.add_child(env_node)
 
 	# 2. Lumière Studio Principale (Key Light)
 	_dir_light = DirectionalLight3D.new()
@@ -104,11 +116,13 @@ func _load_or_build_avatar() -> void:
 	var loaded := false
 	var global_path := ProjectSettings.globalize_path(VRM_RES_PATH)
 
-	# Fallbacks chemins alternatifs connus du monorepo
+	# Chemins candidats du modèle VRM
 	var candidate_paths := [
+		VRM_RES_PATH,
 		global_path,
 		"packages/cortex/compagnon_ui/public/vrm/Compagnon.vrm",
 		"packages/compagnon-desktop/overlay/vrm/Compagnon.vrm",
+		"res://Compagnon.vrm",
 	]
 
 	for p in candidate_paths:

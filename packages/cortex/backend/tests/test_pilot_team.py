@@ -98,6 +98,36 @@ def test_pilot_team_memory_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r.json().get("ok") is True
     assert _FakeAsyncClient.last_call["url"].endswith("/v1/team/memory")
 
+
+def test_pilot_team_super_agent_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = _client(monkeypatch)
+    # Test GET status
+    r_status = client.get("/v1/pilot/team/super-agent/status")
+    assert r_status.status_code == 200
+    data_status = r_status.json()
+    assert data_status["ok"] is True
+    assert "code" in data_status["team"]
+    assert "game" in data_status["team"]
+
+    # Test POST event avec assainissement
+    r_ev = client.post(
+        "/v1/pilot/team/super-agent/event",
+        json={
+            "v": 1,
+            "event": "session.tool_pre",
+            "agent": "cline_code",
+            "summary": "Execution avec token super_secret_123456789abc",
+        },
+    )
+    assert r_ev.status_code == 200
+    data_ev = r_ev.json()
+    assert data_ev["ok"] is True
+    filtered = data_ev["filtered_event"]
+    assert filtered["domain"] == "code"
+    assert "[REDACTED_SECRET]" in filtered["summary"]
+    assert "super_secret_123456789abc" not in filtered["summary"]
+
+
     r2 = client.post(
         "/v1/pilot/team/memory",
         json={"agent_id": "argus", "summary": "smoke vert", "tags": ["qa"]},

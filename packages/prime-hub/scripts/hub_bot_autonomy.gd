@@ -32,6 +32,13 @@ var _rng := RandomNumberGenerator.new()
 var _last_suggest: Dictionary = {}  # name -> unix
 var _quest_cd: Dictionary = {}
 
+var creatures = null
+var vendors_factories = null
+var housing_cities = null
+var swg_combat = null
+var ham_medical = null
+var harvesters = null
+
 
 func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> void:
 	economy = economy_svc
@@ -40,6 +47,15 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> 
 	events = events_svc
 	_rng.randomize()
 	_load_explore_ring()
+
+
+func setup_swg_services(creatures_svc, vendors_factories_svc, housing_cities_svc, swg_combat_svc, ham_medical_svc = null, harvesters_svc = null) -> void:
+	creatures = creatures_svc
+	vendors_factories = vendors_factories_svc
+	housing_cities = housing_cities_svc
+	swg_combat = swg_combat_svc
+	ham_medical = ham_medical_svc
+	harvesters = harvesters_svc
 
 
 func attach_world_clock(clock_svc) -> void:
@@ -551,45 +567,228 @@ func evaluate_barter_needs(bot_name: String) -> Dictionary:
 	}
 
 
-func evaluate_swg_precu_priority(bot_name: String, ham_medical_svc = null, harvesters_svc = null) -> Dictionary:
-	## Ticket 4.5 (O3 SWG Pre-CU) — Arbitrage autonome d'un Joueur IA entre Cantina (Battle Fatigue),
-	## Medcenter (Wounds) et vidange d'Extracteur (Harvester Hopper).
+func evaluate_swg_precu_priority(
+	bot_name: String,
+	ham_medical_svc = null,
+	harvesters_svc = null,
+	creatures_svc = null,
+	vendors_svc = null,
+	housing_svc = null,
+	bot_pos: Vector3 = Vector3.ZERO
+) -> Dictionary:
+	## Arbitrage autonome SWG Pre-CU complet (4 piliers) pour un Joueur IA :
+	## 1. Soins critiques : Cantina (Battle Fatigue >= 200) ou Medcenter (Wounds >= 120).
+	## 2. Faune & Survie : Campement sauvage si blessé loin de la ville, ou dépeçage de bête si cadavre proche.
+	## 3. Extracteurs & Usines : Récolte si hopper >= 40 ou caisse d'usine prête.
+	## 4. Commerce & Vendeurs : Retrait bancaire vendeur si solde >= 300, ou approvisionnement si surplus.
+	## 5. Housing & Citoyenneté : Dépôt de maintenance si réserve basse (< 200), ou vote municipal si élection.
 	var nm := bot_name.strip_edges()
 	var decision := "patrol_or_survey"
 	var reason := "nominal"
-	var bf := 0
-	var wounds_h := 0
-	var hopper_ready := 0
+	var target_meta: Dictionary = {}
 
-	if ham_medical_svc != null and ham_medical_svc.has_method("status"):
-		var st: Dictionary = ham_medical_svc.status(nm)
+	var h_svc = ham_medical_svc if ham_medical_svc != null else ham_medical
+	var harv_svc = harvesters_svc if harvesters_svc != null else harvesters
+	var creat_svc = creatures_svc if creatures_svc != null else creatures
+	var vend_svc = vendors_svc if vendors_svc != null else vendors_factories
+	var house_svc = housing_svc if housing_svc != null else housing_cities
+
+	var bf: int = 0
+	var wounds_h: int = 0
+	var cur_health: int = 1000
+	var eff_health: int = 1000
+	var hopper_ready: int = 0
+
+	if h_svc != null and h_svc.has_method("status"):
+		var st: Dictionary = h_svc.status(nm)
 		var ham: Dictionary = st.get("ham", {}) if typeof(st.get("ham")) == TYPE_DICTIONARY else {}
 		bf = int(ham.get("battle_fatigue", 0))
 		var h_bar: Dictionary = ham.get("health", {}) if typeof(ham.get("health")) == TYPE_DICTIONARY else {}
 		wounds_h = int(h_bar.get("wounds", 0))
+		cur_health = int(h_bar.get("current", 1000))
+		eff_health = int(h_bar.get("effective_max", 1000))
 
-	if harvesters_svc != null and harvesters_svc.has_method("list_harvesters"):
-		var owned: Array = harvesters_svc.list_harvesters(nm)
+	if harv_svc != null and harv_svc.has_method("list_harvesters"):
+		var owned: Array = harv_svc.list_harvesters(nm)
 		for h in owned:
 			if typeof(h) == TYPE_DICTIONARY:
 				hopper_ready += int(h.get("hopper_qty", 0))
 
+	# 1. Soins d'urgence urbains
 	if bf >= 200:
 		decision = "visit_cantina_perle"
 		reason = "high_battle_fatigue"
 	elif wounds_h >= 120:
 		decision = "visit_medcenter_odo"
 		reason = "high_combat_wounds"
+	# 2. Survie en terre sauvage (Pilier 4)
+	elif (wounds_h >= 40 or cur_health < eff_health / 2) and bot_pos != Vector3.ZERO and bot_pos.distance_to(ring_center) > 250.0:
+		decision = "deploy_wilderness_camp"
+		reason = "survival_field_regen"
+		target_meta = {"pos": [bot_pos.x, bot_pos.y, bot_pos.z], "camp_tier": 1}
+	# 3. Dépeçage d'une bête abattue (Pilier 4)
+	elif creat_svc != null and creat_svc.has_method("list_active_corpses") and not (creat_svc.list_active_corpses() as Array).is_empty():
+		var corpses: Array = creat_svc.list_active_corpses()
+		var best_corpse: Dictionary = corpses[0]
+		decision = "harvest_beast_corpse"
+		reason = "unharvested_corpse_available"
+		target_meta = {
+			"corpse_id": str(best_corpse.get("corpse_id", "")),
+			"resource_type": "hide" if _rng.randf() < 0.5 else "meat",
+		}
+	# 4. Vidange d'extracteurs ressources
 	elif hopper_ready >= 40:
 		decision = "collect_harvester_hopper"
 		reason = "hopper_threshold_reached"
+	else:
+		# 5. Banque de Vendeur Joueur (Pilier 3)
+		var handled := false
+		if vend_svc != null and vend_svc.has_method("list_player_vendors"):
+			var v_list: Array = vend_svc.list_player_vendors(nm)
+			for v in v_list:
+				if typeof(v) == TYPE_DICTIONARY and int(v.get("bank_credits", 0)) >= 300:
+					decision = "collect_vendor_revenue"
+					reason = "vendor_bank_funds_ready"
+					target_meta = {"vendor_id": str(v.get("vendor_id", v.get("id", "")))}
+					handled = true
+					break
+		# 6. Entretien Foncier & Villes (Pilier 2)
+		if not handled and house_svc != null and (house_svc.has_method("list_player_structures") or house_svc.has_method("list_structures_for_owner")):
+			var structures: Array = house_svc.list_player_structures(nm) if house_svc.has_method("list_player_structures") else house_svc.list_structures_for_owner(nm)
+			for s in structures:
+				var m_pool := int(s.get("maintenance_pool", s.get("maintenance_credits", 1000)))
+				if typeof(s) == TYPE_DICTIONARY and m_pool <= 200:
+					decision = "deposit_structure_maintenance"
+					reason = "structure_maintenance_low"
+					target_meta = {"structure_id": str(s.get("struct_id", s.get("id", ""))), "deposit_credits": 300}
+					handled = true
+					break
+		# 7. Approvisionnement de la boutique en cas de surplus
+		if not handled and vend_svc != null and economy != null:
+			var barter_eval := evaluate_barter_needs(nm)
+			var surplus: Array = barter_eval.get("surplus", [])
+			if not surplus.is_empty():
+				decision = "stock_vendor_or_bazaar"
+				reason = "surplus_goods_to_sell"
+				target_meta = {"item": str(surplus[0]), "qty": 5}
+				handled = true
 
 	return {
 		"bot": nm,
 		"decision": decision,
 		"reason": reason,
+		"target_meta": target_meta,
 		"battle_fatigue": bf,
 		"health_wounds": wounds_h,
 		"hopper_ready_qty": hopper_ready,
 	}
+
+
+func evaluate_tactical_combat_step(
+	bot_name: String,
+	target_id: String,
+	combat_svc = null,
+	ham_svc = null
+) -> Dictionary:
+	## Pilier 1 SWG — Arbitrage de combat tactique : postures & frappes ciblées HAM
+	var nm := bot_name.strip_edges()
+	var c_svc = combat_svc if combat_svc != null else swg_combat
+	var h_svc = ham_svc if ham_svc != null else ham_medical
+
+	var chosen_posture := "upright"
+	var chosen_strike := "body_hit"
+	var reason := "standard_skirmish"
+
+	var bot_posture := "upright"
+	var tgt_posture := "upright"
+	var tgt_active_statuses: Dictionary = {}
+	var bot_hp_pct := 1.0
+
+	if c_svc != null and c_svc.has_method("get_combat_state"):
+		var st_b: Dictionary = c_svc.get_combat_state(nm)
+		bot_posture = str(st_b.get("posture", "upright"))
+		var st_t: Dictionary = c_svc.get_combat_state(target_id)
+		tgt_posture = str(st_t.get("posture", "upright"))
+		tgt_active_statuses = st_t.get("active_statuses", {}) if typeof(st_t.get("active_statuses")) == TYPE_DICTIONARY else {}
+
+	if h_svc != null and h_svc.has_method("status"):
+		var h_st: Dictionary = h_svc.status(nm)
+		var h_bar: Dictionary = h_st.get("ham", {}).get("health", {}) if typeof(h_st.get("ham", {})) == TYPE_DICTIONARY else {}
+		var cur := float(h_bar.get("current", 1000))
+		var eff := float(maxi(1, int(h_bar.get("effective_max", 1000))))
+		bot_hp_pct = cur / eff
+
+	# 1. Sélection de posture
+	if bot_hp_pct < 0.25:
+		chosen_posture = "prone" # Réduit dégâts reçus de 50%
+		reason = "defensive_cover"
+	elif tgt_posture == "prone" or tgt_active_statuses.has("knockdown"):
+		chosen_posture = "kneeling" # Bonus +20% précision
+		reason = "exploit_fallen_target"
+	else:
+		chosen_posture = "upright"
+
+	# 2. Sélection du coup tactique SWG
+	if tgt_active_statuses.has("knockdown") or tgt_active_statuses.has("dizzy"):
+		# Cible au sol ou étourdie : viser le Mind (Head Shot) pour incapacitation rapide
+		chosen_strike = "head_shot"
+		reason = "execute_head_shot_combo"
+	elif tgt_posture == "upright" and not tgt_active_statuses.has("knockdown"):
+		# Cible debout : tenter le Knockdown (Leg Sweep)
+		chosen_strike = "leg_sweep"
+		reason = "attempt_knockdown_sweep"
+	elif not tgt_active_statuses.has("intimidate"):
+		# Réduire la puissance adverse
+		chosen_strike = "intimidate"
+		reason = "debuff_enemy_damage"
+	else:
+		chosen_strike = "body_hit"
+		reason = "standard_body_attrition"
+
+	return {
+		"bot": nm,
+		"target": target_id,
+		"chosen_posture": chosen_posture,
+		"chosen_strike": chosen_strike,
+		"reason": reason,
+	}
+
+
+func execute_autonomous_action(bot: Dictionary, priority: Dictionary) -> Dictionary:
+	## Exécute concrètement l'action arbitrée sur les sous-systèmes du hub
+	var nm := str(bot.get("name", ""))
+	var decision := str(priority.get("decision", ""))
+	var meta: Dictionary = priority.get("target_meta", {}) if typeof(priority.get("target_meta")) == TYPE_DICTIONARY else {}
+	var out := {"ok": false, "decision": decision}
+
+	match decision:
+		"harvest_beast_corpse":
+			var cid := str(meta.get("corpse_id", ""))
+			var res_type := str(meta.get("resource_type", "hide"))
+			if creatures != null and creatures.has_method("harvest_corpse") and not cid.is_empty():
+				out = creatures.harvest_corpse(nm, cid, res_type)
+		"deploy_wilderness_camp":
+			var pos_arr: Array = meta.get("pos", [4749.0, 0.15, -737.0])
+			var cx: float = float(pos_arr[0])
+			var cz: float = float(pos_arr[2]) if pos_arr.size() >= 3 else float(pos_arr[1])
+			if creatures != null and creatures.has_method("deploy_camp"):
+				out = creatures.deploy_camp(nm, cx, cz, "abri_toile")
+		"collect_vendor_revenue":
+			var vid := str(meta.get("vendor_id", ""))
+			if vendors_factories != null and vendors_factories.has_method("withdraw_vendor_credits") and not vid.is_empty():
+				out = vendors_factories.withdraw_vendor_credits(nm, vid, 300)
+		"deposit_structure_maintenance":
+			var sid := str(meta.get("structure_id", ""))
+			var credits := int(meta.get("deposit_credits", 300))
+			if housing_cities != null and housing_cities.has_method("deposit_maintenance") and not sid.is_empty():
+				out = housing_cities.deposit_maintenance(nm, sid, credits)
+		"stock_vendor_or_bazaar":
+			var it := str(meta.get("item", "ferraille"))
+			var qty := int(meta.get("qty", 5))
+			if vendors_factories != null and vendors_factories.has_method("post_to_bazaar"):
+				out = vendors_factories.post_to_bazaar(nm, it, qty, 25, 48)
+		_:
+			out = {"ok": true, "note": "decision handled via navigation/movement"}
+
+	return out
 

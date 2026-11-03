@@ -539,6 +539,15 @@ export function createVrmPet(hostEl, opts = {}) {
   metallicRimLight.position.set(-1.0, 1.8, -2.0);
   scene.add(metallicRimLight);
 
+  // Projecteurs de scène dynamiques pour le ShowRoutineManager (ambiance spectacle / iStripper)
+  const stageLightCyan = new THREE.PointLight(0x00f5d4, 0, 4.0);
+  stageLightCyan.position.set(-1.2, 1.2, 1.2);
+  scene.add(stageLightCyan);
+
+  const stageLightMagenta = new THREE.PointLight(0xff007f, 0, 4.0);
+  stageLightMagenta.position.set(1.2, 1.2, 1.2);
+  scene.add(stageLightMagenta);
+
   /** @type {import('@pixiv/three-vrm').VRM | null} */
   let vrm = null;
   let talkingUntil = 0;
@@ -708,6 +717,24 @@ export function createVrmPet(hostEl, opts = {}) {
         if (!vrm) throw new Error("VRM model not ready yet for animation");
         const clip = createVRMAnimationClip(animData, vrm);
         clip.name = name;
+
+        // In-Place Lock : Neutralise la dérive de translation (root motion X et Z)
+        // pour que l'avatar reste TOUJOURS centré au milieu du cadre sans jamais déborder ou disparaître
+        const restHipsY = vrm?.humanoid?.getNormalizedBoneNode?.("hips")?.position?.y || 0.824;
+        for (const track of clip.tracks) {
+          if (track.name.endsWith(".position")) {
+            const vals = track.values;
+            const y0 = vals.length >= 3 ? vals[1] : restHipsY;
+            for (let i = 0; i < vals.length; i += 3) {
+              vals[i] = 0;     // Lock horizontal X (zéro dérive gauche/droite hors champ)
+              vals[i + 2] = 0; // Lock profondeur Z (zéro dérive avant/arrière)
+              // Harmonisation verticale Y : rebond de danse maîtrisé ancré sur restHipsY (évite de flotter)
+              const deltaY = (vals[i + 1] - y0) * 0.45;
+              vals[i + 1] = restHipsY + deltaY;
+            }
+          }
+        }
+
         vrmaClips.set(name, clip);
         console.info(`[vrm_pet] VRMA "${name}" loaded (${clip.duration.toFixed(2)}s)`);
         return clip;
@@ -734,7 +761,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const action = mixer.clipAction(clip);
     if (!loop) {
       action.setLoop(THREE.LoopOnce, 1);
-      action.clampWhenFinished = true;
+      action.clampWhenFinished = false; // Ne jamais figer le modèle sur la dernière frame
     } else {
       action.setLoop(THREE.LoopRepeat, Infinity);
     }
@@ -767,6 +794,11 @@ export function createVrmPet(hostEl, opts = {}) {
     }
     activeVrmaName = null;
     poseBlend = 0;
+    if (vrm?.humanoid) {
+      try {
+        vrm.humanoid.resetNormalizedPose();
+      } catch (_) { }
+    }
   }
 
   const _euler = new THREE.Euler();
@@ -1494,9 +1526,10 @@ export function createVrmPet(hostEl, opts = {}) {
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
-    const lookY = box.min.y - 0.005 + (visibleH / 2);
-    targetCamPos.set(center.x, lookY, center.z + dist);
-    targetLookAt.set(center.x, lookY, center.z);
+    const lookY = Math.max(0, box.min.y) - 0.005 + (visibleH / 2);
+    // Caméra centrée de manière inébranlable sur l'axe d'origine (X=0, Z=0)
+    targetCamPos.set(0, lookY, dist);
+    targetLookAt.set(0, lookY, 0);
     targetFov = 28;
 
     if (!cameraInitialized) {
@@ -1767,6 +1800,17 @@ export function createVrmPet(hostEl, opts = {}) {
         mixer.update(dt);
       }
       updatePoseSystem(t, dt);
+
+      // Projecteurs de scène pulsants pendant un spectacle (iStripper canon)
+      if (isShowing()) {
+        const pulseCyan = 2.4 + Math.sin(t * 6.0) * 1.5;
+        const pulseMag = 2.4 + Math.cos(t * 6.0) * 1.5;
+        stageLightCyan.intensity = pulseCyan;
+        stageLightMagenta.intensity = pulseMag;
+      } else if (stageLightCyan.intensity > 0) {
+        stageLightCyan.intensity = Math.max(0, stageLightCyan.intensity - dt * 4.0);
+        stageLightMagenta.intensity = Math.max(0, stageLightMagenta.intensity - dt * 4.0);
+      }
       // Rotation fluide vers targetHeadingY (+ rotation continue si pirouette)
       const turnSpeed = 6.0;
       const diff = targetHeadingY - currentHeadingY;
@@ -1794,7 +1838,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
       // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos, étirement)
-      if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
+      if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction && !isShowing()) {
         if (t > nextHeartPoseTime) {
           // Petite danse spontanée "Finger Heart" K-Pop 1 à 2 fois par heure (toutes les 25 à 35 minutes)
           nextHeartPoseTime = t + 1500.0 + Math.random() * 600.0;
@@ -1984,6 +2028,125 @@ export function createVrmPet(hostEl, opts = {}) {
   window.addEventListener("resize", resize);
   animate();
 
+  /** Show Routine Manager — Séquenceur de spectacles continus (iStripper / vghd canon) */
+  let currentShow = null;
+  let showStepIndex = 0;
+  let showStepTimer = null;
+  let preShowFraming = null;
+
+  const SHOW_ROUTINES = {
+    idol: {
+      name: "Show K-Pop Idol",
+      steps: [
+        { pose: "wave", duration: 3200, mood: "happy", speech: "Bonjour ! Place au spectacle !" },
+        { pose: "dance", duration: 9500, mood: "happy", speech: "On commence avec le groove Pop !" },
+        { pose: "samba", duration: 9000, mood: "happy", speech: "Accélération du rythme !" },
+        { pose: "hiphop", duration: 9000, mood: "happy" },
+        { pose: "spin", duration: 5000, mood: "happy", speech: "Tourbillon cyber !" },
+        { pose: "fingerHeart", duration: 8500, mood: "happy", speech: "Petite danse idol pour vous !" },
+        { pose: "bow", duration: 3500, mood: "serene", speech: "Merci d'avoir regardé le show." },
+      ],
+    },
+    club: {
+      name: "Show Club Electro",
+      steps: [
+        { pose: "lookaround", duration: 3500, mood: "curious", speech: "Ambiance Club activée." },
+        { pose: "disco", duration: 11000, mood: "happy", speech: "Disco Fever sur le bureau !" },
+        { pose: "robot", duration: 10000, mood: "serene", speech: "Synchronisation des servomoteurs." },
+        { pose: "dance", duration: 9000, mood: "happy" },
+        { pose: "spin", duration: 5500, mood: "happy" },
+        { pose: "bow", duration: 3500, mood: "serene", speech: "Fin de la session Club." },
+      ],
+    },
+    latino: {
+      name: "Show Fiesta Caliente",
+      steps: [
+        { pose: "wave", duration: 3000, mood: "happy", speech: "Musica ! Que la fête commence !" },
+        { pose: "samba", duration: 11000, mood: "happy", speech: "Rythme Samba Latino !" },
+        { pose: "salsa", duration: 11000, mood: "happy", speech: "Salsa en continu !" },
+        { pose: "spin", duration: 5000, mood: "happy" },
+        { pose: "jump", duration: 4000, mood: "happy", speech: "Olé !" },
+        { pose: "bow", duration: 3000, mood: "serene", speech: "Merci beaucoup !" },
+      ],
+    },
+  };
+
+  function isShowing() {
+    return currentShow !== null;
+  }
+
+  function startShow(routineKey = "idol", onComplete) {
+    stopShow();
+    const key = String(routineKey || "idol").toLowerCase();
+    const routine = SHOW_ROUTINES[key] || SHOW_ROUTINES.idol;
+    currentShow = { key, routine, onComplete };
+    showStepIndex = 0;
+
+    // Bascule automatique en vue Corps Entier pour apprécier la danse
+    preShowFraming = framing;
+    if (framing !== "full") {
+      setFraming("full");
+    }
+
+    console.info("[vrm_pet] Démarrage du show :", routine.name);
+    executeShowStep();
+    return routine.name;
+  }
+
+  function executeShowStep() {
+    if (!currentShow) return;
+    const steps = currentShow.routine.steps;
+    if (showStepIndex >= steps.length) {
+      endShow();
+      return;
+    }
+
+    const step = steps[showStepIndex];
+    if (step.mood) setMood(step.mood);
+    if (step.pose) setPose(step.pose, step.duration + 500);
+    if (step.speech) say(step.speech);
+
+    showStepTimer = setTimeout(() => {
+      showStepIndex += 1;
+      executeShowStep();
+    }, step.duration);
+  }
+
+  function endShow() {
+    if (!currentShow) return;
+    const cb = currentShow.onComplete;
+    console.info("[vrm_pet] Fin du show :", currentShow.routine.name);
+    currentShow = null;
+    showStepIndex = 0;
+    if (showStepTimer) {
+      clearTimeout(showStepTimer);
+      showStepTimer = null;
+    }
+    stopVRMA(0.2);
+    if (vrm?.humanoid) {
+      try { vrm.humanoid.resetNormalizedPose(); } catch (_) {}
+    }
+    setPose("idle", 0);
+    setMood("serene");
+    if (preShowFraming && preShowFraming !== framing) {
+      setFraming(preShowFraming);
+      preShowFraming = null;
+    }
+    if (typeof cb === "function") {
+      try { cb(); } catch (_) {}
+    }
+  }
+
+  function stopShow() {
+    if (showStepTimer) {
+      clearTimeout(showStepTimer);
+      showStepTimer = null;
+    }
+    if (currentShow) {
+      endShow();
+    }
+  }
+
   function flip() {
     if (!vrm) return;
     targetHeadingY = (targetHeadingY + Math.PI) % (Math.PI * 2);
@@ -2012,6 +2175,9 @@ export function createVrmPet(hostEl, opts = {}) {
     playVRMA,
     stopVRMA,
     loadVRMA,
+    startShow,
+    stopShow,
+    isShowing,
     get activeVRMA() {
       return activeVrmaName;
     },

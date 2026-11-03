@@ -28,9 +28,31 @@ func _ensure_ui() -> void:
 func build_options_for_context(ctx: Dictionary) -> Array:
 	var kind := str(ctx.get("kind", "ground")).to_lower()
 	var t_name := str(ctx.get("name", "")).to_lower()
+	var is_dead := bool(ctx.get("is_dead", false)) or bool(ctx.get("is_corpse", false)) or kind == "corpse"
 	var opts: Array = []
 
-	if kind == "npc" or kind == "player":
+	if is_dead or kind == "corpse":
+		opts.append({"id": "examine", "label": "Examiner Cadavre"})
+		opts.append({"id": "harvest_meat", "label": "🥩 Dépecer Viande"})
+		opts.append({"id": "harvest_hide", "label": "🥋 Dépecer Cuir"})
+		opts.append({"id": "harvest_bone", "label": "🦴 Dépecer Os"})
+	elif kind == "pet":
+		opts.append({"id": "examine", "label": "Examiner Compagnon"})
+		opts.append({"id": "pet_follow", "label": "👣 Suivre Maître"})
+		opts.append({"id": "pet_stay", "label": "🛑 Rester sur Place"})
+		opts.append({"id": "pet_feed", "label": "🍖 Nourrir Bête"})
+		opts.append({"id": "pet_store", "label": "📦 Ranger au Chenil"})
+	elif kind == "vendor":
+		opts.append({"id": "examine", "label": "Examiner Vendeur"})
+		opts.append({"id": "vendor_browse", "label": "🛒 Ouvrir Boutique"})
+		opts.append({"id": "vendor_manage", "label": "💼 Gérer Stock / Caisse"})
+	elif kind == "structure" or kind == "housing" or kind == "building":
+		opts.append({"id": "examine", "label": "Examiner Structure"})
+		opts.append({"id": "house_enter", "label": "🚪 Entrer Bâtiment"})
+		opts.append({"id": "house_manage", "label": "📜 Droits & ACL"})
+		opts.append({"id": "house_maintenance", "label": "💰 Banque & Entretien"})
+		opts.append({"id": "house_decorate", "label": "🎨 Décoration 3D"})
+	elif kind == "npc" or kind == "player":
 		opts.append({"id": "examine", "label": "Examiner"})
 		if kind == "npc":
 			opts.append({"id": "converse", "label": "Discuter"})
@@ -40,15 +62,23 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 			opts.append({"id": "treat_wounds", "label": "Soigner Blessures (Méd.)"})
 		if "kell" in t_name or "yara" in t_name or "odo" in t_name or "talen" in t_name or "tobin" in t_name or "unar" in t_name:
 			opts.append({"id": "open_skills", "label": "Entraîner Compétences"})
+		if kind == "player":
+			opts.append({"id": "tactical_strike", "label": "⚔ Duel Tactique HAM"})
 	elif kind == "beast":
 		opts.append({"id": "examine", "label": "Examiner Créature"})
 		opts.append({"id": "harvest_fauna", "label": "Prélever Ressources"})
+		opts.append({"id": "tame_creature", "label": "🐾 Apprivoiser (Tame)"})
+		opts.append({"id": "tactical_strike", "label": "⚔ Attaquer (HAM Strike)"})
 	else:
 		opts.append({"id": "teleport_here", "label": "⚡ Téléporter ici (Dev)"})
 		opts.append({"id": "move_here", "label": "Marcher ici"})
 		opts.append({"id": "survey_ping", "label": "Sonder Gisement"})
 		opts.append({"id": "survey_sample", "label": "Extraire Échantillon"})
 		opts.append({"id": "deploy_harvester", "label": "Poser Extracteur"})
+		opts.append({"id": "deploy_camp", "label": "⛺ Dresser Camp Scout"})
+		opts.append({"id": "posture_kneel", "label": "🧎 Posture: Accroupi"})
+		opts.append({"id": "posture_prone", "label": "🛌 Posture: Couché"})
+		opts.append({"id": "posture_stand", "label": "🚶 Posture: Debout"})
 		opts.append({"id": "open_skills", "label": "Compétences [K]"})
 
 	return opts

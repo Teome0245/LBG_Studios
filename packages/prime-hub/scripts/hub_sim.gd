@@ -23,6 +23,10 @@ const HubSurveyScript = preload("res://scripts/hub_survey.gd")
 const HubCraftingScript = preload("res://scripts/hub_crafting.gd")
 const HubHamMedicalScript = preload("res://scripts/hub_ham_medical.gd")
 const HubHarvestersScript = preload("res://scripts/hub_harvesters.gd")
+const HubCreaturesScript = preload("res://scripts/hub_creatures.gd")
+const HubVendorsFactoriesScript = preload("res://scripts/hub_vendors_factories.gd")
+const HubHousingCitiesScript = preload("res://scripts/hub_housing_cities.gd")
+const HubSwgCombatScript = preload("res://scripts/hub_swg_combat.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -57,6 +61,10 @@ var survey = null
 var crafting = null
 var ham_medical = null
 var harvesters = null
+var creatures = null
+var vendors_factories = null
+var housing_cities = null
+var swg_combat = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -80,6 +88,16 @@ func attach_economy(economy_svc) -> void:
 		ham_medical.setup(economy_svc, skills, show)
 	if harvesters != null:
 		harvesters.setup(economy_svc, survey, skills, collision)
+	if creatures != null:
+		creatures.setup(self, economy_svc, skills, survey, collision)
+	if vendors_factories != null:
+		vendors_factories.setup(self, economy_svc, skills, collision)
+	if housing_cities != null:
+		housing_cities.setup(self, economy_svc, skills, collision)
+	if swg_combat != null:
+		swg_combat.setup(self, economy_svc, skills, ham_medical)
+	if autonomy != null and autonomy.has_method("setup_swg_services"):
+		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters)
 
 
 func attach_events(events_svc) -> void:
@@ -157,6 +175,18 @@ func reset() -> void:
 	if harvesters == null:
 		harvesters = HubHarvestersScript.new()
 	harvesters.setup(economy, survey, skills, collision)
+	if creatures == null:
+		creatures = HubCreaturesScript.new()
+	creatures.setup(self, economy, skills, survey, collision)
+	if vendors_factories == null:
+		vendors_factories = HubVendorsFactoriesScript.new()
+	vendors_factories.setup(self, economy, skills, collision)
+	if housing_cities == null:
+		housing_cities = HubHousingCitiesScript.new()
+	housing_cities.setup(self, economy, skills, collision)
+	if swg_combat == null:
+		swg_combat = HubSwgCombatScript.new()
+	swg_combat.setup(self, economy, skills, ham_medical)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -173,6 +203,8 @@ func reset() -> void:
 	autonomy.setup(economy, suggest, POIS, events)
 	if autonomy != null and autonomy.has_method("attach_world_clock"):
 		autonomy.attach_world_clock(world_clock)
+	if autonomy != null and autonomy.has_method("setup_swg_services"):
+		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters)
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	if combat != null:
@@ -750,6 +782,37 @@ func _step_npc(npc: Dictionary, dt: float) -> void:
 	npc["pos"] = Vector3(nx, pos.y, nz)
 
 
+func _step_pet(pet_ent: Dictionary, dt: float) -> void:
+	if not bool(pet_ent.get("active", true)):
+		return
+	var goal := str(pet_ent.get("goal", "follow"))
+	if goal == "stay":
+		return
+	var owner_name := str(pet_ent.get("owner", ""))
+	if owner_name.is_empty():
+		return
+	var owner_pos := Vector3.ZERO
+	for eid in entities.keys():
+		var e: Dictionary = entities[eid]
+		if str(e.get("name", "")) == owner_name:
+			owner_pos = e.get("pos", Vector3.ZERO)
+			break
+	if owner_pos == Vector3.ZERO:
+		return
+	var pos: Vector3 = pet_ent.get("pos", Vector3.ZERO)
+	var dx := owner_pos.x - pos.x
+	var dz := owner_pos.z - pos.z
+	var dist := sqrt(dx * dx + dz * dz)
+	if dist > 3.0:
+		var speed := 4.2
+		var move_dist := speed * dt
+		var ratio := minf(1.0, move_dist / dist)
+		var next_x := pos.x + dx * ratio
+		var next_z := pos.z + dz * ratio
+		var w := _walkable_xz(next_x, next_z)
+		pet_ent["pos"] = Vector3(w.x, 0.15, w.y)
+
+
 func _on_world_clock_announce(from_name: String, oid: int, text: String, source: String = "ia") -> void:
 	enqueue_say(from_name, oid, text, source)
 
@@ -768,6 +831,10 @@ func step(dt: float) -> void:
 		events.tick(Time.get_unix_time_from_system())
 	if life != null and tick % _life_tick_every == 0:
 		life.tick_life(entities, Time.get_unix_time_from_system())
+	if creatures != null and tick % _life_tick_every == 0:
+		creatures.tick_creatures(dt * float(_life_tick_every))
+	if swg_combat != null and tick % _life_tick_every == 0:
+		swg_combat.tick_combat(dt * float(_life_tick_every))
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):
@@ -775,6 +842,8 @@ func step(dt: float) -> void:
 		elif str(e.get("kind", "")) == "beast":
 			if combat != null:
 				combat.step_beast(e, dt)
+		elif str(e.get("kind", "")) == "pet":
+			_step_pet(e, dt)
 		elif str(e.get("kind", "")) == "npc":
 			# Escorte / show : mouvement géré par modules dédiés.
 			var g := str(e.get("goal", ""))

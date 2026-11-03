@@ -113,6 +113,15 @@
       body.guiding #face-wrap {
         animation: alert-pulse 0.85s ease-in-out 4;
       }
+      body.mode-ghost {
+        opacity: 1 !important;
+        pointer-events: none !important;
+      }
+      body.mode-ghost .status {
+        opacity: 1 !important;
+        color: #5eead4;
+        text-shadow: 0 0 8px rgba(94, 234, 212, 0.85);
+      }
       .bubble-actions button {
         font-size: 10px;
         font-weight: 700;
@@ -316,11 +325,88 @@
           transform: translateY(0) scale(1);
         }
       }
+      /* Team Office Bar (Axial / SAMS canon) */
+      .team-bar {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 999px;
+        padding: 2px 7px;
+        margin-bottom: 3px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        -webkit-app-region: no-drag;
+        z-index: 8;
+        opacity: 0.88;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .team-bar:hover {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+      .team-chip {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 9px;
+        font-weight: 700;
+        color: #94a3b8;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: rgba(30, 41, 59, 0.65);
+        transition: all 0.25s ease;
+        cursor: default;
+      }
+      .team-chip.active {
+        color: #f8fafc;
+        background: rgba(56, 189, 248, 0.22);
+        border: 1px solid rgba(56, 189, 248, 0.5);
+      }
+      .team-chip.asking {
+        color: #fef08a;
+        background: rgba(234, 179, 8, 0.35);
+        border: 1px solid #eab308;
+        animation: asking-glow 0.9s ease-in-out infinite alternate;
+      }
+      .team-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #64748b;
+        transition: background 0.2s ease, box-shadow 0.2s ease;
+      }
+      .team-chip.active .team-dot {
+        background: #38bdf8;
+        box-shadow: 0 0 6px #38bdf8;
+      }
+      .team-chip.asking .team-dot {
+        background: #eab308;
+        box-shadow: 0 0 8px #facc15;
+      }
+      .team-chip.chip-lyra.active .team-dot { background: #c084fc; box-shadow: 0 0 6px #c084fc; }
+      .team-chip.chip-cline.active .team-dot { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+      .team-chip.chip-hub.active .team-dot { background: #38bdf8; box-shadow: 0 0 6px #38bdf8; }
+      @keyframes asking-glow {
+        from { box-shadow: 0 0 2px rgba(234, 179, 8, 0.3); }
+        to { box-shadow: 0 0 10px rgba(234, 179, 8, 0.9); }
+      }
     </style>
   </head>
   <body>
     <div class="stage">
       <div id="pointer" class="pointer" aria-hidden="true"></div>
+      <div id="team-bar" class="team-bar" title="Équipe d'agents active (Cortex & Hub)">
+        <div class="team-chip chip-lyra" id="chip-lyra" title="Lyra · Assistant Studio">
+          <span class="team-dot"></span><span>Lyra</span>
+        </div>
+        <div class="team-chip chip-cline" id="chip-cline" title="Cline / OpenCode · Dev">
+          <span class="team-dot"></span><span>Cline</span>
+        </div>
+        <div class="team-chip chip-hub" id="chip-hub" title="Godot Hub · MMO .246">
+          <span class="team-dot"></span><span>Hub</span>
+        </div>
+      </div>
       <div id="session-pill" class="session-pill" aria-live="polite">
         <div class="agent" id="session-agent">opencode</div>
         <p class="ticker" id="session-ticker"></p>

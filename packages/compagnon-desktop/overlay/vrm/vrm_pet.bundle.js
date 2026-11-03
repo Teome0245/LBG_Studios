@@ -5,7 +5,7 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // node_modules/three/build/three.module.js
   var three_module_exports = {};
   __export(three_module_exports, {
     ACESFilmicToneMapping: () => ACESFilmicToneMapping,
@@ -432,7 +432,7 @@
     createCanvasElement: () => createCanvasElement
   });
 
-  // packages/compagnon-desktop/node_modules/three/build/three.core.js
+  // node_modules/three/build/three.core.js
   var REVISION = "180";
   var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
   var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31778,7 +31778,7 @@
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // node_modules/three/build/three.module.js
   function WebGLAnimation() {
     let context = null;
     let isAnimating = false;
@@ -41884,7 +41884,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+  // node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
   function toTrianglesDrawMode(geometry, drawMode) {
     if (drawMode === TrianglesDrawMode) {
       console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
@@ -41940,7 +41940,7 @@ void main() {
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/loaders/GLTFLoader.js
+  // node_modules/three/examples/jsm/loaders/GLTFLoader.js
   var GLTFLoader = class extends Loader {
     /**
      * Constructs a new glTF loader.
@@ -44507,7 +44507,7 @@ void main() {
     });
   }
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
+  // node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -51049,7 +51049,7 @@ void main() {
   VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
   VRMUtils.rotateVRM0 = rotateVRM0;
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
+  // node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
   var __async8 = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -53026,7 +53026,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/overlay/vrm/vrm_pet.js
+  // overlay/vrm/vrm_pet.js
   function installColorSpaceGuard(THREE) {
     try {
       const desc = Object.getOwnPropertyDescriptor(THREE.Texture.prototype, "colorSpace");
@@ -53541,6 +53541,12 @@ void main() {
     const metallicRimLight = new DirectionalLight(8448255, 0.75);
     metallicRimLight.position.set(-1, 1.8, -2);
     scene.add(metallicRimLight);
+    const stageLightCyan = new PointLight(62932, 0, 4);
+    stageLightCyan.position.set(-1.2, 1.2, 1.2);
+    scene.add(stageLightCyan);
+    const stageLightMagenta = new PointLight(16711807, 0, 4);
+    stageLightMagenta.position.set(1.2, 1.2, 1.2);
+    scene.add(stageLightMagenta);
     let vrm = null;
     let talkingUntil = 0;
     let mouthAmp = 0;
@@ -53695,6 +53701,19 @@ void main() {
           if (!vrm) throw new Error("VRM model not ready yet for animation");
           const clip = createVRMAnimationClip(animData, vrm);
           clip.name = name;
+          const restHipsY = vrm?.humanoid?.getNormalizedBoneNode?.("hips")?.position?.y || 0.824;
+          for (const track of clip.tracks) {
+            if (track.name.endsWith(".position")) {
+              const vals = track.values;
+              const y0 = vals.length >= 3 ? vals[1] : restHipsY;
+              for (let i = 0; i < vals.length; i += 3) {
+                vals[i] = 0;
+                vals[i + 2] = 0;
+                const deltaY = (vals[i + 1] - y0) * 0.45;
+                vals[i + 1] = restHipsY + deltaY;
+              }
+            }
+          }
           vrmaClips.set(name, clip);
           console.info(`[vrm_pet] VRMA "${name}" loaded (${clip.duration.toFixed(2)}s)`);
           return clip;
@@ -53719,7 +53738,7 @@ void main() {
       const action = mixer.clipAction(clip);
       if (!loop) {
         action.setLoop(LoopOnce, 1);
-        action.clampWhenFinished = true;
+        action.clampWhenFinished = false;
       } else {
         action.setLoop(LoopRepeat, Infinity);
       }
@@ -53754,6 +53773,12 @@ void main() {
       }
       activeVrmaName = null;
       poseBlend = 0;
+      if (vrm?.humanoid) {
+        try {
+          vrm.humanoid.resetNormalizedPose();
+        } catch (_) {
+        }
+      }
     }
     const _euler = new Euler();
     const _quat = new Quaternion();
@@ -54375,9 +54400,9 @@ void main() {
       const neededH = size.y * 1.12;
       const dist = neededH / (2 * Math.tan(fovRad / 2));
       const visibleH = 2 * dist * Math.tan(fovRad / 2);
-      const lookY = box.min.y - 5e-3 + visibleH / 2;
-      targetCamPos.set(center.x, lookY, center.z + dist);
-      targetLookAt.set(center.x, lookY, center.z);
+      const lookY = Math.max(0, box.min.y) - 5e-3 + visibleH / 2;
+      targetCamPos.set(0, lookY, dist);
+      targetLookAt.set(0, lookY, 0);
       targetFov = 28;
       if (!cameraInitialized) {
         currentCamPos.copy(targetCamPos);
@@ -54616,6 +54641,15 @@ void main() {
           mixer.update(dt);
         }
         updatePoseSystem(t, dt);
+        if (isShowing()) {
+          const pulseCyan = 2.4 + Math.sin(t * 6) * 1.5;
+          const pulseMag = 2.4 + Math.cos(t * 6) * 1.5;
+          stageLightCyan.intensity = pulseCyan;
+          stageLightMagenta.intensity = pulseMag;
+        } else if (stageLightCyan.intensity > 0) {
+          stageLightCyan.intensity = Math.max(0, stageLightCyan.intensity - dt * 4);
+          stageLightMagenta.intensity = Math.max(0, stageLightMagenta.intensity - dt * 4);
+        }
         const turnSpeed = 6;
         const diff = targetHeadingY - currentHeadingY;
         currentHeadingY += diff * Math.min(1, dt * turnSpeed);
@@ -54638,7 +54672,7 @@ void main() {
             nextBlinkTime = t + 2.5 + Math.random() * 3.5;
           }
         }
-        if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
+        if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction && !isShowing()) {
           if (t > nextHeartPoseTime) {
             nextHeartPoseTime = t + 1500 + Math.random() * 600;
             setPose("fingerHeart", 8500);
@@ -54807,6 +54841,118 @@ void main() {
     resize();
     window.addEventListener("resize", resize);
     animate();
+    let currentShow = null;
+    let showStepIndex = 0;
+    let showStepTimer = null;
+    let preShowFraming = null;
+    const SHOW_ROUTINES = {
+      idol: {
+        name: "Show K-Pop Idol",
+        steps: [
+          { pose: "wave", duration: 3200, mood: "happy", speech: "Bonjour ! Place au spectacle !" },
+          { pose: "dance", duration: 9500, mood: "happy", speech: "On commence avec le groove Pop !" },
+          { pose: "samba", duration: 9e3, mood: "happy", speech: "Acc\xE9l\xE9ration du rythme !" },
+          { pose: "hiphop", duration: 9e3, mood: "happy" },
+          { pose: "spin", duration: 5e3, mood: "happy", speech: "Tourbillon cyber !" },
+          { pose: "fingerHeart", duration: 8500, mood: "happy", speech: "Petite danse idol pour vous !" },
+          { pose: "bow", duration: 3500, mood: "serene", speech: "Merci d'avoir regard\xE9 le show." }
+        ]
+      },
+      club: {
+        name: "Show Club Electro",
+        steps: [
+          { pose: "lookaround", duration: 3500, mood: "curious", speech: "Ambiance Club activ\xE9e." },
+          { pose: "disco", duration: 11e3, mood: "happy", speech: "Disco Fever sur le bureau !" },
+          { pose: "robot", duration: 1e4, mood: "serene", speech: "Synchronisation des servomoteurs." },
+          { pose: "dance", duration: 9e3, mood: "happy" },
+          { pose: "spin", duration: 5500, mood: "happy" },
+          { pose: "bow", duration: 3500, mood: "serene", speech: "Fin de la session Club." }
+        ]
+      },
+      latino: {
+        name: "Show Fiesta Caliente",
+        steps: [
+          { pose: "wave", duration: 3e3, mood: "happy", speech: "Musica ! Que la f\xEAte commence !" },
+          { pose: "samba", duration: 11e3, mood: "happy", speech: "Rythme Samba Latino !" },
+          { pose: "salsa", duration: 11e3, mood: "happy", speech: "Salsa en continu !" },
+          { pose: "spin", duration: 5e3, mood: "happy" },
+          { pose: "jump", duration: 4e3, mood: "happy", speech: "Ol\xE9 !" },
+          { pose: "bow", duration: 3e3, mood: "serene", speech: "Merci beaucoup !" }
+        ]
+      }
+    };
+    function isShowing() {
+      return currentShow !== null;
+    }
+    function startShow(routineKey = "idol", onComplete) {
+      stopShow();
+      const key2 = String(routineKey || "idol").toLowerCase();
+      const routine = SHOW_ROUTINES[key2] || SHOW_ROUTINES.idol;
+      currentShow = { key: key2, routine, onComplete };
+      showStepIndex = 0;
+      preShowFraming = framing;
+      if (framing !== "full") {
+        setFraming("full");
+      }
+      console.info("[vrm_pet] D\xE9marrage du show :", routine.name);
+      executeShowStep();
+      return routine.name;
+    }
+    function executeShowStep() {
+      if (!currentShow) return;
+      const steps = currentShow.routine.steps;
+      if (showStepIndex >= steps.length) {
+        endShow();
+        return;
+      }
+      const step = steps[showStepIndex];
+      if (step.mood) setMood(step.mood);
+      if (step.pose) setPose(step.pose, step.duration + 500);
+      if (step.speech) say(step.speech);
+      showStepTimer = setTimeout(() => {
+        showStepIndex += 1;
+        executeShowStep();
+      }, step.duration);
+    }
+    function endShow() {
+      if (!currentShow) return;
+      const cb = currentShow.onComplete;
+      console.info("[vrm_pet] Fin du show :", currentShow.routine.name);
+      currentShow = null;
+      showStepIndex = 0;
+      if (showStepTimer) {
+        clearTimeout(showStepTimer);
+        showStepTimer = null;
+      }
+      stopVRMA(0.2);
+      if (vrm?.humanoid) {
+        try {
+          vrm.humanoid.resetNormalizedPose();
+        } catch (_) {
+        }
+      }
+      setPose("idle", 0);
+      setMood("serene");
+      if (preShowFraming && preShowFraming !== framing) {
+        setFraming(preShowFraming);
+        preShowFraming = null;
+      }
+      if (typeof cb === "function") {
+        try {
+          cb();
+        } catch (_) {
+        }
+      }
+    }
+    function stopShow() {
+      if (showStepTimer) {
+        clearTimeout(showStepTimer);
+        showStepTimer = null;
+      }
+      if (currentShow) {
+        endShow();
+      }
+    }
     function flip() {
       if (!vrm) return;
       targetHeadingY = (targetHeadingY + Math.PI) % (Math.PI * 2);
@@ -54834,6 +54980,9 @@ void main() {
       playVRMA,
       stopVRMA,
       loadVRMA,
+      startShow,
+      stopShow,
+      isShowing,
       get activeVRMA() {
         return activeVrmaName;
       },

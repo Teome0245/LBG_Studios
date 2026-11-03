@@ -23,28 +23,62 @@
   const sessionTicker = document.getElementById("session-ticker");
   const btnAllow = document.getElementById("btn-allow");
   const btnDeny = document.getElementById("btn-deny");
+  const chipLyra = document.getElementById("chip-lyra");
+  const chipCline = document.getElementById("chip-cline");
+  const chipHub = document.getElementById("chip-hub");
+
+  function updateTeamChips(agentName, state) {
+    const name = String(agentName || "").toLowerCase();
+    let target = chipLyra;
+    if (name.includes("cline") || name.includes("opencode") || name.includes("code")) {
+      target = chipCline;
+    } else if (name.includes("hub") || name.includes("godot") || name.includes("mmo")) {
+      target = chipHub;
+    }
+    if (!target) return;
+    target.classList.remove("active", "asking");
+    if (state === "active") target.classList.add("active");
+    else if (state === "asking") target.classList.add("asking");
+  }
 
   function showSession(ev) {
     if (!sessionPill || !ev) return;
-    if (sessionAgent) sessionAgent.textContent = String(ev.agent || "agent");
+    const agentName = String(ev.agent || "agent");
+    if (sessionAgent) sessionAgent.textContent = agentName;
     if (sessionTicker)
       sessionTicker.textContent = String(ev.summary || ev.event || "").slice(0, 80);
     sessionPill.classList.add("visible");
     if (ev.event === "session.approval_needed" && ev.approval_id) {
       currentApprovalId = ev.approval_id;
       sessionPill.classList.add("needs-approval");
-      if (statusEl) statusEl.textContent = "Approval";
+      if (statusEl) statusEl.textContent = "Arbitrage : " + agentName;
+      updateTeamChips(agentName, "asking");
+      try {
+        const face = window.__petFace;
+        if (face) {
+          if (typeof face.setMood === "function") face.setMood("curious");
+          if (typeof face.setPose === "function") face.setPose("think", 5000);
+          if (typeof face.say === "function") face.say(agentName + " demande ton arbitrage");
+        }
+      } catch (_) {}
     } else {
       sessionPill.classList.remove("needs-approval");
-      if (statusEl) statusEl.textContent = String(ev.agent || "Session");
+      if (statusEl) statusEl.textContent = agentName;
+      updateTeamChips(agentName, "active");
     }
     if (ev.event === "session.stop" || ev.event === "session.error") {
+      updateTeamChips(agentName, "idle");
       if (hideSessionTimer) clearTimeout(hideSessionTimer);
       hideSessionTimer = setTimeout(function () {
         sessionPill.classList.remove("visible");
         sessionPill.classList.remove("needs-approval");
         currentApprovalId = null;
         if (statusEl) statusEl.textContent = "Compagnon";
+        try {
+          const face = window.__petFace;
+          if (face && typeof face.setPose === "function") face.setPose("idle");
+          if (face && typeof face.setMood === "function") face.setMood("serene");
+        } catch (_) {}
       }, 5000);
     }
   }
@@ -62,8 +96,25 @@
     }
     currentApprovalId = null;
     if (sessionPill) sessionPill.classList.remove("needs-approval");
-    if (statusEl) statusEl.textContent = decision === "allow" ? "Allow…" : "Deny…";
+    if (statusEl) statusEl.textContent = decision === "allow" ? "Validé" : "Refusé";
+
+    // Réaction vivante et expressive de l'avatar au retour humain (Axial / Blobs canon)
+    try {
+      const face = window.__petFace;
+      if (face) {
+        if (decision === "allow") {
+          if (typeof face.setMood === "function") face.setMood("happy");
+          if (typeof face.setPose === "function") face.setPose("approve", 2500);
+          if (typeof face.say === "function") face.say("C'est validé !");
+        } else {
+          if (typeof face.setMood === "function") face.setMood("tense");
+          if (typeof face.setPose === "function") face.setPose("crossArms", 2500);
+          if (typeof face.say === "function") face.say("Action refusée.");
+        }
+      }
+    } catch (_) {}
   }
+
 
   if (btnAllow) {
     btnAllow.addEventListener("click", function (e) {
@@ -453,6 +504,39 @@
         if (overlayMode === "vrm") {
           initVrm();
         }
+      }
+    });
+  }
+
+  // Mode fantôme : écoute des changements de clic traversant (VSeeFace canon)
+  if (window.compagnonDesktop && window.compagnonDesktop.onClickThroughChanged) {
+    window.compagnonDesktop.onClickThroughChanged(function (active) {
+      document.body.classList.toggle("mode-ghost", Boolean(active));
+      if (statusEl) {
+        statusEl.textContent = active ? "👻 Mode Fantôme (Ctrl+Shift+F)" : "Compagnon";
+      }
+    });
+  }
+
+  // ShowRoutineManager : écoute des spectacles continus (iStripper canon)
+  if (window.compagnonDesktop && window.compagnonDesktop.onShowEvent) {
+    window.compagnonDesktop.onShowEvent(function (payload) {
+      try {
+        const face = window.__petFace;
+        if (!face) return;
+        if (payload && payload.action === "start") {
+          const showName = (typeof face.startShow === "function")
+            ? face.startShow(payload.routine || "idol", function () {
+                if (statusEl) statusEl.textContent = "Compagnon";
+              })
+            : "Show";
+          if (statusEl) statusEl.textContent = "🎭 " + (showName || "Show en cours");
+        } else if (payload && payload.action === "stop") {
+          if (typeof face.stopShow === "function") face.stopShow();
+          if (statusEl) statusEl.textContent = "Compagnon";
+        }
+      } catch (err) {
+        console.warn("[overlay] show event", err);
       }
     });
   }

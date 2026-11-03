@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from services.super_agent_filter import SuperAgentRouter
+
 from ._common import httpx, orchestrator_base
 from ._models import (
     OkEnvelope,
@@ -532,3 +534,39 @@ async def pilot_team_campus_conduct(payload: dict[str, object] | None = None) ->
         return data if isinstance(data, dict) else {"ok": True, "payload": data}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# --- Super-Agent Router (Pentiminax architecture canon) ---
+_GLOBAL_SUPER_AGENT_ROUTER = SuperAgentRouter()
+
+
+@router.get("/team/super-agent/status", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_super_agent_status() -> dict[str, object]:
+    """Synthèse des workers étanches et de leurs contextes (Pentiminax canon)."""
+    return {
+        "ok": True,
+        "team": _GLOBAL_SUPER_AGENT_ROUTER.get_team_status(),
+    }
+
+
+@router.post("/team/super-agent/event", tags=["pilot"], response_model=OkEnvelope)
+async def pilot_team_super_agent_event(payload: dict[str, object]) -> dict[str, object]:
+    """Filtre un événement système par du code déterministe avant tout dispatch."""
+    filtered = _GLOBAL_SUPER_AGENT_ROUTER.filter_and_route_event(payload)
+    if filtered is None:
+        return {"ok": False, "error": "Événement invalide ou rejeté par le filtre déterministe"}
+    return {
+        "ok": True,
+        "filtered_event": {
+            "v": filtered.v,
+            "event": filtered.event,
+            "session_id": filtered.session_id,
+            "agent": filtered.agent,
+            "domain": filtered.domain.value,
+            "priority": filtered.priority.value,
+            "summary": filtered.summary,
+            "requires_human_approval": filtered.requires_human_approval,
+            "approval_id": filtered.approval_id,
+        },
+    }
+

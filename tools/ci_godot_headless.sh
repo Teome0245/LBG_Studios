@@ -87,6 +87,11 @@ run_test "Prospection Dynamique Survey Tool & Spawns 1..1000 (O2 Ticket 4.2)" "r
 run_test "Artisanat Pondéré & Phase d'Expérimentation Pre-CU (O2 Ticket 4.3)" "res://tools/craft_experimentation_selftest.gd"
 run_test "Boucle HAM, Wounds Medcenter & Battle Fatigue Cantina (O2 Ticket 4.4)" "res://tools/ham_cantina_medcenter_selftest.gd"
 run_test "Extracteurs de Terrain Harvesters & Autonomie O3 (O2/O3 Ticket 4.5)" "res://tools/harvesters_outpost_selftest.gd"
+run_test "Faune, Métier Scout & Creature Handler Pre-CU (O2/O3 Ticket 4)" "res://tools/creatures_scout_selftest.gd"
+run_test "Commerce, Vendeurs Joueurs & Usines de Production (O2/O3 Ticket 3)" "res://tools/vendors_factories_selftest.gd"
+run_test "Housing Libre, Décoration & Villes de Joueurs (O2/O3 Ticket 2)" "res://tools/housing_cities_selftest.gd"
+run_test "Combat Tactique SWG : HAM, Postures & Combos (O2 Ticket 1)" "res://tools/swg_combat_selftest.gd"
+run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

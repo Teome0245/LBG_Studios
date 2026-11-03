@@ -753,6 +753,337 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		)
 		return _ok(hc_out, 200 if bool(hc_out.get("ok")) else 400)
 
+	# --- Ticket 4 : Faune, Scout & Creature Handler ---
+	if method == "GET" and path == "/v1/creatures/bestiary":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var c_list: Array = sim.creatures.list_creatures()
+		return _ok({"ok": true, "creatures": c_list, "count": c_list.size()})
+
+	if method == "GET" and path.begins_with("/v1/creatures/corpses"):
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var q_cx := 5100.0
+		var q_cz := -800.0
+		var q_rad := 40.0
+		if "?" in path:
+			var qs := path.split("?")[1]
+			for pair in qs.split("&"):
+				var kv = pair.split("=")
+				if kv.size() == 2:
+					if kv[0] == "x": q_cx = float(kv[1])
+					elif kv[0] == "z": q_cz = float(kv[1])
+					elif kv[0] == "radius": q_rad = float(kv[1])
+		var corpses: Array = sim.creatures.list_corpses_near(q_cx, q_cz, q_rad)
+		return _ok({"ok": true, "corpses": corpses, "count": corpses.size()})
+
+	if method == "POST" and path == "/v1/creatures/harvest":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var hb := _json_body(req_body)
+		var h_res: Dictionary = sim.creatures.harvest_corpse(
+			str(hb.get("player", "Voyageur")),
+			str(hb.get("corpse_id", "")),
+			str(hb.get("type", "meat"))
+		)
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/scout/camp/deploy":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var c_res: Dictionary = sim.creatures.deploy_camp(
+			str(cb.get("player", "Voyageur")),
+			float(cb.get("x", 5500.0)),
+			float(cb.get("z", -1200.0)),
+			str(cb.get("type", "abri_toile"))
+		)
+		return _ok(c_res, 200 if bool(c_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/scout/camp/abandon":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var ab := _json_body(req_body)
+		var a_res: Dictionary = sim.creatures.abandon_camp(
+			str(ab.get("player", "Voyageur")),
+			str(ab.get("camp_id", ""))
+		)
+		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/scout/mask_scent":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var mb := _json_body(req_body)
+		var m_res: Dictionary = sim.creatures.mask_scent(str(mb.get("player", "Voyageur")))
+		return _ok(m_res, 200 if bool(m_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/tame":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var t_res: Dictionary = sim.creatures.tame_creature(
+			str(tb.get("player", "Voyageur")),
+			str(tb.get("beast_eid", ""))
+		)
+		return _ok(t_res, 200 if bool(t_res.get("ok")) else 400)
+
+	if method == "GET" and path.begins_with("/v1/creatures/pets"):
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var q_player := "Voyageur"
+		if "?" in path:
+			var qs := path.split("?")[1]
+			for pair in qs.split("&"):
+				var kv = pair.split("=")
+				if kv.size() == 2 and kv[0] == "player":
+					q_player = kv[1]
+		var pets: Array = sim.creatures.list_player_pets(q_player)
+		return _ok({"ok": true, "player": q_player, "pets": pets, "count": pets.size()})
+
+	if method == "POST" and path == "/v1/creatures/pets/call":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var pb := _json_body(req_body)
+		var p_res: Dictionary = sim.creatures.call_pet(
+			str(pb.get("player", "Voyageur")),
+			str(pb.get("pet_id", "")),
+			float(pb.get("x", 5100.0)),
+			float(pb.get("z", -800.0))
+		)
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/pets/store":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var s_res: Dictionary = sim.creatures.store_pet(
+			str(sb.get("player", "Voyageur")),
+			str(sb.get("pet_id", ""))
+		)
+		return _ok(s_res, 200 if bool(s_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/pets/command":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var c_res: Dictionary = sim.creatures.command_pet(
+			str(cb.get("player", "Voyageur")),
+			str(cb.get("pet_id", "")),
+			str(cb.get("command", "follow")),
+			str(cb.get("target_eid", ""))
+		)
+		return _ok(c_res, 200 if bool(c_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/pets/feed":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var fb := _json_body(req_body)
+		var f_res: Dictionary = sim.creatures.feed_pet(
+			str(fb.get("player", "Voyageur")),
+			str(fb.get("pet_id", "")),
+			str(fb.get("food_item_id", "viande"))
+		)
+		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	# --- Ticket 3 : Commerce, Player Vendors & Factories ---
+	if method == "POST" and path == "/v1/vendors/deploy":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "vendors_unavailable"}, 501)
+		var vb := _json_body(req_body)
+		var v_res: Dictionary = sim.vendors_factories.deploy_vendor(
+			str(vb.get("player", "Voyageur")),
+			str(vb.get("name", "")),
+			float(vb.get("x", 5100.0)),
+			float(vb.get("z", -800.0)),
+			str(vb.get("appearance", "droide_protocole"))
+		)
+		return _ok(v_res, 200 if bool(v_res.get("ok")) else 400)
+
+	if method == "GET" and path.begins_with("/v1/vendors/list"):
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "vendors_unavailable"}, 501)
+		var q_owner := ""
+		if "?" in path:
+			var qs := path.split("?")[1]
+			for pair in qs.split("&"):
+				var kv = pair.split("=")
+				if kv.size() == 2 and kv[0] == "owner": q_owner = kv[1]
+		var v_list: Array = sim.vendors_factories.list_player_vendors(q_owner)
+		return _ok({"ok": true, "vendors": v_list, "count": v_list.size()})
+
+	if method == "POST" and path == "/v1/vendors/stock":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "vendors_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var s_res: Dictionary = sim.vendors_factories.stock_item(
+			str(sb.get("player", "Voyageur")),
+			str(sb.get("vendor_id", "")),
+			str(sb.get("item_id", "")),
+			int(sb.get("qty", 1)),
+			int(sb.get("price_credits", 10)),
+			str(sb.get("item_name", "")),
+			str(sb.get("description", "")),
+			sb.get("stats", {}) if typeof(sb.get("stats")) == TYPE_DICTIONARY else {}
+		)
+		return _ok(s_res, 200 if bool(s_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/vendors/buy":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "vendors_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var b_res: Dictionary = sim.vendors_factories.buy_vendor_item(
+			str(bb.get("buyer", "Voyageur")),
+			str(bb.get("vendor_id", "")),
+			str(bb.get("sku_id", "")),
+			int(bb.get("qty", 1))
+		)
+		return _ok(b_res, 200 if bool(b_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/vendors/withdraw":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "vendors_unavailable"}, 501)
+		var wb := _json_body(req_body)
+		var w_res: Dictionary = sim.vendors_factories.withdraw_vendor_credits(
+			str(wb.get("player", "Voyageur")),
+			str(wb.get("vendor_id", "")),
+			int(wb.get("amount", 0))
+		)
+		return _ok(w_res, 200 if bool(w_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factories/deploy":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "factories_unavailable"}, 501)
+		var fb := _json_body(req_body)
+		var f_res: Dictionary = sim.vendors_factories.deploy_factory(
+			str(fb.get("player", "Voyageur")),
+			str(fb.get("type", "equipement")),
+			float(fb.get("x", 5200.0)),
+			float(fb.get("z", -750.0))
+		)
+		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factories/run":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "factories_unavailable"}, 501)
+		var rb := _json_body(req_body)
+		var r_res: Dictionary = sim.vendors_factories.advance_factory_cycles(
+			str(rb.get("factory_id", "")),
+			int(rb.get("cycles", 1))
+		)
+		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
+
+	if method == "GET" and path == "/v1/bazaar/list":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "bazaar_unavailable"}, 501)
+		var b_items: Array = sim.vendors_factories.list_bazaar()
+		return _ok({"ok": true, "listings": b_items, "count": b_items.size()})
+
+	if method == "POST" and path == "/v1/bazaar/buy":
+		if sim == null or sim.vendors_factories == null:
+			return _ok({"ok": false, "error": "bazaar_unavailable"}, 501)
+		var byb := _json_body(req_body)
+		var by_res: Dictionary = sim.vendors_factories.buy_bazaar_listing(
+			str(byb.get("buyer", "Voyageur")),
+			str(byb.get("listing_id", ""))
+		)
+		return _ok(by_res, 200 if bool(by_res.get("ok")) else 400)
+
+	# --- Ticket 2 : Housing Libre, Décoration & Villes de Joueurs ---
+	if method == "POST" and path == "/v1/housing/deploy":
+		if sim == null or sim.housing_cities == null:
+			return _ok({"ok": false, "error": "housing_unavailable"}, 501)
+		var hb := _json_body(req_body)
+		var h_res: Dictionary = sim.housing_cities.deploy_structure(
+			str(hb.get("player", "Voyageur")),
+			str(hb.get("deed_id", "deed_maison_sable_p")),
+			float(hb.get("x", 5400.0)),
+			float(hb.get("z", -900.0)),
+			float(hb.get("yaw", 0.0))
+		)
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/housing/decorate/place":
+		if sim == null or sim.housing_cities == null:
+			return _ok({"ok": false, "error": "housing_unavailable"}, 501)
+		var db := _json_body(req_body)
+		var d_res: Dictionary = sim.housing_cities.place_decoration(
+			str(db.get("player", "Voyageur")),
+			str(db.get("struct_id", "")),
+			str(db.get("item_id", "")),
+			float(db.get("x", 0.0)),
+			float(db.get("y", 0.0)),
+			float(db.get("z", 0.0)),
+			float(db.get("yaw", 0.0)),
+			str(db.get("name", ""))
+		)
+		return _ok(d_res, 200 if bool(d_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/housing/decorate/pickup":
+		if sim == null or sim.housing_cities == null:
+			return _ok({"ok": false, "error": "housing_unavailable"}, 501)
+		var pb := _json_body(req_body)
+		var p_res: Dictionary = sim.housing_cities.pickup_decoration(
+			str(pb.get("player", "Voyageur")),
+			str(pb.get("struct_id", "")),
+			str(pb.get("deco_id", ""))
+		)
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cities/found":
+		if sim == null or sim.housing_cities == null:
+			return _ok({"ok": false, "error": "cities_unavailable"}, 501)
+		var ctb := _json_body(req_body)
+		var ct_res: Dictionary = sim.housing_cities.found_player_city(
+			str(ctb.get("founder", "Voyageur")),
+			str(ctb.get("name", "Nouvelle Oasis")),
+			float(ctb.get("x", 5500.0)),
+			float(ctb.get("z", -1000.0))
+		)
+		return _ok(ct_res, 200 if bool(ct_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cities/elect":
+		if sim == null or sim.housing_cities == null:
+			return _ok({"ok": false, "error": "cities_unavailable"}, 501)
+		var elb := _json_body(req_body)
+		var el_res: Dictionary = sim.housing_cities.hold_mayoral_election(
+			str(elb.get("city_id", "")),
+			elb.get("votes", {}) if typeof(elb.get("votes")) == TYPE_DICTIONARY else {}
+		)
+		return _ok(el_res, 200 if bool(el_res.get("ok")) else 400)
+
+	# --- Ticket 1 : Combat Tactique SWG (HAM, Postures & Combos) ---
+	if method == "POST" and path == "/v1/combat/posture":
+		if sim == null or sim.swg_combat == null:
+			return _ok({"ok": false, "error": "combat_unavailable"}, 501)
+		var pb := _json_body(req_body)
+		var p_res: Dictionary = sim.swg_combat.change_posture(
+			str(pb.get("eid", "Voyageur")),
+			str(pb.get("posture", "upright"))
+		)
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/combat/strike":
+		if sim == null or sim.swg_combat == null:
+			return _ok({"ok": false, "error": "combat_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var s_res: Dictionary = sim.swg_combat.execute_tactical_strike(
+			str(sb.get("attacker", "Voyageur")),
+			str(sb.get("target", "")),
+			str(sb.get("strike", "body_hit"))
+		)
+		return _ok(s_res, 200 if bool(s_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/combat/armor/equip":
+		if sim == null or sim.swg_combat == null:
+			return _ok({"ok": false, "error": "combat_unavailable"}, 501)
+		var ab := _json_body(req_body)
+		var a_res: Dictionary = sim.swg_combat.equip_armor_piece(
+			str(ab.get("player", "Voyageur")),
+			str(ab.get("slot", "chest")),
+			ab.get("armor", {}) if typeof(ab.get("armor")) == TYPE_DICTIONARY else {}
+		)
+		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
 	return _ok({"ok": false, "error": "not_found", "path": path}, 404)
 
 
