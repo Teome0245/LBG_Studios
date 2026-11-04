@@ -1157,7 +1157,7 @@ ipcMain.on('launch-game', (event, keepOpen) => {
     }
     try {
       const cacheTxt = fs.readFileSync(classCache, 'utf8');
-      if (!cacheTxt.includes('EntityManager') || !cacheTxt.includes('LbgWsClient')) {
+      if (profile.id === 'prime' && (!cacheTxt.includes('EntityManager') || !cacheTxt.includes('LbgWsClient'))) {
         event.reply('launch-status', {
           error: true,
           message:

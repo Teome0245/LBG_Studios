@@ -1,10 +1,10 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-03  
+**Mis à jour** : 2026-11-04  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + Boucle d'Évolution Fermée (Séquence 4 Arbitrage ➔ 1 Économie ➔ 2 Quêtes ➔ 3 Combat/HAM) — **100 % Livré, Validé CI & Déployé sur .246:8787**.
+**Fil** : canon O1/O2/O3 + SWG Pre-CU 3D Complet (Contrôles, Combat, VRM, Terminaux, Hotbar, Paperdoll) + Boucle d'Évolution — **100 % Livré, Validé CI & Déployé**.
 
 ---
 
@@ -29,6 +29,38 @@ Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et 
   - *Fiabilisation CI* : Résolution de la collision de seed d'ID joueur dans `ham_cantina_medcenter_selftest.gd`. 18/18 suites de tests headless Godot PASS en 136s. Déploiement validé sur `.246:8787`.
 
 **Chantiers « Âme de SWG Pre-CU »** :
+- [x] **Instance Parallèle SWG Pre-CU 3D & Déploiement Launchpad Windows .10** :
+  - *Instance Dédiée Complète (`packages/swg-client` & `packages/swg-hub`)* :
+    - Étape 1 : Contrôleur TPS `CharacterBody3D`, `SpringArm3D`, postures physiques (standing $1.8\text{m}$, kneeling $1.15\text{m}$, prone $0.55\text{m}$), combo fatal *Dizzy Fall*.
+    - Étape 2 : Terrain 3D grande échelle ($16\times 16\text{ km}$, 64m chunks, FastNoiseLite dunes, City Flat Affector pour Lost Heaven) et pipeline d'assets POB intérieur multi-cellules (Cantina La Perle, comptoir en U, stage musiciens, néons).
+    - Étape 3 : 33 professions Pre-CU (6 de base, 26 élites, Politician), 594 boîtes de compétences 4x4, plafond 250 Skill Points et surrender sécurisé.
+    - Selftests 100% verts : `swg_client_3d_selftest.gd`, `swg_hub_selftest.gd`, `swg_professions_selftest.gd`.
+  - *Enrichissement du Monde 3D & Atmosphère SWG Pre-CU* :
+    - *Hub Urbain Complet* : Spatioport de Lost Heaven avec piste d'atterrissage surélevée, balises lumineuses et navette spatiale posée (Shuttle Lambda-style), Centre Médical avec cuves de bacta luisantes, Grand Hôtel de Ville à colonnades et bannières pourpres, quartier résidentiel en pisé avec escaliers extérieurs et auvents, portes fortifiées Ouest et Est avec bastions de garde.
+    - *Mobilier Urbain & Terminaux Authentiques* : Esplanade centrale avec Terminaux de Missions, Bazar, Banque galactique, Clonage, véhicule Landspeeder X-34 stationné, Vaporisateurs d'humidité (Moisture Vaporators GX-8), lampadaires de rue et amas de fret cargo.
+    - *Wilderness & Faune Vivante* : Campement nomade de Scout avec feu de camp crépitant dans les dunes, extracteur minier lourd (Mining Harvester), éperons rocheux/mesas de grès rouge, cactus du désert, grand Marcheur des Dunes herbivore (Dewback), meute de chacals dorés, scarabée obsidien géant et droïde astromécano R2-T8.
+    - *Système d'Interactions & Menus Radiaux Complets* :
+    - *Détection de proximité & Prompt flottant* : Affichage dynamique de `◈ [E] ou [Clic-Droit] : <Nom Entité> ◈` au bas de l'écran dès qu'une entité se trouve à portée ($\le 6\text{m}$).
+    - *Boîte de dialogue interactive SWG (`swg_dialog_box.gd`)* : Dialogues complets avec répliques et lore avec Lia (danse & musique cantina, dissipation de 50 Fatigue, buff mental), Jax Moro (achat de lait bleu et rations), Maire Odo Merr (statut cité de rang 3, housing, compétences), Docteur Vane (soins HAM complets, cuve de bacta), Gardes de la Milice (primes) et Droïde R2-T8 (scan géologique).
+    - *Terminaux interactifs* : Terminal de missions (`swg_missions_terminal_dialog.gd`) avec contrats de primes et transport, Borne bancaire (`swg_bank_terminal_dialog.gd`) avec dépôts/retraits de crédits, Terminal de Bazar (`swg_bazaar_panel.gd`), Borne de clonage (assurance active).
+    - *Interactions Véhicule, Faune & Bivouac* : Pilotage direct du Landspeeder X-34 (vitesse propulsée $\times 2.5$), repos au feu de camp nomade (fatigue dissipée), apprivoisement de créatures (Creature Handler Tame) et dépeçage Scout.
+  - *Combat 3D, Hotbar d'Action, Radar & Cycle Temporel* :
+    - *Hotbar SWG 8 slots (`swg_action_hotbar.gd`)* : Raccourcis `[1..8]` pour Tir Blaster, Tir Visé, Étourdissement Dizzy, Stimpack Bacta, Sonde géologique, Camouflage Scout, Familier et Speeder.
+    - *Système de Combat 3D (`swg_combat_system_3d.gd`)* : Projectiles blaster lasers rouge/cyan avec traînée et étincelles d'impact, chiffres de dégâts flottants 3D (Floating Combat Text), mort des bêtes avec transformation en cadavres dépeçables au sol.
+    - *Radar Mini-Carte Circulaire SWG* : Boussole avec point cardinal Nord, suivi du joueur et points de couleur (jaune PNJ, rouge bêtes hostiles, cyan terminaux/POB).
+    - *Cycle Jour/Nuit Dynamique* : Rotation continue du double soleil binaire avec transition crépuscule et nuit illuminant les néons et feux de camp de Lost Heaven.
+    - *Respawn Automatique & Clonage d'Urgence [F5]* : Timer de résurrection automatique (8s pour les PNJ citoyens, 18s pour la faune laissant le temps au dépeçage Scout), et touche `F5` pour réanimer instantanément 100% de la population et de la faune.
+    - *Modèle 3D Compagnon & Améliorations Graphiques PBR* :
+      - Remplacement de la capsule joueur par le modèle humanoïde complet du Compagnon (`Compagnon.vrm` / `LadyKoi.vrm`) avec orientation naturelle vers l'avant (-Z) et caméra orbitale TPS.
+      - **Suppression de la T-Pose & Animateur Procédural (`swg_vrm_animator.gd`)** : Pose de repos naturelle (bras baissés le long du corps à ~72°, coudes fléchis, respiration subtile sur la colonne `Spine`) et balancement dynamique des bras et des jambes lors de la marche/course avec flexion des genoux.
+      - **Modèles 3D VRM & Faune pour PNJ et Citoyens** : Attribution de modèles humanoïdes VRM animés sans T-Pose aux PNJ de Lost Heaven (Lia en artiste avec `LadyKoi.vrm`, Docteur Vane avec `Anna.vrm`, Maire Odo Merr avec `Aurora.vrm`, Barman Jax, Gardes et Citoyens avec `Compagnon.vrm`), modèles quadrupèdes canins articulés pour les chacals/chiots et scarabée géant.
+      - Rehaussement graphique PBR : Tonemapping ACES cinématographique chaud, Glow/Bloom HDR sur les lasers et enseignes néon, SSAO (Screen Space Ambient Occlusion) pour des ombres de contact profondes sous les structures et les pieds, SSR et ombres douces.
+      - Nouveaux panneaux SWG Pre-CU complets câblés au clavier et au Datapad latéral :
+        - Touche `[I]` : Sac à dos 40 slots & Papier-Doll d'équipement (silhouette anatomique 6 slots).
+        - Touche `[T]` : Atelier d'artisanat avec expérimentation et estimation du risque d'échec critique.
+        - Touche `[M]` : Carte planétaire tactique temps réel, radar POI et pose de Waypoints personnalisés au clic.
+    - Déployé et validé sous Windows .10 avec Godot 4.6.1 (`SWG_CLIENT_3D_SELFTEST_OK`).
+
 - [x] **Étape 4 (O2/O3) : Faune, Métier Scout & Domptage Creature Handler** :
   - *Bestiaire Lost Heaven* : 9 espèces indexées dans `bestiaire_lh.json` (chacal doré, scarabée obsidien, fennec mirage, marcheur des dunes, chiot chacal, jeune scarabée, bébé marcheur, scorpion titan, serpent de sable) avec tables de dépeçage et paramètres de domptage.
   - *Dépeçage Scout (Harvesting)* : Extraction sélective Viande (`Meat`), Peau/Cuir (`Hide`), Os (`Bone`) sur cadavres de bêtes fraîches avec bonus multiplicateur lié à la compétence `prospecteur_faune` (jusqu'à ×3.0 en Master), sécurité anti-duplication et attribution d'XP prospection.

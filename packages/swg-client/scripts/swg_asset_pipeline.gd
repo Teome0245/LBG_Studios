@@ -1,4 +1,5 @@
 extends RefCounted
+const _SwgVrmAnimatorScript := preload("res://scripts/swg_vrm_animator.gd")
 ## Pipeline d'Importation & d'Instanciation d'Assets 3D SWG Pre-CU
 ## 1. Bâtiments complexes POB (Portal Object) découpés en Cellules intérieures (Foyer, Bar, Scène, Alcôves).
 ## 2. Palettes de teintes indexées à 4 canaux (Custom Color Indexing des tailleurs & armuriers SWG).
@@ -180,4 +181,1427 @@ static func create_tinted_swg_material(c1: Color, c2: Color, metallic: float = 0
 	mat.metallic = metallic
 	mat.roughness = roughness
 	return mat
+
+
+# ==============================================================================
+#  BÂTIMENTS PUBLICS SWG PRE-CU (Spatioport, Clinique, Mairie, Habitations)
+# ==============================================================================
+
+## 1. Spatioport de Lost Heaven (Shuttleport SWG) avec piste d'atterrissage et Navette Spatiale posée
+static func build_swg_shuttleport(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Shuttleport_Lost_Heaven"
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	# Matériaux
+	var mat_pad := StandardMaterial3D.new()
+	mat_pad.albedo_color = Color(0.22, 0.24, 0.26, 1.0)
+	mat_pad.roughness = 0.7
+	mat_pad.metallic = 0.4
+
+	var mat_stripes := StandardMaterial3D.new()
+	mat_stripes.albedo_color = Color(0.95, 0.82, 0.15, 1.0)
+	mat_stripes.emission_enabled = true
+	mat_stripes.emission = Color(0.95, 0.82, 0.15, 1.0)
+	mat_stripes.emission_energy_multiplier = 0.6
+
+	var mat_tower := StandardMaterial3D.new()
+	mat_tower.albedo_color = Color(0.65, 0.58, 0.50, 1.0)
+	mat_tower.roughness = 0.85
+
+	var mat_glass := StandardMaterial3D.new()
+	mat_glass.albedo_color = Color(0.15, 0.45, 0.65, 0.8)
+	mat_glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_glass.roughness = 0.1
+	mat_glass.metallic = 0.9
+
+	# A. Piste d'atterrissage surélevée hexagonale/octogonale (24m x 24m)
+	var pad_sb := StaticBody3D.new()
+	var pad_mesh := MeshInstance3D.new()
+	var pad_cyl := CylinderMesh.new()
+	pad_cyl.top_radius = 14.0
+	pad_cyl.bottom_radius = 15.0
+	pad_cyl.height = 0.8
+	pad_mesh.mesh = pad_cyl
+	pad_mesh.position = Vector3(0, 0.4, 0)
+	pad_mesh.set_surface_override_material(0, mat_pad)
+	pad_sb.add_child(pad_mesh)
+
+	var pad_col := CollisionShape3D.new()
+	var pad_cshape := CylinderShape3D.new()
+	pad_cshape.radius = 14.0
+	pad_cshape.height = 0.8
+	pad_col.shape = pad_cshape
+	pad_col.position = Vector3(0, 0.4, 0)
+	pad_sb.add_child(pad_col)
+	root.add_child(pad_sb)
+
+	# Liseré circulaire d'atterrissage
+	var ring_mesh := MeshInstance3D.new()
+	var ring_torus := TorusMesh.new()
+	ring_torus.inner_radius = 11.5
+	ring_torus.outer_radius = 12.0
+	ring_mesh.mesh = ring_torus
+	ring_mesh.position = Vector3(0, 0.82, 0)
+	ring_mesh.set_surface_override_material(0, mat_stripes)
+	root.add_child(ring_mesh)
+
+	# Balises lumineuses de piste (Vert / Rouge clignotant aux 4 coins)
+	for i in range(4):
+		var angle: float = i * PI * 0.5 + PI * 0.25
+		var bx: float = cos(angle) * 12.5
+		var bz: float = sin(angle) * 12.5
+		var beacon := OmniLight3D.new()
+		beacon.position = Vector3(bx, 1.2, bz)
+		beacon.light_color = Color(0.1, 0.9, 0.3) if i % 2 == 0 else Color(0.9, 0.2, 0.1)
+		beacon.light_energy = 1.5
+		beacon.omni_range = 5.0
+		root.add_child(beacon)
+
+	# B. Tour de Contrôle Spatiale (Terminal de Transit)
+	var tower_sb := StaticBody3D.new()
+	tower_sb.position = Vector3(-18.0, 0, 0)
+
+	var t_base := MeshInstance3D.new()
+	var t_box := BoxMesh.new()
+	t_box.size = Vector3(10.0, 7.0, 10.0)
+	t_base.mesh = t_box
+	t_base.position = Vector3(0, 3.5, 0)
+	t_base.set_surface_override_material(0, mat_tower)
+	tower_sb.add_child(t_base)
+
+	var t_glass_mesh := MeshInstance3D.new()
+	var t_glass_box := CylinderMesh.new()
+	t_glass_box.top_radius = 5.5
+	t_glass_box.bottom_radius = 4.8
+	t_glass_box.height = 3.2
+	t_glass_mesh.mesh = t_glass_box
+	t_glass_mesh.position = Vector3(0, 8.6, 0)
+	t_glass_mesh.set_surface_override_material(0, mat_glass)
+	tower_sb.add_child(t_glass_mesh)
+
+	# Antenne Radar Parabolique au sommet de la tour
+	var radar_dish := MeshInstance3D.new()
+	var dish_mesh := SphereMesh.new()
+	dish_mesh.radius = 2.0
+	dish_mesh.height = 1.0
+	dish_mesh.is_hemisphere = true
+	radar_dish.mesh = dish_mesh
+	radar_dish.position = Vector3(0, 11.2, 0)
+	radar_dish.rotation_degrees = Vector3(-35, 45, 0)
+	var mat_metal_dish := StandardMaterial3D.new()
+	mat_metal_dish.albedo_color = Color(0.8, 0.85, 0.9)
+	mat_metal_dish.metallic = 0.95
+	radar_dish.set_surface_override_material(0, mat_metal_dish)
+	tower_sb.add_child(radar_dish)
+
+	var t_col := CollisionShape3D.new()
+	var t_col_box := BoxShape3D.new()
+	t_col_box.size = Vector3(10.0, 10.0, 10.0)
+	t_col.shape = t_col_box
+	t_col.position = Vector3(0, 5.0, 0)
+	tower_sb.add_child(t_col)
+	root.add_child(tower_sb)
+
+	# C. Navette Spatiale SWG (Shuttle Lambda-Style posée au centre de la piste)
+	var shuttle := Node3D.new()
+	shuttle.name = "SWG_Shuttle_Craft"
+	shuttle.position = Vector3(0, 0.8, 0)
+
+	var mat_shuttle := StandardMaterial3D.new()
+	mat_shuttle.albedo_color = Color(0.88, 0.90, 0.92, 1.0)
+	mat_shuttle.roughness = 0.4
+	mat_shuttle.metallic = 0.5
+
+	var mat_engine := StandardMaterial3D.new()
+	mat_engine.albedo_color = Color(0.2, 0.6, 1.0)
+	mat_engine.emission_enabled = true
+	mat_engine.emission = Color(0.2, 0.7, 1.0)
+	mat_engine.emission_energy_multiplier = 3.0
+
+	# Fuselage principal
+	var fuselage := MeshInstance3D.new()
+	var f_box := BoxMesh.new()
+	f_box.size = Vector3(5.5, 3.2, 12.0)
+	fuselage.mesh = f_box
+	fuselage.position = Vector3(0, 2.8, 0)
+	fuselage.set_surface_override_material(0, mat_shuttle)
+	shuttle.add_child(fuselage)
+
+	# Cockpit biseauté avant
+	var nose := MeshInstance3D.new()
+	var n_prism := PrismMesh.new()
+	n_prism.size = Vector3(4.8, 2.4, 4.0)
+	nose.mesh = n_prism
+	nose.position = Vector3(0, 2.4, -7.5)
+	nose.rotation_degrees = Vector3(-90, 0, 0)
+	nose.set_surface_override_material(0, mat_shuttle)
+	shuttle.add_child(nose)
+
+	# Grande Aile Dorsale Verticale (Iconique SWG Lambda / Shuttle)
+	var dorsal_fin := MeshInstance3D.new()
+	var d_prism := PrismMesh.new()
+	d_prism.size = Vector3(0.5, 8.5, 9.0)
+	dorsal_fin.mesh = d_prism
+	dorsal_fin.position = Vector3(0, 8.6, -0.5)
+	dorsal_fin.rotation_degrees = Vector3(0, 0, 0)
+	dorsal_fin.set_surface_override_material(0, mat_shuttle)
+	shuttle.add_child(dorsal_fin)
+
+	# Aile latérale Gauche (repliée vers le haut à 45°)
+	var left_wing := MeshInstance3D.new()
+	var w_mesh := BoxMesh.new()
+	w_mesh.size = Vector3(0.4, 7.5, 6.0)
+	left_wing.mesh = w_mesh
+	left_wing.position = Vector3(-4.0, 6.0, 0)
+	left_wing.rotation_degrees = Vector3(0, 0, -35)
+	left_wing.set_surface_override_material(0, mat_shuttle)
+	shuttle.add_child(left_wing)
+
+	# Aile latérale Droite (repliée vers le haut à 45°)
+	var right_wing := MeshInstance3D.new()
+	right_wing.mesh = w_mesh
+	right_wing.position = Vector3(4.0, 6.0, 0)
+	right_wing.rotation_degrees = Vector3(0, 0, 35)
+	right_wing.set_surface_override_material(0, mat_shuttle)
+	shuttle.add_child(right_wing)
+
+	# Tuyères de réacteur arrière
+	for rx in [-1.5, 1.5]:
+		var engine := MeshInstance3D.new()
+		var eng_cyl := CylinderMesh.new()
+		eng_cyl.top_radius = 0.9
+		eng_cyl.bottom_radius = 1.1
+		eng_cyl.height = 1.6
+		engine.mesh = eng_cyl
+		engine.position = Vector3(rx, 2.5, 6.2)
+		engine.rotation_degrees = Vector3(90, 0, 0)
+		engine.set_surface_override_material(0, mat_engine)
+		shuttle.add_child(engine)
+
+	# Passerelle d'accès déployée vers le sol
+	var ramp := MeshInstance3D.new()
+	var ramp_mesh := BoxMesh.new()
+	ramp_mesh.size = Vector3(2.2, 0.2, 4.5)
+	ramp.mesh = ramp_mesh
+	ramp.position = Vector3(0, 1.0, 3.5)
+	ramp.rotation_degrees = Vector3(22, 0, 0)
+	var mat_ramp := StandardMaterial3D.new()
+	mat_ramp.albedo_color = Color(0.3, 0.3, 0.32)
+	ramp.set_surface_override_material(0, mat_ramp)
+	shuttle.add_child(ramp)
+
+	root.add_child(shuttle)
+
+	# Enseigne Holo Spatioport
+	var lp_lbl := Label3D.new()
+	lp_lbl.text = "◈ SPATIOPORT DE LOST HEAVEN ◈\n« Navettes vers Anchorhead & Mos Eisley »"
+	lp_lbl.position = Vector3(-18.0, 11.5, 5.2)
+	lp_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lp_lbl.font_size = 18
+	lp_lbl.modulate = Color(0.2, 0.9, 1.0, 1.0)
+	root.add_child(lp_lbl)
+
+	return root
+
+
+## 2. Centre Médical & Clonerie SWG (Medical Center & Cloning Facility)
+static func build_swg_medcenter(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Medical_Center_Lost_Heaven"
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_white := StandardMaterial3D.new()
+	mat_white.albedo_color = Color(0.85, 0.88, 0.90, 1.0)
+	mat_white.roughness = 0.4
+
+	var mat_blue_cross := StandardMaterial3D.new()
+	mat_blue_cross.albedo_color = Color(0.1, 0.75, 1.0, 1.0)
+	mat_blue_cross.emission_enabled = true
+	mat_blue_cross.emission = Color(0.1, 0.75, 1.0, 1.0)
+	mat_blue_cross.emission_energy_multiplier = 2.5
+
+	var mat_bacta := StandardMaterial3D.new()
+	mat_bacta.albedo_color = Color(0.1, 0.85, 0.75, 0.55)
+	mat_bacta.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_bacta.roughness = 0.1
+	mat_bacta.emission_enabled = true
+	mat_bacta.emission = Color(0.1, 0.85, 0.75, 1.0)
+	mat_bacta.emission_energy_multiplier = 1.2
+
+	var sb := StaticBody3D.new()
+
+	# Structure principale à double niveau
+	var b_mesh := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(16.0, 6.0, 14.0)
+	b_mesh.mesh = b_box
+	b_mesh.position = Vector3(0, 3.0, 0)
+	b_mesh.set_surface_override_material(0, mat_white)
+	sb.add_child(b_mesh)
+
+	var b_col := CollisionShape3D.new()
+	var b_cshape := BoxShape3D.new()
+	b_cshape.size = Vector3(16.0, 6.0, 14.0)
+	b_col.shape = b_cshape
+	b_col.position = Vector3(0, 3.0, 0)
+	sb.add_child(b_col)
+
+	# Dôme médical supérieur
+	var dome := MeshInstance3D.new()
+	var sp := SphereMesh.new()
+	sp.radius = 5.0
+	sp.height = 3.5
+	sp.is_hemisphere = true
+	dome.mesh = sp
+	dome.position = Vector3(0, 6.0, 0)
+	dome.set_surface_override_material(0, mat_white)
+	sb.add_child(dome)
+
+	# Croix Caducée Holographique en façade
+	var cross_h := MeshInstance3D.new()
+	var ch_box := BoxMesh.new()
+	ch_box.size = Vector3(3.2, 0.8, 0.2)
+	cross_h.mesh = ch_box
+	cross_h.position = Vector3(0, 4.5, 7.1)
+	cross_h.set_surface_override_material(0, mat_blue_cross)
+	sb.add_child(cross_h)
+
+	var cross_v := MeshInstance3D.new()
+	var cv_box := BoxMesh.new()
+	cv_box.size = Vector3(0.8, 3.2, 0.2)
+	cross_v.mesh = cv_box
+	cross_v.position = Vector3(0, 4.5, 7.1)
+	cross_v.set_surface_override_material(0, mat_blue_cross)
+	sb.add_child(cross_v)
+
+	# 2 Cuves de Bacta (Bacta Tanks) visibles devant le centre
+	for bx in [-5.0, 5.0]:
+		var tank := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 1.1
+		cyl.bottom_radius = 1.1
+		cyl.height = 3.2
+		tank.mesh = cyl
+		tank.position = Vector3(bx, 1.8, 7.8)
+		tank.set_surface_override_material(0, mat_bacta)
+		sb.add_child(tank)
+
+		var bacta_light := OmniLight3D.new()
+		bacta_light.position = Vector3(bx, 1.8, 7.8)
+		bacta_light.light_color = Color(0.1, 0.9, 0.8)
+		bacta_light.light_energy = 1.8
+		bacta_light.omni_range = 4.0
+		sb.add_child(bacta_light)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ CENTRE MÉDICAL DE LOST HEAVEN ◈\n« Soins HAM, Dissipation Fatigue & Enregistrement Clone »"
+	lbl.position = Vector3(0, 8.5, 7.2)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 18
+	lbl.modulate = Color(0.2, 0.95, 1.0, 1.0)
+	root.add_child(lbl)
+
+	return root
+
+
+## 3. Hôtel de Ville / Hall de Guilde de Lost Heaven (Town Hall)
+static func build_swg_town_hall(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Town_Hall_Lost_Heaven"
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_stone := StandardMaterial3D.new()
+	mat_stone.albedo_color = Color(0.72, 0.62, 0.50, 1.0)
+	mat_stone.roughness = 0.8
+
+	var mat_gold := StandardMaterial3D.new()
+	mat_gold.albedo_color = Color(0.95, 0.78, 0.25, 1.0)
+	mat_gold.metallic = 0.8
+	mat_gold.roughness = 0.3
+
+	var mat_banner := StandardMaterial3D.new()
+	mat_banner.albedo_color = Color(0.55, 0.15, 0.20, 1.0) # Pourpre royal
+	mat_banner.roughness = 0.7
+
+	var sb := StaticBody3D.new()
+
+	# Corps de bâtiment principal
+	var hall_mesh := MeshInstance3D.new()
+	var h_box := BoxMesh.new()
+	h_box.size = Vector3(22.0, 8.0, 16.0)
+	hall_mesh.mesh = h_box
+	hall_mesh.position = Vector3(0, 4.0, 0)
+	hall_mesh.set_surface_override_material(0, mat_stone)
+	sb.add_child(hall_mesh)
+
+	var h_col := CollisionShape3D.new()
+	var h_cshape := BoxShape3D.new()
+	h_cshape.size = Vector3(22.0, 8.0, 16.0)
+	h_col.shape = h_cshape
+	h_col.position = Vector3(0, 4.0, 0)
+	sb.add_child(h_col)
+
+	# Grand Escalier d'accès frontal (4 marches étagées)
+	for i in range(4):
+		var step := MeshInstance3D.new()
+		var step_box := BoxMesh.new()
+		step_box.size = Vector3(16.0 - i * 1.5, 0.35, 1.2)
+		step.mesh = step_box
+		step.position = Vector3(0, i * 0.35 + 0.17, 8.6 + (3 - i) * 1.0)
+		step.set_surface_override_material(0, mat_stone)
+		sb.add_child(step)
+
+	# 4 Colonnes monumentales en façade
+	for cx in [-7.5, -2.5, 2.5, 7.5]:
+		var col_mesh := MeshInstance3D.new()
+		var col_cyl := CylinderMesh.new()
+		col_cyl.top_radius = 0.8
+		col_cyl.bottom_radius = 0.9
+		col_cyl.height = 7.6
+		col_mesh.mesh = col_cyl
+		col_mesh.position = Vector3(cx, 4.2, 8.6)
+		col_mesh.set_surface_override_material(0, mat_stone)
+		sb.add_child(col_mesh)
+
+	# Fronton supérieur & Corniche dorée
+	var pediment := MeshInstance3D.new()
+	var ped_prism := PrismMesh.new()
+	ped_prism.size = Vector3(22.0, 4.0, 2.5)
+	pediment.mesh = ped_prism
+	pediment.position = Vector3(0, 10.0, 8.0)
+	pediment.set_surface_override_material(0, mat_stone)
+	sb.add_child(pediment)
+
+	# Bannières municipales pourpres
+	for bx in [-6.0, 6.0]:
+		var banner := MeshInstance3D.new()
+		var b_mesh := BoxMesh.new()
+		b_mesh.size = Vector3(1.8, 5.5, 0.08)
+		banner.mesh = b_mesh
+		banner.position = Vector3(bx, 5.0, 8.1)
+		banner.set_surface_override_material(0, mat_banner)
+		sb.add_child(banner)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ HÔTEL DE VILLE DE LOST HEAVEN ◈\n« Bureau du Maire Odo Merr • Élections & Registre Foncier »"
+	lbl.position = Vector3(0, 12.8, 8.4)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 20
+	lbl.modulate = Color(0.96, 0.86, 0.35, 1.0)
+	root.add_child(lbl)
+
+	return root
+
+
+## 4. Maison Citadine en Pisé (Style Tatooine SWG Pre-CU)
+static func build_swg_tatooine_house(pos: Vector3, yaw_deg: float = 0.0, variant: int = 0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "House_Pise_SWG_%d" % variant
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_pise := StandardMaterial3D.new()
+	mat_pise.albedo_color = Color(0.70 + (variant % 3) * 0.03, 0.60, 0.48, 1.0)
+	mat_pise.roughness = 0.9
+
+	var mat_awning := StandardMaterial3D.new()
+	mat_awning.albedo_color = Color(0.82, 0.72, 0.58) # Toile tendue beige
+	mat_awning.roughness = 0.95
+
+	var sb := StaticBody3D.new()
+
+	# Bâtiment principal cubique
+	var house := MeshInstance3D.new()
+	var h_mesh := BoxMesh.new()
+	h_mesh.size = Vector3(8.0, 4.2, 7.5)
+	house.mesh = h_mesh
+	house.position = Vector3(0, 2.1, 0)
+	house.set_surface_override_material(0, mat_pise)
+	sb.add_child(house)
+
+	var col := CollisionShape3D.new()
+	var c_box := BoxShape3D.new()
+	c_box.size = Vector3(8.0, 4.2, 7.5)
+	col.shape = c_box
+	col.position = Vector3(0, 2.1, 0)
+	sb.add_child(col)
+
+	# Dôme d'aération sur le toit
+	var dome := MeshInstance3D.new()
+	var sp := SphereMesh.new()
+	sp.radius = 1.8
+	sp.height = 1.6
+	sp.is_hemisphere = true
+	dome.mesh = sp
+	dome.position = Vector3(-1.5, 4.2, 0)
+	dome.set_surface_override_material(0, mat_pise)
+	sb.add_child(dome)
+
+	# Escalier extérieur montant sur le toit-terrasse
+	for i in range(5):
+		var step := MeshInstance3D.new()
+		var s_box := BoxMesh.new()
+		s_box.size = Vector3(1.2, 0.4, 0.7)
+		step.mesh = s_box
+		step.position = Vector3(4.5, i * 0.4 + 0.2, -2.5 + i * 0.7)
+		step.set_surface_override_material(0, mat_pise)
+		sb.add_child(step)
+
+	# Auvent de toile ombragé au-dessus de la porte
+	var awning := MeshInstance3D.new()
+	var a_mesh := BoxMesh.new()
+	a_mesh.size = Vector3(2.8, 0.1, 2.0)
+	awning.mesh = a_mesh
+	awning.position = Vector3(0, 3.2, 4.4)
+	awning.rotation_degrees = Vector3(15, 0, 0)
+	awning.set_surface_override_material(0, mat_awning)
+	sb.add_child(awning)
+
+	root.add_child(sb)
+	return root
+
+
+## 5. Porte Fortifiée de Ville & Mur d'Enceinte (City Wall & Gate)
+static func build_swg_city_wall_and_gate(pos: Vector3, yaw_deg: float = 0.0, gate_name: String = "Porte Ouest") -> Node3D:
+	var root := Node3D.new()
+	root.name = "City_Gate_" + gate_name
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_wall := StandardMaterial3D.new()
+	mat_wall.albedo_color = Color(0.58, 0.50, 0.40, 1.0)
+	mat_wall.roughness = 0.9
+
+	var sb := StaticBody3D.new()
+
+	# Bastion Gauche
+	var left_tower := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(6.0, 9.0, 6.0)
+	left_tower.mesh = b_box
+	left_tower.position = Vector3(-6.5, 4.5, 0)
+	left_tower.set_surface_override_material(0, mat_wall)
+	sb.add_child(left_tower)
+
+	# Bastion Droit
+	var right_tower := MeshInstance3D.new()
+	right_tower.mesh = b_box
+	right_tower.position = Vector3(6.5, 4.5, 0)
+	right_tower.set_surface_override_material(0, mat_wall)
+	sb.add_child(right_tower)
+
+	# Arche supérieure de passage
+	var arch := MeshInstance3D.new()
+	var a_box := BoxMesh.new()
+	a_box.size = Vector3(8.0, 3.0, 4.0)
+	arch.mesh = a_box
+	arch.position = Vector3(0, 7.5, 0)
+	arch.set_surface_override_material(0, mat_wall)
+	sb.add_child(arch)
+
+	# Murs d'enceinte prolongeant chaque côté (15m de chaque côté)
+	for side in [-1, 1]:
+		var wall_ext := MeshInstance3D.new()
+		var w_box := BoxMesh.new()
+		w_box.size = Vector3(18.0, 6.0, 3.0)
+		wall_ext.mesh = w_box
+		wall_ext.position = Vector3(side * 18.0, 3.0, 0)
+		wall_ext.set_surface_override_material(0, mat_wall)
+		sb.add_child(wall_ext)
+
+	# Collisions
+	var col_l := CollisionShape3D.new()
+	var c_box := BoxShape3D.new()
+	c_box.size = Vector3(22.0, 9.0, 6.0)
+	col_l.shape = c_box
+	col_l.position = Vector3(-14.0, 4.5, 0)
+	sb.add_child(col_l)
+
+	var col_r := CollisionShape3D.new()
+	col_r.shape = c_box
+	col_r.position = Vector3(14.0, 4.5, 0)
+	sb.add_child(col_r)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ LOST HEAVEN • %s ◈\n« Zone Sous Protection de la Milice »" % gate_name.to_upper()
+	lbl.position = Vector3(0, 9.5, 2.2)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 18
+	lbl.modulate = Color(0.95, 0.85, 0.3, 1.0)
+	root.add_child(lbl)
+
+	return root
+
+
+# ==============================================================================
+#  MOBILIER URBAIN, TERMINAUX & PROPS SWG AUTHENTIQUES
+# ==============================================================================
+
+## 6. Vaporisateur d'Humidité SWG (Moisture Vaporator GX-8)
+static func build_moisture_vaporator(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Moisture_Vaporator"
+	root.position = pos
+
+	var mat_metal := StandardMaterial3D.new()
+	mat_metal.albedo_color = Color(0.65, 0.68, 0.70, 1.0)
+	mat_metal.metallic = 0.8
+	mat_metal.roughness = 0.35
+
+	var mat_light := StandardMaterial3D.new()
+	mat_light.albedo_color = Color(0.2, 0.9, 1.0)
+	mat_light.emission_enabled = true
+	mat_light.emission = Color(0.2, 0.9, 1.0)
+	mat_light.emission_energy_multiplier = 2.0
+
+	var sb := StaticBody3D.new()
+
+	# Mât central élancé (6.5m)
+	var mast := MeshInstance3D.new()
+	var m_cyl := CylinderMesh.new()
+	m_cyl.top_radius = 0.22
+	m_cyl.bottom_radius = 0.35
+	m_cyl.height = 6.5
+	mast.mesh = m_cyl
+	mast.position = Vector3(0, 3.25, 0)
+	mast.set_surface_override_material(0, mat_metal)
+	sb.add_child(mast)
+
+	# Trépied à la base
+	for i in range(3):
+		var leg := MeshInstance3D.new()
+		var l_box := BoxMesh.new()
+		l_box.size = Vector3(0.2, 0.2, 1.8)
+		leg.mesh = l_box
+		var angle: float = i * PI * 2.0 / 3.0
+		leg.position = Vector3(cos(angle) * 0.9, 0.4, sin(angle) * 0.9)
+		leg.rotation = Vector3(0, -angle, 0.4)
+		leg.set_surface_override_material(0, mat_metal)
+		sb.add_child(leg)
+
+	# Anneaux de condensation au milieu
+	var ring := MeshInstance3D.new()
+	var tor := TorusMesh.new()
+	tor.inner_radius = 0.6
+	tor.outer_radius = 0.9
+	ring.mesh = tor
+	ring.position = Vector3(0, 4.0, 0)
+	ring.set_surface_override_material(0, mat_metal)
+	sb.add_child(ring)
+
+	# Tête de captage au sommet avec voyant cyan
+	var beacon := MeshInstance3D.new()
+	var b_sp := SphereMesh.new()
+	b_sp.radius = 0.35
+	b_sp.height = 0.7
+	beacon.mesh = b_sp
+	beacon.position = Vector3(0, 6.7, 0)
+	beacon.set_surface_override_material(0, mat_light)
+	sb.add_child(beacon)
+
+	var omni := OmniLight3D.new()
+	omni.position = Vector3(0, 6.7, 0)
+	omni.light_color = Color(0.2, 0.9, 1.0)
+	omni.light_energy = 1.0
+	omni.omni_range = 3.5
+	sb.add_child(omni)
+
+	var col := CollisionShape3D.new()
+	var c_cyl := CylinderShape3D.new()
+	c_cyl.radius = 0.8
+	c_cyl.height = 6.5
+	col.shape = c_cyl
+	col.position = Vector3(0, 3.25, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+	return root
+
+
+## 7. Borne de Terminal de Mission SWG (Mission Terminal)
+static func build_mission_terminal(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	return _build_generic_terminal(pos, yaw_deg, "Terminal de Missions", Color(0.2, 0.8, 1.0), "term_mission")
+
+
+## 8. Borne de Terminal de Marché / Bazar (Bazaar Terminal)
+static func build_bazaar_terminal(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	return _build_generic_terminal(pos, yaw_deg, "Terminal du Bazar Public", Color(0.95, 0.8, 0.2), "term_bazaar")
+
+
+## 9. Borne Bancaire SWG (Bank Terminal)
+static func build_bank_terminal(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	return _build_generic_terminal(pos, yaw_deg, "Terminal Bancaire Galactique", Color(0.2, 1.0, 0.4), "term_bank")
+
+
+## 10. Borne d'Assurance & Clonage (Cloning Terminal)
+static func build_cloning_terminal(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	return _build_generic_terminal(pos, yaw_deg, "Borne d'Assurance Clonage", Color(0.9, 0.3, 0.9), "term_clone")
+
+
+static func _build_generic_terminal(pos: Vector3, yaw_deg: float, term_name: String, screen_col: Color, kind_id: String) -> Node3D:
+	var root := Node3D.new()
+	root.name = term_name.replace(" ", "_")
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+	root.set_meta("entity_kind", kind_id)
+	root.set_meta("display_name", term_name)
+
+	var mat_body := StandardMaterial3D.new()
+	mat_body.albedo_color = Color(0.28, 0.30, 0.32, 1.0)
+	mat_body.metallic = 0.85
+	mat_body.roughness = 0.3
+
+	var mat_screen := StandardMaterial3D.new()
+	mat_screen.albedo_color = screen_col
+	mat_screen.emission_enabled = true
+	mat_screen.emission = screen_col
+	mat_screen.emission_energy_multiplier = 2.2
+
+	var sb := StaticBody3D.new()
+
+	# Piédestal
+	var base := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(0.9, 1.4, 0.7)
+	base.mesh = b_box
+	base.position = Vector3(0, 0.7, 0)
+	base.set_surface_override_material(0, mat_body)
+	sb.add_child(base)
+
+	# Écran vertical holographique incliné
+	var screen := MeshInstance3D.new()
+	var s_box := BoxMesh.new()
+	s_box.size = Vector3(0.75, 0.65, 0.05)
+	screen.mesh = s_box
+	screen.position = Vector3(0, 1.5, 0.1)
+	screen.rotation_degrees = Vector3(-18, 0, 0)
+	screen.set_surface_override_material(0, mat_screen)
+	sb.add_child(screen)
+
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 1.6, 0.35)
+	light.light_color = screen_col
+	light.light_energy = 1.2
+	light.omni_range = 2.5
+	sb.add_child(light)
+
+	var col := CollisionShape3D.new()
+	var c_shape := BoxShape3D.new()
+	c_shape.size = Vector3(0.9, 1.8, 0.7)
+	col.shape = c_shape
+	col.position = Vector3(0, 0.9, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ %s ◈" % term_name
+	lbl.position = Vector3(0, 2.2, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 14
+	lbl.modulate = screen_col
+	root.add_child(lbl)
+
+	return root
+
+
+## 11. Landspeeder SWG (Style X-34 garé en lévitation)
+static func build_landspeeder(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Landspeeder_X34"
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_body := StandardMaterial3D.new()
+	mat_body.albedo_color = Color(0.75, 0.25, 0.22, 1.0) # Bordeaux délavé
+	mat_body.roughness = 0.4
+	mat_body.metallic = 0.6
+
+	var mat_windshield := StandardMaterial3D.new()
+	mat_windshield.albedo_color = Color(0.2, 0.5, 0.7, 0.6)
+	mat_windshield.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_windshield.roughness = 0.1
+
+	var mat_turbine := StandardMaterial3D.new()
+	mat_turbine.albedo_color = Color(0.3, 0.35, 0.38)
+	mat_turbine.metallic = 0.9
+
+	var sb := StaticBody3D.new()
+
+	# Châssis caréné en lévitation à 0.4m du sol
+	var body := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(2.4, 0.65, 4.8)
+	body.mesh = b_box
+	body.position = Vector3(0, 0.75, 0)
+	body.set_surface_override_material(0, mat_body)
+	sb.add_child(body)
+
+	# 3 Turbines réacteurs cylindriques (G / D / C)
+	for tx in [-1.3, 0.0, 1.3]:
+		var turb := MeshInstance3D.new()
+		var t_cyl := CylinderMesh.new()
+		t_cyl.top_radius = 0.35
+		t_cyl.bottom_radius = 0.35
+		t_cyl.height = 2.2
+		turb.mesh = t_cyl
+		turb.position = Vector3(tx, 1.2 if tx == 0.0 else 0.8, -1.2)
+		turb.rotation_degrees = Vector3(90, 0, 0)
+		turb.set_surface_override_material(0, mat_turbine)
+		sb.add_child(turb)
+
+	# Pare-brise cockpit courbé
+	var windshield := MeshInstance3D.new()
+	var w_mesh := BoxMesh.new()
+	w_mesh.size = Vector3(1.8, 0.5, 0.1)
+	windshield.mesh = w_mesh
+	windshield.position = Vector3(0, 1.25, 0.6)
+	windshield.rotation_degrees = Vector3(25, 0, 0)
+	windshield.set_surface_override_material(0, mat_windshield)
+	sb.add_child(windshield)
+
+	var col := CollisionShape3D.new()
+	var c_box := BoxShape3D.new()
+	c_box.size = Vector3(2.8, 1.2, 5.0)
+	col.shape = c_box
+	col.position = Vector3(0, 0.8, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ Landspeeder X-34 ◈"
+	lbl.position = Vector3(0, 2.0, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 14
+	lbl.modulate = Color(0.9, 0.95, 1.0)
+	root.add_child(lbl)
+
+	return root
+
+
+## 12. Amas de Fret Cargo & Conteneurs Industriels (Cargo Cluster)
+static func build_cargo_cluster(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Cargo_Cluster"
+	root.position = pos
+
+	var mat_crate1 := StandardMaterial3D.new()
+	mat_crate1.albedo_color = Color(0.35, 0.45, 0.55, 1.0)
+	mat_crate1.roughness = 0.6
+
+	var mat_crate2 := StandardMaterial3D.new()
+	mat_crate2.albedo_color = Color(0.65, 0.45, 0.25, 1.0)
+	mat_crate2.roughness = 0.8
+
+	var mat_barrel := StandardMaterial3D.new()
+	mat_barrel.albedo_color = Color(0.85, 0.35, 0.15, 1.0)
+	mat_barrel.metallic = 0.7
+
+	var sb := StaticBody3D.new()
+
+	# Caisse 1 (Grande)
+	var c1 := MeshInstance3D.new()
+	var b1 := BoxMesh.new()
+	b1.size = Vector3(2.0, 1.6, 2.0)
+	c1.mesh = b1
+	c1.position = Vector3(0, 0.8, 0)
+	c1.set_surface_override_material(0, mat_crate1)
+	sb.add_child(c1)
+
+	# Caisse 2 empilée
+	var c2 := MeshInstance3D.new()
+	var b2 := BoxMesh.new()
+	b2.size = Vector3(1.4, 1.2, 1.4)
+	c2.mesh = b2
+	c2.position = Vector3(0.2, 2.2, 0.1)
+	c2.rotation_degrees.y = 15.0
+	c2.set_surface_override_material(0, mat_crate2)
+	sb.add_child(c2)
+
+	# Barils de carburant
+	for bx in [-1.5, 1.6]:
+		var barrel := MeshInstance3D.new()
+		var b_cyl := CylinderMesh.new()
+		b_cyl.top_radius = 0.45
+		b_cyl.bottom_radius = 0.45
+		b_cyl.height = 1.3
+		barrel.mesh = b_cyl
+		barrel.position = Vector3(bx, 0.65, 0.5)
+		barrel.set_surface_override_material(0, mat_barrel)
+		sb.add_child(barrel)
+
+	var col := CollisionShape3D.new()
+	var c_shape := BoxShape3D.new()
+	c_shape.size = Vector3(3.8, 2.8, 2.8)
+	col.shape = c_shape
+	col.position = Vector3(0, 1.4, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+	return root
+
+
+## 13. Lampadaire de Rue (Street Lamp)
+static func build_street_lamp(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Street_Lamp"
+	root.position = pos
+
+	var mat_pole := StandardMaterial3D.new()
+	mat_pole.albedo_color = Color(0.3, 0.35, 0.4)
+	mat_pole.metallic = 0.85
+
+	var mat_lamp := StandardMaterial3D.new()
+	mat_lamp.albedo_color = Color(1.0, 0.9, 0.6)
+	mat_lamp.emission_enabled = true
+	mat_lamp.emission = Color(1.0, 0.9, 0.6)
+	mat_lamp.emission_energy_multiplier = 3.0
+
+	var pole := MeshInstance3D.new()
+	var p_cyl := CylinderMesh.new()
+	p_cyl.top_radius = 0.08
+	p_cyl.bottom_radius = 0.12
+	p_cyl.height = 4.2
+	pole.mesh = p_cyl
+	pole.position = Vector3(0, 2.1, 0)
+	pole.set_surface_override_material(0, mat_pole)
+	root.add_child(pole)
+
+	var lantern := MeshInstance3D.new()
+	var l_box := BoxMesh.new()
+	l_box.size = Vector3(0.5, 0.35, 0.5)
+	lantern.mesh = l_box
+	lantern.position = Vector3(0, 4.3, 0)
+	lantern.set_surface_override_material(0, mat_lamp)
+	root.add_child(lantern)
+
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 4.2, 0)
+	light.light_color = Color(1.0, 0.92, 0.7)
+	light.light_energy = 1.8
+	light.omni_range = 9.0
+	root.add_child(light)
+
+	return root
+
+
+# ==============================================================================
+#  WILDERNESS, RELIEF & CAMPS DE SCOUT NOMADES
+# ==============================================================================
+
+## 14. Campement de Scout Nomade (Scout Survival Camp)
+static func build_scout_camp(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Scout_Camp"
+	root.position = pos
+
+	var mat_canvas := StandardMaterial3D.new()
+	mat_canvas.albedo_color = Color(0.85, 0.78, 0.65, 1.0)
+	mat_canvas.roughness = 0.95
+
+	var mat_fire := StandardMaterial3D.new()
+	mat_fire.albedo_color = Color(1.0, 0.4, 0.1, 1.0)
+	mat_fire.emission_enabled = true
+	mat_fire.emission = Color(1.0, 0.4, 0.1, 1.0)
+	mat_fire.emission_energy_multiplier = 4.0
+
+	# Tente igloo en toile
+	var tent := MeshInstance3D.new()
+	var t_dome := SphereMesh.new()
+	t_dome.radius = 2.4
+	t_dome.height = 2.2
+	t_dome.is_hemisphere = true
+	tent.mesh = t_dome
+	tent.position = Vector3(0, 0, 0)
+	tent.set_surface_override_material(0, mat_canvas)
+	root.add_child(tent)
+
+	# Foyer de camp avec braises incandescentes
+	var fire := MeshInstance3D.new()
+	var f_cone := CylinderMesh.new()
+	f_cone.top_radius = 0.1
+	f_cone.bottom_radius = 0.6
+	f_cone.height = 0.5
+	fire.mesh = f_cone
+	fire.position = Vector3(0, 0.25, 3.8)
+	fire.set_surface_override_material(0, mat_fire)
+	root.add_child(fire)
+
+	# Lumière vacillante du feu de camp
+	var fire_light := OmniLight3D.new()
+	fire_light.position = Vector3(0, 0.8, 3.8)
+	fire_light.light_color = Color(1.0, 0.55, 0.2)
+	fire_light.light_energy = 2.5
+	fire_light.omni_range = 8.0
+	root.add_child(fire_light)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ Bivouac de Scout Nomade ◈\n« Zone de Récupération HAM & Camouflage »"
+	lbl.position = Vector3(0, 2.8, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 14
+	lbl.modulate = Color(1.0, 0.8, 0.3)
+	root.add_child(lbl)
+
+	return root
+
+
+## 15. Extracteur Minier Industriel SWG (Mining Harvester)
+static func build_mining_harvester(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Mining_Harvester"
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+
+	var mat_indus := StandardMaterial3D.new()
+	mat_indus.albedo_color = Color(0.78, 0.52, 0.15, 1.0) # Jaune/Orange industriel
+	mat_indus.roughness = 0.6
+	mat_indus.metallic = 0.7
+
+	var mat_drill := StandardMaterial3D.new()
+	mat_drill.albedo_color = Color(0.25, 0.28, 0.30)
+	mat_drill.metallic = 0.95
+
+	var sb := StaticBody3D.new()
+
+	# Trémie cylindrique principale
+	var hopper := MeshInstance3D.new()
+	var h_cyl := CylinderMesh.new()
+	h_cyl.top_radius = 2.2
+	h_cyl.bottom_radius = 2.2
+	h_cyl.height = 5.5
+	hopper.mesh = h_cyl
+	hopper.position = Vector3(0, 4.2, 0)
+	hopper.set_surface_override_material(0, mat_indus)
+	sb.add_child(hopper)
+
+	# 4 Pieds hydrauliques articulés
+	for i in range(4):
+		var leg := MeshInstance3D.new()
+		var l_cyl := CylinderMesh.new()
+		l_cyl.top_radius = 0.25
+		l_cyl.bottom_radius = 0.35
+		l_cyl.height = 4.2
+		leg.mesh = l_cyl
+		var angle: float = i * PI * 0.5 + PI * 0.25
+		leg.position = Vector3(cos(angle) * 2.8, 2.1, sin(angle) * 2.8)
+		leg.rotation = Vector3(cos(angle) * 0.3, 0, sin(angle) * 0.3)
+		leg.set_surface_override_material(0, mat_drill)
+		sb.add_child(leg)
+
+	# Piston central de forage
+	var drill := MeshInstance3D.new()
+	var d_cyl := CylinderMesh.new()
+	d_cyl.top_radius = 0.7
+	d_cyl.bottom_radius = 0.4
+	d_cyl.height = 3.5
+	drill.mesh = d_cyl
+	drill.position = Vector3(0, 1.2, 0)
+	drill.set_surface_override_material(0, mat_drill)
+	sb.add_child(drill)
+
+	var col := CollisionShape3D.new()
+	var c_cyl := CylinderShape3D.new()
+	c_cyl.radius = 3.2
+	c_cyl.height = 7.0
+	col.shape = c_cyl
+	col.position = Vector3(0, 3.5, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ Extracteur Minier Lourd ◈\n« Gisement de Minerai Ferrique (92% Pureté) »"
+	lbl.position = Vector3(0, 7.5, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 16
+	lbl.modulate = Color(1.0, 0.75, 0.2)
+	root.add_child(lbl)
+
+	return root
+
+
+## 16. Éperon Rocheux / Mesa Géologique du Désert (Rock Outcrop)
+static func build_rock_outcrop(pos: Vector3, scale_vec: Vector3 = Vector3.ONE) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Rock_Outcrop"
+	root.position = pos
+	root.scale = scale_vec
+
+	var mat_rock := StandardMaterial3D.new()
+	mat_rock.albedo_color = Color(0.62, 0.38, 0.28, 1.0) # Grès ocre-rouge stratifié
+	mat_rock.roughness = 0.95
+
+	var sb := StaticBody3D.new()
+
+	var mesh_inst := MeshInstance3D.new()
+	var prism := PrismMesh.new()
+	prism.size = Vector3(12.0, 8.0, 10.0)
+	mesh_inst.mesh = prism
+	mesh_inst.position = Vector3(0, 4.0, 0)
+	mesh_inst.set_surface_override_material(0, mat_rock)
+	sb.add_child(mesh_inst)
+
+	var col := CollisionShape3D.new()
+	var c_shape := BoxShape3D.new()
+	c_shape.size = Vector3(12.0, 8.0, 10.0)
+	col.shape = c_shape
+	col.position = Vector3(0, 4.0, 0)
+	sb.add_child(col)
+
+	root.add_child(sb)
+	return root
+
+
+## 17. Flore Xérophile du Désert (Cactus cierges & Buissons secs)
+static func build_desert_flora(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Desert_Flora"
+	root.position = pos
+
+	var mat_cactus := StandardMaterial3D.new()
+	mat_cactus.albedo_color = Color(0.28, 0.48, 0.32, 1.0)
+	mat_cactus.roughness = 0.85
+
+	# Tronc central du cactus
+	var stem := MeshInstance3D.new()
+	var s_cyl := CylinderMesh.new()
+	s_cyl.top_radius = 0.28
+	s_cyl.bottom_radius = 0.32
+	s_cyl.height = 3.2
+	stem.mesh = s_cyl
+	stem.position = Vector3(0, 1.6, 0)
+	stem.set_surface_override_material(0, mat_cactus)
+	root.add_child(stem)
+
+	# Bras latéraux
+	for side in [-1, 1]:
+		var arm := MeshInstance3D.new()
+		var a_cyl := CylinderMesh.new()
+		a_cyl.top_radius = 0.2
+		a_cyl.bottom_radius = 0.22
+		a_cyl.height = 1.4
+		arm.mesh = a_cyl
+		arm.position = Vector3(side * 0.65, 2.2, 0)
+		arm.set_surface_override_material(0, mat_cactus)
+		root.add_child(arm)
+
+	return root
+
+
+# ==============================================================================
+#  PNJ & BESTIAIRE VIVANT 3D (Droïdes, Faune Dewback / Bantha, Chacal, Fennec)
+# ==============================================================================
+
+## 18. Droïde Astromécano (R2 Style)
+static func build_astromech_droid(pos: Vector3) -> CharacterBody3D:
+	var body := CharacterBody3D.new()
+	body.name = "Droid_R2_Astromech"
+	body.position = pos
+	body.set_meta("entity_kind", "npc_droid_astromech")
+	body.set_meta("display_name", "Droïde Astromécano R2-T8")
+
+	var mat_white := StandardMaterial3D.new()
+	mat_white.albedo_color = Color(0.9, 0.92, 0.95)
+	mat_white.roughness = 0.3
+	mat_white.metallic = 0.5
+
+	var mat_blue := StandardMaterial3D.new()
+	mat_blue.albedo_color = Color(0.1, 0.4, 0.85)
+	mat_blue.metallic = 0.7
+
+	# Corps cylindrique
+	var torso := MeshInstance3D.new()
+	var t_cyl := CylinderMesh.new()
+	t_cyl.top_radius = 0.4
+	t_cyl.bottom_radius = 0.4
+	t_cyl.height = 0.75
+	torso.mesh = t_cyl
+	torso.position = Vector3(0, 0.65, 0)
+	torso.set_surface_override_material(0, mat_white)
+	body.add_child(torso)
+
+	# Dôme supérieur bleu
+	var dome := MeshInstance3D.new()
+	var d_sp := SphereMesh.new()
+	d_sp.radius = 0.4
+	d_sp.height = 0.4
+	d_sp.is_hemisphere = true
+	dome.mesh = d_sp
+	dome.position = Vector3(0, 1.02, 0)
+	dome.set_surface_override_material(0, mat_blue)
+	body.add_child(dome)
+
+	# 2 Jambes latérales
+	for jx in [-0.5, 0.5]:
+		var leg := MeshInstance3D.new()
+		var l_box := BoxMesh.new()
+		l_box.size = Vector3(0.15, 0.8, 0.25)
+		leg.mesh = l_box
+		leg.position = Vector3(jx, 0.45, 0)
+		leg.set_surface_override_material(0, mat_white)
+		body.add_child(leg)
+
+	var col := CollisionShape3D.new()
+	var c_cap := CapsuleShape3D.new()
+	c_cap.radius = 0.45
+	c_cap.height = 1.1
+	col.shape = c_cap
+	col.position = Vector3(0, 0.55, 0)
+	body.add_child(col)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ Droïde R2-T8 ◈"
+	lbl.position = Vector3(0, 1.45, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 12
+	lbl.modulate = Color(0.2, 0.8, 1.0)
+	body.add_child(lbl)
+
+	return body
+
+
+## 16. Chargement d'Avatar VRM Humanoid avec Animateur Procédural (Suppression T-Pose)
+static func load_humanoid_vrm(vrm_name: String) -> Node3D:
+	var candidate_paths := [
+		"res://assets/avatars/" + vrm_name,
+		"packages/compagnon-desktop/overlay/vrm/" + vrm_name,
+		"C:/Agent_IA/compagnon-desktop/overlay/vrm/" + vrm_name,
+		"J:/swgemu/clients/swg-client/assets/avatars/" + vrm_name,
+		"res://assets/avatars/Compagnon.vrm",
+		"res://assets/avatars/LadyKoi.vrm"
+	]
+	for p in candidate_paths:
+		var full_p := ProjectSettings.globalize_path(p)
+		if FileAccess.file_exists(full_p):
+			var gltf := GLTFDocument.new()
+			var state := GLTFState.new()
+			var err := gltf.append_from_file(full_p, state)
+			if err == OK:
+				var scene := gltf.generate_scene(state)
+				if scene != null:
+					scene.rotation_degrees.y = 180.0
+					scene.scale = Vector3(0.92, 0.92, 0.92)
+					var sk: Skeleton3D = _SwgVrmAnimatorScript.find_skeleton_in_tree(scene)
+					if sk != null:
+						var anim := _SwgVrmAnimatorScript.new()
+						anim.name = "VrmAnimator"
+						scene.add_child(anim)
+						anim.setup(sk)
+					return scene
+	return null
+
+
+## 17. Faune Sauvage : Chacal Doré / Chiot des Sables (Quadrupède Articulé)
+static func build_quadruped_creature(pos: Vector3, col: Color, scale_factor: float = 1.0) -> Node3D:
+	var root := Node3D.new()
+	root.position = pos
+
+	var mat_fur := StandardMaterial3D.new()
+	mat_fur.albedo_color = col
+	mat_fur.roughness = 0.85
+
+	# Tronc / Torse
+	var body_mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(0.55, 0.45, 1.2) * scale_factor
+	body_mesh.mesh = box
+	body_mesh.position = Vector3(0, 0.55 * scale_factor, 0)
+	body_mesh.set_surface_override_material(0, mat_fur)
+	root.add_child(body_mesh)
+
+	# Tête avec museau canin
+	var head := MeshInstance3D.new()
+	var h_box := BoxMesh.new()
+	h_box.size = Vector3(0.35, 0.35, 0.5) * scale_factor
+	head.mesh = h_box
+	head.position = Vector3(0, 0.8 * scale_factor, -0.65 * scale_factor)
+	head.set_surface_override_material(0, mat_fur)
+	root.add_child(head)
+
+	# Oreilles pointues
+	for ex in [-0.14, 0.14]:
+		var ear := MeshInstance3D.new()
+		var p_mesh := PrismMesh.new()
+		p_mesh.size = Vector3(0.12, 0.25, 0.08) * scale_factor
+		ear.mesh = p_mesh
+		ear.position = Vector3(ex * scale_factor, 1.05 * scale_factor, -0.6 * scale_factor)
+		ear.set_surface_override_material(0, mat_fur)
+		root.add_child(ear)
+
+	# 4 Pattes
+	for px in [-0.22, 0.22]:
+		for pz in [-0.4, 0.4]:
+			var leg := MeshInstance3D.new()
+			var l_cyl := CylinderMesh.new()
+			l_cyl.top_radius = 0.08 * scale_factor
+			l_cyl.bottom_radius = 0.06 * scale_factor
+			l_cyl.height = 0.55 * scale_factor
+			leg.mesh = l_cyl
+			leg.position = Vector3(px * scale_factor, 0.28 * scale_factor, pz * scale_factor)
+			leg.set_surface_override_material(0, mat_fur)
+			root.add_child(leg)
+
+	# Queue
+	var tail := MeshInstance3D.new()
+	var t_cyl := CylinderMesh.new()
+	t_cyl.top_radius = 0.08 * scale_factor
+	t_cyl.bottom_radius = 0.02 * scale_factor
+	t_cyl.height = 0.65 * scale_factor
+	tail.mesh = t_cyl
+	tail.position = Vector3(0, 0.65 * scale_factor, 0.75 * scale_factor)
+	tail.rotation_degrees = Vector3(-40, 0, 0)
+	tail.set_surface_override_material(0, mat_fur)
+	root.add_child(tail)
+
+	return root
+
+
+## 18. Faune Sauvage : Scarabée Obsidien Géant (Carapace Dôme & Mandibules)
+static func build_beetle_creature(pos: Vector3) -> Node3D:
+	var root := Node3D.new()
+	root.position = pos
+
+	var mat_shell := StandardMaterial3D.new()
+	mat_shell.albedo_color = Color(0.12, 0.12, 0.14)
+	mat_shell.metallic = 0.75
+	mat_shell.roughness = 0.3
+
+	# Carapace bombée
+	var shell := MeshInstance3D.new()
+	var sph := SphereMesh.new()
+	sph.radius = 1.1
+	sph.height = 1.0
+	shell.mesh = sph
+	shell.position = Vector3(0, 0.6, 0)
+	shell.scale = Vector3(1.0, 0.7, 1.4)
+	shell.set_surface_override_material(0, mat_shell)
+	root.add_child(shell)
+
+	# Mandibules dorées
+	var mat_mand := StandardMaterial3D.new()
+	mat_mand.albedo_color = Color(0.85, 0.65, 0.15)
+	for mx in [-0.35, 0.35]:
+		var mand := MeshInstance3D.new()
+		var p_mesh := PrismMesh.new()
+		p_mesh.size = Vector3(0.2, 0.5, 0.1)
+		mand.mesh = p_mesh
+		mand.position = Vector3(mx, 0.45, -1.35)
+		mand.rotation_degrees = Vector3(70, mx * -30.0, 0)
+		mand.set_surface_override_material(0, mat_mand)
+		root.add_child(mand)
+
+	# 6 Pattes arquées
+	for lx in [-0.9, 0.9]:
+		for lz in [-0.6, 0.0, 0.6]:
+			var leg := MeshInstance3D.new()
+			var l_cyl := CylinderMesh.new()
+			l_cyl.top_radius = 0.08
+			l_cyl.bottom_radius = 0.04
+			l_cyl.height = 0.85
+			leg.mesh = l_cyl
+			leg.position = Vector3(lx, 0.35, lz)
+			leg.rotation_degrees = Vector3(0, 0, 45.0 if lx > 0 else -45.0)
+			leg.set_surface_override_material(0, mat_shell)
+			root.add_child(leg)
+
+	return root
+
+
+## 19. Marcheur des Dunes Géant (Faune Dewback / Bantha quadrupède herbivore)
+static func build_dune_walker_creature(pos: Vector3) -> CharacterBody3D:
+	var body := CharacterBody3D.new()
+	body.name = "Dune_Walker_Dewback"
+	body.position = pos
+	body.set_meta("entity_kind", "creature_dewback")
+	body.set_meta("display_name", "Marcheur des Dunes (Herbivore)")
+
+	var mat_skin := StandardMaterial3D.new()
+	mat_skin.albedo_color = Color(0.48, 0.52, 0.35, 1.0) # Vert écailleux désertique
+	mat_skin.roughness = 0.9
+
+	var mat_saddle := StandardMaterial3D.new()
+	mat_saddle.albedo_color = Color(0.45, 0.28, 0.18) # Cuir brun
+
+	# Corps massif
+	var torso := MeshInstance3D.new()
+	var t_box := BoxMesh.new()
+	t_box.size = Vector3(2.2, 1.8, 4.5)
+	torso.mesh = t_box
+	torso.position = Vector3(0, 1.8, 0)
+	torso.set_surface_override_material(0, mat_skin)
+	body.add_child(torso)
+
+	# Tête basse
+	var head := MeshInstance3D.new()
+	var h_box := BoxMesh.new()
+	h_box.size = Vector3(1.4, 1.2, 2.0)
+	head.mesh = h_box
+	head.position = Vector3(0, 1.5, -2.8)
+	head.set_surface_override_material(0, mat_skin)
+	body.add_child(head)
+
+	# Selle de monture sur le dos
+	var saddle := MeshInstance3D.new()
+	var s_box := BoxMesh.new()
+	s_box.size = Vector3(1.8, 0.3, 2.2)
+	s_box.size = Vector3(1.8, 0.3, 2.2)
+	saddle.mesh = s_box
+	saddle.position = Vector3(0, 2.8, -0.2)
+	saddle.set_surface_override_material(0, mat_saddle)
+	body.add_child(saddle)
+
+	# 4 Pattes massives
+	for lz in [-1.5, 1.5]:
+		for lx in [-1.0, 1.0]:
+			var leg := MeshInstance3D.new()
+			var l_cyl := CylinderMesh.new()
+			l_cyl.top_radius = 0.35
+			l_cyl.bottom_radius = 0.45
+			l_cyl.height = 1.6
+			leg.mesh = l_cyl
+			leg.position = Vector3(lx, 0.8, lz)
+			leg.set_surface_override_material(0, mat_skin)
+			body.add_child(leg)
+
+	# Queue
+	var tail := MeshInstance3D.new()
+	var tl_cyl := CylinderMesh.new()
+	tl_cyl.top_radius = 0.25
+	tl_cyl.bottom_radius = 0.05
+	tl_cyl.height = 2.4
+	tail.mesh = tl_cyl
+	tail.position = Vector3(0, 1.2, 3.2)
+	tail.rotation_degrees = Vector3(-35, 0, 0)
+	tail.set_surface_override_material(0, mat_skin)
+	body.add_child(tail)
+
+	var col := CollisionShape3D.new()
+	var c_box := BoxShape3D.new()
+	c_box.size = Vector3(2.5, 2.5, 5.0)
+	col.shape = c_box
+	col.position = Vector3(0, 1.8, 0)
+	body.add_child(col)
+
+	var lbl := Label3D.new()
+	lbl.text = "◈ Marcheur des Dunes (Adulte) ◈\n« Faune Sauvage Domptable • Creature Handler »"
+	lbl.position = Vector3(0, 3.4, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 14
+	lbl.modulate = Color(0.85, 0.95, 0.7)
+	body.add_child(lbl)
+
+	return body
+
 

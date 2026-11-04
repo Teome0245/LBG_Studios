@@ -8,6 +8,8 @@ extends CharacterBody3D
 signal posture_changed(new_posture: String)
 signal target_selected(target_node: Node3D)
 
+const _SwgVrmAnimatorScript := preload("res://scripts/swg_vrm_animator.gd")
+
 const SPEED_WALK: float = 3.5
 const SPEED_RUN: float = 7.0
 const SPEED_SPRINT: float = 10.0
@@ -61,11 +63,73 @@ func _setup_nodes() -> void:
 	_collision_shape.position = Vector3(0, 0.9, 0)
 	add_child(_collision_shape)
 
-	# Modèle visuel de base (remplaçable par un modèle GLB/VRM)
+	# Modèle visuel de base (VRM Compagnon ou Fallback Procédural)
 	_mesh_root = Node3D.new()
 	_mesh_root.name = "AvatarVisual"
 	add_child(_mesh_root)
+	_load_vrm_or_procedural_avatar()
 
+	# Nameplate 3D au-dessus de la tête
+	_nameplate_label = Label3D.new()
+	_nameplate_label.text = "Voyageur de Lost Heaven\n« Pionnier des Sables »"
+	_nameplate_label.position = Vector3(0, 2.2, 0)
+	_nameplate_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_nameplate_label.font_size = 14
+	_nameplate_label.modulate = Color(0.85, 0.95, 1.0, 0.95)
+	add_child(_nameplate_label)
+
+	# Bras de caméra SpringArm3D (anti-collision murs SWG)
+	_spring_arm = SpringArm3D.new()
+	_spring_arm.name = "CameraSpringArm"
+	_spring_arm.position = Vector3(0, 1.45, 0)
+	_spring_arm.spring_length = _target_zoom
+	_spring_arm.margin = 0.2
+	add_child(_spring_arm)
+
+	# Caméra 3D
+	_camera = Camera3D.new()
+	_camera.name = "PlayerCamera3D"
+	_camera.current = true
+	_camera.fov = 72.0
+	_spring_arm.add_child(_camera)
+
+
+func _load_vrm_or_procedural_avatar() -> void:
+	var candidate_paths := [
+		"res://assets/avatars/Compagnon.vrm",
+		"res://assets/avatars/LadyKoi.vrm",
+		"packages/compagnon-desktop/overlay/vrm/Compagnon.vrm",
+		"C:/Agent_IA/compagnon-desktop/overlay/vrm/Compagnon.vrm",
+		"J:/swgemu/clients/swg-client/assets/avatars/Compagnon.vrm"
+	]
+
+	for p in candidate_paths:
+		var full_p := ProjectSettings.globalize_path(p)
+		if FileAccess.file_exists(full_p):
+			var gltf := GLTFDocument.new()
+			var state := GLTFState.new()
+			var err := gltf.append_from_file(full_p, state)
+			if err == OK:
+				var scene := gltf.generate_scene(state)
+				if scene != null:
+					scene.name = "CompagnonModel3D"
+					scene.rotation_degrees.y = 180.0
+					scene.scale = Vector3(0.95, 0.95, 0.95)
+					_mesh_root.add_child(scene)
+
+					# Animateur procédural pour supprimer la T-Pose et animer marche/idle
+					var sk: Skeleton3D = _SwgVrmAnimatorScript.find_skeleton_in_tree(scene)
+					if sk != null:
+						var anim := _SwgVrmAnimatorScript.new()
+						anim.name = "VrmAnimator"
+						add_child(anim)
+						anim.setup(sk)
+					return
+
+	_build_procedural_avatar()
+
+
+func _build_procedural_avatar() -> void:
 	var body_mesh := MeshInstance3D.new()
 	var capsule_mesh := CapsuleMesh.new()
 	capsule_mesh.radius = 0.45
@@ -92,30 +156,6 @@ func _setup_nodes() -> void:
 	mat_vis.emission_energy_multiplier = 1.5
 	visor.set_surface_override_material(0, mat_vis)
 	_mesh_root.add_child(visor)
-
-	# Nameplate 3D au-dessus de la tête
-	_nameplate_label = Label3D.new()
-	_nameplate_label.text = "Voyageur de Lost Heaven\n« Pionnier des Sables »"
-	_nameplate_label.position = Vector3(0, 2.2, 0)
-	_nameplate_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_nameplate_label.font_size = 14
-	_nameplate_label.modulate = Color(0.85, 0.95, 1.0, 0.95)
-	add_child(_nameplate_label)
-
-	# Bras de caméra SpringArm3D (anti-collision murs SWG)
-	_spring_arm = SpringArm3D.new()
-	_spring_arm.name = "CameraSpringArm"
-	_spring_arm.position = Vector3(0, 1.45, 0)
-	_spring_arm.spring_length = _target_zoom
-	_spring_arm.margin = 0.2
-	add_child(_spring_arm)
-
-	# Caméra 3D
-	_camera = Camera3D.new()
-	_camera.name = "PlayerCamera3D"
-	_camera.current = true
-	_camera.fov = 72.0
-	_spring_arm.add_child(_camera)
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -17,9 +17,18 @@ const _SwgStructurePanelScript = preload("res://scripts/swg_structure_panel.gd")
 const _SwgSkillsPanelScript = preload("res://scripts/swg_skills_panel.gd")
 const _SwgSurveyPanelScript = preload("res://scripts/swg_survey_panel.gd")
 const _SwgExperimentPanelScript = preload("res://scripts/swg_experiment_panel.gd")
+const _SwgDialogBoxScript = preload("res://scripts/swg_dialog_box.gd")
+const _SwgMissionsDialogScript = preload("res://scripts/swg_missions_terminal_dialog.gd")
+const _SwgBankDialogScript = preload("res://scripts/swg_bank_terminal_dialog.gd")
+const _SwgCombatSystemScript = preload("res://scripts/swg_combat_system_3d.gd")
+const _SwgActionHotbarScript = preload("res://scripts/swg_action_hotbar.gd")
+const _SwgInventoryScript = preload("res://scripts/swg_inventory_paperdoll.gd")
+const _SwgCraftingScript = preload("res://scripts/swg_crafting_panel.gd")
+const _SwgPlanetaryMapScript = preload("res://scripts/swg_planetary_map.gd")
 
 var player: CharacterBody3D = null
 var terrain_system: Node3D = null
+var swg_combat_system: Node3D = null
 
 # Interface UI CanvasLayer
 var ui_layer: CanvasLayer = null
@@ -32,8 +41,26 @@ var swg_structure_panel: Node = null
 var swg_skills_panel: Node = null
 var swg_survey_panel: Node = null
 var swg_experiment_panel: Node = null
+var swg_dialog_box: Node = null
+var swg_missions_dialog: Node = null
+var swg_bank_dialog: Node = null
+var swg_action_hotbar: Control = null
+var swg_inventory_panel: Node = null
+var swg_crafting_panel: Node = null
+var swg_planetary_map: Node = null
+
+var _sun_primary: DirectionalLight3D = null
+var _sun_secondary: DirectionalLight3D = null
+var _world_environment: WorldEnvironment = null
+var _tracked_entities: Array = []
 
 var _hud_prompt: Label = null
+var _interaction_prompt: PanelContainer = null
+var _interaction_label: Label = null
+var _current_target_entity: Node = null
+var _is_riding_speeder: bool = false
+var _notify_label: Label = null
+var _notify_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -45,82 +72,159 @@ func _ready() -> void:
 
 
 func _setup_environment() -> void:
-	# Ciel & Lumière Ambiante
+	# Ciel & Atmosphère Désertique SWG
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.25, 0.50, 0.85, 1.0)
-	sky_mat.sky_horizon_color = Color(0.85, 0.70, 0.55, 1.0)
-	sky_mat.ground_bottom_color = Color(0.40, 0.30, 0.20, 1.0)
-	sky_mat.ground_horizon_color = Color(0.75, 0.60, 0.45, 1.0)
+	sky_mat.sky_top_color = Color(0.20, 0.45, 0.80, 1.0)
+	sky_mat.sky_horizon_color = Color(0.88, 0.72, 0.52, 1.0)
+	sky_mat.ground_bottom_color = Color(0.35, 0.25, 0.15, 1.0)
+	sky_mat.ground_horizon_color = Color(0.80, 0.65, 0.45, 1.0)
 	sky.sky_material = sky_mat
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.8
+	env.ambient_light_energy = 0.85
+
+	# Brume Atmosphérique Chaude (Distance Fog SWG) pour lisser les dunes à l'horizon
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.85, 0.72, 0.54, 1.0)
+	env.fog_density = 0.0018
+	env.fog_sky_affect = 0.4
+
+	# Améliorations Graphiques Avancées PBR (Glow/Bloom, SSAO, SSIL, ACES Tonemapping)
+	env.glow_enabled = true
+	env.glow_bloom = 0.22
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 1.08
+	env.tonemap_white = 1.2
+	env.ssao_enabled = true
+	env.ssao_radius = 1.8
+	env.ssao_intensity = 2.4
+	env.ssil_enabled = true
+	env.ssr_enabled = true
 
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
+	_world_environment = world_env
 
-	# Soleil Directionnel avec Ombres
-	var sun := DirectionalLight3D.new()
-	sun.position = Vector3(0, 50, 0)
-	sun.rotation_degrees = Vector3(-45, 30, 0)
-	sun.light_color = Color(1.0, 0.95, 0.88, 1.0)
-	sun.light_energy = 1.2
-	sun.shadow_enabled = true
-	add_child(sun)
+	# 1. Soleil Principal Éclatant (Tatooine Sun 1)
+	var sun1 := DirectionalLight3D.new()
+	sun1.name = "Sun_Primary"
+	sun1.position = Vector3(0, 60, 0)
+	sun1.rotation_degrees = Vector3(-42, 35, 0)
+	sun1.light_color = Color(1.0, 0.96, 0.88, 1.0)
+	sun1.light_energy = 1.25
+	sun1.shadow_enabled = true
+	sun1.shadow_blur = 1.6
+	add_child(sun1)
+	_sun_primary = sun1
+
+	# 2. Soleil Binaire Nain Orangé (Tatooine Sun 2)
+	var sun2 := DirectionalLight3D.new()
+	sun2.name = "Sun_Secondary"
+	sun2.position = Vector3(0, 45, 0)
+	sun2.rotation_degrees = Vector3(-32, 55, 0)
+	sun2.light_color = Color(1.0, 0.65, 0.40, 1.0)
+	sun2.light_energy = 0.45
+	sun2.shadow_enabled = false
+	add_child(sun2)
+	_sun_secondary = sun2
 
 
 func _setup_world_geometry() -> void:
+	# 0. Système de Combat 3D, Projectiles & Cycle Jour/Nuit SWG
+	swg_combat_system = _SwgCombatSystemScript.new()
+	add_child(swg_combat_system)
+	swg_combat_system.setup_environment_refs(_sun_primary, _sun_secondary, _world_environment)
+
 	# 1. Système de Terrain Dynamique 3D SWG (Chunks fractals 64m avec affecteurs urbains)
 	terrain_system = _SwgTerrainSystemScript.new()
 	terrain_system.name = "SwgTerrainSystem3D"
 	add_child(terrain_system)
 	terrain_system.update_chunks_around_position(Vector3(0, 0, 0))
 
-	# 2. Cantina La Perle POB Authentique (Multi-cellules : Bar, Scène Artistes, Alcôves)
-	var cantina_pob: Node3D = _SwgAssetPipelineScript.build_swg_cantina_pob(Vector3(15, 0, -20), 0.0)
+	# ==========================================================================
+	# A. HUB URBAIN DE LOST HEAVEN (Architecture Bâtiments Majeurs)
+	# ==========================================================================
+
+	# 2. Cantina La Perle POB Authentique (Multi-cellules : Bar en fer à cheval, Scène, Alcôves)
+	var cantina_pob: Node3D = _SwgAssetPipelineScript.build_swg_cantina_pob(Vector3(25, 0, -22), 0.0)
 	add_child(cantina_pob)
 
-	# 3. Structure 3D Témoin : Bazar Public
-	_spawn_building("Bazar Public de Lost Heaven", Vector3(-18, 0, -15), Vector3(10, 4, 10), Color(0.45, 0.40, 0.35))
-	# 4. Structure 3D Témoin : Centre Médical
-	_spawn_building("Centre Médical d'Odo", Vector3(-25, 0, 15), Vector3(12, 5, 12), Color(0.70, 0.72, 0.75))
+	# 3. Spatioport de Lost Heaven (Shuttleport) avec Navette Spatiale posée et tour de contrôle
+	var shuttleport: Node3D = _SwgAssetPipelineScript.build_swg_shuttleport(Vector3(-42, 0, -28), 15.0)
+	add_child(shuttleport)
 
+	# 4. Hôtel de Ville / Grand Hall Municipal de Lost Heaven
+	var town_hall: Node3D = _SwgAssetPipelineScript.build_swg_town_hall(Vector3(0, 0, -45), 0.0)
+	add_child(town_hall)
 
-func _spawn_building(b_name: String, pos: Vector3, size: Vector3, col: Color) -> void:
-	var sb := StaticBody3D.new()
-	sb.name = b_name
-	sb.position = pos
+	# 5. Centre Médical & Clonerie avec cuves de Bacta lumineuses
+	var medcenter: Node3D = _SwgAssetPipelineScript.build_swg_medcenter(Vector3(-28, 0, 22), -30.0)
+	add_child(medcenter)
 
-	var col_shape := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = size
-	col_shape.shape = box
-	col_shape.position = Vector3(0, size.y * 0.5, 0)
-	sb.add_child(col_shape)
+	# 6. Quartier Résidentiel : Maisons Citadines en Pisé avec terrasses et auvents
+	add_child(_SwgAssetPipelineScript.build_swg_tatooine_house(Vector3(22, 0, 16), 15.0, 0))
+	add_child(_SwgAssetPipelineScript.build_swg_tatooine_house(Vector3(38, 0, 12), -20.0, 1))
+	add_child(_SwgAssetPipelineScript.build_swg_tatooine_house(Vector3(18, 0, 36), 45.0, 2))
+	add_child(_SwgAssetPipelineScript.build_swg_tatooine_house(Vector3(-14, 0, 42), -15.0, 0))
+	add_child(_SwgAssetPipelineScript.build_swg_tatooine_house(Vector3(-36, 0, 45), 30.0, 1))
 
-	var mesh_inst := MeshInstance3D.new()
-	var box_m := BoxMesh.new()
-	box_m.size = size
-	mesh_inst.mesh = box_m
-	mesh_inst.position = Vector3(0, size.y * 0.5, 0)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = col
-	mesh_inst.set_surface_override_material(0, mat)
-	sb.add_child(mesh_inst)
+	# 7. Remparts & Portes Fortifiées de la Cité (Porte Ouest & Porte Est)
+	add_child(_SwgAssetPipelineScript.build_swg_city_wall_and_gate(Vector3(-65, 0, 0), 90.0, "Porte Ouest"))
+	add_child(_SwgAssetPipelineScript.build_swg_city_wall_and_gate(Vector3(65, 0, 0), -90.0, "Porte Est"))
 
-	var lbl := Label3D.new()
-	lbl.text = "◈ %s ◈" % b_name
-	lbl.position = Vector3(0, size.y + 0.8, 0)
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.font_size = 18
-	lbl.modulate = Color(0.96, 0.86, 0.38, 1.0)
-	sb.add_child(lbl)
+	# ==========================================================================
+	# B. MOBILIER URBAIN, TERMINAUX & PROPS SWG AUTHENTIQUES
+	# ==========================================================================
 
-	add_child(sb)
+	# 8. Esplanade Centrale : Terminaux Interactifs SWG
+	add_child(_SwgAssetPipelineScript.build_mission_terminal(Vector3(-4, 0, -7), 0.0))
+	add_child(_SwgAssetPipelineScript.build_bank_terminal(Vector3(4, 0, -7), 0.0))
+	add_child(_SwgAssetPipelineScript.build_bazaar_terminal(Vector3(-8, 0, -3), 45.0))
+	add_child(_SwgAssetPipelineScript.build_cloning_terminal(Vector3(-22, 0, 18), 30.0))
+
+	# 9. Véhicule : Landspeeder X-34 stationné sur la place
+	add_child(_SwgAssetPipelineScript.build_landspeeder(Vector3(8, 0, 6), -35.0))
+
+	# 10. Vaporisateurs d'Humidité (Moisture Vaporators GX-8)
+	add_child(_SwgAssetPipelineScript.build_moisture_vaporator(Vector3(12, 0, -10)))
+	add_child(_SwgAssetPipelineScript.build_moisture_vaporator(Vector3(-15, 0, -8)))
+	add_child(_SwgAssetPipelineScript.build_moisture_vaporator(Vector3(-22, 0, 35)))
+	add_child(_SwgAssetPipelineScript.build_moisture_vaporator(Vector3(30, 0, 28)))
+
+	# 11. Amas de Fret Cargo et Barils de Carburant
+	add_child(_SwgAssetPipelineScript.build_cargo_cluster(Vector3(-12, 0, -18)))
+	add_child(_SwgAssetPipelineScript.build_cargo_cluster(Vector3(12, 0, 18)))
+	add_child(_SwgAssetPipelineScript.build_cargo_cluster(Vector3(-26, 0, -12)))
+
+	# 12. Lampadaires de Rue le long des allées
+	for lz in [-30, -15, 0, 15, 30]:
+		add_child(_SwgAssetPipelineScript.build_street_lamp(Vector3(-12, 0, lz)))
+		add_child(_SwgAssetPipelineScript.build_street_lamp(Vector3(12, 0, lz)))
+
+	# ==========================================================================
+	# C. WILDERNESS, RELIEF & CAMPS SAUVAGES DANS LES DUNES
+	# ==========================================================================
+
+	# 13. Campement de Scout Nomade avec feu de camp dans les dunes à l'Ouest
+	add_child(_SwgAssetPipelineScript.build_scout_camp(Vector3(-95, 0, -45)))
+
+	# 14. Extracteur Minier Industriel (Mining Harvester) au Nord-Est
+	add_child(_SwgAssetPipelineScript.build_mining_harvester(Vector3(90, 0, -55), -45.0))
+
+	# 15. Éperons Rocheux / Mesas de Grès Rouge
+	add_child(_SwgAssetPipelineScript.build_rock_outcrop(Vector3(-110, 0, 65), Vector3(1.4, 1.6, 1.2)))
+	add_child(_SwgAssetPipelineScript.build_rock_outcrop(Vector3(115, 0, -35), Vector3(1.8, 2.0, 1.5)))
+	add_child(_SwgAssetPipelineScript.build_rock_outcrop(Vector3(85, 0, 85), Vector3(1.2, 1.4, 1.1)))
+
+	# 16. Flore Xérophile du Désert (Cactus cierges et buissons secs)
+	for fx in [-105, -85, 75, 95, 120, -50]:
+		for fz in [-75, 55, -45, 95, 20]:
+			add_child(_SwgAssetPipelineScript.build_desert_flora(Vector3(fx, 0, fz)))
 
 
 func _spawn_player() -> void:
@@ -134,12 +238,34 @@ func _spawn_player() -> void:
 
 
 func _spawn_interactable_entities() -> void:
-	# PNJ : Lia (Artiste Cantina)
-	_spawn_npc("Lia (Artiste Cantina)", Vector3(15, 0, -12), Color(0.9, 0.4, 0.7), "npc_entertainer")
-	# PNJ : Odo Merr (Maire)
-	_spawn_npc("Odo Merr (Maire de Lost Heaven)", Vector3(0, 0, -10), Color(0.3, 0.7, 0.9), "npc_mayor")
-	# Créature : Chiot des Sables (Faune domptable)
-	_spawn_npc("Chiot des Sables (Juvénile)", Vector3(-6, 0, 8), Color(0.85, 0.55, 0.2), "creature_juvenile")
+	# 1. PNJ de la Ville de Lost Heaven (Modèles VRM Humanoid 3D)
+	_spawn_npc("Lia (Artiste Cantina)", Vector3(25, 0, -16), Color(0.9, 0.4, 0.7), "npc_entertainer")
+	_spawn_npc("Barman Jax Moro", Vector3(21, 0, -22), Color(0.85, 0.65, 0.35), "npc_bartender")
+	_spawn_npc("Odo Merr (Maire de Lost Heaven)", Vector3(0, 0, -36), Color(0.3, 0.7, 0.9), "npc_mayor")
+	_spawn_npc("Docteur Vane (Médecin Chef)", Vector3(-28, 0, 18), Color(0.2, 0.9, 0.9), "npc_doctor")
+	_spawn_npc("Miran Sael (Apothicaire Nomade)", Vector3(14, 0, -12), Color(0.4, 0.8, 0.5), "npc_merchant")
+	_spawn_npc("Soren Kray (Armurier de Rue)", Vector3(-14, 0, -10), Color(0.8, 0.5, 0.2), "npc_armorer")
+	_spawn_npc("Pilote de Navette Corran", Vector3(-35, 0, -25), Color(0.85, 0.7, 0.9), "npc_pilot")
+	_spawn_npc("Voyageur des Dunes", Vector3(5, 0, -2), Color(0.6, 0.6, 0.6), "npc_citizen")
+	_spawn_npc("Garde de la Milice Porte Ouest", Vector3(-62, 0, -2), Color(0.75, 0.25, 0.2), "npc_guard")
+	_spawn_npc("Garde de la Milice Porte Est", Vector3(62, 0, 2), Color(0.75, 0.25, 0.2), "npc_guard")
+	_spawn_npc("Nix (Éclaireur Vétéran)", Vector3(-90, 0, -42), Color(0.3, 0.6, 0.8), "npc_scout")
+	_spawn_npc("Mira Tarek (Prospectrice)", Vector3(85, 0, -50), Color(0.7, 0.7, 0.3), "npc_miner")
+
+	# 2. Droïdes Urbains
+	add_child(_SwgAssetPipelineScript.build_astromech_droid(Vector3(-38, 0, -18)))
+
+	# 3. Faune Vivante des Dunes (Quadrupèdes & Bêtes des Sables)
+	# Marcheurs des Dunes Géants (Herbivores / Domptables)
+	add_child(_SwgAssetPipelineScript.build_dune_walker_creature(Vector3(-45, 0, 68)))
+	add_child(_SwgAssetPipelineScript.build_dune_walker_creature(Vector3(120, 0, -80)))
+
+	# Bêtes & Prédateurs
+	_spawn_npc("Chiot des Sables (Juvénile)", Vector3(-8, 0, 8), Color(0.85, 0.55, 0.2), "creature_juvenile")
+	_spawn_npc("Chacal Doré (Sauvage)", Vector3(-92, 0, -38), Color(0.95, 0.65, 0.15), "creature_jackal")
+	_spawn_npc("Chacal Alpha (Sauvage)", Vector3(-105, 0, -55), Color(0.98, 0.6, 0.1), "creature_jackal")
+	_spawn_npc("Fennec Mirage (Furtif)", Vector3(45, 0, -75), Color(0.9, 0.75, 0.4), "creature_juvenile")
+	_spawn_npc("Scarabée Obsidien Géant", Vector3(88, 0, 78), Color(0.2, 0.2, 0.25), "creature_beetle")
 
 
 func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> void:
@@ -157,20 +283,47 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 	col_shape.position = Vector3(0, 0.85, 0)
 	body.add_child(col_shape)
 
-	var mesh_inst := MeshInstance3D.new()
-	var cap_m := CapsuleMesh.new()
-	cap_m.radius = 0.45
-	cap_m.height = 1.7
-	mesh_inst.mesh = cap_m
-	mesh_inst.position = Vector3(0, 0.85, 0)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = col
-	mesh_inst.set_surface_override_material(0, mat)
-	body.add_child(mesh_inst)
+	var visual_node: Node3D = null
+
+	# A. PNJ Humanoïdes (Lia, Jax, Odo, Vane, Gardes, Citoyens) -> Modèles VRM 3D
+	if kind_id.begins_with("npc_"):
+		var vrm_choice := "Compagnon.vrm"
+		if "Lia" in n_name or "Artiste" in n_name:
+			vrm_choice = "LadyKoi.vrm"
+		elif "Docteur" in n_name or "Médecin" in n_name or "Vane" in n_name:
+			vrm_choice = "Anna.vrm"
+		elif "Maire" in n_name or "Odo" in n_name or "Barman" in n_name:
+			vrm_choice = "Aurora.vrm"
+
+		visual_node = _SwgAssetPipelineScript.load_humanoid_vrm(vrm_choice)
+
+	# B. Faune Sauvage Quadrupède (Chacal, Chiot) -> Modèle Canin Articulé
+	elif kind_id in ["creature_juvenile", "creature_jackal"]:
+		var s_fac := 0.65 if kind_id == "creature_juvenile" else 1.05
+		visual_node = _SwgAssetPipelineScript.build_quadruped_creature(Vector3.ZERO, col, s_fac)
+
+	# C. Faune Sauvage : Scarabée Obsidien Géant -> Carapace Dôme
+	elif kind_id == "creature_beetle":
+		visual_node = _SwgAssetPipelineScript.build_beetle_creature(Vector3.ZERO)
+
+	# D. Fallback propre si modèle absent
+	if visual_node != null:
+		body.add_child(visual_node)
+	else:
+		var mesh_inst := MeshInstance3D.new()
+		var cap_m := CapsuleMesh.new()
+		cap_m.radius = 0.45
+		cap_m.height = 1.7
+		mesh_inst.mesh = cap_m
+		mesh_inst.position = Vector3(0, 0.85, 0)
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = col
+		mesh_inst.set_surface_override_material(0, mat)
+		body.add_child(mesh_inst)
 
 	var lbl := Label3D.new()
 	lbl.text = n_name
-	lbl.position = Vector3(0, 2.1, 0)
+	lbl.position = Vector3(0, 2.15, 0)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.font_size = 13
 	lbl.modulate = Color(0.85, 0.98, 1.0, 1.0)
@@ -231,26 +384,169 @@ func _setup_ui() -> void:
 	swg_experiment_panel.name = "SwgExperimentPanel"
 	ui_layer.add_child(swg_experiment_panel)
 
-	# Bandeau d'aide aux commandes
+	# 9. Boîte de Dialogue Interactive SWG
+	swg_dialog_box = _SwgDialogBoxScript.new()
+	swg_dialog_box.name = "SwgDialogBox"
+	swg_dialog_box.option_selected.connect(_on_dialog_option_selected)
+	ui_layer.add_child(swg_dialog_box)
+
+	# 10. Terminal de Missions SWG
+	swg_missions_dialog = _SwgMissionsDialogScript.new()
+	swg_missions_dialog.name = "SwgMissionsDialog"
+	swg_missions_dialog.mission_accepted.connect(_on_mission_accepted)
+	ui_layer.add_child(swg_missions_dialog)
+
+	# 11. Terminal Bancaire Galactique
+	swg_bank_dialog = _SwgBankDialogScript.new()
+	swg_bank_dialog.name = "SwgBankDialog"
+	swg_bank_dialog.balance_updated.connect(_on_bank_balance_updated)
+	ui_layer.add_child(swg_bank_dialog)
+
+	# 12. Prompt d'Interaction Flottant Dynamique [E]
+	_interaction_prompt = PanelContainer.new()
+	_interaction_prompt.name = "InteractionPrompt"
+	_interaction_prompt.position = Vector2(420, 620)
+	_interaction_prompt.size = Vector2(440, 38)
+	var p_sb := StyleBoxFlat.new()
+	p_sb.bg_color = Color(0.02, 0.14, 0.18, 0.92)
+	p_sb.set_border_width_all(2)
+	p_sb.border_color = Color(0.96, 0.86, 0.35, 1.0)
+	p_sb.set_corner_radius_all(18)
+	p_sb.content_margin_left = 16
+	p_sb.content_margin_right = 16
+	p_sb.content_margin_top = 8
+	p_sb.content_margin_bottom = 8
+	_interaction_prompt.add_theme_stylebox_override("panel", p_sb)
+
+	_interaction_label = Label.new()
+	_interaction_label.text = "◈ [E] Interagir ◈"
+	_interaction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_interaction_label.add_theme_font_size_override("font_size", 12)
+	_interaction_label.add_theme_color_override("font_color", Color(0.98, 0.92, 0.65, 1.0))
+	_interaction_prompt.add_child(_interaction_label)
+	_interaction_prompt.visible = false
+	ui_layer.add_child(_interaction_prompt)
+
+	# 13. Notification Toast In-Game
+	_notify_label = Label.new()
+	_notify_label.position = Vector2(360, 100)
+	_notify_label.size = Vector2(560, 32)
+	_notify_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_notify_label.add_theme_font_size_override("font_size", 14)
+	_notify_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.5, 1.0))
+	_notify_label.visible = false
+	ui_layer.add_child(_notify_label)
+
+	# 14. Hotbar d'Action Tactique SWG & Radar Boussole
+	swg_action_hotbar = _SwgActionHotbarScript.new()
+	swg_action_hotbar.name = "SwgActionHotbar"
+	swg_action_hotbar.tracked_player = player
+	swg_action_hotbar.tracked_entities = _tracked_entities
+	swg_action_hotbar.hotbar_slot_triggered.connect(_on_hotbar_action_triggered)
+	ui_layer.add_child(swg_action_hotbar)
+
+	# 15. Inventaire & Équipement Papier-Doll SWG [I]
+	swg_inventory_panel = _SwgInventoryScript.new()
+	swg_inventory_panel.name = "SwgInventoryPanel"
+	ui_layer.add_child(swg_inventory_panel)
+
+	# 16. Atelier d'Artisanat Expérimental SWG [T]
+	swg_crafting_panel = _SwgCraftingScript.new()
+	swg_crafting_panel.name = "SwgCraftingPanel"
+	ui_layer.add_child(swg_crafting_panel)
+
+	# 17. Carte Planétaire Tactique SWG [M]
+	swg_planetary_map = _SwgPlanetaryMapScript.new()
+	swg_planetary_map.name = "SwgPlanetaryMap"
+	ui_layer.add_child(swg_planetary_map)
+
+	# 18. Bandeau d'aide aux commandes
 	_hud_prompt = Label.new()
-	_hud_prompt.text = "◈ SWG PRE-CU 3D : ZQSD=Déplacement | Maintenir Clic-Droit=Mouselook | Molette=Zoom Caméra | X=Accroupi | Z=Couché | Espace=Saut | Clic-Droit Entité=Menu Radial | C=Fiche Perso | D=Datapad | B=Bazar | H=Housing"
-	_hud_prompt.position = Vector2(16, 680)
+	_hud_prompt.text = "◈ COMMANDES SWG PRE-CU : ZQSD=Déplacement | E=Interagir | 1..8=Hotbar Combat | I=Inventaire & Papier-Doll | T=Artisanat | M=Carte | K=Compétences | C=Fiche Perso | F5=Clonage"
+	_hud_prompt.position = Vector2(16, 684)
 	_hud_prompt.add_theme_font_size_override("font_size", 10)
 	_hud_prompt.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 0.85))
 	ui_layer.add_child(_hud_prompt)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	# Clic Droit dans le monde 3D : Raycasting vers l'entité pour ouvrir le Menu Radial SWG
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and not event.pressed:
-		# Si on était en mode mouselook, relâcher désactive mouselook
-		pass
+func _process(delta: float) -> void:
+	# Gestion du timer de notification
+	if _notify_timer > 0.0:
+		_notify_timer -= delta
+		if _notify_timer <= 0.0:
+			_notify_label.visible = false
 
+	# Détection de l'entité interactive la plus proche du joueur (portée 6.0m)
+	_detect_nearby_interaction()
+
+	# Mise à jour continue de la position du joueur sur la carte planétaire
+	if swg_planetary_map and player:
+		swg_planetary_map.update_player_position(player.global_position)
+
+
+func _detect_nearby_interaction() -> void:
+	if player == null:
+		return
+
+	var p_pos: Vector3 = player.global_position
+	var closest_node: Node = null
+	var closest_dist: float = 6.0
+	var closest_name: String = ""
+
+	for child in get_children():
+		if child == player or child == terrain_system or child is CanvasLayer or child is WorldEnvironment or child is DirectionalLight3D:
+			continue
+		if not (child is Node3D):
+			continue
+
+		var child_3d := child as Node3D
+		var d: float = p_pos.distance_to(child_3d.global_position)
+		if d < closest_dist:
+			var d_name: String = ""
+			if child_3d.has_meta("display_name"):
+				d_name = str(child_3d.get_meta("display_name"))
+			else:
+				var c_name := child_3d.name.replace("_", " ")
+				if "Terminal" in c_name or "Landspeeder" in c_name or "Vaporator" in c_name or "Camp" in c_name or "Harvester" in c_name or "Cantina" in c_name or "Shuttleport" in c_name or "Medical" in c_name:
+					d_name = c_name
+
+			if not d_name.is_empty():
+				closest_dist = d
+				closest_node = child_3d
+				closest_name = d_name
+
+	if closest_node != null:
+		_current_target_entity = closest_node
+		_interaction_prompt.visible = true
+		_interaction_label.text = "◈ [E] ou [Clic-Droit] : %s ◈" % closest_name
+	else:
+		_current_target_entity = null
+		_interaction_prompt.visible = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Clic-Droit dans le monde 3D : Raycasting vers l'entité pour ouvrir le Menu Radial SWG
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and not event.pressed:
+		_handle_mouse_radial_click(event.position)
+
+	# Touche E : Interaction directe avec l'entité proche
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_E:
+			if _current_target_entity != null:
+				_interact_with_entity(_current_target_entity)
+			else:
+				_show_notification("Aucune entité à portée d'interaction immédiate.", Color(1.0, 0.7, 0.3))
+
 		match event.keycode:
+			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
+				var slot_num := int(event.keycode) - int(KEY_1) + 1
+				if swg_action_hotbar:
+					swg_action_hotbar.trigger_slot(slot_num)
+			KEY_F5:
+				respawn_all_entities()
 			KEY_C:
 				if swg_character_sheet: swg_character_sheet.toggle()
-			KEY_D:
+			KEY_D, KEY_P:
 				if swg_datapad_panel: swg_datapad_panel.toggle()
 			KEY_B:
 				if swg_bazaar_panel: swg_bazaar_panel.toggle()
@@ -260,8 +556,299 @@ func _unhandled_input(event: InputEvent) -> void:
 				if swg_skills_panel: swg_skills_panel.toggle()
 			KEY_U:
 				if swg_survey_panel: swg_survey_panel.toggle()
+			KEY_I:
+				if swg_inventory_panel: swg_inventory_panel.toggle()
+			KEY_T:
+				if swg_crafting_panel: swg_crafting_panel.toggle()
+			KEY_M:
+				if swg_planetary_map: swg_planetary_map.toggle()
+			KEY_J:
+				if swg_missions_dialog:
+					if swg_missions_dialog.visible: swg_missions_dialog.close_panel()
+					else: swg_missions_dialog.open_panel()
 			KEY_ESCAPE:
 				_close_all_modals()
+
+
+func _handle_mouse_radial_click(mouse_pos: Vector2) -> void:
+	if _current_target_entity != null:
+		var kind: String = "npc"
+		if _current_target_entity.has_meta("entity_kind"):
+			kind = str(_current_target_entity.get_meta("entity_kind"))
+		elif "terminal" in _current_target_entity.name.to_lower():
+			kind = "vendor"
+		elif "dewback" in _current_target_entity.name.to_lower() or "chacal" in _current_target_entity.name.to_lower() or "creature" in _current_target_entity.name.to_lower():
+			kind = "beast"
+		elif "landspeeder" in _current_target_entity.name.to_lower():
+			kind = "pet"
+		elif "camp" in _current_target_entity.name.to_lower() or "house" in _current_target_entity.name.to_lower() or "cantina" in _current_target_entity.name.to_lower():
+			kind = "structure"
+
+		var display_name: String = str(_current_target_entity.get_meta("display_name", _current_target_entity.name))
+		var ctx := {
+			"name": display_name,
+			"kind": kind,
+			"node": _current_target_entity
+		}
+		if swg_radial_menu:
+			swg_radial_menu.open_at(mouse_pos, ctx)
+	else:
+		# Menu radial générique de terrain
+		var ctx := {
+			"name": "Désert de Lost Heaven",
+			"kind": "ground"
+		}
+		if swg_radial_menu:
+			swg_radial_menu.open_at(mouse_pos, ctx)
+
+
+func _interact_with_entity(ent: Node) -> void:
+	var ent_name: String = ent.name
+	var ent_kind: String = ""
+	if ent.has_meta("entity_kind"):
+		ent_kind = str(ent.get_meta("entity_kind"))
+	var display_name: String = str(ent.get_meta("display_name", ent_name))
+
+	# 1. PNJ Humains & Droïdes ➔ Boîte de Dialogue
+	if ent_kind.begins_with("npc_"):
+		if swg_dialog_box:
+			swg_dialog_box.open_dialog(display_name, ent_kind)
+		return
+
+	# 2. Terminal de Missions
+	if "Mission" in display_name or ent_kind == "term_mission":
+		if swg_missions_dialog:
+			swg_missions_dialog.open_panel()
+		return
+
+	# 3. Terminal Bancaire
+	if "Bancaire" in display_name or "Bank" in ent_name or ent_kind == "term_bank":
+		if swg_bank_dialog:
+			swg_bank_dialog.open_panel()
+		return
+
+	# 4. Terminal de Bazar
+	if "Bazar" in display_name or ent_kind == "term_bazaar":
+		if swg_bazaar_panel:
+			swg_bazaar_panel.open_panel()
+		return
+
+	# 5. Borne de Clonage & Assurance
+	if "Clonage" in display_name or ent_kind == "term_clone":
+		_show_notification("✓ Empreinte génétique enregistrée au Centre de Clonage de Lost Heaven (Assurance active) !", Color(0.2, 0.9, 1.0))
+		return
+
+	# 6. Landspeeder X-34 (Monture / Véhicule)
+	if "Landspeeder" in ent_name:
+		_toggle_landspeeder_pilot()
+		return
+
+	# 7. Campement de Scout Nomade (Feu de camp)
+	if "Camp" in ent_name:
+		_show_notification("⛺ Repos au coin du feu de camp nomade : Fatigue dissipée & HAM régénéré !", Color(1.0, 0.8, 0.3))
+		return
+
+	# 8. Faune Sauvage (Créatures)
+	if ent_kind.begins_with("creature_") or "Dewback" in ent_name or "Chacal" in ent_name:
+		var ctx := {
+			"name": display_name,
+			"kind": "beast",
+			"node": ent
+		}
+		if swg_radial_menu:
+			swg_radial_menu.open_at(Vector2(640, 360), ctx)
+		return
+
+	# Cas générique : Ouvre le Menu Radial sur l'entité
+	var ctx := {
+		"name": display_name,
+		"kind": "structure",
+		"node": ent
+	}
+	if swg_radial_menu:
+		swg_radial_menu.open_at(Vector2(640, 360), ctx)
+
+
+func _toggle_landspeeder_pilot() -> void:
+	_is_riding_speeder = not _is_riding_speeder
+	if player:
+		if _is_riding_speeder:
+			player.SPEED_SPRINT = 18.0
+			player.SPEED_WALK = 10.0
+			_show_notification("🚀 Landspeeder X-34 engagé ! Vitesse maximale propulsée (Appuyez sur E pour débarquer).", Color(0.3, 1.0, 0.6))
+		else:
+			player.SPEED_SPRINT = 6.2
+			player.SPEED_WALK = 3.6
+			_show_notification("🚶 Vous avez débarqué du Landspeeder.", Color(0.9, 0.95, 1.0))
+
+
+func _on_hotbar_action_triggered(slot_idx: int, action_id: String) -> void:
+	match action_id:
+		"blaster_shot":
+			_execute_blaster_attack(false)
+		"aim_shot":
+			_execute_blaster_attack(true)
+		"dizzy_shot":
+			_execute_dizzy_shot()
+		"bacta_stim":
+			_execute_bacta_stim()
+		"survey_tool":
+			_execute_survey_pulse()
+		"mask_scent":
+			_show_notification("🌿 Camouflage d'odeur Scout activé : Détection faune réduite de 80% !", Color(0.8, 0.65, 0.3))
+		"pet_command":
+			_show_notification("🐾 Ordre au familier transmis : Couverture défensive engagée.", Color(0.9, 0.45, 0.7))
+		"speeder_mount":
+			_toggle_landspeeder_pilot()
+
+
+func _execute_blaster_attack(is_aim: bool) -> void:
+	if player == null or swg_combat_system == null:
+		return
+
+	var p_pos: Vector3 = player.global_position
+	var target_node: Node3D = _current_target_entity as Node3D
+	var t_pos: Vector3 = p_pos - player.global_transform.basis.z * 25.0 # Direction regard par défaut
+
+	# Si aucune cible sélectionnée, recherche de la créature ou bête la plus proche (rayon 35m)
+	if target_node == null:
+		var best_dist := 35.0
+		for child in get_children():
+			if child is CharacterBody3D and child != player:
+				var d: float = p_pos.distance_to(child.global_position)
+				if d < best_dist:
+					best_dist = d
+					target_node = child
+					break
+
+	if target_node != null:
+		t_pos = target_node.global_position
+
+	swg_combat_system.fire_blaster_bolt(p_pos, t_pos, is_aim)
+
+	var dmg: int = 160 if is_aim else 85
+	var col: Color = Color(0.2, 0.9, 1.0) if is_aim else Color(1.0, 0.3, 0.2)
+	swg_combat_system.spawn_damage_number(t_pos, dmg, col)
+
+	if target_node != null:
+		var t_name: String = str(target_node.get_meta("display_name", target_node.name))
+		var hp: int = int(target_node.get_meta("current_health", 250)) - dmg
+		target_node.set_meta("current_health", hp)
+
+		if hp <= 0:
+			var orig_name: String = str(target_node.get_meta("original_name", t_name))
+			var orig_kind: String = str(target_node.get_meta("original_kind", target_node.get_meta("entity_kind", "npc")))
+			target_node.set_meta("original_name", orig_name)
+			target_node.set_meta("original_kind", orig_kind)
+			target_node.set_meta("is_dead", true)
+			target_node.set_meta("entity_kind", "corpse")
+			target_node.set_meta("display_name", "[Cadavre] %s" % orig_name)
+			target_node.rotation_degrees.z = 90.0 # Bête/PNJ couché au sol
+
+			var is_npc: bool = orig_kind.begins_with("npc_")
+			var delay: float = 8.0 if is_npc else 18.0
+			_show_notification("☠ %s abattu ! (Respawn clonage dans %ds, ou touche F5)" % [orig_name, int(delay)], Color(1.0, 0.8, 0.2))
+
+			if is_inside_tree() and get_tree():
+				get_tree().create_timer(delay).timeout.connect(func() -> void:
+					if is_instance_valid(target_node) and target_node.get_meta("is_dead", false):
+						_respawn_entity(target_node as CharacterBody3D)
+				)
+		else:
+			_show_notification("⚔ %s touché : %d dégâts HAM (PV restants : %d) !" % [t_name, dmg, hp], col)
+	else:
+		_show_notification("⚔ Tir de blaster dans les dunes de Lost Heaven !", col)
+
+
+## Réanime instantanément toutes les entités abattues via le protocole de clonage
+func respawn_all_entities() -> void:
+	var count := 0
+	for child in get_children():
+		if child is CharacterBody3D and child != player:
+			if child.get_meta("is_dead", false) or child.rotation_degrees.z != 0.0:
+				_respawn_entity(child as CharacterBody3D)
+				count += 1
+	_show_notification("✨ PROTOCOLE DE CLONAGE D'URGENCE : %d citoyen(s) et créature(s) réanimé(s) !" % count, Color(0.2, 1.0, 0.6))
+
+
+func _respawn_entity(ent: CharacterBody3D) -> void:
+	if not is_instance_valid(ent):
+		return
+	var orig_name: String = str(ent.get_meta("original_name", ent.name))
+	var orig_kind: String = str(ent.get_meta("original_kind", "npc"))
+	ent.set_meta("is_dead", false)
+	ent.set_meta("entity_kind", orig_kind)
+	ent.set_meta("display_name", orig_name)
+	ent.set_meta("current_health", int(ent.get_meta("max_health", 300)))
+	ent.rotation_degrees.z = 0.0 # Remis debout
+	_show_notification("✨ %s s'est relevé(e) et a été réanimé(e) !" % orig_name, Color(0.2, 0.9, 1.0))
+
+
+func _execute_dizzy_shot() -> void:
+	if player == null or swg_combat_system == null:
+		return
+	var p_pos: Vector3 = player.global_position
+	var t_pos: Vector3 = p_pos - player.global_transform.basis.z * 20.0
+	if _current_target_entity is Node3D:
+		t_pos = _current_target_entity.global_position
+	swg_combat_system.fire_blaster_bolt(p_pos, t_pos, false)
+	swg_combat_system.spawn_damage_number(t_pos, 45, Color(1.0, 0.85, 0.2))
+	_show_notification("💫 Tir Étourdissant porté ! Cible affectée par l'état Dizzy (Perte d'équilibre).", Color(1.0, 0.85, 0.2))
+
+
+func _execute_bacta_stim() -> void:
+	_show_notification("💉 Stimpack Bacta d'urgence consommé : +250 Santé et +250 Action restaurées !", Color(0.2, 1.0, 0.5))
+
+
+func _execute_survey_pulse() -> void:
+	if player == null or swg_combat_system == null:
+		return
+	swg_combat_system.trigger_survey_pulse(player.global_position)
+	_show_notification("📡 Sonde Géologique : Filon Ferrique Détecté (Pureté 94%) ! Échantillon de minerai brut extrait.", Color(0.2, 0.85, 1.0))
+
+
+func _show_notification(msg: String, col: Color = Color(0.2, 1.0, 0.5)) -> void:
+	if _notify_label:
+		_notify_label.text = "◈ %s ◈" % msg
+		_notify_label.add_theme_color_override("font_color", col)
+		_notify_label.visible = true
+		_notify_timer = 4.0
+
+
+func _on_dialog_option_selected(opt_id: String, npc_name: String) -> void:
+	match opt_id:
+		"watch_dance":
+			_show_notification("♫ Lia danse sous les spots de la cantina : 50 Fatigue dissipée !", Color(0.9, 0.5, 0.9))
+		"listen_music":
+			_show_notification("🎷 L'orchestre Bith joue un ragtime de cantina : Buff de Mental accordé !", Color(0.3, 0.85, 1.0))
+		"buy_drink":
+			_show_notification("🍺 Vous buvez un grand verre de Lait Bleu frais : 300 Action restaurée !", Color(0.2, 1.0, 0.4))
+		"buy_rations":
+			_show_notification("🍖 Achat de 5 Rations de survie à Jax Moro (50 crédits débités).", Color(0.95, 0.8, 0.2))
+		"heal_ham":
+			_show_notification("💉 Docteur Vane applique un stimulant bacta : Barres HAM restaurées à 100% !", Color(0.1, 0.95, 0.9))
+		"bacta_bath":
+			_show_notification("💧 Bain en cuve de Bacta : Tous les traumatismes et poisons sont guéris !", Color(0.2, 1.0, 0.8))
+		"open_housing":
+			if swg_structure_panel: swg_structure_panel.open_panel()
+		"open_skills":
+			if swg_skills_panel: swg_skills_panel.open_panel()
+		"open_bazaar":
+			if swg_bazaar_panel: swg_bazaar_panel.open_panel()
+		"open_missions":
+			if swg_missions_dialog: swg_missions_dialog.open_panel()
+		"droid_scan":
+			_show_notification("🔍 R2-T8 analyse le sous-sol : Gisement de fer repéré à 120m au Nord-Est.", Color(0.2, 0.8, 1.0))
+		_:
+			_show_notification("Action exécutée : %s avec %s." % [opt_id, npc_name])
+
+
+func _on_mission_accepted(mission_id: String, reward_cr: int) -> void:
+	_show_notification("📜 Contrat de mission [%s] accepté ! Objectif ajouté au Datapad." % mission_id, Color(1.0, 0.85, 0.2))
+
+
+func _on_bank_balance_updated(new_bal: int) -> void:
+	_show_notification("💰 Solde Bancaire Galactique mis à jour : %d crédits." % new_bal, Color(0.2, 1.0, 0.4))
 
 
 func _on_player_posture_changed(p_lbl: String) -> void:
@@ -276,20 +863,54 @@ func _on_quick_panel_requested(k: String) -> void:
 		"skills": if swg_skills_panel: swg_skills_panel.toggle()
 		"survey": if swg_survey_panel: swg_survey_panel.toggle()
 		"experiment": if swg_experiment_panel: swg_experiment_panel.toggle()
+		"inventory": if swg_inventory_panel: swg_inventory_panel.toggle()
+		"talents": if swg_crafting_panel: swg_crafting_panel.toggle()
 		"vendors": if swg_bazaar_panel: swg_bazaar_panel.toggle()
 		"housing": if swg_structure_panel: swg_structure_panel.toggle()
+		"missions":
+			if swg_missions_dialog:
+				if swg_missions_dialog.visible: swg_missions_dialog.close_panel()
+				else: swg_missions_dialog.open_panel()
+		"map": if swg_planetary_map: swg_planetary_map.toggle()
 
 
 func _on_radial_action_selected(act: String, ctx: Dictionary) -> void:
-	print("[SWG 3D] Action radiale déclenchée : %s sur %s" % [act, ctx.get("name", "cible")])
-	if act == "vendor_browse" and swg_bazaar_panel:
-		swg_bazaar_panel.open_panel()
-	elif (act == "house_manage" or act == "house_maintenance") and swg_structure_panel:
-		swg_structure_panel.open_panel()
+	var t_name: String = str(ctx.get("name", "Cible"))
+	print("[SWG 3D] Action radiale : %s sur %s" % [act, t_name])
+
+	match act:
+		"converse":
+			if swg_dialog_box:
+				swg_dialog_box.open_dialog(t_name, str(ctx.get("kind", "npc")))
+		"vendor_browse":
+			if swg_bazaar_panel: swg_bazaar_panel.open_panel()
+		"house_manage", "house_maintenance":
+			if swg_structure_panel: swg_structure_panel.open_panel()
+		"watch_entertainer":
+			_show_notification("♫ Vous admirez la prestation de %s : Fatigue dissipée !" % t_name, Color(0.9, 0.5, 0.9))
+		"treat_wounds":
+			_show_notification("💉 Soins appliqués à %s : Blessures HAM stabilisées !" % t_name, Color(0.2, 0.9, 0.9))
+		"open_skills":
+			if swg_skills_panel: swg_skills_panel.open_panel()
+		"tame_creature":
+			_show_notification("🐾 Domptage Creature Handler réussi ! %s est maintenant votre familier loyal !" % t_name, Color(0.2, 1.0, 0.5))
+		"harvest_meat", "harvest_hide", "harvest_bone", "harvest_fauna":
+			_show_notification("🥩 Dépeçage Scout terminé : 45 unités de ressources prélevées sur %s !" % t_name, Color(0.95, 0.75, 0.2))
+		"tactical_strike":
+			_show_notification("⚔ Attaque tactique HAM portée sur %s !" % t_name, Color(1.0, 0.3, 0.3))
+		"deploy_camp":
+			_show_notification("⛺ Bivouac de Scout déployé dans les dunes de Lost Heaven.", Color(1.0, 0.8, 0.3))
+		"examine":
+			_show_notification("🔍 Examen détaillé : %s (État optimal, intégrité 100%%)." % t_name, Color(0.85, 0.95, 1.0))
+		_:
+			_show_notification("Action %s effectuée sur %s." % [act, t_name])
 
 
 func _close_all_modals() -> void:
 	if swg_radial_menu and swg_radial_menu.visible: swg_radial_menu.close_menu()
+	if swg_dialog_box and swg_dialog_box.visible: swg_dialog_box.close_dialog()
+	if swg_missions_dialog and swg_missions_dialog.visible: swg_missions_dialog.close_panel()
+	if swg_bank_dialog and swg_bank_dialog.visible: swg_bank_dialog.close_panel()
 	if swg_character_sheet and swg_character_sheet.visible: swg_character_sheet.close_panel()
 	if swg_datapad_panel and swg_datapad_panel.visible: swg_datapad_panel.close_panel()
 	if swg_bazaar_panel and swg_bazaar_panel.visible: swg_bazaar_panel.close_panel()
@@ -297,4 +918,8 @@ func _close_all_modals() -> void:
 	if swg_skills_panel and swg_skills_panel.visible: swg_skills_panel.close_panel()
 	if swg_survey_panel and swg_survey_panel.visible: swg_survey_panel.close_panel()
 	if swg_experiment_panel and swg_experiment_panel.visible: swg_experiment_panel.close_panel()
+	if swg_inventory_panel and swg_inventory_panel.visible: swg_inventory_panel.close_panel()
+	if swg_crafting_panel and swg_crafting_panel.visible: swg_crafting_panel.close_panel()
+	if swg_planetary_map and swg_planetary_map.visible: swg_planetary_map.close_panel()
+
 
