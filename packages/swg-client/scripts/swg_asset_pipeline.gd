@@ -86,29 +86,92 @@ static func build_swg_cantina_pob(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
 	var bar_cell_node := Node3D.new()
 	bar_cell_node.name = "Cell_MainBar"
 
-	# Grand comptoir circulaire en fer à cheval (iconique SWG)
-	var counter := MeshInstance3D.new()
-	var c_box := CylinderMesh.new()
-	c_box.top_radius = 4.0
-	c_box.bottom_radius = 4.0
-	c_box.height = 1.1
-	counter.mesh = c_box
-	counter.position = Vector3(-4.0, 0.55, 0)
+	# Grand comptoir en U authentique de Cantina SWG (Espace intérieur dégagé pour le barman)
 	var mat_metal := StandardMaterial3D.new()
-	mat_metal.albedo_color = Color(0.3, 0.35, 0.38, 1.0)
-	mat_metal.metallic = 0.8
-	mat_metal.roughness = 0.3
-	counter.set_surface_override_material(0, mat_metal)
+	mat_metal.albedo_color = Color(0.28, 0.32, 0.36, 1.0)
+	mat_metal.metallic = 0.85
+	mat_metal.roughness = 0.25
 
-	var counter_body := StaticBody3D.new()
-	var c_col := CollisionShape3D.new()
-	var cyl_shape := CylinderShape3D.new()
-	cyl_shape.radius = 4.0
-	cyl_shape.height = 1.1
-	c_col.shape = cyl_shape
-	counter_body.add_child(c_col)
-	counter.add_child(counter_body)
-	bar_cell_node.add_child(counter)
+	# 1. Pan frontal (face aux clients au Sud)
+	var counter_front := MeshInstance3D.new()
+	var box_front := BoxMesh.new()
+	box_front.size = Vector3(5.6, 1.1, 0.7)
+	counter_front.mesh = box_front
+	counter_front.position = Vector3(-4.0, 0.55, 1.8)
+	counter_front.set_surface_override_material(0, mat_metal)
+	var sb_f := StaticBody3D.new()
+	var col_f := CollisionShape3D.new()
+	var box_shape_f := BoxShape3D.new()
+	box_shape_f.size = Vector3(5.6, 1.1, 0.7)
+	col_f.shape = box_shape_f
+	sb_f.add_child(col_f)
+	counter_front.add_child(sb_f)
+	bar_cell_node.add_child(counter_front)
+
+	# 2. Aile gauche (Ouest)
+	var counter_left := MeshInstance3D.new()
+	var box_l := BoxMesh.new()
+	box_l.size = Vector3(0.7, 1.1, 3.2)
+	counter_left.mesh = box_l
+	counter_left.position = Vector3(-6.45, 0.55, 0.2)
+	counter_left.set_surface_override_material(0, mat_metal)
+	var sb_l := StaticBody3D.new()
+	var col_l := CollisionShape3D.new()
+	var box_shape_l := BoxShape3D.new()
+	box_shape_l.size = Vector3(0.7, 1.1, 3.2)
+	col_l.shape = box_shape_l
+	sb_l.add_child(col_l)
+	counter_left.add_child(sb_l)
+	bar_cell_node.add_child(counter_left)
+
+	# 3. Aile droite (Est)
+	var counter_right := MeshInstance3D.new()
+	var box_r := BoxMesh.new()
+	box_r.size = Vector3(0.7, 1.1, 3.2)
+	counter_right.mesh = box_r
+	counter_right.position = Vector3(-1.55, 0.55, 0.2)
+	counter_right.set_surface_override_material(0, mat_metal)
+	var sb_r := StaticBody3D.new()
+	var col_r := CollisionShape3D.new()
+	var box_shape_r := BoxShape3D.new()
+	box_shape_r.size = Vector3(0.7, 1.1, 3.2)
+	col_r.shape = box_shape_r
+	sb_r.add_child(col_r)
+	counter_right.add_child(sb_r)
+	bar_cell_node.add_child(counter_right)
+
+	# 4. Étagère arrière-bar & Distributeurs de boissons de Jax Moro
+	var backbar := MeshInstance3D.new()
+	var bb_box := BoxMesh.new()
+	bb_box.size = Vector3(5.2, 2.4, 0.6)
+	backbar.mesh = bb_box
+	backbar.position = Vector3(-4.0, 1.2, -2.4)
+	backbar.set_surface_override_material(0, mat_metal)
+	var sb_bb := StaticBody3D.new()
+	var col_bb := CollisionShape3D.new()
+	var box_shape_bb := BoxShape3D.new()
+	box_shape_bb.size = Vector3(5.2, 2.4, 0.6)
+	col_bb.shape = box_shape_bb
+	sb_bb.add_child(col_bb)
+	backbar.add_child(sb_bb)
+	bar_cell_node.add_child(backbar)
+
+	# Bouteilles & Carafes de lait bleu luminescentes sur l'étagère
+	for bx in [-1.8, -0.6, 0.6, 1.8]:
+		var bottle := MeshInstance3D.new()
+		var bot_cyl := CylinderMesh.new()
+		bot_cyl.top_radius = 0.08
+		bot_cyl.bottom_radius = 0.12
+		bot_cyl.height = 0.55
+		bottle.mesh = bot_cyl
+		bottle.position = Vector3(-4.0 + bx, 1.8, -2.0)
+		var mat_bot := StandardMaterial3D.new()
+		mat_bot.albedo_color = Color(0.2, 0.85, 1.0, 0.9)
+		mat_bot.emission_enabled = true
+		mat_bot.emission = Color(0.2, 0.85, 1.0)
+		mat_bot.emission_energy_multiplier = 1.5
+		bottle.set_surface_override_material(0, mat_bot)
+		bar_cell_node.add_child(bottle)
 
 	# Néon d'ambiance au-dessus du bar
 	var bar_neon := MeshInstance3D.new()
@@ -433,21 +496,117 @@ static func build_swg_medcenter(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
 
 	var sb := StaticBody3D.new()
 
-	# Structure principale à double niveau
-	var b_mesh := MeshInstance3D.new()
-	var b_box := BoxMesh.new()
-	b_box.size = Vector3(16.0, 6.0, 14.0)
-	b_mesh.mesh = b_box
-	b_mesh.position = Vector3(0, 3.0, 0)
-	b_mesh.set_surface_override_material(0, mat_white)
-	sb.add_child(b_mesh)
+	# Structure Creuse POB Médicale Franchissable (Hall clinique accessible)
+	# 1. Sol carrelé stérile
+	var fl_mesh := MeshInstance3D.new()
+	var fl_box := BoxMesh.new()
+	fl_box.size = Vector3(16.0, 0.4, 14.0)
+	fl_mesh.mesh = fl_box
+	fl_mesh.position = Vector3(0, 0.2, 0)
+	fl_mesh.set_surface_override_material(0, mat_white)
+	sb.add_child(fl_mesh)
+	var fl_col := CollisionShape3D.new()
+	var fl_cshape := BoxShape3D.new()
+	fl_cshape.size = Vector3(16.0, 0.4, 14.0)
+	fl_col.shape = fl_cshape
+	fl_col.position = Vector3(0, 0.2, 0)
+	sb.add_child(fl_col)
 
-	var b_col := CollisionShape3D.new()
-	var b_cshape := BoxShape3D.new()
-	b_cshape.size = Vector3(16.0, 6.0, 14.0)
-	b_col.shape = b_cshape
-	b_col.position = Vector3(0, 3.0, 0)
-	sb.add_child(b_col)
+	# 2. Toit clinique
+	var rf_mesh := MeshInstance3D.new()
+	var rf_box := BoxMesh.new()
+	rf_box.size = Vector3(16.0, 0.6, 14.0)
+	rf_mesh.mesh = rf_box
+	rf_mesh.position = Vector3(0, 6.0, 0)
+	rf_mesh.set_surface_override_material(0, mat_white)
+	sb.add_child(rf_mesh)
+
+	# 3. Mur arrière Nord
+	var bk_mesh := MeshInstance3D.new()
+	var bkb_box := BoxMesh.new()
+	bkb_box.size = Vector3(16.0, 6.0, 0.8)
+	bk_mesh.mesh = bkb_box
+	bk_mesh.position = Vector3(0, 3.0, -6.6)
+	bk_mesh.set_surface_override_material(0, mat_white)
+	sb.add_child(bk_mesh)
+	var bk_col := CollisionShape3D.new()
+	var bk_cshape := BoxShape3D.new()
+	bk_cshape.size = Vector3(16.0, 6.0, 0.8)
+	bk_col.shape = bk_cshape
+	bk_col.position = Vector3(0, 3.0, -6.6)
+	sb.add_child(bk_col)
+
+	# 4. Murs latéraux Ouest & Est
+	for wx in [-7.6, 7.6]:
+		var wl_mesh := MeshInstance3D.new()
+		var wlb_box := BoxMesh.new()
+		wlb_box.size = Vector3(0.8, 6.0, 14.0)
+		wl_mesh.mesh = wlb_box
+		wl_mesh.position = Vector3(wx, 3.0, 0)
+		wl_mesh.set_surface_override_material(0, mat_white)
+		sb.add_child(wl_mesh)
+		var wl_col := CollisionShape3D.new()
+		var wl_cshape := BoxShape3D.new()
+		wl_cshape.size = Vector3(0.8, 6.0, 14.0)
+		wl_col.shape = wl_cshape
+		wl_col.position = Vector3(wx, 3.0, 0)
+		sb.add_child(wl_col)
+
+	# 5. Mur frontal Sud avec GRANDE PORTE D'ACCÈS CLINIQUE (4.2m de passage libre)
+	for fx in [-5.4, 5.4]:
+		var fr_mesh := MeshInstance3D.new()
+		var frb_box := BoxMesh.new()
+		frb_box.size = Vector3(5.2, 6.0, 0.8)
+		fr_mesh.mesh = frb_box
+		fr_mesh.position = Vector3(fx, 3.0, 6.6)
+		fr_mesh.set_surface_override_material(0, mat_white)
+		sb.add_child(fr_mesh)
+		var fr_col := CollisionShape3D.new()
+		var fr_cshape := BoxShape3D.new()
+		fr_cshape.size = Vector3(5.2, 6.0, 0.8)
+		fr_col.shape = fr_cshape
+		fr_col.position = Vector3(fx, 3.0, 6.6)
+		sb.add_child(fr_col)
+
+	# Linteau de porte vitrée médicale
+	var l_mesh := MeshInstance3D.new()
+	var lb_box := BoxMesh.new()
+	lb_box.size = Vector3(5.6, 2.2, 0.8)
+	l_mesh.mesh = lb_box
+	l_mesh.position = Vector3(0, 4.9, 6.6)
+	l_mesh.set_surface_override_material(0, mat_white)
+	sb.add_child(l_mesh)
+
+	# Intérieur : Éclairage clinique néon turquoise
+	var med_omni := OmniLight3D.new()
+	med_omni.position = Vector3(0, 4.8, 0)
+	med_omni.light_color = Color(0.6, 0.95, 1.0)
+	med_omni.light_energy = 2.4
+	med_omni.omni_range = 10.0
+	sb.add_child(med_omni)
+
+	# Intérieur : Bureau de diagnostic du Docteur Vane
+	var desk := MeshInstance3D.new()
+	var d_box := BoxMesh.new()
+	d_box.size = Vector3(3.2, 0.9, 1.4)
+	desk.mesh = d_box
+	desk.position = Vector3(0, 0.65, -3.8)
+	var mat_desk := StandardMaterial3D.new()
+	mat_desk.albedo_color = Color(0.2, 0.25, 0.3)
+	desk.set_surface_override_material(0, mat_desk)
+	sb.add_child(desk)
+
+	# Intérieur : 2 Lits d'examen médical
+	for lx in [-4.5, 4.5]:
+		var bed := MeshInstance3D.new()
+		var b_mesh := BoxMesh.new()
+		b_mesh.size = Vector3(1.6, 0.7, 3.0)
+		bed.mesh = b_mesh
+		bed.position = Vector3(lx, 0.55, -2.0)
+		var mat_bed := StandardMaterial3D.new()
+		mat_bed.albedo_color = Color(0.9, 0.92, 0.95)
+		bed.set_surface_override_material(0, mat_bed)
+		sb.add_child(bed)
 
 	# Dôme médical supérieur
 	var dome := MeshInstance3D.new()
@@ -531,21 +690,114 @@ static func build_swg_town_hall(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
 
 	var sb := StaticBody3D.new()
 
-	# Corps de bâtiment principal
-	var hall_mesh := MeshInstance3D.new()
-	var h_box := BoxMesh.new()
-	h_box.size = Vector3(22.0, 8.0, 16.0)
-	hall_mesh.mesh = h_box
-	hall_mesh.position = Vector3(0, 4.0, 0)
-	hall_mesh.set_surface_override_material(0, mat_stone)
-	sb.add_child(hall_mesh)
+	# Structure Creuse POB Franchissable (Murs périphériques, Sol, Toit et Porte Ouverte)
+	# 1. Sol intérieur carrelé
+	var floor_m := MeshInstance3D.new()
+	var f_box := BoxMesh.new()
+	f_box.size = Vector3(22.0, 0.4, 16.0)
+	floor_m.mesh = f_box
+	floor_m.position = Vector3(0, 0.2, 0)
+	floor_m.set_surface_override_material(0, mat_stone)
+	sb.add_child(floor_m)
+	var f_col := CollisionShape3D.new()
+	var f_cshape := BoxShape3D.new()
+	f_cshape.size = Vector3(22.0, 0.4, 16.0)
+	f_col.shape = f_cshape
+	f_col.position = Vector3(0, 0.2, 0)
+	sb.add_child(f_col)
 
-	var h_col := CollisionShape3D.new()
-	var h_cshape := BoxShape3D.new()
-	h_cshape.size = Vector3(22.0, 8.0, 16.0)
-	h_col.shape = h_cshape
-	h_col.position = Vector3(0, 4.0, 0)
-	sb.add_child(h_col)
+	# 2. Toit / Plafond supérieur
+	var roof_m := MeshInstance3D.new()
+	var r_box := BoxMesh.new()
+	r_box.size = Vector3(22.0, 0.6, 16.0)
+	roof_m.mesh = r_box
+	roof_m.position = Vector3(0, 8.0, 0)
+	roof_m.set_surface_override_material(0, mat_stone)
+	sb.add_child(roof_m)
+
+	# 3. Mur arrière Nord
+	var back_m := MeshInstance3D.new()
+	var bk_box := BoxMesh.new()
+	bk_box.size = Vector3(22.0, 8.0, 0.8)
+	back_m.mesh = bk_box
+	back_m.position = Vector3(0, 4.0, -7.6)
+	back_m.set_surface_override_material(0, mat_stone)
+	sb.add_child(back_m)
+	var bk_col := CollisionShape3D.new()
+	var bk_cshape := BoxShape3D.new()
+	bk_cshape.size = Vector3(22.0, 8.0, 0.8)
+	bk_col.shape = bk_cshape
+	bk_col.position = Vector3(0, 4.0, -7.6)
+	sb.add_child(bk_col)
+
+	# 4. Murs latéraux Ouest & Est
+	for wx in [-10.6, 10.6]:
+		var wall_m := MeshInstance3D.new()
+		var w_box := BoxMesh.new()
+		w_box.size = Vector3(0.8, 8.0, 16.0)
+		wall_m.mesh = w_box
+		wall_m.position = Vector3(wx, 4.0, 0)
+		wall_m.set_surface_override_material(0, mat_stone)
+		sb.add_child(wall_m)
+		var w_col := CollisionShape3D.new()
+		var w_cshape := BoxShape3D.new()
+		w_cshape.size = Vector3(0.8, 8.0, 16.0)
+		w_col.shape = w_cshape
+		w_col.position = Vector3(wx, 4.0, 0)
+		sb.add_child(w_col)
+
+	# 5. Mur frontal Sud avec GRANDE PORTE D'ENTRÉE FRANCHISSABLE (5.2m de passage libre)
+	for fx in [-7.2, 7.2]:
+		var front_m := MeshInstance3D.new()
+		var fr_box := BoxMesh.new()
+		fr_box.size = Vector3(7.6, 8.0, 0.8)
+		front_m.mesh = fr_box
+		front_m.position = Vector3(fx, 4.0, 7.6)
+		front_m.set_surface_override_material(0, mat_stone)
+		sb.add_child(front_m)
+		var fr_col := CollisionShape3D.new()
+		var fr_cshape := BoxShape3D.new()
+		fr_cshape.size = Vector3(7.6, 8.0, 0.8)
+		fr_col.shape = fr_cshape
+		fr_col.position = Vector3(fx, 4.0, 7.6)
+		sb.add_child(fr_col)
+
+	# Linteau supérieur de porte
+	var lintel := MeshInstance3D.new()
+	var l_box := BoxMesh.new()
+	l_box.size = Vector3(6.8, 2.5, 0.8)
+	lintel.mesh = l_box
+	lintel.position = Vector3(0, 6.75, 7.6)
+	lintel.set_surface_override_material(0, mat_stone)
+	sb.add_child(lintel)
+
+	# Intérieur : Tapis d'honneur rouge menant à l'estrade du Maire
+	var carpet := MeshInstance3D.new()
+	var cp_box := BoxMesh.new()
+	cp_box.size = Vector3(4.0, 0.05, 12.0)
+	carpet.mesh = cp_box
+	carpet.position = Vector3(0, 0.43, 0.5)
+	var mat_carpet := StandardMaterial3D.new()
+	mat_carpet.albedo_color = Color(0.65, 0.12, 0.18)
+	carpet.set_surface_override_material(0, mat_carpet)
+	sb.add_child(carpet)
+
+	# Intérieur : Estrade du Maire Odo Merr
+	var dais := MeshInstance3D.new()
+	var d_box := BoxMesh.new()
+	d_box.size = Vector3(7.0, 0.6, 3.5)
+	dais.mesh = d_box
+	dais.position = Vector3(0, 0.65, -4.5)
+	dais.set_surface_override_material(0, mat_gold)
+	sb.add_child(dais)
+
+	# Intérieur : Éclairage lustre monumental
+	var hall_light := OmniLight3D.new()
+	hall_light.position = Vector3(0, 6.5, 0)
+	hall_light.light_color = Color(1.0, 0.9, 0.7)
+	hall_light.light_energy = 2.8
+	hall_light.omni_range = 14.0
+	sb.add_child(hall_light)
 
 	# Grand Escalier d'accès frontal (4 marches étagées)
 	for i in range(4):
@@ -1373,7 +1625,7 @@ static func build_astromech_droid(pos: Vector3) -> CharacterBody3D:
 
 
 ## 16. Chargement d'Avatar VRM Humanoid avec Animateur Procédural (Suppression T-Pose)
-static func load_humanoid_vrm(vrm_name: String) -> Node3D:
+static func load_humanoid_vrm(vrm_name: String, is_entertainer: bool = false) -> Node3D:
 	var candidate_paths := [
 		"res://assets/avatars/" + vrm_name,
 		"packages/compagnon-desktop/overlay/vrm/" + vrm_name,
@@ -1398,7 +1650,7 @@ static func load_humanoid_vrm(vrm_name: String) -> Node3D:
 						var anim := _SwgVrmAnimatorScript.new()
 						anim.name = "VrmAnimator"
 						scene.add_child(anim)
-						anim.setup(sk)
+						anim.setup(sk, is_entertainer)
 					return scene
 	return null
 
@@ -1603,5 +1855,69 @@ static func build_dune_walker_creature(pos: Vector3) -> CharacterBody3D:
 	body.add_child(lbl)
 
 	return body
+
+
+## 20. Modèle visuel de Monture Dewback pour le Joueur (attachable sous le contrôleur)
+static func build_dewback_mount_visual(yaw_deg: float = 0.0) -> Node3D:
+	var root := Node3D.new()
+	root.name = "MountedDewbackVisual"
+	root.rotation_degrees.y = yaw_deg
+	root.position = Vector3(0, -2.5, 0.2) # Aligne le joueur sur la selle
+
+	var mat_skin := StandardMaterial3D.new()
+	mat_skin.albedo_color = Color(0.48, 0.52, 0.35, 1.0)
+	mat_skin.roughness = 0.9
+
+	var mat_saddle := StandardMaterial3D.new()
+	mat_saddle.albedo_color = Color(0.45, 0.28, 0.18)
+
+	var torso := MeshInstance3D.new()
+	var t_box := BoxMesh.new()
+	t_box.size = Vector3(2.2, 1.8, 4.5)
+	torso.mesh = t_box
+	torso.position = Vector3(0, 1.8, 0)
+	torso.set_surface_override_material(0, mat_skin)
+	root.add_child(torso)
+
+	var head := MeshInstance3D.new()
+	var h_box := BoxMesh.new()
+	h_box.size = Vector3(1.4, 1.2, 2.0)
+	head.mesh = h_box
+	head.position = Vector3(0, 1.5, -2.8)
+	head.set_surface_override_material(0, mat_skin)
+	root.add_child(head)
+
+	var saddle := MeshInstance3D.new()
+	var s_box := BoxMesh.new()
+	s_box.size = Vector3(1.8, 0.3, 2.2)
+	saddle.mesh = s_box
+	saddle.position = Vector3(0, 2.8, -0.2)
+	saddle.set_surface_override_material(0, mat_saddle)
+	root.add_child(saddle)
+
+	for lz in [-1.5, 1.5]:
+		for lx in [-1.0, 1.0]:
+			var leg := MeshInstance3D.new()
+			var l_cyl := CylinderMesh.new()
+			l_cyl.top_radius = 0.35
+			l_cyl.bottom_radius = 0.45
+			l_cyl.height = 1.6
+			leg.mesh = l_cyl
+			leg.position = Vector3(lx, 0.8, lz)
+			leg.set_surface_override_material(0, mat_skin)
+			root.add_child(leg)
+
+	var tail := MeshInstance3D.new()
+	var tl_cyl := CylinderMesh.new()
+	tl_cyl.top_radius = 0.25
+	tl_cyl.bottom_radius = 0.05
+	tl_cyl.height = 2.4
+	tail.mesh = tl_cyl
+	tail.position = Vector3(0, 1.2, 3.2)
+	tail.rotation_degrees = Vector3(-35, 0, 0)
+	tail.set_surface_override_material(0, mat_skin)
+	root.add_child(tail)
+
+	return root
 
 

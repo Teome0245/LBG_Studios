@@ -437,6 +437,17 @@ func apply_combat_status(payload: Dictionary) -> void:
 		_canvas_draw.queue_redraw()
 
 
+func set_battle_fatigue(val: int) -> void:
+	_ensure_ui()
+	_ham["battle_fatigue"] = maxi(0, val)
+	if _portrait_3d and _bar_health:
+		var total_cap := float(maxi(1, _bar_health.base_max + _bar_health.buff - _bar_health.wounds))
+		var h_ratio := float(_bar_health.current) / total_cap
+		_portrait_3d.update_ham_state(h_ratio, _ham["battle_fatigue"], _posture_label)
+	if _canvas_draw:
+		_canvas_draw.queue_redraw()
+
+
 func set_target_entity(entity_name: String, entity_kind: String = "npc", distance_m: float = -1.0) -> void:
 	_ensure_ui()
 	_target_name = entity_name.strip_edges()

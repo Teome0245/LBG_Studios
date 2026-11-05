@@ -25,10 +25,14 @@ const _SwgActionHotbarScript = preload("res://scripts/swg_action_hotbar.gd")
 const _SwgInventoryScript = preload("res://scripts/swg_inventory_paperdoll.gd")
 const _SwgCraftingScript = preload("res://scripts/swg_crafting_panel.gd")
 const _SwgPlanetaryMapScript = preload("res://scripts/swg_planetary_map.gd")
+const _SwgSkinSystemScript = preload("res://scripts/swg_skin_system.gd")
+const _SwgAudioSynthesizerScript = preload("res://scripts/swg_audio_synthesizer.gd")
+const _SwgTravelDialogScript = preload("res://scripts/swg_travel_dialog.gd")
 
 var player: CharacterBody3D = null
 var terrain_system: Node3D = null
 var swg_combat_system: Node3D = null
+var swg_audio: Node = null
 
 # Interface UI CanvasLayer
 var ui_layer: CanvasLayer = null
@@ -44,6 +48,7 @@ var swg_experiment_panel: Node = null
 var swg_dialog_box: Node = null
 var swg_missions_dialog: Node = null
 var swg_bank_dialog: Node = null
+var swg_travel_dialog: Node = null
 var swg_action_hotbar: Control = null
 var swg_inventory_panel: Node = null
 var swg_crafting_panel: Node = null
@@ -59,8 +64,17 @@ var _interaction_prompt: PanelContainer = null
 var _interaction_label: Label = null
 var _current_target_entity: Node = null
 var _is_riding_speeder: bool = false
+var _mounted_speeder_visual: Node3D = null
+var _is_riding_dewback: bool = false
+var _mounted_dewback_visual: Node3D = null
+var _shuttle_visual_ref: Node3D = null
+var _hyperspace_overlay: Panel = null
 var _notify_label: Label = null
 var _notify_timer: float = 0.0
+var _active_missions: Array = []
+var _active_waypoints: Dictionary = {}
+var _cantina_buff_timer: float = 0.0
+var _player_fatigue: int = 0
 
 
 func _ready() -> void:
@@ -157,13 +171,14 @@ func _setup_world_geometry() -> void:
 	# 3. Spatioport de Lost Heaven (Shuttleport) avec Navette Spatiale posée et tour de contrôle
 	var shuttleport: Node3D = _SwgAssetPipelineScript.build_swg_shuttleport(Vector3(-42, 0, -28), 15.0)
 	add_child(shuttleport)
+	_shuttle_visual_ref = shuttleport.find_child("SWG_Shuttle_Craft", true, false) as Node3D
 
 	# 4. Hôtel de Ville / Grand Hall Municipal de Lost Heaven
 	var town_hall: Node3D = _SwgAssetPipelineScript.build_swg_town_hall(Vector3(0, 0, -45), 0.0)
 	add_child(town_hall)
 
-	# 5. Centre Médical & Clonerie avec cuves de Bacta lumineuses
-	var medcenter: Node3D = _SwgAssetPipelineScript.build_swg_medcenter(Vector3(-28, 0, 22), -30.0)
+	# 5. Centre Médical & Clonerie avec cuves de Bacta lumineuses (Entrée franchissable face au Sud)
+	var medcenter: Node3D = _SwgAssetPipelineScript.build_swg_medcenter(Vector3(-28, 0, 22), 0.0)
 	add_child(medcenter)
 
 	# 6. Quartier Résidentiel : Maisons Citadines en Pisé avec terrasses et auvents
@@ -239,12 +254,19 @@ func _spawn_player() -> void:
 
 func _spawn_interactable_entities() -> void:
 	# 1. PNJ de la Ville de Lost Heaven (Modèles VRM Humanoid 3D)
-	_spawn_npc("Lia (Artiste Cantina)", Vector3(25, 0, -16), Color(0.9, 0.4, 0.7), "npc_entertainer")
-	_spawn_npc("Barman Jax Moro", Vector3(21, 0, -22), Color(0.85, 0.65, 0.35), "npc_bartender")
-	_spawn_npc("Odo Merr (Maire de Lost Heaven)", Vector3(0, 0, -36), Color(0.3, 0.7, 0.9), "npc_mayor")
-	_spawn_npc("Docteur Vane (Médecin Chef)", Vector3(-28, 0, 18), Color(0.2, 0.9, 0.9), "npc_doctor")
+	# Lia : Élevée sur la scène de spectacle de la Cantina sous les projecteurs
+	_spawn_npc("Lia (Artiste Cantina)", Vector3(32.5, 0.6, -22), Color(0.9, 0.4, 0.7), "npc_entertainer")
+	# Barman Jax Moro : Au centre de son comptoir en U, face aux clients
+	_spawn_npc("Barman Jax Moro", Vector3(21, 0, -22.3), Color(0.85, 0.65, 0.35), "npc_bartender")
+	_spawn_npc("Barkeep Patron (Client du Bar)", Vector3(21, 0, -19.2), Color(0.5, 0.7, 0.5), "npc_citizen")
+	# Odo Merr : Sur l'estrade municipale à l'intérieur de l'Hôtel de Ville
+	_spawn_npc("Odo Merr (Maire de Lost Heaven)", Vector3(0, 0.65, -49.5), Color(0.3, 0.7, 0.9), "npc_mayor")
+	# Docteur Vane : Dans son cabinet clinique au Centre Médical près des cuves de Bacta
+	_spawn_npc("Docteur Vane (Médecin Chef)", Vector3(-28, 0.2, 18.2), Color(0.2, 0.9, 0.9), "npc_doctor")
 	_spawn_npc("Miran Sael (Apothicaire Nomade)", Vector3(14, 0, -12), Color(0.4, 0.8, 0.5), "npc_merchant")
 	_spawn_npc("Soren Kray (Armurier de Rue)", Vector3(-14, 0, -10), Color(0.8, 0.5, 0.2), "npc_armorer")
+	_spawn_npc("Kaelen (Marchand de Droïdes)", Vector3(-9, 0, 2), Color(0.3, 0.5, 0.7), "npc_merchant")
+	_spawn_npc("Torin (Mécanicien Landspeeder)", Vector3(6, 0, 8), Color(0.7, 0.4, 0.2), "npc_engineer")
 	_spawn_npc("Pilote de Navette Corran", Vector3(-35, 0, -25), Color(0.85, 0.7, 0.9), "npc_pilot")
 	_spawn_npc("Voyageur des Dunes", Vector3(5, 0, -2), Color(0.6, 0.6, 0.6), "npc_citizen")
 	_spawn_npc("Garde de la Milice Porte Ouest", Vector3(-62, 0, -2), Color(0.75, 0.25, 0.2), "npc_guard")
@@ -288,14 +310,23 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 	# A. PNJ Humanoïdes (Lia, Jax, Odo, Vane, Gardes, Citoyens) -> Modèles VRM 3D
 	if kind_id.begins_with("npc_"):
 		var vrm_choice := "Compagnon.vrm"
+		var is_ent := false
 		if "Lia" in n_name or "Artiste" in n_name:
 			vrm_choice = "LadyKoi.vrm"
+			is_ent = true
 		elif "Docteur" in n_name or "Médecin" in n_name or "Vane" in n_name:
 			vrm_choice = "Anna.vrm"
-		elif "Maire" in n_name or "Odo" in n_name or "Barman" in n_name:
+		elif "Maire" in n_name or "Odo" in n_name:
 			vrm_choice = "Aurora.vrm"
+			body.rotation_degrees.y = 180.0
+		elif "Docteur" in n_name or "Vane" in n_name:
+			vrm_choice = "Anna.vrm"
+			body.rotation_degrees.y = 180.0
+		elif "Barman" in n_name or "Jax" in n_name:
+			vrm_choice = "Compagnon.vrm"
+			body.rotation_degrees.y = 180.0
 
-		visual_node = _SwgAssetPipelineScript.load_humanoid_vrm(vrm_choice)
+		visual_node = _SwgAssetPipelineScript.load_humanoid_vrm(vrm_choice, is_ent)
 
 	# B. Faune Sauvage Quadrupède (Chacal, Chiot) -> Modèle Canin Articulé
 	elif kind_id in ["creature_juvenile", "creature_jackal"]:
@@ -309,6 +340,10 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 	# D. Fallback propre si modèle absent
 	if visual_node != null:
 		body.add_child(visual_node)
+		# Application automatique de la palette de skin de rôle (robes, armures, tuniques)
+		# SAUF pour Lia qui conserve son magnifique skin et textures VRM d'origine
+		if kind_id != "npc_entertainer" and not ("Lia" in n_name):
+			_SwgSkinSystemScript.apply_npc_role_skin(body, kind_id)
 	else:
 		var mesh_inst := MeshInstance3D.new()
 		var cap_m := CapsuleMesh.new()
@@ -402,6 +437,35 @@ func _setup_ui() -> void:
 	swg_bank_dialog.balance_updated.connect(_on_bank_balance_updated)
 	ui_layer.add_child(swg_bank_dialog)
 
+	# 11b. Terminal de Transport Galactique & Navettes
+	swg_travel_dialog = _SwgTravelDialogScript.new()
+	swg_travel_dialog.name = "SwgTravelDialog"
+	swg_travel_dialog.travel_ticket_purchased.connect(_on_travel_ticket_purchased)
+	ui_layer.add_child(swg_travel_dialog)
+
+	# 11c. Synthétiseur Audio Galactique (Sons blasters, speeder, navette)
+	swg_audio = _SwgAudioSynthesizerScript.new()
+	swg_audio.name = "SwgAudioSynthesizer"
+	add_child(swg_audio)
+
+	# 11d. Overlay de Saut Hyperspatial Cinématique
+	_hyperspace_overlay = Panel.new()
+	_hyperspace_overlay.name = "HyperspaceOverlay"
+	_hyperspace_overlay.size = Vector2(1280, 720)
+	var sb_hyper := StyleBoxFlat.new()
+	sb_hyper.bg_color = Color(0.01, 0.03, 0.08, 0.96)
+	_hyperspace_overlay.add_theme_stylebox_override("panel", sb_hyper)
+	var hyper_lbl := Label.new()
+	hyper_lbl.text = "◈ ENTRÉE EN HYPERESPACE • TRANSIT NAVETTE EN COURS ◈\n« Saut matriciel calculé par l'ordinateur de navigation »"
+	hyper_lbl.position = Vector2(0, 320)
+	hyper_lbl.size = Vector2(1280, 80)
+	hyper_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hyper_lbl.add_theme_font_size_override("font_size", 16)
+	hyper_lbl.add_theme_color_override("font_color", Color(0.3, 0.95, 1.0))
+	_hyperspace_overlay.add_child(hyper_lbl)
+	_hyperspace_overlay.visible = false
+	ui_layer.add_child(_hyperspace_overlay)
+
 	# 12. Prompt d'Interaction Flottant Dynamique [E]
 	_interaction_prompt = PanelContainer.new()
 	_interaction_prompt.name = "InteractionPrompt"
@@ -462,7 +526,7 @@ func _setup_ui() -> void:
 
 	# 18. Bandeau d'aide aux commandes
 	_hud_prompt = Label.new()
-	_hud_prompt.text = "◈ COMMANDES SWG PRE-CU : ZQSD=Déplacement | E=Interagir | 1..8=Hotbar Combat | I=Inventaire & Papier-Doll | T=Artisanat | M=Carte | K=Compétences | C=Fiche Perso | F5=Clonage"
+	_hud_prompt.text = "◈ COMMANDES SWG PRE-CU : ZQSD=Déplacement | E=Interagir | 1..8=Hotbar Combat | I=Inventaire | T=Artisanat | M=Carte | K=Compétences | C=Fiche Perso | F6=Changer Skin | F5=Clonage"
 	_hud_prompt.position = Vector2(16, 684)
 	_hud_prompt.add_theme_font_size_override("font_size", 10)
 	_hud_prompt.add_theme_color_override("font_color", Color(0.85, 0.95, 1.0, 0.85))
@@ -482,6 +546,75 @@ func _process(delta: float) -> void:
 	# Mise à jour continue de la position du joueur sur la carte planétaire
 	if swg_planetary_map and player:
 		swg_planetary_map.update_player_position(player.global_position)
+
+	# Ambiance Cantina & Dissipation de Fatigue
+	if player != null:
+		var lia_pos := Vector3(32.5, 0.6, -22)
+		var dist_to_lia := player.global_position.distance_to(lia_pos)
+		if dist_to_lia <= 14.0:
+			if _player_fatigue > 0:
+				_player_fatigue = maxi(0, _player_fatigue - int(delta * 8.0))
+				if swg_ham_hud and swg_ham_hud.has_method("set_battle_fatigue"):
+					swg_ham_hud.set_battle_fatigue(_player_fatigue)
+			_cantina_buff_timer += delta
+			if _cantina_buff_timer >= 12.0:
+				_cantina_buff_timer = 0.0
+				_show_notification("♫ Ambiance de Cantina : La danse de Lia dissipe votre fatigue et régénère votre esprit !", Color(0.95, 0.55, 0.95))
+
+	# Vérification des objectifs de missions actives
+	_check_active_missions(delta)
+
+
+func _check_active_missions(_delta: float) -> void:
+	if player == null:
+		return
+	var p_pos: Vector3 = player.global_position
+	var completed_list: Array = []
+
+	for m in _active_missions:
+		if m.get("completed", false):
+			continue
+		var t_pos: Vector3 = m["target"]
+		var dist: float = p_pos.distance_to(t_pos)
+
+		var is_done := false
+		if m["kind"] in ["recon", "delivery"]:
+			if dist <= 8.0:
+				is_done = true
+		elif m["kind"] == "destroy":
+			for child in get_children():
+				if child is CharacterBody3D and child.get_meta("is_dead", false):
+					if child.global_position.distance_to(t_pos) <= 25.0:
+						is_done = true
+						break
+
+		if is_done:
+			m["completed"] = true
+			completed_list.append(m)
+
+	for m in completed_list:
+		_complete_mission(m)
+
+
+func _complete_mission(m: Dictionary) -> void:
+	var m_id: String = m["id"]
+	var m_title: String = m["title"]
+	var rew: int = int(m["reward"])
+
+	if _active_waypoints.has(m_id):
+		var wp_node: Node3D = _active_waypoints[m_id]
+		_tracked_entities.erase(wp_node)
+		wp_node.queue_free()
+		_active_waypoints.erase(m_id)
+
+	if swg_planetary_map:
+		swg_planetary_map.remove_waypoint(m_title)
+
+	if swg_audio:
+		swg_audio.play_mission_complete()
+
+	_show_notification("🏆 MISSION RÉUSSIE : [%s] ! +%d Crédits Galactiques versés au compte !" % [m_title, rew], Color(0.2, 1.0, 0.4))
+	_active_missions.erase(m)
 
 
 func _detect_nearby_interaction() -> void:
@@ -566,6 +699,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if swg_missions_dialog:
 					if swg_missions_dialog.visible: swg_missions_dialog.close_panel()
 					else: swg_missions_dialog.open_panel()
+			KEY_F6:
+				if player != null and player.has_method("cycle_skin"):
+					var s_name: String = str(player.call("cycle_skin"))
+					_show_notification("🎨 Apparence Joueur modifiée : %s" % s_name, Color(0.3, 0.95, 1.0))
 			KEY_ESCAPE:
 				_close_all_modals()
 
@@ -638,13 +775,33 @@ func _interact_with_entity(ent: Node) -> void:
 		_show_notification("✓ Empreinte génétique enregistrée au Centre de Clonage de Lost Heaven (Assurance active) !", Color(0.2, 0.9, 1.0))
 		return
 
+	# 5b. Navette Spatiale & Terminal de Transport
+	if "Shuttle" in ent_name or "Navette" in display_name or "Spatioport" in display_name or ent_kind == "term_travel":
+		if swg_travel_dialog:
+			swg_travel_dialog.open_panel()
+		return
+
+	# 5c. Extracteur Minier Harvester (Vidange Trémie)
+	if "Harvester" in ent_name or ent_kind == "structure_harvester":
+		var ore_amount: int = int(ent.get_meta("hopper_ore", 45))
+		if ore_amount <= 0:
+			ore_amount = randi_range(20, 50)
+		_show_notification("⛏️ Trémie de l'extracteur vidée : +%d unités de Silice d'Oris & Minerai de Fer récoltées !" % ore_amount, Color(0.2, 1.0, 0.5))
+		ent.set_meta("hopper_ore", 0)
+		return
+
 	# 6. Landspeeder X-34 (Monture / Véhicule)
 	if "Landspeeder" in ent_name:
 		_toggle_landspeeder_pilot()
 		return
 
+	# 6b. Monture Vivante Dewback des sables
+	if "Dewback" in ent_name or ent_kind == "creature_dewback":
+		_toggle_dewback_mount()
+		return
+
 	# 7. Campement de Scout Nomade (Feu de camp)
-	if "Camp" in ent_name:
+	if "Camp" in ent_name or ent_kind == "structure_camp":
 		_show_notification("⛺ Repos au coin du feu de camp nomade : Fatigue dissipée & HAM régénéré !", Color(1.0, 0.8, 0.3))
 		return
 
@@ -671,15 +828,82 @@ func _interact_with_entity(ent: Node) -> void:
 
 func _toggle_landspeeder_pilot() -> void:
 	_is_riding_speeder = not _is_riding_speeder
+	if _is_riding_speeder and _is_riding_dewback:
+		_toggle_dewback_mount()
 	if player:
 		if _is_riding_speeder:
 			player.SPEED_SPRINT = 18.0
 			player.SPEED_WALK = 10.0
-			_show_notification("🚀 Landspeeder X-34 engagé ! Vitesse maximale propulsée (Appuyez sur E pour débarquer).", Color(0.3, 1.0, 0.6))
+			if _mounted_speeder_visual == null:
+				_mounted_speeder_visual = _SwgAssetPipelineScript.build_landspeeder(Vector3(0, 0.0, 0), 180.0)
+				_mounted_speeder_visual.name = "MountedLandspeederX34"
+				player.add_child(_mounted_speeder_visual)
+			else:
+				_mounted_speeder_visual.visible = true
+			if swg_audio:
+				swg_audio.set_speeder_sound(true)
+			_show_notification("🚀 Landspeeder X-34 engagé ! Vitesse maximale propulsée (Touche [8] pour ranger).", Color(0.3, 1.0, 0.6))
 		else:
 			player.SPEED_SPRINT = 6.2
 			player.SPEED_WALK = 3.6
-			_show_notification("🚶 Vous avez débarqué du Landspeeder.", Color(0.9, 0.95, 1.0))
+			if _mounted_speeder_visual != null:
+				_mounted_speeder_visual.visible = false
+			if swg_audio:
+				swg_audio.set_speeder_sound(false)
+			_show_notification("🚶 Vous avez rangé le Landspeeder dans votre Datapad.", Color(0.9, 0.95, 1.0))
+
+
+func _toggle_dewback_mount() -> void:
+	_is_riding_dewback = not _is_riding_dewback
+	if _is_riding_dewback and _is_riding_speeder:
+		_toggle_landspeeder_pilot()
+	if player:
+		if _is_riding_dewback:
+			player.SPEED_SPRINT = 10.5
+			player.SPEED_WALK = 6.5
+			if _mounted_dewback_visual == null:
+				_mounted_dewback_visual = _SwgAssetPipelineScript.build_dewback_mount_visual(180.0)
+				player.add_child(_mounted_dewback_visual)
+			else:
+				_mounted_dewback_visual.visible = true
+			_show_notification("🦎 Vous êtes monté sur le dos du grand Dewback des sables ! (Touche E pour descendre).", Color(0.4, 1.0, 0.5))
+		else:
+			player.SPEED_SPRINT = 6.2
+			player.SPEED_WALK = 3.6
+			if _mounted_dewback_visual != null:
+				_mounted_dewback_visual.visible = false
+			_show_notification("🚶 Vous descendez du Dewback.", Color(0.9, 0.95, 1.0))
+
+
+func _on_travel_ticket_purchased(dest_id: String, dest_name: String, cost_cr: int, world_pos: Vector3) -> void:
+	if swg_audio:
+		swg_audio.play_shuttle_takeoff()
+
+	_show_notification("🚀 EMBARQUEMENT NAVETTE : Vol vers %s (Coût : %d cr)" % [dest_name, cost_cr], Color(0.2, 0.9, 1.0))
+
+	if _hyperspace_overlay:
+		_hyperspace_overlay.visible = true
+
+	# Ascension animée de la navette Lambda
+	if _shuttle_visual_ref:
+		var tween := create_tween()
+		tween.tween_property(_shuttle_visual_ref, "position:y", 45.0, 1.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	await get_tree().create_timer(2.0).timeout
+
+	if player:
+		player.global_position = world_pos + Vector3(0, 1.0, 0)
+
+	if _shuttle_visual_ref:
+		_shuttle_visual_ref.position.y = 0.8
+
+	if _hyperspace_overlay:
+		_hyperspace_overlay.visible = false
+
+	if swg_audio:
+		swg_audio.play_droid()
+
+	_show_notification("✨ ARRIVÉE À %s ! Atterrissage navette réussi." % dest_name.to_upper(), Color(0.3, 1.0, 0.5))
 
 
 func _on_hotbar_action_triggered(slot_idx: int, action_id: String) -> void:
@@ -723,6 +947,9 @@ func _execute_blaster_attack(is_aim: bool) -> void:
 
 	if target_node != null:
 		t_pos = target_node.global_position
+
+	if swg_audio:
+		swg_audio.play_blaster()
 
 	swg_combat_system.fire_blaster_bolt(p_pos, t_pos, is_aim)
 
@@ -837,14 +1064,110 @@ func _on_dialog_option_selected(opt_id: String, npc_name: String) -> void:
 			if swg_bazaar_panel: swg_bazaar_panel.open_panel()
 		"open_missions":
 			if swg_missions_dialog: swg_missions_dialog.open_panel()
+		"open_travel":
+			if swg_travel_dialog: swg_travel_dialog.open_panel()
+		"shuttle_status":
+			_show_notification("🚀 Corran : « Navette Lambda en phase d'embarquement sur la piste, départ imminent ! »", Color(0.2, 0.95, 1.0))
 		"droid_scan":
+			if swg_audio: swg_audio.play_droid()
 			_show_notification("🔍 R2-T8 analyse le sous-sol : Gisement de fer repéré à 120m au Nord-Est.", Color(0.2, 0.8, 1.0))
+		"droid_whistle":
+			if swg_audio: swg_audio.play_droid()
+			_show_notification("🤖 R2-T8 émet un gazouillis joyeux et fait tourner son dôme !", Color(0.2, 0.95, 1.0))
 		_:
 			_show_notification("Action exécutée : %s avec %s." % [opt_id, npc_name])
 
 
 func _on_mission_accepted(mission_id: String, reward_cr: int) -> void:
-	_show_notification("📜 Contrat de mission [%s] accepté ! Objectif ajouté au Datapad." % mission_id, Color(1.0, 0.85, 0.2))
+	var m_target := Vector3.ZERO
+	var m_title := "Contrat de Mission"
+	var m_kind := "delivery"
+
+	match mission_id:
+		"mis_chacals_ouest":
+			m_target = Vector3(-92, 0, -38)
+			m_title = "Chasse : Meute de Chacals Dorés"
+			m_kind = "destroy"
+			_spawn_npc("Chacal Doré Alpha", m_target, Color(0.85, 0.6, 0.2), "creature_jackal")
+		"mis_recon_ksar":
+			m_target = Vector3(-65, 0, 0)
+			m_title = "Patrouille : Porte Ouest & Ksar"
+			m_kind = "recon"
+		"mis_livraison_eau":
+			m_target = Vector3(-95, 0, -45)
+			m_title = "Ravitaillement : Eau Pure Nomade"
+			m_kind = "delivery"
+		"mis_scarabee_obsidien":
+			m_target = Vector3(88, 0, 78)
+			m_title = "Élimination : Scarabée Obsidien"
+			m_kind = "destroy"
+			_spawn_npc("Scarabée Obsidien Géant", m_target, Color(0.2, 0.2, 0.25), "creature_juvenile")
+		_:
+			m_target = Vector3(randf_range(-60, 60), 0, randf_range(-60, 60))
+			m_title = "Mission Galactique %s" % mission_id
+
+	var mission_data := {
+		"id": mission_id,
+		"title": m_title,
+		"target": m_target,
+		"reward": reward_cr,
+		"kind": m_kind,
+		"completed": false
+	}
+	_active_missions.append(mission_data)
+
+	_spawn_waypoint_beacon(mission_id, m_target, m_title)
+
+	if swg_planetary_map and swg_planetary_map.has_method("add_waypoint"):
+		swg_planetary_map.add_waypoint(Vector2(m_target.x, m_target.z), m_title)
+
+	_show_notification("📜 Contrat [%s] accepté ! Balise Waypoint GPS activée à (%dm, %dm)." % [m_title, int(m_target.x), int(m_target.z)], Color(1.0, 0.85, 0.2))
+
+
+func _spawn_waypoint_beacon(wp_id: String, pos: Vector3, label_text: String) -> void:
+	if _active_waypoints.has(wp_id):
+		return
+	var root := Node3D.new()
+	root.name = "WaypointBeacon_" + wp_id
+	root.position = pos
+
+	var beam := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.18
+	cyl.bottom_radius = 0.28
+	cyl.height = 28.0
+	beam.mesh = cyl
+	beam.position = Vector3(0, 14.0, 0)
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.2, 0.95, 1.0, 0.65)
+	mat.emission_enabled = true
+	mat.emission = Color(0.2, 0.95, 1.0)
+	mat.emission_energy_multiplier = 3.5
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	beam.set_surface_override_material(0, mat)
+	root.add_child(beam)
+
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 1.8
+	torus.outer_radius = 2.2
+	ring.mesh = torus
+	ring.position = Vector3(0, 0.1, 0)
+	ring.set_surface_override_material(0, mat)
+	root.add_child(ring)
+
+	var lbl := Label3D.new()
+	lbl.text = "★ WAYPOINT MISSION ★\n%s" % label_text
+	lbl.position = Vector3(0, 3.2, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 18
+	lbl.modulate = Color(0.3, 1.0, 0.9)
+	root.add_child(lbl)
+
+	add_child(root)
+	_active_waypoints[wp_id] = root
+	_tracked_entities.append(root)
 
 
 func _on_bank_balance_updated(new_bal: int) -> void:
@@ -899,7 +1222,30 @@ func _on_radial_action_selected(act: String, ctx: Dictionary) -> void:
 		"tactical_strike":
 			_show_notification("⚔ Attaque tactique HAM portée sur %s !" % t_name, Color(1.0, 0.3, 0.3))
 		"deploy_camp":
-			_show_notification("⛺ Bivouac de Scout déployé dans les dunes de Lost Heaven.", Color(1.0, 0.8, 0.3))
+			if player:
+				var camp_node: Node3D = _SwgAssetPipelineScript.build_scout_camp(player.global_position)
+				camp_node.name = "Player_Scout_Camp_%d" % randi_range(100, 999)
+				camp_node.set_meta("display_name", "Mon Bivouac de Scout")
+				camp_node.set_meta("entity_kind", "structure_camp")
+				add_child(camp_node)
+				_tracked_entities.append(camp_node)
+				if swg_planetary_map:
+					swg_planetary_map.add_waypoint(Vector2(player.global_position.x, player.global_position.z), "Mon Bivouac")
+				_show_notification("⛺ Bivouac de Scout déployé avec succès ! Regen HAM boostée & feu allumé.", Color(1.0, 0.85, 0.3))
+		"deploy_harvester":
+			if player:
+				var harv_node: Node3D = _SwgAssetPipelineScript.build_mining_harvester(player.global_position, 0.0)
+				harv_node.name = "Player_Personal_Harvester_%d" % randi_range(100, 999)
+				harv_node.set_meta("display_name", "Mon Extracteur Minier Personnel")
+				harv_node.set_meta("entity_kind", "structure_harvester")
+				harv_node.set_meta("hopper_ore", 35)
+				add_child(harv_node)
+				_tracked_entities.append(harv_node)
+				if swg_planetary_map:
+					swg_planetary_map.add_waypoint(Vector2(player.global_position.x, player.global_position.z), "Mon Extracteur")
+				_show_notification("⛏️ Extracteur Minier personnel déployé ! Trémie active en forage.", Color(0.2, 0.9, 1.0))
+		"mount_dewback":
+			_toggle_dewback_mount()
 		"examine":
 			_show_notification("🔍 Examen détaillé : %s (État optimal, intégrité 100%%)." % t_name, Color(0.85, 0.95, 1.0))
 		_:
@@ -910,6 +1256,7 @@ func _close_all_modals() -> void:
 	if swg_radial_menu and swg_radial_menu.visible: swg_radial_menu.close_menu()
 	if swg_dialog_box and swg_dialog_box.visible: swg_dialog_box.close_dialog()
 	if swg_missions_dialog and swg_missions_dialog.visible: swg_missions_dialog.close_panel()
+	if swg_travel_dialog and swg_travel_dialog.visible: swg_travel_dialog.close_panel()
 	if swg_bank_dialog and swg_bank_dialog.visible: swg_bank_dialog.close_panel()
 	if swg_character_sheet and swg_character_sheet.visible: swg_character_sheet.close_panel()
 	if swg_datapad_panel and swg_datapad_panel.visible: swg_datapad_panel.close_panel()

@@ -131,6 +131,28 @@ func update_player_position(pos: Vector3) -> void:
 		_map_draw.queue_redraw()
 
 
+func add_waypoint(world_xz: Vector2, wp_name: String) -> void:
+	# Évite les doublons
+	for wp in user_waypoints:
+		if wp.get("name") == wp_name:
+			return
+	user_waypoints.append({"pos": world_xz, "name": wp_name})
+	if _coord_lbl:
+		_coord_lbl.text = "★ Objectif Actif : [%s] à (X: %dm, Z: %dm)" % [wp_name, int(world_xz.x), int(world_xz.y)]
+	if _map_draw:
+		_map_draw.queue_redraw()
+
+
+func remove_waypoint(wp_name: String) -> void:
+	var filtered: Array = []
+	for wp in user_waypoints:
+		if wp.get("name") != wp_name:
+			filtered.append(wp)
+	user_waypoints = filtered
+	if _map_draw:
+		_map_draw.queue_redraw()
+
+
 func toggle() -> void:
 	visible = not visible
 	if visible and _map_draw:

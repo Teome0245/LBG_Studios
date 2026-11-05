@@ -9,6 +9,9 @@ signal posture_changed(new_posture: String)
 signal target_selected(target_node: Node3D)
 
 const _SwgVrmAnimatorScript := preload("res://scripts/swg_vrm_animator.gd")
+const _SwgSkinSystemScript := preload("res://scripts/swg_skin_system.gd")
+
+var current_skin_index: int = 0
 
 const SPEED_WALK: float = 3.5
 const SPEED_RUN: float = 7.0
@@ -191,6 +194,21 @@ func _unhandled_input(event: InputEvent) -> void:
 					set_posture(Posture.PRONE)
 			KEY_V:
 				_is_running = not _is_running
+			KEY_F6:
+				cycle_skin()
+
+
+func cycle_skin() -> String:
+	current_skin_index = (current_skin_index + 1) % _SwgSkinSystemScript.PLAYER_SKIN_PRESETS.size()
+	apply_player_skin(current_skin_index)
+	var s_name: String = str(_SwgSkinSystemScript.PLAYER_SKIN_PRESETS[current_skin_index]["name"])
+	return s_name
+
+
+func apply_player_skin(idx: int) -> void:
+	if _mesh_root != null:
+		var preset: Dictionary = _SwgSkinSystemScript.PLAYER_SKIN_PRESETS[idx]
+		_SwgSkinSystemScript.apply_skin(_mesh_root, preset)
 
 
 func _physics_process(delta: float) -> void:

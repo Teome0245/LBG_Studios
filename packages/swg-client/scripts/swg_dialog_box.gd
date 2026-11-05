@@ -185,6 +185,15 @@ func _get_dialog_preset(n_name: String, n_kind: String) -> Dictionary:
 				{"id": "close", "label": "Je suis en pleine forme, Docteur."}
 			]
 		}
+	elif "corran" in lower_name or "pilote" in lower_name or "navette" in lower_name:
+		return {
+			"text": "« Bienvenue au Spatioport de Lost Heaven ! Je pilote la navette de liaison planétaire. Nos propulseurs sont chauds, les réservoirs d'hyper-matière sont pleins. Où souhaitez-vous embarquer ? »",
+			"options": [
+				{"id": "open_travel", "label": "Consulter les vols & destinations de la navette"},
+				{"id": "shuttle_status", "label": "Quand part la prochaine navette pour Mos Eisley ?"},
+				{"id": "close", "label": "Je reste à Lost Heaven pour l'instant."}
+			]
+		}
 	elif "garde" in lower_name or "milice" in lower_name:
 		return {
 			"text": "« Halte citoyen ! Zone sous surveillance de la Milice de Lost Heaven. Si vous sortez des remparts, gare aux meutes de chacals dorés et aux pillards des sables. Gardez votre arme à portée. »",
