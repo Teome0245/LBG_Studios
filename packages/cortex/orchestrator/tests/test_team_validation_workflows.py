@@ -39,6 +39,19 @@ def test_core3_build_plan_dry_run(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_dispatch(routed_to, *, actor_id, text, context):  # noqa: ANN001
         return {"ok": True, "agent": routed_to}
 
+    monkeypatch.setattr(
+        "team.core3_build_workflow.audit_zb0_readiness",
+        lambda: {"track": "zb0_readiness", "ok": True},
+    )
+    monkeypatch.setattr(
+        "team.core3_build_workflow.probe_core3_build_plan",
+        lambda execute=False: {
+            "track": "core3_build_plan",
+            "ok": True,
+            "plan": {"dry_run": not execute, "host": "192.168.0.246", "steps": []},
+            "execute_requested": execute,
+        },
+    )
     team_roles.set_dispatch_for_tests(fake_dispatch)
     client = TestClient(app)
     created = client.post(
@@ -63,6 +76,14 @@ def test_godot_validation_workflow_mocked(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(
         "team.godot_validation_workflow.execute_godot_supervisor",
         lambda task: {"kind": "godot_supervisor", "ok": True, "tracks": [{"track": "sidecar_m1", "ok": True}]},
+    )
+    monkeypatch.setattr(
+        "team.godot_validation_workflow.audit_zb0_readiness",
+        lambda: {"track": "zb0_readiness", "ok": True},
+    )
+    monkeypatch.setattr(
+        "team.owner_smokes.run_owner_smokes",
+        lambda bundle="godot_login": {"ok": True, "results": []},
     )
     monkeypatch.setattr(
         "team.godot_validation_workflow._run_smoke_script",

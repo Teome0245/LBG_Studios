@@ -33,6 +33,7 @@ def _env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("LBG_AGENT_MUTATOR_STAGING_DIR", str(tmp_path / "mut_staging"))
     monkeypatch.setenv("LBG_TEAM_VERIFY_SMOKE_CHAIN", "0")
     monkeypatch.setenv("LBG_TEAM_AGENT_MUTATOR", "1")
+    monkeypatch.setenv("LBG_TEAM_APPROVAL_TOKEN", "tok")
     monkeypatch.setenv("LBG_AGENT_MUTATOR_APPLY_ON_REVIEW", "1")
     monkeypatch.setenv("LBG_TEAM_APPROVAL_SOFT", "1")
     team_store.reset_for_tests()

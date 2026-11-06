@@ -1,10 +1,10 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-04  
+**Mis à jour** : 2026-11-06  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + SWG Pre-CU 3D Complet (Contrôles, Combat, VRM, Terminaux, Hotbar, Paperdoll) + Boucle d'Évolution — **100 % Livré, Validé CI & Déployé**.
+**Fil** : canon O1/O2/O3 + SWG Pre-CU 3D Complet (Tuskens, Aggro, Caravane, Loot & Consommables) + Boucle d'Évolution — **100 % Livré, Validé CI & Déployé**.
 
 ---
 
@@ -71,6 +71,18 @@ Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et 
         - Touche `[T]` : Artisanat avec expérimentation et estimation du risque d'échec critique.
         - Touche `[M]` : Carte planétaire tactique temps réel, radar POI et pose de Waypoints personnalisés au clic.
         - Touche `[F6]` : Changement de tenue / skin joueur en direct.
+      - **Camp Hostile Tusken & IA d'Aggro Active** :
+        - Campement nomade des Pillards des Sables (`build_tusken_camp`) implanté dans les dunes Ouest vers le canyon avec huttes en cuir, totems d'armes Gaffi et feu de camp.
+        - Spawns de 3 Tuskens hostiles (`Pillard Tusken Chasseur`, `Guerrier Tusken d'Élite`, `Gaffi Master Tusken`) dotés d'un modèle 3D authentique (masque respirateur, yeux cylindriques, buse à air, cartouchière, robe du désert et bâton Gaffi).
+        - IA d'agressivité continue (`_update_ai_and_aggro`) : détection à 18m (ou 3.5m si camouflage Scout `[6]` actif), hurlement Tusken ou rugissement prédateur (`play_tusken_roar`), charge vers le joueur et attaques au contact infligeant des dégâts HAM directs avec chiffres flottants rouges.
+      - **Caravane Marchande Itinérante de Lost Heaven** :
+        - Convoi marchand en marche continue (`_update_merchant_caravan`) reliant la Porte Ouest et la Porte Est le long de la grand-rue.
+        - Composé d'un Bantha de bât massif à grandes cornes spiralées (`build_caravan_bantha`) chargé de malles d'épices, du marchand ambulant Doran Karr et d'un garde d'escorte armé.
+      - **Loot Réel, Dépeçage Scout & Consommables dans l'Inventaire** :
+        - Méthodes d'inventaire `add_item`, `has_item`, `remove_item` avec empilement automatique (Stacking SWG 40 slots).
+        - Dépeçage Scout (`harvest_meat`, `harvest_hide`, `harvest_bone`) et fouille de corps (`loot_corpse`) transférant effectivement les ressources brutes, crédits et stimpacks dans le sac à dos `[I]` avec marquage anti-duplication et cadavre vidé.
+        - Consommation d'objets câblée (`_on_inventory_item_used`) : Stimpacks Bacta A (+250 Santé/Action), Rations des Dunes (+150 Santé/+200 Mental) et Lait Bleu de Tatooine (+300 Action/+300 Mental).
+        - Nouveaux effets sonores procéduraux intégrés dans `swg_audio_synthesizer.gd` (cri Tusken, bruit de dépeçage, son de gorgée/soin bacta).
     - Synchronisé en direct et validé sous Windows .10 dans `J:\swgemu\clients\swg-client` via l'agent FastAPI :5005 (`SWG_CLIENT_3D_SELFTEST_OK`). CI Godot headless 18/18 PASS.
 
 - [x] **Étape 4 (O2/O3) : Faune, Métier Scout & Domptage Creature Handler** :

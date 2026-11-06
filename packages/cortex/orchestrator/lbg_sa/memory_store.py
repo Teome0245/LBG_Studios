@@ -17,7 +17,12 @@ try:
 
     _HPA_AVAILABLE = True
 except ImportError:
-    _HPA_AVAILABLE = False
+    try:
+        from orchestrator.hybrid_proactive_agent import LongTermMemoryStore, MemoryEntry
+
+        _HPA_AVAILABLE = True
+    except ImportError:
+        _HPA_AVAILABLE = False
 
 _NAMESPACE_RE = re.compile(r"^[a-z][a-z0-9_/\-]{0,63}$")
 _store_cache: dict[str, LbgSaMemoryStore] = {}

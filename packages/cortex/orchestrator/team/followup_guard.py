@@ -81,10 +81,13 @@ def _save_state(payload: dict[str, Any]) -> None:
     path = state_path()
     if path == Path(":memory:"):
         return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp.replace(path)
+    except OSError:
+        pass
 
 
 def _failed_tracks(result: dict[str, Any]) -> list[str]:

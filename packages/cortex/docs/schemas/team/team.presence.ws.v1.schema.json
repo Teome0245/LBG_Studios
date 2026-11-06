@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lbg.local/schemas/team/1/team.presence.ws.v1.schema.json",
+  "title": "Team presence WebSocket envelope v1",
+  "description": "Message push WebSocket /v1/team/presence/ws",
+  "type": "object",
+  "required": ["type", "payload"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "presence"
+    },
+    "payload": {
+      "$ref": "team.presence.v1.schema.json"
+    }
+  },
+  "additionalProperties": false
+}

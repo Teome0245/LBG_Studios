@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lbg.local/schemas/team/1/team.presence.snapshot.v1.schema.json",
+  "title": "Team presence snapshot v1",
+  "description": "Réponse GET /v1/team/presence/snapshot — dernier état connu par agent.",
+  "type": "object",
+  "required": ["schema", "agents", "zones", "generated_at"],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "team.presence.snapshot.v1"
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "team.presence.v1.schema.json" }
+    },
+    "zones": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/zone_descriptor" },
+      "minItems": 1
+    },
+    "generated_at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Unix time (secondes) de génération du snapshot"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["live", "mock"],
+      "description": "live = Cortex ; mock = teaser"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "zone_descriptor": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "$ref": "team.presence.v1.schema.json#/$defs/zone_id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "examples": ["Open Space Core (140)"]
+        },
+        "sort_order": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

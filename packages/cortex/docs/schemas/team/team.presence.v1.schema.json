@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lbg.local/schemas/team/1/team.presence.v1.schema.json",
+  "title": "Team presence event v1",
+  "description": "État affichable d'un agent Team pour le bureau virtuel (Peau). Émis par le Cortex sur changement de tâche ou de zone.",
+  "type": "object",
+  "required": [
+    "schema",
+    "agent_id",
+    "display_name",
+    "status",
+    "location",
+    "timestamp"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "team.presence.v1"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Identifiant stable (rôle Team ou system:…)",
+      "examples": ["admin_infra", "pm", "system:team_qa_smoke"]
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "examples": ["Atlas", "Thémis"]
+    },
+    "status": {
+      "$ref": "#/$defs/presence_status"
+    },
+    "current_action": {
+      "type": "string",
+      "maxLength": 120,
+      "description": "Libellé court pour l'UI (sanitisé, pas de secrets)"
+    },
+    "location": {
+      "$ref": "#/$defs/zone_id"
+    },
+    "target_destination": {
+      "oneOf": [{ "$ref": "#/$defs/zone_id" }, { "type": "null" }],
+      "description": "Zone cible pour animation UI ; null si déjà sur place"
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 64,
+      "description": "Tâche Team associée, si applicable"
+    },
+    "role": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "Rôle Team (team/roles.py)"
+    },
+    "host_hint": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "IP ou hostname LAN principal pour cette action",
+      "examples": ["192.168.0.140", "192.168.0.246"]
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "status_changed",
+        "location_changed",
+        "action_updated",
+        "heartbeat",
+        "offline"
+      ],
+      "default": "status_changed"
+    },
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Unix time (secondes, UTC)"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "presence_status": {
+      "type": "string",
+      "enum": ["idle", "busy", "review", "failed", "offline"],
+      "description": "Aligné sur TeamTask.status + idle/offline hors tâche"
+    },
+    "zone_id": {
+      "type": "string",
+      "enum": [
+        "zone_core",
+        "zone_front",
+        "zone_llm",
+        "zone_mmo_lab",
+        "zone_prime",
+        "zone_coffee"
+      ],
+      "description": "Zone métier LAN (bureau virtuel)"
+    }
+  }
+}

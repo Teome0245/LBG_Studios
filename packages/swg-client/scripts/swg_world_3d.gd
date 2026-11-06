@@ -75,6 +75,9 @@ var _active_missions: Array = []
 var _active_waypoints: Dictionary = {}
 var _cantina_buff_timer: float = 0.0
 var _player_fatigue: int = 0
+var _camouflage_active: bool = false
+var _caravan_root: Node3D = null
+var _caravan_dir: float = 1.0
 
 
 func _ready() -> void:
@@ -289,6 +292,74 @@ func _spawn_interactable_entities() -> void:
 	_spawn_npc("Fennec Mirage (Furtif)", Vector3(45, 0, -75), Color(0.9, 0.75, 0.4), "creature_juvenile")
 	_spawn_npc("Scarabée Obsidien Géant", Vector3(88, 0, 78), Color(0.2, 0.2, 0.25), "creature_beetle")
 
+	# 4. Campement Hostile des Pillards des Sables (Tuskens)
+	add_child(_SwgAssetPipelineScript.build_tusken_camp(Vector3(-140, 0, 85)))
+	_spawn_npc("Pillard Tusken Chasseur", Vector3(-134, 0, 82), Color(0.75, 0.6, 0.45), "npc_tusken")
+	_spawn_npc("Guerrier Tusken d'Élite", Vector3(-143, 0, 88), Color(0.65, 0.5, 0.35), "npc_tusken")
+	_spawn_npc("Gaffi Master Tusken", Vector3(-138, 0, 78), Color(0.8, 0.4, 0.3), "npc_tusken")
+
+	# 5. Caravane Marchande Itinérante de Lost Heaven
+	_spawn_merchant_caravan()
+
+
+func _spawn_merchant_caravan() -> void:
+	var c_root := Node3D.new()
+	c_root.name = "Merchant_Caravan"
+	c_root.position = Vector3(-35, 0, 0)
+
+	var bantha := _SwgAssetPipelineScript.build_caravan_bantha(Vector3(0, 0, 0))
+	c_root.add_child(bantha)
+
+	# Marchand Ambulant Doran Karr
+	var merch := CharacterBody3D.new()
+	merch.name = "Doran Karr (Marchand Ambulant)"
+	merch.position = Vector3(2.5, 0, 1.0)
+	merch.set_meta("entity_kind", "npc_merchant")
+	merch.set_meta("display_name", "Doran Karr (Marchand Ambulant)")
+	var col_s := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.45
+	cap.height = 1.7
+	col_s.shape = cap
+	col_s.position = Vector3(0, 0.85, 0)
+	merch.add_child(col_s)
+	var v_merch := _SwgAssetPipelineScript.load_humanoid_vrm("Compagnon.vrm", false)
+	merch.add_child(v_merch)
+	_SwgSkinSystemScript.apply_npc_role_skin(merch, "npc_merchant")
+	var lbl_m := Label3D.new()
+	lbl_m.text = "Doran Karr (Marchand Ambulant)\n« Ravitaillement & Caravane »"
+	lbl_m.position = Vector3(0, 2.2, 0)
+	lbl_m.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_m.font_size = 13
+	lbl_m.modulate = Color(0.95, 0.85, 0.35)
+	merch.add_child(lbl_m)
+	c_root.add_child(merch)
+
+	# Garde d'escorte de caravane
+	var guard := CharacterBody3D.new()
+	guard.name = "Garde de Caravane (Escorte)"
+	guard.position = Vector3(-2.5, 0, -1.0)
+	guard.set_meta("entity_kind", "npc_guard")
+	guard.set_meta("display_name", "Garde de Caravane (Escorte)")
+	var col_g := CollisionShape3D.new()
+	col_g.shape = cap.duplicate()
+	col_g.position = Vector3(0, 0.85, 0)
+	guard.add_child(col_g)
+	var v_guard := _SwgAssetPipelineScript.load_humanoid_vrm("Compagnon.vrm", false)
+	guard.add_child(v_guard)
+	_SwgSkinSystemScript.apply_npc_role_skin(guard, "npc_guard")
+	var lbl_g := Label3D.new()
+	lbl_g.text = "Garde de Caravane (Escorte)"
+	lbl_g.position = Vector3(0, 2.2, 0)
+	lbl_g.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl_g.font_size = 13
+	lbl_g.modulate = Color(0.85, 0.95, 1.0)
+	guard.add_child(lbl_g)
+	c_root.add_child(guard)
+
+	add_child(c_root)
+	_caravan_root = c_root
+
 
 func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> void:
 	var body := CharacterBody3D.new()
@@ -296,6 +367,13 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 	body.position = pos
 	body.set_meta("entity_kind", kind_id)
 	body.set_meta("display_name", n_name)
+	body.set_meta("home_pos", pos)
+	body.set_meta("attack_cooldown", 0.0)
+	body.set_meta("aggro_state", "idle")
+
+	var base_hp: int = 350 if ("Élite" in n_name or "Master" in n_name) else (220 if kind_id.begins_with("creature_") else 250)
+	body.set_meta("max_health", base_hp)
+	body.set_meta("current_health", base_hp)
 
 	var col_shape := CollisionShape3D.new()
 	var cap := CapsuleShape3D.new()
@@ -307,8 +385,12 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 
 	var visual_node: Node3D = null
 
-	# A. PNJ Humanoïdes (Lia, Jax, Odo, Vane, Gardes, Citoyens) -> Modèles VRM 3D
-	if kind_id.begins_with("npc_"):
+	# A. Hommes des Sables Tuskens (Modèle Bâton Gaffi et Masque Respirateur)
+	if kind_id == "npc_tusken":
+		visual_node = _SwgAssetPipelineScript.build_tusken_raider_visual(col)
+
+	# B. PNJ Humanoïdes (Lia, Jax, Odo, Vane, Gardes, Citoyens) -> Modèles VRM 3D
+	elif kind_id.begins_with("npc_"):
 		var vrm_choice := "Compagnon.vrm"
 		var is_ent := false
 		if "Lia" in n_name or "Artiste" in n_name:
@@ -319,30 +401,25 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 		elif "Maire" in n_name or "Odo" in n_name:
 			vrm_choice = "Aurora.vrm"
 			body.rotation_degrees.y = 180.0
-		elif "Docteur" in n_name or "Vane" in n_name:
-			vrm_choice = "Anna.vrm"
-			body.rotation_degrees.y = 180.0
 		elif "Barman" in n_name or "Jax" in n_name:
 			vrm_choice = "Compagnon.vrm"
 			body.rotation_degrees.y = 180.0
 
 		visual_node = _SwgAssetPipelineScript.load_humanoid_vrm(vrm_choice, is_ent)
 
-	# B. Faune Sauvage Quadrupède (Chacal, Chiot) -> Modèle Canin Articulé
+	# C. Faune Sauvage Quadrupède (Chacal, Chiot) -> Modèle Canin Articulé
 	elif kind_id in ["creature_juvenile", "creature_jackal"]:
 		var s_fac := 0.65 if kind_id == "creature_juvenile" else 1.05
 		visual_node = _SwgAssetPipelineScript.build_quadruped_creature(Vector3.ZERO, col, s_fac)
 
-	# C. Faune Sauvage : Scarabée Obsidien Géant -> Carapace Dôme
+	# D. Faune Sauvage : Scarabée Obsidien Géant -> Carapace Dôme
 	elif kind_id == "creature_beetle":
 		visual_node = _SwgAssetPipelineScript.build_beetle_creature(Vector3.ZERO)
 
-	# D. Fallback propre si modèle absent
+	# E. Fallback propre si modèle absent
 	if visual_node != null:
 		body.add_child(visual_node)
-		# Application automatique de la palette de skin de rôle (robes, armures, tuniques)
-		# SAUF pour Lia qui conserve son magnifique skin et textures VRM d'origine
-		if kind_id != "npc_entertainer" and not ("Lia" in n_name):
+		if kind_id != "npc_entertainer" and kind_id != "npc_tusken" and not ("Lia" in n_name):
 			_SwgSkinSystemScript.apply_npc_role_skin(body, kind_id)
 	else:
 		var mesh_inst := MeshInstance3D.new()
@@ -361,7 +438,7 @@ func _spawn_npc(n_name: String, pos: Vector3, col: Color, kind_id: String) -> vo
 	lbl.position = Vector3(0, 2.15, 0)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.font_size = 13
-	lbl.modulate = Color(0.85, 0.98, 1.0, 1.0)
+	lbl.modulate = Color(1.0, 0.4, 0.3) if kind_id == "npc_tusken" else Color(0.85, 0.98, 1.0, 1.0)
 	body.add_child(lbl)
 
 	add_child(body)
@@ -512,6 +589,7 @@ func _setup_ui() -> void:
 	# 15. Inventaire & Équipement Papier-Doll SWG [I]
 	swg_inventory_panel = _SwgInventoryScript.new()
 	swg_inventory_panel.name = "SwgInventoryPanel"
+	swg_inventory_panel.item_used.connect(_on_inventory_item_used)
 	ui_layer.add_child(swg_inventory_panel)
 
 	# 16. Atelier d'Artisanat Expérimental SWG [T]
@@ -522,6 +600,9 @@ func _setup_ui() -> void:
 	# 17. Carte Planétaire Tactique SWG [M]
 	swg_planetary_map = _SwgPlanetaryMapScript.new()
 	swg_planetary_map.name = "SwgPlanetaryMap"
+	swg_planetary_map.add_waypoint(Vector2(-140, 85), "☠ Campement Tusken")
+	swg_planetary_map.add_waypoint(Vector2(0, 0), "Place de Lost Heaven")
+	swg_planetary_map.add_waypoint(Vector2(-35, -25), "Spatioport Navette")
 	ui_layer.add_child(swg_planetary_map)
 
 	# 18. Bandeau d'aide aux commandes
@@ -563,6 +644,91 @@ func _process(delta: float) -> void:
 
 	# Vérification des objectifs de missions actives
 	_check_active_missions(delta)
+
+	# Déplacement de la Caravane Marchande itinérante
+	_update_merchant_caravan(delta)
+
+	# IA active & gestion de l'aggro des prédateurs et Tuskens
+	_update_ai_and_aggro(delta)
+
+
+func _update_merchant_caravan(delta: float) -> void:
+	if _caravan_root == null:
+		return
+	var speed: float = 1.8
+	_caravan_root.position.x += _caravan_dir * speed * delta
+	if _caravan_root.position.x > 58.0:
+		_caravan_dir = -1.0
+		_caravan_root.rotation_degrees.y = 180.0
+	elif _caravan_root.position.x < -58.0:
+		_caravan_dir = 1.0
+		_caravan_root.rotation_degrees.y = 0.0
+
+
+func _update_ai_and_aggro(delta: float) -> void:
+	if player == null:
+		return
+	var p_pos: Vector3 = player.global_position
+
+	for child in get_children():
+		if not (child is CharacterBody3D) or child == player:
+			continue
+		var ent := child as CharacterBody3D
+		if ent.get_meta("is_dead", false):
+			continue
+
+		var kind: String = str(ent.get_meta("entity_kind", ""))
+		var is_hostile: bool = (kind == "npc_tusken" or kind == "creature_jackal" or kind == "creature_beetle")
+		if not is_hostile:
+			continue
+
+		var e_pos: Vector3 = ent.global_position
+		var dist_to_p: float = e_pos.distance_to(p_pos)
+		var ent_name: String = str(ent.get_meta("display_name", ent.name))
+
+		# Rayon d'aggro : fortement atténué si camouflage d'odeur Scout actif [6]
+		var aggro_radius: float = 3.5 if _camouflage_active else 18.0
+		var current_state: String = str(ent.get_meta("aggro_state", "idle"))
+
+		if dist_to_p <= aggro_radius:
+			if current_state != "chase":
+				ent.set_meta("aggro_state", "chase")
+				if kind == "npc_tusken":
+					if swg_audio: swg_audio.play_tusken_roar()
+					_show_notification("⚠ ALERTE HOSTILE : %s brandit son Gaffi Stick et vous attaque !" % ent_name, Color(1.0, 0.3, 0.2))
+				else:
+					_show_notification("⚠ ATTENTION : %s s'élance sur vous en rugissant !" % ent_name, Color(1.0, 0.5, 0.2))
+
+			# Poursuite : orientation vers le joueur et avancée
+			ent.look_at(Vector3(p_pos.x, e_pos.y, p_pos.z), Vector3.UP)
+			var move_speed: float = 4.0 if kind == "creature_jackal" else 3.2
+			var dir := (p_pos - e_pos).normalized()
+			dir.y = 0.0
+
+			if dist_to_p > 1.9:
+				ent.position += dir * move_speed * delta
+			else:
+				# Frappe de mêlée au corps à corps
+				var atk_cd: float = float(ent.get_meta("attack_cooldown", 0.0)) - delta
+				if atk_cd <= 0.0:
+					atk_cd = 1.8
+					ent.set_meta("attack_cooldown", atk_cd)
+					var dmg_hp: int = randi_range(35, 65)
+					var dmg_act: int = randi_range(20, 40)
+					if swg_ham_hud:
+						swg_ham_hud.damage_pool("health", dmg_hp)
+						swg_ham_hud.damage_pool("action", dmg_act)
+					if swg_combat_system:
+						swg_combat_system.spawn_damage_number(p_pos, dmg_hp, Color(1.0, 0.2, 0.1))
+					_show_notification("⚔ Frappe reçue de %s ! (-%d Santé, -%d Action)" % [ent_name, dmg_hp, dmg_act], Color(1.0, 0.25, 0.25))
+				else:
+					ent.set_meta("attack_cooldown", atk_cd)
+
+		elif dist_to_p > 32.0 and current_state == "chase":
+			ent.set_meta("aggro_state", "return")
+			var home_pos: Vector3 = ent.get_meta("home_pos", e_pos)
+			ent.look_at(Vector3(home_pos.x, e_pos.y, home_pos.z), Vector3.UP)
+			_show_notification("✓ Vous avez distancé %s dans les dunes !" % ent_name, Color(0.3, 0.9, 0.5))
 
 
 func _check_active_missions(_delta: float) -> void:
@@ -919,7 +1085,11 @@ func _on_hotbar_action_triggered(slot_idx: int, action_id: String) -> void:
 		"survey_tool":
 			_execute_survey_pulse()
 		"mask_scent":
-			_show_notification("🌿 Camouflage d'odeur Scout activé : Détection faune réduite de 80% !", Color(0.8, 0.65, 0.3))
+			_camouflage_active = not _camouflage_active
+			if _camouflage_active:
+				_show_notification("🌿 Camouflage d'odeur Scout ACTIVÉ : Rayon de détection ennemis réduit à 3.5m !", Color(0.3, 1.0, 0.6))
+			else:
+				_show_notification("🌿 Camouflage d'odeur Scout DÉSACTIVÉ.", Color(0.9, 0.8, 0.4))
 		"pet_command":
 			_show_notification("🐾 Ordre au familier transmis : Couverture défensive engagée.", Color(0.9, 0.45, 0.7))
 		"speeder_mount":
@@ -1217,8 +1387,73 @@ func _on_radial_action_selected(act: String, ctx: Dictionary) -> void:
 			if swg_skills_panel: swg_skills_panel.open_panel()
 		"tame_creature":
 			_show_notification("🐾 Domptage Creature Handler réussi ! %s est maintenant votre familier loyal !" % t_name, Color(0.2, 1.0, 0.5))
-		"harvest_meat", "harvest_hide", "harvest_bone", "harvest_fauna":
-			_show_notification("🥩 Dépeçage Scout terminé : 45 unités de ressources prélevées sur %s !" % t_name, Color(0.95, 0.75, 0.2))
+		"harvest_meat":
+			var t_node: Node = ctx.get("node")
+			var q := randi_range(30, 50)
+			if swg_inventory_panel and swg_inventory_panel.has_method("add_item"):
+				swg_inventory_panel.add_item({
+					"id": "meat_wild",
+					"name": "Viande Carnée Sauvage",
+					"icon": "🥩",
+					"slot": "crafting",
+					"qty": q,
+					"desc": "Viande fraîche de bête des dunes (Qualité OQ 780, PE 650)"
+				})
+			if swg_audio: swg_audio.play_harvest()
+			_mark_corpse_harvested(t_node)
+			_show_notification("🥩 Dépeçage Scout : +%d Viande Carnée ajoutée dans le Sac à Dos [I] !" % q, Color(0.95, 0.75, 0.2))
+		"harvest_hide":
+			var t_node: Node = ctx.get("node")
+			var q := randi_range(20, 40)
+			if swg_inventory_panel and swg_inventory_panel.has_method("add_item"):
+				swg_inventory_panel.add_item({
+					"id": "hide_coarse",
+					"name": "Cuir Brut des Sables",
+					"icon": "🥋",
+					"slot": "crafting",
+					"qty": q,
+					"desc": "Peau tannée pour armures et sellerie (Qualité OQ 820, DR 710)"
+				})
+			if swg_audio: swg_audio.play_harvest()
+			_mark_corpse_harvested(t_node)
+			_show_notification("🥋 Dépeçage Scout : +%d Cuir Brut ajouté dans le Sac à Dos [I] !" % q, Color(0.95, 0.75, 0.2))
+		"harvest_bone", "harvest_fauna":
+			var t_node: Node = ctx.get("node")
+			var q := randi_range(15, 30)
+			if swg_inventory_panel and swg_inventory_panel.has_method("add_item"):
+				swg_inventory_panel.add_item({
+					"id": "bone_dense",
+					"name": "Os Squelettique Dense",
+					"icon": "🦴",
+					"slot": "crafting",
+					"qty": q,
+					"desc": "Structure osseuse minéralisée pour bio-ingénierie (Qualité OQ 890)"
+				})
+			if swg_audio: swg_audio.play_harvest()
+			_mark_corpse_harvested(t_node)
+			_show_notification("🦴 Dépeçage Scout : +%d Os Minéralisé ajouté dans le Sac à Dos [I] !" % q, Color(0.95, 0.75, 0.2))
+		"loot_corpse":
+			var t_node: Node = ctx.get("node")
+			if swg_inventory_panel and swg_inventory_panel.has_method("add_item"):
+				swg_inventory_panel.add_item({
+					"id": "credits_pouch",
+					"name": "Bourse de Crédits Tuskens",
+					"icon": "💰",
+					"slot": "usable",
+					"qty": 1,
+					"desc": "Bourse en cuir contenant 125 crédits galactiques"
+				})
+				swg_inventory_panel.add_item({
+					"id": "medpack_a",
+					"name": "Stimpack Médical A",
+					"icon": "💉",
+					"slot": "usable",
+					"qty": 2,
+					"desc": "Restaure 250 Santé et 250 Action"
+				})
+			if swg_audio: swg_audio.play_harvest()
+			_mark_corpse_harvested(t_node)
+			_show_notification("💰 Butin pillé : Bourse de crédits & 2 Stimpacks Bacta transférés dans l'Inventaire [I] !", Color(1.0, 0.85, 0.2))
 		"tactical_strike":
 			_show_notification("⚔ Attaque tactique HAM portée sur %s !" % t_name, Color(1.0, 0.3, 0.3))
 		"deploy_camp":
@@ -1268,5 +1503,53 @@ func _close_all_modals() -> void:
 	if swg_inventory_panel and swg_inventory_panel.visible: swg_inventory_panel.close_panel()
 	if swg_crafting_panel and swg_crafting_panel.visible: swg_crafting_panel.close_panel()
 	if swg_planetary_map and swg_planetary_map.visible: swg_planetary_map.close_panel()
+
+
+func _mark_corpse_harvested(node: Node) -> void:
+	if node and is_instance_valid(node):
+		node.set_meta("is_harvested", true)
+		var d_name: String = str(node.get_meta("display_name", node.name))
+		node.set_meta("display_name", "[Vidé] " + d_name.replace("[Cadavre] ", ""))
+		for ch in node.get_children():
+			if ch is Label3D:
+				ch.text = "[Vidé] Dépouille récoltée"
+				ch.modulate = Color(0.5, 0.5, 0.5, 0.6)
+
+
+func _on_inventory_item_used(item_id: String) -> void:
+	match item_id:
+		"medpack_a":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("health", 250)
+				swg_ham_hud.heal_pool("action", 250)
+			if swg_audio:
+				swg_audio.play_consume()
+			_show_notification("💉 Stimpack Bacta appliqué : +250 Santé et +250 Action restaurées !", Color(0.2, 1.0, 0.6))
+		"ration_lh":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("health", 150)
+				swg_ham_hud.heal_pool("mind", 200)
+			_player_fatigue = maxi(0, _player_fatigue - 20)
+			if swg_ham_hud and swg_ham_hud.has_method("set_battle_fatigue"):
+				swg_ham_hud.set_battle_fatigue(_player_fatigue)
+			if swg_audio:
+				swg_audio.play_consume()
+			_show_notification("🍖 Ration des Dunes consommée : +150 Santé, +200 Mental & Fatigue dissipée !", Color(1.0, 0.85, 0.3))
+		"blue_milk":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("action", 300)
+				swg_ham_hud.heal_pool("mind", 300)
+			_player_fatigue = maxi(0, _player_fatigue - 30)
+			if swg_ham_hud and swg_ham_hud.has_method("set_battle_fatigue"):
+				swg_ham_hud.set_battle_fatigue(_player_fatigue)
+			if swg_audio:
+				swg_audio.play_consume()
+			_show_notification("🥛 Grand verre de Lait Bleu frais : +300 Action, +300 Mental & Réconfort total !", Color(0.3, 0.85, 1.0))
+		"credits_pouch":
+			if swg_audio:
+				swg_audio.play_mission_complete()
+			_show_notification("💰 Bourse de crédits ouverte : +125 Crédits Galactiques crédités !", Color(1.0, 0.85, 0.2))
+		_:
+			_show_notification("Objet [%s] utilisé avec succès." % item_id, Color(0.85, 0.95, 1.0))
 
 

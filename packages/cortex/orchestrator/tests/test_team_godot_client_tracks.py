@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -35,13 +36,13 @@ def test_audit_zb0_finds_header_stub(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     (hdr / "LbgZoneBridgeTickTask.h").write_text("// stub\n", encoding="utf-8")
     (hdr / "LbgZoneBridgeInit.cpp").write_text("// stub\n", encoding="utf-8")
     zone_impl = new_mmo / "lbg-mmo/server-core3/server/zone"
-    zone_impl.mkdir(parents=True)
+    zone_impl.mkdir(parents=True, exist_ok=True)
     (zone_impl / "ZoneServerImplementation.cpp").write_text(
         "lbg::zonebridge::startZoneBridgeTick(_this);\n",
         encoding="utf-8",
     )
     cmake = new_mmo / "lbg-mmo/server-core3"
-    cmake.mkdir(parents=True)
+    cmake.mkdir(parents=True, exist_ok=True)
     (cmake / "CMakeLists.txt").write_text('file(GLOB_RECURSE lbg_sources "server/lbg/*.cpp")\n', encoding="utf-8")
     monkeypatch.setenv("LBG_NEW_MMO_ROOT", str(new_mmo))
     out = audit_zb0_readiness()
@@ -67,10 +68,10 @@ def test_audit_zb1_code_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -
         (lbg / name).write_text("// stub\n", encoding="utf-8")
     (lbg / "LbgZoneBridgeTickTask.h").write_text("publishZoneBridgeJson\n", encoding="utf-8")
     zone_impl = new_mmo / "lbg-mmo/server-core3/server/zone"
-    zone_impl.mkdir(parents=True)
+    zone_impl.mkdir(parents=True, exist_ok=True)
     (zone_impl / "ZoneServerImplementation.cpp").write_text("startZoneBridgeTick\n", encoding="utf-8")
     cmake = new_mmo / "lbg-mmo/server-core3"
-    cmake.mkdir(parents=True)
+    cmake.mkdir(parents=True, exist_ok=True)
     (cmake / "CMakeLists.txt").write_text('file(GLOB_RECURSE lbg_sources "server/lbg/*.cpp")\n', encoding="utf-8")
     monkeypatch.setenv("LBG_NEW_MMO_ROOT", str(new_mmo))
     out = audit_zb1_readiness(probe_live_feed=False)
@@ -93,6 +94,10 @@ def test_team_run_zb0_track_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_dispatch(routed_to, *, actor_id, text, context):  # noqa: ANN001
         return {"ok": True, "agent": routed_to}
 
+    def fake_zb0() -> dict[str, Any]:
+        return {"track": "zb0_readiness", "ok": True, "checks": {"zb0_header": True}}
+
+    monkeypatch.setattr("team.godot_client_tracks_workflow.audit_zb0_readiness", fake_zb0)
     team_roles.set_dispatch_for_tests(fake_dispatch)
     client = TestClient(app)
     created = client.post(
@@ -149,9 +154,11 @@ def test_godot_supervisor_includes_zb0_track() -> None:
         return {"kind": "player_ia_probe", "ok": True, "online_count": 2, "checks": []}
 
     import team.godot_supervisor as gs
+    import team.player_ia_probe as pip
 
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(gs, "probe_player_ia", fake_probe)
+    monkeypatch.setattr(pip, "probe_player_ia", fake_probe)
+    monkeypatch.setattr(gs, "audit_zb0_readiness", lambda: {"track": "zb0_readiness", "ok": True})
     monkeypatch.setenv("LBG_TEAM_GODOT_SOE_M3", "0")
     monkeypatch.setenv("LBG_TEAM_GODOT_GATEWAY_SMOKE", "0")
     try:

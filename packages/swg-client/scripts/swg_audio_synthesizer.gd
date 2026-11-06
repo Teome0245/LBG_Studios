@@ -12,6 +12,9 @@ var _snd_mission: AudioStreamWAV = null
 var _snd_droid: AudioStreamWAV = null
 var _snd_shuttle: AudioStreamWAV = null
 var _snd_speeder: AudioStreamWAV = null
+var _snd_tusken: AudioStreamWAV = null
+var _snd_harvest: AudioStreamWAV = null
+var _snd_consume: AudioStreamWAV = null
 
 
 func _ready() -> void:
@@ -71,6 +74,32 @@ func _build_synthetic_sounds() -> void:
 	if _snd_speeder:
 		_snd_speeder.loop_mode = AudioStreamWAV.LOOP_FORWARD
 
+	# 6. Cri Tusken : Hurlement guttural nomade binaire (URoRRuR'R'R)
+	_snd_tusken = _generate_tone_wav(0.75, 11025, func(t: float, dur: float) -> float:
+		var chop := sin(t * 14.0 * TAU)
+		var freq := 320.0 + sin(t * 22.0) * 180.0
+		var screech := sin(t * freq * TAU)
+		var noise := (randf() * 2.0 - 1.0) * 0.45
+		var env := sin((t / dur) * PI)
+		return (screech * 0.55 + noise * 0.45) * env * (1.0 if chop > -0.2 else 0.1)
+	)
+
+	# 7. Récolte / Dépeçage : Tranchant et collecte de ressources
+	_snd_harvest = _generate_tone_wav(0.32, 11025, func(t: float, dur: float) -> float:
+		var env := exp(-t * 9.0)
+		var whoosh := sin(t * lerpf(400.0, 150.0, t / dur) * TAU)
+		var clink := sin(t * 880.0 * TAU) * 0.3
+		return (whoosh + clink) * env
+	)
+
+	# 8. Consommation / Bacta : Gorgée tonifiante et impulsion revitalisante
+	_snd_consume = _generate_tone_wav(0.4, 11025, func(t: float, _dur: float) -> float:
+		var mod := sin(t * 28.0 * TAU) * 120.0
+		var tone := sin(t * (440.0 + mod) * TAU)
+		var env := (1.0 - (t / 0.4)) * 0.8
+		return tone * env
+	)
+
 
 func play_blaster() -> void:
 	if not is_inside_tree():
@@ -108,6 +137,36 @@ func play_shuttle_takeoff() -> void:
 		_player_jingle.stream = _snd_shuttle
 		_player_jingle.volume_db = -1.0
 		_player_jingle.play()
+
+
+func play_tusken_roar() -> void:
+	if not is_inside_tree():
+		return
+	if _player_sfx and _snd_tusken:
+		_player_sfx.stream = _snd_tusken
+		_player_sfx.pitch_scale = randf_range(0.9, 1.1)
+		_player_sfx.volume_db = 0.0
+		_player_sfx.play()
+
+
+func play_harvest() -> void:
+	if not is_inside_tree():
+		return
+	if _player_sfx and _snd_harvest:
+		_player_sfx.stream = _snd_harvest
+		_player_sfx.pitch_scale = randf_range(0.95, 1.05)
+		_player_sfx.volume_db = -3.0
+		_player_sfx.play()
+
+
+func play_consume() -> void:
+	if not is_inside_tree():
+		return
+	if _player_sfx and _snd_consume:
+		_player_sfx.stream = _snd_consume
+		_player_sfx.pitch_scale = randf_range(0.98, 1.05)
+		_player_sfx.volume_db = -2.0
+		_player_sfx.play()
 
 
 func set_speeder_sound(active: bool) -> void:

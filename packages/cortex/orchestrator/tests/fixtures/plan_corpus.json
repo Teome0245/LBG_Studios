@@ -12,7 +12,7 @@
     {
       "id": "ops_disk",
       "objective": "sonde disque et santé ollama sur le LAN",
-      "expected_roles": ["ops", "admin_infra"],
+      "expected_roles_any_of": ["ops", "admin_infra"],
       "notes": "ops + admin_infra via mots-clés ollama"
     },
     {

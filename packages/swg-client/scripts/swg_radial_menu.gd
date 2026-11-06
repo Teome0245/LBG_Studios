@@ -33,6 +33,7 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 
 	if is_dead or kind == "corpse":
 		opts.append({"id": "examine", "label": "Examiner Cadavre"})
+		opts.append({"id": "loot_corpse", "label": "💰 Fouiller & Piller (Loot)"})
 		opts.append({"id": "harvest_meat", "label": "🥩 Dépecer Viande"})
 		opts.append({"id": "harvest_hide", "label": "🥋 Dépecer Cuir"})
 		opts.append({"id": "harvest_bone", "label": "🦴 Dépecer Os"})

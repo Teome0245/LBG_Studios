@@ -45,7 +45,11 @@ class LongTermMemoryStore:
         q = (query or "").strip().lower()
         if not q:
             return self._entries[-limit:][::-1]
-        ranked = [e for e in reversed(self._entries) if q in e.summary.lower() or any(q in t.lower() for t in e.tags)]
+        words = [w for w in q.split() if w]
+        ranked = [
+            e for e in reversed(self._entries)
+            if any(w in e.summary.lower() or any(w in t.lower() for t in e.tags) for w in words)
+        ]
         return ranked[: max(1, int(limit))]
 
     def context_hints(self, query: str, limit: int = 3) -> str:

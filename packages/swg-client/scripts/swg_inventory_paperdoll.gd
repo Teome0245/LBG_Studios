@@ -221,3 +221,60 @@ func open_panel() -> void:
 func close_panel() -> void:
 	visible = false
 
+
+## Ajoute un objet dans l'inventaire avec empilement automatique (Stacking SWG)
+func add_item(item_data: Dictionary) -> bool:
+	var item_id: String = str(item_data.get("id", ""))
+	var add_qty: int = int(item_data.get("qty", 1))
+
+	# 1. Empilement sur un objet existant si stackable
+	for it in inventory_items:
+		if str(it.get("id", "")) == item_id and str(it.get("slot", "")) != "main_hand" and str(it.get("slot", "")) != "chest" and str(it.get("slot", "")) != "legs":
+			it["qty"] = int(it.get("qty", 1)) + add_qty
+			_render_inventory_grid()
+			_info_label.text = "✓ Reçu : +%d %s (Total : %d)" % [add_qty, it.get("name", ""), it["qty"]]
+			return true
+
+	# 2. Nouvel emplacement dans la limite des 40 slots
+	if inventory_items.size() < 40:
+		var new_it: Dictionary = item_data.duplicate(true)
+		if not new_it.has("qty"):
+			new_it["qty"] = add_qty
+		inventory_items.append(new_it)
+		_render_inventory_grid()
+		_info_label.text = "✓ Nouvel objet ajouté : %s (x%d)" % [new_it.get("name", ""), new_it["qty"]]
+		return true
+
+	_info_label.text = "⚠ Sac à dos plein ! Impossible de stocker %s." % item_data.get("name", "")
+	return false
+
+
+## Vérifie si un objet est présent dans l'inventaire
+func has_item(item_id: String) -> bool:
+	for it in inventory_items:
+		if str(it.get("id", "")) == item_id:
+			return true
+	return false
+
+
+## Retourne la quantité totale possédée d'un objet
+func get_item_count(item_id: String) -> int:
+	for it in inventory_items:
+		if str(it.get("id", "")) == item_id:
+			return int(it.get("qty", 0))
+	return 0
+
+
+## Retire une quantité d'un objet
+func remove_item(item_id: String, qty: int = 1) -> bool:
+	for it in inventory_items:
+		if str(it.get("id", "")) == item_id:
+			var current: int = int(it.get("qty", 1))
+			if current <= qty:
+				inventory_items.erase(it)
+			else:
+				it["qty"] = current - qty
+			_render_inventory_grid()
+			return true
+	return false
+

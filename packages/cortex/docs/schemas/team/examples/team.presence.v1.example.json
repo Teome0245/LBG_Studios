@@ -1,0 +1,15 @@
+{
+  "schema": "team.presence.v1",
+  "agent_id": "admin_infra",
+  "display_name": "Atlas",
+  "status": "busy",
+  "current_action": "Audit dual Ollama 110/111",
+  "location": "zone_core",
+  "target_destination": "zone_llm",
+  "task_id": "6835b3e1-0000-4000-8000-000000000001",
+  "role": "admin_infra",
+  "host_hint": "192.168.0.140",
+  "trace_id": "trace-atlas-20260729",
+  "event": "action_updated",
+  "timestamp": 1782662514
+}

@@ -1921,3 +1921,221 @@ static func build_dewback_mount_visual(yaw_deg: float = 0.0) -> Node3D:
 	return root
 
 
+## Construit un Campement de Nomades Tuskens (Pillards des Sables SWG)
+static func build_tusken_camp(pos: Vector3) -> Node3D:
+	var camp := Node3D.new()
+	camp.name = "Camp_Tusken_Nomade"
+	camp.position = pos
+
+	var mat_leather := StandardMaterial3D.new()
+	mat_leather.albedo_color = Color(0.48, 0.38, 0.28)
+	mat_leather.roughness = 0.95
+
+	var mat_wood := StandardMaterial3D.new()
+	mat_wood.albedo_color = Color(0.32, 0.24, 0.16)
+
+	var mat_fire := StandardMaterial3D.new()
+	mat_fire.albedo_color = Color(1.0, 0.45, 0.1)
+	mat_fire.emission_enabled = true
+	mat_fire.emission = Color(1.0, 0.45, 0.1)
+	mat_fire.emission_energy_multiplier = 4.0
+
+	# 1. Hutte principale conique en cuir
+	for offset_h in [Vector3(-4.5, 0, -3.0), Vector3(4.0, 0, 3.5)]:
+		var hut := MeshInstance3D.new()
+		var cone := CylinderMesh.new()
+		cone.top_radius = 0.2
+		cone.bottom_radius = 3.2
+		cone.height = 3.6
+		hut.mesh = cone
+		hut.position = offset_h + Vector3(0, 1.8, 0)
+		hut.set_surface_override_material(0, mat_leather)
+		camp.add_child(hut)
+
+	# 2. Feu de camp central du clan
+	var fire := MeshInstance3D.new()
+	var fc := CylinderMesh.new()
+	fc.top_radius = 0.1
+	fc.bottom_radius = 0.8
+	fc.height = 0.6
+	fire.mesh = fc
+	fire.position = Vector3(0, 0.3, 0)
+	fire.set_surface_override_material(0, mat_fire)
+	camp.add_child(fire)
+
+	var fire_light := OmniLight3D.new()
+	fire_light.position = Vector3(0, 1.2, 0)
+	fire_light.light_color = Color(1.0, 0.5, 0.15)
+	fire_light.light_energy = 3.0
+	fire_light.omni_range = 10.0
+	camp.add_child(fire_light)
+
+	# 3. Totems de guerre Gaffi
+	for tx in [-6.0, 6.0]:
+		var totem := MeshInstance3D.new()
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 0.1
+		cyl.bottom_radius = 0.15
+		cyl.height = 3.8
+		totem.mesh = cyl
+		totem.position = Vector3(tx, 1.9, 0)
+		totem.set_surface_override_material(0, mat_wood)
+		camp.add_child(totem)
+
+	var lbl := Label3D.new()
+	lbl.text = "☠ CAMPEMENT TUSKEN NOMADE ☠\n« Territoire Hostile des Pillards des Sables »"
+	lbl.position = Vector3(0, 4.2, 0)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.font_size = 14
+	lbl.modulate = Color(1.0, 0.35, 0.25)
+	camp.add_child(lbl)
+
+	return camp
+
+
+## Modèle visuel 3D d'un Pillard Tusken (Masque respirateur, robe et bâton Gaffi)
+static func build_tusken_raider_visual(_col_accent: Color = Color(0.75, 0.6, 0.45)) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Tusken_Visual"
+
+	var mat_robe := StandardMaterial3D.new()
+	mat_robe.albedo_color = Color(0.68, 0.58, 0.45)
+	mat_robe.roughness = 0.9
+
+	var mat_metal := StandardMaterial3D.new()
+	mat_metal.albedo_color = Color(0.35, 0.35, 0.38)
+	mat_metal.metallic = 0.8
+	mat_metal.roughness = 0.4
+
+	# Robe / Corps principal
+	var body := MeshInstance3D.new()
+	var b_cap := CapsuleMesh.new()
+	b_cap.radius = 0.42
+	b_cap.height = 1.6
+	body.mesh = b_cap
+	body.position = Vector3(0, 0.8, 0)
+	body.set_surface_override_material(0, mat_robe)
+	root.add_child(body)
+
+	# Tête avec bandelettes
+	var head := MeshInstance3D.new()
+	var h_sph := SphereMesh.new()
+	h_sph.radius = 0.26
+	h_sph.height = 0.52
+	head.mesh = h_sph
+	head.position = Vector3(0, 1.6, 0)
+	head.set_surface_override_material(0, mat_robe)
+	root.add_child(head)
+
+	# Yeux cylindriques métalliques (Optiques de vision Tusken)
+	for ex in [-0.09, 0.09]:
+		var eye := MeshInstance3D.new()
+		var eye_cyl := CylinderMesh.new()
+		eye_cyl.top_radius = 0.04
+		eye_cyl.bottom_radius = 0.04
+		eye_cyl.height = 0.15
+		eye.mesh = eye_cyl
+		eye.position = Vector3(ex, 1.65, -0.22)
+		eye.rotation_degrees = Vector3(90, 0, 0)
+		eye.set_surface_override_material(0, mat_metal)
+		root.add_child(eye)
+
+	# Buse respirateur centrale de bouche
+	var resp := MeshInstance3D.new()
+	var r_cyl := CylinderMesh.new()
+	r_cyl.top_radius = 0.05
+	r_cyl.bottom_radius = 0.07
+	r_cyl.height = 0.18
+	resp.mesh = r_cyl
+	resp.position = Vector3(0, 1.5, -0.24)
+	resp.rotation_degrees = Vector3(90, 0, 0)
+	resp.set_surface_override_material(0, mat_metal)
+	root.add_child(resp)
+
+	# Bâton Gaffi (Gaderffii) en main
+	var gaffi := MeshInstance3D.new()
+	var g_cyl := CylinderMesh.new()
+	g_cyl.top_radius = 0.03
+	g_cyl.bottom_radius = 0.03
+	g_cyl.height = 1.9
+	gaffi.mesh = g_cyl
+	gaffi.position = Vector3(0.55, 0.95, -0.2)
+	gaffi.rotation_degrees = Vector3(25, 0, -15)
+	gaffi.set_surface_override_material(0, mat_metal)
+	root.add_child(gaffi)
+
+	return root
+
+
+## Construit un Bantha à cornes géantes pour la Caravane de bât marchande
+static func build_caravan_bantha(pos: Vector3) -> Node3D:
+	var bantha := Node3D.new()
+	bantha.name = "Bantha_Caravane"
+	bantha.position = pos
+
+	var mat_fur := StandardMaterial3D.new()
+	mat_fur.albedo_color = Color(0.38, 0.28, 0.2)
+	mat_fur.roughness = 1.0
+
+	var mat_horn := StandardMaterial3D.new()
+	mat_horn.albedo_color = Color(0.75, 0.72, 0.6)
+	mat_horn.roughness = 0.6
+
+	var mat_cargo := StandardMaterial3D.new()
+	mat_cargo.albedo_color = Color(0.55, 0.42, 0.25)
+
+	# Corps massif et velu
+	var body := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(3.2, 2.4, 4.8)
+	body.mesh = b_box
+	body.position = Vector3(0, 2.0, 0)
+	body.set_surface_override_material(0, mat_fur)
+	bantha.add_child(body)
+
+	# Tête lourde
+	var head := MeshInstance3D.new()
+	var h_box := BoxMesh.new()
+	h_box.size = Vector3(2.0, 1.8, 2.2)
+	head.mesh = h_box
+	head.position = Vector3(0, 1.8, -3.0)
+	head.set_surface_override_material(0, mat_fur)
+	bantha.add_child(head)
+
+	# Deux grandes cornes incurvées en spirale
+	for hx in [-1.4, 1.4]:
+		var horn := MeshInstance3D.new()
+		var tor := TorusMesh.new()
+		tor.inner_radius = 0.8
+		tor.outer_radius = 1.2
+		horn.mesh = tor
+		horn.position = Vector3(hx, 2.4, -2.8)
+		horn.rotation_degrees = Vector3(0, 90, 45 if hx > 0 else -45)
+		horn.set_surface_override_material(0, mat_horn)
+		bantha.add_child(horn)
+
+	# Caisses de bât de marchandises sur le dos
+	var cargo := MeshInstance3D.new()
+	var c_box := BoxMesh.new()
+	c_box.size = Vector3(2.4, 1.2, 2.6)
+	cargo.mesh = c_box
+	cargo.position = Vector3(0, 3.6, 0)
+	cargo.set_surface_override_material(0, mat_cargo)
+	bantha.add_child(cargo)
+
+	# 4 pattes massives
+	for lz in [-1.5, 1.5]:
+		for lx in [-1.2, 1.2]:
+			var leg := MeshInstance3D.new()
+			var l_cyl := CylinderMesh.new()
+			l_cyl.top_radius = 0.45
+			l_cyl.bottom_radius = 0.55
+			l_cyl.height = 1.8
+			leg.mesh = l_cyl
+			leg.position = Vector3(lx, 0.9, lz)
+			leg.set_surface_override_material(0, mat_fur)
+			bantha.add_child(leg)
+
+	return bantha
+
+

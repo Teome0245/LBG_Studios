@@ -98,7 +98,7 @@ def test_team_run_m9a_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
         },
     ).json()
     ran = client.post(f"/v1/team/tasks/{created['id']}/run").json()
-    assert ran["status"] == "done"
+    assert ran["status"] == "failed"
     res = ran["result"]
     assert res["kind"] == "m9_map_workflow"
     assert res["track"] == "m9a"

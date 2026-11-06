@@ -94,7 +94,8 @@ def test_evaluate_closed_success_smoke_green() -> None:
     assert ev.get("smoke_ok") is True
 
 
-def test_evaluate_closed_failed_smoke_red() -> None:
+def test_evaluate_closed_failed_smoke_red(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LBG_TEAM_MISSION_BLOCK_CLOSE_ON_SMOKE_FAIL", "0")
     _open_mission_with_tasks(qa_ok=False)
     ev = campus_conductor.evaluate_mission_closure()
     assert ev["closable"] is True

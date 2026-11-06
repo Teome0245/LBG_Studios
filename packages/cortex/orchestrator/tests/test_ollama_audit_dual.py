@@ -40,11 +40,21 @@ def test_audit_ollama_lan_dual(monkeypatch: pytest.MonkeyPatch) -> None:
             }
         return {
             "installed": [
+                {"name": "huihui_ai/gemma-4-abliterated:E4b-qat", "size_gb": 4.0},
+                {"name": "huihui_ai/gemma-4-abliterated:12b-qat", "size_gb": 12.0},
+                {"name": "huihui_ai/qwen2.5-coder-abliterate:14b", "size_gb": 14.0},
                 {"name": "gemma4:e2b", "size_gb": 7.2},
                 {"name": "gemma4:26b", "size_gb": 17.0},
                 {"name": "huihui_ai/Qwen3.8-abliterated:27b", "size_gb": 18.0},
             ],
-            "names": {"gemma4:e2b", "gemma4:26b", "huihui_ai/Qwen3.8-abliterated:27b"},
+            "names": {
+                "huihui_ai/gemma-4-abliterated:E4b-qat",
+                "huihui_ai/gemma-4-abliterated:12b-qat",
+                "huihui_ai/qwen2.5-coder-abliterate:14b",
+                "gemma4:e2b",
+                "gemma4:26b",
+                "huihui_ai/Qwen3.8-abliterated:27b",
+            },
         }
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
@@ -76,13 +86,29 @@ def test_audit_companion_legacy_is_advisory(monkeypatch: pytest.MonkeyPatch) -> 
 
     def fake_fetch(base: str, *, timeout: float = 10.0) -> dict:
         if "111" in base:
-            return {"installed": [{"name": "qwen2.5:3b", "size_gb": 1.9}], "names": {"qwen2.5:3b"}}
+            return {
+                "installed": [
+                    {"name": "huihui_ai/qwen3.5-abliterated:2B", "size_gb": 2.0},
+                    {"name": "huihui_ai/qwen3.5-abliterated:0.8B", "size_gb": 0.8},
+                    {"name": "qwen2.5:3b", "size_gb": 1.9},
+                ],
+                "names": {"huihui_ai/qwen3.5-abliterated:2B", "huihui_ai/qwen3.5-abliterated:0.8B", "qwen2.5:3b"},
+            }
         return {
             "installed": [
+                {"name": "huihui_ai/gemma-4-abliterated:E4b-qat", "size_gb": 4.0},
+                {"name": "huihui_ai/gemma-4-abliterated:12b-qat", "size_gb": 12.0},
+                {"name": "huihui_ai/qwen2.5-coder-abliterate:14b", "size_gb": 14.0},
                 {"name": "gemma4:e2b", "size_gb": 7.0},
                 {"name": "huihui_ai/Qwen3.8-abliterated:27b", "size_gb": 18.0},
             ],
-            "names": {"gemma4:e2b", "huihui_ai/Qwen3.8-abliterated:27b"},
+            "names": {
+                "huihui_ai/gemma-4-abliterated:E4b-qat",
+                "huihui_ai/gemma-4-abliterated:12b-qat",
+                "huihui_ai/qwen2.5-coder-abliterate:14b",
+                "gemma4:e2b",
+                "huihui_ai/Qwen3.8-abliterated:27b",
+            },
         }
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
@@ -114,7 +140,24 @@ def test_audit_detects_missing_light_model_failover_ok(monkeypatch: pytest.Monke
     def fake_fetch(base: str, *, timeout: float = 10.0) -> dict:
         if "111" in base:
             return {"installed": [], "names": set()}
-        return {"installed": [{"name": "gemma4:e2b", "size_gb": 7.0}, {"name": "huihui_ai/Qwen3.8-abliterated:27b", "size_gb": 18.0}], "names": {"gemma4:e2b", "huihui_ai/Qwen3.8-abliterated:27b"}}
+        return {
+            "installed": [
+                {"name": "huihui_ai/gemma-4-abliterated:E4b-qat", "size_gb": 4.0},
+                {"name": "huihui_ai/gemma-4-abliterated:12b-qat", "size_gb": 12.0},
+                {"name": "huihui_ai/qwen2.5-coder-abliterate:14b", "size_gb": 14.0},
+                {"name": "qwen2.5:3b", "size_gb": 1.9},
+                {"name": "gemma4:e2b", "size_gb": 7.0},
+                {"name": "huihui_ai/Qwen3.8-abliterated:27b", "size_gb": 18.0},
+            ],
+            "names": {
+                "huihui_ai/gemma-4-abliterated:E4b-qat",
+                "huihui_ai/gemma-4-abliterated:12b-qat",
+                "huihui_ai/qwen2.5-coder-abliterate:14b",
+                "qwen2.5:3b",
+                "gemma4:e2b",
+                "huihui_ai/Qwen3.8-abliterated:27b",
+            },
+        }
 
     monkeypatch.setattr(oa, "_fetch_tags", fake_fetch)
     out = oa.audit_ollama_lan()

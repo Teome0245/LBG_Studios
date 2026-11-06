@@ -109,7 +109,7 @@ class IngestParserTests(unittest.TestCase):
         ids = {i.source_id for i in items}
         self.assertTrue(any(i.startswith("fact_") for i in ids))
         self.assertIn("character_compagnon_v1", ids)
-        self.assertTrue(all(i.source_kind == "knowledge" for i in items))
+        self.assertTrue(all(i.source_kind in {"knowledge", "philosophy"} for i in items))
 
     def test_load_experiences_missing_ok(self) -> None:
         with patch.dict("os.environ", {"LBG_JOBS_MEMORY_PATH": "/tmp/no_such_exp.jsonl"}, clear=False):

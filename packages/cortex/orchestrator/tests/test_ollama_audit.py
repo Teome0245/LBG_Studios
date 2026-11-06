@@ -49,11 +49,11 @@ def test_reason_forge_profile_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LBG_DIALOGUE_LLM_MODEL_UNCENSORED", raising=False)
     from team.reason_llm import reason_local_model
 
-    assert reason_local_model(profile="forge") == "huihui_ai/gemma-4-abliterated:e2b"
+    assert reason_local_model(profile="forge") == "huihui_ai/gemma-4-abliterated:E4b-qat"
     assert reason_local_model(profile="router") == "huihui_ai/qwen3.5-abliterated:2B"
     assert reason_local_model(profile="json") == "huihui_ai/qwen3.5-abliterated:2B"
     assert reason_local_model(profile="fast") == "huihui_ai/qwen3.5-abliterated:0.8B"
-    assert reason_local_model(profile="code") == "huihui_ai/gemma-4-abliterated:12b"
-    assert reason_local_model(profile="pm") == "huihui_ai/gemma-4-abliterated:12b"
-    assert reason_local_model(profile="dialogue") == "huihui_ai/gemma-4-abliterated:12b"
-    assert reason_local_model(profile="uncensored") == "huihui_ai/gemma-4-abliterated:12b"
+    assert reason_local_model(profile="code") == "huihui_ai/qwen2.5-coder-abliterate:14b"
+    assert reason_local_model(profile="pm") == "huihui_ai/gemma-4-abliterated:12b-qat"
+    assert reason_local_model(profile="dialogue") == "huihui_ai/gemma-4-abliterated:12b-qat"
+    assert reason_local_model(profile="uncensored") == "huihui_ai/gemma-4-abliterated:12b-qat"
