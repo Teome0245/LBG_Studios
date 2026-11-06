@@ -83,6 +83,24 @@ Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et 
         - Dépeçage Scout (`harvest_meat`, `harvest_hide`, `harvest_bone`) et fouille de corps (`loot_corpse`) transférant effectivement les ressources brutes, crédits et stimpacks dans le sac à dos `[I]` avec marquage anti-duplication et cadavre vidé.
         - Consommation d'objets câblée (`_on_inventory_item_used`) : Stimpacks Bacta A (+250 Santé/Action), Rations des Dunes (+150 Santé/+200 Mental) et Lait Bleu de Tatooine (+300 Action/+300 Mental).
         - Nouveaux effets sonores procéduraux intégrés dans `swg_audio_synthesizer.gd` (cri Tusken, bruit de dépeçage, son de gorgée/soin bacta).
+      - **Les 6 Piliers SWG Pre-CU 3D Majeurs (Intégration & Déploiement Complets)** :
+        - [x] **Volet 2 : Nids de Créatures (Lairs) & Vagues de Riposte** (`swg_creature_lair_3d.gd`) : Monticules rocheux destructibles (1400/1800 PV) avec seuils de riposte à 75%, 50% et 25%, alerte de meute coordonnée, effondrement en décombres pillables (`harvest_debris`) avec crédits et œufs fossilisés rares.
+        - [x] **Volet 3 : GCW Factions & Guerre Civile Galactique** (`swg_faction_system.gd`, `swg_faction_dialog.gd`) : Alignement Impérial/Rebelle, statuts Civilian / On-Leave / Special Forces (PvP ouvert), recruteurs Lieutenant Kren et Capitaine Vao, patrouilles de Stormtroopers et Soldats Rebelles, tourelles défensives automatiques.
+        - [x] **Volet 5 : Spectacle Cantina & Entertainer Flourishes** (`swg_world_3d.gd`) : Commandes `/flourish 1..8`, observation active `/watch` et `/listen`, gerbes d'étincelles disco et cônes de lumière dynamiques, jauge d'inspiration cantina conférant le buff d'Harmonie Mentale (+100 Mental Max, regen boostée).
+        - [x] **Volet 4 : Datapad PCD Montures & Véhicules** (`swg_datapad_panel.gd`, `swg_world_3d.gd`) : Contrôle personnel des appareils (PCD) pour invocation et rangement instantanés du Landspeeder X-34, Swoop Bike, Dewback de selle et Chiot des Sables avec sifflet d'appel sonore.
+        - [x] **Volet 1 : Housing Posable 3D & Bâtiments Entrables POB** (`swg_asset_pipeline.gd`, `swg_world_3d.gd`) : Structure habitable en pisé avec pas de porte franchissable (sans téléportation), intérieur meublé d'une table basse, banquette et coffre de maison sécurisé, vendeur personnel PNJ `Daran`, commande `/house` ou `/placehouse`.
+        - [x] **Volet 6 : Espèces & Races SWG Pre-CU / Image Designer** (`swg_species_system.gd`, `swg_species_dialog.gd`, `swg_player_controller_3d.gd`) : Catalogue des 6 espèces canoniques (Humain, Twi'lek aux lekku, Androïde/Cyborg, Zabrak d'Iridonia, Wookiee géant, Rodien chasseur) avec morphologie adaptée, teintes de peau/pelage, bonus raciaux HAM et salon d'Image Designer accessible via `[F6]` ou `/species`.
+        - [x] **Selftest Global SWG 3D Validé & Déployé** : `packages/swg-client/tools/swg_client_3d_selftest.gd` 100% vert (10/10 sous-suites), synchronisation immédiate des 17 scripts sur Windows `.10:5005` (`J:/swgemu/clients/swg-client/`).
+      - **Cadre de Ciblage Tactique & Jauges HAM Cible (`swg_target_frame.gd`)** :
+        - Unité cadre supérieure affichant en temps réel le nom, la distance en mètres, l'insigne d'alignement (`[HOSTILE]`, `[CITOYEN]`, `[CADAVRE]`, `[STRUCTURE]`) et les 3 jauges HAM de la cible (Santé, Action, Mental).
+        - Touche `[Tab]` pour cycler et verrouiller intelligemment la cible vivante la plus proche (portée 45m).
+      - **Boîte de Chat Spatial & Commandes Galactiques (`swg_chat_box.gd`)** :
+        - Interface de communication en bas à gauche avec onglets `[Spatial]` et `[Combat/Système]`.
+        - Saisie `[Entrée]` avec interprétation des commandes Slash authentiques SWG : `/dance`, `/kneel`, `/prone`, `/stand`, `/camp`, `/harvester`, `/speeder`, `/dewback`, `/clone`, `/shout <msg>`, `/help`.
+        - Journal de combat temps réel relatant les dégâts blaster, les frappes reçues, les abattages et les transactions.
+      - **Artisanat Connecté au Sac à Dos (`swg_crafting_panel.gd`)** :
+        - Schémas connectés aux ressources réelles de l'inventaire (`inventory_ref`) : Stimpacks avancés, Blaster DH-17 Custom, Gilet en cuir renforcé, Couteau Vibro Scout.
+        - Contrôle strict des prérequis de composants, déduction automatique des matières premières et insertion des objets créés dans le sac à dos `[I]`.
     - Synchronisé en direct et validé sous Windows .10 dans `J:\swgemu\clients\swg-client` via l'agent FastAPI :5005 (`SWG_CLIENT_3D_SELFTEST_OK`). CI Godot headless 18/18 PASS.
 
 - [x] **Étape 4 (O2/O3) : Faune, Métier Scout & Domptage Creature Handler** :
@@ -450,6 +468,13 @@ Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et 
     - Rebundle esbuild `vrm_pet.bundle.js` synchronisé dans `compagnon-desktop` et `compagnon_ui`.
     - Conteneur `lbg-frontend` rebuildé et redémarré sur CT100 (`:5174`).
     - Synchronisation sur Windows SDS `.10` et correction de la tâche `LBG-Compagnon-Desktop` pour appeler directement `electron.exe` (5 processus vérifiés en `SessionId: 1`).
+- **Correctif Définitif Session 0 Windows `.10` (Auto-Watchdog Proactif & Fin des Interventions Manuelles au Reboot)** :
+  * **Problème résolu** : À chaque reboot nocturne de Windows, `Agent_IA` démarrait en Session 0 (service/tâche système pré-login). L'utilisateur devait demander manuellement au Compagnon de réparer la Session 0 chaque matin, ce qui tombait parfois en timeout de 122s côté UI.
+  * **Solutions pérennes déployées** :
+    1. *Watchdog Autonome Proactif (`main.py`)* : ajout d'un thread d'arrière-plan `Session0Watchdog` qui sonde en continu `WTSGetActiveConsoleSessionId()`. Dès qu'un utilisateur se connecte sur la machine (session interactive > 0), le watchdog détecte la session console active et déclenche automatiquement `_run_fix_session0_task()` sans aucune intervention humaine ni commande du Compagnon.
+    2. *Trigger Tâche Planifiée Accéléré (`install_fix_session0_task.ps1`)* : délai `AtLogOn` ramené de 45s (`PT45S`) à 5s (`PT5S`).
+    3. *Auto-remédiation Compagnon Fiabilisée (`desktop_dispatch.py`)* : délai de lecture ramené de 120s à 30s lors de l'appel `fix_session0` avec passage immédiat en polling actif, éliminant les faux échecs `session0_auto_failed`.
+    4. *Déploiement live sur SDS `.10:5005`* : `main.py`, `executor.py`, `install_fix_session0_task.ps1` et `fix_session0_admin.ps1` synchronisés et validés en session interactive (`SessionId: 1`, `session0_risk: false`, sha256 validé).
 - **Correctif Définitif `vghd.exe - Qt5Sql.dll introuvable` & Tâche `AgentLocalV0` Session 0 (`Agent_IA` Windows `.10`)** :
   * **Réparation immédiate à distance** : déclenchement de `repair_app_deps` sur `.10:5005` -> `Qt5Sql.dll` et `sqldrivers/` restaurés dans `C:\Users\sdesh\AppData\Local\vghd\bin\`.
   * **Causes racines identifiées** :
@@ -1317,6 +1342,31 @@ _Aucun bloquant documenté pour ce bootstrap._
   - Exécution du script [`tools/smoke_rejeu_humain_d6_5174.sh`](../tools/smoke_rejeu_humain_d6_5174.sh) sur `:5174` : 7 tours exécutés sans aucune rupture ni fuite ops.
   - Verdict 100 % vert : `C1=PASS`, `C2=PASS`, `PLAN=PASS`, `GO_AHEAD=PASS` (`SMOKE_REJEU_HUMAIN_D6_OK`, conversation `rejeu-humain-d6-3fa2fffd`).
   - Salutations et suivi sans template rigide, avis franc collègue studio en causerie, plan d'action structuré markdown et absence de piège sur le go-ahead.
+- 2026-11-06 : **SWG Pre-CU 3D : Volets 3, 5, 4 et 1 (Factions GCW, Flourishes, PCD Datapad, Housing POB Entrable) Validés & Déployés** —
+  - *Volet 3 — Guerre Civile Galactique (GCW)* : Système d'alignement (`swg_faction_system.gd`) et bureau de recrutement (`swg_faction_dialog.gd`), statuts Civilian/On-Leave/Special Forces (PvP actif mondial), points de faction, garnisons Est (Lieutenant Kren, Stormtroopers, tourelle impériale) et Sud-Ouest (Capitaine Vao, Soldats rebelles, tourelle de l'Alliance).
+  - *Volet 5 — Spectacle Cantina & Flourishes* : Commandes `/flourish 1..8`, observation active `/watch` et concert `/listen`, étincelles scéniques, montée de la jauge d'inspiration et octroi du buff de clarté mentale (+250 Mental).
+  - *Volet 4 — PCD Datapad Montures & Véhicules* : Gestion dans le Datapad `[P]` des cartes de contrôle (PCD) pour Landspeeder X-34, Moto-Jet Swoop Bike et Dewback Dressé de Selle, invocation `/call` et rangement `/store` directs.
+  - *Volet 1 — Housing Posable 3D & Bâtiments Entrables (POB)* : Maison creuse `build_swg_enterable_player_house` avec pas de porte franchissable, salon meublé (table, banquette cuir, coffre sécurisé de maison) et Vendeur PNJ personnel (`Daran`). Commande `/house` ou `/placehouse` pour ériger une maison libre à partir d'un Deed.
+  - *Validation & Déploiement* : Selftest headless `swg_client_3d_selftest.gd` 100% vert (9/9 suites) ; 13 fichiers synchronisés vers `J:\swgemu\clients\swg-client` sur Windows SDS `.10`.
+- 2026-11-06 : **SWG Pre-CU 3D : Volet 2 — Nids de Créatures (Creature Lairs), Vagues & Missions de Destruction Validé & Déployé** —
+  - *Composant `swg_creature_lair_3d.gd`* : Monticules procéduraux de bêtes avec jauge de santé HAM (1400 à 1800 PV), alerte d'aggro de meute coordonnée, vagues de renforts furieux à 75%, 50% et 25% de vie.
+  - *Destruction & Décombres* : Effondrement du monticule à 0 PV, transformation en `[DÉCOMBRES DE NID]`, pillage via menu radial avec ressources rares (Œufs fossilisés, Chitine pure de reine, viandes alpha) et crédits.
+  - *Contrats de Terminal & Missions* : Nouveaux contrats `mis_lair_chacals` (Tumulus Ouest, 1250 cr) et `mis_lair_scarabees` (Canyon Est, 1600 cr) connectés au Waypoint GPS et validés automatiquement dès l'effondrement du nid.
+  - *Validation & Déploiement* : Selftest headless `swg_client_3d_selftest.gd` 100% PASS ; synchronisé sur machine Windows `.10` (`J:\swgemu\clients\swg-client`).
+- 2026-11-06 : **Intégration & Raccordement SWG Pre-CU dans Prime Client 2D Topdown (`packages/prime-client`) — Validé & Déployé** —
+  - *Composants portés et connectés* :
+    - `scripts/swg_target_frame.gd` : Cadre de ciblage unifié 2D (`Vector2.distance_to / 32.0`) & 3D, jauges HAM directes (Santé rouge, Action verte, Mental bleue), badges `[HOSTILE]`, `[CITOYEN]`, `[CADAVRE]`.
+    - `scripts/swg_chat_box.gd` : Chat défilant avec saisie `[Entrée]`, commandes Slash (`/dance`, `/kneel`, `/prone`, `/stand`, `/camp`, `/harvester`, `/clone`, `/shout`, `/help`) et verrouillage focus clavier.
+    - `scripts/swg_crafting_panel.gd` : Atelier d'artisanat SWG fonctionnel avec contrôle des stocks, consommation des ingrédients d'inventaire et génération d'objets.
+    - `scripts/swg_inventory_paperdoll.gd` : Sac à dos 40 slots & Papier-Doll 6 slots, gestion sécurisée off-tree, consommation de consommables (Stimpack Bacta, Rations, Lait Bleu) répercutée sur les jauges.
+    - `scripts/swg_audio_synthesizer.gd` : Synthétiseur audio procédural en pur GDScript (blasters, bips droïde, navette, quête, soins).
+  - *Contrôles clavier et boucle de jeu 2D* :
+    - Raccourci `[Tab]` : cycle de ciblage d'entités avec bip sonore droïde.
+    - Raccourci `[Entrée]` : focus boîte de chat.
+    - Raccourcis `[I]` (Inventaire/Papier-Doll) et `[T]` (Artisanat).
+  - *Validation & Déploiement* :
+    - Selftest `packages/prime-client/tools/client_modular_selftest.gd` 100% vert sous Godot 4.6.3.
+    - Déploiement automatisé sur Windows SDS `.10` (`J:\swgemu\clients\prime-client`).
 - 2026-10-12 : **ticket 5.2 Outillage Ruff & tests headless Godot CI — validé & clôturé** —
   - Configuration [`ruff.toml`](../ruff.toml) et [`pyproject.toml`](../pyproject.toml) racine pour le linting Python ; `ruff check .` passe à 100 % vert.
   - Runner headless Godot [`tools/ci_godot_headless.sh`](../tools/ci_godot_headless.sh) intégré : sim, nav et db/économie (18/18 checks) exécutés en ~3 s (< 10 s DoD) sans dépendance réseau LAN.

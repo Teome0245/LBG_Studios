@@ -40,6 +40,11 @@ const _SwgDatapadPanelScript = preload("res://scripts/swg_datapad_panel.gd")
 const _SwgCharacterSheetScript = preload("res://scripts/swg_character_sheet.gd")
 const _SwgBazaarPanelScript = preload("res://scripts/swg_bazaar_panel.gd")
 const _SwgStructurePanelScript = preload("res://scripts/swg_structure_panel.gd")
+const _SwgTargetFrameScript = preload("res://scripts/swg_target_frame.gd")
+const _SwgChatBoxScript = preload("res://scripts/swg_chat_box.gd")
+const _SwgCraftingScript = preload("res://scripts/swg_crafting_panel.gd")
+const _SwgInventoryScript = preload("res://scripts/swg_inventory_paperdoll.gd")
+const _SwgAudioSynthesizerScript = preload("res://scripts/swg_audio_synthesizer.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
@@ -55,6 +60,11 @@ var swg_datapad_panel: Node = null
 var swg_character_sheet: Node = null
 var swg_bazaar_panel: Node = null
 var swg_structure_panel: Node = null
+var swg_target_frame: Node = null
+var swg_chat_box: Node = null
+var swg_crafting_panel: Node = null
+var swg_inventory_paperdoll: Node = null
+var swg_audio: Node = null
 var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
@@ -230,6 +240,8 @@ func _set_selected_entity(oid: int) -> void:
 	if oid == 0:
 		if swg_ham_hud and swg_ham_hud.has_method("set_target_entity"):
 			swg_ham_hud.set_target_entity("")
+		if swg_target_frame and swg_target_frame.has_method("clear_target"):
+			swg_target_frame.clear_target()
 		return
 	var e: Node = entity_manager.get_entity(oid)
 	if e:
@@ -243,6 +255,53 @@ func _set_selected_entity(oid: int) -> void:
 				var ep: Vector3 = e.core3_pos
 				dist = my_xz.distance_to(Vector2(ep.x, ep.z))
 			swg_ham_hud.set_target_entity(t_name, t_kind, dist)
+		if swg_target_frame and swg_target_frame.has_method("set_target"):
+			var pc: Node = get_node_or_null("PlayerController")
+			var pid: int = int(pc.get_player_id()) if (pc and pc.has_method("get_player_id")) else 0
+			var me: Node = entity_manager.get_entity(pid) if (entity_manager and pid > 0) else null
+			swg_target_frame.set_target(e, me)
+
+
+func _cycle_swg_target() -> void:
+	if entity_manager == null or not entity_manager.has_method("get_all_entities"):
+		return
+	var entities: Array = entity_manager.get_all_entities()
+	if entities.is_empty():
+		return
+
+	var pc: Node = get_node_or_null("PlayerController")
+	var pid: int = int(pc.get_player_id()) if (pc and pc.has_method("get_player_id")) else 0
+	var my_xz := _player_world_xz()
+
+	var candidates: Array = []
+	for ent in entities:
+		if ent == null or not is_instance_valid(ent):
+			continue
+		var oid: int = int(ent.get("oid")) if "oid" in ent else 0
+		if oid == pid or oid == 0:
+			continue
+		var dist := 9999.0
+		if my_xz != Vector2.INF and "core3_pos" in ent:
+			var ep: Vector3 = ent.core3_pos
+			dist = my_xz.distance_to(Vector2(ep.x, ep.z))
+		candidates.append({"oid": oid, "node": ent, "dist": dist})
+
+	if candidates.is_empty():
+		return
+
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["dist"]) < float(b["dist"])
+	)
+
+	var next_idx := 0
+	for i in range(candidates.size()):
+		if candidates[i]["oid"] == _selected_entity_id:
+			next_idx = (i + 1) % candidates.size()
+			break
+
+	_set_selected_entity(candidates[next_idx]["oid"])
+	if swg_audio and swg_audio.has_method("play_droid"):
+		swg_audio.play_droid()
 
 
 func _ensure_swg_ui() -> void:
@@ -258,6 +317,32 @@ func _ensure_swg_ui() -> void:
 		hud_layer.add_child(swg_ham_hud)
 		if swg_ham_hud.has_signal("quick_panel_requested"):
 			swg_ham_hud.quick_panel_requested.connect(_on_swg_quick_panel_requested)
+	if hud_layer and swg_target_frame == null:
+		swg_target_frame = _SwgTargetFrameScript.new()
+		swg_target_frame.name = "SwgTargetFrame"
+		swg_target_frame.target_cleared.connect(func() -> void:
+			_set_selected_entity(0)
+		)
+		hud_layer.add_child(swg_target_frame)
+	if hud_layer and swg_chat_box == null:
+		swg_chat_box = _SwgChatBoxScript.new()
+		swg_chat_box.name = "SwgChatBox"
+		swg_chat_box.command_executed.connect(_on_swg_chat_command)
+		hud_layer.add_child(swg_chat_box)
+	if modal_layer and swg_inventory_paperdoll == null:
+		swg_inventory_paperdoll = _SwgInventoryScript.new()
+		swg_inventory_paperdoll.name = "SwgInventoryPaperdoll"
+		swg_inventory_paperdoll.item_used.connect(_on_swg_inventory_item_used)
+		modal_layer.add_child(swg_inventory_paperdoll)
+	if modal_layer and swg_crafting_panel == null:
+		swg_crafting_panel = _SwgCraftingScript.new()
+		swg_crafting_panel.name = "SwgCraftingPanel"
+		swg_crafting_panel.inventory_ref = swg_inventory_paperdoll
+		modal_layer.add_child(swg_crafting_panel)
+	if swg_audio == null:
+		swg_audio = _SwgAudioSynthesizerScript.new()
+		swg_audio.name = "SwgAudioSynthesizer"
+		add_child(swg_audio)
 	if modal_layer and swg_radial_menu == null:
 		swg_radial_menu = _SwgRadialMenuScript.new()
 		swg_radial_menu.name = "SwgRadialMenu"
@@ -298,6 +383,53 @@ func _ensure_swg_ui() -> void:
 		_swg_action_http.request_completed.connect(_on_swg_action_http_done)
 
 
+func _on_swg_chat_command(cmd: String, _args: String) -> void:
+	match cmd:
+		"dance":
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#ff77ee]♫ Vous esquissez les pas de danse d'artiste de cantina ![/color]", "spatial")
+		"kneel":
+			_on_swg_radial_action("posture_kneel", {})
+		"prone":
+			_on_swg_radial_action("posture_prone", {})
+		"stand":
+			_on_swg_radial_action("posture_upright", {})
+		"camp":
+			_on_swg_radial_action("deploy_camp", {})
+		"harvester":
+			_on_swg_radial_action("deploy_harvester", {})
+		"clone", "suicide":
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#44ffcc]🏥 Rapatriement au Centre Médical de Lost Heaven.[/color]", "system")
+		_:
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#ff9999]Commande : /%s. Tapez /help pour l'aide.[/color]" % cmd, "system")
+
+
+func _on_swg_inventory_item_used(item_id: String) -> void:
+	if swg_audio and swg_audio.has_method("play_consume"):
+		swg_audio.play_consume()
+	match item_id:
+		"medpack_a", "medpack_adv":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("health", 250)
+				swg_ham_hud.heal_pool("action", 250)
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#44ff88]💉 Stimpack Bacta appliqué (+250 Santé / +250 Action) ![/color]", "combat")
+		"ration_lh":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("health", 150)
+				swg_ham_hud.heal_pool("mind", 200)
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#ffdd44]🍖 Ration de survie consommée (+150 S / +200 M) ![/color]", "spatial")
+		"blue_milk":
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("action", 300)
+				swg_ham_hud.heal_pool("mind", 300)
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#66ddff]🥛 Lait Bleu de Tatooine consommé (+300 Action / +300 Mental) ![/color]", "spatial")
+
+
 func _on_swg_quick_panel_requested(panel_key: String) -> void:
 	_ensure_swg_ui()
 	match panel_key:
@@ -310,6 +442,12 @@ func _on_swg_quick_panel_requested(panel_key: String) -> void:
 		"skills":
 			if swg_skills_panel and swg_skills_panel.has_method("toggle"):
 				swg_skills_panel.toggle()
+		"inventory":
+			if swg_inventory_paperdoll and swg_inventory_paperdoll.has_method("toggle"):
+				swg_inventory_paperdoll.toggle()
+		"crafting", "talents":
+			if swg_crafting_panel and swg_crafting_panel.has_method("toggle"):
+				swg_crafting_panel.toggle()
 		"survey":
 			if swg_survey_panel and swg_survey_panel.has_method("toggle"):
 				var xz: Vector2 = _player_world_xz()

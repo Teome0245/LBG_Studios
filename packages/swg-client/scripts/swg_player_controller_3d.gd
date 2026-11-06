@@ -12,6 +12,7 @@ const _SwgVrmAnimatorScript := preload("res://scripts/swg_vrm_animator.gd")
 const _SwgSkinSystemScript := preload("res://scripts/swg_skin_system.gd")
 
 var current_skin_index: int = 0
+var current_species_id: String = "human"
 
 const SPEED_WALK: float = 3.5
 const SPEED_RUN: float = 7.0
@@ -98,12 +99,22 @@ func _setup_nodes() -> void:
 
 
 func _load_vrm_or_procedural_avatar() -> void:
+	_load_vrm_model("Compagnon.vrm")
+
+
+func _load_vrm_model(vrm_name: String) -> bool:
+	# Nettoie tout animateur ou modèle résiduel
+	for c in _mesh_root.get_children():
+		c.queue_free()
+	var old_anim := find_child("VrmAnimator", true, false)
+	if old_anim: old_anim.queue_free()
+
 	var candidate_paths := [
-		"res://assets/avatars/Compagnon.vrm",
-		"res://assets/avatars/LadyKoi.vrm",
-		"packages/compagnon-desktop/overlay/vrm/Compagnon.vrm",
-		"C:/Agent_IA/compagnon-desktop/overlay/vrm/Compagnon.vrm",
-		"J:/swgemu/clients/swg-client/assets/avatars/Compagnon.vrm"
+		"res://assets/avatars/" + vrm_name,
+		"packages/compagnon-desktop/overlay/vrm/" + vrm_name,
+		"C:/Agent_IA/compagnon-desktop/overlay/vrm/" + vrm_name,
+		"J:/swgemu/clients/swg-client/assets/avatars/" + vrm_name,
+		"res://assets/avatars/Compagnon.vrm"
 	]
 
 	for p in candidate_paths:
@@ -115,21 +126,46 @@ func _load_vrm_or_procedural_avatar() -> void:
 			if err == OK:
 				var scene := gltf.generate_scene(state)
 				if scene != null:
-					scene.name = "CompagnonModel3D"
+					scene.name = "SpeciesModel3D"
 					scene.rotation_degrees.y = 180.0
 					scene.scale = Vector3(0.95, 0.95, 0.95)
 					_mesh_root.add_child(scene)
 
-					# Animateur procédural pour supprimer la T-Pose et animer marche/idle
 					var sk: Skeleton3D = _SwgVrmAnimatorScript.find_skeleton_in_tree(scene)
 					if sk != null:
 						var anim := _SwgVrmAnimatorScript.new()
 						anim.name = "VrmAnimator"
 						add_child(anim)
 						anim.setup(sk)
-					return
+					return true
 
 	_build_procedural_avatar()
+	return false
+
+
+func apply_species(sp: Dictionary) -> void:
+	current_species_id = str(sp.get("id", "human"))
+	var vrm_file: String = str(sp.get("vrm_model", "Compagnon.vrm"))
+	var scale_vec: Vector3 = sp.get("scale_vec", Vector3(0.95, 0.95, 0.95))
+	var s_title: String = str(sp.get("title", "« Voyageur »"))
+	var tint: Color = sp.get("skin_tint", Color.WHITE)
+
+	_load_vrm_model(vrm_file)
+	if _mesh_root:
+		_mesh_root.scale = scale_vec
+
+	# Teinte cutanée / fourrure
+	_SwgSkinSystemScript.apply_skin(_mesh_root, {
+		"primary": tint,
+		"secondary": Color(0.85, 0.85, 0.9),
+		"hair": tint * 0.8,
+		"metallic": 0.2,
+		"roughness": 0.7
+	})
+
+	if _nameplate_label:
+		_nameplate_label.text = "Voyageur de Lost Heaven\n%s" % s_title
+		_nameplate_label.position.y = 2.2 * scale_vec.y
 
 
 func _build_procedural_avatar() -> void:

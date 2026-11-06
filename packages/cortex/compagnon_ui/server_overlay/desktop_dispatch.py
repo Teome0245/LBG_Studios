@@ -501,11 +501,10 @@ async def _auto_remediate_session0(
     """
     fix_timeout = timeout
     try:
-        # fix_session0 peut prendre ~45–90 s côté worker
-        read_s = float(getattr(timeout, "read", 120) or 120)
-        fix_timeout = httpx_timeout(read=max(read_s, 120.0))
+        # fix_session0 déclenche la bascule admin (retour ou coupure rapide)
+        fix_timeout = httpx_timeout(read=30.0)
     except Exception:
-        fix_timeout = httpx_timeout(read=120.0)
+        fix_timeout = httpx_timeout(read=30.0)
 
     fix = await _invoke_worker_desktop(
         worker,

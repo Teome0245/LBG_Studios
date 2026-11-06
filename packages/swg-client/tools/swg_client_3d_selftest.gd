@@ -76,8 +76,108 @@ func _init() -> void:
 	var tinted_mat = SwgAssetPipelineScript.create_tinted_swg_material(Color.WHITE, Color.ORANGE, 0.6, 0.3)
 	assert(tinted_mat != null and is_equal_approx(tinted_mat.metallic, 0.6), "Le matériau teinté SWG doit être instancié avec les bons paramètres PBR")
 
+	# 5. Test des Nids de Créatures (Lairs) & Vagues Pre-CU
+	var LairScript := preload("res://scripts/swg_creature_lair_3d.gd")
+	var lair = LairScript.new()
+	assert(lair != null, "Échec instanciation SwgCreatureLair3D")
+	lair.lair_id = "test_lair"
+	lair.lair_display_name = "Nid Test"
+	lair.creature_kind = "creature_jackal"
+	lair.lair_max_hp = 1000
+	lair.current_hp = 1000
+	lair.loot_credits = 500
+	lair.loot_rare_item = "Œuf Fossilisé"
+	lair._setup_collision()
+	lair._build_lair_mesh()
+
+	assert(lair.get_meta("entity_kind") == "creature_lair", "Le type d'entité du nid doit être creature_lair")
+	assert(lair.current_hp == 1000, "Les PV du nid doivent être à 1000")
+
+	# Simuler dégâts sur le nid
+	var dmg_taken := lair.take_damage(300, null)
+	assert(dmg_taken == 300 and lair.current_hp == 700, "Le nid doit encaisser les dégâts")
+	assert(not lair.is_lair_destroyed, "Le nid ne doit pas être détruit à 700 PV")
+
+	# Coup de grâce
+	lair.take_damage(800, null)
+	assert(lair.current_hp == 0 and lair.is_lair_destroyed, "Le nid doit être détruit à 0 PV")
+	assert(lair.get_meta("entity_kind") == "lair_debris", "Le nid détruit doit devenir des décombres de nid")
+
+	# Pillage des décombres
+	var loot: Dictionary = lair.harvest_debris()
+	assert(loot.get("ok", false) == true, "La fouille des décombres doit réussir")
+	assert(loot.get("credits") == 500, "Le butin de crédits doit correspondre")
+	assert(loot.get("rare_item") == "Œuf Fossilisé", "L'œuf rare doit être récupéré")
+
+	var loot2: Dictionary = lair.harvest_debris()
+	assert(loot2.get("ok", false) == false, "Un nid déjà pillé ne doit pas pouvoir être pillé deux fois")
+
+	lair.free()
+
+	# 6. Test du Système de Factions Galactiques & GCW Pre-CU
+	var FactionSystemScript := preload("res://scripts/swg_faction_system.gd")
+	var fac_sys = FactionSystemScript.new()
+	assert(fac_sys != null, "Échec instanciation SwgFactionSystem")
+	assert(fac_sys.get_faction_name() == "Neutre", "La faction initiale doit être Neutre")
+	assert(fac_sys.current_status == FactionSystemScript.FactionStatus.CIVILIAN, "Le statut initial doit être Civilian")
+
+	# Enrôlement Impérial
+	fac_sys.enlist(FactionSystemScript.Faction.IMPERIAL)
+	assert(fac_sys.get_faction_name() == "Impérial", "La faction doit être Impérial")
+	assert(fac_sys.current_status == FactionSystemScript.FactionStatus.ON_LEAVE, "Le statut après enrôlement doit être On-Leave")
+
+	# Déclaration Special Forces (Overt PvP)
+	fac_sys.declare_special_forces()
+	assert(fac_sys.is_special_forces(), "Le joueur doit être en Special Forces")
+	assert(fac_sys.is_enemy("Rebelle"), "Un Rebelle doit être identifié comme ennemi pour un Impérial SF")
+	assert(not fac_sys.is_enemy("Impérial"), "Un allié Impérial ne doit pas être un ennemi")
+
+	# Démobilisation
+	fac_sys.resign_to_civilian()
+	assert(fac_sys.get_faction_name() == "Neutre", "Après démission, la faction redevient Neutre")
+	assert(not fac_sys.is_special_forces(), "Après démission, le statut SF est levé")
+	fac_sys.free()
+
+	# 7. Test Bâtiment Entrable (Player Housing POB)
+	var house: Node3D = SwgAssetPipelineScript.build_swg_enterable_player_house(Vector3(10, 0, 10), 0.0, "Maison Test")
+	assert(house != null, "La maison entrable doit être construite")
+	assert(house.get_meta("entity_kind") == "housing", "Le type d'entité doit être housing")
+	assert(house.find_child("Coffre*", true, false) != null or house.get_child_count() > 3, "Le coffre et meubles intérieurs doivent être présents")
+	house.free()
+
+	# 8. Test Datapad PCD Montures & Véhicules
+	assert(world.swg_datapad_panel != null, "Le Datapad doit être initialisé")
+	assert(world.swg_datapad_panel._pets.size() >= 4, "Le Datapad doit contenir au moins 4 PCD (Speeder, Swoop, Dewback, Chiot)")
+	assert(world.swg_datapad_panel._pets[0].get("pet_id") == "pcd_speeder_x34", "Le PCD Speeder X-34 doit être présent")
+
+	# 9. Test Cantina Entertainer Flourish & Inspiration
+	world._execute_entertainer_flourish(1)
+	assert(world._inspiration_meter >= 35.0, "Un flourish doit augmenter la jauge d'inspiration")
+	world._execute_entertainer_flourish(2)
+	world._execute_entertainer_flourish(3)
+	assert(world._inspiration_meter == 0.0, "La jauge d'inspiration doit avoir octroyé le buff complet à 100%")
+
+	# 10. Test Système d'Espèces SWG Pre-CU & Image Designer
+	var SpeciesScript := preload("res://scripts/swg_species_system.gd")
+	assert(SpeciesScript.get_species_count() == 6, "Le catalogue d'espèces doit contenir exactement 6 espèces SWG")
+	var wookiee: Dictionary = SpeciesScript.find_species_by_id("wookiee")
+	assert(wookiee.get("name") == "Wookiee de Kashyyyk", "L'espèce Wookiee doit être présente")
+	assert(wookiee.get("ham_bonus", {}).get("health") == 350, "Le bonus de santé Wookiee doit être +350")
+	var twilek: Dictionary = SpeciesScript.find_species_by_id("twilek")
+	assert(twilek.get("name") == "Twi'lek des Oasis", "L'espèce Twi'lek doit être présente")
+
+	# Test application de l'espèce sur le joueur
+	var p2 = PlayerScript.new()
+	p2._setup_nodes()
+	p2.apply_species(wookiee)
+	assert(p2.current_species_id == "wookiee", "L'espèce du joueur doit être wookiee")
+	assert(p2._mesh_root.scale.x > 1.1, "L'échelle du modèle Wookiee doit être imposante (> 1.1)")
+	p2.apply_species(twilek)
+	assert(p2.current_species_id == "twilek", "L'espèce du joueur doit basculer vers twilek")
+	p2.free()
+
 	world.free()
 
-	print("SWG_CLIENT_3D_SELFTEST_OK: Étape 1 (Contrôleur TPS & Postures) + Étape 2 (Terrain 3D 16x16km & Pipeline POB/Assets) 100% validées !")
+	print("SWG_CLIENT_3D_SELFTEST_OK: Tous les Piliers SWG Pre-CU 3D (Lairs, GCW Factions, Entertainer Flourishes, PCD Montures/Véhicules, Housing Entrable POB, Espèces & Image Designer) 100% validés !")
 	quit(0)
 

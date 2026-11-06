@@ -9,34 +9,72 @@ var _schematic_list: VBoxContainer = null
 var _craft_status_label: Label = null
 var _risk_bar: ProgressBar = null
 
+var inventory_ref: Node = null
+
 var recipes: Array = [
 	{
 		"id": "rec_medpack",
-		"name": "Stimpack Médical Avancé",
-		"desc": "Injecteur de bacta d'urgence. Restaure 350 Santé & Action.",
-		"req": "Minerai Ferrique x20 • Eau Pure x10",
+		"name": "Stimpack Médical Avancé (x3)",
+		"desc": "Injecteur de bacta d'urgence. Restaure 350 Santé & 350 Action.",
+		"req": "Minerai Ferrique x20 • Viande Sauvage x10",
+		"costs": {"ore_iron": 20, "meat_wild": 10},
+		"result_item": {
+			"id": "medpack_adv",
+			"name": "Stimpack Médical Avancé",
+			"icon": "💉",
+			"slot": "usable",
+			"qty": 3,
+			"desc": "Bacta concentré (+350 Santé / +350 Action)"
+		},
 		"base_quality": 88
 	},
 	{
 		"id": "rec_blaster_dh17",
-		"name": "Blaster de Précision DH-17",
-		"desc": "Pistolet lourd à haute cadence. Dégâts 95 S, portée 35m.",
-		"req": "Minerai Ferrique x40 • Condensateur x1",
+		"name": "Blaster Custom Artisanal DH-17",
+		"desc": "Pistolet lourd à haute cadence. Dégâts 95 S, précision +12.",
+		"req": "Minerai Ferrique x35 • Condensateur x1",
+		"costs": {"ore_iron": 35, "capacitor_used": 1},
+		"result_item": {
+			"id": "dh17_custom",
+			"name": "Blaster Custom DH-17",
+			"icon": "🔫",
+			"slot": "main_hand",
+			"qty": 1,
+			"desc": "Arme militaire de précision (Dégâts 95 S)"
+		},
 		"base_quality": 92
 	},
 	{
 		"id": "rec_leather_vest",
-		"name": "Plastron en Cuir de Dewback Renforcé",
-		"desc": "Armure légère pour Scout. Absorption des dégâts cinétiques +35.",
-		"req": "Cuir de Dewback x30 • Ferraille x15",
+		"name": "Gilet de Chasse en Cuir Épais",
+		"desc": "Armure souple de Scout. Protection cinétique renforcée (Armure +35).",
+		"req": "Cuir de Dewback x25 • Minerai Ferrique x15",
+		"costs": {"hide_bantha": 25, "ore_iron": 15},
+		"result_item": {
+			"id": "vest_custom",
+			"name": "Gilet en Cuir Renforcé",
+			"icon": "🥋",
+			"slot": "chest",
+			"qty": 1,
+			"desc": "Armure de cuir artisanal (Armure +35)"
+		},
 		"base_quality": 85
 	},
 	{
-		"id": "rec_capacitor",
-		"name": "Condensateur Recyclé de Speeder",
-		"desc": "Composant mécatronique pour réparation de moteurs à répulsion.",
-		"req": "Minerai Ferrique x15 • Composants Électroniques x5",
-		"base_quality": 80
+		"id": "rec_vibro_blade",
+		"name": "Couteau Vibro de Dépeçage Scout",
+		"desc": "Outil tranchant à haute fréquence optimisant les prélèvements de faune.",
+		"req": "Os Dense x15 • Minerai Ferrique x15",
+		"costs": {"bone_dense": 15, "ore_iron": 15},
+		"result_item": {
+			"id": "vibro_blade",
+			"name": "Couteau Vibro Scout",
+			"icon": "🗡️",
+			"slot": "usable",
+			"qty": 1,
+			"desc": "Lame vibratoire de dépeçage"
+		},
+		"base_quality": 89
 	}
 ]
 
@@ -144,13 +182,39 @@ func _populate_recipes() -> void:
 		craft_btn.custom_minimum_size = Vector2(100, 32)
 		var captured_r: Dictionary = r
 		craft_btn.pressed.connect(func() -> void:
-			_craft_status_label.text = "🔨 Fabrication de [%s] terminée avec succès ! Objet déposé dans votre sac à dos." % str(captured_r["name"])
-			item_crafted.emit(str(captured_r["name"]), float(captured_r["base_quality"]))
+			_attempt_craft(captured_r)
 		)
 		hb.add_child(craft_btn)
 
 		card.add_child(hb)
 		_schematic_list.add_child(card)
+
+
+func _attempt_craft(r: Dictionary) -> void:
+	var r_name: String = str(r["name"])
+	var costs: Dictionary = r.get("costs", {})
+	var result_it: Dictionary = r.get("result_item", {})
+
+	if inventory_ref != null and inventory_ref.has_method("get_item_count"):
+		# 1. Vérification des ressources requises
+		for item_id in costs.keys():
+			var needed: int = int(costs[item_id])
+			var owned: int = int(inventory_ref.call("get_item_count", item_id))
+			if owned < needed:
+				_craft_status_label.text = "⚠ Ressources insuffisantes : Requis %d x [%s] (Possédé : %d). Allez forer ou dépecer !" % [needed, item_id, owned]
+				return
+
+		# 2. Déduction des ressources de l'inventaire
+		for item_id in costs.keys():
+			var needed: int = int(costs[item_id])
+			inventory_ref.call("remove_item", item_id, needed)
+
+		# 3. Ajout de l'objet manufacturé dans l'inventaire
+		if not result_it.is_empty():
+			inventory_ref.call("add_item", result_it)
+
+	_craft_status_label.text = "🔨 Fabrication de [%s] terminée avec succès ! Objet déposé dans votre sac à dos [I]." % r_name
+	item_crafted.emit(r_name, float(r.get("base_quality", 85.0)))
 
 
 func toggle() -> void:

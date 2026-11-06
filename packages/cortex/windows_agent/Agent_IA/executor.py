@@ -205,7 +205,7 @@ def list_directory(path="."):
 
 def read_file(path):
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8', errors='replace') as f:
             return {"status": "ok", "content": f.read()}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -737,6 +737,19 @@ def get_electron_session(**kwargs):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+def inspect_autostart(**kwargs):
+    import subprocess
+    cmd = """
+    $run = Get-ItemProperty 'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run', 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -ErrorAction SilentlyContinue | Out-String
+    $startupFiles = Get-ChildItem ([Environment]::GetFolderPath('Startup')), ([Environment]::GetFolderPath('CommonStartup')) -ErrorAction SilentlyContinue | Select-Object FullName, Name | ConvertTo-Json
+    @{ run = $run; startup = ($startupFiles | ConvertFrom-Json) } | ConvertTo-Json -Depth 4
+    """
+    try:
+        out = subprocess.check_output(["powershell", "-NoProfile", "-Command", cmd], text=True)
+        return {"status": "ok", "autostart": out.strip()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 def get_scheduled_tasks(**kwargs):
     import subprocess
     ps_cmd = "Get-ScheduledTask | Where-Object { $_.TaskName -match \"LBG|Compagnon|Agent\" } | Select-Object TaskName, State | ConvertTo-Json"
@@ -755,9 +768,10 @@ def kill_all_electron(**kwargs):
         return {"status": "ok", "message": "No electron running or: " + str(e.output)}
 
 def get_task_xml(**kwargs):
+    task_name = kwargs.get("task_name") or "LBG-AgentIA-logon"
     import subprocess
     try:
-        out = subprocess.check_output(["schtasks", "/Query", "/TN", "LBG-AgentIA-logon", "/XML"], text=True)
+        out = subprocess.check_output(["schtasks", "/Query", "/TN", task_name, "/XML"], text=True)
         return {"status": "ok", "xml": out[:1200]}
     except Exception as e:
         return {"status": "error", "message": str(e)}

@@ -37,6 +37,13 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 		opts.append({"id": "harvest_meat", "label": "🥩 Dépecer Viande"})
 		opts.append({"id": "harvest_hide", "label": "🥋 Dépecer Cuir"})
 		opts.append({"id": "harvest_bone", "label": "🦴 Dépecer Os"})
+	elif kind == "creature_lair":
+		opts.append({"id": "examine", "label": "Examiner Nid"})
+		opts.append({"id": "attack_lair", "label": "💥 Attaquer le Nid (Blaster)"})
+		opts.append({"id": "survey_fauna", "label": "🔬 Analyser l'Espèce"})
+	elif kind == "lair_debris":
+		opts.append({"id": "examine", "label": "Examiner Décombres"})
+		opts.append({"id": "loot_lair", "label": "💰 Piller Œufs & Butin Rare"})
 	elif kind == "pet":
 		opts.append({"id": "examine", "label": "Examiner Compagnon"})
 		opts.append({"id": "pet_follow", "label": "👣 Suivre Maître"})
@@ -63,6 +70,8 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 			opts.append({"id": "treat_wounds", "label": "Soigner Blessures (Méd.)"})
 		if "kell" in t_name or "yara" in t_name or "odo" in t_name or "talen" in t_name or "tobin" in t_name or "unar" in t_name:
 			opts.append({"id": "open_skills", "label": "Entraîner Compétences"})
+		if "kren" in t_name or "vao" in t_name or "recruteur" in t_name or "officier" in t_name or "commando" in t_name:
+			opts.append({"id": "open_faction_recruiter", "label": "🎖 Recrutement Militaire GCW"})
 		if kind == "player":
 			opts.append({"id": "tactical_strike", "label": "⚔ Duel Tactique HAM"})
 	elif kind == "beast":

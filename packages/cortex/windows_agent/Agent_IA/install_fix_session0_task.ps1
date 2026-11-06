@@ -36,9 +36,9 @@ $settings = New-ScheduledTaskSettingsSet `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 5) `
     -MultipleInstances Parallel
 # Parallel : evite IgnoreNew qui no-opait quand un fantome " Running " bloquait la remediation.
-# AtLogOn + delai : session bureau prete, service S0 deja eventuellement demarre au boot.
+# AtLogOn + delai court : session bureau prete, service S0 deja eventuellement demarre au boot.
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $domainUser
-$logonTrigger.Delay = "PT45S"
+$logonTrigger.Delay = "PT5S"
 Register-ScheduledTask `
     -TaskName $name `
     -Action $action `

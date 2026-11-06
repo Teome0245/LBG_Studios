@@ -23,6 +23,42 @@ var _waypoints: Array = [
 
 var _pets: Array = [
 	{
+		"pet_id": "pcd_speeder_x34",
+		"name": "Landspeeder X-34 Personnel",
+		"species": "Véhicule Répulseur Léger (28 m/s)",
+		"level": 1,
+		"health": 1500,
+		"max_health": 1500,
+		"loyalty": 100,
+		"hunger": 0,
+		"active_in_world": false,
+		"commands_learned": ["mount", "store", "repair", "cruise"]
+	},
+	{
+		"pet_id": "pcd_swoop_bike",
+		"name": "Swoop Bike Rapide",
+		"species": "Moto-Jet Haute Vitesse (36 m/s)",
+		"level": 1,
+		"health": 1200,
+		"max_health": 1200,
+		"loyalty": 100,
+		"hunger": 0,
+		"active_in_world": false,
+		"commands_learned": ["mount", "store", "turbo"]
+	},
+	{
+		"pet_id": "pcd_dewback_mount",
+		"name": "Dewback Dressé de Selle",
+		"species": "Monture Reptilienne des Dunes",
+		"level": 5,
+		"health": 2200,
+		"max_health": 2200,
+		"loyalty": 95,
+		"hunger": 10,
+		"active_in_world": false,
+		"commands_learned": ["mount", "follow", "stay", "feed", "store"]
+	},
+	{
 		"pet_id": "pcd_chacal_01",
 		"name": "Chiot des Sables",
 		"species": "Chacal Doré (Juvénile)",

@@ -238,5 +238,32 @@ func _init() -> void:
 	struct_ui._toggle_privacy()
 	assert(bool(struct_ui._structure_data.get("is_public")) == false, "La bascule ACL Public/Privé doit fonctionner")
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 9 Composants UI SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad, Fiche HAM 9-stats, Bazar, Housing) vérifiés avec succès")
+	# Test Nouveaux Composants Connectés : Target Frame, Chat Box, Crafting Effectif & Audio
+	var SwgTargetFrameScript := preload("res://scripts/swg_target_frame.gd")
+	var target_frame = SwgTargetFrameScript.new()
+	assert(target_frame != null, "Échec instanciation SwgTargetFrame")
+
+	var SwgChatBoxScript := preload("res://scripts/swg_chat_box.gd")
+	var chat_box = SwgChatBoxScript.new()
+	assert(chat_box != null, "Échec instanciation SwgChatBox")
+	chat_box.add_log("Message test spatial", "spatial")
+	chat_box.add_log("Log dégâts combat", "combat")
+	assert(chat_box._history_spatial.size() >= 1 and chat_box._history_combat.size() >= 1, "Historiques chat incorrects")
+
+	var SwgInventoryScript := preload("res://scripts/swg_inventory_paperdoll.gd")
+	var inv_doll = SwgInventoryScript.new()
+	assert(inv_doll != null, "Échec instanciation SwgInventoryPaperdoll")
+	inv_doll.add_item({"id": "ore_iron", "name": "Minerai Ferrique", "qty": 50, "slot": "crafting"})
+	assert(inv_doll.get_item_count("ore_iron") == 170, "Stacking et décompte d'inventaire incorrect")
+
+	var SwgCraftingScript := preload("res://scripts/swg_crafting_panel.gd")
+	var crafting = SwgCraftingScript.new()
+	assert(crafting != null, "Échec instanciation SwgCraftingPanel")
+	crafting.inventory_ref = inv_doll
+
+	var SwgAudioSynthesizerScript := preload("res://scripts/swg_audio_synthesizer.gd")
+	var synth_audio = SwgAudioSynthesizerScript.new()
+	assert(synth_audio != null, "Échec instanciation SwgAudioSynthesizer")
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 14 Composants UI SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad, Fiche HAM 9-stats, Bazar, Housing, Target Frame, Chat Box, Crafting Réel, Papier-Doll, Audio) vérifiés avec succès")
 	quit(0)

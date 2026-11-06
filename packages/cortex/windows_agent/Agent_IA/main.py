@@ -61,6 +61,12 @@ logger = logging.getLogger("Agent_IA")
 
 app = FastAPI(title="Windows Agent Managed (Auto-Learning)")
 
+
+@app.on_event("startup")
+async def _on_startup_watchdog():
+    _start_session0_auto_watchdog()
+
+
 # -----------------------------------------------------------------------------
 # Desktop config hot-reload (sans relancer uvicorn)
 # -----------------------------------------------------------------------------
@@ -1132,6 +1138,53 @@ def _desktop_listener_session_info() -> dict[str, object]:
     return info
 
 
+def _active_console_session_id() -> int | None:
+    """Session ID de la console physique/interactive Windows (WTSGetActiveConsoleSessionId)."""
+    try:
+        import ctypes
+
+        sid = ctypes.windll.kernel32.WTSGetActiveConsoleSessionId()
+        if sid != 0xFFFFFFFF and sid is not None:
+            return int(sid)
+    except Exception:
+        pass
+    return None
+
+
+def _start_session0_auto_watchdog() -> None:
+    """Watchdog autonome : si Agent_IA est en Session 0 (au boot de la machine),
+    surveille l'arrivée de la session utilisateur interactive.
+    Dès qu'un utilisateur se connecte (active_sid > 0), déclenche automatiquement
+    la bascule vers la session bureau pour ne jamais rester coincé en Session 0.
+    """
+    import threading
+
+    def _watchdog_loop() -> None:
+        time.sleep(3.0)
+        while True:
+            try:
+                info = _desktop_listener_session_info()
+                if info.get("self_session_id") == 0 or info.get("session0_risk") is True:
+                    active_sid = _active_console_session_id()
+                    if active_sid is not None and active_sid > 0:
+                        logger.warning(
+                            "[Session0 Watchdog] Session console interactive detectee (sid=%s) alors qu'Agent_IA est en Session 0. Auto-remediation...",
+                            active_sid,
+                        )
+                        _run_fix_session0_task(dry_run=False)
+                        time.sleep(25.0)
+                    else:
+                        time.sleep(5.0)
+                else:
+                    time.sleep(30.0)
+            except Exception as e:
+                logger.debug("[Session0 Watchdog] err: %s", e)
+                time.sleep(10.0)
+
+    t = threading.Thread(target=_watchdog_loop, name="Session0Watchdog", daemon=True)
+    t.start()
+
+
 def _read_fix_session0_log(*, max_lines: int = 40) -> str:
     """Queue du journal de remédiation (best-effort)."""
     path = Path(r"C:\Agent_IA\logs\fix_session0.log")
@@ -1171,7 +1224,7 @@ def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
                     + task
                     + "' -ErrorAction SilentlyContinue; Start-Sleep 1 }; "
                     f"Start-ScheduledTask -TaskName '{task}'; "
-                    "$deadline=(Get-Date).AddSeconds(45); "
+                    "$deadline=(Get-Date).AddSeconds(15); "
                     "do { "
                     f"  $i=Get-ScheduledTaskInfo -TaskName '{task}' -ErrorAction SilentlyContinue; "
                     f"  $st=(Get-ScheduledTask -TaskName '{task}').State; "
@@ -1190,7 +1243,7 @@ def _run_fix_session0_task(*, dry_run: bool) -> dict[str, object]:
             ],
             capture_output=True,
             text=True,
-            timeout=90,
+            timeout=30,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         detail = ((r.stdout or "") + "\n" + (r.stderr or "")).strip()

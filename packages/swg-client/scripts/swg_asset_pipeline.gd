@@ -921,6 +921,141 @@ static func build_swg_tatooine_house(pos: Vector3, yaw_deg: float = 0.0, variant
 	return root
 
 
+## Bâtiment Ouvert Entrable (POB) — Maison de Joueur Meublée & Vendeur Personnel SWG Pre-CU
+static func build_swg_enterable_player_house(pos: Vector3, yaw_deg: float = 0.0, house_name: String = "Maison de Voyageur") -> Node3D:
+	var root := Node3D.new()
+	root.name = "Enterable_House_" + house_name.replace(" ", "_")
+	root.position = pos
+	root.rotation_degrees.y = yaw_deg
+	root.set_meta("display_name", house_name)
+	root.set_meta("entity_kind", "housing")
+
+	var mat_wall := StandardMaterial3D.new()
+	mat_wall.albedo_color = Color(0.76, 0.64, 0.50) # Pisé chaud
+	mat_wall.roughness = 0.9
+
+	var mat_floor := StandardMaterial3D.new()
+	mat_floor.albedo_color = Color(0.45, 0.35, 0.28) # Dalles cuites
+	mat_floor.roughness = 0.8
+
+	var mat_couch := StandardMaterial3D.new()
+	mat_couch.albedo_color = Color(0.65, 0.25, 0.2) # Cuir pourpre
+
+	var mat_table := StandardMaterial3D.new()
+	mat_table.albedo_color = Color(0.25, 0.22, 0.20)
+	mat_table.metallic = 0.5
+
+	var sb := StaticBody3D.new()
+
+	# 1. Sol intérieur carrelé (8m x 8m)
+	var floor_mesh := MeshInstance3D.new()
+	var f_box := BoxMesh.new()
+	f_box.size = Vector3(8.2, 0.2, 8.2)
+	floor_mesh.mesh = f_box
+	floor_mesh.position = Vector3(0, 0.1, 0)
+	floor_mesh.set_surface_override_material(0, mat_floor)
+	sb.add_child(floor_mesh)
+
+	var f_col := CollisionShape3D.new()
+	var fc_box := BoxShape3D.new()
+	fc_box.size = Vector3(8.2, 0.2, 8.2)
+	f_col.shape = fc_box
+	f_col.position = Vector3(0, 0.1, 0)
+	sb.add_child(f_col)
+
+	# 2. Toit / Plafond (Hauteur 3.8m)
+	var roof_mesh := MeshInstance3D.new()
+	var r_box := BoxMesh.new()
+	r_box.size = Vector3(8.6, 0.3, 8.6)
+	roof_mesh.mesh = r_box
+	roof_mesh.position = Vector3(0, 3.8, 0)
+	roof_mesh.set_surface_override_material(0, mat_wall)
+	sb.add_child(roof_mesh)
+
+	# 3. Murs avec ouverture de porte franchissable à Z = +4.0
+	_add_wall_segment(sb, Vector3(0, 1.9, -4.0), Vector3(8.4, 3.6, 0.4), mat_wall)
+	_add_wall_segment(sb, Vector3(-4.0, 1.9, 0), Vector3(0.4, 3.6, 8.0), mat_wall)
+	_add_wall_segment(sb, Vector3(4.0, 1.9, 0), Vector3(0.4, 3.6, 8.0), mat_wall)
+	_add_wall_segment(sb, Vector3(-2.6, 1.9, 4.0), Vector3(2.8, 3.6, 0.4), mat_wall)
+	_add_wall_segment(sb, Vector3(2.6, 1.9, 4.0), Vector3(2.8, 3.6, 0.4), mat_wall)
+	_add_wall_segment(sb, Vector3(0, 3.2, 4.0), Vector3(2.4, 1.2, 0.4), mat_wall)
+
+	# 4. Éclairage chaleureux intérieur
+	var in_light := OmniLight3D.new()
+	in_light.position = Vector3(0, 3.2, 0)
+	in_light.light_color = Color(1.0, 0.85, 0.65)
+	in_light.light_energy = 2.8
+	in_light.omni_range = 7.5
+	root.add_child(in_light)
+
+	# 5. Mobilier Intérieur : Table basse, banquettes, coffre de maison
+	var table := MeshInstance3D.new()
+	var t_cyl := CylinderMesh.new()
+	t_cyl.top_radius = 0.9
+	t_cyl.bottom_radius = 0.9
+	t_cyl.height = 0.55
+	table.mesh = t_cyl
+	table.position = Vector3(-1.2, 0.45, -1.0)
+	table.set_surface_override_material(0, mat_table)
+	root.add_child(table)
+
+	var couch := MeshInstance3D.new()
+	var c_box := BoxMesh.new()
+	c_box.size = Vector3(2.2, 0.5, 0.8)
+	couch.mesh = c_box
+	couch.position = Vector3(-1.2, 0.4, -2.4)
+	couch.set_surface_override_material(0, mat_couch)
+	root.add_child(couch)
+
+	# Coffre de Stockage de Maison
+	var chest := MeshInstance3D.new()
+	var ch_box := BoxMesh.new()
+	ch_box.size = Vector3(1.2, 0.8, 0.7)
+	chest.mesh = ch_box
+	chest.position = Vector3(2.8, 0.5, -2.8)
+	var mat_chest := StandardMaterial3D.new()
+	mat_chest.albedo_color = Color(0.2, 0.6, 0.7)
+	chest.set_surface_override_material(0, mat_chest)
+	root.add_child(chest)
+
+	var chest_lbl := Label3D.new()
+	chest_lbl.text = "◈ Coffre Sécurisé de Maison ◈"
+	chest_lbl.position = Vector3(2.8, 1.2, -2.8)
+	chest_lbl.font_size = 11
+	chest_lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	chest_lbl.modulate = Color(0.4, 0.9, 1.0)
+	root.add_child(chest_lbl)
+
+	# 6. Comptoir et Vendeur PNJ Personnel (Player Vendor)
+	var bar_counter := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(2.2, 1.0, 0.7)
+	bar_counter.mesh = b_box
+	bar_counter.position = Vector3(2.4, 0.6, 1.2)
+	bar_counter.set_surface_override_material(0, mat_table)
+	root.add_child(bar_counter)
+
+	root.add_child(sb)
+	return root
+
+
+static func _add_wall_segment(parent: Node3D, pos: Vector3, size_vec: Vector3, mat: Material) -> void:
+	var mesh_inst := MeshInstance3D.new()
+	var b_mesh := BoxMesh.new()
+	b_mesh.size = size_vec
+	mesh_inst.mesh = b_mesh
+	mesh_inst.position = pos
+	mesh_inst.set_surface_override_material(0, mat)
+	parent.add_child(mesh_inst)
+
+	var col_inst := CollisionShape3D.new()
+	var b_shape := BoxShape3D.new()
+	b_shape.size = size_vec
+	col_inst.shape = b_shape
+	col_inst.position = pos
+	parent.add_child(col_inst)
+
+
 ## 5. Porte Fortifiée de Ville & Mur d'Enceinte (City Wall & Gate)
 static func build_swg_city_wall_and_gate(pos: Vector3, yaw_deg: float = 0.0, gate_name: String = "Porte Ouest") -> Node3D:
 	var root := Node3D.new()
@@ -2137,5 +2272,219 @@ static func build_caravan_bantha(pos: Vector3) -> Node3D:
 			bantha.add_child(leg)
 
 	return bantha
+
+
+## Modèle 3D de Stormtrooper Impérial SWG Pre-CU
+static func build_stormtrooper_visual(is_officer: bool = false) -> Node3D:
+	var trooper := Node3D.new()
+	trooper.name = "Stormtrooper_Visual"
+
+	var mat_armor := StandardMaterial3D.new()
+	mat_armor.albedo_color = Color(0.96, 0.96, 0.98) # Plastron blanc
+	mat_armor.roughness = 0.25
+	mat_armor.metallic = 0.15
+
+	var mat_black := StandardMaterial3D.new()
+	mat_black.albedo_color = Color(0.08, 0.08, 0.1) # Combinaison sous-armure
+	mat_black.roughness = 0.8
+
+	# Corps / Plastron
+	var torso := MeshInstance3D.new()
+	var t_box := BoxMesh.new()
+	t_box.size = Vector3(0.5, 0.65, 0.3)
+	torso.mesh = t_box
+	torso.position = Vector3(0, 1.15, 0)
+	torso.set_surface_override_material(0, mat_armor)
+	trooper.add_child(torso)
+
+	# Casque emblématique
+	var helmet := MeshInstance3D.new()
+	var h_mesh := BoxMesh.new()
+	h_mesh.size = Vector3(0.32, 0.35, 0.32)
+	helmet.mesh = h_mesh
+	helmet.position = Vector3(0, 1.62, 0)
+	helmet.set_surface_override_material(0, mat_armor)
+	trooper.add_child(helmet)
+
+	# Visière sombre
+	var visor := MeshInstance3D.new()
+	var v_box := BoxMesh.new()
+	v_box.size = Vector3(0.24, 0.08, 0.05)
+	visor.mesh = v_box
+	visor.position = Vector3(0, 1.62, 0.16)
+	var mat_vis := StandardMaterial3D.new()
+	mat_vis.albedo_color = Color(0.02, 0.02, 0.04)
+	visor.set_surface_override_material(0, mat_vis)
+	trooper.add_child(visor)
+
+	# Épaulière d'officier orange si applicable
+	if is_officer:
+		var pldrn := MeshInstance3D.new()
+		var p_box := BoxMesh.new()
+		p_box.size = Vector3(0.18, 0.15, 0.22)
+		pldrn.mesh = p_box
+		pldrn.position = Vector3(-0.32, 1.45, 0)
+		var mat_p := StandardMaterial3D.new()
+		mat_p.albedo_color = Color(0.95, 0.45, 0.1) # Orange Commandant
+		pldrn.set_surface_override_material(0, mat_p)
+		trooper.add_child(pldrn)
+
+	# Bras et Blaster E-11
+	for sx in [-0.28, 0.28]:
+		var arm := MeshInstance3D.new()
+		var a_cyl := CylinderMesh.new()
+		a_cyl.top_radius = 0.08
+		a_cyl.bottom_radius = 0.07
+		a_cyl.height = 0.6
+		arm.mesh = a_cyl
+		arm.position = Vector3(sx, 1.15, 0)
+		arm.set_surface_override_material(0, mat_black)
+		trooper.add_child(arm)
+
+	# Blaster E-11 braqué en avant
+	var blaster := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(0.08, 0.12, 0.5)
+	blaster.mesh = b_box
+	blaster.position = Vector3(0.2, 1.1, 0.35)
+	blaster.set_surface_override_material(0, mat_black)
+	trooper.add_child(blaster)
+
+	# Jambes protégées
+	for lx in [-0.14, 0.14]:
+		var leg := MeshInstance3D.new()
+		var l_cyl := CylinderMesh.new()
+		l_cyl.top_radius = 0.1
+		l_cyl.bottom_radius = 0.09
+		l_cyl.height = 0.8
+		leg.mesh = l_cyl
+		leg.position = Vector3(lx, 0.4, 0)
+		leg.set_surface_override_material(0, mat_armor)
+		trooper.add_child(leg)
+
+	return trooper
+
+
+## Modèle 3D de Soldat de l'Alliance Rebelle SWG Pre-CU
+static func build_rebel_soldier_visual(is_commando: bool = false) -> Node3D:
+	var rebel := Node3D.new()
+	rebel.name = "RebelSoldier_Visual"
+
+	var mat_vest := StandardMaterial3D.new()
+	mat_vest.albedo_color = Color(0.38, 0.44, 0.32) if not is_commando else Color(0.25, 0.28, 0.32) # Treillis kaki/gris
+	mat_vest.roughness = 0.8
+
+	var mat_helmet := StandardMaterial3D.new()
+	mat_helmet.albedo_color = Color(0.85, 0.82, 0.72) # Casque beige / blanc de l'Alliance
+	mat_helmet.roughness = 0.5
+
+	var mat_pants := StandardMaterial3D.new()
+	mat_pants.albedo_color = Color(0.48, 0.42, 0.34)
+
+	# Torse
+	var torso := MeshInstance3D.new()
+	var t_box := BoxMesh.new()
+	t_box.size = Vector3(0.48, 0.65, 0.28)
+	torso.mesh = t_box
+	torso.position = Vector3(0, 1.15, 0)
+	torso.set_surface_override_material(0, mat_vest)
+	rebel.add_child(torso)
+
+	# Casque de combat à visière évasée
+	var helm := MeshInstance3D.new()
+	var h_cyl := CylinderMesh.new()
+	h_cyl.top_radius = 0.18
+	h_cyl.bottom_radius = 0.26
+	h_cyl.height = 0.25
+	helm.mesh = h_cyl
+	helm.position = Vector3(0, 1.65, 0)
+	helm.set_surface_override_material(0, mat_helmet)
+	rebel.add_child(helm)
+
+	# Fusil blaster DH-17
+	var rifle := MeshInstance3D.new()
+	var r_box := BoxMesh.new()
+	r_box.size = Vector3(0.08, 0.14, 0.65)
+	rifle.mesh = r_box
+	rifle.position = Vector3(0.22, 1.15, 0.38)
+	var mat_gun := StandardMaterial3D.new()
+	mat_gun.albedo_color = Color(0.12, 0.12, 0.15)
+	mat_gun.metallic = 0.8
+	rifle.set_surface_override_material(0, mat_gun)
+	rebel.add_child(rifle)
+
+	# Jambes
+	for lx in [-0.14, 0.14]:
+		var leg := MeshInstance3D.new()
+		var l_cyl := CylinderMesh.new()
+		l_cyl.top_radius = 0.1
+		l_cyl.bottom_radius = 0.08
+		l_cyl.height = 0.8
+		leg.mesh = l_cyl
+		leg.position = Vector3(lx, 0.4, 0)
+		leg.set_surface_override_material(0, mat_pants)
+		rebel.add_child(leg)
+
+	return rebel
+
+
+## Tourelle de Défense Factionnelle Automatique (Turret) SWG Pre-CU
+static func build_faction_turret(pos: Vector3, faction_type: String = "imperial") -> Node3D:
+	var turret := Node3D.new()
+	turret.name = "FactionTurret_%s" % faction_type
+	turret.position = pos
+
+	var col_base := Color(0.85, 0.85, 0.9) if faction_type == "imperial" else Color(0.4, 0.45, 0.38)
+	var mat_t := StandardMaterial3D.new()
+	mat_t.albedo_color = col_base
+	mat_t.metallic = 0.8
+	mat_t.roughness = 0.3
+
+	# Base pyramidale
+	var base := MeshInstance3D.new()
+	var b_cyl := CylinderMesh.new()
+	b_cyl.top_radius = 0.9
+	b_cyl.bottom_radius = 1.4
+	b_cyl.height = 1.2
+	base.mesh = b_cyl
+	base.position = Vector3(0, 0.6, 0)
+	base.set_surface_override_material(0, mat_t)
+	turret.add_child(base)
+
+	# Dôme rotatif de visée
+	var dome := MeshInstance3D.new()
+	var d_sph := SphereMesh.new()
+	d_sph.radius = 0.75
+	d_sph.height = 0.9
+	dome.mesh = d_sph
+	dome.position = Vector3(0, 1.4, 0)
+	dome.set_surface_override_material(0, mat_t)
+	turret.add_child(dome)
+
+	# Double canon laser
+	for cx in [-0.25, 0.25]:
+		var barrel := MeshInstance3D.new()
+		var b_mesh := CylinderMesh.new()
+		b_mesh.top_radius = 0.08
+		b_mesh.bottom_radius = 0.09
+		b_mesh.height = 1.8
+		barrel.mesh = b_mesh
+		barrel.rotation_degrees = Vector3(90, 0, 0)
+		barrel.position = Vector3(cx, 1.4, 0.9)
+		var mat_b := StandardMaterial3D.new()
+		mat_b.albedo_color = Color(0.1, 0.1, 0.12)
+		mat_b.metallic = 0.9
+		barrel.set_surface_override_material(0, mat_b)
+		turret.add_child(barrel)
+
+	# Voyant radar de détection
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 1.8, 0)
+	light.light_color = Color(1.0, 0.2, 0.1) if faction_type == "imperial" else Color(0.2, 0.9, 0.3)
+	light.light_energy = 2.0
+	light.omni_range = 5.0
+	turret.add_child(light)
+
+	return turret
 
 

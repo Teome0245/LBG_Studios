@@ -51,7 +51,17 @@ func unhandled_input(event: InputEvent) -> void:
 			main._handle_world_right_click(main._canvas_mouse_pos())
 			main.get_viewport().set_input_as_handled()
 	if event is InputEventKey and event.pressed:
+		if main.swg_chat_box and main.swg_chat_box.has_method("is_chat_focused") and main.swg_chat_box.is_chat_focused():
+			if event.keycode == KEY_ESCAPE:
+				main.swg_chat_box._input_line.release_focus()
+				main.get_viewport().set_input_as_handled()
+			return
+
 		match event.keycode:
+			KEY_TAB:
+				if main.has_method("_cycle_swg_target"):
+					main._cycle_swg_target()
+					main.get_viewport().set_input_as_handled()
 			KEY_F1:
 				main._focus_bot("Lia")
 			KEY_F2:
@@ -94,7 +104,12 @@ func unhandled_input(event: InputEvent) -> void:
 				if e and main.camera:
 					main.camera.position = e.position
 			KEY_T:
-				toggle_talents()
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_crafting_panel and main.swg_crafting_panel.has_method("toggle"):
+					main.swg_crafting_panel.toggle()
+				else:
+					toggle_talents()
 			KEY_K:
 				if main.has_method("_ensure_swg_ui"):
 					main._ensure_swg_ui()
@@ -114,7 +129,12 @@ func unhandled_input(event: InputEvent) -> void:
 				if main.swg_experiment_panel and main.swg_experiment_panel.has_method("toggle"):
 					main.swg_experiment_panel.toggle()
 			KEY_I:
-				toggle_inventory()
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_inventory_paperdoll and main.swg_inventory_paperdoll.has_method("toggle"):
+					main.swg_inventory_paperdoll.toggle()
+				else:
+					toggle_inventory()
 			KEY_J:
 				toggle_missions()
 			KEY_P:
@@ -133,7 +153,12 @@ func unhandled_input(event: InputEvent) -> void:
 						e.queue_redraw()
 				print("[Main] nameplates=%s" % _EntityScript.show_nameplates)
 			KEY_ENTER, KEY_KP_ENTER:
-				if main.net_world and main.net_world.hub_runtime_enabled():
+				if main.has_method("_ensure_swg_ui"):
+					main._ensure_swg_ui()
+				if main.swg_chat_box and main.swg_chat_box.has_method("grab_chat_focus"):
+					main.swg_chat_box.grab_chat_focus()
+					main.get_viewport().set_input_as_handled()
+				elif main.net_world and main.net_world.hub_runtime_enabled():
 					if main._dialogue_panel and main._dialogue_panel.get("visible") and main._dialogue_panel.has_method("hide_portrait"):
 						main._dialogue_panel.hide_portrait()
 					focus_hub_chat_input()

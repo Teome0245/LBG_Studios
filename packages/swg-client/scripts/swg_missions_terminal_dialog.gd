@@ -63,6 +63,22 @@ func _build_ui() -> void:
 func _populate_missions() -> void:
 	var missions: Array = [
 		{
+			"id": "mis_lair_chacals",
+			"type": "💥 LAIR DESTROY",
+			"title": "Destruction de Nid : Tumulus des Chacals des Dunes",
+			"target": "Dunes Ouest Lair (-130m, -65m)",
+			"reward": "1 250 Crédits • 350 XP Chasseur",
+			"desc": "Éradiquez le nid des prédateurs des sables. Attention aux vagues de gardiens furieux."
+		},
+		{
+			"id": "mis_lair_scarabees",
+			"type": "💥 LAIR DESTROY",
+			"title": "Extermination : Nid de Scarabées Obsidiens",
+			"target": "Canyon Est Lair (140m, 95m)",
+			"reward": "1 600 Crédits • Chitine Pure de Nid",
+			"desc": "Détruisez le nid souterrain de scarabées avant qu'ils ne submergent la station minière."
+		},
+		{
 			"id": "mis_chacals_ouest",
 			"type": "⚔ DESTRUCTION",
 			"title": "Chasse aux Prédateurs : Meute de Chacals Dorés",

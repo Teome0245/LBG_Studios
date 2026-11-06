@@ -122,6 +122,8 @@ func _build_ui() -> void:
 
 
 func _render_paperdoll_slots() -> void:
+	if _paperdoll_container == null:
+		return
 	for c in _paperdoll_container.get_children():
 		c.queue_free()
 
@@ -160,6 +162,8 @@ func _render_paperdoll_slots() -> void:
 
 
 func _render_inventory_grid() -> void:
+	if _grid_container == null:
+		return
 	for c in _grid_container.get_children():
 		c.queue_free()
 
@@ -232,7 +236,8 @@ func add_item(item_data: Dictionary) -> bool:
 		if str(it.get("id", "")) == item_id and str(it.get("slot", "")) != "main_hand" and str(it.get("slot", "")) != "chest" and str(it.get("slot", "")) != "legs":
 			it["qty"] = int(it.get("qty", 1)) + add_qty
 			_render_inventory_grid()
-			_info_label.text = "✓ Reçu : +%d %s (Total : %d)" % [add_qty, it.get("name", ""), it["qty"]]
+			if _info_label != null:
+				_info_label.text = "✓ Reçu : +%d %s (Total : %d)" % [add_qty, it.get("name", ""), it["qty"]]
 			return true
 
 	# 2. Nouvel emplacement dans la limite des 40 slots
@@ -242,10 +247,12 @@ func add_item(item_data: Dictionary) -> bool:
 			new_it["qty"] = add_qty
 		inventory_items.append(new_it)
 		_render_inventory_grid()
-		_info_label.text = "✓ Nouvel objet ajouté : %s (x%d)" % [new_it.get("name", ""), new_it["qty"]]
+		if _info_label != null:
+			_info_label.text = "✓ Nouvel objet ajouté : %s (x%d)" % [new_it.get("name", ""), new_it["qty"]]
 		return true
 
-	_info_label.text = "⚠ Sac à dos plein ! Impossible de stocker %s." % item_data.get("name", "")
+	if _info_label != null:
+		_info_label.text = "⚠ Sac à dos plein ! Impossible de stocker %s." % item_data.get("name", "")
 	return false
 
 

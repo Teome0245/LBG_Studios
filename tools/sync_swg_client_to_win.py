@@ -7,11 +7,23 @@ BASE_REMOTE = "J:/swgemu/clients/swg-client"
 ENDPOINT = "http://192.168.0.10:5005/execute"
 
 FILES = [
+    "scripts/swg_species_system.gd",
+    "scripts/swg_species_dialog.gd",
+    "scripts/swg_player_controller_3d.gd",
+    "scripts/swg_faction_system.gd",
+    "scripts/swg_faction_dialog.gd",
+    "scripts/swg_datapad_panel.gd",
+    "scripts/swg_creature_lair_3d.gd",
+    "scripts/swg_missions_terminal_dialog.gd",
+    "scripts/swg_chat_box.gd",
+    "scripts/swg_target_frame.gd",
+    "scripts/swg_crafting_panel.gd",
     "scripts/swg_inventory_paperdoll.gd",
     "scripts/swg_audio_synthesizer.gd",
     "scripts/swg_asset_pipeline.gd",
     "scripts/swg_radial_menu.gd",
     "scripts/swg_world_3d.gd",
+    "tools/swg_client_3d_selftest.gd",
 ]
 
 for rel_path in FILES:

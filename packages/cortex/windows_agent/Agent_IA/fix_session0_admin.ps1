@@ -49,6 +49,16 @@ if (Test-Path "C:\Agent_IA\repair_vghd_deps.ps1") {
   }
 }
 
+# 1c) Mettre a jour la definition de la tache LBG-AgentIA-fix-session0 (delai court PT5S)
+if (Test-Path "C:\Agent_IA\install_fix_session0_task.ps1") {
+  try {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Agent_IA\install_fix_session0_task.ps1" 2>&1 | Out-Null
+    W "install_fix_session0_task.ps1 executed"
+  } catch {
+    W "install_fix_session0_task.ps1 err: $_"
+  }
+}
+
 # 2) Tuer TOUT ce qui ecoute :5005 (toutes sessions)
 function Get-Listeners5005 {
   @(
