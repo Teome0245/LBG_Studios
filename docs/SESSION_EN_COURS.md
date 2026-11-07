@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-06  
+**Mis à jour** : 2026-11-07  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -1342,6 +1342,9 @@ _Aucun bloquant documenté pour ce bootstrap._
   - Exécution du script [`tools/smoke_rejeu_humain_d6_5174.sh`](../tools/smoke_rejeu_humain_d6_5174.sh) sur `:5174` : 7 tours exécutés sans aucune rupture ni fuite ops.
   - Verdict 100 % vert : `C1=PASS`, `C2=PASS`, `PLAN=PASS`, `GO_AHEAD=PASS` (`SMOKE_REJEU_HUMAIN_D6_OK`, conversation `rejeu-humain-d6-3fa2fffd`).
   - Salutations et suivi sans template rigide, avis franc collègue studio en causerie, plan d'action structuré markdown et absence de piège sur le go-ahead.
+- 2026-11-07 : **Unification de la synchronisation Windows SDS .10 & Hygiène Workspace** —
+  - *Outillage unifié (`tools/sync_client_to_win.py`)* : Script unique avec support `--client swg|prime|all`, `--dry-run`, gestion fine des erreurs et découverte des cibles. Wrappers de compatibilité `sync_swg_client_to_win.py` et `sync_prime_client_to_win.py` préservés.
+  - *Tests & CI* : 152/152 tests Cortex backend PASS, 505/505 tests orchestrateur PASS (0 échec), 18/18 suites Godot headless PASS. Copie de travail `main` 100% propre.
 - 2026-11-06 : **SWG Pre-CU 3D : Volets 3, 5, 4 et 1 (Factions GCW, Flourishes, PCD Datapad, Housing POB Entrable) Validés & Déployés** —
   - *Volet 3 — Guerre Civile Galactique (GCW)* : Système d'alignement (`swg_faction_system.gd`) et bureau de recrutement (`swg_faction_dialog.gd`), statuts Civilian/On-Leave/Special Forces (PvP actif mondial), points de faction, garnisons Est (Lieutenant Kren, Stormtroopers, tourelle impériale) et Sud-Ouest (Capitaine Vao, Soldats rebelles, tourelle de l'Alliance).
   - *Volet 5 — Spectacle Cantina & Flourishes* : Commandes `/flourish 1..8`, observation active `/watch` et concert `/listen`, étincelles scéniques, montée de la jauge d'inspiration et octroi du buff de clarté mentale (+250 Mental).
