@@ -1,3 +1,8 @@
+import asyncio
+from contextlib import asynccontextmanager
+import logging
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 
 from router.v1 import router as v1_router
@@ -10,44 +15,23 @@ try:
 except ImportError:
     svc_proactive = None  # type: ignore[assignment]
 
-app = FastAPI(title="LBG_IA_MMO Orchestrator", version="0.1.0")
-app.include_router(health_router)
-app.include_router(v1_router, prefix="/v1")
 
-
-@app.on_event("startup")
-def _startup() -> None:
-    import asyncio
-
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     svc_brain.ensure_started()
     svc_lia_autonomy.ensure_started()
     svc_jobs.ensure_started()
     if svc_proactive is not None:
         svc_proactive.ensure_started()
+
     try:
         from team import presence as team_presence
         from team import store as team_store
 
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-        if loop is not None:
-            team_presence.bind_loop(loop)
+        loop = asyncio.get_running_loop()
+        team_presence.bind_loop(loop)
         tasks = team_store.list_tasks(limit=200)
         team_presence.rebuild_from_tasks(tasks)
-    except Exception:
-        pass
-
-
-@app.on_event("startup")
-async def _presence_bind_loop() -> None:
-    import asyncio
-
-    try:
-        from team import presence as team_presence
-
-        team_presence.bind_loop(asyncio.get_running_loop())
 
         async def _recover_loop() -> None:
             while True:
@@ -62,17 +46,6 @@ async def _presence_bind_loop() -> None:
     except Exception:
         pass
 
-
-@app.on_event("startup")
-async def _llm_model_probe_loop() -> None:
-    """Probe les modèles LLM cloud au démarrage puis toutes les 10 min.
-
-    Si un modèle configuré n'est plus disponible, applique auto_fix_env
-    pour basculer sur le meilleur modèle disponible (runtime uniquement).
-    """
-    import asyncio
-    import logging
-
     logger = logging.getLogger("lbg.llm_model_probe")
 
     async def _probe_cycle() -> None:
@@ -80,6 +53,7 @@ async def _llm_model_probe_loop() -> None:
         while True:
             try:
                 from team.llm_model_probe import auto_fix_env
+
                 summary = auto_fix_env()
                 if summary.get("patched"):
                     logger.warning("LLM model auto-fix applied: %s", summary["changes"])
@@ -91,3 +65,9 @@ async def _llm_model_probe_loop() -> None:
 
     asyncio.create_task(_probe_cycle())
 
+    yield
+
+
+app = FastAPI(title="LBG_IA_MMO Orchestrator", version="0.1.0", lifespan=lifespan)
+app.include_router(health_router)
+app.include_router(v1_router, prefix="/v1")

@@ -245,11 +245,12 @@
         "godot_dev_workflow",
         "b53cbce0-d4b0-4be7-ad1c-06550704c88d",
         "b996663d-516c-46cf-96d5-a83c1db765bb",
-        "c718d838-4212-45b5-bfe8-c0f9987db02c"
+        "c718d838-4212-45b5-bfe8-c0f9987db02c",
+        "cc8f3360-5ffd-482d-ba22-0fb277301706"
       ],
-      "hit_count": 4,
-      "last_seen_ts": 1793994917.8843691,
-      "last_seen": "2026-11-06"
+      "hit_count": 5,
+      "last_seen_ts": 1794075705.9732482,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_4e93b71f6f",
@@ -267,11 +268,13 @@
         "job:532162669e794ab1bf669de68f5ed2c3",
         "trace:0749b01443a14da182652697cc5a40d7",
         "job:3bc7c900c6a14a61ae92b5f16134ca81",
-        "trace:8e86fc14f09f4a5598f88e3c2a25c557"
+        "trace:8e86fc14f09f4a5598f88e3c2a25c557",
+        "job:29233a08eb304931b3765082f2ecafbe",
+        "trace:8adadc8f3676454090ebb3005b7712d4"
       ],
-      "hit_count": 4,
-      "last_seen_ts": 1793994918.1891866,
-      "last_seen": "2026-11-06"
+      "hit_count": 5,
+      "last_seen_ts": 1794075706.2495816,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_0ba14bb9a0",
@@ -289,11 +292,13 @@
         "job:8104ff5f1a33496a88711502abdd7f38",
         "trace:a1ac4a63fe254d76ab02de8a6cd87989",
         "job:60377dc2769f45cbb6dca238d5282e54",
-        "trace:e5036a31157f4fa0a6ba3c3932e9ad37"
+        "trace:e5036a31157f4fa0a6ba3c3932e9ad37",
+        "job:985d68a6f3ff47b3b3441648d065e055",
+        "trace:544529641f28426b8542c695e10ede2c"
       ],
-      "hit_count": 4,
-      "last_seen_ts": 1793994918.754601,
-      "last_seen": "2026-11-06"
+      "hit_count": 5,
+      "last_seen_ts": 1794075706.8038905,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_4f2cbe2ea4",
@@ -311,11 +316,13 @@
         "job:921ac868c8544ca799bada0f13769575",
         "trace:25a4ede116d5418a831f2649824e24a4",
         "job:3cdd7ab055264c1c8c736f1bb2d8fe84",
-        "trace:e4ba4d61953d4a18a3c24a786d5e046f"
+        "trace:e4ba4d61953d4a18a3c24a786d5e046f",
+        "job:e77644e7f2814144aa896717982572ce",
+        "trace:05a0646fe5ae421ab3ba4febcc75905c"
       ],
-      "hit_count": 4,
-      "last_seen_ts": 1793994918.7722158,
-      "last_seen": "2026-11-06"
+      "hit_count": 5,
+      "last_seen_ts": 1794075706.816987,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_82a6c96556",
@@ -331,11 +338,12 @@
         "2f4163a5-f478-4558-a703-c42b6ae67191",
         "fb82c964-db19-4315-afbe-93117b1276fe",
         "ef726744-f992-4fb5-9d30-3abdbb240659",
-        "fe9c6f30-aa11-474c-8b22-25059b1341f8"
+        "fe9c6f30-aa11-474c-8b22-25059b1341f8",
+        "bb6d9683-75d2-45e7-85a8-ddfb9e04dc66"
       ],
-      "hit_count": 5,
-      "last_seen_ts": 1793994919.437877,
-      "last_seen": "2026-11-06"
+      "hit_count": 6,
+      "last_seen_ts": 1794075707.323777,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_03bbfa62f1",
@@ -348,11 +356,12 @@
       "refs": [
         "f9372cd6-94ea-4b00-9387-6a91da5e89a0",
         "outcome_judge",
-        "a9813e4c-ed85-4534-892c-2e6b68cc4c71"
+        "a9813e4c-ed85-4534-892c-2e6b68cc4c71",
+        "60d6b822-8642-49f3-8f33-ccf94aebef05"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793994930.3082132,
-      "last_seen": "2026-11-06"
+      "hit_count": 3,
+      "last_seen_ts": 1794075714.6694832,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_c441e16a98",
@@ -398,11 +407,12 @@
       "do_not_repeat": "Ignorer un score judge bas sans follow-up",
       "refs": [
         "67ac0d9c-1bc9-4571-92c0-055710c2705b",
-        "outcome_judge"
+        "outcome_judge",
+        "0b7a399b-68a5-49e0-84d6-bf3bb4e2e187"
       ],
-      "hit_count": 1,
-      "last_seen_ts": 1793905081.9498267,
-      "last_seen": "2026-11-05"
+      "hit_count": 2,
+      "last_seen_ts": 1794075715.2867374,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_f73dee4b37",
@@ -433,11 +443,12 @@
         "67d032f8-1368-4dd5-b7e4-cc2d36c75128",
         "outcome_judge",
         "eb223375-962e-4b07-9079-517ebebddd45",
-        "3e6232e9-7d10-4943-88da-390ba8c351aa"
+        "3e6232e9-7d10-4943-88da-390ba8c351aa",
+        "dd5ef5a7-d044-4f81-8d9c-f5d5b6c5d7d9"
       ],
-      "hit_count": 3,
-      "last_seen_ts": 1793994939.1902428,
-      "last_seen": "2026-11-06"
+      "hit_count": 4,
+      "last_seen_ts": 1794075723.5256803,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_b44a6d962b",
@@ -458,11 +469,12 @@
         "75ad29ba-8dbc-45fa-a736-b8a943be3285",
         "2926785b-a34d-4c0c-b093-15a7f7659c76",
         "231f4785-7f31-4150-a35f-6858fd057990",
-        "ce0ce1ff-9089-4b8c-ba71-5aee6d66cf75"
+        "ce0ce1ff-9089-4b8c-ba71-5aee6d66cf75",
+        "a764f345-be4f-4443-b34f-3864231fa7f9"
       ],
-      "hit_count": 9,
-      "last_seen_ts": 1793994939.2862248,
-      "last_seen": "2026-11-06"
+      "hit_count": 10,
+      "last_seen_ts": 1794075723.603545,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_050b7c9272",
@@ -546,11 +558,12 @@
       "refs": [
         "a15d0917-579c-4a1d-a4d6-a972fef152a4",
         "outcome_judge",
-        "a5a06663-06b2-4f93-9fc8-eacbd79798e1"
+        "a5a06663-06b2-4f93-9fc8-eacbd79798e1",
+        "4a0a8490-7cbe-4242-b80b-8593a2a8ef35"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793994930.7834089,
-      "last_seen": "2026-11-06"
+      "hit_count": 3,
+      "last_seen_ts": 1794075715.1158009,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_ce92413cdf",
@@ -679,11 +692,12 @@
       "refs": [
         "a4803119-e0c8-48db-a629-39c40b0021eb",
         "outcome_judge",
-        "393395cd-d394-49ef-801d-f1848a10a463"
+        "393395cd-d394-49ef-801d-f1848a10a463",
+        "e135cf58-376b-491e-be0d-faf24d50943f"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793994926.2489083,
-      "last_seen": "2026-11-06"
+      "hit_count": 3,
+      "last_seen_ts": 1794075713.688335,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_5cf76fe0cb",
@@ -829,11 +843,60 @@
       "do_not_repeat": "Ignorer un score judge bas sans follow-up",
       "refs": [
         "f4a30484-b261-41b9-8571-60fd3baa27cc",
+        "outcome_judge",
+        "09427e3d-fed8-426b-b90d-310dff06c5cd"
+      ],
+      "hit_count": 2,
+      "last_seen_ts": 1794075715.0824032,
+      "last_seen": "2026-11-07"
+    },
+    {
+      "id": "lesson_df59fd0606",
+      "date": "2026-11-07",
+      "agent_role": "pm",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur pm_brief: Brief réunification sous-projets",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "c0cd6227-e422-49ce-8930-9516362d45f1",
         "outcome_judge"
       ],
       "hit_count": 1,
-      "last_seen_ts": 1793994930.7411785,
-      "last_seen": "2026-11-06"
+      "last_seen_ts": 1794075714.619635,
+      "last_seen": "2026-11-07"
+    },
+    {
+      "id": "lesson_f3f0ed6820",
+      "date": "2026-11-07",
+      "agent_role": "pm",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur pm_brief: Triage échec QA — analyser résultat smoke/healthz et proposer prochaines actions (parent=63d7d798-80db-4716-b4a0-cdd915b",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "452addda-1e3e-4c99-9170-acfc3bf48d6a",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794075723.9784355,
+      "last_seen": "2026-11-07"
+    },
+    {
+      "id": "lesson_c7a69d7eaa",
+      "date": "2026-11-07",
+      "agent_role": "qa",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur godot_validation_workflow: Valider client Godot",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "08a83646-8b81-4c2b-8fdc-a72c0ea36cec",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794075724.074279,
+      "last_seen": "2026-11-07"
     }
   ]
 }
