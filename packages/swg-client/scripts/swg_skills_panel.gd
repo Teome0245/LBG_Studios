@@ -128,6 +128,49 @@ func toggle() -> void:
 		refresh_tree()
 
 
+func open_panel() -> void:
+	panel_visible = true
+	visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	refresh_tree()
+
+
+func close_panel() -> void:
+	panel_visible = false
+	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func open_for_trainer(prof_id: String) -> void:
+	open_panel()
+	var target_p := prof_id.to_lower()
+	for i in range(_professions.size()):
+		var p: Dictionary = _professions[i]
+		var pid: String = str(p.get("id", "")).to_lower()
+		var pnm: String = str(p.get("name", "")).to_lower()
+		if pid == target_p or pid.contains(target_p) or pnm.contains(target_p):
+			_selected_prof_idx = i
+			if _prof_list:
+				_prof_list.select(i)
+			_paint_pyramid()
+			_paint_details()
+			if _status_label:
+				_status_label.text = "◈ Entraînement PNJ : Profession %s sélectionnée" % str(p.get("name", pid))
+			break
+
+
+func learn_box_direct(box_id: String) -> void:
+	_selected_box_id = box_id
+	if not (box_id in _learned_boxes):
+		_learned_boxes.append(box_id)
+		_used_sp += 15
+		_paint_all()
+		if _status_label:
+			_status_label.text = "✓ Compétence apprise auprès du Formateur : %s" % box_id
+		box_learned.emit({"ok": true, "learned_box": box_id})
+		learn_selected_box()
+
+
 func _ensure_ui() -> void:
 	if _grid_4x4 != null:
 		return

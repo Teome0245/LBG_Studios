@@ -246,10 +246,11 @@
         "b53cbce0-d4b0-4be7-ad1c-06550704c88d",
         "b996663d-516c-46cf-96d5-a83c1db765bb",
         "c718d838-4212-45b5-bfe8-c0f9987db02c",
-        "cc8f3360-5ffd-482d-ba22-0fb277301706"
+        "cc8f3360-5ffd-482d-ba22-0fb277301706",
+        "99cba8e9-a11d-4d66-9e61-d7642d9373c4"
       ],
-      "hit_count": 5,
-      "last_seen_ts": 1794075705.9732482,
+      "hit_count": 6,
+      "last_seen_ts": 1794075896.2661483,
       "last_seen": "2026-11-07"
     },
     {
@@ -270,10 +271,12 @@
         "job:3bc7c900c6a14a61ae92b5f16134ca81",
         "trace:8e86fc14f09f4a5598f88e3c2a25c557",
         "job:29233a08eb304931b3765082f2ecafbe",
-        "trace:8adadc8f3676454090ebb3005b7712d4"
+        "trace:8adadc8f3676454090ebb3005b7712d4",
+        "job:8bb929f822734066ac2cc8e5b3a9be0e",
+        "trace:fafa7f258c2b41dcb73a274ba5cc6bfd"
       ],
-      "hit_count": 5,
-      "last_seen_ts": 1794075706.2495816,
+      "hit_count": 6,
+      "last_seen_ts": 1794075896.5837471,
       "last_seen": "2026-11-07"
     },
     {
@@ -294,10 +297,12 @@
         "job:60377dc2769f45cbb6dca238d5282e54",
         "trace:e5036a31157f4fa0a6ba3c3932e9ad37",
         "job:985d68a6f3ff47b3b3441648d065e055",
-        "trace:544529641f28426b8542c695e10ede2c"
+        "trace:544529641f28426b8542c695e10ede2c",
+        "job:db3f149ca4204f8d99098d1890dcaaab",
+        "trace:9f23a397de544f4a86d118aa69bf50df"
       ],
-      "hit_count": 5,
-      "last_seen_ts": 1794075706.8038905,
+      "hit_count": 6,
+      "last_seen_ts": 1794075897.2602022,
       "last_seen": "2026-11-07"
     },
     {
@@ -318,10 +323,12 @@
         "job:3cdd7ab055264c1c8c736f1bb2d8fe84",
         "trace:e4ba4d61953d4a18a3c24a786d5e046f",
         "job:e77644e7f2814144aa896717982572ce",
-        "trace:05a0646fe5ae421ab3ba4febcc75905c"
+        "trace:05a0646fe5ae421ab3ba4febcc75905c",
+        "job:fb1ca1b423804fec876ec718a33e9e2a",
+        "trace:23f155b562ed491e81bc14af2fe96f2f"
       ],
-      "hit_count": 5,
-      "last_seen_ts": 1794075706.816987,
+      "hit_count": 6,
+      "last_seen_ts": 1794075897.2790477,
       "last_seen": "2026-11-07"
     },
     {
@@ -339,10 +346,11 @@
         "fb82c964-db19-4315-afbe-93117b1276fe",
         "ef726744-f992-4fb5-9d30-3abdbb240659",
         "fe9c6f30-aa11-474c-8b22-25059b1341f8",
-        "bb6d9683-75d2-45e7-85a8-ddfb9e04dc66"
+        "bb6d9683-75d2-45e7-85a8-ddfb9e04dc66",
+        "4c73e148-ba28-43bd-872a-961f305ec61c"
       ],
-      "hit_count": 6,
-      "last_seen_ts": 1794075707.323777,
+      "hit_count": 7,
+      "last_seen_ts": 1794075897.9045813,
       "last_seen": "2026-11-07"
     },
     {
@@ -391,11 +399,12 @@
       "refs": [
         "12b59a03-864e-4c5c-b69e-f4969f699a74",
         "outcome_judge",
-        "87c9c053-e7fe-404f-8f48-8ed4ca9bc88b"
+        "87c9c053-e7fe-404f-8f48-8ed4ca9bc88b",
+        "aa641037-0aab-4820-bffe-32c6e6fc9f11"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793906909.4146137,
-      "last_seen": "2026-11-05"
+      "hit_count": 3,
+      "last_seen_ts": 1794075909.2700543,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_22579c20cf",
@@ -472,8 +481,8 @@
         "ce0ce1ff-9089-4b8c-ba71-5aee6d66cf75",
         "a764f345-be4f-4443-b34f-3864231fa7f9"
       ],
-      "hit_count": 10,
-      "last_seen_ts": 1794075723.603545,
+      "hit_count": 11,
+      "last_seen_ts": 1794075917.6099267,
       "last_seen": "2026-11-07"
     },
     {
@@ -693,10 +702,11 @@
         "a4803119-e0c8-48db-a629-39c40b0021eb",
         "outcome_judge",
         "393395cd-d394-49ef-801d-f1848a10a463",
-        "e135cf58-376b-491e-be0d-faf24d50943f"
+        "e135cf58-376b-491e-be0d-faf24d50943f",
+        "d3e432d8-98d2-43e1-ad26-be92439a2ced"
       ],
-      "hit_count": 3,
-      "last_seen_ts": 1794075713.688335,
+      "hit_count": 4,
+      "last_seen_ts": 1794075904.5759995,
       "last_seen": "2026-11-07"
     },
     {
@@ -710,11 +720,12 @@
       "refs": [
         "a8687270-68b4-4872-9049-2ef2f5851fe1",
         "outcome_judge",
-        "7c8971f6-dae7-4b57-b1c0-490a58a29bc6"
+        "7c8971f6-dae7-4b57-b1c0-490a58a29bc6",
+        "47f6362e-6b0a-4dd5-b6c3-3d51cb5e80cc"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793994930.1348643,
-      "last_seen": "2026-11-06"
+      "hit_count": 3,
+      "last_seen_ts": 1794075908.3280232,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_d985862733",
@@ -779,11 +790,12 @@
       "refs": [
         "83b80720-e177-463d-9590-1a2b26504198",
         "outcome_judge",
-        "0101aa9f-6fbd-48c8-875e-73f2e655f3e4"
+        "0101aa9f-6fbd-48c8-875e-73f2e655f3e4",
+        "73a82aa6-278d-4c24-a576-af7d1f9dcc8f"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1793994926.2044141,
-      "last_seen": "2026-11-06"
+      "hit_count": 3,
+      "last_seen_ts": 1794075904.505287,
+      "last_seen": "2026-11-07"
     },
     {
       "id": "lesson_294ed9480b",
@@ -844,10 +856,11 @@
       "refs": [
         "f4a30484-b261-41b9-8571-60fd3baa27cc",
         "outcome_judge",
-        "09427e3d-fed8-426b-b90d-310dff06c5cd"
+        "09427e3d-fed8-426b-b90d-310dff06c5cd",
+        "a7273f72-e8d6-4638-9ff1-57545fb6cfc9"
       ],
-      "hit_count": 2,
-      "last_seen_ts": 1794075715.0824032,
+      "hit_count": 3,
+      "last_seen_ts": 1794075909.0922976,
       "last_seen": "2026-11-07"
     },
     {

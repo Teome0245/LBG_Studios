@@ -293,6 +293,13 @@ func _spawn_interactable_entities() -> void:
 	_spawn_npc("Mira Tarek (Prospectrice)", Vector3(85, 0, -50), Color(0.7, 0.7, 0.3), "npc_miner")
 	_spawn_npc("Daran (Vendeur Personnel)", Vector3(24.4, 0.1, 14.8), Color(0.3, 0.8, 0.95), "npc_vendor")
 
+	# Formateurs PNJ de Professions SWG Pre-CU (Skill Trainers 3D)
+	_spawn_npc("Vorn (Formateur Bagarreur & Tireur)", Vector3(-45, 0, -8), Color(0.9, 0.3, 0.2), "npc_trainer_combat")
+	_spawn_npc("Dax (Maître Formateur Artisan)", Vector3(-20, 0, 12), Color(0.85, 0.7, 0.2), "npc_trainer_artisan")
+	_spawn_npc("Ordo (Pisteur & Formateur Éclaireur)", Vector3(-68, 0, 15), Color(0.3, 0.75, 0.35), "npc_trainer_scout")
+	_spawn_npc("Elan (Instructeur Médical)", Vector3(-22, 0.2, 22), Color(0.2, 0.85, 0.95), "npc_trainer_medic")
+	_spawn_npc("Selene (Formatrice Cantina & Danse)", Vector3(36, 0.6, -18), Color(0.95, 0.45, 0.75), "npc_trainer_entertainer")
+
 	# 2. Droïdes Urbains
 	add_child(_SwgAssetPipelineScript.build_astromech_droid(Vector3(-38, 0, -18)))
 
@@ -1424,8 +1431,50 @@ func _execute_bacta_stim() -> void:
 func _execute_survey_pulse() -> void:
 	if player == null or swg_combat_system == null:
 		return
-	swg_combat_system.trigger_survey_pulse(player.global_position)
-	_show_notification("📡 Sonde Géologique : Filon Ferrique Détecté (Pureté 94%) ! Échantillon de minerai brut extrait.", Color(0.2, 0.85, 1.0))
+	var p_pos: Vector3 = player.global_position if player.is_inside_tree() else player.position
+	var dens := int(82 + (int(absf(p_pos.x * 3.7 + p_pos.z * 5.1)) % 17))
+	var res_name := "Silice d'Oris" if p_pos.x < 0 else "Cuivre Kovessien"
+	var stats := {"oq": 870, "cd": 790, "pe": 650, "ma": 710, "sr": 680}
+
+	swg_combat_system.trigger_survey_beacon_3d(p_pos, res_name, dens, stats)
+	if swg_audio and swg_audio.has_method("play_droid"):
+		swg_audio.play_droid()
+	_show_notification("📡 Sonde Géologique 3D : %s Détecté (Concentration : %d%%) !" % [res_name, dens], Color(0.2, 0.85, 1.0))
+	if swg_survey_panel and swg_survey_panel.has_method("update_survey_from_world"):
+		swg_survey_panel.update_survey_from_world(dens, "NE", res_name)
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#33ddff]📡 Survey Tool 3D : Balise holographique déployée à (%.0f, %.0f). Concentration en %s : %d%% [OQ:870, CD:790][/color]" % [p_pos.x, p_pos.z, res_name, dens], "spatial")
+
+
+func _execute_sample_resource() -> void:
+	if player == null:
+		return
+	var p_pos: Vector3 = player.global_position if player.is_inside_tree() else player.position
+	if player.has_method("set_posture"):
+		player.set_posture(1) # KNEELING
+	if swg_combat_system:
+		swg_combat_system.trigger_survey_pulse(p_pos)
+	var qty := randi_range(8, 16)
+	var res_name := "Silice d'Oris" if p_pos.x < 0 else "Cuivre Kovessien"
+	_show_notification("⛏ Échantillonnage géologique réussi : +%d %s prélevé(e)s !" % [qty, res_name], Color(0.3, 0.95, 0.6))
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#44ff88]⛏ Échantillon de terrain extrait : %d unités de %s ajoutées à votre inventaire.[/color]" % [qty, res_name], "inventory")
+	if is_inside_tree() and get_tree():
+		get_tree().create_timer(1.2).timeout.connect(func() -> void:
+			if is_instance_valid(player) and player.has_method("set_posture"):
+				player.set_posture(0) # STANDING
+		)
+
+
+func _execute_learn_skill(box_id: String, box_label: String) -> void:
+	if swg_skills_panel and swg_skills_panel.has_method("learn_box_direct"):
+		swg_skills_panel.learn_box_direct(box_id)
+	var p_pos: Vector3 = player.global_position if (player and player.is_inside_tree()) else (player.position if player else Vector3.ZERO)
+	if player and swg_combat_system:
+		swg_combat_system.trigger_skill_up_effect(p_pos)
+	_show_notification("✨ NOUVELLE COMPÉTENCE ACQUISE : %s !" % box_label, Color(1.0, 0.85, 0.2))
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#ffdd44]★ Félicitations ! Vous avez appris la compétence SWG : %s auprès du Formateur.[/color]" % box_label, "general")
 
 
 func _show_notification(msg: String, col: Color = Color(0.2, 1.0, 0.5)) -> void:
@@ -1460,6 +1509,47 @@ func _on_dialog_option_selected(opt_id: String, npc_name: String) -> void:
 			if swg_missions_dialog: swg_missions_dialog.open_panel()
 		"open_travel":
 			if swg_travel_dialog: swg_travel_dialog.open_panel()
+		"train_combat":
+			if swg_skills_panel and swg_skills_panel.has_method("open_for_trainer"):
+				swg_skills_panel.open_for_trainer("brawler")
+			elif swg_skills_panel:
+				swg_skills_panel.open_panel()
+		"train_artisan":
+			if swg_skills_panel and swg_skills_panel.has_method("open_for_trainer"):
+				swg_skills_panel.open_for_trainer("artisan")
+			elif swg_skills_panel:
+				swg_skills_panel.open_panel()
+		"train_scout":
+			if swg_skills_panel and swg_skills_panel.has_method("open_for_trainer"):
+				swg_skills_panel.open_for_trainer("scout")
+			elif swg_skills_panel:
+				swg_skills_panel.open_panel()
+		"train_medic":
+			if swg_skills_panel and swg_skills_panel.has_method("open_for_trainer"):
+				swg_skills_panel.open_for_trainer("medic")
+			elif swg_skills_panel:
+				swg_skills_panel.open_panel()
+		"train_entertainer":
+			if swg_skills_panel and swg_skills_panel.has_method("open_for_trainer"):
+				swg_skills_panel.open_for_trainer("entertainer")
+			elif swg_skills_panel:
+				swg_skills_panel.open_panel()
+		"learn_marksman_novice":
+			_execute_learn_skill("marksman_novice", "Tireur au Blaster Novice")
+		"learn_brawler_novice":
+			_execute_learn_skill("brawler_novice", "Bagarreur Novice")
+		"learn_artisan_novice":
+			_execute_learn_skill("artisan_novice", "Artisan Novice")
+		"learn_scout_novice":
+			_execute_learn_skill("scout_novice", "Éclaireur Novice")
+		"learn_medic_novice":
+			_execute_learn_skill("medic_novice", "Médecin Novice")
+		"learn_entertainer_novice":
+			_execute_learn_skill("entertainer_novice", "Artiste Novice")
+		"survey_advice":
+			_show_notification("📡 Dax : « Active ton Survey Tool avec [F8] ou la Hotbar pour balayer les filons ! »", Color(0.2, 0.85, 1.0))
+		"camp_tips":
+			_show_notification("⛺ Ordo : « En cas de tempête de sable, pose un camp ou abrite-toi dans un POB ! »", Color(0.3, 0.9, 0.4))
 		"shuttle_status":
 			_show_notification("🚀 Corran : « Navette Lambda en phase d'embarquement sur la piste, départ imminent ! »", Color(0.2, 0.95, 1.0))
 		"droid_scan":
@@ -1661,7 +1751,24 @@ func _on_radial_action_selected(act: String, ctx: Dictionary) -> void:
 		"treat_wounds":
 			_show_notification("💉 Soins appliqués à %s : Blessures HAM stabilisées !" % t_name, Color(0.2, 0.9, 0.9))
 		"open_skills":
-			if swg_skills_panel: swg_skills_panel.open_panel()
+			if swg_skills_panel:
+				var t_lower := t_name.to_lower()
+				if "combat" in t_lower or "vorn" in t_lower or "bagarreur" in t_lower or "tireur" in t_lower:
+					swg_skills_panel.open_for_trainer("brawler")
+				elif "artisan" in t_lower or "dax" in t_lower:
+					swg_skills_panel.open_for_trainer("artisan")
+				elif "scout" in t_lower or "ordo" in t_lower or "pisteur" in t_lower:
+					swg_skills_panel.open_for_trainer("scout")
+				elif "medic" in t_lower or "elan" in t_lower or "médical" in t_lower:
+					swg_skills_panel.open_for_trainer("medic")
+				elif "entertainer" in t_lower or "selene" in t_lower or "danse" in t_lower or "scène" in t_lower:
+					swg_skills_panel.open_for_trainer("entertainer")
+				else:
+					swg_skills_panel.open_panel()
+		"survey_ping":
+			_execute_survey_pulse()
+		"survey_sample":
+			_execute_sample_resource()
 		"tame_creature":
 			_show_notification("🐾 Domptage Creature Handler réussi ! %s est maintenant votre familier loyal !" % t_name, Color(0.2, 1.0, 0.5))
 		"harvest_meat":

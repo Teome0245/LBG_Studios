@@ -212,6 +212,56 @@ func _get_dialog_preset(n_name: String, n_kind: String) -> Dictionary:
 				{"id": "close", "label": "Reprends ta patrouille, R2."}
 			]
 		}
+	elif "vorn" in lower_name or "combat" in n_kind:
+		return {
+			"text": "« Tu veux apprendre à manier le fusil blaster ou la vibro-lame ? Le combat dans les dunes ne pardonne aucune faiblesse. Montre-moi ta discipline et tes points de compétence (SP). »",
+			"options": [
+				{"id": "train_combat", "label": "🎓 S'entraîner auprès de Vorn (Ouvrir Arbre Combattant 4x4) [K]"},
+				{"id": "learn_marksman_novice", "label": "🎯 Apprendre Novice Tireur au Blaster (100 XP)"},
+				{"id": "learn_brawler_novice", "label": "🥊 Apprendre Novice Bagarreur Corps-à-Corps (100 XP)"},
+				{"id": "close", "label": "Je reviendrai quand je serai prêt."}
+			]
+		}
+	elif "dax" in lower_name or "artisan" in n_kind:
+		return {
+			"text": "« L'artisanat est l'ossature de toute société. Un véritable artisan sait reconnaître la pureté d'un filon minéral et fabriquer des composants aux statistiques légendaires. »",
+			"options": [
+				{"id": "train_artisan", "label": "🎓 S'entraîner à l'Artisanat (Ouvrir Arbre Artisan 4x4) [K]"},
+				{"id": "learn_artisan_novice", "label": "⚙ Apprendre Novice Artisan (100 XP)"},
+				{"id": "survey_advice", "label": "📡 Conseils sur l'usage du Survey Tool et la prospection"},
+				{"id": "close", "label": "À plus tard, Maître Dax."}
+			]
+		}
+	elif "ordo" in lower_name or "scout" in n_kind:
+		return {
+			"text": "« Les dunes de Scrapaltai regorgent de prédateurs et de gisements cachés. Un éclaireur sait pister la faune, ériger des camps de survie et cartographier les ressources. »",
+			"options": [
+				{"id": "train_scout", "label": "🎓 S'entraîner à l'Éclaireur (Ouvrir Arbre Scout 4x4) [K]"},
+				{"id": "learn_scout_novice", "label": "🐾 Apprendre Novice Éclaireur (100 XP)"},
+				{"id": "camp_tips", "label": "⛺ Comment monter un camp en zone hostile ?"},
+				{"id": "close", "label": "Que les pistes te soient favorables."}
+			]
+		}
+	elif "elan" in lower_name or "medic" in n_kind:
+		return {
+			"text": "« Les traumatismes HAM, poisons et blessures graves exigent une rigueur médicale absolue. Viens apprendre les protocoles de premiers soins et de confection de stips de bacta. »",
+			"options": [
+				{"id": "train_medic", "label": "🎓 S'entraîner à la Médecine (Ouvrir Arbre Médecin 4x4) [K]"},
+				{"id": "learn_medic_novice", "label": "💉 Apprendre Novice Médecin (100 XP)"},
+				{"id": "heal_ham", "label": "🩺 Soigner mes blessures actuelles"},
+				{"id": "close", "label": "Merci, Instructeur Elan."}
+			]
+		}
+	elif "selene" in lower_name or "entertainer" in n_kind:
+		return {
+			"text": "« Bienvenue à la scène ! La cantina est le sanctuaire où les guerriers fatigués viennent retrouver leur vigueur grâce aux danses et aux harmonies d'inspiration. »",
+			"options": [
+				{"id": "train_entertainer", "label": "🎓 S'entraîner aux Arts de Scène (Ouvrir Arbre Artiste 4x4) [K]"},
+				{"id": "learn_entertainer_novice", "label": "♫ Apprendre Novice Artiste de Scène (100 XP)"},
+				{"id": "watch_dance", "label": "✨ Regarder une prestation de danse (Dissiper Fatigue)"},
+				{"id": "close", "label": "Enchantez notre cantina, Selene."}
+			]
+		}
 	else:
 		return {
 			"text": "« Salutations voyageur des sables ! Que la brise de Lost Heaven vous soit favorable. »",

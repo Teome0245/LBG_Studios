@@ -159,3 +159,99 @@ func trigger_survey_pulse(origin: Vector3) -> void:
 	tween.tween_property(mat, "albedo_color:a", 0.0, 1.5)
 	tween.chain().tween_callback(pulse.queue_free)
 
+
+## Effet de montée de niveau / compétence apprise (Holo Skill-Up)
+func trigger_skill_up_effect(origin: Vector3) -> void:
+	var aura := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 1.2
+	cyl.bottom_radius = 1.4
+	cyl.height = 2.8
+	aura.mesh = cyl
+	aura.position = origin + Vector3(0, 1.4, 0)
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.85, 0.25, 0.6)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.emission_enabled = true
+	mat.emission = Color(1.0, 0.8, 0.2)
+	mat.emission_energy_multiplier = 4.0
+	aura.set_surface_override_material(0, mat)
+	add_child(aura)
+
+	# Anneau doré ascendant
+	var ring := MeshInstance3D.new()
+	var tor := TorusMesh.new()
+	tor.inner_radius = 1.2
+	tor.outer_radius = 1.5
+	ring.mesh = tor
+	ring.position = origin + Vector3(0, 0.2, 0)
+	var mat_r := StandardMaterial3D.new()
+	mat_r.albedo_color = Color(1.0, 0.95, 0.4, 0.9)
+	mat_r.emission_enabled = true
+	mat_r.emission = Color(1.0, 0.9, 0.3)
+	ring.set_surface_override_material(0, mat_r)
+	add_child(ring)
+
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "position:y", origin.y + 3.2, 1.2)
+	tw.tween_property(ring, "scale", Vector3(1.6, 1.6, 1.6), 1.2)
+	tw.tween_property(mat_r, "albedo_color:a", 0.0, 1.2)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 1.4)
+	tw.chain().tween_callback(aura.queue_free)
+	tw.chain().tween_callback(ring.queue_free)
+
+
+## Balise Holographique de Prospection 3D (Holo-Survey Beacon)
+func trigger_survey_beacon_3d(pos: Vector3, spawn_name: String, density_pct: int, stats: Dictionary = {}) -> void:
+	trigger_survey_pulse(pos)
+
+	var beacon := Node3D.new()
+	beacon.name = "HoloSurveyBeacon_%d" % Time.get_ticks_msec()
+	beacon.position = pos
+	add_child(beacon)
+
+	# Faisceau vertical cyan
+	var beam := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.15
+	cyl.bottom_radius = 0.35
+	cyl.height = 4.0
+	beam.mesh = cyl
+	beam.position = Vector3(0, 2.0, 0)
+
+	var mat_beam := StandardMaterial3D.new()
+	var col_beam := Color(0.1, 0.9, 1.0, 0.75) if density_pct >= 70 else (Color(1.0, 0.85, 0.2, 0.75) if density_pct >= 40 else Color(1.0, 0.3, 0.2, 0.75))
+	mat_beam.albedo_color = col_beam
+	mat_beam.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_beam.emission_enabled = true
+	mat_beam.emission = col_beam
+	mat_beam.emission_energy_multiplier = 3.0
+	beam.set_surface_override_material(0, mat_beam)
+	beacon.add_child(beam)
+
+	# Label 3D affichant le filon et sa concentration
+	var lbl := Label3D.new()
+	lbl.text = "📡 %s\nConcentration : %d%%\n[OQ:%s CD:%s PE:%s]" % [
+		spawn_name,
+		density_pct,
+		str(stats.get("oq", "850")),
+		str(stats.get("cd", "780")),
+		str(stats.get("pe", "640"))
+	]
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate = Color(0.95, 1.0, 1.0)
+	lbl.outline_modulate = Color(0.02, 0.1, 0.15)
+	lbl.outline_size = 4
+	lbl.font_size = 28
+	lbl.position = Vector3(0, 4.3, 0)
+	beacon.add_child(lbl)
+
+	# Disparition progressive après 6 secondes
+	var tw := create_tween()
+	tw.tween_interval(5.0)
+	tw.tween_property(mat_beam, "albedo_color:a", 0.0, 1.0)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 1.0)
+	tw.chain().tween_callback(beacon.queue_free)
+

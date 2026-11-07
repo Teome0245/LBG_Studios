@@ -196,6 +196,28 @@ func toggle() -> void:
 		refresh_spawns()
 
 
+func open_panel() -> void:
+	panel_visible = true
+	visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	refresh_spawns()
+
+
+func close_panel() -> void:
+	panel_visible = false
+	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func update_survey_from_world(p_dens: int, p_dir: String, p_name: String) -> void:
+	_last_density_pct = clampi(p_dens, 0, 100)
+	_last_dir = p_dir
+	if _radar_draw:
+		_radar_draw.update_radar(p_dens, p_dir, p_name)
+	if _status_lbl:
+		_status_lbl.text = "Radar 3D actif : %s détecté à %d%% (%s)" % [p_name, p_dens, p_dir]
+
+
 func _ensure_ui() -> void:
 	if _spawns_list != null:
 		return

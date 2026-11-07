@@ -68,8 +68,8 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 			opts.append({"id": "watch_entertainer", "label": "Observer (Soigner Fatigue)"})
 		if "odo" in t_name or "med" in t_name or kind == "player":
 			opts.append({"id": "treat_wounds", "label": "Soigner Blessures (Méd.)"})
-		if "kell" in t_name or "yara" in t_name or "odo" in t_name or "talen" in t_name or "tobin" in t_name or "unar" in t_name:
-			opts.append({"id": "open_skills", "label": "Entraîner Compétences"})
+		if "kell" in t_name or "yara" in t_name or "odo" in t_name or "talen" in t_name or "tobin" in t_name or "unar" in t_name or "vorn" in t_name or "dax" in t_name or "ordo" in t_name or "elan" in t_name or "selene" in t_name or "formateur" in t_name or "trainer" in t_name:
+			opts.append({"id": "open_skills", "label": "🎓 Entraîner Compétences"})
 		if "kren" in t_name or "vao" in t_name or "recruteur" in t_name or "officier" in t_name or "commando" in t_name:
 			opts.append({"id": "open_faction_recruiter", "label": "🎖 Recrutement Militaire GCW"})
 		if kind == "player":

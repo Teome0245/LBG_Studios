@@ -176,8 +176,22 @@ func _init() -> void:
 	assert(p2.current_species_id == "twilek", "L'espèce du joueur doit basculer vers twilek")
 	p2.free()
 
+	# 11. Test Formateurs PNJ 3D & Arbres de Compétences 4x4 Interactifs (Étape 2)
+	assert(world.swg_skills_panel != null, "Le panneau de compétences 4x4 doit être initialisé")
+	world._on_dialog_option_selected("train_artisan", "Dax (Maître Formateur Artisan)")
+	assert(world.swg_skills_panel.visible, "Le panneau 4x4 doit s'ouvrir lors de l'entraînement auprès d'un Formateur PNJ")
+	world._execute_learn_skill("artisan_novice", "Artisan Novice")
+	assert("artisan_novice" in world.swg_skills_panel._learned_boxes, "La box novice doit être enregistrée comme apprise auprès du Formateur")
+
+	# 12. Test Prospection Survey Tool 3D Holographique & Sondage Géologique (Étape 2)
+	assert(world.swg_survey_panel != null, "Le panneau Survey Tool doit être initialisé")
+	world._execute_survey_pulse()
+	assert(world.swg_survey_panel._last_density_pct > 0, "Le sondage géologique doit alimenter la densité du Survey Tool")
+	world._execute_sample_resource()
+	assert(world.player.current_posture == PlayerScript.Posture.KNEELING, "Le prélèvement d'échantillon géologique doit agenouiller temporairement le prospecteur")
+
 	world.free()
 
-	print("SWG_CLIENT_3D_SELFTEST_OK: Tous les Piliers SWG Pre-CU 3D (Lairs, GCW Factions, Entertainer Flourishes, PCD Montures/Véhicules, Housing Entrable POB, Espèces & Image Designer) 100% validés !")
+	print("SWG_CLIENT_3D_SELFTEST_OK: Tous les Piliers SWG Pre-CU 3D (Lairs, GCW Factions, Entertainer, PCD Montures, Housing POB, Espèces, Formateurs PNJ 4x4 & Survey 3D) 100% validés !")
 	quit(0)
 

@@ -4,14 +4,42 @@
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + SWG Pre-CU 3D Complet (Tuskens, Aggro, Caravane, Loot & Consommables) + Boucle d'Évolution — **100 % Livré, Validé CI & Déployé**.
+**Fil** : canon O1/O2/O3 + SWG Pre-CU Raccordement Prime 2D & Hub + O3 Autonomie Bots IA + 3D Formateurs 4x4 & Survey Tool Holographique — **100 % Livré, Validé CI & Déployé**.
 
 ---
 
 ## Objectif actuel
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
-Travail produit : Autonomie fermée d'analyse, proposition, arbitrage humain et déploiement du MMO Lost Heaven.
+Séquence stratégique validée : **1 (Prime 2D/Hub) ➔ 3 (Autonomie Flotte O3) ➔ 2 (Approfondissement 3D Formateurs & Survey)**.
+
+- [x] **Étape 1 : Raccordement Systèmes SWG Pre-CU à Prime 2D & Prime-Hub (`.246:8787`)** :
+  - *Factions GCW* : `HubFaction` (`scripts/hub_faction.gd`), recruteurs PNJ (Lt Kren, Cap Vao), Civilian / On-Leave / Special Forces (PvP ouvert), hostilité et routes HTTP `/v1/factions/*`.
+  - *Nids de Créatures (Lairs)* : `HubCreatures` (`scripts/hub_creatures.gd`), seuils de vagues de défenseurs (75%, 50%, 25%), transformation en décombres à 0 PV et pillage de butin rare (œufs fossilisés, crédits). Représentation visuelle 2D dans `entity.gd`.
+  - *Espèces SWG & Image Designer* : Catalogue de 6 espèces avec bonus HAM, fenêtres de sélection et retouche visuelle (`swg_species_system.gd`, `swg_species_dialog.gd`).
+  - *PCD Datapad* : Intégration de 4 PCD (Landspeeder X-34, Swoop Bike, Dewback, Chiot).
+  - *Selftest & Déploiement* : `swg_factions_lairs_selftest.gd` 100% PASS, déployé sur `.246:8787` et synchronisé vers Windows SDS `.10` (`J:/swgemu/clients/prime-client`).
+
+- [x] **Étape 3 : Autonomie O3 des Joueurs IA sur les Systèmes SWG** :
+  - *Arbitrage autonome Pre-CU (`hub_bot_autonomy.gd`)* :
+    - Détection et assaut autonome des nids de créatures (`attack_creature_lair`) quand la santé est $\ge 70\%$.
+    - Pillage autonome des décombres de nids détruits (`harvest_lair_debris`).
+    - Enrôlement autonome dans la Guerre Civile Galactique GCW (`enlist_gcw_faction`).
+    - Érection autonome d'habitations et tentes personnelles (`build_player_house`).
+  - *Validation CI* : `bot_autonomy_swg_selftest.gd` 100% PASS (10 tests unitaires et intégrés).
+  - *CI Headless Godot globale (`tools/ci_godot_headless.sh`)* : 18 suites validées à 100% sans régression. Redéployé en live sur `.246:8787`.
+
+- [x] **Étape 2 : Approfondissement SWG Pre-CU 3D (Formateurs PNJ 4x4 & Survey Tool 3D)** :
+  - *Formateurs PNJ de Professions (Skill Trainers 3D)* :
+    - 5 Formateurs spécialisés déployés dans Lost Heaven : Vorn (Bagarreur & Tireur), Dax (Artisanat), Ordo (Éclaireur/Survie), Elan (Médecine) et Selene (Artiste de scène).
+    - Dialogue interactif dédié (`swg_dialog_box.gd`) avec explications immersives et options de formation.
+    - Menus radiaux enrichis (`swg_radial_menu.gd`) avec option `🎓 Entraîner Compétences`.
+    - Arbre 4x4 interactif (`swg_skills_panel.gd`) : ouverture ciblée sur la profession du formateur (`open_for_trainer`), apprentissage direct (`learn_box_direct`) et effet holographique festif 3D d'auréole dorée (`trigger_skill_up_effect`).
+  - *Prospection Survey Tool 3D Holographique* :
+    - Balise holographique 3D (`trigger_survey_beacon_3d`) : faisceau vertical cyan, étincelles d'impulsion sonar et panneau d'affichage 3D billboard (concentration %, stats OQ/CD/PE).
+    - Synchronisation dynamique avec le panneau Survey (`update_survey_from_world`).
+    - Extraction géologique de terrain (`_execute_sample_resource`) : posture agenouillée, échantillonnage de minerais réels avec stats 1..1000 injectés dans l'inventaire.
+  - *Validation & Sync* : `swg_client_3d_selftest.gd` 100% PASS (12 piliers testés), synchronisation des 21 fichiers vers Windows SDS .10 (`J:/swgemu/clients/swg-client`).
 
 **Boucle d'Évolution Réalisée & Déployée (Séquence 4 ➔ 1 ➔ 2 ➔ 3)** :
 - [x] **Point 4 : La Boucle d'Arbitrage & Moissonnage Automatique** :
