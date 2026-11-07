@@ -27,6 +27,7 @@ const HubCreaturesScript = preload("res://scripts/hub_creatures.gd")
 const HubVendorsFactoriesScript = preload("res://scripts/hub_vendors_factories.gd")
 const HubHousingCitiesScript = preload("res://scripts/hub_housing_cities.gd")
 const HubSwgCombatScript = preload("res://scripts/hub_swg_combat.gd")
+const HubFactionScript = preload("res://scripts/hub_faction.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -65,6 +66,7 @@ var creatures = null
 var vendors_factories = null
 var housing_cities = null
 var swg_combat = null
+var faction = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -97,7 +99,7 @@ func attach_economy(economy_svc) -> void:
 	if swg_combat != null:
 		swg_combat.setup(self, economy_svc, skills, ham_medical)
 	if autonomy != null and autonomy.has_method("setup_swg_services"):
-		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters)
+		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters, faction)
 
 
 func attach_events(events_svc) -> void:
@@ -187,6 +189,9 @@ func reset() -> void:
 	if swg_combat == null:
 		swg_combat = HubSwgCombatScript.new()
 	swg_combat.setup(self, economy, skills, ham_medical)
+	if faction == null:
+		faction = HubFactionScript.new()
+	faction.setup(self, null, economy)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -204,7 +209,7 @@ func reset() -> void:
 	if autonomy != null and autonomy.has_method("attach_world_clock"):
 		autonomy.attach_world_clock(world_clock)
 	if autonomy != null and autonomy.has_method("setup_swg_services"):
-		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters)
+		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters, faction)
 	_ensure_fleet()
 	_ensure_hub_npcs()
 	if combat != null:

@@ -8,6 +8,7 @@ const HubHousingCitiesScript := preload("res://scripts/hub_housing_cities.gd")
 const HubSwgCombatScript := preload("res://scripts/hub_swg_combat.gd")
 const HubSkillsScript := preload("res://scripts/hub_skills.gd")
 const HubEconomyScript := preload("res://scripts/hub_economy.gd")
+const HubFactionScript := preload("res://scripts/hub_faction.gd")
 
 
 class MockMedicalService extends RefCounted:
@@ -50,10 +51,12 @@ func _init() -> void:
 	combat.setup(null, economy, skills)
 
 	var med = MockMedicalService.new()
+	var factions = HubFactionScript.new()
+	factions.setup(null, null, economy)
 
 	var autonomy = HubBotAutonomyScript.new()
 	autonomy.setup(economy, null, {"plaza": Vector3(4749.0, 0.15, -737.0)})
-	autonomy.setup_swg_services(creatures, vendors, housing, combat, med)
+	autonomy.setup_swg_services(creatures, vendors, housing, combat, med, null, factions)
 
 	# --- TEST 1 : Priorité Fatigue Cantina ---
 	med.set_status_for("BotFatigue", {
@@ -146,6 +149,43 @@ func _init() -> void:
 	var combat_step3: Dictionary = autonomy.evaluate_tactical_combat_step("BotAgonisant", "Ennemi1", combat, med)
 	assert(combat_step3.get("chosen_posture") == "prone", "Un bot agonisant doit adopter la posture couchée pour réduire les dégâts de 50%")
 	print("[+] PASS: IA Combat - Posture défensive prone en cas de danger mortel validée")
+
+	# --- TEST 8 : Autonomie Assaut de Nids de Créatures (Lairs) & Décombres ---
+	creatures.corpses_by_id.clear()
+	var p8: Dictionary = autonomy.evaluate_swg_precu_priority("BotHunter", med, null, creatures, null, null)
+	assert(p8.get("decision") == "attack_creature_lair", "Un bot chasseur en forme doit décider d'attaquer le nid")
+	var exec_atk: Dictionary = autonomy.execute_autonomous_action({"name": "BotHunter"}, p8)
+	assert(bool(exec_atk.get("ok", false)) == true, "L'assaut de nid autonome doit réussir")
+	print("[+] PASS: IA Autonomie - Assaut autonome de Nid de Créatures validé")
+
+	# Simuler la destruction des nids pour tester le pillage autonome des décombres
+	creatures.attack_lair("BotHunter", "lair_jackals_west", 1500)
+	var p8b: Dictionary = autonomy.evaluate_swg_precu_priority("BotHunter2", med, null, creatures, null, null)
+	assert(p8b.get("decision") == "harvest_lair_debris", "Un bot doit récolter les décombres d'un nid détruit")
+	var exec_harv_lair: Dictionary = autonomy.execute_autonomous_action({"name": "BotHunter2"}, p8b)
+	assert(bool(exec_harv_lair.get("ok", false)) == true and exec_harv_lair.get("credits") == 950, "Pillage autonome de décombres validé")
+	print("[+] PASS: IA Autonomie - Pillage autonome de décombres de nid validé")
+
+	# Pillage du deuxième nid pour libérer la priorité combat vers GCW
+	creatures.attack_lair("BotHunter", "lair_beetles_east", 2000)
+	creatures.harvest_debris("BotHunter", "lair_beetles_east")
+
+	# --- TEST 9 : Enrôlement Faction GCW Autonome ---
+	var p9: Dictionary = autonomy.evaluate_swg_precu_priority("BotRecrue", med, null, creatures, null, null)
+	assert(p9.get("decision") == "enlist_gcw_faction", "Un bot neutre sans urgence doit s'enrôler dans une faction GCW")
+	var exec_enl: Dictionary = autonomy.execute_autonomous_action({"name": "BotRecrue"}, p9)
+	assert(bool(exec_enl.get("ok", false)) == true and exec_enl.get("status") == "on_leave", "L'enrôlement militaire autonome doit réussir")
+	print("[+] PASS: IA Autonomie - Enrôlement militaire autonome dans la Guerre Civile validé")
+
+	# --- TEST 10 : Construction de Maison Personnelle (Housing POB) ---
+	economy.grant_world_loot("BotArchitect", [], 3000)
+	skills.learn_box("BotArchitect", "citoyen_novice", true)
+	factions.enlist("BotArchitect", "imperial") # Déjà enrôlé donc point 9 sauté
+	var p10: Dictionary = autonomy.evaluate_swg_precu_priority("BotArchitect", med, null, null, null, housing, Vector3(5600, 0, -1200))
+	assert(p10.get("decision") == "build_player_house", "Un bot citoyen avec crédits doit bâtir sa maison")
+	var exec_build: Dictionary = autonomy.execute_autonomous_action({"name": "BotArchitect"}, p10)
+	assert(bool(exec_build.get("ok", false)) == true, "La construction de maison autonome doit réussir")
+	print("[+] PASS: IA Autonomie - Construction autonome d'habitat/housing validée")
 
 	if economy != null and economy.db != null and economy.db.has_method("shutdown"):
 		economy.db.shutdown()

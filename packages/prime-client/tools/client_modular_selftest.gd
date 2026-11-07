@@ -265,5 +265,27 @@ func _init() -> void:
 	var synth_audio = SwgAudioSynthesizerScript.new()
 	assert(synth_audio != null, "Échec instanciation SwgAudioSynthesizer")
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 14 Composants UI SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad, Fiche HAM 9-stats, Bazar, Housing, Target Frame, Chat Box, Crafting Réel, Papier-Doll, Audio) vérifiés avec succès")
+	# Test Factions Galactiques & GCW Pre-CU (2D)
+	var SwgFactionSystemScript := preload("res://scripts/swg_faction_system.gd")
+	var fac_sys = SwgFactionSystemScript.new()
+	assert(fac_sys != null, "Échec instanciation SwgFactionSystem")
+	fac_sys.enlist(SwgFactionSystemScript.Faction.IMPERIAL)
+	assert(fac_sys.get_faction_name() == "Impérial", "Faction enrôlée doit être Impérial")
+	fac_sys.declare_special_forces()
+	assert(fac_sys.is_special_forces(), "Le joueur doit être en Special Forces")
+	assert(fac_sys.is_enemy("Rebelle"), "Un Rebelle doit être un ennemi pour un Impérial SF")
+	fac_sys.free()
+
+	# Test Espèces & Image Designer SWG Pre-CU (2D)
+	var SwgSpeciesSystemScript := preload("res://scripts/swg_species_system.gd")
+	assert(SwgSpeciesSystemScript.get_species_count() == 6, "Catalogue de 6 espèces SWG requis")
+	var wookiee = SwgSpeciesSystemScript.find_species_by_id("wookiee")
+	assert(wookiee.get("name") == "Wookiee de Kashyyyk", "Espèce Wookiee présente")
+	assert(wookiee.get("ham_bonus", {}).get("health") == 350, "Bonus HAM Wookiee santé +350")
+
+	# Test Datapad PCD Véhicules & Montures
+	assert(datapad_ui._pets.size() >= 4, "Le Datapad doit contenir les 4 PCD (Speeder, Swoop, Dewback, Chiot)")
+	assert(datapad_ui._pets[0].get("pet_id") == "pcd_speeder_x34", "PCD Speeder X-34 présent")
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 18 Composants SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad PCD, Fiche HAM 9-stats, Bazar, Housing, Target Frame, Chat Box, Crafting Réel, Papier-Doll, Audio, Factions GCW, Espèces Image Designer) vérifiés avec succès")
 	quit(0)

@@ -23,6 +23,42 @@ var _waypoints: Array = [
 
 var _pets: Array = [
 	{
+		"pet_id": "pcd_speeder_x34",
+		"name": "Landspeeder X-34",
+		"species": "Véhicule Répulseur Rapide",
+		"level": 1,
+		"health": 2500,
+		"max_health": 2500,
+		"loyalty": 100,
+		"hunger": 0,
+		"active_in_world": false,
+		"commands_learned": ["board", "store", "repair", "cruise"]
+	},
+	{
+		"pet_id": "pcd_swoop_bike",
+		"name": "Swoop Bike Personnalisé",
+		"species": "Motojet de Course Hors-Piste",
+		"level": 1,
+		"health": 1800,
+		"max_health": 1800,
+		"loyalty": 100,
+		"hunger": 0,
+		"active_in_world": false,
+		"commands_learned": ["board", "store", "nitro", "repair"]
+	},
+	{
+		"pet_id": "pcd_dewback_mount",
+		"name": "Dewback Dressé de Selle",
+		"species": "Monture Saurienne Robuste",
+		"level": 5,
+		"health": 3200,
+		"max_health": 3200,
+		"loyalty": 98,
+		"hunger": 15,
+		"active_in_world": false,
+		"commands_learned": ["mount", "follow", "stay", "trample"]
+	},
+	{
 		"pet_id": "pcd_chacal_01",
 		"name": "Chiot des Sables",
 		"species": "Chacal Doré (Juvénile)",

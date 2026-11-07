@@ -15,6 +15,7 @@ var bestiary_by_id: Dictionary = {}
 var corpses_by_id: Dictionary = {}
 var camps_by_id: Dictionary = {}
 var pets_by_id: Dictionary = {}
+var lairs_by_id: Dictionary = {}
 var scent_masked_players: Dictionary = {}
 
 var _rng := RandomNumberGenerator.new()
@@ -31,6 +32,7 @@ func setup(parent_sim, economy_svc = null, skills_svc = null, survey_svc = null,
 	collision = collision_svc
 	_rng.randomize()
 	reload_bestiary()
+	init_default_lairs()
 
 
 func reload_bestiary(custom_path: String = "") -> void:
@@ -626,4 +628,163 @@ func tick_creatures(_delta: float) -> void:
 					"wild"
 				)
 			camps_by_id.erase(camp_id)
+
+
+# ==============================================================================
+# SECTION 6 : NIDS DE CRÉATURES (LAIRS) & DESTRUCTION DE NID
+# ==============================================================================
+
+func init_default_lairs() -> void:
+	lairs_by_id = {
+		"lair_jackals_west": {
+			"id": "lair_jackals_west",
+			"name": "Tumulus des Chacals des Dunes",
+			"creature_kind": "creature_jackal",
+			"guardian_name": "Chacal Protecteur du Nid",
+			"x": 4550.0,
+			"z": -810.0,
+			"max_health": 1400,
+			"current_health": 1400,
+			"is_destroyed": false,
+			"waves_spawned": [],
+			"loot_credits": 950,
+			"loot_rare_item": "oeuf_chacal_fossile",
+			"rare_item_label": "Œuf de Chacal des Sables Fossilisé",
+			"is_harvested": false
+		},
+		"lair_beetles_east": {
+			"id": "lair_beetles_east",
+			"name": "Nid de Scarabées Obsidiens",
+			"creature_kind": "creature_beetle",
+			"guardian_name": "Scarabée Ouvrier Défenseur",
+			"x": 5420.0,
+			"z": -670.0,
+			"max_health": 1800,
+			"current_health": 1800,
+			"is_destroyed": false,
+			"waves_spawned": [],
+			"loot_credits": 1250,
+			"loot_rare_item": "chitine_reine_scarabee",
+			"rare_item_label": "Chitine Pure de Reine Scarabée",
+			"is_harvested": false
+		}
+	}
+
+
+func list_lairs() -> Array:
+	var out: Array = []
+	for lid in lairs_by_id.keys():
+		out.append((lairs_by_id[lid] as Dictionary).duplicate(true))
+	return out
+
+
+func get_lair(lair_id: String) -> Dictionary:
+	var lid := lair_id.strip_edges()
+	if lairs_by_id.has(lid):
+		return (lairs_by_id[lid] as Dictionary).duplicate(true)
+	return {}
+
+
+func attack_lair(player: String, lair_id: String, damage: int) -> Dictionary:
+	var p := player.strip_edges()
+	var lid := lair_id.strip_edges()
+	if not lairs_by_id.has(lid):
+		return {"ok": false, "error": "lair_not_found"}
+
+	var lair: Dictionary = lairs_by_id[lid]
+	if bool(lair.get("is_destroyed", false)):
+		return {"ok": false, "error": "lair_already_destroyed", "is_debris": true}
+
+	var cur_hp: int = int(lair.get("current_health", 1000))
+	var max_hp: int = int(lair.get("max_health", 1000))
+	var new_hp := maxi(0, cur_hp - damage)
+	lair["current_health"] = new_hp
+
+	var waves: Array = lair.get("waves_spawned", [])
+	var ratio := float(new_hp) / float(max_hp)
+	var spawned_wave := 0
+
+	# Seuils de riposte 75%, 50%, 25%
+	if ratio <= 0.75 and not 0.75 in waves:
+		waves.append(0.75)
+		spawned_wave = 1
+	elif ratio <= 0.50 and not 0.50 in waves:
+		waves.append(0.50)
+		spawned_wave = 2
+	elif ratio <= 0.25 and not 0.25 in waves:
+		waves.append(0.25)
+		spawned_wave = 3
+
+	lair["waves_spawned"] = waves
+
+	if new_hp <= 0:
+		lair["is_destroyed"] = true
+		lair["current_health"] = 0
+		lairs_by_id[lid] = lair
+		if sim != null and sim.has_method("_stream"):
+			sim._stream(
+				"lair.destroyed",
+				"%s a détruit le nid %s ! Les décombres sont pillables." % [p, str(lair.get("name", lid))],
+				p,
+				"combat"
+			)
+		return {
+			"ok": true,
+			"player": p,
+			"lair_id": lid,
+			"damage_dealt": damage,
+			"remaining_hp": 0,
+			"is_destroyed": true,
+			"debris_ready": true,
+			"message": "Le nid s'est effondré en décombres !"
+		}
+
+	lairs_by_id[lid] = lair
+	return {
+		"ok": true,
+		"player": p,
+		"lair_id": lid,
+		"damage_dealt": damage,
+		"remaining_hp": new_hp,
+		"max_hp": max_hp,
+		"wave_triggered": spawned_wave,
+		"is_destroyed": false
+	}
+
+
+func harvest_debris(player: String, lair_id: String) -> Dictionary:
+	var p := player.strip_edges()
+	var lid := lair_id.strip_edges()
+	if not lairs_by_id.has(lid):
+		return {"ok": false, "error": "lair_not_found"}
+
+	var lair: Dictionary = lairs_by_id[lid]
+	if not bool(lair.get("is_destroyed", false)):
+		return {"ok": false, "error": "lair_not_destroyed"}
+
+	if bool(lair.get("is_harvested", false)):
+		return {"ok": false, "error": "debris_already_harvested"}
+
+	lair["is_harvested"] = true
+	lairs_by_id[lid] = lair
+
+	var creds := int(lair.get("loot_credits", 500))
+	var rare_item := str(lair.get("loot_rare_item", "oeuf_rare"))
+	var item_lbl := str(lair.get("rare_item_label", "Objet Rare"))
+
+	if economy != null and economy.has_method("add_credits"):
+		economy.add_credits(p, creds)
+	if economy != null and economy.has_method("add_inventory_item"):
+		economy.add_inventory_item(p, rare_item, 1)
+
+	return {
+		"ok": true,
+		"player": p,
+		"lair_id": lid,
+		"credits": creds,
+		"rare_item": rare_item,
+		"rare_item_label": item_lbl,
+		"message": "Décombres fouillés avec succès ! +%d crédits et 1x %s." % [creds, item_lbl]
+	}
+
 

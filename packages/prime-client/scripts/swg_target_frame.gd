@@ -196,6 +196,22 @@ func update_target_data() -> void:
 		_status_badge.text = "[CADAVRE]"
 		_status_badge.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 		border_color = Color(0.5, 0.5, 0.5)
+	elif kind == "creature_lair":
+		_status_badge.text = "[NID DE CRÉATURES]"
+		_status_badge.add_theme_color_override("font_color", Color(1.0, 0.45, 0.1))
+		border_color = Color(1.0, 0.4, 0.1)
+	elif kind == "lair_debris":
+		_status_badge.text = "[DÉCOMBRES DE NID]"
+		_status_badge.add_theme_color_override("font_color", Color(0.7, 0.8, 0.4))
+		border_color = Color(0.6, 0.7, 0.3)
+	elif kind in ["npc_stormtrooper", "npc_imperial_officer"]:
+		_status_badge.text = "[IMPÉRIAL]"
+		_status_badge.add_theme_color_override("font_color", Color(0.3, 0.7, 1.0))
+		border_color = Color(0.25, 0.6, 0.95)
+	elif kind in ["npc_rebel_soldier", "npc_rebel_commando"]:
+		_status_badge.text = "[REBELLE]"
+		_status_badge.add_theme_color_override("font_color", Color(1.0, 0.5, 0.2))
+		border_color = Color(0.95, 0.45, 0.15)
 	elif kind == "npc_tusken" or kind.begins_with("creature_"):
 		_status_badge.text = "[HOSTILE]"
 		_status_badge.add_theme_color_override("font_color", Color(1.0, 0.3, 0.2))

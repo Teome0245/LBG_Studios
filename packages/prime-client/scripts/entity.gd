@@ -52,6 +52,11 @@ var force_nameplate: bool = false
 ## P5b — windup boss (telegraph) / aggro : teinte + anneau.
 var combat_goal: String = ""
 var is_boss_beast: bool = false
+var faction: String = "neutral"
+var species_id: String = "human"
+var is_mounted: bool = false
+var current_hp: int = 1000
+var max_hp: int = 1000
 
 func set_force_nameplate(enabled: bool) -> void:
 	force_nameplate = enabled
@@ -422,6 +427,21 @@ func _draw() -> void:
 	elif kind == "npc":
 		draw_circle(draw_pos + Vector2(0.5, 0.5), 3.5, Color(0, 0, 0, 0.25))
 		draw_circle(draw_pos, 3.0, color.darkened(0.15))
+	elif kind == "creature_lair":
+		var lair_col := Color(0.55, 0.42, 0.28) # Terre ocre
+		if "beetle" in entity_key or "scarab" in entity_key:
+			lair_col = Color(0.25, 0.22, 0.28) # Obsidienne sombre
+		draw_circle(draw_pos + Vector2(2, 2), 14.0, Color(0, 0, 0, 0.35))
+		draw_circle(draw_pos, 13.0, lair_col)
+		draw_arc(draw_pos, 13.0, 0.0, TAU, 24, lair_col.lightened(0.25), 2.0, true)
+		# Cratère central
+		draw_circle(draw_pos, 5.0, Color(0.12, 0.08, 0.05))
+		# Jauge de vie du nid
+		if max_hp > 0:
+			var ratio: float = clampf(float(current_hp) / float(max_hp), 0.0, 1.0)
+			var bar_w := 24.0
+			draw_rect(Rect2(draw_pos.x - bar_w * 0.5, draw_pos.y - 18.0, bar_w, 3.0), Color(0.1, 0.1, 0.1, 0.8))
+			draw_rect(Rect2(draw_pos.x - bar_w * 0.5, draw_pos.y - 18.0, bar_w * ratio, 3.0), Color(0.2, 0.85, 0.3, 0.9))
 	elif kind == "beast":
 		var beast_col := color
 		if combat_goal == "telegraph":
@@ -435,6 +455,16 @@ func _draw() -> void:
 			draw_arc(draw_pos, radius * 2.2, 0.0, TAU, 28, Color(1.0, 0.85, 0.25, pulse), 2.0, true)
 		elif combat_goal == "aggro":
 			draw_arc(draw_pos, radius * 1.8, 0.0, TAU, 24, Color(0.95, 0.3, 0.2, 0.75), 1.6, true)
+
+	# Affichage de Monture / Véhicule au sol sous le joueur
+	if is_mounted and kind == "player":
+		draw_arc(draw_pos, token_r * 1.4, 0.0, TAU, 24, Color(0.3, 0.85, 0.95, 0.8), 2.2, true)
+
+	# Insigne de Faction GCW SWG Pre-CU
+	if faction == "imperial":
+		draw_circle(draw_pos + Vector2(token_r * 0.7, -token_r * 0.7), 3.5, Color(0.85, 0.15, 0.15, 0.95)) # Badge Impérial rouge
+	elif faction == "rebel":
+		draw_circle(draw_pos + Vector2(token_r * 0.7, -token_r * 0.7), 3.5, Color(0.95, 0.6, 0.15, 0.95)) # Badge Rebelle orange
 	if abs(height_offset) > 1.0 and abs(height_offset) <= 48.0:
 		draw_line(
 			Vector2(0.0, 0.0),

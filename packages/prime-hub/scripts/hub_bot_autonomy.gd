@@ -38,6 +38,7 @@ var housing_cities = null
 var swg_combat = null
 var ham_medical = null
 var harvesters = null
+var faction = null
 
 
 func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> void:
@@ -49,13 +50,14 @@ func setup(economy_svc, suggest_svc, poi_map: Dictionary, events_svc = null) -> 
 	_load_explore_ring()
 
 
-func setup_swg_services(creatures_svc, vendors_factories_svc, housing_cities_svc, swg_combat_svc, ham_medical_svc = null, harvesters_svc = null) -> void:
+func setup_swg_services(creatures_svc, vendors_factories_svc, housing_cities_svc, swg_combat_svc, ham_medical_svc = null, harvesters_svc = null, faction_svc = null) -> void:
 	creatures = creatures_svc
 	vendors_factories = vendors_factories_svc
 	housing_cities = housing_cities_svc
 	swg_combat = swg_combat_svc
 	ham_medical = ham_medical_svc
 	harvesters = harvesters_svc
+	faction = faction_svc
 
 
 func attach_world_clock(clock_svc) -> void:
@@ -663,7 +665,55 @@ func evaluate_swg_precu_priority(
 					target_meta = {"structure_id": str(s.get("struct_id", s.get("id", ""))), "deposit_credits": 300}
 					handled = true
 					break
-		# 7. Approvisionnement de la boutique en cas de surplus
+
+		# 7. Chasse & Assaut de Nids de Créatures (Lairs) & Décombres
+		if not handled and creat_svc != null and creat_svc.has_method("list_lairs"):
+			var lairs: Array = creat_svc.list_lairs()
+			for l in lairs:
+				if typeof(l) == TYPE_DICTIONARY:
+					var lid: String = str(l.get("id", ""))
+					var is_dest: bool = bool(l.get("is_destroyed", false))
+					var is_harv: bool = bool(l.get("is_harvested", false))
+					if is_dest and not is_harv:
+						decision = "harvest_lair_debris"
+						reason = "unharvested_lair_debris_available"
+						target_meta = {"lair_id": lid}
+						handled = true
+						break
+					elif not is_dest and cur_health >= eff_health * 0.7 and bf < 100:
+						decision = "attack_creature_lair"
+						reason = "active_lair_assault"
+						target_meta = {"lair_id": lid, "damage": 250}
+						handled = true
+						break
+
+		# 8. Enrôlement GCW Factions
+		var f_svc = faction
+		if not handled and f_svc != null and f_svc.has_method("get_faction_data"):
+			var fdata: Dictionary = f_svc.get_faction_data(nm)
+			if str(fdata.get("faction", "neutral")) == "neutral":
+				var target_f := "imperial" if (hash(nm) % 2 == 0) else "rebel"
+				decision = "enlist_gcw_faction"
+				reason = "bot_civil_war_enlistment"
+				target_meta = {"faction": target_f}
+				handled = true
+
+		# 9. Construction d'Habitat / Housing
+		if not handled and house_svc != null and economy != null and (house_svc.has_method("list_player_structures") or house_svc.has_method("list_structures_for_owner")):
+			var structs: Array = house_svc.list_player_structures(nm) if house_svc.has_method("list_player_structures") else house_svc.list_structures_for_owner(nm)
+			var bot_creds: int = int(economy.status(nm).get("credits", 0)) if economy.has_method("status") else (economy.get_credits(nm) if economy.has_method("get_credits") else 0)
+			if structs.is_empty() and bot_creds >= 500:
+				var h_pos := bot_pos if bot_pos != Vector3.ZERO else Vector3(5550.0, 0.15, -1150.0)
+				decision = "build_player_house"
+				reason = "bot_housing_settlement"
+				target_meta = {
+					"structure_type": "deed_maison_sable_p",
+					"name": "Résidence de %s" % nm,
+					"pos": [h_pos.x, h_pos.y, h_pos.z]
+				}
+				handled = true
+
+		# 10. Approvisionnement de la boutique en cas de surplus
 		if not handled and vend_svc != null and economy != null:
 			var barter_eval := evaluate_barter_needs(nm)
 			var surplus: Array = barter_eval.get("surplus", [])
@@ -787,6 +837,27 @@ func execute_autonomous_action(bot: Dictionary, priority: Dictionary) -> Diction
 			var qty := int(meta.get("qty", 5))
 			if vendors_factories != null and vendors_factories.has_method("post_to_bazaar"):
 				out = vendors_factories.post_to_bazaar(nm, it, qty, 25, 48)
+		"attack_creature_lair":
+			var lid := str(meta.get("lair_id", ""))
+			var dmg := int(meta.get("damage", 250))
+			if creatures != null and creatures.has_method("attack_lair") and not lid.is_empty():
+				out = creatures.attack_lair(nm, lid, dmg)
+		"harvest_lair_debris":
+			var lid := str(meta.get("lair_id", ""))
+			if creatures != null and creatures.has_method("harvest_debris") and not lid.is_empty():
+				out = creatures.harvest_debris(nm, lid)
+		"enlist_gcw_faction":
+			var fac := str(meta.get("faction", "imperial"))
+			var f_svc = faction
+			if f_svc != null and f_svc.has_method("enlist"):
+				out = f_svc.enlist(nm, fac)
+		"build_player_house":
+			var pos_arr: Array = meta.get("pos", [5550.0, 0.15, -1150.0])
+			var h_x: float = float(pos_arr[0])
+			var h_z: float = float(pos_arr[2]) if pos_arr.size() >= 3 else float(pos_arr[1])
+			var stype := str(meta.get("structure_type", "deed_maison_sable_p"))
+			if housing_cities != null and housing_cities.has_method("deploy_structure"):
+				out = housing_cities.deploy_structure(nm, stype, h_x, h_z)
 		_:
 			out = {"ok": true, "note": "decision handled via navigation/movement"}
 

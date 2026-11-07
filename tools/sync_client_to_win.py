@@ -42,6 +42,12 @@ CLIENT_TARGETS = {
         "local_base": STUDIOS_ROOT / "packages/prime-client",
         "remote_base": "J:/swgemu/clients/prime-client",
         "files": [
+            "scripts/swg_faction_system.gd",
+            "scripts/swg_faction_dialog.gd",
+            "scripts/swg_species_system.gd",
+            "scripts/swg_species_dialog.gd",
+            "scripts/swg_datapad_panel.gd",
+            "scripts/entity.gd",
             "scripts/swg_target_frame.gd",
             "scripts/swg_chat_box.gd",
             "scripts/swg_crafting_panel.gd",
@@ -142,3 +148,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

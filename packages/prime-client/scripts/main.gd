@@ -45,6 +45,10 @@ const _SwgChatBoxScript = preload("res://scripts/swg_chat_box.gd")
 const _SwgCraftingScript = preload("res://scripts/swg_crafting_panel.gd")
 const _SwgInventoryScript = preload("res://scripts/swg_inventory_paperdoll.gd")
 const _SwgAudioSynthesizerScript = preload("res://scripts/swg_audio_synthesizer.gd")
+const _SwgFactionSystemScript = preload("res://scripts/swg_faction_system.gd")
+const _SwgFactionDialogScript = preload("res://scripts/swg_faction_dialog.gd")
+const _SwgSpeciesSystemScript = preload("res://scripts/swg_species_system.gd")
+const _SwgSpeciesDialogScript = preload("res://scripts/swg_species_dialog.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
@@ -65,6 +69,9 @@ var swg_chat_box: Node = null
 var swg_crafting_panel: Node = null
 var swg_inventory_paperdoll: Node = null
 var swg_audio: Node = null
+var swg_faction_system: Node = null
+var swg_faction_dialog: Node = null
+var swg_species_dialog: Node = null
 var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
@@ -376,6 +383,19 @@ func _ensure_swg_ui() -> void:
 		swg_structure_panel = _SwgStructurePanelScript.new()
 		swg_structure_panel.name = "SwgStructurePanel"
 		modal_layer.add_child(swg_structure_panel)
+	if swg_faction_system == null:
+		swg_faction_system = _SwgFactionSystemScript.new()
+		add_child(swg_faction_system)
+	if modal_layer and swg_faction_dialog == null:
+		swg_faction_dialog = _SwgFactionDialogScript.new()
+		swg_faction_dialog.name = "SwgFactionDialog"
+		swg_faction_dialog.set_faction_system(swg_faction_system)
+		modal_layer.add_child(swg_faction_dialog)
+	if modal_layer and swg_species_dialog == null:
+		swg_species_dialog = _SwgSpeciesDialogScript.new()
+		swg_species_dialog.name = "SwgSpeciesDialog"
+		swg_species_dialog.species_selected.connect(Callable(self, "_on_swg_species_selected"))
+		modal_layer.add_child(swg_species_dialog)
 	if _swg_action_http == null:
 		_swg_action_http = HTTPRequest.new()
 		_swg_action_http.name = "SwgActionHttp"
@@ -398,6 +418,21 @@ func _on_swg_chat_command(cmd: String, _args: String) -> void:
 			_on_swg_radial_action("deploy_camp", {})
 		"harvester":
 			_on_swg_radial_action("deploy_harvester", {})
+		"flourish":
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#ff66dd]✨ Flourish d'Entertainer exécuté ! L'assistance est transportée par la performance.[/color]", "spatial")
+			if swg_audio and swg_audio.has_method("play_mission_complete"):
+				swg_audio.play_mission_complete()
+			if swg_ham_hud:
+				swg_ham_hud.heal_pool("mind", 150)
+		"species", "race":
+			if swg_species_dialog:
+				swg_species_dialog.open_panel()
+		"faction":
+			if swg_faction_dialog:
+				swg_faction_dialog.open_panel("recruiter_imperial_kren")
+		"house", "placehouse":
+			_on_swg_radial_action("deploy_house", {})
 		"clone", "suicide":
 			if swg_chat_box:
 				swg_chat_box.add_log("[color=#44ffcc]🏥 Rapatriement au Centre Médical de Lost Heaven.[/color]", "system")
@@ -428,6 +463,18 @@ func _on_swg_inventory_item_used(item_id: String) -> void:
 				swg_ham_hud.heal_pool("mind", 300)
 			if swg_chat_box:
 				swg_chat_box.add_log("[color=#66ddff]🥛 Lait Bleu de Tatooine consommé (+300 Action / +300 Mental) ![/color]", "spatial")
+
+
+func _on_swg_species_selected(sp: Dictionary) -> void:
+	var s_name := str(sp.get("name", "Humain"))
+	var s_title := str(sp.get("title", ""))
+	var bonus: Dictionary = sp.get("ham_bonus", {})
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#44ffcc]🧬 Image Designer : Vous avez adopté l'espèce %s %s ![/color]" % [s_name, s_title], "spatial")
+	if swg_ham_hud:
+		swg_ham_hud.heal_pool("health", int(bonus.get("health", 100)))
+		swg_ham_hud.heal_pool("action", int(bonus.get("action", 100)))
+		swg_ham_hud.heal_pool("mind", int(bonus.get("mind", 100)))
 
 
 func _on_swg_quick_panel_requested(panel_key: String) -> void:
@@ -614,6 +661,40 @@ func _on_swg_radial_action(action_id: String, ctx: Dictionary) -> void:
 					HTTPClient.METHOD_POST,
 					JSON.stringify({"player": p_name, "pet_id": pet_id, "food_item": "meat_dune_crawler", "qty": 1})
 				)
+		"attack_lair":
+			var lid := str(ctx.get("lair_id", ctx.get("entity_key", "lair_jackals_west")))
+			_hotbar_feedback("⚔ Assaut de Nid de Créatures : Tir concentré sur %s !" % lid)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/lair/attack",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "lair_id": lid, "damage": 250})
+				)
+		"harvest_debris":
+			var lid := str(ctx.get("lair_id", ctx.get("entity_key", "lair_jackals_west")))
+			_hotbar_feedback("Fouille des décombres du nid %s..." % lid)
+			if _swg_action_http and _swg_action_http.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+				_swg_action_http.request(
+					base_url.rstrip("/") + "/v1/creatures/lair/harvest",
+					PackedStringArray(["Content-Type: application/json"]),
+					HTTPClient.METHOD_POST,
+					JSON.stringify({"player": p_name, "lair_id": lid})
+				)
+		"enlist_faction":
+			if swg_faction_dialog:
+				var rec_id := str(ctx.get("entity_key", "recruiter_imperial_kren"))
+				swg_faction_dialog.open_panel(rec_id)
+		"open_species":
+			if swg_species_dialog:
+				swg_species_dialog.open_panel()
+		"call_pcd":
+			var pcd_id := str(ctx.get("pcd_id", "pcd_speeder_x34"))
+			_hotbar_feedback("Datapad PCD : Déploiement de %s !" % pcd_id)
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#44ffcc]🚀 Appareil invoqué : %s disponible.[/color]" % pcd_id, "spatial")
+			if swg_audio and swg_audio.has_method("play_speeder"):
+				swg_audio.play_speeder()
 		"deploy_camp":
 			var xz: Vector2 = _player_world_xz()
 			if xz == Vector2.INF:

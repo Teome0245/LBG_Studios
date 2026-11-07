@@ -7,6 +7,7 @@ const HubEconomyScript = preload("res://scripts/hub_economy.gd")
 const HubCatalogScript = preload("res://scripts/hub_catalog.gd")
 const HubDialogueScript = preload("res://scripts/hub_dialogue.gd")
 const HubHuntYardScript = preload("res://scripts/hub_hunt_yard.gd")
+const HubFactionScript = preload("res://scripts/hub_faction.gd")
 
 @export var listen_host: String = "0.0.0.0"
 @export var listen_port: int = 8789
@@ -22,6 +23,7 @@ var catalog = null
 var dialogue = null
 var events = null
 var world_stream = null
+var faction = null
 
 ## C11 TickGate — cooldown mutations par joueur (aligné agent_catalog / sidecar).
 const TICK_MUTATION_PATHS := {
@@ -57,6 +59,9 @@ func setup_services(auth_svc = null, economy_svc = null, catalog_svc = null, dia
 		economy.setup()
 	if dialogue_svc == null and dialogue.has_method("setup"):
 		dialogue.setup()
+	if faction == null:
+		faction = HubFactionScript.new()
+		faction.setup(sim, null, economy)
 
 
 func start(sim_node: Node, port: int = 8789, ws: int = 8787) -> Error:
@@ -885,6 +890,86 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		)
 		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
 
+	# --- Nids de Créatures (Lairs) & Destruction de Nid SWG Pre-CU ---
+	if method == "GET" and path == "/v1/creatures/lairs":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var lairs: Array = sim.creatures.list_lairs()
+		return _ok({"ok": true, "lairs": lairs, "count": lairs.size()})
+
+	if method == "POST" and path == "/v1/creatures/lair/attack":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var lb := _json_body(req_body)
+		var a_res: Dictionary = sim.creatures.attack_lair(
+			str(lb.get("player", "Voyageur")),
+			str(lb.get("lair_id", "")),
+			int(lb.get("damage", 100))
+		)
+		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/lair/harvest":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var hb := _json_body(req_body)
+		var h_res: Dictionary = sim.creatures.harvest_debris(
+			str(hb.get("player", "Voyageur")),
+			str(hb.get("lair_id", ""))
+		)
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	# --- Système de Factions & GCW SWG Pre-CU ---
+	if method == "GET" and path.begins_with("/v1/factions/status"):
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok({"ok": true, "faction_data": faction.get_faction_data(p_name)})
+
+	if method == "GET" and path == "/v1/factions/recruiters":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		return _ok({"ok": true, "recruiters": faction.list_recruiters()})
+
+	if method == "POST" and path == "/v1/factions/enlist":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var fb := _json_body(req_body)
+		var e_res: Dictionary = faction.enlist(str(fb.get("player", "Voyageur")), str(fb.get("faction", "neutral")))
+		return _ok(e_res, 200 if bool(e_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/special_forces":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var sfb := _json_body(req_body)
+		var sf_res: Dictionary = faction.declare_special_forces(str(sfb.get("player", "Voyageur")))
+		return _ok(sf_res, 200 if bool(sf_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/on_leave":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var olb := _json_body(req_body)
+		var ol_res: Dictionary = faction.go_on_leave(str(olb.get("player", "Voyageur")))
+		return _ok(ol_res, 200 if bool(ol_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/resign":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var rb := _json_body(req_body)
+		var r_res: Dictionary = faction.resign_to_civilian(str(rb.get("player", "Voyageur")))
+		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
+
+	# --- Espèces SWG (Image Designer) ---
+	if method == "GET" and path == "/v1/species/catalog":
+		var cats := [
+			{"id": "human", "name": "Humain (Corellien)", "bonus": {"health": 100, "action": 100, "mind": 100}},
+			{"id": "twilek", "name": "Twi'lek des Oasis", "bonus": {"health": 50, "action": 150, "mind": 200}},
+			{"id": "cyborg", "name": "Androïde / Cyborg Compagnon", "bonus": {"health": 200, "action": 100, "mind": 50}},
+			{"id": "zabrak", "name": "Zabrak d'Iridonia", "bonus": {"health": 150, "action": 150, "mind": 120}},
+			{"id": "wookiee", "name": "Wookiee de Kashyyyk", "bonus": {"health": 350, "action": 50, "mind": 50}},
+			{"id": "rodian", "name": "Rodien Chasseur", "bonus": {"health": 80, "action": 200, "mind": 80}}
+		]
+		return _ok({"ok": true, "species": cats})
+
 	# --- Ticket 3 : Commerce, Player Vendors & Factories ---
 	if method == "POST" and path == "/v1/vendors/deploy":
 		if sim == null or sim.vendors_factories == null:
@@ -961,6 +1046,86 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			float(fb.get("z", -750.0))
 		)
 		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	# --- Nids de Créatures (Lairs) & Destruction de Nid SWG Pre-CU ---
+	if method == "GET" and path == "/v1/creatures/lairs":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var lairs: Array = sim.creatures.list_lairs()
+		return _ok({"ok": true, "lairs": lairs, "count": lairs.size()})
+
+	if method == "POST" and path == "/v1/creatures/lair/attack":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var lb := _json_body(req_body)
+		var a_res: Dictionary = sim.creatures.attack_lair(
+			str(lb.get("player", "Voyageur")),
+			str(lb.get("lair_id", "")),
+			int(lb.get("damage", 100))
+		)
+		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/lair/harvest":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var hb := _json_body(req_body)
+		var h_res: Dictionary = sim.creatures.harvest_debris(
+			str(hb.get("player", "Voyageur")),
+			str(hb.get("lair_id", ""))
+		)
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	# --- Système de Factions & GCW SWG Pre-CU ---
+	if method == "GET" and path.begins_with("/v1/factions/status"):
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok({"ok": true, "faction_data": faction.get_faction_data(p_name)})
+
+	if method == "GET" and path == "/v1/factions/recruiters":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		return _ok({"ok": true, "recruiters": faction.list_recruiters()})
+
+	if method == "POST" and path == "/v1/factions/enlist":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var fb := _json_body(req_body)
+		var e_res: Dictionary = faction.enlist(str(fb.get("player", "Voyageur")), str(fb.get("faction", "neutral")))
+		return _ok(e_res, 200 if bool(e_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/special_forces":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var sfb := _json_body(req_body)
+		var sf_res: Dictionary = faction.declare_special_forces(str(sfb.get("player", "Voyageur")))
+		return _ok(sf_res, 200 if bool(sf_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/on_leave":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var olb := _json_body(req_body)
+		var ol_res: Dictionary = faction.go_on_leave(str(olb.get("player", "Voyageur")))
+		return _ok(ol_res, 200 if bool(ol_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/factions/resign":
+		if faction == null:
+			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
+		var rb := _json_body(req_body)
+		var r_res: Dictionary = faction.resign_to_civilian(str(rb.get("player", "Voyageur")))
+		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
+
+	# --- Espèces SWG (Image Designer) ---
+	if method == "GET" and path == "/v1/species/catalog":
+		var cats := [
+			{"id": "human", "name": "Humain (Corellien)", "bonus": {"health": 100, "action": 100, "mind": 100}},
+			{"id": "twilek", "name": "Twi'lek des Oasis", "bonus": {"health": 50, "action": 150, "mind": 200}},
+			{"id": "cyborg", "name": "Androïde / Cyborg Compagnon", "bonus": {"health": 200, "action": 100, "mind": 50}},
+			{"id": "zabrak", "name": "Zabrak d'Iridonia", "bonus": {"health": 150, "action": 150, "mind": 120}},
+			{"id": "wookiee", "name": "Wookiee de Kashyyyk", "bonus": {"health": 350, "action": 50, "mind": 50}},
+			{"id": "rodian", "name": "Rodien Chasseur", "bonus": {"health": 80, "action": 200, "mind": 80}}
+		]
+		return _ok({"ok": true, "species": cats})
 
 	if method == "POST" and path == "/v1/factories/run":
 		if sim == null or sim.vendors_factories == null:
