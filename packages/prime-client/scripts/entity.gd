@@ -55,6 +55,8 @@ var is_boss_beast: bool = false
 var faction: String = "neutral"
 var species_id: String = "human"
 var is_mounted: bool = false
+var is_lightsaber_active: bool = false
+var lightsaber_color: Color = Color(0.2, 0.7, 1.0)
 var current_hp: int = 1000
 var max_hp: int = 1000
 
@@ -465,6 +467,66 @@ func _draw() -> void:
 		draw_circle(draw_pos + Vector2(token_r * 0.7, -token_r * 0.7), 3.5, Color(0.85, 0.15, 0.15, 0.95)) # Badge Impérial rouge
 	elif faction == "rebel":
 		draw_circle(draw_pos + Vector2(token_r * 0.7, -token_r * 0.7), 3.5, Color(0.95, 0.6, 0.15, 0.95)) # Badge Rebelle orange
+
+	# Lame de Sabre Laser Jedi 2D (Plasma émissif)
+	if is_lightsaber_active and kind == "player":
+		var blade_dir := Vector2(sin(facing_angle), cos(facing_angle))
+		var blade_start := draw_pos + blade_dir * (token_r * 0.6)
+		var blade_end := draw_pos + blade_dir * (token_r * 2.4)
+		# Halo externe
+		draw_line(blade_start, blade_end, lightsaber_color.lightened(0.3), 3.5, true)
+		# Cœur de plasma blanc intense
+		draw_line(blade_start, blade_end, Color.WHITE, 1.8, true)
+		draw_circle(blade_start, 2.0, lightsaber_color)
+
+	# Droïde Astromécano R2 / MSE compagnon 2D
+	if kind == "droid" or "r2" in entity_key.to_lower():
+		draw_circle(draw_pos, 7.0, Color(0.9, 0.92, 0.95)) # Corps blanc
+		draw_arc(draw_pos, 7.0, -PI, 0.0, 16, Color(0.1, 0.35, 0.85), 3.0, true) # Dôme bleu
+		draw_circle(draw_pos + Vector2(0, -3), 1.5, Color(1.0, 0.1, 0.1)) # Œil rouge
+
+	# Sonde Impériale Arakyd MK-IV 2D
+	if "arakyd" in entity_key.to_lower() or "probe" in entity_key.to_lower():
+		draw_circle(draw_pos, 8.0, Color(0.15, 0.15, 0.18))
+		draw_circle(draw_pos, 3.0, Color(1.0, 0.1, 0.1)) # Capteur rouge
+		var p_wave := 0.4 + 0.3 * sin(Time.get_ticks_msec() * 0.008)
+		draw_arc(draw_pos, 16.0, 0.0, TAU, 20, Color(1.0, 0.2, 0.2, p_wave), 1.5, true)
+
+	# Terminaux Interactifs SWG Pre-CU (Bounty, Clonage, Mairie, Bio, Galaxie)
+	if kind == "terminal" or entity_key.begins_with("terminal:"):
+		var term_color := Color(0.2, 0.85, 1.0) # Cyan par défaut
+		if "bounty" in entity_key: term_color = Color(1.0, 0.25, 0.2) # Rouge chasseur
+		elif "insurance" in entity_key: term_color = Color(0.2, 0.9, 0.5) # Vert clonage
+		elif "cityhall" in entity_key: term_color = Color(1.0, 0.85, 0.3) # Or municipal
+		elif "bio" in entity_key: term_color = Color(0.3, 1.0, 0.4) # Vert biochimique
+		elif "planets" in entity_key: term_color = Color(0.7, 0.5, 1.0) # Violet galactique
+
+		# Piédestal hexagonal et écran holo
+		draw_circle(draw_pos + Vector2(1, 1), 7.0, Color(0, 0, 0, 0.3))
+		draw_circle(draw_pos, 6.0, Color(0.2, 0.22, 0.25))
+		draw_circle(draw_pos, 4.0, term_color)
+		var t_glow := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.005)
+		draw_arc(draw_pos, 9.0, 0.0, TAU, 16, Color(term_color.r, term_color.g, term_color.b, t_glow), 1.5, true)
+
+	# Chasseur Incom T-65B X-Wing au sol (Starport)
+	if "ship:" in entity_key or "xwing" in entity_key:
+		# Fuselage
+		draw_rect(Rect2(draw_pos.x - 3, draw_pos.y - 14, 6, 28), Color(0.85, 0.85, 0.88))
+		# Cockpit
+		draw_rect(Rect2(draw_pos.x - 2, draw_pos.y - 4, 4, 8), Color(0.2, 0.7, 1.0))
+		# 4 Ailes en X déployées
+		draw_line(draw_pos + Vector2(-16, -8), draw_pos + Vector2(16, 8), Color(0.8, 0.82, 0.85), 2.5)
+		draw_line(draw_pos + Vector2(-16, 8), draw_pos + Vector2(16, -8), Color(0.8, 0.82, 0.85), 2.5)
+		# Canons lasers rouges aux bouts
+		draw_circle(draw_pos + Vector2(-16, -8), 2.0, Color(1.0, 0.2, 0.2))
+		draw_circle(draw_pos + Vector2(16, -8), 2.0, Color(1.0, 0.2, 0.2))
+
+	# Sas Pressurisé de la Corvette Corellienne (Donjon)
+	if "dungeon:" in entity_key or "corvette" in entity_key:
+		draw_rect(Rect2(draw_pos.x - 10, draw_pos.y - 6, 20, 12), Color(0.65, 0.15, 0.15))
+		draw_rect(Rect2(draw_pos.x - 7, draw_pos.y - 4, 14, 8), Color(0.15, 0.18, 0.22))
+		var a_pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() * 0.01)
+		draw_circle(draw_pos + Vector2(0, -7), 3.0, Color(1.0, 0.1, 0.1, a_pulse)) # Gyrophare d'alerte
 	if abs(height_offset) > 1.0 and abs(height_offset) <= 48.0:
 		draw_line(
 			Vector2(0.0, 0.0),
@@ -539,7 +601,7 @@ func _is_clutter_visual() -> bool:
 
 
 func is_interactable() -> bool:
-	return kind == "npc"
+	return kind == "npc" or kind == "terminal" or kind == "droid" or entity_key.begins_with("terminal:") or entity_key.begins_with("ship:") or entity_key.begins_with("dungeon:") or entity_key.begins_with("droid:")
 
 
 func is_local_player(local_id: int) -> bool:
@@ -553,9 +615,9 @@ func screen_anchor() -> Vector2:
 func hit_test_screen(mouse_pos: Vector2) -> bool:
 	if not visible:
 		return false
-	if kind != "npc" and kind != "player" and kind != "beast":
+	if kind != "npc" and kind != "player" and kind != "beast" and kind != "terminal" and kind != "droid" and not entity_key.begins_with("terminal:") and not entity_key.begins_with("ship:") and not entity_key.begins_with("dungeon:"):
 		return false
 	var token_px: float = float(_SpriteRegistry.display_px())
 	# Hitbox précise ajustée sur la figurine (évite d'intercepter les clics au sol pour marcher)
-	var radius_px := clampf(token_px * 0.28, 6.0, 11.0)
+	var radius_px := clampf(token_px * 0.35, 8.0, 16.0)
 	return screen_anchor().distance_squared_to(mouse_pos) <= radius_px * radius_px

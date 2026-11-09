@@ -68,16 +68,46 @@ func unhandled_input(event: InputEvent) -> void:
 				main._focus_bot("Nix")
 			KEY_F3:
 				main._focus_bot("Mira")
+			KEY_F4:
+				if main.has_method("_toggle_lightsaber"):
+					main._toggle_lightsaber()
+			KEY_F5:
+				if main.has_method("_deploy_arakyd_probe"):
+					main._deploy_arakyd_probe()
+			KEY_F6:
+				if main.has_method("_execute_force_heal"):
+					main._execute_force_heal()
+			KEY_F8:
+				if main.has_method("_toggle_space_flight"):
+					main._toggle_space_flight()
+			KEY_F9:
+				main.show_debug_hud = not main.show_debug_hud
+				apply_debug_hud()
+			KEY_F10:
+				if main._login_panel:
+					main._login_panel.visible = not main._login_panel.visible
+			KEY_F11:
+				var cur_mode := DisplayServer.window_get_mode()
+				if cur_mode == DisplayServer.WINDOW_MODE_FULLSCREEN or cur_mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
+					DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+				else:
+					DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			KEY_C:
 				if main.has_method("_ensure_swg_ui"):
 					main._ensure_swg_ui()
 				if main.swg_character_sheet and main.swg_character_sheet.has_method("toggle"):
 					main.swg_character_sheet.toggle()
-			KEY_D:
+			KEY_V:
 				if main.has_method("_ensure_swg_ui"):
 					main._ensure_swg_ui()
 				if main.swg_datapad_panel and main.swg_datapad_panel.has_method("toggle"):
 					main.swg_datapad_panel.toggle()
+			KEY_D:
+				if event.is_command_or_control_pressed():
+					if main.has_method("_ensure_swg_ui"):
+						main._ensure_swg_ui()
+					if main.swg_datapad_panel and main.swg_datapad_panel.has_method("toggle"):
+						main.swg_datapad_panel.toggle()
 			KEY_B:
 				if main.has_method("_ensure_swg_ui"):
 					main._ensure_swg_ui()
@@ -91,18 +121,15 @@ func unhandled_input(event: InputEvent) -> void:
 						main.swg_structure_panel.toggle()
 				elif main.quest_ops:
 					main.quest_ops.toggle_echo_hammat()
-				else:
-					if main.has_method("_ensure_swg_ui"):
-						main._ensure_swg_ui()
-					if main.swg_structure_panel and main.swg_structure_panel.has_method("toggle"):
-						main.swg_structure_panel.toggle()
 			KEY_R:
-				if main.net_world:
-					main.net_world.focus_lost_heaven_hub()
+				if event.is_command_or_control_pressed():
+					if main.net_world:
+						main.net_world.focus_lost_heaven_hub()
 			KEY_F:
-				var e: Node = main.entity_manager.get_entity(0x0000_0001_0000_0002)
-				if e and main.camera:
-					main.camera.position = e.position
+				if event.is_command_or_control_pressed():
+					var e: Node = main.entity_manager.get_entity(0x0000_0001_0000_0002)
+					if e and main.camera:
+						main.camera.position = e.position
 			KEY_T:
 				if main.has_method("_ensure_swg_ui"):
 					main._ensure_swg_ui()
@@ -163,9 +190,6 @@ func unhandled_input(event: InputEvent) -> void:
 						main._dialogue_panel.hide_portrait()
 					focus_hub_chat_input()
 					main.get_viewport().set_input_as_handled()
-			KEY_F9:
-				main.show_debug_hud = not main.show_debug_hud
-				apply_debug_hud()
 			KEY_ESCAPE:
 				if hub_chat_input and hub_chat_input.has_focus():
 					hub_chat_input.release_focus()
@@ -204,9 +228,6 @@ func unhandled_input(event: InputEvent) -> void:
 					main._game_menu.toggle()
 				else:
 					main.get_tree().quit()
-			KEY_F10:
-				if main._login_panel:
-					main._login_panel.visible = not main._login_panel.visible
 
 
 func apply_debug_hud() -> void:
@@ -522,10 +543,21 @@ func cycle_dialogue_expression() -> void:
 
 
 func open_npc_dialogue(entity: Node) -> void:
-	if entity == null or main == null or main._dialogue_panel == null:
+	if entity == null or main == null:
+		return
+	var speaker: String = str(entity.get_display_name())
+	if main.has_method("_ensure_swg_ui"):
+		main._ensure_swg_ui()
+
+	# Priorité 1 : Interface de dialogue interactive SWG Pre-CU (Terminaux, Formateurs, Spatioport, Donjons, Droïdes, Villes)
+	if main.swg_dialog_box != null:
+		main.swg_dialog_box.open_dialog(speaker, entity.kind)
+		main._hotbar_feedback("Interaction %s" % speaker)
+		return
+
+	if main._dialogue_panel == null:
 		return
 	ensure_dialogue_bridge()
-	var speaker: String = str(entity.get_display_name())
 	var anchor: Dictionary = _NpcAnchorResolver.resolve(entity.entity_key, speaker)
 	var role := str(anchor.get("role", ""))
 	var world_npc_id := _NpcAnchorResolver.normalize_pilot_id(entity.entity_key)

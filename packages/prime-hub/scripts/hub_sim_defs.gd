@@ -118,4 +118,22 @@ const HUB_NPCS: Array = [
 		"ambient": "Prenez de l'eau fraîche pour vos bêtes à l'Oasis d'Al-Khali avant la traversée vers le Ksar."},
 	{"eid": "npc:ferrailleur_canyon", "oid": 910022, "name": "Ferrailleur du Canyon", "pos": Vector3(5650.0, 0.15, -3250.0), "wander_r": 8.0,
 		"ambient": "Une carcasse de cargo impérial gît dans la faille — encore des pièces à dessouder."},
+
+	# --- Piliers SWG Pre-CU & Terminaux Interactifs de Lost Heaven ---
+	{"eid": "terminal:bounty", "oid": 910030, "name": "Terminal des Chasseurs de Primes", "pos": Vector3(5025.0, 0.15, -945.0), "wander_r": 0.0,
+		"ambient": "Guilde des Bounty Hunters : avis de recherche et déploiement de sondes Arakyd."},
+	{"eid": "terminal:insurance", "oid": 910031, "name": "Borne d'Assurance & Clonage", "pos": Vector3(4485.0, 0.15, -525.0), "wander_r": 0.0,
+		"ambient": "Centre de Clonage : assurance équipement anti-decay et liaison de matrice ADN."},
+	{"eid": "terminal:cityhall", "oid": 910032, "name": "Hôtel de Ville & Élections de Maire", "pos": Vector3(4475.0, 0.15, -945.0), "wander_r": 0.0,
+		"ambient": "Hôtel de Ville civique : votez pour le Maire, enregistrez votre citoyenneté et consultez les taxes."},
+	{"eid": "terminal:bio", "oid": 910033, "name": "Incubateur Bio-Ingénieur & Synthèse ADN", "pos": Vector3(5325.0, 0.15, -735.0), "wander_r": 0.0,
+		"ambient": "Laboratoire de génétique : prélevez l'ADN de faune et incubez des bêtes hybrides mutantes."},
+	{"eid": "droid:r2", "oid": 910034, "name": "Droïde Astromécano R2-D2", "pos": Vector3(4755.0, 0.15, -730.0), "wander_r": 4.0,
+		"ambient": "Unité droïde série R2 : module de soute ambulante et atelier de confection mobile."},
+	{"eid": "ship:xwing", "oid": 910035, "name": "Chasseur Incom T-65B X-Wing (Vol JTL 3D)", "pos": Vector3(4250.0, 0.15, -745.0), "wander_r": 0.0,
+		"ambient": "Chasseur stellaire de l'Alliance : embarquez pour le dogfight spatial orbital 3D [F9]."},
+	{"eid": "dungeon:corvette", "oid": 910036, "name": "Sas de la Corvette Corellienne (Donjon Raid)", "pos": Vector3(4245.0, 0.15, -725.0), "wander_r": 0.0,
+		"ambient": "Instance donjon chronométrée 60 minutes : sabotez l'hyperdrive et sauvez les otages diplomatiques."},
+	{"eid": "terminal:planets", "oid": 910037, "name": "Console de Transit Galactique Multi-Planètes", "pos": Vector3(4265.0, 0.15, -735.0), "wander_r": 0.0,
+		"ambient": "Transit stellaire : voyagez vers Naboo, Endor, Dathomir, Corellia et Tatooine."},
 ]

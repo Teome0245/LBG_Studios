@@ -10,6 +10,7 @@ signal target_selected(target_node: Node3D)
 
 const _SwgVrmAnimatorScript := preload("res://scripts/swg_vrm_animator.gd")
 const _SwgSkinSystemScript := preload("res://scripts/swg_skin_system.gd")
+const _SwgRaceModelFactoryScript := preload("res://scripts/swg_race_model_factory.gd")
 
 var current_skin_index: int = 0
 var current_species_id: String = "human"
@@ -154,17 +155,23 @@ func apply_species(sp: Dictionary) -> void:
 	if _mesh_root:
 		_mesh_root.scale = scale_vec
 
-	# Teinte cutanée / fourrure
+	# Morphologie & Appendices 3D spécifiques par race (oreilles, cornes, lunettes, réacteur, etc.)
+	if _mesh_root:
+		_SwgRaceModelFactoryScript.attach_race_features(_mesh_root, sp)
+
+	# Teinte cutanée / fourrure / blindage
+	var is_mech := (current_species_id in ["cyborg", "mechari"])
 	_SwgSkinSystemScript.apply_skin(_mesh_root, {
 		"primary": tint,
 		"secondary": Color(0.85, 0.85, 0.9),
 		"hair": tint * 0.8,
-		"metallic": 0.2,
-		"roughness": 0.7
+		"metallic": 0.85 if is_mech else 0.2,
+		"roughness": 0.35 if is_mech else 0.7
 	})
 
 	if _nameplate_label:
-		_nameplate_label.text = "Voyageur de Lost Heaven\n%s" % s_title
+		var p_name: String = str(sp.get("prime_name", sp.get("name", "Voyageur")))
+		_nameplate_label.text = "%s\n%s" % [p_name, s_title]
 		_nameplate_label.position.y = 2.2 * scale_vec.y
 
 

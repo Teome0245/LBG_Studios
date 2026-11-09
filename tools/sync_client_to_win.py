@@ -20,6 +20,7 @@ CLIENT_TARGETS = {
         "files": [
             "scripts/swg_species_system.gd",
             "scripts/swg_species_dialog.gd",
+            "scripts/swg_race_model_factory.gd",
             "scripts/swg_player_controller_3d.gd",
             "scripts/swg_faction_system.gd",
             "scripts/swg_faction_dialog.gd",
@@ -59,6 +60,10 @@ CLIENT_TARGETS = {
             "scripts/swg_audio_synthesizer.gd",
             "scripts/main.gd",
             "scripts/client_ui_dialogue.gd",
+            "scripts/swg_dialog_box.gd",
+            "scripts/swg_space_flight_3d.gd",
+            "scripts/hub_focus.gd",
+            "scripts/client_net_world.gd",
             "tools/client_modular_selftest.gd",
         ],
     },

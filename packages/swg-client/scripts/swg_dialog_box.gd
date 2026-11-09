@@ -262,6 +262,75 @@ func _get_dialog_preset(n_name: String, n_kind: String) -> Dictionary:
 				{"id": "close", "label": "Enchantez notre cantina, Selene."}
 			]
 		}
+	elif "bounty" in lower_name or "primes" in lower_name or "bounty" in n_kind:
+		return {
+			"text": "« GUILDE DES CHASSEURS DE PRIMES — Terminaux Sécurisés. Des fugitifs, des officiers en fuite et des individus sensibles à la Force sont recherchés vivants ou morts. »",
+			"options": [
+				{"id": "open_bounty_terminal", "label": "📜 Consulter les Contrats de Primes Actifs"},
+				{"id": "deploy_probe_droid", "label": "📡 Déployer une Sonde Arakyd MK-IV pour traquer la cible"},
+				{"id": "close", "label": "Quitter le terminal."}
+			]
+		}
+	elif "assurance" in lower_name or "insurance" in lower_name or "insurance" in n_kind:
+		return {
+			"text": "« TERMINAL D'ASSURANCE & CLONAGE GALACTIQUE. Protégez votre équipement contre la dégradation définitive (Decay) et enregistrez votre matrice génétique. »",
+			"options": [
+				{"id": "insure_equipment", "label": "🛡 Assurer l'intégralité de mon équipement (200 crédits)"},
+				{"id": "bind_clone", "label": "🧬 Lier ma matrice de résurrection à ce Centre de Clonage"},
+				{"id": "close", "label": "Fermer le terminal."}
+			]
+		}
+	elif "xwing" in lower_name or "starfighter" in lower_name or "vaisseau" in lower_name or "spatial" in lower_name:
+		return {
+			"text": "« CHASSEUR STELLAIRE INCOM T-65B X-WING — Prêt pour le vol orbital Jump to Lightspeed (JTL). Systèmes d'armes armés, boucliers déflecteurs en ligne. »",
+			"options": [
+				{"id": "launch_starfighter", "label": "🚀 Décoller vers l'espace orbital (Combat Dogfight JTL) [F9]"},
+				{"id": "close", "label": "Rester au sol."}
+			]
+		}
+	elif "cityhall" in lower_name or "ville" in lower_name or "municipal" in lower_name or "city" in n_kind:
+		return {
+			"text": "« TERMINAL POLITIQUE & HÔTEL DE VILLE CIVIQUE. Enregistrez votre statut de citoyen, votez pour le prochain mandat de Maire et consultez la caisse municipale. »",
+			"options": [
+				{"id": "vote_mayor", "label": "🗳 Voter pour le Maire sortant aux élections civiques"},
+				{"id": "register_citizen", "label": "📜 Devenir citoyen officiel de la ville"},
+				{"id": "view_city_taxes", "label": "💰 Consulter les taux d'imposition (Foncier & Commerce)"},
+				{"id": "city_specialization", "label": "⚙ Spécialisation active : Centre Industriel (-10% temps craft)"},
+				{"id": "close", "label": "Quitter le terminal municipal."}
+			]
+		}
+	elif "bio" in lower_name or "incubateur" in lower_name or "adn" in lower_name:
+		return {
+			"text": "« INCUBATEUR GÉNÉTIQUE & LABORATOIRE BIO-INGÉNIEUR. Analysez vos échantillons d'ADN de créatures prélevés sur le terrain et synthétisez des embryons mutants. »",
+			"options": [
+				{"id": "sample_dna_wild", "label": "🧪 Prélever un échantillon d'ADN sur la faune ciblée"},
+				{"id": "fuse_embryo", "label": "🧬 Fusionner 2 matrices d'ADN pour concevoir un familier hybride"},
+				{"id": "craft_stimulant", "label": "💉 Synthétiser une enzyme de régénération pour Médecin"},
+				{"id": "close", "label": "Fermer la console de l'incubateur."}
+			]
+		}
+	elif "corvette" in lower_name or "donjon" in lower_name or "raid" in lower_name or "corvette" in n_kind:
+		return {
+			"text": "« SAS DE LA CORVETTE CORELLIENNE (DONJON RAID). Alerte rouge ! Le vaisseau diplomatique a été pris d'assaut. Vous disposez de 60 minutes pour sécuriser le pont et saboter l'hyperdrive. »",
+			"options": [
+				{"id": "enter_corvette", "label": "🚨 Franchir le sas pressurisé (Lancer l'instance 60 min)"},
+				{"id": "sabotage_engines", "label": "💥 Saboter les générateurs de saut hyperspatial"},
+				{"id": "rescue_hostages", "label": "🤝 Évacuer les otages diplomatiques"},
+				{"id": "close", "label": "Repli vers la zone d'atterrissage."}
+			]
+		}
+	elif "planete" in lower_name or "galaxie" in lower_name or "galactique" in lower_name or "starmap" in lower_name or "planet" in n_kind:
+		return {
+			"text": "« CONSOLE DE TRANSIT STELLAIRE & CARTOGRAPHIE GALACTIQUE. Choisissez votre destination planétaire parmi les 5 mondes majeurs de Star Wars Galaxies. »",
+			"options": [
+				{"id": "travel_tatooine", "label": "🏜 Tatooine (Désert aride, Mer de dunes & Canyons)"},
+				{"id": "travel_naboo", "label": "🌿 Naboo (Plaines verdoyantes, Cascades & Cités d'art)"},
+				{"id": "travel_endor", "label": "🌲 Endor (Lune forestière aux séquoias géants & Ewoks)"},
+				{"id": "travel_dathomir", "label": "🩸 Dathomir (Ciel carmin, Rancors sauvages & Brumes toxiques)"},
+				{"id": "travel_corellia", "label": "🏙 Corellia (Berceau naval de Coronet City & Fret galactique)"},
+				{"id": "close", "label": "Conserver les coordonnées actuelles."}
+			]
+		}
 	else:
 		return {
 			"text": "« Salutations voyageur des sables ! Que la brise de Lost Heaven vous soit favorable. »",

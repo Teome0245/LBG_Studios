@@ -970,6 +970,312 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		]
 		return _ok({"ok": true, "species": cats})
 
+	# --- SWG Jedi & Force Sensitive ---
+	if method == "GET" and path.begins_with("/v1/jedi/status"):
+		var j_svc = sim.jedi_force if (sim != null and "jedi_force" in sim) else null
+		if j_svc == null: return _ok({"ok": false, "error": "jedi_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok(j_svc.get_status(p_name))
+
+	if method == "POST" and path == "/v1/jedi/holocron":
+		var j_svc = sim.jedi_force if (sim != null and "jedi_force" in sim) else null
+		if j_svc == null: return _ok({"ok": false, "error": "jedi_unavailable"}, 501)
+		var jb := _json_body(req_body)
+		var h_res: Dictionary = j_svc.consult_holocron(str(jb.get("player", "Voyageur")), str(jb.get("holocron_kind", "jedi")))
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/jedi/lightsaber/craft":
+		var j_svc = sim.jedi_force if (sim != null and "jedi_force" in sim) else null
+		if j_svc == null: return _ok({"ok": false, "error": "jedi_unavailable"}, 501)
+		var jb := _json_body(req_body)
+		var s_res: Dictionary = j_svc.craft_lightsaber(str(jb.get("player", "Voyageur")), str(jb.get("crystal_id", "crystal_ilum_blue")), str(jb.get("hilt_type", "curved")))
+		return _ok(s_res, 200 if bool(s_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/jedi/power/execute":
+		var j_svc = sim.jedi_force if (sim != null and "jedi_force" in sim) else null
+		if j_svc == null: return _ok({"ok": false, "error": "jedi_unavailable"}, 501)
+		var jb := _json_body(req_body)
+		var p_res: Dictionary = j_svc.execute_force_power(str(jb.get("player", "Voyageur")), str(jb.get("power_id", "force_heal")), str(jb.get("target", "")))
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	# --- SWG Chasseurs de Primes (Bounty Hunter) ---
+	if method == "GET" and path.begins_with("/v1/bounties/list"):
+		var bh_svc = sim.bounty_hunter if (sim != null and "bounty_hunter" in sim) else null
+		if bh_svc == null: return _ok({"ok": false, "error": "bounty_hunter_unavailable"}, 501)
+		var hunter := _query_param(query, "hunter", "")
+		return _ok({"ok": true, "bounties": bh_svc.list_bounties(hunter)})
+
+	if method == "POST" and path == "/v1/bounties/accept":
+		var bh_svc = sim.bounty_hunter if (sim != null and "bounty_hunter" in sim) else null
+		if bh_svc == null: return _ok({"ok": false, "error": "bounty_hunter_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var a_res: Dictionary = bh_svc.accept_bounty(str(bb.get("hunter", "Boba_Fett")), str(bb.get("bounty_id", "")))
+		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/bounties/seeker_droid":
+		var bh_svc = sim.bounty_hunter if (sim != null and "bounty_hunter" in sim) else null
+		if bh_svc == null: return _ok({"ok": false, "error": "bounty_hunter_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var d_res: Dictionary = bh_svc.deploy_seeker_droid(str(bb.get("hunter", "Boba_Fett")), str(bb.get("bounty_id", "")))
+		return _ok(d_res, 200 if bool(d_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/bounties/claim":
+		var bh_svc = sim.bounty_hunter if (sim != null and "bounty_hunter" in sim) else null
+		if bh_svc == null: return _ok({"ok": false, "error": "bounty_hunter_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var c_res: Dictionary = bh_svc.claim_bounty(str(bb.get("hunter", "Boba_Fett")), str(bb.get("bounty_id", "")))
+		return _ok(c_res, 200 if bool(c_res.get("ok")) else 400)
+
+	# --- SWG Spatioports & Navettes Galactiques (Travel) ---
+	if method == "GET" and path == "/v1/travel/shuttle":
+		var tr_svc = sim.travel_shuttle if (sim != null and "travel_shuttle" in sim) else null
+		if tr_svc == null: return _ok({"ok": false, "error": "travel_unavailable"}, 501)
+		return _ok(tr_svc.get_shuttle_status())
+
+	if method == "GET" and path == "/v1/travel/routes":
+		var tr_svc = sim.travel_shuttle if (sim != null and "travel_shuttle" in sim) else null
+		if tr_svc == null: return _ok({"ok": false, "error": "travel_unavailable"}, 501)
+		return _ok({"ok": true, "routes": tr_svc.list_routes()})
+
+	if method == "POST" and path == "/v1/travel/ticket/purchase":
+		var tr_svc = sim.travel_shuttle if (sim != null and "travel_shuttle" in sim) else null
+		if tr_svc == null: return _ok({"ok": false, "error": "travel_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var p_res: Dictionary = tr_svc.purchase_ticket(str(tb.get("player", "Voyageur")), str(tb.get("route_id", "lh_eisley")))
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/travel/shuttle/board":
+		var tr_svc = sim.travel_shuttle if (sim != null and "travel_shuttle" in sim) else null
+		if tr_svc == null: return _ok({"ok": false, "error": "travel_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var b_res: Dictionary = tr_svc.board_shuttle(str(tb.get("player", "Voyageur")), str(tb.get("route_id", "lh_eisley")))
+		return _ok(b_res, 200 if bool(b_res.get("ok")) else 400)
+
+	# --- SWG Bases Factionnelles GCW & Sabotage ---
+	if method == "GET" and path == "/v1/gcw/bases":
+		var gb_svc = sim.gcw_bases if (sim != null and "gcw_bases" in sim) else null
+		if gb_svc == null: return _ok({"ok": false, "error": "gcw_bases_unavailable"}, 501)
+		return _ok({"ok": true, "bases": gb_svc.list_bases()})
+
+	if method == "POST" and path == "/v1/gcw/base/hack":
+		var gb_svc = sim.gcw_bases if (sim != null and "gcw_bases" in sim) else null
+		if gb_svc == null: return _ok({"ok": false, "error": "gcw_bases_unavailable"}, 501)
+		var gbb := _json_body(req_body)
+		var h_res: Dictionary = gb_svc.hack_security_terminal(str(gbb.get("player", "Voyageur")), str(gbb.get("base_id", "")))
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/gcw/base/overload":
+		var gb_svc = sim.gcw_bases if (sim != null and "gcw_bases" in sim) else null
+		if gb_svc == null: return _ok({"ok": false, "error": "gcw_bases_unavailable"}, 501)
+		var gbb := _json_body(req_body)
+		var o_res: Dictionary = gb_svc.overload_reactor(str(gbb.get("player", "Voyageur")), str(gbb.get("base_id", "")))
+		return _ok(o_res, 200 if bool(o_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/gcw/base/detonate":
+		var gb_svc = sim.gcw_bases if (sim != null and "gcw_bases" in sim) else null
+		if gb_svc == null: return _ok({"ok": false, "error": "gcw_bases_unavailable"}, 501)
+		var gbb := _json_body(req_body)
+		var d_res: Dictionary = gb_svc.detonate_base(str(gbb.get("player", "Voyageur")), str(gbb.get("base_id", "")))
+		return _ok(d_res, 200 if bool(d_res.get("ok")) else 400)
+
+	# --- SWG Assurance, Clonage & Decay ---
+	if method == "GET" and path.begins_with("/v1/cloning/status"):
+		var cl_svc = sim.cloning_insurance if (sim != null and "cloning_insurance" in sim) else null
+		if cl_svc == null: return _ok({"ok": false, "error": "cloning_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok(cl_svc.get_status(p_name))
+
+	if method == "POST" and path == "/v1/cloning/bind":
+		var cl_svc = sim.cloning_insurance if (sim != null and "cloning_insurance" in sim) else null
+		if cl_svc == null: return _ok({"ok": false, "error": "cloning_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var b_res: Dictionary = cl_svc.bind_cloning_facility(str(cb.get("player", "Voyageur")), str(cb.get("facility_id", "clone_lost_heaven")))
+		return _ok(b_res, 200 if bool(b_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cloning/insure":
+		var cl_svc = sim.cloning_insurance if (sim != null and "cloning_insurance" in sim) else null
+		if cl_svc == null: return _ok({"ok": false, "error": "cloning_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var i_res: Dictionary = cl_svc.insure_items(str(cb.get("player", "Voyageur")), int(cb.get("item_count", 8)))
+		return _ok(i_res, 200 if bool(i_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cloning/respawn":
+		var cl_svc = sim.cloning_insurance if (sim != null and "cloning_insurance" in sim) else null
+		if cl_svc == null: return _ok({"ok": false, "error": "cloning_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var r_res: Dictionary = cl_svc.process_death_and_clone(str(cb.get("player", "Voyageur")))
+		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
+
+	# --- SWG Jump to Lightspeed (JTL / Combat Spatial) ---
+	if method == "GET" and path == "/v1/space/ships":
+		var sp_svc = sim.space_jtl if (sim != null and "space_jtl" in sim) else null
+		if sp_svc == null: return _ok({"ok": false, "error": "space_jtl_unavailable"}, 501)
+		return _ok({"ok": true, "ships": sp_svc.list_sector_ships()})
+
+	if method == "POST" and path == "/v1/space/ship/launch":
+		var sp_svc = sim.space_jtl if (sim != null and "space_jtl" in sim) else null
+		if sp_svc == null: return _ok({"ok": false, "error": "space_jtl_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var l_res: Dictionary = sp_svc.spawn_starship(str(sb.get("pilot", "Wedge_Antilles")), str(sb.get("ship_type", "xwing_t65")))
+		return _ok(l_res, 200 if bool(l_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/space/ship/power":
+		var sp_svc = sim.space_jtl if (sim != null and "space_jtl" in sim) else null
+		if sp_svc == null: return _ok({"ok": false, "error": "space_jtl_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var p_res: Dictionary = sp_svc.adjust_power_distribution(str(sb.get("ship_id", "")), int(sb.get("weapons", 33)), int(sb.get("shields", 33)), int(sb.get("engines", 34)))
+		return _ok(p_res, 200 if bool(p_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/space/combat/fire":
+		var sp_svc = sim.space_jtl if (sim != null and "space_jtl" in sim) else null
+		if sp_svc == null: return _ok({"ok": false, "error": "space_jtl_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var f_res: Dictionary = sp_svc.fire_lasers_at_target(str(sb.get("attacker", "")), str(sb.get("target", "")))
+		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/space/hyperspace":
+		var sp_svc = sim.space_jtl if (sim != null and "space_jtl" in sim) else null
+		if sp_svc == null: return _ok({"ok": false, "error": "space_jtl_unavailable"}, 501)
+		var sb := _json_body(req_body)
+		var h_res: Dictionary = sp_svc.jump_hyperspace(str(sb.get("ship_id", "")), str(sb.get("destination", "Corellian_Sector")))
+		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
+
+	# --- 1. Villes de Joueurs & Politique (Player Cities) ---
+	if method == "GET" and path == "/v1/cities/list":
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		return _ok({"ok": true, "cities": pc_svc.get_all_cities()})
+
+	if method == "GET" and path.begins_with("/v1/cities/status"):
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		var cid := _query_param(query, "city_id", "city_new_coronet")
+		return _ok(pc_svc.get_city_status(cid))
+
+	if method == "POST" and path == "/v1/cities/found":
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var f_res: Dictionary = pc_svc.found_city(str(cb.get("founder", "Voyageur")), str(cb.get("name", "")), cb.get("pos", [0.0, 0.0, 0.0]))
+		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cities/register":
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var r_res: Dictionary = pc_svc.register_citizen(str(cb.get("city_id", "city_new_coronet")), str(cb.get("player", "Voyageur")))
+		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cities/vote":
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var v_res: Dictionary = pc_svc.cast_vote(str(cb.get("city_id", "city_new_coronet")), str(cb.get("voter", "Voyageur")), str(cb.get("candidate", "")))
+		return _ok(v_res, 200 if bool(v_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/cities/taxes":
+		var pc_svc = sim.player_cities if (sim != null and "player_cities" in sim) else null
+		if pc_svc == null: return _ok({"ok": false, "error": "player_cities_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var t_res: Dictionary = pc_svc.set_taxes(str(cb.get("city_id", "")), str(cb.get("mayor", "")), int(cb.get("property_tax", 25)), int(cb.get("income_tax", 5)), int(cb.get("travel_tax", 50)))
+		return _ok(t_res, 200 if bool(t_res.get("ok")) else 400)
+
+	# --- 2. Bio-Ingénierie & ADN (Bio-Engineer) ---
+	if method == "GET" and path.begins_with("/v1/bio/status"):
+		var bio_svc = sim.bio_engineer if (sim != null and "bio_engineer" in sim) else null
+		if bio_svc == null: return _ok({"ok": false, "error": "bio_engineer_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok(bio_svc.get_bio_status(p_name))
+
+	if method == "POST" and path == "/v1/bio/sample_dna":
+		var bio_svc = sim.bio_engineer if (sim != null and "bio_engineer" in sim) else null
+		if bio_svc == null: return _ok({"ok": false, "error": "bio_engineer_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var s_res: Dictionary = bio_svc.sample_dna(str(bb.get("player", "Voyageur")), str(bb.get("creature_type", "chacal_des_dunes")), float(bb.get("distance_m", 4.0)))
+		return _ok(s_res, 200 if bool(s_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/bio/incubate":
+		var bio_svc = sim.bio_engineer if (sim != null and "bio_engineer" in sim) else null
+		if bio_svc == null: return _ok({"ok": false, "error": "bio_engineer_unavailable"}, 501)
+		var bb := _json_body(req_body)
+		var i_res: Dictionary = bio_svc.incubate_creature(str(bb.get("player", "Voyageur")), str(bb.get("dna_id_1", "")), str(bb.get("dna_id_2", "")), str(bb.get("name", "")))
+		return _ok(i_res, 200 if bool(i_res.get("ok")) else 400)
+
+	# --- 3. Droid Engineer (Fabrication & Modules) ---
+	if method == "GET" and path.begins_with("/v1/droids/list"):
+		var dr_svc = sim.droid_engineer if (sim != null and "droid_engineer" in sim) else null
+		if dr_svc == null: return _ok({"ok": false, "error": "droid_engineer_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok({"ok": true, "droids": dr_svc.get_player_droids(p_name)})
+
+	if method == "POST" and path == "/v1/droids/craft":
+		var dr_svc = sim.droid_engineer if (sim != null and "droid_engineer" in sim) else null
+		if dr_svc == null: return _ok({"ok": false, "error": "droid_engineer_unavailable"}, 501)
+		var db := _json_body(req_body)
+		var c_res: Dictionary = dr_svc.craft_droid(str(db.get("player", "Voyageur")), str(db.get("chassis", "r2_astromech")), str(db.get("name", "")), str(db.get("color", "blue")))
+		return _ok(c_res, 200 if bool(c_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/droids/install_module":
+		var dr_svc = sim.droid_engineer if (sim != null and "droid_engineer" in sim) else null
+		if dr_svc == null: return _ok({"ok": false, "error": "droid_engineer_unavailable"}, 501)
+		var db := _json_body(req_body)
+		var m_res: Dictionary = dr_svc.install_module(str(db.get("droid_id", "")), str(db.get("module_type", "storage")))
+		return _ok(m_res, 200 if bool(m_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/droids/command":
+		var dr_svc = sim.droid_engineer if (sim != null and "droid_engineer" in sim) else null
+		if dr_svc == null: return _ok({"ok": false, "error": "droid_engineer_unavailable"}, 501)
+		var db := _json_body(req_body)
+		var cmd_res: Dictionary = dr_svc.issue_command(str(db.get("droid_id", "")), str(db.get("player", "Voyageur")), str(db.get("command", "follow")), db.get("param", null))
+		return _ok(cmd_res, 200 if bool(cmd_res.get("ok")) else 400)
+
+	# --- 4. Parcs à Thèmes & Donjons (Jabba, Empereur, Corvette, Krayt) ---
+	if method == "GET" and path.begins_with("/v1/themeparks/progress"):
+		var tp_svc = sim.theme_parks if (sim != null and "theme_parks" in sim) else null
+		if tp_svc == null: return _ok({"ok": false, "error": "theme_parks_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok({"ok": true, "progress": tp_svc.get_player_progress(p_name)})
+
+	if method == "POST" and path == "/v1/themeparks/complete_mission":
+		var tp_svc = sim.theme_parks if (sim != null and "theme_parks" in sim) else null
+		if tp_svc == null: return _ok({"ok": false, "error": "theme_parks_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var cm_res: Dictionary = tp_svc.complete_theme_park_mission(str(tb.get("player", "Voyageur")), str(tb.get("park_id", "jabba_palace")))
+		return _ok(cm_res, 200 if bool(cm_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/dungeons/corvette/enter":
+		var tp_svc = sim.theme_parks if (sim != null and "theme_parks" in sim) else null
+		if tp_svc == null: return _ok({"ok": false, "error": "theme_parks_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var ec_res: Dictionary = tp_svc.launch_corvette_instance(str(tb.get("player", "Voyageur")))
+		return _ok(ec_res, 200 if bool(ec_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/dungeons/krayt/attack":
+		var tp_svc = sim.theme_parks if (sim != null and "theme_parks" in sim) else null
+		if tp_svc == null: return _ok({"ok": false, "error": "theme_parks_unavailable"}, 501)
+		var tb := _json_body(req_body)
+		var ak_res: Dictionary = tp_svc.attack_krayt_dragon(str(tb.get("player", "Voyageur")), int(tb.get("damage", 1500)))
+		return _ok(ak_res, 200 if bool(ak_res.get("ok")) else 400)
+
+	# --- 5. Multi-Planètes & Biomes Stellaires ---
+	if method == "GET" and path == "/v1/planets/list":
+		var pl_svc = sim.galaxy_planets if (sim != null and "galaxy_planets" in sim) else null
+		if pl_svc == null: return _ok({"ok": false, "error": "galaxy_planets_unavailable"}, 501)
+		return _ok({"ok": true, "planets": pl_svc.get_all_planets()})
+
+	if method == "GET" and path.begins_with("/v1/planets/ambient"):
+		var pl_svc = sim.galaxy_planets if (sim != null and "galaxy_planets" in sim) else null
+		if pl_svc == null: return _ok({"ok": false, "error": "galaxy_planets_unavailable"}, 501)
+		var pid := _query_param(query, "planet_id", "tatooine")
+		return _ok(pl_svc.get_ambient_profile(pid))
+
+	if method == "POST" and path == "/v1/planets/travel":
+		var pl_svc = sim.galaxy_planets if (sim != null and "galaxy_planets" in sim) else null
+		if pl_svc == null: return _ok({"ok": false, "error": "galaxy_planets_unavailable"}, 501)
+		var pb := _json_body(req_body)
+		var tr_res: Dictionary = pl_svc.travel_to_planet(str(pb.get("player", "Voyageur")), str(pb.get("destination", "naboo")))
+		return _ok(tr_res, 200 if bool(tr_res.get("ok")) else 400)
+
 	# --- Ticket 3 : Commerce, Player Vendors & Factories ---
 	if method == "POST" and path == "/v1/vendors/deploy":
 		if sim == null or sim.vendors_factories == null:
@@ -1074,58 +1380,6 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			str(hb.get("lair_id", ""))
 		)
 		return _ok(h_res, 200 if bool(h_res.get("ok")) else 400)
-
-	# --- Système de Factions & GCW SWG Pre-CU ---
-	if method == "GET" and path.begins_with("/v1/factions/status"):
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		var p_name := _query_param(query, "player", "Voyageur")
-		return _ok({"ok": true, "faction_data": faction.get_faction_data(p_name)})
-
-	if method == "GET" and path == "/v1/factions/recruiters":
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		return _ok({"ok": true, "recruiters": faction.list_recruiters()})
-
-	if method == "POST" and path == "/v1/factions/enlist":
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		var fb := _json_body(req_body)
-		var e_res: Dictionary = faction.enlist(str(fb.get("player", "Voyageur")), str(fb.get("faction", "neutral")))
-		return _ok(e_res, 200 if bool(e_res.get("ok")) else 400)
-
-	if method == "POST" and path == "/v1/factions/special_forces":
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		var sfb := _json_body(req_body)
-		var sf_res: Dictionary = faction.declare_special_forces(str(sfb.get("player", "Voyageur")))
-		return _ok(sf_res, 200 if bool(sf_res.get("ok")) else 400)
-
-	if method == "POST" and path == "/v1/factions/on_leave":
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		var olb := _json_body(req_body)
-		var ol_res: Dictionary = faction.go_on_leave(str(olb.get("player", "Voyageur")))
-		return _ok(ol_res, 200 if bool(ol_res.get("ok")) else 400)
-
-	if method == "POST" and path == "/v1/factions/resign":
-		if faction == null:
-			return _ok({"ok": false, "error": "faction_unavailable"}, 501)
-		var rb := _json_body(req_body)
-		var r_res: Dictionary = faction.resign_to_civilian(str(rb.get("player", "Voyageur")))
-		return _ok(r_res, 200 if bool(r_res.get("ok")) else 400)
-
-	# --- Espèces SWG (Image Designer) ---
-	if method == "GET" and path == "/v1/species/catalog":
-		var cats := [
-			{"id": "human", "name": "Humain (Corellien)", "bonus": {"health": 100, "action": 100, "mind": 100}},
-			{"id": "twilek", "name": "Twi'lek des Oasis", "bonus": {"health": 50, "action": 150, "mind": 200}},
-			{"id": "cyborg", "name": "Androïde / Cyborg Compagnon", "bonus": {"health": 200, "action": 100, "mind": 50}},
-			{"id": "zabrak", "name": "Zabrak d'Iridonia", "bonus": {"health": 150, "action": 150, "mind": 120}},
-			{"id": "wookiee", "name": "Wookiee de Kashyyyk", "bonus": {"health": 350, "action": 50, "mind": 50}},
-			{"id": "rodian", "name": "Rodien Chasseur", "bonus": {"health": 80, "action": 200, "mind": 80}}
-		]
-		return _ok({"ok": true, "species": cats})
 
 	if method == "POST" and path == "/v1/factories/run":
 		if sim == null or sim.vendors_factories == null:

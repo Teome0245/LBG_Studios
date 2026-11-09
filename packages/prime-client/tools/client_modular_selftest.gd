@@ -278,14 +278,61 @@ func _init() -> void:
 
 	# Test Espèces & Image Designer SWG Pre-CU (2D)
 	var SwgSpeciesSystemScript := preload("res://scripts/swg_species_system.gd")
-	assert(SwgSpeciesSystemScript.get_species_count() == 6, "Catalogue de 6 espèces SWG requis")
+	assert(SwgSpeciesSystemScript.get_species_count() >= 6, "Catalogue de 6 espèces SWG / Prime requis")
 	var wookiee = SwgSpeciesSystemScript.find_species_by_id("wookiee")
 	assert(wookiee.get("name") == "Wookiee de Kashyyyk", "Espèce Wookiee présente")
 	assert(wookiee.get("ham_bonus", {}).get("health") == 350, "Bonus HAM Wookiee santé +350")
+	var tinkling = SwgSpeciesSystemScript.find_species_by_id("tinkling")
+	assert(tinkling.get("id") == "tinkling", "Espèce Tinkling résolue")
 
 	# Test Datapad PCD Véhicules & Montures
 	assert(datapad_ui._pets.size() >= 4, "Le Datapad doit contenir les 4 PCD (Speeder, Swoop, Dewback, Chiot)")
 	assert(datapad_ui._pets[0].get("pet_id") == "pcd_speeder_x34", "PCD Speeder X-34 présent")
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 18 Composants SWG Pre-CU 2D (HUD, Radial, Skills, Survey, Exp, Datapad PCD, Fiche HAM 9-stats, Bazar, Housing, Target Frame, Chat Box, Crafting Réel, Papier-Doll, Audio, Factions GCW, Espèces Image Designer) vérifiés avec succès")
+	# Test Sabre Laser & Droïdes dans Entity 2D
+	var EntityScript := preload("res://scripts/entity.gd")
+	var ent = EntityScript.new()
+	ent.kind = "player"
+	ent.is_lightsaber_active = true
+	assert(ent.is_lightsaber_active == true, "Le sabre laser doit être actif sur l'entité 2D")
+	ent.kind = "droid"
+	ent.entity_key = "droid_r2"
+	assert(ent.kind == "droid", "L'entité 2D doit supporter le type droïde")
+	ent.free()
+
+	# Test Dialogue Box SWG Universel (2D)
+	var SwgDialogBoxScript := preload("res://scripts/swg_dialog_box.gd")
+	var dialog_box = SwgDialogBoxScript.new()
+	assert(dialog_box != null, "Échec instanciation SwgDialogBox")
+	var p_city: Dictionary = dialog_box._get_dialog_preset("Hôtel de Ville", "terminal_cityhall")
+	assert(p_city["options"].size() >= 4, "Le dialogue d'Hôtel de Ville 2D doit offrir au moins 4 options")
+	var p_bio: Dictionary = dialog_box._get_dialog_preset("Incubateur Bio", "terminal_bio")
+	assert(p_bio["options"].size() >= 3, "Le dialogue d'Incubateur 2D doit offrir des options de synthèse ADN")
+	var p_droid: Dictionary = dialog_box._get_dialog_preset("Droïde R2", "terminal_droid")
+	assert(p_droid["options"].size() >= 4, "Le dialogue de commande droïde 2D doit être présent")
+	var p_corvette: Dictionary = dialog_box._get_dialog_preset("Sas Corvette", "terminal_corvette")
+	assert(p_corvette["options"].size() >= 3, "Le dialogue de raid Corvette 2D doit être présent")
+	var p_planets: Dictionary = dialog_box._get_dialog_preset("Console Galactique", "terminal_planets")
+	assert(p_planets["options"].size() >= 5, "La console stellaire 2D doit offrir les 5 planètes")
+	dialog_box.free()
+
+	# Test Extension Spatiale Jump to Lightspeed (JTL) 3D dans Prime Client
+	var SwgSpaceFlightScript := preload("res://scripts/swg_space_flight_3d.gd")
+	var space_3d = SwgSpaceFlightScript.new()
+	assert(space_3d != null, "Échec instanciation SwgSpaceFlight3D")
+	space_3d.enter_space()
+	assert(space_3d.visible == true, "Le mode spatial 3D doit s'afficher")
+	# Répartiteur Tri-Voie
+	space_3d.set_power_distribution(50, 25, 25)
+	assert(space_3d.power_weapons == 50, "La répartition d'énergie à 50% armes doit être enregistrée")
+	# Canons lasers
+	space_3d.fire_lasers()
+	# Hyperspace
+	space_3d.trigger_hyperspace("Secteur Corellien")
+	assert(space_3d.is_hyperspace == true, "Le saut hyperspatial 3D doit être enclenché")
+	space_3d.exit_space()
+	assert(space_3d.visible == false, "La sortie de l'espace doit ramener au monde 2D")
+	space_3d.free()
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 22 Composants SWG Pre-CU 2D + Extension Spatiale JTL 3D vérifiés avec succès !")
 	quit(0)

@@ -93,6 +93,7 @@ run_test "Housing Libre, Décoration & Villes de Joueurs (O2/O3 Ticket 2)" "res:
 run_test "Combat Tactique SWG : HAM, Postures & Combos (O2 Ticket 1)" "res://tools/swg_combat_selftest.gd"
 run_test "Factions GCW & Nids de Créatures SWG Pre-CU (O2/O3)" "res://tools/swg_factions_lairs_selftest.gd"
 run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
+run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
 run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

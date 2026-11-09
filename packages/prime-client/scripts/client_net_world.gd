@@ -520,7 +520,7 @@ func apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 	if hub_runtime_enabled():
 		var e2: Node = main.entity_manager.get_entity(oid)
 		if e2 and e2.has_method("set_force_nameplate"):
-			if kind == "player" or kind == "npc" or kind == "beast":
+			if kind in ["player", "npc", "beast", "terminal", "droid", "ship", "dungeon"]:
 				if not bool(e2.get("force_nameplate")):
 					e2.call("set_force_nameplate", true)
 		# C1/C2 — activité courte (status idle|busy|quest) · pas de tag IA
@@ -691,6 +691,15 @@ func demo_spawn() -> void:
 		"NPC_Guard",
 		"npc"
 	)
+	# Spawns SWG de Lost Heaven
+	main.entity_manager.spawn(800101, Vector3(5025.0, 0.0, -945.0), Color(0.9, 0.2, 0.2), "Terminal Primes SWG", "terminal", "terminal:bounty")
+	main.entity_manager.spawn(800102, Vector3(4485.0, 0.0, -525.0), Color(0.2, 0.8, 1.0), "Assurance Clonage", "terminal", "terminal:insurance")
+	main.entity_manager.spawn(800103, Vector3(4475.0, 0.0, -945.0), Color(1.0, 0.85, 0.3), "Mairie de Lost Heaven", "terminal", "terminal:cityhall")
+	main.entity_manager.spawn(800104, Vector3(5325.0, 0.0, -735.0), Color(0.3, 0.9, 0.4), "Incubateur Génétique", "terminal", "terminal:bio_incubator")
+	main.entity_manager.spawn(800105, Vector3(4755.0, 0.0, -730.0), Color(0.9, 0.9, 1.0), "R2-D2", "droid", "droid:r2d2")
+	main.entity_manager.spawn(800106, Vector3(4250.0, 0.0, -745.0), Color(0.7, 0.6, 1.0), "Console Galactique", "terminal", "terminal:planets")
+	main.entity_manager.spawn(800107, Vector3(4230.0, 0.0, -750.0), Color(1.0, 0.7, 0.2), "Chasseur X-Wing T-65B", "ship", "ship:xwing")
+	main.entity_manager.spawn(800108, Vector3(4220.0, 0.0, -735.0), Color(0.8, 0.3, 0.8), "Corvette Corellienne (Sas)", "dungeon", "dungeon:corvette")
 	main.entity_manager.spawn(0, Vector3(0.0, 0.0, 0.0), Color(1.0, 1.0, 0.0, 0.6), "(0,0)")
 	var center := _Projection3D2D.to_screen(Vector3(4749.0, 0.0, -737.0))
 	if main.camera:

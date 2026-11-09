@@ -49,6 +49,8 @@ const _SwgFactionSystemScript = preload("res://scripts/swg_faction_system.gd")
 const _SwgFactionDialogScript = preload("res://scripts/swg_faction_dialog.gd")
 const _SwgSpeciesSystemScript = preload("res://scripts/swg_species_system.gd")
 const _SwgSpeciesDialogScript = preload("res://scripts/swg_species_dialog.gd")
+const _SwgDialogBoxScript = preload("res://scripts/swg_dialog_box.gd")
+const _SwgSpaceFlightScript = preload("res://scripts/swg_space_flight_3d.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
@@ -72,6 +74,10 @@ var swg_audio: Node = null
 var swg_faction_system: Node = null
 var swg_faction_dialog: Node = null
 var swg_species_dialog: Node = null
+var swg_dialog_box: Node = null
+var swg_space_flight: Node = null
+var swg_quick_bar: Control = null
+var _lightsaber_active: bool = false
 var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
@@ -396,11 +402,90 @@ func _ensure_swg_ui() -> void:
 		swg_species_dialog.name = "SwgSpeciesDialog"
 		swg_species_dialog.species_selected.connect(Callable(self, "_on_swg_species_selected"))
 		modal_layer.add_child(swg_species_dialog)
+	if modal_layer and swg_dialog_box == null:
+		swg_dialog_box = _SwgDialogBoxScript.new()
+		swg_dialog_box.name = "SwgDialogBox"
+		modal_layer.add_child(swg_dialog_box)
+		swg_dialog_box.option_selected.connect(_on_swg_dialog_option_selected)
+	if swg_space_flight == null:
+		var space_layer := CanvasLayer.new()
+		space_layer.name = "SpaceFlightLayer"
+		space_layer.layer = 100
+		add_child(space_layer)
+		swg_space_flight = _SwgSpaceFlightScript.new()
+		space_layer.add_child(swg_space_flight)
+	if hud_layer and swg_quick_bar == null:
+		_setup_swg_quick_bar(hud_layer)
 	if _swg_action_http == null:
 		_swg_action_http = HTTPRequest.new()
 		_swg_action_http.name = "SwgActionHttp"
 		add_child(_swg_action_http)
 		_swg_action_http.request_completed.connect(_on_swg_action_http_done)
+
+
+func _setup_swg_quick_bar(hud_layer: Control) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "SwgQuickBar"
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.anchor_top = 0.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = -660.0
+	panel.offset_right = -12.0
+	panel.offset_top = 10.0
+	panel.offset_bottom = 48.0
+	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	panel.focus_mode = Control.FOCUS_NONE
+
+	var sb_panel := StyleBoxFlat.new()
+	sb_panel.bg_color = Color(0.04, 0.08, 0.14, 0.92)
+	sb_panel.border_color = Color(0.2, 0.6, 0.9, 0.8)
+	sb_panel.set_border_width_all(1)
+	sb_panel.set_corner_radius_all(6)
+	sb_panel.content_margin_left = 6
+	sb_panel.content_margin_right = 6
+	sb_panel.content_margin_top = 4
+	sb_panel.content_margin_bottom = 4
+	panel.add_theme_stylebox_override("panel", sb_panel)
+
+	var container := HBoxContainer.new()
+	container.add_theme_constant_override("separation", 6)
+	container.focus_mode = Control.FOCUS_NONE
+	panel.add_child(container)
+	hud_layer.add_child(panel)
+	swg_quick_bar = panel
+
+	var buttons_info = [
+		{"label": "🚀 Espace 3D [F8]", "color": Color(0.2, 0.8, 1.0), "fn": Callable(self, "_toggle_space_flight")},
+		{"label": "✦ Sabre [F4]", "color": Color(0.3, 0.95, 0.85), "fn": Callable(self, "_toggle_lightsaber")},
+		{"label": "✨ Heal [F6]", "color": Color(0.4, 1.0, 0.5), "fn": Callable(self, "_execute_force_heal")},
+		{"label": "📡 Sonde [F5]", "color": Color(1.0, 0.4, 0.4), "fn": Callable(self, "_deploy_arakyd_probe")},
+		{"label": "🏛 Mairie", "color": Color(1.0, 0.85, 0.3), "fn": func(): if swg_dialog_box: swg_dialog_box.open_dialog("Hôtel de Ville de Lost Heaven", "terminal_cityhall")},
+		{"label": "🌍 Galaxie", "color": Color(0.7, 0.6, 1.0), "fn": func(): if swg_dialog_box: swg_dialog_box.open_dialog("Console Galactique", "terminal_planets")}
+	]
+
+	for b_info in buttons_info:
+		var btn := Button.new()
+		btn.text = b_info["label"]
+		btn.custom_minimum_size = Vector2(96, 28)
+		btn.add_theme_font_size_override("font_size", 11)
+		btn.add_theme_color_override("font_color", Color(0.95, 0.98, 1.0))
+		btn.focus_mode = Control.FOCUS_NONE
+
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.08, 0.16, 0.24, 0.9)
+		sb.set_border_width_all(1)
+		sb.border_color = b_info["color"]
+		sb.set_corner_radius_all(4)
+		btn.add_theme_stylebox_override("normal", sb)
+
+		var sb_h := sb.duplicate() as StyleBoxFlat
+		sb_h.bg_color = Color(0.14, 0.32, 0.48, 0.95)
+		sb_h.border_color = Color(1.0, 0.9, 0.3)
+		btn.add_theme_stylebox_override("hover", sb_h)
+
+		btn.pressed.connect(b_info["fn"])
+		container.add_child(btn)
 
 
 func _on_swg_chat_command(cmd: String, _args: String) -> void:
@@ -436,9 +521,74 @@ func _on_swg_chat_command(cmd: String, _args: String) -> void:
 		"clone", "suicide":
 			if swg_chat_box:
 				swg_chat_box.add_log("[color=#44ffcc]🏥 Rapatriement au Centre Médical de Lost Heaven.[/color]", "system")
+		"saber":
+			_toggle_lightsaber()
+		"probe":
+			_deploy_arakyd_probe()
+		"space", "jtl":
+			_toggle_space_flight()
+		"forceheal":
+			_execute_force_heal()
 		_:
 			if swg_chat_box:
 				swg_chat_box.add_log("[color=#ff9999]Commande : /%s. Tapez /help pour l'aide.[/color]" % cmd, "system")
+
+
+func _toggle_lightsaber() -> void:
+	_lightsaber_active = not _lightsaber_active
+	var pc: Node = get_node_or_null("PlayerController")
+	var pid: int = int(pc.get_player_id()) if pc else 0
+	var me: Node = entity_manager.get_entity(pid) if entity_manager else null
+	if me and "is_lightsaber_active" in me:
+		me.is_lightsaber_active = _lightsaber_active
+		me.queue_redraw()
+	if swg_audio and swg_audio.has_method("play_sound"):
+		swg_audio.play_sound("lightsaber_ignite" if _lightsaber_active else "lightsaber_hum")
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#44ccff]✦ Sabre laser %s ![/color]" % ("dégainé" if _lightsaber_active else "rengainé"), "spatial")
+
+
+func _deploy_arakyd_probe() -> void:
+	if swg_audio and swg_audio.has_method("play_sound"):
+		swg_audio.play_sound("craft_success")
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#ff4444]📡 Sonde Arakyd MK-IV déployée en orbite — Balayage GPS en cours...[/color]", "combat")
+
+
+func _toggle_space_flight() -> void:
+	_ensure_swg_ui()
+	if swg_space_flight:
+		swg_space_flight.toggle_space_flight()
+		if swg_chat_box:
+			swg_chat_box.add_log("[color=#ffff44]🚀 Bascule Vol Spatial Jump to Lightspeed (JTL) 3D ![/color]", "spatial")
+
+
+func _execute_force_heal() -> void:
+	if swg_audio and swg_audio.has_method("play_sound"):
+		swg_audio.play_sound("level_up")
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#33ff88]✨ Pouvoir de Force : Force Heal déployé ! (+450 HAM)[/color]", "spatial")
+
+
+func _on_swg_dialog_option_selected(opt_id: String, _npc_name: String) -> void:
+	match opt_id:
+		"launch_starfighter":
+			_toggle_space_flight()
+		"sample_dna_wild":
+			if swg_chat_box: swg_chat_box.add_log("[color=#33ff88]🧪 Échantillon d'ADN prélevé avec succès ![/color]", "spatial")
+		"fuse_embryo":
+			if swg_chat_box: swg_chat_box.add_log("[color=#ffaa33]🧬 Matrice d'embryon hybride synthétisée dans l'incubateur ![/color]", "spatial")
+		"vote_mayor":
+			if swg_chat_box: swg_chat_box.add_log("[color=#44aaff]🗳 Vote enregistré pour les élections de Maire ![/color]", "spatial")
+		"register_citizen":
+			if swg_chat_box: swg_chat_box.add_log("[color=#44aaff]📜 Vous êtes désormais citoyen officiel de la ville ![/color]", "spatial")
+		"insure_equipment":
+			if swg_chat_box: swg_chat_box.add_log("[color=#44aaff]🛡 Équipement assuré contre le Decay post-mortem (200 crédits prélevés)[/color]", "spatial")
+		"bind_clone":
+			if swg_chat_box: swg_chat_box.add_log("[color=#44aaff]🧬 Empreinte ADN liée au centre de clonage ![/color]", "spatial")
+		"enter_corvette":
+			if swg_chat_box: swg_chat_box.add_log("[color=#ff3333]🚨 Alerte rouge : Sas franchi ! Compte à rebours Corvette lancé (60 min).[/color]", "combat")
+
 
 
 func _on_swg_inventory_item_used(item_id: String) -> void:

@@ -89,6 +89,10 @@ static func should_show_entity(core3: Vector3, kind: String, name: String = "", 
 ## Navettes / tangibles Core3 (points gris « shuttle fly to tatooine »).
 static func is_clutter(kind: String, name: String = "", entity_key: String = "") -> bool:
 	var k := kind.strip_edges().to_lower()
+	var ekey := entity_key.strip_edges().to_lower()
+	# Garder impérativement les entités SWG interactives (Mairie, Droïdes, Terminaux, Vaisseaux, Donjons)
+	if k in ["droid", "terminal", "ship", "dungeon"] or ekey.begins_with("terminal:") or ekey.begins_with("droid:") or ekey.begins_with("ship:") or ekey.begins_with("dungeon:") or ekey.begins_with("swg_"):
+		return false
 	if k in ["object", "tangible", "vehicle", "building", "static", "waypoint", "cell"]:
 		return true
 	var blob := ("%s %s" % [name, entity_key]).to_lower()

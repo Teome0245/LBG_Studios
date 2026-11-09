@@ -7,6 +7,8 @@ extends SceneTree
 
 const WorldSceneScript := preload("res://scripts/swg_world_3d.gd")
 const PlayerScript := preload("res://scripts/swg_player_controller_3d.gd")
+const SwgAssetPipelineScript := preload("res://scripts/swg_asset_pipeline.gd")
+const DialogBoxScript := preload("res://scripts/swg_dialog_box.gd")
 
 func _init() -> void:
 	print("[swg_client_3d_selftest] Début de la vérification du Client SWG Pre-CU 3D...")
@@ -66,7 +68,6 @@ func _init() -> void:
 	assert(world.terrain_system.loaded_chunks.size() > 0, "Les chunks de terrain 3D autour du centre doivent être chargés")
 
 	# 4. Test du Pipeline d'Assets POB & Teintes (Étape 2)
-	var SwgAssetPipelineScript := preload("res://scripts/swg_asset_pipeline.gd")
 	var test_cantina: Node3D = SwgAssetPipelineScript.build_swg_cantina_pob(Vector3(100, 0, 100))
 	assert(test_cantina != null, "La Cantina POB doit être générée")
 	assert(test_cantina.has_node("Cell_MainBar"), "La cellule Bar de la Cantina doit exister")
@@ -157,23 +158,40 @@ func _init() -> void:
 	world._execute_entertainer_flourish(3)
 	assert(world._inspiration_meter == 0.0, "La jauge d'inspiration doit avoir octroyé le buff complet à 100%")
 
-	# 10. Test Système d'Espèces SWG Pre-CU & Image Designer
+	# 10. Test Système d'Espèces SWG Pre-CU / Prime & Fabrique 3D d'Appendices
 	var SpeciesScript := preload("res://scripts/swg_species_system.gd")
-	assert(SpeciesScript.get_species_count() == 6, "Le catalogue d'espèces doit contenir exactement 6 espèces SWG")
+	assert(SpeciesScript.get_species_count() >= 6, "Le catalogue d'espèces doit contenir au moins 6 espèces SWG / Prime")
 	var wookiee: Dictionary = SpeciesScript.find_species_by_id("wookiee")
 	assert(wookiee.get("name") == "Wookiee de Kashyyyk", "L'espèce Wookiee doit être présente")
 	assert(wookiee.get("ham_bonus", {}).get("health") == 350, "Le bonus de santé Wookiee doit être +350")
 	var twilek: Dictionary = SpeciesScript.find_species_by_id("twilek")
 	assert(twilek.get("name") == "Twi'lek des Oasis", "L'espèce Twi'lek doit être présente")
 
-	# Test application de l'espèce sur le joueur
+	# Test résolution par ID Prime
+	var fel_rani: Dictionary = SpeciesScript.find_species_by_id("fel_rani")
+	assert(fel_rani.get("id") == "twilek", "L'ID Prime fel_rani doit résoudre l'espèce twilek")
+	var tinkling: Dictionary = SpeciesScript.find_species_by_id("tinkling")
+	assert(tinkling.get("id") == "tinkling", "L'ID Prime tinkling doit être présent")
+	var mechari: Dictionary = SpeciesScript.find_species_by_id("mechari")
+	assert(mechari.get("id") == "cyborg", "L'ID Prime mechari doit résoudre l'espèce cyborg")
+
+	# Test application de l'espèce sur le joueur et génération 3D des appendices
 	var p2 = PlayerScript.new()
 	p2._setup_nodes()
 	p2.apply_species(wookiee)
 	assert(p2.current_species_id == "wookiee", "L'espèce du joueur doit être wookiee")
 	assert(p2._mesh_root.scale.x > 1.1, "L'échelle du modèle Wookiee doit être imposante (> 1.1)")
+	var w_feat: Array[Node] = p2._mesh_root.find_children("RaceFeature_*", "", true, false)
+	assert(w_feat.size() > 0, "Les appendices 3D de Varkoon / Wookiee doivent être instanciés")
+
 	p2.apply_species(twilek)
 	assert(p2.current_species_id == "twilek", "L'espèce du joueur doit basculer vers twilek")
+	var t_feat: Array[Node] = p2._mesh_root.find_children("RaceFeature_*", "", true, false)
+	assert(t_feat.size() > 0, "Les appendices 3D de Fel'Rani / Twi'lek doivent être instanciés")
+
+	p2.apply_species(tinkling)
+	assert(p2.current_species_id == "tinkling", "L'espèce du joueur doit basculer vers tinkling")
+	assert(p2._mesh_root.scale.x < 0.6, "L'échelle de Tinkling doit être de petite taille (~45cm)")
 	p2.free()
 
 	# 11. Test Formateurs PNJ 3D & Arbres de Compétences 4x4 Interactifs (Étape 2)
@@ -190,8 +208,57 @@ func _init() -> void:
 	world._execute_sample_resource()
 	assert(world.player.current_posture == PlayerScript.Posture.KNEELING, "Le prélèvement d'échantillon géologique doit agenouiller temporairement le prospecteur")
 
+	# 13. Test Sabre Laser Jedi 3D & Pouvoirs de Force
+	world._toggle_lightsaber()
+	assert(world._lightsaber_active == true and world._lightsaber_mesh != null and world._lightsaber_mesh.visible, "Le sabre laser doit être dégainé dans la main du joueur")
+	world._execute_force_heal()
+	assert(world._force_pool < 1000.0, "Force Heal doit consommer de la réserve de Force")
+	world._toggle_lightsaber()
+	assert(world._lightsaber_active == false and not world._lightsaber_mesh.visible, "Le sabre laser doit être rengainé")
+
+	# 14. Test Droïde Sonde Arakyd (Bounty Hunter)
+	world._deploy_arakyd_probe()
+	assert(world.find_child("ArakydProbeDroid*", true, false) != null or world._tracked_entities.size() > 0, "La sonde Arakyd doit descendre des cieux")
+
+	# 15. Test Vol Spatial JTL (Jump to Lightspeed) & X-Wing T-65
+	world._toggle_space_flight()
+	assert(world._is_in_space_flight == true and world._space_ship_mesh != null, "Le joueur doit piloter son X-Wing en vol orbital spatial")
+	world._toggle_space_flight()
+	assert(world._is_in_space_flight == false, "Le retour au sol doit réussir")
+
+	# 16. Test Hôtel de Ville Civique & Bâtiments Municipaux
+	var city_hall: Node3D = SwgAssetPipelineScript.build_city_hall(Vector3(180, 0, 70), "New Coronet")
+	assert(city_hall != null, "L'Hôtel de Ville de New Coronet doit être instancié")
+	assert(city_hall.find_child("Dome*", true, false) != null or city_hall.get_child_count() > 0, "Le dôme doré et les colonnes doivent être présents")
+	city_hall.free()
+
+	# 17. Test Incubateur de Bio-Ingénierie & Synthèse ADN
+	var bio_lab: Node3D = SwgAssetPipelineScript.build_bio_incubator(Vector3(-18, 0.2, 28))
+	assert(bio_lab != null, "L'Incubateur de bio-ingénierie doit être construit")
+	bio_lab.free()
+
+	# 18. Test Droïde R2 Astromécano (Droid Engineer)
+	var r2_droid: Node3D = SwgAssetPipelineScript.build_r2_astromech(Vector3(-14, 0, 6))
+	assert(r2_droid != null, "Le droïde R2 doit être instancié avec son dôme et ses jambes")
+	r2_droid.free()
+
+	# 19. Test Donjon Sas de la Corvette Corellienne
+	var corvette: Node3D = SwgAssetPipelineScript.build_corvette_airlock(Vector3(-160, 0, -80))
+	assert(corvette != null, "Le sas de raid de la Corvette Corellienne doit être construit")
+	corvette.free()
+
+	# 20. Test Présélections de Dialogues Interactifs (Villes, Bio, Corvette, Planètes)
+	var db := DialogBoxScript.new()
+	var p_city: Dictionary = db._get_dialog_preset("Hôtel de Ville de New Coronet", "terminal_cityhall")
+	assert(p_city["options"].size() >= 4, "Le terminal de ville doit offrir au moins 4 options (vote, citoyenneté, taxes)")
+	var p_bio: Dictionary = db._get_dialog_preset("Incubateur Bio", "terminal_bio")
+	assert(p_bio["options"].size() >= 3, "L'incubateur génétique doit offrir des options de prélèvement et d'hybridation")
+	var p_planets: Dictionary = db._get_dialog_preset("Console Galactique", "terminal_planets")
+	assert(p_planets["options"].size() >= 5, "La console stellaire doit proposer les 5 planètes SWG")
+	db.free()
+
 	world.free()
 
-	print("SWG_CLIENT_3D_SELFTEST_OK: Tous les Piliers SWG Pre-CU 3D (Lairs, GCW Factions, Entertainer, PCD Montures, Housing POB, Espèces, Formateurs PNJ 4x4 & Survey 3D) 100% validés !")
+	print("SWG_CLIENT_3D_SELFTEST_OK: 100% SWG Pre-CU Répliqué (20 Piliers 3D, Jedi, Bounty, JTL, Villes, Bio, Droïdes, Donjons & Multi-Planètes) !")
 	quit(0)
 

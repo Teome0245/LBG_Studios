@@ -78,6 +78,12 @@ var _is_riding_speeder: bool = false
 var _mounted_speeder_visual: Node3D = null
 var _is_riding_dewback: bool = false
 var _mounted_dewback_visual: Node3D = null
+var _lightsaber_mesh: Node3D = null
+var _lightsaber_active: bool = false
+var _space_ship_mesh: Node3D = null
+var _is_in_space_flight: bool = false
+var _force_pool: float = 1000.0
+var _max_force: float = 1000.0
 var _shuttle_visual_ref: Node3D = null
 var _hyperspace_overlay: Panel = null
 var _notify_label: Label = null
@@ -299,6 +305,36 @@ func _spawn_interactable_entities() -> void:
 	_spawn_npc("Ordo (Pisteur & Formateur Éclaireur)", Vector3(-68, 0, 15), Color(0.3, 0.75, 0.35), "npc_trainer_scout")
 	_spawn_npc("Elan (Instructeur Médical)", Vector3(-22, 0.2, 22), Color(0.2, 0.85, 0.95), "npc_trainer_medic")
 	_spawn_npc("Selene (Formatrice Cantina & Danse)", Vector3(36, 0.6, -18), Color(0.95, 0.45, 0.75), "npc_trainer_entertainer")
+
+	# Terminaux Bounty Hunter & Assurance Post-Mortem
+	_spawn_npc("Terminal des Chasseurs de Primes", Vector3(2, 0, -25), Color(0.95, 0.2, 0.2), "terminal_bounty")
+	_spawn_npc("Borne d'Assurance Équipement", Vector3(-25, 0.2, 22), Color(0.2, 0.9, 0.8), "terminal_insurance")
+
+	# Bases Factionnelles GCW & Tourelles Lourdes de Défense
+	add_child(_SwgAssetPipelineScript.build_faction_turret(Vector3(140, 0, -110), "imperial"))
+	add_child(_SwgAssetPipelineScript.build_faction_turret(Vector3(-140, 0, 110), "rebel"))
+
+	# Villes de Joueurs & Bâtiments Civiques (Hôtel de Ville de New Coronet)
+	add_child(_SwgAssetPipelineScript.build_city_hall(Vector3(180, 0, 70), "New Coronet", -45.0))
+	_spawn_npc("Terminal Électoral de New Coronet", Vector3(175, 0, 64), Color(1.0, 0.8, 0.2), "terminal_cityhall")
+
+	# Bio-Ingénierie & Laboratoire d'Incubation ADN
+	add_child(_SwgAssetPipelineScript.build_bio_incubator(Vector3(-18, 0.2, 28)))
+	_spawn_npc("Console de l'Incubateur Génétique", Vector3(-16.5, 0.2, 28), Color(0.2, 1.0, 0.4), "terminal_bio")
+
+	# Droïde R2 Astromécano & Droïde Ingénieur
+	add_child(_SwgAssetPipelineScript.build_r2_astromech(Vector3(-14, 0, 6), 30.0))
+
+	# Donjon Raid de la Corvette Corellienne
+	add_child(_SwgAssetPipelineScript.build_corvette_airlock(Vector3(-160, 0, -80), 90.0))
+	_spawn_npc("Sas Pressurisé Corvette Corellienne", Vector3(-158, 0, -80), Color(1.0, 0.2, 0.2), "terminal_corvette")
+
+	# Console de Transit & Carte Stellaire Multi-Planètes
+	_spawn_npc("Console de Navigation Galactique", Vector3(-32, 0, -22), Color(0.4, 0.7, 1.0), "terminal_planets")
+
+	# Vaisseaux Spatiaux JTL (X-Wing T-65 sur tarmac & Chasseur TIE en survol)
+	add_child(_SwgAssetPipelineScript.build_xwing_starfighter(Vector3(-55, 0, -25), 45.0))
+	add_child(_SwgAssetPipelineScript.build_tiefighter_starfighter(Vector3(110, 25, -70), -120.0))
 
 	# 2. Droïdes Urbains
 	add_child(_SwgAssetPipelineScript.build_astromech_droid(Vector3(-38, 0, -18)))
@@ -1045,6 +1081,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				respawn_all_entities()
 			KEY_F6:
 				if swg_species_dialog: swg_species_dialog.toggle()
+			KEY_F7:
+				_toggle_lightsaber()
+			KEY_F8:
+				_deploy_arakyd_probe()
+			KEY_F9:
+				_toggle_space_flight()
+			KEY_F10:
+				_execute_force_heal()
 			KEY_C:
 				if swg_character_sheet: swg_character_sheet.toggle()
 			KEY_D, KEY_P:
@@ -1558,8 +1602,90 @@ func _on_dialog_option_selected(opt_id: String, npc_name: String) -> void:
 		"droid_whistle":
 			if swg_audio: swg_audio.play_droid()
 			_show_notification("🤖 R2-T8 émet un gazouillis joyeux et fait tourner son dôme !", Color(0.2, 0.95, 1.0))
+		"open_bounty_terminal":
+			_show_notification("📜 Terminal des Primes : 3 contrats actifs dont le fugitif Kaelen (3500 cr) !", Color(0.95, 0.85, 0.2))
+			if swg_chat_box:
+				swg_chat_box.add_log("[color=#ff9933]📜 Guild Terminal : Cibles ouvertes (Kaelen 3500 cr, Warlord Tusken 5000 cr, Jedi Renégat 12000 cr).[/color]", "bounty")
+		"deploy_probe_droid":
+			_deploy_arakyd_probe()
+		"insure_equipment":
+			_show_notification("🛡 Matrice d'assurance activée : Vos 8 équipements sont protégés contre le decay post-mortem (200 cr déduits) !", Color(0.2, 1.0, 0.7))
+		"bind_clone":
+			_show_notification("🧬 Matrice génétique liée : En cas de mort, réapparition immédiate au Centre de Clonage de Lost Heaven !", Color(0.2, 0.9, 1.0))
+		"launch_starfighter":
+			_toggle_space_flight()
 		_:
 			_show_notification("Action exécutée : %s avec %s." % [opt_id, npc_name])
+
+
+func _toggle_lightsaber() -> void:
+	if player == null: return
+	_lightsaber_active = not _lightsaber_active
+	if _lightsaber_active:
+		if _lightsaber_mesh == null:
+			_lightsaber_mesh = _SwgAssetPipelineScript.build_lightsaber_mesh("blue")
+			player.add_child(_lightsaber_mesh)
+			_lightsaber_mesh.position = Vector3(0.4, 0.9, -0.4)
+			_lightsaber_mesh.rotation_degrees = Vector3(45, 0, 0)
+		_lightsaber_mesh.visible = true
+		if swg_combat_system:
+			swg_combat_system.trigger_skill_up_effect(player.global_position if player.is_inside_tree() else player.position)
+		_show_notification("⚔ SABRE LASER DÉGAÎNÉ : Lame de plasma azur allumée (Visibilité Impériale active) !", Color(0.2, 0.8, 1.0))
+		if swg_chat_box:
+			swg_chat_box.add_log("[color=#33ccff]⚡ Un vrombissement caractéristique résonne : vous dégainez votre sabre laser.[/color]", "combat")
+	else:
+		if _lightsaber_mesh != null:
+			_lightsaber_mesh.visible = false
+		_show_notification("⚔ Sabre laser rengainé à la ceinture.", Color(0.7, 0.7, 0.8))
+
+
+func _execute_force_heal() -> void:
+	if _force_pool < 150.0:
+		_show_notification("⚠ Réserve de Force insuffisante (150 requis, disponible : %.0f) !" % _force_pool, Color(1.0, 0.4, 0.4))
+		return
+	_force_pool -= 150.0
+	if player and swg_combat_system:
+		swg_combat_system.trigger_skill_up_effect(player.global_position if player.is_inside_tree() else player.position)
+	_show_notification("✨ GUÉRISON DE FORCE (Force Heal) : +350 Santé et Action restaurées !", Color(0.3, 1.0, 0.6))
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#44ff88]✨ La Force coule en vous : vos tissus cellulaires se régénèrent instantanément (+350 Santé).[/color]", "combat")
+
+
+func _execute_force_speed() -> void:
+	if _force_pool < 200.0:
+		_show_notification("⚠ Réserve de Force insuffisante (200 requis) !", Color(1.0, 0.4, 0.4))
+		return
+	_force_pool -= 200.0
+	_show_notification("⚡ VÉLOCITÉ DE FORCE (Force Speed) : Vitesse de déplacement x2.0 pendant 15s !", Color(0.2, 0.9, 1.0))
+
+
+func _deploy_arakyd_probe() -> void:
+	if player == null: return
+	var p_pos: Vector3 = player.global_position if player.is_inside_tree() else player.position
+	var droid: Node3D = _SwgAssetPipelineScript.build_arakyd_probe_droid(p_pos + Vector3(0, 15.0, 0))
+	add_child(droid)
+	_tracked_entities.append(droid)
+	var tw := create_tween()
+	tw.tween_property(droid, "position:y", p_pos.y + 2.0, 1.8)
+	_show_notification("📡 Droïde Sonde Arakyd largué depuis l'orbite ! Télémétrie et scan de primes actifs.", Color(1.0, 0.3, 0.3))
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#ff3333]📡 Droïde Sonde Arakyd MK-IV déployé : balayage des signaux Jedi et criminels dans le secteur.[/color]", "bounty")
+
+
+func _toggle_space_flight() -> void:
+	if player == null: return
+	_is_in_space_flight = not _is_in_space_flight
+	if _is_in_space_flight:
+		if _space_ship_mesh == null:
+			_space_ship_mesh = _SwgAssetPipelineScript.build_xwing_starfighter(Vector3(0, 80.0, 0))
+			add_child(_space_ship_mesh)
+		player.position = Vector3(0, 80.0, 0)
+		_show_notification("🚀 MODE SPATIAL JTL ACTIVÉ : À bord de l'Incom T-65B X-Wing en orbite de combat !", Color(1.0, 0.8, 0.2))
+		if swg_chat_box:
+			swg_chat_box.add_log("[color=#ffcc33]🚀 Vol spatial Jump to Lightspeed (JTL) engagé : moteurs ioniques à 100%, S-Foils verrouillés en position d'attaque.[/color]", "space")
+	else:
+		player.position = Vector3(0, 0.5, 0)
+		_show_notification("🛬 Atterrissage planétaire : Retour sur la terre ferme de Lost Heaven.", Color(0.3, 0.9, 1.0))
 
 
 func _on_mission_accepted(mission_id: String, reward_cr: int) -> void:

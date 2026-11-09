@@ -28,6 +28,17 @@ const HubVendorsFactoriesScript = preload("res://scripts/hub_vendors_factories.g
 const HubHousingCitiesScript = preload("res://scripts/hub_housing_cities.gd")
 const HubSwgCombatScript = preload("res://scripts/hub_swg_combat.gd")
 const HubFactionScript = preload("res://scripts/hub_faction.gd")
+const HubJediForceScript = preload("res://scripts/hub_jedi_force.gd")
+const HubBountyHunterScript = preload("res://scripts/hub_bounty_hunter.gd")
+const HubTravelShuttleScript = preload("res://scripts/hub_travel_shuttle.gd")
+const HubGcwBasesScript = preload("res://scripts/hub_gcw_bases.gd")
+const HubCloningInsuranceScript = preload("res://scripts/hub_cloning_insurance.gd")
+const HubSpaceJtlScript = preload("res://scripts/hub_space_jtl.gd")
+const HubPlayerCitiesScript = preload("res://scripts/hub_player_cities.gd")
+const HubBioEngineerScript = preload("res://scripts/hub_bio_engineer.gd")
+const HubDroidEngineerScript = preload("res://scripts/hub_droid_engineer.gd")
+const HubThemeParksScript = preload("res://scripts/hub_theme_parks.gd")
+const HubGalaxyPlanetsScript = preload("res://scripts/hub_galaxy_planets.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -67,6 +78,17 @@ var vendors_factories = null
 var housing_cities = null
 var swg_combat = null
 var faction = null
+var jedi_force = null
+var bounty_hunter = null
+var travel_shuttle = null
+var gcw_bases = null
+var cloning_insurance = null
+var space_jtl = null
+var player_cities = null
+var bio_engineer = null
+var droid_engineer = null
+var theme_parks = null
+var galaxy_planets = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -98,6 +120,18 @@ func attach_economy(economy_svc) -> void:
 		housing_cities.setup(self, economy_svc, skills, collision)
 	if swg_combat != null:
 		swg_combat.setup(self, economy_svc, skills, ham_medical)
+	if bounty_hunter != null:
+		bounty_hunter.setup(self, economy_svc)
+	if jedi_force != null:
+		jedi_force.setup(self, economy_svc, skills, bounty_hunter)
+	if travel_shuttle != null:
+		travel_shuttle.setup(self, economy_svc)
+	if gcw_bases != null:
+		gcw_bases.setup(self, faction, economy_svc)
+	if cloning_insurance != null:
+		cloning_insurance.setup(self, economy_svc)
+	if space_jtl != null:
+		space_jtl.setup(self)
 	if autonomy != null and autonomy.has_method("setup_swg_services"):
 		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters, faction)
 
@@ -192,6 +226,34 @@ func reset() -> void:
 	if faction == null:
 		faction = HubFactionScript.new()
 	faction.setup(self, null, economy)
+	if bounty_hunter == null:
+		bounty_hunter = HubBountyHunterScript.new()
+	bounty_hunter.setup(self, economy)
+	if jedi_force == null:
+		jedi_force = HubJediForceScript.new()
+	jedi_force.setup(self, economy, skills, bounty_hunter)
+	if travel_shuttle == null:
+		travel_shuttle = HubTravelShuttleScript.new()
+	travel_shuttle.setup(self, economy)
+	if gcw_bases == null:
+		gcw_bases = HubGcwBasesScript.new()
+	gcw_bases.setup(self, faction, economy)
+	if cloning_insurance == null:
+		cloning_insurance = HubCloningInsuranceScript.new()
+	cloning_insurance.setup(self, economy)
+	if space_jtl == null:
+		space_jtl = HubSpaceJtlScript.new()
+	space_jtl.setup(self)
+	if player_cities == null:
+		player_cities = HubPlayerCitiesScript.new(economy)
+	if bio_engineer == null:
+		bio_engineer = HubBioEngineerScript.new()
+	if droid_engineer == null:
+		droid_engineer = HubDroidEngineerScript.new()
+	if theme_parks == null:
+		theme_parks = HubThemeParksScript.new()
+	if galaxy_planets == null:
+		galaxy_planets = HubGalaxyPlanetsScript.new()
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -396,7 +458,6 @@ func _ensure_hub_npcs() -> void:
 				e["pos"] = Vector3(wz.x, p.y, wz.y)
 				e["home_x"] = wz.x
 				e["home_z"] = wz.y
-		return
 	for n in HUB_NPCS:
 		var eid: String = str(n["eid"])
 		if entities.has(eid):
@@ -408,7 +469,7 @@ func _ensure_hub_npcs() -> void:
 		entities[eid] = {
 			"eid": eid,
 			"oid": int(n["oid"]),
-			"kind": "npc",
+			"kind": str(n.get("kind", "npc")),
 			"name": str(n["name"]),
 			"pos": p,
 			"target": Vector3.ZERO,
@@ -840,6 +901,12 @@ func step(dt: float) -> void:
 		creatures.tick_creatures(dt * float(_life_tick_every))
 	if swg_combat != null and tick % _life_tick_every == 0:
 		swg_combat.tick_combat(dt * float(_life_tick_every))
+	if player_cities != null and tick % _life_tick_every == 0:
+		player_cities.tick(dt * float(_life_tick_every))
+	if droid_engineer != null and tick % _life_tick_every == 0:
+		droid_engineer.tick(dt * float(_life_tick_every))
+	if theme_parks != null and tick % _life_tick_every == 0:
+		theme_parks.tick(dt * float(_life_tick_every))
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):

@@ -2488,3 +2488,597 @@ static func build_faction_turret(pos: Vector3, faction_type: String = "imperial"
 	return turret
 
 
+## Modèle 3D de Sabre Laser déployable (Lightsaber)
+static func build_lightsaber_mesh(blade_color: String = "blue") -> Node3D:
+	var saber := Node3D.new()
+	saber.name = "Lightsaber"
+
+	# Manche métallique chromé
+	var hilt := MeshInstance3D.new()
+	var h_cyl := CylinderMesh.new()
+	h_cyl.top_radius = 0.035
+	h_cyl.bottom_radius = 0.035
+	h_cyl.height = 0.32
+	hilt.mesh = h_cyl
+	hilt.position = Vector3(0, 0.16, 0)
+	var mat_hilt := StandardMaterial3D.new()
+	mat_hilt.albedo_color = Color(0.85, 0.88, 0.92)
+	mat_hilt.metallic = 0.95
+	mat_hilt.roughness = 0.2
+	hilt.set_surface_override_material(0, mat_hilt)
+	saber.add_child(hilt)
+
+	# Anneaux noirs antidérapants
+	for ry in [0.08, 0.14, 0.20]:
+		var ring := MeshInstance3D.new()
+		var r_tor := TorusMesh.new()
+		r_tor.inner_radius = 0.036
+		r_tor.outer_radius = 0.042
+		ring.mesh = r_tor
+		ring.position = Vector3(0, ry, 0)
+		var mat_r := StandardMaterial3D.new()
+		mat_r.albedo_color = Color(0.12, 0.12, 0.15)
+		ring.set_surface_override_material(0, mat_r)
+		saber.add_child(ring)
+
+	# Lame d'énergie pure émissive
+	var blade := MeshInstance3D.new()
+	blade.name = "EnergyBlade"
+	var b_cyl := CylinderMesh.new()
+	b_cyl.top_radius = 0.025
+	b_cyl.bottom_radius = 0.028
+	b_cyl.height = 1.25
+	blade.mesh = b_cyl
+	blade.position = Vector3(0, 0.32 + 0.625, 0)
+
+	var col := Color(0.15, 0.6, 1.0)
+	match blade_color.to_lower():
+		"green": col = Color(0.2, 1.0, 0.35)
+		"red": col = Color(1.0, 0.15, 0.15)
+		"purple": col = Color(0.85, 0.25, 1.0)
+		"yellow": col = Color(1.0, 0.9, 0.2)
+
+	var mat_b := StandardMaterial3D.new()
+	mat_b.albedo_color = Color.WHITE
+	mat_b.emission_enabled = true
+	mat_b.emission = col
+	mat_b.emission_energy_multiplier = 6.0
+	blade.set_surface_override_material(0, mat_b)
+	saber.add_child(blade)
+
+	# Lumière dynamique projetée par la lame
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 0.95, 0)
+	light.light_color = col
+	light.light_energy = 3.5
+	light.omni_range = 6.0
+	saber.add_child(light)
+
+	return saber
+
+
+## Modèle 3D de Droïde Sonde Impérial Arakyd (Arakyd Probe Droid)
+static func build_arakyd_probe_droid(pos: Vector3) -> Node3D:
+	var droid := Node3D.new()
+	droid.name = "ArakydProbeDroid"
+	droid.position = pos
+
+	var mat_dark := StandardMaterial3D.new()
+	mat_dark.albedo_color = Color(0.12, 0.13, 0.15)
+	mat_dark.metallic = 0.85
+	mat_dark.roughness = 0.35
+
+	# Tête sphérique principale
+	var head := MeshInstance3D.new()
+	var h_sph := SphereMesh.new()
+	h_sph.radius = 0.6
+	h_sph.height = 1.1
+	head.mesh = h_sph
+	head.position = Vector3(0, 2.2, 0)
+	head.set_surface_override_material(0, mat_dark)
+	droid.add_child(head)
+
+	# Capteurs et photorécepteurs rouges lumineux
+	var eye := MeshInstance3D.new()
+	var e_sph := SphereMesh.new()
+	e_sph.radius = 0.14
+	e_sph.height = 0.18
+	eye.mesh = e_sph
+	eye.position = Vector3(0, 2.3, 0.55)
+	var mat_eye := StandardMaterial3D.new()
+	mat_eye.albedo_color = Color(1.0, 0.1, 0.1)
+	mat_eye.emission_enabled = true
+	mat_eye.emission = Color(1.0, 0.1, 0.1)
+	mat_eye.emission_energy_multiplier = 4.0
+	eye.set_surface_override_material(0, mat_eye)
+	droid.add_child(eye)
+
+	# 3 Bras articulés inférieurs
+	for angle_deg in [0, 120, 240]:
+		var arm := MeshInstance3D.new()
+		var a_cyl := CylinderMesh.new()
+		a_cyl.top_radius = 0.05
+		a_cyl.bottom_radius = 0.04
+		a_cyl.height = 0.9
+		arm.mesh = a_cyl
+		var rad := deg_to_rad(angle_deg)
+		arm.position = Vector3(cos(rad) * 0.35, 1.4, sin(rad) * 0.35)
+		arm.rotation_degrees = Vector3(15 * sin(rad), 0, -15 * cos(rad))
+		arm.set_surface_override_material(0, mat_dark)
+		droid.add_child(arm)
+
+	# Antenne de transmission hyperspatiale
+	var ant := MeshInstance3D.new()
+	var a_mesh := CylinderMesh.new()
+	a_mesh.top_radius = 0.02
+	a_mesh.bottom_radius = 0.03
+	a_mesh.height = 1.2
+	ant.mesh = a_mesh
+	ant.position = Vector3(0.25, 3.2, -0.2)
+	ant.set_surface_override_material(0, mat_dark)
+	droid.add_child(ant)
+
+	return droid
+
+
+## Modèle 3D de Chasseur Incom T-65B X-Wing (JTL)
+static func build_xwing_starfighter(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var ship := Node3D.new()
+	ship.name = "XWing_T65"
+	ship.position = pos
+	ship.rotation_degrees.y = yaw_deg
+
+	var mat_white := StandardMaterial3D.new()
+	mat_white.albedo_color = Color(0.88, 0.90, 0.92)
+	mat_white.metallic = 0.4
+	mat_white.roughness = 0.4
+
+	var mat_red := StandardMaterial3D.new()
+	mat_red.albedo_color = Color(0.85, 0.15, 0.12)
+
+	# Fuselage principal allongé
+	var body := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(1.6, 1.2, 9.5)
+	body.mesh = b_box
+	body.position = Vector3(0, 0.6, 0)
+	body.set_surface_override_material(0, mat_white)
+	ship.add_child(body)
+
+	# Nez pointu
+	var nose := MeshInstance3D.new()
+	var n_box := BoxMesh.new()
+	n_box.size = Vector3(1.1, 0.8, 3.2)
+	nose.mesh = n_box
+	nose.position = Vector3(0, 0.5, -5.5)
+	nose.set_surface_override_material(0, mat_white)
+	ship.add_child(nose)
+
+	# Bandes rouges d'escadron (Red Five)
+	var stripe := MeshInstance3D.new()
+	var s_box := BoxMesh.new()
+	s_box.size = Vector3(1.65, 0.2, 1.4)
+	stripe.mesh = s_box
+	stripe.position = Vector3(0, 1.15, -2.0)
+	stripe.set_surface_override_material(0, mat_red)
+	ship.add_child(stripe)
+
+	# 4 Ailes en configuration d'attaque en X (S-Foils deployed)
+	for side in [-1, 1]:
+		for vertical in [-1, 1]:
+			var wing := MeshInstance3D.new()
+			var w_box := BoxMesh.new()
+			w_box.size = Vector3(4.8, 0.12, 2.2)
+			wing.mesh = w_box
+			wing.position = Vector3(side * 2.8, 0.6 + vertical * 0.75, 1.0)
+			wing.rotation_degrees.z = side * vertical * 14.0 # Angle S-Foil en X
+			wing.set_surface_override_material(0, mat_white)
+			ship.add_child(wing)
+
+			# Canon laser au bout de chaque aile
+			var cannon := MeshInstance3D.new()
+			var c_cyl := CylinderMesh.new()
+			c_cyl.top_radius = 0.06
+			c_cyl.bottom_radius = 0.08
+			c_cyl.height = 4.2
+			cannon.mesh = c_cyl
+			cannon.rotation_degrees = Vector3(90, 0, 0)
+			cannon.position = Vector3(side * 5.2, 0.6 + vertical * 1.35, -0.6)
+			var mat_c := StandardMaterial3D.new()
+			mat_c.albedo_color = Color(0.2, 0.22, 0.25)
+			mat_c.metallic = 0.9
+			cannon.set_surface_override_material(0, mat_c)
+			ship.add_child(cannon)
+
+	# 4 Moteurs à sub-illumination ioniques avec lueur rose/rouge
+	for ex in [-0.75, 0.75]:
+		for ey in [0.25, 0.95]:
+			var engine := MeshInstance3D.new()
+			var e_cyl := CylinderMesh.new()
+			e_cyl.top_radius = 0.35
+			e_cyl.bottom_radius = 0.35
+			e_cyl.height = 2.4
+			engine.mesh = e_cyl
+			engine.rotation_degrees = Vector3(90, 0, 0)
+			engine.position = Vector3(ex, ey, 3.8)
+			engine.set_surface_override_material(0, mat_white)
+			ship.add_child(engine)
+
+			var glow := OmniLight3D.new()
+			glow.position = Vector3(ex, ey, 5.1)
+			glow.light_color = Color(1.0, 0.4, 0.6)
+			glow.light_energy = 2.5
+			glow.omni_range = 4.0
+			ship.add_child(glow)
+
+	return ship
+
+
+## Modèle 3D de Chasseur TIE/ln Sienar (JTL)
+static func build_tiefighter_starfighter(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var tie := Node3D.new()
+	tie.name = "TIEFighter_LN"
+	tie.position = pos
+	tie.rotation_degrees.y = yaw_deg
+
+	var mat_hull := StandardMaterial3D.new()
+	mat_hull.albedo_color = Color(0.65, 0.68, 0.72)
+	mat_hull.metallic = 0.8
+	mat_hull.roughness = 0.3
+
+	var mat_panel := StandardMaterial3D.new()
+	mat_panel.albedo_color = Color(0.08, 0.09, 0.1)
+	mat_panel.roughness = 0.8
+
+	# Cockpit sphérique central
+	var pod := MeshInstance3D.new()
+	var p_sph := SphereMesh.new()
+	p_sph.radius = 1.1
+	p_sph.height = 2.2
+	pod.mesh = p_sph
+	pod.position = Vector3(0, 1.2, 0)
+	pod.set_surface_override_material(0, mat_hull)
+	tie.add_child(pod)
+
+	# Hublot avant polygonal
+	var glass := MeshInstance3D.new()
+	var g_cyl := CylinderMesh.new()
+	g_cyl.top_radius = 0.55
+	g_cyl.bottom_radius = 0.55
+	g_cyl.height = 0.25
+	glass.mesh = g_cyl
+	glass.rotation_degrees = Vector3(90, 0, 0)
+	glass.position = Vector3(0, 1.2, -1.05)
+	var mat_g := StandardMaterial3D.new()
+	mat_g.albedo_color = Color(0.1, 0.12, 0.15)
+	mat_g.roughness = 0.1
+	glass.set_surface_override_material(0, mat_g)
+	tie.add_child(glass)
+
+	# 2 Pylônes d'ailes et 2 Grands Panneaux Solaires Hexagonaux
+	for side in [-1, 1]:
+		var pylon := MeshInstance3D.new()
+		var py_cyl := CylinderMesh.new()
+		py_cyl.top_radius = 0.22
+		py_cyl.bottom_radius = 0.22
+		py_cyl.height = 2.8
+		pylon.mesh = py_cyl
+		pylon.rotation_degrees = Vector3(0, 0, 90)
+		pylon.position = Vector3(side * 2.2, 1.2, 0)
+		pylon.set_surface_override_material(0, mat_hull)
+		tie.add_child(pylon)
+
+		# Panneau hexagonal
+		var wing := MeshInstance3D.new()
+		var w_box := BoxMesh.new()
+		w_box.size = Vector3(0.15, 6.5, 5.5)
+		wing.mesh = w_box
+		wing.position = Vector3(side * 3.6, 1.2, 0)
+		wing.set_surface_override_material(0, mat_panel)
+		tie.add_child(wing)
+
+	# 2 Canons laser mentonniers verts
+	for cx in [-0.22, 0.22]:
+		var gun := MeshInstance3D.new()
+		var g_mesh := CylinderMesh.new()
+		g_mesh.top_radius = 0.05
+		g_mesh.bottom_radius = 0.06
+		g_mesh.height = 0.6
+		gun.mesh = g_mesh
+		gun.rotation_degrees = Vector3(90, 0, 0)
+		gun.position = Vector3(cx, 0.5, -1.1)
+		var mat_gun := StandardMaterial3D.new()
+		mat_gun.albedo_color = Color(0.2, 1.0, 0.3)
+		mat_gun.emission_enabled = true
+		mat_gun.emission = Color(0.2, 1.0, 0.3)
+		gun.set_surface_override_material(0, mat_gun)
+		tie.add_child(gun)
+
+	return tie
+
+
+## 16. Hôtel de Ville Civique (Player City Hall SWG)
+static func build_city_hall(pos: Vector3, city_name: String = "New Coronet", yaw_deg: float = 0.0) -> Node3D:
+	var hall := Node3D.new()
+	hall.name = "CityHall_" + city_name.replace(" ", "_")
+	hall.position = pos
+	hall.rotation_degrees.y = yaw_deg
+
+	var mat_marble := StandardMaterial3D.new()
+	mat_marble.albedo_color = Color(0.85, 0.83, 0.78)
+	mat_marble.roughness = 0.35
+
+	var mat_gold := StandardMaterial3D.new()
+	mat_gold.albedo_color = Color(0.9, 0.75, 0.2)
+	mat_gold.metallic = 0.9
+	mat_gold.roughness = 0.2
+
+	var sb := StaticBody3D.new()
+
+	# Base surélevée et perron
+	var base := MeshInstance3D.new()
+	var b_box := BoxMesh.new()
+	b_box.size = Vector3(22.0, 1.2, 16.0)
+	base.mesh = b_box
+	base.position = Vector3(0, 0.6, 0)
+	base.set_surface_override_material(0, mat_marble)
+	sb.add_child(base)
+
+	# Bâtiment principal avec hall d'assemblée
+	var body := MeshInstance3D.new()
+	var body_box := BoxMesh.new()
+	body_box.size = Vector3(18.0, 7.0, 12.0)
+	body.mesh = body_box
+	body.position = Vector3(0, 4.7, 1.0)
+	body.set_surface_override_material(0, mat_marble)
+	sb.add_child(body)
+
+	# Dôme doré central du Sénat municipal
+	var dome := MeshInstance3D.new()
+	var d_sph := SphereMesh.new()
+	d_sph.radius = 4.0
+	d_sph.height = 4.5
+	dome.mesh = d_sph
+	dome.position = Vector3(0, 8.8, 1.0)
+	dome.set_surface_override_material(0, mat_gold)
+	sb.add_child(dome)
+
+	# 6 Colonnes majestueuses en façade
+	for cx in [-7.5, -4.5, -1.5, 1.5, 4.5, 7.5]:
+		var col := MeshInstance3D.new()
+		var c_cyl := CylinderMesh.new()
+		c_cyl.top_radius = 0.55
+		c_cyl.bottom_radius = 0.65
+		c_cyl.height = 6.2
+		col.mesh = c_cyl
+		col.position = Vector3(cx, 4.3, -5.8)
+		col.set_surface_override_material(0, mat_marble)
+		sb.add_child(col)
+
+	hall.add_child(sb)
+
+	# Enseigne municipale et terminal électoral
+	var sign := Label3D.new()
+	sign.text = "🏛 HÔTEL DE VILLE CIVIQUE 🏛\n« %s »\n[E] Voter pour le Maire & Consulter les Taxes" % city_name
+	sign.position = Vector3(0, 6.8, -6.2)
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.font_size = 20
+	sign.modulate = Color(1.0, 0.85, 0.3)
+	hall.add_child(sign)
+
+	return hall
+
+
+## 17. Incubateur de Bio-Ingénierie & Laboratoire Génétique
+static func build_bio_incubator(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var lab := Node3D.new()
+	lab.name = "Bio_Incubator_Lab"
+	lab.position = pos
+	lab.rotation_degrees.y = yaw_deg
+
+	var mat_metal := StandardMaterial3D.new()
+	mat_metal.albedo_color = Color(0.3, 0.35, 0.4)
+	mat_metal.metallic = 0.8
+
+	var mat_fluid := StandardMaterial3D.new()
+	mat_fluid.albedo_color = Color(0.1, 0.95, 0.3, 0.6)
+	mat_fluid.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_fluid.emission_enabled = true
+	mat_fluid.emission = Color(0.1, 0.95, 0.3)
+	mat_fluid.emission_energy_multiplier = 2.0
+
+	var sb := StaticBody3D.new()
+
+	# Socle circulaire en acier lourd
+	var base := MeshInstance3D.new()
+	var b_cyl := CylinderMesh.new()
+	b_cyl.top_radius = 1.4
+	b_cyl.bottom_radius = 1.6
+	b_cyl.height = 0.6
+	base.mesh = b_cyl
+	base.position = Vector3(0, 0.3, 0)
+	base.set_surface_override_material(0, mat_metal)
+	sb.add_child(base)
+
+	# Cuve cylindrique en verre de confinement génétique
+	var vat := MeshInstance3D.new()
+	var v_cyl := CylinderMesh.new()
+	v_cyl.top_radius = 1.1
+	v_cyl.bottom_radius = 1.1
+	v_cyl.height = 2.4
+	vat.mesh = v_cyl
+	vat.position = Vector3(0, 1.8, 0)
+	vat.set_surface_override_material(0, mat_fluid)
+	sb.add_child(vat)
+
+	# Chapeau supérieur avec anneau de stimulation biochimique
+	var cap := MeshInstance3D.new()
+	var c_cyl := CylinderMesh.new()
+	c_cyl.top_radius = 1.5
+	c_cyl.bottom_radius = 1.3
+	c_cyl.height = 0.5
+	cap.mesh = c_cyl
+	cap.position = Vector3(0, 3.2, 0)
+	cap.set_surface_override_material(0, mat_metal)
+	sb.add_child(cap)
+
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 1.8, 0)
+	light.light_color = Color(0.1, 0.95, 0.3)
+	light.light_energy = 3.0
+	light.omni_range = 5.0
+	sb.add_child(light)
+
+	lab.add_child(sb)
+
+	var label := Label3D.new()
+	label.text = "🧪 INCUBATEUR BIO-INGÉNIEUR 🧪\n« Synthèse ADN & Chimères »"
+	label.position = Vector3(0, 4.0, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size = 18
+	label.modulate = Color(0.3, 1.0, 0.4)
+	lab.add_child(label)
+
+	return lab
+
+
+## 18. Droïde Astromécano Série R2 (Droid Engineer)
+static func build_r2_astromech(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var r2 := Node3D.new()
+	r2.name = "R2_Astromech_Droid"
+	r2.position = pos
+	r2.rotation_degrees.y = yaw_deg
+
+	var mat_white := StandardMaterial3D.new()
+	mat_white.albedo_color = Color(0.92, 0.93, 0.95)
+	mat_white.roughness = 0.3
+
+	var mat_blue := StandardMaterial3D.new()
+	mat_blue.albedo_color = Color(0.1, 0.3, 0.8)
+	mat_blue.metallic = 0.7
+
+	# Corps cylindrique
+	var body := MeshInstance3D.new()
+	var b_cyl := CylinderMesh.new()
+	b_cyl.top_radius = 0.42
+	b_cyl.bottom_radius = 0.42
+	b_cyl.height = 0.75
+	body.mesh = b_cyl
+	body.position = Vector3(0, 0.65, 0)
+	body.set_surface_override_material(0, mat_white)
+	r2.add_child(body)
+
+	# Dôme pivotant semi-sphérique
+	var dome := MeshInstance3D.new()
+	var d_sph := SphereMesh.new()
+	d_sph.radius = 0.42
+	d_sph.height = 0.5
+	dome.mesh = d_sph
+	dome.position = Vector3(0, 1.05, 0)
+	dome.set_surface_override_material(0, mat_blue)
+	r2.add_child(dome)
+
+	# Œil projecteur holographique rougeoyant
+	var eye := MeshInstance3D.new()
+	var e_cyl := CylinderMesh.new()
+	e_cyl.top_radius = 0.08
+	e_cyl.bottom_radius = 0.08
+	e_cyl.height = 0.12
+	eye.mesh = e_cyl
+	eye.rotation_degrees = Vector3(90, 0, 0)
+	eye.position = Vector3(0, 1.15, -0.4)
+	var mat_eye := StandardMaterial3D.new()
+	mat_eye.albedo_color = Color(1.0, 0.1, 0.1)
+	mat_eye.emission_enabled = true
+	mat_eye.emission = Color(1.0, 0.1, 0.1)
+	eye.set_surface_override_material(0, mat_eye)
+	r2.add_child(eye)
+
+	# 2 Jambes latérales avec pieds montés sur roulettes
+	for sx in [-0.55, 0.55]:
+		var leg := MeshInstance3D.new()
+		var l_box := BoxMesh.new()
+		l_box.size = Vector3(0.14, 0.9, 0.22)
+		leg.mesh = l_box
+		leg.position = Vector3(sx, 0.55, 0)
+		leg.set_surface_override_material(0, mat_white)
+		r2.add_child(leg)
+
+	# Petite roulette avant centrale
+	var front_wheel := MeshInstance3D.new()
+	var fw_sph := SphereMesh.new()
+	fw_sph.radius = 0.12
+	fw_sph.height = 0.24
+	front_wheel.mesh = fw_sph
+	front_wheel.position = Vector3(0, 0.12, -0.2)
+	front_wheel.set_surface_override_material(0, mat_blue)
+	r2.add_child(front_wheel)
+
+	var label := Label3D.new()
+	label.text = "🤖 R2-D2 (Astromécano)\n« Module Soute & Atelier Mobile »"
+	label.position = Vector3(0, 1.5, 0)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size = 14
+	label.modulate = Color(0.4, 0.8, 1.0)
+	r2.add_child(label)
+
+	return r2
+
+
+## 19. Donjon de la Corvette Corellienne (Sas & Gyrophares)
+static func build_corvette_airlock(pos: Vector3, yaw_deg: float = 0.0) -> Node3D:
+	var airlock := Node3D.new()
+	airlock.name = "Corvette_Airlock_Dungeon"
+	airlock.position = pos
+	airlock.rotation_degrees.y = yaw_deg
+
+	var mat_armor := StandardMaterial3D.new()
+	mat_armor.albedo_color = Color(0.7, 0.15, 0.15) # Rouge Corellien
+	mat_armor.roughness = 0.5
+
+	var mat_blastdoor := StandardMaterial3D.new()
+	mat_blastdoor.albedo_color = Color(0.2, 0.22, 0.25)
+	mat_blastdoor.metallic = 0.9
+
+	var sb := StaticBody3D.new()
+
+	# Cadre de sas pressurisé blindé
+	var frame := MeshInstance3D.new()
+	var f_box := BoxMesh.new()
+	f_box.size = Vector3(6.5, 5.5, 3.0)
+	frame.mesh = f_box
+	frame.position = Vector3(0, 2.75, 0)
+	frame.set_surface_override_material(0, mat_armor)
+	sb.add_child(frame)
+
+	# Porte de sas hermétique
+	var door := MeshInstance3D.new()
+	var d_box := BoxMesh.new()
+	d_box.size = Vector3(3.5, 4.2, 0.3)
+	door.mesh = d_box
+	door.position = Vector3(0, 2.1, -1.4)
+	door.set_surface_override_material(0, mat_blastdoor)
+	sb.add_child(door)
+
+	# Gyrophare d'alerte rouge
+	var siren := OmniLight3D.new()
+	siren.position = Vector3(0, 5.2, -1.6)
+	siren.light_color = Color(1.0, 0.1, 0.1)
+	siren.light_energy = 4.0
+	siren.omni_range = 8.0
+	sb.add_child(siren)
+
+	airlock.add_child(sb)
+
+	var label := Label3D.new()
+	label.text = "🚨 CORVETTE CORELLIENNE (DONJON) 🚨\n« Instance Raid Chronométrée : 60 min »\n[E] Pénétrer dans le Sas Pressurisé"
+	label.position = Vector3(0, 6.2, -1.6)
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size = 18
+	label.modulate = Color(1.0, 0.3, 0.3)
+	airlock.add_child(label)
+
+	return airlock
+
+
+

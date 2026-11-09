@@ -1,17 +1,141 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-07  
+**Mis à jour** : 2026-11-09  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + SWG Pre-CU Raccordement Prime 2D & Hub + O3 Autonomie Bots IA + 3D Formateurs 4x4 & Survey Tool Holographique — **100 % Livré, Validé CI & Déployé**.
+**Fil** : canon O1/O2/O3 + SWG Pre-CU Copie Quasi-Complète 100% — **Résolution conflits touches + Publication Patch Launchpad v2.1.5 (246:8080) OK**.
+
+---
+
+## Dernières actions réalisées (2026-11-09)
+1. **Refonte & Dépoussiérage des contrôles clavier (`client_ui_dialogue.gd` & `swg_space_flight_3d.gd`)** :
+   - Élimination du conflit majeur `KEY_D` (aller à droite ZQSD qui déclenchait le Datapad) ➔ Datapad déplacé sur `V` ou `Ctrl+D`.
+   - Élimination des collisions de touches de fonctions `F9` (Debug HUD vs Espace 3D) et `F10` (Heal vs Login Panel).
+   - Nouvelle cartographie ergonomique F-Keys :
+     - `F4` : Sabre laser (dégainer / rengainer)
+     - `F5` : Sonde de traque Arakyd
+     - `F6` : Force Heal
+     - `F8` : Vol Spatial JTL 3D
+     - `F9` : Debug HUD
+     - `F10` : Panneau de connexion / compte
+     - `F11` : Bascule Plein écran
+   - Consommation stricte des événements en vol spatial 3D (`set_input_as_handled`) pour ne plus polluer le sol.
+   - Touches `R` (Hub) et `F` (Caméra) sécurisées sous `Ctrl+R` et `Ctrl+F` pour éviter les téléportations accidentelles.
+2. **Synchronisation & Publication du Patch Client Launchpad** :
+   - Synchronisé via `sync_prime_client_to_win.py` vers Windows SDS `J:/swgemu/clients/prime-client`.
+   - Déployé sur le serveur de patches `192.168.0.246:8080` via `deploy_prime_client_patch_246.sh` (version `2026-11-09T15:46:08Z`, 287 fichiers).
+3. **Modélisation 3D par Race Prime & SWG (`swg_race_model_factory.gd`)** :
+   - Approche hybride universelle basée sur les squelettes VRM humanoïdes (`SwgVrmAnimator`) avec ajustement de gabarit anatomique et ancrage dynamique d'appendices 3D aux os (`BoneAttachment3D`) :
+     - **Fel'Rani** (`twilek` / Arvandor) : Oreilles félines pointues sur l'os Head, queue féline souple sur l'os Hips, silhouette élancée.
+     - **Tinkling** (Mecha-Prime) : Proportions chibi (échelle $\times 0.48$, taille ~45 cm), lunettes steampunk d'artisan luminescentes sur le front et sacoche d'outils.
+     - **Mechari** (`cyborg` / Mecha-Prime) : Capteur optique cybernétique cyan, antenne comlink et générateur dorsal d'énergie avec dissipateurs.
+     - **Varkoon** (`wookiee` / Arvandor) : Buste très large et trapu (échelle $\times 1.25$), baudrier croisé en cuir avec cartouches de munitions et épaulière de combat.
+     - **Mogrul** (Aetherion) : Silhouette trapue d'apothicaire, masque respiratoire facial à double cartouche de filtrage.
+     - **K'Miri** (`zabrak` / Khar'Zuun) : Couronne de 6 cornes crâniennes pointues en arc de cercle sur le crâne.
+     - **Pykrel** (`rodian` / Arvandor) : Museau tubulaire vert et yeux composés noirs globuleux.
+     - **Humain** (Terre1 / Corellien) : Écharpe de voyageur du désert.
+   - Système de nettoyage automatique des appendices lors du changement de race, support des résolutions par ID Prime (`race:fel_rani`, `tinkling`, `mechari`, etc.) et SWG.
+   - Raccordé directement au contrôleur joueur (`swg_player_controller_3d.gd`) et à l'Image Designer (`[F6]`).
+   - Validé 100% vert sous Godot headless (`swg_client_3d_selftest.gd`, `client_modular_selftest.gd`) et synchronisé sur machine Windows SDS `.10` (`J:/swgemu/clients/swg-client`).
 
 ---
 
 ## Objectif actuel
 
 Continuité multi-outils : même canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** ([`OBJECTIVES.md`](../OBJECTIVES.md)).  
-Séquence stratégique validée : **1 (Prime 2D/Hub) ➔ 3 (Autonomie Flotte O3) ➔ 2 (Approfondissement 3D Formateurs & Survey)**.
+Réplique exhaustive 100% Star Wars Galaxies Pre-CU : achèvement des **5 Piliers d'Élite dans l'ordre** :
+
+- [x] **Point 1 : Villes de Joueurs & Politique (*Player Cities & Elections*) (`hub_player_cities.gd`)** :
+  - Fondation de cités par les joueurs, 5 échelons d'expansion (Outpost ➔ Village ➔ Township ➔ City ➔ Metropolis).
+  - Élections démocratiques régulières de Maires au suffrage universel par les citoyens résidents (`start_election`, `cast_vote`, `conclude_election`).
+  - Décrets municipaux & spécialisations civiques : Centre Industriel (-10% temps craft), Sanctuaire Médical, Avant-poste Scientifique, District des Plaisirs, Refuge de Clonage.
+  - Fiscalité locale paramétrable (taxes foncières, taxes sur les ventes des marchands, taxes de spatioport).
+  - Rendu 3D : Modélisation générative de l'Hôtel de Ville (`build_city_hall`) avec colonnade en marbre, dôme doré et terminal politique interactif (`terminal_cityhall`).
+
+- [x] **Point 2 : Bio-Ingénierie & Échantillonnage d'ADN (*Bio-Engineer*) (`hub_bio_engineer.gd`)** :
+  - Sonde d'échantillonnage génétique sur la faune sauvage (Chacals, Banthas, Dewbacks, Dragons Krayt) avec extraction de profils de robustesse, prouesse et férocité.
+  - Cuve d'incubation génétique en laboratoire (`incubate_creature`) : fusion de deux matrices d'ADN pour forger des chimères mutantes uniques destinées aux *Creature Handlers*.
+  - Synthèse d'enzymes biomédicales mutagènes pour Médecins et Chefs cuisiniers.
+  - Rendu 3D : Modèle procédural de l'Incubateur Génétique (`build_bio_incubator`) avec cuve de fluide bioluminescent vert émissif (`OmniLight3D`).
+
+- [x] **Point 3 : Ingénierie Droïde Avancée (*Droid Engineer*) (`hub_droid_engineer.gd`)** :
+  - Confection de châssis modulaires : Droïde Astromécano Série R2, Droïde de Protocole Série 3PO, Droïde Sonde Probot, Droïde Souris MSE-6, Droïde de Combat Série IG.
+  - Montage de modules spécialisés : extension de soute (+25 slots ambulants), atelier mobile de craft nomade, dispensaire médical automatique, radar de scan sonar, tourelle blaster E-Web.
+  - Commandes tactiques en jeu (`/follow`, `/stay`, `/patrol`, `/store_item`, `/dispense_meds`, `/play_music`).
+  - Rendu 3D : Modélisation procédurale du droïde R2-D2 (`build_r2_astromech`) avec dôme bleu pivotant, œil holographique et roulettes de déplacement.
+
+- [x] **Point 4 : Parcs à Thèmes Galactiques & Donjons Classiques (`hub_theme_parks.gd`)** :
+  - **Palais de Jabba le Hutt (Tatooine)** : Suite de quêtes d'allégeance de la pègre auprès de Bib Fortuna, Reelo Baruk et Jabba (obtention de la Hache Vibro et de l'insigne d'Exécuteur).
+  - **Retraite de l'Empereur (Naboo)** : Missions d'espionnage impérial d'élite avec Dark Vador et l'Empereur Palpatine (badge d'Inquisiteur et cape de Maître Impérial).
+  - **Donjon de la Corvette Corellienne** : Instance raid chronométrée sous compte à rebours 3600s (60 min) avec progression de ponts (Sas ➔ Machines ➔ Pont de Commandement), sauvetage d'otages et sabotage de l'hyperdrive.
+  - **Raid Boss Dragon Krayt** : Antre du dragon millénaire (95 000 HP) avec drop garanti de Perles de Krayt légendaires et d'écailles composites.
+  - Rendu 3D : Sas pressurisé blindé de la Corvette Corellienne (`build_corvette_airlock`) avec gyrophares d'alarme rouge et voyants d'urgence.
+
+- [x] **Point 5 : Multi-Planètes & Biomes Stellaires (`hub_galaxy_planets.gd`)** :
+  - Catalogue des 5 mondes majeurs de SWG :
+    - **Tatooine** : Désert aride, dunes, soleil binaire, canyons et camps Tuskens.
+    - **Naboo** : Plaines luxuriantes verdoyantes, cascades, marécages et dômes en marbre de Theed.
+    - **Endor** : Lune forestière dense, séquoias géants, canopée humide et villages arboricoles Ewoks.
+    - **Dathomir** : Ciel carmin brumeux, badlands toxiques, Rancors sauvages et temples des Sœurs de la Nuit.
+    - **Corellia** : Plaines tempérées maritimes, berceau naval et chantiers de Coronet City.
+  - Transition atmosphérique, météo dynamique et billetterie de transit inter-mondes.
+  - Rendu 3D : Console de navigation galactique (`terminal_planets`) pour voyager entre les 5 planètes.
+
+- [x] **Portage Intégral sur Prime Client (`packages/prime-client`) (2D au sol + Extension Spatiale JTL 3D)** :
+  - **Gameplay Planétaire 2D au sol (100% fidèle SWG sans 3D)** :
+    - *Boîte de Dialogue Universelle SWG 2D* (`scripts/swg_dialog_box.gd`) : Menus narratifs interactifs pour les 5 nouveaux systèmes (Hôtel de Ville & Élections de Maire, Incubateur Bio & Synthèse ADN, Commandes Droïdes R2/MSE, Donjon Raid Corvette Corellienne, Cartographie & Transit vers les 5 planètes).
+    - *Rendu 2D des Entités* (`scripts/entity.gd`) : Sabre laser Jedi avec lame de plasma émissive orientée selon `facing_angle` (dégainable avec `[F7]`), droïdes astromécanos R2 (corps blanc, dôme bleu, œil rouge), sondes Arakyd de traque avec anneau radar pulsant (`[F8]`), insignes de factions GCW et lairs de créatures.
+    - *Raccourcis & Commandes Chat* (`client_ui_dialogue.gd` & `main.gd`) : Raccourcis `[F7]` (sabre laser), `[F8]` (sonde Arakyd), `[F10]` (soin Force Heal), `[F9]` (vol spatial), commandes `/saber`, `/probe`, `/space`, `/forceheal`.
+  - **Extension Spatiale Jump to Lightspeed (JTL) 3D Incrustée (`scripts/swg_space_flight_3d.gd`)** :
+    - Bascule instantanée sol 2D ➔ orbite spatiale 3D via `[F9]` ou dialogue de Spatioport/X-Wing.
+    - *SubViewport 3D* plein écran avec champ d'étoiles procédural, modélisation 3D du chasseur Incom T-65B X-Wing, chasseurs TIE ennemis en dogfight, canons lasers rouges 3D animés.
+    - *HUD Spatial 2D Overlay* : Répartiteur d'énergie Tri-Voie dynamique (Armes `[F5]`, Boucliers `[F6]`, Moteurs `[F7]`), télémétrie de vitesse (MGLT), jauges de boucliers avant/arrière et saut hyperspatial (`[H]`).
+  - **Validation & Synchronisation** :
+    - `client_modular_selftest.gd` : 22 composants SWG 2D + Extension Spatiale JTL 3D validés à 100% (code 0).
+    - Synchronisation Windows SDS `.10` (`J:/swgemu/clients/prime-client`) : 16 fichiers synchronisés avec succès via `tools/sync_client_to_win.py --client prime`.
+    - CI globale headless Godot (`tools/ci_godot_headless.sh`) : 19 suites de tests validées (code 0).
+
+- [x] **Validation, Tests & Déploiement** :
+  - Selftest Hub complet : `swg_complete_features_selftest.gd` **100% PASS (code 0)**.
+  - Selftest Client 3D (20 Piliers) : `swg_client_3d_selftest.gd` **100% PASS (code 0)**.
+  - Synchronisation Windows SDS `.10` : 21 fichiers mis à jour sans erreur via `sync_client_to_win.py`.
+  - Déploiement live sur serveur distant `.246:8787` (`deploy_prime_hub_246.sh`) : vérifié par curl 200 OK sur `/v1/cities/list`, `/v1/bio/status`, `/v1/droids/list`, `/v1/themeparks/progress`, `/v1/planets/list`.
+
+- [x] **SWG Pre-CU : Les 5 Piliers d'Achèvement + JTL Dogfight Spatial (Livrés & Validés)** :
+  1. **Jedi & Force Sensitive (`hub_jedi_force.gd`)** :
+     - Consultation d'Holocrons, promotion Padawan, déblocage de branches Force Sensitive (Combat, Powers, Senses, Healing).
+     - Confection de sabre laser artisanal (cristaux Ilum bleu/vert, Corusca, Krayt Dragon Pearl).
+     - Pouvoirs de Force actifs : Force Heal (restauration HAM), Force Speed, Mind Trick (pacification IA), Force Lightning, Lightsaber Deflection.
+     - Système de Visibilité Impériale : accumulation de visibilité lors de l'usage public de la Force, génération automatique de primes de traque.
+     - Rendu 3D : Modélisation générative du manche de sabre et lame plasma émissive avec `OmniLight3D` (`swg_asset_pipeline.gd`), dégainer/rengainer avec [F7], sort Force Heal avec [F10].
+  2. **Bounty Hunter / Chasseurs de Primes (`hub_bounty_hunter.gd`)** :
+     - Terminaux de Primes (Bounty Terminals) avec attribution dynamique et traque de cibles (PNJ fugitifs, criminels, joueurs Jedi renégats).
+     - Droïdes Sondes Impériaux Arakyd MK-IV : déploiement orbital, télémétrie GPS et repérage de cibles avec rayon d'action.
+     - Rendu 3D : Modèle procédural du droïde Arakyd (œil rougeoyant, antennes, bras mécaniques) déployable avec [F8], bornes de primes avec dialogues interactifs (`swg_dialog_box.gd`).
+  3. **Spatioports & Navettes Galactiques (`hub_travel_shuttle.gd`)** :
+     - Cycle temporel de spatioport SWG : Boarding (embarquement 60s) ➔ Takeoff (décollage 15s) ➔ In Orbit (vol 30s) ➔ Landing (atterrissage 15s).
+     - Billetterie planétaire (Mos Eisley, Theed Naboo, Coronet Corellia, Lost Heaven) avec prélèvement bancaire automatique.
+  4. **Bases Factionnelles GCW & Sabotage de Réacteur (`hub_gcw_bases.gd`)** :
+     - Déploiement de bases fortifiées impériales et rebelles protégées par tourelles lasers lourdes.
+     - Séquence de sabotage canonique : piratage du terminal de sécurité ➔ surcharge du réacteur principal (compte à rebours critique 300s) ➔ évacuation d'urgence et détonation avec attribution de 5 000 points de faction.
+     - Rendu 3D : Tourelles de défense automatiques (`build_faction_turret`) et générateurs de bouclier.
+  5. **Centres de Clonage, Assurance & Decay Post-Mortem (`hub_cloning_insurance.gd`)** :
+     - Terminaux de clonage avec liaison d'empreinte génétique ADN et réapparition immédiate à la mort.
+     - Terminaux d'assurance d'équipement : protection contre l'usure irréversible (*Decay*) lors du décès.
+     - Mal de Clonage (*Cloning Sickness*) : affaiblissement temporaire des caractéristiques HAM dissipable par un Médecin ou un Campement.
+  6. **Bonus Hors-Sol : Jump to Lightspeed (JTL) Combat Spatial 3D (`hub_space_jtl.gd`)** :
+     - Chasseurs stellaires pilotables : Incom T-65B X-Wing, Sienar TIE/ln, Cargo Léger Corellien YT-1300.
+     - Système énergétique Tri-Voie réglable en vol : Armes / Boucliers / Moteurs.
+     - Dogfight laser 3D en vol orbital avec calcul de boucliers avant/arrière, coque et sauts hyperspatiaux.
+     - Rendu 3D : Vaisseaux spatiaux génératifs détaillés (`build_xwing_starfighter`, `build_tiefighter_starfighter`), bascule en mode de vol libre spatial avec la touche [F9].
+
+- [x] **Validation & Déploiement** :
+  - Selftest Hub SWG complet : `swg_complete_features_selftest.gd` 100% PASS (code 0).
+  - Selftest Client 3D SWG : `swg_client_3d_selftest.gd` 100% PASS (15 sous-systèmes validés).
+  - CI Globale Godot Headless (`tools/ci_godot_headless.sh`) : 19 suites de tests 100% PASS en 240s (<10s DoD unitaire).
+  - Synchronisation Windows SDS .10 (`J:/swgemu/clients/swg-client`) : 21 fichiers synchronisés avec 0 erreur via `tools/sync_client_to_win.py`.
+  - Déploiement live sur serveur Hub `.246:8787` (`deploy_prime_hub_246.sh`) : validation curl 200 OK sur `/v1/jedi/status`, `/v1/bounties/list`, `/v1/travel/shuttle`, `/v1/space/ships`.
 
 - [x] **Étape 1 : Raccordement Systèmes SWG Pre-CU à Prime 2D & Prime-Hub (`.246:8787`)** :
   - *Factions GCW* : `HubFaction` (`scripts/hub_faction.gd`), recruteurs PNJ (Lt Kren, Cap Vao), Civilian / On-Leave / Special Forces (PvP ouvert), hostilité et routes HTTP `/v1/factions/*`.
