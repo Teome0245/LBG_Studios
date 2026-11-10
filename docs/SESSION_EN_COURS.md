@@ -20,8 +20,16 @@
      - Dégradé cyberpunk avec grille perspective sci-fi et bandeau d'en-tête LBG Studios.
    - **Orchestrateur & CLI Unifié (`content_bot.py`)** : génération complète en ~30 secondes d'un fichier MP4 1080×1920 (H.264 / AAC, ~3 Mo) prêt pour TikTok, YouTube Shorts et Instagram Reels.
    - **Connecteurs Publication YouTube Shorts & TikTok Studio (`youtube_publisher.py`, `tiktok_publisher.py`)** :
-     - YouTube Data API v3 pour @LBG-p8k avec gestion des métadonnées, tags et statut.
-     - Capability `preparer_upload_tiktok` sur l'Agent Windows (.10) : ouverture automatique de TikTok Studio Upload, sélection du fichier dans l'explorateur et injection de la légende/hashtags dans le presse-papier Windows.
+     - **YouTube Data API v3** : authentification OAuth 2.0 officielle 100% connectée à la chaîne officielle **La Boite à Geek (@lbg-p8k, ID: UCqr0ctaojYRPy0kD4rPTBQg)** avec jeton persistant (`tools/studio_content_engine/config/youtube_token.json`).
+     - Pont d'authentification automatisé avec ouverture de Firefox sur le poste Windows et proxy loopback local.
+     - **Shorts publiés avec succès sur @LBG-p8k** :
+       - [`https://www.youtube.com/shorts/WNfoQsOhX-0`](https://www.youtube.com/shorts/WNfoQsOhX-0) (*"Arrête de payer des API Cloud pour tes Agents IA"*).
+       - [`https://www.youtube.com/shorts/sRpZn0ONnWU`](https://www.youtube.com/shorts/sRpZn0ONnWU) (*"Pourquoi Godot 4 Headless bat les serveurs traditionnels"*).
+     - **TikTok Studio** : capability `preparer_upload_tiktok` sur l'Agent Windows (.10) : ouverture automatique de TikTok Studio Upload, sélection du fichier dans l'explorateur et injection de la légende/hashtags dans le presse-papier Windows.
+     - **Automatisation Quotidienne (2 vidéos / jour)** :
+       - Timer systemd `lbg-content-daily.timer` actif à **11h30** et **17h30** avec service `lbg-content-daily.service`.
+       - Backlog de sujets curatés (`topics_backlog.json`) dépilant les thématiques tech/MMO/Godot/IA sans doublons.
+       - Génération automatique du fichier MP4 + publication YouTube Shorts + création d'une fiche mémo texte (`*_tiktok_memo.txt`) dans `O:\OneDrive\Pictures\IA\Contenue\` avec légende et hashtags pour publication manuelle TikTok en 5 secondes.
 2. **Pipeline Graphique 3D & World Building Automatisé (Blender Headless + Godot 4)** :
    - **Étape 1 : Blender Headless (`bpy`) & Props Modulaires (`tools/asset_pipeline/blender_prop_builder.py`)** :
      - Installation & activation de Blender 5.2.2 LTS en mode headless (`blender -b`).

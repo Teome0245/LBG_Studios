@@ -78,26 +78,67 @@ FALLBACK_SCRIPTS = [
             "Mets cette vidéo en favori et dis-moi en commentaire quel type de PNJ tu veux voir simuler.",
         ],
     },
+    {
+        "title": "Pourquoi Godot 4 Headless bat les serveurs traditionnels",
+        "category": "Architecture Serveur MMO",
+        "hook": "Pourquoi presque tous les studios se trompent sur leur architecture de serveurs multijoueurs ?",
+        "problem": "Faire tourner des serveurs dédiés monolithiques en Python ou Node.js devient vite ingérable dès que le monde 3D grandit.",
+        "solution": "Avec Godot 4 en mode headless natif, le moteur gère lui-même la physique, les collisions et la navigation à 60 ticks par seconde avec zéro overhead graphique.",
+        "cta": "Abonne-toi à la chaîne pour voir nos benchmarks en direct et télécharge le code sur notre GitHub.",
+        "sentences": [
+            "Pourquoi presque tous les studios se trompent sur leur architecture de serveurs multijoueurs ?",
+            "Faire tourner des serveurs dédiés monolithiques en Python ou Node.js devient vite ingérable dès que le monde 3D grandit.",
+            "Avec Godot 4 en mode headless natif, le moteur gère lui-même la physique, les collisions et la navigation à 60 ticks par seconde avec zéro overhead graphique.",
+            "Abonne-toi à la chaîne pour voir nos benchmarks en direct et télécharge le code sur notre GitHub.",
+        ],
+    },
 ]
+
+
+def _match_fallback_script(topic: str | None) -> dict[str, Any]:
+    """Sélectionne ou génère le script canonique le plus pertinent pour le sujet."""
+    if not topic:
+        return dict(FALLBACK_SCRIPTS[0])
+
+    topic_lower = topic.lower()
+    if any(k in topic_lower for k in ["godot", "headless", "serveur", "multijoueur", "mmo", "tick"]):
+        return dict(FALLBACK_SCRIPTS[2])
+    if any(k in topic_lower for k in ["bot", "pnj", "nav", "navigation", "simul"]):
+        return dict(FALLBACK_SCRIPTS[1])
+
+    # Générateur de secours dynamique structuré pour les sujets inédits
+    clean_title = topic[:60].strip()
+    return {
+        "title": clean_title,
+        "category": "Tech & Dev Local",
+        "hook": f"Tu veux savoir comment maîtriser {clean_title} sans dépendre d'outils propriétaires ?",
+        "problem": "La plupart des solutions imposent des abonnements exorbitants et verrouillent totalement tes données.",
+        "solution": f"En appliquant les méthodes d'ingénierie locale de LBG Studios, tu gardes le contrôle absolu avec zéro coût récurrent.",
+        "cta": "Abonne-toi pour découvrir la suite et récupère l'ensemble de nos architectures open source.",
+        "sentences": [
+            f"Tu veux savoir comment maîtriser {clean_title} sans dépendre d'outils propriétaires ?",
+            "La plupart des solutions imposent des abonnements exorbitants et verrouillent totalement tes données.",
+            "En appliquant les méthodes d'ingénierie locale de LBG Studios, tu gardes le contrôle absolu avec zéro coût récurrent.",
+            "Abonne-toi pour découvrir la suite et récupère l'ensemble de nos architectures open source.",
+        ],
+    }
 
 
 def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -> dict[str, Any]:
     """Génère un script structuré via Ollama local ou utilise le fallback canonique."""
     if not topic:
-        # Sélection aléatoire ou par défaut dans les scripts canons
-        return FALLBACK_SCRIPTS[0]
+        return dict(FALLBACK_SCRIPTS[0])
 
     prompt = f"Génère un script vidéo court TikTok/Shorts percutant en français sur le sujet : '{topic}'."
 
     hosts_and_models = [
         (OLLAMA_HOST_111, "qwen2.5:3b"),
-        (OLLAMA_HOST_111, os.environ.get("LBG_MODEL_111", "huihui_ai/gemma-4-abliterated:E4b-qat")),
-        (OLLAMA_HOST_110, model),
+        (OLLAMA_HOST_111, "lbg-compagnon-e4b-v1:latest"),
     ]
     for host, mod in hosts_and_models:
         try:
-            logger.info("Tentative de génération script sur %s avec %s...", host, mod)
-            with httpx.Client(timeout=20.0) as client:
+            logger.info("Tentative de génération script sur %s avec %s (délai: 4s)...", host, mod)
+            with httpx.Client(timeout=4.0) as client:
                 res = client.post(
                     f"{host}/api/generate",
                     json={
@@ -105,24 +146,22 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
                         "system": SYSTEM_PROMPT,
                         "prompt": prompt,
                         "stream": False,
-                        "options": {"temperature": 0.7, "num_ctx": 2048},
+                        "options": {"temperature": 0.7, "num_ctx": 1024},
                     },
                 )
                 if res.status_code == 200:
                     raw_text = res.json().get("response", "").strip()
-                    cleaned = re.sub(r"^```json\s*", "", raw_text, flags=re.MULTILINE)
-                    cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE).strip()
-                    data = json.loads(cleaned)
-                    if "sentences" in data and len(data["sentences"]) >= 3:
-                        logger.info("Script généré avec succès par %s (%s) !", host, mod)
-                        return data
+                    match = re.search(r"\{.*\}", raw_text, re.DOTALL)
+                    if match:
+                        data = json.loads(match.group(0))
+                        if "sentences" in data and len(data["sentences"]) >= 3:
+                            logger.info("Script généré avec succès par %s (%s) !", host, mod)
+                            return data
         except Exception as e:
             logger.warning("Échec génération sur %s (%s) : %s", host, mod, e)
 
-    logger.info("Utilisation du script canonique fallback.")
-    fb = dict(FALLBACK_SCRIPTS[0])
-    fb["topic_requested"] = topic
-    return fb
+    logger.info("Sélection du script canonique adapté au sujet : '%s'...", topic)
+    return _match_fallback_script(topic)
 
 
 if __name__ == "__main__":

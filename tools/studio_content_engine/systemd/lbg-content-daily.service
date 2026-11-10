@@ -1,0 +1,11 @@
+[Unit]
+Description=LBG Studios - Générateur Quotidien de Contenu Vidéo (Shorts & TikTok)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/lbg/Projets/LBG_Studios
+ExecStart=/home/lbg/Projets/LBG_Studios/packages/cortex/.venv/bin/python /home/lbg/Projets/LBG_Studios/tools/studio_content_engine/cron_daily_publisher.py
+StandardOutput=journal
+StandardError=journal
+

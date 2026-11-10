@@ -1,0 +1,123 @@
+[
+  {
+    "id": 1,
+    "topic": "Pourquoi Godot 4 headless enterre les serveurs multijoueurs traditionnels",
+    "category": "Architecture Serveur MMO",
+    "status": "published",
+    "published_at": "2026-11-10T23:59:30",
+    "youtube_url": "https://www.youtube.com/shorts/sRpZn0ONnWU"
+  },
+  {
+    "id": 2,
+    "topic": "Comment faire tourner 10 Bots IA dans un monde 3D sans cluster",
+    "category": "Godot 4 & Simulation",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 3,
+    "topic": "Pourquoi nous n'avons pas tout réécrit en Rust (ADR 0029)",
+    "category": "Architecture Logicielle",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 4,
+    "topic": "Comment créer son propre Second Brain avec Obsidian et RAG local",
+    "category": "Productivité & IA Locale",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 5,
+    "topic": "Simuler 50 bêtes sauvages et PNJ à 60 FPS avec NavigationServer 3D",
+    "category": "Moteur Godot 4",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 6,
+    "topic": "Pourquoi SQLite WAL bat Redis et MongoDB pour les jeux indés",
+    "category": "Bases de Données & Perf",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 7,
+    "topic": "Créer et animer des avatars 3D VRM en ligne de commande avec Blender headless",
+    "category": "Pipeline Graphique 3D",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 8,
+    "topic": "Comment piloter un PC Windows depuis Linux via des micro-agents FastAPI",
+    "category": "DevOps & Automatisation",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 9,
+    "topic": "Zéro euro de frais cloud : notre stack d'infrastructure locale expliquée",
+    "category": "Hardware & Self-Hosting",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 10,
+    "topic": "La mort des NPC passifs : comment les LLM locaux rendent les PNJ conscients",
+    "category": "Game Design & IA",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 11,
+    "topic": "Génération procédurale de terrain et scatter d'objets sur Godot 4.6",
+    "category": "World Building Procédural",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 12,
+    "topic": "WebSockets vs WebTransport : quel protocole pour un MMO temps réel en 2026",
+    "category": "Réseau Temps Réel",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 13,
+    "topic": "Pourquoi le lock-in OpenAI menace les créateurs de SaaS",
+    "category": "Économie & Open Source",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 14,
+    "topic": "Comment compiler un client Godot headless pour CI/CD automatique",
+    "category": "CI/CD & DevOps",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  },
+  {
+    "id": 15,
+    "topic": "Le secret des micro-animations faciales et du lip-sync par FFT audio",
+    "category": "Tech Art & Son",
+    "status": "pending",
+    "published_at": null,
+    "youtube_url": null
+  }
+]
+

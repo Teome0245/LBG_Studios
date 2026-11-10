@@ -79,7 +79,25 @@ Le module déclenche directement sur le poste Windows :
 packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py --demo --tiktok
 ```
 
-### 4. (Re)génération des poses 3D sous Blender
+### 4. Automatisation Quotidienne (2 Vidéos par Jour)
+Le système tourne de manière autonome via un timer systemd Linux :
+- **Horaires** : Déclenchement automatique chaque jour à **11h30** et **17h30**.
+- **Gestionnaire** : `cron_daily_publisher.py` dépile le fichier `topics_backlog.json`.
+- **YouTube Shorts** : Publication 100% automatique en public sur la chaîne officielle **La Boite à Geek (`@lbg-p8k`)**.
+- **TikTok Manual Helper** : La vidéo MP4 est synchronisée sur `O:\OneDrive\Pictures\IA\Contenue\` avec sa fiche mémo texte (`*_tiktok_memo.txt`) contenant la légende exacte et les hashtags viraux.
+
+Vérifier le statut du planificateur :
+```bash
+systemctl --user status lbg-content-daily.timer
+systemctl --user list-timers
+```
+
+Déclencher un drop manuellement hors planning :
+```bash
+packages/cortex/.venv/bin/python tools/studio_content_engine/cron_daily_publisher.py
+```
+
+### 5. (Re)génération des poses 3D sous Blender
 Si vous modifiez l'éclairage, la caméra ou l'avatar (`Compagnon.vrm`, `NeonNeko.vrm`) :
 ```bash
 blender -b --python tools/studio_content_engine/blender_render_keyframes.py
