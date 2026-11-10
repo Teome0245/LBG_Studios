@@ -221,12 +221,15 @@ flowchart LR
   PC --> P246
 ```
 
+| **`tools/studio_content_engine`** | Générateur autonome de vidéos courtes 9:16 (TikTok, YouTube Shorts, Reels) 100% local (Ollama + Piper TTS + Blender headless + FFmpeg) | `tools/studio_content_engine/README.md` |
+
 ---
 
 ## Jalons récents (O1 / O2 / O3)
 
 | Date | Jalon | Où |
 |------|--------|-----|
+| 2026-11-10 | **Studio Content Engine (0€)** : Pipeline autonome vidéo courte verticale 9:16, lip-sync audio RMS, poses Blender 3D, sous-titres ASS, connecteurs TikTok / YouTube | `tools/studio_content_engine/` · [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) |
 | 2026-10-14 | Canon **O1 Compagnon / O2 MMO banc / O3 Joueurs IA** + règle mutations dures | [`OBJECTIVES.md`](../OBJECTIVES.md) · [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) |
 | 2026-10-14 | **D8** avatar bridge Desktop (SSE `:8765` · VRM overlay · contrat events v1) | [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) · [`avatar_presence_events_v1.md`](../packages/cortex/docs/avatar_presence_events_v1.md) |
 | 2026-10-13 | Canon docs : autorité joueur `:8787` · packages `prime-hub` / `compagnon-desktop` au registre | ce fichier · [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md) |
