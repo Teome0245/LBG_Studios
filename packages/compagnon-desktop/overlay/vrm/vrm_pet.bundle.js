@@ -54687,7 +54687,9 @@ void main() {
         console.warn(`[vrm_pet] Accessoire inconnu: "${type}"`);
         return false;
       }
-      const boneNode = vrm.humanoid.getNormalizedBoneNode(def.bone);
+      const rawBone = typeof vrm.humanoid.getRawBoneNode === "function" && vrm.humanoid.getRawBoneNode(def.bone);
+      const normBone = typeof vrm.humanoid.getNormalizedBoneNode === "function" && vrm.humanoid.getNormalizedBoneNode(def.bone);
+      const boneNode = rawBone || normBone;
       if (!boneNode) {
         console.warn(`[vrm_pet] Os introuvable pour accessoire: "${def.bone}"`);
         return false;
@@ -54705,10 +54707,25 @@ void main() {
       let model = loadedAccessories.get(type);
       if (!model) {
         try {
-          const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
+          let base = "./vrm";
+          if (modelUrl && modelUrl.includes("/")) {
+            base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
+          }
           const fullUrl = `${base}/${def.url}`;
+          console.info(`[vrm_pet] Chargement accessoire ${type} depuis ${fullUrl}...`);
           const gltf = await accessoryLoader.loadAsync(fullUrl);
           model = gltf.scene;
+          model.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              child.frustumCulled = false;
+              if (child.material) {
+                child.material.depthWrite = true;
+                child.material.needsUpdate = true;
+              }
+            }
+          });
           loadedAccessories.set(type, model);
         } catch (err) {
           console.warn(`[vrm_pet] \xC9chec chargement accessoire "${type}":`, err);
@@ -54718,6 +54735,7 @@ void main() {
       model.position.set(def.offset[0], def.offset[1], def.offset[2]);
       model.rotation.set(def.rotation[0], def.rotation[1], def.rotation[2]);
       model.scale.set(def.scale, def.scale, def.scale);
+      model.visible = true;
       boneNode.add(model);
       equippedAccessories.set(type, model);
       console.info(`[vrm_pet] Accessoire \xE9quip\xE9: ${type} sur ${def.bone}`);

@@ -20,10 +20,10 @@ function installColorSpaceGuard(THREE) {
         if (this == null || typeof this !== "object") return;
         try {
           desc.set.call(this, v);
-        } catch (_) {}
+        } catch (_) { }
       },
     });
-  } catch (_) {}
+  } catch (_) { }
 }
 
 const MOOD_EXPR = {
@@ -54,6 +54,36 @@ const POSE_EULERS = {
     head: [0, 0, 0],
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
+  },
+  /** Focus / Scan de code : corps légèrement penché en avant, main gauche relevée près du buste (tenant un datapad), tête attentive qui scrute l'écran. */
+  focus: {
+    leftUpperArm: [0.35, 0.25, -1.05],
+    leftLowerArm: [0.10, 0.20, -1.45],
+    leftHand: [0.15, -0.10, 0.30],
+    rightUpperArm: [0.15, 0, 1.25],
+    rightLowerArm: [0, 0, 0.15],
+    rightHand: [0, 0, 0],
+    spine: [0.08, 0.02, 0],
+    chest: [0.10, 0.02, 0],
+    neck: [-0.05, 0.04, 0.02],
+    head: [-0.08, 0.05, 0.03],
+    leftUpperLeg: [0, 0, -0.02],
+    rightUpperLeg: [0, 0, 0.02],
+  },
+  /** Victoire / Célébration : deux bras levés en V triomphal, buste relevé et tête fière. */
+  victory: {
+    leftUpperArm: [0.10, 0.10, -2.55],
+    rightUpperArm: [0.10, -0.10, 2.55],
+    leftLowerArm: [0, 0, -0.35],
+    rightLowerArm: [0, 0, -0.35],
+    leftHand: [0.20, 0, 0],
+    rightHand: [0.20, 0, 0],
+    spine: [-0.04, 0, 0],
+    chest: [-0.06, 0, 0],
+    neck: [0.06, 0, 0],
+    head: [0.08, 0, 0],
+    leftUpperLeg: [0, 0, -0.04],
+    rightUpperLeg: [0, 0, 0.04],
   },
   /** Finger Heart (geste coréen K-Pop / anime idol : pouce et index croisés en mini cœur au niveau du haut du torse/menton, tête penchée espiègle, main gauche sur la hanche, grands yeux vifs et sourire pétillant). */
   fingerHeart: {
@@ -539,6 +569,20 @@ export function createVrmPet(hostEl, opts = {}) {
   metallicRimLight.position.set(-1.0, 1.8, -2.0);
   scene.add(metallicRimLight);
 
+  // Halo cybernétique doux (sublime le détachement de l'avatar du fond d'écran)
+  const cyberHaloLight = new THREE.DirectionalLight(0x00f5d4, 0.45);
+  cyberHaloLight.position.set(0, -1.0, -1.8);
+  scene.add(cyberHaloLight);
+
+  // Projecteurs de scène dynamiques pour le ShowRoutineManager (ambiance spectacle / iStripper)
+  const stageLightCyan = new THREE.PointLight(0x00f5d4, 0, 4.0);
+  stageLightCyan.position.set(-1.2, 1.2, 1.2);
+  scene.add(stageLightCyan);
+
+  const stageLightMagenta = new THREE.PointLight(0xff007f, 0, 4.0);
+  stageLightMagenta.position.set(1.2, 1.2, 1.2);
+  scene.add(stageLightMagenta);
+
   /** @type {import('@pixiv/three-vrm').VRM | null} */
   let vrm = null;
   let talkingUntil = 0;
@@ -708,6 +752,24 @@ export function createVrmPet(hostEl, opts = {}) {
         if (!vrm) throw new Error("VRM model not ready yet for animation");
         const clip = createVRMAnimationClip(animData, vrm);
         clip.name = name;
+
+        // In-Place Lock : Neutralise la dérive de translation (root motion X et Z)
+        // pour que l'avatar reste TOUJOURS centré au milieu du cadre sans jamais déborder ou disparaître
+        const restHipsY = vrm?.humanoid?.getNormalizedBoneNode?.("hips")?.position?.y || 0.824;
+        for (const track of clip.tracks) {
+          if (track.name.endsWith(".position")) {
+            const vals = track.values;
+            const y0 = vals.length >= 3 ? vals[1] : restHipsY;
+            for (let i = 0; i < vals.length; i += 3) {
+              vals[i] = 0;     // Lock horizontal X (zéro dérive gauche/droite hors champ)
+              vals[i + 2] = 0; // Lock profondeur Z (zéro dérive avant/arrière)
+              // Harmonisation verticale Y : rebond de danse maîtrisé ancré sur restHipsY (évite de flotter)
+              const deltaY = (vals[i + 1] - y0) * 0.45;
+              vals[i + 1] = restHipsY + deltaY;
+            }
+          }
+        }
+
         vrmaClips.set(name, clip);
         console.info(`[vrm_pet] VRMA "${name}" loaded (${clip.duration.toFixed(2)}s)`);
         return clip;
@@ -734,7 +796,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const action = mixer.clipAction(clip);
     if (!loop) {
       action.setLoop(THREE.LoopOnce, 1);
-      action.clampWhenFinished = true;
+      action.clampWhenFinished = false; // Ne jamais figer le modèle sur la dernière frame
     } else {
       action.setLoop(THREE.LoopRepeat, Infinity);
     }
@@ -759,14 +821,19 @@ export function createVrmPet(hostEl, opts = {}) {
 
   function stopVRMA(fadeSec = 0.25) {
     if (activeVrmaAction) {
-      try { activeVrmaAction.fadeOut(fadeSec); } catch (_) {}
+      try { activeVrmaAction.fadeOut(fadeSec); } catch (_) { }
       activeVrmaAction = null;
     }
     if (mixer) {
-      try { mixer.stopAllAction(); } catch (_) {}
+      try { mixer.stopAllAction(); } catch (_) { }
     }
     activeVrmaName = null;
     poseBlend = 0;
+    if (vrm?.humanoid) {
+      try {
+        vrm.humanoid.resetNormalizedPose();
+      } catch (_) { }
+    }
   }
 
   const _euler = new THREE.Euler();
@@ -800,12 +867,12 @@ export function createVrmPet(hostEl, opts = {}) {
     for (const n of ["happy", "angry", "sad", "surprised", "relaxed", "neutral", "aa", "blinkRight", "blinkLeft"]) {
       try {
         em.setValue(n, 0);
-      } catch (_) {}
+      } catch (_) { }
     }
     for (const [k, v] of Object.entries(weights || {})) {
       try {
         em.setValue(k, Math.max(0, Math.min(1, Number(v) || 0)));
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -876,7 +943,9 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "robot" || n === "popping" || n === "wavedance") key = "robot";
     else if (n === "disco" || n === "twist" || n === "fever") key = "disco";
     else if (n === "spin" || n === "tourner" || n === "pirouette") key = "spin";
-    else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key = "jump";
+    else if (n === "focus" || n === "scan" || n === "code" || n === "debug") key = "focus";
+    else if (n === "victory" || n === "victoire" || n === "win" || n === "success") key = "victory";
+    else if (n === "jump" || n === "saut") key = "jump";
     else if (n === "stretch" || n === "etirement") key = "stretch";
     else if (n === "clap" || n === "clapping") key = "clapping";
     else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key = "angry";
@@ -1044,6 +1113,18 @@ export function createVrmPet(hostEl, opts = {}) {
     if (poseTo === "think") {
       const swayThink = Math.sin(t * 0.8) * 0.03;
       if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
+    }
+    if (poseTo === "focus") {
+      const scanHead = Math.sin(t * 1.8) * 0.04;
+      const dataGlow = Math.sin(t * 3.5) * 0.02;
+      if (animated.head) animated.head = [animated.head[0] + dataGlow, animated.head[1] + scanHead, animated.head[2]];
+      if (animated.leftHand) animated.leftHand = [animated.leftHand[0] + dataGlow, animated.leftHand[1], animated.leftHand[2]];
+    }
+    if (poseTo === "victory") {
+      const cheerArm = Math.sin(t * 5.0) * 0.06;
+      if (animated.leftUpperArm) animated.leftUpperArm = [animated.leftUpperArm[0], animated.leftUpperArm[1], animated.leftUpperArm[2] - cheerArm];
+      if (animated.rightUpperArm) animated.rightUpperArm = [animated.rightUpperArm[0], animated.rightUpperArm[1], animated.rightUpperArm[2] + cheerArm];
+      if (animated.chest) animated.chest = [animated.chest[0] + cheerArm * 0.3, animated.chest[1], animated.chest[2]];
     }
     if (poseTo === "dance") {
       // Tempo groove doux et posé à ~1.05 Hz (63 BPM, détendu et gracieux)
@@ -1405,7 +1486,7 @@ export function createVrmPet(hostEl, opts = {}) {
       try {
         vrm?.expressionManager?.setValue("blinkRight", 0);
         vrm?.expressionManager?.setValue("blinkLeft", 0);
-      } catch (_) {}
+      } catch (_) { }
       setMood("serene");
       // Retour automatique fluide en vue buste après la fin d'une danse
       if (isDanceFraming && baseFraming === "bust") {
@@ -1436,7 +1517,7 @@ export function createVrmPet(hostEl, opts = {}) {
         const targetScale = 1.0;
         headBone.scale.set(targetScale, targetScale, targetScale);
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function frameVrm(v) {
@@ -1454,7 +1535,7 @@ export function createVrmPet(hostEl, opts = {}) {
           hips.getWorldPosition(headPos);
           headPos.y += 0.5;
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // Cadrage portrait aéré centré sur la tête et le haut du buste :
       // On vise légèrement sous le nez (headPos.y - 0.02) avec recul (dist = 1.30)
@@ -1494,9 +1575,10 @@ export function createVrmPet(hostEl, opts = {}) {
     const dist = neededH / (2 * Math.tan(fovRad / 2));
     const visibleH = 2.0 * dist * Math.tan(fovRad / 2);
     // Alignement parfait au sol : les pieds reposent sur le bord inférieur (barre des tâches)
-    const lookY = box.min.y - 0.005 + (visibleH / 2);
-    targetCamPos.set(center.x, lookY, center.z + dist);
-    targetLookAt.set(center.x, lookY, center.z);
+    const lookY = Math.max(0, box.min.y) - 0.005 + (visibleH / 2);
+    // Caméra centrée de manière inébranlable sur l'axe d'origine (X=0, Z=0)
+    targetCamPos.set(0, lookY, dist);
+    targetLookAt.set(0, lookY, 0);
     targetFov = 28;
 
     if (!cameraInitialized) {
@@ -1708,6 +1790,108 @@ export function createVrmPet(hostEl, opts = {}) {
   loader.register((parser) => new VRMLoaderPlugin(parser));
   loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
+  // Système d'accessoires 3D modulaires pour l'avatar (lunettes HUD, datapad, écouteurs)
+  const accessoryLoader = new GLTFLoader();
+  const loadedAccessories = new Map();
+  const equippedAccessories = new Map();
+
+  const ACCESSORY_DEFS = {
+    visor: {
+      url: "accessories/cyber_visor.glb",
+      bone: "head",
+      offset: [0, 0.05, 0.08],
+      rotation: [0, 0, 0],
+      scale: 0.95,
+    },
+    datapad: {
+      url: "accessories/holo_datapad.glb",
+      bone: "leftHand",
+      offset: [0.02, 0.04, 0.01],
+      rotation: [0.2, 0.3, 1.2],
+      scale: 0.85,
+    },
+    headset: {
+      url: "accessories/neural_headset.glb",
+      bone: "head",
+      offset: [0.005, 0.045, 0.01],
+      rotation: [0, 0, 0],
+      scale: 0.95,
+    },
+  };
+
+  async function equipAccessory(type, equip = true) {
+    if (!vrm?.humanoid) return false;
+    const def = ACCESSORY_DEFS[type];
+    if (!def) {
+      console.warn(`[vrm_pet] Accessoire inconnu: "${type}"`);
+      return false;
+    }
+
+    // Priorité au bone physique du squelette dans le scene graph (Raw), fallback Normalisé
+    const rawBone = (typeof vrm.humanoid.getRawBoneNode === "function" && vrm.humanoid.getRawBoneNode(def.bone));
+    const normBone = (typeof vrm.humanoid.getNormalizedBoneNode === "function" && vrm.humanoid.getNormalizedBoneNode(def.bone));
+    const boneNode = rawBone || normBone;
+    if (!boneNode) {
+      console.warn(`[vrm_pet] Os introuvable pour accessoire: "${def.bone}"`);
+      return false;
+    }
+
+    if (!equip) {
+      if (equippedAccessories.has(type)) {
+        const obj = equippedAccessories.get(type);
+        boneNode.remove(obj);
+        equippedAccessories.delete(type);
+        console.info(`[vrm_pet] Accessoire retiré: ${type}`);
+      }
+      return true;
+    }
+
+    if (equippedAccessories.has(type)) return true;
+
+    let model = loadedAccessories.get(type);
+    if (!model) {
+      try {
+        let base = "./vrm";
+        if (modelUrl && modelUrl.includes("/")) {
+          base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
+        }
+        const fullUrl = `${base}/${def.url}`;
+        console.info(`[vrm_pet] Chargement accessoire ${type} depuis ${fullUrl}...`);
+        const gltf = await accessoryLoader.loadAsync(fullUrl);
+        model = gltf.scene;
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.frustumCulled = false;
+            if (child.material) {
+              child.material.depthWrite = true;
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+        loadedAccessories.set(type, model);
+      } catch (err) {
+        console.warn(`[vrm_pet] Échec chargement accessoire "${type}":`, err);
+        return false;
+      }
+    }
+
+    model.position.set(def.offset[0], def.offset[1], def.offset[2]);
+    model.rotation.set(def.rotation[0], def.rotation[1], def.rotation[2]);
+    model.scale.set(def.scale, def.scale, def.scale);
+    model.visible = true;
+    boneNode.add(model);
+    equippedAccessories.set(type, model);
+    console.info(`[vrm_pet] Accessoire équipé: ${type} sur ${def.bone}`);
+    return true;
+  }
+
+  function toggleAccessory(type) {
+    const isEquipped = equippedAccessories.has(type);
+    return equipAccessory(type, !isEquipped);
+  }
+
   loader.load(
     modelUrl,
     (gltf) => {
@@ -1767,6 +1951,17 @@ export function createVrmPet(hostEl, opts = {}) {
         mixer.update(dt);
       }
       updatePoseSystem(t, dt);
+
+      // Projecteurs de scène pulsants pendant un spectacle (iStripper canon)
+      if (isShowing()) {
+        const pulseCyan = 2.4 + Math.sin(t * 6.0) * 1.5;
+        const pulseMag = 2.4 + Math.cos(t * 6.0) * 1.5;
+        stageLightCyan.intensity = pulseCyan;
+        stageLightMagenta.intensity = pulseMag;
+      } else if (stageLightCyan.intensity > 0) {
+        stageLightCyan.intensity = Math.max(0, stageLightCyan.intensity - dt * 4.0);
+        stageLightMagenta.intensity = Math.max(0, stageLightMagenta.intensity - dt * 4.0);
+      }
       // Rotation fluide vers targetHeadingY (+ rotation continue si pirouette)
       const turnSpeed = 6.0;
       const diff = targetHeadingY - currentHeadingY;
@@ -1785,7 +1980,7 @@ export function createVrmPet(hostEl, opts = {}) {
         const blinkVal = Math.sin(Math.min(Math.PI, blinkProgress));
         try {
           vrm.expressionManager?.setValue("blink", blinkVal);
-        } catch (_) {}
+        } catch (_) { }
         if (blinkProgress >= Math.PI) {
           blinkProgress = 0;
           nextBlinkTime = t + 2.5 + Math.random() * 3.5;
@@ -1794,7 +1989,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
       // 2. Micro-gestes autonomes vivants pendant les pauses sur la barre des tâches
       // Postures calmes et contenues qui restent dans le cadre (bras croisés, réflexion, observation, repos, étirement)
-      if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction) {
+      if (poseTo === "idle" && poseHoldUntil === 0 && !activeVrmaAction && !isShowing()) {
         if (t > nextHeartPoseTime) {
           // Petite danse spontanée "Finger Heart" K-Pop 1 à 2 fois par heure (toutes les 25 à 35 minutes)
           nextHeartPoseTime = t + 1500.0 + Math.random() * 600.0;
@@ -1815,7 +2010,7 @@ export function createVrmPet(hostEl, opts = {}) {
         try {
           const rh = vrm.humanoid?.getNormalizedBoneNode?.("rightHand");
           if (rh) rh.getWorldPosition(handPos);
-        } catch (_) {}
+        } catch (_) { }
 
         heartSprites.forEach((sp, i) => {
           sp.visible = true;
@@ -1846,7 +2041,7 @@ export function createVrmPet(hostEl, opts = {}) {
             em.setValue("blinkRight", winkVal);
             em.setValue("blinkLeft", 0); // L'œil gauche reste toujours grand ouvert
           }
-        } catch (_) {}
+        } catch (_) { }
       } else {
         heartSprites.forEach((sp) => {
           sp.visible = false;
@@ -1864,7 +2059,7 @@ export function createVrmPet(hostEl, opts = {}) {
               em.setValue("ih", 0);
               em.setValue("aa", 0);
             }
-          } catch (_) {}
+          } catch (_) { }
           setMood("serene");
         }
       }
@@ -1984,6 +2179,125 @@ export function createVrmPet(hostEl, opts = {}) {
   window.addEventListener("resize", resize);
   animate();
 
+  /** Show Routine Manager — Séquenceur de spectacles continus (iStripper / vghd canon) */
+  let currentShow = null;
+  let showStepIndex = 0;
+  let showStepTimer = null;
+  let preShowFraming = null;
+
+  const SHOW_ROUTINES = {
+    idol: {
+      name: "Show K-Pop Idol",
+      steps: [
+        { pose: "wave", duration: 3200, mood: "happy", speech: "Bonjour ! Place au spectacle !" },
+        { pose: "dance", duration: 9500, mood: "happy", speech: "On commence avec le groove Pop !" },
+        { pose: "samba", duration: 9000, mood: "happy", speech: "Accélération du rythme !" },
+        { pose: "hiphop", duration: 9000, mood: "happy" },
+        { pose: "spin", duration: 5000, mood: "happy", speech: "Tourbillon cyber !" },
+        { pose: "fingerHeart", duration: 8500, mood: "happy", speech: "Petite danse idol pour vous !" },
+        { pose: "bow", duration: 3500, mood: "serene", speech: "Merci d'avoir regardé le show." },
+      ],
+    },
+    club: {
+      name: "Show Club Electro",
+      steps: [
+        { pose: "lookaround", duration: 3500, mood: "curious", speech: "Ambiance Club activée." },
+        { pose: "disco", duration: 11000, mood: "happy", speech: "Disco Fever sur le bureau !" },
+        { pose: "robot", duration: 10000, mood: "serene", speech: "Synchronisation des servomoteurs." },
+        { pose: "dance", duration: 9000, mood: "happy" },
+        { pose: "spin", duration: 5500, mood: "happy" },
+        { pose: "bow", duration: 3500, mood: "serene", speech: "Fin de la session Club." },
+      ],
+    },
+    latino: {
+      name: "Show Fiesta Caliente",
+      steps: [
+        { pose: "wave", duration: 3000, mood: "happy", speech: "Musica ! Que la fête commence !" },
+        { pose: "samba", duration: 11000, mood: "happy", speech: "Rythme Samba Latino !" },
+        { pose: "salsa", duration: 11000, mood: "happy", speech: "Salsa en continu !" },
+        { pose: "spin", duration: 5000, mood: "happy" },
+        { pose: "jump", duration: 4000, mood: "happy", speech: "Olé !" },
+        { pose: "bow", duration: 3000, mood: "serene", speech: "Merci beaucoup !" },
+      ],
+    },
+  };
+
+  function isShowing() {
+    return currentShow !== null;
+  }
+
+  function startShow(routineKey = "idol", onComplete) {
+    stopShow();
+    const key = String(routineKey || "idol").toLowerCase();
+    const routine = SHOW_ROUTINES[key] || SHOW_ROUTINES.idol;
+    currentShow = { key, routine, onComplete };
+    showStepIndex = 0;
+
+    // Bascule automatique en vue Corps Entier pour apprécier la danse
+    preShowFraming = framing;
+    if (framing !== "full") {
+      setFraming("full");
+    }
+
+    console.info("[vrm_pet] Démarrage du show :", routine.name);
+    executeShowStep();
+    return routine.name;
+  }
+
+  function executeShowStep() {
+    if (!currentShow) return;
+    const steps = currentShow.routine.steps;
+    if (showStepIndex >= steps.length) {
+      endShow();
+      return;
+    }
+
+    const step = steps[showStepIndex];
+    if (step.mood) setMood(step.mood);
+    if (step.pose) setPose(step.pose, step.duration + 500);
+    if (step.speech) say(step.speech);
+
+    showStepTimer = setTimeout(() => {
+      showStepIndex += 1;
+      executeShowStep();
+    }, step.duration);
+  }
+
+  function endShow() {
+    if (!currentShow) return;
+    const cb = currentShow.onComplete;
+    console.info("[vrm_pet] Fin du show :", currentShow.routine.name);
+    currentShow = null;
+    showStepIndex = 0;
+    if (showStepTimer) {
+      clearTimeout(showStepTimer);
+      showStepTimer = null;
+    }
+    stopVRMA(0.2);
+    if (vrm?.humanoid) {
+      try { vrm.humanoid.resetNormalizedPose(); } catch (_) {}
+    }
+    setPose("idle", 0);
+    setMood("serene");
+    if (preShowFraming && preShowFraming !== framing) {
+      setFraming(preShowFraming);
+      preShowFraming = null;
+    }
+    if (typeof cb === "function") {
+      try { cb(); } catch (_) {}
+    }
+  }
+
+  function stopShow() {
+    if (showStepTimer) {
+      clearTimeout(showStepTimer);
+      showStepTimer = null;
+    }
+    if (currentShow) {
+      endShow();
+    }
+  }
+
   function flip() {
     if (!vrm) return;
     targetHeadingY = (targetHeadingY + Math.PI) % (Math.PI * 2);
@@ -2009,9 +2323,17 @@ export function createVrmPet(hostEl, opts = {}) {
     setFraming,
     setPose,
     setHeading,
+    equipAccessory,
+    toggleAccessory,
+    get equippedAccessories() {
+      return Array.from(equippedAccessories.keys());
+    },
     playVRMA,
     stopVRMA,
     loadVRMA,
+    startShow,
+    stopShow,
+    isShowing,
     get activeVRMA() {
       return activeVrmaName;
     },
@@ -2036,7 +2358,7 @@ export function createVrmPet(hostEl, opts = {}) {
           if (vrm?.scene) {
             mixer.uncacheRoot(vrm.scene);
           }
-        } catch (_) {}
+        } catch (_) { }
         mixer = null;
       }
 
@@ -2049,14 +2371,14 @@ export function createVrmPet(hostEl, opts = {}) {
         try {
           scene.remove(sp);
           sp.geometry?.dispose();
-        } catch (_) {}
+        } catch (_) { }
       }
-      try { heartMat.dispose(); } catch (_) {}
+      try { heartMat.dispose(); } catch (_) { }
 
       for (const tex of createdTextures) {
         try {
           tex.dispose();
-        } catch (_) {}
+        } catch (_) { }
       }
       createdTextures.length = 0;
 
@@ -2076,7 +2398,7 @@ export function createVrmPet(hostEl, opts = {}) {
         if (renderer.forceContextLoss) {
           renderer.forceContextLoss();
         }
-      } catch (_) {}
+      } catch (_) { }
       if (renderer.domElement?.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }

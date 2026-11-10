@@ -2050,6 +2050,12 @@ if (!gotLock) {
           setWanderEnabled(on);
           return { ok: true, wander: on };
         }
+        if (cmd === "toggle_accessory" || cmd === "equip_accessory" || cmd === "accessory") {
+          const type = d.type || d.accessory || "visor";
+          const equip = d.equip !== undefined ? Boolean(d.equip) : undefined;
+          sendVrmAccessory(type, equip);
+          return { ok: true, accessory: type, equip };
+        }
         return { ok: false, error: `cmd inconnu: ${cmd}` };
       },
     });

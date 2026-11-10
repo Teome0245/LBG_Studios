@@ -391,19 +391,28 @@ const isUpdating = ref(false)
 const activeAccessories = ref(new Set())
 
 function triggerAccessory(type) {
-  if (activeAccessories.value.has(type)) {
-    activeAccessories.value.delete(type)
-  } else {
+  const willEquip = !activeAccessories.value.has(type)
+  if (willEquip) {
     activeAccessories.value.add(type)
+  } else {
+    activeAccessories.value.delete(type)
   }
   try {
+    // 1. Toggle immédiat sur l'avatar 3D WebGL local de LyraPanel (Web :5174 et fenêtre Chat)
+    if (vrmInst && typeof vrmInst.equipAccessory === 'function') {
+      vrmInst.equipAccessory(type, willEquip)
+    } else if (vrmInst && typeof vrmInst.toggleAccessory === 'function') {
+      vrmInst.toggleAccessory(type)
+    }
+
+    // 2. Toggle sur l'overlay transparent du bureau (Electron pet)
     if (window.compagnonDesktop && typeof window.compagnonDesktop.toggleAccessory === 'function') {
       window.compagnonDesktop.toggleAccessory(type)
     } else {
       fetch('http://127.0.0.1:8765/avatar/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cmd: 'toggle_accessory', type }),
+        body: JSON.stringify({ cmd: 'toggle_accessory', type, equip: willEquip }),
       }).catch(() => {})
     }
   } catch (_) {}
@@ -554,7 +563,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=finger_heart_v6'
+    script.src = '/vrm/vrm_pet.bundle.js?v=accessories_v1'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)
