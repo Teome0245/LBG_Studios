@@ -7,11 +7,16 @@ if not exist "%SRC_DIR%\main.js" (
     set "SRC_DIR=\\192.168.0.143\projects\LBG_Studios\packages\compagnon-desktop"
 )
 
-:: 1. Synchronisation rapide automatique au lancement
+:: 1. Synchronisation rapide automatique au lancement (SANS /MIR pour ne jamais effacer les modèles perso)
 if exist "%SRC_DIR%\main.js" (
     echo [LBG Compagnon] Verification des mises a jour depuis %SRC_DIR%...
-    robocopy "%SRC_DIR%\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /MIR /NFL /NDL /NJH /NJS /nc /ns /np
+    :: Copie des mises a jour sans suppression (/E copie recursive sans /PURGE)
+    robocopy "%SRC_DIR%\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /NFL /NDL /NJH /NJS /nc /ns /np
     robocopy "%SRC_DIR%" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json /NFL /NDL /NJH /NJS /nc /ns /np
+    :: Sauvegarde securisee des modeles VRM perso vers le depot s'ils n'y sont pas deja
+    if exist "C:\Agent_IA\compagnon-desktop\overlay\vrm\*.vrm" (
+        robocopy "C:\Agent_IA\compagnon-desktop\overlay\vrm" "%SRC_DIR%\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+    )
     echo [LBG Compagnon] Synchronisation terminee.
 ) else (
     echo [LBG Compagnon] Mode local (repo source non detecte).

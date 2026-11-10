@@ -1905,10 +1905,17 @@ function checkAndApplySourceUpdate(manual = false) {
   console.info(`[AutoUpdate] Vérification depuis ${sourceRoot}...`);
 
   // 1. Synchronisation du dossier overlay (VRM, animations, bundle, shaders)
+  // Utilisation stricte de /E (JAMAIS /MIR ou /PURGE) pour NE JAMAIS supprimer les modèles VRM perso de l'utilisateur !
   const srcOverlay = path.join(sourceRoot, "overlay");
   const dstOverlay = path.join(localRoot, "overlay");
   if (fs.existsSync(srcOverlay)) {
-    runRobocopy(srcOverlay, dstOverlay, ["/MIR"]);
+    runRobocopy(srcOverlay, dstOverlay, ["/E"]);
+    // Sauvegarde de sécurité des modèles .vrm ajoutés localement vers le dépôt source
+    const localVrm = path.join(dstOverlay, "vrm");
+    const repoVrm = path.join(srcOverlay, "vrm");
+    if (fs.existsSync(localVrm) && fs.existsSync(repoVrm)) {
+      runRobocopy(localVrm, repoVrm, ["*.vrm", "/XC", "/XN", "/XO"]);
+    }
   }
 
   // 2. Synchronisation de main.js et preload.js
