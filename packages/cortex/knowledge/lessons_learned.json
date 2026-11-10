@@ -910,6 +910,200 @@
       "hit_count": 1,
       "last_seen_ts": 1794075724.074279,
       "last_seen": "2026-11-07"
+    },
+    {
+      "id": "lesson_f6bc62c0a1",
+      "date": "2026-11-10",
+      "agent_role": "dev_godot",
+      "context": "hard_fail",
+      "failure_or_success": "failure",
+      "pattern": "Hard-fail godot_dev_workflow: Iris forge M9b minimap — Iris — forge M9 (m9b)\n\nSondes\n❌ [m9b_readiness] — config/minimap_config.json absent (M9b-5)\n\nForge : Iris forge — 1 patch(es) · smoke=KO\n\nChecklist humain (rapi",
+      "do_not_repeat": "Échec silencieux sans leçon (godot_dev_workflow)",
+      "refs": [
+        "47c8bcd9-8803-4fcc-a724-ad22854c2af0",
+        "hard_fail",
+        "godot_dev_workflow"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301583.4548142,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_882470c7ce",
+      "date": "2026-11-10",
+      "agent_role": "ops",
+      "context": "unknown: toujours en échec",
+      "failure_or_success": "failure",
+      "pattern": "job failed: étape condamnée",
+      "do_not_repeat": "Réutiliser experience_memory / lessons avant de replanifier le même objectif.",
+      "refs": [
+        "job:fba774861aa14da4b674b33a63a8d431",
+        "trace:59b98d83fe564977b13e9745f3fb42cf"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301583.78145,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_5fa88c1715",
+      "date": "2026-11-10",
+      "agent_role": "ops",
+      "context": "Échec à l'étape « ouvrir vghd » : Succès trompeur : outcome=bad_request",
+      "failure_or_success": "failure",
+      "pattern": "job failed: ouvrir une app",
+      "do_not_repeat": "Réutiliser experience_memory / lessons avant de replanifier le même objectif.",
+      "refs": [
+        "job:9cf38028c65d4ef7b82b3242f05d6c43",
+        "trace:fabe2700e45b4cb0a42a61e306783736"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301584.3853776,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_80071e69b8",
+      "date": "2026-11-10",
+      "agent_role": "ops",
+      "context": "npc_dialogue: boom",
+      "failure_or_success": "failure",
+      "pattern": "job failed: objectif stable",
+      "do_not_repeat": "Réutiliser experience_memory / lessons avant de replanifier le même objectif.",
+      "refs": [
+        "job:2477e4515660416f89ab1657e282b31b",
+        "trace:09ebd740dbee492da2300fac90927048"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301584.404119,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_59ad918168",
+      "date": "2026-11-10",
+      "agent_role": "ops",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur ops_storage: healthz probe smoke",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "50201b48-4a58-4574-b640-851b6dfbe70e",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301585.008966,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_350c8de968",
+      "date": "2026-11-10",
+      "agent_role": "dev_game",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur dev_game_workflow: analyser bug gameplay",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "4a11d1a4-74e8-4938-8edd-704144086165",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301591.7991993,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_578e7c4775",
+      "date": "2026-11-10",
+      "agent_role": "qa",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur godot_supervisor: Supervise Godot zb0",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "769f1ff7-4883-4f65-8ba6-3406ee6a7d44",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301597.1836658,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_4e41c8f6e8",
+      "date": "2026-11-10",
+      "agent_role": "qa",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.47) sur godot_supervisor: Supervise Godot",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "aeda0d0c-d511-4814-9a23-daf0ab7132b2",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301597.3011088,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_e2934186de",
+      "date": "2026-11-10",
+      "agent_role": "dev_game",
+      "context": "hard_fail",
+      "failure_or_success": "failure",
+      "pattern": "Hard-fail m9_map_workflow: Audit M9a Scrapaltai — Dédale — jalon M9 (m9a)\n\nSondes\n❌ [m9a_readiness] — export pipeline manquant\n\nChecklist humain (rapide)\n  □ ✓ Preset « M9 planète » (m9a) — texture Scrapaltai +",
+      "do_not_repeat": "Échec silencieux sans leçon (m9_map_workflow)",
+      "refs": [
+        "565b8812-ab7a-4409-b00d-5740ae7443af",
+        "hard_fail",
+        "m9_map_workflow"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301605.807643,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_13924c3d40",
+      "date": "2026-11-10",
+      "agent_role": "pm",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur pm_brief: Brief M9 Scrapaltai — triage m9a (parent=565b8812-ab7a-4409-b00d-5740ae7443af)",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "4c6dd23c-ae10-40fb-9ee0-88eb432ef09c",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301605.8303583,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_55b539f06f",
+      "date": "2026-11-10",
+      "agent_role": "player_ia",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur player_ia_think: think tick lia",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "08c4d922-54ae-447f-8738-9b09571f34a4",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301606.2341301,
+      "last_seen": "2026-11-10"
+    },
+    {
+      "id": "lesson_03f7f2fe12",
+      "date": "2026-11-10",
+      "agent_role": "pm",
+      "context": "post_judge",
+      "failure_or_success": "failure",
+      "pattern": "Post-judge faible (score=0.55) sur pm_brief: Triage échec QA — analyser résultat smoke/healthz et proposer prochaines actions (parent=78385046-e935-4c63-8f4f-45598a7",
+      "do_not_repeat": "Ignorer un score judge bas sans follow-up",
+      "refs": [
+        "dc969390-eb09-49b2-b155-fc82671a6ae0",
+        "outcome_judge"
+      ],
+      "hit_count": 1,
+      "last_seen_ts": 1794301606.3874505,
+      "last_seen": "2026-11-10"
     }
   ]
 }

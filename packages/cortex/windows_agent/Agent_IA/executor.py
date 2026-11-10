@@ -334,10 +334,14 @@ def ouvrir_paint(**kwargs):
 def copier_vrm_upload_ia(**kwargs):
     import shutil
     import os
-    src_dir = "A:/LBG_Studios/packages/compagnon-desktop/overlay/vrm"
-    dst_dir = "N:/Upload/IA"
+    win_root = os.getenv("LBG_STUDIOS_WIN_ROOT", "A:/LBG_Studios").replace("\\", "/")
+    src_dir = os.path.join(win_root, "packages/compagnon-desktop/overlay/vrm")
+    dst_dir = os.getenv("LBG_UPLOAD_IA_DIR", "N:/Upload/IA").replace("\\", "/")
     if not os.path.exists(dst_dir):
-        os.makedirs(dst_dir, exist_ok=True)
+        try:
+            os.makedirs(dst_dir, exist_ok=True)
+        except Exception as e:
+            return {"status": "error", "error": f"Impossible de créer le dossier destination {dst_dir}: {e}"}
     files_to_copy = [
         "Compagnon.vrm",
         "body_skin_android.png", "body_skin_android_5b.png",
@@ -366,12 +370,18 @@ def copier_vrm_upload_ia(**kwargs):
 def copier_models_vers_onedrive(**kwargs):
     import shutil
     import os
-    dst_dir = "O:/OneDrive/Pictures/IA/Models"
-    os.makedirs(dst_dir, exist_ok=True)
+    win_root = os.getenv("LBG_STUDIOS_WIN_ROOT", "A:/LBG_Studios").replace("\\", "/")
+    vrm_dir = os.getenv("LBG_DESKTOP_VRM_DIR", "C:/Agent_IA/compagnon-desktop/overlay/vrm").replace("\\", "/")
+    dst_dir = os.getenv("LBG_ONEDRIVE_MODELS_DIR", "O:/OneDrive/Pictures/IA/Models").replace("\\", "/")
+    try:
+        os.makedirs(dst_dir, exist_ok=True)
+    except Exception as e:
+        return {"status": "error", "error": f"Impossible de créer le dossier destination {dst_dir}: {e}"}
+
     sources = [
-        ("A:/LBG_Studios/packages/swg-client/assets/avatars", ["Anna.vrm", "Aurora.vrm", "Compagnon.vrm", "default.vrm", "LadyKoi.vrm"]),
-        ("A:/LBG_Studios/packages/cortex/pilot_web/orchestrator_avatar/models", ["base_female.glb", "RobotExpressive.glb"]),
-        ("C:/Agent_IA/compagnon-desktop/overlay/vrm", ["Compagnon.vrm", "LadyKoi.vrm", "Aurora.vrm", "Anna.vrm"])
+        (os.path.join(win_root, "packages/swg-client/assets/avatars"), ["Anna.vrm", "Aurora.vrm", "Compagnon.vrm", "default.vrm", "LadyKoi.vrm"]),
+        (os.path.join(win_root, "packages/cortex/pilot_web/orchestrator_avatar/models"), ["base_female.glb", "RobotExpressive.glb"]),
+        (vrm_dir, ["Compagnon.vrm", "LadyKoi.vrm", "Aurora.vrm", "Anna.vrm"])
     ]
     copied = []
     errors = []
@@ -391,7 +401,7 @@ def copier_models_vers_onedrive(**kwargs):
         "copied": copied,
         "errors": errors,
         "destination": dst_dir,
-        "destination_files": os.listdir(dst_dir)
+        "destination_files": os.listdir(dst_dir) if os.path.exists(dst_dir) else []
     }
 
 
@@ -402,8 +412,13 @@ def sync_vrm_desktop(**kwargs):
     import shutil
     import os
     import urllib.request
-    dst_dir = "C:/Agent_IA/compagnon-desktop/overlay/vrm"
-    os.makedirs(dst_dir, exist_ok=True)
+    win_root = os.getenv("LBG_STUDIOS_WIN_ROOT", "A:/LBG_Studios").replace("\\", "/")
+    dst_dir = os.getenv("LBG_DESKTOP_VRM_DIR", "C:/Agent_IA/compagnon-desktop/overlay/vrm").replace("\\", "/")
+    try:
+        os.makedirs(dst_dir, exist_ok=True)
+    except Exception as e:
+        return {"status": "error", "error": f"Impossible de créer le dossier destination {dst_dir}: {e}"}
+
     dst_anim_dir = os.path.join(dst_dir, "animations")
     os.makedirs(dst_anim_dir, exist_ok=True)
     files = ["body_skin_android.png", "body_skin_android_5b.png", "face_skin_android.png", "hair_android.png", "metallic_matcap.png", "rim_multiply_mask.png", "vrm_pet.bundle.js", "vrm_pet.js"]
@@ -415,7 +430,7 @@ def sync_vrm_desktop(**kwargs):
     ]
     res = []
     errs = []
-    src_dir = "A:/LBG_Studios/packages/compagnon-desktop/overlay/vrm"
+    src_dir = os.path.join(win_root, "packages/compagnon-desktop/overlay/vrm")
     src_anim_dir = os.path.join(src_dir, "animations")
     if os.path.exists(src_dir):
         for f in files:
