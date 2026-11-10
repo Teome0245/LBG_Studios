@@ -12,16 +12,16 @@ timeout /t 1 /nobreak >nul
 echo 2. Synchronisation des fichiers VRM, bundle et animations depuis A: vers C:...
 :: Sauvegarde prealable de securite de TOUS les modeles VRM perso de C: vers A: (sans ecraser)
 if exist "C:\Agent_IA\compagnon-desktop\overlay\vrm\*.vrm" (
-    robocopy "C:\Agent_IA\compagnon-desktop\overlay\vrm" "A:\LBG_Studios\packages\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+    robocopy "C:\Agent_IA\compagnon-desktop\overlay\vrm" "A:\LBG_Studios\packages\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
 )
 :: Copie des fichiers sans /MIR (utilisation stricte de /E pour ne jamais supprimer de modeles perso)
-robocopy "A:\LBG_Studios\packages\compagnon-desktop\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /NFL /NDL /NJH /NJS /nc /ns /np
-robocopy "A:\LBG_Studios\packages\compagnon-desktop" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json Lancer_Compagnon.cmd MAJ_COMPAGNON.cmd /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "A:\LBG_Studios\packages\compagnon-desktop\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
+robocopy "A:\LBG_Studios\packages\compagnon-desktop" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json Lancer_Compagnon.cmd MAJ_COMPAGNON.cmd /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
 
 :: Importation automatique des nouveaux modeles depuis OneDrive (sans ecraser les existants)
 if exist "O:\OneDrive\Pictures\IA\Models" (
     echo Importation des nouveaux modeles depuis O:\OneDrive\Pictures\IA\Models...
-    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
 )
 
 echo 3. Relance de l'agent local Agent_IA (:5005)...

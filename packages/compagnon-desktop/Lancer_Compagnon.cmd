@@ -12,11 +12,11 @@ if exist "%SRC_DIR%\main.js" (
     echo [LBG Compagnon] Verification des mises a jour depuis %SRC_DIR%...
     :: Sauvegarde prealable de securite de TOUS les modeles VRM perso de C: vers A: (sans ecraser)
     if exist "C:\Agent_IA\compagnon-desktop\overlay\vrm\*.vrm" (
-        robocopy "C:\Agent_IA\compagnon-desktop\overlay\vrm" "%SRC_DIR%\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+        robocopy "C:\Agent_IA\compagnon-desktop\overlay\vrm" "%SRC_DIR%\overlay\vrm" *.vrm /XC /XN /XO /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
     )
     :: Copie des mises a jour sans suppression (/E copie recursive sans /PURGE)
-    robocopy "%SRC_DIR%\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /NFL /NDL /NJH /NJS /nc /ns /np
-    robocopy "%SRC_DIR%" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json Lancer_Compagnon.cmd MAJ_COMPAGNON.cmd /NFL /NDL /NJH /NJS /nc /ns /np
+    robocopy "%SRC_DIR%\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
+    robocopy "%SRC_DIR%" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json Lancer_Compagnon.cmd MAJ_COMPAGNON.cmd /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
     echo [LBG Compagnon] Synchronisation terminee.
 ) else (
     echo [LBG Compagnon] Mode local (repo source non detecte).
@@ -25,7 +25,7 @@ if exist "%SRC_DIR%\main.js" (
 :: 2. Importation automatique et securisee des modeles depuis OneDrive (sans ecraser les existants : /XC /XN /XO)
 if exist "O:\OneDrive\Pictures\IA\Models" (
     echo [LBG Compagnon] Verification des modeles dans O:\OneDrive\Pictures\IA\Models...
-    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /R:1 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np
 )
 
 :: 3. Demarrage de l'agent IA local si present
