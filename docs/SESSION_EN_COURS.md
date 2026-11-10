@@ -33,6 +33,11 @@
        - Relaunch automatique transparent (`app.relaunch()`) si le code principal a été mis à jour.
        - Entrée manuelle ajoutée dans la barre des tâches : `🔄 Vérifier les mises à jour (A: -> C:)`.
        - Nouveau lanceur Windows rapide `Lancer_Compagnon.cmd` et mise à jour de `Create-DesktopShortcut.ps1`.
+       - Raccourcis `Ctrl+R` / `F5` (rechargement sans cache) et `Ctrl+Shift+I` (DevTools) câblés dans `mainWindow` pour l'interface de chat.
+     - **Déploiement Compagnon Web/Chat UI (`packages/cortex/compagnon_ui`) sur CT `.100:5174`** :
+       - Bouton `🔄 MAJ` (synchronisation et reload) ajouté dans le header du panneau avatar 3D (`LyraPanel.vue`).
+       - Section `👓 Accessoires 3D` (Visière, Datapad, Oreillette) et pose `🔍 Focus` intégrées dans `LyraPanel.vue`.
+       - Build Docker frontend & backend déployé sur CT `.100` (`deploy_compagnon_100.sh`).
 2. **Enrichissement du Second Brain Lore & Monde LBG (`docs/lore/`)** :
    - Documentation canonique (hors Star Wars, biomes LBG propres inspirés de SWG) des 4 autres planètes majeures :
      - **`arvandor.md`** (Plaines luxuriantes, marbre blanc, cascades, diplomatie) + faction `cercle_diplomates_arvandor.md` + PNJ `bige_coto.md` (danse/arts scéniques).

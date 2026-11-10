@@ -207,6 +207,17 @@ function createMainWindow() {
     },
   });
 
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (input.key === "F5" || (input.control && input.key.toLowerCase() === "r")) {
+      mainWindow.webContents.reloadIgnoringCache();
+      event.preventDefault();
+    }
+    if (input.control && input.shift && input.key.toLowerCase() === "i") {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
+
   mainWindow.once("ready-to-show", () => {
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.show();
   });
@@ -865,6 +876,15 @@ async function rebuildTrayMenu() {
     { label: "Ouvrir Compagnon", click: () => showChat() },
     { label: "Afficher / masquer chat", click: () => toggleChat() },
     {
+      label: "🔄 Recharger l'interface Chat (Ctrl+R / F5)",
+      click: () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.reloadIgnoringCache();
+          mainWindow.show();
+        }
+      },
+    },
+    {
       label: "🧠 Conscience 3D de Lyra",
       click: () => shell.openExternal(compagnonUrl() + "brain"),
     },
@@ -1447,6 +1467,15 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
     {
       label: "💬 Ouvrir Compagnon (Chat)",
       click: () => showChat(),
+    },
+    {
+      label: "🔄 Recharger l'interface Chat (Ctrl+R)",
+      click: () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.reloadIgnoringCache();
+          mainWindow.show();
+        }
+      },
     },
     { type: "separator" },
     {

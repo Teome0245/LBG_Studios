@@ -5,9 +5,20 @@
       <h2 class="text-xs font-semibold tracking-wide uppercase">
         {{ avatarMode === 'vrm' ? 'Compagnon — Avatar 3D' : 'Lyra — Personnalisation' }}
       </h2>
-      <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="avatarMode === 'vrm' ? 'bg-teal-500/15 text-teal-300' : 'bg-slate-800 text-slate-400'">
-        {{ avatarMode === 'vrm' ? selectedModelLabel : '2D' }}
-      </span>
+      <div class="flex items-center gap-1.5">
+        <button
+          type="button"
+          class="px-2 py-0.5 rounded text-[10px] font-medium bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 flex items-center gap-1 transition shadow-sm"
+          title="Vérifier et synchroniser les mises à jour (A: -> Windows C:)"
+          @click="triggerUpdate"
+        >
+          <span :class="isUpdating ? 'animate-spin' : ''">🔄</span>
+          <span>{{ isUpdating ? 'Sync...' : 'MAJ' }}</span>
+        </button>
+        <span class="text-[10px] px-1.5 py-0.5 rounded font-mono" :class="avatarMode === 'vrm' ? 'bg-teal-500/15 text-teal-300' : 'bg-slate-800 text-slate-400'">
+          {{ avatarMode === 'vrm' ? selectedModelLabel : '2D' }}
+        </span>
+      </div>
     </header>
 
     <!-- Zone Avatar 3D / 2D fixe (ne défile pas, toujours visible quand on clique sur les danses/poses) -->
@@ -180,6 +191,51 @@
             >
               👏 Applaudir
             </button>
+            <button
+              type="button"
+              class="py-1 rounded border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/50 text-[10px] text-cyan-200 transition font-medium"
+              title="Posture de concentration et scan de code"
+              @click="triggerPose('focus', 6000)"
+            >
+              🔍 Focus
+            </button>
+          </div>
+
+          <!-- Accessoires 3D VRM -->
+          <div class="pt-2 border-t border-slate-800/80">
+            <div class="flex items-center justify-between text-[11px] pb-1">
+              <span class="text-cyan-300 font-medium flex items-center gap-1">👓 Accessoires 3D</span>
+              <span class="text-[9px] text-slate-500 font-mono">Modulaires · GLB</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <button
+                type="button"
+                class="py-1 rounded border text-[10px] transition font-medium"
+                :class="activeAccessories.has('visor') ? 'border-cyan-400 bg-cyan-900/60 text-cyan-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
+                title="Visière HUD cybernétique sur la tête"
+                @click="triggerAccessory('visor')"
+              >
+                🕶️ Visière
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border text-[10px] transition font-medium"
+                :class="activeAccessories.has('datapad') ? 'border-teal-400 bg-teal-900/60 text-teal-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
+                title="Datapad holographique en main"
+                @click="triggerAccessory('datapad')"
+              >
+                📱 Datapad
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border text-[10px] transition font-medium"
+                :class="activeAccessories.has('headset') ? 'border-pink-400 bg-pink-900/60 text-pink-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
+                title="Oreillette de communication neurale"
+                @click="triggerAccessory('headset')"
+              >
+                🎧 Oreillette
+              </button>
+            </div>
           </div>
 
           <!-- Pack Danses VRM -->
@@ -324,6 +380,48 @@ const version = ref("")
 const latency = ref(0)
 const uptime = ref("")
 const faceHost = ref(null)
+
+const isUpdating = ref(false)
+const activeAccessories = ref(new Set())
+
+function triggerAccessory(type) {
+  if (activeAccessories.value.has(type)) {
+    activeAccessories.value.delete(type)
+  } else {
+    activeAccessories.value.add(type)
+  }
+  try {
+    if (window.compagnonDesktop && typeof window.compagnonDesktop.toggleAccessory === 'function') {
+      window.compagnonDesktop.toggleAccessory(type)
+    } else {
+      fetch('http://127.0.0.1:8765/avatar/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: 'toggle_accessory', type }),
+      }).catch(() => {})
+    }
+  } catch (_) {}
+}
+
+async function triggerUpdate() {
+  isUpdating.value = true
+  try {
+    if (window.compagnonDesktop && typeof window.compagnonDesktop.checkUpdates === 'function') {
+      window.compagnonDesktop.checkUpdates()
+    } else {
+      await fetch('http://127.0.0.1:8765/avatar/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: 'check_update' }),
+      }).catch(() => {})
+    }
+  } catch (_) {
+  } finally {
+    setTimeout(() => {
+      isUpdating.value = false
+    }, 2500)
+  }
+}
 
 const avatarMode = ref(localStorage.getItem('compagnon_avatar_mode') || 'vrm')
 const selectedModel = ref(localStorage.getItem('compagnon_vrm_model') || 'Compagnon.vrm')
