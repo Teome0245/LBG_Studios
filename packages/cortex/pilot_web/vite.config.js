@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
-const STATIC_DIRS = ["orchestrator_avatar", "office_map", "face_rig", "brain_3d", "assets"];
+const STATIC_DIRS = ["orchestrator_avatar", "office_map", "face_rig", "brain_3d", "assets", "topology"];
 const configDir = fileURLToPath(new URL(".", import.meta.url));
 
 function copyPilotStaticAssets() {

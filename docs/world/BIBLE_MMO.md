@@ -26,7 +26,7 @@
 | Couche | Quoi | Exemples | Statut produit |
 |--------|------|----------|----------------|
 | **A — Hub jouable** | Monde où le joueur spawn / joue aujourd’hui | Planète **Scrapaltai**, ville **Lost Heaven** | Actif (client Godot + Prime) |
-| **B — Réseau stellaire LBG** | Autres mondes / origines raciales | Arvandor, Terre1, Mecha_Prime, Khar_Zuun, Thalassia, … | Lore + races ; pas tous jouables |
+| **B — Réseau stellaire LBG** | Autres mondes / origines raciales | Arvandor, Terre-One, Mecha_Prime, Khar_Zuun, Thalassia, … | Lore + races ; pas tous jouables |
 | **C — Technique moteur** | Ids zone / legacy SOE | Zone id `tatooine`, anciens labels « Mos Eisley » | Invisible joueur ; migration en cours |
 | **D — Fantasy stub** | Contenu générique non LBG | Quêtes loups/bandits, auberge « Pomme Rouge » | **Gelé / à remplacer** — ne pas propager |
 

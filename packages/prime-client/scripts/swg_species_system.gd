@@ -9,13 +9,13 @@ const SPECIES_CATALOG := [
 		"prime_id": "race:human",
 		"aliases": ["human", "humain"],
 		"name": "Humain (Corellien)",
-		"prime_name": "Humain de Terre1",
+		"prime_name": "Humain de Terre-One",
 		"title": "« Citoyen Polyvalent »",
 		"vrm_model": "Mia.vrm",
 		"scale_vec": Vector3(0.95, 0.95, 0.95),
 		"skin_tint": Color(0.92, 0.85, 0.78),
 		"ham_bonus": {"health": 100, "action": 100, "mind": 100},
-		"description": "Équilibré dans toutes les jauges HAM. Polyvalence universelle originaire de Terre1 (Avatar Mia)."
+		"description": "Équilibré dans toutes les jauges HAM. Polyvalence universelle originaire de Terre-One (Avatar Mia)."
 	},
 	{
 		"id": "twilek",

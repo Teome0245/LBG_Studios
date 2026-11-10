@@ -299,7 +299,7 @@ Content-Type: application/json
 
 | Race | Planète d'origine | Tailles (cm) | Silhouette Core3 | Disponible V1 |
 |------|-------------------|--------------|-------------------|---------------|
-| Humain | Terre1 | 155–200 | `human` | Oui |
+| Humain | Terre-One | 155–200 | `human` | Oui |
 | Fel'Rani | Arvandor | 140–180 | `human` | Oui |
 | Varkoon | Arvandor | 150–190 | `wookiee` | Oui |
 | Mechari | Mecha-Prime | 160–190 | `moncal` | Oui |

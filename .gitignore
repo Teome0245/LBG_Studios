@@ -80,3 +80,5 @@ packages/cortex/orchestrator/team/data/prompt_overrides/*.txt
 
 # Exception Pilot avatar (léger)
 !packages/cortex/pilot_web/orchestrator_avatar/models/*.glb
+!packages/compagnon-desktop/overlay/vrm/accessories/*.glb
+!packages/prime-client/assets/models/*.glb

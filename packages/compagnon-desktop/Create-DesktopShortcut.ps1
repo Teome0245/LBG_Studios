@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # Creates Desktop + Start Menu shortcut for LBG Compagnon Desktop (local Windows copy).
 # Does NOT re-download Electron. Assumes C:\Agent_IA\compagnon-desktop is already installed.
 param(
@@ -44,7 +44,11 @@ $targets = @(
   (Join-Path $startMenu "$Name.lnk")
 )
 
-# Shortcut targets electron.exe with app folder as argument (clean, no npm)
+# Shortcut targets Lancer_Compagnon.cmd (with auto-sync from A:) or electron.exe fallback
+$launcherCmd = Join-Path $LocalRoot "Lancer_Compagnon.cmd"
+$targetExe = if (Test-Path -LiteralPath $launcherCmd) { $launcherCmd } else { $electronExe }
+$targetArgs = if ($targetExe -eq $launcherCmd) { "" } else { "`"$LocalRoot`"" }
+
 $wsh = New-Object -ComObject WScript.Shell
 foreach ($lnkPath in $targets) {
   $dir = Split-Path -Parent $lnkPath
@@ -52,11 +56,11 @@ foreach ($lnkPath in $targets) {
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
   }
   $lnk = $wsh.CreateShortcut($lnkPath)
-  $lnk.TargetPath = $electronExe
-  $lnk.Arguments = "`"$LocalRoot`""
+  $lnk.TargetPath = $targetExe
+  $lnk.Arguments = $targetArgs
   $lnk.WorkingDirectory = $LocalRoot
-  $lnk.WindowStyle = 1
-  $lnk.Description = "LBG Compagnon Desktop (Electron tray + avatar)"
+  $lnk.WindowStyle = 7 # Minimized window for seamless background sync
+  $lnk.Description = "LBG Compagnon Desktop (Electron tray + avatar avec auto-update)"
   $icon = Join-Path $LocalRoot "assets\icon.png"
   if (Test-Path -LiteralPath $icon) { $lnk.IconLocation = $icon }
   else { $lnk.IconLocation = "$electronExe,0" }

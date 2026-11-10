@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="orchestrator_avatar/orchestrator_avatar.css" />
   <link rel="stylesheet" href="face_rig/face_rig.css" />
   <link rel="stylesheet" href="brain_3d/brain_3d.css" />
+  <link rel="stylesheet" href="topology/topology_graph.css" />
 </head>
 <body>
   <div class="pilot-shell-bar">
@@ -36,6 +37,7 @@
           <a href="#/team/brain" data-nav-route="team_brain">Cerveau 3D 🧠</a>
           <a href="#/team/fleet" data-nav-route="team_fleet">Fleet</a>
           <a href="#/team/metrics" data-nav-route="team_metrics">Métriques</a>
+          <a href="#/topology" data-nav-route="topology" title="Topologie Second Brain &amp; Lore">Topologie 🕸️</a>
           <a href="#/agents/map" data-nav-route="agents_map" title="Carte agents (proxy Orch)">Carte agents</a>
         </div>
       </details>
@@ -1405,6 +1407,51 @@
           </div>
         </div>
       </aside>
+    </div>
+  </div>
+
+  <div id="pilot-page-topology" class="pilot-page" hidden>
+    <div class="topology-header">
+      <div class="topology-title-box">
+        <h1 class="topology-title">🕸️ Topologie &amp; Graphe Second Brain</h1>
+        <div class="topology-stats">
+          <span>Nœuds : <strong id="topo-stat-nodes">0</strong></span>
+          <span>Relations : <strong id="topo-stat-edges">0</strong></span>
+          <span>Bots en direct : <strong id="topo-stat-bots" style="color:#38bdf8;">0</strong></span>
+          <span class="muted">(docs/lore/ + .246:8787)</span>
+        </div>
+      </div>
+      <div class="topology-controls">
+        <button type="button" class="topology-filter-btn active" data-filter="all">Tous</button>
+        <button type="button" class="topology-filter-btn" data-filter="planet">Planètes</button>
+        <button type="button" class="topology-filter-btn" data-filter="npc">PNJ</button>
+        <button type="button" class="topology-filter-btn" data-filter="faction">Factions</button>
+        <button type="button" class="topology-filter-btn" data-filter="mechanic">Mécaniques</button>
+        <button type="button" class="topology-filter-btn" data-filter="bot" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">Bots IA 🤖</button>
+        <button type="button" class="topology-action-btn" id="topo-btn-pulse" title="Déclencher une impulsion à travers le réseau">⚡ Spider Crawl</button>
+        <button type="button" class="topology-filter-btn" id="topo-btn-reset" title="Recentrer le graphe">👁️ Recentrer</button>
+      </div>
+    </div>
+
+    <div class="topology-canvas-container" id="topology-container">
+      <canvas id="topology-canvas"></canvas>
+
+      <div class="topology-drawer" id="topology-drawer">
+        <div class="topology-drawer-header">
+          <div>
+            <span class="topology-drawer-badge" id="topo-drawer-badge">Document</span>
+            <h3 class="topology-drawer-title" id="topo-drawer-title">Titre</h3>
+          </div>
+          <button type="button" class="topology-drawer-close" id="topo-drawer-close" aria-label="Fermer">✕</button>
+        </div>
+        <div class="topology-drawer-section">
+          <p id="topo-drawer-path" class="muted" style="margin:0;font-size:0.75rem;font-family:monospace;"></p>
+        </div>
+        <div class="topology-drawer-section">
+          <h4>Relations &amp; Liens Wiki</h4>
+          <div class="topology-links-list" id="topo-drawer-links"></div>
+        </div>
+      </div>
     </div>
   </div>
 

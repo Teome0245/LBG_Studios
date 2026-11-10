@@ -55,6 +55,36 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
+  /** Focus / Scan de code : corps légèrement penché en avant, main gauche relevée près du buste (tenant un datapad), tête attentive qui scrute l'écran. */
+  focus: {
+    leftUpperArm: [0.35, 0.25, -1.05],
+    leftLowerArm: [0.10, 0.20, -1.45],
+    leftHand: [0.15, -0.10, 0.30],
+    rightUpperArm: [0.15, 0, 1.25],
+    rightLowerArm: [0, 0, 0.15],
+    rightHand: [0, 0, 0],
+    spine: [0.08, 0.02, 0],
+    chest: [0.10, 0.02, 0],
+    neck: [-0.05, 0.04, 0.02],
+    head: [-0.08, 0.05, 0.03],
+    leftUpperLeg: [0, 0, -0.02],
+    rightUpperLeg: [0, 0, 0.02],
+  },
+  /** Victoire / Célébration : deux bras levés en V triomphal, buste relevé et tête fière. */
+  victory: {
+    leftUpperArm: [0.10, 0.10, -2.55],
+    rightUpperArm: [0.10, -0.10, 2.55],
+    leftLowerArm: [0, 0, -0.35],
+    rightLowerArm: [0, 0, -0.35],
+    leftHand: [0.20, 0, 0],
+    rightHand: [0.20, 0, 0],
+    spine: [-0.04, 0, 0],
+    chest: [-0.06, 0, 0],
+    neck: [0.06, 0, 0],
+    head: [0.08, 0, 0],
+    leftUpperLeg: [0, 0, -0.04],
+    rightUpperLeg: [0, 0, 0.04],
+  },
   /** Finger Heart (geste coréen K-Pop / anime idol : pouce et index croisés en mini cœur au niveau du haut du torse/menton, tête penchée espiègle, main gauche sur la hanche, grands yeux vifs et sourire pétillant). */
   fingerHeart: {
     // Épaule et bras droit : coude maintenu près du flanc/torse, avant-bras levé vers le haut du buste/menton
@@ -539,6 +569,11 @@ export function createVrmPet(hostEl, opts = {}) {
   metallicRimLight.position.set(-1.0, 1.8, -2.0);
   scene.add(metallicRimLight);
 
+  // Halo cybernétique doux (sublime le détachement de l'avatar du fond d'écran)
+  const cyberHaloLight = new THREE.DirectionalLight(0x00f5d4, 0.45);
+  cyberHaloLight.position.set(0, -1.0, -1.8);
+  scene.add(cyberHaloLight);
+
   // Projecteurs de scène dynamiques pour le ShowRoutineManager (ambiance spectacle / iStripper)
   const stageLightCyan = new THREE.PointLight(0x00f5d4, 0, 4.0);
   stageLightCyan.position.set(-1.2, 1.2, 1.2);
@@ -908,7 +943,9 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "robot" || n === "popping" || n === "wavedance") key = "robot";
     else if (n === "disco" || n === "twist" || n === "fever") key = "disco";
     else if (n === "spin" || n === "tourner" || n === "pirouette") key = "spin";
-    else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key = "jump";
+    else if (n === "focus" || n === "scan" || n === "code" || n === "debug") key = "focus";
+    else if (n === "victory" || n === "victoire" || n === "win" || n === "success") key = "victory";
+    else if (n === "jump" || n === "saut") key = "jump";
     else if (n === "stretch" || n === "etirement") key = "stretch";
     else if (n === "clap" || n === "clapping") key = "clapping";
     else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key = "angry";
@@ -1076,6 +1113,18 @@ export function createVrmPet(hostEl, opts = {}) {
     if (poseTo === "think") {
       const swayThink = Math.sin(t * 0.8) * 0.03;
       if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
+    }
+    if (poseTo === "focus") {
+      const scanHead = Math.sin(t * 1.8) * 0.04;
+      const dataGlow = Math.sin(t * 3.5) * 0.02;
+      if (animated.head) animated.head = [animated.head[0] + dataGlow, animated.head[1] + scanHead, animated.head[2]];
+      if (animated.leftHand) animated.leftHand = [animated.leftHand[0] + dataGlow, animated.leftHand[1], animated.leftHand[2]];
+    }
+    if (poseTo === "victory") {
+      const cheerArm = Math.sin(t * 5.0) * 0.06;
+      if (animated.leftUpperArm) animated.leftUpperArm = [animated.leftUpperArm[0], animated.leftUpperArm[1], animated.leftUpperArm[2] - cheerArm];
+      if (animated.rightUpperArm) animated.rightUpperArm = [animated.rightUpperArm[0], animated.rightUpperArm[1], animated.rightUpperArm[2] + cheerArm];
+      if (animated.chest) animated.chest = [animated.chest[0] + cheerArm * 0.3, animated.chest[1], animated.chest[2]];
     }
     if (poseTo === "dance") {
       // Tempo groove doux et posé à ~1.05 Hz (63 BPM, détendu et gracieux)
@@ -1741,6 +1790,89 @@ export function createVrmPet(hostEl, opts = {}) {
   loader.register((parser) => new VRMLoaderPlugin(parser));
   loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
 
+  // Système d'accessoires 3D modulaires pour l'avatar (lunettes HUD, datapad, écouteurs)
+  const accessoryLoader = new GLTFLoader();
+  const loadedAccessories = new Map();
+  const equippedAccessories = new Map();
+
+  const ACCESSORY_DEFS = {
+    visor: {
+      url: "accessories/cyber_visor.glb",
+      bone: "head",
+      offset: [0, 0.05, 0.08],
+      rotation: [0, 0, 0],
+      scale: 0.95,
+    },
+    datapad: {
+      url: "accessories/holo_datapad.glb",
+      bone: "leftHand",
+      offset: [0.02, 0.04, 0.01],
+      rotation: [0.2, 0.3, 1.2],
+      scale: 0.85,
+    },
+    headset: {
+      url: "accessories/neural_headset.glb",
+      bone: "head",
+      offset: [0.005, 0.045, 0.01],
+      rotation: [0, 0, 0],
+      scale: 0.95,
+    },
+  };
+
+  async function equipAccessory(type, equip = true) {
+    if (!vrm?.humanoid) return false;
+    const def = ACCESSORY_DEFS[type];
+    if (!def) {
+      console.warn(`[vrm_pet] Accessoire inconnu: "${type}"`);
+      return false;
+    }
+
+    const boneNode = vrm.humanoid.getNormalizedBoneNode(def.bone);
+    if (!boneNode) {
+      console.warn(`[vrm_pet] Os introuvable pour accessoire: "${def.bone}"`);
+      return false;
+    }
+
+    if (!equip) {
+      if (equippedAccessories.has(type)) {
+        const obj = equippedAccessories.get(type);
+        boneNode.remove(obj);
+        equippedAccessories.delete(type);
+        console.info(`[vrm_pet] Accessoire retiré: ${type}`);
+      }
+      return true;
+    }
+
+    if (equippedAccessories.has(type)) return true;
+
+    let model = loadedAccessories.get(type);
+    if (!model) {
+      try {
+        const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
+        const fullUrl = `${base}/${def.url}`;
+        const gltf = await accessoryLoader.loadAsync(fullUrl);
+        model = gltf.scene;
+        loadedAccessories.set(type, model);
+      } catch (err) {
+        console.warn(`[vrm_pet] Échec chargement accessoire "${type}":`, err);
+        return false;
+      }
+    }
+
+    model.position.set(def.offset[0], def.offset[1], def.offset[2]);
+    model.rotation.set(def.rotation[0], def.rotation[1], def.rotation[2]);
+    model.scale.set(def.scale, def.scale, def.scale);
+    boneNode.add(model);
+    equippedAccessories.set(type, model);
+    console.info(`[vrm_pet] Accessoire équipé: ${type} sur ${def.bone}`);
+    return true;
+  }
+
+  function toggleAccessory(type) {
+    const isEquipped = equippedAccessories.has(type);
+    return equipAccessory(type, !isEquipped);
+  }
+
   loader.load(
     modelUrl,
     (gltf) => {
@@ -2172,6 +2304,11 @@ export function createVrmPet(hostEl, opts = {}) {
     setFraming,
     setPose,
     setHeading,
+    equipAccessory,
+    toggleAccessory,
+    get equippedAccessories() {
+      return Array.from(equippedAccessories.keys());
+    },
     playVRMA,
     stopVRMA,
     loadVRMA,

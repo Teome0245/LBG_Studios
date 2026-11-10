@@ -1,14 +1,58 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-09  
+**Mis à jour** : 2026-11-10  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 + SWG Pre-CU Copie Quasi-Complète 100% — **Résolution conflits touches + Publication Patch Launchpad v2.1.5 (246:8080) OK**.
+**Fil** : canon O1/O2/O3 — **Intégration complète de la veille technique (Revue LLM, Second Brain Lore, Risk Gate, Topology Graph Pilot UI)**.
 
 ---
 
-## Dernières actions réalisées (2026-11-09)
+## Dernières actions réalisées (2026-11-10)
+1. **Pipeline Graphique 3D & World Building Automatisé (Blender Headless + Godot 4)** :
+   - **Étape 1 : Blender Headless (`bpy`) & Props Modulaires (`tools/asset_pipeline/blender_prop_builder.py`)** :
+     - Installation & activation de Blender 5.2.2 LTS en mode headless (`blender -b`).
+     - Générateur procédural de props sci-fi avec biseaux, matériaux PBR émissifs et formes de collision Godot automatiques (`-col`).
+     - Génération validée de 3 modèles `.glb` directement utilisables dans `packages/prime-client/assets/models/` (`sci_fi_crate.glb`, `modular_pillar.glb`, `terminal_console.glb`).
+   - **Étape 2 : Pipeline Créatures & Personnages Rig/Animé (`tools/asset_pipeline/ai_creature_pipeline.py`)** :
+     - Script `blender_creature_processor.py` : nettoyage maillage, centrage, auto-rig squelette (Armature standard), skinning automatique (Bone Heat Weighting), et animation cyclique (Idle de respiration).
+     - Génération validée en 2s de créatures exportées en `.glb` avec animations (`alien_beast_crawler.glb`, `gundark_beast.glb`).
+   - **Étape 3 : Constructeur de Terrain & Scatter Procédural Godot 4 (`packages/prime-client/scripts/world_terrain_builder.gd`)** :
+     - Génération de maillage de terrain dynamique (`ArrayMesh` avec `FastNoiseLite`), vertex coloring par altitude/biome, calcul des normales et tangentes.
+     - Collision physique temps réel via `ConcavePolygonShape3D` (`create_trimesh_shape()`).
+     - Algorithme de dispersion intelligente de props (scatter) avec analyse du gradient de pente (filtrage des falaises raides).
+     - Suite de tests headless `packages/prime-client/tools/terrain_builder_selftest.gd` intégrée dans `tools/ci_godot_headless.sh` (pass en <1s).
+   - **Étape 4 : Amélioration du Compagnon Desktop (`packages/compagnon-desktop`)** :
+     - **Accessoires 3D modulaires (`tools/asset_pipeline/blender_accessory_builder.py`)** : modélisation et export de 3 accessoires `.glb` (`cyber_visor.glb`, `holo_datapad.glb`, `neural_headset.glb`) attachables dynamiquement aux os VRM (`head`, `leftHand`).
+     - **Nouvelles Poses / Emotes procédurales** : `focus` (analyse/scan de code avec posture inclinée et micro-oscillations) et `victory` (bras en V triomphal et célébration).
+     - **Amélioration du Rendu 3D** : ajout d'un contre-jour `cyberHaloLight` (lumière cyan d'ambiance à 0x00f5d4) pour découper nettement la silhouette sur n'importe quel fond d'écran Windows.
+     - **Intégration Electron & Overlay** : compilation via `bundle-vrm.py`, nouvelles entrées contextuelles dans le menu plateau/clic-droit (`main.js`, `overlay.js`, `preload.js`).
+     - **Auto-Sync & Phase Tampon au Démarrage (`main.js`, `Lancer_Compagnon.cmd`)** :
+       - Auto-détection de la source (`A:\LBG_Studios\packages\compagnon-desktop` ou partage réseau `\\192.168.0.143`) directement à l'ouverture.
+       - Synchronisation automatique transparente des assets et du code (`main.js`, `preload.js`, `overlay/`).
+       - Relaunch automatique transparent (`app.relaunch()`) si le code principal a été mis à jour.
+       - Entrée manuelle ajoutée dans la barre des tâches : `🔄 Vérifier les mises à jour (A: -> C:)`.
+       - Nouveau lanceur Windows rapide `Lancer_Compagnon.cmd` et mise à jour de `Create-DesktopShortcut.ps1`.
+2. **Enrichissement du Second Brain Lore & Monde LBG (`docs/lore/`)** :
+   - Documentation canonique (hors Star Wars, biomes LBG propres inspirés de SWG) des 4 autres planètes majeures :
+     - **`arvandor.md`** (Plaines luxuriantes, marbre blanc, cascades, diplomatie) + faction `cercle_diplomates_arvandor.md` + PNJ `bige_coto.md` (danse/arts scéniques).
+     - **`khar_zuun.md`** (Lune des arbres titans, canopées géantes, brume dense) + faction `gardiens_canopee.md` + PNJ `mira_kael.md` (chasseresse).
+     - **`terre_one.md`** (Berceau naval océanique, chantiers spatiaux) + faction `chantiers_navals_orbitaux.md` + PNJ `garr_vek.md` (instructeur spatial).
+     - **`mor_valoth.md`** (Badlands carmin toxiques, bêtes mutantes) + faction `confrerie_brumes_rouges.md` + PNJ `dr_azra_veld.md` (bio-ingénierie dissidente).
+   - Validateur `tools/validate_lore_links.py` : 21 nœuds, 147 relations, 0 lien cassé, 0 orphelin.
+2. **Connexion Temps Réel de la Topologie au Hub Godot (`.246:8787`)** :
+   - Endpoint `GET /v1/pilot/topology` : agrège la base de connaissances et interroge en direct le hub Godot (`/v1/bots`).
+   - Injection dynamique des **10 Joueurs IA en direct** (Nix, Lia, Mira, Kael, Renn, Sola, Vex, Ori, Tess, Bram) avec leurs coordonnées temps réel, quête active et mode de jeu.
+   - Frontend Pilot (`topology_graph.js`) : filtre `Bots IA 🤖`, badge live, mise à jour glissante continue (polling 4s) et drawer d'inspection enrichi.
+   - Compilation Vite et déploiement en production sur la VM `.140` (`lbg-backend.service` actif et validé).
+3. **Outil de Revue de Code Automatique Locale LBG (`tools/review_code_llm.py`)** :
+   - Audit heuristique instantané (0 ms) des canons LBG et intégration Ollama `.110` / `.111`.
+4. **Protocole Risk Gate Déterministe (`docs/design/RISK_GATE_AGENT_PROTOCOL.md`)** :
+   - Formalisation canonique du sas étanche validé par la CI Godot headless (19 suites, code 0).
+
+---
+
+## Dernières actions antérieures (2026-11-09)
 1. **Refonte & Dépoussiérage des contrôles clavier (`client_ui_dialogue.gd` & `swg_space_flight_3d.gd`)** :
    - Élimination du conflit majeur `KEY_D` (aller à droite ZQSD qui déclenchait le Datapad) ➔ Datapad déplacé sur `V` ou `Ctrl+D`.
    - Élimination des collisions de touches de fonctions `F9` (Debug HUD vs Espace 3D) et `F10` (Heal vs Login Panel).
@@ -34,7 +78,7 @@
      - **`Greeny.vrm`** : Avatar reptilien vert ➔ Affecté à **Pykrel** (`rodian` / Arvandor).
      - **`DemonHorn.vrm`** : Avatar à cornes crâniennes pointues ➔ Affecté à **K'Miri** (`zabrak` / Khar'Zuun).
      - **`Rebecca.vrm`** : Avatar d'ingénieure cyber ➔ Affecté à **Tinkling** (échelle $\times 0.50$, taille ~45 cm).
-     - **`Mia.vrm`** : Avatar citoyenne de Lost Heaven ➔ Affecté à **Humain** (Terre1 / Corellien).
+     - **`Mia.vrm`** : Avatar citoyenne de Lost Heaven ➔ Affecté à **Humain** (Terre-One / Corellien).
      - **`Marie.vrm`** : Nouvel avatar exploratrice de terrain d'Arvandor.
      - **`Espeon.vrm`** : Nouvel avatar familier quadrupède psionique des dunes.
    - Synchronisation complète des assets VRM sur les 5 dossiers cibles Windows SDS `.10` (`J:/swgemu/clients/swg-client`, `J:/swgemu/clients/prime-client`, `A:/LBG_Studios/...`, `C:/Agent_IA/...`).

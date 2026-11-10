@@ -83,7 +83,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_artisan_trainer_a"
       ],
@@ -102,7 +102,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_artisan_trainer_b"
       ],
@@ -121,7 +121,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_artisan_trainer_c"
       ],
@@ -162,7 +162,7 @@
       ],
       "constraints": [
         "lieu = La Perle de Scrapaltai, Lost Heaven, Scrapaltai",
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_barman_jax"
       ],
@@ -211,7 +211,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_barman_sira"
       ],
@@ -230,7 +230,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_barman_torrik"
       ],
@@ -249,7 +249,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_bige_coto"
       ],
@@ -268,7 +268,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_brawler_trainer_a"
       ],
@@ -287,7 +287,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_brawler_trainer_b"
       ],
@@ -306,7 +306,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_brawler_trainer_c"
       ],
@@ -325,7 +325,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_daan_oth"
       ],
@@ -367,7 +367,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_inn_jor"
       ],
@@ -386,7 +386,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_inn_mara"
       ],
@@ -405,7 +405,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_lyra_velo"
       ],
@@ -424,7 +424,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_marksman_trainer_a"
       ],
@@ -443,7 +443,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_marksman_trainer_b"
       ],
@@ -462,7 +462,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_marksman_trainer_c"
       ],
@@ -481,7 +481,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_medic_trainer_a"
       ],
@@ -500,7 +500,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_medic_trainer_b"
       ],
@@ -519,7 +519,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_medic_trainer_c"
       ],
@@ -538,7 +538,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_nira_kell"
       ],
@@ -557,7 +557,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_a"
       ],
@@ -577,7 +577,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_b"
       ],
@@ -597,7 +597,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_alliance_c"
       ],
@@ -617,7 +617,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_a"
       ],
@@ -637,7 +637,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_b"
       ],
@@ -657,7 +657,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_freelance_c"
       ],
@@ -678,7 +678,7 @@
         "rester dans son rôle d'instructeur"
       ],
       "constraints": [
-        "pas de métier Terre1 (forgeron village, auberge fantasy)",
+        "pas de métier Terre-One (forgeron village, auberge fantasy)",
         "réponses courtes",
         "pilot_id=npc:core3_pilot_imperial_a",
         "rôle=pilot_trainer (pas civil, pas guide)"
@@ -699,7 +699,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_imperial_b"
       ],
@@ -719,7 +719,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_pilot_imperial_c"
       ],
@@ -739,7 +739,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_politician_trainer_a"
       ],
@@ -758,7 +758,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_politician_trainer_b"
       ],
@@ -777,7 +777,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_politician_trainer_c"
       ],
@@ -796,7 +796,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_scout_trainer_a"
       ],
@@ -815,7 +815,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_scout_trainer_b"
       ],
@@ -834,7 +834,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_scout_trainer_c"
       ],
@@ -856,7 +856,7 @@
       "constraints": [
         "role = entertainer_trainer — pas scientifique, pas barman",
         "lieu formation = auberge Lost Heaven ; spectacle = La Perle de Scrapaltai",
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_talen_ress"
       ],
@@ -875,7 +875,7 @@
         "repondre au joueur en restant dans son role SWG"
       ],
       "constraints": [
-        "pas de metier Terre1 (forgeron village, auberge fantasy)",
+        "pas de metier Terre-One (forgeron village, auberge fantasy)",
         "reponses courtes",
         "pilot_id=npc:core3_vex_sorn"
       ],

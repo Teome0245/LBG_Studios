@@ -508,6 +508,22 @@
     });
   }
 
+  // Accessoires 3D modulaires (visière, datapad, écouteurs)
+  if (window.compagnonDesktop && window.compagnonDesktop.onVrmAccessory) {
+    window.compagnonDesktop.onVrmAccessory(function (payload) {
+      try {
+        const face = window.__petFace;
+        if (!face) return;
+        const type = payload && (payload.type || payload.accessory);
+        const equip = payload && payload.equip !== undefined ? Boolean(payload.equip) : undefined;
+        if (typeof face.equipAccessory === "function") {
+          if (equip !== undefined) face.equipAccessory(type, equip);
+          else if (typeof face.toggleAccessory === "function") face.toggleAccessory(type);
+        }
+      } catch (_) { }
+    });
+  }
+
   // Mode fantôme : écoute des changements de clic traversant (VSeeFace canon)
   if (window.compagnonDesktop && window.compagnonDesktop.onClickThroughChanged) {
     window.compagnonDesktop.onClickThroughChanged(function (active) {

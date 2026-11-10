@@ -1,9 +1,27 @@
-(() => {
+var VrmPetMod = (() => {
   var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // overlay/vrm/vrm_pet.js
+  var vrm_pet_exports = {};
+  __export(vrm_pet_exports, {
+    createVrmPet: () => createVrmPet
+  });
 
   // node_modules/three/build/three.module.js
   var three_module_exports = {};
@@ -47583,12 +47601,12 @@ void main() {
   };
   var __defProp2 = Object.defineProperty;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp.call(b, prop))
+      if (__hasOwnProp2.call(b, prop))
         __defNormalProp(a, prop, b[prop]);
     if (__getOwnPropSymbols)
       for (var prop of __getOwnPropSymbols(b)) {
@@ -48433,12 +48451,12 @@ void main() {
   var __defProps = Object.defineProperties;
   var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp22 = Object.prototype.hasOwnProperty;
   var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
   var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp22(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues2 = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp2.call(b, prop))
+      if (__hasOwnProp22.call(b, prop))
         __defNormalProp2(a, prop, b[prop]);
     if (__getOwnPropSymbols2)
       for (var prop of __getOwnPropSymbols2(b)) {
@@ -53069,6 +53087,36 @@ void main() {
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
     },
+    /** Focus / Scan de code : corps légèrement penché en avant, main gauche relevée près du buste (tenant un datapad), tête attentive qui scrute l'écran. */
+    focus: {
+      leftUpperArm: [0.35, 0.25, -1.05],
+      leftLowerArm: [0.1, 0.2, -1.45],
+      leftHand: [0.15, -0.1, 0.3],
+      rightUpperArm: [0.15, 0, 1.25],
+      rightLowerArm: [0, 0, 0.15],
+      rightHand: [0, 0, 0],
+      spine: [0.08, 0.02, 0],
+      chest: [0.1, 0.02, 0],
+      neck: [-0.05, 0.04, 0.02],
+      head: [-0.08, 0.05, 0.03],
+      leftUpperLeg: [0, 0, -0.02],
+      rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Victoire / Célébration : deux bras levés en V triomphal, buste relevé et tête fière. */
+    victory: {
+      leftUpperArm: [0.1, 0.1, -2.55],
+      rightUpperArm: [0.1, -0.1, 2.55],
+      leftLowerArm: [0, 0, -0.35],
+      rightLowerArm: [0, 0, -0.35],
+      leftHand: [0.2, 0, 0],
+      rightHand: [0.2, 0, 0],
+      spine: [-0.04, 0, 0],
+      chest: [-0.06, 0, 0],
+      neck: [0.06, 0, 0],
+      head: [0.08, 0, 0],
+      leftUpperLeg: [0, 0, -0.04],
+      rightUpperLeg: [0, 0, 0.04]
+    },
     /** Finger Heart (geste coréen K-Pop / anime idol : pouce et index croisés en mini cœur au niveau du haut du torse/menton, tête penchée espiègle, main gauche sur la hanche, grands yeux vifs et sourire pétillant). */
     fingerHeart: {
       // Épaule et bras droit : coude maintenu près du flanc/torse, avant-bras levé vers le haut du buste/menton
@@ -53541,6 +53589,9 @@ void main() {
     const metallicRimLight = new DirectionalLight(8448255, 0.75);
     metallicRimLight.position.set(-1, 1.8, -2);
     scene.add(metallicRimLight);
+    const cyberHaloLight = new DirectionalLight(62932, 0.45);
+    cyberHaloLight.position.set(0, -1, -1.8);
+    scene.add(cyberHaloLight);
     const stageLightCyan = new PointLight(62932, 0, 4);
     stageLightCyan.position.set(-1.2, 1.2, 1.2);
     scene.add(stageLightCyan);
@@ -53876,7 +53927,9 @@ void main() {
       else if (n === "robot" || n === "popping" || n === "wavedance") key2 = "robot";
       else if (n === "disco" || n === "twist" || n === "fever") key2 = "disco";
       else if (n === "spin" || n === "tourner" || n === "pirouette") key2 = "spin";
-      else if (n === "jump" || n === "saut" || n === "victory" || n === "victoire") key2 = "jump";
+      else if (n === "focus" || n === "scan" || n === "code" || n === "debug") key2 = "focus";
+      else if (n === "victory" || n === "victoire" || n === "win" || n === "success") key2 = "victory";
+      else if (n === "jump" || n === "saut") key2 = "jump";
       else if (n === "stretch" || n === "etirement") key2 = "stretch";
       else if (n === "clap" || n === "clapping") key2 = "clapping";
       else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key2 = "angry";
@@ -54035,6 +54088,18 @@ void main() {
       if (poseTo === "think") {
         const swayThink = Math.sin(t * 0.8) * 0.03;
         if (animated.head) animated.head = [animated.head[0], animated.head[1] + swayThink, animated.head[2] + swayThink * 0.5];
+      }
+      if (poseTo === "focus") {
+        const scanHead = Math.sin(t * 1.8) * 0.04;
+        const dataGlow = Math.sin(t * 3.5) * 0.02;
+        if (animated.head) animated.head = [animated.head[0] + dataGlow, animated.head[1] + scanHead, animated.head[2]];
+        if (animated.leftHand) animated.leftHand = [animated.leftHand[0] + dataGlow, animated.leftHand[1], animated.leftHand[2]];
+      }
+      if (poseTo === "victory") {
+        const cheerArm = Math.sin(t * 5) * 0.06;
+        if (animated.leftUpperArm) animated.leftUpperArm = [animated.leftUpperArm[0], animated.leftUpperArm[1], animated.leftUpperArm[2] - cheerArm];
+        if (animated.rightUpperArm) animated.rightUpperArm = [animated.rightUpperArm[0], animated.rightUpperArm[1], animated.rightUpperArm[2] + cheerArm];
+        if (animated.chest) animated.chest = [animated.chest[0] + cheerArm * 0.3, animated.chest[1], animated.chest[2]];
       }
       if (poseTo === "dance") {
         const tempo = t * 6.5;
@@ -54589,6 +54654,79 @@ void main() {
     const loader = new GLTFLoader();
     loader.register((parser) => new VRMLoaderPlugin(parser));
     loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+    const accessoryLoader = new GLTFLoader();
+    const loadedAccessories = /* @__PURE__ */ new Map();
+    const equippedAccessories = /* @__PURE__ */ new Map();
+    const ACCESSORY_DEFS = {
+      visor: {
+        url: "accessories/cyber_visor.glb",
+        bone: "head",
+        offset: [0, 0.05, 0.08],
+        rotation: [0, 0, 0],
+        scale: 0.95
+      },
+      datapad: {
+        url: "accessories/holo_datapad.glb",
+        bone: "leftHand",
+        offset: [0.02, 0.04, 0.01],
+        rotation: [0.2, 0.3, 1.2],
+        scale: 0.85
+      },
+      headset: {
+        url: "accessories/neural_headset.glb",
+        bone: "head",
+        offset: [5e-3, 0.045, 0.01],
+        rotation: [0, 0, 0],
+        scale: 0.95
+      }
+    };
+    async function equipAccessory(type, equip = true) {
+      if (!vrm?.humanoid) return false;
+      const def = ACCESSORY_DEFS[type];
+      if (!def) {
+        console.warn(`[vrm_pet] Accessoire inconnu: "${type}"`);
+        return false;
+      }
+      const boneNode = vrm.humanoid.getNormalizedBoneNode(def.bone);
+      if (!boneNode) {
+        console.warn(`[vrm_pet] Os introuvable pour accessoire: "${def.bone}"`);
+        return false;
+      }
+      if (!equip) {
+        if (equippedAccessories.has(type)) {
+          const obj = equippedAccessories.get(type);
+          boneNode.remove(obj);
+          equippedAccessories.delete(type);
+          console.info(`[vrm_pet] Accessoire retir\xE9: ${type}`);
+        }
+        return true;
+      }
+      if (equippedAccessories.has(type)) return true;
+      let model = loadedAccessories.get(type);
+      if (!model) {
+        try {
+          const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
+          const fullUrl = `${base}/${def.url}`;
+          const gltf = await accessoryLoader.loadAsync(fullUrl);
+          model = gltf.scene;
+          loadedAccessories.set(type, model);
+        } catch (err) {
+          console.warn(`[vrm_pet] \xC9chec chargement accessoire "${type}":`, err);
+          return false;
+        }
+      }
+      model.position.set(def.offset[0], def.offset[1], def.offset[2]);
+      model.rotation.set(def.rotation[0], def.rotation[1], def.rotation[2]);
+      model.scale.set(def.scale, def.scale, def.scale);
+      boneNode.add(model);
+      equippedAccessories.set(type, model);
+      console.info(`[vrm_pet] Accessoire \xE9quip\xE9: ${type} sur ${def.bone}`);
+      return true;
+    }
+    function toggleAccessory(type) {
+      const isEquipped = equippedAccessories.has(type);
+      return equipAccessory(type, !isEquipped);
+    }
     loader.load(
       modelUrl,
       (gltf) => {
@@ -54977,6 +55115,11 @@ void main() {
       setFraming,
       setPose,
       setHeading,
+      equipAccessory,
+      toggleAccessory,
+      get equippedAccessories() {
+        return Array.from(equippedAccessories.keys());
+      },
       playVRMA,
       stopVRMA,
       loadVRMA,
@@ -55054,6 +55197,7 @@ void main() {
   if (typeof window !== "undefined") {
     window.__createVrmPet = createVrmPet;
   }
+  return __toCommonJS(vrm_pet_exports);
 })();
 /*! Bundled license information:
 

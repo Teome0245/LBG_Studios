@@ -57,6 +57,14 @@ contextBridge.exposeInMainWorld("compagnonDesktop", {
       } catch (_) {}
     });
   },
+  onVrmAccessory: (cb) => {
+    ipcRenderer.on("compagnon:vrm-accessory", (_e, payload) => {
+      try {
+        cb(payload);
+      } catch (_) {}
+    });
+  },
+  toggleAccessory: (type) => ipcRenderer.send("compagnon:toggle-accessory", type),
   onGuide: (cb) => {
     ipcRenderer.on("compagnon:guide", (_e, payload) => {
       try {

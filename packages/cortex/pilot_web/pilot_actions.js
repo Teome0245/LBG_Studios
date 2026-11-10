@@ -443,6 +443,7 @@
       if (seg === "team" && parts[1] === "brain") return "team_brain";
       if (seg === "brain") return "team_brain";
       if (seg === "team" && parts[1] === "metrics") return "team_metrics";
+      if (seg === "topology" || (seg === "team" && parts[1] === "topology")) return "topology";
       if (seg === "team") return "team";
       if (seg === "ops") return "ops";
       if (seg === "pm") return "pm";

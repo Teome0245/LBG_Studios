@@ -839,6 +839,8 @@ async function rebuildTrayMenu() {
     { label: "Saluer (wave)", click: () => sendVrmPose("wave", 3000) },
     { label: "Confiante (crossArms)", click: () => sendVrmPose("crossArms", 5000) },
     { label: "Réflexion (think)", click: () => sendVrmPose("think", 4000) },
+    { label: "🔍 Focus & Scan Code (focus)", click: () => sendVrmPose("focus", 6000) },
+    { label: "🏆 Victoire & Célébration (victory)", click: () => sendVrmPose("victory", 4500) },
     { label: "Approbation (approve)", click: () => sendVrmPose("approve", 3500) },
     { type: "separator" },
     { label: "💖 Petite Danse Idol (fingerHeart)", click: () => sendVrmPose("fingerHeart", 8500) },
@@ -902,6 +904,14 @@ async function rebuildTrayMenu() {
       submenu: posesSub,
     },
     {
+      label: "👓 Accessoires 3D Modulaires",
+      submenu: [
+        { label: "🕶️ Visière HUD Cyber", click: () => sendVrmAccessory("visor") },
+        { label: "📱 Datapad Holographique", click: () => sendVrmAccessory("datapad") },
+        { label: "🎧 Oreillette Neurale", click: () => sendVrmAccessory("headset") },
+      ],
+    },
+    {
       label: "🎭 Spectacles & Shows (iStripper)",
       submenu: [
         { label: "✨ Show K-Pop Idol (~45s)", click: () => triggerShow("idol") },
@@ -954,6 +964,10 @@ async function rebuildTrayMenu() {
       click: () => shell.openExternal(compagnonUrl()),
     },
     { type: "separator" },
+    {
+      label: "🔄 Vérifier les mises à jour (A: -> C:)",
+      click: () => checkAndApplySourceUpdate(true),
+    },
     {
       label: "Quitter",
       click: () => {
@@ -1374,6 +1388,16 @@ ipcMain.on("compagnon:set-pose", (_e, payload) => {
   }
 });
 
+function sendVrmAccessory(type, equip) {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send("compagnon:vrm-accessory", { type, equip });
+  }
+}
+
+ipcMain.on("compagnon:toggle-accessory", (_e, type) => {
+  sendVrmAccessory(type);
+});
+
 ipcMain.on("compagnon:avatar-presence", (_e, payload) => {
   publishAvatarPresence(payload || {});
 });
@@ -1442,8 +1466,24 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
       click: () => sendVrmPose("think", 4000),
     },
     {
+      label: "🔍 Focus & Scan Code",
+      click: () => sendVrmPose("focus", 6000),
+    },
+    {
+      label: "🏆 Victoire & Célébration",
+      click: () => sendVrmPose("victory", 4500),
+    },
+    {
       label: "🧘 Repos posé",
       click: () => sendVrmPose("relax", 6000),
+    },
+    {
+      label: "👓 Accessoires 3D Modulaires",
+      submenu: [
+        { label: "🕶️ Visière HUD Cyber", click: () => sendVrmAccessory("visor") },
+        { label: "📱 Datapad Holographique", click: () => sendVrmAccessory("datapad") },
+        { label: "🎧 Oreillette Neurale", click: () => sendVrmAccessory("headset") },
+      ],
     },
     {
       label: "💃 Pack Danses",
@@ -1791,6 +1831,103 @@ function startSessionIslandStream() {
   });
 }
 
+function checkAndApplySourceUpdate(manual = false) {
+  if (process.platform !== "win32") return false;
+
+  const candidateRoots = [
+    "A:\\LBG_Studios\\packages\\compagnon-desktop",
+    "\\\\192.168.0.143\\projects\\LBG_Studios\\packages\\compagnon-desktop",
+  ];
+
+  let sourceRoot = null;
+  for (const c of candidateRoots) {
+    try {
+      if (fs.existsSync(path.join(c, "main.js"))) {
+        sourceRoot = c;
+        break;
+      }
+    } catch (_) {}
+  }
+
+  if (!sourceRoot) {
+    if (manual) {
+      new Notification({
+        title: "LBG Compagnon",
+        body: "Dépôt source non détecté (A: ou réseau déconnecté).",
+      }).show();
+    }
+    return false;
+  }
+
+  const localRoot = __dirname;
+  if (sourceRoot.toLowerCase() === localRoot.toLowerCase()) return false;
+
+  const { spawnSync } = require("child_process");
+
+  function runRobocopy(src, dst, args = []) {
+    // Robocopy codes 0..7 sont des succès (0=identique, 1=fichiers copiés, etc.)
+    const res = spawnSync("robocopy", [src, dst, ...args, "/NFL", "/NDL", "/NJH", "/NJS", "/nc", "/ns", "/np"], {
+      windowsHide: true,
+      encoding: "utf8",
+    });
+    return res.status != null && res.status < 8;
+  }
+
+  console.info(`[AutoUpdate] Vérification depuis ${sourceRoot}...`);
+
+  // 1. Synchronisation du dossier overlay (VRM, animations, bundle, shaders)
+  const srcOverlay = path.join(sourceRoot, "overlay");
+  const dstOverlay = path.join(localRoot, "overlay");
+  if (fs.existsSync(srcOverlay)) {
+    runRobocopy(srcOverlay, dstOverlay, ["/MIR"]);
+  }
+
+  // 2. Synchronisation de main.js et preload.js
+  let codeUpdated = false;
+  for (const file of ["main.js", "preload.js"]) {
+    const srcFile = path.join(sourceRoot, file);
+    const dstFile = path.join(localRoot, file);
+    if (fs.existsSync(srcFile) && fs.existsSync(dstFile)) {
+      try {
+        const srcStat = fs.statSync(srcFile);
+        const dstStat = fs.statSync(dstFile);
+        if (srcStat.mtimeMs > dstStat.mtimeMs + 500) {
+          fs.copyFileSync(srcFile, dstFile);
+          codeUpdated = true;
+          console.info(`[AutoUpdate] Fichier ${file} synchronisé depuis le repo.`);
+        }
+      } catch (err) {
+        console.warn(`[AutoUpdate] Erreur copie ${file}:`, err);
+      }
+    }
+  }
+
+  if (codeUpdated) {
+    console.info("[AutoUpdate] Code principal mis à jour. Relaunch de l'application...");
+    if (manual) {
+      new Notification({
+        title: "LBG Compagnon",
+        body: "Mise à jour appliquée ! Relance en cours...",
+      }).show();
+    }
+    app.relaunch();
+    app.exit(0);
+    return true;
+  }
+
+  if (manual) {
+    new Notification({
+      title: "LBG Compagnon",
+      body: "Compagnon synchronisé et à jour !",
+    }).show();
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.reload();
+    }
+  }
+
+  return false;
+}
+
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -1801,15 +1938,9 @@ if (!gotLock) {
     loadConfig();
     if (process.platform === "win32") {
       app.setAppUserModelId("lbg.compagnon.desktop");
-      // Synchronisation automatique transparente des assets overlay depuis A: vers C: au demarrage
-      try {
-        const shareOverlay = "A:\\LBG_Studios\\packages\\compagnon-desktop\\overlay";
-        const localOverlay = path.join(__dirname, "overlay");
-        if (fs.existsSync(shareOverlay) && fs.existsSync(localOverlay) && shareOverlay.toLowerCase() !== localOverlay.toLowerCase()) {
-          const { execSync } = require("child_process");
-          execSync(`robocopy "${shareOverlay}" "${localOverlay}" /MIR /NFL /NDL /NJH /NJS /nc /ns /np`, { stdio: "ignore" });
-        }
-      } catch (_) {}
+      // Synchronisation automatique transparente au démarrage
+      const didRelaunch = checkAndApplySourceUpdate(false);
+      if (didRelaunch) return;
     }
     // Purge partitions Chromium (ancienne + courante) — plus de chips fantômes
     try {

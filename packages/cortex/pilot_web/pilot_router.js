@@ -21,6 +21,7 @@
       const teamOfficePage = document.getElementById("pilot-page-team-office");
       const teamBrainPage = document.getElementById("pilot-page-team-brain");
       const teamMetricsPage = document.getElementById("pilot-page-team-metrics");
+      const topologyPage = document.getElementById("pilot-page-topology");
       const pm = document.getElementById("pilot-page-pm");
       const ly = document.getElementById("pilot-page-lyra");
       const de = document.getElementById("pilot-page-desktop");
@@ -36,6 +37,7 @@
       if (teamOfficePage) teamOfficePage.hidden = r !== "team_office";
       if (teamBrainPage) teamBrainPage.hidden = r !== "team_brain";
       if (teamMetricsPage) teamMetricsPage.hidden = r !== "team_metrics";
+      if (topologyPage) topologyPage.hidden = r !== "topology";
       if (pm) pm.hidden = r !== "pm";
       if (ly) ly.hidden = r !== "lyra";
       if (de) de.hidden = r !== "desktop";
@@ -70,6 +72,11 @@
         try { if (typeof teamBrainBindPage === "function") teamBrainBindPage(); } catch (_) {}
       } else {
         try { if (typeof teamBrainStop === "function") teamBrainStop(); } catch (_) {}
+      }
+      if (r === "topology") {
+        try { if (typeof topologyGraphInit === "function") topologyGraphInit(); } catch (_) {}
+      } else {
+        try { if (typeof topologyGraphStop === "function") topologyGraphStop(); } catch (_) {}
       }
       if (r === "desktop") {
         try { pilotDesktopRefreshConfigHint(); } catch (_) {}
@@ -144,6 +151,7 @@
         team_office: "campus",
         team_brain: "campus",
         team_metrics: "campus",
+        topology: "campus",
         agents_map: "campus",
         ops: "ops",
         desktop: "ops",

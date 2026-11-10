@@ -118,6 +118,7 @@ elif [[ "${MODE}" == "quick" ]]; then
   run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
   run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
   run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
+  run_client_test "World Terrain Builder & Scatter Procédural" "res://tools/terrain_builder_selftest.gd"
 
 else
   run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
@@ -144,6 +145,7 @@ else
   run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
   run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
   run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
+  run_client_test "World Terrain Builder & Scatter Procédural" "res://tools/terrain_builder_selftest.gd"
 fi
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))

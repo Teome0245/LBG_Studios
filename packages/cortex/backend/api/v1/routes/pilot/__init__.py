@@ -15,6 +15,7 @@ from . import (
     slack_hitl,
     status,
     team,
+    topology,
     vision,
 )
 from ._common import LOG, OrchestratorClient, OrchestratorError, httpx
@@ -30,6 +31,7 @@ for _mod in (
     gameplay_debug,
     hunt_yard,
     team,
+    topology,
     slack_hitl,
     vision,
 ):

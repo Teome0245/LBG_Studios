@@ -1,0 +1,931 @@
+{
+  "nodes": {
+    "craft_artisanat": {
+      "id": "craft_artisanat",
+      "title": "Artisanat, Schémas & Forge d'Équipements",
+      "type": "mechanic",
+      "path": "mechanics/craft_artisanat.md",
+      "links_to": [
+        "tinkling",
+        "syndicat_ferrailleurs",
+        "scrapaltai",
+        "tinkling",
+        "scrapaltai"
+      ],
+      "incoming_count": 10
+    },
+    "bio_ingenierie": {
+      "id": "bio_ingenierie",
+      "title": "Bio-Ingénierie & Échantillonnage d'ADN",
+      "type": "mechanic",
+      "path": "mechanics/bio_ingenierie.md",
+      "links_to": [
+        "varkoon",
+        "scrapaltai",
+        "scrapaltai",
+        "varkoon"
+      ],
+      "incoming_count": 12
+    },
+    "villes_politique": {
+      "id": "villes_politique",
+      "title": "Villes de Joueurs, Décrets & Élections",
+      "type": "mechanic",
+      "path": "mechanics/villes_politique.md",
+      "links_to": [
+        "concordat_lost_heaven",
+        "scrapaltai",
+        "craft_artisanat",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 6
+    },
+    "scrapaltai": {
+      "id": "scrapaltai",
+      "title": "Scrapaltai",
+      "type": "planet",
+      "path": "planets/scrapaltai.md",
+      "links_to": [
+        "concordat_lost_heaven",
+        "syndicat_ferrailleurs",
+        "fel_rani",
+        "varkoon",
+        "tinkling",
+        "craft_artisanat",
+        "villes_politique",
+        "bio_ingenierie",
+        "syndicat_ferrailleurs",
+        "concordat_lost_heaven",
+        "syndicat_ferrailleurs",
+        "fel_rani",
+        "varkoon",
+        "tinkling"
+      ],
+      "incoming_count": 21
+    },
+    "arvandor": {
+      "id": "arvandor",
+      "title": "Arvandor",
+      "type": "planet",
+      "path": "planets/arvandor.md",
+      "links_to": [
+        "cercle_diplomates_arvandor",
+        "concordat_lost_heaven",
+        "fel_rani",
+        "bige_coto",
+        "villes_politique",
+        "cercle_diplomates_arvandor",
+        "concordat_lost_heaven",
+        "scrapaltai",
+        "fel_rani",
+        "bige_coto"
+      ],
+      "incoming_count": 4
+    },
+    "khar_zuun": {
+      "id": "khar_zuun",
+      "title": "Khar'Zuun",
+      "type": "planet",
+      "path": "planets/khar_zuun.md",
+      "links_to": [
+        "gardiens_canopee",
+        "varkoon",
+        "mira_kael",
+        "bio_ingenierie",
+        "bio_ingenierie",
+        "gardiens_canopee",
+        "varkoon",
+        "mira_kael"
+      ],
+      "incoming_count": 4
+    },
+    "mor_valoth": {
+      "id": "mor_valoth",
+      "title": "Mor-Valoth",
+      "type": "planet",
+      "path": "planets/mor_valoth.md",
+      "links_to": [
+        "confrerie_brumes_rouges",
+        "dr_azra_veld",
+        "bio_ingenierie",
+        "bio_ingenierie",
+        "confrerie_brumes_rouges",
+        "dr_azra_veld"
+      ],
+      "incoming_count": 4
+    },
+    "terre_one": {
+      "id": "terre_one",
+      "title": "Terre-One",
+      "type": "planet",
+      "path": "planets/terre_one.md",
+      "links_to": [
+        "chantiers_navals_orbitaux",
+        "garr_vek",
+        "tinkling",
+        "craft_artisanat",
+        "chantiers_navals_orbitaux",
+        "craft_artisanat",
+        "garr_vek",
+        "tinkling"
+      ],
+      "incoming_count": 4
+    },
+    "cercle_diplomates_arvandor": {
+      "id": "cercle_diplomates_arvandor",
+      "title": "Le Cercle des Diplomates d'Arvandor",
+      "type": "faction",
+      "path": "factions/cercle_diplomates_arvandor.md",
+      "links_to": [
+        "arvandor",
+        "fel_rani",
+        "concordat_lost_heaven",
+        "villes_politique",
+        "arvandor",
+        "concordat_lost_heaven",
+        "scrapaltai",
+        "villes_politique"
+      ],
+      "incoming_count": 4
+    },
+    "gardiens_canopee": {
+      "id": "gardiens_canopee",
+      "title": "Les Gardiens de la Canopée",
+      "type": "faction",
+      "path": "factions/gardiens_canopee.md",
+      "links_to": [
+        "khar_zuun",
+        "varkoon",
+        "mira_kael",
+        "bio_ingenierie",
+        "khar_zuun",
+        "bio_ingenierie",
+        "varkoon",
+        "mira_kael"
+      ],
+      "incoming_count": 4
+    },
+    "concordat_lost_heaven": {
+      "id": "concordat_lost_heaven",
+      "title": "Le Concordat de Lost Heaven",
+      "type": "faction",
+      "path": "factions/concordat_lost_heaven.md",
+      "links_to": [
+        "scrapaltai",
+        "fel_rani",
+        "syndicat_ferrailleurs",
+        "villes_politique",
+        "scrapaltai",
+        "villes_politique",
+        "syndicat_ferrailleurs"
+      ],
+      "incoming_count": 15
+    },
+    "chantiers_navals_orbitaux": {
+      "id": "chantiers_navals_orbitaux",
+      "title": "Les Chantiers Navals Orbitaux",
+      "type": "faction",
+      "path": "factions/chantiers_navals_orbitaux.md",
+      "links_to": [
+        "terre_one",
+        "garr_vek",
+        "tinkling",
+        "craft_artisanat",
+        "terre_one",
+        "craft_artisanat",
+        "garr_vek",
+        "syndicat_ferrailleurs",
+        "scrapaltai"
+      ],
+      "incoming_count": 4
+    },
+    "syndicat_ferrailleurs": {
+      "id": "syndicat_ferrailleurs",
+      "title": "Le Syndicat des Ferrailleurs",
+      "type": "faction",
+      "path": "factions/syndicat_ferrailleurs.md",
+      "links_to": [
+        "scrapaltai",
+        "tinkling",
+        "concordat_lost_heaven",
+        "craft_artisanat",
+        "scrapaltai",
+        "craft_artisanat",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 10
+    },
+    "confrerie_brumes_rouges": {
+      "id": "confrerie_brumes_rouges",
+      "title": "La Confrérie des Brumes Rouges",
+      "type": "faction",
+      "path": "factions/confrerie_brumes_rouges.md",
+      "links_to": [
+        "mor_valoth",
+        "dr_azra_veld",
+        "bio_ingenierie",
+        "mor_valoth",
+        "bio_ingenierie",
+        "concordat_lost_heaven",
+        "dr_azra_veld"
+      ],
+      "incoming_count": 4
+    },
+    "garr_vek": {
+      "id": "garr_vek",
+      "title": "Garr Vek",
+      "type": "npc",
+      "path": "npcs/garr_vek.md",
+      "links_to": [
+        "terre_one",
+        "chantiers_navals_orbitaux",
+        "chantiers_navals_orbitaux",
+        "terre_one",
+        "scrapaltai",
+        "tinkling",
+        "craft_artisanat"
+      ],
+      "incoming_count": 4
+    },
+    "mira_kael": {
+      "id": "mira_kael",
+      "title": "Mira Kael",
+      "type": "npc",
+      "path": "npcs/mira_kael.md",
+      "links_to": [
+        "khar_zuun",
+        "gardiens_canopee",
+        "khar_zuun",
+        "gardiens_canopee",
+        "varkoon",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 4
+    },
+    "fel_rani": {
+      "id": "fel_rani",
+      "title": "Fel'Rani",
+      "type": "npc",
+      "path": "npcs/fel_rani.md",
+      "links_to": [
+        "scrapaltai",
+        "concordat_lost_heaven",
+        "scrapaltai",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 9
+    },
+    "bige_coto": {
+      "id": "bige_coto",
+      "title": "Bige Coto",
+      "type": "npc",
+      "path": "npcs/bige_coto.md",
+      "links_to": [
+        "arvandor",
+        "cercle_diplomates_arvandor",
+        "arvandor",
+        "scrapaltai",
+        "cercle_diplomates_arvandor",
+        "fel_rani"
+      ],
+      "incoming_count": 2
+    },
+    "varkoon": {
+      "id": "varkoon",
+      "title": "Varkoon",
+      "type": "npc",
+      "path": "npcs/varkoon.md",
+      "links_to": [
+        "scrapaltai",
+        "concordat_lost_heaven",
+        "scrapaltai",
+        "bio_ingenierie",
+        "fel_rani",
+        "concordat_lost_heaven",
+        "syndicat_ferrailleurs"
+      ],
+      "incoming_count": 9
+    },
+    "tinkling": {
+      "id": "tinkling",
+      "title": "Tinkling",
+      "type": "npc",
+      "path": "npcs/tinkling.md",
+      "links_to": [
+        "scrapaltai",
+        "syndicat_ferrailleurs",
+        "scrapaltai",
+        "craft_artisanat",
+        "syndicat_ferrailleurs",
+        "fel_rani"
+      ],
+      "incoming_count": 9
+    },
+    "dr_azra_veld": {
+      "id": "dr_azra_veld",
+      "title": "Dr Azra Veld",
+      "type": "npc",
+      "path": "npcs/dr_azra_veld.md",
+      "links_to": [
+        "mor_valoth",
+        "confrerie_brumes_rouges",
+        "mor_valoth",
+        "scrapaltai",
+        "confrerie_brumes_rouges",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 4
+    }
+  },
+  "edges": [
+    {
+      "source": "craft_artisanat",
+      "target": "tinkling"
+    },
+    {
+      "source": "craft_artisanat",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "craft_artisanat",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "craft_artisanat",
+      "target": "tinkling"
+    },
+    {
+      "source": "craft_artisanat",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "bio_ingenierie",
+      "target": "varkoon"
+    },
+    {
+      "source": "bio_ingenierie",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "bio_ingenierie",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "bio_ingenierie",
+      "target": "varkoon"
+    },
+    {
+      "source": "villes_politique",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "villes_politique",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "villes_politique",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "villes_politique",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "fel_rani"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "varkoon"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "tinkling"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "villes_politique"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "fel_rani"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "varkoon"
+    },
+    {
+      "source": "scrapaltai",
+      "target": "tinkling"
+    },
+    {
+      "source": "arvandor",
+      "target": "cercle_diplomates_arvandor"
+    },
+    {
+      "source": "arvandor",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "arvandor",
+      "target": "fel_rani"
+    },
+    {
+      "source": "arvandor",
+      "target": "bige_coto"
+    },
+    {
+      "source": "arvandor",
+      "target": "villes_politique"
+    },
+    {
+      "source": "arvandor",
+      "target": "cercle_diplomates_arvandor"
+    },
+    {
+      "source": "arvandor",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "arvandor",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "arvandor",
+      "target": "fel_rani"
+    },
+    {
+      "source": "arvandor",
+      "target": "bige_coto"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "gardiens_canopee"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "varkoon"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "mira_kael"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "gardiens_canopee"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "varkoon"
+    },
+    {
+      "source": "khar_zuun",
+      "target": "mira_kael"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "confrerie_brumes_rouges"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "dr_azra_veld"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "confrerie_brumes_rouges"
+    },
+    {
+      "source": "mor_valoth",
+      "target": "dr_azra_veld"
+    },
+    {
+      "source": "terre_one",
+      "target": "chantiers_navals_orbitaux"
+    },
+    {
+      "source": "terre_one",
+      "target": "garr_vek"
+    },
+    {
+      "source": "terre_one",
+      "target": "tinkling"
+    },
+    {
+      "source": "terre_one",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "terre_one",
+      "target": "chantiers_navals_orbitaux"
+    },
+    {
+      "source": "terre_one",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "terre_one",
+      "target": "garr_vek"
+    },
+    {
+      "source": "terre_one",
+      "target": "tinkling"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "arvandor"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "fel_rani"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "villes_politique"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "arvandor"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "cercle_diplomates_arvandor",
+      "target": "villes_politique"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "khar_zuun"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "varkoon"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "mira_kael"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "khar_zuun"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "varkoon"
+    },
+    {
+      "source": "gardiens_canopee",
+      "target": "mira_kael"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "fel_rani"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "villes_politique"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "villes_politique"
+    },
+    {
+      "source": "concordat_lost_heaven",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "terre_one"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "garr_vek"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "tinkling"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "terre_one"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "garr_vek"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "chantiers_navals_orbitaux",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "tinkling"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "syndicat_ferrailleurs",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "mor_valoth"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "dr_azra_veld"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "mor_valoth"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "confrerie_brumes_rouges",
+      "target": "dr_azra_veld"
+    },
+    {
+      "source": "garr_vek",
+      "target": "terre_one"
+    },
+    {
+      "source": "garr_vek",
+      "target": "chantiers_navals_orbitaux"
+    },
+    {
+      "source": "garr_vek",
+      "target": "chantiers_navals_orbitaux"
+    },
+    {
+      "source": "garr_vek",
+      "target": "terre_one"
+    },
+    {
+      "source": "garr_vek",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "garr_vek",
+      "target": "tinkling"
+    },
+    {
+      "source": "garr_vek",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "mira_kael",
+      "target": "khar_zuun"
+    },
+    {
+      "source": "mira_kael",
+      "target": "gardiens_canopee"
+    },
+    {
+      "source": "mira_kael",
+      "target": "khar_zuun"
+    },
+    {
+      "source": "mira_kael",
+      "target": "gardiens_canopee"
+    },
+    {
+      "source": "mira_kael",
+      "target": "varkoon"
+    },
+    {
+      "source": "mira_kael",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "fel_rani",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "fel_rani",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "fel_rani",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "fel_rani",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "bige_coto",
+      "target": "arvandor"
+    },
+    {
+      "source": "bige_coto",
+      "target": "cercle_diplomates_arvandor"
+    },
+    {
+      "source": "bige_coto",
+      "target": "arvandor"
+    },
+    {
+      "source": "bige_coto",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "bige_coto",
+      "target": "cercle_diplomates_arvandor"
+    },
+    {
+      "source": "bige_coto",
+      "target": "fel_rani"
+    },
+    {
+      "source": "varkoon",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "varkoon",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "varkoon",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "varkoon",
+      "target": "bio_ingenierie"
+    },
+    {
+      "source": "varkoon",
+      "target": "fel_rani"
+    },
+    {
+      "source": "varkoon",
+      "target": "concordat_lost_heaven"
+    },
+    {
+      "source": "varkoon",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "tinkling",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "tinkling",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "tinkling",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "tinkling",
+      "target": "craft_artisanat"
+    },
+    {
+      "source": "tinkling",
+      "target": "syndicat_ferrailleurs"
+    },
+    {
+      "source": "tinkling",
+      "target": "fel_rani"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "mor_valoth"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "confrerie_brumes_rouges"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "mor_valoth"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "scrapaltai"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "confrerie_brumes_rouges"
+    },
+    {
+      "source": "dr_azra_veld",
+      "target": "bio_ingenierie"
+    }
+  ],
+  "broken_links": []
+}
