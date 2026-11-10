@@ -83,3 +83,7 @@ packages/cortex/orchestrator/team/data/prompt_overrides/*.txt
 !packages/compagnon-desktop/overlay/vrm/accessories/*.glb
 !packages/cortex/compagnon_ui/public/vrm/accessories/*.glb
 !packages/prime-client/assets/models/*.glb
+
+# Studio Content Bot Video Outputs
+tools/studio_content_engine/output/
+

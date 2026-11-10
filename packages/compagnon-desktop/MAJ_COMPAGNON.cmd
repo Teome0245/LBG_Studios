@@ -18,6 +18,12 @@ if exist "C:\Agent_IA\compagnon-desktop\overlay\vrm\*.vrm" (
 robocopy "A:\LBG_Studios\packages\compagnon-desktop\overlay" "C:\Agent_IA\compagnon-desktop\overlay" /E /NFL /NDL /NJH /NJS /nc /ns /np
 robocopy "A:\LBG_Studios\packages\compagnon-desktop" "C:\Agent_IA\compagnon-desktop" main.js preload.js config.json Lancer_Compagnon.cmd MAJ_COMPAGNON.cmd /NFL /NDL /NJH /NJS /nc /ns /np
 
+:: Importation automatique des nouveaux modeles depuis OneDrive (sans ecraser les existants)
+if exist "O:\OneDrive\Pictures\IA\Models" (
+    echo Importation des nouveaux modeles depuis O:\OneDrive\Pictures\IA\Models...
+    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+)
+
 echo 3. Relance de l'agent local Agent_IA (:5005)...
 if exist "C:\Agent_IA\start_agent.cmd" (
     start "" /b cmd /c "C:\Agent_IA\start_agent.cmd" >nul 2>&1

@@ -753,7 +753,25 @@ function getVrmDir() {
 function getVrmModels() {
   try {
     const dir = getVrmDir();
-    if (!fs.existsSync(dir)) return [];
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    // Synchronisation automatique et non-destructive depuis le dossier OneDrive s'il existe (sans écraser)
+    const oneDriveDir = "O:\\OneDrive\\Pictures\\IA\\Models";
+    if (process.platform === "win32" && fs.existsSync(oneDriveDir)) {
+      try {
+        const odFiles = fs.readdirSync(oneDriveDir).filter((f) => f.toLowerCase().endsWith(".vrm"));
+        for (const f of odFiles) {
+          const target = path.join(dir, f);
+          if (!fs.existsSync(target)) {
+            fs.copyFileSync(path.join(oneDriveDir, f), target);
+            console.info(`[compagnon] Modèle VRM importé depuis OneDrive: ${f}`);
+          }
+        }
+      } catch (err) {
+        console.warn("[compagnon] Sync OneDrive VRM", err.message);
+      }
+    }
+
     return fs.readdirSync(dir)
       .filter((f) => f.toLowerCase().endsWith(".vrm"))
       .map((f) => ({

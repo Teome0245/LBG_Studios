@@ -22,12 +22,18 @@ if exist "%SRC_DIR%\main.js" (
     echo [LBG Compagnon] Mode local (repo source non detecte).
 )
 
-:: 2. Demarrage de l'agent IA local si present
+:: 2. Importation automatique et securisee des modeles depuis OneDrive (sans ecraser les existants : /XC /XN /XO)
+if exist "O:\OneDrive\Pictures\IA\Models" (
+    echo [LBG Compagnon] Verification des modeles dans O:\OneDrive\Pictures\IA\Models...
+    robocopy "O:\OneDrive\Pictures\IA\Models" "C:\Agent_IA\compagnon-desktop\overlay\vrm" *.vrm /XC /XN /XO /NFL /NDL /NJH /NJS /nc /ns /np
+)
+
+:: 3. Demarrage de l'agent IA local si present
 if exist "C:\Agent_IA\start_agent.cmd" (
     start "" /b cmd /c "C:\Agent_IA\start_agent.cmd" >nul 2>&1
 )
 
-:: 3. Lancement d'Electron
+:: 4. Lancement d'Electron
 start "" "C:\Agent_IA\compagnon-desktop\node_modules\electron\dist\electron.exe" "C:\Agent_IA\compagnon-desktop"
 exit
 

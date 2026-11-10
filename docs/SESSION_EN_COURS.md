@@ -9,7 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-10)
-1. **Pipeline Graphique 3D & World Building Automatisé (Blender Headless + Godot 4)** :
+1. **Pipeline de Création de Contenu Automatisé 100% Local / 0 € (`tools/studio_content_engine/`)** :
+   - **Génération de Scripts Viraux Tech (`script_generator.py`)** : format court vertical (Hook 3s, Problème/Douleur, Solution architecture 0€, Call to Action) alimenté par Ollama local (`.111:11434` / `.110:11434`) avec repli canonique résilient.
+   - **Synthèse Vocale Sidecar Piper TTS (`voice_engine.py`)** : génération instantanée des flux audio en français via `http://192.168.0.111:8098/v1/tts`, concaténation avec pauses calibrées et découpage temporel des phrases.
+   - **Sous-titres Stylisés TikTok (`voice_engine.py`)** : génération de pistes `.ass` (Advanced SubStation Alpha) à haut contraste (jaune fluo / blanc gras, contour 6px noir) calées dynamiquement.
+   - **Rendu 3D des Poses Clés Avatar Mia (`blender_render_keyframes.py`)** : calcul sous Blender 5.2.2 LTS headless (Cycles CPU débruité) des poses 9:16 (`neutral`, `talk_a`, `talk_o`, `blink`, `joy`) à partir du modèle VRM canonique `packages/prime-client/assets/avatars/Mia.vrm`.
+   - **Composition Vidéo & Lip-Sync Dynamique (`video_compositor.py`)** :
+     - Synchronisation labiale temps réel sur l'amplitude RMS audio.
+     - Clignements d'yeux procéduraux (toutes les 3.6s) et micro-mouvements de respiration.
+     - Spectre audio néon réactif (28 barres oscillantes).
+     - Dégradé cyberpunk avec grille perspective sci-fi et bandeau d'en-tête LBG Studios.
+   - **Orchestrateur & CLI Unifié (`content_bot.py`)** : génération complète en ~30 secondes d'un fichier MP4 1080×1920 (H.264 / AAC, ~3 Mo) prêt pour TikTok, YouTube Shorts et Instagram Reels.
+2. **Pipeline Graphique 3D & World Building Automatisé (Blender Headless + Godot 4)** :
    - **Étape 1 : Blender Headless (`bpy`) & Props Modulaires (`tools/asset_pipeline/blender_prop_builder.py`)** :
      - Installation & activation de Blender 5.2.2 LTS en mode headless (`blender -b`).
      - Générateur procédural de props sci-fi avec biseaux, matériaux PBR émissifs et formes de collision Godot automatiques (`-col`).
