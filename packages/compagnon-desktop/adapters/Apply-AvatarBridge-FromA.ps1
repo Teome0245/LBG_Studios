@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # ASCII-only (SMB A: + Windows PowerShell 5.1 without UTF-8 BOM).
 # Sync compagnon-desktop (bridge D8) from A: (.143) -> C:\Agent_IA then smoke.
 param(
@@ -22,7 +22,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $Source "avatar_bridge.js"))) {
 
 Write-Step "Sync $Source -> $Dest"
 New-Item -ItemType Directory -Force -Path $Dest | Out-Null
-& robocopy.exe $Source $Dest /MIR /NFL /NDL /NJH /NJS /nc /ns /np `
+& robocopy.exe $Source $Dest /E /NFL /NDL /NJH /NJS /nc /ns /np `
   /XD node_modules dist .git `
   /XF "*.log" | Out-Null
 $code = $LASTEXITCODE

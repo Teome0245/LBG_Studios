@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
   Sync + install + launch LBG Compagnon Desktop on Windows (.10).
@@ -52,7 +52,7 @@ function Test-IsUnc([string]$Path) {
 function Sync-ToLocal([string]$Source, [string]$Dest) {
   Write-Host "==> Sync $Source -> $Dest"
   New-Item -ItemType Directory -Path $Dest -Force | Out-Null | Out-Null
-  & robocopy.exe $Source $Dest /MIR /NFL /NDL /NJH /NJS /nc /ns /np `
+  & robocopy.exe $Source $Dest /E /NFL /NDL /NJH /NJS /nc /ns /np `
     /XD node_modules dist .git `
     /XF "*.log" | Out-Null
   $code = $LASTEXITCODE

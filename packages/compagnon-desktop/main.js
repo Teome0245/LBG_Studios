@@ -1909,18 +1909,19 @@ function checkAndApplySourceUpdate(manual = false) {
   const srcOverlay = path.join(sourceRoot, "overlay");
   const dstOverlay = path.join(localRoot, "overlay");
   if (fs.existsSync(srcOverlay)) {
-    runRobocopy(srcOverlay, dstOverlay, ["/E"]);
-    // Sauvegarde de sécurité des modèles .vrm ajoutés localement vers le dépôt source
+    // A. Sauvegarde prealable de securite de TOUS les modeles VRM perso de C: vers A: (sans ecraser)
     const localVrm = path.join(dstOverlay, "vrm");
     const repoVrm = path.join(srcOverlay, "vrm");
     if (fs.existsSync(localVrm) && fs.existsSync(repoVrm)) {
       runRobocopy(localVrm, repoVrm, ["*.vrm", "/XC", "/XN", "/XO"]);
     }
+    // B. Copie des mises a jour vers C: (avec /E pur, sans /PURGE)
+    runRobocopy(srcOverlay, dstOverlay, ["/E"]);
   }
 
-  // 2. Synchronisation de main.js et preload.js
+  // 2. Synchronisation de main.js, preload.js et scripts de lancement
   let codeUpdated = false;
-  for (const file of ["main.js", "preload.js"]) {
+  for (const file of ["main.js", "preload.js", "Lancer_Compagnon.cmd", "MAJ_COMPAGNON.cmd"]) {
     const srcFile = path.join(sourceRoot, file);
     const dstFile = path.join(localRoot, file);
     if (fs.existsSync(srcFile) && fs.existsSync(dstFile)) {
