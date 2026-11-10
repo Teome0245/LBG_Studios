@@ -971,9 +971,6 @@ func _handle_world_left_click(screen_pos: Vector2) -> void:
 	var me: Node = entity_manager.get_entity(pid)
 	if me:
 		core3.y = me.core3_pos.y
-		var zones: Node = get_node_or_null("WorldMap/ZoneLayers")
-		if zones:
-			core3 = zones.clamp_move(me.core3_pos, core3)
 	pc.request_move_to(core3.x, core3.z)
 
 

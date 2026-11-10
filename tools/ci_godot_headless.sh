@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# tools/ci_godot_headless.sh — Runner de tests headless Godot pour prime-hub (Ticket 5.2)
+# tools/ci_godot_headless.sh — Runner de tests headless Godot pour prime-hub & prime-client
 #
-# Exécute la suite complète de tests mécaniques et économiques en local / CI :
-#   1. sim_selftest.gd : Simulateur HubSim modulaire (combat, présence, 60 ticks)
-#   2. nav_selftest.gd : Navigation 3D navmesh (NavigationServer3D, 40 entités)
-#   3. db_selftest.gd  : SQLite transactionnel WAL, auth, positions, état économique
+# Options :
+#   (sans argument)        : Exécute la suite complète des 20 tests
+#   --quick                : Exécute les 4 tests critiques (sim, nav, db, client modulaire) en <10s
+#   --module <script_res>  : Exécute un seul selftest (ex. res://tools/sim_selftest.gd ou sim_selftest.gd)
 #
-# Aucun réseau LAN requis. Exécution complète en < 10 s.
+# Aucun réseau LAN requis.
 
 set -euo pipefail
 
@@ -31,8 +31,35 @@ if [[ -z "${GODOT_BIN}" ]]; then
   fi
 fi
 
+MODE="full"
+TARGET_MODULE=""
+
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    --quick|-q)
+      MODE="quick"
+      ;;
+    --module|-m)
+      MODE="module"
+      if [[ $# -lt 2 ]]; then
+        echo "[-] ERREUR: --module requiert un nom de script (ex. sim_selftest.gd)" >&2
+        exit 1
+      fi
+      TARGET_MODULE="$2"
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--quick | --module <nom_script> | --help]"
+      exit 0
+      ;;
+    *)
+      echo "[-] Option inconnue: $1" >&2
+      exit 1
+      ;;
+  esac
+fi
+
 echo "============================================================"
-echo "  CI Godot Headless — Tests prime-hub (Ticket 5.2)"
+echo "  CI Godot Headless — Mode: ${MODE} (Ticket 5.2 / Outillage)"
 echo "  Binaire : ${GODOT_BIN}"
 echo "============================================================"
 
@@ -71,37 +98,60 @@ run_client_test() {
   fi
 }
 
-run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
-run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
-run_test "Bâtiments CAO & Portes découpées (HubBlueprintBuilder)" "res://tools/building_cad_selftest.gd"
-run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
-run_test "Contrat Joueurs IA & Adaptateur Universel (O3 AgentEnvironmentAdapter)" "res://tools/agent_adapter_selftest.gd"
-run_test "Propagation des Rumeurs & Wiki Hub (O3 Ticket 2.2)" "res://tools/rumor_propagation_selftest.gd"
-run_test "Météo Dynamique & Repli Bâtiments (HubEvents, Sandstorm, Abri)" "res://tools/weather_storm_selftest.gd"
-run_test "Cycle Jour/Nuit Circadien & Lanternes (O2 Ticket 2.1)" "res://tools/day_night_selftest.gd"
-run_test "Escorte Tactique & Binômes IA (O3 Ticket 3.1)" "res://tools/tactical_escort_selftest.gd"
-run_test "Métier Récupérateur & Établis Mécatroniques (O2 Ticket 2.2)" "res://tools/crafting_schematics_selftest.gd"
-run_test "Économie de Troc P2P & Négociations IA (O3 Ticket 3.2)" "res://tools/barter_trade_selftest.gd"
-run_test "Arbres de Compétences SWG Pre-CU 4x4 & Skill Points (O2 Ticket 4.1)" "res://tools/precu_skills_tree_selftest.gd"
-run_test "Prospection Dynamique Survey Tool & Spawns 1..1000 (O2 Ticket 4.2)" "res://tools/survey_resources_selftest.gd"
-run_test "Artisanat Pondéré & Phase d'Expérimentation Pre-CU (O2 Ticket 4.3)" "res://tools/craft_experimentation_selftest.gd"
-run_test "Boucle HAM, Wounds Medcenter & Battle Fatigue Cantina (O2 Ticket 4.4)" "res://tools/ham_cantina_medcenter_selftest.gd"
-run_test "Extracteurs de Terrain Harvesters & Autonomie O3 (O2/O3 Ticket 4.5)" "res://tools/harvesters_outpost_selftest.gd"
-run_test "Faune, Métier Scout & Creature Handler Pre-CU (O2/O3 Ticket 4)" "res://tools/creatures_scout_selftest.gd"
-run_test "Commerce, Vendeurs Joueurs & Usines de Production (O2/O3 Ticket 3)" "res://tools/vendors_factories_selftest.gd"
-run_test "Housing Libre, Décoration & Villes de Joueurs (O2/O3 Ticket 2)" "res://tools/housing_cities_selftest.gd"
-run_test "Combat Tactique SWG : HAM, Postures & Combos (O2 Ticket 1)" "res://tools/swg_combat_selftest.gd"
-run_test "Factions GCW & Nids de Créatures SWG Pre-CU (O2/O3)" "res://tools/swg_factions_lairs_selftest.gd"
-run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
-run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
-run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
+if [[ "${MODE}" == "module" ]]; then
+  # Normalisation du chemin res://
+  script_clean="${TARGET_MODULE#res://}"
+  script_clean="${script_clean#tools/}"
+  script_res="res://tools/${script_clean}"
+
+  if [[ -f "${PRIME_HUB_DIR}/tools/${script_clean}" ]]; then
+    run_test "Module Hub ciblé : ${script_clean}" "${script_res}"
+  elif [[ -f "${PRIME_CLIENT_DIR}/tools/${script_clean}" ]]; then
+    run_client_test "Module Client ciblé : ${script_clean}" "${script_res}"
+  else
+    echo "[-] ERREUR: Script introuvable dans prime-hub/tools ni prime-client/tools: ${script_clean}" >&2
+    exit 1
+  fi
+
+elif [[ "${MODE}" == "quick" ]]; then
+  run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
+  run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
+  run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
+  run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
+
+else
+  run_test "Simulateur HubSim (combat, présence, ticks)" "res://tools/sim_selftest.gd"
+  run_test "Navigation 3D (NavigationServer3D, navmesh)" "res://tools/nav_selftest.gd"
+  run_test "Bâtiments CAO & Portes découpées (HubBlueprintBuilder)" "res://tools/building_cad_selftest.gd"
+  run_test "Persistance & Économie (SQLite WAL, auth, state)" "res://tools/db_selftest.gd"
+  run_test "Contrat Joueurs IA & Adaptateur Universel (O3 AgentEnvironmentAdapter)" "res://tools/agent_adapter_selftest.gd"
+  run_test "Propagation des Rumeurs & Wiki Hub (O3 Ticket 2.2)" "res://tools/rumor_propagation_selftest.gd"
+  run_test "Météo Dynamique & Repli Bâtiments (HubEvents, Sandstorm, Abri)" "res://tools/weather_storm_selftest.gd"
+  run_test "Cycle Jour/Nuit Circadien & Lanternes (O2 Ticket 2.1)" "res://tools/day_night_selftest.gd"
+  run_test "Escorte Tactique & Binômes IA (O3 Ticket 3.1)" "res://tools/tactical_escort_selftest.gd"
+  run_test "Métier Récupérateur & Établis Mécatroniques (O2 Ticket 2.2)" "res://tools/crafting_schematics_selftest.gd"
+  run_test "Économie de Troc P2P & Négociations IA (O3 Ticket 3.2)" "res://tools/barter_trade_selftest.gd"
+  run_test "Arbres de Compétences SWG Pre-CU 4x4 & Skill Points (O2 Ticket 4.1)" "res://tools/precu_skills_tree_selftest.gd"
+  run_test "Prospection Dynamique Survey Tool & Spawns 1..1000 (O2 Ticket 4.2)" "res://tools/survey_resources_selftest.gd"
+  run_test "Artisanat Pondéré & Phase d'Expérimentation Pre-CU (O2 Ticket 4.3)" "res://tools/craft_experimentation_selftest.gd"
+  run_test "Boucle HAM, Wounds Medcenter & Battle Fatigue Cantina (O2 Ticket 4.4)" "res://tools/ham_cantina_medcenter_selftest.gd"
+  run_test "Extracteurs de Terrain Harvesters & Autonomie O3 (O2/O3 Ticket 4.5)" "res://tools/harvesters_outpost_selftest.gd"
+  run_test "Faune, Métier Scout & Creature Handler Pre-CU (O2/O3 Ticket 4)" "res://tools/creatures_scout_selftest.gd"
+  run_test "Commerce, Vendeurs Joueurs & Usines de Production (O2/O3 Ticket 3)" "res://tools/vendors_factories_selftest.gd"
+  run_test "Housing Libre, Décoration & Villes de Joueurs (O2/O3 Ticket 2)" "res://tools/housing_cities_selftest.gd"
+  run_test "Combat Tactique SWG : HAM, Postures & Combos (O2 Ticket 1)" "res://tools/swg_combat_selftest.gd"
+  run_test "Factions GCW & Nids de Créatures SWG Pre-CU (O2/O3)" "res://tools/swg_factions_lairs_selftest.gd"
+  run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
+  run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
+  run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
+fi
 
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))
 
 echo ""
 echo "============================================================"
 if [[ ${FAILED} -eq 0 ]]; then
-  echo "[OK] Tous les tests headless Godot ont réussi en ${TOTAL_DURATION}s (<10s DoD)."
+  echo "[OK] Tous les tests headless Godot ont réussi en ${TOTAL_DURATION}s."
   echo "============================================================"
   exit 0
 else

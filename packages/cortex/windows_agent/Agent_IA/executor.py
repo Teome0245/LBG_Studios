@@ -362,6 +362,41 @@ def copier_vrm_upload_ia(**kwargs):
 
 
 # --- Capability auto-installée ---
+# Description : Copie les modèles VRM et GLB des avatars vers O:/OneDrive/Pictures/IA/Models
+def copier_models_vers_onedrive(**kwargs):
+    import shutil
+    import os
+    dst_dir = "O:/OneDrive/Pictures/IA/Models"
+    os.makedirs(dst_dir, exist_ok=True)
+    sources = [
+        ("A:/LBG_Studios/packages/swg-client/assets/avatars", ["Anna.vrm", "Aurora.vrm", "Compagnon.vrm", "default.vrm", "LadyKoi.vrm"]),
+        ("A:/LBG_Studios/packages/cortex/pilot_web/orchestrator_avatar/models", ["base_female.glb", "RobotExpressive.glb"]),
+        ("C:/Agent_IA/compagnon-desktop/overlay/vrm", ["Compagnon.vrm", "LadyKoi.vrm", "Aurora.vrm", "Anna.vrm"])
+    ]
+    copied = []
+    errors = []
+    for s_dir, file_list in sources:
+        if os.path.exists(s_dir):
+            for fname in file_list:
+                src_path = os.path.join(s_dir, fname)
+                dst_path = os.path.join(dst_dir, fname)
+                if os.path.exists(src_path) and fname not in copied:
+                    try:
+                        shutil.copy2(src_path, dst_path)
+                        copied.append(fname)
+                    except Exception as e:
+                        errors.append(f"{fname}: {str(e)}")
+    return {
+        "status": "ok" if not errors else "partial",
+        "copied": copied,
+        "errors": errors,
+        "destination": dst_dir,
+        "destination_files": os.listdir(dst_dir)
+    }
+
+
+
+# --- Capability auto-installée ---
 # Description : Synchronise les textures, bundles VRM et animations vers C:/Agent_IA/compagnon-desktop/overlay/vrm
 def sync_vrm_desktop(**kwargs):
     import shutil

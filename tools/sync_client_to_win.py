@@ -59,6 +59,7 @@ CLIENT_TARGETS = {
             "scripts/swg_inventory_paperdoll.gd",
             "scripts/swg_audio_synthesizer.gd",
             "scripts/main.gd",
+            "scripts/player_controller.gd",
             "scripts/client_ui_dialogue.gd",
             "scripts/swg_dialog_box.gd",
             "scripts/swg_space_flight_3d.gd",

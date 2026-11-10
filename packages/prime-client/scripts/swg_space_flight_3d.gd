@@ -146,10 +146,10 @@ func _setup_flight_hud() -> void:
 	vb.size = Vector2(200, 90)
 	pwr_panel.add_child(vb)
 
-	# Armes [F5]
+	# Armes [F1] / [1]
 	var hb_w := HBoxContainer.new()
 	var lbl_w := Label.new()
-	lbl_w.text = "Armes [F5]: "
+	lbl_w.text = "Armes [F1/1]: "
 	lbl_w.custom_minimum_size = Vector2(85, 20)
 	hb_w.add_child(lbl_w)
 	_pwr_weapons_bar = ProgressBar.new()
@@ -158,10 +158,10 @@ func _setup_flight_hud() -> void:
 	hb_w.add_child(_pwr_weapons_bar)
 	vb.add_child(hb_w)
 
-	# Boucliers [F6]
+	# Boucliers [F2] / [2]
 	var hb_s := HBoxContainer.new()
 	var lbl_s := Label.new()
-	lbl_s.text = "Boucliers [F6]: "
+	lbl_s.text = "Boucliers [F2/2]: "
 	lbl_s.custom_minimum_size = Vector2(85, 20)
 	hb_s.add_child(lbl_s)
 	_pwr_shields_bar = ProgressBar.new()
@@ -170,10 +170,10 @@ func _setup_flight_hud() -> void:
 	hb_s.add_child(_pwr_shields_bar)
 	vb.add_child(hb_s)
 
-	# Moteurs [F7]
+	# Moteurs [F3] / [3]
 	var hb_e := HBoxContainer.new()
 	var lbl_e := Label.new()
-	lbl_e.text = "Moteurs [F7]: "
+	lbl_e.text = "Moteurs [F3/3]: "
 	lbl_e.custom_minimum_size = Vector2(85, 20)
 	hb_e.add_child(lbl_e)
 	_pwr_engines_bar = ProgressBar.new()
@@ -216,7 +216,7 @@ func _setup_flight_hud() -> void:
 
 	# Bannière d'aide & commandes (Haut-Centre)
 	var banner := Label.new()
-	banner.text = "✦ JUMP TO LIGHTSPEED — X-WING T-65B ✦\n[Z/S] Poussée Moteurs  |  [Q/D] Roulis/Lacet  |  [ESPACE] Canons Lasers  |  [H] Hyper-espace  |  [F9] Atterrir"
+	banner.text = "✦ JUMP TO LIGHTSPEED — X-WING T-65B ✦\n[Souris / ZQSD] Pilotage  |  [Clic Gche / ESPACE] Lasers  |  [Molette / Z-S] Poussée  |  [H] Hyper-espace  |  [F8 / ÉCHAP] Atterrir"
 	banner.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	banner.position = Vector2(0, 16)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -406,6 +406,9 @@ func _process(delta: float) -> void:
 		var forward := -_player_ship.transform.basis.z
 		_player_ship.position += forward * current_speed * delta
 
+		# Redressement automatique progressif du roulis
+		_player_ship.rotation_degrees.z = lerpf(_player_ship.rotation_degrees.z, 0.0, 4.0 * delta)
+
 		# Suivi caméra
 		if _camera != null:
 			_camera.position = _player_ship.position + Vector3(0, 3.2, 9.5)
@@ -430,6 +433,29 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
+
+	# Contrôle Souris (Tir, Molette d'accélération et Orientation)
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			fire_lasers()
+			get_viewport().set_input_as_handled()
+			return
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			current_speed = minf(current_speed + 10.0, max_speed)
+			get_viewport().set_input_as_handled()
+			return
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			current_speed = maxf(current_speed - 10.0, 0.0)
+			get_viewport().set_input_as_handled()
+			return
+
+	if event is InputEventMouseMotion:
+		if _player_ship != null:
+			_player_ship.rotation_degrees.y -= event.relative.x * 0.25
+			_player_ship.rotation_degrees.x = clampf(_player_ship.rotation_degrees.x - event.relative.y * 0.25, -55.0, 55.0)
+			_player_ship.rotation_degrees.z = clampf(-event.relative.x * 0.5, -35.0, 35.0)
+			get_viewport().set_input_as_handled()
+			return
 
 	if event is InputEventKey and event.pressed:
 		match event.keycode:

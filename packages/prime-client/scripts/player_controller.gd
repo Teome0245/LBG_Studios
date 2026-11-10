@@ -99,6 +99,12 @@ func _handle_movement() -> void:
 				_send({"t": action, "active": pressed})
 	if any_key:
 		_click_target = Vector3.INF
+	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		var main_node = get_parent()
+		if main_node and main_node.has_method("_canvas_mouse_pos") and not bool(main_node.get("swg_space_flight") and main_node.swg_space_flight.visible):
+			var m_canvas: Vector2 = main_node._canvas_mouse_pos()
+			var target_c3: Vector3 = main_node._screen_click_to_core3(m_canvas)
+			set_click_target(target_c3)
 	var running: bool = Input.is_physical_key_pressed(KEY_SHIFT)
 	if running != _state["run"]:
 		_state["run"] = running
