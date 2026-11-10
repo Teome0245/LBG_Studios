@@ -93,6 +93,49 @@
             </div>
           </div>
 
+          <!-- Accessoires 3D VRM Modulaires (Priorité Haute, immédiatement visibles) -->
+          <div class="pt-2 pb-1 border-t border-cyan-500/30">
+            <div class="flex items-center justify-between text-[11px] pb-1.5">
+              <span class="text-cyan-300 font-semibold flex items-center gap-1.5">
+                <span>👓</span>
+                <span>Accessoires 3D</span>
+              </span>
+              <span class="text-[9px] text-cyan-400/80 font-mono bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30">Modulaires · GLB</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button
+                type="button"
+                class="py-1.5 px-1 rounded border text-[10px] transition font-medium flex items-center justify-center gap-1 cursor-pointer"
+                :class="activeAccessories.has('visor') ? 'border-cyan-400 bg-cyan-900/80 text-cyan-200 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400/50' : 'border-slate-700/60 bg-slate-900/50 text-slate-300 hover:text-white hover:border-slate-500'"
+                title="Visière HUD cybernétique sur la tête"
+                @click="triggerAccessory('visor')"
+              >
+                <span>🕶️</span>
+                <span>Visière</span>
+              </button>
+              <button
+                type="button"
+                class="py-1.5 px-1 rounded border text-[10px] transition font-medium flex items-center justify-center gap-1 cursor-pointer"
+                :class="activeAccessories.has('datapad') ? 'border-teal-400 bg-teal-900/80 text-teal-200 shadow-md shadow-teal-500/20 ring-1 ring-teal-400/50' : 'border-slate-700/60 bg-slate-900/50 text-slate-300 hover:text-white hover:border-slate-500'"
+                title="Datapad holographique en main"
+                @click="triggerAccessory('datapad')"
+              >
+                <span>📱</span>
+                <span>Datapad</span>
+              </button>
+              <button
+                type="button"
+                class="py-1.5 px-1 rounded border text-[10px] transition font-medium flex items-center justify-center gap-1 cursor-pointer"
+                :class="activeAccessories.has('headset') ? 'border-pink-400 bg-pink-900/80 text-pink-200 shadow-md shadow-pink-500/20 ring-1 ring-pink-400/50' : 'border-slate-700/60 bg-slate-900/50 text-slate-300 hover:text-white hover:border-slate-500'"
+                title="Oreillette de communication neurale"
+                @click="triggerAccessory('headset')"
+              >
+                <span>🎧</span>
+                <span>Oreillette</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Poses expressives rapides -->
           <div class="grid grid-cols-4 gap-1 pt-1">
             <button
@@ -199,43 +242,6 @@
             >
               🔍 Focus
             </button>
-          </div>
-
-          <!-- Accessoires 3D VRM -->
-          <div class="pt-2 border-t border-slate-800/80">
-            <div class="flex items-center justify-between text-[11px] pb-1">
-              <span class="text-cyan-300 font-medium flex items-center gap-1">👓 Accessoires 3D</span>
-              <span class="text-[9px] text-slate-500 font-mono">Modulaires · GLB</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <button
-                type="button"
-                class="py-1 rounded border text-[10px] transition font-medium"
-                :class="activeAccessories.has('visor') ? 'border-cyan-400 bg-cyan-900/60 text-cyan-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
-                title="Visière HUD cybernétique sur la tête"
-                @click="triggerAccessory('visor')"
-              >
-                🕶️ Visière
-              </button>
-              <button
-                type="button"
-                class="py-1 rounded border text-[10px] transition font-medium"
-                :class="activeAccessories.has('datapad') ? 'border-teal-400 bg-teal-900/60 text-teal-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
-                title="Datapad holographique en main"
-                @click="triggerAccessory('datapad')"
-              >
-                📱 Datapad
-              </button>
-              <button
-                type="button"
-                class="py-1 rounded border text-[10px] transition font-medium"
-                :class="activeAccessories.has('headset') ? 'border-pink-400 bg-pink-900/60 text-pink-200 shadow-sm' : 'border-slate-700/60 bg-slate-900/40 text-slate-400 hover:text-slate-200'"
-                title="Oreillette de communication neurale"
-                @click="triggerAccessory('headset')"
-              >
-                🎧 Oreillette
-              </button>
-            </div>
           </div>
 
           <!-- Pack Danses VRM -->

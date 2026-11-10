@@ -46,7 +46,7 @@
     const agentName = String(ev.agent || "agent");
     if (sessionAgent) sessionAgent.textContent = agentName;
     if (sessionTicker)
-      sessionTicker.textContent = String(ev.summary || ev.event || "").slice(0, 80);
+      sessionTicker.textContent = String(ev.summary || ev.event || "").slice(0, 240);
     sessionPill.classList.add("visible");
     if (ev.event === "session.approval_needed" && ev.approval_id) {
       currentApprovalId = ev.approval_id;
@@ -265,7 +265,7 @@
     const msg =
       (payload && (payload.message || payload.label)) ||
       "Regarde ici…";
-    if (bubbleMsg) bubbleMsg.textContent = String(msg).slice(0, 140);
+    if (bubbleMsg) bubbleMsg.textContent = String(msg).slice(0, 240);
     if (bubble) {
       bubble.classList.add("visible", "guide");
     }
@@ -290,7 +290,7 @@
         } else if (face.pulse) {
           face.pulse("alert");
         }
-        if (face.say) face.say(String(msg).slice(0, 80));
+        if (face.say) face.say(String(msg).slice(0, 240));
       }
     } catch (_) { }
     if (guideHideTimer) clearTimeout(guideHideTimer);
@@ -319,7 +319,7 @@
     const msg =
       (payload && (payload.message || payload.body || payload.label)) ||
       "Je vois quelque chose — on agit ?";
-    if (bubbleMsg) bubbleMsg.textContent = String(msg).slice(0, 140);
+    if (bubbleMsg) bubbleMsg.textContent = String(msg).slice(0, 240);
     if (bubble) bubble.classList.add("visible");
     if (statusEl) statusEl.textContent = "Initiative";
     if (wrap) {
@@ -333,7 +333,7 @@
       if (face) {
         if (face.setMood) face.setMood("tense");
         if (face.pulse) face.pulse("alert");
-        if (face.say) face.say(String(msg).slice(0, 80));
+        if (face.say) face.say(String(msg).slice(0, 240));
       }
     } catch (_) { }
   }
@@ -430,7 +430,7 @@
           return;
         }
         if (face.setTalking && Number.isFinite(ms)) face.setTalking(ms);
-        else if (face.say && payload && payload.text) face.say(String(payload.text).slice(0, 80));
+        else if (face.say && payload && payload.text) face.say(String(payload.text).slice(0, 240));
       } catch (_) { }
     });
   }
