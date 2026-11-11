@@ -40,6 +40,7 @@ _WS = re.compile(r"\s+")
 class TtsRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=4000)
     voice: str | None = None
+    length_scale: float | None = Field(default=None, description="Facteur de vitesse (>0, ex 0.9 = 10% plus rapide)")
 
 
 def sanitize_for_speech(text: str, *, max_chars: int = MAX_CHARS) -> str:
@@ -84,7 +85,7 @@ def _load_voice(voice: str):
     return PiperVoice.load(str(onnx))
 
 
-def synthesize_wav(text: str, *, voice: str | None = None) -> bytes:
+def synthesize_wav(text: str, *, voice: str | None = None, length_scale: float | None = None) -> bytes:
     spoken = sanitize_for_speech(text)
     if not spoken:
         raise ValueError("texte vide après sanitize")
@@ -97,18 +98,26 @@ def synthesize_wav(text: str, *, voice: str | None = None) -> bytes:
         raise RuntimeError(f"load_voice:{exc}") from exc
 
     buf = io.BytesIO()
-    syn_kw: dict[str, Any] = {}
+    syn_config = None
+    spk_id = None
     if SPEAKER_ID is not None and str(SPEAKER_ID).strip() != "":
         try:
-            syn_kw["speaker_id"] = int(SPEAKER_ID)
+            spk_id = int(SPEAKER_ID)
         except ValueError:
+            pass
+
+    if length_scale is not None or spk_id is not None:
+        try:
+            from piper.config import SynthesisConfig
+            syn_config = SynthesisConfig(speaker_id=spk_id, length_scale=length_scale)
+        except Exception:
             pass
 
     with wave.open(buf, "wb") as wf:
         # piper-tts ≥1.2 : synthesize_wav(text, wav_file)
         # fallback : synthesize() générateur de chunks PCM
         if hasattr(piper_voice, "synthesize_wav"):
-            piper_voice.synthesize_wav(spoken, wf, **syn_kw)
+            piper_voice.synthesize_wav(spoken, wf, syn_config=syn_config)
         else:
             syn = getattr(piper_voice, "synthesize", None)
             if syn is None:
@@ -118,7 +127,7 @@ def synthesize_wav(text: str, *, voice: str | None = None) -> bytes:
             sample_rate = int(getattr(piper_voice.config, "sample_rate", 22050))
             sample_width = 2
             channels = 1
-            for audio in syn(spoken, **syn_kw):
+            for audio in syn(spoken, syn_config=syn_config):
                 # AudioChunk (audio_int16_bytes) ou bytes
                 raw = getattr(audio, "audio_int16_bytes", None)
                 if raw is None:
@@ -160,7 +169,7 @@ def list_voices() -> dict[str, Any]:
 @app.post("/v1/tts")
 def tts(body: TtsRequest) -> Response:
     try:
-        wav = synthesize_wav(body.text, voice=body.voice)
+        wav = synthesize_wav(body.text, voice=body.voice, length_scale=body.length_scale)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:

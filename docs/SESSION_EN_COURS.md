@@ -31,12 +31,18 @@
    - Ajout des nouveaux fichiers à la synchronisation SDS Windows `.10` (`tools/sync_client_to_win.py`) : 22 fichiers synchronisés avec succès.
    - Validation 100% verte du selftest client Godot headless (`tools/client_modular_selftest.gd`).
    - Déploiement du patch officiel sur le serveur de patch Launchpad (`192.168.0.246:8080`) via `deploy_prime_client_patch_246.sh`.
-4. **Studio Content Engine : Intro Signature "Lia" & Branding Chaîne** :
+4. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Fluide UPMC** :
    - **Phrase d'accroche Signature (`script_generator.py`)** : injection systématique en début de chaque script : *"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {sujet}."*
+   - **Silence Initial de 2.0s (`voice_engine.py`)** : introduction d'un silence paramétrable de 2.0s au début de la vidéo. L'avatar respire au repos avec les yeux ouverts, avant d'enchaîner sur la parole et les sous-titres ASS synchronisés.
+   - **Nouvelle Voix Haute Définition (`fr_FR-upmc-medium`)** :
+     - Modèle Piper TTS Sorbonne UPMC installé sur `.111:8098` (phonétique plus précise, diction fluide et naturelle).
+     - Support du paramètre de vitesse `length_scale` (0.92 = 8% plus rapide, dynamique et percutant pour les formats courts Shorts/TikTok).
+     - Déployé sur `/opt/lbg-piper-tts/app.py` du conteneur `.111` et testé avec succès.
    - **Branding & Visuel Cyberpunk (`video_compositor.py`)** :
      - Nouveau badge d'identité en haut à gauche : `LIA // {CATEGORY}` en néon cyan.
+     - Décalage du premier clignement d'yeux à t=1.8s pour garantir un regard franc et éveillé dès la première seconde.
      - Posture de face naturelle avec regard ouvert et synchronisation labiale continue sur l'enveloppe RMS.
-   - **Validation de bout en bout** : génération du drop `drop_1794401991` (31.9s, 4.5 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
+   - **Validation de bout en bout** : génération du drop `drop_1794407411` (35.1s, 4.95 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
 
 ---
 

@@ -49,6 +49,8 @@ def build_short_video(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     model: str = "qwen2.5:3b",
     avatar_dir: Path = COMPAGNON_ASSETS_DIR,
+    voice: str | None = None,
+    silence_sec: float | None = None,
     deploy_pilot: bool = True,
     publish_youtube: bool = False,
     publish_tiktok: bool = False,
@@ -69,10 +71,16 @@ def build_short_video(
         logger.info("  [%d] %s", idx + 1, s)
 
     logger.info("=== [2/4] Synthèse Vocale Piper TTS (.111:8098) ===")
-    audio_path, cues, audio_duration = synthesize_script(
-        sentences=script_data.get("sentences", []),
-        work_dir=work_dir,
-    )
+    synth_kwargs: dict[str, Any] = {
+        "sentences": script_data.get("sentences", []),
+        "work_dir": work_dir,
+    }
+    if voice:
+        synth_kwargs["voice"] = voice
+    if silence_sec is not None:
+        synth_kwargs["initial_silence_sec"] = silence_sec
+
+    audio_path, cues, audio_duration = synthesize_script(**synth_kwargs)
     logger.info("Audio généré : %s (durée: %.2fs)", audio_path.name, audio_duration)
 
     logger.info("=== [3/4] Génération des sous-titres TikTok (.ass) ===")
@@ -162,6 +170,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Studio Content Bot — Pipeline Vidéo Avatar 0€")
     parser.add_argument("--topic", type=str, default=None, help="Sujet de la vidéo tech")
     parser.add_argument("--demo", action="store_true", help="Génère la vidéo démo avec script canonique")
+    parser.add_argument("--voice", type=str, default=None, help="Voix Piper TTS (ex: fr_FR-upmc-medium)")
+    parser.add_argument("--silence", type=float, default=None, help="Secondes de silence au début (défaut: 2.0)")
     parser.add_argument("--model", type=str, default="qwen2.5:3b", help="Modèle Ollama")
     parser.add_argument("--outdir", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Dossier de sortie")
     parser.add_argument("--youtube", action="store_true", help="Publie sur la chaîne YouTube @LBG-p8k")
@@ -176,6 +186,8 @@ def main() -> None:
         topic=topic,
         output_dir=Path(args.outdir),
         model=args.model,
+        voice=args.voice,
+        silence_sec=args.silence,
         publish_youtube=args.youtube,
         publish_tiktok=args.tiktok,
     )

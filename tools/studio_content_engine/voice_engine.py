@@ -22,6 +22,9 @@ import httpx
 logger = logging.getLogger(__name__)
 
 PIPER_URL = os.environ.get("LBG_PIPER_URL", "http://192.168.0.111:8098/v1/tts")
+DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr_FR-upmc-medium")
+DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
+INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "2.0"))
 
 
 @dataclass
@@ -33,10 +36,17 @@ class SentenceCue:
     words: list[str]
 
 
-def synthesize_sentence(text: str, out_path: Path, url: str = PIPER_URL) -> float:
+def synthesize_sentence(
+    text: str,
+    out_path: Path,
+    url: str = PIPER_URL,
+    voice: str = DEFAULT_VOICE,
+    length_scale: float = DEFAULT_LENGTH_SCALE,
+) -> float:
     """Synthétise une phrase via Piper TTS et renvoie la durée en secondes."""
+    payload: dict[str, Any] = {"text": text, "voice": voice, "length_scale": length_scale}
     with httpx.Client(timeout=30.0) as client:
-        res = client.post(url, json={"text": text})
+        res = client.post(url, json=payload)
         if res.status_code != 200:
             raise RuntimeError(f"Piper TTS erreur HTTP {res.status_code}: {res.text}")
         wav_bytes = res.content
@@ -55,14 +65,17 @@ def synthesize_sentence(text: str, out_path: Path, url: str = PIPER_URL) -> floa
 def synthesize_script(
     sentences: list[str],
     work_dir: Path,
+    voice: str = DEFAULT_VOICE,
+    length_scale: float = DEFAULT_LENGTH_SCALE,
     pause_between: float = 0.25,
+    initial_silence_sec: float = INITIAL_SILENCE_SEC,
 ) -> tuple[Path, list[SentenceCue], float]:
     """Synthétise l'ensemble du script et génère l'audio complet avec timings exacts."""
     work_dir.mkdir(parents=True, exist_ok=True)
     cues: list[SentenceCue] = []
     sentence_files: list[Path] = []
 
-    current_time = 0.2  # Petit silence initial de 200ms
+    current_time = initial_silence_sec  # Silence initial paramétrable (2.0s par défaut)
     sample_rate = 22050
     channels = 1
     sample_width = 2
@@ -73,7 +86,7 @@ def synthesize_script(
         if not clean_text:
             continue
         part_file = work_dir / f"sentence_{idx:02d}.wav"
-        dur = synthesize_sentence(clean_text, part_file)
+        dur = synthesize_sentence(clean_text, part_file, voice=voice, length_scale=length_scale)
         sentence_files.append(part_file)
 
         words = clean_text.split()
@@ -111,7 +124,7 @@ def synthesize_script(
     # Pause calibrée en échantillons (multiple exact de 2 octets, aucun décalage de phase)
     pause_samples = int(sample_rate * pause_between)
     pause_array = np.zeros(pause_samples, dtype=np.float32)
-    initial_silence = np.zeros(int(sample_rate * 0.2), dtype=np.float32)
+    initial_silence = np.zeros(int(sample_rate * initial_silence_sec), dtype=np.float32)
 
     all_chunks = [initial_silence]
     for idx, p in enumerate(parts):

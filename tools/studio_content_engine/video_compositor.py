@@ -231,8 +231,8 @@ def render_video(
         rms = rms_series[f_idx]
 
         # 1. Sélection de la pose d'avatar
-        # Clignement toutes les 3.6s pendant 0.14s
-        is_blink = (t % 3.6) < 0.14
+        # Clignement toutes les 3.6s pendant 0.14s (décalé à t=1.8s pour garder les yeux ouverts au début)
+        is_blink = ((t + 1.8) % 3.6) < 0.14
         # Sourire outro sur les 2 dernières secondes
         is_outro = t > (total_duration - 2.0)
 
