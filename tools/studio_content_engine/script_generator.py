@@ -124,10 +124,24 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
     }
 
 
+def inject_signature_intro(data: dict[str, Any]) -> dict[str, Any]:
+    """Injecte l'intro signature canonique au début de chaque script."""
+    title = data.get("title", "le sujet du jour")
+    signature = f"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {title}."
+
+    sentences = list(data.get("sentences", []))
+    # Ne pas doubler si l'intro est déjà présente
+    if not any("je suis lia" in s.lower() for s in sentences):
+        sentences.insert(0, signature)
+        data["sentences"] = sentences
+        data["signature_intro"] = signature
+    return data
+
+
 def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -> dict[str, Any]:
     """Génère un script structuré via Ollama local ou utilise le fallback canonique."""
     if not topic:
-        return dict(FALLBACK_SCRIPTS[0])
+        return inject_signature_intro(dict(FALLBACK_SCRIPTS[0]))
 
     prompt = f"Génère un script vidéo court TikTok/Shorts percutant en français sur le sujet : '{topic}'."
 
@@ -156,12 +170,12 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
                         data = json.loads(match.group(0))
                         if "sentences" in data and len(data["sentences"]) >= 3:
                             logger.info("Script généré avec succès par %s (%s) !", host, mod)
-                            return data
+                            return inject_signature_intro(data)
         except Exception as e:
             logger.warning("Échec génération sur %s (%s) : %s", host, mod, e)
 
     logger.info("Sélection du script canonique adapté au sujet : '%s'...", topic)
-    return _match_fallback_script(topic)
+    return inject_signature_intro(_match_fallback_script(topic))
 
 
 if __name__ == "__main__":

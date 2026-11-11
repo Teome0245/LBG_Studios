@@ -31,6 +31,12 @@
    - Ajout des nouveaux fichiers à la synchronisation SDS Windows `.10` (`tools/sync_client_to_win.py`) : 22 fichiers synchronisés avec succès.
    - Validation 100% verte du selftest client Godot headless (`tools/client_modular_selftest.gd`).
    - Déploiement du patch officiel sur le serveur de patch Launchpad (`192.168.0.246:8080`) via `deploy_prime_client_patch_246.sh`.
+4. **Studio Content Engine : Intro Signature "Lia" & Branding Chaîne** :
+   - **Phrase d'accroche Signature (`script_generator.py`)** : injection systématique en début de chaque script : *"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {sujet}."*
+   - **Branding & Visuel Cyberpunk (`video_compositor.py`)** :
+     - Nouveau badge d'identité en haut à gauche : `LIA // {CATEGORY}` en néon cyan.
+     - Posture de face naturelle avec regard ouvert et synchronisation labiale continue sur l'enveloppe RMS.
+   - **Validation de bout en bout** : génération du drop `drop_1794401991` (31.9s, 4.5 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
 
 ---
 

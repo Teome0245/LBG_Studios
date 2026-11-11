@@ -172,3 +172,4 @@ func _calculate_day_cycle_color(hour: float) -> Color:
 	else:
 		# Nuit noire : Bleu nuit profond lisible (pas tout noir opaque)
 		return Color(0.24, 0.28, 0.44)
+

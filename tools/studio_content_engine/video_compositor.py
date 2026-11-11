@@ -159,9 +159,9 @@ def render_video(
     # Bandeau supérieur Cyberpunk
     # Box header
     h_draw.rounded_rectangle([60, 80, WIDTH - 60, 240], radius=24, fill=(18, 24, 38, 220), outline=(0, 245, 212, 180), width=3)
-    # Badge catégorie
-    h_draw.rounded_rectangle([90, 105, 360, 145], radius=10, fill=(0, 245, 212, 40), outline=(0, 245, 212, 220), width=2)
-    h_draw.text((105, 112), f"⚡ {category.upper()}", fill=(0, 245, 212, 255), font=font_badge)
+    # Badge catégorie & avatar
+    h_draw.rounded_rectangle([90, 105, 420, 145], radius=10, fill=(0, 245, 212, 40), outline=(0, 245, 212, 220), width=2)
+    h_draw.text((105, 112), f"LIA // {category.upper()}", fill=(0, 245, 212, 255), font=font_badge)
 
     # Badge 100% Local
     h_draw.rounded_rectangle([WIDTH - 380, 105, WIDTH - 90, 145], radius=10, fill=(255, 0, 128, 40), outline=(255, 0, 128, 220), width=2)
@@ -236,10 +236,10 @@ def render_video(
         # Sourire outro sur les 2 dernières secondes
         is_outro = t > (total_duration - 2.0)
 
-        if is_outro and "joy" in poses:
-            active_pose = poses["joy"]
-        elif is_blink and "blink" in poses:
+        if is_blink and "blink" in poses:
             active_pose = poses["blink"]
+        elif is_outro and "joy" in poses:
+            active_pose = poses["joy"]
         elif rms > 0.15:
             # Alternance voyelle A / O selon fréquence du pitch/amplitude
             cycle_phase = int(t * 8) % 2

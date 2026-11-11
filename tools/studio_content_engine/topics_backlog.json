@@ -11,9 +11,9 @@
     "id": 2,
     "topic": "Comment faire tourner 10 Bots IA dans un monde 3D sans cluster",
     "category": "Godot 4 & Simulation",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-11T11:31:08.811533",
+    "youtube_url": "https://www.youtube.com/shorts/6t2DzzYlQho"
   },
   {
     "id": 3,
@@ -120,4 +120,3 @@
     "youtube_url": null
   }
 ]
-
