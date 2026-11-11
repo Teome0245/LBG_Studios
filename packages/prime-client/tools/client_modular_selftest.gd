@@ -330,9 +330,25 @@ func _init() -> void:
 	# Hyperspace
 	space_3d.trigger_hyperspace("Secteur Corellien")
 	assert(space_3d.is_hyperspace == true, "Le saut hyperspatial 3D doit être enclenché")
+	# Bascule Caméra Cockpit PVKK vs Vue Extérieure
+	assert(space_3d.camera_mode == 0, "Le mode caméra initial doit être Cockpit PVKK (0)")
+	space_3d.toggle_camera_mode()
+	assert(space_3d.camera_mode == 1, "La bascule caméra doit passer en Vue Extérieure 3D (1)")
+	space_3d.toggle_camera_mode()
+	assert(space_3d.camera_mode == 0, "La re-bascule caméra doit revenir en Cockpit PVKK (0)")
 	space_3d.exit_space()
 	assert(space_3d.visible == false, "La sortie de l'espace doit ramener au monde 2D")
 	space_3d.free()
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 22 Composants SWG Pre-CU 2D + Extension Spatiale JTL 3D vérifiés avec succès !")
+	# Test Canvas of Kings 2D Atmosphere & Day/Night Lighting
+	var CanvasAtmosphereScript := preload("res://scripts/canvas_of_kings_atmosphere.gd")
+	var atmo = CanvasAtmosphereScript.new()
+	assert(atmo != null, "Échec instanciation CanvasOfKingsAtmosphere")
+	atmo.set_world_clock({"game_hour": 14.5, "is_night": false, "light_ambient": 0.95})
+	assert(atmo._game_hour == 14.5, "L'horloge solaire doit être mise à jour à 14.5h")
+	atmo.set_world_clock({"game_hour": 23.0, "is_night": true, "light_ambient": 0.2})
+	assert(atmo._game_hour == 23.0, "L'horloge solaire doit être mise à jour à 23h (nuit)")
+	atmo.free()
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 22 Composants SWG Pre-CU 2D + Extension Spatiale JTL 3D + Ambiance Canvas of Kings vérifiés avec succès !")
 	quit(0)

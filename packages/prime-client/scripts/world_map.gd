@@ -24,15 +24,30 @@ var _grid_color: Color = Color(0.15, 0.15, 0.25, 0.6)
 @onready var _hub_ground: HubGroundLayer = $HubGroundLayer
 @onready var _hub_props: HubPropsLayer = $HubPropsLayer
 
+const _AtmosphereScript = preload("res://scripts/canvas_of_kings_atmosphere.gd")
+var _atmosphere: CanvasOfKingsAtmosphere = null
+
 var _backdrop: Node2D = null
 
 func _ready() -> void:
 	_load_map_config()
 	_setup_backdrop()
+	_setup_atmosphere()
 	_load_map_texture()
 	_apply_scale()
 	_apply_world_render()
 	set_process(false)
+
+func _setup_atmosphere() -> void:
+	if _atmosphere == null:
+		_atmosphere = _AtmosphereScript.new()
+		add_child(_atmosphere)
+
+func set_world_clock(wc: Dictionary) -> void:
+	if _atmosphere != null and _atmosphere.has_method("set_world_clock"):
+		_atmosphere.set_world_clock(wc)
+	if _hub_buildings != null and _hub_buildings.has_method("set_world_clock"):
+		_hub_buildings.set_world_clock(wc)
 
 func _process(_delta: float) -> void:
 	pass

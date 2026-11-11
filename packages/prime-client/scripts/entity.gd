@@ -468,25 +468,29 @@ func _draw() -> void:
 	elif faction == "rebel":
 		draw_circle(draw_pos + Vector2(token_r * 0.7, -token_r * 0.7), 3.5, Color(0.95, 0.6, 0.15, 0.95)) # Badge Rebelle orange
 
-	# Lame de Sabre Laser Jedi 2D (Plasma émissif)
+	# Lame de Sabre Laser Jedi 2D (Plasma émissif & Halo de lumière)
 	if is_lightsaber_active and kind == "player":
 		var blade_dir := Vector2(sin(facing_angle), cos(facing_angle))
 		var blade_start := draw_pos + blade_dir * (token_r * 0.6)
 		var blade_end := draw_pos + blade_dir * (token_r * 2.4)
-		# Halo externe
-		draw_line(blade_start, blade_end, lightsaber_color.lightened(0.3), 3.5, true)
+		# Halo lumineux au sol
+		draw_circle(draw_pos, token_r * 1.8, Color(lightsaber_color.r, lightsaber_color.g, lightsaber_color.b, 0.12))
+		# Halo externe émissif
+		draw_line(blade_start, blade_end, lightsaber_color.lightened(0.3), 4.5, true)
 		# Cœur de plasma blanc intense
-		draw_line(blade_start, blade_end, Color.WHITE, 1.8, true)
-		draw_circle(blade_start, 2.0, lightsaber_color)
+		draw_line(blade_start, blade_end, Color.WHITE, 2.0, true)
+		draw_circle(blade_start, 2.5, lightsaber_color)
 
 	# Droïde Astromécano R2 / MSE compagnon 2D
 	if kind == "droid" or "r2" in entity_key.to_lower():
+		draw_colored_polygon(_ellipse_points(draw_pos + Vector2(2, 4), 8.0, 3.5, 12), Color(0, 0, 0, 0.28))
 		draw_circle(draw_pos, 7.0, Color(0.9, 0.92, 0.95)) # Corps blanc
 		draw_arc(draw_pos, 7.0, -PI, 0.0, 16, Color(0.1, 0.35, 0.85), 3.0, true) # Dôme bleu
 		draw_circle(draw_pos + Vector2(0, -3), 1.5, Color(1.0, 0.1, 0.1)) # Œil rouge
 
 	# Sonde Impériale Arakyd MK-IV 2D
 	if "arakyd" in entity_key.to_lower() or "probe" in entity_key.to_lower():
+		draw_colored_polygon(_ellipse_points(draw_pos + Vector2(2, 8), 9.0, 4.0, 12), Color(0, 0, 0, 0.22))
 		draw_circle(draw_pos, 8.0, Color(0.15, 0.15, 0.18))
 		draw_circle(draw_pos, 3.0, Color(1.0, 0.1, 0.1)) # Capteur rouge
 		var p_wave := 0.4 + 0.3 * sin(Time.get_ticks_msec() * 0.008)
@@ -501,15 +505,22 @@ func _draw() -> void:
 		elif "bio" in entity_key: term_color = Color(0.3, 1.0, 0.4) # Vert biochimique
 		elif "planets" in entity_key: term_color = Color(0.7, 0.5, 1.0) # Violet galactique
 
-		# Piédestal hexagonal et écran holo
-		draw_circle(draw_pos + Vector2(1, 1), 7.0, Color(0, 0, 0, 0.3))
-		draw_circle(draw_pos, 6.0, Color(0.2, 0.22, 0.25))
-		draw_circle(draw_pos, 4.0, term_color)
+		# Halo de lumière ambiante au sol style Canvas of Kings
 		var t_glow := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.005)
-		draw_arc(draw_pos, 9.0, 0.0, TAU, 16, Color(term_color.r, term_color.g, term_color.b, t_glow), 1.5, true)
+		draw_circle(draw_pos, 22.0, Color(term_color.r, term_color.g, term_color.b, 0.08 * t_glow))
+		# Ombre de socle
+		draw_colored_polygon(_ellipse_points(draw_pos + Vector2(3, 3), 8.5, 4.5, 12), Color(0, 0, 0, 0.35))
+		# Piédestal hexagonal et écran holo
+		draw_circle(draw_pos, 6.5, Color(0.2, 0.22, 0.25))
+		draw_circle(draw_pos, 4.5, term_color)
+		draw_arc(draw_pos, 9.5, 0.0, TAU, 16, Color(term_color.r, term_color.g, term_color.b, t_glow), 1.5, true)
 
 	# Chasseur Incom T-65B X-Wing au sol (Starport)
 	if "ship:" in entity_key or "xwing" in entity_key:
+		# Ombre portée des 4 ailes sur le tarmac
+		var sh_off := Vector2(-5, 6)
+		draw_line(draw_pos + sh_off + Vector2(-16, -8), draw_pos + sh_off + Vector2(16, 8), Color(0, 0, 0, 0.25), 3.5)
+		draw_line(draw_pos + sh_off + Vector2(-16, 8), draw_pos + sh_off + Vector2(16, -8), Color(0, 0, 0, 0.25), 3.5)
 		# Fuselage
 		draw_rect(Rect2(draw_pos.x - 3, draw_pos.y - 14, 6, 28), Color(0.85, 0.85, 0.88))
 		# Cockpit

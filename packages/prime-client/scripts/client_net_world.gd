@@ -346,6 +346,8 @@ func on_ws_zone_state(payload: Dictionary) -> void:
 		var wc: Dictionary = payload.get("world_clock")
 		var wm_clock: Node = main.get_node_or_null("WorldMap")
 		if wm_clock:
+			if wm_clock.has_method("set_world_clock"):
+				wm_clock.set_world_clock(wc)
 			var bl_clock: Node = wm_clock.get_node_or_null("HubBuildingsLayer")
 			if bl_clock and bl_clock.has_method("set_world_clock"):
 				bl_clock.set_world_clock(wc)

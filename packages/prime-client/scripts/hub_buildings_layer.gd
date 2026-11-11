@@ -58,9 +58,14 @@ func _draw_building(b: Dictionary) -> void:
 	var center := Projection3D2D.to_screen(Vector3(cx, 0.0, cz))
 	var rect := Rect2(center - Vector2(half_px, half_px), Vector2(half_px * 2.0, half_px * 2.0))
 
-	# 1. Ombre portée douce vers le Sud-Ouest (soleil rasant du désert)
+	# 1. Ombre portée douce solaire dynamique (Canvas of Kings)
 	var shadow_off := Vector2(-6.0, 8.0)
-	draw_rect(Rect2(rect.position + shadow_off, rect.size), Color(0.12, 0.09, 0.06, 0.22), true)
+	var shadow_alpha := 0.24
+	var wm = get_parent()
+	if wm and "_atmosphere" in wm and wm._atmosphere != null:
+		shadow_off = wm._atmosphere.get_sun_shadow_offset()
+		shadow_alpha = wm._atmosphere.get_sun_shadow_alpha()
+	draw_rect(Rect2(rect.position + shadow_off, rect.size), Color(0.10, 0.08, 0.05, shadow_alpha), true)
 
 	# 2. Sol intérieur dallé parchemin/pierre claire (style plan d'architecte Dyson Logos)
 	_draw_interior_floor(rect, kind)

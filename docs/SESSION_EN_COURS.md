@@ -1,10 +1,36 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-10  
+**Mis à jour** : 2026-11-11  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Intégration complète de la veille technique (Revue LLM, Second Brain Lore, Risk Gate, Topology Graph Pilot UI)**.
+**Fil** : canon O1/O2/O3 — **Élévation Graphique Prime Client : 2D Top-Down (Canvas of Kings) + 3D Spatiale JTL (PVKK / Road to Vostok)**.
+
+---
+
+## Dernières actions réalisées (2026-11-11)
+1. **Élévation Graphique 2D Top-Down style *Canvas of Kings* (Prime Client 2D)** :
+   - **Moteur d'Ambiance Visuelle & Éclairage Dynamique (`canvas_of_kings_atmosphere.gd`)** :
+     - Cycle jour/nuit circadien 2D avec `CanvasModulate` synchronisé directement sur le snapshot réseau `world_clock` du hub (`game_hour`, `is_night`, `light_ambient`).
+     - Éclairage solaire et ombres portées douces dynamiques : calcul en temps réel de `_sun_shadow_offset` et `_sun_shadow_alpha` répercutés sur les bâtiments de Lost Heaven (`hub_buildings_layer.gd`) et les entités (`entity.gd`).
+     - Éclairage 2D nocturne procédural : 11 lanternes `PointLight2D` avec textures de gradient radial générées en mémoire (Hermite cubique, 0 dépendance asset manquante) et scintillement organique doux.
+     - Particules atmosphériques douces de poussière et vent (`CPUParticles2D`) centrées sur la caméra 2D.
+     - Ombre de contact au sol et halos lumineux doux sous les terminaux holo, les droïdes et les sabres laser.
+2. **Élévation Graphique 3D Spatiale JTL style *PVKK* & *Road to Vostok* (`swg_space_flight_3d.gd`)** :
+   - **Post-Processing & Rendu PBR Réaliste (Road to Vostok & Godot 4)** :
+     - Tonemapping `ACES` (`tonemap_exposure = 1.15`, `tonemap_white = 1.25`) pour un contraste doux sans brûlures de hautes lumières.
+     - Bloom / Glow cinématographique chaud (`glow_bloom = 0.35`, `glow_hdr_threshold = 0.9`, mode SCREEN) pour le rayonnement des étoiles, réacteurs et voyants.
+     - Nébuleuse spatiale cosmique (Brouillard de profondeur atmosphérique `fog_enabled = true`).
+     - Éclairage directionnel solaire à ombres PBR nettes (`DirectionalLight3D`) doublé d'un contre-jour cosmique bleuté de nébuleuse.
+     - Ceinture d'astéroïdes et roches PBR polygonales rugueuses (`metallic = 0.15, roughness = 0.92`) en rotation lente.
+   - **Poste de Pilotage & Mode Cockpit PVKK (Première Personne)** :
+     - Modélisation du cockpit tactile brutaliste / dieselpunk : montants verrière en acier riveté, console de bord en pan incliné (`roughness = 0.85`), moniteur CRT vectoriel à phosphore vert émissif (radar JTL avec coordonnées et ciblage TIE en direct), voyants LED d'état émissifs (SYS_NOMINAL, SHIELDS_OK, WEAPONS_HOT, WARN_RADAR), et levier de gaz (throttle) qui s'incline avec l'accélération.
+     - Bascule fluide double caméra avec la touche **`[V]`** ou le bouton HUD dédié : bascule entre **Cockpit PVKK Immersive** (1ère personne) et **Vue Extérieure 3D** (3e personne).
+     - En vue extérieure : 4 réacteurs ioniques de l'X-Wing avec panaches de plasma rose/rouge émissifs qui pulsent et s'étirent selon la vitesse (`current_speed`).
+3. **Outillage, Déploiement & Validation** :
+   - Ajout des nouveaux fichiers à la synchronisation SDS Windows `.10` (`tools/sync_client_to_win.py`) : 22 fichiers synchronisés avec succès.
+   - Validation 100% verte du selftest client Godot headless (`tools/client_modular_selftest.gd`).
+   - Déploiement du patch officiel sur le serveur de patch Launchpad (`192.168.0.246:8080`) via `deploy_prime_client_patch_246.sh`.
 
 ---
 
