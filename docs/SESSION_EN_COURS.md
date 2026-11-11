@@ -37,18 +37,18 @@
    - **Ksar Nomade** : 9 lanternes de campement nomade et oasis (Arches d'entrée Nord et Est, berges de l'Oasis, Grande tente de l'Ancien Nadir, Tente des soins de Miran Sael, Tente de troc, Caravansérail).
    - **Caravanes de Scrapaltai (`entity.gd`)** : détection automatique des membres de caravane (`npc:caravan_*`, nomades), ajout d'une lanterne 2D attachée `PointLight2D` ambrée projetant une lueur mobile et scintillante au sol, dessin des lanternes nomades en laiton et des bâtis/sacoches de bât.
    - **Halte des caravanes d'Al-Khali** : balises et feux de bivouac à mi-chemin entre Lost Heaven et le Ksar.
-5. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Fluide UPMC** :
+5. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Officielle Vivienne Neural** :
    - **Phrase d'accroche Signature (`script_generator.py`)** : injection systématique en début de chaque script : *"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {sujet}."*
    - **Silence Initial de 2.0s (`voice_engine.py`)** : introduction d'un silence paramétrable de 2.0s au début de la vidéo. L'avatar respire au repos avec les yeux ouverts, avant d'enchaîner sur la parole et les sous-titres ASS synchronisés.
-   - **Nouvelle Voix Haute Définition (`fr_FR-upmc-medium`)** :
-     - Modèle Piper TTS Sorbonne UPMC installé sur `.111:8098` (phonétique plus précise, diction fluide et naturelle).
-     - Support du paramètre de vitesse `length_scale` (0.92 = 8% plus rapide, dynamique et percutant pour les formats courts Shorts/TikTok).
-     - Déployé sur `/opt/lbg-piper-tts/app.py` du conteneur `.111` et testé avec succès.
+   - **Voix Officielle Sélectionnée (`fr-FR-VivienneMultilingualNeural`)** :
+     - Voix Microsoft Neural haute fidélité retenue par le studio (`fr-FR-VivienneMultilingualNeural`) : élocution vivante, diction ultra-propre et naturelle à 0 € de coût récurrent.
+     - Conversion automatique en WAV pcm 22050 Hz pour un alignement parfait avec le calage labial RMS et le formatage des sous-titres ASS.
+     - Repli de sécurité automatique vers le serveur Piper local (`fr_FR-upmc-medium` sur `.111:8098`) en cas de déconnexion réseau.
    - **Branding & Visuel Cyberpunk (`video_compositor.py`)** :
      - Nouveau badge d'identité en haut à gauche : `LIA // {CATEGORY}` en néon cyan.
      - Décalage du premier clignement d'yeux à t=1.8s pour garantir un regard franc et éveillé dès la première seconde.
      - Posture de face naturelle avec regard ouvert et synchronisation labiale continue sur l'enveloppe RMS.
-   - **Validation de bout en bout** : génération du drop `drop_1794407411` (35.1s, 4.95 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
+   - **Validation de bout en bout** : génération du drop `drop_1794407604` (33.4s, 4.49 Mo) avec voix Vivienne Neural, synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
 
 ---
 
