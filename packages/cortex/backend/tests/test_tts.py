@@ -25,9 +25,10 @@ def test_tts_voices_catalog():
     data = response.json()
     assert data["ok"] is True
     assert "voices" in data
-    assert len(data["voices"]) >= 3
+    assert len(data["voices"]) >= 4
+    assert any(v["id"] == "fr-FR-VivienneMultilingualNeural" for v in data["voices"])
     assert any(v["id"] == "fr_FR-siwis-medium" for v in data["voices"])
-    assert data["default_voice"] == "fr_FR-siwis-medium"
+    assert data["default_voice"] == "fr-FR-VivienneMultilingualNeural"
 
 
 def test_tts_viseme_generation_deterministic():

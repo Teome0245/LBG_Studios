@@ -37,18 +37,20 @@
    - **Ksar Nomade** : 9 lanternes de campement nomade et oasis (Arches d'entrée Nord et Est, berges de l'Oasis, Grande tente de l'Ancien Nadir, Tente des soins de Miran Sael, Tente de troc, Caravansérail).
    - **Caravanes de Scrapaltai (`entity.gd`)** : détection automatique des membres de caravane (`npc:caravan_*`, nomades), ajout d'une lanterne 2D attachée `PointLight2D` ambrée projetant une lueur mobile et scintillante au sol, dessin des lanternes nomades en laiton et des bâtis/sacoches de bât.
    - **Halte des caravanes d'Al-Khali** : balises et feux de bivouac à mi-chemin entre Lost Heaven et le Ksar.
-5. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Officielle Vivienne Neural** :
-   - **Phrase d'accroche Signature (`script_generator.py`)** : injection systématique en début de chaque script : *"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {sujet}."*
-   - **Silence Initial de 2.0s (`voice_engine.py`)** : introduction d'un silence paramétrable de 2.0s au début de la vidéo. L'avatar respire au repos avec les yeux ouverts, avant d'enchaîner sur la parole et les sous-titres ASS synchronisés.
-   - **Voix Officielle Sélectionnée (`fr-FR-VivienneMultilingualNeural`)** :
-     - Voix Microsoft Neural haute fidélité retenue par le studio (`fr-FR-VivienneMultilingualNeural`) : élocution vivante, diction ultra-propre et naturelle à 0 € de coût récurrent.
-     - Conversion automatique en WAV pcm 22050 Hz pour un alignement parfait avec le calage labial RMS et le formatage des sous-titres ASS.
-     - Repli de sécurité automatique vers le serveur Piper local (`fr_FR-upmc-medium` sur `.111:8098`) en cas de déconnexion réseau.
-   - **Branding & Visuel Cyberpunk (`video_compositor.py`)** :
-     - Nouveau badge d'identité en haut à gauche : `LIA // {CATEGORY}` en néon cyan.
-     - Décalage du premier clignement d'yeux à t=1.8s pour garantir un regard franc et éveillé dès la première seconde.
-     - Posture de face naturelle avec regard ouvert et synchronisation labiale continue sur l'enveloppe RMS.
-   - **Validation de bout en bout** : génération du drop `drop_1794407604` (33.4s, 4.49 Mo) avec voix Vivienne Neural, synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
+5. **Studio Content Engine : Voix Officielle Vivienne Neural, 2s Silence & Fix Phonétique ("GitHub")** :
+   - **Voix Officielle Sélectionnée (`fr-FR-VivienneMultilingualNeural`)** : élocution vivante, diction ultra-propre et naturelle à 0 € de coût récurrent.
+   - **Correction Phonétique Orale (`voice_engine.py`)** : règle automatique transposant "GitHub" en "Guite Heube" pour l'audio sans altérer l'orthographe exacte dans les sous-titres ASS.
+   - **Silence Initial de 2.0s & Phrase Signature** : 2 secondes de regard franc avant le démarrage de la présentation *"Bonjour, je suis Lia..."*.
+   - **Validation de bout en bout** : génération du drop `drop_1794407604` (33.4s, 4.49 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
+6. **Compagnon Desktop & Backend Cortex : Intégration de la Voix Vivienne Neural** :
+   - **Backend Cortex (`packages/cortex/backend/services/tts_service.py` & `/v1/tts`)** :
+     - Ajout de `fr-FR-VivienneMultilingualNeural` comme voix par défaut du Compagnon (`default_voice`).
+     - Synthèse audio WAV haute fidélité avec calcul synchronisé des 5 visèmes morph-targets VRM (`aa`, `ih`, `ou`, `ee`, `oh`).
+     - Installation des dépendances et déploiement validé sur le serveur `.140:8000` (`lbg-backend.service`).
+     - 153 tests unitaires backend verts (`pytest backend/tests`).
+   - **Agent Windows .10 (`compagnon_parler`)** :
+     - Nouvelle capability installée sur l'agent Windows (`.10:5005`) pour synthétiser et jouer en direct la voix Vivienne Neural sur les haut-parleurs du PC avec notification au pont avatar VRM (`127.0.0.1:8765`).
+     - Test d'élocution en direct validé avec succès.
 
 ---
 

@@ -13,6 +13,7 @@ import io
 import json
 import logging
 import os
+import re
 import subprocess
 import wave
 from dataclasses import dataclass
@@ -28,6 +29,24 @@ PIPER_URL = os.environ.get("LBG_PIPER_URL", "http://192.168.0.111:8098/v1/tts")
 DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr-FR-VivienneMultilingualNeural")
 DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
 INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "2.0"))
+
+
+# Dictionnaire de correction phonétique pour la voix française (GitHub -> Guite Heube, etc.)
+PHONETIC_ORAL_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\bgithub\b", re.IGNORECASE), "Guite Heube"),
+    (re.compile(r"\bopen source\b", re.IGNORECASE), "opène source"),
+    (re.compile(r"\bapi\b", re.IGNORECASE), "A P I"),
+    (re.compile(r"\bllm\b", re.IGNORECASE), "L L M"),
+    (re.compile(r"\bframework\b", re.IGNORECASE), "fraimwork"),
+]
+
+
+def phonetic_for_speech(text: str) -> str:
+    """Adapte les termes techniques anglophones pour une prononciation naturelle en français."""
+    spoken = text
+    for pattern, replacement in PHONETIC_ORAL_RULES:
+        spoken = pattern.sub(replacement, spoken)
+    return spoken
 
 
 @dataclass
@@ -131,7 +150,8 @@ def synthesize_script(
         if not clean_text:
             continue
         part_file = work_dir / f"sentence_{idx:02d}.wav"
-        dur = synthesize_sentence(clean_text, part_file, voice=voice, length_scale=length_scale)
+        spoken_text = phonetic_for_speech(clean_text)
+        dur = synthesize_sentence(spoken_text, part_file, voice=voice, length_scale=length_scale)
         sentence_files.append(part_file)
 
         words = clean_text.split()

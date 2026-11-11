@@ -30,7 +30,7 @@ class TtsStatusResponse(BaseModel):
 
 class TtsSynthesizeRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Texte à synthétiser")
-    voice: str = Field(default="fr_FR-siwis-medium", description="Identifiant de la voix")
+    voice: str = Field(default="fr-FR-VivienneMultilingualNeural", description="Identifiant de la voix")
     speed: float = Field(default=1.0, ge=0.5, le=2.0, description="Facteur de vitesse")
 
 
@@ -72,7 +72,7 @@ async def get_voices() -> dict[str, Any]:
     return {
         "ok": True,
         "voices": get_available_voices(),
-        "default_voice": "fr_FR-siwis-medium",
+        "default_voice": "fr-FR-VivienneMultilingualNeural",
     }
 
 

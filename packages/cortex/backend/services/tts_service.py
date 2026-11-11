@@ -24,12 +24,28 @@ DEFAULT_TIMEOUT_SEC = 15.0
 
 VOICES_CATALOG: list[dict[str, Any]] = [
     {
-        "id": "fr_FR-siwis-medium",
-        "name": "Siwis (Femme, Expressive)",
+        "id": "fr-FR-VivienneMultilingualNeural",
+        "name": "Vivienne (Femme, Studio & Diction Haute Fidélité)",
         "language": "fr",
         "gender": "female",
-        "description": "Voix féminine chaleureuse et fluide, recommandée pour Compagnon Lyra.",
+        "description": "Voix officielle du studio et du Compagnon : élocution vivante, chaleureuse et naturelle.",
         "is_default": True,
+    },
+    {
+        "id": "fr_FR-siwis-medium",
+        "name": "Siwis (Femme, Expressive locale Piper)",
+        "language": "fr",
+        "gender": "female",
+        "description": "Voix féminine locale Piper (.111:8098).",
+        "is_default": False,
+    },
+    {
+        "id": "fr_FR-upmc-medium",
+        "name": "UPMC (Femme, Diction Claire locale Piper)",
+        "language": "fr",
+        "gender": "female",
+        "description": "Voix féminine Sorbonne UPMC locale (.111:8098).",
+        "is_default": False,
     },
     {
         "id": "fr_FR-upmc-pierre",
@@ -228,9 +244,40 @@ def generate_visemes_from_text(text: str, speed: float = 1.0) -> list[dict[str, 
     return visemes
 
 
+async def _synthesize_edge_tts(text: str, voice: str, speed: float = 1.0) -> bytes:
+    """Synthétise via Microsoft Edge Neural TTS et renvoie les octets WAV pcm_s16le 22050 Hz."""
+    import subprocess
+    import tempfile
+    import edge_tts
+
+    pct = int(round((speed - 1.0) * 100))
+    rate_str = f"{pct:+d}%"
+    comm = edge_tts.Communicate(text, voice, rate=rate_str)
+
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as mp3_f:
+        mp3_path = mp3_f.name
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_f:
+        wav_path = wav_f.name
+
+    try:
+        await comm.save(mp3_path)
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", mp3_path, "-ar", "22050", "-ac", "1", wav_path],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        with open(wav_path, "rb") as f:
+            return f.read()
+    finally:
+        for p in (mp3_path, wav_path):
+            if os.path.exists(p):
+                os.unlink(p)
+
+
 async def synthesize_speech(
     text: str,
-    voice: str = "fr_FR-siwis-medium",
+    voice: str = "fr-FR-VivienneMultilingualNeural",
     speed: float = 1.0,
 ) -> dict[str, Any]:
     """Synthétise la voix et retourne le payload avec audio et visèmes synchronisés."""
@@ -246,11 +293,45 @@ async def synthesize_speech(
     visemes = generate_visemes_from_text(clean_text, speed=speed)
     total_dur = (visemes[-1]["time_offset"] + visemes[-1]["duration"]) if visemes else 0.5
 
-    if provider == "piper" and url:
+    # Si mode Mock explicite activé
+    if provider == "mock":
+        mock_wav_header = b"RIFF$\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00"
+        mock_b64 = base64.b64encode(mock_wav_header).decode("ascii")
+        return {
+            "ok": True,
+            "text": clean_text,
+            "voice": voice,
+            "provider": "mock",
+            "audio_b64": mock_b64,
+            "format": "audio/wav",
+            "duration_sec": round(total_dur, 2),
+            "visemes": visemes,
+        }
+
+    # 1. Priorité Voix Vivienne Neural (0€, ultra-haute fidélité)
+    if "neural" in voice.lower() or voice.startswith("fr-FR-"):
+        try:
+            wav_bytes = await _synthesize_edge_tts(clean_text, voice, speed=speed)
+            audio_b64 = base64.b64encode(wav_bytes).decode("ascii")
+            return {
+                "ok": True,
+                "text": clean_text,
+                "voice": voice,
+                "provider": "edge_neural",
+                "audio_b64": audio_b64,
+                "format": "audio/wav",
+                "duration_sec": round(total_dur, 2),
+                "visemes": visemes,
+            }
+        except Exception as exc:  # noqa: BLE001
+            LOG.warning("Fallback Edge TTS vers Piper local: %s", exc)
+
+    # 2. Piper local (.111:8098) ou amont configuré
+    if url:
         try:
             payload = {
                 "text": clean_text,
-                "voice": voice,
+                "voice": voice if not voice.startswith("fr-FR-") else "fr_FR-upmc-medium",
                 "speed": speed,
             }
             async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT_SEC) as client:
@@ -271,7 +352,7 @@ async def synthesize_speech(
         except Exception as exc:  # noqa: BLE001
             LOG.warning("Fallback TTS après exception amont: %s", exc)
 
-    # Mode mock / web_speech : retourne les métadonnées et visèmes avec audio mock
+    # Mode web_speech / fallback
     mock_wav_header = b"RIFF$\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00D\xac\x00\x00\x88X\x01\x00\x02\x00\x10\x00data\x00\x00\x00\x00"
     mock_b64 = base64.b64encode(mock_wav_header).decode("ascii")
 
