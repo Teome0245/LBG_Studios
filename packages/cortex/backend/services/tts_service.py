@@ -66,6 +66,25 @@ VOICES_CATALOG: list[dict[str, Any]] = [
 ]
 
 
+# Dictionnaire de correction phonétique pour la voix française (GitHub -> Guite Heube, etc.)
+PHONETIC_ORAL_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"\bgithub\b", re.IGNORECASE), "Guite Heube"),
+    (re.compile(r"\bopen source\b", re.IGNORECASE), "opène source"),
+    (re.compile(r"\bapi\b", re.IGNORECASE), "A P I"),
+    (re.compile(r"\bllm\b", re.IGNORECASE), "L L M"),
+    (re.compile(r"\bframework\b", re.IGNORECASE), "fraimwork"),
+    (re.compile(r"\bgodot\b", re.IGNORECASE), "Godo"),
+]
+
+
+def phonetic_for_speech(text: str) -> str:
+    """Adapte les termes techniques anglophones pour une prononciation naturelle en français."""
+    spoken = text
+    for pattern, replacement in PHONETIC_ORAL_RULES:
+        spoken = pattern.sub(replacement, spoken)
+    return spoken
+
+
 def tts_enabled() -> bool:
     return os.environ.get("LBG_TTS_ENABLED", "true").lower() in ("1", "true", "yes", "on")
 
@@ -248,6 +267,7 @@ async def _synthesize_edge_tts(text: str, voice: str, speed: float = 1.0) -> byt
     """Synthétise via Microsoft Edge Neural TTS et renvoie les octets WAV pcm_s16le 22050 Hz."""
     import subprocess
     import tempfile
+
     import edge_tts
 
     pct = int(round((speed - 1.0) * 100))
@@ -309,9 +329,10 @@ async def synthesize_speech(
         }
 
     # 1. Priorité Voix Vivienne Neural (0€, ultra-haute fidélité)
+    spoken_text = phonetic_for_speech(clean_text)
     if "neural" in voice.lower() or voice.startswith("fr-FR-"):
         try:
-            wav_bytes = await _synthesize_edge_tts(clean_text, voice, speed=speed)
+            wav_bytes = await _synthesize_edge_tts(spoken_text, voice, speed=speed)
             audio_b64 = base64.b64encode(wav_bytes).decode("ascii")
             return {
                 "ok": True,
@@ -330,7 +351,7 @@ async def synthesize_speech(
     if url:
         try:
             payload = {
-                "text": clean_text,
+                "text": spoken_text,
                 "voice": voice if not voice.startswith("fr-FR-") else "fr_FR-upmc-medium",
                 "speed": speed,
             }

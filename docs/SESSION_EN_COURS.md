@@ -42,15 +42,16 @@
    - **Correction Phonétique Orale (`voice_engine.py`)** : règle automatique transposant "GitHub" en "Guite Heube" pour l'audio sans altérer l'orthographe exacte dans les sous-titres ASS.
    - **Silence Initial de 2.0s & Phrase Signature** : 2 secondes de regard franc avant le démarrage de la présentation *"Bonjour, je suis Lia..."*.
    - **Validation de bout en bout** : génération du drop `drop_1794407604` (33.4s, 4.49 Mo) synchronisé vers `O:\OneDrive\Pictures\IA\Contenue\`.
-6. **Compagnon Desktop & Backend Cortex : Intégration de la Voix Vivienne Neural** :
+6. **Compagnon Desktop & Backend Cortex : Intégration de la Voix Vivienne Neural & Dictionnaire Phonétique** :
    - **Backend Cortex (`packages/cortex/backend/services/tts_service.py` & `/v1/tts`)** :
      - Ajout de `fr-FR-VivienneMultilingualNeural` comme voix par défaut du Compagnon (`default_voice`).
+     - Application automatique du dictionnaire phonétique oral (`GitHub` -> `Guite Heube`, `open source` -> `opène source`, `Godot` -> `Godo`, `API`, `LLM`, `framework`) pour toutes les répliques du Compagnon.
      - Synthèse audio WAV haute fidélité avec calcul synchronisé des 5 visèmes morph-targets VRM (`aa`, `ih`, `ou`, `ee`, `oh`).
      - Installation des dépendances et déploiement validé sur le serveur `.140:8000` (`lbg-backend.service`).
      - 153 tests unitaires backend verts (`pytest backend/tests`).
    - **Agent Windows .10 (`compagnon_parler`)** :
      - Nouvelle capability installée sur l'agent Windows (`.10:5005`) pour synthétiser et jouer en direct la voix Vivienne Neural sur les haut-parleurs du PC avec notification au pont avatar VRM (`127.0.0.1:8765`).
-     - Test d'élocution en direct validé avec succès.
+     - Test d'élocution avec termes techniques ("GitHub", "Godot", "open source") validé avec succès en direct sur Windows .10.
 
 ---
 
