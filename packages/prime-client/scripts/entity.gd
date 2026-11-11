@@ -60,6 +60,10 @@ var lightsaber_color: Color = Color(0.2, 0.7, 1.0)
 var current_hp: int = 1000
 var max_hp: int = 1000
 
+# Lanterne dynamique de caravane
+var _caravan_lantern_light: PointLight2D = null
+static var _shared_caravan_light_tex: Texture2D = null
+
 func set_force_nameplate(enabled: bool) -> void:
 	force_nameplate = enabled
 	queue_redraw()
@@ -286,6 +290,7 @@ func _process(delta: float) -> void:
 		if not _smooth_enabled and not (kind == "beast" and combat_goal == "telegraph"):
 			set_process(false)
 	_update_sprite_offset()
+	_update_caravan_lantern_tick()
 	# Évite redraw 60 Hz × N entités si rien n'a bougé à l'écran.
 	if moved or _last_draw_pos == Vector2.INF or position.distance_squared_to(_last_draw_pos) > 0.25:
 		_last_draw_pos = position
@@ -402,6 +407,52 @@ func _update_sprite_offset() -> void:
 			elif sin_a > 0.2:
 				sprite.flip_h = false
 
+func is_caravan_member() -> bool:
+	if entity_key.begins_with("npc:caravan_"):
+		return true
+	var ek := entity_key.to_lower()
+	if "caravan" in ek:
+		return true
+	var lbl := label_text.to_lower()
+	return "caravane" in lbl or "caravanier" in lbl or "nomade" in lbl
+
+static func _get_or_create_caravan_light_texture() -> Texture2D:
+	if _shared_caravan_light_tex != null:
+		return _shared_caravan_light_tex
+	var radius_px := 96
+	var img := Image.create(radius_px * 2, radius_px * 2, false, Image.FORMAT_RGBA8)
+	var center := Vector2(radius_px, radius_px)
+	var max_r := float(radius_px)
+	for y in range(radius_px * 2):
+		for x in range(radius_px * 2):
+			var dist := center.distance_to(Vector2(x, y))
+			if dist >= max_r:
+				img.set_pixel(x, y, Color(1, 1, 1, 0))
+			else:
+				var t := 1.0 - (dist / max_r)
+				var alpha := t * t * (3.0 - 2.0 * t)
+				img.set_pixel(x, y, Color(1, 1, 1, alpha))
+	_shared_caravan_light_tex = ImageTexture.create_from_image(img)
+	return _shared_caravan_light_tex
+
+func _update_caravan_lantern_tick() -> void:
+	if not is_caravan_member():
+		if _caravan_lantern_light != null and _caravan_lantern_light.visible:
+			_caravan_lantern_light.visible = false
+		return
+	if _caravan_lantern_light == null:
+		_caravan_lantern_light = PointLight2D.new()
+		_caravan_lantern_light.name = "CaravanLanternLight"
+		_caravan_lantern_light.texture = _get_or_create_caravan_light_texture()
+		_caravan_lantern_light.texture_scale = 2.0
+		_caravan_lantern_light.color = Color(1.0, 0.76, 0.38) # Ambre nomade chaleureux
+		_caravan_lantern_light.energy = 0.95
+		add_child(_caravan_lantern_light)
+	if _caravan_lantern_light:
+		_caravan_lantern_light.visible = true
+		var t := Time.get_ticks_msec() * 0.0035 + float(object_id * 2.2)
+		_caravan_lantern_light.energy = 0.86 + 0.14 * sin(t * 1.8) * cos(t * 2.4)
+
 func _draw() -> void:
 	if kind != "player" and _is_clutter_visual():
 		return
@@ -514,6 +565,26 @@ func _draw() -> void:
 		draw_circle(draw_pos, 6.5, Color(0.2, 0.22, 0.25))
 		draw_circle(draw_pos, 4.5, term_color)
 		draw_arc(draw_pos, 9.5, 0.0, TAU, 16, Color(term_color.r, term_color.g, term_color.b, t_glow), 1.5, true)
+
+	# Caravanes Nomades de Scrapaltai (Lanterne de convoi & Bâtis de transport)
+	if is_caravan_member():
+		var l_offset := Vector2(token_r * 0.72, token_r * 0.15 + _bob_offset_px() * 0.5)
+		var l_pos := draw_pos + l_offset
+		# Lueur d'ambiance projetée au sol style Canvas of Kings
+		var c_flicker := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.007)
+		draw_circle(l_pos, 20.0, Color(1.0, 0.76, 0.35, 0.12 * c_flicker))
+		# Ombre de la lanterne
+		draw_colored_polygon(_ellipse_points(l_pos + Vector2(1, 4), 3.5, 2.0, 8), Color(0, 0, 0, 0.25))
+		# Corps en cuivre / laiton
+		draw_rect(Rect2(l_pos.x - 2.5, l_pos.y - 4.0, 5.0, 6.0), Color(0.38, 0.26, 0.16))
+		# Flamme / verre incandescent
+		draw_rect(Rect2(l_pos.x - 1.5, l_pos.y - 3.0, 3.0, 4.0), Color(1.0, 0.88, 0.42, 0.95))
+		# Anse supérieure de suspension
+		draw_arc(l_pos + Vector2(0, -4.0), 2.2, -PI, 0.0, 8, Color(0.22, 0.16, 0.10), 1.2, true)
+		# Bête de bât de convoi : sacoches et coffres de caravane des deux côtés
+		if "beast" in entity_key.to_lower():
+			draw_rect(Rect2(draw_pos.x - token_r * 0.85, draw_pos.y - 4.0, 4.5, 8.0), Color(0.42, 0.32, 0.20)) # Bât gauche
+			draw_rect(Rect2(draw_pos.x + token_r * 0.55, draw_pos.y - 4.0, 4.5, 8.0), Color(0.42, 0.32, 0.20)) # Bât droit
 
 	# Chasseur Incom T-65B X-Wing au sol (Starport)
 	if "ship:" in entity_key or "xwing" in entity_key:

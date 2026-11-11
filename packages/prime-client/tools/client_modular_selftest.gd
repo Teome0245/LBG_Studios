@@ -344,11 +344,21 @@ func _init() -> void:
 	var CanvasAtmosphereScript := preload("res://scripts/canvas_of_kings_atmosphere.gd")
 	var atmo = CanvasAtmosphereScript.new()
 	assert(atmo != null, "Échec instanciation CanvasOfKingsAtmosphere")
+	assert(atmo._lights_nodes.size() >= 35, "L'atmosphère doit indexer au moins 35 lanternes (LH entrées, Zalem, Ksar, Oasis)")
 	atmo.set_world_clock({"game_hour": 14.5, "is_night": false, "light_ambient": 0.95})
 	assert(atmo._game_hour == 14.5, "L'horloge solaire doit être mise à jour à 14.5h")
 	atmo.set_world_clock({"game_hour": 23.0, "is_night": true, "light_ambient": 0.2})
 	assert(atmo._game_hour == 23.0, "L'horloge solaire doit être mise à jour à 23h (nuit)")
 	atmo.free()
 
-	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 22 Composants SWG Pre-CU 2D + Extension Spatiale JTL 3D + Ambiance Canvas of Kings vérifiés avec succès !")
+	# Test Lanterne dynamique sur Caravane nomade
+	var ent_caravan = EntityScript.new()
+	ent_caravan.entity_key = "npc:caravan_leader"
+	ent_caravan.label_text = "Chef de caravane Al-Khali"
+	assert(ent_caravan.is_caravan_member() == true, "L'entité doit être reconnue comme membre de caravane")
+	ent_caravan._update_caravan_lantern_tick()
+	assert(ent_caravan._caravan_lantern_light != null, "La lanterne 2D PointLight2D doit être instanciée sur la caravane")
+	ent_caravan.free()
+
+	print("CLIENT_MODULAR_SELFTEST_OK: 4 modules + Inventory DnD + Hotbar + 22 Composants SWG Pre-CU 2D + Extension Spatiale JTL 3D + Ambiance Canvas of Kings (Lanternes Entrées LH, Zalem, Ksar & Caravanes) vérifiés avec succès !")
 	quit(0)

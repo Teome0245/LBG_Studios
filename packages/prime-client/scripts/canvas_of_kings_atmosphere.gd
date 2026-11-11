@@ -20,14 +20,22 @@ var _particles: CPUParticles2D = null
 var _lantern_screen_positions: Array[Vector2] = []
 var _lights_nodes: Array[PointLight2D] = []
 
-func _ready() -> void:
+func _init() -> void:
 	name = "CanvasOfKingsAtmosphere"
 	z_index = 50 # Au-dessus des sols et bâtiments mais sous le HUD
+	_ensure_setup()
+
+func _ready() -> void:
+	_ensure_setup()
+	set_process(true)
+
+func _ensure_setup() -> void:
+	if _lights_nodes.size() > 0:
+		return
 	_light_texture = _generate_soft_light_texture(128)
 	_setup_canvas_modulate()
 	_setup_atmospheric_particles()
 	_setup_hub_lights()
-	set_process(true)
 
 func _process(delta: float) -> void:
 	# Scintillement subtil et organique des lanternes la nuit
@@ -84,6 +92,7 @@ func _setup_atmospheric_particles() -> void:
 	add_child(_particles)
 
 func _setup_hub_lights() -> void:
+	# 1. Centre-ville de Lost Heaven (Plaza, commerces et bâtiments officiels)
 	var hub_center := Projection3D2D.to_screen(Vector3(4749.0, 0.0, -737.0))
 	_lantern_screen_positions = [
 		hub_center,                          # Rosace Plaza centrale
@@ -98,6 +107,57 @@ func _setup_hub_lights() -> void:
 		hub_center + Vector2(-134.5, 79.0),  # Mairie
 		hub_center + Vector2(135.5, 83.0),   # Missions
 	]
+
+	# 2. Entrées de Lost Heaven (Lumières de chaque côté des arches et portails)
+	# Porte Ouest — vers Zalem (x = 3688.9, z = -675.9)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(3688.9, 0.0, -662.0))) # Pilier Nord
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(3688.9, 0.0, -690.0))) # Pilier Sud
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(3665.0, 0.0, -676.0))) # Poste avancée route
+
+	# Porte Est — vers le Désert et l'Anneau (x = 5813.6, z = -982.5)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5813.6, 0.0, -968.0))) # Pilier Nord
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5813.6, 0.0, -998.0))) # Pilier Sud
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5838.0, 0.0, -982.0))) # Balise départ convoi
+
+	# Porte Sud — vers la Piste des Caravanes et le Shuttleport (x = 4749.0, z = -450.0)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4726.0, 0.0, -450.0))) # Côté Ouest
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4772.0, 0.0, -450.0))) # Côté Est
+
+	# Porte Nord — sortie palissade Lost Heaven (x = 4749.0, z = -408.0)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4726.0, 0.0, -408.0))) # Côté Ouest
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4772.0, 0.0, -408.0))) # Côté Est
+
+	# 3. Camp Avancé de Zalem (Poste frontière et garnison Ouest)
+	# Checkpoint & barrières d'accès Ouest de Zalem (de chaque côté)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1460.0, 0.0, -535.0))) # Pilier Nord
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1460.0, 0.0, -565.0))) # Pilier Sud
+	# Bâtiments de l'avant-poste
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1200.0, 0.0, -520.0))) # Commandement Capitaine Vael
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1060.0, 0.0, -440.0))) # Atelier Soren Kray
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1340.0, 0.0, -440.0))) # Caserne Milice
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1200.0, 0.0, -320.0))) # Relais des convois & Inn
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-980.0, 0.0, -680.0)))  # Dépôt de ravitaillement
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(-1200.0, 0.0, -450.0))) # Place centrale Zalem
+
+	# 4. Ksar Nomade (Village fortifié de l'Oasis et refuge caravanier)
+	# Grande Arche Nord d'entrée du Ksar (de chaque côté)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4938.0, 0.0, -3470.0))) # Pilier Ouest
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4962.0, 0.0, -3470.0))) # Pilier Est
+	# Arche Orientale d'entrée (de chaque côté)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5120.0, 0.0, -3588.0))) # Pilier Nord
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5120.0, 0.0, -3612.0))) # Pilier Sud
+	# Oasis du Ksar (Lanternes de berge douces)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4995.0, 0.0, -3670.0))) # Berge Ouest
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5045.0, 0.0, -3670.0))) # Berge Est
+	# Campement et tentes bédouines du Ksar
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4920.0, 0.0, -3760.0))) # Tente Ancien Nadir
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4820.0, 0.0, -3650.0))) # Tente Soins Miran Sael
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5120.0, 0.0, -3710.0))) # Tente Troc bédouine
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(4950.0, 0.0, -3800.0))) # Caravansérail nomade
+
+	# 5. Halte et relais de la piste des Caravanes (Oasis d'Al-Khali à mi-chemin)
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5480.0, 0.0, -2450.0))) # Relais d'Al-Khali 1
+	_lantern_screen_positions.append(Projection3D2D.to_screen(Vector3(5495.0, 0.0, -2465.0))) # Relais d'Al-Khali 2
 
 	for l_pos in _lantern_screen_positions:
 		var pl := PointLight2D.new()

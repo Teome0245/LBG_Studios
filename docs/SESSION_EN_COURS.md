@@ -31,7 +31,13 @@
    - Ajout des nouveaux fichiers à la synchronisation SDS Windows `.10` (`tools/sync_client_to_win.py`) : 22 fichiers synchronisés avec succès.
    - Validation 100% verte du selftest client Godot headless (`tools/client_modular_selftest.gd`).
    - Déploiement du patch officiel sur le serveur de patch Launchpad (`192.168.0.246:8080`) via `deploy_prime_client_patch_246.sh`.
-4. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Fluide UPMC** :
+4. **Éclairage 2D Avancé Canvas of Kings : Entrées de Lost Heaven, Camp Zalem, Ksar Nomade & Caravanes** :
+   - **Entrées de Lost Heaven** : 8 lanternes encadrant de chaque côté les piliers et arches d'entrée (Porte Ouest route de Zalem, Porte Est du désert, Porte Sud du shuttleport, Porte Nord palissade).
+   - **Camp Avancé de Zalem** : 8 lanternes ambrées de garnison (Checkpoint et barrières Ouest, Poste de commandement Capitaine Vael, Atelier Soren Kray, Caserne Milice, Relais des convois/Inn, Dépôt de ravitaillement, Place d'armes).
+   - **Ksar Nomade** : 9 lanternes de campement nomade et oasis (Arches d'entrée Nord et Est, berges de l'Oasis, Grande tente de l'Ancien Nadir, Tente des soins de Miran Sael, Tente de troc, Caravansérail).
+   - **Caravanes de Scrapaltai (`entity.gd`)** : détection automatique des membres de caravane (`npc:caravan_*`, nomades), ajout d'une lanterne 2D attachée `PointLight2D` ambrée projetant une lueur mobile et scintillante au sol, dessin des lanternes nomades en laiton et des bâtis/sacoches de bât.
+   - **Halte des caravanes d'Al-Khali** : balises et feux de bivouac à mi-chemin entre Lost Heaven et le Ksar.
+5. **Studio Content Engine : Intro Signature "Lia", 2s de Silence & Voix Fluide UPMC** :
    - **Phrase d'accroche Signature (`script_generator.py`)** : injection systématique en début de chaque script : *"Bonjour, je suis Lia, l'IA de La Boite à Geek ! Aujourd'hui je vous présente : {sujet}."*
    - **Silence Initial de 2.0s (`voice_engine.py`)** : introduction d'un silence paramétrable de 2.0s au début de la vidéo. L'avatar respire au repos avec les yeux ouverts, avant d'enchaîner sur la parole et les sous-titres ASS synchronisés.
    - **Nouvelle Voix Haute Définition (`fr_FR-upmc-medium`)** :

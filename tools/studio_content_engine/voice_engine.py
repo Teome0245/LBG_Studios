@@ -8,10 +8,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import logging
 import os
+import subprocess
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,7 +24,8 @@ import httpx
 logger = logging.getLogger(__name__)
 
 PIPER_URL = os.environ.get("LBG_PIPER_URL", "http://192.168.0.111:8098/v1/tts")
-DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr_FR-upmc-medium")
+# Par défaut : Voix Vivienne Multilingual Neural (ultra-fluide, diction parfaite, 0€)
+DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr-FR-VivienneMultilingualNeural")
 DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
 INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "2.0"))
 
@@ -36,14 +39,38 @@ class SentenceCue:
     words: list[str]
 
 
-def synthesize_sentence(
+async def _synthesize_edge_tts(text: str, voice: str, out_path: Path) -> float:
+    """Synthétise une phrase via Edge TTS Neural (Vivienne) et convertit en WAV 22050 Hz."""
+    import edge_tts
+
+    tmp_mp3 = out_path.with_suffix(".mp3")
+    comm = edge_tts.Communicate(text, voice)
+    await comm.save(str(tmp_mp3))
+
+    # Conversion en WAV pcm_s16le 22050 Hz mono pour le pipeline RMS / sync
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(tmp_mp3), "-ar", "22050", "-ac", "1", str(out_path)],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if tmp_mp3.exists():
+        tmp_mp3.unlink()
+
+    with wave.open(str(out_path), "rb") as wf:
+        frames = wf.getnframes()
+        rate = wf.getframerate()
+        return float(frames) / float(rate)
+
+
+def _synthesize_piper(
     text: str,
     out_path: Path,
     url: str = PIPER_URL,
-    voice: str = DEFAULT_VOICE,
+    voice: str = "fr_FR-upmc-medium",
     length_scale: float = DEFAULT_LENGTH_SCALE,
 ) -> float:
-    """Synthétise une phrase via Piper TTS et renvoie la durée en secondes."""
+    """Synthétise une phrase via Piper TTS local (.111:8098)."""
     payload: dict[str, Any] = {"text": text, "voice": voice, "length_scale": length_scale}
     with httpx.Client(timeout=30.0) as client:
         res = client.post(url, json=payload)
@@ -57,9 +84,27 @@ def synthesize_sentence(
     with wave.open(str(out_path), "rb") as wf:
         frames = wf.getnframes()
         rate = wf.getframerate()
-        duration = float(frames) / float(rate)
+        return float(frames) / float(rate)
 
-    return duration
+
+def synthesize_sentence(
+    text: str,
+    out_path: Path,
+    url: str = PIPER_URL,
+    voice: str = DEFAULT_VOICE,
+    length_scale: float = DEFAULT_LENGTH_SCALE,
+) -> float:
+    """Synthétise une phrase via le moteur approprié (Edge Neural ou Piper local)."""
+    # Si la voix est un modèle Edge Neural (ex: fr-FR-VivienneMultilingualNeural)
+    if "neural" in voice.lower() or voice.startswith("fr-FR-"):
+        try:
+            return asyncio.run(_synthesize_edge_tts(text, voice, out_path))
+        except Exception as e:
+            logger.warning("Échec Edge TTS (%s) : %s. Repli sur Piper local (fr_FR-upmc-medium)...", voice, e)
+            return _synthesize_piper(text, out_path, url=url, voice="fr_FR-upmc-medium", length_scale=length_scale)
+
+    # Sinon : Piper TTS local par défaut
+    return _synthesize_piper(text, out_path, url=url, voice=voice, length_scale=length_scale)
 
 
 def synthesize_script(
