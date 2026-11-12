@@ -183,6 +183,43 @@ const POSE_EULERS = {
     leftFoot: [-0.12, -0.25, 0],
     rightFoot: [0.04, 0.25, 0],
   },
+  /** Aeysa Singing : Performance subtile & intimiste de chanteuse virtuelle cyber (@aeysamusic) */
+  aeysaSinging: {
+    rightShoulder: [0.05, 0.03, -0.05],
+    rightUpperArm: [0.32, 0.35, 0.85],
+    rightLowerArm: [-0.22, -0.16, -2.12],
+    rightHand: [0.18, -0.14, 0.32],
+    rightThumbProximal: [0.55, 0.30, 0],
+    rightThumbDistal: [0.45, 0, 0],
+    rightIndexProximal: [1.40, 0, 0],
+    rightIndexIntermediate: [1.30, 0, 0],
+    rightMiddleProximal: [1.45, 0, 0],
+    rightMiddleIntermediate: [1.35, 0, 0],
+    rightRingProximal: [1.45, 0, 0],
+    rightRingIntermediate: [1.35, 0, 0],
+    rightLittleProximal: [1.40, 0, 0],
+    rightLittleIntermediate: [1.25, 0, 0],
+    leftShoulder: [0.03, 0.01, 0.02],
+    leftUpperArm: [0.24, 0.12, -0.85],
+    leftLowerArm: [0.18, 0.15, -1.05],
+    leftHand: [0.12, 0.08, 0.04],
+    leftThumbProximal: [0.25, 0.10, 0],
+    leftIndexProximal: [0.22, 0, 0],
+    leftMiddleProximal: [0.25, 0, 0],
+    leftRingProximal: [0.25, 0, 0],
+    leftLittleProximal: [0.20, 0, 0],
+    hips: [-0.06, 0.08, -0.05],
+    spine: [0.04, -0.05, 0.04],
+    chest: [0.08, -0.03, 0.03],
+    neck: [-0.04, 0.02, 0.02],
+    head: [-0.08, -0.02, 0.03],
+    leftUpperLeg: [-0.12, -0.08, -0.18],
+    rightUpperLeg: [0.04, 0.08, 0.18],
+    leftLowerLeg: [0.25, 0, 0],
+    rightLowerLeg: [0.20, 0, 0],
+    leftFoot: [0.02, -0.18, 0],
+    rightFoot: [0.02, 0.18, 0],
+  },
   /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
   pointLeft: {
     leftUpperArm: [0, 0, -1.28],
@@ -1482,6 +1519,7 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key = "wave";
     else if (n === "dance" || n === "danse") key = "dance";
     else if (n === "cybergroove" || n === "groove" || n === "concert" || n === "darksynth") key = "cyberGroove";
+    else if (n === "aeysasinging" || n === "aeysa" || n === "aeysamusic" || n === "singer" || n === "chanteuse" || n === "livesinger") key = "aeysaSinging";
     else if (n === "samba" || n === "salsa" || n === "latina") key = "samba";
     else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key = "hiphop";
     else if (n === "robot" || n === "popping" || n === "wavedance") key = "robot";
@@ -2203,6 +2241,152 @@ export function createVrmPet(hostEl, opts = {}) {
         animated.leftLittleProximal = [0.30, 0, 0];
       }
     }
+    if (poseTo === "aeysaSinging") {
+      // Cadence 128 BPM (pulsation de base 13.404 rad/s)
+      const tempo = t * 13.404;
+      const tempoHalf = tempo * 0.5;
+      const breathe = Math.sin(t * 1.8);
+
+      // 1. Déphasages cinématiques doux et naturels
+      const phaseHips = tempoHalf;
+      const phaseSpine = tempoHalf - 0.25;
+      const phaseChest = tempoHalf - 0.45;
+      const phaseHead = tempo - 0.50;
+
+      // 2. Déhanché Lemniscate subtil & fluide (aucun squat, cambrure naturelle)
+      const hipSway = Math.sin(phaseHips) * 0.14; // rotation Y (~8°)
+      const hipRoll = Math.cos(phaseHips) * 0.08; // bascule Z (~4.5°)
+      const hipPitch = -0.06 + Math.sin(tempo) * 0.015; // cambrure lombaire douce
+
+      if (animated.hips) {
+        animated.hips = [hipPitch, hipSway, hipRoll];
+      }
+
+      // 3. Colonne & Cage thoracique (ondulation de chanteuse en S + respiration vivante)
+      if (animated.spine) {
+        animated.spine = [
+          0.04 + breathe * 0.015,
+          -Math.sin(phaseSpine) * 0.09,
+          -Math.cos(phaseSpine) * 0.07,
+        ];
+      }
+      if (animated.chest) {
+        animated.chest = [
+          0.07 + breathe * 0.025,
+          -Math.sin(phaseChest) * 0.07,
+          -Math.cos(phaseChest) * 0.06,
+        ];
+      }
+
+      // 4. Tête & Regard : maintien vers la caméra avec contact visuel direct et micro-tilts musicaux
+      const headNod = Math.sin(phaseHead) * 0.038;
+      const headTilt = Math.cos(tempoHalf) * 0.045;
+      if (animated.head) {
+        animated.head = [
+          -0.10 + headNod,
+          -Math.sin(phaseChest) * 0.05,
+          headTilt,
+        ];
+      }
+      if (animated.neck) {
+        animated.neck = [-0.04, 0.01, 0.01];
+      }
+
+      // 5. Jambes : stance stable, déhanché contrapposto léger et genoux souples (sans accroupissement)
+      const isLeftBearing = hipSway < 0;
+      const kneeSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2.0) * 0.05;
+      if (animated.leftUpperLeg) {
+        animated.leftUpperLeg = [
+          isLeftBearing ? 0.02 : -0.12,
+          -0.08,
+          -0.16,
+        ];
+      }
+      if (animated.leftLowerLeg) {
+        animated.leftLowerLeg = [isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+      }
+      if (animated.leftFoot) {
+        animated.leftFoot = [0.02, -0.12, 0];
+      }
+
+      if (animated.rightUpperLeg) {
+        animated.rightUpperLeg = [
+          !isLeftBearing ? 0.02 : -0.12,
+          0.08,
+          0.16,
+        ];
+      }
+      if (animated.rightLowerLeg) {
+        animated.rightLowerLeg = [!isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+      }
+      if (animated.rightFoot) {
+        animated.rightFoot = [0.02, 0.12, 0];
+      }
+
+      // 6. Bras droit : Micro tenu délicatement juste devant les lèvres
+      const micBob = Math.sin(tempo) * 0.008;
+      if (animated.rightShoulder) {
+        animated.rightShoulder = [0.04, 0.02, -0.04];
+      }
+      if (animated.rightUpperArm) {
+        animated.rightUpperArm = [0.32 + micBob * 0.1, 0.35, 0.85];
+      }
+      if (animated.rightLowerArm) {
+        animated.rightLowerArm = [-0.21, -0.15, -2.12 + micBob * 0.15];
+      }
+      if (animated.rightHand) {
+        animated.rightHand = [0.18, -0.14, 0.32];
+      }
+      animated.rightThumbProximal = [0.55, 0.30, 0];
+      animated.rightThumbDistal = [0.45, 0, 0];
+      animated.rightIndexProximal = [1.40, 0, 0];
+      animated.rightIndexIntermediate = [1.30, 0, 0];
+      animated.rightMiddleProximal = [1.45, 0, 0];
+      animated.rightMiddleIntermediate = [1.35, 0, 0];
+      animated.rightRingProximal = [1.45, 0, 0];
+      animated.rightRingIntermediate = [1.35, 0, 0];
+      animated.rightLittleProximal = [1.40, 0, 0];
+      animated.rightLittleIntermediate = [1.25, 0, 0];
+
+      // 7. Bras gauche : gestuelle expressive de chanteuse (alternance subtile entre plexus et geste d'accueil)
+      const gestureCycle = Math.sin(t * 0.35); // cycle lent de ~18s
+      const isChestHand = gestureCycle > 0;
+      if (isChestHand) {
+        const handBreath = breathe * 0.03;
+        if (animated.leftShoulder) animated.leftShoulder = [0.02, 0.01, 0.02];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.26 + handBreath, 0.18, -0.85];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0.22, 0.16, -1.35];
+        }
+        if (animated.leftHand) {
+          animated.leftHand = [0.15, 0.12, 0.10];
+        }
+        animated.leftThumbProximal = [0.20, 0.08, 0];
+        animated.leftIndexProximal = [0.22, 0, 0];
+        animated.leftMiddleProximal = [0.25, 0, 0];
+        animated.leftRingProximal = [0.26, 0, 0];
+        animated.leftLittleProximal = [0.22, 0, 0];
+      } else {
+        const openReach = Math.sin(tempoHalf) * 0.04;
+        if (animated.leftShoulder) animated.leftShoulder = [0.03, 0.01, 0.02];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.32 + openReach, 0.12, -0.90];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0.18, 0.14, -0.95];
+        }
+        if (animated.leftHand) {
+          animated.leftHand = [0.20, 0.08, 0.10];
+        }
+        animated.leftThumbProximal = [0.15, 0, 0];
+        animated.leftIndexProximal = [0.18, 0, 0];
+        animated.leftMiddleProximal = [0.20, 0, 0];
+        animated.leftRingProximal = [0.20, 0, 0];
+        animated.leftLittleProximal = [0.18, 0, 0];
+      }
+    }
 
     // Important three-vrm 3.x :
     // setPose() → raw, puis vrm.update() écrase raw avec normalized (T-pose).
@@ -2842,8 +3026,8 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       }
 
-      // Gestion du Micro 3D et du chant scénique lors du Cyber Groove et danses scéniques
-      const isSingingScene = (poseTo === "cyberGroove" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing");
+      // Gestion du Micro 3D et du chant scénique lors du Cyber Groove, Aeysa Singing et danses scéniques
+      const isSingingScene = (poseTo === "cyberGroove" || poseTo === "aeysaSinging" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing");
       if (isSingingScene && vrm) {
         wasInCyberGroove = true;
         // 1. S'assurer que le micro 3D est solidement attaché comme enfant de rightHand
@@ -2919,6 +3103,14 @@ export function createVrmPet(hostEl, opts = {}) {
         // Rebond au kick + descente basse de 7.5 cm quand elle est en drop jambes fléchies !
         const kickDrop = Math.pow(Math.max(0, Math.sin(tempo)), 1.8) * 0.032;
         vrm.scene.position.y = walkYOffset - (0.075 * dropFactor) - kickDrop;
+      } else if (poseTo === "aeysaSinging") {
+        const tempo = t * 13.404;
+        const tempoHalf = tempo * 0.5;
+        // Déport latéral subtil (2.2 cm) pour un balancement naturel et doux
+        vrm.scene.position.x = Math.sin(tempoHalf) * 0.022;
+        // Hauteur Y parfaitement stable avec micro-amorti imperceptible
+        const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2.0) * 0.005;
+        vrm.scene.position.y = walkYOffset - kickSoft;
       } else if (poseTo === "dance") {
         const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
         vrm.scene.position.y = walkYOffset + danceBounce;

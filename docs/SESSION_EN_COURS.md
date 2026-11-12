@@ -54,7 +54,24 @@
      - Avatar 3D (Lyra androïde) en plein pied au centre de la scène tenant le micro cyber 3D néon, lèvres et regard calés au tempo, enchaînant les danses mocap (Intro Diva -> Couplet Groove -> Bellydance -> Pop Dance -> Gangnam -> Samba -> Finale Idol).
      - Rendu master vidéo 1080×1920 (Vertical 9:16, H.264 High Profile @ 6214 kb/s, 29.98 FPS, Audio AAC 48 kHz stéréo, 44.46 Mo).
      - Fichier délivré sur l'hôte Windows : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_studio_60s.mp4`.
-   - **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
+3. **Mode Live Concert Virtuel Style @aeysamusic sur Nexura Domina (YouTube Shorts / TikTok 60s HD)** :
+   - **Performance Vocale Subtile & Intimiste (`aeysaSinging`)** :
+     * Développé suite aux retours de l'utilisateur sur la vidéo de référence @aeysamusic : fin des mouvements brusques, des flexions squats et des coupures clownesques (gangnam, bellydance).
+     * Maintien du micro cyber néon délicatement calé à 2 cm sous les lèvres avec pulsation douce des anneaux.
+     * Déhanché en huit (lemniscate) doux et continu, micro-rebond amorti sans changement brutal d'altitude Y.
+     * Mouvements de tête et cou subtils (head nod doux au tempo, micro-tilts harmonieux vers l'épaule).
+     * Regard magnétique vers l'objectif (contact visuel intime maintenu avec le spectateur) et extase vocale douce calée au phrasé.
+     * Gestuelle de la main gauche alternant délicatement entre la pose sur le plexus/sternum et l'adresse ouverte au public.
+   - **Cadrage Caméra Buste / Mi-Corps Cinématique** :
+     * Cadrage rapproché (mode buste plein écran) : élimination du vide au-dessus de la tête, focus sur les yeux, les expressions, le micro et le buste cyber.
+   - **Scénographie de Scène Épurée & Atmosphérique** :
+     * Dégradé sombre profond (`#03050c` à `#0a1024`) avec deux Rim Lights volumétriques (cyan à gauche, magenta à droite) créant une aura de contour sur la silhouette.
+     * Faisceaux de projecteurs verticaux lents et particules de poussière de scène / bokeh flottant doucement.
+     * HUD épuré minimaliste : titre sobre `✦ NEXURA DOMINA` et visualiseur audio réactif 36 barres.
+   - **Script de Déploiement & Capture Automatique** :
+     * `packages/compagnon-desktop/record_studio_nexura_clip.py` synchronisé sur Windows (`C:\Agent_IA\record_studio_nexura_clip.py`).
+     * Muxing automatique avec la piste master `Nexura Domina_v1.mp3`, upscale Lanczos 1080×1920 HD vertical et sauvegarde dans `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4`.
+4. **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
      - Enregistrement en direct hardware via FFmpeg `gdigrab` sur le poste Windows (`192.168.0.10`) de l'overlay 3D Three.js réel en exécution (Lyra skin android, micro cyber 3D néon, lipsync et animations mocap).
      - Synchronisation chorégraphique millimétrée sur les 60 secondes de `Khor-un Val-Kyra.mp3` :
        - 0.0s – 8.5s : Intro Diva avec micro en main (`femaledance`)

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LBG Studios - Nexura Domina (Live Virtual Singer)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #03050c;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    position: relative;
+  }
+
+  /* Canvas de scène : fond sombre cinématique, rim lights volumétriques et particules */
+  #stage-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* Avatar 3D VRM : cadrage buste / mi-corps plein écran */
+  #avatar-host {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* HUD Top Card - Style AeySa Music / Virtual Idol Minimaliste */
+  #top-hud {
+    position: absolute;
+    top: 24px;
+    left: 6%;
+    width: 88%;
+    background: rgba(8, 12, 24, 0.72);
+    border: 1px solid rgba(0, 245, 212, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 245, 212, 0.15);
+    backdrop-filter: blur(14px);
+    z-index: 10;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: fadeInDown 1.2s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .live-pill {
+    background: rgba(0, 245, 212, 0.15);
+    border: 1px solid rgba(0, 245, 212, 0.8);
+    color: #00f5d4;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00f5d4;
+    box-shadow: 0 0 8px #00f5d4;
+    animation: blinkDot 1s infinite alternate ease-in-out;
+  }
+  @keyframes blinkDot {
+    from { opacity: 0.3; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.4); }
+  }
+
+  .tag-local {
+    color: #f43f5e;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.5);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .hud-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .hud-title {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 245, 212, 0.35);
+  }
+
+  .hud-subtitle {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* HUD Bottom - Visualiseur Audio & Signature */
+  #bottom-hud {
+    position: absolute;
+    bottom: 20px;
+    left: 6%;
+    width: 88%;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    animation: fadeInUp 1.2s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .song-status {
+    background: rgba(8, 12, 24, 0.75);
+    border: 1px solid rgba(255, 0, 128, 0.4);
+    color: #f1f5f9;
+    padding: 3px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-shadow: 0 0 8px rgba(255, 0, 128, 0.5);
+    backdrop-filter: blur(8px);
+  }
+
+  #equalizer-canvas {
+    width: 100%;
+    height: 38px;
+    filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.3));
+  }
+
+  .brand-signature {
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Décor 2D / Lumières Scéniques de Concert -->
+  <canvas id="stage-canvas"></canvas>
+
+  <!-- Hôte Avatar 3D Three-VRM (Cadrage Buste / Mi-Corps Chanteuse) -->
+  <div id="avatar-host"></div>
+
+  <!-- HUD Supérieur Intimiste -->
+  <div id="top-hud">
+    <div class="hud-header">
+      <div class="live-pill">
+        <div class="live-dot"></div>
+        <span>LYRA // VIRTUAL LIVE</span>
+      </div>
+      <div class="tag-local">100% LOCAL • 0€ CLOUD</div>
+    </div>
+    <div class="hud-title-row">
+      <span class="hud-title">✦ NEXURA DOMINA</span>
+      <span class="hud-subtitle">• VOCAL PERFORMANCE (128 BPM)</span>
+    </div>
+  </div>
+
+  <!-- HUD Inférieur Minimaliste -->
+  <div id="bottom-hud">
+    <div class="song-status" id="status-label">PERFORMANCE LIVE • MICRO CYBER 3D</div>
+    <canvas id="equalizer-canvas"></canvas>
+    <div class="brand-signature">LBG Studios • Khor-un Val-Kyra • Godot & Three-VRM</div>
+  </div>
+
+  <!-- Source Audio Locale -->
+  <audio id="bgm" src="./nexura_domina_v1.mp3" preload="auto"></audio>
+
+  <!-- Bundle Three-VRM avec Pose AeysaSinging Intégrée -->
+  <script src="./vrm/vrm_pet.bundle.js"></script>
+
+  <script>
+    const stageCanvas = document.getElementById('stage-canvas');
+    const stageCtx = stageCanvas.getContext('2d');
+    const eqCanvas = document.getElementById('equalizer-canvas');
+    const eqCtx = eqCanvas.getContext('2d');
+    const hostEl = document.getElementById('avatar-host');
+    const statusLabel = document.getElementById('status-label');
+    const audio = document.getElementById('bgm');
+
+    // 1. Redimensionnement réactif
+    function resizeCanvases() {
+      stageCanvas.width = window.innerWidth;
+      stageCanvas.height = window.innerHeight;
+      eqCanvas.width = eqCanvas.clientWidth * window.devicePixelRatio;
+      eqCanvas.height = eqCanvas.clientHeight * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    // 2. Particules d'atmosphère de concert (poussière lumineuse lente & bokeh)
+    const NUM_PARTICLES = 45;
+    const particles = [];
+    for (let i = 0; i < NUM_PARTICLES; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: 1.0 + Math.random() * 2.8,
+        speed: 0.15 + Math.random() * 0.45,
+        drift: (Math.random() - 0.5) * 0.3,
+        alpha: 0.15 + Math.random() * 0.55,
+        hue: Math.random() > 0.4 ? 'rgba(0, 245, 212,' : 'rgba(255, 0, 128,'
+      });
+    }
+
+    // 3. Audio Web API pour réactivité live
+    let audioCtx = null;
+    let analyser = null;
+    let dataArray = null;
+
+    function setupAudio() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const source = audioCtx.createMediaElementSource(audio);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 128;
+          analyser.smoothingTimeConstant = 0.85;
+          source.connect(analyser);
+          analyser.connect(audioCtx.destination);
+          dataArray = new Uint8Array(analyser.frequencyBinCount);
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      } catch (e) {
+        console.warn("AudioContext non initialisé :", e);
+      }
+    }
+
+    // 4. Rendu de la Scène de Concert (Rim lights volumétriques cinématiques @aeysamusic)
+    function drawStage(timeSec, bassLevel) {
+      const W = stageCanvas.width;
+      const H = stageCanvas.height;
+
+      // Fond sombre profond avec dégradé radial
+      const bgGrad = stageCtx.createRadialGradient(W * 0.5, H * 0.35, 60, W * 0.5, H * 0.45, H * 0.8);
+      bgGrad.addColorStop(0, '#0a1024');
+      bgGrad.addColorStop(0.5, '#040714');
+      bgGrad.addColorStop(1, '#020308');
+      stageCtx.fillStyle = bgGrad;
+      stageCtx.fillRect(0, 0, W, H);
+
+      // --- RIM LIGHT GAUCHE (Cyan électrique / Bleu néon) ---
+      const cyanPulse = 0.45 + bassLevel * 0.40;
+      const cyanGlow = stageCtx.createRadialGradient(W * 0.20, H * 0.30, 20, W * 0.25, H * 0.35, W * 0.65);
+      cyanGlow.addColorStop(0, `rgba(0, 245, 212, ${0.30 * cyanPulse})`);
+      cyanGlow.addColorStop(0.4, `rgba(0, 140, 255, ${0.16 * cyanPulse})`);
+      cyanGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      stageCtx.fillStyle = cyanGlow;
+      stageCtx.fillRect(0, 0, W, H);
+
+      // --- RIM LIGHT DROITE (Magenta / Violet néon) ---
+      const magentaPulse = 0.40 + Math.sin(timeSec * 3.5) * 0.15 + bassLevel * 0.35;
+      const magentaGlow = stageCtx.createRadialGradient(W * 0.80, H * 0.32, 20, W * 0.75, H * 0.38, W * 0.65);
+      magentaGlow.addColorStop(0, `rgba(255, 0, 128, ${0.32 * magentaPulse})`);
+      magentaGlow.addColorStop(0.4, `rgba(147, 51, 234, ${0.18 * magentaPulse})`);
+      magentaGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      stageCtx.fillStyle = magentaGlow;
+      stageCtx.fillRect(0, 0, W, H);
+
+      // --- FAISCEAUX DE PROJECTEURS VOLUMÉTRIQUES DE CONCERT ---
+      const beamAlpha = 0.08 + bassLevel * 0.09;
+      // Projecteur gauche oscillant
+      const beamAngleL = Math.sin(timeSec * 0.8) * 0.12;
+      stageCtx.save();
+      stageCtx.translate(W * 0.15, -40);
+      stageCtx.rotate(0.35 + beamAngleL);
+      const bGrad1 = stageCtx.createLinearGradient(0, 0, 160, H * 1.2);
+      bGrad1.addColorStop(0, `rgba(0, 245, 212, ${beamAlpha * 1.8})`);
+      bGrad1.addColorStop(0.7, `rgba(0, 245, 212, ${beamAlpha * 0.4})`);
+      bGrad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      stageCtx.fillStyle = bGrad1;
+      stageCtx.fillRect(-50, 0, 100, H * 1.2);
+      stageCtx.restore();
+
+      // Projecteur droit oscillant
+      const beamAngleR = Math.cos(timeSec * 0.75) * 0.12;
+      stageCtx.save();
+      stageCtx.translate(W * 0.85, -40);
+      stageCtx.rotate(-0.35 + beamAngleR);
+      const bGrad2 = stageCtx.createLinearGradient(0, 0, -160, H * 1.2);
+      bGrad2.addColorStop(0, `rgba(255, 0, 128, ${beamAlpha * 1.8})`);
+      bGrad2.addColorStop(0.7, `rgba(255, 0, 128, ${beamAlpha * 0.4})`);
+      bGrad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      stageCtx.fillStyle = bGrad2;
+      stageCtx.fillRect(-50, 0, 100, H * 1.2);
+      stageCtx.restore();
+
+      // Sol sombre avec brume spéculaire douce
+      const floorGrad = stageCtx.createLinearGradient(0, H * 0.75, 0, H);
+      floorGrad.addColorStop(0, 'rgba(3, 5, 12, 0)');
+      floorGrad.addColorStop(0.6, 'rgba(10, 16, 36, 0.45)');
+      floorGrad.addColorStop(1, 'rgba(0, 245, 212, 0.10)');
+      stageCtx.fillStyle = floorGrad;
+      stageCtx.fillRect(0, H * 0.75, W, H * 0.25);
+
+      // Particules de poussière de scène flottantes
+      for (const p of particles) {
+        p.y -= p.speed * (1 + bassLevel * 0.4);
+        p.x += p.drift;
+        if (p.y < 0) { p.y = H + 10; p.x = Math.random() * W; }
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        stageCtx.fillStyle = p.hue + (p.alpha * (0.7 + bassLevel * 0.3)) + ')';
+        stageCtx.beginPath();
+        stageCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        stageCtx.fill();
+      }
+    }
+
+    // 5. Visualiseur Audio Réactif (32 barres néon élancées)
+    function drawEqualizer() {
+      const eW = eqCanvas.width;
+      const eH = eqCanvas.height;
+      eqCtx.clearRect(0, 0, eW, eH);
+      let avgBass = 0.4;
+
+      if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < 8; i++) sum += dataArray[i];
+        avgBass = sum / (8 * 255);
+      }
+
+      const numBars = 36;
+      const barW = Math.max(2, (eW / numBars) - 2.5);
+      for (let i = 0; i < numBars; i++) {
+        let val = 0.25;
+        if (dataArray) {
+          const idx = Math.floor(i * (dataArray.length / numBars));
+          val = (dataArray[idx] || 30) / 255;
+        } else {
+          val = 0.25 + Math.sin(performance.now() * 0.007 + i * 0.35) * 0.20;
+        }
+        const barH = Math.max(3, val * (eH - 4));
+        const bx = i * ((eW - (numBars * barW)) / (numBars - 1) + barW);
+        const by = eH - barH;
+
+        const barGrad = eqCtx.createLinearGradient(0, by, 0, eH);
+        barGrad.addColorStop(0, i < 18 ? '#00f5d4' : '#ff007f');
+        barGrad.addColorStop(1, 'rgba(15, 23, 42, 0.3)');
+        eqCtx.fillStyle = barGrad;
+        eqCtx.fillRect(bx, by, barW, barH);
+      }
+      return avgBass;
+    }
+
+    // 6. Gestion de la Performance Virtuelle Lyra (@aeysamusic style)
+    let petInstance = null;
+
+    async function init() {
+      console.log("[studio_clip] Chargement de la chanteuse virtuelle 3D (cadrage buste)...");
+      petInstance = window.__createVrmPet(hostEl, {
+        modelUrl: "./vrm/Compagnon.vrm",
+        framing: "bust" // Plan buste / mi-corps intimiste
+      });
+
+      const checkReady = setInterval(() => {
+        if (petInstance && petInstance.ready) {
+          clearInterval(checkReady);
+          console.log("[studio_clip] Avatar 3D prêt ! Lancement du concert...");
+          startPerformance();
+        }
+      }, 120);
+    }
+
+    function startPerformance() {
+      setupAudio();
+      // Pose de chanteuse subtile et habitée (micro tenu, contact visuel, déhanché lemniscate fluide)
+      petInstance.setPose("aeysaSinging", 70000);
+      petInstance.setMood("happy");
+
+      audio.currentTime = 0;
+      audio.play().catch(e => console.log("Audio autoplay prevented:", e));
+
+      const startTime = performance.now();
+
+      function frameLoop(now) {
+        const elapsed = (now - startTime) / 1000;
+
+        // Mise à jour du statut narratif selon la progression de Nexura Domina
+        if (elapsed < 5.0) {
+          statusLabel.innerText = "INTRO MYSTIQUE • NAPPES VOCALES CYBER";
+        } else if (elapsed < 20.0) {
+          statusLabel.innerText = "MONTÉE LIVE • 128 BPM ELECTRO-POP";
+        } else if (elapsed < 45.0) {
+          statusLabel.innerText = "COUPLET HABITÉ • LIPSYNC & CONTACT VISUEL";
+        } else if (elapsed < 55.0) {
+          statusLabel.innerText = "DROP CLIMAX • ANNEAUX NÉON & EXTASIE VOCALE";
+        } else {
+          statusLabel.innerText = "OUTRO FINALE • SIGNATURE IDOL VIRTUELLE";
+        }
+
+        // Rendu graphique
+        const bass = drawEqualizer();
+        drawStage(elapsed, bass);
+
+        if (elapsed < 60.5) {
+          requestAnimationFrame(frameLoop);
+        } else {
+          console.log("[studio_clip] Fin des 60 secondes de clip !");
+          document.title = "RECORDING_FINISHED";
+        }
+      }
+
+      requestAnimationFrame(frameLoop);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -1,11 +1,29 @@
-(() => {
+var VrmPetMod = (() => {
   var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // overlay/vrm/vrm_pet.js
+  var vrm_pet_exports = {};
+  __export(vrm_pet_exports, {
+    createVrmPet: () => createVrmPet
+  });
+
+  // node_modules/three/build/three.module.js
   var three_module_exports = {};
   __export(three_module_exports, {
     ACESFilmicToneMapping: () => ACESFilmicToneMapping,
@@ -432,7 +450,7 @@
     createCanvasElement: () => createCanvasElement
   });
 
-  // packages/compagnon-desktop/node_modules/three/build/three.core.js
+  // node_modules/three/build/three.core.js
   var REVISION = "180";
   var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
   var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31778,7 +31796,7 @@
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/build/three.module.js
+  // node_modules/three/build/three.module.js
   function WebGLAnimation() {
     let context = null;
     let isAnimating = false;
@@ -41884,7 +41902,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+  // node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
   function toTrianglesDrawMode(geometry, drawMode) {
     if (drawMode === TrianglesDrawMode) {
       console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
@@ -41940,7 +41958,7 @@ void main() {
     }
   }
 
-  // packages/compagnon-desktop/node_modules/three/examples/jsm/loaders/GLTFLoader.js
+  // node_modules/three/examples/jsm/loaders/GLTFLoader.js
   var GLTFLoader = class extends Loader {
     /**
      * Constructs a new glTF loader.
@@ -44507,7 +44525,7 @@ void main() {
     });
   }
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
+  // node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -47583,12 +47601,12 @@ void main() {
   };
   var __defProp2 = Object.defineProperty;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp.call(b, prop))
+      if (__hasOwnProp2.call(b, prop))
         __defNormalProp(a, prop, b[prop]);
     if (__getOwnPropSymbols)
       for (var prop of __getOwnPropSymbols(b)) {
@@ -48433,12 +48451,12 @@ void main() {
   var __defProps = Object.defineProperties;
   var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp22 = Object.prototype.hasOwnProperty;
   var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
   var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp22(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues2 = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp2.call(b, prop))
+      if (__hasOwnProp22.call(b, prop))
         __defNormalProp2(a, prop, b[prop]);
     if (__getOwnPropSymbols2)
       for (var prop of __getOwnPropSymbols2(b)) {
@@ -51049,7 +51067,7 @@ void main() {
   VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
   VRMUtils.rotateVRM0 = rotateVRM0;
 
-  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
+  // node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
   var __async8 = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -53026,7 +53044,7 @@ void main() {
     }
   };
 
-  // packages/compagnon-desktop/overlay/vrm/vrm_pet.js
+  // overlay/vrm/vrm_pet.js
   function installColorSpaceGuard(THREE) {
     try {
       const desc = Object.getOwnPropertyDescriptor(THREE.Texture.prototype, "colorSpace");
@@ -53196,6 +53214,43 @@ void main() {
       rightLowerLeg: [0.25, 0, 0],
       leftFoot: [-0.12, -0.25, 0],
       rightFoot: [0.04, 0.25, 0]
+    },
+    /** Aeysa Singing : Performance subtile & intimiste de chanteuse virtuelle cyber (@aeysamusic) */
+    aeysaSinging: {
+      rightShoulder: [0.05, 0.03, -0.05],
+      rightUpperArm: [0.32, 0.35, 0.85],
+      rightLowerArm: [-0.22, -0.16, -2.12],
+      rightHand: [0.18, -0.14, 0.32],
+      rightThumbProximal: [0.55, 0.3, 0],
+      rightThumbDistal: [0.45, 0, 0],
+      rightIndexProximal: [1.4, 0, 0],
+      rightIndexIntermediate: [1.3, 0, 0],
+      rightMiddleProximal: [1.45, 0, 0],
+      rightMiddleIntermediate: [1.35, 0, 0],
+      rightRingProximal: [1.45, 0, 0],
+      rightRingIntermediate: [1.35, 0, 0],
+      rightLittleProximal: [1.4, 0, 0],
+      rightLittleIntermediate: [1.25, 0, 0],
+      leftShoulder: [0.03, 0.01, 0.02],
+      leftUpperArm: [0.24, 0.12, -0.85],
+      leftLowerArm: [0.18, 0.15, -1.05],
+      leftHand: [0.12, 0.08, 0.04],
+      leftThumbProximal: [0.25, 0.1, 0],
+      leftIndexProximal: [0.22, 0, 0],
+      leftMiddleProximal: [0.25, 0, 0],
+      leftRingProximal: [0.25, 0, 0],
+      leftLittleProximal: [0.2, 0, 0],
+      hips: [-0.06, 0.08, -0.05],
+      spine: [0.04, -0.05, 0.04],
+      chest: [0.08, -0.03, 0.03],
+      neck: [-0.04, 0.02, 0.02],
+      head: [-0.08, -0.02, 0.03],
+      leftUpperLeg: [-0.12, -0.08, -0.18],
+      rightUpperLeg: [0.04, 0.08, 0.18],
+      leftLowerLeg: [0.25, 0, 0],
+      rightLowerLeg: [0.2, 0, 0],
+      leftFoot: [0.02, -0.18, 0],
+      rightFoot: [0.02, 0.18, 0]
     },
     /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
     pointLeft: {
@@ -54432,6 +54487,7 @@ void main() {
       else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key2 = "wave";
       else if (n === "dance" || n === "danse") key2 = "dance";
       else if (n === "cybergroove" || n === "groove" || n === "concert" || n === "darksynth") key2 = "cyberGroove";
+      else if (n === "aeysasinging" || n === "aeysa" || n === "aeysamusic" || n === "singer" || n === "chanteuse" || n === "livesinger") key2 = "aeysaSinging";
       else if (n === "samba" || n === "salsa" || n === "latina") key2 = "samba";
       else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key2 = "hiphop";
       else if (n === "robot" || n === "popping" || n === "wavedance") key2 = "robot";
@@ -55057,6 +55113,135 @@ void main() {
           animated.leftLittleProximal = [0.3, 0, 0];
         }
       }
+      if (poseTo === "aeysaSinging") {
+        const tempo = t * 13.404;
+        const tempoHalf2 = tempo * 0.5;
+        const breathe = Math.sin(t * 1.8);
+        const phaseHips = tempoHalf2;
+        const phaseSpine = tempoHalf2 - 0.25;
+        const phaseChest = tempoHalf2 - 0.45;
+        const phaseHead = tempo - 0.5;
+        const hipSway = Math.sin(phaseHips) * 0.14;
+        const hipRoll = Math.cos(phaseHips) * 0.08;
+        const hipPitch = -0.06 + Math.sin(tempo) * 0.015;
+        if (animated.hips) {
+          animated.hips = [hipPitch, hipSway, hipRoll];
+        }
+        if (animated.spine) {
+          animated.spine = [
+            0.04 + breathe * 0.015,
+            -Math.sin(phaseSpine) * 0.09,
+            -Math.cos(phaseSpine) * 0.07
+          ];
+        }
+        if (animated.chest) {
+          animated.chest = [
+            0.07 + breathe * 0.025,
+            -Math.sin(phaseChest) * 0.07,
+            -Math.cos(phaseChest) * 0.06
+          ];
+        }
+        const headNod = Math.sin(phaseHead) * 0.038;
+        const headTilt = Math.cos(tempoHalf2) * 0.045;
+        if (animated.head) {
+          animated.head = [
+            -0.1 + headNod,
+            -Math.sin(phaseChest) * 0.05,
+            headTilt
+          ];
+        }
+        if (animated.neck) {
+          animated.neck = [-0.04, 0.01, 0.01];
+        }
+        const isLeftBearing = hipSway < 0;
+        const kneeSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2) * 0.05;
+        if (animated.leftUpperLeg) {
+          animated.leftUpperLeg = [
+            isLeftBearing ? 0.02 : -0.12,
+            -0.08,
+            -0.16
+          ];
+        }
+        if (animated.leftLowerLeg) {
+          animated.leftLowerLeg = [isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+        }
+        if (animated.leftFoot) {
+          animated.leftFoot = [0.02, -0.12, 0];
+        }
+        if (animated.rightUpperLeg) {
+          animated.rightUpperLeg = [
+            !isLeftBearing ? 0.02 : -0.12,
+            0.08,
+            0.16
+          ];
+        }
+        if (animated.rightLowerLeg) {
+          animated.rightLowerLeg = [!isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+        }
+        if (animated.rightFoot) {
+          animated.rightFoot = [0.02, 0.12, 0];
+        }
+        const micBob = Math.sin(tempo) * 8e-3;
+        if (animated.rightShoulder) {
+          animated.rightShoulder = [0.04, 0.02, -0.04];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.32 + micBob * 0.1, 0.35, 0.85];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [-0.21, -0.15, -2.12 + micBob * 0.15];
+        }
+        if (animated.rightHand) {
+          animated.rightHand = [0.18, -0.14, 0.32];
+        }
+        animated.rightThumbProximal = [0.55, 0.3, 0];
+        animated.rightThumbDistal = [0.45, 0, 0];
+        animated.rightIndexProximal = [1.4, 0, 0];
+        animated.rightIndexIntermediate = [1.3, 0, 0];
+        animated.rightMiddleProximal = [1.45, 0, 0];
+        animated.rightMiddleIntermediate = [1.35, 0, 0];
+        animated.rightRingProximal = [1.45, 0, 0];
+        animated.rightRingIntermediate = [1.35, 0, 0];
+        animated.rightLittleProximal = [1.4, 0, 0];
+        animated.rightLittleIntermediate = [1.25, 0, 0];
+        const gestureCycle = Math.sin(t * 0.35);
+        const isChestHand = gestureCycle > 0;
+        if (isChestHand) {
+          const handBreath = breathe * 0.03;
+          if (animated.leftShoulder) animated.leftShoulder = [0.02, 0.01, 0.02];
+          if (animated.leftUpperArm) {
+            animated.leftUpperArm = [0.26 + handBreath, 0.18, -0.85];
+          }
+          if (animated.leftLowerArm) {
+            animated.leftLowerArm = [0.22, 0.16, -1.35];
+          }
+          if (animated.leftHand) {
+            animated.leftHand = [0.15, 0.12, 0.1];
+          }
+          animated.leftThumbProximal = [0.2, 0.08, 0];
+          animated.leftIndexProximal = [0.22, 0, 0];
+          animated.leftMiddleProximal = [0.25, 0, 0];
+          animated.leftRingProximal = [0.26, 0, 0];
+          animated.leftLittleProximal = [0.22, 0, 0];
+        } else {
+          const openReach = Math.sin(tempoHalf2) * 0.04;
+          if (animated.leftShoulder) animated.leftShoulder = [0.03, 0.01, 0.02];
+          if (animated.leftUpperArm) {
+            animated.leftUpperArm = [0.32 + openReach, 0.12, -0.9];
+          }
+          if (animated.leftLowerArm) {
+            animated.leftLowerArm = [0.18, 0.14, -0.95];
+          }
+          if (animated.leftHand) {
+            animated.leftHand = [0.2, 0.08, 0.1];
+          }
+          animated.leftThumbProximal = [0.15, 0, 0];
+          animated.leftIndexProximal = [0.18, 0, 0];
+          animated.leftMiddleProximal = [0.2, 0, 0];
+          animated.leftRingProximal = [0.2, 0, 0];
+          animated.leftLittleProximal = [0.18, 0, 0];
+        }
+      }
       const poseObj = {};
       for (const name of BONE_NAMES) {
         const e = animated[name];
@@ -55614,7 +55799,7 @@ void main() {
             setMood("serene");
           }
         }
-        const isSingingScene = poseTo === "cyberGroove" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing";
+        const isSingingScene = poseTo === "cyberGroove" || poseTo === "aeysaSinging" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing";
         if (isSingingScene && vrm) {
           wasInCyberGroove = true;
           ensureMicAttached(vrm);
@@ -55677,6 +55862,12 @@ void main() {
           vrm.scene.position.x = Math.sin(tempoHalf2) * 0.048 * divaFactor;
           const kickDrop = Math.pow(Math.max(0, Math.sin(tempo)), 1.8) * 0.032;
           vrm.scene.position.y = walkYOffset - 0.075 * dropFactor - kickDrop;
+        } else if (poseTo === "aeysaSinging") {
+          const tempo = t * 13.404;
+          const tempoHalf2 = tempo * 0.5;
+          vrm.scene.position.x = Math.sin(tempoHalf2) * 0.022;
+          const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2) * 5e-3;
+          vrm.scene.position.y = walkYOffset - kickSoft;
         } else if (poseTo === "dance") {
           const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
           vrm.scene.position.y = walkYOffset + danceBounce;
@@ -55995,6 +56186,7 @@ void main() {
   if (typeof window !== "undefined") {
     window.__createVrmPet = createVrmPet;
   }
+  return __toCommonJS(vrm_pet_exports);
 })();
 /*! Bundled license information:
 
