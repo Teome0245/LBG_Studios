@@ -2247,80 +2247,91 @@ export function createVrmPet(hostEl, opts = {}) {
       const tempoHalf = tempo * 0.5;
       const breathe = Math.sin(t * 1.8);
 
-      // 1. Déphasages cinématiques doux et naturels
+      // 1. Déphasages cinématiques vifs et synchronisés (128 BPM / 64 BPM)
       const phaseHips = tempoHalf;
-      const phaseSpine = tempoHalf - 0.25;
-      const phaseChest = tempoHalf - 0.45;
-      const phaseHead = tempo - 0.50;
+      const phaseSpine = tempoHalf - 0.22;
+      const phaseChest = tempoHalf - 0.40;
+      const phaseHead = tempo - 0.45;
 
-      // 2. Déhanché Lemniscate subtil & fluide (aucun squat, cambrure naturelle)
-      const hipSway = Math.sin(phaseHips) * 0.14; // rotation Y (~8°)
-      const hipRoll = Math.cos(phaseHips) * 0.08; // bascule Z (~4.5°)
-      const hipPitch = -0.06 + Math.sin(tempo) * 0.015; // cambrure lombaire douce
+      // 2. Déhanché Signature Aeysa Festival : Bascule latérale Z et rotation Y prononcées avec kick pop
+      const kickCurve = Math.pow(Math.max(0, Math.sin(tempo)), 2.2);
+      const kickPop = kickCurve * 0.08;
+
+      // Bascule latérale Z : déhanché affirmé (la hanche monte d'un côté et descend de l'autre à ~18°)
+      const rawRoll = Math.sin(phaseHips);
+      const hipRoll = rawRoll * 0.32 + (rawRoll > 0 ? kickPop : -kickPop);
+
+      // Rotation Y : projection de la hanche vers l'avant-côté à ~15°
+      const hipSway = Math.cos(phaseHips) * 0.26;
+
+      // Cambrure lombaire féminine sensuelle (bassin en antéversion cambrée permanente)
+      const hipPitch = -0.15 + Math.abs(Math.sin(phaseHips)) * 0.06;
 
       if (animated.hips) {
         animated.hips = [hipPitch, hipSway, hipRoll];
       }
 
-      // 3. Colonne & Cage thoracique (ondulation de chanteuse en S + respiration vivante)
+      // 3. Compensation de la colonne vertébrale en S (le torse reste élégant et stable pendant que les hanches dansent)
       if (animated.spine) {
         animated.spine = [
-          0.04 + breathe * 0.015,
-          -Math.sin(phaseSpine) * 0.09,
-          -Math.cos(phaseSpine) * 0.07,
+          0.06 + breathe * 0.015,
+          -hipSway * 0.65,
+          -hipRoll * 0.85,
         ];
       }
       if (animated.chest) {
         animated.chest = [
-          0.07 + breathe * 0.025,
-          -Math.sin(phaseChest) * 0.07,
-          -Math.cos(phaseChest) * 0.06,
+          0.08 + breathe * 0.025,
+          -hipSway * 0.35,
+          -hipRoll * 0.45,
         ];
       }
 
-      // 4. Tête & Regard : maintien vers la caméra avec contact visuel direct et micro-tilts musicaux
-      const headNod = Math.sin(phaseHead) * 0.038;
-      const headTilt = Math.cos(tempoHalf) * 0.045;
+      // 4. Tête & Regard : contact visuel caméra captivant et micro-tilts
+      const headNod = Math.sin(phaseHead) * 0.04;
+      const headTilt = Math.cos(tempoHalf) * 0.05;
       if (animated.head) {
         animated.head = [
           -0.10 + headNod,
-          -Math.sin(phaseChest) * 0.05,
-          headTilt,
+          hipSway * 0.20,
+          headTilt - hipRoll * 0.15,
         ];
       }
       if (animated.neck) {
         animated.neck = [-0.04, 0.01, 0.01];
       }
 
-      // 5. Jambes : stance stable, déhanché contrapposto léger et genoux souples (sans accroupissement)
-      const isLeftBearing = hipSway < 0;
-      const kneeSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2.0) * 0.05;
+      // 5. Jambes Signature : Stance large, transfert de poids rythmé & genou libre fléchi
+      const isLeftBearing = hipRoll > 0; // la hanche gauche est haute et porte le poids
+      const bearingKnee = 0.12 + kickCurve * 0.04; // genou d'appui presque tendu
+      const freeKnee = 0.46 + kickCurve * 0.08;    // genou libre fléchi vers l'intérieur pour libérer la hanche
+
       if (animated.leftUpperLeg) {
         animated.leftUpperLeg = [
-          isLeftBearing ? 0.02 : -0.12,
-          -0.08,
-          -0.16,
+          isLeftBearing ? 0.04 : -0.18, // cuisse libre avancée
+          -0.14,                         // hanche ouverte en éventail
+          -0.24,                         // stance large et stable
         ];
       }
       if (animated.leftLowerLeg) {
-        animated.leftLowerLeg = [isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+        animated.leftLowerLeg = [isLeftBearing ? bearingKnee : freeKnee, 0, 0];
       }
       if (animated.leftFoot) {
-        animated.leftFoot = [0.02, -0.12, 0];
+        animated.leftFoot = [isLeftBearing ? 0.02 : 0.08, -0.22, 0]; // micro-relevé du talon sur pied libre
       }
 
       if (animated.rightUpperLeg) {
         animated.rightUpperLeg = [
-          !isLeftBearing ? 0.02 : -0.12,
-          0.08,
-          0.16,
+          !isLeftBearing ? 0.04 : -0.18,
+          0.14,
+          0.24,
         ];
       }
       if (animated.rightLowerLeg) {
-        animated.rightLowerLeg = [!isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+        animated.rightLowerLeg = [!isLeftBearing ? bearingKnee : freeKnee, 0, 0];
       }
       if (animated.rightFoot) {
-        animated.rightFoot = [0.02, 0.12, 0];
+        animated.rightFoot = [!isLeftBearing ? 0.02 : 0.08, 0.22, 0];
       }
 
       // 6. Bras droit : Micro tenu délicatement juste devant les lèvres
@@ -2485,6 +2496,41 @@ export function createVrmPet(hostEl, opts = {}) {
   function frameVrm(v) {
     updateHeadScale(v);
     v.scene.updateMatrixWorld(true);
+
+    if (framing === "mid" || framing === "aeysa") {
+      let headPos = new THREE.Vector3(0, 1.4, 0);
+      try {
+        const head = v.humanoid?.getNormalizedBoneNode?.("head");
+        const hips = v.humanoid?.getNormalizedBoneNode?.("hips");
+        if (head) {
+          head.getWorldPosition(headPos);
+        } else if (hips) {
+          hips.getWorldPosition(headPos);
+          headPos.y += 0.5;
+        }
+      } catch (_) { }
+
+      // Cadrage plan américain / mi-cuisses mettant en valeur le déhanché des hanches et jambes :
+      // On vise sous le nombril (headPos.y - 0.42) avec du recul (dist = 1.95, fov = 26)
+      // pour embrasser la tête, les yeux, le micro, et toute la dynamique des hanches et cuisses !
+      const lookY = headPos.y - 0.42;
+      const dist = 1.95;
+      targetCamPos.set(headPos.x, lookY, headPos.z + dist);
+      targetLookAt.set(headPos.x, lookY, headPos.z);
+      targetFov = 26;
+
+      if (!cameraInitialized) {
+        currentCamPos.copy(targetCamPos);
+        currentLookAt.copy(targetLookAt);
+        currentFov = targetFov;
+        camera.fov = currentFov;
+        camera.position.copy(currentCamPos);
+        camera.lookAt(currentLookAt);
+        camera.updateProjectionMatrix();
+        cameraInitialized = true;
+      }
+      return;
+    }
 
     if (framing === "bust") {
       let headPos = new THREE.Vector3(0, 1.4, 0);
@@ -3106,10 +3152,10 @@ export function createVrmPet(hostEl, opts = {}) {
       } else if (poseTo === "aeysaSinging") {
         const tempo = t * 13.404;
         const tempoHalf = tempo * 0.5;
-        // Déport latéral subtil (2.2 cm) pour un balancement naturel et doux
-        vrm.scene.position.x = Math.sin(tempoHalf) * 0.022;
-        // Hauteur Y parfaitement stable avec micro-amorti imperceptible
-        const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2.0) * 0.005;
+        // Déport latéral physique (3.2 cm) accompagnant harmonieusement le transfert de poids des hanches
+        vrm.scene.position.x = Math.sin(tempoHalf) * 0.032;
+        // Hauteur Y stable avec micro-amorti dynamique
+        const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2.0) * 0.006;
         vrm.scene.position.y = walkYOffset - kickSoft;
       } else if (poseTo === "dance") {
         const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;

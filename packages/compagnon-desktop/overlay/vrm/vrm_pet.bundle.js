@@ -55118,68 +55118,75 @@ void main() {
         const tempoHalf2 = tempo * 0.5;
         const breathe = Math.sin(t * 1.8);
         const phaseHips = tempoHalf2;
-        const phaseSpine = tempoHalf2 - 0.25;
-        const phaseChest = tempoHalf2 - 0.45;
-        const phaseHead = tempo - 0.5;
-        const hipSway = Math.sin(phaseHips) * 0.14;
-        const hipRoll = Math.cos(phaseHips) * 0.08;
-        const hipPitch = -0.06 + Math.sin(tempo) * 0.015;
+        const phaseSpine = tempoHalf2 - 0.22;
+        const phaseChest = tempoHalf2 - 0.4;
+        const phaseHead = tempo - 0.45;
+        const kickCurve = Math.pow(Math.max(0, Math.sin(tempo)), 2.2);
+        const kickPop = kickCurve * 0.08;
+        const rawRoll = Math.sin(phaseHips);
+        const hipRoll = rawRoll * 0.32 + (rawRoll > 0 ? kickPop : -kickPop);
+        const hipSway = Math.cos(phaseHips) * 0.26;
+        const hipPitch = -0.15 + Math.abs(Math.sin(phaseHips)) * 0.06;
         if (animated.hips) {
           animated.hips = [hipPitch, hipSway, hipRoll];
         }
         if (animated.spine) {
           animated.spine = [
-            0.04 + breathe * 0.015,
-            -Math.sin(phaseSpine) * 0.09,
-            -Math.cos(phaseSpine) * 0.07
+            0.06 + breathe * 0.015,
+            -hipSway * 0.65,
+            -hipRoll * 0.85
           ];
         }
         if (animated.chest) {
           animated.chest = [
-            0.07 + breathe * 0.025,
-            -Math.sin(phaseChest) * 0.07,
-            -Math.cos(phaseChest) * 0.06
+            0.08 + breathe * 0.025,
+            -hipSway * 0.35,
+            -hipRoll * 0.45
           ];
         }
-        const headNod = Math.sin(phaseHead) * 0.038;
-        const headTilt = Math.cos(tempoHalf2) * 0.045;
+        const headNod = Math.sin(phaseHead) * 0.04;
+        const headTilt = Math.cos(tempoHalf2) * 0.05;
         if (animated.head) {
           animated.head = [
             -0.1 + headNod,
-            -Math.sin(phaseChest) * 0.05,
-            headTilt
+            hipSway * 0.2,
+            headTilt - hipRoll * 0.15
           ];
         }
         if (animated.neck) {
           animated.neck = [-0.04, 0.01, 0.01];
         }
-        const isLeftBearing = hipSway < 0;
-        const kneeSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2) * 0.05;
+        const isLeftBearing = hipRoll > 0;
+        const bearingKnee = 0.12 + kickCurve * 0.04;
+        const freeKnee = 0.46 + kickCurve * 0.08;
         if (animated.leftUpperLeg) {
           animated.leftUpperLeg = [
-            isLeftBearing ? 0.02 : -0.12,
-            -0.08,
-            -0.16
+            isLeftBearing ? 0.04 : -0.18,
+            // cuisse libre avancée
+            -0.14,
+            // hanche ouverte en éventail
+            -0.24
+            // stance large et stable
           ];
         }
         if (animated.leftLowerLeg) {
-          animated.leftLowerLeg = [isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+          animated.leftLowerLeg = [isLeftBearing ? bearingKnee : freeKnee, 0, 0];
         }
         if (animated.leftFoot) {
-          animated.leftFoot = [0.02, -0.12, 0];
+          animated.leftFoot = [isLeftBearing ? 0.02 : 0.08, -0.22, 0];
         }
         if (animated.rightUpperLeg) {
           animated.rightUpperLeg = [
-            !isLeftBearing ? 0.02 : -0.12,
-            0.08,
-            0.16
+            !isLeftBearing ? 0.04 : -0.18,
+            0.14,
+            0.24
           ];
         }
         if (animated.rightLowerLeg) {
-          animated.rightLowerLeg = [!isLeftBearing ? 0.15 + kneeSoft : 0.28 + kneeSoft, 0, 0];
+          animated.rightLowerLeg = [!isLeftBearing ? bearingKnee : freeKnee, 0, 0];
         }
         if (animated.rightFoot) {
-          animated.rightFoot = [0.02, 0.12, 0];
+          animated.rightFoot = [!isLeftBearing ? 0.02 : 0.08, 0.22, 0];
         }
         const micBob = Math.sin(tempo) * 8e-3;
         if (animated.rightShoulder) {
@@ -55325,6 +55332,36 @@ void main() {
     function frameVrm(v) {
       updateHeadScale(v);
       v.scene.updateMatrixWorld(true);
+      if (framing === "mid" || framing === "aeysa") {
+        let headPos = new Vector3(0, 1.4, 0);
+        try {
+          const head = v.humanoid?.getNormalizedBoneNode?.("head");
+          const hips = v.humanoid?.getNormalizedBoneNode?.("hips");
+          if (head) {
+            head.getWorldPosition(headPos);
+          } else if (hips) {
+            hips.getWorldPosition(headPos);
+            headPos.y += 0.5;
+          }
+        } catch (_) {
+        }
+        const lookY2 = headPos.y - 0.42;
+        const dist2 = 1.95;
+        targetCamPos.set(headPos.x, lookY2, headPos.z + dist2);
+        targetLookAt.set(headPos.x, lookY2, headPos.z);
+        targetFov = 26;
+        if (!cameraInitialized) {
+          currentCamPos.copy(targetCamPos);
+          currentLookAt.copy(targetLookAt);
+          currentFov = targetFov;
+          camera.fov = currentFov;
+          camera.position.copy(currentCamPos);
+          camera.lookAt(currentLookAt);
+          camera.updateProjectionMatrix();
+          cameraInitialized = true;
+        }
+        return;
+      }
       if (framing === "bust") {
         let headPos = new Vector3(0, 1.4, 0);
         try {
@@ -55865,8 +55902,8 @@ void main() {
         } else if (poseTo === "aeysaSinging") {
           const tempo = t * 13.404;
           const tempoHalf2 = tempo * 0.5;
-          vrm.scene.position.x = Math.sin(tempoHalf2) * 0.022;
-          const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2) * 5e-3;
+          vrm.scene.position.x = Math.sin(tempoHalf2) * 0.032;
+          const kickSoft = Math.pow(Math.max(0, Math.sin(tempo)), 2) * 6e-3;
           vrm.scene.position.y = walkYOffset - kickSoft;
         } else if (poseTo === "dance") {
           const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
