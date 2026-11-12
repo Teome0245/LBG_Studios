@@ -43,6 +43,17 @@
      - Résolution dynamique universelle dans `vrm_pet.js` (`VRMA_CATALOG` de 397 clés d'accès direct, `resolveVrmaFile`), dézoom dynamique automatique sur mouvement complet (`isFullBodyAction`), et neutralisation du root-motion in-place.
      - Recompilation du bundle IIFE (`vrm_pet.bundle.js`), synchronisation locale vers l'overlay Windows (`192.168.0.10:5005`) et déploiement Web instantané sur CT 100 (`192.168.0.100:5174`).
      - Test live validé sur desktop overlay avec `send_avatar_command` (`gangnam`, `bellydance`, etc.).
+   - **Clip Musical Officiel 60s en Mode Studio Cyberpunk 3D (YouTube Shorts / TikTok HD)** :
+     - Élimination totale des éléments de bureau Windows (ni fond d'écran, ni barre des tâches, ni icônes) : immersion 100% scénique.
+     - Scène de concert futuriste en Three.js / WebGL hardware (GTX 1050 Ti) :
+       * Grille perspective lumineuse cyan au sol défilant vers l'avant à 30 FPS.
+       * Spots volumétriques de scène (cyan & magenta) pulsant en temps réel au kick de la musique.
+       * 40 particules néon montantes en continu et halo central scénique derrière l'avatar.
+       * Carte d'en-tête HUD glassmorphism (style officiel Studio Content Engine) : `LYRA // LIVE 3D CONCERT`, `100% LOCAL • 0€ CLOUD`, `KHOR-UN VAL-KYRA (128 BPM)`.
+       * Égaliseur audio 32 bandes en bas de scène réagissant aux fréquences réelles de la piste.
+     - Avatar 3D (Lyra androïde) en plein pied au centre de la scène tenant le micro cyber 3D néon, lèvres et regard calés au tempo, enchaînant les danses mocap (Intro Diva -> Couplet Groove -> Bellydance -> Pop Dance -> Gangnam -> Samba -> Finale Idol).
+     - Rendu master vidéo 1080×1920 (Vertical 9:16, H.264 High Profile @ 6214 kb/s, 29.98 FPS, Audio AAC 48 kHz stéréo, 44.46 Mo).
+     - Fichier délivré sur l'hôte Windows : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_studio_60s.mp4`.
    - **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
      - Enregistrement en direct hardware via FFmpeg `gdigrab` sur le poste Windows (`192.168.0.10`) de l'overlay 3D Three.js réel en exécution (Lyra skin android, micro cyber 3D néon, lipsync et animations mocap).
      - Synchronisation chorégraphique millimétrée sur les 60 secondes de `Khor-un Val-Kyra.mp3` :
