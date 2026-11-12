@@ -180,6 +180,14 @@
             </button>
             <button
               type="button"
+              class="py-1 rounded border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 text-[10px] text-purple-200 transition font-bold"
+              title="Cyber Groove 128 BPM (Déhanché live, foot tap et micro)"
+              @click="triggerPose('cyberGroove', 25000)"
+            >
+              ⚡ Cyber Groove
+            </button>
+            <button
+              type="button"
               class="py-1 rounded border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/50 text-[10px] text-cyan-200 transition"
               title="Cycle de marche (VRMA)"
               @click="triggerPose('walk', 6000)"
@@ -250,6 +258,21 @@
               <span class="text-pink-300 font-medium flex items-center gap-1">💃 Pack Danses</span>
               <span class="text-[9px] text-slate-500 font-mono">VRMA / Kinematic 60fps</span>
             </div>
+            <!-- Bouton Vedette Cyber Groove 128 BPM -->
+            <div class="mb-1.5">
+              <button
+                type="button"
+                class="w-full py-1.5 px-2 rounded-md border border-purple-500/60 bg-gradient-to-r from-purple-950/80 via-fuchsia-950/60 to-purple-950/80 hover:from-purple-900/90 hover:to-fuchsia-900/90 text-xs text-purple-200 transition font-bold flex items-center justify-between shadow-lg shadow-purple-950/40"
+                title="Cyber Groove 128 BPM (Déhanché rythmé, kick du pied, sway et micro live)"
+                @click="triggerPose('cyberGroove', 25000)"
+              >
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                  ⚡ Cyber Groove Live
+                </span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-purple-800/60 text-purple-100 font-mono">128 BPM</span>
+              </button>
+            </div>
             <div class="grid grid-cols-4 gap-1">
               <button
                 type="button"
@@ -261,11 +284,35 @@
               </button>
               <button
                 type="button"
-                class="py-1 rounded border border-pink-500/30 bg-pink-950/30 hover:bg-pink-900/50 text-[10px] text-pink-200 transition"
-                title="Danse Groove fluide & détendue"
-                @click="triggerPose('dance', 8000)"
+                class="py-1 rounded border border-fuchsia-500/40 bg-fuchsia-950/40 hover:bg-fuchsia-900/60 text-[10px] text-fuchsia-200 transition font-bold"
+                title="Diva Live Concert au micro"
+                @click="triggerPose('femaledance', 25000)"
               >
-                🎵 Groove
+                🎤 Diva Live
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 text-[10px] text-purple-200 transition font-bold"
+                title="Bellydance / Danse orientale fluide"
+                @click="triggerPose('bellydance', 25000)"
+              >
+                💃 Bellydance
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-pink-500/40 bg-pink-950/40 hover:bg-pink-900/60 text-[10px] text-pink-200 transition"
+                title="Pop Dance Maraschino Step rythmé"
+                @click="triggerPose('popdance', 20000)"
+              >
+                ✨ Pop Dance
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-indigo-500/30 bg-indigo-950/30 hover:bg-indigo-900/50 text-[10px] text-indigo-200 transition font-medium"
+                title="Gangnam Style dynamique"
+                @click="triggerPose('gangnam', 20000)"
+              >
+                🕶️ Gangnam
               </button>
               <button
                 type="button"
@@ -285,6 +332,14 @@
               </button>
               <button
                 type="button"
+                class="py-1 rounded border border-emerald-500/30 bg-emerald-950/30 hover:bg-emerald-900/50 text-[10px] text-emerald-200 transition"
+                title="Capoeira Ginga arts martiaux"
+                @click="triggerPose('ginga', 15000)"
+              >
+                🥋 Capoeira
+              </button>
+              <button
+                type="button"
                 class="py-1 rounded border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/50 text-[10px] text-cyan-200 transition"
                 title="Robot / Popping avec onde cinématique"
                 @click="triggerPose('robot', 8000)"
@@ -298,6 +353,14 @@
                 @click="triggerPose('disco', 8000)"
               >
                 🪩 Disco
+              </button>
+              <button
+                type="button"
+                class="py-1 rounded border border-teal-500/30 bg-teal-950/30 hover:bg-teal-900/50 text-[10px] text-teal-200 transition"
+                title="Catwalk démarche mannequin"
+                @click="triggerPose('catwalk', 12000)"
+              >
+                👠 Catwalk
               </button>
               <button
                 type="button"
@@ -468,10 +531,26 @@ watch(
       const last = messages.value[newLen - 1]
       if (last && last.role === 'assistant' && last.content) {
         onAssistantReply(last.content)
+      } else if (last && last.role === 'user' && last.content) {
+        onUserPrompt(last.content)
       }
     }
   }
 )
+
+function onUserPrompt(text) {
+  const t = String(text || '').toLowerCase().trim()
+  if (
+    t.includes('cybergroove') ||
+    t.includes('groove') ||
+    t.includes('danse') ||
+    t.includes('darksynth') ||
+    t.includes('concert') ||
+    t.includes('chante')
+  ) {
+    triggerPose('cyberGroove', 25000)
+  }
+}
 
 function onAssistantReply(text) {
   const t = String(text).toLowerCase()
@@ -563,7 +642,7 @@ function ensureVrmAssets() {
     }
     const script = document.createElement('script')
     script.id = 'vrm-pet-bundle-js'
-    script.src = '/vrm/vrm_pet.bundle.js?v=accessories_v1'
+    script.src = '/vrm/vrm_pet.bundle.js?v=cyber_groove_v2'
     script.onload = () => resolve()
     script.onerror = () => resolve()
     document.body.appendChild(script)
@@ -701,7 +780,10 @@ function toggleFraming(f) {
 let returnToBustTimer = null
 
 function triggerPose(pose, holdMs) {
-  const fullBodyPoses = ['dance', 'danse', 'samba', 'salsa', 'hiphop', 'walk', 'marche', 'spin', 'jump', 'disco', 'robot', 'twist', 'popping', 'fever']
+  const fullBodyPoses = [
+    'cybergroove', 'cyber_groove', 'groove', 'dance', 'danse', 'samba', 'salsa', 'hiphop', 'walk', 'marche', 'spin', 'jump', 'disco', 'robot', 'twist', 'popping', 'fever',
+    'femaledance', 'bellydance', 'popdance', 'gangnam', 'twerk', 'cancan', 'capoeira', 'ginga', 'backflip', 'catwalk', 'castspell'
+  ]
   const isFullBody = fullBodyPoses.includes(String(pose || '').toLowerCase())
 
   if (returnToBustTimer) {

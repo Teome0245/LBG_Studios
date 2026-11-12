@@ -1,14 +1,58 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-11  
+**Mis à jour** : 2026-11-12  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Élévation Graphique Prime Client : 2D Top-Down (Canvas of Kings) + 3D Spatiale JTL (PVKK / Road to Vostok)**.
+**Fil** : canon O1/O2/O3 — **Cyber Groove 128 BPM Compagnon Live Concert & Storyboard Real-Time Pose**.
 
 ---
 
-## Dernières actions réalisées (2026-11-11)
+## Dernières actions réalisées (2026-11-12)
+1. **Studio Content Engine V2.1 (Dynamisme Vidéo, Motion Design & B-Roll Tech)** :
+   - **Sous-titres Karaoké Mot-à-Mot Pop (`voice_engine.py`)** : découpage temporel fin et surlignage mot par mot en jaune néon éclatant (`&H0000FFFF&` avec grossissement pop +14%) au tempo oral exact.
+   - **Arrière-plan Cyberpunk en Mouvement Continu (`video_compositor.py`)** : défilement fluide de la grille perspective au sol vers l'avant à 30 FPS + 24 particules néon montantes en permanence (fin de l'écran statique).
+   - **Infographies B-Roll Concètes à Droite** :
+     - *Phase Alerte* : carte rouge `PIÈGE DES API CLOUD` avec courbe de coût grimpante (`+450€ / mois`).
+     - *Phase Solution* : carte cyan `STACK 100% LOCALE` avec tags Godot 4.6 Headless, Ollama RTX, Piper ONNX, SQLite WAL.
+     - *Phase Métriques* : carte vert émeraude `BENCHMARKS EN DIRECT` avec jauge 60 ticks/s (100%), RAM 1.2 Go (15%) et 0.00€ Cloud.
+     - *Phase Outro* : carte magenta `REPO LBG STUDIOS` avec lien GitHub et bouton d'action.
+   - **Composition 2 Tiers & Avatar Réactif** :
+     - Cadrage équilibré : Lia sur le tiers gauche de l'écran avec posture/regard tourné vers les infographies de droite.
+     - Micro-inclinaisons de tête et buste dynamiques sur les accents de voix (`rms`).
+   - **Validation & Test Vidéo HD** : génération complète réussie (`drop_1794489788`, 55.2s, 26.65 Mo, MP4 1080×1920 @ 30 FPS).
+2. **Compagnon 3D VRM : Posture & Chorégraphie Live Concert (Storyboard Diva Nexura Domina)** :
+   - **Micro 3D Stylisé de Scène (`cyberMicGroup`)** : création d'un mesh 3D procédural (corps noir graphite métallique, capsule micro sculptée, anneaux néon emissive cyan et magenta pulsant au kick 128 BPM) attaché dynamiquement comme enfant direct du bone `rightHand` (`rhNode.add(cyberMicGroup)`), grille orientée au plus près des lèvres/menton.
+   - **Naturel Scénique, Biomécanique & Contrapposto Dynamique (Correctif Storyboard)** :
+     - **Micro 3D redressé vers la bouche** : correction des angles du bras droit (`rightLowerArm` replié vers le haut et l'intérieur `[-0.22, -0.16, -2.10]`, coude contre le buste `[0.32, 0.35, 0.85]`), et réorientation locale de la capsule (`rotation.set(0.25, 0.15, 0.60)`) pour que la sphère chromée soit dressée directement à 2 cm devant les lèvres au lieu de pointer horizontalement sur le torse.
+     - **Jambes déverrouillées & Stance ouverte permanente** : fin des cuisses croisées ou collées en un seul trait ; écartement minimal garanti de `0.26 rad` (~15°), pieds en éventail (25° externe), flexion permanente bien visible (jambe d'appui à `0.25 rad`, jambe libre à `0.55 rad`, et drop de scène à `0.85 rad` ~50°).
+     - **Tête & Émotion** : inclinaison arrière accentuée vers le micro (`head: [-0.22, -0.06, 0.08]`) pour restituer la véritable extase vocale du concept art.
+   - **Intégration Mocap FBX Complète (195 Fichiers, Tous Dossiers & Sous-Dossiers)** :
+     - Rapatriement récursif de l'intégralité des mouvements FBX depuis `O:\OneDrive\Pictures\IA\mouvements` (Packs `Capoeira Pack`, `Female Locomotion Pack`, `Free Test Pack`, `Pro Magic Pack`, et racine) vers `packages/compagnon-desktop/overlay/vrm/fbx_source/` (195 fichiers FBX, 611 Mo de mocap brute).
+     - Pipeline de conversion parallèle multi-cœurs (`tools/batch_convert_fbx.py`) avec FBX2glTF + `fbx2vrma-converter.js` : **189 nouveaux convertis, 6 existants, 0 échec** en ~2 minutes.
+     - Empreinte disque ultralégère : **90.02 Mo au total** pour les 195 animations VRMA (~450 Ko par animation en moyenne !).
+     - Classification et génération du manifest structuré (`manifest.json`) en 8 catégories :
+       - *Danses & Grooves* (29 anims : Gangnam Style, Twerk, Can Can, Macarena, Bellydance, Hip Hop 1-3, Jazz 1-3, Samba, Salsa, Disco...).
+       - *Capoeira & Arts Martiaux* (40 anims : Armada, Au, Bencao, Chapa, Ginga, Martelo, Meia Lua, Rasteira...).
+       - *Locomotion & Déplacements* (25 anims : Catwalk, Happy Walk, Strafes, Sprint, Jump...).
+       - *Magie & Incantations* (57 anims : Cast Spell 1H/2H, Magic Area Attacks 01-05, Shield Blocks, Reacts...).
+       - *Poses & Silhouettes* (18 anims : Female Dance Pose, Dynamic Pose, Laying, Kneeling...).
+       - *Expressions & Réactions* (23 anims : Cheering, Victory, Taunt, Bashful, Thinking, Phone...).
+       - *Fitness & Sport* (11 anims : Air Squats, Back Squat, Backflip, Push Up, Kettlebell, Speedbag...).
+       - *Général* (17 anims).
+     - Résolution dynamique universelle dans `vrm_pet.js` (`VRMA_CATALOG` de 397 clés d'accès direct, `resolveVrmaFile`), dézoom dynamique automatique sur mouvement complet (`isFullBodyAction`), et neutralisation du root-motion in-place.
+     - Recompilation du bundle IIFE (`vrm_pet.bundle.js`), synchronisation locale vers l'overlay Windows (`192.168.0.10:5005`) et déploiement Web instantané sur CT 100 (`192.168.0.100:5174`).
+     - Test live validé sur desktop overlay avec `send_avatar_command` (`gangnam`, `bellydance`, etc.).
+   - **Clip Musical 60s & Déploiement Pipeline (Khor-un Val-Kyra / Nexura Diva)** :
+     - Script de montage cinématographique vertical 1080x1920 30 FPS (`tools/build_clip_khor_un_val_kyra.py`) : 7 plans enchaînés avec zoompan/Ken Burns dynamique et synchronisation complète de la bande son master 60s (`khor_un_val_kyra.mp3`).
+     - Rendu vidéo finalisé (`clip_khor_un_val_kyra_60s.mp4`, 9.0 Mo, H.264 / AAC 256k) et copié automatiquement sur le poste Windows dans `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_60s.mp4`.
+   - **Panneau Compagnon Web & Desktop (`LyraPanel.vue`)** :
+     - Ajout de 12 boutons de chorégraphies et actions animées : Diva Live, Bellydance, Pop Dance, Gangnam Style, Samba, Hip-Hop, Capoeira Ginga, Robot, Disco, Catwalk, Pirouette, Mini Heart.
+     - Déclenchement automatique du plein pied (`fullBodyPoses`) dès le clic.
+     - Recompilation Vite et déploiement sur CT 100 (`lbg-frontend`).
+   - **Portage des Animations 3D dans le MMO (`prime-client` Godot 4.6)** :
+     - Création de `packages/prime-client/assets/animations/{locomotion,combat,dances}/` avec 23 animations prêtes à l'emploi au format GLB standard (walk, run, sprint, jump, strafes, capoeira ginga/armada/esquiva/martelo, sorts magiques 1H/2H, parade bouclier, danses).
+     - Tests CI Headless Godot validés (`tools/ci_godot_headless.sh`).
 1. **Élévation Graphique 2D Top-Down style *Canvas of Kings* (Prime Client 2D)** :
    - **Moteur d'Ambiance Visuelle & Éclairage Dynamique (`canvas_of_kings_atmosphere.gd`)** :
      - Cycle jour/nuit circadien 2D avec `CanvasModulate` synchronisé directement sur le snapshot réseau `world_clock` du hub (`game_hour`, `is_night`, `light_ambient`).
@@ -52,6 +96,19 @@
    - **Agent Windows .10 (`compagnon_parler`)** :
      - Nouvelle capability installée sur l'agent Windows (`.10:5005`) pour synthétiser et jouer en direct la voix Vivienne Neural sur les haut-parleurs du PC avec notification au pont avatar VRM (`127.0.0.1:8765`).
      - Test d'élocution avec termes techniques ("GitHub", "Godot", "open source") validé avec succès en direct sur Windows .10.
+7. **Intégration Computer Use `agent-desktop` (Vercel Labs) sur Windows `.10` et Linux `.143`** :
+   - **Moteur d'Accessibilité Natif (`agent_desktop.py`)** :
+     - Remplacement des captures d'écran lourdes (`observe_screen` / vision LLM) et de la monopolisation de la souris physique (`pyautogui`) par la lecture directe de l'arbre d'accessibilité de l'OS (UI Automation sur Windows, AT-SPI sur Linux).
+     - Actions supportées : `ui_snapshot` (capture d'éléments interactifs avec identifiants `@ref`), `ui_click` (clic headless en tâche de fond), `ui_type` (saisie sécurisée via stdin), `ui_press` (raccourcis), `ui_scroll`, `ui_focus`.
+     - Exécution possible en unitaire ou chaînée dans la macro par lot `run_steps`.
+   - **Intégration dans `windows_agent` (`packages/cortex/windows_agent/Agent_IA/`)** :
+     - Détection de la CLI globale (`agent-desktop`) et exposition du statut dans `GET /healthz` (`agent_desktop.installed`, `agent_desktop.version`).
+     - Compatibilité totale avec les garde-fous de sécurité existants (dry-run, approval tokens).
+     - Script de déploiement `sync_windows_agent.sh` mis à jour pour copier `agent_desktop.py`.
+     - Suite de tests unitaires dédiée `test_agent_desktop.py` (17 tests validés).
+     - **Déploiement live sur Windows `.10:5005` validé** : `agent-desktop 1.2.0` installé et actif, premier `ui_snapshot` live exécuté en ~400 ms avec 604 éléments référencés.
+   - **Intégration dans `linux_agent` (`packages/cortex/linux_agent/Agent_IA/`)** :
+     - Sémantique symétrique pour Omarchy `.143`, exposition dans `/healthz` et tests dédiés `test_agent_desktop_linux.py` (12 tests validés).
 
 ---
 

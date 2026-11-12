@@ -24,6 +24,14 @@ export_presets.cfg.bak
 *.GLB
 *.vrm
 *.VRM
+*.fbx
+*.FBX
+**/fbx_source/
+*.mp4
+*.MP4
+*.webm
+*.mov
+*.MOV
 *.tre
 *.TRE
 *.zip

@@ -142,6 +142,47 @@ const POSE_EULERS = {
     leftUpperLeg: [0, 0, -0.02],
     rightUpperLeg: [0, 0, 0.02],
   },
+  /** Cyber Groove 128 BPM : posture live scénique avec micro en main et déhanché fluide */
+  cyberGroove: {
+    rightShoulder: [0.06, 0.04, -0.06],
+    rightUpperArm: [0.32, 0.35, 0.85],
+    rightLowerArm: [-0.22, -0.16, -2.10],
+    rightHand: [0.18, -0.15, 0.32],
+    // Doigts fermés sur le manche du micro
+    rightThumbProximal: [0.55, 0.30, 0],
+    rightThumbDistal: [0.45, 0, 0],
+    rightIndexProximal: [1.40, 0, 0],
+    rightIndexIntermediate: [1.30, 0, 0],
+    rightMiddleProximal: [1.45, 0, 0],
+    rightMiddleIntermediate: [1.35, 0, 0],
+    rightRingProximal: [1.45, 0, 0],
+    rightRingIntermediate: [1.35, 0, 0],
+    rightLittleProximal: [1.40, 0, 0],
+    rightLittleIntermediate: [1.25, 0, 0],
+    // Bras gauche diva sur la hanche avec grâce
+    leftShoulder: [0.02, -0.02, 0.02],
+    leftUpperArm: [0.12, 0.10, -1.15],
+    leftLowerArm: [0.18, 0.12, -1.25],
+    leftHand: [-0.10, 0.08, -0.15],
+    leftThumbProximal: [0.25, 0.10, 0],
+    leftIndexProximal: [0.30, 0, 0],
+    leftMiddleProximal: [0.35, 0, 0],
+    leftRingProximal: [0.35, 0, 0],
+    leftLittleProximal: [0.30, 0, 0],
+    // Dos cambré féminin et poitrine projetée fière
+    hips: [-0.10, 0.14, -0.10],
+    spine: [0.06, -0.08, 0.08],
+    chest: [0.14, -0.06, 0.06],
+    neck: [-0.08, 0.04, 0.04],
+    head: [-0.22, -0.06, 0.08],
+    // Stance de concert ouverte en éventail (pieds écartés et genoux fléchis)
+    leftUpperLeg: [-0.24, -0.15, -0.26],
+    rightUpperLeg: [0.06, 0.15, 0.26],
+    leftLowerLeg: [0.55, 0, 0],
+    rightLowerLeg: [0.25, 0, 0],
+    leftFoot: [-0.12, -0.25, 0],
+    rightFoot: [0.04, 0.25, 0],
+  },
   /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
   pointLeft: {
     leftUpperArm: [0, 0, -1.28],
@@ -560,26 +601,32 @@ export function createVrmPet(hostEl, opts = {}) {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   hostEl.appendChild(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x444466, 1.0));
-  const key = new THREE.DirectionalLight(0xffffff, 1.4);
-  key.position.set(1.0, 1.8, 2.2);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x223355, 0.85));
+  const key = new THREE.DirectionalLight(0xe0f7fa, 1.3);
+  key.position.set(0.8, 1.8, 2.2);
   scene.add(key);
-  scene.add(new THREE.DirectionalLight(0x99e9f2, 0.45).translateX(-2).translateY(1));
-  const metallicRimLight = new THREE.DirectionalLight(0x80e8ff, 0.75);
-  metallicRimLight.position.set(-1.0, 1.8, -2.0);
+  scene.add(new THREE.DirectionalLight(0x99e9f2, 0.4).translateX(-2).translateY(1));
+
+  // Éclairage de concert Cyberpunk à contre-jour (Rim Lights Cyan & Magenta)
+  const metallicRimLight = new THREE.DirectionalLight(0x00f5d4, 1.35);
+  metallicRimLight.position.set(-1.5, 1.8, -1.8);
   scene.add(metallicRimLight);
 
+  const magentaRimLight = new THREE.DirectionalLight(0xd946ef, 1.15);
+  magentaRimLight.position.set(1.5, 1.8, -1.8);
+  scene.add(magentaRimLight);
+
   // Halo cybernétique doux (sublime le détachement de l'avatar du fond d'écran)
-  const cyberHaloLight = new THREE.DirectionalLight(0x00f5d4, 0.45);
+  const cyberHaloLight = new THREE.DirectionalLight(0x00f5d4, 0.65);
   cyberHaloLight.position.set(0, -1.0, -1.8);
   scene.add(cyberHaloLight);
 
   // Projecteurs de scène dynamiques pour le ShowRoutineManager (ambiance spectacle / iStripper)
-  const stageLightCyan = new THREE.PointLight(0x00f5d4, 0, 4.0);
+  const stageLightCyan = new THREE.PointLight(0x00f5d4, 0.8, 4.0);
   stageLightCyan.position.set(-1.2, 1.2, 1.2);
   scene.add(stageLightCyan);
 
-  const stageLightMagenta = new THREE.PointLight(0xff007f, 0, 4.0);
+  const stageLightMagenta = new THREE.PointLight(0xff007f, 0.8, 4.0);
   stageLightMagenta.position.set(1.2, 1.2, 1.2);
   scene.add(stageLightMagenta);
 
@@ -605,6 +652,7 @@ export function createVrmPet(hostEl, opts = {}) {
   // 1er déclenchement test à 25s pour vérification immédiate après le démarrage
   let nextHeartPoseTime = 25.0;
   let wasInHeartPose = false;
+  let wasInCyberGroove = false;
   let walkYOffset = 0;
   let spinAngle = 0;
 
@@ -649,6 +697,68 @@ export function createVrmPet(hostEl, opts = {}) {
     scene.add(s);
   }
 
+  // --- Micro 3D de scène pour Cyber Groove ---
+  const cyberMicGroup = new THREE.Group();
+  cyberMicGroup.name = "cyberMicGroup";
+  cyberMicGroup.visible = false;
+
+  // Manche cylindrique noir graphite avec grip
+  const micHandleGeo = new THREE.CylinderGeometry(0.016, 0.012, 0.20, 16);
+  const micHandleMat = new THREE.MeshStandardMaterial({
+    color: 0x11161d,
+    metalness: 0.85,
+    roughness: 0.30,
+  });
+  const micHandle = new THREE.Mesh(micHandleGeo, micHandleMat);
+  cyberMicGroup.add(micHandle);
+
+  // Tête sphérique chrome métallisée avec grille
+  const micHeadGeo = new THREE.SphereGeometry(0.028, 16, 16);
+  micHeadGeo.scale(1.0, 1.25, 1.0);
+  const micHeadMat = new THREE.MeshStandardMaterial({
+    color: 0x4a5568,
+    metalness: 0.95,
+    roughness: 0.15,
+  });
+  const micHead = new THREE.Mesh(micHeadGeo, micHeadMat);
+  micHead.position.y = 0.11;
+  cyberMicGroup.add(micHead);
+
+  // Double anneau néon emissive cyan / magenta éclatant
+  const ringGeo = new THREE.TorusGeometry(0.020, 0.004, 12, 24);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.rotation.x = Math.PI / 2;
+  ringMesh.position.y = 0.088;
+  cyberMicGroup.add(ringMesh);
+
+  const ringGeo2 = new THREE.TorusGeometry(0.016, 0.003, 12, 24);
+  const ringMat2 = new THREE.MeshBasicMaterial({
+    color: 0xff0088,
+  });
+  const ringMesh2 = new THREE.Mesh(ringGeo2, ringMat2);
+  ringMesh2.rotation.x = Math.PI / 2;
+  ringMesh2.position.y = -0.075;
+  cyberMicGroup.add(ringMesh2);
+
+  function ensureMicAttached(v) {
+    if (!v?.humanoid) return;
+    try {
+      const rhNode = v.humanoid.getNormalizedBoneNode?.("rightHand") || v.humanoid.getRawBoneNode?.("rightHand");
+      if (rhNode && cyberMicGroup.parent !== rhNode) {
+        if (cyberMicGroup.parent) cyberMicGroup.parent.remove(cyberMicGroup);
+        rhNode.add(cyberMicGroup);
+        // Position locale dans la main droite :
+        // La sphère du micro se dresse vers le haut et l'arrière pour arriver pile devant les lèvres
+        cyberMicGroup.position.set(0.018, 0.045, 0.025);
+        cyberMicGroup.rotation.set(0.25, 0.15, 0.60);
+        cyberMicGroup.scale.set(1.35, 1.35, 1.35);
+      }
+    } catch (_) { }
+  }
+
   /** Pose courante / cible pour blend */
   let poseFrom = "idle";
   let poseTo = "idle";
@@ -662,6 +772,406 @@ export function createVrmPet(hostEl, opts = {}) {
   let activeVrmaName = null;
   const vrmaClips = new Map();
   const vrmaLoading = new Map();
+
+  const VRMA_CATALOG = {
+  "180turnwbriefcase": "180 Turn W_ Briefcase.vrma",
+  "180 turn w_ briefcase": "180 Turn W_ Briefcase.vrma",
+  "airsquatbentarms": "Air Squat Bent Arms.vrma",
+  "air squat bent arms": "Air Squat Bent Arms.vrma",
+  "armshiphopdance": "Arms Hip Hop Dance.vrma",
+  "arms hip hop dance": "Arms Hip Hop Dance.vrma",
+  "backsquat": "Back Squat.vrma",
+  "back squat": "Back Squat.vrma",
+  "backsquat2": "Back Squat2.vrma",
+  "back squat2": "Back Squat2.vrma",
+  "backflip": "Backflip.vrma",
+  "bashful": "Bashful.vrma",
+  "batterondeck": "Batter On Deck.vrma",
+  "batter on deck": "Batter On Deck.vrma",
+  "bellydancing": "Bellydancing.vrma",
+  "breakdanceready": "Breakdance Ready.vrma",
+  "breakdance ready": "Breakdance Ready.vrma",
+  "calling": "Calling.vrma",
+  "cancan": "Can Can.vrma",
+  "can can": "Can Can.vrma",
+  "capoeirapackpiratebyp.konstantinov": "Capoeira_Pack_Pirate By P. Konstantinov.vrma",
+  "capoeira_pack_pirate by p. konstantinov": "Capoeira_Pack_Pirate By P. Konstantinov.vrma",
+  "capoeirapackarmadatoesquiva": "Capoeira_Pack_armada to esquiva.vrma",
+  "capoeira_pack_armada to esquiva": "Capoeira_Pack_armada to esquiva.vrma",
+  "capoeirapackarmada": "Capoeira_Pack_armada.vrma",
+  "capoeira_pack_armada": "Capoeira_Pack_armada.vrma",
+  "capoeirapackautorole": "Capoeira_Pack_au to role.vrma",
+  "capoeira_pack_au to role": "Capoeira_Pack_au to role.vrma",
+  "capoeirapackau": "Capoeira_Pack_au.vrma",
+  "capoeira_pack_au": "Capoeira_Pack_au.vrma",
+  "capoeirapackbencao": "Capoeira_Pack_bencao.vrma",
+  "capoeira_pack_bencao": "Capoeira_Pack_bencao.vrma",
+  "capoeirapackcapoeira(2)": "Capoeira_Pack_capoeira (2).vrma",
+  "capoeira_pack_capoeira (2)": "Capoeira_Pack_capoeira (2).vrma",
+  "capoeirapackcapoeira(3)": "Capoeira_Pack_capoeira (3).vrma",
+  "capoeira_pack_capoeira (3)": "Capoeira_Pack_capoeira (3).vrma",
+  "capoeirapackcapoeira": "Capoeira_Pack_capoeira.vrma",
+  "capoeira_pack_capoeira": "Capoeira_Pack_capoeira.vrma",
+  "capoeirapackchapa2": "Capoeira_Pack_chapa 2.vrma",
+  "capoeira_pack_chapa 2": "Capoeira_Pack_chapa 2.vrma",
+  "capoeirapackchapagiratoria2": "Capoeira_Pack_chapa giratoria 2.vrma",
+  "capoeira_pack_chapa giratoria 2": "Capoeira_Pack_chapa giratoria 2.vrma",
+  "capoeirapackchapagiratoria": "Capoeira_Pack_chapa-giratoria.vrma",
+  "capoeira_pack_chapa-giratoria": "Capoeira_Pack_chapa-giratoria.vrma",
+  "capoeirapackchapaeudecouro": "Capoeira_Pack_chapaeu de couro.vrma",
+  "capoeira_pack_chapaeu de couro": "Capoeira_Pack_chapaeu de couro.vrma",
+  "capoeirapackesquiva1": "Capoeira_Pack_esquiva 1.vrma",
+  "capoeira_pack_esquiva 1": "Capoeira_Pack_esquiva 1.vrma",
+  "capoeirapackesquiva2": "Capoeira_Pack_esquiva 2.vrma",
+  "capoeira_pack_esquiva 2": "Capoeira_Pack_esquiva 2.vrma",
+  "capoeirapackesquiva3": "Capoeira_Pack_esquiva 3.vrma",
+  "capoeira_pack_esquiva 3": "Capoeira_Pack_esquiva 3.vrma",
+  "capoeirapackesquiva4": "Capoeira_Pack_esquiva 4.vrma",
+  "capoeira_pack_esquiva 4": "Capoeira_Pack_esquiva 4.vrma",
+  "capoeirapackesquiva5": "Capoeira_Pack_esquiva 5.vrma",
+  "capoeira_pack_esquiva 5": "Capoeira_Pack_esquiva 5.vrma",
+  "capoeirapackgingabackward": "Capoeira_Pack_ginga backward.vrma",
+  "capoeira_pack_ginga backward": "Capoeira_Pack_ginga backward.vrma",
+  "capoeirapackgingaforward": "Capoeira_Pack_ginga forward.vrma",
+  "capoeira_pack_ginga forward": "Capoeira_Pack_ginga forward.vrma",
+  "capoeirapackgingasideways1": "Capoeira_Pack_ginga sideways 1.vrma",
+  "capoeira_pack_ginga sideways 1": "Capoeira_Pack_ginga sideways 1.vrma",
+  "capoeirapackgingasideways2": "Capoeira_Pack_ginga sideways 2.vrma",
+  "capoeira_pack_ginga sideways 2": "Capoeira_Pack_ginga sideways 2.vrma",
+  "capoeirapackgingasidewaystoau": "Capoeira_Pack_ginga sideways to au.vrma",
+  "capoeira_pack_ginga sideways to au": "Capoeira_Pack_ginga sideways to au.vrma",
+  "capoeirapackgingavariation1": "Capoeira_Pack_ginga variation 1.vrma",
+  "capoeira_pack_ginga variation 1": "Capoeira_Pack_ginga variation 1.vrma",
+  "capoeirapackgingavariation2": "Capoeira_Pack_ginga variation 2.vrma",
+  "capoeira_pack_ginga variation 2": "Capoeira_Pack_ginga variation 2.vrma",
+  "capoeirapackgingavariation3": "Capoeira_Pack_ginga variation 3.vrma",
+  "capoeira_pack_ginga variation 3": "Capoeira_Pack_ginga variation 3.vrma",
+  "capoeirapackmacacoside": "Capoeira_Pack_macaco side.vrma",
+  "capoeira_pack_macaco side": "Capoeira_Pack_macaco side.vrma",
+  "capoeirapackmartelo2": "Capoeira_Pack_martelo 2.vrma",
+  "capoeira_pack_martelo 2": "Capoeira_Pack_martelo 2.vrma",
+  "capoeirapackmartelo3": "Capoeira_Pack_martelo 3.vrma",
+  "capoeira_pack_martelo 3": "Capoeira_Pack_martelo 3.vrma",
+  "capoeirapackmartelodochausemmao": "Capoeira_Pack_martelo do chau sem mao.vrma",
+  "capoeira_pack_martelo do chau sem mao": "Capoeira_Pack_martelo do chau sem mao.vrma",
+  "capoeirapackmartelodochau": "Capoeira_Pack_martelo do chau.vrma",
+  "capoeira_pack_martelo do chau": "Capoeira_Pack_martelo do chau.vrma",
+  "capoeirapackmeialuadecompassoback": "Capoeira_Pack_meia lua de compasso back.vrma",
+  "capoeira_pack_meia lua de compasso back": "Capoeira_Pack_meia lua de compasso back.vrma",
+  "capoeirapackmeialuadecompasso": "Capoeira_Pack_meia lua de compasso.vrma",
+  "capoeira_pack_meia lua de compasso": "Capoeira_Pack_meia lua de compasso.vrma",
+  "capoeirapackmeialuadefrente": "Capoeira_Pack_meia lua de frente.vrma",
+  "capoeira_pack_meia lua de frente": "Capoeira_Pack_meia lua de frente.vrma",
+  "capoeirapackpontera": "Capoeira_Pack_pontera.vrma",
+  "capoeira_pack_pontera": "Capoeira_Pack_pontera.vrma",
+  "capoeirapackqueshada1": "Capoeira_Pack_queshada 1.vrma",
+  "capoeira_pack_queshada 1": "Capoeira_Pack_queshada 1.vrma",
+  "capoeirapackqueshada2": "Capoeira_Pack_queshada 2.vrma",
+  "capoeira_pack_queshada 2": "Capoeira_Pack_queshada 2.vrma",
+  "capoeirapackrasteira1": "Capoeira_Pack_rasteira 1.vrma",
+  "capoeira_pack_rasteira 1": "Capoeira_Pack_rasteira 1.vrma",
+  "capoeirapackrasteira2": "Capoeira_Pack_rasteira 2.vrma",
+  "capoeira_pack_rasteira 2": "Capoeira_Pack_rasteira 2.vrma",
+  "capoeirapacktroca1": "Capoeira_Pack_troca 1.vrma",
+  "capoeira_pack_troca 1": "Capoeira_Pack_troca 1.vrma",
+  "catwalkwalking": "Catwalk Walking.vrma",
+  "catwalk walking": "Catwalk Walking.vrma",
+  "cheering": "Cheering.vrma",
+  "chickendance": "Chicken Dance.vrma",
+  "chicken dance": "Chicken Dance.vrma",
+  "crazygesture": "Crazy Gesture.vrma",
+  "crazy gesture": "Crazy Gesture.vrma",
+  "dancingmaraschinostep": "Dancing Maraschino Step.vrma",
+  "dancing maraschino step": "Dancing Maraschino Step.vrma",
+  "dancingtwerk": "Dancing Twerk.vrma",
+  "dancing twerk": "Dancing Twerk.vrma",
+  "dancing": "Dancing.vrma",
+  "defeated": "Defeated.vrma",
+  "dwarfidle": "Dwarf Idle.vrma",
+  "dwarf idle": "Dwarf Idle.vrma",
+  "femalecrouchpose": "Female Crouch Pose.vrma",
+  "female crouch pose": "Female Crouch Pose.vrma",
+  "femaledancepose": "Female Dance Pose.vrma",
+  "female dance pose": "Female Dance Pose.vrma",
+  "femaledancepose1": "Female Dance Pose1.vrma",
+  "female dance pose1": "Female Dance Pose1.vrma",
+  "femaledynamicpose": "Female Dynamic Pose.vrma",
+  "female dynamic pose": "Female Dynamic Pose.vrma",
+  "femalelayingpose": "Female Laying Pose.vrma",
+  "female laying pose": "Female Laying Pose.vrma",
+  "femalelayingpose1": "Female Laying Pose1.vrma",
+  "female laying pose1": "Female Laying Pose1.vrma",
+  "femalestandingpose": "Female Standing Pose.vrma",
+  "female standing pose": "Female Standing Pose.vrma",
+  "femalestandingpose2": "Female Standing Pose2.vrma",
+  "female standing pose2": "Female Standing Pose2.vrma",
+  "femalestopandstartwalking": "Female Stop And Start Walking.vrma",
+  "female stop and start walking": "Female Stop And Start Walking.vrma",
+  "femalelocomotionpackpiratebyp.konstantinov": "Female_Locomotion_Pack_Pirate By P. Konstantinov.vrma",
+  "female_locomotion_pack_pirate by p. konstantinov": "Female_Locomotion_Pack_Pirate By P. Konstantinov.vrma",
+  "femalelocomotionpackidle": "Female_Locomotion_Pack_idle.vrma",
+  "female_locomotion_pack_idle": "Female_Locomotion_Pack_idle.vrma",
+  "femalelocomotionpackjump": "Female_Locomotion_Pack_jump.vrma",
+  "female_locomotion_pack_jump": "Female_Locomotion_Pack_jump.vrma",
+  "femalelocomotionpackleftstrafewalk": "Female_Locomotion_Pack_left strafe walk.vrma",
+  "female_locomotion_pack_left strafe walk": "Female_Locomotion_Pack_left strafe walk.vrma",
+  "femalelocomotionpackleftstrafe": "Female_Locomotion_Pack_left strafe.vrma",
+  "female_locomotion_pack_left strafe": "Female_Locomotion_Pack_left strafe.vrma",
+  "femalelocomotionpackleftturn": "Female_Locomotion_Pack_left turn.vrma",
+  "female_locomotion_pack_left turn": "Female_Locomotion_Pack_left turn.vrma",
+  "femalelocomotionpackrightstrafewalk": "Female_Locomotion_Pack_right strafe walk.vrma",
+  "female_locomotion_pack_right strafe walk": "Female_Locomotion_Pack_right strafe walk.vrma",
+  "femalelocomotionpackrightstrafe": "Female_Locomotion_Pack_right strafe.vrma",
+  "female_locomotion_pack_right strafe": "Female_Locomotion_Pack_right strafe.vrma",
+  "femalelocomotionpackrightturn": "Female_Locomotion_Pack_right turn.vrma",
+  "female_locomotion_pack_right turn": "Female_Locomotion_Pack_right turn.vrma",
+  "femalelocomotionpackrunning": "Female_Locomotion_Pack_running.vrma",
+  "female_locomotion_pack_running": "Female_Locomotion_Pack_running.vrma",
+  "femalelocomotionpackwalking": "Female_Locomotion_Pack_walking.vrma",
+  "female_locomotion_pack_walking": "Female_Locomotion_Pack_walking.vrma",
+  "flair": "Flair.vrma",
+  "freetestpackpiratebyp.konstantinov": "Free_Test_Pack_Pirate By P. Konstantinov.vrma",
+  "free_test_pack_pirate by p. konstantinov": "Free_Test_Pack_Pirate By P. Konstantinov.vrma",
+  "freetestpackbackfliptouppercut": "Free_Test_Pack_back flip to uppercut.vrma",
+  "free_test_pack_back flip to uppercut": "Free_Test_Pack_back flip to uppercut.vrma",
+  "freetestpackgangnamstyle": "Free_Test_Pack_gangnam style.vrma",
+  "free_test_pack_gangnam style": "Free_Test_Pack_gangnam style.vrma",
+  "freetestpackidle": "Free_Test_Pack_idle.vrma",
+  "free_test_pack_idle": "Free_Test_Pack_idle.vrma",
+  "freetestpackjump": "Free_Test_Pack_jump.vrma",
+  "free_test_pack_jump": "Free_Test_Pack_jump.vrma",
+  "freetestpackleftstrafewalking": "Free_Test_Pack_left strafe walking.vrma",
+  "free_test_pack_left strafe walking": "Free_Test_Pack_left strafe walking.vrma",
+  "freetestpackleftturn90": "Free_Test_Pack_left turn 90.vrma",
+  "free_test_pack_left turn 90": "Free_Test_Pack_left turn 90.vrma",
+  "freetestpackrightstrafewalking": "Free_Test_Pack_right strafe walking.vrma",
+  "free_test_pack_right strafe walking": "Free_Test_Pack_right strafe walking.vrma",
+  "freetestpackrightturn90": "Free_Test_Pack_right turn 90.vrma",
+  "free_test_pack_right turn 90": "Free_Test_Pack_right turn 90.vrma",
+  "freetestpacksambadancing": "Free_Test_Pack_samba dancing.vrma",
+  "free_test_pack_samba dancing": "Free_Test_Pack_samba dancing.vrma",
+  "freetestpackskinningtest": "Free_Test_Pack_skinning test.vrma",
+  "free_test_pack_skinning test": "Free_Test_Pack_skinning test.vrma",
+  "freetestpackwalking": "Free_Test_Pack_walking.vrma",
+  "free_test_pack_walking": "Free_Test_Pack_walking.vrma",
+  "golfputtfailure": "Golf Putt Failure.vrma",
+  "golf putt failure": "Golf Putt Failure.vrma",
+  "happywalk": "Happy Walk.vrma",
+  "happy walk": "Happy Walk.vrma",
+  "havingameeting,female": "Having A Meeting, Female.vrma",
+  "having a meeting, female": "Having A Meeting, Female.vrma",
+  "hiphopdancing": "Hip Hop Dancing.vrma",
+  "hip hop dancing": "Hip Hop Dancing.vrma",
+  "hiphopdancing1": "Hip Hop Dancing1.vrma",
+  "hip hop dancing1": "Hip Hop Dancing1.vrma",
+  "hiphopdancing2": "Hip Hop Dancing2.vrma",
+  "hip hop dancing2": "Hip Hop Dancing2.vrma",
+  "hiphopdancing3": "Hip Hop Dancing3.vrma",
+  "hip hop dancing3": "Hip Hop Dancing3.vrma",
+  "hokeypokey": "Hokey Pokey.vrma",
+  "hokey pokey": "Hokey Pokey.vrma",
+  "idletositup": "Idle To Situp.vrma",
+  "idle to situp": "Idle To Situp.vrma",
+  "idle": "Idle.vrma",
+  "jazzdancing": "Jazz Dancing.vrma",
+  "jazz dancing": "Jazz Dancing.vrma",
+  "jazzdancing2": "Jazz Dancing2.vrma",
+  "jazz dancing2": "Jazz Dancing2.vrma",
+  "jazzdancing3": "Jazz Dancing3.vrma",
+  "jazz dancing3": "Jazz Dancing3.vrma",
+  "kettlebellswing": "Kettlebell Swing.vrma",
+  "kettlebell swing": "Kettlebell Swing.vrma",
+  "kipup": "Kip Up.vrma",
+  "kip up": "Kip Up.vrma",
+  "kneelingidle": "Kneeling Idle.vrma",
+  "kneeling idle": "Kneeling Idle.vrma",
+  "layingvomiting": "Laying Vomiting.vrma",
+  "laying vomiting": "Laying Vomiting.vrma",
+  "lookaround": "lookaround.vrma",
+  "look around": "Look Around.vrma",
+  "loser": "Loser.vrma",
+  "lowcrawl": "Low Crawl.vrma",
+  "low crawl": "Low Crawl.vrma",
+  "macarenadance": "Macarena Dance.vrma",
+  "macarena dance": "Macarena Dance.vrma",
+  "ninjaidle": "Ninja Idle.vrma",
+  "ninja idle": "Ninja Idle.vrma",
+  "pikewalk": "Pike Walk.vrma",
+  "pike walk": "Pike Walk.vrma",
+  "plotting": "Plotting.vrma",
+  "praying": "Praying.vrma",
+  "promagicpackcrouchidle": "Pro_Magic_Pack_Crouch Idle.vrma",
+  "pro_magic_pack_crouch idle": "Pro_Magic_Pack_Crouch Idle.vrma",
+  "promagicpackcrouchtostandingidle": "Pro_Magic_Pack_Crouch To Standing Idle.vrma",
+  "pro_magic_pack_crouch to standing idle": "Pro_Magic_Pack_Crouch To Standing Idle.vrma",
+  "promagicpackcrouchturnleft90": "Pro_Magic_Pack_Crouch Turn Left 90.vrma",
+  "pro_magic_pack_crouch turn left 90": "Pro_Magic_Pack_Crouch Turn Left 90.vrma",
+  "promagicpackcrouchturnright90": "Pro_Magic_Pack_Crouch Turn Right 90.vrma",
+  "pro_magic_pack_crouch turn right 90": "Pro_Magic_Pack_Crouch Turn Right 90.vrma",
+  "promagicpackcrouchwalkback": "Pro_Magic_Pack_Crouch Walk Back.vrma",
+  "pro_magic_pack_crouch walk back": "Pro_Magic_Pack_Crouch Walk Back.vrma",
+  "promagicpackcrouchwalkforward": "Pro_Magic_Pack_Crouch Walk Forward.vrma",
+  "pro_magic_pack_crouch walk forward": "Pro_Magic_Pack_Crouch Walk Forward.vrma",
+  "promagicpackcrouchwalkleft": "Pro_Magic_Pack_Crouch Walk Left.vrma",
+  "pro_magic_pack_crouch walk left": "Pro_Magic_Pack_Crouch Walk Left.vrma",
+  "promagicpackcrouchwalkright": "Pro_Magic_Pack_Crouch Walk Right.vrma",
+  "pro_magic_pack_crouch walk right": "Pro_Magic_Pack_Crouch Walk Right.vrma",
+  "promagicpackstanding1hmagicattack01": "Pro_Magic_Pack_Standing 1H Magic Attack 01.vrma",
+  "pro_magic_pack_standing 1h magic attack 01": "Pro_Magic_Pack_Standing 1H Magic Attack 01.vrma",
+  "promagicpackstanding1hmagicattack02": "Pro_Magic_Pack_Standing 1H Magic Attack 02.vrma",
+  "pro_magic_pack_standing 1h magic attack 02": "Pro_Magic_Pack_Standing 1H Magic Attack 02.vrma",
+  "promagicpackstanding1hmagicattack03": "Pro_Magic_Pack_Standing 1H Magic Attack 03.vrma",
+  "pro_magic_pack_standing 1h magic attack 03": "Pro_Magic_Pack_Standing 1H Magic Attack 03.vrma",
+  "promagicpackstanding2hcastspell01": "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma",
+  "pro_magic_pack_standing 2h cast spell 01": "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma",
+  "promagicpackstanding2hmagicareaattack01": "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+  "pro_magic_pack_standing 2h magic area attack 01": "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+  "promagicpackstanding2hmagicareaattack02": "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma",
+  "pro_magic_pack_standing 2h magic area attack 02": "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma",
+  "promagicpackstanding2hmagicattack01": "Pro_Magic_Pack_Standing 2H Magic Attack 01.vrma",
+  "pro_magic_pack_standing 2h magic attack 01": "Pro_Magic_Pack_Standing 2H Magic Attack 01.vrma",
+  "promagicpackstanding2hmagicattack02": "Pro_Magic_Pack_Standing 2H Magic Attack 02.vrma",
+  "pro_magic_pack_standing 2h magic attack 02": "Pro_Magic_Pack_Standing 2H Magic Attack 02.vrma",
+  "promagicpackstanding2hmagicattack03": "Pro_Magic_Pack_Standing 2H Magic Attack 03.vrma",
+  "pro_magic_pack_standing 2h magic attack 03": "Pro_Magic_Pack_Standing 2H Magic Attack 03.vrma",
+  "promagicpackstanding2hmagicattack04": "Pro_Magic_Pack_Standing 2H Magic Attack 04.vrma",
+  "pro_magic_pack_standing 2h magic attack 04": "Pro_Magic_Pack_Standing 2H Magic Attack 04.vrma",
+  "promagicpackstanding2hmagicattack05": "Pro_Magic_Pack_Standing 2H Magic Attack 05.vrma",
+  "pro_magic_pack_standing 2h magic attack 05": "Pro_Magic_Pack_Standing 2H Magic Attack 05.vrma",
+  "promagicpackstandingblockend": "Pro_Magic_Pack_Standing Block End.vrma",
+  "pro_magic_pack_standing block end": "Pro_Magic_Pack_Standing Block End.vrma",
+  "promagicpackstandingblockidle": "Pro_Magic_Pack_Standing Block Idle.vrma",
+  "pro_magic_pack_standing block idle": "Pro_Magic_Pack_Standing Block Idle.vrma",
+  "promagicpackstandingblockreactlarge": "Pro_Magic_Pack_Standing Block React Large.vrma",
+  "pro_magic_pack_standing block react large": "Pro_Magic_Pack_Standing Block React Large.vrma",
+  "promagicpackstandingblockstart": "Pro_Magic_Pack_Standing Block Start.vrma",
+  "pro_magic_pack_standing block start": "Pro_Magic_Pack_Standing Block Start.vrma",
+  "promagicpackstandingidle03": "Pro_Magic_Pack_Standing Idle 03.vrma",
+  "pro_magic_pack_standing idle 03": "Pro_Magic_Pack_Standing Idle 03.vrma",
+  "promagicpackstandingidle04": "Pro_Magic_Pack_Standing Idle 04.vrma",
+  "pro_magic_pack_standing idle 04": "Pro_Magic_Pack_Standing Idle 04.vrma",
+  "promagicpackstandingidletocrouch": "Pro_Magic_Pack_Standing Idle To Crouch.vrma",
+  "pro_magic_pack_standing idle to crouch": "Pro_Magic_Pack_Standing Idle To Crouch.vrma",
+  "promagicpackstandingjumprunninglanding": "Pro_Magic_Pack_Standing Jump Running Landing.vrma",
+  "pro_magic_pack_standing jump running landing": "Pro_Magic_Pack_Standing Jump Running Landing.vrma",
+  "promagicpackstandingjumprunning": "Pro_Magic_Pack_Standing Jump Running.vrma",
+  "pro_magic_pack_standing jump running": "Pro_Magic_Pack_Standing Jump Running.vrma",
+  "promagicpackstandingjump": "Pro_Magic_Pack_Standing Jump.vrma",
+  "pro_magic_pack_standing jump": "Pro_Magic_Pack_Standing Jump.vrma",
+  "promagicpackstandinglandtostandingidle": "Pro_Magic_Pack_Standing Land To Standing Idle.vrma",
+  "pro_magic_pack_standing land to standing idle": "Pro_Magic_Pack_Standing Land To Standing Idle.vrma",
+  "promagicpackstandingreactdeathbackward": "Pro_Magic_Pack_Standing React Death Backward.vrma",
+  "pro_magic_pack_standing react death backward": "Pro_Magic_Pack_Standing React Death Backward.vrma",
+  "promagicpackstandingreactdeathforward": "Pro_Magic_Pack_Standing React Death Forward.vrma",
+  "pro_magic_pack_standing react death forward": "Pro_Magic_Pack_Standing React Death Forward.vrma",
+  "promagicpackstandingreactdeathleft": "Pro_Magic_Pack_Standing React Death Left.vrma",
+  "pro_magic_pack_standing react death left": "Pro_Magic_Pack_Standing React Death Left.vrma",
+  "promagicpackstandingreactdeathright": "Pro_Magic_Pack_Standing React Death Right.vrma",
+  "pro_magic_pack_standing react death right": "Pro_Magic_Pack_Standing React Death Right.vrma",
+  "promagicpackstandingreactlargefromback": "Pro_Magic_Pack_Standing React Large From Back.vrma",
+  "pro_magic_pack_standing react large from back": "Pro_Magic_Pack_Standing React Large From Back.vrma",
+  "promagicpackstandingreactlargefromfront": "Pro_Magic_Pack_Standing React Large From Front.vrma",
+  "pro_magic_pack_standing react large from front": "Pro_Magic_Pack_Standing React Large From Front.vrma",
+  "promagicpackstandingreactlargefromleft": "Pro_Magic_Pack_Standing React Large From Left.vrma",
+  "pro_magic_pack_standing react large from left": "Pro_Magic_Pack_Standing React Large From Left.vrma",
+  "promagicpackstandingreactlargefromright": "Pro_Magic_Pack_Standing React Large From Right.vrma",
+  "pro_magic_pack_standing react large from right": "Pro_Magic_Pack_Standing React Large From Right.vrma",
+  "promagicpackstandingreactsmallfromback": "Pro_Magic_Pack_Standing React Small From Back.vrma",
+  "pro_magic_pack_standing react small from back": "Pro_Magic_Pack_Standing React Small From Back.vrma",
+  "promagicpackstandingreactsmallfromfront": "Pro_Magic_Pack_Standing React Small From Front.vrma",
+  "pro_magic_pack_standing react small from front": "Pro_Magic_Pack_Standing React Small From Front.vrma",
+  "promagicpackstandingreactsmallfromleft": "Pro_Magic_Pack_Standing React Small From Left.vrma",
+  "pro_magic_pack_standing react small from left": "Pro_Magic_Pack_Standing React Small From Left.vrma",
+  "promagicpackstandingreactsmallfromright": "Pro_Magic_Pack_Standing React Small From Right.vrma",
+  "pro_magic_pack_standing react small from right": "Pro_Magic_Pack_Standing React Small From Right.vrma",
+  "promagicpackstandingrunback": "Pro_Magic_Pack_Standing Run Back.vrma",
+  "pro_magic_pack_standing run back": "Pro_Magic_Pack_Standing Run Back.vrma",
+  "promagicpackstandingrunforward": "Pro_Magic_Pack_Standing Run Forward.vrma",
+  "pro_magic_pack_standing run forward": "Pro_Magic_Pack_Standing Run Forward.vrma",
+  "promagicpackstandingrunleft": "Pro_Magic_Pack_Standing Run Left.vrma",
+  "pro_magic_pack_standing run left": "Pro_Magic_Pack_Standing Run Left.vrma",
+  "promagicpackstandingrunright": "Pro_Magic_Pack_Standing Run Right.vrma",
+  "pro_magic_pack_standing run right": "Pro_Magic_Pack_Standing Run Right.vrma",
+  "promagicpackstandingsprintforward": "Pro_Magic_Pack_Standing Sprint Forward.vrma",
+  "pro_magic_pack_standing sprint forward": "Pro_Magic_Pack_Standing Sprint Forward.vrma",
+  "promagicpackstandingturnleft90": "Pro_Magic_Pack_Standing Turn Left 90.vrma",
+  "pro_magic_pack_standing turn left 90": "Pro_Magic_Pack_Standing Turn Left 90.vrma",
+  "promagicpackstandingturnright90": "Pro_Magic_Pack_Standing Turn Right 90.vrma",
+  "pro_magic_pack_standing turn right 90": "Pro_Magic_Pack_Standing Turn Right 90.vrma",
+  "promagicpackstandingwalkback": "Pro_Magic_Pack_Standing Walk Back.vrma",
+  "pro_magic_pack_standing walk back": "Pro_Magic_Pack_Standing Walk Back.vrma",
+  "promagicpackstandingwalkforward": "Pro_Magic_Pack_Standing Walk Forward.vrma",
+  "pro_magic_pack_standing walk forward": "Pro_Magic_Pack_Standing Walk Forward.vrma",
+  "promagicpackstandingwalkleft": "Pro_Magic_Pack_Standing Walk Left.vrma",
+  "pro_magic_pack_standing walk left": "Pro_Magic_Pack_Standing Walk Left.vrma",
+  "promagicpackstandingwalkright": "Pro_Magic_Pack_Standing Walk Right.vrma",
+  "pro_magic_pack_standing walk right": "Pro_Magic_Pack_Standing Walk Right.vrma",
+  "promagicpackxbot": "Pro_Magic_Pack_X Bot.vrma",
+  "pro_magic_pack_x bot": "Pro_Magic_Pack_X Bot.vrma",
+  "promagicpackstanding1hcastspell01": "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+  "pro_magic_pack_standing 1h cast spell 01": "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+  "promagicpackstandingidle02": "Pro_Magic_Pack_standing idle 02.vrma",
+  "pro_magic_pack_standing idle 02": "Pro_Magic_Pack_standing idle 02.vrma",
+  "promagicpackstandingidle": "Pro_Magic_Pack_standing idle.vrma",
+  "pro_magic_pack_standing idle": "Pro_Magic_Pack_standing idle.vrma",
+  "pullplant": "Pull Plant.vrma",
+  "pull plant": "Pull Plant.vrma",
+  "pushup": "Push Up.vrma",
+  "push up": "Push Up.vrma",
+  "rejected": "Rejected.vrma",
+  "rejected1": "Rejected1.vrma",
+  "sambadancing": "Samba Dancing.vrma",
+  "samba dancing": "Samba Dancing.vrma",
+  "sambadancing1": "Samba Dancing1.vrma",
+  "samba dancing1": "Samba Dancing1.vrma",
+  "speedbag": "Speedbag.vrma",
+  "standingusingtouchscreentablet": "Standing Using Touchscreen Tablet.vrma",
+  "standing using touchscreen tablet": "Standing Using Touchscreen Tablet.vrma",
+  "stealthassassination": "Stealth Assassination.vrma",
+  "stealth assassination": "Stealth Assassination.vrma",
+  "sumohighpull": "Sumo High Pull.vrma",
+  "sumo high pull": "Sumo High Pull.vrma",
+  "sumohighpull1": "Sumo High Pull1.vrma",
+  "sumo high pull1": "Sumo High Pull1.vrma",
+  "talkingonphone": "Talking On Phone.vrma",
+  "talking on phone": "Talking On Phone.vrma",
+  "talkingphonepacing": "Talking Phone Pacing.vrma",
+  "talking phone pacing": "Talking Phone Pacing.vrma",
+  "taunt": "Taunt.vrma",
+  "textingandwalking": "Texting And Walking.vrma",
+  "texting and walking": "Texting And Walking.vrma",
+  "thinking": "thinking.vrma",
+  "victory": "Victory.vrma",
+  "yawn": "Yawn.vrma",
+  "yellingout": "Yelling Out.vrma",
+  "yelling out": "Yelling Out.vrma",
+  "angry": "angry.vrma",
+  "blush": "blush.vrma",
+  "clapping": "clapping.vrma",
+  "dance": "dance.vrma",
+  "disco": "disco.vrma",
+  "goodbye": "goodbye.vrma",
+  "hiphop": "hiphop.vrma",
+  "idleloop": "idle_loop.vrma",
+  "idle_loop": "idle_loop.vrma",
+  "idlestretch": "idle_stretch.vrma",
+  "idle_stretch": "idle_stretch.vrma",
+  "jump": "jump.vrma",
+  "look_around": "look_around.vrma",
+  "relax": "relax.vrma",
+  "robot": "robot.vrma",
+  "sad": "sad.vrma",
+  "salsa": "salsa.vrma",
+  "samba": "samba.vrma",
+  "sit": "sit.vrma",
+  "sitwave": "sitWave.vrma",
+  "sleepy": "sleepy.vrma",
+  "spin": "spin.vrma",
+  "surprised": "surprised.vrma",
+  "walk": "walk.vrma",
+  "waveright": "wave_right.vrma",
+  "wave_right": "wave_right.vrma"
+};
 
   const VRMA_MAP = {
     walk: "walk.vrma",
@@ -715,9 +1225,42 @@ export function createVrmPet(hostEl, opts = {}) {
     surprised: "surprised.vrma",
     sad: "sad.vrma",
     angry: "angry.vrma",
+    bellydance: "Bellydancing.vrma",
+    bellydancing: "Bellydancing.vrma",
+    popdance: "Dancing Maraschino Step.vrma",
+    maraschino: "Dancing Maraschino Step.vrma",
+    femaledance: "Female Dance Pose.vrma",
+    dancepose: "Female Dance Pose.vrma",
+    dancing: "Dancing.vrma",
+    twerk: "Dancing Twerk.vrma",
+    gangnam: "Free_Test_Pack_gangnam style.vrma",
+    gangnamstyle: "Free_Test_Pack_gangnam style.vrma",
+    cancan: "Can Can.vrma",
+    macarena: "Macarena Dance.vrma",
+    chickendance: "Chicken Dance.vrma",
+    hokeypokey: "Hokey Pokey.vrma",
+    backflip: "Backflip.vrma",
+    pushup: "Push Up.vrma",
+    taunt: "Taunt.vrma",
+    catwalk: "Catwalk Walking.vrma",
+    happywalk: "Happy Walk.vrma",
+    capoeira: "Capoeira_Pack_capoeira.vrma",
+    ginga: "Capoeira_Pack_ginga forward.vrma",
+    castspell: "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+    magicattack: "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+    shieldblock: "Pro_Magic_Pack_Standing Block Idle.vrma",
     hello: "wave_right.vrma",
     salute: "wave_right.vrma",
   };
+
+  function resolveVrmaFile(name) {
+    if (!name) return null;
+    if (typeof name !== "string") return null;
+    if (name.endsWith(".vrma")) return name;
+    const clean = name.toLowerCase().replace(/[-_\s]/g, "");
+    const raw = name.toLowerCase();
+    return VRMA_MAP[clean] || VRMA_MAP[raw] || VRMA_CATALOG[clean] || VRMA_CATALOG[raw] || null;
+  }
 
   function getVrmaUrl(filename) {
     const base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
@@ -787,7 +1330,7 @@ export function createVrmPet(hostEl, opts = {}) {
   async function playVRMA(name, opts = {}) {
     if (!vrm || !mixer) return false;
     const key = name.toLowerCase().replace(/[-_\s]/g, "");
-    const filename = VRMA_MAP[key] || (name.endsWith(".vrma") ? name : `${name}.vrma`);
+    const filename = resolveVrmaFile(name) || (name.endsWith(".vrma") ? name : `${name}.vrma`);
     const clip = await loadVRMA(key, filename);
     if (!clip || disposed) return false;
 
@@ -937,7 +1480,8 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "crossarms" || n === "cross" || n === "arms") key = "crossArms";
     else if (n === "bow" || n === "greet" || n === "welcome") key = "bow";
     else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key = "wave";
-    else if (n === "dance" || n === "danse" || n === "groove") key = "dance";
+    else if (n === "dance" || n === "danse") key = "dance";
+    else if (n === "cybergroove" || n === "groove" || n === "concert" || n === "darksynth") key = "cyberGroove";
     else if (n === "samba" || n === "salsa" || n === "latina") key = "samba";
     else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key = "hiphop";
     else if (n === "robot" || n === "popping" || n === "wavedance") key = "robot";
@@ -950,6 +1494,10 @@ export function createVrmPet(hostEl, opts = {}) {
     else if (n === "clap" || n === "clapping") key = "clapping";
     else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key = "angry";
     else if (n === "walk" || n === "marche" || n === "step") key = "walk";
+    else if (n === "bellydance" || n === "bellydancing" || n === "belly" || n === "orientale") key = "bellydance";
+    else if (n === "popdance" || n === "maraschino" || n === "popstep") key = "popdance";
+    else if (n === "femaledance" || n === "dancepose" || n === "chanteuse") key = "femaledance";
+    else if (n === "dancing") key = "dancing";
     else if (
       n === "fingerheart" ||
       n === "heart" ||
@@ -997,9 +1545,16 @@ export function createVrmPet(hostEl, opts = {}) {
     const fullBodyDances = [
       "dance", "danse", "groove", "samba", "salsa", "latina", "hiphop", "bboy", "street", "bounce",
       "robot", "popping", "wavedance", "disco", "twist", "fever", "spin", "tourner", "pirouette", "jump", "saut", "victory", "walk", "marche",
-      "fingerheart", "heart", "kpopheart", "miniheart"
+      "fingerheart", "heart", "kpopheart", "miniheart", "bellydance", "bellydancing", "popdance", "maraschino", "femaledance", "dancepose", "dancing",
+      "twerk", "gangnam", "macarena", "cancan", "capoeira", "backflip", "fitness"
     ];
-    if (fullBodyDances.includes(key) && baseFraming === "bust") {
+    const isFullBodyAction = fullBodyDances.includes(key) ||
+      key.includes("dance") || key.includes("capoeira") || key.includes("magic") ||
+      key.includes("squat") || key.includes("jump") || key.includes("flip") ||
+      key.includes("walk") || key.includes("run") || key.includes("strafe") ||
+      key.includes("twerk") || key.includes("gangnam") || key.includes("macarena") ||
+      key.includes("cancan") || key.includes("fitness") || key.includes("sport");
+    if (isFullBodyAction && baseFraming === "bust") {
       framing = "full";
       isDanceFraming = true;
       if (vrm) frameVrm(vrm);
@@ -1007,9 +1562,9 @@ export function createVrmPet(hostEl, opts = {}) {
 
     // Déclenchement clip VRMA officiel si disponible (ex: dance, samba, hiphop, walk, lookaround)
     // Sinon repli procédural immédiat (ex: robot, disco, spin, crossArms, bow)
-    const vrmaFile = VRMA_MAP[key] || VRMA_MAP[n];
+    const vrmaFile = resolveVrmaFile(key) || resolveVrmaFile(n);
     if (vrmaFile) {
-      playVRMA(key, { loop: !(hold > 0) })
+      playVRMA(vrmaFile, { loop: !(hold > 0) })
         .then((ok) => {
           if (!ok) stopVRMA(0);
         })
@@ -1445,6 +2000,209 @@ export function createVrmPet(hostEl, opts = {}) {
         ];
       }
     }
+    if (poseTo === "cyberGroove") {
+      // Cadence 128 BPM (pulsation de base 13.404 rad/s)
+      const tempo = t * 13.404;
+      const tempoHalf = tempo * 0.5; // demi-temps (64 BPM)
+      const tempoQuarter = tempo * 0.25; // 4 temps (32 BPM)
+
+      // 1. Déphasages cinématiques organiques (Follow-Through / Inertie humaine vivante)
+      // Le bassin initie le groove, la colonne transmet avec retard, puis la cage thoracique, les épaules et la tête
+      const phaseHips = tempoHalf;
+      const phaseSpine = tempoHalf - 0.28;
+      const phaseChest = tempoHalf - 0.48;
+      const phaseHead = tempo - 0.60;
+      const phaseArm = tempoHalf - 0.35;
+
+      // 2. Alternance fluide : Déhanché Diva Cambrée <-> Power Drop Jambes Fléchies (~7,5s par phase)
+      const cycleTime = (t * 0.42) % (Math.PI * 2.0);
+      const rawDrop = Math.max(0, Math.sin(cycleTime));
+      const dropFactor = rawDrop * rawDrop * (3 - 2 * rawDrop); // 0 = debout diva, 1 = drop genoux fléchis
+      const divaFactor = 1.0 - dropFactor * 0.75;
+
+      // 3. Déhanché en Huit (Lemniscate / Courbe de Lissajous naturelle)
+      const hipSway = Math.sin(phaseHips) * 0.24 * divaFactor; // rotation Y (~14°)
+      const hipRoll = Math.cos(phaseHips) * 0.16 * divaFactor; // bascule latérale Z (~9°)
+      const hipTwist = Math.sin(tempo) * 0.05 * divaFactor;   // micro-twist au kick
+      const hipPitch = -0.12 - dropFactor * 0.14 + Math.abs(Math.sin(tempo)) * 0.03; // cambrure lombaire féminine
+
+      // 4. Rebond élastique et absorption des genoux au kick de batterie (128 BPM)
+      const kickCurve = Math.pow(Math.max(0, Math.sin(tempo)), 2.2);
+      const kneeBounce = kickCurve * 0.18;
+      const footTap = kickCurve * 0.22;
+
+      // Hanches
+      if (animated.hips) {
+        animated.hips = [hipPitch, hipSway, hipRoll + hipTwist];
+      }
+
+      // Colonne & Buste : courbure en S compensatoire avec retard d'inertie
+      if (animated.spine) {
+        animated.spine = [
+          0.06 + dropFactor * 0.16 - hipPitch * 0.20,
+          -Math.sin(phaseSpine) * 0.18 * divaFactor,
+          -Math.cos(phaseSpine) * 0.15 * divaFactor,
+        ];
+      }
+      if (animated.chest) {
+        animated.chest = [
+          0.12 + dropFactor * 0.12,
+          -Math.sin(phaseChest) * 0.14 * divaFactor,
+          -Math.cos(phaseChest) * 0.12 * divaFactor,
+        ];
+      }
+
+      // Tête & Cou : posture de chant habitée (tête inclinée en arrière vers le micro avec émotion)
+      const headRock = Math.sin(phaseHead) * 0.08;
+      if (animated.head) {
+        animated.head = [
+          -0.18 - dropFactor * 0.08 + headRock, // tête renversée en arrière vers le micro
+          -Math.sin(phaseChest) * 0.10 * divaFactor + 0.05, // léger 3/4 profil captivant
+          0.10 + Math.cos(tempoHalf) * 0.05, // inclinaison gracieuse vers l'épaule
+        ];
+      }
+      if (animated.neck) {
+        animated.neck = [-0.08 - dropFactor * 0.04, 0.03, 0.03];
+      }
+
+      // 5. JAMBES & PIEDS : Stance large, pieds ouverts en éventail et genoux fléchis
+      if (dropFactor > 0.15) {
+        // --- PHASE JAMBES FLÉCHIES (Drop Power Stance de concert) ---
+        // Stance très dynamique, cuisses bien écartées, genoux fléchis à ~50°
+        const squatKnee = 0.85 * dropFactor + kneeBounce;
+        if (animated.leftUpperLeg) {
+          animated.leftUpperLeg = [
+            -0.42 * dropFactor, // cuisse avancée
+            -0.25 * dropFactor, // hanche ouverte vers l'extérieur
+            -0.34 * dropFactor, // écartement large et stable
+          ];
+        }
+        if (animated.leftLowerLeg) {
+          animated.leftLowerLeg = [squatKnee, 0, 0];
+        }
+        if (animated.leftFoot) {
+          animated.leftFoot = [-0.22 * dropFactor, -0.28, 0]; // pied ouvert en éventail
+        }
+
+        if (animated.rightUpperLeg) {
+          animated.rightUpperLeg = [
+            -0.42 * dropFactor,
+            0.25 * dropFactor,
+            0.34 * dropFactor,
+          ];
+        }
+        if (animated.rightLowerLeg) {
+          animated.rightLowerLeg = [squatKnee, 0, 0];
+        }
+        if (animated.rightFoot) {
+          animated.rightFoot = [-0.22 * dropFactor, 0.28, 0];
+        }
+      } else {
+        // --- PHASE DÉHANCHÉ DIVA (Contrapposto : Jambe d'appui vs Jambe libre) ---
+        // Stance ouverte garantie : les cuisses ne sont JAMAIS collées ni croisées
+        const isLeftBearing = hipSway < 0;
+        if (animated.leftUpperLeg) {
+          animated.leftUpperLeg = [
+            isLeftBearing ? 0.06 : -0.26, // jambe libre avancée ou jambe d'appui en retrait
+            -0.18, // hanche ouverte
+            -0.26 - (isLeftBearing ? 0.04 : -0.04), // écartement constant vers la gauche
+          ];
+        }
+        if (animated.leftLowerLeg) {
+          // Genou toujours fléchi (jambe d'appui déverrouillée à 0.25 rad, jambe libre fléchie à 0.55 rad)
+          animated.leftLowerLeg = [isLeftBearing ? 0.25 + kneeBounce * 0.4 : 0.55 + kneeBounce, 0, 0];
+        }
+        if (animated.leftFoot) {
+          animated.leftFoot = [isLeftBearing ? 0.02 : footTap * 0.7, -0.25, 0];
+        }
+
+        if (animated.rightUpperLeg) {
+          animated.rightUpperLeg = [
+            !isLeftBearing ? 0.06 : -0.26,
+            0.18,
+            0.26 + (!isLeftBearing ? 0.04 : -0.04), // écartement constant vers la droite
+          ];
+        }
+        if (animated.rightLowerLeg) {
+          animated.rightLowerLeg = [!isLeftBearing ? 0.25 + kneeBounce * 0.4 : 0.55 + kneeBounce, 0, 0];
+        }
+        if (animated.rightFoot) {
+          animated.rightFoot = [!isLeftBearing ? 0.02 : footTap * 0.7, 0.25, 0];
+        }
+      }
+
+      // 6. BRAS DROIT : Micro tenu directement devant la bouche (Posture vocale authentique)
+      const micBob = Math.sin(tempo) * 0.012;
+      if (animated.rightShoulder) {
+        animated.rightShoulder = [0.06, 0.04, -0.06];
+      }
+      if (animated.rightUpperArm) {
+        // Bras descendant le long du flanc droit et orienté vers l'avant-buste
+        animated.rightUpperArm = [0.32 + micBob * 0.15 + dropFactor * 0.06, 0.35, 0.85];
+      }
+      if (animated.rightLowerArm) {
+        // Coude replié fermement vers le menton et l'intérieur du visage
+        animated.rightLowerArm = [-0.22, -0.16, -2.10 + micBob * 0.2];
+      }
+      if (animated.rightHand) {
+        // Poignet dressant le micro directement sous les lèvres
+        animated.rightHand = [0.18, -0.15, 0.32];
+      }
+
+      // Doigts main droite (fermeture ferme sur le manche du micro)
+      animated.rightThumbProximal = [0.55, 0.30, 0];
+      animated.rightThumbDistal = [0.45, 0, 0];
+      animated.rightIndexProximal = [1.40, 0, 0];
+      animated.rightIndexIntermediate = [1.30, 0, 0];
+      animated.rightMiddleProximal = [1.45, 0, 0];
+      animated.rightMiddleIntermediate = [1.35, 0, 0];
+      animated.rightRingProximal = [1.45, 0, 0];
+      animated.rightRingIntermediate = [1.35, 0, 0];
+      animated.rightLittleProximal = [1.40, 0, 0];
+      animated.rightLittleIntermediate = [1.25, 0, 0];
+
+      // 7. BRAS GAUCHE : ÉLÉGANCE ET NATUREL (JAMAIS RAIDE NI EN L-SHAPE)
+      if (dropFactor > 0.30) {
+        // Au Drop : Geste vocal ample et expressif vers le public / la foule
+        const reach = Math.sin(tempoHalf) * 0.08;
+        if (animated.leftShoulder) animated.leftShoulder = [0.04, 0, 0.02];
+        if (animated.leftUpperArm) {
+          animated.leftUpperArm = [0.45 + reach, 0.12, -0.95];
+        }
+        if (animated.leftLowerArm) {
+          animated.leftLowerArm = [0.20, 0.15, -0.90];
+        }
+        if (animated.leftHand) {
+          animated.leftHand = [0.22, 0.10, 0.12]; // paume ouverte vers le ciel
+        }
+        animated.leftThumbProximal = [0.15, 0, 0];
+        animated.leftIndexProximal = [0.18, 0, 0];
+        animated.leftMiddleProximal = [0.22, 0, 0];
+        animated.leftRingProximal = [0.22, 0, 0];
+        animated.leftLittleProximal = [0.18, 0, 0];
+      } else {
+        // En Déhanché Diva : Main délicatement posée sur la hanche gauche
+        const hipBob = Math.sin(phaseArm) * 0.04;
+        if (animated.leftShoulder) animated.leftShoulder = [0.02, -0.02, 0.02];
+        if (animated.leftUpperArm) {
+          // Bras le long du flanc, coude souple vers l'extérieur
+          animated.leftUpperArm = [0.12 + hipBob, 0.10, -1.15];
+        }
+        if (animated.leftLowerArm) {
+          // Avant-bras replié ramenant la main sur la crête iliaque
+          animated.leftLowerArm = [0.18, 0.12, -1.25 + hipBob * 0.5];
+        }
+        if (animated.leftHand) {
+          animated.leftHand = [-0.10, 0.08, -0.15];
+        }
+        // Doigts détendus épousant la hanche
+        animated.leftThumbProximal = [0.25, 0.10, 0];
+        animated.leftIndexProximal = [0.30, 0, 0];
+        animated.leftMiddleProximal = [0.35, 0, 0];
+        animated.leftRingProximal = [0.35, 0, 0];
+        animated.leftLittleProximal = [0.30, 0, 0];
+      }
+    }
 
     // Important three-vrm 3.x :
     // setPose() → raw, puis vrm.update() écrase raw avec normalized (T-pose).
@@ -1511,12 +2269,32 @@ export function createVrmPet(hostEl, opts = {}) {
   function updateHeadScale(v) {
     if (!v?.humanoid) return;
     try {
+      // Étape B : Morphologie adulte élancée de scène (gynoïde chanteuse)
+      // 1. Tête légèrement affinée (ratio adulte élancé ~7.5 têtes)
       const headBone = v.humanoid.getNormalizedBoneNode?.("head");
       if (headBone) {
-        // Morphologie naturelle proportionnée (échelle 1.0) : profil équilibré et élancé
-        const targetScale = 1.0;
-        headBone.scale.set(targetScale, targetScale, targetScale);
+        headBone.scale.set(0.92, 0.92, 0.92);
       }
+      // 2. Cou affiné et élancé (port altier)
+      const neckBone = v.humanoid.getNormalizedBoneNode?.("neck");
+      if (neckBone) {
+        neckBone.scale.set(0.92, 1.06, 0.92);
+      }
+      // 3. Hanches plus marquées et féminines
+      const hipsBone = v.humanoid.getNormalizedBoneNode?.("hips");
+      if (hipsBone) {
+        hipsBone.scale.set(1.09, 1.0, 1.08);
+      }
+      // 4. Jambes galbées et élancées (gain de stature)
+      const leftUpperLeg = v.humanoid.getNormalizedBoneNode?.("leftUpperLeg");
+      const rightUpperLeg = v.humanoid.getNormalizedBoneNode?.("rightUpperLeg");
+      if (leftUpperLeg) leftUpperLeg.scale.set(0.98, 1.07, 0.98);
+      if (rightUpperLeg) rightUpperLeg.scale.set(0.98, 1.07, 0.98);
+
+      const leftLowerLeg = v.humanoid.getNormalizedBoneNode?.("leftLowerLeg");
+      const rightLowerLeg = v.humanoid.getNormalizedBoneNode?.("rightLowerLeg");
+      if (leftLowerLeg) leftLowerLeg.scale.set(0.98, 1.07, 0.98);
+      if (rightLowerLeg) rightLowerLeg.scale.set(0.98, 1.07, 0.98);
     } catch (_) { }
   }
 
@@ -1635,7 +2413,7 @@ export function createVrmPet(hostEl, opts = {}) {
     const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
     const vrmDir = base || "./vrm";
     const androidBodyTex = textureLoader.load(
-      `${vrmDir}/body_skin_android.png?v=mecha_thigh_joined_v26`,
+      `${vrmDir}/body_skin_android.png?v=cyber_concert_v1`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1645,7 +2423,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading body texture:", err)
     );
     const androidFaceTex = textureLoader.load(
-      `${vrmDir}/face_skin_android.png?v=mecha_v17`,
+      `${vrmDir}/face_skin_android.png?v=mecha_face_restored_v2`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1655,7 +2433,7 @@ export function createVrmPet(hostEl, opts = {}) {
       (err) => console.warn("[vrm_pet] err loading face texture:", err)
     );
     const androidHairTex = textureLoader.load(
-      `${vrmDir}/hair_android.png?v=mecha_v17`,
+      `${vrmDir}/hair_android.png?v=cyber_concert_v1`,
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = false;
@@ -1710,7 +2488,7 @@ export function createVrmPet(hostEl, opts = {}) {
           m.shadeMultiplyTexture = cyanTexture;
           if (m.emissive) {
             m.emissive.setHex(0x00f5d4);
-            m.emissiveIntensity = 2.5;
+            m.emissiveIntensity = 3.8;
           }
           m.needsUpdate = true;
         } else if (name.includes("eyehighlight")) {
@@ -2064,6 +2842,55 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       }
 
+      // Gestion du Micro 3D et du chant scénique lors du Cyber Groove et danses scéniques
+      const isSingingScene = (poseTo === "cyberGroove" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing");
+      if (isSingingScene && vrm) {
+        wasInCyberGroove = true;
+        // 1. S'assurer que le micro 3D est solidement attaché comme enfant de rightHand
+        ensureMicAttached(vrm);
+        cyberMicGroup.visible = true;
+
+        // 2. Double anneau néon du micro qui pulse au kick
+        const tempo = t * 13.404;
+        const kickPulse = Math.sin(tempo) > 0.25;
+        ringMat.color.setHex(kickPulse ? 0x00ffff : 0x0088ff);
+        ringMat2.color.setHex(kickPulse ? 0xff0088 : 0x8800ff);
+
+        // 3. Lipsync & Émotion Scénique Authentique (regard passionné / extase vocale du storyboard)
+        try {
+          const em = vrm.expressionManager;
+          if (em) {
+            const mouthA = Math.pow(Math.max(0, Math.sin(tempo * 1.5)), 1.5) * 0.72;
+            const mouthO = Math.pow(Math.max(0, Math.cos(tempo * 1.0)), 2.0) * 0.48;
+            em.setValue("aa", mouthA);
+            em.setValue("oh", mouthO);
+            em.setValue("ih", 0.20);
+            // Regard de diva habité : yeux mi-clos / extase scénique douce calée au tempo
+            const vocalEcstasy = 0.50 + Math.sin(tempoHalf) * 0.25;
+            em.setValue("blink", vocalEcstasy);
+            em.setValue("relaxed", 0.60);
+            em.setValue("surprised", 0);
+            em.setValue("happy", 0);
+          }
+        } catch (_) { }
+      } else {
+        cyberMicGroup.visible = false;
+        if (wasInCyberGroove) {
+          wasInCyberGroove = false;
+          try {
+            const em = vrm?.expressionManager;
+            if (em) {
+              em.setValue("aa", 0);
+              em.setValue("oh", 0);
+              em.setValue("ih", 0);
+              em.setValue("relaxed", 0);
+              em.setValue("surprised", 0);
+              em.setValue("blink", 0);
+            }
+          } catch (_) { }
+        }
+      }
+
       // Compensation dynamique de la descente du bassin (hips) dans walk.vrma (+8.8cm)
       // pour que les pieds restent exactement alignés sur le sol de la barre des tâches sans s'enfoncer
       const isWalking = (activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk");
@@ -2074,31 +2901,54 @@ export function createVrmPet(hostEl, opts = {}) {
       // Micro bob / jump / dance / walk offset (repli procédural uniquement si pas de clip VRMA actif)
       if (activeVrmaAction) {
         vrm.scene.position.y = walkYOffset;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "jump") {
         const jumpBounce = Math.max(0, Math.sin(t * 4.0)) * 0.038;
         vrm.scene.position.y = walkYOffset + jumpBounce;
+        vrm.scene.position.x = 0;
+      } else if (poseTo === "cyberGroove") {
+        const tempo = t * 13.404;
+        const tempoHalf = tempo * 0.5;
+        const cycleTime = (t * 0.42) % (Math.PI * 2.0);
+        const dropFactor = Math.max(0, Math.sin(cycleTime));
+        const divaFactor = 1.0 - dropFactor * 0.75;
+
+        // Déport latéral physique de scène en X (balancement de 4.8 cm actif surtout debout)
+        vrm.scene.position.x = Math.sin(tempoHalf) * 0.048 * divaFactor;
+
+        // Rebond au kick + descente basse de 7.5 cm quand elle est en drop jambes fléchies !
+        const kickDrop = Math.pow(Math.max(0, Math.sin(tempo)), 1.8) * 0.032;
+        vrm.scene.position.y = walkYOffset - (0.075 * dropFactor) - kickDrop;
       } else if (poseTo === "dance") {
         const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
         vrm.scene.position.y = walkYOffset + danceBounce;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "fingerHeart") {
         const heartBounce = Math.abs(Math.sin(t * 7.0)) * 0.014;
         vrm.scene.position.y = walkYOffset + heartBounce;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "samba") {
         const sambaBounce = Math.abs(Math.sin(t * 11.0)) * 0.010;
         vrm.scene.position.y = walkYOffset + sambaBounce;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "hiphop") {
         const hiphopBounce = Math.abs(Math.sin(t * 9.0)) * 0.018;
         vrm.scene.position.y = walkYOffset + hiphopBounce;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "disco") {
         const discoBounce = Math.abs(Math.sin(t * 8.0)) * 0.014;
         vrm.scene.position.y = walkYOffset + discoBounce;
+        vrm.scene.position.x = 0;
       } else if (poseTo === "robot") {
         const robotBounce = (Math.floor(t * 4.5 * 2.0) % 2 === 0 ? 0.004 : 0);
         vrm.scene.position.y = walkYOffset + robotBounce;
+        vrm.scene.position.x = 0;
       } else if (!activeVrmaAction && poseTo === "idle") {
         vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 0.002 : 0.005);
+        vrm.scene.position.x = 0;
       } else {
         vrm.scene.position.y = walkYOffset;
+        vrm.scene.position.x = 0;
       }
       // Mouse tracking interactif : regard qui suit doucement le curseur de la souris
       mouseNdc.lerp(mouseActive ? targetMouseNdc : new THREE.Vector2(0, 0), Math.min(1.0, dt * 6.0));

@@ -38,19 +38,21 @@ echo "[+] Lancement de la conversion FBX -> VRMA..."
 mkdir -p "${DEST_DESKTOP}"
 mkdir -p "${DEST_WEB}"
 
+BIN_PATH="${CONVERTER_DIR}/FBX2glTF-linux-x64"
+
 if [[ -f "${TARGET}" ]]; then
   FILENAME=$(basename "${TARGET}")
   BASENAME="${FILENAME%.*}"
   OUT_VRMA="${DEST_DESKTOP}/${BASENAME}.vrma"
   
-  node "${CONVERTER_DIR}/fbx2vrma-converter.js" -i "${TARGET}" -o "${OUT_VRMA}"
+  node "${CONVERTER_DIR}/fbx2vrma-converter.js" -i "${TARGET}" -o "${OUT_VRMA}" --fbx2gltf "${BIN_PATH}"
   cp "${OUT_VRMA}" "${DEST_WEB}/${BASENAME}.vrma"
   echo "[✔] Animation convertie : ${OUT_VRMA} ($(du -h "${OUT_VRMA}" | cut -f1))"
   CONVERTED_FILES=("${BASENAME}.vrma")
 
 elif [[ -d "${TARGET}" ]]; then
   TMP_OUT=$(mktemp -d)
-  node "${CONVERTER_DIR}/fbx2vrma-converter.js" -d "${TARGET}" -o "${TMP_OUT}"
+  node "${CONVERTER_DIR}/fbx2vrma-converter.js" -d "${TARGET}" -o "${TMP_OUT}" --fbx2gltf "${BIN_PATH}"
   
   CONVERTED_FILES=()
   for vrma in "${TMP_OUT}"/*.vrma; do

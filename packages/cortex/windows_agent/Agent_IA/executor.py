@@ -3,7 +3,10 @@ import subprocess
 import logging
 import string
 import shutil
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
 import re
 import textwrap
 import importlib
@@ -26,10 +29,12 @@ def list_drives():
 def find_in_path(program_name):
     result = shutil.which(program_name)
     if result:
-        print(f"[RESOLVER] ✔ Trouvé via PATH : {result}")
+        print(f"[RESOLVER] [OK] Trouvé via PATH : {result}")
     return result
 
 def find_in_registry(program_name):
+    if winreg is None:
+        return None
     registry_paths = [
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths",
         r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
@@ -46,7 +51,7 @@ def find_in_registry(program_name):
                     if program_name.lower() in subkey_name.lower():
                         subkey = winreg.OpenKey(key, subkey_name)
                         path, _ = winreg.QueryValueEx(subkey, None)
-                        print(f"[RESOLVER] ✔ Trouvé via registre : {path}")
+                        print(f"[RESOLVER] [OK] Trouvé via registre : {path}")
                         return path
                     i += 1
                 except OSError:
@@ -76,12 +81,12 @@ def search_executable(program_name, drives):
             if not os.path.exists(base):
                 continue
 
-            print(f"[RESOLVER] 🔍 Scan : {base}")
+            print(f"[RESOLVER] [SCAN] Scan : {base}")
 
             for root, dirs, files in os.walk(base):
                 if exe_name in (f.lower() for f in files):
                     full_path = os.path.join(root, exe_name)
-                    print(f"[RESOLVER] ✔ Trouvé via scan : {full_path}")
+                    print(f"[RESOLVER] [OK] Trouvé via scan : {full_path}")
                     return full_path
 
     return None
@@ -96,7 +101,7 @@ def find_uwp_app(program_name):
         result = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True).strip()
 
         if result and os.path.exists(result):
-            print(f"[RESOLVER] ✔ Trouvé via UWP : {result}")
+            print(f"[RESOLVER] [OK] Trouvé via UWP : {result}")
             return result
 
     except Exception:
@@ -105,11 +110,11 @@ def find_uwp_app(program_name):
     return None
 
 def resolve_program(program_name):
-    print(f"[RESOLVER] 🔎 Recherche du programme : {program_name}")
+    print(f"[RESOLVER] [LOOKUP] Recherche du programme : {program_name}")
 
     # 0) Cache local
     if program_name in PROGRAM_CACHE:
-        print(f"[RESOLVER] ✔ Trouvé dans le cache : {PROGRAM_CACHE[program_name]}")
+        print(f"[RESOLVER] [OK] Trouvé dans le cache : {PROGRAM_CACHE[program_name]}")
         return PROGRAM_CACHE[program_name]
 
     # 1) PATH
@@ -137,7 +142,7 @@ def resolve_program(program_name):
         PROGRAM_CACHE[program_name] = path
         return path
 
-    print(f"[RESOLVER] ❌ Programme introuvable : {program_name}")
+    print(f"[RESOLVER] [ERR] Programme introuvable : {program_name}")
     return None
 
 # ---------------------------------------------------------
@@ -443,10 +448,10 @@ def sync_vrm_desktop(**kwargs):
                 except Exception as e:
                     errs.append(f"{f}: {e}")
         if os.path.exists(src_anim_dir):
-            for af in anim_files:
-                s = os.path.join(src_anim_dir, af)
-                d = os.path.join(dst_anim_dir, af)
-                if os.path.exists(s):
+            for af in os.listdir(src_anim_dir):
+                if af.lower().endswith(".vrma") or af.lower() == "manifest.json":
+                    s = os.path.join(src_anim_dir, af)
+                    d = os.path.join(dst_anim_dir, af)
                     try:
                         shutil.copy2(s, d)
                         res.append(f"animations/{af}")
@@ -760,6 +765,33 @@ def check_bridge_local(**kwargs):
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
 
+def send_avatar_command(**kwargs):
+    import json
+    import urllib.request
+    cmd = kwargs.get('cmd') or 'set_pose'
+    pose = kwargs.get('pose', 'cyberGroove')
+    holdMs = int(kwargs.get('holdMs', 25000))
+    payload = {
+        'cmd': cmd,
+        'pose': pose,
+        'holdMs': holdMs,
+        'detail': {
+            'pose': pose,
+            'holdMs': holdMs,
+            **(kwargs.get('detail') or {})
+        },
+    }
+    try:
+        req = urllib.request.Request(
+            'http://127.0.0.1:8765/avatar/command',
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        with urllib.request.urlopen(req, timeout=3) as r:
+            return {'status': 'ok', 'response': r.read().decode()}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
 def get_compagnon_status(**kwargs):
     import subprocess
     ps_cmd = "Get-CimInstance Win32_Process | Where-Object { $_.Name -match \"electron\" -or $_.CommandLine -match \"compagnon\" } | Select-Object ProcessId, Name, CommandLine | ConvertTo-Json"
@@ -978,4 +1010,65 @@ def capture_active_window_snippet(**kwargs):
         }
     except Exception as exc:
         return {"status": "error", "message": str(exc), "persisted_to_disk": False}
+
+
+def install_agent_desktop_cli(**kwargs):
+    """Installe agent-desktop (Vercel Labs) via npm global sur le poste Windows."""
+    try:
+        npm_bin = shutil.which("npm.cmd") or shutil.which("npm") or r"C:\Program Files\nodejs\npm.cmd"
+        cmd = [npm_bin, "install", "-g", "--allow-scripts=agent-desktop", "agent-desktop"]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180, check=False)
+        return {
+            "status": "ok" if proc.returncode == 0 else "error",
+            "returncode": proc.returncode,
+            "stdout": proc.stdout.strip(),
+            "stderr": proc.stderr.strip(),
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def copier_fbx_mouvements(recursive=True, **kwargs):
+    """Copie tous les fichiers FBX depuis O:/OneDrive/Pictures/IA/mouvements (et sous-dossiers) vers A:/LBG_Studios/packages/compagnon-desktop/overlay/vrm/fbx_source."""
+    import shutil
+    import os
+    src_dir = "O:/OneDrive/Pictures/IA/mouvements"
+    dst_dir = "A:/LBG_Studios/packages/compagnon-desktop/overlay/vrm/fbx_source"
+    os.makedirs(dst_dir, exist_ok=True)
+    if not os.path.exists(src_dir):
+        return {"status": "error", "error": f"Dossier source introuvable: {src_dir}"}
+
+    copied = []
+    errors = []
+    total_bytes = 0
+
+    for root, dirs, files in os.walk(src_dir):
+        for f in files:
+            if f.lower().endswith(".fbx"):
+                src_path = os.path.join(root, f)
+                rel_dir = os.path.relpath(root, src_dir)
+                if rel_dir == ".":
+                    target_name = f
+                else:
+                    prefix = rel_dir.replace("\\", "_").replace("/", "_").replace(" ", "_")
+                    target_name = f"{prefix}_{f}"
+
+                dst_path = os.path.join(dst_dir, target_name)
+                try:
+                    shutil.copy2(src_path, dst_path)
+                    sz = os.path.getsize(dst_path)
+                    total_bytes += sz
+                    copied.append(target_name)
+                except Exception as e:
+                    errors.append(f"{target_name}: {e}")
+
+    return {
+        "status": "ok" if not errors else "partial",
+        "total_files": len(copied),
+        "total_mb": round(total_bytes / (1024 * 1024), 2),
+        "copied": copied,
+        "errors": errors,
+        "destination": dst_dir
+    }
+
 

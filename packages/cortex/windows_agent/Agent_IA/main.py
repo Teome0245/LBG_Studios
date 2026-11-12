@@ -32,6 +32,7 @@ from mail_imap_preview import run_mail_imap_preview
 
 from face_parts_import_action import run_import_face_parts
 from comfyui_lifecycle import probe_comfyui, run_comfyui_lifecycle
+import agent_desktop
 
 # Safe loading of timezone to avoid crashes on Windows if tzdata is missing
 _LOCAL_TZ = None
@@ -771,6 +772,31 @@ def _workflow_apply_ops(workflow: dict, ops: list[dict]) -> dict:
     return out
 
 
+_COMPUTER_USE_KINDS = {
+    "observe_screen",
+    "click_xy",
+    "move_xy",
+    "drag_xy",
+    "type_text",
+    "hotkey",
+    "scroll",
+    "wait_ms",
+    "ui_snapshot",
+    "desktop_snapshot",
+    "observe_ui",
+    "ui_click",
+    "desktop_click",
+    "ui_type",
+    "desktop_type",
+    "ui_press",
+    "desktop_press",
+    "ui_scroll",
+    "desktop_scroll",
+    "ui_focus",
+    "desktop_focus",
+}
+
+
 def _handle_computer_use_action(
     *,
     kind: str,
@@ -799,18 +825,19 @@ def _handle_computer_use_action(
         _audit(out)
         return out
 
-    if kind == "observe_screen" and _observe_requires_approval() and not _desktop_approval_ok(ctx):
+    is_observe_kind = kind in {"observe_screen", "ui_snapshot", "desktop_snapshot", "observe_ui"}
+    if is_observe_kind and _observe_requires_approval() and not _desktop_approval_ok(ctx):
         out = {
             **base,
             "ok": False,
             "outcome": "approval_denied",
-            "error": "Approval token requis pour observe_screen (context.desktop_approval).",
+            "error": f"Approval token requis pour {kind} (context.desktop_approval).",
             "kind": kind,
         }
         _audit(out)
         return out
 
-    if kind != "observe_screen" and not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
+    if not is_observe_kind and not dry_run and _desktop_requires_approval() and not _desktop_approval_ok(ctx):
         out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
         _audit(out)
         return out
@@ -1052,6 +1079,107 @@ def _handle_computer_use_action(
             out = {**base, "ok": False, "outcome": "error", "error": str(e), "kind": kind, "clicks": clicks}
             _audit(out)
             return out
+
+    # --- Intégration agent-desktop (Vercel Labs : computer use via arbre d'accessibilité) ---
+    if kind in {"ui_snapshot", "desktop_snapshot", "observe_ui"}:
+        app_name = action.get("app")
+        interactive_only = action.get("interactive", action.get("interactive_only", True))
+        compact = action.get("compact", True)
+        skeleton = action.get("skeleton", False)
+        root_ref = action.get("root_ref") or action.get("root")
+        timeout_s = float(action.get("timeout_s", 12.0))
+        res = agent_desktop.run_snapshot(
+            app=str(app_name) if app_name else None,
+            interactive_only=bool(interactive_only),
+            compact=bool(compact),
+            skeleton=bool(skeleton),
+            root_ref=str(root_ref) if root_ref else None,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
+
+    if kind in {"ui_click", "desktop_click"}:
+        ref = action.get("ref") or action.get("target") or ""
+        button = str(action.get("button") or "left")
+        clicks = int(action.get("clicks") or 1)
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 8.0))
+        res = agent_desktop.run_click(
+            ref=str(ref),
+            button=button,
+            clicks=clicks,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
+
+    if kind in {"ui_type", "desktop_type"}:
+        ref = action.get("ref") or action.get("target") or ""
+        text = str(action.get("text") or "")
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 10.0))
+        res = agent_desktop.run_type(
+            ref=str(ref),
+            text=text,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
+
+    if kind in {"ui_press", "desktop_press"}:
+        key = str(action.get("key") or "")
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_press(
+            key=key,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
+
+    if kind in {"ui_scroll", "desktop_scroll"}:
+        ref = action.get("ref") or action.get("target")
+        direction = str(action.get("direction") or "down")
+        amount = int(action.get("amount") or 3)
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_scroll(
+            ref=str(ref) if ref else None,
+            direction=direction,
+            amount=amount,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
+
+    if kind in {"ui_focus", "desktop_focus"}:
+        ref = action.get("ref") or action.get("target") or ""
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_focus(
+            ref=str(ref),
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        _audit(out)
+        return out
 
     out = {**base, "ok": False, "outcome": "unknown_kind", "error": "Action computer_use inconnue", "kind": kind}
     _audit(out)
@@ -1586,6 +1714,7 @@ async def healthz():
             "mss_importable": _importable("mss"),
             "pillow_importable": _importable("PIL"),
         },
+        "agent_desktop": agent_desktop.get_status(),
         "comfyui": {
             "enabled_env": _get_desktop_cfg("LBG_DESKTOP_COMFYUI_ENABLED").strip() or None,
             "base_url": _desktop_comfyui_base_url(),
@@ -2260,7 +2389,7 @@ async def invoke(payload: InvokeRequest):
                     else:
                         continue
 
-            if step_kind in {"observe_screen", "click_xy", "move_xy", "drag_xy", "type_text", "hotkey", "scroll", "wait_ms"}:
+            if step_kind in _COMPUTER_USE_KINDS:
                 step_base = {**base, "kind": step_kind, "step_index": i}
                 out_step = _handle_computer_use_action(
                     kind=step_kind,
@@ -2315,7 +2444,7 @@ async def invoke(payload: InvokeRequest):
         _audit_write({"event": "agents.desktop.audit", "trace_id": trace_id, **out})
         return out
 
-    if kind in {"observe_screen", "click_xy", "move_xy", "drag_xy", "type_text", "hotkey", "scroll", "wait_ms"}:
+    if kind in _COMPUTER_USE_KINDS:
         return _handle_computer_use_action(kind=kind, action=action, ctx=ctx, base=base, trace_id=trace_id, dry_run=dry_run)
 
     if kind == "repair_app_deps":

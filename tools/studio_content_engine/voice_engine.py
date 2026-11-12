@@ -230,9 +230,12 @@ def format_ass_time(seconds: float) -> str:
 
 
 def generate_tiktok_ass_subtitles(cues: list[SentenceCue], out_path: Path) -> Path:
-    """Génère un fichier de sous-titres .ass au format TikTok dynamique."""
-    # Style TikTok : Police grasse sans-serif, gros corps, jaune/blanc percutant, contour noir épais
-    ass_content = f"""[Script Info]
+    """Génère un fichier de sous-titres .ass au format TikTok ultra dynamique mot-à-mot.
+    
+    Chaque mot prononcé s'illumine en direct en jaune néon pop (Karaoké CapCut / TikTok)
+    pour capter en permanence l'attention du spectateur.
+    """
+    ass_content = """[Script Info]
 Title: LBG Studios TikTok Subtitles
 ScriptType: v4.00+
 WrapStyle: 0
@@ -242,33 +245,53 @@ PlayResY: 1920
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: TikTokDefault,Liberation Sans,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,6,2,2,60,60,420,1
-Style: TikTokHighlight,Liberation Sans,72,&H0000FFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,7,3,2,60,60,420,1
+Style: TikTokDefault,Liberation Sans,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,6,2,2,60,60,400,1
+Style: TikTokHighlight,Liberation Sans,72,&H0000FFFF,&H00FFFFFF,&H00000000,&H90000000,-1,0,0,0,100,100,0,0,1,7,3,2,60,60,400,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     for cue in cues:
-        # Si la phrase est longue, la scinder en morceaux de 4-6 mots pour l'impact visuel TikTok
         words = cue.words
         n_words = len(words)
-        if n_words <= 6:
-            chunks = [(words, cue.start, cue.end)]
-        else:
-            mid = n_words // 2
-            t_mid = cue.start + (cue.duration * (mid / n_words))
-            chunks = [
-                (words[:mid], cue.start, t_mid),
-                (words[mid:], t_mid, cue.end),
-            ]
+        if not words:
+            continue
+
+        # Découpage en blocs d'impact de 3 à 5 mots pour éviter les lignes trop larges
+        max_words_per_chunk = 4
+        chunks = []
+        for i in range(0, n_words, max_words_per_chunk):
+            sub_words = words[i : i + max_words_per_chunk]
+            # Calcul du timing proportionnel dans la phrase
+            t_chunk_start = cue.start + (cue.duration * (i / max(1, n_words)))
+            t_chunk_end = cue.start + (cue.duration * (min(n_words, i + max_words_per_chunk) / max(1, n_words)))
+            chunks.append((sub_words, t_chunk_start, t_chunk_end))
 
         for chunk_words, t_start, t_end in chunks:
-            chunk_text = " ".join(chunk_words).upper()
-            start_str = format_ass_time(t_start)
-            end_str = format_ass_time(t_end)
-            # Surlignage dynamique
-            line = f"Dialogue: 0,{start_str},{end_str},TikTokDefault,,0,0,0,,{chunk_text}\n"
-            ass_content += line
+            chunk_duration = max(0.1, t_end - t_start)
+            # Pondération par longueur des mots pour un timing oral naturel
+            weights = [max(2, len(re.sub(r"[^\w]", "", w))) for w in chunk_words]
+            total_weight = sum(weights)
+
+            cur_word_t = t_start
+            for w_idx, active_word in enumerate(chunk_words):
+                w_dur = chunk_duration * (weights[w_idx] / max(1, total_weight))
+                w_start_str = format_ass_time(cur_word_t)
+                w_end_str = format_ass_time(cur_word_t + w_dur)
+                cur_word_t += w_dur
+
+                # Assembler le texte avec le mot actif surligné en jaune néon pop
+                rendered_words = []
+                for j, word in enumerate(chunk_words):
+                    clean_w = word.upper()
+                    if j == w_idx:
+                        # Mot actif : Jaune néon éclatant (&H0000FFFF&) avec pop de taille (+14%)
+                        rendered_words.append(r"{\c&H0000FFFF&\b1\fscx114\fscy114}" + clean_w + r"{\rTikTokDefault}")
+                    else:
+                        rendered_words.append(clean_w)
+
+                line_text = " ".join(rendered_words)
+                ass_content += f"Dialogue: 0,{w_start_str},{w_end_str},TikTokDefault,,0,0,0,,{line_text}\n"
 
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(ass_content)

@@ -19,25 +19,25 @@
     "id": 3,
     "topic": "Pourquoi nous n'avons pas tout réécrit en Rust (ADR 0029)",
     "category": "Architecture Logicielle",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-11T17:32:02.756566",
+    "youtube_url": "https://www.youtube.com/shorts/t2E_t1BMhcY"
   },
   {
     "id": 4,
     "topic": "Comment créer son propre Second Brain avec Obsidian et RAG local",
     "category": "Productivité & IA Locale",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-12T11:31:28.520740",
+    "youtube_url": "https://www.youtube.com/shorts/z_pk-BOute0"
   },
   {
     "id": 5,
     "topic": "Simuler 50 bêtes sauvages et PNJ à 60 FPS avec NavigationServer 3D",
     "category": "Moteur Godot 4",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-12T17:40:16.442825",
+    "youtube_url": "https://www.youtube.com/shorts/a_KTZ303S_k"
   },
   {
     "id": 6,

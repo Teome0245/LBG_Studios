@@ -131,6 +131,7 @@ Le worker supporte 2 familles d’actions via `context.desktop_action` :
 
 ### Paramètres supportés (Computer Use)
 
+#### A) Computer Use standard (pyautogui & coordonnées écran)
 - `observe_screen`
   - `region` (optionnel) : `{x,y,w,h}`
   - retour contrôlé via `LBG_DESKTOP_SCREENSHOT_RETURN` :
@@ -151,6 +152,35 @@ Le worker supporte 2 familles d’actions via `context.desktop_action` :
   - `clicks` (requis) : -2000..2000
 - `wait_ms`
   - `ms` (requis) : 0..60000
+
+#### B) Computer Use via `agent-desktop` (Vercel Labs — Arbre d'accessibilité natif)
+> **Recommandé** : lit l'arborescence UI Automation / AT-SPI directement en JSON, sans capture d'écran et sans monopoliser la souris utilisateur.  
+> Prérequis sur le poste : `npm i -g agent-desktop` (ou binaire GitHub).
+
+- `ui_snapshot` (alias `desktop_snapshot`, `observe_ui`)
+  - `app` (optionnel) : nom du processus / titre de fenêtre (ex: `"notepad"`, `"Slack"`)
+  - `interactive` (bool, défaut `true`) : filtre uniquement les éléments interactifs (boutons, champs, liens)
+  - `compact` (bool, défaut `true`) : élague les conteneurs superflus
+  - `skeleton` (bool, défaut `false`) : vue macro structurelle
+  - `root_ref` (optionnel) : sous-arbre ciblé à partir d'un `@ref`
+  - *Retourne* : JSON avec `snapshot_id` et la liste des éléments et leurs `@ref` stables.
+- `ui_click` (alias `desktop_click`)
+  - `ref` (requis) : identifiant d'élément (ex: `"@s8f3k2p9:e3"`)
+  - `button` (`left|right|middle`, défaut `"left"`)
+  - `clicks` (1..n, défaut 1)
+  - `headed` (bool, défaut `false`) : simule un clic matériel si l'application refuse l'accessibilité
+- `ui_type` (alias `desktop_type`)
+  - `ref` (requis) : identifiant du champ de saisie
+  - `text` (requis) : chaîne de texte injectée de manière sécurisée via stdin
+  - `headed` (bool, défaut `false`)
+- `ui_press` (alias `desktop_press`)
+  - `key` (requis) : touche ou raccourci (ex: `"Enter"`, `"Escape"`, `"Ctrl+s"`)
+- `ui_scroll` (alias `desktop_scroll`)
+  - `ref` (optionnel) : conteneur à faire défiler
+  - `direction` (`up|down|left|right`, défaut `"down"`)
+  - `amount` (nombre de crans, défaut 3)
+- `ui_focus` (alias `desktop_focus`)
+  - `ref` (requis) : identifiant de l'élément à focaliser
 
 ### ComfyUI (API locale)
 

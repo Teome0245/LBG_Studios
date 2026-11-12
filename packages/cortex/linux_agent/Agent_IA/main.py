@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 import core
 import session_emitter
 from face_parts_import_action import run_import_face_parts
+import agent_desktop
 
 
 @asynccontextmanager
@@ -66,6 +67,7 @@ def healthz() -> dict[str, object]:
         },
         "session": core.session_info(),
         "presence_agents": session_emitter.status(),
+        "agent_desktop": agent_desktop.get_status(),
     }
 
 
@@ -591,6 +593,127 @@ def invoke(payload: InvokeRequest) -> dict[str, object]:
             timeout_s=to_i,
         )
         out = {**base, **result, "kind": "run_cli_agent"}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    # --- Intégration agent-desktop (Vercel Labs : computer use via accessibilité AT-SPI / D-Bus) ---
+    if kind in {"ui_snapshot", "desktop_snapshot", "observe_ui"}:
+        app_name = action.get("app")
+        interactive_only = action.get("interactive", action.get("interactive_only", True))
+        compact = action.get("compact", True)
+        skeleton = action.get("skeleton", False)
+        root_ref = action.get("root_ref") or action.get("root")
+        timeout_s = float(action.get("timeout_s", 12.0))
+        res = agent_desktop.run_snapshot(
+            app=str(app_name) if app_name else None,
+            interactive_only=bool(interactive_only),
+            compact=bool(compact),
+            skeleton=bool(skeleton),
+            root_ref=str(root_ref) if root_ref else None,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in {"ui_click", "desktop_click"}:
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        ref = action.get("ref") or action.get("target") or ""
+        button = str(action.get("button") or "left")
+        clicks = int(action.get("clicks") or 1)
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 8.0))
+        res = agent_desktop.run_click(
+            ref=str(ref),
+            button=button,
+            clicks=clicks,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in {"ui_type", "desktop_type"}:
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        ref = action.get("ref") or action.get("target") or ""
+        text_val = str(action.get("text") or "")
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 10.0))
+        res = agent_desktop.run_type(
+            ref=str(ref),
+            text=text_val,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in {"ui_press", "desktop_press"}:
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        key = str(action.get("key") or "")
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_press(
+            key=key,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in {"ui_scroll", "desktop_scroll"}:
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        ref = action.get("ref") or action.get("target")
+        direction = str(action.get("direction") or "down")
+        amount = int(action.get("amount") or 3)
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_scroll(
+            ref=str(ref) if ref else None,
+            direction=direction,
+            amount=amount,
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
+        core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+        return out
+
+    if kind in {"ui_focus", "desktop_focus"}:
+        if not dry_run and core.linux_requires_approval() and not core.linux_approval_ok(ctx):
+            out = {**base, "ok": False, "outcome": "approval_denied", "error": "Approval token requis", "kind": kind}
+            core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
+            return out
+        ref = action.get("ref") or action.get("target") or ""
+        headed = bool(action.get("headed", False))
+        timeout_s = float(action.get("timeout_s", 5.0))
+        res = agent_desktop.run_focus(
+            ref=str(ref),
+            headed=headed,
+            timeout_s=timeout_s,
+            dry_run=dry_run,
+        )
+        out = {**base, **res, "kind": kind}
         core.audit_write({"event": "agents.linux.audit", "trace_id": trace_id, **out})
         return out
 

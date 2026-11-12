@@ -1,29 +1,11 @@
-var VrmPetMod = (() => {
+(() => {
   var __defProp = Object.defineProperty;
-  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-  var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
-  var __copyProps = (to, from, except, desc) => {
-    if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-    }
-    return to;
-  };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // overlay/vrm/vrm_pet.js
-  var vrm_pet_exports = {};
-  __export(vrm_pet_exports, {
-    createVrmPet: () => createVrmPet
-  });
-
-  // node_modules/three/build/three.module.js
+  // packages/compagnon-desktop/node_modules/three/build/three.module.js
   var three_module_exports = {};
   __export(three_module_exports, {
     ACESFilmicToneMapping: () => ACESFilmicToneMapping,
@@ -450,7 +432,7 @@ var VrmPetMod = (() => {
     createCanvasElement: () => createCanvasElement
   });
 
-  // node_modules/three/build/three.core.js
+  // packages/compagnon-desktop/node_modules/three/build/three.core.js
   var REVISION = "180";
   var MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
   var TOUCH = { ROTATE: 0, PAN: 1, DOLLY_PAN: 2, DOLLY_ROTATE: 3 };
@@ -31796,7 +31778,7 @@ var VrmPetMod = (() => {
     }
   }
 
-  // node_modules/three/build/three.module.js
+  // packages/compagnon-desktop/node_modules/three/build/three.module.js
   function WebGLAnimation() {
     let context = null;
     let isAnimating = false;
@@ -41902,7 +41884,7 @@ void main() {
     }
   };
 
-  // node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
+  // packages/compagnon-desktop/node_modules/three/examples/jsm/utils/BufferGeometryUtils.js
   function toTrianglesDrawMode(geometry, drawMode) {
     if (drawMode === TrianglesDrawMode) {
       console.warn("THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.");
@@ -41958,7 +41940,7 @@ void main() {
     }
   }
 
-  // node_modules/three/examples/jsm/loaders/GLTFLoader.js
+  // packages/compagnon-desktop/node_modules/three/examples/jsm/loaders/GLTFLoader.js
   var GLTFLoader = class extends Loader {
     /**
      * Constructs a new glTF loader.
@@ -44525,7 +44507,7 @@ void main() {
     });
   }
 
-  // node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
+  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm/lib/three-vrm.module.js
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -47601,12 +47583,12 @@ void main() {
   };
   var __defProp2 = Object.defineProperty;
   var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
   var __propIsEnum = Object.prototype.propertyIsEnumerable;
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp2.call(b, prop))
+      if (__hasOwnProp.call(b, prop))
         __defNormalProp(a, prop, b[prop]);
     if (__getOwnPropSymbols)
       for (var prop of __getOwnPropSymbols(b)) {
@@ -48451,12 +48433,12 @@ void main() {
   var __defProps = Object.defineProperties;
   var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
   var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
-  var __hasOwnProp22 = Object.prototype.hasOwnProperty;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
   var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
   var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp22(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __spreadValues2 = (a, b) => {
     for (var prop in b || (b = {}))
-      if (__hasOwnProp22.call(b, prop))
+      if (__hasOwnProp2.call(b, prop))
         __defNormalProp2(a, prop, b[prop]);
     if (__getOwnPropSymbols2)
       for (var prop of __getOwnPropSymbols2(b)) {
@@ -51067,7 +51049,7 @@ void main() {
   VRMUtils.removeUnnecessaryVertices = removeUnnecessaryVertices;
   VRMUtils.rotateVRM0 = rotateVRM0;
 
-  // node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
+  // packages/compagnon-desktop/node_modules/@pixiv/three-vrm-animation/lib/three-vrm-animation.module.js
   var __async8 = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -53044,7 +53026,7 @@ void main() {
     }
   };
 
-  // overlay/vrm/vrm_pet.js
+  // packages/compagnon-desktop/overlay/vrm/vrm_pet.js
   function installColorSpaceGuard(THREE) {
     try {
       const desc = Object.getOwnPropertyDescriptor(THREE.Texture.prototype, "colorSpace");
@@ -53173,6 +53155,47 @@ void main() {
       head: [-0.03, 0.04, 0.01],
       leftUpperLeg: [0, 0, -0.02],
       rightUpperLeg: [0, 0, 0.02]
+    },
+    /** Cyber Groove 128 BPM : posture live scénique avec micro en main et déhanché fluide */
+    cyberGroove: {
+      rightShoulder: [0.06, 0.04, -0.06],
+      rightUpperArm: [0.32, 0.35, 0.85],
+      rightLowerArm: [-0.22, -0.16, -2.1],
+      rightHand: [0.18, -0.15, 0.32],
+      // Doigts fermés sur le manche du micro
+      rightThumbProximal: [0.55, 0.3, 0],
+      rightThumbDistal: [0.45, 0, 0],
+      rightIndexProximal: [1.4, 0, 0],
+      rightIndexIntermediate: [1.3, 0, 0],
+      rightMiddleProximal: [1.45, 0, 0],
+      rightMiddleIntermediate: [1.35, 0, 0],
+      rightRingProximal: [1.45, 0, 0],
+      rightRingIntermediate: [1.35, 0, 0],
+      rightLittleProximal: [1.4, 0, 0],
+      rightLittleIntermediate: [1.25, 0, 0],
+      // Bras gauche diva sur la hanche avec grâce
+      leftShoulder: [0.02, -0.02, 0.02],
+      leftUpperArm: [0.12, 0.1, -1.15],
+      leftLowerArm: [0.18, 0.12, -1.25],
+      leftHand: [-0.1, 0.08, -0.15],
+      leftThumbProximal: [0.25, 0.1, 0],
+      leftIndexProximal: [0.3, 0, 0],
+      leftMiddleProximal: [0.35, 0, 0],
+      leftRingProximal: [0.35, 0, 0],
+      leftLittleProximal: [0.3, 0, 0],
+      // Dos cambré féminin et poitrine projetée fière
+      hips: [-0.1, 0.14, -0.1],
+      spine: [0.06, -0.08, 0.08],
+      chest: [0.14, -0.06, 0.06],
+      neck: [-0.08, 0.04, 0.04],
+      head: [-0.22, -0.06, 0.08],
+      // Stance de concert ouverte en éventail (pieds écartés et genoux fléchis)
+      leftUpperLeg: [-0.24, -0.15, -0.26],
+      rightUpperLeg: [0.06, 0.15, 0.26],
+      leftLowerLeg: [0.55, 0, 0],
+      rightLowerLeg: [0.25, 0, 0],
+      leftFoot: [-0.12, -0.25, 0],
+      rightFoot: [0.04, 0.25, 0]
     },
     /** Pointer vers la gauche (geste doux et courtois de la main, coude souple vers l'avant). */
     pointLeft: {
@@ -53581,21 +53604,24 @@ void main() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = SRGBColorSpace;
     hostEl.appendChild(renderer.domElement);
-    scene.add(new HemisphereLight(16777215, 4473958, 1));
-    const key = new DirectionalLight(16777215, 1.4);
-    key.position.set(1, 1.8, 2.2);
+    scene.add(new HemisphereLight(16777215, 2241365, 0.85));
+    const key = new DirectionalLight(14743546, 1.3);
+    key.position.set(0.8, 1.8, 2.2);
     scene.add(key);
-    scene.add(new DirectionalLight(10086898, 0.45).translateX(-2).translateY(1));
-    const metallicRimLight = new DirectionalLight(8448255, 0.75);
-    metallicRimLight.position.set(-1, 1.8, -2);
+    scene.add(new DirectionalLight(10086898, 0.4).translateX(-2).translateY(1));
+    const metallicRimLight = new DirectionalLight(62932, 1.35);
+    metallicRimLight.position.set(-1.5, 1.8, -1.8);
     scene.add(metallicRimLight);
-    const cyberHaloLight = new DirectionalLight(62932, 0.45);
+    const magentaRimLight = new DirectionalLight(14239471, 1.15);
+    magentaRimLight.position.set(1.5, 1.8, -1.8);
+    scene.add(magentaRimLight);
+    const cyberHaloLight = new DirectionalLight(62932, 0.65);
     cyberHaloLight.position.set(0, -1, -1.8);
     scene.add(cyberHaloLight);
-    const stageLightCyan = new PointLight(62932, 0, 4);
+    const stageLightCyan = new PointLight(62932, 0.8, 4);
     stageLightCyan.position.set(-1.2, 1.2, 1.2);
     scene.add(stageLightCyan);
-    const stageLightMagenta = new PointLight(16711807, 0, 4);
+    const stageLightMagenta = new PointLight(16711807, 0.8, 4);
     stageLightMagenta.position.set(1.2, 1.2, 1.2);
     scene.add(stageLightMagenta);
     let vrm = null;
@@ -53617,6 +53643,7 @@ void main() {
     let nextIdleFidgetTime = 6;
     let nextHeartPoseTime = 25;
     let wasInHeartPose = false;
+    let wasInCyberGroove = false;
     let walkYOffset = 0;
     let spinAngle = 0;
     function createHeartTexture() {
@@ -53657,6 +53684,57 @@ void main() {
       s.visible = false;
       scene.add(s);
     }
+    const cyberMicGroup = new Group();
+    cyberMicGroup.name = "cyberMicGroup";
+    cyberMicGroup.visible = false;
+    const micHandleGeo = new CylinderGeometry(0.016, 0.012, 0.2, 16);
+    const micHandleMat = new MeshStandardMaterial({
+      color: 1119773,
+      metalness: 0.85,
+      roughness: 0.3
+    });
+    const micHandle = new Mesh(micHandleGeo, micHandleMat);
+    cyberMicGroup.add(micHandle);
+    const micHeadGeo = new SphereGeometry(0.028, 16, 16);
+    micHeadGeo.scale(1, 1.25, 1);
+    const micHeadMat = new MeshStandardMaterial({
+      color: 4871528,
+      metalness: 0.95,
+      roughness: 0.15
+    });
+    const micHead = new Mesh(micHeadGeo, micHeadMat);
+    micHead.position.y = 0.11;
+    cyberMicGroup.add(micHead);
+    const ringGeo = new TorusGeometry(0.02, 4e-3, 12, 24);
+    const ringMat = new MeshBasicMaterial({
+      color: 65535
+    });
+    const ringMesh = new Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = Math.PI / 2;
+    ringMesh.position.y = 0.088;
+    cyberMicGroup.add(ringMesh);
+    const ringGeo2 = new TorusGeometry(0.016, 3e-3, 12, 24);
+    const ringMat2 = new MeshBasicMaterial({
+      color: 16711816
+    });
+    const ringMesh2 = new Mesh(ringGeo2, ringMat2);
+    ringMesh2.rotation.x = Math.PI / 2;
+    ringMesh2.position.y = -0.075;
+    cyberMicGroup.add(ringMesh2);
+    function ensureMicAttached(v) {
+      if (!v?.humanoid) return;
+      try {
+        const rhNode = v.humanoid.getNormalizedBoneNode?.("rightHand") || v.humanoid.getRawBoneNode?.("rightHand");
+        if (rhNode && cyberMicGroup.parent !== rhNode) {
+          if (cyberMicGroup.parent) cyberMicGroup.parent.remove(cyberMicGroup);
+          rhNode.add(cyberMicGroup);
+          cyberMicGroup.position.set(0.018, 0.045, 0.025);
+          cyberMicGroup.rotation.set(0.25, 0.15, 0.6);
+          cyberMicGroup.scale.set(1.35, 1.35, 1.35);
+        }
+      } catch (_) {
+      }
+    }
     let poseFrom = "idle";
     let poseTo = "idle";
     let poseBlend = 1;
@@ -53667,6 +53745,405 @@ void main() {
     let activeVrmaName = null;
     const vrmaClips = /* @__PURE__ */ new Map();
     const vrmaLoading = /* @__PURE__ */ new Map();
+    const VRMA_CATALOG = {
+      "180turnwbriefcase": "180 Turn W_ Briefcase.vrma",
+      "180 turn w_ briefcase": "180 Turn W_ Briefcase.vrma",
+      "airsquatbentarms": "Air Squat Bent Arms.vrma",
+      "air squat bent arms": "Air Squat Bent Arms.vrma",
+      "armshiphopdance": "Arms Hip Hop Dance.vrma",
+      "arms hip hop dance": "Arms Hip Hop Dance.vrma",
+      "backsquat": "Back Squat.vrma",
+      "back squat": "Back Squat.vrma",
+      "backsquat2": "Back Squat2.vrma",
+      "back squat2": "Back Squat2.vrma",
+      "backflip": "Backflip.vrma",
+      "bashful": "Bashful.vrma",
+      "batterondeck": "Batter On Deck.vrma",
+      "batter on deck": "Batter On Deck.vrma",
+      "bellydancing": "Bellydancing.vrma",
+      "breakdanceready": "Breakdance Ready.vrma",
+      "breakdance ready": "Breakdance Ready.vrma",
+      "calling": "Calling.vrma",
+      "cancan": "Can Can.vrma",
+      "can can": "Can Can.vrma",
+      "capoeirapackpiratebyp.konstantinov": "Capoeira_Pack_Pirate By P. Konstantinov.vrma",
+      "capoeira_pack_pirate by p. konstantinov": "Capoeira_Pack_Pirate By P. Konstantinov.vrma",
+      "capoeirapackarmadatoesquiva": "Capoeira_Pack_armada to esquiva.vrma",
+      "capoeira_pack_armada to esquiva": "Capoeira_Pack_armada to esquiva.vrma",
+      "capoeirapackarmada": "Capoeira_Pack_armada.vrma",
+      "capoeira_pack_armada": "Capoeira_Pack_armada.vrma",
+      "capoeirapackautorole": "Capoeira_Pack_au to role.vrma",
+      "capoeira_pack_au to role": "Capoeira_Pack_au to role.vrma",
+      "capoeirapackau": "Capoeira_Pack_au.vrma",
+      "capoeira_pack_au": "Capoeira_Pack_au.vrma",
+      "capoeirapackbencao": "Capoeira_Pack_bencao.vrma",
+      "capoeira_pack_bencao": "Capoeira_Pack_bencao.vrma",
+      "capoeirapackcapoeira(2)": "Capoeira_Pack_capoeira (2).vrma",
+      "capoeira_pack_capoeira (2)": "Capoeira_Pack_capoeira (2).vrma",
+      "capoeirapackcapoeira(3)": "Capoeira_Pack_capoeira (3).vrma",
+      "capoeira_pack_capoeira (3)": "Capoeira_Pack_capoeira (3).vrma",
+      "capoeirapackcapoeira": "Capoeira_Pack_capoeira.vrma",
+      "capoeira_pack_capoeira": "Capoeira_Pack_capoeira.vrma",
+      "capoeirapackchapa2": "Capoeira_Pack_chapa 2.vrma",
+      "capoeira_pack_chapa 2": "Capoeira_Pack_chapa 2.vrma",
+      "capoeirapackchapagiratoria2": "Capoeira_Pack_chapa giratoria 2.vrma",
+      "capoeira_pack_chapa giratoria 2": "Capoeira_Pack_chapa giratoria 2.vrma",
+      "capoeirapackchapagiratoria": "Capoeira_Pack_chapa-giratoria.vrma",
+      "capoeira_pack_chapa-giratoria": "Capoeira_Pack_chapa-giratoria.vrma",
+      "capoeirapackchapaeudecouro": "Capoeira_Pack_chapaeu de couro.vrma",
+      "capoeira_pack_chapaeu de couro": "Capoeira_Pack_chapaeu de couro.vrma",
+      "capoeirapackesquiva1": "Capoeira_Pack_esquiva 1.vrma",
+      "capoeira_pack_esquiva 1": "Capoeira_Pack_esquiva 1.vrma",
+      "capoeirapackesquiva2": "Capoeira_Pack_esquiva 2.vrma",
+      "capoeira_pack_esquiva 2": "Capoeira_Pack_esquiva 2.vrma",
+      "capoeirapackesquiva3": "Capoeira_Pack_esquiva 3.vrma",
+      "capoeira_pack_esquiva 3": "Capoeira_Pack_esquiva 3.vrma",
+      "capoeirapackesquiva4": "Capoeira_Pack_esquiva 4.vrma",
+      "capoeira_pack_esquiva 4": "Capoeira_Pack_esquiva 4.vrma",
+      "capoeirapackesquiva5": "Capoeira_Pack_esquiva 5.vrma",
+      "capoeira_pack_esquiva 5": "Capoeira_Pack_esquiva 5.vrma",
+      "capoeirapackgingabackward": "Capoeira_Pack_ginga backward.vrma",
+      "capoeira_pack_ginga backward": "Capoeira_Pack_ginga backward.vrma",
+      "capoeirapackgingaforward": "Capoeira_Pack_ginga forward.vrma",
+      "capoeira_pack_ginga forward": "Capoeira_Pack_ginga forward.vrma",
+      "capoeirapackgingasideways1": "Capoeira_Pack_ginga sideways 1.vrma",
+      "capoeira_pack_ginga sideways 1": "Capoeira_Pack_ginga sideways 1.vrma",
+      "capoeirapackgingasideways2": "Capoeira_Pack_ginga sideways 2.vrma",
+      "capoeira_pack_ginga sideways 2": "Capoeira_Pack_ginga sideways 2.vrma",
+      "capoeirapackgingasidewaystoau": "Capoeira_Pack_ginga sideways to au.vrma",
+      "capoeira_pack_ginga sideways to au": "Capoeira_Pack_ginga sideways to au.vrma",
+      "capoeirapackgingavariation1": "Capoeira_Pack_ginga variation 1.vrma",
+      "capoeira_pack_ginga variation 1": "Capoeira_Pack_ginga variation 1.vrma",
+      "capoeirapackgingavariation2": "Capoeira_Pack_ginga variation 2.vrma",
+      "capoeira_pack_ginga variation 2": "Capoeira_Pack_ginga variation 2.vrma",
+      "capoeirapackgingavariation3": "Capoeira_Pack_ginga variation 3.vrma",
+      "capoeira_pack_ginga variation 3": "Capoeira_Pack_ginga variation 3.vrma",
+      "capoeirapackmacacoside": "Capoeira_Pack_macaco side.vrma",
+      "capoeira_pack_macaco side": "Capoeira_Pack_macaco side.vrma",
+      "capoeirapackmartelo2": "Capoeira_Pack_martelo 2.vrma",
+      "capoeira_pack_martelo 2": "Capoeira_Pack_martelo 2.vrma",
+      "capoeirapackmartelo3": "Capoeira_Pack_martelo 3.vrma",
+      "capoeira_pack_martelo 3": "Capoeira_Pack_martelo 3.vrma",
+      "capoeirapackmartelodochausemmao": "Capoeira_Pack_martelo do chau sem mao.vrma",
+      "capoeira_pack_martelo do chau sem mao": "Capoeira_Pack_martelo do chau sem mao.vrma",
+      "capoeirapackmartelodochau": "Capoeira_Pack_martelo do chau.vrma",
+      "capoeira_pack_martelo do chau": "Capoeira_Pack_martelo do chau.vrma",
+      "capoeirapackmeialuadecompassoback": "Capoeira_Pack_meia lua de compasso back.vrma",
+      "capoeira_pack_meia lua de compasso back": "Capoeira_Pack_meia lua de compasso back.vrma",
+      "capoeirapackmeialuadecompasso": "Capoeira_Pack_meia lua de compasso.vrma",
+      "capoeira_pack_meia lua de compasso": "Capoeira_Pack_meia lua de compasso.vrma",
+      "capoeirapackmeialuadefrente": "Capoeira_Pack_meia lua de frente.vrma",
+      "capoeira_pack_meia lua de frente": "Capoeira_Pack_meia lua de frente.vrma",
+      "capoeirapackpontera": "Capoeira_Pack_pontera.vrma",
+      "capoeira_pack_pontera": "Capoeira_Pack_pontera.vrma",
+      "capoeirapackqueshada1": "Capoeira_Pack_queshada 1.vrma",
+      "capoeira_pack_queshada 1": "Capoeira_Pack_queshada 1.vrma",
+      "capoeirapackqueshada2": "Capoeira_Pack_queshada 2.vrma",
+      "capoeira_pack_queshada 2": "Capoeira_Pack_queshada 2.vrma",
+      "capoeirapackrasteira1": "Capoeira_Pack_rasteira 1.vrma",
+      "capoeira_pack_rasteira 1": "Capoeira_Pack_rasteira 1.vrma",
+      "capoeirapackrasteira2": "Capoeira_Pack_rasteira 2.vrma",
+      "capoeira_pack_rasteira 2": "Capoeira_Pack_rasteira 2.vrma",
+      "capoeirapacktroca1": "Capoeira_Pack_troca 1.vrma",
+      "capoeira_pack_troca 1": "Capoeira_Pack_troca 1.vrma",
+      "catwalkwalking": "Catwalk Walking.vrma",
+      "catwalk walking": "Catwalk Walking.vrma",
+      "cheering": "Cheering.vrma",
+      "chickendance": "Chicken Dance.vrma",
+      "chicken dance": "Chicken Dance.vrma",
+      "crazygesture": "Crazy Gesture.vrma",
+      "crazy gesture": "Crazy Gesture.vrma",
+      "dancingmaraschinostep": "Dancing Maraschino Step.vrma",
+      "dancing maraschino step": "Dancing Maraschino Step.vrma",
+      "dancingtwerk": "Dancing Twerk.vrma",
+      "dancing twerk": "Dancing Twerk.vrma",
+      "dancing": "Dancing.vrma",
+      "defeated": "Defeated.vrma",
+      "dwarfidle": "Dwarf Idle.vrma",
+      "dwarf idle": "Dwarf Idle.vrma",
+      "femalecrouchpose": "Female Crouch Pose.vrma",
+      "female crouch pose": "Female Crouch Pose.vrma",
+      "femaledancepose": "Female Dance Pose.vrma",
+      "female dance pose": "Female Dance Pose.vrma",
+      "femaledancepose1": "Female Dance Pose1.vrma",
+      "female dance pose1": "Female Dance Pose1.vrma",
+      "femaledynamicpose": "Female Dynamic Pose.vrma",
+      "female dynamic pose": "Female Dynamic Pose.vrma",
+      "femalelayingpose": "Female Laying Pose.vrma",
+      "female laying pose": "Female Laying Pose.vrma",
+      "femalelayingpose1": "Female Laying Pose1.vrma",
+      "female laying pose1": "Female Laying Pose1.vrma",
+      "femalestandingpose": "Female Standing Pose.vrma",
+      "female standing pose": "Female Standing Pose.vrma",
+      "femalestandingpose2": "Female Standing Pose2.vrma",
+      "female standing pose2": "Female Standing Pose2.vrma",
+      "femalestopandstartwalking": "Female Stop And Start Walking.vrma",
+      "female stop and start walking": "Female Stop And Start Walking.vrma",
+      "femalelocomotionpackpiratebyp.konstantinov": "Female_Locomotion_Pack_Pirate By P. Konstantinov.vrma",
+      "female_locomotion_pack_pirate by p. konstantinov": "Female_Locomotion_Pack_Pirate By P. Konstantinov.vrma",
+      "femalelocomotionpackidle": "Female_Locomotion_Pack_idle.vrma",
+      "female_locomotion_pack_idle": "Female_Locomotion_Pack_idle.vrma",
+      "femalelocomotionpackjump": "Female_Locomotion_Pack_jump.vrma",
+      "female_locomotion_pack_jump": "Female_Locomotion_Pack_jump.vrma",
+      "femalelocomotionpackleftstrafewalk": "Female_Locomotion_Pack_left strafe walk.vrma",
+      "female_locomotion_pack_left strafe walk": "Female_Locomotion_Pack_left strafe walk.vrma",
+      "femalelocomotionpackleftstrafe": "Female_Locomotion_Pack_left strafe.vrma",
+      "female_locomotion_pack_left strafe": "Female_Locomotion_Pack_left strafe.vrma",
+      "femalelocomotionpackleftturn": "Female_Locomotion_Pack_left turn.vrma",
+      "female_locomotion_pack_left turn": "Female_Locomotion_Pack_left turn.vrma",
+      "femalelocomotionpackrightstrafewalk": "Female_Locomotion_Pack_right strafe walk.vrma",
+      "female_locomotion_pack_right strafe walk": "Female_Locomotion_Pack_right strafe walk.vrma",
+      "femalelocomotionpackrightstrafe": "Female_Locomotion_Pack_right strafe.vrma",
+      "female_locomotion_pack_right strafe": "Female_Locomotion_Pack_right strafe.vrma",
+      "femalelocomotionpackrightturn": "Female_Locomotion_Pack_right turn.vrma",
+      "female_locomotion_pack_right turn": "Female_Locomotion_Pack_right turn.vrma",
+      "femalelocomotionpackrunning": "Female_Locomotion_Pack_running.vrma",
+      "female_locomotion_pack_running": "Female_Locomotion_Pack_running.vrma",
+      "femalelocomotionpackwalking": "Female_Locomotion_Pack_walking.vrma",
+      "female_locomotion_pack_walking": "Female_Locomotion_Pack_walking.vrma",
+      "flair": "Flair.vrma",
+      "freetestpackpiratebyp.konstantinov": "Free_Test_Pack_Pirate By P. Konstantinov.vrma",
+      "free_test_pack_pirate by p. konstantinov": "Free_Test_Pack_Pirate By P. Konstantinov.vrma",
+      "freetestpackbackfliptouppercut": "Free_Test_Pack_back flip to uppercut.vrma",
+      "free_test_pack_back flip to uppercut": "Free_Test_Pack_back flip to uppercut.vrma",
+      "freetestpackgangnamstyle": "Free_Test_Pack_gangnam style.vrma",
+      "free_test_pack_gangnam style": "Free_Test_Pack_gangnam style.vrma",
+      "freetestpackidle": "Free_Test_Pack_idle.vrma",
+      "free_test_pack_idle": "Free_Test_Pack_idle.vrma",
+      "freetestpackjump": "Free_Test_Pack_jump.vrma",
+      "free_test_pack_jump": "Free_Test_Pack_jump.vrma",
+      "freetestpackleftstrafewalking": "Free_Test_Pack_left strafe walking.vrma",
+      "free_test_pack_left strafe walking": "Free_Test_Pack_left strafe walking.vrma",
+      "freetestpackleftturn90": "Free_Test_Pack_left turn 90.vrma",
+      "free_test_pack_left turn 90": "Free_Test_Pack_left turn 90.vrma",
+      "freetestpackrightstrafewalking": "Free_Test_Pack_right strafe walking.vrma",
+      "free_test_pack_right strafe walking": "Free_Test_Pack_right strafe walking.vrma",
+      "freetestpackrightturn90": "Free_Test_Pack_right turn 90.vrma",
+      "free_test_pack_right turn 90": "Free_Test_Pack_right turn 90.vrma",
+      "freetestpacksambadancing": "Free_Test_Pack_samba dancing.vrma",
+      "free_test_pack_samba dancing": "Free_Test_Pack_samba dancing.vrma",
+      "freetestpackskinningtest": "Free_Test_Pack_skinning test.vrma",
+      "free_test_pack_skinning test": "Free_Test_Pack_skinning test.vrma",
+      "freetestpackwalking": "Free_Test_Pack_walking.vrma",
+      "free_test_pack_walking": "Free_Test_Pack_walking.vrma",
+      "golfputtfailure": "Golf Putt Failure.vrma",
+      "golf putt failure": "Golf Putt Failure.vrma",
+      "happywalk": "Happy Walk.vrma",
+      "happy walk": "Happy Walk.vrma",
+      "havingameeting,female": "Having A Meeting, Female.vrma",
+      "having a meeting, female": "Having A Meeting, Female.vrma",
+      "hiphopdancing": "Hip Hop Dancing.vrma",
+      "hip hop dancing": "Hip Hop Dancing.vrma",
+      "hiphopdancing1": "Hip Hop Dancing1.vrma",
+      "hip hop dancing1": "Hip Hop Dancing1.vrma",
+      "hiphopdancing2": "Hip Hop Dancing2.vrma",
+      "hip hop dancing2": "Hip Hop Dancing2.vrma",
+      "hiphopdancing3": "Hip Hop Dancing3.vrma",
+      "hip hop dancing3": "Hip Hop Dancing3.vrma",
+      "hokeypokey": "Hokey Pokey.vrma",
+      "hokey pokey": "Hokey Pokey.vrma",
+      "idletositup": "Idle To Situp.vrma",
+      "idle to situp": "Idle To Situp.vrma",
+      "idle": "Idle.vrma",
+      "jazzdancing": "Jazz Dancing.vrma",
+      "jazz dancing": "Jazz Dancing.vrma",
+      "jazzdancing2": "Jazz Dancing2.vrma",
+      "jazz dancing2": "Jazz Dancing2.vrma",
+      "jazzdancing3": "Jazz Dancing3.vrma",
+      "jazz dancing3": "Jazz Dancing3.vrma",
+      "kettlebellswing": "Kettlebell Swing.vrma",
+      "kettlebell swing": "Kettlebell Swing.vrma",
+      "kipup": "Kip Up.vrma",
+      "kip up": "Kip Up.vrma",
+      "kneelingidle": "Kneeling Idle.vrma",
+      "kneeling idle": "Kneeling Idle.vrma",
+      "layingvomiting": "Laying Vomiting.vrma",
+      "laying vomiting": "Laying Vomiting.vrma",
+      "lookaround": "lookaround.vrma",
+      "look around": "Look Around.vrma",
+      "loser": "Loser.vrma",
+      "lowcrawl": "Low Crawl.vrma",
+      "low crawl": "Low Crawl.vrma",
+      "macarenadance": "Macarena Dance.vrma",
+      "macarena dance": "Macarena Dance.vrma",
+      "ninjaidle": "Ninja Idle.vrma",
+      "ninja idle": "Ninja Idle.vrma",
+      "pikewalk": "Pike Walk.vrma",
+      "pike walk": "Pike Walk.vrma",
+      "plotting": "Plotting.vrma",
+      "praying": "Praying.vrma",
+      "promagicpackcrouchidle": "Pro_Magic_Pack_Crouch Idle.vrma",
+      "pro_magic_pack_crouch idle": "Pro_Magic_Pack_Crouch Idle.vrma",
+      "promagicpackcrouchtostandingidle": "Pro_Magic_Pack_Crouch To Standing Idle.vrma",
+      "pro_magic_pack_crouch to standing idle": "Pro_Magic_Pack_Crouch To Standing Idle.vrma",
+      "promagicpackcrouchturnleft90": "Pro_Magic_Pack_Crouch Turn Left 90.vrma",
+      "pro_magic_pack_crouch turn left 90": "Pro_Magic_Pack_Crouch Turn Left 90.vrma",
+      "promagicpackcrouchturnright90": "Pro_Magic_Pack_Crouch Turn Right 90.vrma",
+      "pro_magic_pack_crouch turn right 90": "Pro_Magic_Pack_Crouch Turn Right 90.vrma",
+      "promagicpackcrouchwalkback": "Pro_Magic_Pack_Crouch Walk Back.vrma",
+      "pro_magic_pack_crouch walk back": "Pro_Magic_Pack_Crouch Walk Back.vrma",
+      "promagicpackcrouchwalkforward": "Pro_Magic_Pack_Crouch Walk Forward.vrma",
+      "pro_magic_pack_crouch walk forward": "Pro_Magic_Pack_Crouch Walk Forward.vrma",
+      "promagicpackcrouchwalkleft": "Pro_Magic_Pack_Crouch Walk Left.vrma",
+      "pro_magic_pack_crouch walk left": "Pro_Magic_Pack_Crouch Walk Left.vrma",
+      "promagicpackcrouchwalkright": "Pro_Magic_Pack_Crouch Walk Right.vrma",
+      "pro_magic_pack_crouch walk right": "Pro_Magic_Pack_Crouch Walk Right.vrma",
+      "promagicpackstanding1hmagicattack01": "Pro_Magic_Pack_Standing 1H Magic Attack 01.vrma",
+      "pro_magic_pack_standing 1h magic attack 01": "Pro_Magic_Pack_Standing 1H Magic Attack 01.vrma",
+      "promagicpackstanding1hmagicattack02": "Pro_Magic_Pack_Standing 1H Magic Attack 02.vrma",
+      "pro_magic_pack_standing 1h magic attack 02": "Pro_Magic_Pack_Standing 1H Magic Attack 02.vrma",
+      "promagicpackstanding1hmagicattack03": "Pro_Magic_Pack_Standing 1H Magic Attack 03.vrma",
+      "pro_magic_pack_standing 1h magic attack 03": "Pro_Magic_Pack_Standing 1H Magic Attack 03.vrma",
+      "promagicpackstanding2hcastspell01": "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma",
+      "pro_magic_pack_standing 2h cast spell 01": "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma",
+      "promagicpackstanding2hmagicareaattack01": "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+      "pro_magic_pack_standing 2h magic area attack 01": "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+      "promagicpackstanding2hmagicareaattack02": "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma",
+      "pro_magic_pack_standing 2h magic area attack 02": "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma",
+      "promagicpackstanding2hmagicattack01": "Pro_Magic_Pack_Standing 2H Magic Attack 01.vrma",
+      "pro_magic_pack_standing 2h magic attack 01": "Pro_Magic_Pack_Standing 2H Magic Attack 01.vrma",
+      "promagicpackstanding2hmagicattack02": "Pro_Magic_Pack_Standing 2H Magic Attack 02.vrma",
+      "pro_magic_pack_standing 2h magic attack 02": "Pro_Magic_Pack_Standing 2H Magic Attack 02.vrma",
+      "promagicpackstanding2hmagicattack03": "Pro_Magic_Pack_Standing 2H Magic Attack 03.vrma",
+      "pro_magic_pack_standing 2h magic attack 03": "Pro_Magic_Pack_Standing 2H Magic Attack 03.vrma",
+      "promagicpackstanding2hmagicattack04": "Pro_Magic_Pack_Standing 2H Magic Attack 04.vrma",
+      "pro_magic_pack_standing 2h magic attack 04": "Pro_Magic_Pack_Standing 2H Magic Attack 04.vrma",
+      "promagicpackstanding2hmagicattack05": "Pro_Magic_Pack_Standing 2H Magic Attack 05.vrma",
+      "pro_magic_pack_standing 2h magic attack 05": "Pro_Magic_Pack_Standing 2H Magic Attack 05.vrma",
+      "promagicpackstandingblockend": "Pro_Magic_Pack_Standing Block End.vrma",
+      "pro_magic_pack_standing block end": "Pro_Magic_Pack_Standing Block End.vrma",
+      "promagicpackstandingblockidle": "Pro_Magic_Pack_Standing Block Idle.vrma",
+      "pro_magic_pack_standing block idle": "Pro_Magic_Pack_Standing Block Idle.vrma",
+      "promagicpackstandingblockreactlarge": "Pro_Magic_Pack_Standing Block React Large.vrma",
+      "pro_magic_pack_standing block react large": "Pro_Magic_Pack_Standing Block React Large.vrma",
+      "promagicpackstandingblockstart": "Pro_Magic_Pack_Standing Block Start.vrma",
+      "pro_magic_pack_standing block start": "Pro_Magic_Pack_Standing Block Start.vrma",
+      "promagicpackstandingidle03": "Pro_Magic_Pack_Standing Idle 03.vrma",
+      "pro_magic_pack_standing idle 03": "Pro_Magic_Pack_Standing Idle 03.vrma",
+      "promagicpackstandingidle04": "Pro_Magic_Pack_Standing Idle 04.vrma",
+      "pro_magic_pack_standing idle 04": "Pro_Magic_Pack_Standing Idle 04.vrma",
+      "promagicpackstandingidletocrouch": "Pro_Magic_Pack_Standing Idle To Crouch.vrma",
+      "pro_magic_pack_standing idle to crouch": "Pro_Magic_Pack_Standing Idle To Crouch.vrma",
+      "promagicpackstandingjumprunninglanding": "Pro_Magic_Pack_Standing Jump Running Landing.vrma",
+      "pro_magic_pack_standing jump running landing": "Pro_Magic_Pack_Standing Jump Running Landing.vrma",
+      "promagicpackstandingjumprunning": "Pro_Magic_Pack_Standing Jump Running.vrma",
+      "pro_magic_pack_standing jump running": "Pro_Magic_Pack_Standing Jump Running.vrma",
+      "promagicpackstandingjump": "Pro_Magic_Pack_Standing Jump.vrma",
+      "pro_magic_pack_standing jump": "Pro_Magic_Pack_Standing Jump.vrma",
+      "promagicpackstandinglandtostandingidle": "Pro_Magic_Pack_Standing Land To Standing Idle.vrma",
+      "pro_magic_pack_standing land to standing idle": "Pro_Magic_Pack_Standing Land To Standing Idle.vrma",
+      "promagicpackstandingreactdeathbackward": "Pro_Magic_Pack_Standing React Death Backward.vrma",
+      "pro_magic_pack_standing react death backward": "Pro_Magic_Pack_Standing React Death Backward.vrma",
+      "promagicpackstandingreactdeathforward": "Pro_Magic_Pack_Standing React Death Forward.vrma",
+      "pro_magic_pack_standing react death forward": "Pro_Magic_Pack_Standing React Death Forward.vrma",
+      "promagicpackstandingreactdeathleft": "Pro_Magic_Pack_Standing React Death Left.vrma",
+      "pro_magic_pack_standing react death left": "Pro_Magic_Pack_Standing React Death Left.vrma",
+      "promagicpackstandingreactdeathright": "Pro_Magic_Pack_Standing React Death Right.vrma",
+      "pro_magic_pack_standing react death right": "Pro_Magic_Pack_Standing React Death Right.vrma",
+      "promagicpackstandingreactlargefromback": "Pro_Magic_Pack_Standing React Large From Back.vrma",
+      "pro_magic_pack_standing react large from back": "Pro_Magic_Pack_Standing React Large From Back.vrma",
+      "promagicpackstandingreactlargefromfront": "Pro_Magic_Pack_Standing React Large From Front.vrma",
+      "pro_magic_pack_standing react large from front": "Pro_Magic_Pack_Standing React Large From Front.vrma",
+      "promagicpackstandingreactlargefromleft": "Pro_Magic_Pack_Standing React Large From Left.vrma",
+      "pro_magic_pack_standing react large from left": "Pro_Magic_Pack_Standing React Large From Left.vrma",
+      "promagicpackstandingreactlargefromright": "Pro_Magic_Pack_Standing React Large From Right.vrma",
+      "pro_magic_pack_standing react large from right": "Pro_Magic_Pack_Standing React Large From Right.vrma",
+      "promagicpackstandingreactsmallfromback": "Pro_Magic_Pack_Standing React Small From Back.vrma",
+      "pro_magic_pack_standing react small from back": "Pro_Magic_Pack_Standing React Small From Back.vrma",
+      "promagicpackstandingreactsmallfromfront": "Pro_Magic_Pack_Standing React Small From Front.vrma",
+      "pro_magic_pack_standing react small from front": "Pro_Magic_Pack_Standing React Small From Front.vrma",
+      "promagicpackstandingreactsmallfromleft": "Pro_Magic_Pack_Standing React Small From Left.vrma",
+      "pro_magic_pack_standing react small from left": "Pro_Magic_Pack_Standing React Small From Left.vrma",
+      "promagicpackstandingreactsmallfromright": "Pro_Magic_Pack_Standing React Small From Right.vrma",
+      "pro_magic_pack_standing react small from right": "Pro_Magic_Pack_Standing React Small From Right.vrma",
+      "promagicpackstandingrunback": "Pro_Magic_Pack_Standing Run Back.vrma",
+      "pro_magic_pack_standing run back": "Pro_Magic_Pack_Standing Run Back.vrma",
+      "promagicpackstandingrunforward": "Pro_Magic_Pack_Standing Run Forward.vrma",
+      "pro_magic_pack_standing run forward": "Pro_Magic_Pack_Standing Run Forward.vrma",
+      "promagicpackstandingrunleft": "Pro_Magic_Pack_Standing Run Left.vrma",
+      "pro_magic_pack_standing run left": "Pro_Magic_Pack_Standing Run Left.vrma",
+      "promagicpackstandingrunright": "Pro_Magic_Pack_Standing Run Right.vrma",
+      "pro_magic_pack_standing run right": "Pro_Magic_Pack_Standing Run Right.vrma",
+      "promagicpackstandingsprintforward": "Pro_Magic_Pack_Standing Sprint Forward.vrma",
+      "pro_magic_pack_standing sprint forward": "Pro_Magic_Pack_Standing Sprint Forward.vrma",
+      "promagicpackstandingturnleft90": "Pro_Magic_Pack_Standing Turn Left 90.vrma",
+      "pro_magic_pack_standing turn left 90": "Pro_Magic_Pack_Standing Turn Left 90.vrma",
+      "promagicpackstandingturnright90": "Pro_Magic_Pack_Standing Turn Right 90.vrma",
+      "pro_magic_pack_standing turn right 90": "Pro_Magic_Pack_Standing Turn Right 90.vrma",
+      "promagicpackstandingwalkback": "Pro_Magic_Pack_Standing Walk Back.vrma",
+      "pro_magic_pack_standing walk back": "Pro_Magic_Pack_Standing Walk Back.vrma",
+      "promagicpackstandingwalkforward": "Pro_Magic_Pack_Standing Walk Forward.vrma",
+      "pro_magic_pack_standing walk forward": "Pro_Magic_Pack_Standing Walk Forward.vrma",
+      "promagicpackstandingwalkleft": "Pro_Magic_Pack_Standing Walk Left.vrma",
+      "pro_magic_pack_standing walk left": "Pro_Magic_Pack_Standing Walk Left.vrma",
+      "promagicpackstandingwalkright": "Pro_Magic_Pack_Standing Walk Right.vrma",
+      "pro_magic_pack_standing walk right": "Pro_Magic_Pack_Standing Walk Right.vrma",
+      "promagicpackxbot": "Pro_Magic_Pack_X Bot.vrma",
+      "pro_magic_pack_x bot": "Pro_Magic_Pack_X Bot.vrma",
+      "promagicpackstanding1hcastspell01": "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+      "pro_magic_pack_standing 1h cast spell 01": "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+      "promagicpackstandingidle02": "Pro_Magic_Pack_standing idle 02.vrma",
+      "pro_magic_pack_standing idle 02": "Pro_Magic_Pack_standing idle 02.vrma",
+      "promagicpackstandingidle": "Pro_Magic_Pack_standing idle.vrma",
+      "pro_magic_pack_standing idle": "Pro_Magic_Pack_standing idle.vrma",
+      "pullplant": "Pull Plant.vrma",
+      "pull plant": "Pull Plant.vrma",
+      "pushup": "Push Up.vrma",
+      "push up": "Push Up.vrma",
+      "rejected": "Rejected.vrma",
+      "rejected1": "Rejected1.vrma",
+      "sambadancing": "Samba Dancing.vrma",
+      "samba dancing": "Samba Dancing.vrma",
+      "sambadancing1": "Samba Dancing1.vrma",
+      "samba dancing1": "Samba Dancing1.vrma",
+      "speedbag": "Speedbag.vrma",
+      "standingusingtouchscreentablet": "Standing Using Touchscreen Tablet.vrma",
+      "standing using touchscreen tablet": "Standing Using Touchscreen Tablet.vrma",
+      "stealthassassination": "Stealth Assassination.vrma",
+      "stealth assassination": "Stealth Assassination.vrma",
+      "sumohighpull": "Sumo High Pull.vrma",
+      "sumo high pull": "Sumo High Pull.vrma",
+      "sumohighpull1": "Sumo High Pull1.vrma",
+      "sumo high pull1": "Sumo High Pull1.vrma",
+      "talkingonphone": "Talking On Phone.vrma",
+      "talking on phone": "Talking On Phone.vrma",
+      "talkingphonepacing": "Talking Phone Pacing.vrma",
+      "talking phone pacing": "Talking Phone Pacing.vrma",
+      "taunt": "Taunt.vrma",
+      "textingandwalking": "Texting And Walking.vrma",
+      "texting and walking": "Texting And Walking.vrma",
+      "thinking": "thinking.vrma",
+      "victory": "Victory.vrma",
+      "yawn": "Yawn.vrma",
+      "yellingout": "Yelling Out.vrma",
+      "yelling out": "Yelling Out.vrma",
+      "angry": "angry.vrma",
+      "blush": "blush.vrma",
+      "clapping": "clapping.vrma",
+      "dance": "dance.vrma",
+      "disco": "disco.vrma",
+      "goodbye": "goodbye.vrma",
+      "hiphop": "hiphop.vrma",
+      "idleloop": "idle_loop.vrma",
+      "idle_loop": "idle_loop.vrma",
+      "idlestretch": "idle_stretch.vrma",
+      "idle_stretch": "idle_stretch.vrma",
+      "jump": "jump.vrma",
+      "look_around": "look_around.vrma",
+      "relax": "relax.vrma",
+      "robot": "robot.vrma",
+      "sad": "sad.vrma",
+      "salsa": "salsa.vrma",
+      "samba": "samba.vrma",
+      "sit": "sit.vrma",
+      "sitwave": "sitWave.vrma",
+      "sleepy": "sleepy.vrma",
+      "spin": "spin.vrma",
+      "surprised": "surprised.vrma",
+      "walk": "walk.vrma",
+      "waveright": "wave_right.vrma",
+      "wave_right": "wave_right.vrma"
+    };
     const VRMA_MAP = {
       walk: "walk.vrma",
       marche: "walk.vrma",
@@ -53719,9 +54196,41 @@ void main() {
       surprised: "surprised.vrma",
       sad: "sad.vrma",
       angry: "angry.vrma",
+      bellydance: "Bellydancing.vrma",
+      bellydancing: "Bellydancing.vrma",
+      popdance: "Dancing Maraschino Step.vrma",
+      maraschino: "Dancing Maraschino Step.vrma",
+      femaledance: "Female Dance Pose.vrma",
+      dancepose: "Female Dance Pose.vrma",
+      dancing: "Dancing.vrma",
+      twerk: "Dancing Twerk.vrma",
+      gangnam: "Free_Test_Pack_gangnam style.vrma",
+      gangnamstyle: "Free_Test_Pack_gangnam style.vrma",
+      cancan: "Can Can.vrma",
+      macarena: "Macarena Dance.vrma",
+      chickendance: "Chicken Dance.vrma",
+      hokeypokey: "Hokey Pokey.vrma",
+      backflip: "Backflip.vrma",
+      pushup: "Push Up.vrma",
+      taunt: "Taunt.vrma",
+      catwalk: "Catwalk Walking.vrma",
+      happywalk: "Happy Walk.vrma",
+      capoeira: "Capoeira_Pack_capoeira.vrma",
+      ginga: "Capoeira_Pack_ginga forward.vrma",
+      castspell: "Pro_Magic_Pack_standing 1H cast spell 01.vrma",
+      magicattack: "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma",
+      shieldblock: "Pro_Magic_Pack_Standing Block Idle.vrma",
       hello: "wave_right.vrma",
       salute: "wave_right.vrma"
     };
+    function resolveVrmaFile(name) {
+      if (!name) return null;
+      if (typeof name !== "string") return null;
+      if (name.endsWith(".vrma")) return name;
+      const clean = name.toLowerCase().replace(/[-_\s]/g, "");
+      const raw = name.toLowerCase();
+      return VRMA_MAP[clean] || VRMA_MAP[raw] || VRMA_CATALOG[clean] || VRMA_CATALOG[raw] || null;
+    }
     function getVrmaUrl(filename) {
       const base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
       return (base ? base + "/animations/" : "animations/") + filename;
@@ -53781,7 +54290,7 @@ void main() {
     async function playVRMA(name, opts2 = {}) {
       if (!vrm || !mixer) return false;
       const key2 = name.toLowerCase().replace(/[-_\s]/g, "");
-      const filename = VRMA_MAP[key2] || (name.endsWith(".vrma") ? name : `${name}.vrma`);
+      const filename = resolveVrmaFile(name) || (name.endsWith(".vrma") ? name : `${name}.vrma`);
       const clip = await loadVRMA(key2, filename);
       if (!clip || disposed) return false;
       const loop = opts2.loop !== false;
@@ -53921,7 +54430,8 @@ void main() {
       else if (n === "crossarms" || n === "cross" || n === "arms") key2 = "crossArms";
       else if (n === "bow" || n === "greet" || n === "welcome") key2 = "bow";
       else if (n === "wave" || n === "hello" || n === "salute" || n === "coucou") key2 = "wave";
-      else if (n === "dance" || n === "danse" || n === "groove") key2 = "dance";
+      else if (n === "dance" || n === "danse") key2 = "dance";
+      else if (n === "cybergroove" || n === "groove" || n === "concert" || n === "darksynth") key2 = "cyberGroove";
       else if (n === "samba" || n === "salsa" || n === "latina") key2 = "samba";
       else if (n === "hiphop" || n === "bboy" || n === "street" || n === "bounce") key2 = "hiphop";
       else if (n === "robot" || n === "popping" || n === "wavedance") key2 = "robot";
@@ -53934,6 +54444,10 @@ void main() {
       else if (n === "clap" || n === "clapping") key2 = "clapping";
       else if (n === "angry" || n === "colere" || n === "mad" || n === "pout") key2 = "angry";
       else if (n === "walk" || n === "marche" || n === "step") key2 = "walk";
+      else if (n === "bellydance" || n === "bellydancing" || n === "belly" || n === "orientale") key2 = "bellydance";
+      else if (n === "popdance" || n === "maraschino" || n === "popstep") key2 = "popdance";
+      else if (n === "femaledance" || n === "dancepose" || n === "chanteuse") key2 = "femaledance";
+      else if (n === "dancing") key2 = "dancing";
       else if (n === "fingerheart" || n === "heart" || n === "kpopheart" || n === "love" || n === "miniheart" || n === "coeur") key2 = "fingerHeart";
       else if (POSE_EULERS[raw]) key2 = raw;
       else if (POSE_EULERS[n]) key2 = n;
@@ -53985,16 +54499,31 @@ void main() {
         "fingerheart",
         "heart",
         "kpopheart",
-        "miniheart"
+        "miniheart",
+        "bellydance",
+        "bellydancing",
+        "popdance",
+        "maraschino",
+        "femaledance",
+        "dancepose",
+        "dancing",
+        "twerk",
+        "gangnam",
+        "macarena",
+        "cancan",
+        "capoeira",
+        "backflip",
+        "fitness"
       ];
-      if (fullBodyDances.includes(key2) && baseFraming === "bust") {
+      const isFullBodyAction = fullBodyDances.includes(key2) || key2.includes("dance") || key2.includes("capoeira") || key2.includes("magic") || key2.includes("squat") || key2.includes("jump") || key2.includes("flip") || key2.includes("walk") || key2.includes("run") || key2.includes("strafe") || key2.includes("twerk") || key2.includes("gangnam") || key2.includes("macarena") || key2.includes("cancan") || key2.includes("fitness") || key2.includes("sport");
+      if (isFullBodyAction && baseFraming === "bust") {
         framing = "full";
         isDanceFraming = true;
         if (vrm) frameVrm(vrm);
       }
-      const vrmaFile = VRMA_MAP[key2] || VRMA_MAP[n];
+      const vrmaFile = resolveVrmaFile(key2) || resolveVrmaFile(n);
       if (vrmaFile) {
-        playVRMA(key2, { loop: !(hold > 0) }).then((ok) => {
+        playVRMA(vrmaFile, { loop: !(hold > 0) }).then((ok) => {
           if (!ok) stopVRMA(0);
         }).catch((err) => {
           console.warn(`[vrm_pet] playVRMA failed for "${key2}":`, err);
@@ -54103,10 +54632,10 @@ void main() {
       }
       if (poseTo === "dance") {
         const tempo = t * 6.5;
-        const tempoHalf = tempo * 0.5;
-        const swayHips = Math.sin(tempoHalf) * 0.07;
-        const rollHips = Math.cos(tempoHalf) * 0.05;
-        const armWave = Math.sin(tempoHalf) * 0.14;
+        const tempoHalf2 = tempo * 0.5;
+        const swayHips = Math.sin(tempoHalf2) * 0.07;
+        const rollHips = Math.cos(tempoHalf2) * 0.05;
+        const armWave = Math.sin(tempoHalf2) * 0.14;
         const elbowBounce = Math.sin(tempo) * 0.1;
         if (animated.hips) animated.hips = [0, swayHips, rollHips];
         if (animated.spine) animated.spine = [animated.spine[0], -swayHips * 0.4, -rollHips * 0.3];
@@ -54115,10 +54644,10 @@ void main() {
         if (animated.leftLowerLeg) animated.leftLowerLeg = [kneeBounce, 0, 0];
         if (animated.rightLowerLeg) animated.rightLowerLeg = [kneeBounce, 0, 0];
         if (animated.leftUpperArm) {
-          animated.leftUpperArm = [0.18 + armWave, 0.12, -1.05 + Math.cos(tempoHalf) * 0.1];
+          animated.leftUpperArm = [0.18 + armWave, 0.12, -1.05 + Math.cos(tempoHalf2) * 0.1];
         }
         if (animated.rightUpperArm) {
-          animated.rightUpperArm = [0.18 - armWave, -0.12, 1.05 - Math.cos(tempoHalf) * 0.1];
+          animated.rightUpperArm = [0.18 - armWave, -0.12, 1.05 - Math.cos(tempoHalf2) * 0.1];
         }
         if (animated.leftLowerArm) {
           animated.leftLowerArm = [0, 0, -1.15 - elbowBounce];
@@ -54316,9 +54845,9 @@ void main() {
       }
       if (poseTo === "fingerHeart") {
         const tempo = t * 6.5;
-        const tempoHalf = tempo * 0.5;
-        const swayHips = Math.sin(tempoHalf) * 0.08;
-        const rollHips = Math.cos(tempoHalf) * 0.05;
+        const tempoHalf2 = tempo * 0.5;
+        const swayHips = Math.sin(tempoHalf2) * 0.08;
+        const rollHips = Math.cos(tempoHalf2) * 0.05;
         const heartPulse = Math.sin(tempo) * 0.035;
         const kneeBounce = 0.02 + Math.abs(Math.sin(tempo)) * 0.035;
         if (animated.hips) animated.hips = [0, 0.07 + swayHips * 0.6, -0.05 + rollHips * 0.5];
@@ -54340,18 +54869,192 @@ void main() {
           ];
         }
         if (animated.leftUpperArm) {
-          animated.leftUpperArm = [0.18 + Math.cos(tempoHalf) * 0.05, -0.15, -0.92];
+          animated.leftUpperArm = [0.18 + Math.cos(tempoHalf2) * 0.05, -0.15, -0.92];
         }
         if (animated.leftLowerArm) {
-          animated.leftLowerArm = [0.08, 0.15, -1.05 - Math.sin(tempoHalf) * 0.08];
+          animated.leftLowerArm = [0.08, 0.15, -1.05 - Math.sin(tempoHalf2) * 0.08];
         }
         const headNod = Math.sin(tempo) * 0.03;
         if (animated.head) {
           animated.head = [
             -0.05 + headNod,
             -0.06 + swayHips * 0.3,
-            0.18 + Math.cos(tempoHalf) * 0.05
+            0.18 + Math.cos(tempoHalf2) * 0.05
           ];
+        }
+      }
+      if (poseTo === "cyberGroove") {
+        const tempo = t * 13.404;
+        const tempoHalf2 = tempo * 0.5;
+        const tempoQuarter = tempo * 0.25;
+        const phaseHips = tempoHalf2;
+        const phaseSpine = tempoHalf2 - 0.28;
+        const phaseChest = tempoHalf2 - 0.48;
+        const phaseHead = tempo - 0.6;
+        const phaseArm = tempoHalf2 - 0.35;
+        const cycleTime = t * 0.42 % (Math.PI * 2);
+        const rawDrop = Math.max(0, Math.sin(cycleTime));
+        const dropFactor = rawDrop * rawDrop * (3 - 2 * rawDrop);
+        const divaFactor = 1 - dropFactor * 0.75;
+        const hipSway = Math.sin(phaseHips) * 0.24 * divaFactor;
+        const hipRoll = Math.cos(phaseHips) * 0.16 * divaFactor;
+        const hipTwist = Math.sin(tempo) * 0.05 * divaFactor;
+        const hipPitch = -0.12 - dropFactor * 0.14 + Math.abs(Math.sin(tempo)) * 0.03;
+        const kickCurve = Math.pow(Math.max(0, Math.sin(tempo)), 2.2);
+        const kneeBounce = kickCurve * 0.18;
+        const footTap = kickCurve * 0.22;
+        if (animated.hips) {
+          animated.hips = [hipPitch, hipSway, hipRoll + hipTwist];
+        }
+        if (animated.spine) {
+          animated.spine = [
+            0.06 + dropFactor * 0.16 - hipPitch * 0.2,
+            -Math.sin(phaseSpine) * 0.18 * divaFactor,
+            -Math.cos(phaseSpine) * 0.15 * divaFactor
+          ];
+        }
+        if (animated.chest) {
+          animated.chest = [
+            0.12 + dropFactor * 0.12,
+            -Math.sin(phaseChest) * 0.14 * divaFactor,
+            -Math.cos(phaseChest) * 0.12 * divaFactor
+          ];
+        }
+        const headRock = Math.sin(phaseHead) * 0.08;
+        if (animated.head) {
+          animated.head = [
+            -0.18 - dropFactor * 0.08 + headRock,
+            // tête renversée en arrière vers le micro
+            -Math.sin(phaseChest) * 0.1 * divaFactor + 0.05,
+            // léger 3/4 profil captivant
+            0.1 + Math.cos(tempoHalf2) * 0.05
+            // inclinaison gracieuse vers l'épaule
+          ];
+        }
+        if (animated.neck) {
+          animated.neck = [-0.08 - dropFactor * 0.04, 0.03, 0.03];
+        }
+        if (dropFactor > 0.15) {
+          const squatKnee = 0.85 * dropFactor + kneeBounce;
+          if (animated.leftUpperLeg) {
+            animated.leftUpperLeg = [
+              -0.42 * dropFactor,
+              // cuisse avancée
+              -0.25 * dropFactor,
+              // hanche ouverte vers l'extérieur
+              -0.34 * dropFactor
+              // écartement large et stable
+            ];
+          }
+          if (animated.leftLowerLeg) {
+            animated.leftLowerLeg = [squatKnee, 0, 0];
+          }
+          if (animated.leftFoot) {
+            animated.leftFoot = [-0.22 * dropFactor, -0.28, 0];
+          }
+          if (animated.rightUpperLeg) {
+            animated.rightUpperLeg = [
+              -0.42 * dropFactor,
+              0.25 * dropFactor,
+              0.34 * dropFactor
+            ];
+          }
+          if (animated.rightLowerLeg) {
+            animated.rightLowerLeg = [squatKnee, 0, 0];
+          }
+          if (animated.rightFoot) {
+            animated.rightFoot = [-0.22 * dropFactor, 0.28, 0];
+          }
+        } else {
+          const isLeftBearing = hipSway < 0;
+          if (animated.leftUpperLeg) {
+            animated.leftUpperLeg = [
+              isLeftBearing ? 0.06 : -0.26,
+              // jambe libre avancée ou jambe d'appui en retrait
+              -0.18,
+              // hanche ouverte
+              -0.26 - (isLeftBearing ? 0.04 : -0.04)
+              // écartement constant vers la gauche
+            ];
+          }
+          if (animated.leftLowerLeg) {
+            animated.leftLowerLeg = [isLeftBearing ? 0.25 + kneeBounce * 0.4 : 0.55 + kneeBounce, 0, 0];
+          }
+          if (animated.leftFoot) {
+            animated.leftFoot = [isLeftBearing ? 0.02 : footTap * 0.7, -0.25, 0];
+          }
+          if (animated.rightUpperLeg) {
+            animated.rightUpperLeg = [
+              !isLeftBearing ? 0.06 : -0.26,
+              0.18,
+              0.26 + (!isLeftBearing ? 0.04 : -0.04)
+              // écartement constant vers la droite
+            ];
+          }
+          if (animated.rightLowerLeg) {
+            animated.rightLowerLeg = [!isLeftBearing ? 0.25 + kneeBounce * 0.4 : 0.55 + kneeBounce, 0, 0];
+          }
+          if (animated.rightFoot) {
+            animated.rightFoot = [!isLeftBearing ? 0.02 : footTap * 0.7, 0.25, 0];
+          }
+        }
+        const micBob = Math.sin(tempo) * 0.012;
+        if (animated.rightShoulder) {
+          animated.rightShoulder = [0.06, 0.04, -0.06];
+        }
+        if (animated.rightUpperArm) {
+          animated.rightUpperArm = [0.32 + micBob * 0.15 + dropFactor * 0.06, 0.35, 0.85];
+        }
+        if (animated.rightLowerArm) {
+          animated.rightLowerArm = [-0.22, -0.16, -2.1 + micBob * 0.2];
+        }
+        if (animated.rightHand) {
+          animated.rightHand = [0.18, -0.15, 0.32];
+        }
+        animated.rightThumbProximal = [0.55, 0.3, 0];
+        animated.rightThumbDistal = [0.45, 0, 0];
+        animated.rightIndexProximal = [1.4, 0, 0];
+        animated.rightIndexIntermediate = [1.3, 0, 0];
+        animated.rightMiddleProximal = [1.45, 0, 0];
+        animated.rightMiddleIntermediate = [1.35, 0, 0];
+        animated.rightRingProximal = [1.45, 0, 0];
+        animated.rightRingIntermediate = [1.35, 0, 0];
+        animated.rightLittleProximal = [1.4, 0, 0];
+        animated.rightLittleIntermediate = [1.25, 0, 0];
+        if (dropFactor > 0.3) {
+          const reach = Math.sin(tempoHalf2) * 0.08;
+          if (animated.leftShoulder) animated.leftShoulder = [0.04, 0, 0.02];
+          if (animated.leftUpperArm) {
+            animated.leftUpperArm = [0.45 + reach, 0.12, -0.95];
+          }
+          if (animated.leftLowerArm) {
+            animated.leftLowerArm = [0.2, 0.15, -0.9];
+          }
+          if (animated.leftHand) {
+            animated.leftHand = [0.22, 0.1, 0.12];
+          }
+          animated.leftThumbProximal = [0.15, 0, 0];
+          animated.leftIndexProximal = [0.18, 0, 0];
+          animated.leftMiddleProximal = [0.22, 0, 0];
+          animated.leftRingProximal = [0.22, 0, 0];
+          animated.leftLittleProximal = [0.18, 0, 0];
+        } else {
+          const hipBob = Math.sin(phaseArm) * 0.04;
+          if (animated.leftShoulder) animated.leftShoulder = [0.02, -0.02, 0.02];
+          if (animated.leftUpperArm) {
+            animated.leftUpperArm = [0.12 + hipBob, 0.1, -1.15];
+          }
+          if (animated.leftLowerArm) {
+            animated.leftLowerArm = [0.18, 0.12, -1.25 + hipBob * 0.5];
+          }
+          if (animated.leftHand) {
+            animated.leftHand = [-0.1, 0.08, -0.15];
+          }
+          animated.leftThumbProximal = [0.25, 0.1, 0];
+          animated.leftIndexProximal = [0.3, 0, 0];
+          animated.leftMiddleProximal = [0.35, 0, 0];
+          animated.leftRingProximal = [0.35, 0, 0];
+          animated.leftLittleProximal = [0.3, 0, 0];
         }
       }
       const poseObj = {};
@@ -54413,9 +55116,24 @@ void main() {
       try {
         const headBone = v.humanoid.getNormalizedBoneNode?.("head");
         if (headBone) {
-          const targetScale = 1;
-          headBone.scale.set(targetScale, targetScale, targetScale);
+          headBone.scale.set(0.92, 0.92, 0.92);
         }
+        const neckBone = v.humanoid.getNormalizedBoneNode?.("neck");
+        if (neckBone) {
+          neckBone.scale.set(0.92, 1.06, 0.92);
+        }
+        const hipsBone = v.humanoid.getNormalizedBoneNode?.("hips");
+        if (hipsBone) {
+          hipsBone.scale.set(1.09, 1, 1.08);
+        }
+        const leftUpperLeg = v.humanoid.getNormalizedBoneNode?.("leftUpperLeg");
+        const rightUpperLeg = v.humanoid.getNormalizedBoneNode?.("rightUpperLeg");
+        if (leftUpperLeg) leftUpperLeg.scale.set(0.98, 1.07, 0.98);
+        if (rightUpperLeg) rightUpperLeg.scale.set(0.98, 1.07, 0.98);
+        const leftLowerLeg = v.humanoid.getNormalizedBoneNode?.("leftLowerLeg");
+        const rightLowerLeg = v.humanoid.getNormalizedBoneNode?.("rightLowerLeg");
+        if (leftLowerLeg) leftLowerLeg.scale.set(0.98, 1.07, 0.98);
+        if (rightLowerLeg) rightLowerLeg.scale.set(0.98, 1.07, 0.98);
       } catch (_) {
       }
     }
@@ -54517,7 +55235,7 @@ void main() {
       const base = modelUrl.includes("/") ? modelUrl.substring(0, modelUrl.lastIndexOf("/")) : "./vrm";
       const vrmDir = base || "./vrm";
       const androidBodyTex = textureLoader.load(
-        `${vrmDir}/body_skin_android.png?v=mecha_thigh_joined_v26`,
+        `${vrmDir}/body_skin_android.png?v=cyber_concert_v1`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -54527,7 +55245,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading body texture:", err)
       );
       const androidFaceTex = textureLoader.load(
-        `${vrmDir}/face_skin_android.png?v=mecha_v17`,
+        `${vrmDir}/face_skin_android.png?v=mecha_face_restored_v2`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -54537,7 +55255,7 @@ void main() {
         (err) => console.warn("[vrm_pet] err loading face texture:", err)
       );
       const androidHairTex = textureLoader.load(
-        `${vrmDir}/hair_android.png?v=mecha_v17`,
+        `${vrmDir}/hair_android.png?v=cyber_concert_v1`,
         (tex) => {
           tex.colorSpace = SRGBColorSpace;
           tex.flipY = false;
@@ -54587,7 +55305,7 @@ void main() {
             m.shadeMultiplyTexture = cyanTexture;
             if (m.emissive) {
               m.emissive.setHex(62932);
-              m.emissiveIntensity = 2.5;
+              m.emissiveIntensity = 3.8;
             }
             m.needsUpdate = true;
           } else if (name.includes("eyehighlight")) {
@@ -54896,37 +55614,99 @@ void main() {
             setMood("serene");
           }
         }
+        const isSingingScene = poseTo === "cyberGroove" || poseTo === "bellydance" || poseTo === "popdance" || poseTo === "femaledance" || poseTo === "dancing";
+        if (isSingingScene && vrm) {
+          wasInCyberGroove = true;
+          ensureMicAttached(vrm);
+          cyberMicGroup.visible = true;
+          const tempo = t * 13.404;
+          const kickPulse = Math.sin(tempo) > 0.25;
+          ringMat.color.setHex(kickPulse ? 65535 : 35071);
+          ringMat2.color.setHex(kickPulse ? 16711816 : 8913151);
+          try {
+            const em = vrm.expressionManager;
+            if (em) {
+              const mouthA = Math.pow(Math.max(0, Math.sin(tempo * 1.5)), 1.5) * 0.72;
+              const mouthO = Math.pow(Math.max(0, Math.cos(tempo * 1)), 2) * 0.48;
+              em.setValue("aa", mouthA);
+              em.setValue("oh", mouthO);
+              em.setValue("ih", 0.2);
+              const vocalEcstasy = 0.5 + Math.sin(tempoHalf) * 0.25;
+              em.setValue("blink", vocalEcstasy);
+              em.setValue("relaxed", 0.6);
+              em.setValue("surprised", 0);
+              em.setValue("happy", 0);
+            }
+          } catch (_) {
+          }
+        } else {
+          cyberMicGroup.visible = false;
+          if (wasInCyberGroove) {
+            wasInCyberGroove = false;
+            try {
+              const em = vrm?.expressionManager;
+              if (em) {
+                em.setValue("aa", 0);
+                em.setValue("oh", 0);
+                em.setValue("ih", 0);
+                em.setValue("relaxed", 0);
+                em.setValue("surprised", 0);
+                em.setValue("blink", 0);
+              }
+            } catch (_) {
+            }
+          }
+        }
         const isWalking = activeVrmaName === "walk" || activeVrmaName === "marche" || poseTo === "walk";
         const targetWalkY = isWalking ? 0.088 : 0;
         const lerpSpeed = isWalking ? 16 : 6;
         walkYOffset += (targetWalkY - walkYOffset) * Math.min(1, dt * lerpSpeed);
         if (activeVrmaAction) {
           vrm.scene.position.y = walkYOffset;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "jump") {
           const jumpBounce = Math.max(0, Math.sin(t * 4)) * 0.038;
           vrm.scene.position.y = walkYOffset + jumpBounce;
+          vrm.scene.position.x = 0;
+        } else if (poseTo === "cyberGroove") {
+          const tempo = t * 13.404;
+          const tempoHalf2 = tempo * 0.5;
+          const cycleTime = t * 0.42 % (Math.PI * 2);
+          const dropFactor = Math.max(0, Math.sin(cycleTime));
+          const divaFactor = 1 - dropFactor * 0.75;
+          vrm.scene.position.x = Math.sin(tempoHalf2) * 0.048 * divaFactor;
+          const kickDrop = Math.pow(Math.max(0, Math.sin(tempo)), 1.8) * 0.032;
+          vrm.scene.position.y = walkYOffset - 0.075 * dropFactor - kickDrop;
         } else if (poseTo === "dance") {
           const danceBounce = Math.abs(Math.sin(t * 6.5)) * 0.012;
           vrm.scene.position.y = walkYOffset + danceBounce;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "fingerHeart") {
           const heartBounce = Math.abs(Math.sin(t * 7)) * 0.014;
           vrm.scene.position.y = walkYOffset + heartBounce;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "samba") {
           const sambaBounce = Math.abs(Math.sin(t * 11)) * 0.01;
           vrm.scene.position.y = walkYOffset + sambaBounce;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "hiphop") {
           const hiphopBounce = Math.abs(Math.sin(t * 9)) * 0.018;
           vrm.scene.position.y = walkYOffset + hiphopBounce;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "disco") {
           const discoBounce = Math.abs(Math.sin(t * 8)) * 0.014;
           vrm.scene.position.y = walkYOffset + discoBounce;
+          vrm.scene.position.x = 0;
         } else if (poseTo === "robot") {
           const robotBounce = Math.floor(t * 4.5 * 2) % 2 === 0 ? 4e-3 : 0;
           vrm.scene.position.y = walkYOffset + robotBounce;
+          vrm.scene.position.x = 0;
         } else if (!activeVrmaAction && poseTo === "idle") {
           vrm.scene.position.y = -Math.abs(Math.sin(t * 1.25)) * (framing === "full" ? 2e-3 : 5e-3);
+          vrm.scene.position.x = 0;
         } else {
           vrm.scene.position.y = walkYOffset;
+          vrm.scene.position.x = 0;
         }
         mouseNdc.lerp(mouseActive ? targetMouseNdc : new Vector2(0, 0), Math.min(1, dt * 6));
         const lookTarget = camera.position.clone();
@@ -55215,7 +55995,6 @@ void main() {
   if (typeof window !== "undefined") {
     window.__createVrmPet = createVrmPet;
   }
-  return __toCommonJS(vrm_pet_exports);
 })();
 /*! Bundled license information:
 

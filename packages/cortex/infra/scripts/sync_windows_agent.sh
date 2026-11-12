@@ -25,6 +25,7 @@ mkdir -p "$DST"
 
 # Copie "miroir" des fichiers de code/doc.
 cp -f "$SRC/main.py" "$DST/main.py"
+cp -f "$SRC/agent_desktop.py" "$DST/agent_desktop.py"
 cp -f "$SRC/executor.py" "$DST/executor.py"
 cp -f "$SRC/models.py" "$DST/models.py"
 cp -f "$SRC/program_resolver.py" "$DST/program_resolver.py"
