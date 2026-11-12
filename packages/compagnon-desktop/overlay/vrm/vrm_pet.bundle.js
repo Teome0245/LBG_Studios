@@ -53621,7 +53621,8 @@ void main() {
   function createVrmPet(hostEl, opts = {}) {
     installColorSpaceGuard(three_module_exports);
     const modelUrl = opts.modelUrl || "./vrm/default.vrm";
-    let framing = String(opts.framing || opts.vrmFraming || "bust").toLowerCase() === "bust" ? "bust" : "full";
+    const rawFraming = String(opts.framing || opts.vrmFraming || "bust").toLowerCase();
+    let framing = rawFraming === "mid" || rawFraming === "aeysa" ? "mid" : rawFraming === "bust" ? "bust" : "full";
     let baseFraming = framing;
     let isDanceFraming = false;
     const clock = new Clock();
@@ -54579,7 +54580,8 @@ void main() {
       }
       const vrmaFile = resolveVrmaFile(key2) || resolveVrmaFile(n);
       if (vrmaFile) {
-        playVRMA(vrmaFile, { loop: !(hold > 0) }).then((ok) => {
+        const shouldLoop = hold === 0 || hold === void 0 || hold > 15e3;
+        playVRMA(vrmaFile, { loop: shouldLoop }).then((ok) => {
           if (!ok) stopVRMA(0);
         }).catch((err) => {
           console.warn(`[vrm_pet] playVRMA failed for "${key2}":`, err);
@@ -55345,8 +55347,8 @@ void main() {
           }
         } catch (_) {
         }
-        const lookY2 = headPos.y - 0.42;
-        const dist2 = 1.95;
+        const lookY2 = headPos.y - 0.45;
+        const dist2 = 2.7;
         targetCamPos.set(headPos.x, lookY2, headPos.z + dist2);
         targetLookAt.set(headPos.x, lookY2, headPos.z);
         targetFov = 26;
@@ -55428,7 +55430,8 @@ void main() {
       v.scene.updateMatrixWorld(true);
     }
     function setFraming(next) {
-      baseFraming = String(next || "").toLowerCase() === "bust" ? "bust" : "full";
+      const raw = String(next || "").toLowerCase();
+      baseFraming = raw === "mid" || raw === "aeysa" ? "mid" : raw === "bust" ? "bust" : "full";
       framing = baseFraming;
       isDanceFraming = false;
       if (vrm) {

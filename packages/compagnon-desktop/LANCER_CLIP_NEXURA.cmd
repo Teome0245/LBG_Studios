@@ -11,3 +11,4 @@ C:\Python\Python314\python.exe record_studio_nexura_clip.py
 echo.
 echo Clip genere avec succes dans O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4 !
 pause
+

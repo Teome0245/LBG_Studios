@@ -207,8 +207,8 @@
   <!-- Source Audio Locale -->
   <audio id="bgm" src="./nexura_domina_v1.mp3" preload="auto"></audio>
 
-  <!-- Bundle Three-VRM avec Pose AeysaSinging Intégrée -->
-  <script src="./vrm/vrm_pet.bundle.js"></script>
+  <!-- Bundle Three-VRM avec Déhanché Mocap Popdance/Maraschino Intégré -->
+  <script src="./vrm/vrm_pet.bundle.js?v=popdance_aeysa_v5"></script>
 
   <script>
     const stageCanvas = document.getElementById('stage-canvas');
@@ -408,8 +408,8 @@
 
     function startPerformance() {
       setupAudio();
-      // Pose de chanteuse subtile et habitée (micro tenu, contact visuel, déhanché lemniscate fluide)
-      petInstance.setPose("aeysaSinging", 70000);
+      // Déhanché Pop / Maraschino Step viral d'Aeysa sur scène avec micro 3D et chant habité
+      petInstance.setPose("popdance", 0);
       petInstance.setMood("happy");
 
       audio.currentTime = 0;

@@ -592,10 +592,9 @@ function lerpEulerMap(a, b, t) {
 export function createVrmPet(hostEl, opts = {}) {
   installColorSpaceGuard(THREE);
   const modelUrl = opts.modelUrl || "./vrm/default.vrm";
-  /** bust = gros plan buste & tête · full = corps entier */
-  let framing = String(opts.framing || opts.vrmFraming || "bust").toLowerCase() === "bust"
-    ? "bust"
-    : "full";
+  /** bust = gros plan buste & tête · mid/aeysa = plan américain mi-cuisses · full = corps entier */
+  const rawFraming = String(opts.framing || opts.vrmFraming || "bust").toLowerCase();
+  let framing = (rawFraming === "mid" || rawFraming === "aeysa") ? "mid" : (rawFraming === "bust" ? "bust" : "full");
   let baseFraming = framing;
   let isDanceFraming = false;
   const clock = new THREE.Clock();
@@ -1602,7 +1601,8 @@ export function createVrmPet(hostEl, opts = {}) {
     // Sinon repli procédural immédiat (ex: robot, disco, spin, crossArms, bow)
     const vrmaFile = resolveVrmaFile(key) || resolveVrmaFile(n);
     if (vrmaFile) {
-      playVRMA(vrmaFile, { loop: !(hold > 0) })
+      const shouldLoop = (hold === 0 || hold === undefined || hold > 15000);
+      playVRMA(vrmaFile, { loop: shouldLoop })
         .then((ok) => {
           if (!ok) stopVRMA(0);
         })
@@ -2511,10 +2511,10 @@ export function createVrmPet(hostEl, opts = {}) {
       } catch (_) { }
 
       // Cadrage plan américain / mi-cuisses mettant en valeur le déhanché des hanches et jambes :
-      // On vise sous le nombril (headPos.y - 0.42) avec du recul (dist = 1.95, fov = 26)
-      // pour embrasser la tête, les yeux, le micro, et toute la dynamique des hanches et cuisses !
-      const lookY = headPos.y - 0.42;
-      const dist = 1.95;
+      // On vise sous le nombril (headPos.y - 0.45) avec du recul (dist = 2.70, fov = 26)
+      // pour embrasser la tête entière, les yeux, le micro, et toute la dynamique des hanches et cuisses sans tronquer le haut !
+      const lookY = headPos.y - 0.45;
+      const dist = 2.70;
       targetCamPos.set(headPos.x, lookY, headPos.z + dist);
       targetLookAt.set(headPos.x, lookY, headPos.z);
       targetFov = 26;
@@ -2610,7 +2610,8 @@ export function createVrmPet(hostEl, opts = {}) {
   }
 
   function setFraming(next) {
-    baseFraming = String(next || "").toLowerCase() === "bust" ? "bust" : "full";
+    const raw = String(next || "").toLowerCase();
+    baseFraming = (raw === "mid" || raw === "aeysa") ? "mid" : (raw === "bust" ? "bust" : "full");
     framing = baseFraming;
     isDanceFraming = false;
     if (vrm) {

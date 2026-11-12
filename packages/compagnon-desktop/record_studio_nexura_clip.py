@@ -17,10 +17,18 @@ FINAL_ONEDRIVE = r"O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio
 URL = "http://127.0.0.1:8766/studio_clip.html"
 PROFILE = r"C:\Agent_IA\studio_profile"
 
-print("[1/6] Fermeture des overlays bureau existants...")
+print("[1/6] Fermeture des overlays bureau existants et nettoyage cache...")
 subprocess.run(["taskkill", "/F", "/IM", "electron.exe", "/T"], capture_output=True)
 subprocess.run(["taskkill", "/F", "/IM", "chrome.exe", "/T"], capture_output=True)
 time.sleep(1)
+
+# Nettoyer le cache HTTP de Chrome pour charger le dernier bundle JS
+cache_dir = os.path.join(PROFILE, "Default", "Cache")
+if os.path.exists(cache_dir):
+    try:
+        shutil.rmtree(cache_dir, ignore_errors=True)
+    except Exception:
+        pass
 
 # Relancer le serveur studio
 print("[2/6] Demarrage du serveur local studio :8766...")
@@ -28,12 +36,14 @@ subprocess.Popen([r"C:\Python\Python314\python.exe", r"C:\Agent_IA\studio_server
 time.sleep(1.5)
 
 print("[3/6] Lancement du Studio WebGL Chrome (style @aeysamusic)...")
+ts = int(time.time())
 chrome_cmd = [
     CHROME,
-    f"--app={URL}",
+    f"--app={URL}?v={ts}",
     "--window-size=556,1002",
     "--window-position=1340,30",
     "--autoplay-policy=no-user-gesture-required",
+    "--disable-http-cache",
     f"--user-data-dir={PROFILE}",
     "--no-first-run",
     "--no-default-browser-check"
@@ -105,3 +115,4 @@ else:
     print(f"Erreur muxing : {mux_proc.stderr}")
 
 print("SUCCES_TOTAL_NEXURA")
+
