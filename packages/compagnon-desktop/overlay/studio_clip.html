@@ -207,8 +207,8 @@
   <!-- Source Audio Locale -->
   <audio id="bgm" src="./nexura_domina_v1.mp3" preload="auto"></audio>
 
-  <!-- Bundle Three-VRM avec Déhanché Mocap Popdance/Maraschino Intégré -->
-  <script src="./vrm/vrm_pet.bundle.js?v=popdance_aeysa_v5"></script>
+  <!-- Bundle Three-VRM avec Déhanché Mocap Popdance/Maraschino Intégré (Plan Large Silhouette) -->
+  <script src="./vrm/vrm_pet.bundle.js?v=popdance_aeysa_v6"></script>
 
   <script>
     const stageCanvas = document.getElementById('stage-canvas');
@@ -420,15 +420,17 @@
       function frameLoop(now) {
         const elapsed = (now - startTime) / 1000;
 
-        // Mise à jour du statut narratif selon la progression de Nexura Domina
-        if (elapsed < 5.0) {
+        // Mise à jour du statut narratif selon la progression de Nexura Domina (157.6s)
+        if (elapsed < 12.0) {
           statusLabel.innerText = "INTRO MYSTIQUE • NAPPES VOCALES CYBER";
-        } else if (elapsed < 20.0) {
+        } else if (elapsed < 42.0) {
           statusLabel.innerText = "MONTÉE LIVE • 128 BPM ELECTRO-POP";
-        } else if (elapsed < 45.0) {
+        } else if (elapsed < 82.0) {
           statusLabel.innerText = "COUPLET HABITÉ • LIPSYNC & CONTACT VISUEL";
-        } else if (elapsed < 55.0) {
-          statusLabel.innerText = "DROP CLIMAX • ANNEAUX NÉON & EXTASIE VOCALE";
+        } else if (elapsed < 120.0) {
+          statusLabel.innerText = "DROP SCÉNIQUE • ANNEAUX NÉON & DÉHANCHÉ POP";
+        } else if (elapsed < 150.0) {
+          statusLabel.innerText = "CLIMAX VOCAL • EXTASIE & BASS BOOST";
         } else {
           statusLabel.innerText = "OUTRO FINALE • SIGNATURE IDOL VIRTUELLE";
         }
@@ -437,10 +439,10 @@
         const bass = drawEqualizer();
         drawStage(elapsed, bass);
 
-        if (elapsed < 60.5) {
+        if (elapsed < 159.0) {
           requestAnimationFrame(frameLoop);
         } else {
-          console.log("[studio_clip] Fin des 60 secondes de clip !");
+          console.log("[studio_clip] Fin complète de la chanson Nexura Domina !");
           document.title = "RECORDING_FINISHED";
         }
       }

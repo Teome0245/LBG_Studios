@@ -3,6 +3,8 @@ import subprocess
 import time
 import os
 import shutil
+import ctypes
+import threading
 
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 if not os.path.exists(CHROME):
@@ -10,12 +12,41 @@ if not os.path.exists(CHROME):
 
 FFMPEG = r"C:\Users\sdesh\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0-full_build\bin\ffmpeg.EXE"
 AUDIO_PATH = r"O:\OneDrive\Pictures\IA\Contenue\Nexura Domina_v1.mp3"
-RAW_VIDEO = r"C:\Agent_IA\studio_nexura_raw_60s.mp4"
-FINAL_CLIP = r"C:\Agent_IA\clip_nexura_domina_v1_studio_60s.mp4"
-FINAL_ONEDRIVE = r"O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4"
+RAW_VIDEO = r"C:\Agent_IA\studio_nexura_raw_full.mp4"
+FINAL_CLIP = r"C:\Agent_IA\clip_nexura_domina_v1_studio_full.mp4"
+FINAL_ONEDRIVE = r"O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_full.mp4"
 
 URL = "http://127.0.0.1:8766/studio_clip.html"
 PROFILE = r"C:\Agent_IA\studio_profile"
+
+def keep_topmost_worker(stop_event):
+    user32 = ctypes.windll.user32
+    try:
+        user32.SetCursorPos(0, 0)
+    except Exception:
+        pass
+
+    def enum_cb(hwnd, lparam):
+        if user32.IsWindowVisible(hwnd):
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length > 0:
+                buff = ctypes.create_unicode_buffer(length + 1)
+                user32.GetWindowTextW(hwnd, buff, length + 1)
+                title = buff.value
+                if "Nexura" in title or "LBG Studios" in title or "Live Virtual Singer" in title:
+                    user32.SetWindowPos(hwnd, -1, 1340, 30, 556, 1002, 0x0040)
+                    user32.SetForegroundWindow(hwnd)
+        return True
+
+    CMPFUNC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
+    cb = CMPFUNC(enum_cb)
+
+    while not stop_event.is_set():
+        try:
+            user32.EnumWindows(cb, 0)
+        except Exception:
+            pass
+        time.sleep(1.0)
 
 print("[1/6] Fermeture des overlays bureau existants et nettoyage cache...")
 subprocess.run(["taskkill", "/F", "/IM", "electron.exe", "/T"], capture_output=True)
@@ -52,16 +83,22 @@ chrome_proc = subprocess.Popen(chrome_cmd)
 print(f"Chrome lance (PID={chrome_proc.pid}), attente chargement VRM 3D (5s)...")
 time.sleep(5.0)
 
-print("[4/6] Demarrage de l'enregistrement FFmpeg gdigrab (60.5s @ 30 FPS)...")
-# Zone utile plein ecran stage 540x960
+# Lancement du gardien TopMost
+stop_topmost = threading.Event()
+topmost_thread = threading.Thread(target=keep_topmost_worker, args=(stop_topmost,), daemon=True)
+topmost_thread.start()
+
+print("[4/6] Demarrage de l'enregistrement FFmpeg gdigrab (chanson complete 158s @ 30 FPS)...")
+# Zone utile plein ecran stage 540x960 sans curseur de souris (-draw_mouse 0)
 ffmpeg_rec_cmd = [
     FFMPEG,
     "-f", "gdigrab",
+    "-draw_mouse", "0",
     "-framerate", "30",
     "-offset_x", "1348",
     "-offset_y", "64",
     "-video_size", "540x960",
-    "-t", "60.5",
+    "-t", "158.0",
     "-i", "desktop",
     "-c:v", "libx264",
     "-preset", "veryfast",
@@ -71,6 +108,9 @@ ffmpeg_rec_cmd = [
 ]
 rec_proc = subprocess.run(ffmpeg_rec_cmd, capture_output=True, text=True)
 print(f"Enregistrement termine (code {rec_proc.returncode}).")
+
+# Arret du gardien TopMost
+stop_topmost.set()
 
 print("[5/6] Fermeture de Chrome et relance du compagnon bureau...")
 try:
@@ -110,6 +150,8 @@ if mux_proc.returncode == 0:
     final_size = os.path.getsize(FINAL_CLIP) if os.path.exists(FINAL_CLIP) else 0
     print(f"Clip Studio HD genere : {round(final_size / (1024*1024), 2)} Mo")
     shutil.copy2(FINAL_CLIP, FINAL_ONEDRIVE)
+    # Copie de compatibilite
+    shutil.copy2(FINAL_CLIP, r"O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4")
     print(f"Copie reussie vers OneDrive : {FINAL_ONEDRIVE}")
 else:
     print(f"Erreur muxing : {mux_proc.stderr}")

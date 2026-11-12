@@ -2510,11 +2510,11 @@ export function createVrmPet(hostEl, opts = {}) {
         }
       } catch (_) { }
 
-      // Cadrage plan américain / mi-cuisses mettant en valeur le déhanché des hanches et jambes :
-      // On vise sous le nombril (headPos.y - 0.45) avec du recul (dist = 2.70, fov = 26)
-      // pour embrasser la tête entière, les yeux, le micro, et toute la dynamique des hanches et cuisses sans tronquer le haut !
-      const lookY = headPos.y - 0.45;
-      const dist = 2.70;
+      // Cadrage plan large / silhouette complète mettant en valeur toute la silhouette et le déhanché :
+      // On vise le centre du corps (headPos.y - 0.58) avec recul (dist = 3.45, fov = 26)
+      // pour que l'avatar soit entièrement visible des pieds à la tête avec respiration sous le HUD
+      const lookY = headPos.y - 0.58;
+      const dist = 3.45;
       targetCamPos.set(headPos.x, lookY, headPos.z + dist);
       targetLookAt.set(headPos.x, lookY, headPos.z);
       targetFov = 26;

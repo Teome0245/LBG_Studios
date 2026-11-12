@@ -54,20 +54,22 @@
      - Avatar 3D (Lyra androïde) en plein pied au centre de la scène tenant le micro cyber 3D néon, lèvres et regard calés au tempo, enchaînant les danses mocap (Intro Diva -> Couplet Groove -> Bellydance -> Pop Dance -> Gangnam -> Samba -> Finale Idol).
      - Rendu master vidéo 1080×1920 (Vertical 9:16, H.264 High Profile @ 6214 kb/s, 29.98 FPS, Audio AAC 48 kHz stéréo, 44.46 Mo).
      - Fichier délivré sur l'hôte Windows : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_studio_60s.mp4`.
-3. **Mode Live Concert Virtuel & Déhanché Mocap Aeysa sur Nexura Domina (YouTube Shorts / TikTok 60s HD)** :
+3. **Mode Live Concert Virtuel & Déhanché Mocap Aeysa sur Nexura Domina (Clip Complet 158s / 2m38s HD)** :
    - **Déhanché Mocap Pop / Maraschino Step Viral (@aeysamusic)** :
      * Analyse image par image de la référence TikTok virale (`7699001951047961878`) : balancement prononcé du bassin de gauche à droite, cambrure lombaire, flexion alternée des genoux et transfert de poids organique sur jambe d'appui tendue.
      * Intégration du clip mocap officiel `Dancing Maraschino Step.vrma` joué en boucle fluide infinie par l'AnimationMixer Three-VRM.
      * Micro 3D cyber néon solidement tenu en main droite avec anneaux cyan/magenta pulsant au kick 128 BPM.
      * Lipsync vocal synchrone en temps réel et regard scénique habité (yeux mi-clos / extase vocale de diva).
-   - **Cadrage Plan Américain Optimisé (`framing: "mid"`)** :
-     * Cadrage stable plan américain mi-cuisses (`dist = 2.70m`, `lookY = headPos.y - 0.45m`, `fov = 26`) : tête entière visible sous le HUD sans coupure + hanches galbées déhanchées au centre + cuisses et genoux au-dessus du visualiseur audio.
-   - **Scénographie Studio Cyberpunk & Capture Hardware Directe** :
+   - **Cadrage Silhouette Complète Dézoomé (`dist = 3.45m`, `lookY = headPos.y - 0.58m`)** :
+     * Moins zoomé à la demande utilisateur : plan moyen complet révélant l'avatar des pieds à la tête avec respiration sous le HUD supérieur, bottes mecha posées sur le sol de scène juste au-dessus du visualiseur audio, et toute la dynamique des hanches/cuisses bien visible.
+   - **Scénographie Studio Cyberpunk & Capture Sécurisée Hardware** :
      * Dégradé sombre cinématique (`#03050c`), doubles rim lights volumétriques réactives aux basses, particules lentes.
      * HUD concert glassmorphism minimaliste ("✦ NEXURA DOMINA", live pill, equalizer audio 36 barres réactif).
-     * Script de capture et muxing automatique `record_studio_nexura_clip.py` exécuté sur Windows via l'agent `:5005` (FFmpeg gdigrab 60.5s @ 30 FPS + upscale Lanczos 1080×1920 HD vertical + audio master `Nexura Domina_v1.mp3`).
-     * Master vidéo final livré : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4` (72.36 Mo, 1080×1920 HD).
-     * Frames de contrôle validées : `frame_v5_15s.png` et `frame_v5_35s.png`.
+     * Script de capture et muxing automatique `record_studio_nexura_clip.py` exécuté sur Windows via l'agent `:5005` (FFmpeg gdigrab 158s @ 30 FPS avec `-draw_mouse 0`, gardien Win32 TopMost anti-superposition, upscale Lanczos 1080×1920 HD vertical + audio master `Nexura Domina_v1.mp3`).
+     * Master vidéo final livré :
+       * Version intégrale : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_full.mp4` (145.65 Mo, 157.6s, 1080×1920 HD).
+       * Version compatibilité : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4`.
+     * Frames de contrôle validées : `final_check_30s.png`, `final_check_75s.png`, `final_check_120s.png`.
 4. **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
      - Enregistrement en direct hardware via FFmpeg `gdigrab` sur le poste Windows (`192.168.0.10`) de l'overlay 3D Three.js réel en exécution (Lyra skin android, micro cyber 3D néon, lipsync et animations mocap).
      - Synchronisation chorégraphique millimétrée sur les 60 secondes de `Khor-un Val-Kyra.mp3` :
