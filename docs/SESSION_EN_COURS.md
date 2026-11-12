@@ -43,6 +43,19 @@
      - Résolution dynamique universelle dans `vrm_pet.js` (`VRMA_CATALOG` de 397 clés d'accès direct, `resolveVrmaFile`), dézoom dynamique automatique sur mouvement complet (`isFullBodyAction`), et neutralisation du root-motion in-place.
      - Recompilation du bundle IIFE (`vrm_pet.bundle.js`), synchronisation locale vers l'overlay Windows (`192.168.0.10:5005`) et déploiement Web instantané sur CT 100 (`192.168.0.100:5174`).
      - Test live validé sur desktop overlay avec `send_avatar_command` (`gangnam`, `bellydance`, etc.).
+   - **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
+     - Enregistrement en direct hardware via FFmpeg `gdigrab` sur le poste Windows (`192.168.0.10`) de l'overlay 3D Three.js réel en exécution (Lyra skin android, micro cyber 3D néon, lipsync et animations mocap).
+     - Synchronisation chorégraphique millimétrée sur les 60 secondes de `Khor-un Val-Kyra.mp3` :
+       - 0.0s – 8.5s : Intro Diva avec micro en main (`femaledance`)
+       - 8.5s – 22.0s : Couplet rythmé & chant passionné (`cyberGroove`)
+       - 22.0s – 34.5s : Electro Drop 1 (`bellydance`)
+       - 34.5s – 45.0s : Electro Drop 2 / Pop dance (`popdance`)
+       - 45.0s – 52.5s : Climax d'énergie (`gangnam`)
+       - 52.5s – 57.5s : Célébration festive (`samba`)
+       - 57.5s – 60.0s : Final Idol (`fingerHeart` & sourire de victoire)
+     - Encodage H.264 / AAC 48 kHz stéréo à 1080×1920 (vertical HD 9:16 pour YouTube Shorts & TikTok, 19.23 Mo).
+     - Fichier final délivré sur le disque hôte : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_avatar_bureau_60s.mp4`.
+     - Rétablissement automatique des dimensions de bureau standard et du mode promenade (`wander: true`).
    - **Clip Musical 60s & Déploiement Pipeline (Khor-un Val-Kyra / Nexura Diva)** :
      - Script de montage cinématographique vertical 1080x1920 30 FPS (`tools/build_clip_khor_un_val_kyra.py`) : 7 plans enchaînés avec zoompan/Ken Burns dynamique et synchronisation complète de la bande son master 60s (`khor_un_val_kyra.mp3`).
      - Rendu vidéo finalisé (`clip_khor_un_val_kyra_60s.mp4`, 9.0 Mo, H.264 / AAC 256k) et copié automatiquement sur le poste Windows dans `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_60s.mp4`.
