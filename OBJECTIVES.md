@@ -12,7 +12,7 @@
 
 Formule courte : **Compagnon (hors-jeu) ↔ Joueur IA (noyau agent) ↔ MMO (simulateur borné)**.
 
-**Organisme & Entité globale** : [`docs/ORGANISME_LBG.md`](docs/ORGANISME_LBG.md) — L'entité globale **Lyra** (nom de travail), son incarnation relationnelle **Lia**, et la cartographie des organes d'action multimodaux (`.10`, `.143`, `.140`, `.110/.111`, `.246`).  
+**Organisme & Entité globale** : [`docs/ORGANISME_LBG.md`](docs/ORGANISME_LBG.md) — L'entité globale **Gladys**, son incarnation relationnelle **Lia**, et la cartographie des organes d'action multimodaux (`.10`, `.143`, `.140`, `.110/.111`, `.246`).  
 Checklist restauration (vert/jaune/rouge) : [`docs/RESTAURATION_PRODUIT.md`](docs/RESTAURATION_PRODUIT.md).  
 **Priorités actuelles** : [`docs/PRIORITES_ACTUELLES.md`](docs/PRIORITES_ACTUELLES.md).  
 **Focus Compagnon** : [`docs/FOCUS_COMPAGNON.md`](docs/FOCUS_COMPAGNON.md) — présence `:5174` & Desktop Electron ; Pilot `#/assistant` = cockpit ops.  

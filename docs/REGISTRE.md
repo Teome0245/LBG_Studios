@@ -5,7 +5,7 @@
 
 **Objectif** : trois piliers — **O1 Compagnon** · **O2 MMO (banc d’essai)** · **O3 Joueurs IA** —  
 [`OBJECTIVES.md`](../OBJECTIVES.md) · restauration : [`RESTAURATION_PRODUIT.md`](RESTAURATION_PRODUIT.md).  
-**Organisme & Architecture globale** : [`ORGANISME_LBG.md`](ORGANISME_LBG.md) (Entité globale **Lyra**, incarnation **Lia**, organes d'action multimodaux `.10`/`.143`/`.140`/`.110`/`.246`).  
+**Organisme & Architecture globale** : [`ORGANISME_LBG.md`](ORGANISME_LBG.md) (Entité globale **Gladys**, incarnation **Lia**, organes d'action multimodaux `.10`/`.143`/`.140`/`.110`/`.246`).  
 **Priorités actuelles** : [`PRIORITES_ACTUELLES.md`](PRIORITES_ACTUELLES.md) (snapshot O1/O2/O3).  
 **Focus compagnon** : [`FOCUS_COMPAGNON.md`](FOCUS_COMPAGNON.md) (O1 · D8 avatar bridge).  
 **Session en cours (Cursor ↔ Antigravity)** : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md).  

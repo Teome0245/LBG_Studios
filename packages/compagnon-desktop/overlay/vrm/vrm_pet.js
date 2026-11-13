@@ -2496,6 +2496,7 @@ export function createVrmPet(hostEl, opts = {}) {
   function frameVrm(v) {
     updateHeadScale(v);
     v.scene.updateMatrixWorld(true);
+    if (manualCameraMode) return;
 
     if (framing === "mid" || framing === "aeysa") {
       let headPos = new THREE.Vector3(0, 1.4, 0);
@@ -2627,6 +2628,7 @@ export function createVrmPet(hostEl, opts = {}) {
       return;
     }
     manualCameraMode = true;
+    cameraInitialized = true;
     if (opts.dist !== undefined) {
       const dist = Number(opts.dist);
       const angle = Number(opts.angle ?? 0);
@@ -2643,7 +2645,7 @@ export function createVrmPet(hostEl, opts = {}) {
     if (opts.fov !== undefined) {
       targetFov = Math.max(10, Math.min(80, Number(opts.fov)));
     }
-    if (opts.immediate) {
+    if (opts.immediate || !currentCamPos.lengthSq()) {
       currentCamPos.copy(targetCamPos);
       currentLookAt.copy(targetLookAt);
       currentFov = targetFov;
@@ -2652,6 +2654,36 @@ export function createVrmPet(hostEl, opts = {}) {
       camera.lookAt(currentLookAt);
       camera.updateProjectionMatrix();
     }
+  }
+
+  let liveSingingActive = false;
+  const liveSingingWeights = { aa: 0, oh: 0, ee: 0, ih: 0, ou: 0, blink: 0, relaxed: 0, happy: 0, surprised: 0 };
+
+  function setLiveSinging(active, weights) {
+    liveSingingActive = !!active;
+    if (weights) {
+      Object.assign(liveSingingWeights, weights);
+    }
+    if (!liveSingingActive) {
+      for (const k in liveSingingWeights) liveSingingWeights[k] = 0;
+      if (vrm?.expressionManager) {
+        try {
+          vrm.expressionManager.setValue("aa", 0);
+          vrm.expressionManager.setValue("oh", 0);
+          vrm.expressionManager.setValue("ee", 0);
+          vrm.expressionManager.setValue("ih", 0);
+          vrm.expressionManager.setValue("relaxed", 0);
+          vrm.expressionManager.setValue("blink", 0);
+        } catch (_) { }
+      }
+    }
+  }
+
+  function setFacialExpression(name, val) {
+    if (!vrm?.expressionManager) return;
+    try {
+      vrm.expressionManager.setValue(name, Math.max(0, Math.min(1, Number(val || 0))));
+    } catch (_) { }
   }
 
   function setMicVisible(vis) {
@@ -3272,19 +3304,41 @@ export function createVrmPet(hostEl, opts = {}) {
         if (mouthAmp < 0.02) mouthAmp = 0;
       }
 
-      const vLerp = Math.min(1.0, dt * 18.0);
-      for (const vk of VISEME_KEYS) {
-        currentVisemeWeights[vk] += (targetWeights[vk] - currentVisemeWeights[vk]) * vLerp;
-        if (currentVisemeWeights[vk] < 0.01) currentVisemeWeights[vk] = 0;
-      }
-
-      if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
-        if (poseTo === "fingerHeart") {
-          // Pendant le fingerHeart, maintenir le sourire entrouvert naturel (sans forcer 0.42)
-          vrm.expressionManager.setValue("aa", Math.max(currentVisemeWeights.aa, 0.14));
-        } else {
+      if (liveSingingActive) {
+        // En mode chant interactif / audio-sync : appliquer dynamiquement les voyelles et l'émotion scénique
+        for (const vk of VISEME_KEYS) {
+          const targetW = liveSingingWeights[vk] || 0;
+          currentVisemeWeights[vk] += (targetW - currentVisemeWeights[vk]) * Math.min(1.0, dt * 25.0);
+        }
+        if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
           for (const vk of VISEME_KEYS) {
             vrm.expressionManager.setValue(vk, currentVisemeWeights[vk]);
+          }
+          if (liveSingingWeights.relaxed !== undefined) {
+            vrm.expressionManager.setValue("relaxed", liveSingingWeights.relaxed);
+          }
+          if (liveSingingWeights.happy !== undefined) {
+            vrm.expressionManager.setValue("happy", liveSingingWeights.happy);
+          }
+          if (liveSingingWeights.blink !== undefined && liveSingingWeights.blink > 0) {
+            vrm.expressionManager.setValue("blink", liveSingingWeights.blink);
+          }
+        }
+      } else {
+        const vLerp = Math.min(1.0, dt * 18.0);
+        for (const vk of VISEME_KEYS) {
+          currentVisemeWeights[vk] += (targetWeights[vk] - currentVisemeWeights[vk]) * vLerp;
+          if (currentVisemeWeights[vk] < 0.01) currentVisemeWeights[vk] = 0;
+        }
+
+        if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
+          if (poseTo === "fingerHeart") {
+            // Pendant le fingerHeart, maintenir le sourire entrouvert naturel (sans forcer 0.42)
+            vrm.expressionManager.setValue("aa", Math.max(currentVisemeWeights.aa, 0.14));
+          } else {
+            for (const vk of VISEME_KEYS) {
+              vrm.expressionManager.setValue(vk, currentVisemeWeights[vk]);
+            }
           }
         }
       }
@@ -3455,6 +3509,8 @@ export function createVrmPet(hostEl, opts = {}) {
     flip,
     setFraming,
     setCamera,
+    setLiveSinging,
+    setFacialExpression,
     setMicVisible,
     setSpeed,
     setPose,

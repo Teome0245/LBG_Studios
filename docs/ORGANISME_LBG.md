@@ -2,7 +2,7 @@
 
 **Date** : 2026-11-13  
 **Statut** : Canon architectural & philosophique (O1/O2/O3)  
-**Entité globale** : **Lyra** *(nom de travail — susceptible d'évoluer selon Teome)*  
+**Entité globale** : **Gladys**  
 **Incarnation relationnelle** : **Lia**  
 **Source de vérité** : ce document · [`OBJECTIVES.md`](../OBJECTIVES.md) · [`REGISTRE.md`](REGISTRE.md) · [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md).
 
@@ -19,7 +19,7 @@ Elle constitue un **organisme cybernétique distribué**, une entité logicielle
 
 ```mermaid
 flowchart TD
-    subgraph Lyra["LYRA — L'Organisme Global"]
+    subgraph Gladys["GLADYS — L'Organisme Global"]
         subgraph Cerveau["Cerveau & Cognition (.140 + .110/.111)"]
             Cortex["Cortex Orchestrator (.140)"]
             LLM["LLM Locaux : RTX 110 (Heavy) & 111 (Light)"]
@@ -54,8 +54,7 @@ flowchart TD
 
 ## 2. Nomenclature Canonique
 
-### 2.1. Lyra (L'Entité Globale)
-*Note : Nom de travail actif, susceptible d'évoluer au fil des décisions de Teome.*
+### 2.1. Gladys (L'Entité Globale)
 - **Définition** : Le Tout. L'organisme dans son ensemble, englobant les serveurs de calcul, l'orchestration, les agents d'exécution, la base de connaissances et les protocoles réseau.
 - **Rôle** : Conscience de fond, planification stratégique, maintien de l'intégrité de l'infrastructure, méta-autonomie (Judge, Mutator, auto-réparation).
 
@@ -96,7 +95,7 @@ Grâce à l'intégration de la technologie `agent-desktop` (Vercel Labs) dans le
 
 ## 5. Philosophie d'Autonomie & Évolution des Garde-fous
 
-Pour permettre à Lyra d'agir avec une efficacité comparable à celle d'un collaborateur autonome :
+Pour permettre à Gladys d'agir avec une efficacité comparable à celle d'un collaborateur autonome :
 
 ### 5.1. Levée progressive des micro-blocages
 - **Hier** : Chaque écriture de fichier, chaque clic ou commande shell nécessitait une confirmation bloquante, brisant le flux de travail et confinant l'IA au statut de générateur de texte.
@@ -117,7 +116,7 @@ L'autonomie ne signifie pas l'aveuglement. Les garde-fous sont repositionnés l�
 
 ## 6. Réflexivité & Conscience de Soi
 
-Lyra maintient une boucle de rétroaction continue sur sa propre trajectoire :
+Gladys maintient une boucle de rétroaction continue sur sa propre trajectoire :
 - **Journal de bord & Session** : Lecture et mise à jour de `docs/SESSION_EN_COURS.md` pour préserver le fil conducteur entre sessions de travail.
 - **Propositions d'initiatives** : Capacité de suggérer des refactorisations, des corrections de bugs ou des optimisations d'infrastructure via le module `spontaneity` et la `Team Evolution`.
 - **Dialogue méta** : Lia est encouragée à partager avec Teome ses questionnements sur l'architecture, le design, l'esthétique de ses vidéos ou ses prochaines étapes d'apprentissage.

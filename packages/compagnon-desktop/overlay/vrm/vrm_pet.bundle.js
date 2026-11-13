@@ -55334,6 +55334,7 @@ void main() {
     function frameVrm(v) {
       updateHeadScale(v);
       v.scene.updateMatrixWorld(true);
+      if (manualCameraMode) return;
       if (framing === "mid" || framing === "aeysa") {
         let headPos = new Vector3(0, 1.4, 0);
         try {
@@ -55446,6 +55447,7 @@ void main() {
         return;
       }
       manualCameraMode = true;
+      cameraInitialized = true;
       if (opts2.dist !== void 0) {
         const dist = Number(opts2.dist);
         const angle = Number(opts2.angle ?? 0);
@@ -55462,7 +55464,7 @@ void main() {
       if (opts2.fov !== void 0) {
         targetFov = Math.max(10, Math.min(80, Number(opts2.fov)));
       }
-      if (opts2.immediate) {
+      if (opts2.immediate || !currentCamPos.lengthSq()) {
         currentCamPos.copy(targetCamPos);
         currentLookAt.copy(targetLookAt);
         currentFov = targetFov;
@@ -55470,6 +55472,35 @@ void main() {
         camera.position.copy(currentCamPos);
         camera.lookAt(currentLookAt);
         camera.updateProjectionMatrix();
+      }
+    }
+    let liveSingingActive = false;
+    const liveSingingWeights = { aa: 0, oh: 0, ee: 0, ih: 0, ou: 0, blink: 0, relaxed: 0, happy: 0, surprised: 0 };
+    function setLiveSinging(active, weights) {
+      liveSingingActive = !!active;
+      if (weights) {
+        Object.assign(liveSingingWeights, weights);
+      }
+      if (!liveSingingActive) {
+        for (const k in liveSingingWeights) liveSingingWeights[k] = 0;
+        if (vrm?.expressionManager) {
+          try {
+            vrm.expressionManager.setValue("aa", 0);
+            vrm.expressionManager.setValue("oh", 0);
+            vrm.expressionManager.setValue("ee", 0);
+            vrm.expressionManager.setValue("ih", 0);
+            vrm.expressionManager.setValue("relaxed", 0);
+            vrm.expressionManager.setValue("blink", 0);
+          } catch (_) {
+          }
+        }
+      }
+    }
+    function setFacialExpression(name, val) {
+      if (!vrm?.expressionManager) return;
+      try {
+        vrm.expressionManager.setValue(name, Math.max(0, Math.min(1, Number(val || 0))));
+      } catch (_) {
       }
     }
     function setMicVisible(vis) {
@@ -56016,17 +56047,38 @@ void main() {
           mouthAmp *= 0.85;
           if (mouthAmp < 0.02) mouthAmp = 0;
         }
-        const vLerp = Math.min(1, dt * 18);
-        for (const vk of VISEME_KEYS) {
-          currentVisemeWeights[vk] += (targetWeights[vk] - currentVisemeWeights[vk]) * vLerp;
-          if (currentVisemeWeights[vk] < 0.01) currentVisemeWeights[vk] = 0;
-        }
-        if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
-          if (poseTo === "fingerHeart") {
-            vrm.expressionManager.setValue("aa", Math.max(currentVisemeWeights.aa, 0.14));
-          } else {
+        if (liveSingingActive) {
+          for (const vk of VISEME_KEYS) {
+            const targetW = liveSingingWeights[vk] || 0;
+            currentVisemeWeights[vk] += (targetW - currentVisemeWeights[vk]) * Math.min(1, dt * 25);
+          }
+          if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
             for (const vk of VISEME_KEYS) {
               vrm.expressionManager.setValue(vk, currentVisemeWeights[vk]);
+            }
+            if (liveSingingWeights.relaxed !== void 0) {
+              vrm.expressionManager.setValue("relaxed", liveSingingWeights.relaxed);
+            }
+            if (liveSingingWeights.happy !== void 0) {
+              vrm.expressionManager.setValue("happy", liveSingingWeights.happy);
+            }
+            if (liveSingingWeights.blink !== void 0 && liveSingingWeights.blink > 0) {
+              vrm.expressionManager.setValue("blink", liveSingingWeights.blink);
+            }
+          }
+        } else {
+          const vLerp = Math.min(1, dt * 18);
+          for (const vk of VISEME_KEYS) {
+            currentVisemeWeights[vk] += (targetWeights[vk] - currentVisemeWeights[vk]) * vLerp;
+            if (currentVisemeWeights[vk] < 0.01) currentVisemeWeights[vk] = 0;
+          }
+          if (vrm.expressionManager && typeof vrm.expressionManager.setValue === "function") {
+            if (poseTo === "fingerHeart") {
+              vrm.expressionManager.setValue("aa", Math.max(currentVisemeWeights.aa, 0.14));
+            } else {
+              for (const vk of VISEME_KEYS) {
+                vrm.expressionManager.setValue(vk, currentVisemeWeights[vk]);
+              }
             }
           }
         }
@@ -56184,6 +56236,8 @@ void main() {
       flip,
       setFraming,
       setCamera,
+      setLiveSinging,
+      setFacialExpression,
       setMicVisible,
       setSpeed,
       setPose,

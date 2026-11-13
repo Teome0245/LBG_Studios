@@ -4,13 +4,13 @@
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Organisme Global Lyra & Incarnation Lia — Pilotage Multimodal OS (.10 & .143 via agent-desktop)**.
+**Fil** : canon O1/O2/O3 — **Organisme Global Gladys & Incarnation Lia — Pilotage Multimodal OS (.10 & .143 via agent-desktop)**.
 
 ---
 
 ## Dernières actions réalisées (2026-11-13)
 1. **Manifeste & Architecture Globale de l'Organisme LBG (`docs/ORGANISME_LBG.md`)** :
-   - Formalisation de l'entité cybernétique globale : **Lyra** *(nom de travail)* et de son incarnation relationnelle : **Lia**.
+   - Formalisation de l'entité cybernétique globale : **Gladys** et de son incarnation relationnelle : **Lia**.
    - Cartographie anatomique des rôles machines :
      - `.10` (Poste Teome) : Interface de symbiose humaine, audio/visuel, et main droite logicielle UIA sans vol de souris.
      - `.143` (Atelier Omarchy) : Usine logicielle et main gauche autonome pour les agents CLI (compute, CI, dev).
