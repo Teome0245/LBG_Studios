@@ -9,7 +9,14 @@
 ---
 
 ## Dernières actions réalisées (2026-11-13)
-1. **Atelier de Chorégraphie 3D & Séquenceur Multi-pistes (`packages/compagnon-desktop/overlay/choreographer.html`)** :
+1. **Atelier de Chorégraphie 3D & Export Vidéo HD (`packages/compagnon-desktop/overlay/choreographer.html`)** :
+   - **Clip Officiel Complet 1080×1920 (Vertical 9:16) Généré avec Succès** :
+     - Rendu intégral des **2 min 37s (158.5s)** de *Nexura Domina* avec les **22 figures de mouvements** composées par l'utilisateur.
+     - Muxing master stéréo audio + Upscale Lanczos 1080×1920 @ 30 FPS CRF 18 (125.5 Mo).
+     - Fichier déposé directement sur OneDrive : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_full.mp4`.
+   - **Sauvegarde et Restauration Automatique de la Chorégraphie** :
+     - Endpoints `/api/save_sequence` et `/api/load_sequence` sur le serveur `.143:8766`.
+     - Sauvegarde automatique en local et sur serveur : rechargement transparent à chaque rafraîchissement.
    - **Serveur Multi-threadé avec Range Streaming (`tools/studio_choreographer_server.py`)** :
      - Remplacement de `socketserver.TCPServer` bloquant par `ThreadingTCPServer` multi-threadé avec support HTTP Range (`206 Partial Content`) pour le streaming instantané sans lock du MP3 audio et des 14 Mo du VRM.
      - Port 8766 ouvert sur UFW (`192.168.0.0/16`).

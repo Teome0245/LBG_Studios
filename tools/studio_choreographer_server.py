@@ -10,10 +10,12 @@ import socketserver
 import os
 import mimetypes
 import re
+import json
 import urllib.parse
 
 PORT = 8766
 DIRECTORY = "/home/lbg/Projets/LBG_Studios/packages/compagnon-desktop/overlay"
+SAVE_PATH = "/home/lbg/Projets/LBG_Studios/tools/active_choreography.json"
 
 mimetypes.add_type("model/gltf-binary", ".vrm")
 mimetypes.add_type("application/octet-stream", ".vrma")
@@ -39,6 +41,55 @@ class RangeHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.end_headers()
+
+    def do_POST(self):
+        """API endpoints for saving choreography sequence directly from studio UI."""
+        if self.path.startswith("/api/save_sequence") or self.path.startswith("/api/render"):
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(length).decode("utf-8")
+                data = json.loads(body)
+                with open(SAVE_PATH, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"✦ [Server] Chorégraphie sauvegardée dans {SAVE_PATH} ({len(data.get('motions', []))} mouvements, {len(data.get('cameras', []))} caméras)")
+                resp = json.dumps({"status": "ok", "saved_to": SAVE_PATH, "motions_count": len(data.get("motions", []))}).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+            except Exception as e:
+                print(f"✦ [Server] Erreur sauvegarde: {e}")
+                err_resp = json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(err_resp)))
+                self.end_headers()
+                self.wfile.write(err_resp)
+            return
+
+        self.send_error(http.HTTPStatus.NOT_FOUND, "API not found")
+
+    def do_GET(self):
+        if self.path.startswith("/api/load_sequence"):
+            if os.path.exists(SAVE_PATH):
+                with open(SAVE_PATH, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                resp = json.dumps({"status": "empty"}).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+            return
+
+        super().do_GET()
 
     def send_head(self):
         """Support standard HTTP Range requests for MP3 streaming and large VRM chunks."""

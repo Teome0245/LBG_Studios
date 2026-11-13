@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexura Domina - Clip Officiel 9:16 (Choreographer 3D)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #03050c;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    position: relative;
+  }
+
+  /* Stage Background & Effets Scéniques */
+  #canvas-stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  /* Hôte Avatar 3D VRM */
+  #avatar-host {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Top Card HUD (Shorts / TikTok Style) */
+  #top-hud {
+    position: absolute;
+    top: 24px;
+    left: 5%;
+    width: 90%;
+    background: rgba(13, 18, 34, 0.88);
+    border: 1.5px solid rgba(0, 245, 212, 0.65);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 245, 212, 0.25);
+    backdrop-filter: blur(12px);
+    z-index: 20;
+    padding: 12px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .badge-live {
+    background: rgba(0, 245, 212, 0.15);
+    border: 1px solid #00f5d4;
+    color: #00f5d4;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #00f5d4;
+    box-shadow: 0 0 8px #00f5d4;
+    animation: livePulse 1s infinite alternate;
+  }
+  @keyframes livePulse {
+    from { opacity: 0.4; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.3); }
+  }
+
+  .badge-audio {
+    background: rgba(244, 63, 94, 0.15);
+    border: 1px solid #f43f5e;
+    color: #f43f5e;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .hud-title {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 245, 212, 0.3);
+  }
+
+  .hud-motion-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: monospace;
+    font-weight: 600;
+  }
+  .hud-motion-name {
+    color: #00f5d4;
+    font-weight: 700;
+  }
+
+  /* Bottom Equalizer Card */
+  #bottom-hud {
+    position: absolute;
+    bottom: 24px;
+    left: 5%;
+    width: 90%;
+    background: rgba(13, 18, 34, 0.88);
+    border: 1.5px solid rgba(244, 63, 94, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(12px);
+    z-index: 20;
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  #audio-bars-canvas {
+    width: 100%;
+    height: 28px;
+    display: block;
+  }
+
+  /* Indicateur de préparation pour l'enregistreur */
+  #render-flag {
+    display: none;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 4px;
+    height: 4px;
+    background: #00ff00;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas-stage"></canvas>
+<div id="avatar-host"></div>
+<div id="render-flag"></div>
+
+<!-- Top HUD Card -->
+<div id="top-hud">
+  <div class="hud-row">
+    <div class="badge-live"><span class="badge-pulse"></span> LIVE IDOL 3D</div>
+    <div class="badge-audio">128 BPM • MASTER STEREO</div>
+  </div>
+  <div class="hud-title">✦ NEXURA DOMINA</div>
+  <div class="hud-motion-info">
+    <span>FIGURE : <span class="hud-motion-name" id="hud-motion-name">Female Dance Pose1</span></span>
+    <span id="hud-timecode">00:00.00 / 02:37.61</span>
+  </div>
+</div>
+
+<!-- Bottom Equalizer Card -->
+<div id="bottom-hud">
+  <canvas id="audio-bars-canvas" width="480" height="28"></canvas>
+  <div class="hud-row" style="font-size: 10px; color: var(--text-muted, #94a3b8); font-family: monospace;">
+    <span>VOX : SYNCHRO LIPSYNC LIVE</span>
+    <span style="color: #ec4899;" id="hud-exp-name">Chant Scénique Passionné</span>
+    <span>LBG STUDIOS 2026</span>
+  </div>
+</div>
+
+<audio id="audio-player" src="./nexura_domina_v1.mp3" preload="auto"></audio>
+
+<script src="./vrm/vrm_pet.bundle.js?v=choreographer_v1"></script>
+
+<script>
+// =========================================================================
+// Chorégraphie officielle composée par l'utilisateur (22 séquences précises)
+// =========================================================================
+let sequenceData = null;
+
+async function loadChoreo() {
+  try {
+    const res = await fetch("/api/load_sequence");
+    const data = await res.json();
+    if (data && data.motions && data.motions.length > 0) {
+      sequenceData = data;
+      console.log("[RenderClip] Chorégraphie chargée depuis le serveur:", sequenceData.motions.length, "mouvements.");
+      return;
+    }
+  } catch (_) {}
+
+  // Repli automatique sur le JSON exact de l'utilisateur
+  sequenceData = {
+    audio: "nexura_domina_v1.mp3",
+    duration: 157.61,
+    bpm: 128,
+    motions: [
+      { start: 0, end: 3.52, file: "Female Dance Pose1.vrma", name: "Female Dance Pose1", speed: 1 },
+      { start: 3.48, end: 9.28, file: "Female Crouch Pose.vrma", name: "Female Crouch Pose", speed: 1 },
+      { start: 9.34, end: 12.38, file: "Samba Dancing1.vrma", name: "Samba Dancing1", speed: 1 },
+      { start: 12.44, end: 14.4, file: "Jazz Dancing3.vrma", name: "Jazz Dancing3", speed: 1 },
+      { start: 14.44, end: 25.28, file: "Bellydancing.vrma", name: "Bellydancing", speed: 1 },
+      { start: 25.33, end: 70.29, file: "samba.vrma", name: "samba", speed: 1 },
+      { start: 70.41, end: 72.25, file: "jump.vrma", name: "jump", speed: 1 },
+      { start: 72.28, end: 74.56, file: "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma", name: "Pro_Magic_Pack_Standing 2H Cast Spell 01", speed: 1 },
+      { start: 74.55, end: 76.63, file: "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma", name: "Pro_Magic_Pack_Standing 2H Magic Area Attack 01", speed: 1 },
+      { start: 76.68, end: 81.4, file: "Dwarf Idle.vrma", name: "Dwarf Idle", speed: 1 },
+      { start: 81.45, end: 83.11, file: "Pro_Magic_Pack_standing 1H cast spell 01.vrma", name: "Pro_Magic_Pack_standing 1H cast spell 01", speed: 1 },
+      { start: 83.1, end: 86.83, file: "Air Squat Bent Arms.vrma", name: "Air Squat Bent Arms", speed: 1 },
+      { start: 86.83, end: 92.51, file: "Crazy Gesture.vrma", name: "Crazy Gesture", speed: 1 },
+      { start: 92.51, end: 110.47, file: "Hip Hop Dancing3.vrma", name: "Hip Hop Dancing3", speed: 1 },
+      { start: 110.53, end: 129.85, file: "Bellydancing.vrma", name: "Bellydancing", speed: 1 },
+      { start: 129.83, end: 130.35, file: "Female Dance Pose.vrma", name: "Female Dance Pose", speed: 1 },
+      { start: 130.92, end: 131.32, file: "Female Dance Pose1.vrma", name: "Female Dance Pose1", speed: 1 },
+      { start: 131.94, end: 132.34, file: "Female Dance Pose.vrma", name: "Female Dance Pose", speed: 1 },
+      { start: 133.05, end: 144.09, file: "Hip Hop Dancing3.vrma", name: "Hip Hop Dancing3", speed: 1 },
+      { start: 144.13, end: 148.21, file: "Taunt.vrma", name: "Taunt", speed: 1 },
+      { start: 148.12, end: 150.73, file: "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma", name: "Pro_Magic_Pack_Standing 2H Magic Area Attack 02", speed: 1 },
+      { start: 150.7, end: 157.61, file: "Dwarf Idle.vrma", name: "Dwarf Idle", speed: 1 }
+    ],
+    cameras: [
+      { start: 0, end: 144.02, preset: "full", name: "Silhouette Complète" },
+      { start: 144.08, end: 157.6, preset: "full", name: "Plan Large Final" }
+    ],
+    expressions: [
+      { start: 0, end: 14.5, preset: "mystique", name: "Intro Regard Mystique" },
+      { start: 14.5, end: 46, preset: "diva", name: "Couplet Chant Passionné" },
+      { start: 46, end: 78, preset: "idol", name: "Montée Sourire Idol" },
+      { start: 78, end: 112, preset: "climax", name: "Drop Climax Vocal" },
+      { start: 112, end: 142, preset: "diva", name: "Solo Vocal Scénique" },
+      { start: 142, end: 157.6, preset: "mystique", name: "Outro Présence Diva" }
+    ]
+  };
+}
+
+let petInstance = null;
+let currentMotion = "";
+const audio = document.getElementById("audio-player");
+let audioCtx, analyser, dataArray;
+
+async function init() {
+  await loadChoreo();
+  const hostEl = document.getElementById("avatar-host");
+
+  window.petInstance = petInstance = window.__createVrmPet(hostEl, {
+    modelUrl: "./vrm/Compagnon.vrm",
+    framing: "full"
+  });
+
+  const checkReady = setInterval(() => {
+    if (petInstance && petInstance.ready) {
+      clearInterval(checkReady);
+      console.log("[RenderClip] Avatar prêt ! Démarrage du concert 9:16...");
+      onReady();
+    }
+  }, 100);
+
+  initStageCanvas();
+  setupAudio();
+}
+
+function onReady() {
+  if (petInstance.setMicVisible) petInstance.setMicVisible(true);
+  // Cadrage vertical idéal pour mettre en valeur les mouvements des hanches et jambes
+  if (petInstance.setCamera) {
+    petInstance.setCamera({ dist: 3.35, height: 0.85, lookY: 0.85, fov: 27, immediate: true });
+  }
+
+  // Marquer prêt pour FFmpeg / capture
+  document.getElementById("render-flag").style.display = "block";
+  window.__READY_FOR_RECORD = true;
+
+  // Démarrer l'audio et la lecture
+  audio.currentTime = 0;
+  audio.play().catch(e => {
+    console.warn("Autoplay note:", e);
+    // Sur click ou autoplay policy
+    document.body.onclick = () => { audio.play(); };
+  });
+
+  audio.ontimeupdate = () => {
+    updateChoreo(audio.currentTime);
+  };
+}
+
+function updateChoreo(curT) {
+  // Format timecode
+  const mins = Math.floor(curT / 60);
+  const secs = curT % 60;
+  document.getElementById("hud-timecode").innerText = `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs.toFixed(2)} / 02:37.61`;
+
+  // Mouvement actif
+  const activeMotion = sequenceData.motions.find(m => curT >= m.start && curT < m.end);
+  if (activeMotion && activeMotion.file !== currentMotion) {
+    currentMotion = activeMotion.file;
+    document.getElementById("hud-motion-name").innerText = activeMotion.name;
+    if (petInstance.playVRMA) {
+      petInstance.playVRMA(activeMotion.file, { loop: true });
+    }
+    if (petInstance.setSpeed) {
+      petInstance.setSpeed(activeMotion.speed || 1.0);
+    }
+  }
+
+  // Expression active
+  const activeExp = sequenceData.expressions.find(e => curT >= e.start && curT < e.end);
+  if (activeExp) {
+    document.getElementById("hud-exp-name").innerText = activeExp.name;
+  }
+}
+
+// =========================================================================
+// Scénographie Cyberpunk & Sol Miroir Dynamique (Style TikTok / Shorts)
+// =========================================================================
+function initStageCanvas() {
+  const canvas = document.getElementById("canvas-stage");
+  const ctx = canvas.getContext("2d");
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: 1 + Math.random() * 2.5,
+      speed: 0.8 + Math.random() * 1.5,
+      color: Math.random() > 0.5 ? "rgba(0, 245, 212," : "rgba(244, 63, 94,"
+    });
+  }
+
+  function render(now) {
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Fond dégradé scène de concert
+    const grad = ctx.createRadialGradient(w/2, h*0.45, 30, w/2, h/2, Math.max(w, h)*0.75);
+    grad.addColorStop(0, "#0c152a");
+    grad.addColorStop(0.5, "#060914");
+    grad.addColorStop(1, "#020308");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Projecteurs volumétriques
+    const t = now * 0.001;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+
+    const p1 = ctx.createLinearGradient(0, 0, w * 0.4, h);
+    p1.addColorStop(0, "#00f5d4");
+    p1.addColorStop(1, "transparent");
+    ctx.fillStyle = p1;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.1, 0);
+    ctx.lineTo(w * 0.5 + Math.sin(t * 1.5) * 50, h);
+    ctx.lineTo(w * 0.25, h);
+    ctx.fill();
+
+    const p2 = ctx.createLinearGradient(w, 0, w * 0.6, h);
+    p2.addColorStop(0, "#f43f5e");
+    p2.addColorStop(1, "transparent");
+    ctx.fillStyle = p2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.9, 0);
+    ctx.lineTo(w * 0.5 + Math.cos(t * 1.5) * 50, h);
+    ctx.lineTo(w * 0.75, h);
+    ctx.fill();
+    ctx.restore();
+
+    // Grille Cyberpunk perspective au sol
+    const horizonY = h * 0.72;
+    const speedOffset = (t * 2.0) % 1.0;
+    ctx.lineWidth = 1.2;
+    const numLines = 12;
+    for (let k = 0; k < numLines; k++) {
+      const normK = (k + speedOffset) / numLines;
+      const gy = horizonY + (h - horizonY) * Math.pow(normK, 2.2);
+      ctx.strokeStyle = `rgba(0, 245, 212, ${normK * 0.35})`;
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(w, gy);
+      ctx.stroke();
+    }
+    const stepX = w * 0.15;
+    for (let vx = -w * 0.3; vx <= w * 1.3; vx += stepX) {
+      ctx.strokeStyle = "rgba(0, 245, 212, 0.18)";
+      ctx.beginPath();
+      ctx.moveTo(w * 0.5, horizonY - 60);
+      ctx.lineTo(vx, h);
+      ctx.stroke();
+    }
+
+    // Particules néon montantes
+    for (const p of particles) {
+      p.y -= p.speed;
+      if (p.y < 0) { p.y = h; p.x = Math.random() * w; }
+      ctx.fillStyle = p.color + "0.6)";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+// =========================================================================
+// Equalizer Audio & Lipsync Temps Réel
+// =========================================================================
+function setupAudio() {
+  const barsCanvas = document.getElementById("audio-bars-canvas");
+  const barsCtx = barsCanvas.getContext("2d");
+
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    const source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+  } catch (e) {
+    console.warn("AudioContext init:", e);
+  }
+
+  function drawBars() {
+    barsCtx.clearRect(0, 0, barsCanvas.width, barsCanvas.height);
+    if (analyser && dataArray && !audio.paused) {
+      analyser.getByteFrequencyData(dataArray);
+      const count = 24;
+      const barW = barsCanvas.width / count - 2;
+      for (let i = 0; i < count; i++) {
+        const val = dataArray[i] / 255;
+        const h = val * barsCanvas.height;
+        barsCtx.fillStyle = i < 12 ? "#00f5d4" : "#f43f5e";
+        barsCtx.fillRect(i * (barW + 2), barsCanvas.height - h, barW, h);
+      }
+
+      // Lipsync vocal en direct
+      if (petInstance && petInstance.setLiveSinging) {
+        let voiceSum = 0;
+        for (let i = 2; i <= 12; i++) voiceSum += dataArray[i];
+        const voiceRms = (voiceSum / (11 * 255)) * 1.35;
+        const curT = audio.currentTime;
+        const activeExp = sequenceData.expressions.find(e => curT >= e.start && curT < e.end);
+        const preset = activeExp ? activeExp.preset : "diva";
+
+        let mouthA = 0, mouthO = 0, mouthI = 0;
+        let relaxedVal = 0.5, happyVal = 0, blinkVal = 0;
+
+        if (voiceRms > 0.07) {
+          const energy = Math.min(1.0, (voiceRms - 0.07) * 1.6);
+          if (preset === "climax") {
+            mouthA = Math.min(1.0, energy * 1.25);
+            mouthO = Math.sin(curT * 12) > 0.15 ? energy * 0.50 : 0;
+            relaxedVal = 0.85;
+            blinkVal = 0.40 + Math.sin(curT * 4) * 0.20;
+          } else if (preset === "idol") {
+            mouthA = energy * 0.65;
+            mouthI = energy * 0.35;
+            happyVal = 0.75;
+            relaxedVal = 0.50;
+            blinkVal = 0.05;
+          } else {
+            mouthA = energy * 0.88;
+            mouthO = Math.sin(curT * 10) > 0.25 ? energy * 0.45 : 0;
+            mouthI = 0.20;
+            relaxedVal = 0.70;
+            blinkVal = 0.35 + Math.sin(curT * 5) * 0.15;
+          }
+        }
+        petInstance.setLiveSinging(true, {
+          aa: mouthA,
+          oh: mouthO,
+          ih: mouthI,
+          relaxed: relaxedVal,
+          happy: happyVal,
+          blink: blinkVal
+        });
+      }
+    }
+    requestAnimationFrame(drawBars);
+  }
+  requestAnimationFrame(drawBars);
+}
+
+window.addEventListener("DOMContentLoaded", init);
+</script>
+
+</body>
+</html>
+

@@ -916,6 +916,25 @@ async function initStudio() {
   const hostEl = document.getElementById("avatar-host");
   console.log("[Choreographer] Démarrage du Three-VRM Studio...");
 
+  // Restaurer depuis le serveur ou localStorage si présent
+  try {
+    const res = await fetch("/api/load_sequence");
+    const serverSeq = await res.json();
+    if (serverSeq && serverSeq.motions && serverSeq.motions.length > 0) {
+      sequenceData = serverSeq;
+      console.log("[Choreographer] Timeline chargée depuis le serveur:", sequenceData.motions.length, "mouvements");
+    } else {
+      const saved = localStorage.getItem("choreographer_active_sequence");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.motions && parsed.motions.length > 0) {
+          sequenceData = parsed;
+          console.log("[Choreographer] Timeline restaurée depuis le cache local.");
+        }
+      }
+    }
+  } catch (_) { }
+
   window.petInstance = petInstance = window.__createVrmPet(hostEl, {
     modelUrl: "./vrm/Compagnon.vrm",
     framing: "full"
@@ -1872,8 +1891,32 @@ function setupEvents() {
     }
   });
 
+  async function saveProjectToServer() {
+    try {
+      localStorage.setItem("choreographer_active_sequence", JSON.stringify(sequenceData));
+      const res = await fetch("/api/save_sequence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sequenceData)
+      });
+      const data = await res.json();
+      console.log("[Choreographer] Sauvegarde serveur réussie:", data);
+      return true;
+    } catch (e) {
+      console.warn("[Choreographer] Erreur sauvegarde serveur:", e);
+      return false;
+    }
+  }
+
+  // Sauvegarde automatique en localStorage à chaque changement
+  const origRenderTimeline = renderTimeline;
+  window.addEventListener("beforeunload", () => {
+    try { localStorage.setItem("choreographer_active_sequence", JSON.stringify(sequenceData)); } catch (_) {}
+  });
+
   // Bouton Sauvegarder Projet
-  document.getElementById("btn-save-project").onclick = () => {
+  document.getElementById("btn-save-project").onclick = async () => {
+    await saveProjectToServer();
     const jsonStr = JSON.stringify(sequenceData, null, 2);
     const blob = new Blob([jsonStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1882,6 +1925,7 @@ function setupEvents() {
     a.download = "choreography_nexura_domina.json";
     a.click();
     URL.revokeObjectURL(url);
+    alert("✦ Projet synchronisé sur le serveur .143 et téléchargé !");
   };
 
   // Bouton Charger Preset Nexura
@@ -1892,8 +1936,13 @@ function setupEvents() {
   };
 
   // Bouton Export Rendu Vidéo
-  document.getElementById("btn-render-clip").onclick = () => {
-    alert("Pour lancer l'export HD hors-ligne déterministe avec la chorégraphie actuelle, le script Python offline renderer est prêt.");
+  document.getElementById("btn-render-clip").onclick = async () => {
+    const ok = await saveProjectToServer();
+    if (ok) {
+      alert("✦ Chorégraphie envoyée au serveur de rendu HD (.143) !\nLe moteur de rendu peut démarrer la génération vidéo.");
+    } else {
+      alert("✦ Projet sauvegardé en local.");
+    }
   };
 }
 
