@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LBG Studios - Atelier de Chorégraphie 3D & Séquenceur</title>
+<style>
+  :root {
+    --bg-dark: #070a14;
+    --bg-panel: #0d1222;
+    --bg-card: #141b30;
+    --border: #1e293b;
+    --border-accent: rgba(0, 245, 212, 0.4);
+    --primary: #00f5d4;
+    --secondary: #f43f5e;
+    --accent: #a855f7;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  #app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Header barre supérieure */
+  #header {
+    height: 48px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 10;
+  }
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+  }
+  .header-logo span { color: var(--primary); }
+  .header-badge {
+    background: rgba(0, 245, 212, 0.12);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Zone principale (Workspace 3D + Panneau latéral) */
+  #workspace {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Panneau latéral gauche */
+  #sidebar {
+    width: 380px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+    transition: transform 0.25s ease;
+  }
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: rgba(0, 245, 212, 0.05);
+  }
+
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: none;
+  }
+  .tab-content.active { display: flex; flex-direction: column; gap: 14px; }
+
+  /* Section styles */
+  .section-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .control-group {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+  }
+  .control-row label { color: var(--text); font-weight: 600; }
+  .control-row input[type="range"] {
+    flex: 1;
+    margin: 0 10px;
+    accent-color: var(--primary);
+  }
+  .val-badge {
+    min-width: 44px;
+    text-align: right;
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--primary);
+    font-weight: bold;
+  }
+
+  /* Liste catalogue d'animations */
+  .search-box {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+  }
+  .search-box:focus { border-color: var(--primary); }
+  .category-filter {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .cat-pill {
+    padding: 4px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text-muted);
+  }
+  .cat-pill.active {
+    background: var(--primary);
+    color: #000;
+    font-weight: bold;
+    border-color: var(--primary);
+  }
+
+  .anim-list {
+    flex: 1;
+    min-height: 240px;
+    max-height: 380px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+  }
+  .anim-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .anim-item:hover { background: rgba(0, 245, 212, 0.08); color: var(--primary); }
+  .anim-item.selected {
+    background: rgba(0, 245, 212, 0.18);
+    color: var(--primary);
+    font-weight: bold;
+    border-left: 3px solid var(--primary);
+  }
+  .anim-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+  }
+
+  /* Boutons */
+  .btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-primary {
+    background: var(--primary);
+    color: #03050c;
+    border-color: var(--primary);
+    font-weight: 700;
+  }
+  .btn-primary:hover {
+    background: #00d8bc;
+    color: #000;
+  }
+  .btn-danger {
+    background: rgba(244, 63, 94, 0.15);
+    border-color: var(--secondary);
+    color: var(--secondary);
+  }
+  .btn-danger:hover { background: var(--secondary); color: #fff; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+  /* Presets Caméra */
+  .cam-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .cam-btn {
+    padding: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .cam-btn:hover, .cam-btn.active {
+    border-color: var(--primary);
+    background: rgba(0, 245, 212, 0.12);
+    color: var(--primary);
+  }
+
+  /* Viewport 3D */
+  #viewport-container {
+    flex: 1;
+    position: relative;
+    background: #03050c;
+    overflow: hidden;
+  }
+  #canvas-stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  #avatar-host {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  /* Overlay HUD sur le Viewport */
+  #viewport-overlay {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(13, 18, 34, 0.85);
+    border: 1px solid var(--border-accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    pointer-events: none;
+  }
+  .hud-line { display: flex; justify-content: space-between; gap: 14px; }
+  .hud-label { color: var(--text-muted); }
+  .hud-val { color: var(--primary); font-family: monospace; font-weight: bold; }
+
+  /* Format Ratio Marker (Option 9:16 vertical overlay) */
+  #guide-916 {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    aspect-ratio: 9 / 16;
+    border: 1px dashed rgba(0, 245, 212, 0.35);
+    pointer-events: none;
+    z-index: 4;
+    box-shadow: 0 0 0 9999px rgba(3, 5, 12, 0.45);
+  }
+
+  /* Zone Timeline & Séquenceur (Bas de page) */
+  #sequencer-panel {
+    height: 220px;
+    background: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+  #transport-bar {
+    height: 42px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    gap: 16px;
+  }
+  .transport-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .time-display {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: bold;
+    color: var(--primary);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* Zone des pistes (Timeline tracks) */
+  #tracks-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    background: #090e1a;
+  }
+  #tracks-inner {
+    position: relative;
+    height: 100%;
+    min-width: 1400px;
+  }
+  .timeline-ruler {
+    height: 22px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+    position: relative;
+    font-size: 10px;
+    font-family: monospace;
+    color: var(--text-muted);
+  }
+  .ruler-mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    padding-left: 4px;
+  }
+
+  .track-row {
+    height: 54px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .track-label {
+    position: sticky;
+    left: 0;
+    width: 110px;
+    height: 100%;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 5;
+    color: var(--text);
+  }
+
+  .timeline-block {
+    position: absolute;
+    height: 40px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(0, 245, 212, 0.25), rgba(0, 180, 216, 0.4));
+    border: 1px solid var(--primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .timeline-block.active {
+    box-shadow: 0 0 12px var(--primary);
+    border-width: 2px;
+  }
+  .timeline-block.cam-block {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(244, 63, 94, 0.3));
+    border-color: var(--accent);
+  }
+
+  /* Tête de lecture (Playhead) */
+  #playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--secondary);
+    box-shadow: 0 0 8px var(--secondary);
+    z-index: 20;
+    pointer-events: none;
+  }
+  #playhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    background: var(--secondary);
+    border-radius: 50%;
+  }
+
+  /* Audio Equalizer Mini */
+  #audio-bars-canvas {
+    height: 28px;
+    width: 140px;
+  }
+</style>
+</head>
+<body>
+
+<div id="app-container">
+  <!-- 1. En-tête de l'application -->
+  <header id="header">
+    <div class="header-logo">
+      <span>✦</span> LBG STUDIOS • CHOREOGRAPHER 3D
+      <span class="header-badge">Sandbox & Séquenceur</span>
+    </div>
+    <div class="header-actions">
+      <canvas id="audio-bars-canvas"></canvas>
+      <button id="btn-toggle-guide" class="btn btn-sm">Guide 9:16 [ON]</button>
+      <button id="btn-save-project" class="btn btn-sm">💾 Sauvegarder Projet</button>
+      <button id="btn-load-preset" class="btn btn-sm btn-primary">⚡ Charger Preset Nexura</button>
+    </div>
+  </header>
+
+  <!-- 2. Workspace Principal (Panneau gauche + Viewport 3D) -->
+  <div id="workspace">
+    <!-- Panneau de contrôle gauche -->
+    <aside id="sidebar">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-catalogue">Catalogue Mocap</button>
+        <button class="tab-btn" data-tab="tab-camera">Caméra & Plans</button>
+        <button class="tab-btn" data-tab="tab-perfo">Chant & Style</button>
+      </div>
+
+      <!-- Onglet Catalogue Mocap -->
+      <div id="tab-catalogue" class="tab-content active">
+        <div class="section-title">Recherche dans les 221 Animations</div>
+        <input type="text" id="search-input" class="search-box" placeholder="Ex: Maraschino, hip hop, belly, samba, walk...">
+
+        <div class="category-filter" id="category-filter">
+          <div class="cat-pill active" data-cat="all">Tout (221)</div>
+          <div class="cat-pill" data-cat="Danses & Grooves">Danses (29)</div>
+          <div class="cat-pill" data-cat="Poses & Silhouettes">Poses (18)</div>
+          <div class="cat-pill" data-cat="Locomotion & Déplacements">Marches (25)</div>
+          <div class="cat-pill" data-cat="Capoeira & Arts Martiaux">Capoeira (40)</div>
+        </div>
+
+        <div class="anim-list" id="anim-list">
+          <!-- Injecté dynamiquement par JS -->
+        </div>
+
+        <div class="control-group">
+          <div class="section-title">Contrôles du Mouvement Sélectionné</div>
+          <div class="control-row">
+            <label>Vitesse / Cadence :</label>
+            <input type="range" id="speed-slider" min="0.25" max="2.0" step="0.05" value="1.0">
+            <span class="val-badge" id="speed-val">1.0x</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-sm" id="btn-speed-reset">Reset 1.0x</button>
+            <button class="btn btn-sm btn-primary" id="btn-speed-128bpm">Caler 128 BPM</button>
+            <button class="btn btn-sm" id="btn-add-to-timeline">+ Ajouter Timeline</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet Caméra & Plans -->
+      <div id="tab-camera" class="tab-content">
+        <div class="section-title">Presets de Plans Cinématiques</div>
+        <div class="cam-presets">
+          <button class="cam-btn" data-cam="full">🎬 Silhouette Complète<br><span style="font-size:9px;color:var(--text-muted);">(Pieds à Tête)</span></button>
+          <button class="cam-btn active" data-cam="mid">💃 Plan Américain<br><span style="font-size:9px;color:var(--text-muted);">(Hanches & Micro)</span></button>
+          <button class="cam-btn" data-cam="bust">🎤 Buste Diva<br><span style="font-size:9px;color:var(--text-muted);">(Poitrine & Visage)</span></button>
+          <button class="cam-btn" data-cam="closeup">✨ Gros Plan Émotion<br><span style="font-size:9px;color:var(--text-muted);">(Yeux & Lipsync)</span></button>
+        </div>
+
+        <div class="control-group" style="margin-top: 10px;">
+          <div class="section-title">Ajustement Fin Manuel</div>
+          <div class="control-row">
+            <label>Distance :</label>
+            <input type="range" id="cam-dist" min="1.0" max="6.0" step="0.1" value="3.45">
+            <span class="val-badge" id="cam-dist-val">3.45m</span>
+          </div>
+          <div class="control-row">
+            <label>Hauteur Cible :</label>
+            <input type="range" id="cam-height" min="0.2" max="1.8" step="0.05" value="0.85">
+            <span class="val-badge" id="cam-height-val">0.85m</span>
+          </div>
+          <div class="control-row">
+            <label>Angle Horizontal :</label>
+            <input type="range" id="cam-angle" min="-180" max="180" step="5" value="0">
+            <span class="val-badge" id="cam-angle-val">0°</span>
+          </div>
+          <div class="control-row">
+            <label>Angle FOV :</label>
+            <input type="range" id="cam-fov" min="15" max="55" step="1" value="26">
+            <span class="val-badge" id="cam-fov-val">26°</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet Chant & Style -->
+      <div id="tab-perfo" class="tab-content">
+        <div class="control-group">
+          <div class="section-title">Accessoires & Scénographie</div>
+          <div class="control-row">
+            <label>Micro Cyber 3D Néon :</label>
+            <button class="btn btn-sm btn-primary" id="btn-toggle-mic">ACTIF [ON]</button>
+          </div>
+          <div class="control-row">
+            <label>Humeur / Regard :</label>
+            <select id="mood-select" class="search-box" style="width: auto;">
+              <option value="happy">Passionné / Scénique</option>
+              <option value="serene">Calme / Mystique</option>
+              <option value="curious">Curieux / Vivant</option>
+              <option value="neutral">Neutre</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label>Ambiance Scène :</label>
+            <select id="stage-select" class="search-box" style="width: auto;">
+              <option value="cyber-concert">Concert Cyber (Cyan/Rose)</option>
+              <option value="dark-minimal">Studio Minimal Sombre</option>
+              <option value="electric-blue">Electric Blue Neon</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Viewport 3D Interactif -->
+    <main id="viewport-container">
+      <canvas id="canvas-stage"></canvas>
+      <div id="avatar-host"></div>
+      <div id="guide-916"></div>
+
+      <!-- HUD d'information temps réel -->
+      <div id="viewport-overlay">
+        <div class="hud-line"><span class="hud-label">MOUVEMENT :</span> <span class="hud-val" id="hud-motion">Dancing Maraschino Step</span></div>
+        <div class="hud-line"><span class="hud-label">TEMPS :</span> <span class="hud-val" id="hud-time">00:00.00 / 02:37.61</span></div>
+        <div class="hud-line"><span class="hud-label">PLAN CAMÉRA :</span> <span class="hud-val" id="hud-cam">Silhouette Complète</span></div>
+        <div class="hud-line"><span class="hud-label">CADENCE :</span> <span class="hud-val" id="hud-bpm">128 BPM (1.0x)</span></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 3. Zone Timeline & Séquenceur Multi-pistes -->
+  <footer id="sequencer-panel">
+    <!-- Barre de transport -->
+    <div id="transport-bar">
+      <div class="transport-controls">
+        <button class="btn btn-primary" id="btn-play">▶ Lecture</button>
+        <button class="btn" id="btn-pause">⏸ Pause</button>
+        <button class="btn btn-danger" id="btn-stop">⏹ Stop</button>
+        <div class="time-display" id="timecode">00:00.00</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;">
+        <span style="color: var(--text-muted);">Piste audio :</span>
+        <span style="color: var(--primary); font-weight: bold;">Nexura Domina_v1.mp3 (128 BPM)</span>
+        <audio id="audio-player" src="./nexura_domina_v1.mp3" preload="auto"></audio>
+      </div>
+
+      <div>
+        <button class="btn btn-sm btn-primary" id="btn-render-clip">🎬 Exporter Clip Vidéo HD</button>
+      </div>
+    </div>
+
+    <!-- Pistes d'animation et de caméra -->
+    <div id="tracks-scroll">
+      <div id="tracks-inner">
+        <!-- Règle graduée en secondes -->
+        <div class="timeline-ruler" id="timeline-ruler"></div>
+
+        <!-- Tête de lecture rouge -->
+        <div id="playhead" style="left: 110px;"></div>
+
+        <!-- Piste 1 : Chorégraphie (Blocs d'animation VRM) -->
+        <div class="track-row" id="track-motions">
+          <div class="track-label">💃 MOUVEMENTS</div>
+          <!-- Blocs d'animations injectés ici -->
+        </div>
+
+        <!-- Piste 2 : Caméra (Plans et transitions) -->
+        <div class="track-row" id="track-cameras">
+          <div class="track-label">🎥 CAMÉRAS</div>
+          <!-- Blocs de caméras injectés ici -->
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Bundle Three-VRM avec support du Studio & Méthodes Exposées -->
+<script src="./vrm/vrm_pet.bundle.js?v=choreographer_v1"></script>
+
+<script>
+// =========================================================================
+// 1. Initialisation Globale & Données de l'Atelier
+// =========================================================================
+let petInstance = null;
+let animManifest = null;
+let currentMotion = "Dancing Maraschino Step.vrma";
+let isPlaying = false;
+let isMicOn = true;
+let currentCamPreset = "full";
+
+const PIXELS_PER_SECOND = 25; // 1 seconde = 25px sur la timeline
+const TRACK_START_OFFSET = 110; // Largeur du label de piste
+
+// Preset officiel chorégraphié pour Nexura Domina (157.6s)
+let sequenceData = {
+  audio: "nexura_domina_v1.mp3",
+  duration: 157.61,
+  bpm: 128,
+  motions: [
+    { start: 0.0, end: 14.5, file: "Female Dance Pose.vrma", name: "Intro Diva Mystique", speed: 0.95 },
+    { start: 14.5, end: 46.0, file: "Dancing Maraschino Step.vrma", name: "Couplet Déhanché Pop", speed: 1.0 },
+    { start: 46.0, end: 78.0, file: "Dancing.vrma", name: "Montée Rythmique", speed: 1.05 },
+    { start: 78.0, end: 112.0, file: "Dancing Maraschino Step.vrma", name: "Drop Déhanché Scénique", speed: 1.0 },
+    { start: 112.0, end: 142.0, file: "Female Dance Pose1.vrma", name: "Climax Vocal Passionné", speed: 0.95 },
+    { start: 142.0, end: 157.6, file: "Female Dance Pose.vrma", name: "Outro Signature Idol", speed: 0.90 }
+  ],
+  cameras: [
+    { start: 0.0, end: 14.5, preset: "mid", name: "Plan Américain" },
+    { start: 14.5, end: 46.0, preset: "full", name: "Silhouette Complète" },
+    { start: 46.0, end: 78.0, preset: "mid", name: "Plan Déhanché" },
+    { start: 78.0, end: 112.0, preset: "full", name: "Plan Scène Ouverte" },
+    { start: 112.0, end: 142.0, preset: "bust", name: "Gros Plan Diva" },
+    { start: 142.0, end: 157.6, preset: "full", name: "Plan Large Final" }
+  ]
+};
+
+// =========================================================================
+// 2. Démarrage du VRM et Scène 3D
+// =========================================================================
+async function initStudio() {
+  const hostEl = document.getElementById("avatar-host");
+  console.log("[Choreographer] Démarrage du Three-VRM Studio...");
+
+  petInstance = window.__createVrmPet(hostEl, {
+    modelUrl: "./vrm/Compagnon.vrm",
+    framing: "full"
+  });
+
+  const checkReady = setInterval(() => {
+    if (petInstance && petInstance.ready) {
+      clearInterval(checkReady);
+      console.log("[Choreographer] Avatar 3D prêt !");
+      onAvatarReady();
+    }
+  }, 100);
+
+  // Charger le catalogue d'animations
+  loadManifest();
+  setupAudio();
+  renderTimeline();
+  setupEvents();
+  initStageCanvas();
+}
+
+function onAvatarReady() {
+  // Activer le micro cyber par défaut
+  if (petInstance.setMicVisible) petInstance.setMicVisible(true);
+  // Jouer l'animation initiale
+  playSelectedMotion("Dancing Maraschino Step.vrma");
+  applyCamPreset("full");
+}
+
+// =========================================================================
+// 3. Gestion du Catalogue d'Animations
+// =========================================================================
+async function loadManifest() {
+  try {
+    const res = await fetch("./vrm/animations/manifest.json");
+    animManifest = await res.json();
+    renderAnimList(animManifest.categories);
+  } catch (err) {
+    console.warn("[Choreographer] Erreur chargement manifest:", err);
+  }
+}
+
+function renderAnimList(categories, filterQuery = "") {
+  const listEl = document.getElementById("anim-list");
+  listEl.innerHTML = "";
+
+  const query = filterQuery.toLowerCase().trim();
+
+  Object.entries(categories).forEach(([catName, files]) => {
+    files.forEach(file => {
+      const cleanName = file.replace(/\.vrma$/i, "");
+      if (query && !cleanName.toLowerCase().includes(query) && !catName.toLowerCase().includes(query)) {
+        return;
+      }
+
+      const item = document.createElement("div");
+      item.className = "anim-item" + (file === currentMotion ? " selected" : "");
+      item.innerHTML = `
+        <span>${cleanName}</span>
+        <span class="anim-badge">${catName.split(" ")[0]}</span>
+      `;
+      item.onclick = () => {
+        document.querySelectorAll(".anim-item").forEach(el => el.classList.remove("selected"));
+        item.classList.add("selected");
+        currentMotion = file;
+        playSelectedMotion(file);
+      };
+      listEl.appendChild(item);
+    });
+  });
+}
+
+function playSelectedMotion(file) {
+  if (!petInstance) return;
+  console.log("[Choreographer] Play animation:", file);
+  currentMotion = file;
+  document.getElementById("hud-motion").innerText = file.replace(/\.vrma$/i, "");
+
+  if (petInstance.playVRMA) {
+    petInstance.playVRMA(file, { loop: true });
+  }
+  const speed = parseFloat(document.getElementById("speed-slider").value);
+  if (petInstance.setSpeed) petInstance.setSpeed(speed);
+}
+
+// =========================================================================
+// 4. Contrôles Caméra & Presets
+// =========================================================================
+const CAM_PRESETS = {
+  full: { dist: 3.45, lookY: 0.82, fov: 26, name: "Silhouette Complète" },
+  mid: { dist: 2.70, lookY: 0.95, fov: 26, name: "Plan Américain (Hanches & Micro)" },
+  bust: { dist: 1.50, lookY: 1.30, fov: 24, name: "Buste Diva" },
+  closeup: { dist: 0.95, lookY: 1.40, fov: 22, name: "Gros Plan Émotion" }
+};
+
+function applyCamPreset(key) {
+  const p = CAM_PRESETS[key];
+  if (!p || !petInstance) return;
+  currentCamPreset = key;
+
+  document.querySelectorAll(".cam-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.cam === key);
+  });
+
+  document.getElementById("cam-dist").value = p.dist;
+  document.getElementById("cam-dist-val").innerText = p.dist + "m";
+  document.getElementById("cam-height").value = p.lookY;
+  document.getElementById("cam-height-val").innerText = p.lookY + "m";
+  document.getElementById("cam-fov").value = p.fov;
+  document.getElementById("cam-fov-val").innerText = p.fov + "°";
+
+  document.getElementById("hud-cam").innerText = p.name;
+
+  if (petInstance.setCamera) {
+    petInstance.setCamera({ dist: p.dist, lookY: p.lookY, fov: p.fov });
+  }
+}
+
+// =========================================================================
+// 5. Timeline Musicale & Séquenceur Multi-pistes
+// =========================================================================
+const audio = document.getElementById("audio-player");
+
+function renderTimeline() {
+  const rulerEl = document.getElementById("timeline-ruler");
+  const motionsTrack = document.getElementById("track-motions");
+  const camerasTrack = document.getElementById("track-cameras");
+  const totalDuration = sequenceData.duration;
+  const totalWidth = totalDuration * PIXELS_PER_SECOND + TRACK_START_OFFSET + 200;
+
+  document.getElementById("tracks-inner").style.width = totalWidth + "px";
+
+  // 1. Règle graduée
+  rulerEl.innerHTML = "";
+  for (let sec = 0; sec <= totalDuration; sec += 5) {
+    const mark = document.createElement("div");
+    mark.className = "ruler-mark";
+    mark.style.left = (sec * PIXELS_PER_SECOND + TRACK_START_OFFSET) + "px";
+    const mins = Math.floor(sec / 60);
+    const s = sec % 60;
+    mark.innerText = `${mins}:${s < 10 ? '0' : ''}${s}`;
+    rulerEl.appendChild(mark);
+  }
+
+  // 2. Piste Mouvements
+  motionsTrack.querySelectorAll(".timeline-block").forEach(b => b.remove());
+  sequenceData.motions.forEach(block => {
+    const left = block.start * PIXELS_PER_SECOND + TRACK_START_OFFSET;
+    const width = (block.end - block.start) * PIXELS_PER_SECOND;
+    const b = document.createElement("div");
+    b.className = "timeline-block";
+    b.style.left = left + "px";
+    b.style.width = Math.max(30, width) + "px";
+    b.innerText = block.name;
+    b.onclick = () => seekTo(block.start);
+    motionsTrack.appendChild(b);
+  });
+
+  // 3. Piste Caméras
+  camerasTrack.querySelectorAll(".timeline-block").forEach(b => b.remove());
+  sequenceData.cameras.forEach(block => {
+    const left = block.start * PIXELS_PER_SECOND + TRACK_START_OFFSET;
+    const width = (block.end - block.start) * PIXELS_PER_SECOND;
+    const b = document.createElement("div");
+    b.className = "timeline-block cam-block";
+    b.style.left = left + "px";
+    b.style.width = Math.max(30, width) + "px";
+    b.innerText = block.name;
+    b.onclick = () => {
+      seekTo(block.start);
+      applyCamPreset(block.preset);
+    };
+    camerasTrack.appendChild(b);
+  });
+}
+
+function seekTo(seconds) {
+  audio.currentTime = seconds;
+  updatePlaybackPosition(seconds);
+}
+
+function updatePlaybackPosition(curTime) {
+  const px = curTime * PIXELS_PER_SECOND + TRACK_START_OFFSET;
+  document.getElementById("playhead").style.left = px + "px";
+
+  // Format timecode MM:SS.SS
+  const mins = Math.floor(curTime / 60);
+  const secs = curTime % 60;
+  const timeStr = `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs.toFixed(2)}`;
+  document.getElementById("timecode").innerText = timeStr;
+  document.getElementById("hud-time").innerText = `${timeStr} / 02:37.61`;
+
+  // Vérifier quel bloc d'animation doit être actif
+  const activeMotion = sequenceData.motions.find(m => curTime >= m.start && curTime < m.end);
+  if (activeMotion && activeMotion.file !== currentMotion) {
+    playSelectedMotion(activeMotion.file);
+  }
+
+  // Vérifier quelle caméra doit être active
+  const activeCam = sequenceData.cameras.find(c => curTime >= c.start && curTime < c.end);
+  if (activeCam && activeCam.preset !== currentCamPreset) {
+    applyCamPreset(activeCam.preset);
+  }
+}
+
+// =========================================================================
+// 6. Audio WebGL Equalizer & Animation Canvas
+// =========================================================================
+let audioCtx, analyser, dataArray;
+
+function setupAudio() {
+  const barsCanvas = document.getElementById("audio-bars-canvas");
+  const barsCtx = barsCanvas.getContext("2d");
+
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    const source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+  } catch (e) {
+    console.warn("[Choreographer] Web Audio API init note:", e);
+  }
+
+  function drawMiniBars() {
+    barsCtx.clearRect(0, 0, barsCanvas.width, barsCanvas.height);
+    if (analyser && dataArray && !audio.paused) {
+      analyser.getByteFrequencyData(dataArray);
+      const count = 16;
+      const barW = barsCanvas.width / count - 2;
+      for (let i = 0; i < count; i++) {
+        const val = dataArray[i] / 255;
+        const h = val * barsCanvas.height;
+        barsCtx.fillStyle = i < 8 ? "#00f5d4" : "#f43f5e";
+        barsCtx.fillRect(i * (barW + 2), barsCanvas.height - h, barW, h);
+      }
+    }
+    requestAnimationFrame(drawMiniBars);
+  }
+  requestAnimationFrame(drawMiniBars);
+}
+
+// Scène d'ambiance avec sol miroir et faisceaux
+function initStageCanvas() {
+  const canvas = document.getElementById("canvas-stage");
+  const ctx = canvas.getContext("2d");
+
+  function resize() {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  function renderStage(now) {
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Fond dégradé studio concert
+    const grad = ctx.createRadialGradient(w/2, h*0.45, 40, w/2, h/2, Math.max(w, h)*0.75);
+    grad.addColorStop(0, "#0c152a");
+    grad.addColorStop(0.5, "#060914");
+    grad.addColorStop(1, "#020308");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Projecteurs volumétriques
+    const t = now * 0.001;
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const p1 = ctx.createLinearGradient(0, 0, w * 0.4, h);
+    p1.addColorStop(0, "#00f5d4");
+    p1.addColorStop(1, "transparent");
+    ctx.fillStyle = p1;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.15, 0);
+    ctx.lineTo(w * 0.45 + Math.sin(t) * 40, h);
+    ctx.lineTo(w * 0.25, h);
+    ctx.fill();
+
+    const p2 = ctx.createLinearGradient(w, 0, w * 0.6, h);
+    p2.addColorStop(0, "#f43f5e");
+    p2.addColorStop(1, "transparent");
+    ctx.fillStyle = p2;
+    ctx.beginPath();
+    ctx.moveTo(w * 0.85, 0);
+    ctx.lineTo(w * 0.55 + Math.cos(t) * 40, h);
+    ctx.lineTo(w * 0.75, h);
+    ctx.fill();
+    ctx.restore();
+
+    requestAnimationFrame(renderStage);
+  }
+  requestAnimationFrame(renderStage);
+}
+
+// =========================================================================
+// 7. Événements UI & Gestion des Interactions
+// =========================================================================
+function setupEvents() {
+  // Onglets
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    };
+  });
+
+  // Recherche d'animations
+  const searchInput = document.getElementById("search-input");
+  searchInput.oninput = () => {
+    if (animManifest) renderAnimList(animManifest.categories, searchInput.value);
+  };
+
+  // Filtres catégories
+  document.querySelectorAll(".cat-pill").forEach(pill => {
+    pill.onclick = () => {
+      document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      const cat = pill.dataset.cat;
+      if (cat === "all") {
+        renderAnimList(animManifest.categories, searchInput.value);
+      } else {
+        const filtered = { [cat]: animManifest.categories[cat] || [] };
+        renderAnimList(filtered, searchInput.value);
+      }
+    };
+  });
+
+  // Vitesse de lecture slider
+  const speedSlider = document.getElementById("speed-slider");
+  speedSlider.oninput = () => {
+    const val = parseFloat(speedSlider.value);
+    document.getElementById("speed-val").innerText = val.toFixed(2) + "x";
+    document.getElementById("hud-bpm").innerText = Math.round(128 * val) + " BPM (" + val.toFixed(2) + "x)";
+    if (petInstance && petInstance.setSpeed) petInstance.setSpeed(val);
+  };
+  document.getElementById("btn-speed-reset").onclick = () => {
+    speedSlider.value = 1.0;
+    speedSlider.oninput();
+  };
+  document.getElementById("btn-speed-128bpm").onclick = () => {
+    speedSlider.value = 1.0;
+    speedSlider.oninput();
+  };
+
+  // Presets Caméra
+  document.querySelectorAll(".cam-btn").forEach(btn => {
+    btn.onclick = () => applyCamPreset(btn.dataset.cam);
+  });
+
+  // Sliders Caméra manuelle
+  const distSlider = document.getElementById("cam-dist");
+  const heightSlider = document.getElementById("cam-height");
+  const angleSlider = document.getElementById("cam-angle");
+  const fovSlider = document.getElementById("cam-fov");
+
+  function onCamSliderChange() {
+    const dist = parseFloat(distSlider.value);
+    const height = parseFloat(heightSlider.value);
+    const angleDeg = parseFloat(angleSlider.value);
+    const fov = parseFloat(fovSlider.value);
+
+    document.getElementById("cam-dist-val").innerText = dist.toFixed(2) + "m";
+    document.getElementById("cam-height-val").innerText = height.toFixed(2) + "m";
+    document.getElementById("cam-angle-val").innerText = angleDeg + "°";
+    document.getElementById("cam-fov-val").innerText = fov + "°";
+
+    const angleRad = (angleDeg * Math.PI) / 180;
+    if (petInstance && petInstance.setCamera) {
+      petInstance.setCamera({ dist, height, lookY: height, angle: angleRad, fov });
+    }
+  }
+  distSlider.oninput = onCamSliderChange;
+  heightSlider.oninput = onCamSliderChange;
+  angleSlider.oninput = onCamSliderChange;
+  fovSlider.oninput = onCamSliderChange;
+
+  // Toggle Micro
+  const btnMic = document.getElementById("btn-toggle-mic");
+  btnMic.onclick = () => {
+    isMicOn = !isMicOn;
+    btnMic.innerText = isMicOn ? "ACTIF [ON]" : "MASQUÉ [OFF]";
+    btnMic.className = isMicOn ? "btn btn-sm btn-primary" : "btn btn-sm";
+    if (petInstance && petInstance.setMicVisible) petInstance.setMicVisible(isMicOn);
+  };
+
+  // Transport : Play / Pause / Stop
+  const btnPlay = document.getElementById("btn-play");
+  const btnPause = document.getElementById("btn-pause");
+  const btnStop = document.getElementById("btn-stop");
+
+  btnPlay.onclick = () => {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    audio.play();
+    isPlaying = true;
+  };
+  btnPause.onclick = () => {
+    audio.pause();
+    isPlaying = false;
+  };
+  btnStop.onclick = () => {
+    audio.pause();
+    audio.currentTime = 0;
+    isPlaying = false;
+    updatePlaybackPosition(0);
+  };
+
+  audio.ontimeupdate = () => {
+    updatePlaybackPosition(audio.currentTime);
+  };
+
+  // Clic sur timeline pour scrubber
+  const rulerEl = document.getElementById("timeline-ruler");
+  rulerEl.onclick = (e) => {
+    const rect = rulerEl.getBoundingClientRect();
+    const clickX = e.clientX - rect.left + document.getElementById("tracks-scroll").scrollLeft;
+    const time = Math.max(0, Math.min(sequenceData.duration, (clickX - TRACK_START_OFFSET) / PIXELS_PER_SECOND));
+    seekTo(time);
+  };
+
+  // Bouton Toggle Guide 9:16
+  const guide916 = document.getElementById("guide-916");
+  const btnGuide = document.getElementById("btn-toggle-guide");
+  btnGuide.onclick = () => {
+    const vis = guide916.style.display !== "none";
+    guide916.style.display = vis ? "none" : "block";
+    btnGuide.innerText = vis ? "Guide 9:16 [OFF]" : "Guide 9:16 [ON]";
+  };
+
+  // Bouton Ajouter à la Timeline
+  document.getElementById("btn-add-to-timeline").onclick = () => {
+    const curTime = audio.currentTime;
+    const speed = parseFloat(speedSlider.value);
+    const duration = 15.0; // Bloc par défaut 15 secondes
+    sequenceData.motions.push({
+      start: curTime,
+      end: Math.min(sequenceData.duration, curTime + duration),
+      file: currentMotion,
+      name: currentMotion.replace(/\.vrma$/i, ""),
+      speed
+    });
+    sequenceData.motions.sort((a,b) => a.start - b.start);
+    renderTimeline();
+  };
+
+  // Bouton Sauvegarder Projet
+  document.getElementById("btn-save-project").onclick = () => {
+    const jsonStr = JSON.stringify(sequenceData, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "choreography_nexura_domina.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Bouton Charger Preset Nexura
+  document.getElementById("btn-load-preset").onclick = () => {
+    renderTimeline();
+    seekTo(0);
+    alert("Preset chorégraphique officiel Nexura Domina chargé !");
+  };
+
+  // Bouton Export Rendu Vidéo
+  document.getElementById("btn-render-clip").onclick = () => {
+    alert("Pour lancer l'export HD hors-ligne déterministe avec la chorégraphie actuelle, le script Python offline renderer est prêt.");
+  };
+}
+
+// Initialisation au chargement du DOM
+window.addEventListener("DOMContentLoaded", initStudio);
+</script>
+
+</body>
+</html>

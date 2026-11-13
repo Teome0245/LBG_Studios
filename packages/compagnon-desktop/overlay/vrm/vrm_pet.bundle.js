@@ -55439,6 +55439,47 @@ void main() {
         frameVrm(vrm);
       }
     }
+    let manualCameraMode = false;
+    function setCamera(opts2) {
+      if (!opts2) {
+        manualCameraMode = false;
+        return;
+      }
+      manualCameraMode = true;
+      if (opts2.dist !== void 0) {
+        const dist = Number(opts2.dist);
+        const angle = Number(opts2.angle ?? 0);
+        const lookY = Number(opts2.lookY ?? targetLookAt.y);
+        const height = Number(opts2.height ?? lookY + 0.1);
+        targetCamPos.set(Math.sin(angle) * dist, height, Math.cos(angle) * dist);
+        targetLookAt.set(0, lookY, 0);
+      } else if (opts2.x !== void 0 && opts2.y !== void 0 && opts2.z !== void 0) {
+        targetCamPos.set(Number(opts2.x), Number(opts2.y), Number(opts2.z));
+        if (opts2.lookY !== void 0) {
+          targetLookAt.set(Number(opts2.lookX ?? 0), Number(opts2.lookY), Number(opts2.lookZ ?? 0));
+        }
+      }
+      if (opts2.fov !== void 0) {
+        targetFov = Math.max(10, Math.min(80, Number(opts2.fov)));
+      }
+      if (opts2.immediate) {
+        currentCamPos.copy(targetCamPos);
+        currentLookAt.copy(targetLookAt);
+        currentFov = targetFov;
+        camera.fov = currentFov;
+        camera.position.copy(currentCamPos);
+        camera.lookAt(currentLookAt);
+        camera.updateProjectionMatrix();
+      }
+    }
+    function setMicVisible(vis) {
+      if (vrm) ensureMicAttached(vrm);
+      cyberMicGroup.visible = !!vis;
+    }
+    function setSpeed(speed) {
+      const s = Math.max(0.1, Math.min(4, Number(speed)));
+      if (activeVrmaAction) activeVrmaAction.timeScale = s;
+    }
     function makeSolidColorTexture(hexColor) {
       const canvas = document.createElement("canvas");
       canvas.width = 4;
@@ -56142,6 +56183,9 @@ void main() {
       pulse,
       flip,
       setFraming,
+      setCamera,
+      setMicVisible,
+      setSpeed,
       setPose,
       setHeading,
       equipAccessory,
@@ -56155,6 +56199,21 @@ void main() {
       startShow,
       stopShow,
       isShowing,
+      get camera() {
+        return camera;
+      },
+      get scene() {
+        return scene;
+      },
+      get vrm() {
+        return vrm;
+      },
+      get mixer() {
+        return mixer;
+      },
+      get activeAction() {
+        return activeVrmaAction;
+      },
       get activeVRMA() {
         return activeVrmaName;
       },
