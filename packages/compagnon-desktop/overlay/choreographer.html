@@ -447,20 +447,113 @@
     font-weight: 600;
     display: flex;
     align-items: center;
-    padding: 0 8px;
-    cursor: pointer;
+    padding: 0 6px;
+    cursor: grab;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    user-select: none;
   }
-  .timeline-block.active {
-    box-shadow: 0 0 12px var(--primary);
-    border-width: 2px;
+  .timeline-block:active { cursor: grabbing; }
+  .timeline-block.selected {
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 0 16px var(--primary), 0 0 4px #ffffff !important;
+    background: linear-gradient(135deg, rgba(0, 245, 212, 0.45), rgba(0, 180, 216, 0.6)) !important;
+    z-index: 10;
   }
   .timeline-block.cam-block {
     background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(244, 63, 94, 0.3));
     border-color: var(--accent);
+  }
+  .timeline-block.cam-block.selected {
+    box-shadow: 0 0 16px var(--accent), 0 0 4px #ffffff !important;
+  }
+
+  .block-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    padding: 0 4px;
+  }
+
+  /* Bouton suppression croix sur chaque bloc */
+  .block-delete-btn {
+    opacity: 0;
+    background: rgba(244, 63, 94, 0.85);
+    color: #ffffff;
+    border: none;
+    border-radius: 3px;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    margin-left: 4px;
+    z-index: 5;
+  }
+  .timeline-block:hover .block-delete-btn, .timeline-block.selected .block-delete-btn {
+    opacity: 1;
+  }
+  .block-delete-btn:hover {
+    transform: scale(1.2);
+    background: #ff0033;
+  }
+
+  /* Poignées d'étirement (Trimming) gauche et droite */
+  .block-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: ew-resize;
+    z-index: 4;
+    transition: background 0.15s;
+  }
+  .block-handle-left { left: 0; }
+  .block-handle-right { right: 0; }
+  .timeline-block:hover .block-handle {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  .block-handle:hover {
+    background: var(--primary) !important;
+  }
+
+  /* Barre d'outils d'édition rapide sous le transport */
+  #edit-toolbar {
+    height: 36px;
+    background: #090e1a;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    font-size: 11px;
+    gap: 12px;
+  }
+  .edit-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .edit-input {
+    width: 58px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--primary);
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px 4px;
   }
 
   /* Tête de lecture (Playhead) */
@@ -650,6 +743,30 @@
 
       <div>
         <button class="btn btn-sm btn-primary" id="btn-render-clip">🎬 Exporter Clip Vidéo HD</button>
+      </div>
+    </div>
+
+    <!-- Barre d'outils d'édition rapide : Couper, Supprimer, Ajuster -->
+    <div id="edit-toolbar">
+      <div class="edit-toolbar-group">
+        <button class="btn btn-sm btn-primary" id="btn-split" title="Coupe le bloc sélectionné à la tête de lecture (Raccourci: C)">✂ Couper au Curseur [C]</button>
+        <button class="btn btn-sm btn-danger" id="btn-delete-block" title="Supprime le bloc sélectionné (Raccourci: Suppr)">🗑 Supprimer le Bloc [Suppr]</button>
+        <button class="btn btn-sm" id="btn-clear-track" title="Vide tous les mouvements de la timeline">🧹 Vider Piste</button>
+      </div>
+
+      <div class="edit-toolbar-group" id="selected-block-details" style="display: none;">
+        <span style="color: var(--primary); font-weight: bold;" id="sel-block-name">Bloc sélectionné</span>
+        <label>Début :</label>
+        <input type="number" id="sel-block-start" class="edit-input" step="0.1" min="0">
+        <label>Fin :</label>
+        <input type="number" id="sel-block-end" class="edit-input" step="0.1" min="0">
+        <span class="val-badge" id="sel-block-dur">0.0s</span>
+        <label>Vitesse :</label>
+        <input type="number" id="sel-block-speed" class="edit-input" step="0.05" min="0.2" max="2.0" value="1.0">
+      </div>
+
+      <div class="edit-toolbar-group" style="color: var(--text-muted); font-size: 10px;">
+        💡 Cliquez pour sélectionner • Tirez les bords pour étirer • [C] couper • [Suppr] supprimer
       </div>
     </div>
 
@@ -844,9 +961,132 @@ function applyCamPreset(key) {
 }
 
 // =========================================================================
-// 5. Timeline Musicale & Séquenceur Multi-pistes
+// 5. Timeline Musicale & Séquenceur Multi-pistes (Édition, Couper, Supprimer)
 // =========================================================================
 const audio = document.getElementById("audio-player");
+let selectedBlock = null; // { type: 'motion'|'camera', index: number }
+
+function selectBlock(type, index) {
+  selectedBlock = { type, index };
+  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+  const block = list[index];
+  if (!block) {
+    deselectBlock();
+    return;
+  }
+
+  // Mettre à jour l'UI des détails
+  const detailsEl = document.getElementById("selected-block-details");
+  if (detailsEl) {
+    detailsEl.style.display = "flex";
+    document.getElementById("sel-block-name").innerText = (type === "motion" ? "💃 " : "🎥 ") + block.name;
+    const startInput = document.getElementById("sel-block-start");
+    const endInput = document.getElementById("sel-block-end");
+    const durSpan = document.getElementById("sel-block-dur");
+    const speedInput = document.getElementById("sel-block-speed");
+
+    startInput.value = block.start.toFixed(2);
+    endInput.value = block.end.toFixed(2);
+    durSpan.innerText = (block.end - block.start).toFixed(2) + "s";
+    if (speedInput) {
+      speedInput.value = (block.speed || 1.0).toFixed(2);
+      speedInput.style.display = type === "motion" ? "inline-block" : "none";
+    }
+  }
+
+  // Rafraîchir les classes CSS .selected
+  document.querySelectorAll(".timeline-block").forEach(b => b.classList.remove("selected"));
+  const trackId = type === "motion" ? "track-motions" : "track-cameras";
+  const domBlocks = document.getElementById(trackId)?.querySelectorAll(".timeline-block");
+  if (domBlocks && domBlocks[index]) {
+    domBlocks[index].classList.add("selected");
+  }
+
+  // Si c'est un mouvement, prévisualiser immédiatement
+  if (type === "motion" && block.file) {
+    playSelectedMotion(block.file);
+  } else if (type === "camera" && block.preset) {
+    applyCamPreset(block.preset);
+  }
+}
+
+function deselectBlock() {
+  selectedBlock = null;
+  const detailsEl = document.getElementById("selected-block-details");
+  if (detailsEl) detailsEl.style.display = "none";
+  document.querySelectorAll(".timeline-block").forEach(b => b.classList.remove("selected"));
+}
+
+function deleteBlock(type, index) {
+  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+  if (index >= 0 && index < list.length) {
+    const removed = list.splice(index, 1)[0];
+    console.log("[Choreographer] Bloc supprimé:", removed.name);
+    deselectBlock();
+    renderTimeline();
+    // Synchroniser l'état audio actuel
+    updatePlaybackPosition(audio.currentTime);
+  }
+}
+
+function deleteSelectedBlock() {
+  if (!selectedBlock) return;
+  deleteBlock(selectedBlock.type, selectedBlock.index);
+}
+
+function splitSelectedBlockAtPlayhead() {
+  const curTime = audio.currentTime;
+  let targetType = selectedBlock ? selectedBlock.type : "motion";
+  let list = targetType === "motion" ? sequenceData.motions : sequenceData.cameras;
+  let targetIdx = selectedBlock ? selectedBlock.index : -1;
+
+  // Si aucun bloc sélectionné, trouver le bloc sous la tête de lecture
+  if (targetIdx === -1) {
+    targetIdx = list.findIndex(b => curTime > b.start + 0.25 && curTime < b.end - 0.25);
+  }
+
+  if (targetIdx === -1) {
+    // Si aucun mouvement sous le curseur, chercher dans les caméras
+    list = sequenceData.cameras;
+    targetType = "camera";
+    targetIdx = list.findIndex(b => curTime > b.start + 0.25 && curTime < b.end - 0.25);
+  }
+
+  if (targetIdx === -1) {
+    console.warn("[Choreographer] Aucun bloc à couper à la position", curTime.toFixed(2));
+    return;
+  }
+
+  const origBlock = list[targetIdx];
+  if (curTime <= origBlock.start + 0.25 || curTime >= origBlock.end - 0.25) {
+    console.warn("[Choreographer] La tête de lecture est trop proche d'une extrémité pour couper.");
+    return;
+  }
+
+  // Couper en deux : le bloc existant s'arrête à curTime, le nouveau démarre à curTime
+  const oldEnd = origBlock.end;
+  origBlock.end = Number(curTime.toFixed(2));
+
+  const newBlock = {
+    ...origBlock,
+    start: Number(curTime.toFixed(2)),
+    end: oldEnd
+  };
+
+  list.splice(targetIdx + 1, 0, newBlock);
+  console.log(`[Choreographer] Bloc "${origBlock.name}" coupé à ${curTime.toFixed(2)}s.`);
+
+  renderTimeline();
+  selectBlock(targetType, targetIdx + 1);
+}
+
+function clearMotionsTrack() {
+  if (confirm("Voulez-vous vraiment effacer tous les mouvements de la timeline ?")) {
+    sequenceData.motions = [];
+    deselectBlock();
+    renderTimeline();
+  }
+}
 
 function renderTimeline() {
   const rulerEl = document.getElementById("timeline-ruler");
@@ -871,34 +1111,164 @@ function renderTimeline() {
 
   // 2. Piste Mouvements
   motionsTrack.querySelectorAll(".timeline-block").forEach(b => b.remove());
-  sequenceData.motions.forEach(block => {
+  sequenceData.motions.forEach((block, idx) => {
     const left = block.start * PIXELS_PER_SECOND + TRACK_START_OFFSET;
     const width = (block.end - block.start) * PIXELS_PER_SECOND;
-    const b = document.createElement("div");
-    b.className = "timeline-block";
-    b.style.left = left + "px";
-    b.style.width = Math.max(30, width) + "px";
-    b.innerText = block.name;
-    b.onclick = () => seekTo(block.start);
+    const b = createTimelineBlockElement("motion", block, idx, left, width);
     motionsTrack.appendChild(b);
   });
 
   // 3. Piste Caméras
   camerasTrack.querySelectorAll(".timeline-block").forEach(b => b.remove());
-  sequenceData.cameras.forEach(block => {
+  sequenceData.cameras.forEach((block, idx) => {
     const left = block.start * PIXELS_PER_SECOND + TRACK_START_OFFSET;
     const width = (block.end - block.start) * PIXELS_PER_SECOND;
-    const b = document.createElement("div");
-    b.className = "timeline-block cam-block";
-    b.style.left = left + "px";
-    b.style.width = Math.max(30, width) + "px";
-    b.innerText = block.name;
-    b.onclick = () => {
-      seekTo(block.start);
-      applyCamPreset(block.preset);
-    };
+    const b = createTimelineBlockElement("camera", block, idx, left, width);
     camerasTrack.appendChild(b);
   });
+
+  // Restaurer sélection visuelle si active
+  if (selectedBlock) {
+    const trackId = selectedBlock.type === "motion" ? "track-motions" : "track-cameras";
+    const domBlocks = document.getElementById(trackId)?.querySelectorAll(".timeline-block");
+    if (domBlocks && domBlocks[selectedBlock.index]) {
+      domBlocks[selectedBlock.index].classList.add("selected");
+    }
+  }
+}
+
+function createTimelineBlockElement(type, block, idx, left, width) {
+  const b = document.createElement("div");
+  b.className = "timeline-block" + (type === "camera" ? " cam-block" : "");
+  if (selectedBlock && selectedBlock.type === type && selectedBlock.index === idx) {
+    b.classList.add("selected");
+  }
+  b.style.left = left + "px";
+  b.style.width = Math.max(28, width) + "px";
+
+  // Poignée gauche (Trim Start)
+  const handleL = document.createElement("div");
+  handleL.className = "block-handle block-handle-left";
+  handleL.title = "Glisser pour rogner le début";
+  b.appendChild(handleL);
+
+  // Titre du bloc
+  const titleEl = document.createElement("span");
+  titleEl.className = "block-title";
+  titleEl.innerText = block.name;
+  b.appendChild(titleEl);
+
+  // Bouton suppression [×]
+  const delBtn = document.createElement("button");
+  delBtn.className = "block-delete-btn";
+  delBtn.innerText = "×";
+  delBtn.title = "Supprimer ce bloc";
+  delBtn.onclick = (e) => {
+    e.stopPropagation();
+    deleteBlock(type, idx);
+  };
+  b.appendChild(delBtn);
+
+  // Poignée droite (Trim End)
+  const handleR = document.createElement("div");
+  handleR.className = "block-handle block-handle-right";
+  handleR.title = "Glisser pour rogner la fin";
+  b.appendChild(handleR);
+
+  // Clic sélection
+  b.onclick = (e) => {
+    e.stopPropagation();
+    selectBlock(type, idx);
+    seekTo(block.start);
+  };
+
+  // Trimming & Dragging Interactif
+  setupBlockInteractions(b, type, idx, handleL, handleR);
+
+  return b;
+}
+
+function setupBlockInteractions(blockEl, type, idx, handleL, handleR) {
+  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+
+  // 1. Trimming Gauche (Début)
+  handleL.onmousedown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const origStart = list[idx].start;
+    const blockEnd = list[idx].end;
+
+    function onMouseMove(ev) {
+      const deltaPx = ev.clientX - startX;
+      const deltaSec = deltaPx / PIXELS_PER_SECOND;
+      let newStart = Math.max(0, Math.min(blockEnd - 0.4, origStart + deltaSec));
+      list[idx].start = Number(newStart.toFixed(2));
+      renderTimeline();
+      selectBlock(type, idx);
+    }
+    function onMouseUp() {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  // 2. Trimming Droit (Fin)
+  handleR.onmousedown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const startX = e.clientX;
+    const blockStart = list[idx].start;
+    const origEnd = list[idx].end;
+
+    function onMouseMove(ev) {
+      const deltaPx = ev.clientX - startX;
+      const deltaSec = deltaPx / PIXELS_PER_SECOND;
+      let newEnd = Math.max(blockStart + 0.4, Math.min(sequenceData.duration, origEnd + deltaSec));
+      list[idx].end = Number(newEnd.toFixed(2));
+      renderTimeline();
+      selectBlock(type, idx);
+    }
+    function onMouseUp() {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  // 3. Déplacement horizontal du bloc (Move)
+  blockEl.onmousedown = (e) => {
+    if (e.target === handleL || e.target === handleR || e.target.classList.contains("block-delete-btn")) return;
+    const startX = e.clientX;
+    const origStart = list[idx].start;
+    const dur = list[idx].end - list[idx].start;
+    let hasMoved = false;
+
+    function onMouseMove(ev) {
+      const deltaPx = ev.clientX - startX;
+      if (Math.abs(deltaPx) > 3) hasMoved = true;
+      const deltaSec = deltaPx / PIXELS_PER_SECOND;
+      let newStart = Math.max(0, Math.min(sequenceData.duration - dur, origStart + deltaSec));
+      list[idx].start = Number(newStart.toFixed(2));
+      list[idx].end = Number((newStart + dur).toFixed(2));
+      renderTimeline();
+      selectBlock(type, idx);
+    }
+    function onMouseUp() {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      if (hasMoved) {
+        // Réordonner la liste par start
+        list.sort((a,b) => a.start - b.start);
+        renderTimeline();
+      }
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
 }
 
 function seekTo(seconds) {
@@ -1162,19 +1532,91 @@ function setupEvents() {
 
   // Bouton Ajouter à la Timeline
   document.getElementById("btn-add-to-timeline").onclick = () => {
-    const curTime = audio.currentTime;
+    const curTime = Number(audio.currentTime.toFixed(2));
     const speed = parseFloat(speedSlider.value);
     const duration = 15.0; // Bloc par défaut 15 secondes
     sequenceData.motions.push({
       start: curTime,
-      end: Math.min(sequenceData.duration, curTime + duration),
+      end: Number(Math.min(sequenceData.duration, curTime + duration).toFixed(2)),
       file: currentMotion,
       name: currentMotion.replace(/\.vrma$/i, ""),
       speed
     });
     sequenceData.motions.sort((a,b) => a.start - b.start);
     renderTimeline();
+    // Sélectionner automatiquement le nouveau bloc ajouté
+    const newIdx = sequenceData.motions.findIndex(m => m.start === curTime && m.file === currentMotion);
+    if (newIdx !== -1) selectBlock("motion", newIdx);
   };
+
+  // Boutons d'édition rapide : Couper, Supprimer, Vider
+  document.getElementById("btn-split").onclick = () => {
+    splitSelectedBlockAtPlayhead();
+  };
+
+  document.getElementById("btn-delete-block").onclick = () => {
+    deleteSelectedBlock();
+  };
+
+  document.getElementById("btn-clear-track").onclick = () => {
+    clearMotionsTrack();
+  };
+
+  // Inputs d'édition numérique dans la barre d'outils
+  const inStart = document.getElementById("sel-block-start");
+  const inEnd = document.getElementById("sel-block-end");
+  const inSpeed = document.getElementById("sel-block-speed");
+
+  function onBlockInputChange() {
+    if (!selectedBlock) return;
+    const list = selectedBlock.type === "motion" ? sequenceData.motions : sequenceData.cameras;
+    const b = list[selectedBlock.index];
+    if (!b) return;
+
+    let s = parseFloat(inStart.value);
+    let e = parseFloat(inEnd.value);
+    if (isNaN(s) || isNaN(e)) return;
+    if (s < 0) s = 0;
+    if (e > sequenceData.duration) e = sequenceData.duration;
+    if (e <= s + 0.2) e = s + 0.2;
+
+    b.start = Number(s.toFixed(2));
+    b.end = Number(e.toFixed(2));
+    if (selectedBlock.type === "motion" && inSpeed) {
+      b.speed = parseFloat(inSpeed.value) || 1.0;
+    }
+    document.getElementById("sel-block-dur").innerText = (b.end - b.start).toFixed(2) + "s";
+    renderTimeline();
+  }
+
+  inStart.onchange = onBlockInputChange;
+  inEnd.onchange = onBlockInputChange;
+  if (inSpeed) inSpeed.onchange = onBlockInputChange;
+
+  // Raccourcis clavier universels
+  window.addEventListener("keydown", (e) => {
+    // Ignorer si l'utilisateur est en train de taper dans un champ texte de recherche
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) {
+      return;
+    }
+
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      deleteSelectedBlock();
+    } else if (e.key === "c" || e.key === "C" || e.key === "s" || e.key === "S") {
+      e.preventDefault();
+      splitSelectedBlockAtPlayhead();
+    } else if (e.code === "Space") {
+      e.preventDefault();
+      if (audio.paused) {
+        audio.play();
+        isPlaying = true;
+      } else {
+        audio.pause();
+        isPlaying = false;
+      }
+    }
+  });
 
   // Bouton Sauvegarder Projet
   document.getElementById("btn-save-project").onclick = () => {
