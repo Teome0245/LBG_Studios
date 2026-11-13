@@ -871,6 +871,9 @@ let currentMotion = "Dancing Maraschino Step.vrma";
 let isPlaying = false;
 let isMicOn = true;
 let currentCamPreset = "full";
+let currentExpPreset = "diva";
+let isLipsyncEnabled = true;
+let lipsyncGain = 1.3;
 
 const PIXELS_PER_SECOND = 25; // 1 seconde = 25px sur la timeline
 const TRACK_START_OFFSET = 110; // Largeur du label de piste
@@ -895,6 +898,14 @@ let sequenceData = {
     { start: 78.0, end: 112.0, preset: "full", name: "Plan Scène Ouverte" },
     { start: 112.0, end: 142.0, preset: "bust", name: "Gros Plan Diva" },
     { start: 142.0, end: 157.6, preset: "full", name: "Plan Large Final" }
+  ],
+  expressions: [
+    { start: 0.0, end: 14.5, preset: "mystique", name: "Intro Regard Mystique" },
+    { start: 14.5, end: 46.0, preset: "diva", name: "Couplet Chant Passionné" },
+    { start: 46.0, end: 78.0, preset: "idol", name: "Montée Sourire Idol" },
+    { start: 78.0, end: 112.0, preset: "climax", name: "Drop Climax Vocal" },
+    { start: 112.0, end: 142.0, preset: "diva", name: "Solo Vocal Scénique" },
+    { start: 142.0, end: 157.6, preset: "mystique", name: "Outro Présence Diva" }
   ]
 };
 
@@ -905,7 +916,7 @@ async function initStudio() {
   const hostEl = document.getElementById("avatar-host");
   console.log("[Choreographer] Démarrage du Three-VRM Studio...");
 
-  petInstance = window.__createVrmPet(hostEl, {
+  window.petInstance = petInstance = window.__createVrmPet(hostEl, {
     modelUrl: "./vrm/Compagnon.vrm",
     framing: "full"
   });
@@ -927,6 +938,12 @@ async function initStudio() {
 }
 
 function onAvatarReady() {
+  // Masquer l'indicateur de chargement
+  const loader = document.getElementById("vrm-loader");
+  if (loader) {
+    loader.style.opacity = "0";
+    setTimeout(() => { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 500);
+  }
   // Activer le micro cyber par défaut
   if (petInstance.setMicVisible) petInstance.setMicVisible(true);
   // Jouer l'animation initiale
@@ -1027,11 +1044,18 @@ function applyCamPreset(key) {
 // 5. Timeline Musicale & Séquenceur Multi-pistes (Édition, Couper, Supprimer)
 // =========================================================================
 const audio = document.getElementById("audio-player");
-let selectedBlock = null; // { type: 'motion'|'camera', index: number }
+let selectedBlock = null; // { type: 'motion'|'camera'|'expression', index: number }
+
+function getTrackList(type) {
+  if (type === "motion") return sequenceData.motions;
+  if (type === "camera") return sequenceData.cameras;
+  if (type === "expression") return sequenceData.expressions;
+  return [];
+}
 
 function selectBlock(type, index) {
   selectedBlock = { type, index };
-  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+  const list = getTrackList(type);
   const block = list[index];
   if (!block) {
     deselectBlock();
@@ -1042,34 +1066,45 @@ function selectBlock(type, index) {
   const detailsEl = document.getElementById("selected-block-details");
   if (detailsEl) {
     detailsEl.style.display = "flex";
-    document.getElementById("sel-block-name").innerText = (type === "motion" ? "💃 " : "🎥 ") + block.name;
+    const prefix = type === "motion" ? "💃 " : (type === "camera" ? "🎥 " : "🎤 ");
+    document.getElementById("sel-block-name").innerText = prefix + block.name;
     const startInput = document.getElementById("sel-block-start");
     const endInput = document.getElementById("sel-block-end");
     const durSpan = document.getElementById("sel-block-dur");
     const speedInput = document.getElementById("sel-block-speed");
+    const extraLabel = document.getElementById("lbl-block-extra");
 
     startInput.value = block.start.toFixed(2);
     endInput.value = block.end.toFixed(2);
     durSpan.innerText = (block.end - block.start).toFixed(2) + "s";
-    if (speedInput) {
-      speedInput.value = (block.speed || 1.0).toFixed(2);
-      speedInput.style.display = type === "motion" ? "inline-block" : "none";
+    if (speedInput && extraLabel) {
+      if (type === "motion") {
+        extraLabel.innerText = "Vitesse :";
+        speedInput.style.display = "inline-block";
+        speedInput.value = (block.speed || 1.0).toFixed(2);
+      } else {
+        extraLabel.innerText = "";
+        speedInput.style.display = "none";
+      }
     }
   }
 
   // Rafraîchir les classes CSS .selected
   document.querySelectorAll(".timeline-block").forEach(b => b.classList.remove("selected"));
-  const trackId = type === "motion" ? "track-motions" : "track-cameras";
+  const trackId = type === "motion" ? "track-motions" : (type === "camera" ? "track-cameras" : "track-expressions");
   const domBlocks = document.getElementById(trackId)?.querySelectorAll(".timeline-block");
   if (domBlocks && domBlocks[index]) {
     domBlocks[index].classList.add("selected");
   }
 
-  // Si c'est un mouvement, prévisualiser immédiatement
+  // Prévisualisation immédiate
   if (type === "motion" && block.file) {
     playSelectedMotion(block.file);
   } else if (type === "camera" && block.preset) {
     applyCamPreset(block.preset);
+  } else if (type === "expression") {
+    currentExpPreset = block.preset;
+    document.getElementById("hud-exp").innerText = block.name;
   }
 }
 
@@ -1081,7 +1116,7 @@ function deselectBlock() {
 }
 
 function deleteBlock(type, index) {
-  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+  const list = getTrackList(type);
   if (index >= 0 && index < list.length) {
     const removed = list.splice(index, 1)[0];
     console.log("[Choreographer] Bloc supprimé:", removed.name);
@@ -1100,7 +1135,7 @@ function deleteSelectedBlock() {
 function splitSelectedBlockAtPlayhead() {
   const curTime = audio.currentTime;
   let targetType = selectedBlock ? selectedBlock.type : "motion";
-  let list = targetType === "motion" ? sequenceData.motions : sequenceData.cameras;
+  let list = getTrackList(targetType);
   let targetIdx = selectedBlock ? selectedBlock.index : -1;
 
   // Si aucun bloc sélectionné, trouver le bloc sous la tête de lecture
@@ -1112,6 +1147,13 @@ function splitSelectedBlockAtPlayhead() {
     // Si aucun mouvement sous le curseur, chercher dans les caméras
     list = sequenceData.cameras;
     targetType = "camera";
+    targetIdx = list.findIndex(b => curTime > b.start + 0.25 && curTime < b.end - 0.25);
+  }
+
+  if (targetIdx === -1) {
+    // Chercher dans les expressions
+    list = sequenceData.expressions;
+    targetType = "expression";
     targetIdx = list.findIndex(b => curTime > b.start + 0.25 && curTime < b.end - 0.25);
   }
 
@@ -1155,6 +1197,7 @@ function renderTimeline() {
   const rulerEl = document.getElementById("timeline-ruler");
   const motionsTrack = document.getElementById("track-motions");
   const camerasTrack = document.getElementById("track-cameras");
+  const expressionsTrack = document.getElementById("track-expressions");
   const totalDuration = sequenceData.duration;
   const totalWidth = totalDuration * PIXELS_PER_SECOND + TRACK_START_OFFSET + 200;
 
@@ -1190,9 +1233,20 @@ function renderTimeline() {
     camerasTrack.appendChild(b);
   });
 
+  // 4. Piste Expressions Faciales & Chant
+  if (expressionsTrack) {
+    expressionsTrack.querySelectorAll(".timeline-block").forEach(b => b.remove());
+    sequenceData.expressions.forEach((block, idx) => {
+      const left = block.start * PIXELS_PER_SECOND + TRACK_START_OFFSET;
+      const width = (block.end - block.start) * PIXELS_PER_SECOND;
+      const b = createTimelineBlockElement("expression", block, idx, left, width);
+      expressionsTrack.appendChild(b);
+    });
+  }
+
   // Restaurer sélection visuelle si active
   if (selectedBlock) {
-    const trackId = selectedBlock.type === "motion" ? "track-motions" : "track-cameras";
+    const trackId = selectedBlock.type === "motion" ? "track-motions" : (selectedBlock.type === "camera" ? "track-cameras" : "track-expressions");
     const domBlocks = document.getElementById(trackId)?.querySelectorAll(".timeline-block");
     if (domBlocks && domBlocks[selectedBlock.index]) {
       domBlocks[selectedBlock.index].classList.add("selected");
@@ -1202,7 +1256,8 @@ function renderTimeline() {
 
 function createTimelineBlockElement(type, block, idx, left, width) {
   const b = document.createElement("div");
-  b.className = "timeline-block" + (type === "camera" ? " cam-block" : "");
+  const typeClass = type === "camera" ? " cam-block" : (type === "expression" ? " exp-block" : "");
+  b.className = "timeline-block" + typeClass;
   if (selectedBlock && selectedBlock.type === type && selectedBlock.index === idx) {
     b.classList.add("selected");
   }
@@ -1252,7 +1307,7 @@ function createTimelineBlockElement(type, block, idx, left, width) {
 }
 
 function setupBlockInteractions(blockEl, type, idx, handleL, handleR) {
-  const list = type === "motion" ? sequenceData.motions : sequenceData.cameras;
+  const list = getTrackList(type);
 
   // 1. Trimming Gauche (Début)
   handleL.onmousedown = (e) => {
@@ -1361,10 +1416,18 @@ function updatePlaybackPosition(curTime) {
   if (activeCam && activeCam.preset !== currentCamPreset) {
     applyCamPreset(activeCam.preset);
   }
+
+  // Vérifier quelle expression / style de chant doit être actif
+  const activeExp = sequenceData.expressions.find(e => curTime >= e.start && curTime < e.end);
+  if (activeExp) {
+    currentExpPreset = activeExp.preset;
+    const hudExp = document.getElementById("hud-exp");
+    if (hudExp) hudExp.innerText = activeExp.name;
+  }
 }
 
 // =========================================================================
-// 6. Audio WebGL Equalizer & Animation Canvas
+// 6. Audio WebGL Equalizer, Lipsync Vocal Temps Réel & Canvas
 // =========================================================================
 let audioCtx, analyser, dataArray;
 
@@ -1395,6 +1458,84 @@ function setupAudio() {
         const h = val * barsCanvas.height;
         barsCtx.fillStyle = i < 8 ? "#00f5d4" : "#f43f5e";
         barsCtx.fillRect(i * (barW + 2), barsCanvas.height - h, barW, h);
+      }
+
+      // Synchronisation du Lipsync Vocal et Expressions Faciales en direct
+      if (petInstance && isLipsyncEnabled) {
+        // Médiums / Formants de la voix : indices 2 à 12 (environ 300Hz à 3000Hz)
+        let voiceSum = 0;
+        let voiceCount = 0;
+        for (let i = 2; i <= 12; i++) {
+          voiceSum += dataArray[i];
+          voiceCount++;
+        }
+        const voiceRms = (voiceSum / (voiceCount * 255)) * lipsyncGain;
+        const curT = audio.currentTime;
+        const activeExp = sequenceData.expressions.find(e => curT >= e.start && curT < e.end);
+        const preset = activeExp ? activeExp.preset : (currentExpPreset || "diva");
+
+        let mouthA = 0;
+        let mouthO = 0;
+        let mouthI = 0;
+        let relaxedVal = 0;
+        let happyVal = 0;
+        let blinkVal = 0;
+
+        if (voiceRms > 0.07) {
+          // La chanteuse est en train de chanter sur la piste !
+          const energy = Math.min(1.0, (voiceRms - 0.07) * 1.6);
+          if (preset === "climax") {
+            // Climax vocal : grande ouverture de voix avec extase passionnée
+            mouthA = Math.min(1.0, energy * 1.25);
+            mouthO = Math.sin(curT * 12) > 0.15 ? energy * 0.50 : 0;
+            relaxedVal = 0.85;
+            blinkVal = 0.40 + Math.sin(curT * 4) * 0.20;
+          } else if (preset === "idol") {
+            // Sourire idol éclatant + voix douce
+            mouthA = energy * 0.65;
+            mouthI = energy * 0.35;
+            happyVal = 0.75;
+            relaxedVal = 0.50;
+            blinkVal = 0.05;
+          } else if (preset === "mystique") {
+            // Regard habité et mystique, ouverture de voix posée
+            mouthA = energy * 0.55;
+            mouthO = energy * 0.40;
+            relaxedVal = 0.45;
+            blinkVal = 0.25;
+          } else if (preset === "silence") {
+            // Respiration scénique, bouche fermée
+            mouthA = 0;
+            relaxedVal = 0.35;
+          } else {
+            // diva (standard passionné)
+            mouthA = energy * 0.88;
+            mouthO = Math.sin(curT * 10) > 0.25 ? energy * 0.45 : 0;
+            mouthI = 0.20;
+            relaxedVal = 0.70;
+            blinkVal = 0.35 + Math.sin(curT * 5) * 0.15;
+          }
+        } else {
+          // Pause / Respiration scénique
+          if (preset === "idol") happyVal = 0.50;
+          if (preset === "mystique") relaxedVal = 0.40;
+          if (preset === "diva" || preset === "climax") relaxedVal = 0.30;
+        }
+
+        if (petInstance.setLiveSinging) {
+          petInstance.setLiveSinging(true, {
+            aa: mouthA,
+            oh: mouthO,
+            ih: mouthI,
+            relaxed: relaxedVal,
+            happy: happyVal,
+            blink: blinkVal
+          });
+        }
+      }
+    } else {
+      if (petInstance && petInstance.setLiveSinging) {
+        petInstance.setLiveSinging(false);
       }
     }
     requestAnimationFrame(drawMiniBars);
@@ -1550,6 +1691,56 @@ function setupEvents() {
     if (petInstance && petInstance.setMicVisible) petInstance.setMicVisible(isMicOn);
   };
 
+  // Toggle Lipsync Audio Voix
+  const btnLipsync = document.getElementById("btn-toggle-lipsync");
+  if (btnLipsync) {
+    btnLipsync.onclick = () => {
+      isLipsyncEnabled = !isLipsyncEnabled;
+      btnLipsync.innerText = isLipsyncEnabled ? "ACTIF [ON]" : "DÉSACTIVÉ [OFF]";
+      btnLipsync.className = isLipsyncEnabled ? "btn btn-sm btn-primary" : "btn btn-sm";
+    };
+  }
+
+  // Gain Lipsync
+  const inLipsyncGain = document.getElementById("lipsync-gain");
+  if (inLipsyncGain) {
+    inLipsyncGain.oninput = () => {
+      lipsyncGain = parseFloat(inLipsyncGain.value);
+      document.getElementById("lipsync-gain-val").innerText = lipsyncGain.toFixed(1) + "x";
+    };
+  }
+
+  // Sélecteur d'humeur / style vocal
+  const selMood = document.getElementById("mood-select");
+  if (selMood) {
+    selMood.onchange = () => {
+      currentExpPreset = selMood.value;
+      const optText = selMood.options[selMood.selectedIndex].text;
+      document.getElementById("hud-exp").innerText = optText;
+    };
+  }
+
+  // Bouton Ajouter Bloc Expression au Curseur
+  const btnAddExp = document.getElementById("btn-add-expression");
+  if (btnAddExp) {
+    btnAddExp.onclick = () => {
+      const curTime = Number(audio.currentTime.toFixed(2));
+      const duration = 20.0;
+      const preset = selMood ? selMood.value : "diva";
+      const optText = selMood ? selMood.options[selMood.selectedIndex].text : "Chant Diva";
+      sequenceData.expressions.push({
+        start: curTime,
+        end: Number(Math.min(sequenceData.duration, curTime + duration).toFixed(2)),
+        preset,
+        name: optText
+      });
+      sequenceData.expressions.sort((a,b) => a.start - b.start);
+      renderTimeline();
+      const newIdx = sequenceData.expressions.findIndex(e => e.start === curTime && e.preset === preset);
+      if (newIdx !== -1) selectBlock("expression", newIdx);
+    };
+  }
+
   // Transport : Play / Pause / Stop
   const btnPlay = document.getElementById("btn-play");
   const btnPause = document.getElementById("btn-pause");
@@ -1632,7 +1823,7 @@ function setupEvents() {
 
   function onBlockInputChange() {
     if (!selectedBlock) return;
-    const list = selectedBlock.type === "motion" ? sequenceData.motions : sequenceData.cameras;
+    const list = getTrackList(selectedBlock.type);
     const b = list[selectedBlock.index];
     if (!b) return;
 
