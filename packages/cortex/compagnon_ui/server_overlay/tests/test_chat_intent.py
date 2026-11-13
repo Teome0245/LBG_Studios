@@ -22,6 +22,11 @@ class ChatIntentTests(unittest.TestCase):
             "parle-moi de toi",
             "présente-toi",
             "raconte-moi quelque chose d'intéressant",
+            "c'est quoi Gladys ?",
+            "qui est Gladys ?",
+            "tu connais Gladys ?",
+            "parle-moi de Gladys",
+            "qui est Lia ?",
         ):
             self.assertTrue(ci.is_companion_chat(p), p)
 
