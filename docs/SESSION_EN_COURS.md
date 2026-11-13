@@ -9,7 +9,21 @@
 ---
 
 ## Dernières actions réalisées (2026-11-13)
-1. **Manifeste & Architecture Globale de l'Organisme LBG (`docs/ORGANISME_LBG.md`)** :
+1. **Atelier de Chorégraphie 3D & Séquenceur Multi-pistes (`packages/compagnon-desktop/overlay/choreographer.html`)** :
+   - **Serveur Multi-threadé avec Range Streaming (`tools/studio_choreographer_server.py`)** :
+     - Remplacement de `socketserver.TCPServer` bloquant par `ThreadingTCPServer` multi-threadé avec support HTTP Range (`206 Partial Content`) pour le streaming instantané sans lock du MP3 audio et des 14 Mo du VRM.
+     - Port 8766 ouvert sur UFW (`192.168.0.0/16`).
+   - **Piste Timeline Dédiée "🎤 CHANT & VISAGE"** :
+     - 3ème piste interactive avec presets scéniques : *Diva Scénique (Passionné)*, *Climax Vocal (Extase)*, *Idol Pop (Sourire Charme)*, *Regard Mystique (Intense)*, *Silence / Respiration*.
+     - Outils interactifs complets : Cutter `[C]` / `[S]`, Trimming des bords, suppression `[Suppr]`, glisser-déposer de blocs et insertion au curseur.
+   - **Lipsync Audio Vocal Réactif en Temps Réel (Web Audio API Analyser)** :
+     - Analyse fréquentielle continue des formants de la voix (300 Hz - 3000 Hz) sur `nexura_domina_v1.mp3`.
+     - Modulation en temps réel des visèmes VRM (`aa`, `oh`, `ee`, `ih`) et expressions d'extase vocale (`relaxed`, `happy`, `blink`) calée sur le chant réel de la chanteuse.
+   - **Affichage VRM & UX Améliorée** :
+     - Indicateur de chargement cyber (`#vrm-loader`) avec disparition fluide dès l'avatar prêt.
+     - Stabilisation de la caméra manuelle et automatique (`cameraInitialized = true`).
+
+2. **Manifeste & Architecture Globale de l'Organisme LBG (`docs/ORGANISME_LBG.md`)** :
    - Formalisation de l'entité cybernétique globale : **Gladys** et de son incarnation relationnelle : **Lia**.
    - Cartographie anatomique des rôles machines :
      - `.10` (Poste Teome) : Interface de symbiose humaine, audio/visuel, et main droite logicielle UIA sans vol de souris.
