@@ -43,9 +43,9 @@
     "id": 6,
     "topic": "Pourquoi SQLite WAL bat Redis et MongoDB pour les jeux indés",
     "category": "Bases de Données & Perf",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-13T11:39:50.853652",
+    "youtube_url": "https://www.youtube.com/shorts/aJpj2ziUJRg"
   },
   {
     "id": 7,

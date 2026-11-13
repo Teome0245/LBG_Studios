@@ -1,43 +1,35 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-12  
+**Mis à jour** : 2026-11-13  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Cyber Groove 128 BPM Compagnon Live Concert & Storyboard Real-Time Pose**.
+**Fil** : canon O1/O2/O3 — **Organisme Global Lyra & Incarnation Lia — Pilotage Multimodal OS (.10 & .143 via agent-desktop)**.
 
 ---
 
 ## Dernières actions réalisées (2026-11-13)
-1. **Atelier de Chorégraphie 3D & Séquenceur d'Entraînement Multi-pistes (`choreographer.html`)** :
-   - **Raison d'être & Rupture d'approche** : fin des captures en aveugle sur le bureau physique Windows `.10` ; mise en place d'un atelier visuel interactif hébergé sur `.143` pour décomposer, tester, mixer et caler les mouvements sur le rythme de la musique avant tout export vidéo.
-   - **Explorateur Mocap & Décomposition (221 Animations VRMA)** :
-     - Recherche instantanée par mot-clé et filtres par catégories (Danses 29, Poses 18, Marches 25, Capoeira 40, Magie 57).
-     - Déclenchement en 1 clic sur l'avatar 3D Lyra (`Compagnon.vrm`).
-     - Contrôle fin de la cadence (slider vitesse 0.25x à 2.0x, bouton de calage automatique sur 128 BPM, fondu de transition).
-     - Toggle micro 3D néon (cyan/rose pulsant).
-   - **Caméra & Cadrage Cinématique Débrayable** :
-     - 4 Presets instantanés : *Silhouette Complète (Pieds à Tête)*, *Plan Américain (Hanches & Micro)*, *Buste Diva (Poitrine & Visage)*, *Gros Plan Émotion*.
-     - Sliders temps réel : distance (1m à 6m), hauteur cible (0.2m à 1.8m), angle horizontal (-180° à +180°) et FOV (15° à 55°).
-     - Guide visuel ratio 9:16 vertical commutable pour anticiper les cadrages YouTube Shorts et TikTok.
-   - **Timeline Musicale & Séquenceur Multi-pistes** :
-     - Forme d'onde audio et synchronisation avec `Nexura Domina_v1.mp3` (157.6s, 128 BPM).
-     - Piste de blocs d'animation et piste de changements de plan caméra.
-     - Scrubber temporel interactif : clic direct sur la timeline pour caler l'animation et l'audio à la milliseconde près.
-     - Sauvegarde et chargement de projet JSON (`choreography_nexura_domina.json`).
-   - **Serveur Dédié 100% Local (.143)** :
-     - Serveur Python `tools/studio_choreographer_server.py` sur port `8766` avec CORS et types MIME VRM/VRMA/MP3.
-     - Accessible sur : `http://192.168.0.143:8766/choreographer.html`.
+1. **Manifeste & Architecture Globale de l'Organisme LBG (`docs/ORGANISME_LBG.md`)** :
+   - Formalisation de l'entité cybernétique globale : **Lyra** *(nom de travail)* et de son incarnation relationnelle : **Lia**.
+   - Cartographie anatomique des rôles machines :
+     - `.10` (Poste Teome) : Interface de symbiose humaine, audio/visuel, et main droite logicielle UIA sans vol de souris.
+     - `.143` (Atelier Omarchy) : Usine logicielle et main gauche autonome pour les agents CLI (compute, CI, dev).
+     - `.140` / `.110/.111` : Cerveau central, orchestration Cortex, mémoire et inférence locale.
+     - `.246` (Lost Heaven `:8787`) : Banc d'entraînement spatial pour les corps virtuels O3.
+   - Doctrine d'autonomie et garde-fous : abaissement des micro-confirmations bloquantes avec audit JSONL strict.
+   - Référencé dans `OBJECTIVES.md` et `docs/REGISTRE.md`.
 
-## Dernières actions réalisées (2026-11-12)
-1. **Studio Content Engine V2 (Refonte Vidéos TikTok / YouTube Shorts)** :
-   - **Écriture & Durée (45–55s)** : restructuration de `script_generator.py` (prompt d'ingénierie concrète, chiffres réels, stack open-source, 8 phrases denses ~140 mots) pour passer de ~20s creux à un format rétention optimal de 55 secondes (testé à 55.2s).
-   - **Cadrage 3D Plein Pied (Blender 5.2.2 LTS)** : modification de `blender_render_keyframes.py` avec recul caméra (`Y = -2.55m`, `Z = 0.82m`, `lens = 45mm`), éclairage 4 points et pré-calcul Cycles de 9 poses clés articulées (`neutral`, `talk_a`, `talk_o`, `blink`, `joy`, `explain`, `explain_talk`, `point`, `think`).
-   - **Composition Dynamique & Animation (`video_compositor.py`)** :
-     - Phasage narratif associant la gestuelle au discours (`think` sur le problème, `explain` sur la stack, `point` sur les benchmarks, `joy` sur le CTA).
-     - Micro-mouvements procéduraux : respiration verticale ($Y \pm 5\text{px}$) et balancement de hanches/poids latéral ($X \pm 7\text{px}$).
-     - Profondeur visuelle : spectre audio néon 28 barres réactif placé *derrière* l'avatar et badges HUD contextuels dynamiques en haut d'écran.
-   - **Validation & Test Vidéo** : génération réussie d'un drop complet (`drop_1794488466`, 55.2s, 6.73 Mo, MP4 1080×1920 @ 30 FPS).
+2. **Intégration Moteur `agent-desktop` (Vercel Labs) sur Windows (.10) et Linux (.143)** :
+   - Intégration de l'accessibilité native OS (UIA sur Windows, AT-SPI sur Linux) dans `packages/cortex/windows_agent` et `packages/cortex/linux_agent`.
+   - Primitives implémentées : `ui_snapshot`, `ui_click`, `ui_type`, `ui_press`, `ui_scroll`, `ui_focus`.
+   - Actions headless sans vol de souris validées sur Windows.
+   - Exposition du statut CLI dans `GET /healthz`.
+   - Déploiement live sur le PC `.10` (`192.168.0.10:5005`) et démonstration live validée sur Notepad.exe.
+   - Tests unitaires complets : 17 tests Windows, 12 tests Linux, 153 tests Cortex Backend (100% verts).
+
+---
+
+## Actions précédentes (2026-11-12)
 1. **Studio Content Engine V2.1 (Dynamisme Vidéo, Motion Design & B-Roll Tech)** :
    - **Sous-titres Karaoké Mot-à-Mot Pop (`voice_engine.py`)** : découpage temporel fin et surlignage mot par mot en jaune néon éclatant (`&H0000FFFF&` avec grossissement pop +14%) au tempo oral exact.
    - **Arrière-plan Cyberpunk en Mouvement Continu (`video_compositor.py`)** : défilement fluide de la grille perspective au sol vers l'avant à 30 FPS + 24 particules néon montantes en permanence (fin de l'écran statique).
@@ -52,15 +44,76 @@
    - **Validation & Test Vidéo HD** : génération complète réussie (`drop_1794489788`, 55.2s, 26.65 Mo, MP4 1080×1920 @ 30 FPS).
 2. **Compagnon 3D VRM : Posture & Chorégraphie Live Concert (Storyboard Diva Nexura Domina)** :
    - **Micro 3D Stylisé de Scène (`cyberMicGroup`)** : création d'un mesh 3D procédural (corps noir graphite métallique, capsule micro sculptée, anneaux néon emissive cyan et magenta pulsant au kick 128 BPM) attaché dynamiquement comme enfant direct du bone `rightHand` (`rhNode.add(cyberMicGroup)`), grille orientée au plus près des lèvres/menton.
-   - **Naturel Scénique, Biomécanique & Contrapposto Dynamique (Correctif "Manque de Naturel")** :
-     - **Bras droit & Micro** : haut du bras descendu le long du flanc (`rightUpperArm` Z = 0.92, X = 0.38), coude replié vers le haut (`rightLowerArm` Z = -1.90), poignet orienté vers la bouche pour une prise en main vocale authentique.
-     - **Bras gauche vivant** : suppression de toute raideur ou pose en L ; main délicatement posée sur la hanche gauche avec doigts détendus en phase déhanché (pose diva classique), ou geste expressif paume ouverte vers la foule en phase drop.
-     - **Jambes & Stance de Concert (Fin des jambes poteaux)** : écartement naturel des cuisses (`leftUpperLeg` Z = -0.18, `rightUpperLeg` Z = 0.18), ouverture des pieds en éventail/canard (12° externe), et déverrouillage permanent des genoux (flexion minimale continue 0.14 + rebond élastique 0.18 au kick).
-     - **Chaîne cinétique & Courbure en S** : Lemniscate (déhanché en huit) avec inertie retardée (bassin -> colonne -> torse -> tête), cambrure lombaire et tête penchée en arrière dans l'extase du chant.
-   - **Déploiement & Synchronisation** :
-     - Recompilation esbuild `vrm_pet.bundle.js` (2.1 Mo).
-     - Synchronisation directe sur Windows `C:\Agent_IA\compagnon-desktop\overlay\vrm` via `sync_vrm_desktop`.
-     - Overlay Windows redémarré et commande `set_pose: cyberGroove` injectée en direct.
+   - **Naturel Scénique, Biomécanique & Contrapposto Dynamique (Correctif Storyboard)** :
+     - **Micro 3D redressé vers la bouche** : correction des angles du bras droit (`rightLowerArm` replié vers le haut et l'intérieur `[-0.22, -0.16, -2.10]`, coude contre le buste `[0.32, 0.35, 0.85]`), et réorientation locale de la capsule (`rotation.set(0.25, 0.15, 0.60)`) pour que la sphère chromée soit dressée directement à 2 cm devant les lèvres au lieu de pointer horizontalement sur le torse.
+     - **Jambes déverrouillées & Stance ouverte permanente** : fin des cuisses croisées ou collées en un seul trait ; écartement minimal garanti de `0.26 rad` (~15°), pieds en éventail (25° externe), flexion permanente bien visible (jambe d'appui à `0.25 rad`, jambe libre à `0.55 rad`, et drop de scène à `0.85 rad` ~50°).
+     - **Tête & Émotion** : inclinaison arrière accentuée vers le micro (`head: [-0.22, -0.06, 0.08]`) pour restituer la véritable extase vocale du concept art.
+   - **Intégration Mocap FBX Complète (195 Fichiers, Tous Dossiers & Sous-Dossiers)** :
+     - Rapatriement récursif de l'intégralité des mouvements FBX depuis `O:\OneDrive\Pictures\IA\mouvements` (Packs `Capoeira Pack`, `Female Locomotion Pack`, `Free Test Pack`, `Pro Magic Pack`, et racine) vers `packages/compagnon-desktop/overlay/vrm/fbx_source/` (195 fichiers FBX, 611 Mo de mocap brute).
+     - Pipeline de conversion parallèle multi-cœurs (`tools/batch_convert_fbx.py`) avec FBX2glTF + `fbx2vrma-converter.js` : **189 nouveaux convertis, 6 existants, 0 échec** en ~2 minutes.
+     - Empreinte disque ultralégère : **90.02 Mo au total** pour les 195 animations VRMA (~450 Ko par animation en moyenne !).
+     - Classification et génération du manifest structuré (`manifest.json`) en 8 catégories :
+       - *Danses & Grooves* (29 anims : Gangnam Style, Twerk, Can Can, Macarena, Bellydance, Hip Hop 1-3, Jazz 1-3, Samba, Salsa, Disco...).
+       - *Capoeira & Arts Martiaux* (40 anims : Armada, Au, Bencao, Chapa, Ginga, Martelo, Meia Lua, Rasteira...).
+       - *Locomotion & Déplacements* (25 anims : Catwalk, Happy Walk, Strafes, Sprint, Jump...).
+       - *Magie & Incantations* (57 anims : Cast Spell 1H/2H, Magic Area Attacks 01-05, Shield Blocks, Reacts...).
+       - *Poses & Silhouettes* (18 anims : Female Dance Pose, Dynamic Pose, Laying, Kneeling...).
+       - *Expressions & Réactions* (23 anims : Cheering, Victory, Taunt, Bashful, Thinking, Phone...).
+       - *Fitness & Sport* (11 anims : Air Squats, Back Squat, Backflip, Push Up, Kettlebell, Speedbag...).
+       - *Général* (17 anims).
+     - Résolution dynamique universelle dans `vrm_pet.js` (`VRMA_CATALOG` de 397 clés d'accès direct, `resolveVrmaFile`), dézoom dynamique automatique sur mouvement complet (`isFullBodyAction`), et neutralisation du root-motion in-place.
+     - Recompilation du bundle IIFE (`vrm_pet.bundle.js`), synchronisation locale vers l'overlay Windows (`192.168.0.10:5005`) et déploiement Web instantané sur CT 100 (`192.168.0.100:5174`).
+     - Test live validé sur desktop overlay avec `send_avatar_command` (`gangnam`, `bellydance`, etc.).
+   - **Clip Musical Officiel 60s en Mode Studio Cyberpunk 3D (YouTube Shorts / TikTok HD)** :
+     - Élimination totale des éléments de bureau Windows (ni fond d'écran, ni barre des tâches, ni icônes) : immersion 100% scénique.
+     - Scène de concert futuriste en Three.js / WebGL hardware (GTX 1050 Ti) :
+       * Grille perspective lumineuse cyan au sol défilant vers l'avant à 30 FPS.
+       * Spots volumétriques de scène (cyan & magenta) pulsant en temps réel au kick de la musique.
+       * 40 particules néon montantes en continu et halo central scénique derrière l'avatar.
+       * Carte d'en-tête HUD glassmorphism (style officiel Studio Content Engine) : `LYRA // LIVE 3D CONCERT`, `100% LOCAL • 0€ CLOUD`, `KHOR-UN VAL-KYRA (128 BPM)`.
+       * Égaliseur audio 32 bandes en bas de scène réagissant aux fréquences réelles de la piste.
+     - Avatar 3D (Lyra androïde) en plein pied au centre de la scène tenant le micro cyber 3D néon, lèvres et regard calés au tempo, enchaînant les danses mocap (Intro Diva -> Couplet Groove -> Bellydance -> Pop Dance -> Gangnam -> Samba -> Finale Idol).
+     - Rendu master vidéo 1080×1920 (Vertical 9:16, H.264 High Profile @ 6214 kb/s, 29.98 FPS, Audio AAC 48 kHz stéréo, 44.46 Mo).
+     - Fichier délivré sur l'hôte Windows : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_studio_60s.mp4`.
+3. **Mode Live Concert Virtuel & Déhanché Mocap Aeysa sur Nexura Domina (Clip Complet 158s / 2m38s HD)** :
+   - **Déhanché Mocap Pop / Maraschino Step Viral (@aeysamusic)** :
+     * Analyse image par image de la référence TikTok virale (`7699001951047961878`) : balancement prononcé du bassin de gauche à droite, cambrure lombaire, flexion alternée des genoux et transfert de poids organique sur jambe d'appui tendue.
+     * Intégration du clip mocap officiel `Dancing Maraschino Step.vrma` joué en boucle fluide infinie par l'AnimationMixer Three-VRM.
+     * Micro 3D cyber néon solidement tenu en main droite avec anneaux cyan/magenta pulsant au kick 128 BPM.
+     * Lipsync vocal synchrone en temps réel et regard scénique habité (yeux mi-clos / extase vocale de diva).
+   - **Cadrage Silhouette Complète Dézoomé (`dist = 3.45m`, `lookY = headPos.y - 0.58m`)** :
+     * Moins zoomé à la demande utilisateur : plan moyen complet révélant l'avatar des pieds à la tête avec respiration sous le HUD supérieur, bottes mecha posées sur le sol de scène juste au-dessus du visualiseur audio, et toute la dynamique des hanches/cuisses bien visible.
+   - **Scénographie Studio Cyberpunk & Capture Sécurisée Hardware** :
+     * Dégradé sombre cinématique (`#03050c`), doubles rim lights volumétriques réactives aux basses, particules lentes.
+     * HUD concert glassmorphism minimaliste ("✦ NEXURA DOMINA", live pill, equalizer audio 36 barres réactif).
+     * Script de capture et muxing automatique `record_studio_nexura_clip.py` exécuté sur Windows via l'agent `:5005` (FFmpeg gdigrab 158s @ 30 FPS avec `-draw_mouse 0`, gardien Win32 TopMost anti-superposition, upscale Lanczos 1080×1920 HD vertical + audio master `Nexura Domina_v1.mp3`).
+     * Master vidéo final livré :
+       * Version intégrale : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_full.mp4` (145.65 Mo, 157.6s, 1080×1920 HD).
+       * Version compatibilité : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_60s.mp4`.
+     * Frames de contrôle validées : `final_check_30s.png`, `final_check_75s.png`, `final_check_120s.png`.
+4. **Clip Musical Officiel 60s avec l'Avatar de Bureau 3D (Lyra Live Performance)** :
+     - Enregistrement en direct hardware via FFmpeg `gdigrab` sur le poste Windows (`192.168.0.10`) de l'overlay 3D Three.js réel en exécution (Lyra skin android, micro cyber 3D néon, lipsync et animations mocap).
+     - Synchronisation chorégraphique millimétrée sur les 60 secondes de `Khor-un Val-Kyra.mp3` :
+       - 0.0s – 8.5s : Intro Diva avec micro en main (`femaledance`)
+       - 8.5s – 22.0s : Couplet rythmé & chant passionné (`cyberGroove`)
+       - 22.0s – 34.5s : Electro Drop 1 (`bellydance`)
+       - 34.5s – 45.0s : Electro Drop 2 / Pop dance (`popdance`)
+       - 45.0s – 52.5s : Climax d'énergie (`gangnam`)
+       - 52.5s – 57.5s : Célébration festive (`samba`)
+       - 57.5s – 60.0s : Final Idol (`fingerHeart` & sourire de victoire)
+     - Encodage H.264 / AAC 48 kHz stéréo à 1080×1920 (vertical HD 9:16 pour YouTube Shorts & TikTok, 19.23 Mo).
+     - Fichier final délivré sur le disque hôte : `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_avatar_bureau_60s.mp4`.
+     - Rétablissement automatique des dimensions de bureau standard et du mode promenade (`wander: true`).
+   - **Clip Musical 60s & Déploiement Pipeline (Khor-un Val-Kyra / Nexura Diva)** :
+     - Script de montage cinématographique vertical 1080x1920 30 FPS (`tools/build_clip_khor_un_val_kyra.py`) : 7 plans enchaînés avec zoompan/Ken Burns dynamique et synchronisation complète de la bande son master 60s (`khor_un_val_kyra.mp3`).
+     - Rendu vidéo finalisé (`clip_khor_un_val_kyra_60s.mp4`, 9.0 Mo, H.264 / AAC 256k) et copié automatiquement sur le poste Windows dans `O:\OneDrive\Pictures\IA\Contenue\clip_khor_un_val_kyra_60s.mp4`.
+   - **Panneau Compagnon Web & Desktop (`LyraPanel.vue`)** :
+     - Ajout de 12 boutons de chorégraphies et actions animées : Diva Live, Bellydance, Pop Dance, Gangnam Style, Samba, Hip-Hop, Capoeira Ginga, Robot, Disco, Catwalk, Pirouette, Mini Heart.
+     - Déclenchement automatique du plein pied (`fullBodyPoses`) dès le clic.
+     - Recompilation Vite et déploiement sur CT 100 (`lbg-frontend`).
+   - **Portage des Animations 3D dans le MMO (`prime-client` Godot 4.6)** :
+     - Création de `packages/prime-client/assets/animations/{locomotion,combat,dances}/` avec 23 animations prêtes à l'emploi au format GLB standard (walk, run, sprint, jump, strafes, capoeira ginga/armada/esquiva/martelo, sorts magiques 1H/2H, parade bouclier, danses).
+     - Tests CI Headless Godot validés (`tools/ci_godot_headless.sh`).
 1. **Élévation Graphique 2D Top-Down style *Canvas of Kings* (Prime Client 2D)** :
    - **Moteur d'Ambiance Visuelle & Éclairage Dynamique (`canvas_of_kings_atmosphere.gd`)** :
      - Cycle jour/nuit circadien 2D avec `CanvasModulate` synchronisé directement sur le snapshot réseau `world_clock` du hub (`game_hour`, `is_night`, `light_ambient`).

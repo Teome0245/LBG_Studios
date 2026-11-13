@@ -90,7 +90,11 @@ def _synthesize_piper(
     length_scale: float = DEFAULT_LENGTH_SCALE,
 ) -> float:
     """Synthétise une phrase via Piper TTS local (.111:8098)."""
-    payload: dict[str, Any] = {"text": text, "voice": voice, "length_scale": length_scale}
+    payload: dict[str, Any] = {
+        "text": text,
+        "voice": voice,
+        "length_scale": length_scale,
+    }
     with httpx.Client(timeout=30.0) as client:
         res = client.post(url, json=payload)
         if res.status_code != 200:
@@ -119,11 +123,23 @@ def synthesize_sentence(
         try:
             return asyncio.run(_synthesize_edge_tts(text, voice, out_path))
         except Exception as e:
-            logger.warning("Échec Edge TTS (%s) : %s. Repli sur Piper local (fr_FR-upmc-medium)...", voice, e)
-            return _synthesize_piper(text, out_path, url=url, voice="fr_FR-upmc-medium", length_scale=length_scale)
+            logger.warning(
+                "Échec Edge TTS (%s) : %s. Repli sur Piper local (fr_FR-upmc-medium)...",
+                voice,
+                e,
+            )
+            return _synthesize_piper(
+                text,
+                out_path,
+                url=url,
+                voice="fr_FR-upmc-medium",
+                length_scale=length_scale,
+            )
 
     # Sinon : Piper TTS local par défaut
-    return _synthesize_piper(text, out_path, url=url, voice=voice, length_scale=length_scale)
+    return _synthesize_piper(
+        text, out_path, url=url, voice=voice, length_scale=length_scale
+    )
 
 
 def synthesize_script(
@@ -151,7 +167,9 @@ def synthesize_script(
             continue
         part_file = work_dir / f"sentence_{idx:02d}.wav"
         spoken_text = phonetic_for_speech(clean_text)
-        dur = synthesize_sentence(spoken_text, part_file, voice=voice, length_scale=length_scale)
+        dur = synthesize_sentence(
+            spoken_text, part_file, voice=voice, length_scale=length_scale
+        )
         sentence_files.append(part_file)
 
         words = clean_text.split()
@@ -214,7 +232,11 @@ def synthesize_script(
         out_wav.writeframes(int_pcm.tobytes())
 
     total_duration = float(len(merged)) / float(sample_rate)
-    logger.info("Audio complet assemblé sans clipping : %s (durée: %.2fs)", final_audio_path, total_duration)
+    logger.info(
+        "Audio complet assemblé sans clipping : %s (durée: %.2fs)",
+        final_audio_path,
+        total_duration,
+    )
     return final_audio_path, cues, total_duration
 
 
@@ -231,7 +253,7 @@ def format_ass_time(seconds: float) -> str:
 
 def generate_tiktok_ass_subtitles(cues: list[SentenceCue], out_path: Path) -> Path:
     """Génère un fichier de sous-titres .ass au format TikTok ultra dynamique mot-à-mot.
-    
+
     Chaque mot prononcé s'illumine en direct en jaune néon pop (Karaoké CapCut / TikTok)
     pour capter en permanence l'attention du spectateur.
     """
@@ -264,7 +286,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             sub_words = words[i : i + max_words_per_chunk]
             # Calcul du timing proportionnel dans la phrase
             t_chunk_start = cue.start + (cue.duration * (i / max(1, n_words)))
-            t_chunk_end = cue.start + (cue.duration * (min(n_words, i + max_words_per_chunk) / max(1, n_words)))
+            t_chunk_end = cue.start + (
+                cue.duration * (min(n_words, i + max_words_per_chunk) / max(1, n_words))
+            )
             chunks.append((sub_words, t_chunk_start, t_chunk_end))
 
         for chunk_words, t_start, t_end in chunks:
@@ -286,7 +310,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     clean_w = word.upper()
                     if j == w_idx:
                         # Mot actif : Jaune néon éclatant (&H0000FFFF&) avec pop de taille (+14%)
-                        rendered_words.append(r"{\c&H0000FFFF&\b1\fscx114\fscy114}" + clean_w + r"{\rTikTokDefault}")
+                        rendered_words.append(
+                            r"{\c&H0000FFFF&\b1\fscx114\fscy114}"
+                            + clean_w
+                            + r"{\rTikTokDefault}"
+                        )
                     else:
                         rendered_words.append(clean_w)
 
@@ -297,4 +325,3 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         f.write(ass_content)
 
     return out_path
-

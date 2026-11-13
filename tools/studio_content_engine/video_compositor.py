@@ -29,7 +29,9 @@ HEIGHT = 1920
 FPS = 30
 
 
-def load_font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+def load_font(
+    size: int, bold: bool = True
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Tente de charger une police TTF système moderne, avec fallback standard."""
     font_candidates = [
         "/usr/share/fonts/liberation/LiberationSans-Bold.ttf"
@@ -102,7 +104,7 @@ def create_dynamic_background(t: float, w: int = WIDTH, h: int = HEIGHT) -> Imag
     num_grid_lines = 16
     for k in range(num_grid_lines):
         norm_k = (k + speed_offset) / num_grid_lines
-        gy = int(horizon_y + (h - horizon_y) * (norm_k ** 2))
+        gy = int(horizon_y + (h - horizon_y) * (norm_k**2))
         if horizon_y <= gy < h:
             draw.line([(0, gy), (w, gy)], fill=grid_color, width=1)
 
@@ -150,10 +152,27 @@ def draw_tech_card(
 
     if card_type == "alert":
         # CARTE PROBLÈME : Alerte Cloud & Explosion des coûts
-        draw.rounded_rectangle([x0, y0, x1, y1], radius=20, fill=(38, 12, 16, 230), outline=(255, 60, 60, 240), width=3)
+        draw.rounded_rectangle(
+            [x0, y0, x1, y1],
+            radius=20,
+            fill=(38, 12, 16, 230),
+            outline=(255, 60, 60, 240),
+            width=3,
+        )
         # Header
-        draw.rounded_rectangle([x0 + 15, y0 + 15, x1 - 15, y0 + 75], radius=10, fill=(255, 60, 60, 40), outline=(255, 80, 80, 200), width=2)
-        draw.text((x0 + 35, y0 + 26), "🚨  PIÈGE DES API CLOUD", fill=(255, 90, 90, 255), font=f_title)
+        draw.rounded_rectangle(
+            [x0 + 15, y0 + 15, x1 - 15, y0 + 75],
+            radius=10,
+            fill=(255, 60, 60, 40),
+            outline=(255, 80, 80, 200),
+            width=2,
+        )
+        draw.text(
+            (x0 + 35, y0 + 26),
+            "🚨  PIÈGE DES API CLOUD",
+            fill=(255, 90, 90, 255),
+            font=f_title,
+        )
 
         # Bullets
         bullets = [
@@ -168,80 +187,262 @@ def draw_tech_card(
             cur_y += 42
 
         # Jauge rouge d'alerte coût
-        draw.text((x0 + 30, cur_y + 10), "COÛT MENSUEL ESTIMÉ :", fill=(255, 100, 100, 255), font=f_badge)
-        draw.rounded_rectangle([x0 + 30, cur_y + 45, x1 - 30, cur_y + 80], radius=8, fill=(60, 20, 20, 255), outline=(255, 60, 60, 180), width=2)
+        draw.text(
+            (x0 + 30, cur_y + 10),
+            "COÛT MENSUEL ESTIMÉ :",
+            fill=(255, 100, 100, 255),
+            font=f_badge,
+        )
+        draw.rounded_rectangle(
+            [x0 + 30, cur_y + 45, x1 - 30, cur_y + 80],
+            radius=8,
+            fill=(60, 20, 20, 255),
+            outline=(255, 60, 60, 180),
+            width=2,
+        )
         pulse_w = int((x1 - x0 - 64) * (0.85 + math.sin(t * 6.0) * 0.1))
-        draw.rounded_rectangle([x0 + 32, cur_y + 47, x0 + 32 + pulse_w, cur_y + 78], radius=6, fill=(255, 40, 40, 255))
-        draw.text((x0 + 70, cur_y + 50), "+450 € / MOIS  📈", fill=(255, 255, 255, 255), font=f_badge)
+        draw.rounded_rectangle(
+            [x0 + 32, cur_y + 47, x0 + 32 + pulse_w, cur_y + 78],
+            radius=6,
+            fill=(255, 40, 40, 255),
+        )
+        draw.text(
+            (x0 + 70, cur_y + 50),
+            "+450 € / MOIS  📈",
+            fill=(255, 255, 255, 255),
+            font=f_badge,
+        )
 
     elif card_type == "stack":
         # CARTE SOLUTION : Architecture 100% Locale
-        draw.rounded_rectangle([x0, y0, x1, y1], radius=20, fill=(10, 30, 38, 230), outline=(0, 245, 212, 240), width=3)
+        draw.rounded_rectangle(
+            [x0, y0, x1, y1],
+            radius=20,
+            fill=(10, 30, 38, 230),
+            outline=(0, 245, 212, 240),
+            width=3,
+        )
         # Header
-        draw.rounded_rectangle([x0 + 15, y0 + 15, x1 - 15, y0 + 75], radius=10, fill=(0, 245, 212, 40), outline=(0, 245, 212, 200), width=2)
-        draw.text((x0 + 30, y0 + 26), "⚡  STACK 100% LOCALE", fill=(0, 245, 212, 255), font=f_title)
+        draw.rounded_rectangle(
+            [x0 + 15, y0 + 15, x1 - 15, y0 + 75],
+            radius=10,
+            fill=(0, 245, 212, 40),
+            outline=(0, 245, 212, 200),
+            width=2,
+        )
+        draw.text(
+            (x0 + 30, y0 + 26),
+            "⚡  STACK 100% LOCALE",
+            fill=(0, 245, 212, 255),
+            font=f_title,
+        )
 
         # 4 Tags technologiques néon
         tags = [
-            ("🎮  Godot 4.6 Headless (60 FPS)", (0, 245, 212, 40), (0, 245, 212, 220), (200, 255, 245, 255)),
-            ("🧠  Ollama Local (RTX 3060)", (255, 0, 180, 40), (255, 0, 180, 220), (255, 210, 240, 255)),
-            ("🗣️  Piper TTS ONNX (30ms)", (0, 245, 212, 40), (0, 245, 212, 220), (200, 255, 245, 255)),
-            ("💾  SQLite WAL + WebSockets", (50, 255, 140, 40), (50, 255, 140, 220), (210, 255, 220, 255)),
+            (
+                "🎮  Godot 4.6 Headless (60 FPS)",
+                (0, 245, 212, 40),
+                (0, 245, 212, 220),
+                (200, 255, 245, 255),
+            ),
+            (
+                "🧠  Ollama Local (RTX 3060)",
+                (255, 0, 180, 40),
+                (255, 0, 180, 220),
+                (255, 210, 240, 255),
+            ),
+            (
+                "🗣️  Piper TTS ONNX (30ms)",
+                (0, 245, 212, 40),
+                (0, 245, 212, 220),
+                (200, 255, 245, 255),
+            ),
+            (
+                "💾  SQLite WAL + WebSockets",
+                (50, 255, 140, 40),
+                (50, 255, 140, 220),
+                (210, 255, 220, 255),
+            ),
         ]
         cur_y = y0 + 95
         for tag_text, tag_fill, tag_out, tag_col in tags:
-            draw.rounded_rectangle([x0 + 25, cur_y, x1 - 25, cur_y + 48], radius=8, fill=tag_fill, outline=tag_out, width=2)
+            draw.rounded_rectangle(
+                [x0 + 25, cur_y, x1 - 25, cur_y + 48],
+                radius=8,
+                fill=tag_fill,
+                outline=tag_out,
+                width=2,
+            )
             draw.text((x0 + 40, cur_y + 10), tag_text, fill=tag_col, font=f_badge)
             cur_y += 62
 
         # Badge bas
-        draw.rounded_rectangle([x0 + 25, cur_y + 8, x1 - 25, cur_y + 54], radius=8, fill=(0, 245, 212, 20), outline=(0, 245, 212, 140), width=1)
-        draw.text((x0 + 55, cur_y + 18), "FACTURE CLOUD : 0.00 €  🟢", fill=(0, 245, 212, 255), font=f_badge)
+        draw.rounded_rectangle(
+            [x0 + 25, cur_y + 8, x1 - 25, cur_y + 54],
+            radius=8,
+            fill=(0, 245, 212, 20),
+            outline=(0, 245, 212, 140),
+            width=1,
+        )
+        draw.text(
+            (x0 + 55, cur_y + 18),
+            "FACTURE CLOUD : 0.00 €  🟢",
+            fill=(0, 245, 212, 255),
+            font=f_badge,
+        )
 
     elif card_type == "metrics":
         # CARTE BENCHMARKS : Performances réelles
-        draw.rounded_rectangle([x0, y0, x1, y1], radius=20, fill=(12, 34, 22, 230), outline=(50, 255, 140, 240), width=3)
+        draw.rounded_rectangle(
+            [x0, y0, x1, y1],
+            radius=20,
+            fill=(12, 34, 22, 230),
+            outline=(50, 255, 140, 240),
+            width=3,
+        )
         # Header
-        draw.rounded_rectangle([x0 + 15, y0 + 15, x1 - 15, y0 + 75], radius=10, fill=(50, 255, 140, 40), outline=(50, 255, 140, 200), width=2)
-        draw.text((x0 + 25, y0 + 26), "📊  BENCHMARKS EN DIRECT", fill=(50, 255, 140, 255), font=f_title)
+        draw.rounded_rectangle(
+            [x0 + 15, y0 + 15, x1 - 15, y0 + 75],
+            radius=10,
+            fill=(50, 255, 140, 40),
+            outline=(50, 255, 140, 200),
+            width=2,
+        )
+        draw.text(
+            (x0 + 25, y0 + 26),
+            "📊  BENCHMARKS EN DIRECT",
+            fill=(50, 255, 140, 255),
+            font=f_title,
+        )
 
         cur_y = y0 + 95
         # Métrique 1 : Ticks serveur
-        draw.text((x0 + 30, cur_y), "CADENCE SERVEUR : 60 TICKS/S", fill=(210, 255, 220, 255), font=f_badge)
-        draw.rounded_rectangle([x0 + 30, cur_y + 35, x1 - 30, cur_y + 60], radius=6, fill=(20, 50, 30, 255), outline=(50, 255, 140, 180), width=1)
-        draw.rounded_rectangle([x0 + 32, cur_y + 37, x1 - 32, cur_y + 58], radius=4, fill=(50, 255, 140, 255))
+        draw.text(
+            (x0 + 30, cur_y),
+            "CADENCE SERVEUR : 60 TICKS/S",
+            fill=(210, 255, 220, 255),
+            font=f_badge,
+        )
+        draw.rounded_rectangle(
+            [x0 + 30, cur_y + 35, x1 - 30, cur_y + 60],
+            radius=6,
+            fill=(20, 50, 30, 255),
+            outline=(50, 255, 140, 180),
+            width=1,
+        )
+        draw.rounded_rectangle(
+            [x0 + 32, cur_y + 37, x1 - 32, cur_y + 58],
+            radius=4,
+            fill=(50, 255, 140, 255),
+        )
         draw.text((x1 - 110, cur_y + 36), "100%", fill=(10, 30, 15, 255), font=f_badge)
 
         # Métrique 2 : RAM
         cur_y += 85
-        draw.text((x0 + 30, cur_y), "RAM UTILISÉE : 1.2 GB / 16 GB", fill=(200, 245, 255, 255), font=f_badge)
-        draw.rounded_rectangle([x0 + 30, cur_y + 35, x1 - 30, cur_y + 60], radius=6, fill=(15, 35, 45, 255), outline=(0, 245, 212, 180), width=1)
+        draw.text(
+            (x0 + 30, cur_y),
+            "RAM UTILISÉE : 1.2 GB / 16 GB",
+            fill=(200, 245, 255, 255),
+            font=f_badge,
+        )
+        draw.rounded_rectangle(
+            [x0 + 30, cur_y + 35, x1 - 30, cur_y + 60],
+            radius=6,
+            fill=(15, 35, 45, 255),
+            outline=(0, 245, 212, 180),
+            width=1,
+        )
         ram_w = int((x1 - x0 - 64) * 0.15)
-        draw.rounded_rectangle([x0 + 32, cur_y + 37, x0 + 32 + ram_w, cur_y + 58], radius=4, fill=(0, 245, 212, 255))
-        draw.text((x0 + 45 + ram_w, cur_y + 36), "9.3%", fill=(0, 245, 212, 255), font=f_badge)
+        draw.rounded_rectangle(
+            [x0 + 32, cur_y + 37, x0 + 32 + ram_w, cur_y + 58],
+            radius=4,
+            fill=(0, 245, 212, 255),
+        )
+        draw.text(
+            (x0 + 45 + ram_w, cur_y + 36), "9.3%", fill=(0, 245, 212, 255), font=f_badge
+        )
 
         # Métrique 3 : Coût
         cur_y += 85
-        draw.text((x0 + 30, cur_y), "DÉPENSE EXTERNE : 0.00 €", fill=(255, 255, 255, 255), font=f_badge)
-        draw.rounded_rectangle([x0 + 30, cur_y + 35, x1 - 30, cur_y + 70], radius=8, fill=(50, 255, 140, 30), outline=(50, 255, 140, 220), width=2)
-        draw.text((x0 + 65, cur_y + 40), "AUCUN ABONNEMENT  ✅", fill=(50, 255, 140, 255), font=f_title)
+        draw.text(
+            (x0 + 30, cur_y),
+            "DÉPENSE EXTERNE : 0.00 €",
+            fill=(255, 255, 255, 255),
+            font=f_badge,
+        )
+        draw.rounded_rectangle(
+            [x0 + 30, cur_y + 35, x1 - 30, cur_y + 70],
+            radius=8,
+            fill=(50, 255, 140, 30),
+            outline=(50, 255, 140, 220),
+            width=2,
+        )
+        draw.text(
+            (x0 + 65, cur_y + 40),
+            "AUCUN ABONNEMENT  ✅",
+            fill=(50, 255, 140, 255),
+            font=f_title,
+        )
 
     elif card_type == "outro":
         # CARTE OUTRO : GitHub LBG Studios
-        draw.rounded_rectangle([x0, y0, x1, y1], radius=20, fill=(34, 12, 30, 230), outline=(255, 0, 180, 240), width=3)
+        draw.rounded_rectangle(
+            [x0, y0, x1, y1],
+            radius=20,
+            fill=(34, 12, 30, 230),
+            outline=(255, 0, 180, 240),
+            width=3,
+        )
         # Header
-        draw.rounded_rectangle([x0 + 15, y0 + 15, x1 - 15, y0 + 75], radius=10, fill=(255, 0, 180, 40), outline=(255, 0, 180, 200), width=2)
-        draw.text((x0 + 35, y0 + 26), "⭐  CODE OPEN SOURCE", fill=(255, 100, 220, 255), font=f_title)
+        draw.rounded_rectangle(
+            [x0 + 15, y0 + 15, x1 - 15, y0 + 75],
+            radius=10,
+            fill=(255, 0, 180, 40),
+            outline=(255, 0, 180, 200),
+            width=2,
+        )
+        draw.text(
+            (x0 + 35, y0 + 26),
+            "⭐  CODE OPEN SOURCE",
+            fill=(255, 100, 220, 255),
+            font=f_title,
+        )
 
         cur_y = y0 + 105
-        draw.text((x0 + 30, cur_y), "• GitHub : LBG Studios", fill=(255, 220, 245, 255), font=f_body)
-        draw.text((x0 + 30, cur_y + 45), "• github.com/Teome0245", fill=(0, 245, 212, 255), font=f_body)
-        draw.text((x0 + 30, cur_y + 90), "• Architectures & scripts 0€", fill=(220, 220, 220, 255), font=f_body)
+        draw.text(
+            (x0 + 30, cur_y),
+            "• GitHub : LBG Studios",
+            fill=(255, 220, 245, 255),
+            font=f_body,
+        )
+        draw.text(
+            (x0 + 30, cur_y + 45),
+            "• github.com/Teome0245",
+            fill=(0, 245, 212, 255),
+            font=f_body,
+        )
+        draw.text(
+            (x0 + 30, cur_y + 90),
+            "• Architectures & scripts 0€",
+            fill=(220, 220, 220, 255),
+            font=f_body,
+        )
 
         # Bouton call to action
         cur_y += 165
-        draw.rounded_rectangle([x0 + 25, cur_y, x1 - 25, cur_y + 65], radius=12, fill=(255, 0, 180, 200), outline=(255, 150, 220, 255), width=2)
-        draw.text((x0 + 45, cur_y + 16), "ABONNE-TOI & REJOINS-NOUS 🚀", fill=(255, 255, 255, 255), font=f_badge)
+        draw.rounded_rectangle(
+            [x0 + 25, cur_y, x1 - 25, cur_y + 65],
+            radius=12,
+            fill=(255, 0, 180, 200),
+            outline=(255, 150, 220, 255),
+            width=2,
+        )
+        draw.text(
+            (x0 + 45, cur_y + 16),
+            "ABONNE-TOI & REJOINS-NOUS 🚀",
+            fill=(255, 255, 255, 255),
+            font=f_badge,
+        )
 
 
 def render_video(
@@ -260,8 +461,15 @@ def render_video(
     # Chargement des poses de l'avatar plein pied
     poses: dict[str, Image.Image] = {}
     pose_names = [
-        "neutral", "talk_a", "talk_o", "blink", "joy",
-        "explain", "explain_talk", "point", "think"
+        "neutral",
+        "talk_a",
+        "talk_o",
+        "blink",
+        "joy",
+        "explain",
+        "explain_talk",
+        "point",
+        "think",
     ]
     for p_name in pose_names:
         p_file = avatar_dir / f"{p_name}.png"
@@ -297,21 +505,54 @@ def render_video(
     h_draw = ImageDraw.Draw(header_layer)
 
     # Bandeau supérieur Cyberpunk
-    h_draw.rounded_rectangle([60, 80, WIDTH - 60, 240], radius=24, fill=(18, 24, 38, 220), outline=(0, 245, 212, 180), width=3)
+    h_draw.rounded_rectangle(
+        [60, 80, WIDTH - 60, 240],
+        radius=24,
+        fill=(18, 24, 38, 220),
+        outline=(0, 245, 212, 180),
+        width=3,
+    )
     # Badge catégorie & avatar
-    h_draw.rounded_rectangle([90, 105, 420, 145], radius=10, fill=(0, 245, 212, 40), outline=(0, 245, 212, 220), width=2)
-    h_draw.text((105, 112), f"LIA // {category.upper()}", fill=(0, 245, 212, 255), font=font_badge)
+    h_draw.rounded_rectangle(
+        [90, 105, 420, 145],
+        radius=10,
+        fill=(0, 245, 212, 40),
+        outline=(0, 245, 212, 220),
+        width=2,
+    )
+    h_draw.text(
+        (105, 112),
+        f"LIA // {category.upper()}",
+        fill=(0, 245, 212, 255),
+        font=font_badge,
+    )
 
     # Badge 100% Local
-    h_draw.rounded_rectangle([WIDTH - 380, 105, WIDTH - 90, 145], radius=10, fill=(255, 0, 128, 40), outline=(255, 0, 128, 220), width=2)
-    h_draw.text((WIDTH - 365, 112), "100% LOCAL • 0€", fill=(255, 100, 180, 255), font=font_badge)
+    h_draw.rounded_rectangle(
+        [WIDTH - 380, 105, WIDTH - 90, 145],
+        radius=10,
+        fill=(255, 0, 128, 40),
+        outline=(255, 0, 128, 220),
+        width=2,
+    )
+    h_draw.text(
+        (WIDTH - 365, 112),
+        "100% LOCAL • 0€",
+        fill=(255, 100, 180, 255),
+        font=font_badge,
+    )
 
     # Titre du sujet
     disp_title = title if len(title) <= 36 else title[:33] + "..."
     h_draw.text((95, 170), disp_title, fill=(255, 255, 255, 255), font=font_title)
 
     # Footer
-    h_draw.text((WIDTH // 2 - 180, HEIGHT - 80), "LBG Studios • github.com/Teome0245", fill=(140, 160, 190, 200), font=font_footer)
+    h_draw.text(
+        (WIDTH // 2 - 180, HEIGHT - 80),
+        "LBG Studios • github.com/Teome0245",
+        fill=(140, 160, 190, 200),
+        font=font_footer,
+    )
 
     # Lancement du process FFmpeg en pipe stdin
     ffmpeg_cmd = [
@@ -352,7 +593,12 @@ def render_video(
     ]
 
     logger.info("Encodage FFmpeg en cours vers %s...", output_mp4)
-    proc = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ffmpeg_cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
 
     # Rendu des frames
     num_bars = 28
@@ -397,7 +643,11 @@ def render_video(
             # Explication de la solution technique -> gestuelle mains ouvertes
             if is_talking and "explain_talk" in poses:
                 cycle_phase = int(t * 6) % 2
-                active_pose = poses["explain_talk"] if cycle_phase == 0 else poses.get("explain", poses["explain_talk"])
+                active_pose = (
+                    poses["explain_talk"]
+                    if cycle_phase == 0
+                    else poses.get("explain", poses["explain_talk"])
+                )
             elif "explain" in poses:
                 active_pose = poses["explain"]
             else:
@@ -450,7 +700,9 @@ def render_video(
         # Micro-inclinaison de tête et buste calée sur les syllabes
         tilt_deg = math.sin(t * 3.2) * 1.5 + (rms * 2.2)
         if abs(tilt_deg) > 0.2:
-            rendered_pose = active_pose.rotate(tilt_deg, resample=Image.Resampling.BICUBIC, expand=False)
+            rendered_pose = active_pose.rotate(
+                tilt_deg, resample=Image.Resampling.BICUBIC, expand=False
+            )
         else:
             rendered_pose = active_pose
 
@@ -473,7 +725,9 @@ def render_video(
             bg_c = int(245 - color_ratio * 145)
             bb = int(212 + color_ratio * 43)
 
-            f_draw.rounded_rectangle([bx, by0, bx + bar_width, by1], radius=4, fill=(br, bg_c, bb, 160))
+            f_draw.rounded_rectangle(
+                [bx, by0, bx + bar_width, by1], radius=4, fill=(br, bg_c, bb, 160)
+            )
 
         # 6. Badge HUD narratif dynamique en haut sous le bandeau
         if active_card == "alert":
@@ -499,7 +753,13 @@ def render_video(
 
         hud_w = 620
         hud_x0 = (WIDTH - hud_w) // 2
-        f_draw.rounded_rectangle([hud_x0, 260, hud_x0 + hud_w, 310], radius=12, fill=hud_fill, outline=hud_outline, width=2)
+        f_draw.rounded_rectangle(
+            [hud_x0, 260, hud_x0 + hud_w, 310],
+            radius=12,
+            fill=hud_fill,
+            outline=hud_outline,
+            width=2,
+        )
         f_draw.text((hud_x0 + 25, 272), hud_text, fill=hud_color, font=font_hud)
 
         # 7. Carte infographique B-Roll à droite
@@ -519,6 +779,9 @@ def render_video(
         err_msg = stderr_data.decode("utf-8", errors="replace")
         raise RuntimeError(f"FFmpeg erreur ({proc.returncode}): {err_msg}")
 
-    logger.info("Vidéo finalisée avec succès : %s (taille: %d octets)", output_mp4, output_mp4.stat().st_size)
+    logger.info(
+        "Vidéo finalisée avec succès : %s (taille: %d octets)",
+        output_mp4,
+        output_mp4.stat().st_size,
+    )
     return output_mp4
-
