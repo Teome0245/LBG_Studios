@@ -9,6 +9,13 @@
 ---
 
 ## Dernières actions réalisées (2026-11-14)
+-3. **Audit Global Gladys & Boucle d'Auto-Évaluation / Self-Healing** :
+    - **Banc d'essai Self-Healing (`tools/test_self_healing_loop.py`)** :
+      * Injection d'un échec de test CI -> détection automatique par Gladys -> génération d'un mandat de patch vers Ollama local (`qwen2.5:3b` / `14b`) -> application du patch -> repassage vert des tests en 13.7 s à 0 € cloud.
+    - **Audit des Surfaces LAN Gladys (`tools/smoke_lan_surfaces.sh --functional`)** :
+      * 21 checks fonctionnels OK (Pilot UI/healthz, Cockpit UI/snapshot, Lyra/Orch UI, Simple Chat, Prime Hub Godot G5+, MCP healthz, Patches manifest, Agent Desktop réel sur Windows .10).
+      * Godot Prime Hub G5+ (`.246:8787`) : ~5.5 jours d'uptime stable sans fuite mémoire, tick 9 416 077, 38 PNJ + 10 bots IA actifs, persistance SQLite WAL nominale.
+
 -2. **Intégration Connaissances & Outils Gladys (Claude Code Local 0€ & Pipeline Studio 3D)** :
     - **Analyse des vidéos communautaires** :
       * Cedric Oden IA : Dérivation de Claude Code CLI sur Ollama local à 0€ avec contexte 64k tokens.
