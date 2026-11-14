@@ -51,49 +51,49 @@
     "id": 7,
     "topic": "Créer et animer des avatars 3D VRM en ligne de commande avec Blender headless",
     "category": "Pipeline Graphique 3D",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-13T17:40:10.513152",
+    "youtube_url": "https://www.youtube.com/shorts/zcy5L_jY9sI"
   },
   {
     "id": 8,
     "topic": "Comment piloter un PC Windows depuis Linux via des micro-agents FastAPI",
     "category": "DevOps & Automatisation",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-14T11:39:30.533063",
+    "youtube_url": "https://www.youtube.com/shorts/G2DUJYrV5mI"
   },
   {
     "id": 9,
     "topic": "Zéro euro de frais cloud : notre stack d'infrastructure locale expliquée",
     "category": "Hardware & Self-Hosting",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-14T17:39:26.669120",
+    "youtube_url": "https://www.youtube.com/shorts/7DIEpp03lNI"
   },
   {
     "id": 10,
     "topic": "La mort des NPC passifs : comment les LLM locaux rendent les PNJ conscients",
     "category": "Game Design & IA",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-14T20:58:14.720785",
+    "youtube_url": "https://www.youtube.com/shorts/b_2T_V7p0y4"
   },
   {
     "id": 11,
     "topic": "Génération procédurale de terrain et scatter d'objets sur Godot 4.6",
     "category": "World Building Procédural",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-14T21:07:51.351326",
+    "youtube_url": "https://www.youtube.com/shorts/7Wo2K9tpjX0"
   },
   {
     "id": 12,
     "topic": "WebSockets vs WebTransport : quel protocole pour un MMO temps réel en 2026",
     "category": "Réseau Temps Réel",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-14T21:39:24.714672",
+    "youtube_url": "https://www.youtube.com/shorts/hfcyTegddJ4"
   },
   {
     "id": 13,

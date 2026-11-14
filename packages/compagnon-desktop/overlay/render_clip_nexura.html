@@ -7,12 +7,23 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
   html, body {
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
     background: #03050c;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Cadre 9:16 Centré Purement Isolé (Zéro Bureau) */
+  #clip-container {
     position: relative;
+    width: 540px;
+    height: 960px;
+    overflow: hidden;
+    background: #03050c;
   }
 
   /* Stage Background & Effets Scéniques */
@@ -157,30 +168,32 @@
 </head>
 <body>
 
-<canvas id="canvas-stage"></canvas>
-<div id="avatar-host"></div>
-<div id="render-flag"></div>
+<div id="clip-container">
+  <canvas id="canvas-stage"></canvas>
+  <div id="avatar-host"></div>
+  <div id="render-flag"></div>
 
-<!-- Top HUD Card -->
-<div id="top-hud">
-  <div class="hud-row">
-    <div class="badge-live"><span class="badge-pulse"></span> LIVE IDOL 3D</div>
-    <div class="badge-audio">128 BPM • MASTER STEREO</div>
+  <!-- Top HUD Card -->
+  <div id="top-hud">
+    <div class="hud-row">
+      <div class="badge-live"><span class="badge-pulse"></span> LIVE IDOL 3D</div>
+      <div class="badge-audio">128 BPM • MASTER STEREO</div>
+    </div>
+    <div class="hud-title">✦ NEXURA DOMINA</div>
+    <div class="hud-motion-info">
+      <span>FIGURE : <span class="hud-motion-name" id="hud-motion-name">Female Dance Pose1</span></span>
+      <span id="hud-timecode">00:00.00 / 02:37.61</span>
+    </div>
   </div>
-  <div class="hud-title">✦ NEXURA DOMINA</div>
-  <div class="hud-motion-info">
-    <span>FIGURE : <span class="hud-motion-name" id="hud-motion-name">Female Dance Pose1</span></span>
-    <span id="hud-timecode">00:00.00 / 02:37.61</span>
-  </div>
-</div>
 
-<!-- Bottom Equalizer Card -->
-<div id="bottom-hud">
-  <canvas id="audio-bars-canvas" width="480" height="28"></canvas>
-  <div class="hud-row" style="font-size: 10px; color: var(--text-muted, #94a3b8); font-family: monospace;">
-    <span>VOX : SYNCHRO LIPSYNC LIVE</span>
-    <span style="color: #ec4899;" id="hud-exp-name">Chant Scénique Passionné</span>
-    <span>LBG STUDIOS 2026</span>
+  <!-- Bottom Equalizer Card -->
+  <div id="bottom-hud">
+    <canvas id="audio-bars-canvas" width="480" height="28"></canvas>
+    <div class="hud-row" style="font-size: 10px; color: var(--text-muted, #94a3b8); font-family: monospace;">
+      <span>VOX : SYNCHRO LIPSYNC LIVE</span>
+      <span style="color: #ec4899;" id="hud-exp-name">Chant Scénique Passionné</span>
+      <span>LBG STUDIOS 2026</span>
+    </div>
   </div>
 </div>
 
@@ -275,29 +288,50 @@ async function init() {
   setupAudio();
 }
 
+let videoPlaybackStartTime = null;
+let isVideoPlaying = false;
+
 function onReady() {
   if (petInstance.setMicVisible) petInstance.setMicVisible(true);
-  // Cadrage vertical idéal pour mettre en valeur les mouvements des hanches et jambes
   if (petInstance.setCamera) {
-    petInstance.setCamera({ dist: 3.35, height: 0.85, lookY: 0.85, fov: 27, immediate: true });
+    petInstance.setCamera({ dist: 4.25, height: 0.85, lookY: 0.85, fov: 28, immediate: true });
+  }
+  // Adopter la pose d'introduction en attendant le clap
+  if (petInstance.playVRMA) {
+    petInstance.playVRMA("Female Dance Pose1.vrma", { loop: true });
   }
 
-  // Marquer prêt pour FFmpeg / capture
+  // Marquer prêt pour l'enregistreur
   document.getElementById("render-flag").style.display = "block";
   window.__READY_FOR_RECORD = true;
 
-  // Démarrer l'audio et la lecture
-  audio.currentTime = 0;
-  audio.play().catch(e => {
-    console.warn("Autoplay note:", e);
-    // Sur click ou autoplay policy
-    document.body.onclick = () => { audio.play(); };
-  });
-
-  audio.ontimeupdate = () => {
-    updateChoreo(audio.currentTime);
-  };
+  // Démarrage de sécurité automatique après 4s si pas de déclenchement externe
+  setTimeout(() => {
+    if (!isVideoPlaying) startPlaybackNow();
+  }, 4000);
 }
+
+function startPlaybackNow() {
+  if (isVideoPlaying) return;
+  try {
+    audio.currentTime = 0;
+    audio.play().catch(e => { console.warn("Audio autoplay:", e); });
+  } catch (_) {}
+
+  videoPlaybackStartTime = performance.now();
+  isVideoPlaying = true;
+  console.log("[RenderClip] Performance démarrée !");
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" || e.key === " " || e.key === "Enter") {
+    startPlaybackNow();
+  }
+});
+
+window.addEventListener("click", () => {
+  startPlaybackNow();
+});
 
 function updateChoreo(curT) {
   // Format timecode
@@ -323,6 +357,60 @@ function updateChoreo(curT) {
   if (activeExp) {
     document.getElementById("hud-exp-name").innerText = activeExp.name;
   }
+
+  // Caméra active & Mouvements Drone Mobiles
+  updateCameraAtTime(curT);
+}
+
+const CAM_PRESETS = {
+  full: { type: 'fixed', dist: 4.25, lookY: 0.85, fov: 28, name: "Silhouette Complète" },
+  mid: { type: 'fixed', dist: 3.10, lookY: 1.00, fov: 27, name: "Plan Américain" },
+  bust: { type: 'fixed', dist: 1.80, lookY: 1.28, fov: 25, name: "Buste Diva" },
+  closeup: { type: 'fixed', dist: 1.15, lookY: 1.38, fov: 23, name: "Gros Plan Émotion" },
+  drone_orbit: { type: 'mobile', mode: 'orbit', dist: 3.90, lookY: 0.90, fov: 28, rotations: 1, name: "🛸 Drone Orbit 360°" },
+  drone_orbit_close: { type: 'mobile', mode: 'orbit', dist: 2.10, lookY: 1.25, fov: 25, rotations: 1, name: "💫 Drone Orbit Buste" },
+  drone_arc180: { type: 'mobile', mode: 'arc180', dist: 3.40, lookY: 0.95, fov: 28, name: "🔄 Drone Arc 180°" },
+  push_in: { type: 'mobile', mode: 'push_in', distStart: 4.30, distEnd: 1.70, lookYStart: 0.85, lookYEnd: 1.32, fov: 26, name: "🚀 Travelling Avant" },
+  pull_out: { type: 'mobile', mode: 'pull_out', distStart: 1.70, distEnd: 4.30, lookYStart: 1.32, lookYEnd: 0.85, fov: 26, name: "🌌 Travelling Arrière" },
+  sway: { type: 'mobile', mode: 'sway', dist: 3.20, lookY: 0.95, fov: 28, name: "🌊 Balancement Beat" }
+};
+
+let currentCamPreset = null;
+function updateCameraAtTime(curTime) {
+  const activeCam = sequenceData.cameras.find(c => curTime >= c.start && curTime < c.end);
+  if (!activeCam || !petInstance) return;
+
+  const key = activeCam.preset || "full";
+  const p = CAM_PRESETS[key] || CAM_PRESETS["full"];
+
+  if (p.type === 'mobile') {
+    const dur = Math.max(0.1, activeCam.end - activeCam.start);
+    const progress = Math.max(0, Math.min(1, (curTime - activeCam.start) / dur));
+
+    if (p.mode === 'orbit') {
+      const angle = progress * Math.PI * 2 * (p.rotations || 1);
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    } else if (p.mode === 'arc180') {
+      const angle = -Math.PI * 0.5 + progress * Math.PI;
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    } else if (p.mode === 'push_in') {
+      const dist = p.distStart + (p.distEnd - p.distStart) * progress;
+      const lookY = p.lookYStart + (p.lookYEnd - p.lookYStart) * progress;
+      petInstance.setCamera({ dist, lookY, height: lookY + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'pull_out') {
+      const dist = p.distStart + (p.distEnd - p.distStart) * progress;
+      const lookY = p.lookYStart + (p.lookYEnd - p.lookYStart) * progress;
+      petInstance.setCamera({ dist, lookY, height: lookY + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'sway') {
+      const angle = Math.sin(progress * Math.PI * 6) * 0.35;
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    }
+  } else {
+    if (activeCam.preset !== currentCamPreset) {
+      currentCamPreset = activeCam.preset;
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, fov: p.fov, angle: 0, immediate: true });
+    }
+  }
 }
 
 // =========================================================================
@@ -333,8 +421,8 @@ function initStageCanvas() {
   const ctx = canvas.getContext("2d");
 
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = 540;
+    canvas.height = 960;
   }
   window.addEventListener("resize", resize);
   resize();
@@ -342,8 +430,8 @@ function initStageCanvas() {
   const particles = [];
   for (let i = 0; i < 30; i++) {
     particles.push({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+      x: Math.random() * 540,
+      y: Math.random() * 960,
       size: 1 + Math.random() * 2.5,
       speed: 0.8 + Math.random() * 1.5,
       color: Math.random() > 0.5 ? "rgba(0, 245, 212," : "rgba(244, 63, 94,"
@@ -422,6 +510,12 @@ function initStageCanvas() {
       ctx.fill();
     }
 
+    // Mise à jour continue et fluide de la chorégraphie et des caméras drone à 60 FPS
+    if (isVideoPlaying && videoPlaybackStartTime !== null) {
+      const curT = (now - videoPlaybackStartTime) / 1000.0;
+      updateChoreo(Math.min(sequenceData.duration, curT));
+    }
+
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
@@ -448,30 +542,42 @@ function setupAudio() {
 
   function drawBars() {
     barsCtx.clearRect(0, 0, barsCanvas.width, barsCanvas.height);
-    if (analyser && dataArray && !audio.paused) {
-      analyser.getByteFrequencyData(dataArray);
+    if (isVideoPlaying && videoPlaybackStartTime !== null) {
+      const curT = (performance.now() - videoPlaybackStartTime) / 1000.0;
+      const beat = curT * (128 / 60) * Math.PI * 2;
+      const activeExp = sequenceData.expressions.find(e => curT >= e.start && curT < e.end);
+      const preset = activeExp ? activeExp.preset : "silence";
+      const isSinging = preset !== "silence";
+
+      // Égaliseur audio et analyse FFT réelle de la voix (asservissement Atelier)
+      let voiceRms = 0;
+      if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let voiceSum = 0;
+        let voiceCount = 0;
+        for (let i = 2; i < 18; i++) {
+          voiceSum += dataArray[i];
+          voiceCount++;
+        }
+        voiceRms = (voiceSum / (voiceCount * 255)) * 1.5;
+      }
+
+      // Animation dynamique de l'égaliseur audio
       const count = 24;
       const barW = barsCanvas.width / count - 2;
       for (let i = 0; i < count; i++) {
-        const val = dataArray[i] / 255;
+        const val = analyser && dataArray ? Math.max(0.12, (dataArray[i % dataArray.length] / 255.0)) : Math.max(0.12, Math.abs(Math.sin(beat * 0.5 + i * 0.45)) * (isSinging ? 0.90 : 0.40));
         const h = val * barsCanvas.height;
         barsCtx.fillStyle = i < 12 ? "#00f5d4" : "#f43f5e";
         barsCtx.fillRect(i * (barW + 2), barsCanvas.height - h, barW, h);
       }
 
-      // Lipsync vocal en direct
+      // Lipsync vocal & expressions scéniques en direct calés sur la voix
       if (petInstance && petInstance.setLiveSinging) {
-        let voiceSum = 0;
-        for (let i = 2; i <= 12; i++) voiceSum += dataArray[i];
-        const voiceRms = (voiceSum / (11 * 255)) * 1.35;
-        const curT = audio.currentTime;
-        const activeExp = sequenceData.expressions.find(e => curT >= e.start && curT < e.end);
-        const preset = activeExp ? activeExp.preset : "diva";
-
         let mouthA = 0, mouthO = 0, mouthI = 0;
-        let relaxedVal = 0.5, happyVal = 0, blinkVal = 0;
+        let relaxedVal = 0.35, happyVal = 0, blinkVal = 0;
 
-        if (voiceRms > 0.07) {
+        if (isSinging && voiceRms > 0.07) {
           const energy = Math.min(1.0, (voiceRms - 0.07) * 1.6);
           if (preset === "climax") {
             mouthA = Math.min(1.0, energy * 1.25);
@@ -484,14 +590,26 @@ function setupAudio() {
             happyVal = 0.75;
             relaxedVal = 0.50;
             blinkVal = 0.05;
+          } else if (preset === "mystique") {
+            mouthA = energy * 0.55;
+            mouthO = energy * 0.40;
+            relaxedVal = 0.45;
+            blinkVal = 0.25;
           } else {
+            // diva
             mouthA = energy * 0.88;
             mouthO = Math.sin(curT * 10) > 0.25 ? energy * 0.45 : 0;
             mouthI = 0.20;
             relaxedVal = 0.70;
             blinkVal = 0.35 + Math.sin(curT * 5) * 0.15;
           }
+        } else {
+          // Pause / Respiration scénique : bouche fermée naturelle
+          if (preset === "idol") happyVal = 0.50;
+          if (preset === "mystique") relaxedVal = 0.40;
+          if (preset === "diva" || preset === "climax") relaxedVal = 0.30;
         }
+
         petInstance.setLiveSinging(true, {
           aa: mouthA,
           oh: mouthO,

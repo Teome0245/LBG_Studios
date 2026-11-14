@@ -288,6 +288,14 @@
     background: rgba(0, 245, 212, 0.12);
     color: var(--primary);
   }
+  .cam-btn-drone {
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+  .cam-btn-drone:hover, .cam-btn-drone.active {
+    border-color: #a855f7 !important;
+    background: rgba(168, 85, 247, 0.2) !important;
+    color: #e9d5ff !important;
+  }
 
   /* Viewport 3D */
   #viewport-container {
@@ -348,9 +356,26 @@
     box-shadow: 0 0 0 9999px rgba(3, 5, 12, 0.45);
   }
 
+  /* Poignée de redimensionnement de la timeline */
+  #timeline-resizer {
+    height: 6px;
+    background: #1e293b;
+    cursor: row-resize;
+    transition: background 0.15s;
+    z-index: 25;
+    position: relative;
+    border-top: 1px solid rgba(0, 245, 212, 0.3);
+  }
+  #timeline-resizer:hover, #timeline-resizer.dragging {
+    background: var(--primary);
+    box-shadow: 0 0 10px rgba(0, 245, 212, 0.6);
+  }
+
   /* Zone Timeline & Séquenceur (Bas de page) */
   #sequencer-panel {
-    height: 220px;
+    height: 310px;
+    min-height: 180px;
+    max-height: 80vh;
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
     display: flex;
@@ -358,7 +383,7 @@
     z-index: 10;
   }
   #transport-bar {
-    height: 42px;
+    height: 38px;
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -374,11 +399,11 @@
   }
   .time-display {
     font-family: monospace;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: bold;
     color: var(--primary);
     background: rgba(0, 0, 0, 0.4);
-    padding: 4px 10px;
+    padding: 3px 8px;
     border-radius: 4px;
     border: 1px solid var(--border);
   }
@@ -387,14 +412,29 @@
   #tracks-scroll {
     flex: 1;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     position: relative;
     background: #090e1a;
   }
+  #tracks-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  #tracks-scroll::-webkit-scrollbar-track {
+    background: #080c16;
+  }
+  #tracks-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+  }
+  #tracks-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+  }
   #tracks-inner {
     position: relative;
-    height: 100%;
+    min-height: 100%;
     min-width: 1400px;
+    padding-bottom: 8px;
   }
   .timeline-ruler {
     height: 22px;
@@ -414,7 +454,7 @@
   }
 
   .track-row {
-    height: 54px;
+    height: 48px;
     border-bottom: 1px solid var(--border);
     position: relative;
     display: flex;
@@ -438,7 +478,7 @@
 
   .timeline-block {
     position: absolute;
-    height: 40px;
+    height: 36px;
     border-radius: 6px;
     background: linear-gradient(135deg, rgba(0, 245, 212, 0.25), rgba(0, 180, 216, 0.4));
     border: 1px solid var(--primary);
@@ -685,7 +725,8 @@
 
       <!-- Onglet Caméra & Plans -->
       <div id="tab-camera" class="tab-content">
-        <div class="section-title">Presets de Plans Cinématiques</div>
+        <!-- 1. Plans Cadrés Fixes -->
+        <div class="section-title">1. Plans Cadrés Fixes</div>
         <div class="cam-presets">
           <button class="cam-btn" data-cam="full">🎬 Silhouette Complète<br><span style="font-size:9px;color:var(--text-muted);">(Pieds à Tête)</span></button>
           <button class="cam-btn active" data-cam="mid">💃 Plan Américain<br><span style="font-size:9px;color:var(--text-muted);">(Hanches & Micro)</span></button>
@@ -693,6 +734,32 @@
           <button class="cam-btn" data-cam="closeup">✨ Gros Plan Émotion<br><span style="font-size:9px;color:var(--text-muted);">(Yeux & Lipsync)</span></button>
         </div>
 
+        <!-- 2. Caméras Mobiles & Mouvements Drone -->
+        <div class="section-title" style="margin-top: 12px; color: #d8b4fe;">2. Mouvements Mobiles & Drone 🛸</div>
+        <div class="cam-presets">
+          <button class="cam-btn cam-btn-drone" data-cam="drone_orbit">🛸 Drone Orbit 360°<br><span style="font-size:9px;color:var(--text-muted);">(Tourne autour du modèle)</span></button>
+          <button class="cam-btn cam-btn-drone" data-cam="drone_orbit_close">💫 Drone Orbit Buste<br><span style="font-size:9px;color:var(--text-muted);">(Rotation rapprochée)</span></button>
+          <button class="cam-btn cam-btn-drone" data-cam="drone_arc180">🔄 Drone Arc 180°<br><span style="font-size:9px;color:var(--text-muted);">(Face ↔ Dos dynamique)</span></button>
+          <button class="cam-btn cam-btn-drone" data-cam="push_in">🚀 Travelling Avant<br><span style="font-size:9px;color:var(--text-muted);">(Zoom progressif ciné)</span></button>
+          <button class="cam-btn cam-btn-drone" data-cam="pull_out">🌌 Travelling Arrière<br><span style="font-size:9px;color:var(--text-muted);">(Dézoom révélation)</span></button>
+          <button class="cam-btn cam-btn-drone" data-cam="sway">🌊 Balancement Beat<br><span style="font-size:9px;color:var(--text-muted);">(Dolly gauche/droite)</span></button>
+        </div>
+
+        <!-- 3. Actions sur la Timeline Caméras -->
+        <div class="control-group" style="margin-top: 12px;">
+          <div class="section-title">Insérer ou Modifier sur la Timeline</div>
+          <div class="control-row">
+            <label>Durée du plan :</label>
+            <input type="range" id="cam-duration-slider" min="2.0" max="30.0" step="0.5" value="10.0">
+            <span class="val-badge" id="cam-duration-val">10.0s</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+            <button class="btn btn-sm btn-primary" id="btn-add-cam-timeline">➕ Insérer ce Plan à la Tête de Lecture</button>
+            <button class="btn btn-sm" id="btn-update-selected-cam" style="display: none; background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #e9d5ff;">✓ Appliquer au Bloc Caméra Sélectionné</button>
+          </div>
+        </div>
+
+        <!-- 4. Ajustement Fin Manuel -->
         <div class="control-group" style="margin-top: 10px;">
           <div class="section-title">Ajustement Fin Manuel</div>
           <div class="control-row">
@@ -784,6 +851,9 @@
     </main>
   </div>
 
+  <!-- Poignée interactive pour étirer/redimensionner la timeline à la souris -->
+  <div id="timeline-resizer" title="Glissez vers le haut ou le bas pour redimensionner la timeline"></div>
+
   <!-- 3. Zone Timeline & Séquenceur Multi-pistes -->
   <footer id="sequencer-panel">
     <!-- Barre de transport -->
@@ -795,13 +865,18 @@
         <div class="time-display" id="timecode">00:00.00</div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 12px; font-size: 12px;">
-        <span style="color: var(--text-muted);">Piste audio :</span>
-        <span style="color: var(--primary); font-weight: bold;">Nexura Domina_v1.mp3 (128 BPM)</span>
-        <audio id="audio-player" src="./nexura_domina_v1.mp3" preload="auto"></audio>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+        <span style="color: #00f0ff; font-weight: bold; text-shadow: 0 0 6px rgba(0,240,255,0.6);">🎧 Morceau :</span>
+        <select id="select-audio-track" style="background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(13, 20, 36, 0.95)); color: #fff; border: 1.5px solid #00f0ff; box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); padding: 5px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; outline: none;">
+          <option value="lia_cyber_30s" data-src="./audio/lia_cyberpunk_song_30s_master.wav" data-duration="29.94" data-bpm="128" selected>🎵 Lia Cyberpunk Master V2 (MusicGen 30s + Voix - 128 BPM)</option>
+          <option value="nexura" data-src="./nexura_domina_v1.mp3" data-duration="157.61" data-bpm="128">⚡ Nexura Domina (Clip Officiel 2m37)</option>
+          <option value="track_v1" data-src="./audio/track_musicgen_v1.wav" data-duration="8.0" data-bpm="128">🎹 Instrumental Beat (MusicGen 8s - 128 BPM)</option>
+        </select>
+        <audio id="audio-player" src="./audio/lia_cyberpunk_song_30s_master.wav" preload="auto"></audio>
       </div>
 
-      <div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-sm" id="btn-toggle-timeline-size" title="Agrandit ou réduit la hauteur de la timeline">⤢ Agrandir Timeline</button>
         <button class="btn btn-sm btn-primary" id="btn-render-clip">🎬 Exporter Clip Vidéo HD</button>
       </div>
     </div>
@@ -973,13 +1048,74 @@ function onAvatarReady() {
 // =========================================================================
 // 3. Gestion du Catalogue d'Animations
 // =========================================================================
+let currentSelectedCategory = "all";
+
 async function loadManifest() {
   try {
-    const res = await fetch("./vrm/animations/manifest.json");
+    const res = await fetch("./vrm/animations/manifest.json?t=" + Date.now());
     animManifest = await res.json();
+    
+    // Mise à jour du compteur total dans le titre
+    const titleEl = document.querySelector("#tab-catalogue .section-title");
+    if (titleEl && animManifest.total) {
+      titleEl.innerText = `Recherche dans les ${animManifest.total} Animations`;
+    }
+
+    // Génération dynamique des pilules de catégories
+    setupCategoryPills(animManifest.categories);
+
     renderAnimList(animManifest.categories);
   } catch (err) {
     console.warn("[Choreographer] Erreur chargement manifest:", err);
+  }
+}
+
+function setupCategoryPills(categories) {
+  const filterContainer = document.getElementById("category-filter");
+  if (!filterContainer) return;
+  filterContainer.innerHTML = "";
+
+  const totalCount = Object.values(categories).reduce((acc, list) => acc + list.length, 0);
+
+  // 1. Bouton "Tout"
+  const allPill = document.createElement("div");
+  allPill.className = "cat-pill" + (currentSelectedCategory === "all" ? " active" : "");
+  allPill.dataset.cat = "all";
+  allPill.innerText = `Tout (${totalCount})`;
+  allPill.onclick = () => selectCategory("all");
+  filterContainer.appendChild(allPill);
+
+  // 2. Boutons par catégorie
+  Object.entries(categories).forEach(([catName, files]) => {
+    const pill = document.createElement("div");
+    pill.className = "cat-pill" + (currentSelectedCategory === catName ? " active" : "");
+    pill.dataset.cat = catName;
+    // Nom court
+    let shortName = catName;
+    if (catName.includes("Star Wars")) shortName = "Danses SWG 🌌";
+    else if (catName.includes("Danses")) shortName = "Danses";
+    else if (catName.includes("Poses")) shortName = "Poses";
+    else if (catName.includes("Locomotion")) shortName = "Marches";
+    else if (catName.includes("Capoeira")) shortName = "Capoeira";
+    
+    pill.innerText = `${shortName} (${files.length})`;
+    pill.onclick = () => selectCategory(catName);
+    filterContainer.appendChild(pill);
+  });
+}
+
+function selectCategory(cat) {
+  currentSelectedCategory = cat;
+  document.querySelectorAll(".cat-pill").forEach(p => {
+    p.classList.toggle("active", p.dataset.cat === cat);
+  });
+  const searchInput = document.getElementById("search-input");
+  const q = searchInput ? searchInput.value : "";
+  if (cat === "all") {
+    renderAnimList(animManifest.categories, q);
+  } else {
+    const filtered = { [cat]: animManifest.categories[cat] || [] };
+    renderAnimList(filtered, q);
   }
 }
 
@@ -1027,35 +1163,161 @@ function playSelectedMotion(file) {
 }
 
 // =========================================================================
-// 4. Contrôles Caméra & Presets
+// 4. Contrôles Caméra, Presets Cinématiques & Mouvements Drone Mobiles
 // =========================================================================
 const CAM_PRESETS = {
-  full: { dist: 3.45, lookY: 0.82, fov: 26, name: "Silhouette Complète" },
-  mid: { dist: 2.70, lookY: 0.95, fov: 26, name: "Plan Américain (Hanches & Micro)" },
-  bust: { dist: 1.50, lookY: 1.30, fov: 24, name: "Buste Diva" },
-  closeup: { dist: 0.95, lookY: 1.40, fov: 22, name: "Gros Plan Émotion" }
+  // Plans Cadrés Fixes
+  full: { type: 'fixed', dist: 3.45, lookY: 0.82, fov: 26, name: "Silhouette Complète" },
+  mid: { type: 'fixed', dist: 2.70, lookY: 0.95, fov: 26, name: "Plan Américain" },
+  bust: { type: 'fixed', dist: 1.50, lookY: 1.30, fov: 24, name: "Buste Diva" },
+  closeup: { type: 'fixed', dist: 0.95, lookY: 1.40, fov: 22, name: "Gros Plan Émotion" },
+
+  // Mouvements Mobiles & Drone Cinématographique
+  drone_orbit: {
+    type: 'mobile',
+    mode: 'orbit',
+    dist: 3.20,
+    lookY: 0.92,
+    fov: 26,
+    rotations: 1,
+    name: "🛸 Drone Orbit 360°"
+  },
+  drone_orbit_close: {
+    type: 'mobile',
+    mode: 'orbit',
+    dist: 1.85,
+    lookY: 1.25,
+    fov: 24,
+    rotations: 1,
+    name: "💫 Drone Orbit Buste"
+  },
+  drone_arc180: {
+    type: 'mobile',
+    mode: 'arc180',
+    dist: 2.85,
+    lookY: 0.98,
+    fov: 26,
+    name: "🔄 Drone Arc 180°"
+  },
+  push_in: {
+    type: 'mobile',
+    mode: 'push_in',
+    distStart: 3.6,
+    distEnd: 1.4,
+    lookYStart: 0.85,
+    lookYEnd: 1.35,
+    fov: 25,
+    name: "🚀 Travelling Avant"
+  },
+  pull_out: {
+    type: 'mobile',
+    mode: 'pull_out',
+    distStart: 1.4,
+    distEnd: 3.6,
+    lookYStart: 1.35,
+    lookYEnd: 0.85,
+    fov: 25,
+    name: "🌌 Travelling Arrière"
+  },
+  sway: {
+    type: 'mobile',
+    mode: 'sway',
+    dist: 2.7,
+    lookY: 0.98,
+    fov: 26,
+    name: "🌊 Balancement Beat"
+  }
 };
 
-function applyCamPreset(key) {
+function applyCamPreset(key, syncBlock = true) {
   const p = CAM_PRESETS[key];
   if (!p || !petInstance) return;
   currentCamPreset = key;
 
+  applyCamPresetUI(key);
+
+  // Si un bloc caméra est actuellement sélectionné, le mettre à jour instantanément
+  if (syncBlock && selectedBlock && selectedBlock.type === "camera") {
+    const b = sequenceData.cameras[selectedBlock.index];
+    if (b) {
+      b.preset = key;
+      b.name = p.name;
+      renderTimeline();
+      selectBlock("camera", selectedBlock.index);
+      try { localStorage.setItem("choreographer_active_sequence", JSON.stringify(sequenceData)); } catch (_) {}
+    }
+  }
+
+  // Prévisualisation immédiate dans la scène 3D
+  if (p.type === 'mobile') {
+    if (p.mode === 'orbit') {
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'arc180') {
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle: -Math.PI * 0.5, fov: p.fov, immediate: true });
+    } else if (p.mode === 'push_in') {
+      petInstance.setCamera({ dist: p.distStart, lookY: p.lookYStart, height: p.lookYStart + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'pull_out') {
+      petInstance.setCamera({ dist: p.distStart, lookY: p.lookYStart, height: p.lookYStart + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'sway') {
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle: 0, fov: p.fov, immediate: true });
+    }
+  } else {
+    document.getElementById("cam-dist").value = p.dist;
+    document.getElementById("cam-dist-val").innerText = p.dist + "m";
+    document.getElementById("cam-height").value = p.lookY;
+    document.getElementById("cam-height-val").innerText = p.lookY + "m";
+    document.getElementById("cam-fov").value = p.fov;
+    document.getElementById("cam-fov-val").innerText = p.fov + "°";
+    petInstance.setCamera({ dist: p.dist, lookY: p.lookY, fov: p.fov, angle: 0, immediate: true });
+  }
+
+  document.getElementById("hud-cam").innerText = p.name;
+}
+
+function applyCamPresetUI(key) {
   document.querySelectorAll(".cam-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.cam === key);
   });
+}
 
-  document.getElementById("cam-dist").value = p.dist;
-  document.getElementById("cam-dist-val").innerText = p.dist + "m";
-  document.getElementById("cam-height").value = p.lookY;
-  document.getElementById("cam-height-val").innerText = p.lookY + "m";
-  document.getElementById("cam-fov").value = p.fov;
-  document.getElementById("cam-fov-val").innerText = p.fov + "°";
+function updateCameraAtTime(curTime) {
+  const activeCam = sequenceData.cameras.find(c => curTime >= c.start && curTime < c.end);
+  if (!activeCam || !petInstance) return;
 
-  document.getElementById("hud-cam").innerText = p.name;
+  const key = activeCam.preset || "full";
+  const p = CAM_PRESETS[key] || CAM_PRESETS["full"];
 
-  if (petInstance.setCamera) {
-    petInstance.setCamera({ dist: p.dist, lookY: p.lookY, fov: p.fov });
+  document.getElementById("hud-cam").innerText = activeCam.name || p.name;
+
+  if (p.type === 'mobile') {
+    const dur = Math.max(0.1, activeCam.end - activeCam.start);
+    const progress = Math.max(0, Math.min(1, (curTime - activeCam.start) / dur));
+
+    if (p.mode === 'orbit') {
+      const angle = progress * Math.PI * 2 * (p.rotations || 1);
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    } else if (p.mode === 'arc180') {
+      const angle = -Math.PI * 0.5 + progress * Math.PI;
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    } else if (p.mode === 'push_in') {
+      const dist = p.distStart + (p.distEnd - p.distStart) * progress;
+      const lookY = p.lookYStart + (p.lookYEnd - p.lookYStart) * progress;
+      petInstance.setCamera({ dist, lookY, height: lookY + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'pull_out') {
+      const dist = p.distStart + (p.distEnd - p.distStart) * progress;
+      const lookY = p.lookYStart + (p.lookYEnd - p.lookYStart) * progress;
+      petInstance.setCamera({ dist, lookY, height: lookY + 0.08, angle: 0, fov: p.fov, immediate: true });
+    } else if (p.mode === 'sway') {
+      const angle = Math.sin(progress * Math.PI * 6) * 0.35;
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.1, angle, fov: p.fov, immediate: true });
+    }
+  } else {
+    // Plan fixe
+    if (activeCam.preset !== currentCamPreset) {
+      currentCamPreset = activeCam.preset;
+      applyCamPresetUI(activeCam.preset);
+      petInstance.setCamera({ dist: p.dist, lookY: p.lookY, fov: p.fov, angle: 0, immediate: true });
+    }
   }
 }
 
@@ -1063,6 +1325,42 @@ function applyCamPreset(key) {
 // 5. Timeline Musicale & Séquenceur Multi-pistes (Édition, Couper, Supprimer)
 // =========================================================================
 const audio = document.getElementById("audio-player");
+const selectAudio = document.getElementById("select-audio-track");
+if (selectAudio) {
+  selectAudio.addEventListener("change", (e) => {
+    const opt = selectAudio.options[selectAudio.selectedIndex];
+    const newSrc = opt.dataset.src;
+    const newDur = parseFloat(opt.dataset.duration) || 30.0;
+    audio.pause();
+    audio.src = newSrc;
+    audio.currentTime = 0;
+    sequenceData.duration = newDur;
+    
+    // Si piste courte de 30s : adapter la timeline proprement
+    if (newDur < 40.0 && sequenceData.motions.length > 5) {
+      sequenceData.motions = [
+        { start: 0.0, end: 5.5, file: "Female Dance Pose.vrma", name: "Intro Présence Cyber", speed: 1.0 },
+        { start: 5.5, end: 15.0, file: "Arms Hip Hop Dance.vrma", name: "Montée Beat Électro", speed: 1.0 },
+        { start: 15.0, end: 25.0, file: "Bellydancing.vrma", name: "Drop Nexura Domina", speed: 1.0 },
+        { start: 25.0, end: newDur, file: "swg_moonwalk.vrma", name: "Outro Glisse Matrix", speed: 1.0 }
+      ];
+      sequenceData.cameras = [
+        { start: 0.0, end: 5.5, preset: "silhouette", name: "Silhouette Complète" },
+        { start: 5.5, end: 15.0, preset: "travelling_in", name: "Travelling Avant (Push In)" },
+        { start: 15.0, end: 25.0, preset: "drone_orbit_360", name: "Drone Orbit 360°" },
+        { start: 25.0, end: newDur, preset: "plan_large", name: "Plan Large Final" }
+      ];
+      sequenceData.expressions = [
+        { start: 0.0, end: 5.5, preset: "mystique", name: "Intro Mystique" },
+        { start: 5.5, end: 15.0, preset: "passion", name: "Diva Scénique" },
+        { start: 15.0, end: 25.0, preset: "extase", name: "Climax Vocal" },
+        { start: 25.0, end: newDur, preset: "respiration", name: "Outro Déconnexion" }
+      ];
+    }
+    renderTimeline();
+    console.log("✦ [AUDIO TRACK SWITCH] Nouvelle piste :", newSrc, "Durée :", newDur);
+  });
+}
 let selectedBlock = null; // { type: 'motion'|'camera'|'expression', index: number }
 
 function getTrackList(type) {
@@ -1116,11 +1414,24 @@ function selectBlock(type, index) {
     domBlocks[index].classList.add("selected");
   }
 
-  // Prévisualisation immédiate
+  // Prévisualisation immédiate & Synchronisation Onglet
   if (type === "motion" && block.file) {
     playSelectedMotion(block.file);
-  } else if (type === "camera" && block.preset) {
-    applyCamPreset(block.preset);
+  } else if (type === "camera") {
+    // Afficher le bouton de mise à jour rapide du bloc caméra
+    const updateBtn = document.getElementById("btn-update-selected-cam");
+    if (updateBtn) {
+      updateBtn.style.display = "block";
+      updateBtn.innerText = `✓ Remplacer par plan sélectionné (${block.name})`;
+    }
+    // Ouvrir l'onglet Caméra pour faciliter le choix
+    const camTabBtn = document.querySelector('[data-tab="tab-camera"]');
+    if (camTabBtn && !camTabBtn.classList.contains("active")) {
+      camTabBtn.click();
+    }
+    if (block.preset) {
+      applyCamPreset(block.preset, false);
+    }
   } else if (type === "expression") {
     currentExpPreset = block.preset;
     document.getElementById("hud-exp").innerText = block.name;
@@ -1131,6 +1442,8 @@ function deselectBlock() {
   selectedBlock = null;
   const detailsEl = document.getElementById("selected-block-details");
   if (detailsEl) detailsEl.style.display = "none";
+  const updateBtn = document.getElementById("btn-update-selected-cam");
+  if (updateBtn) updateBtn.style.display = "none";
   document.querySelectorAll(".timeline-block").forEach(b => b.classList.remove("selected"));
 }
 
@@ -1430,11 +1743,8 @@ function updatePlaybackPosition(curTime) {
     playSelectedMotion(activeMotion.file);
   }
 
-  // Vérifier quelle caméra doit être active
-  const activeCam = sequenceData.cameras.find(c => curTime >= c.start && curTime < c.end);
-  if (activeCam && activeCam.preset !== currentCamPreset) {
-    applyCamPreset(activeCam.preset);
-  }
+  // Vérifier et animer la caméra (Plans Fixes ou Mouvements Drone Mobiles)
+  updateCameraAtTime(curTime);
 
   // Vérifier quelle expression / style de chant doit être actif
   const activeExp = sequenceData.expressions.find(e => curTime >= e.start && curTime < e.end);
@@ -1612,6 +1922,11 @@ function initStageCanvas() {
     ctx.fill();
     ctx.restore();
 
+    // Animation fluide à 60 FPS du drone et de la caméra pendant la lecture
+    if (isPlaying && audio && !audio.paused) {
+      updatePlaybackPosition(audio.currentTime);
+    }
+
     requestAnimationFrame(renderStage);
   }
   requestAnimationFrame(renderStage);
@@ -1669,10 +1984,70 @@ function setupEvents() {
     speedSlider.oninput();
   };
 
-  // Presets Caméra
+  // Presets Caméra (Plans Fixes & Drone Mobile)
   document.querySelectorAll(".cam-btn").forEach(btn => {
-    btn.onclick = () => applyCamPreset(btn.dataset.cam);
+    btn.onclick = () => {
+      applyCamPreset(btn.dataset.cam, true);
+    };
   });
+
+  // Bouton Ajouter Plan Caméra à la Timeline
+  const btnAddCam = document.getElementById("btn-add-cam-timeline");
+  const camDurSlider = document.getElementById("cam-duration-slider");
+  const camDurVal = document.getElementById("cam-duration-val");
+
+  if (camDurSlider && camDurVal) {
+    camDurSlider.oninput = () => {
+      camDurVal.innerText = parseFloat(camDurSlider.value).toFixed(1) + "s";
+    };
+  }
+
+  if (btnAddCam) {
+    btnAddCam.onclick = () => {
+      const curTime = Number(audio.currentTime.toFixed(2));
+      const dur = parseFloat(camDurSlider?.value || 10.0);
+      const end = Number(Math.min(sequenceData.duration, curTime + dur).toFixed(2));
+      const p = CAM_PRESETS[currentCamPreset] || CAM_PRESETS["full"];
+
+      const newBlock = {
+        start: curTime,
+        end,
+        preset: currentCamPreset,
+        name: p.name
+      };
+
+      // Découpage propre sans trous
+      const updatedCams = [];
+      for (const c of sequenceData.cameras) {
+        if (c.end <= curTime || c.start >= end) {
+          updatedCams.push(c);
+        } else if (c.start < curTime && c.end > end) {
+          updatedCams.push({ ...c, end: curTime });
+          updatedCams.push({ ...c, start: end });
+        } else if (c.start < curTime && c.end <= end) {
+          updatedCams.push({ ...c, end: curTime });
+        } else if (c.start >= curTime && c.end > end) {
+          updatedCams.push({ ...c, start: end });
+        }
+      }
+      updatedCams.push(newBlock);
+      updatedCams.sort((a, b) => a.start - b.start);
+      sequenceData.cameras = updatedCams;
+
+      renderTimeline();
+      const newIdx = sequenceData.cameras.findIndex(c => c.start === curTime && c.preset === currentCamPreset);
+      if (newIdx !== -1) selectBlock("camera", newIdx);
+      try { localStorage.setItem("choreographer_active_sequence", JSON.stringify(sequenceData)); } catch (_) {}
+    };
+  }
+
+  // Bouton Mettre à Jour le Bloc Sélectionné
+  const btnUpdateCam = document.getElementById("btn-update-selected-cam");
+  if (btnUpdateCam) {
+    btnUpdateCam.onclick = () => {
+      applyCamPreset(currentCamPreset, true);
+    };
+  }
 
   // Sliders Caméra manuelle
   const distSlider = document.getElementById("cam-dist");
@@ -1913,6 +2288,52 @@ function setupEvents() {
   window.addEventListener("beforeunload", () => {
     try { localStorage.setItem("choreographer_active_sequence", JSON.stringify(sequenceData)); } catch (_) {}
   });
+
+  // Redimensionnement de la timeline (Poignée Draggable + Bouton Toggle)
+  const btnToggleTl = document.getElementById("btn-toggle-timeline-size");
+  const seqPanel = document.getElementById("sequencer-panel");
+  const resizer = document.getElementById("timeline-resizer");
+  let isTlExpanded = false;
+
+  if (btnToggleTl && seqPanel) {
+    btnToggleTl.onclick = () => {
+      isTlExpanded = !isTlExpanded;
+      seqPanel.style.height = isTlExpanded ? "450px" : "310px";
+      btnToggleTl.innerText = isTlExpanded ? "⤡ Réduire Timeline" : "⤢ Agrandir Timeline";
+      if (typeof window.onResize === "function") window.onResize();
+    };
+  }
+
+  if (resizer && seqPanel) {
+    let isResizing = false;
+    let startY = 0;
+    let startHeight = 0;
+
+    resizer.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      startY = e.clientY;
+      startHeight = seqPanel.offsetHeight;
+      resizer.classList.add("dragging");
+      document.body.style.cursor = "row-resize";
+      e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isResizing) return;
+      const dy = startY - e.clientY;
+      const newHeight = Math.max(160, Math.min(window.innerHeight * 0.85, startHeight + dy));
+      seqPanel.style.height = `${newHeight}px`;
+      if (typeof window.onResize === "function") window.onResize();
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (isResizing) {
+        isResizing = false;
+        resizer.classList.remove("dragging");
+        document.body.style.cursor = "";
+      }
+    });
+  }
 
   // Bouton Sauvegarder Projet
   document.getElementById("btn-save-project").onclick = async () => {

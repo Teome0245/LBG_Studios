@@ -28,7 +28,7 @@ PIPER_URL = os.environ.get("LBG_PIPER_URL", "http://192.168.0.111:8098/v1/tts")
 # Par défaut : Voix Vivienne Multilingual Neural (ultra-fluide, diction parfaite, 0€)
 DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr-FR-VivienneMultilingualNeural")
 DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
-INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "2.0"))
+INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "0.3"))
 
 
 # Dictionnaire de correction phonétique pour la voix française (GitHub -> Guite Heube, etc.)

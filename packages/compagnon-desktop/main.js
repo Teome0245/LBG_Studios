@@ -950,8 +950,9 @@ async function rebuildTrayMenu() {
       ],
     },
     {
-      label: "🎭 Spectacles & Shows (iStripper)",
+      label: "🎭 Spectacles & Shows",
       submenu: [
+        { label: "⚡ Show Nexura Domina (~2m37)", click: () => triggerShow("nexura") },
         { label: "✨ Show K-Pop Idol (~45s)", click: () => triggerShow("idol") },
         { label: "🪩 Show Club Electro (~40s)", click: () => triggerShow("club") },
         { label: "💃 Show Fiesta Latina (~40s)", click: () => triggerShow("latino") },
@@ -1544,8 +1545,9 @@ ipcMain.on("compagnon:show-overlay-context-menu", () => {
       ],
     },
     {
-      label: "🎭 Spectacles & Shows (iStripper)",
+      label: "🎭 Spectacles & Shows",
       submenu: [
+        { label: "⚡ Show Nexura Domina (~2m37)", click: () => triggerShow("nexura") },
         { label: "✨ Show K-Pop Idol (~45s)", click: () => triggerShow("idol") },
         { label: "🪩 Show Club Electro (~40s)", click: () => triggerShow("club") },
         { label: "💃 Show Fiesta Latina (~40s)", click: () => triggerShow("latino") },

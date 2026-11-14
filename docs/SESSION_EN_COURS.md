@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-13  
+**Mis à jour** : 2026-11-14  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -8,12 +8,92 @@
 
 ---
 
-## Dernières actions réalisées (2026-11-13)
-1. **Atelier de Chorégraphie 3D & Export Vidéo HD (`packages/compagnon-desktop/overlay/choreographer.html`)** :
-   - **Clip Officiel Complet 1080×1920 (Vertical 9:16) Généré avec Succès** :
-     - Rendu intégral des **2 min 37s (158.5s)** de *Nexura Domina* avec les **22 figures de mouvements** composées par l'utilisateur.
-     - Muxing master stéréo audio + Upscale Lanczos 1080×1920 @ 30 FPS CRF 18 (125.5 Mo).
-     - Fichier déposé directement sur OneDrive : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v1_studio_full.mp4`.
+## Dernières actions réalisées (2026-11-14)
+-2. **Intégration Connaissances & Outils Gladys (Claude Code Local 0€ & Pipeline Studio 3D)** :
+    - **Analyse des vidéos communautaires** :
+      * Cedric Oden IA : Dérivation de Claude Code CLI sur Ollama local à 0€ avec contexte 64k tokens.
+      * MechaPizzAI : Chaîne d'orchestration IA (Agent de code + Générateur 3D Tripo + Blender + Moteur de jeu).
+    - **Assimilation dans Gladys & Transposition LBG Studios** :
+      * Remplacement d'Unity propriétaire par **Godot 4.6 headless** (`prime-hub` :8787), avec scènes `.tscn` textuelles idéales pour les LLM et 0 GPU requis.
+      * Création du guide canonique [`docs/GLADYS_STUDIO_PIPELINE.md`](GLADYS_STUDIO_PIPELINE.md).
+      * Création du lanceur [`tools/launch_claude_local.sh`](../tools/launch_claude_local.sh) reliant la CLI Claude installée sur `.143` au serveur Ollama `.110` (modèle `qwen2.5-coder:14b` sur RTX).
+      * Gladys dispose désormais de la "Main Ouvrière" de code locale illimitée à 0€ couplée au pipeline d'assets 3D Blender headless.
+
+-1. **Optimisation & Scalabilité du Studio Content Engine (@LBG-p8k YouTube Shorts / TikTok)** :
+    - **Audit de la chaîne YouTube** : Analyse des métriques des 12 premiers shorts, identification des goulots d'étranglement (mélange de langues, titres tronqués `loca`, 2s de silence initial et salutation formelle molle qui cassait la rétention).
+    - **Refonte du Discours & Hook Anti-Scroll** :
+      * Suppression de la salutation en phrase 1 ; attaque directe sur le problème technique dès 0.3s.
+      * Discours ultra concret et chiffré axé sur la stack réelle LBG Studios (Godot 4.6 headless, NavigationServer3D, SQLite en WAL, micro-LLM 4-bits, Piper TTS ONNX, 60 ticks/s, 0€ cloud).
+      * CTA final avec question clivante pour stimuler les commentaires et l'algorithme.
+    - **Sécurisation & Publication YouTube** :
+      * Forçage des métadonnées françaises (`defaultLanguage: "fr"`, `defaultAudioLanguage: "fr"`).
+      * Troncature intelligente de titres (`clean_title_smart`) et génération de tags dynamiques selon le sujet.
+      * Réduction du silence initial dans `voice_engine.py` de 2.0s à 0.3s.
+    - **Cadencement à 6 Vidéos par Jour (Quota YouTube Sécurisé)** :
+      * `lbg-content-daily.timer` reconfiguré sous systemd utilisateur (09h00, 11h30, 14h00, 16h30, 19h00, 21h30) = 9 600 / 10 000 unités API/jour sans dépassement.
+      * `topics_backlog.json` étendu à 30 sujets techniques concrets (21 en attente).
+      * Premiers drops nouvelle formule publiés avec succès (Shorts PNJ conscients `#b_2T_V7p0y4` et Procédural Godot `#7Wo2K9tpjX0`).
+
+0. **Chaîne de Production Musicale 100 % Autonome (0 € Cloud) — Validée & Déployée** :
+   - **Étape 1 : Morceau Étendu 30s @ 128 BPM** :
+     * Modèle **MusicGen** local (`facebook/musicgen-small`) exécuté avec succès en multi-cœurs CPU.
+     * Génération de `lia_cyberpunk_track_30s.wav` (30.0s, structure progressive avec montée et drop dansant).
+   - **Étape 2 : Voix de Chant & Présence de Lia Masterisée** :
+     * Synthèse vocale de chant calée au tempo via la voix officielle de Lia (`fr-FR-VivienneMultilingualNeural` avec pitch et rate calibrés).
+     * Mixage studio via `ffmpeg` avec spatialisation, compression et réverbération légère (`tools/mix_lia_song.py`).
+     * Master audio produit : `packages/compagnon-desktop/overlay/audio/lia_cyberpunk_song_30s_master.wav` (1.4 Mo).
+   - **Étape 3 : Intégration Native dans l'Atelier 3D (`choreographer.html`)** :
+     * Déploiement sur le Hub Studio VM `.140` : `http://192.168.0.140/audio/lia_cyberpunk_song_30s_master.wav`.
+     * Ajout d'un sélecteur déroulant de pistes audio dans l'Atelier 3D permettant de basculer instantanément entre le morceau 30s de Lia, l'instrumentale courte et le morceau historique Nexura Domina.
+     * Adaptation automatique de la durée de la timeline et re-génération dynamique des blocs chorégraphiques lors du changement de piste.
+
+1. **Chantier Animations Star Wars Galaxies (SWG)** :
+   - Retrait immédiat du hack d'angle manuel et implémentation de la décomposition exacte du moteur SOE ($Q = Q_{post} \cdot Q_{anim} \cdot Q_{pre}$).
+   - Préparation du pipeline de retargeting automatique d'armature via Blender 5.2 headless sur `.143` pour mapper les 302 danses SWG vers le rig VRM Humanoid sans torsion.
+
+2. **Basculement Canonique de l'Atelier de Chorégraphie 3D sur le Hub Studio VM `.140`** :
+   - Conformément aux canons du monorepo (centralisation des surfaces d'exposition Studio sur la VM `.140`), l'Atelier 3D n'est plus exposé sur un port ad-hoc (`.143:8766`).
+   - **Nouvelles URLs canoniques d'exposition** :
+     * `http://192.168.0.140/choreographer.html` (Port 80 HTTP standard direct)
+     * `http://192.168.0.140:8080/choreographer.html` (Port Nginx Pilot historique)
+   - Synchronisation complète des assets 3D (`/opt/LBG_IA_MMO/pilot_web/vrm/` : 364 Mo de modèles, textures et 195 animations VRMA).
+   - Nginx sur `.140` mis à jour : écoute simultanée ports 80 & 8080, types MIME `.vrm` (`model/gltf-binary`) et `.vrma` (`application/octet-stream`), en-têtes CORS complets et support natif des Range Requests (`206 Partial Content`) pour le streaming audio/vidéo.
+   - Route `/api/load_sequence` mappée directement vers `/opt/LBG_IA_MMO/pilot_web/active_choreography.json`.
+   - Fermeture et arrêt du serveur ad-hoc sur `.143:8766`.
+
+1. **Intégration Réussie des Danses Star Wars Galaxies en VRMA Natif** :
+   - Reverse-engineering complet du format binaire d'animation SOE (`CKAT / IFF`) et implémentation d'un convertisseur pur Python (`tools/swg_to_vrma.py`).
+   - Décodage mathématique des quaternions compressés 32 bits (11b X / 11b Y / 10b Z) et remapping 1-pour-1 sur le rig VRM Humanoid 1.0 (`VRMC_vrm_animation`).
+   - Première série d'animations SWG converties et déployées :
+     * `swg_moonwalk.vrma` (15.27s, 458 frames @ 30 FPS, 22 os animés)
+     * `swg_poplock_loop.vrma` (8.20s, 246 frames @ 30 FPS, 22 os animés)
+   - Synchronisées sur :
+     * Hub Studio VM `.140` : `http://192.168.0.140/choreographer.html`
+     * Bureau Windows `.10` : `C:\Agent_IA\compagnon-desktop\overlay\vrm\animations\`
+     * Monorepo Cortex : `packages/cortex/compagnon_ui/public/vrm/animations/`
+   - Manifeste `manifest.json` mis à jour (222 animations au total) avec la catégorie *"Danses Star Wars Galaxies 🌌"* en tête du catalogue.
+
+2. **Clip Officiel V2/V3 & Publication YouTube Shorts Public** :
+   - **Génération GPU NVIDIA Purement Fluide & Sans Saccade** :
+     - Rendu calculé avec accélération matérielle Direct3D 11 via la NVIDIA GeForce GTX 1050 Ti sur `.10`.
+     - Résolution native 1080×1920 (Vertical 9:16) @ 30.0 FPS avec upscale Lanczos HD et CRF 18.
+     - Poids final : **175.7 Mo** (débit vidéo plein de ~10 Mb/s, confirmant 100% de fluidité et aucune trame sautée).
+     - Déposé directement sur OneDrive : `O:\OneDrive\Pictures\IA\Contenue\clip_nexura_domina_v2_drone_final.mp4`.
+   - **Chorégraphie & Caméras Multi-angles Intégrales composées par l'utilisateur** :
+     - **22 figures mocap VRMA** enchaînées harmonieusement.
+     - **11 plans de caméras cinématographiques** incluant les nouveaux mouvements de caméra mobiles :
+       * 🚀 Travelling Avant (Push In)
+       * 🌌 Travelling Arrière (Pull Out)
+       * 🛸 Drone Orbit 360° (rotations continues autour du modèle)
+       * 💫 Drone Orbit Buste
+       * Silhouettes complètes et plans larges finaux.
+     - **23 expressions faciales et styles vocaux** calés sur les couplets, souffles et climax.
+     - **23 expressions faciales et styles vocaux** calés sur les temps forts, pauses et climax.
+   - **Système de Caméras Dynamiques & Mouvements Drone dans l'Atelier 3D (`choreographer.html`)** :
+     - Section dédiée "Mouvements Mobiles & Drone 🛸" avec interpolation en temps réel à 60 FPS.
+     - Outils d'insertion rapide au curseur, remplacement direct sur clic de bloc, et découpe avec `[C]`.
+     - Timeline étendue avec poignée de redimensionnement draggable (`resizer`) et bouton grand format (450px).
+     - En-têtes `Cache-Control: no-cache` pour un rafraîchissement immédiat sans cache navigateur.
    - **Sauvegarde et Restauration Automatique de la Chorégraphie** :
      - Endpoints `/api/save_sequence` et `/api/load_sequence` sur le serveur `.143:8766`.
      - Sauvegarde automatique en local et sur serveur : rechargement transparent à chaque rafraîchissement.
@@ -356,6 +436,12 @@ Réplique exhaustive 100% Star Wars Galaxies Pre-CU : achèvement des **5 Pilier
 
 
 --- 
+
+- [x] **Publication Officielle YouTube Shorts (@lbg-p8k) — Nexura Domina (13 nov. 2026)** :
+  - **Clip HD 9:16 (1080×1920)** : Version corrigée v3 enregistrée en mode Kiosk plein écran GPU NVIDIA (163.8 Mo, 2m37s, fluidité 30 FPS).
+  - **Améliorations validées** : Caméra reculée (dist: 4.25m, fov: 28°), lipsync spectral FFT calé sur la voix réelle, zéro pixel de bureau / coins arrondis Windows 11 éliminés.
+  - **Lia Desktop (Compagnon)** : Nettoyage du menu Tray (retrait de iStripper ➔ ) et intégration du  directement dans .
+  - **Lien YouTube Shorts Public** : https://www.youtube.com/shorts/uLV_0kI2ogM
 
 ## Historique archivé
 

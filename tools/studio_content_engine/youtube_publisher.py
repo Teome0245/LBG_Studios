@@ -154,6 +154,49 @@ def get_authenticated_service() -> Any:
     return build("youtube", "v3", credentials=creds)
 
 
+def build_dynamic_tags(title: str, base_tags: list[str] | None = None) -> list[str]:
+    """Génère des tags riches et ciblés en fonction du sujet de la vidéo."""
+    tags = list(base_tags) if base_tags else ["shorts", "ia", "tech", "lbg studios", "développement", "open source"]
+    title_lower = title.lower()
+
+    keyword_map = {
+        "godot": ["godot 4", "gamedev", "godot engine", "indiedev", "headless"],
+        "bot": ["ia autonome", "agents ia", "simulation 3d", "gaming"],
+        "sqlite": ["sqlite wal", "database", "backend", "performances", "redis"],
+        "rust": ["rustlang", "architecture", "c++", "benchmark"],
+        "cloud": ["0€ cloud", "self hosting", "infrastructure", "linux"],
+        "obsidian": ["second brain", "rag", "productivité", "ia locale"],
+        "windows": ["fastapi", "devops", "automation", "python"],
+        "llm": ["ollama", "ia locale", "piper tts", "open source ai"],
+    }
+
+    for key, related in keyword_map.items():
+        if key in title_lower:
+            for r in related:
+                if r not in tags:
+                    tags.append(r)
+
+    return tags[:15]  # YouTube accepte jusqu'à 500 caractères, ~15 tags ciblés est idéal
+
+
+def clean_title_for_shorts(title: str, max_len: int = 95) -> str:
+    """Nettoie et tronque proprement le titre sans jamais couper au milieu d'un mot."""
+    clean = title.strip()
+    suffix = " #Shorts"
+    if "#Shorts" in clean or "#shorts" in clean:
+        suffix = ""
+
+    target_len = max_len - len(suffix)
+    if len(clean) > target_len:
+        truncated = clean[:target_len]
+        last_space = truncated.rfind(" ")
+        if last_space > 30:
+            truncated = truncated[:last_space]
+        clean = truncated.strip() + "..."
+
+    return f"{clean}{suffix}"
+
+
 def upload_short_video(
     video_path: Path,
     title: str,
@@ -167,21 +210,18 @@ def upload_short_video(
 
     youtube = get_authenticated_service()
 
-    # Assurer que le titre ou la description contient #Shorts pour le référencement
-    clean_title = title if "#Shorts" in title else f"{title} #Shorts"
-    if len(clean_title) > 100:
-        clean_title = clean_title[:90] + "... #Shorts"
+    # Nettoyage intelligent du titre
+    clean_title = clean_title_for_shorts(title)
 
     default_desc = (
         f"{title}\n\n"
         "⚡ Vidéo 100% générée par le Studio Content Engine de LBG Studios (0€ Cloud).\n"
+        "💬 Donnez votre avis en commentaire : vous utilisez quelle stack chez vous ?\n\n"
         "🔗 GitHub du projet : https://github.com/Teome0245/LBG_Studios\n\n"
-        "#Shorts #IA #Tech #IntelligenceArtificielle #GodotEngine #OpenSource #Dev"
+        "#Shorts #IA #Tech #IntelligenceArtificielle #GodotEngine #OpenSource #Dev #SelfHosting"
     )
     final_desc = description if description else default_desc
-
-    default_tags = ["shorts", "ia", "tech", "lbg studios", "développement", "godot 4", "open source"]
-    final_tags = tags if tags else default_tags
+    final_tags = build_dynamic_tags(title, tags)
 
     body = {
         "snippet": {
@@ -189,6 +229,8 @@ def upload_short_video(
             "description": final_desc,
             "tags": final_tags,
             "categoryId": "28",  # 28 = Science & Technology
+            "defaultLanguage": "fr",
+            "defaultAudioLanguage": "fr",
         },
         "status": {
             "privacyStatus": privacy_status,

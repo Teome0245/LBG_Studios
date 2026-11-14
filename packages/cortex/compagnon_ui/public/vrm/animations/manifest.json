@@ -1,6 +1,10 @@
 {
-  "total": 220,
+  "total": 222,
   "categories": {
+    "Danses Star Wars Galaxies 🌌": [
+      "swg_moonwalk.vrma",
+      "swg_poplock_loop.vrma"
+    ],
     "Danses & Grooves": [
       "Arms Hip Hop Dance.vrma",
       "Bellydancing.vrma",

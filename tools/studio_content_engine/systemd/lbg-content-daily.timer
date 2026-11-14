@@ -1,9 +1,13 @@
 [Unit]
-Description=LBG Studios - Déclencheur 2 Vidéos par Jour (11h30 et 17h30)
+Description=LBG Studios - Déclencheur 6 Vidéos par Jour (Quota YouTube Sécurisé 9600/10000 pts)
 
 [Timer]
+OnCalendar=*-*-* 09:00:00
 OnCalendar=*-*-* 11:30:00
-OnCalendar=*-*-* 17:30:00
+OnCalendar=*-*-* 14:00:00
+OnCalendar=*-*-* 16:30:00
+OnCalendar=*-*-* 19:00:00
+OnCalendar=*-*-* 21:30:00
 Persistent=true
 
 [Install]

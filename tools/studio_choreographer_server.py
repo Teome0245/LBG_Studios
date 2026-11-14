@@ -36,6 +36,7 @@ class RangeHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, HEAD, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "*")
         self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -43,7 +44,36 @@ class RangeHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        """API endpoints for saving choreography sequence directly from studio UI."""
+        """API endpoints for saving choreography sequence or uploading finished clips."""
+        if self.path.startswith("/api/upload_clip"):
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                target = "/home/lbg/Projets/LBG_Studios/tools/clip_nexura_domina_v3_perfect.mp4"
+                print(f"✦ [Server] Réception du clip vidéo ({length / (1024*1024):.2f} Mo)...")
+                with open(target, "wb") as f:
+                    remaining = length
+                    while remaining > 0:
+                        chunk = self.rfile.read(min(remaining, 2 * 1024 * 1024))
+                        if not chunk: break
+                        f.write(chunk)
+                        remaining -= len(chunk)
+                print(f"✦ [Server] Clip vidéo sauvegardé avec succès dans {target} !")
+                resp = json.dumps({"status": "ok", "saved_to": target}).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+            except Exception as e:
+                print(f"✦ [Server] Erreur upload clip: {e}")
+                err_resp = json.dumps({"status": "error", "message": str(e)}).encode("utf-8")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(err_resp)))
+                self.end_headers()
+                self.wfile.write(err_resp)
+            return
+
         if self.path.startswith("/api/save_sequence") or self.path.startswith("/api/render"):
             try:
                 length = int(self.headers.get("Content-Length", 0))

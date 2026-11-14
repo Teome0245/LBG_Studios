@@ -1300,7 +1300,7 @@ export function createVrmPet(hostEl, opts = {}) {
 
   function getVrmaUrl(filename) {
     const base = modelUrl.substring(0, modelUrl.lastIndexOf("/"));
-    return (base ? base + "/animations/" : "animations/") + filename;
+    return (base ? base + "/animations/" : "animations/") + filename + "?v=" + Date.now();
   }
 
   async function loadVRMA(name, filename) {
@@ -1599,7 +1599,11 @@ export function createVrmPet(hostEl, opts = {}) {
 
     // Déclenchement clip VRMA officiel si disponible (ex: dance, samba, hiphop, walk, lookaround)
     // Sinon repli procédural immédiat (ex: robot, disco, spin, crossArms, bow)
-    const vrmaFile = resolveVrmaFile(key) || resolveVrmaFile(n);
+    const vrmaFile = resolveVrmaFile(raw) || resolveVrmaFile(n) || resolveVrmaFile(key);
+    if (vrmaFile && vrmaFile !== "Idle.vrma" && key === "idle") {
+      key = "dance";
+      setMood("happy");
+    }
     if (vrmaFile) {
       const shouldLoop = (hold === 0 || hold === undefined || hold > 15000);
       playVRMA(vrmaFile, { loop: shouldLoop })
@@ -3373,6 +3377,34 @@ export function createVrmPet(hostEl, opts = {}) {
   let preShowFraming = null;
 
   const SHOW_ROUTINES = {
+    nexura: {
+      name: "Concert Nexura Domina (~2m37)",
+      steps: [
+        { pose: "Female Dance Pose1.vrma", duration: 3400, mood: "serene", speech: "Nexura Domina... Place au spectacle !" },
+        { pose: "Idle.vrma", duration: 5900, mood: "serene" },
+        { pose: "Samba Dancing1.vrma", duration: 3100, mood: "happy" },
+        { pose: "Jazz Dancing3.vrma", duration: 2000, mood: "happy" },
+        { pose: "Bellydancing.vrma", duration: 10800, mood: "happy" },
+        { pose: "samba.vrma", duration: 45000, mood: "happy", speech: "Accélération du rythme !" },
+        { pose: "jump.vrma", duration: 1800, mood: "happy" },
+        { pose: "Pro_Magic_Pack_Standing 2H Cast Spell 01.vrma", duration: 2300, mood: "serene" },
+        { pose: "Pro_Magic_Pack_Standing 2H Magic Area Attack 01.vrma", duration: 2100, mood: "serene" },
+        { pose: "Dwarf Idle.vrma", duration: 4700, mood: "serene" },
+        { pose: "Pro_Magic_Pack_standing 1H cast spell 01.vrma", duration: 1700, mood: "serene" },
+        { pose: "Air Squat Bent Arms.vrma", duration: 3700, mood: "happy" },
+        { pose: "Crazy Gesture.vrma", duration: 5700, mood: "happy" },
+        { pose: "Hip Hop Dancing3.vrma", duration: 18000, mood: "happy", speech: "Solo Hip-Hop Cyber !" },
+        { pose: "Bellydancing.vrma", duration: 19300, mood: "happy" },
+        { pose: "Female Dance Pose.vrma", duration: 1100, mood: "happy" },
+        { pose: "Female Dance Pose1.vrma", duration: 1000, mood: "happy" },
+        { pose: "Female Dance Pose.vrma", duration: 1100, mood: "happy" },
+        { pose: "Hip Hop Dancing3.vrma", duration: 11000, mood: "happy" },
+        { pose: "Taunt.vrma", duration: 4000, mood: "happy" },
+        { pose: "Pro_Magic_Pack_Standing 2H Magic Area Attack 02.vrma", duration: 2600, mood: "serene" },
+        { pose: "Dwarf Idle.vrma", duration: 6900, mood: "serene" },
+        { pose: "bow", duration: 3500, mood: "happy", speech: "Merci d'avoir regardé mon show !" },
+      ],
+    },
     idol: {
       name: "Show K-Pop Idol",
       steps: [

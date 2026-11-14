@@ -11,10 +11,10 @@
       "speed": 1
     },
     {
-      "start": 3.48,
-      "end": 9.28,
-      "file": "Female Crouch Pose.vrma",
-      "name": "Female Crouch Pose",
+      "start": 3.4,
+      "end": 9.4,
+      "file": "Idle.vrma",
+      "name": "Idle",
       "speed": 1
     },
     {
@@ -161,7 +161,61 @@
   "cameras": [
     {
       "start": 0,
-      "end": 144.02,
+      "end": 3.38,
+      "preset": "full",
+      "name": "Silhouette Complète"
+    },
+    {
+      "start": 3.39,
+      "end": 8.95,
+      "preset": "push_in",
+      "name": "🚀 Travelling Avant"
+    },
+    {
+      "start": 9.68,
+      "end": 41.72,
+      "preset": "pull_out",
+      "name": "🌌 Travelling Arrière"
+    },
+    {
+      "start": 43,
+      "end": 67.48,
+      "preset": "drone_orbit",
+      "name": "🛸 Drone Orbit 360°"
+    },
+    {
+      "start": 68.76,
+      "end": 78.76,
+      "preset": "full",
+      "name": "Silhouette Complète"
+    },
+    {
+      "start": 82.55,
+      "end": 93.15,
+      "preset": "drone_orbit",
+      "name": "🛸 Drone Orbit 360°"
+    },
+    {
+      "start": 93.69,
+      "end": 103.69,
+      "preset": "full",
+      "name": "Silhouette Complète"
+    },
+    {
+      "start": 104.65,
+      "end": 117.37,
+      "preset": "drone_orbit_close",
+      "name": "💫 Drone Orbit Buste"
+    },
+    {
+      "start": 118.18,
+      "end": 129.42,
+      "preset": "full",
+      "name": "Silhouette Complète"
+    },
+    {
+      "start": 130.17,
+      "end": 142.57,
       "preset": "full",
       "name": "Silhouette Complète"
     },
@@ -175,39 +229,141 @@
   "expressions": [
     {
       "start": 0,
-      "end": 14.5,
+      "end": 9.1,
       "preset": "mystique",
       "name": "Intro Regard Mystique"
     },
     {
-      "start": 14.5,
-      "end": 46,
+      "start": 9.13,
+      "end": 12.49,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 12.46,
+      "end": 14.2,
       "preset": "diva",
       "name": "Couplet Chant Passionné"
     },
     {
-      "start": 46,
-      "end": 78,
-      "preset": "idol",
-      "name": "Montée Sourire Idol"
+      "start": 14.21,
+      "end": 23.53,
+      "preset": "silence",
+      "name": "Silence / Respiration"
     },
     {
-      "start": 78,
-      "end": 112,
+      "start": 23.5,
+      "end": 31.38,
+      "preset": "diva",
+      "name": "Diva Scénique (Passionné)"
+    },
+    {
+      "start": 31.38,
+      "end": 37.18,
       "preset": "climax",
-      "name": "Drop Climax Vocal"
+      "name": "Climax Vocal (Extase)"
     },
     {
-      "start": 112,
-      "end": 142,
+      "start": 37.15,
+      "end": 42.51,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 42.46,
+      "end": 52.58,
+      "preset": "climax",
+      "name": "Climax Vocal (Extase)"
+    },
+    {
+      "start": 52.66,
+      "end": 70.74,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 70.76,
+      "end": 71.84,
+      "preset": "diva",
+      "name": "Diva Scénique (Passionné)"
+    },
+    {
+      "start": 71.91,
+      "end": 79.19,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 79.19,
+      "end": 89.47,
+      "preset": "diva",
+      "name": "Diva Scénique (Passionné)"
+    },
+    {
+      "start": 89.52,
+      "end": 90.72,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 90.67,
+      "end": 108.99,
+      "preset": "diva",
+      "name": "Diva Scénique (Passionné)"
+    },
+    {
+      "start": 108.97,
+      "end": 110.57,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 110.52,
+      "end": 112.01,
       "preset": "diva",
       "name": "Solo Vocal Scénique"
     },
     {
-      "start": 142,
-      "end": 157.6,
-      "preset": "mystique",
-      "name": "Outro Présence Diva"
+      "start": 112,
+      "end": 112.92,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 113.13,
+      "end": 114.12,
+      "preset": "diva",
+      "name": "Solo Vocal Scénique"
+    },
+    {
+      "start": 114.25,
+      "end": 115.44,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 115.44,
+      "end": 116.64,
+      "preset": "diva",
+      "name": "Solo Vocal Scénique"
+    },
+    {
+      "start": 116.63,
+      "end": 117.93,
+      "preset": "silence",
+      "name": "Silence / Respiration"
+    },
+    {
+      "start": 117.9,
+      "end": 119.12,
+      "preset": "diva",
+      "name": "Solo Vocal Scénique"
+    },
+    {
+      "start": 119.2,
+      "end": 157.61,
+      "preset": "silence",
+      "name": "Silence / Respiration"
     }
   ]
 }

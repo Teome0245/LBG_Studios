@@ -171,7 +171,7 @@ def main() -> None:
     parser.add_argument("--topic", type=str, default=None, help="Sujet de la vidéo tech")
     parser.add_argument("--demo", action="store_true", help="Génère la vidéo démo avec script canonique")
     parser.add_argument("--voice", type=str, default=None, help="Voix Piper TTS (ex: fr_FR-upmc-medium)")
-    parser.add_argument("--silence", type=float, default=None, help="Secondes de silence au début (défaut: 2.0)")
+    parser.add_argument("--silence", type=float, default=None, help="Secondes de silence au début (défaut: 0.3s)")
     parser.add_argument("--model", type=str, default="qwen2.5:3b", help="Modèle Ollama")
     parser.add_argument("--outdir", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Dossier de sortie")
     parser.add_argument("--youtube", action="store_true", help="Publie sur la chaîne YouTube @LBG-p8k")
