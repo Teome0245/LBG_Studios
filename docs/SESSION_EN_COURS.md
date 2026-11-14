@@ -15,6 +15,10 @@
     - **Audit des Surfaces LAN Gladys (`tools/smoke_lan_surfaces.sh --functional`)** :
       * 21 checks fonctionnels OK (Pilot UI/healthz, Cockpit UI/snapshot, Lyra/Orch UI, Simple Chat, Prime Hub Godot G5+, MCP healthz, Patches manifest, Agent Desktop réel sur Windows .10).
       * Godot Prime Hub G5+ (`.246:8787`) : ~5.5 jours d'uptime stable sans fuite mémoire, tick 9 416 077, 38 PNJ + 10 bots IA actifs, persistance SQLite WAL nominale.
+    - **Ronde d'Audit Nocturne Autonome (`tools/nocturnal_gladys_auditor.py`)** :
+      * Service et timer systemd `gladys-nocturnal-audit.timer` armés pour tourner de 00:30 à 06:30 toutes les heures en mode diagnostic non-destructif.
+      * Rapport consigné dans `docs/AUDIT_NOCTURNE_*.md`.
+      * Prochaine publication YouTube Shorts automatique : 09:00.
 
 -2. **Intégration Connaissances & Outils Gladys (Claude Code Local 0€ & Pipeline Studio 3D)** :
     - **Analyse des vidéos communautaires** :
