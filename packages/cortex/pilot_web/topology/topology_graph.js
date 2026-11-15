@@ -24,6 +24,7 @@
 
   const COLOR_PALETTE = {
     planet: { main: "#f59e0b", glow: "rgba(245, 158, 11, 0.4)", radius: 24, label: "Planète" },
+    city: { main: "#ec4899", glow: "rgba(236, 72, 153, 0.4)", radius: 21, label: "Ville / Lieu" },
     npc: { main: "#10b981", glow: "rgba(16, 185, 129, 0.4)", radius: 18, label: "PNJ" },
     faction: { main: "#a855f7", glow: "rgba(168, 85, 247, 0.4)", radius: 20, label: "Faction" },
     mechanic: { main: "#06b6d4", glow: "rgba(6, 182, 212, 0.4)", radius: 16, label: "Mécanique" },
@@ -376,6 +377,8 @@
         }
         botHtml += `</div>`;
         pathEl.innerHTML = botHtml;
+      } else if (node.desc) {
+        pathEl.innerHTML = `<div style="background:rgba(30,41,59,0.5);border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:10px;margin-bottom:8px;"><div style="font-size:0.86rem;color:#f1f5f9;line-height:1.45;margin-bottom:6px;">${node.desc}</div>${node.zone ? `<div style="font-size:0.78rem;color:#38bdf8;"><strong>Zone :</strong> ${node.zone}</div>` : ''}</div><div style="font-size:0.75rem;color:#94a3b8;">Fiche : docs/lore/${node.path}</div>`;
       } else {
         pathEl.textContent = `Fichier : docs/lore/${node.path}`;
       }

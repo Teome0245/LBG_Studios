@@ -46,20 +46,23 @@
       "type": "planet",
       "path": "planets/scrapaltai.md",
       "links_to": [
-        "concordat_lost_heaven",
-        "syndicat_ferrailleurs",
-        "fel_rani",
-        "varkoon",
+        "ferme_humidite",
+        "lost_heaven",
+        "anchor_ridge",
         "tinkling",
-        "craft_artisanat",
-        "villes_politique",
+        "camp_ferrailleurs",
         "bio_ingenierie",
-        "syndicat_ferrailleurs",
-        "concordat_lost_heaven",
-        "syndicat_ferrailleurs",
-        "fel_rani",
         "varkoon",
-        "tinkling"
+        "fel_rani",
+        "concordat_lost_heaven",
+        "ksar_nomade",
+        "gouffre_krayt",
+        "avant_poste_zalem",
+        "villes_politique",
+        "mos_espa_bazar",
+        "craft_artisanat",
+        "camp_vent_rouge",
+        "syndicat_ferrailleurs"
       ],
       "incoming_count": 21
     },
@@ -335,6 +338,243 @@
         "bio_ingenierie"
       ],
       "incoming_count": 4
+    },
+    "lost_heaven": {
+      "id": "lost_heaven",
+      "title": "Lost Heaven (Cité Hub & Spatioport)",
+      "type": "city",
+      "path": "cities/lost_heaven.md",
+      "desc": "Capitale et principal port shuttle de Scrapaltai. Cœur du commerce, des banques, de la milice et de la cantina La Perle.",
+      "links_to": [
+        "scrapaltai",
+        "concordat_lost_heaven",
+        "craft_artisanat",
+        "villes_politique"
+      ],
+      "incoming_count": 12
+    },
+    "anchor_ridge": {
+      "id": "anchor_ridge",
+      "title": "Bourgade Minière d'Anchor-Ridge",
+      "type": "city",
+      "path": "cities/anchor_ridge.md",
+      "desc": "Village minier adossé aux falaises nord. Galeries profondes de 200m, extraction de duracier brut et raffinage.",
+      "links_to": [
+        "scrapaltai",
+        "prospecteur_durn",
+        "chimiste_sela",
+        "craft_artisanat"
+      ],
+      "incoming_count": 5
+    },
+    "ferme_humidite": {
+      "id": "ferme_humidite",
+      "title": "Ferme d'Humidité Lars-Val",
+      "type": "city",
+      "path": "cities/ferme_humidite.md",
+      "desc": "Complexe de 24 condenseurs atmosphériques au centre du désert. Réserve d'eau vitale pour toute la région.",
+      "links_to": [
+        "scrapaltai",
+        "fermier_valen"
+      ],
+      "incoming_count": 4
+    },
+    "camp_ferrailleurs": {
+      "id": "camp_ferrailleurs",
+      "title": "Camp des Maraudeurs Ferrailleurs (Jawas)",
+      "type": "city",
+      "path": "cities/camp_ferrailleurs.md",
+      "desc": "Repaire troglodyte niché dans le Grand Canyon. Centre de troc de processeurs droïdes et pièces de navette.",
+      "links_to": [
+        "scrapaltai",
+        "ferrailleur_kliktik",
+        "syndicat_ferrailleurs"
+      ],
+      "incoming_count": 4
+    },
+    "camp_vent_rouge": {
+      "id": "camp_vent_rouge",
+      "title": "Camp Fortifié du Vent Rouge",
+      "type": "city",
+      "path": "cities/camp_vent_rouge.md",
+      "desc": "Campement des nomades et pillards des sables dans la Mer de Dunes. Sanctuaire des esprits ancestraux.",
+      "links_to": [
+        "scrapaltai",
+        "chamane_uror"
+      ],
+      "incoming_count": 4
+    },
+    "gouffre_krayt": {
+      "id": "gouffre_krayt",
+      "title": "Gouffre du Dragon Krayt",
+      "type": "city",
+      "path": "cities/gouffre_krayt.md",
+      "desc": "Gorge rocheuse escarpée au nord, antre du légendaire Dragon Krayt et zone d'aventure extrême.",
+      "links_to": [
+        "scrapaltai",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 3
+    },
+    "mos_espa_bazar": {
+      "id": "mos_espa_bazar",
+      "title": "Bazar de Mos Espa / Fort Al-Khali",
+      "type": "city",
+      "path": "cities/mos_espa_bazar.md",
+      "desc": "Cité marchande de l'ouest réputée pour ses courses de bolides d'arène et ses ateliers de blindage.",
+      "links_to": [
+        "scrapaltai",
+        "armurier_kane",
+        "craft_artisanat"
+      ],
+      "incoming_count": 4
+    },
+    "ksar_nomade": {
+      "id": "ksar_nomade",
+      "title": "Ksar Nomade (Oasis du Sud)",
+      "type": "city",
+      "path": "cities/ksar_nomade.md",
+      "desc": "Village de tentes bédouines bordant l'oasis sacrée. Étape clé des caravanes marchandes.",
+      "links_to": [
+        "scrapaltai",
+        "ancien_nadir",
+        "guerisseur_miran",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 6
+    },
+    "avant_poste_zalem": {
+      "id": "avant_poste_zalem",
+      "title": "Avant-poste Zalem",
+      "type": "city",
+      "path": "cities/avant_poste_zalem.md",
+      "desc": "Garnison fortifiée contrôlant la passe ouest vers la métropole Zalem. Point de contrôle de la milice.",
+      "links_to": [
+        "scrapaltai",
+        "capitaine_vael",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 5
+    },
+    "prospecteur_durn": {
+      "id": "prospecteur_durn",
+      "title": "Durn Vane (Chef Minier)",
+      "type": "npc",
+      "path": "npcs/prospecteur_durn.md",
+      "desc": "Maître mineur d'Anchor-Ridge. Supervise l'extraction sous la falaise nord.",
+      "links_to": [
+        "anchor_ridge",
+        "craft_artisanat"
+      ],
+      "incoming_count": 3
+    },
+    "chimiste_sela": {
+      "id": "chimiste_sela",
+      "title": "Sela Kore (Affineuse Chimiste)",
+      "type": "npc",
+      "path": "npcs/chimiste_sela.md",
+      "desc": "Chimiste d'Anchor-Ridge. Purifie les poudres du désert et formule les catalyseurs industriels.",
+      "links_to": [
+        "anchor_ridge",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 3
+    },
+    "fermier_valen": {
+      "id": "fermier_valen",
+      "title": "Valen Lars (Fermier d'Eau)",
+      "type": "npc",
+      "path": "npcs/fermier_valen.md",
+      "desc": "Fermier d'humidité veillant sur les condenseurs de rosée et l'eau potable.",
+      "links_to": [
+        "ferme_humidite",
+        "scrapaltai"
+      ],
+      "incoming_count": 3
+    },
+    "ferrailleur_kliktik": {
+      "id": "ferrailleur_kliktik",
+      "title": "Klik'Tik (Chef Jawa Troqueur)",
+      "type": "npc",
+      "path": "npcs/ferrailleur_kliktik.md",
+      "desc": "Chef troqueur Jawa du Grand Canyon, expert en reprogrammation droïde et recyclage.",
+      "links_to": [
+        "camp_ferrailleurs",
+        "syndicat_ferrailleurs"
+      ],
+      "incoming_count": 3
+    },
+    "chamane_uror": {
+      "id": "chamane_uror",
+      "title": "U'Ror'K (Chamane du Vent Rouge)",
+      "type": "npc",
+      "path": "npcs/chamane_uror.md",
+      "desc": "Guide spirituel du clan du Vent Rouge, gardien des coutumes ancestrales et du karma des sables.",
+      "links_to": [
+        "camp_vent_rouge",
+        "scrapaltai"
+      ],
+      "incoming_count": 3
+    },
+    "armurier_kane": {
+      "id": "armurier_kane",
+      "title": "Kane Rill (Armurier de Bolides)",
+      "type": "npc",
+      "path": "npcs/armurier_kane.md",
+      "desc": "Spécialiste en blindage composite et propulseurs pour bolides d'arène à Mos Espa.",
+      "links_to": [
+        "mos_espa_bazar",
+        "craft_artisanat"
+      ],
+      "incoming_count": 3
+    },
+    "jax_moro": {
+      "id": "jax_moro",
+      "title": "Jax Moro (Barman La Perle)",
+      "type": "npc",
+      "path": "npcs/jax_moro.md",
+      "desc": "Barman emblématique de La Perle de Scrapaltai à Lost Heaven, source de rafraîchissements et de rumeurs.",
+      "links_to": [
+        "lost_heaven",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 4
+    },
+    "capitaine_vael": {
+      "id": "capitaine_vael",
+      "title": "Capitaine Vael (Milice Locale)",
+      "type": "npc",
+      "path": "npcs/capitaine_vael.md",
+      "desc": "Officier commandant le détachement de la milice à l'Avant-poste Zalem.",
+      "links_to": [
+        "avant_poste_zalem",
+        "concordat_lost_heaven"
+      ],
+      "incoming_count": 3
+    },
+    "ancien_nadir": {
+      "id": "ancien_nadir",
+      "title": "Ancien Nadir (Chef Nomade)",
+      "type": "npc",
+      "path": "npcs/ancien_nadir.md",
+      "desc": "Doyen des caravanes du Ksar Nomade, protecteur de l'oasis sacrée.",
+      "links_to": [
+        "ksar_nomade",
+        "scrapaltai"
+      ],
+      "incoming_count": 3
+    },
+    "guerisseur_miran": {
+      "id": "guerisseur_miran",
+      "title": "Miran Sael (Guérisseur du Désert)",
+      "type": "npc",
+      "path": "npcs/guerisseur_miran.md",
+      "desc": "Soigneur de la Confrérie au Ksar Nomade, distille les racines et sérums du désert.",
+      "links_to": [
+        "ksar_nomade",
+        "bio_ingenierie"
+      ],
+      "incoming_count": 3
     }
   },
   "edges": [
@@ -925,6 +1165,131 @@
     {
       "source": "dr_azra_veld",
       "target": "bio_ingenierie"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "scrapaltai",
+      "relation": "capital_of"
+    },
+    {
+      "source": "anchor_ridge",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "ferme_humidite",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "camp_ferrailleurs",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "camp_vent_rouge",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "gouffre_krayt",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "mos_espa_bazar",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "ksar_nomade",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "avant_poste_zalem",
+      "target": "scrapaltai",
+      "relation": "located_on"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "ksar_nomade",
+      "relation": "caravan_route"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "avant_poste_zalem",
+      "relation": "paved_road"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "anchor_ridge",
+      "relation": "supply_track"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "ferme_humidite",
+      "relation": "water_pipeline"
+    },
+    {
+      "source": "lost_heaven",
+      "target": "mos_espa_bazar",
+      "relation": "trade_track"
+    },
+    {
+      "source": "camp_ferrailleurs",
+      "target": "gouffre_krayt",
+      "relation": "canyon_passage"
+    },
+    {
+      "source": "prospecteur_durn",
+      "target": "anchor_ridge",
+      "relation": "resides_in"
+    },
+    {
+      "source": "chimiste_sela",
+      "target": "anchor_ridge",
+      "relation": "resides_in"
+    },
+    {
+      "source": "fermier_valen",
+      "target": "ferme_humidite",
+      "relation": "resides_in"
+    },
+    {
+      "source": "ferrailleur_kliktik",
+      "target": "camp_ferrailleurs",
+      "relation": "resides_in"
+    },
+    {
+      "source": "chamane_uror",
+      "target": "camp_vent_rouge",
+      "relation": "resides_in"
+    },
+    {
+      "source": "armurier_kane",
+      "target": "mos_espa_bazar",
+      "relation": "resides_in"
+    },
+    {
+      "source": "jax_moro",
+      "target": "lost_heaven",
+      "relation": "resides_in"
+    },
+    {
+      "source": "capitaine_vael",
+      "target": "avant_poste_zalem",
+      "relation": "resides_in"
+    },
+    {
+      "source": "ancien_nadir",
+      "target": "ksar_nomade",
+      "relation": "resides_in"
+    },
+    {
+      "source": "guerisseur_miran",
+      "target": "ksar_nomade",
+      "relation": "resides_in"
     }
   ],
   "broken_links": []

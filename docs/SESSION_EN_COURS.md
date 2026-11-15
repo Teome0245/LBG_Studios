@@ -9,6 +9,23 @@
 ---
 
 ## Dernières actions réalisées (2026-11-15)
+-6. **Intégration de la Topologie Second Brain & Knowledge Explorer (`#/topology`)** :
+    - **Extension du Graphe Second Brain (50 Nœuds & 172 Arêtes en Direct sur .140:8080)** :
+      * Intégration des 9 Villes & Lieux de Scrapaltai (`type: "city"`, rose `#ec4899`) : *Lost Heaven*, *Bourgade Minière d'Anchor-Ridge*, *Ferme d'Humidité Lars-Val*, *Camp des Maraudeurs Ferrailleurs Jawas*, *Camp Fortifié du Vent Rouge*, *Gouffre du Dragon Krayt*, *Bazar de Mos Espa / Fort Al-Khali*, *Ksar Nomade*, *Avant-poste Zalem*.
+      * Intégration des 10 nouveaux PNJ clés de Scrapaltai (`type: "npc"`, vert `#10b981`) : *Durn Vane*, *Sela Kore*, *Valen Lars*, *Klik'Tik*, *U'Ror'K*, *Kane Rill*, *Jax Moro*, *Capitaine Vael*, *Ancien Nadir*, *Miran Sael*.
+      * Ajout du bouton de filtre interactif « Villes & Lieux 🏛️ » et enrichissement du Drawer latéral (fiche descriptive, zone, liens de commerce et résidences).
+      * Déploiement et synchronisation validés sur la VM `.140` (`GET /v1/pilot/topology` retourne 50 nœuds dont 10 bots IA live).
+
+-5. **Studio Scénique & Production Musicale Autonome (Danses SWG & Morceau 60s)** :
+    - **Extraction & Retargeting Universel des 64 Danses Star Wars Galaxies (SWG)** :
+      * Extraction de 73 animations officielles depuis les 54 archives `.tre` de SWG sur `.10` (`data_animation_00.tre`, `patch_01.tre`, `patch_10.tre`, `patch_11_00.tre`).
+      * Résolution de la cinématique anatomique pour Three-VRM (`tools/batch_convert_swg_to_vrma.py`) : suppression du bug de coude inversé grâce à la projection scalaire de flexion du coude ($\theta \in [20^\circ, 148^\circ]$) sur l'axe normalisé Z, posture de buste vers l'avant ($Z \in [+5\text{cm}, +42\text{cm}]$).
+      * Conversion et déploiement de 64 fichiers `.vrma` sur `.140` et `.10` : Tatooine Jazz (`loop` + 8 flourishes), Tumble acrobaties (`loop` + 10 flourishes), Lyrical féminin/masculin (`base_loop` + flourishes 1 à 8), Poplock (`base_loop` + flourishes 1 à 8), Jazz 1 (`loop` + flourishes 1 à 8), Elaine, Moonwalk 1 & 2, Belly Dance.
+      * Mise à jour du catalogue Atelier 3D (`choreographer.html` et `manifest.json`) : onglet **`Danses SWG 🌌 (64)`** actif, total catalogue porté de 222 à **284 animations**.
+    - **Studio de Composition Musicale Autonome (0 € Cloud)** :
+      * Création du pipeline complet de bout en bout `tools/studio_music_generator_v2.py` : paroles thématiques via LLM local Ollama `.110`/`.111` -> composition instrumentale MusicGen multi-segments avec crossfade studio -> synthèse vocale de chant de Lia (`fr-FR-VivienneMultilingualNeural`) -> mixage Master V2 (ducking, égalisation présences +3dB, compression) -> déploiement sur `.140` et `.10`.
+      * Production et déploiement du premier morceau 60s autonome : **`🎵 Lia - Tatooine Sunset (MusicGen 60s + Voix - 128 BPM)`**, immédiatement disponible dans le sélecteur audio de l'Atelier 3D.
+
 -4. **Intégration des Mécaniques T4C/SWG & Extension Territoriale de Scrapaltai (Modèle Tatooine)** :
     - **Extension de la Géographie Planétaire (31 POIs & 7 Régions de Navigation NavMesh)** :
       * Ajout des pôles de vie crédibles : Bourgade minière d'Anchor-Ridge (`poi:anchor_ridge`), Ferme d'Humidité Lars-Val (`poi:ferme_humidite`), Camp des Maraudeurs Ferrailleurs Jawas (`poi:camp_ferrailleurs`), Camp Fortifié du Vent Rouge (`poi:camp_vent_rouge`), Gouffre du Dragon Krayt (`poi:gouffre_krayt`), Bazar de Mos Espa / Fort Al-Khali (`poi:mos_espa_bazar`).

@@ -20,7 +20,7 @@ if [[ ! -d "$CORTEX/pilot_web" ]]; then
 fi
 
 echo "=== deploy cortex pilot_web → ${VM_USER}@${VM_HOST}:${REMOTE}/pilot_web ==="
-rsync -az --delete --exclude 'mmo/' \
+rsync -az --delete --exclude 'mmo/' --exclude 'audio/' \
   -e "ssh -o BatchMode=yes" \
   "$CORTEX/pilot_web/" \
   "${VM_USER}@${VM_HOST}:${REMOTE}/pilot_web/"
