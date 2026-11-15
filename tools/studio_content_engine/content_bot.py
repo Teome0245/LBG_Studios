@@ -170,7 +170,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Studio Content Bot — Pipeline Vidéo Avatar 0€")
     parser.add_argument("--topic", type=str, default=None, help="Sujet de la vidéo tech")
     parser.add_argument("--demo", action="store_true", help="Génère la vidéo démo avec script canonique")
-    parser.add_argument("--voice", type=str, default=None, help="Voix Piper TTS (ex: fr_FR-upmc-medium)")
+    parser.add_argument("--voice", type=str, default=None, help="Voix TTS (défaut: fr-FR-VivienneMultilingualNeural, fallback: fr_FR-siwis-medium)")
     parser.add_argument("--silence", type=float, default=None, help="Secondes de silence au début (défaut: 0.3s)")
     parser.add_argument("--model", type=str, default="qwen2.5:3b", help="Modèle Ollama")
     parser.add_argument("--outdir", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Dossier de sortie")

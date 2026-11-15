@@ -25,8 +25,10 @@ import httpx
 logger = logging.getLogger(__name__)
 
 PIPER_URL = os.environ.get("LBG_PIPER_URL", "http://192.168.0.111:8098/v1/tts")
-# Par défaut : Voix Vivienne Multilingual Neural (ultra-fluide, diction parfaite, 0€)
+# Par défaut : Voix Vivienne Multilingual Neural (voix officielle de Lia, ultra-fluide, 0€)
 DEFAULT_VOICE = os.environ.get("LBG_STUDIO_VOICE", "fr-FR-VivienneMultilingualNeural")
+# Voix Piper locale de secours (.111:8098) : Voix féminine siwis pour rester 100% cohérent avec Lia
+FALLBACK_PIPER_VOICE = os.environ.get("LBG_STUDIO_FALLBACK_VOICE", "fr_FR-siwis-medium")
 DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
 INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "0.3"))
 
@@ -58,38 +60,74 @@ class SentenceCue:
     words: list[str]
 
 
-async def _synthesize_edge_tts(text: str, voice: str, out_path: Path) -> float:
-    """Synthétise une phrase via Edge TTS Neural (Vivienne) et convertit en WAV 22050 Hz."""
+async def _synthesize_edge_tts(
+    text: str, voice: str, out_path: Path, max_retries: int = 3
+) -> float:
+    """Synthétise une phrase via Edge TTS Neural (Vivienne) avec retries et convertit en WAV 22050 Hz."""
     import edge_tts
 
     tmp_mp3 = out_path.with_suffix(".mp3")
-    comm = edge_tts.Communicate(text, voice)
-    await comm.save(str(tmp_mp3))
+    last_err: Exception | None = None
 
-    # Conversion en WAV pcm_s16le 22050 Hz mono pour le pipeline RMS / sync
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", str(tmp_mp3), "-ar", "22050", "-ac", "1", str(out_path)],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+    for attempt in range(1, max_retries + 1):
+        try:
+            if tmp_mp3.exists():
+                tmp_mp3.unlink()
+
+            comm = edge_tts.Communicate(text, voice)
+            await asyncio.wait_for(comm.save(str(tmp_mp3)), timeout=25.0)
+
+            if not tmp_mp3.exists() or tmp_mp3.stat().st_size == 0:
+                raise RuntimeError(f"Fichier MP3 Edge TTS vide pour : « {text[:30]} »")
+
+            # Conversion en WAV pcm_s16le 22050 Hz mono pour le pipeline RMS / sync
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", str(tmp_mp3), "-ar", "22050", "-ac", "1", str(out_path)],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+            with wave.open(str(out_path), "rb") as wf:
+                frames = wf.getnframes()
+                rate = wf.getframerate()
+                dur = float(frames) / float(rate)
+                if dur <= 0:
+                    raise RuntimeError("Durée audio WAV nulle")
+                return dur
+
+        except Exception as e:
+            last_err = e
+            logger.warning(
+                "Tentative %d/%d Edge TTS (%s) échouée pour « %s » : %s",
+                attempt,
+                max_retries,
+                voice,
+                text[:30],
+                e,
+            )
+            if attempt < max_retries:
+                await asyncio.sleep(1.2 * attempt)
+        finally:
+            if tmp_mp3.exists():
+                try:
+                    tmp_mp3.unlink()
+                except OSError:
+                    pass
+
+    raise RuntimeError(
+        f"Échec définitif Edge TTS ({voice}) après {max_retries} tentatives : {last_err}"
     )
-    if tmp_mp3.exists():
-        tmp_mp3.unlink()
-
-    with wave.open(str(out_path), "rb") as wf:
-        frames = wf.getnframes()
-        rate = wf.getframerate()
-        return float(frames) / float(rate)
 
 
 def _synthesize_piper(
     text: str,
     out_path: Path,
     url: str = PIPER_URL,
-    voice: str = "fr_FR-upmc-medium",
+    voice: str = FALLBACK_PIPER_VOICE,
     length_scale: float = DEFAULT_LENGTH_SCALE,
 ) -> float:
-    """Synthétise une phrase via Piper TTS local (.111:8098)."""
+    """Synthétise une phrase via Piper TTS local (.111:8098) avec voix féminine (siwis)."""
     payload: dict[str, Any] = {
         "text": text,
         "voice": voice,
@@ -117,54 +155,32 @@ def synthesize_sentence(
     voice: str = DEFAULT_VOICE,
     length_scale: float = DEFAULT_LENGTH_SCALE,
 ) -> float:
-    """Synthétise une phrase via le moteur approprié (Edge Neural ou Piper local)."""
-    # Si la voix est un modèle Edge Neural (ex: fr-FR-VivienneMultilingualNeural)
+    """Synthétise une phrase sans JAMAIS mélanger les voix à l'intérieur d'une vidéo."""
     if "neural" in voice.lower() or voice.startswith("fr-FR-"):
-        try:
-            return asyncio.run(_synthesize_edge_tts(text, voice, out_path))
-        except Exception as e:
-            logger.warning(
-                "Échec Edge TTS (%s) : %s. Repli sur Piper local (fr_FR-upmc-medium)...",
-                voice,
-                e,
-            )
-            return _synthesize_piper(
-                text,
-                out_path,
-                url=url,
-                voice="fr_FR-upmc-medium",
-                length_scale=length_scale,
-            )
+        return asyncio.run(_synthesize_edge_tts(text, voice, out_path))
 
-    # Sinon : Piper TTS local par défaut
     return _synthesize_piper(
         text, out_path, url=url, voice=voice, length_scale=length_scale
     )
 
 
-def synthesize_script(
+def _execute_script_synthesis(
     sentences: list[str],
     work_dir: Path,
-    voice: str = DEFAULT_VOICE,
+    voice: str,
     length_scale: float = DEFAULT_LENGTH_SCALE,
     pause_between: float = 0.25,
     initial_silence_sec: float = INITIAL_SILENCE_SEC,
 ) -> tuple[Path, list[SentenceCue], float]:
-    """Synthétise l'ensemble du script et génère l'audio complet avec timings exacts."""
-    work_dir.mkdir(parents=True, exist_ok=True)
+    """Exécute la synthèse de toutes les phrases avec une seule voix strictement homogène."""
+    import numpy as np
+
     cues: list[SentenceCue] = []
     sentence_files: list[Path] = []
-
-    current_time = initial_silence_sec  # Silence initial paramétrable (2.0s par défaut)
+    current_time = initial_silence_sec
     sample_rate = 22050
-    channels = 1
-    sample_width = 2
 
-    # Synthèse de chaque phrase
-    for idx, sentence in enumerate(sentences):
-        clean_text = sentence.strip()
-        if not clean_text:
-            continue
+    for idx, clean_text in enumerate(sentences):
         part_file = work_dir / f"sentence_{idx:02d}.wav"
         spoken_text = phonetic_for_speech(clean_text)
         dur = synthesize_sentence(
@@ -184,9 +200,7 @@ def synthesize_script(
         )
         current_time += dur + pause_between
 
-    # Concaténation propre via NumPy (anti-clipping, micro fade-in/out, calage exact des octets)
-    import numpy as np
-
+    # Concaténation audio avec micro fade-in/out
     parts: list[np.ndarray] = []
     for pf in sentence_files:
         with wave.open(str(pf), "rb") as in_wav:
@@ -195,7 +209,6 @@ def synthesize_script(
             raw = in_wav.readframes(n)
             s_data = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
 
-            # Micro-fondu de 8ms aux extrémités pour supprimer tout clic/pop de coupure
             fade_len = min(len(s_data) // 4, int(sample_rate * 0.008))
             if fade_len > 0:
                 fade_in = np.linspace(0.0, 1.0, fade_len, dtype=np.float32)
@@ -204,7 +217,6 @@ def synthesize_script(
                 s_data[-fade_len:] *= fade_out
             parts.append(s_data)
 
-    # Pause calibrée en échantillons (multiple exact de 2 octets, aucun décalage de phase)
     pause_samples = int(sample_rate * pause_between)
     pause_array = np.zeros(pause_samples, dtype=np.float32)
     initial_silence = np.zeros(int(sample_rate * initial_silence_sec), dtype=np.float32)
@@ -217,7 +229,6 @@ def synthesize_script(
 
     merged = np.concatenate(all_chunks)
 
-    # Normalisation propre du pic à -1.0 dB (0.891) pour éviter tout clipping
     peak = np.max(np.abs(merged)) if len(merged) > 0 else 1.0
     if peak > 0.01:
         merged = (merged / peak) * 0.891
@@ -233,11 +244,62 @@ def synthesize_script(
 
     total_duration = float(len(merged)) / float(sample_rate)
     logger.info(
-        "Audio complet assemblé sans clipping : %s (durée: %.2fs)",
+        "Audio assemblé [Voix: %s] : %s (durée: %.2fs)",
+        voice,
         final_audio_path,
         total_duration,
     )
     return final_audio_path, cues, total_duration
+
+
+def synthesize_script(
+    sentences: list[str],
+    work_dir: Path,
+    voice: str = DEFAULT_VOICE,
+    length_scale: float = DEFAULT_LENGTH_SCALE,
+    pause_between: float = 0.25,
+    initial_silence_sec: float = INITIAL_SILENCE_SEC,
+) -> tuple[Path, list[SentenceCue], float]:
+    """Synthétise l'ensemble du script en garantissant l'invariance absolue de la voix."""
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    clean_sentences = [s.strip() for s in sentences if s.strip()]
+    if not clean_sentences:
+        raise ValueError("Aucune phrase fournie pour la synthèse du script.")
+
+    target_voice = voice
+    is_edge = "neural" in target_voice.lower() or target_voice.startswith("fr-FR-")
+
+    # Si la voix demandée est Edge Neural (Vivienne), tenter la génération complète avec retries
+    if is_edge:
+        try:
+            return _execute_script_synthesis(
+                sentences=clean_sentences,
+                work_dir=work_dir,
+                voice=target_voice,
+                length_scale=length_scale,
+                pause_between=pause_between,
+                initial_silence_sec=initial_silence_sec,
+            )
+        except Exception as e:
+            logger.error(
+                "Échec Edge TTS pour la voix '%s' (%s). "
+                "BASCULEMENT INTÉGRAL DU SCRIPT sur la voix Piper locale '%s' pour garantir l'homogénéité vocale.",
+                target_voice,
+                e,
+                FALLBACK_PIPER_VOICE,
+            )
+            target_voice = FALLBACK_PIPER_VOICE
+
+    # Synthèse complète avec la voix locale Piper choisie (ex: fr_FR-siwis-medium)
+    return _execute_script_synthesis(
+        sentences=clean_sentences,
+        work_dir=work_dir,
+        voice=target_voice,
+        length_scale=length_scale,
+        pause_between=pause_between,
+        initial_silence_sec=initial_silence_sec,
+    )
 
 
 def format_ass_time(seconds: float) -> str:

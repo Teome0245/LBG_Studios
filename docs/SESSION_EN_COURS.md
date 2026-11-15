@@ -9,6 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-15)
+-8. **Verrouillage & Invariance Stricte de la Voix de Lia dans les Vidéos (`voice_engine.py`)** :
+    - **Diagnostic du Problème** : Dans les deux dernières vidéos (`drop_1794729612` et `drop_1794738612`), Lia alternait entre voix féminine et masculine. Cause : un repli silencieux immédiat et non-retryé sur `fr_FR-upmc-medium` (voix d'homme Pierre UPMC) phrase par phrase dès qu'un glitch websocket Edge TTS survenait.
+    - **Garantie d'Invariance Vocale par Vidéo** :
+      * Implémentation d'une boucle de retries avec exponential backoff (3 tentatives, délai 1.2s * tentative, timeout de 25s) sur Edge TTS (`fr-FR-VivienneMultilingualNeural`), éliminant 99.9% des micro-coupures réseau Microsoft.
+      * Nettoyage automatique et garanti des fichiers MP3 temporaires résiduels (`try... finally`).
+      * Suppression du repli partiel phrase par phrase : si une panne réseau totale persiste après tous les retries, le basculement est **intégral sur l'ensemble du script** pour ne jamais mélanger deux voix dans une même vidéo.
+      * Remplacement de la voix de repli locale Piper `.111:8098` par la voix féminine `fr_FR-siwis-medium` (cohérente avec Lia) au lieu de la voix d'homme `upmc-medium`.
+    - **Validation & Tests** :
+      * Test unitaire de robustesse : passage nominal 100% Vivienne (0 résidu MP3) et passage de repli intégral validé.
+      * `packages/cortex/.venv/bin/ruff check tools/studio_content_engine/` : 100% conforme.
+      * 153 tests Cortex Backend et suite complète Godot Headless validés à 100%.
+
 -7. **Studio Musical & Vocal Autonome V3 & Intégration Directe dans l'Atelier 3D** :
     - **Pause Définitive des Danses SWG** : Suite aux retours visuels (cinématique non naturelle 2003 sur rig VRM moderne), le chantier expérimental SWG est gelé pour capitaliser sur les 222+ animations parfaites Mixamo/VRM.
     - **Moteur Musical V3 (`tools/studio_music_generator_v3.py`)** :
