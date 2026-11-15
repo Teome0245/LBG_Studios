@@ -8,6 +8,24 @@
 
 ---
 
+## Dernières actions réalisées (2026-11-15)
+-4. **Intégration des Mécaniques T4C/SWG & Extension Territoriale de Scrapaltai (Modèle Tatooine)** :
+    - **Extension de la Géographie Planétaire (31 POIs & 7 Régions de Navigation NavMesh)** :
+      * Ajout des pôles de vie crédibles : Bourgade minière d'Anchor-Ridge (`poi:anchor_ridge`), Ferme d'Humidité Lars-Val (`poi:ferme_humidite`), Camp des Maraudeurs Ferrailleurs Jawas (`poi:camp_ferrailleurs`), Camp Fortifié du Vent Rouge (`poi:camp_vent_rouge`), Gouffre du Dragon Krayt (`poi:gouffre_krayt`), Bazar de Mos Espa / Fort Al-Khali (`poi:mos_espa_bazar`).
+      * Intégration de 4 nouvelles zones de navigation maillée dans `hub_nav.gd` (`anchor_ridge`, `ferme_humidite`, `camp_ferrailleurs`, `mos_espa`) montant à 7 régions et 372 polygones.
+    - **Nouveaux PNJ Vivants de Scrapaltai (71 NPCs & Registre étendu)** :
+      * `npc:prospecteur_durn` (Durn Vane, chef minier), `npc:chimiste_sela` (Sela Kore, affineuse), `npc:fermier_valen` (Valen Lars, fermier d'eau), `npc:ferrailleur_kliktik` (Klik'Tik, troqueur Jawa), `npc:chamane_uror` (U'Ror'K, chamane des sables), `npc:armurier_kane` (Kane Rill, armurier d'arène).
+    - **Mécanique T4C 1 : Moteur de Dialogue par Mots-Clés (Keyword Engine)** :
+      * Détection textuelle directe sans UI rigide dans `hub_dialogue.gd` (`T4C_NPC_KEYWORDS`), permettant de questionner les PNJ sur l'eau, les minerais, les réactifs, le troc, les esprits, les bêtes du gouffre et la prophétie.
+      * Validation unitaire dédiée : [`packages/prime-hub/tools/t4c_dialogue_selftest.gd`](../packages/prime-hub/tools/t4c_dialogue_selftest.gd) (PASS).
+    - **Mécanique T4C 2 : Caractéristiques Libres & Karma / Alignement** :
+      * Ajout dans `hub_skills.gd` des 5 stats fondamentales de La 4ème Prophétie (Force, Dextérité, Endurance, Intelligence, Sagesse) avec points non alloués et méthodes d'attribution sécurisées.
+      * Jauge de Karma dynamique (-1000 à +1000) et titres d'alignement réactifs (*Séraphin de l'Ordre*, *Protecteur Bienveillant*, *Citoyen Neutre*, *Hors-la-loi Notifié*, *Terreur des Sables*).
+      * Validation unitaire dédiée : [`packages/prime-hub/tools/t4c_attributes_selftest.gd`](../packages/prime-hub/tools/t4c_attributes_selftest.gd) (PASS).
+    - **CI & Intégrité** :
+      * `tools/ci_godot_headless.sh` étendu avec les tests T4C (100% vert).
+      * Tests Cortex Backend : 153 passed in 5.73s.
+
 ## Dernières actions réalisées (2026-11-14)
 -3. **Audit Global Gladys & Boucle d'Auto-Évaluation / Self-Healing** :
     - **Banc d'essai Self-Healing (`tools/test_self_healing_loop.py`)** :

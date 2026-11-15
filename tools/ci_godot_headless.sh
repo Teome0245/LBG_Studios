@@ -144,6 +144,8 @@ else
   run_test "Factions GCW & Nids de Créatures SWG Pre-CU (O2/O3)" "res://tools/swg_factions_lairs_selftest.gd"
   run_test "Autonomie Flotte IA SWG Pre-CU & Prise de Décision (O3)" "res://tools/bot_autonomy_swg_selftest.gd"
   run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
+  run_test "Attributs Libres (FOR/DEX/END/INT/SAG) & Karma (T4C / La 4ème Prophétie)" "res://tools/t4c_attributes_selftest.gd"
+  run_test "Dialogue par Mots-Clés (T4C) & Extension Territoriale Scrapaltai" "res://tools/t4c_dialogue_selftest.gd"
   run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
   run_client_test "World Terrain Builder & Scatter Procédural" "res://tools/terrain_builder_selftest.gd"
 fi

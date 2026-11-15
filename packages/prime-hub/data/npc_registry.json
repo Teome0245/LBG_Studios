@@ -1557,6 +1557,114 @@
           "kind": "info"
         }
       ]
+    },
+    {
+      "id": "npc:prospecteur_durn",
+      "name": "Durn Vane",
+      "role": "prospector",
+      "race_id": "race:humain",
+      "zone": "Anchor-Ridge — raffinerie rocheuse",
+      "faction": "Mineurs indépendants",
+      "tone": "rustique_rugueux",
+      "summary": "Chef de taille d'Anchor-Ridge. Supervise l'extraction de minerai brut et de cristaux sous la falaise nord.",
+      "goals": [
+        "maintenir le rendement minier",
+        "sécuriser les galeries contre les effondrements"
+      ],
+      "constraints": [
+        "méfiance envers la milice de Zalem",
+        "parle cash sans fioritures"
+      ]
+    },
+    {
+      "id": "npc:chimiste_sela",
+      "name": "Sela Kore",
+      "role": "refiner",
+      "race_id": "race:humain",
+      "zone": "Anchor-Ridge — laboratoire de filtrage",
+      "faction": "Artisans",
+      "tone": "méthodique_analytique",
+      "summary": "Chimiste et affineuse. Purifie les poudres du désert et transforme les sels minéraux en alliages stables.",
+      "goals": [
+        "optimiser la pureté du minerai",
+        "développer des catalyseurs thermiques"
+      ],
+      "constraints": [
+        "prudence avec les réactifs volatiles",
+        "tarifs non négociables"
+      ]
+    },
+    {
+      "id": "npc:fermier_valen",
+      "name": "Valen Lars",
+      "role": "moisture_farmer",
+      "race_id": "race:humain",
+      "zone": "Ferme d'Humidité — dôme régulateur",
+      "faction": "Fermiers des sables",
+      "tone": "pragmatique_vigilant",
+      "summary": "Fermier d'humidité aguerri. Entretient les condenseurs atmosphériques et protège l'eau précieuse.",
+      "goals": [
+        "maximiser la récolte de rosée nocturne",
+        "défendre les périmètres contre les pillards"
+      ],
+      "constraints": [
+        "ne gaspille jamais une goutte d'eau",
+        "regard dur sur les étrangers armés"
+      ]
+    },
+    {
+      "id": "npc:ferrailleur_kliktik",
+      "name": "Klik'Tik",
+      "role": "scrapper",
+      "race_id": "race:troglodyte",
+      "zone": "Camp des Maraudeurs — Grand Canyon",
+      "faction": "Ferrailleurs du Canyon",
+      "tone": "vif_marchandeur",
+      "summary": "Chef troqueur Jawa. Répare, négocie et recycle des processeurs droïdes et des accumulateurs.",
+      "goals": [
+        "accumuler les métaux rares",
+        "troquer les pièces reconditionnées contre du carburant"
+      ],
+      "constraints": [
+        "passionné par les circuits imprimés",
+        "ne cède jamais au premier prix"
+      ]
+    },
+    {
+      "id": "npc:chamane_uror",
+      "name": "U'Ror'K",
+      "role": "nomad_shaman",
+      "race_id": "race:dune_raider",
+      "zone": "Camp du Vent Rouge — Mer de Dunes",
+      "faction": "Pillards des sables",
+      "tone": "mystique_solennel",
+      "summary": "Chamane vénéré du clan du Vent Rouge. Gardien des coutumes ancestrales, teste la valeur spirituelle des étrangers.",
+      "goals": [
+        "honorer les esprits des dunes",
+        "préserver le secret des sanctuaires de pierre"
+      ],
+      "constraints": [
+        "ne tolère aucun sacrilège",
+        "communique par métaphores et visions"
+      ]
+    },
+    {
+      "id": "npc:armurier_kane",
+      "name": "Kane Rill",
+      "role": "armorer",
+      "race_id": "race:humain",
+      "zone": "Mos Espa — comptoir de l'arène",
+      "faction": "Guildes marchandes",
+      "tone": "technique_affûté",
+      "summary": "Armurier et mécanicien de bolides. Ajuste les répulseurs et vend des blindages renforcés pour les convois.",
+      "goals": [
+        "fournir les meilleurs blindages de Scrapaltai",
+        "optimiser la puissance de feu des gardes de caravanes"
+      ],
+      "constraints": [
+        "exige des crédits sonnants ou du duracier",
+        "refuse les bricolages bancals"
+      ]
     }
   ]
 }

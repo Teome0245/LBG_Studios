@@ -23,6 +23,12 @@ const GREETINGS := {
 	"npc:mecanicien_soren": "Soren Kray. Si ça roule, ça casse. Si ça fume, je répare. Parle vite, j'ai les mains dans le carbu.",
 	"npc:ancien_nadir": "Ancien Nadir. Paix sur ta route. Le Ksar Nomade accueille ceux qui respectent l'eau et le silence des dunes.",
 	"npc:guerisseur_miran": "Miran Sael. Tente des soins. Le soleil brûle et les venins guettent. Que puis-je soigner pour ta caravane ?",
+	"npc:prospecteur_durn": "Durn Vane. Anchor-Ridge. Si tu n'as pas peur de la poussière et du pic, parle de minerai ou de galeries.",
+	"npc:chimiste_sela": "Sela Kore. Laboratoire d'Anchor-Ridge. Je filtre ce que le désert crache. Tu veux parler alchimie ou catalyseurs ?",
+	"npc:fermier_valen": "Valen Lars. Ferme d'humidité. Garde les mains loin des vannes et dis-moi ce que tu veux savoir sur l'eau.",
+	"npc:ferrailleur_kliktik": "Klik'Tik. Utini ! Pièces, processeurs, accumulateurs ! Tu as de la bonne ferraille à troquer ?",
+	"npc:chamane_uror": "U'Ror'K. Le souffle du Vent Rouge porte la mémoire des sables. Écoute les esprits ou subis le désert.",
+	"npc:armurier_kane": "Kane Rill. Mos Espa. Blindage lourd pour bolides et chasseurs. Qu'est-ce qu'on renforce aujourd'hui ?",
 }
 
 const DEFAULT_MOVES := {
@@ -67,6 +73,78 @@ const DEFAULT_MOVES := {
 		{"id": "move:habitue_convois", "label": "Convois Zalem", "utterance": "Qu'est-ce qui circule sur la route ouest vers Zalem en ce moment ?", "kind": "info"},
 		{"id": "move:habitue_alliance", "label": "Alliances Joueurs", "utterance": "Tu cherches des alliancés fiables parmi les joueurs ?", "kind": "info"},
 	],
+	"npc:prospecteur_durn": [
+		{"id": "move:durn_minerai", "label": "Gisements de la faille", "utterance": "Quels minerais trouve-t-on dans la faille nord ?", "kind": "info"},
+		{"id": "move:durn_krayt", "label": "Mise en garde", "utterance": "Le Gouffre du Krayt est-il dangereux ?", "kind": "info"},
+	],
+	"npc:chimiste_sela": [
+		{"id": "move:sela_catalyseur", "label": "Formules de filtrage", "utterance": "Quels réactifs utilises-tu pour affiner les poudres ?", "kind": "info"},
+		{"id": "move:sela_filtre", "label": "Filtres à sable", "utterance": "Comment entretenir son masque de survie ?", "kind": "info"},
+	],
+	"npc:fermier_valen": [
+		{"id": "move:valen_eau", "label": "Réserve de rosée", "utterance": "Comment fonctionnent vos condenseurs d'humidité ?", "kind": "info"},
+		{"id": "move:valen_pillards", "label": "Razzias du désert", "utterance": "Les pillards attaquent souvent la ferme ?", "kind": "info"},
+	],
+	"npc:ferrailleur_kliktik": [
+		{"id": "move:kliktik_troc", "label": "Processeur droïde", "utterance": "Tu as des composants pour droïde astromécano ?", "kind": "info"},
+		{"id": "move:kliktik_epave", "label": "Dernières épaves", "utterance": "Où est tombé le dernier convoi ?", "kind": "info"},
+	],
+	"npc:chamane_uror": [
+		{"id": "move:uror_esprits", "label": "Murmures du vent", "utterance": "Que disent les esprits de la Mer de Dunes ?", "kind": "info"},
+		{"id": "move:uror_karma", "label": "Épreuve de l'âme", "utterance": "Comment juges-tu la valeur d'un étranger ?", "kind": "info"},
+	],
+	"npc:armurier_kane": [
+		{"id": "move:kane_blindage", "label": "Blindage de bolide", "utterance": "Tu as du duracier renforcé pour la carrosserie ?", "kind": "info"},
+		{"id": "move:kane_arene", "label": "Duels de Mos Espa", "utterance": "Qui est le champion actuel de l'arène ?", "kind": "info"},
+	],
+}
+
+## Mots-clés thématiques par PNJ (Système de dialogue inspiré de La 4ème Prophétie / T4C)
+const T4C_NPC_KEYWORDS := {
+	"npc:prospecteur_durn": {
+		"minerai": "Le duracier brut et l'obsidienne des failles dorment sous les roches nord. Sans bon pic, tu n'extrais que de la poussière.",
+		"galerie": "Nos galeries s'enfoncent à 200 mètres sous Anchor-Ridge. Gare aux éboulements quand la terre tremble !",
+		"krayt": "Le Grand Gouffre n'est pas loin. Si tu entends un râle métallique dans la gorge, jette ta pioche et cours !",
+		"prophétie": "Les anciens mineurs parlaient d'une source d'eau vive enfouie sous le manteau rocheux... la prophétie des sables.",
+		"prophetie": "Les anciens mineurs parlaient d'une source d'eau vive enfouie sous le manteau rocheux... la prophétie des sables.",
+		"anchor": "Anchor-Ridge est le dernier bastion civil avant les falaises hostiles. Reste sur les pistes balisées.",
+	},
+	"npc:chimiste_sela": {
+		"alchimie": "Rien de magique, tout est réaction chimique. Les sels alcalins du désert distillés forment nos meilleurs stabilisateurs.",
+		"catalyseur": "J'ai besoin de soufre volcanique et de cristaux bleus pour mes solvants industriels de haute pureté.",
+		"filtre": "Un filtre de respiration encrassé et tes poumons se transforment en pierre ponce en trois jours de tempête.",
+		"poudre": "Les poudres d'épice rouge raffinées stimulent l'endurance, mais leur commerce est surveillé par la milice.",
+	},
+	"npc:fermier_valen": {
+		"eau": "Une pinte d'eau pure vaut dix fois son poids en crédits sur Scrapaltai. Chaque goutte compte.",
+		"humidité": "Nos 24 vaporisateurs captent la rosée nocturne. À midi, le moindre joint défectueux évapore la récolte.",
+		"humidite": "Nos 24 vaporisateurs captent la rosée nocturne. À midi, le moindre joint défectueux évapore la récolte.",
+		"sécheresse": "Les deux soleils pompent la terre jusqu'à la moelle. Sans nos fermes, les villes meurent de soif.",
+		"secheresse": "Les deux soleils pompent la terre jusqu'à la moelle. Sans nos fermes, les villes meurent de soif.",
+		"pillards": "Le clan du Vent Rouge rôde la nuit pour siphonner nos réservoirs. On dort le blaster armé.",
+	},
+	"npc:ferrailleur_kliktik": {
+		"troc": "Utini ! Pas de monnaie dévaluée ici, que du troc honnête ! Puces, condensateurs, servos de propulseurs !",
+		"jawa": "Nous connaissons chaque épave tombée du ciel. Si un boulon a touché le sable, il nous appartient !",
+		"droïde": "Astromécano révisé, droïde de protocole cabossé, unité de combat rouillée... tout se reprogramme !",
+		"droide": "Astromécano révisé, droïde de protocole cabossé, unité de combat rouillée... tout se reprogramme !",
+		"pièces": "Cherche dans le Grand Canyon : les carcasses de speeders regorgent de bobines magnétiques intactes.",
+		"pieces": "Cherche dans le Grand Canyon : les carcasses de speeders regorgent de bobines magnétiques intactes.",
+	},
+	"npc:chamane_uror": {
+		"esprits": "Le vent chante dans les failles de pierre. Il réclame le respect du silence et l'offrande de la bravoure.",
+		"karma": "Tes actes te devancent comme ton ombre au couchant. Qui sème la trahison récolte les crocs du krayt.",
+		"dunes": "La Mer de Dunes n'a pas de frontière. Seuls les initiés savent lire les ondulations du sable rouge.",
+		"rituel": "Prouve ta pureté d'intention : rapporte une relique intacte du canyon sans verser de sang innocent.",
+		"foi": "Notre foi est gravée dans le roc. Les citadins de Lost Heaven ont oublié le langage des deux soleils.",
+	},
+	"npc:armurier_kane": {
+		"blindage": "Plastron de duracier ou plaques mécatroniques composites. Si un pillard tire, tu veux que le plasma ricoche !",
+		"arène": "Mos Espa vit au rythme des courses et des duels. La foule veut de la vitesse et de la tôle froissée.",
+		"arene": "Mos Espa vit au rythme des courses et des duels. La foule veut de la vitesse et de la tôle froissée.",
+		"bolide": "Un injecteur suralimenté te donne 300 km/h en ligne droite sur le lac salé.",
+		"arme": "Un bon blaster lourd calibré pour la chaleur du désert ne s'enraye jamais au moment critique.",
+	}
 }
 
 const FALLBACK_REPLIES := [
@@ -99,6 +177,25 @@ const FALLBACK_REPLIES := [
 	["caravane", "Les caravanes entre Lost Heaven et Al-Khali prennent des risques énormes — les habitués guettent leur arrivée."],
 	["al-khali", "L'Oasis d'Al-Khali — la caravane tarde, et entre les pillards et la chaleur, chaque info vaut de l'eau."],
 	["joueur", "À La Perle, les habitués cherchent des joueurs prêts à lier observation du terrain et discrétion."],
+	["anchor", "Anchor-Ridge au nord : village de mineurs au pied des falaises. Durn Vane supervise l'extraction."],
+	["ridge", "Anchor-Ridge au nord : gisements de métaux bruts et de cristaux, mais gare aux bêtes du canyon."],
+	["ferme", "Ferme d'Humidité Lars-Val : condenseurs de rosée vitaux pour tout le secteur central."],
+	["eau", "Sur Scrapaltai, l'eau est la vraie monnaie. Les fermes d'humidité et les oasis dictent la survie."],
+	["jawa", "Les Jawas du Grand Canyon : ferrailleurs hors pair, troquent composants droïdes et pièces de navette."],
+	["maraudeur", "Camp des Maraudeurs : troc de pièces détachées au fond du canyon avec Klik'Tik."],
+	["vent rouge", "Le clan du Vent Rouge : pillards des dunes est, menés par le chamane U'Ror'K."],
+	["tusken", "Les nomades du Vent Rouge considèrent les sables comme leur domaine sacré — approche avec prudence."],
+	["krayt", "Le Gouffre du Krayt : repaire d'un léviathan des sables au nord. Seuls les fous ou les héros y vont."],
+	["dragon", "Légende du Dragon Krayt : une perle précieuse dans son estomac et des crocs capables de broyer un speeder."],
+	["mos espa", "Mos Espa : cité marchande de l'ouest, connue pour ses arènes de vitesse et ses armuriers."],
+	["arene", "L'Arène de Mos Espa : courses de bolides effrénées et paris clandestins sur les pilotes locaux."],
+	["t4c", "L'héritage de la 4ème Prophétie : liberté totale de stats (FOR/DEX/END/INT/SAG) et karma réactif."],
+	["prophetie", "La prophétie raconte que les actes de bravoure débloqueront les ailes du Séraphin des sables."],
+	["prophétie", "La prophétie raconte que les actes de bravoure débloqueront les ailes du Séraphin des sables."],
+	["karma", "Ton karma évolue à chaque choix : de Terreur des Sables (-1000) à Séraphin de l'Ordre (+1000)."],
+	["alignement", "L'alignement moral influence comment les gardes, les pillards et les marchands te traitent."],
+	["stats", "Cinq caractéristiques fondamentales : Force, Dextérité, Endurance, Intelligence et Sagesse."],
+	["attributs", "Cinq caractéristiques fondamentales : Force, Dextérité, Endurance, Intelligence et Sagesse."],
 ]
 
 var _registry: Dictionary = {}  # id -> entry
@@ -457,6 +554,16 @@ func _pick_reply(
 		if npc_id == "npc:rumeuriste":
 			return "Rumeuriste : Les échos de %s rapportés par %s : %s" % [orig, sbot, txt]
 		return "%s : D'après %s (%s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", sbot, orig, txt]
+
+	# --- Moteur de Mots-Clés T4C Spécifiques au PNJ (La 4ème Prophétie Dialogue Engine) ---
+	if T4C_NPC_KEYWORDS.has(npc_id):
+		var kw_dict: Dictionary = T4C_NPC_KEYWORDS[npc_id]
+		for kw in kw_dict.keys():
+			if str(kw) in t:
+				var reply_text: String = str(kw_dict[kw])
+				var who := npc_name if not npc_name.is_empty() else "PNJ"
+				return "%s : %s" % [who, reply_text]
+
 	if is_greet and GREETINGS.has(npc_id):
 		var greet := str(GREETINGS[npc_id])
 		# Salut : une accroche utile max — jamais de parenthèse « au fait » ni de recycle.
@@ -525,6 +632,10 @@ func invoke(body: Dictionary) -> Dictionary:
 			)
 	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player, history)
 	var moves := _suggested_moves(npc_id)
+	var t4c_kws: Array = []
+	if T4C_NPC_KEYWORDS.has(npc_id):
+		t4c_kws = (T4C_NPC_KEYWORDS[npc_id] as Dictionary).keys()
+
 	var meta := {
 		"lyra_engagement_resolved": "prime_hub",
 		"dialogue_profile_resolved": "prime_hub_native",
@@ -537,6 +648,7 @@ func invoke(body: Dictionary) -> Dictionary:
 		"relation_memory_hint": rel_hint,
 		"history_turns": history.size(),
 		"tracked_quest": str(ss.get("tracked_quest", "")),
+		"t4c_keywords": t4c_kws,
 	}
 	if npc_id == "npc:scribe" and economy != null and economy.has_method("chronicle"):
 		meta["chronicle"] = economy.chronicle(player, true)
@@ -547,6 +659,7 @@ func invoke(body: Dictionary) -> Dictionary:
 		"npc_name": npc_name,
 		"session_summary": ss,
 		"source": "prime_hub",
+		"t4c_keywords": t4c_kws,
 	}
 	return {
 		"ok": true,

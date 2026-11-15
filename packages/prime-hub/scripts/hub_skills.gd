@@ -147,6 +147,28 @@ func _ensure_player_skill_state(player: String) -> Dictionary:
 		for k in DEFAULT_XP_POOLS.keys():
 			if not xp_pools.has(k):
 				xp_pools[k] = DEFAULT_XP_POOLS[k]
+
+	# T4C Core Attributes & Karma (Force, Dextérité, Endurance, Intelligence, Sagesse)
+	if typeof(p.get("t4c_attributes")) != TYPE_DICTIONARY:
+		p["t4c_attributes"] = {
+			"strength": 20,
+			"dexterity": 20,
+			"endurance": 20,
+			"intelligence": 20,
+			"wisdom": 20,
+			"unallocated_points": 15,
+			"karma": 0
+		}
+	else:
+		var atts: Dictionary = p["t4c_attributes"]
+		for k in ["strength", "dexterity", "endurance", "intelligence", "wisdom"]:
+			if not atts.has(k):
+				atts[k] = 20
+		if not atts.has("unallocated_points"):
+			atts["unallocated_points"] = 0
+		if not atts.has("karma"):
+			atts["karma"] = 0
+
 	return p
 
 
@@ -394,5 +416,89 @@ func player_tree_snapshot(player: String) -> Dictionary:
 		"skill_mods": compute_skill_mods(player),
 		"title": str(p.get("title", "")),
 		"professions": profs_out,
+		"t4c_attributes": get_t4c_attributes(player),
 	}
+
+
+## --- Système d'Attributs Libres & Karma (Inspiré de La 4ème Prophétie / T4C) ---
+
+func get_karma_title(karma: int) -> String:
+	if karma >= 600:
+		return "Séraphin de l'Ordre"
+	elif karma >= 200:
+		return "Protecteur Bienveillant"
+	elif karma > -200:
+		return "Citoyen Neutre"
+	elif karma > -600:
+		return "Hors-la-loi Notifié"
+	else:
+		return "Terreur des Sables"
+
+
+func get_t4c_attributes(player: String) -> Dictionary:
+	var p := _ensure_player_skill_state(player)
+	if p.is_empty():
+		return {}
+	var atts: Dictionary = (p.get("t4c_attributes", {}) as Dictionary).duplicate(true)
+	var k_val := int(atts.get("karma", 0))
+	atts["karma_title"] = get_karma_title(k_val)
+	return atts
+
+
+func allocate_t4c_attribute(player: String, attribute: String, points: int) -> Dictionary:
+	var p := _ensure_player_skill_state(player)
+	if p.is_empty():
+		return {"ok": false, "error": "economy_unavailable"}
+	var att_key := attribute.strip_edges().to_lower()
+	var valid_keys := ["strength", "dexterity", "endurance", "intelligence", "wisdom"]
+	if att_key not in valid_keys:
+		return {"ok": false, "error": "invalid_attribute", "valid_attributes": valid_keys}
+	var pts := int(points)
+	if pts <= 0:
+		return {"ok": false, "error": "invalid_points_amount"}
+	var atts: Dictionary = p["t4c_attributes"]
+	var unallocated := int(atts.get("unallocated_points", 0))
+	if pts > unallocated:
+		return {
+			"ok": false,
+			"error": "insufficient_unallocated_points",
+			"requested": pts,
+			"available": unallocated
+		}
+	atts[att_key] = int(atts.get(att_key, 20)) + pts
+	atts["unallocated_points"] = unallocated - pts
+	if economy != null:
+		economy.log_session_event(player, "t4c_stat_alloc", "+%d en %s" % [pts, att_key], {"attribute": att_key, "points": pts})
+		economy._save_players()
+	return {
+		"ok": true,
+		"player": player,
+		"attribute": att_key,
+		"allocated": pts,
+		"new_value": int(atts[att_key]),
+		"remaining_unallocated": int(atts["unallocated_points"]),
+		"t4c_attributes": get_t4c_attributes(player)
+	}
+
+
+func adjust_karma(player: String, delta: int, reason: String = "") -> Dictionary:
+	var p := _ensure_player_skill_state(player)
+	if p.is_empty():
+		return {"ok": false, "error": "economy_unavailable"}
+	var atts: Dictionary = p["t4c_attributes"]
+	var old_karma := int(atts.get("karma", 0))
+	var new_karma := clampi(old_karma + delta, -1000, 1000)
+	atts["karma"] = new_karma
+	if economy != null:
+		economy.log_session_event(player, "karma_change", "Karma %+d (%s) : %s" % [delta, get_karma_title(new_karma), reason], {"delta": delta, "new_karma": new_karma, "reason": reason})
+		economy._save_players()
+	return {
+		"ok": true,
+		"player": player,
+		"old_karma": old_karma,
+		"delta": delta,
+		"new_karma": new_karma,
+		"karma_title": get_karma_title(new_karma)
+	}
+
 

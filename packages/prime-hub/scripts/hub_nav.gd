@@ -36,6 +36,34 @@ const ZONES_DEF: Array = [
 		"default_bounds": [4700.0, -4050.0, 5200.0, -3550.0],
 		"margin": 150.0,
 	},
+	{
+		"id": "anchor_ridge",
+		"filter_min_x": 3500.0, "filter_max_x": 4800.0,
+		"filter_min_z": -3500.0, "filter_max_z": -2700.0,
+		"default_bounds": [3950.0, -3350.0, 4450.0, -2850.0],
+		"margin": 150.0,
+	},
+	{
+		"id": "ferme_humidite",
+		"filter_min_x": 3400.0, "filter_max_x": 4300.0,
+		"filter_min_z": -2500.0, "filter_max_z": -1800.0,
+		"default_bounds": [3650.0, -2350.0, 4050.0, -1950.0],
+		"margin": 150.0,
+	},
+	{
+		"id": "camp_ferrailleurs",
+		"filter_min_x": 5800.0, "filter_max_x": 6700.0,
+		"filter_min_z": -3200.0, "filter_max_z": -2400.0,
+		"default_bounds": [6050.0, -3000.0, 6450.0, -2600.0],
+		"margin": 150.0,
+	},
+	{
+		"id": "mos_espa",
+		"filter_min_x": 1900.0, "filter_max_x": 2900.0,
+		"filter_min_z": -2200.0, "filter_max_z": -1400.0,
+		"default_bounds": [2150.0, -2000.0, 2650.0, -1600.0],
+		"margin": 150.0,
+	},
 ]
 
 var map: RID = RID()
