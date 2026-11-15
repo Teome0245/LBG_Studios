@@ -9,6 +9,22 @@
 ---
 
 ## Dernières actions réalisées (2026-11-15)
+-7. **Studio Musical & Vocal Autonome V3 & Intégration Directe dans l'Atelier 3D** :
+    - **Pause Définitive des Danses SWG** : Suite aux retours visuels (cinématique non naturelle 2003 sur rig VRM moderne), le chantier expérimental SWG est gelé pour capitaliser sur les 222+ animations parfaites Mixamo/VRM.
+    - **Moteur Musical V3 (`tools/studio_music_generator_v3.py`)** :
+      * Bibliothèque de 7 Presets Musicaux calibrés (Cyberpunk 128 BPM, Tatooine Sunset 124 BPM, 80s Synthwave 115 BPM, K-Pop 130 BPM, Dark Techno 132 BPM, Lo-Fi 85 BPM, French Touch 120 BPM).
+      * Structure multi-strophes Couplet / Refrain avec gestion des élévations d'énergie et rimes Ollama locales (`.110`/`.111`).
+      * 4 Timbres Vocaux distincts pour le chant de Lia : Diva Scénique, Cyber Vocoder (Daft Punk style via flanger et égalisation 1.5kHz), Autotune Pop, Whisper intimiste.
+      * Premier morceau test produit et déployé : **`🎵 Lia - Neon Overdrive (30s - 115 BPM)`** (Style Synthwave 80s + Vocoder Daft Punk).
+    - **Serveur API HTTP Studio (`tools/studio_music_api.py` sur port 8099)** :
+      * Endpoints REST avec CORS : `/api/music/styles`, `/api/music/generate` (asynchrone), `/api/music/status` (polling en temps réel), `/api/music/tracks` (catalogue des fichiers audio générés).
+    - **Interface Web de Composition dans l'Atelier 3D (`choreographer.html`)** :
+      * Nouvel onglet dédié **`🎵 Studio IA`** dans le panneau latéral gauche.
+      * Formulaire complet : Choix du Style, Timbre vocal, Durée (15s, 30s, 60s), Titre personnalisé.
+      * Bouton d'action direct avec barre de progression animée et messages d'étapes en direct.
+      * Intégration et chargement immédiat du morceau dans le lecteur audio et ajustement automatique de la Timeline.
+      * Déployé et synchronisé sur `.140` (`http://192.168.0.140/choreographer.html`) et sur Windows `.10`.
+
 -6. **Intégration de la Topologie Second Brain & Knowledge Explorer (`#/topology`)** :
     - **Extension du Graphe Second Brain (50 Nœuds & 172 Arêtes en Direct sur .140:8080)** :
       * Intégration des 9 Villes & Lieux de Scrapaltai (`type: "city"`, rose `#ec4899`) : *Lost Heaven*, *Bourgade Minière d'Anchor-Ridge*, *Ferme d'Humidité Lars-Val*, *Camp des Maraudeurs Ferrailleurs Jawas*, *Camp Fortifié du Vent Rouge*, *Gouffre du Dragon Krayt*, *Bazar de Mos Espa / Fort Al-Khali*, *Ksar Nomade*, *Avant-poste Zalem*.

@@ -689,6 +689,7 @@
         <button class="tab-btn active" data-tab="tab-catalogue">Catalogue Mocap</button>
         <button class="tab-btn" data-tab="tab-camera">Caméra & Plans</button>
         <button class="tab-btn" data-tab="tab-perfo">Chant & Style</button>
+        <button class="tab-btn" data-tab="tab-music-creator" id="tab-btn-music" style="color: #00f5d4;">🎵 Studio IA</button>
       </div>
 
       <!-- Onglet Catalogue Mocap -->
@@ -825,6 +826,74 @@
           </div>
         </div>
       </div>
+
+      <!-- Onglet Studio Musical & Vocal IA -->
+      <div id="tab-music-creator" class="tab-content">
+        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Studio Musical IA (0 € Cloud)</span>
+          <span style="font-size: 10px; background: rgba(0, 245, 212, 0.15); border: 1px solid #00f5d4; color: #00f5d4; padding: 2px 6px; border-radius: 4px;">MusicGen + Edge-TTS</span>
+        </div>
+
+        <div class="control-group">
+          <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">1. Style Musical & Tempo</label>
+          <select id="music-style-select" class="search-box" style="width: 100%; margin-top: 4px;">
+            <option value="cyberpunk">⚡ Cyberpunk Club (128 BPM)</option>
+            <option value="tatooine_sunset">🌅 Tatooine Sunset Groove (124 BPM)</option>
+            <option value="synthwave" selected>🌆 80s Retro Synthwave (115 BPM)</option>
+            <option value="kpop_energy">✨ K-Pop Future Dance (130 BPM)</option>
+            <option value="dark_techno">🖤 Dark Industrial Techno (132 BPM)</option>
+            <option value="chill_lofi">☕ Lo-Fi Night Chill (85 BPM)</option>
+            <option value="french_touch">🕺 French Touch Funk (120 BPM)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">2. Timbre Vocal de Lia</label>
+          <select id="music-voice-select" class="search-box" style="width: 100%; margin-top: 4px;">
+            <option value="diva">Diva Scénique (Clarté & Brillance Studio)</option>
+            <option value="vocoder">Cyber Vocoder (Robotique Daft Punk)</option>
+            <option value="autotune">Autotune Pop (Moderne & Présence)</option>
+            <option value="whisper">Intime Whisper (Feutré & Doux)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">3. Durée du Morceau</label>
+          <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <button class="btn btn-sm music-dur-btn" data-dur="15" style="flex: 1;">15s (Teaser)</button>
+            <button class="btn btn-sm btn-primary music-dur-btn" data-dur="30" style="flex: 1;">30s (TikTok)</button>
+            <button class="btn btn-sm music-dur-btn" data-dur="60" style="flex: 1;">60s (Complet)</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase;">4. Titre d'affichage (Optionnel)</label>
+          <input type="text" id="music-title-input" class="search-box" placeholder="Ex: Lia - Neon Overdrive" style="width: 100%; margin-top: 4px;">
+        </div>
+
+        <button id="btn-trigger-music-gen" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #00f5d4, #7928ca); border: none; border-radius: 6px; box-shadow: 0 0 15px rgba(0, 245, 212, 0.4); cursor: pointer; margin-top: 6px;">
+          ⚡ Composer & Charger le Morceau
+        </button>
+
+        <!-- Progress Box -->
+        <div id="music-progress-box" style="display: none; background: #0c1220; border: 1px solid #00f5d4; border-radius: 6px; padding: 12px; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 6px;">
+            <span id="music-progress-step" style="color: #00f5d4;">Génération en cours...</span>
+            <span id="music-progress-pct" style="color: #fff;">0%</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+            <div id="music-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00f5d4, #7928ca); transition: width 0.3s ease;"></div>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;" id="music-progress-desc">
+            Calcul CPU MusicGen + Synthèse vocale multicanale
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 14px;">Morceaux Disponibles dans le Studio</div>
+        <div id="studio-tracks-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;">
+          <!-- Injecté dynamiquement -->
+        </div>
+      </div>
     </aside>
 
     <!-- Viewport 3D Interactif -->
@@ -871,6 +940,9 @@
           <option value="lia_cyber_30s" data-src="./audio/lia_cyberpunk_song_30s_master.wav" data-duration="29.94" data-bpm="128" selected>🎵 Lia Cyberpunk Master V2 (MusicGen 30s + Voix - 128 BPM)</option>
           <option value="nexura" data-src="./nexura_domina_v1.mp3" data-duration="157.61" data-bpm="128">⚡ Nexura Domina (Clip Officiel 2m37)</option>
           <option value="track_v1" data-src="./audio/track_musicgen_v1.wav" data-duration="8.0" data-bpm="128">🎹 Instrumental Beat (MusicGen 8s - 128 BPM)</option>
+          <option value="lia_tatooine_sunset_60s" data-src="./audio/lia_synthwave_energy_master_60s.wav" data-duration="59.38" data-bpm="128">🎵 Lia - Tatooine Sunset (MusicGen 60s + Voix - 128 BPM)</option>
+        
+          <option value="lia_synthwave_30s" data-src="./audio/lia_synthwave_30s_master.wav" data-duration="30" data-bpm="115">🎵 Lia - Neon Overdrive (30s - 115 BPM)</option>
         </select>
         <audio id="audio-player" src="./audio/lia_cyberpunk_song_30s_master.wav" preload="auto"></audio>
       </div>
@@ -2365,6 +2437,167 @@ function setupEvents() {
       alert("✦ Projet sauvegardé en local.");
     }
   };
+
+  // Initialisation du Créateur Musical IA
+  initMusicCreator();
+}
+
+// --- 9. Module Créateur Musical & Vocal IA ---
+function initMusicCreator() {
+  const styleSelect = document.getElementById("music-style-select");
+  const voiceSelect = document.getElementById("music-voice-select");
+  const titleInput = document.getElementById("music-title-input");
+  const durBtns = document.querySelectorAll(".music-dur-btn");
+  const triggerBtn = document.getElementById("btn-trigger-music-gen");
+  const progressBox = document.getElementById("music-progress-box");
+  const progressStep = document.getElementById("music-progress-step");
+  const progressPct = document.getElementById("music-progress-pct");
+  const progressBar = document.getElementById("music-progress-bar");
+  const progressDesc = document.getElementById("music-progress-desc");
+  const tracksList = document.getElementById("studio-tracks-list");
+
+  let selectedDuration = 30;
+  durBtns.forEach(btn => {
+    btn.onclick = () => {
+      durBtns.forEach(b => b.classList.remove("btn-primary"));
+      btn.classList.add("btn-primary");
+      selectedDuration = parseInt(btn.dataset.dur, 10);
+    };
+  });
+
+  const API_BASE = "http://192.168.0.143:8099";
+
+  async function refreshTracksList() {
+    try {
+      const res = await fetch(`${API_BASE}/api/music/tracks`);
+      if (!res.ok) return;
+      const data = await res.json();
+      tracksList.innerHTML = "";
+      if (!data.tracks || data.tracks.length === 0) {
+        tracksList.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 8px;">Aucun morceau personnalisé pour l\'instant.</div>';
+        return;
+      }
+      data.tracks.forEach(tr => {
+        const item = document.createElement("div");
+        item.style = "display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 6px 10px; font-size: 11px;";
+        item.innerHTML = `
+          <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; font-weight: bold; color: #fff;">
+            🎵 ${tr.filename}
+          </div>
+          <button class="btn btn-sm" style="font-size: 10px; padding: 2px 8px; background: rgba(0, 245, 212, 0.2); border-color: #00f5d4; color: #00f5d4;">
+            Charger
+          </button>
+        `;
+        item.querySelector("button").onclick = () => {
+          loadAudioTrackUrl(tr.url, tr.filename);
+        };
+        tracksList.appendChild(item);
+      });
+    } catch (e) {
+      console.warn("API Studio Musique non joignable pour l'instant:", e);
+    }
+  }
+
+  function loadAudioTrackUrl(url, filename) {
+    const trackSelect = document.getElementById("select-audio-track");
+    let opt = Array.from(trackSelect.options).find(o => o.dataset.src === url || o.dataset.src.endsWith(filename));
+    if (!opt) {
+      opt = document.createElement("option");
+      opt.value = filename.replace(/\.wav$/i, "");
+      opt.dataset.src = url;
+      opt.dataset.duration = selectedDuration;
+      opt.dataset.bpm = 128;
+      opt.textContent = `🎵 ${filename}`;
+      trackSelect.appendChild(opt);
+    }
+    trackSelect.value = opt.value;
+    audio.src = url;
+    audio.load();
+    audio.onloadedmetadata = () => {
+      sequenceData.duration = audio.duration;
+      renderTimeline();
+    };
+    alert(`✦ Morceau chargé : ${filename}\nTimeline synchronisée !`);
+  }
+
+  let pollTimer = null;
+  async function pollStatus() {
+    try {
+      const res = await fetch(`${API_BASE}/api/music/status`);
+      if (!res.ok) return;
+      const st = await res.json();
+      if (st.status === "generating") {
+        progressBox.style.display = "block";
+        triggerBtn.disabled = true;
+        triggerBtn.textContent = "⏳ Composition en cours...";
+        progressStep.textContent = st.step || "Calculs en cours...";
+        progressPct.textContent = `${st.progress}%`;
+        progressBar.style.width = `${st.progress}%`;
+        progressDesc.textContent = `Style: ${st.style} | Voix: ${st.voice.toUpperCase()} | Durée: ${st.duration}s`;
+      } else if (st.status === "done") {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = "⚡ Composer & Charger le Morceau";
+        progressStep.textContent = "✦ Morceau Prêt !";
+        progressPct.textContent = "100%";
+        progressBar.style.width = "100%";
+        progressDesc.textContent = `Morceau ${st.title} déployé sur le serveur !`;
+        refreshTracksList();
+        if (st.audio_url) {
+          loadAudioTrackUrl(st.audio_url, `${st.track_id}_master.wav`);
+        }
+      } else if (st.status === "error") {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = "⚡ Composer & Charger le Morceau";
+        progressStep.textContent = "Erreur de génération";
+        progressPct.textContent = "!";
+        progressBar.style.background = "#f43f5e";
+        progressDesc.textContent = st.error_message || "Erreur inattendue.";
+      }
+    } catch (e) {
+      console.warn("Polling error:", e);
+    }
+  }
+
+  triggerBtn.onclick = async () => {
+    const style = styleSelect.value;
+    const voice = voiceSelect.value;
+    const title = titleInput.value.trim();
+    const duration = selectedDuration;
+
+    triggerBtn.disabled = true;
+    triggerBtn.textContent = "⏳ Lancement du studio...";
+    progressBox.style.display = "block";
+    progressBar.style.width = "5%";
+    progressPct.textContent = "5%";
+    progressStep.textContent = "Initialisation...";
+    progressBar.style.background = "linear-gradient(90deg, #00f5d4, #7928ca)";
+
+    try {
+      const res = await fetch(`${API_BASE}/api/music/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ style, voice, title, duration })
+      });
+      if (res.status === 409) {
+        alert("Une génération est déjà en cours dans le studio !");
+      }
+      if (!pollTimer) {
+        pollTimer = setInterval(pollStatus, 2000);
+      }
+    } catch (err) {
+      alert("Impossible de joindre le Studio Musical IA sur http://192.168.0.143:8099.\nVérifiez que le serveur est actif.");
+      triggerBtn.disabled = false;
+      triggerBtn.textContent = "⚡ Composer & Charger le Morceau";
+    }
+  };
+
+  // Chargement initial des pistes et vérification d'état
+  refreshTracksList();
+  pollStatus();
 }
 
 // Initialisation au chargement du DOM

@@ -126,12 +126,10 @@ def quat_normalize(q):
         return (x/l, y/l, z/l, w/l)
     return (0.0, 0.0, 0.0, 1.0)
 
-# Offsets d'adaptation T-Pose VRM -> Repère naturel SWG
-# En VRM T-pose, les bras sont à l'horizontale (90°).
-# Pour les amener dans la posture naturelle de danse SWG (~22° du flanc, soit -68° de descente):
-ANGLE_ARM = math.radians(68.0)
-REST_OFFSET_LEFT_ARM = (0.0, 0.0, -math.sin(ANGLE_ARM / 2.0), math.cos(ANGLE_ARM / 2.0))
-REST_OFFSET_RIGHT_ARM = (0.0, 0.0, math.sin(ANGLE_ARM / 2.0), math.cos(ANGLE_ARM / 2.0))
+# Quaternions de posture de danse naturelle pour les bras (T-Pose -> Dance Pose)
+# Descente le long du buste (50°), orientation vers l'avant (25°), légère ouverture (15°)
+Q_DANCE_LEFT_UPPER_ARM = (0.024804, -0.248338, -0.383467, 0.889194)
+Q_DANCE_RIGHT_UPPER_ARM = (0.024804, 0.248338, 0.383467, 0.889194)
 
 def build_vrma(fps, frame_count, bones, rot_channels, output_path):
     """Construit un conteneur glTF 2.0 / VRMA binaire valide."""
@@ -190,15 +188,33 @@ def build_vrma(fps, frame_count, bones, rot_channels, output_path):
             if f in frame_dict:
                 last_quat = frame_dict[f]
             
-            # Conversion de repère SOE -> glTF (-x, -y, z, w)
-            raw_q = (-last_quat[0], -last_quat[1], last_quat[2], last_quat[3])
+            # Repère SOE -> glTF VRM
+            raw_q = (last_quat[0], last_quat[1], last_quat[2], last_quat[3])
             
-            # Ajustement de repos pour les bras depuis la T-Pose
+            # Traitement anatomique rigoureux pour les membres supérieurs
             if vrm_bname == "leftUpperArm":
-                adj_q = quat_normalize(quat_mult(raw_q, REST_OFFSET_LEFT_ARM))
+                # Pose de danse vers l'avant + oscillation rythmique SWG
+                adj_q = quat_normalize(quat_mult(Q_DANCE_LEFT_UPPER_ARM, (raw_q[0]*0.3, raw_q[1]*0.3, raw_q[2]*0.3, raw_q[3])))
             elif vrm_bname == "rightUpperArm":
-                adj_q = quat_normalize(quat_mult(raw_q, REST_OFFSET_RIGHT_ARM))
+                adj_q = quat_normalize(quat_mult(Q_DANCE_RIGHT_UPPER_ARM, (raw_q[0]*0.3, raw_q[1]*0.3, raw_q[2]*0.3, raw_q[3])))
+            elif vrm_bname == "leftLowerArm":
+                # Flexion dynamique du coude extraite de la piste SWG, projetée sur l'axe Z anatomique VRM
+                w_clamped = max(-1.0, min(1.0, raw_q[3]))
+                theta = 2.0 * math.acos(abs(w_clamped))
+                # Plier vers l'avant au rythme de l'animation
+                sin_t = math.sin(theta / 2.0)
+                cos_t = math.cos(theta / 2.0)
+                adj_q = (0.0, 0.0, sin_t, cos_t)
+            elif vrm_bname == "rightLowerArm":
+                w_clamped = max(-1.0, min(1.0, raw_q[3]))
+                theta = 2.0 * math.acos(abs(w_clamped))
+                sin_t = math.sin(-theta / 2.0)
+                cos_t = math.cos(theta / 2.0)
+                adj_q = (0.0, 0.0, sin_t, cos_t)
+            elif vrm_bname in ["leftHand", "rightHand"]:
+                adj_q = (0.0, 0.0, 0.0, 1.0)
             else:
+                # Tronc, tête et jambes : animation SWG 100% officielle intacte
                 adj_q = raw_q
                 
             quat_list.append(adj_q)

@@ -99,17 +99,17 @@
     "id": 13,
     "topic": "Pourquoi le lock-in OpenAI menace les créateurs de SaaS",
     "category": "Économie & Open Source",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-15T09:08:42.605077",
+    "youtube_url": "https://www.youtube.com/shorts/gKige0j74-w"
   },
   {
     "id": 14,
     "topic": "Comment compiler un client Godot headless pour CI/CD automatique",
     "category": "CI/CD & DevOps",
-    "status": "pending",
-    "published_at": null,
-    "youtube_url": null
+    "status": "published",
+    "published_at": "2026-11-15T11:38:34.057851",
+    "youtube_url": "https://www.youtube.com/shorts/EWq_lhJpRqg"
   },
   {
     "id": 15,
