@@ -9,6 +9,16 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-19. **Mise en Service Réussie du Serveur DNS Local AdGuard Home (CT 153 sur Proxmox .201)** :
+    - **Validation L2 & Exécution Gladys** : Suite à l'approbation dans le chat Compagnon, exécution du script officiel `packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh`.
+    - **Provisionnement Proxmox** : Conteneur LXC 153 Ubuntu 24.04 (`lbg-dns-adguard`) créé avec succès sur le storage `local-vm-930g` de l'hyperviseur `192.168.0.201`.
+    - **Réseau & IP Statique** : Attribué sur `192.168.0.53/24` (passerelle Freebox `.254`).
+    - **Service AdGuard Home Actif** : Téléchargé, installé et lancé en service systemd automatique.
+    - **Surfaces réseau validées** :
+      * Assistant web initial : `http://192.168.0.53:3000/` (répond 302 vers `/install.html`).
+      * Interface d'administration finale : `http://192.168.0.53/` (port 80).
+      * Port DNS LAN : `192.168.0.53:53` (UDP/TCP).
+
 -18. **Résolution Faux Positif Audit Ollama & Stabilisation Inférence DNS Compagnon** :
     - **Faux positif résolu (`ollama_audit.py`)** : Le modèle `lbg-compagnon-e4b-v1:latest` sur `.111` était signalé manquant car l'audit vérifiait une égalité stricte sans supporter le tag `:latest` implicite/explicite. `model_available()` mis à niveau pour gérer les tags et correspondances de base.
     - **Fin des timeouts & des bascules d'urgence sur 2B (`llm_chat_phase.py`, `local_llm_provider.py`)** :
