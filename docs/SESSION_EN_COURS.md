@@ -18,6 +18,9 @@
       * *Respiration Organique Humaine* : cycle respiratoire de 3.3s avec micro-mouvements de soulèvement de poitrine et de bassin.
       * *Inertie & Amorti Physique* : filtrage passe-bas (EMA) sur les inclinaisons de tête et du cou pour supprimer les saccades brutales liées aux pics audio.
       * *Camera Glide Cinéma* : glissement latéral progressif et amorti de l'avatar lorsque les infographies B-Roll apparaissent, sans téléportation d'image.
+    - **Feuille de Route Garde-Robe Modulaire Lia (Validée)** :
+      * Pour le drop de 21h30 : maintien du modèle androïde brut (peau synthétique cyan intégrale exposée).
+      * Pour la suite : conception d'une garde-robe modulaire techwear / ingénieure LBG / cyberpunk (veste ouverte, pantalon cargo, hoodie techwear) superposable à son corps cybernétique, laissant apparaître son épiderme mécatronique aux articulations et au cou selon les thématiques de vidéo.
     - **Validation & Test Vidéo** :
       * Rendu complet d'un MP4 test 1080x1920 avec sous-titres TikTok et voix Edge-TTS validé avec succès (3.88 Mo).
 

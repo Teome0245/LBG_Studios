@@ -11,6 +11,10 @@ Canon session : [`SESSION_EN_COURS.md`](SESSION_EN_COURS.md) · priorités : [`P
 
 ## Ouverts
 
+### O1 — Studio Content & Incarnation Lia (Garde-robe Modulaire)
+
+- **O-LIA-WARDROBE** : Conception d'une garde-robe modulaire pour Lia (techwear cyberpunk / ingénieure LBG Studios) pouvant habiller son modèle 3D tout en révélant sa peau cybernétique cyan selon les besoins des vidéos et thématiques de production. (Drop de 21h30 maintenu en androïde brut).
+
 ### O1 — Feeling Compagnon / présence
 
 _Aucun sujet ouvert en attente — O-FEEL-1, O-FEEL-2 et O-FEEL-3 clos._
