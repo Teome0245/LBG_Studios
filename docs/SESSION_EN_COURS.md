@@ -25,6 +25,20 @@
       * Test de l'endpoint HTTP live validé sur `.246:8787`.
       * Manifeste client et patch déployés sur `192.168.0.246:8080`.
 
+-17. **Publication Automatique TikTok Studio via Gladys & Agent Windows (`.10`)** :
+    - **Activation TikTok Studio dans le Cron Quotidien (`cron_daily_publisher.py`)** :
+      * Ajout des flags `--tiktok` et `--pilot` lors de chaque drop automatique (21h30 et suivants).
+      * Synchronisation systématique du MP4 rendu dans `O:\OneDrive\Pictures\IA\Contenue\`.
+      * Création de la fiche mémo texte avec les métadonnées et hashtags viraux.
+    - **Déploiement de la Capability `preparer_upload_tiktok` sur l'Agent Windows (`.10:5005`)** :
+      * Ouverture directe de `https://www.tiktok.com/tiktokstudio/upload` dans le navigateur par défaut (Edge).
+      * Injection automatique de la légende et des hashtags (`#fyp #ia #tech #lbgstudios`) dans le presse-papier Windows via PowerShell (`Set-Clipboard`).
+      * Mise en surbrillance automatique du fichier MP4 dans l'Explorateur Windows (`explorer.exe /select,...`).
+    - **Validation Gladys Multimodal `agent-desktop` (Computer Use Headless)** :
+      * Diagnostic validé sur le poste `.10` : agent actif en session interactive 1, `agent-desktop 1.2.0` opérationnel.
+      * Arbre UI de Microsoft Edge inspecté avec succès en direct via Gladys (snapshot OK, 562 refs UI accessibles sans capture d'écran ni blocage de souris).
+      * Prêt pour le drop de 21h30 ce soir.
+
 -16. **Intégration du Modèle 3D Lia Androïde Cyber & Mouvements Naturels Organiques** :
     - **Modèle 3D Lia Androïde (Cyber Cyan & Métaux)** :
       * Re-génération complète des 9 keyframes 3D plein pied dans `tools/studio_content_engine/assets/compagnon` via Blender 5.2 Cycles CPU avec les textures officielles de Lia Androïde (`body_skin_android.png`, `face_skin_android.png`, `hair_android.png` et iris émissifs cyan `#00f5d4`).

@@ -1072,3 +1072,45 @@ def copier_fbx_mouvements(recursive=True, **kwargs):
     }
 
 
+def preparer_upload_tiktok(video_path=None, caption=None, **kwargs):
+    """Prépare la publication TikTok Studio sur le poste Windows :
+    1. Ouvre TikTok Studio Upload dans le navigateur par défaut (Edge).
+    2. Copie la légende et les hashtags dans le presse-papier Windows via PowerShell.
+    3. Si le fichier vidéo existe, ouvre l'Explorateur Windows avec le fichier sélectionné.
+    """
+    import os
+    import subprocess
+    import webbrowser
+
+    results = {}
+
+    if caption:
+        try:
+            escaped = caption.replace("'", "''")
+            subprocess.run(["powershell", "-NoProfile", "-Command", f"Set-Clipboard -Value '{escaped}'"], check=False, timeout=5)
+            results["clipboard"] = "copied"
+        except Exception as e:
+            results["clipboard_error"] = str(e)
+
+    try:
+        url = "https://www.tiktok.com/tiktokstudio/upload"
+        webbrowser.open(url)
+        results["browser"] = "opened"
+    except Exception as e:
+        results["browser_error"] = str(e)
+
+    if video_path and os.path.exists(video_path):
+        try:
+            subprocess.run(["explorer.exe", f"/select,{os.path.normpath(video_path)}"], check=False, timeout=5)
+            results["explorer"] = "opened"
+        except Exception as e:
+            results["explorer_error"] = str(e)
+
+    return {
+        "status": "ok",
+        "action": "preparer_upload_tiktok",
+        "details": results,
+    }
+
+
+

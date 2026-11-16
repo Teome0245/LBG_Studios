@@ -97,6 +97,8 @@ def run_daily_drop() -> None:
         "--topic",
         topic,
         "--youtube",
+        "--tiktok",
+        "--pilot",
     ]
 
     res = subprocess.run(cmd, capture_output=True, text=True)
