@@ -40,6 +40,11 @@ const mandateChips = mandateAskIntents()
 const recipeChips = recipesForEmptyState(7)
 const recipeBusy = ref('')
 const worldPrefs = ref(loadWorldNotifPrefs())
+const showTelemetry = ref(false)
+
+function toggleTelemetry() {
+  showTelemetry.value = !showTelemetry.value
+}
 
 onMounted(() => {
   loadHistory()
@@ -274,6 +279,15 @@ function triggerCtrlK() {
       >
         <button
           type="button"
+          class="rounded-lg border px-2.5 py-1 text-[10px] transition-colors"
+          :class="showTelemetry ? 'border-cyan-400/50 bg-cyan-950/40 text-cyan-200' : 'border-white/10 bg-slate-950/40 text-slate-400 hover:text-slate-200'"
+          :title="showTelemetry ? 'Masquer la télémétrie interne' : 'Afficher la télémétrie interne (Timeline, réflexion, contexte)'"
+          @click="toggleTelemetry"
+        >
+          {{ showTelemetry ? 'Télémétrie : ON' : 'Mode Épuré' }}
+        </button>
+        <button
+          type="button"
           class="rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1 text-[10px] text-slate-400 hover:border-cyan-400/40 hover:text-cyan-100 transition-colors"
           title="Compacte le fil, garde mandat"
           @click="onBreathe"
@@ -433,14 +447,14 @@ function triggerCtrlK() {
           >
             <!-- A1 — Contexte injecté ce tour (replié) -->
             <ContextJournal
-              v-if="msg.role === 'assistant' && journalForMessage(msg) && viewFilter !== 'timeline'"
+              v-if="showTelemetry && msg.role === 'assistant' && journalForMessage(msg) && viewFilter !== 'timeline'"
               :journal="journalForMessage(msg)"
               :open-by-default="isOpsChromeMessage(msg)"
             />
 
-            <!-- Timeline — D6.3 : repliée par défaut en mode ask/réponse -->
+            <!-- Timeline — D6.3 : visible si télémétrie ou filtre timeline -->
             <details
-              v-if="msg.role === 'assistant' && msg.timeline?.length"
+              v-if="msg.role === 'assistant' && msg.timeline?.length && (showTelemetry || viewFilter === 'timeline')"
               class="mb-3.5 pb-3.5 border-b border-white/10 group/tl"
               :class="viewFilter === 'timeline' ? 'ring-1 ring-cyan-500/20 rounded-xl p-2 -m-1' : ''"
               :open="timelineOpenByDefault(msg) ? true : undefined"
@@ -469,9 +483,9 @@ function triggerCtrlK() {
               </ol>
             </details>
 
-            <!-- Réflexion — D6.3 : repliée sauf Agir/ops -->
+            <!-- Réflexion — visible si télémétrie -->
             <details
-              v-if="msg.role === 'assistant' && msg.reflection && viewFilter !== 'timeline'"
+              v-if="showTelemetry && msg.role === 'assistant' && msg.reflection && viewFilter !== 'timeline'"
               class="mb-3 text-[11px] text-slate-400 group/rf"
               :open="isOpsChromeMessage(msg) ? true : undefined"
             >
@@ -543,7 +557,7 @@ function triggerCtrlK() {
             </div>
 
             <ApprovalCard
-              v-if="msg.role === 'assistant' && msg.approval?.tasks?.length && viewFilter !== 'timeline'"
+              v-if="msg.role === 'assistant' && msg.approval?.tasks?.length && viewFilter !== 'timeline' && !msg.l2_session_nudge"
               :approval="msg.approval"
             />
 
@@ -554,9 +568,9 @@ function triggerCtrlK() {
               :job-contract="msg.jobContract || null"
             />
 
-            <!-- Pied modèle/latence — D6.3 : discret / replié en ask -->
+            <!-- Pied modèle/latence — visible si télémétrie -->
             <details
-              v-if="msg.role === 'assistant' && viewFilter !== 'timeline' && (msg.model || msg.latency || msg.provider)"
+              v-if="showTelemetry && msg.role === 'assistant' && viewFilter !== 'timeline' && (msg.model || msg.latency || msg.provider)"
               class="mt-3.5 pt-2.5 border-t border-white/10 group/meta"
               :open="isOpsChromeMessage(msg) ? true : undefined"
             >

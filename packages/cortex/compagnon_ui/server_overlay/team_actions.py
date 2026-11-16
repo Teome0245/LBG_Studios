@@ -188,13 +188,25 @@ async def list_pending_approvals(*, limit: int = 20) -> dict[str, Any]:
         return {"ok": False, "error": f"{type(e).__name__}: {e}", "tasks": []}
 
 
+def session_l2_nudge_enabled() -> bool:
+    """Par défaut désactivé pour ne pas polluer le fil de conversation avec d'anciennes cartes L2."""
+    return os.getenv("LBG_L2_SESSION_NUDGE_ENABLED", "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 async def maybe_attach_session_l2_nudge(
     result: dict[str, Any],
     *,
     conversation_id: str | None,
 ) -> dict[str, Any]:
-    """Une fois par conversation Compagnon : rappel L2 + cartes si pending > 0."""
+    """Une fois par conversation Compagnon : rappel L2 + cartes si pending > 0 (si activé)."""
     if not isinstance(result, dict):
+        return result
+    if not session_l2_nudge_enabled():
         return result
     cid = (conversation_id or "default").strip() or "default"
 

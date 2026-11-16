@@ -300,6 +300,19 @@ class ChatIntentTests(unittest.TestCase):
                 f"Modèle inattendu (devrait être heavy): {pref}",
             )
 
+    def test_clean_meta_leak(self) -> None:
+        import character_layer as cl  # noqa: E402
+
+        dirty = (
+            "Voici une proposition de réponse, respectant strictement la structure et le ton définis précédemment : "
+            "**Dials d'expression :** - politesse → poli (0.75) - humour → léger (0.25) "
+            "**Consigne :** Réponses courtes, reste net et poli. "
+            "**Formules signature :** « À votre service. » "
+            "**Réponse finale :** « Voyons la suite ensemble. »"
+        )
+        cleaned = cl.clean_meta_leak(dirty)
+        self.assertEqual(cleaned, "Voyons la suite ensemble.")
+
 
 if __name__ == "__main__":
     unittest.main()
