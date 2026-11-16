@@ -21,7 +21,7 @@
     - **Validation & Test Vidéo** :
       * Rendu complet d'un MP4 test 1080x1920 avec sous-titres TikTok et voix Edge-TTS validé avec succès (3.88 Mo).
 
--15. **Cycle Circadien 90 Min Réelles, Contrôle Strict des Triplons de PNJ & Spatialisation du Chat Cantina** :
+-15. **Cycle Circadien 90 Min Réelles, Rôle Vivant des Citoyens en Loisir & Spatialisation du Chat** :
     - **Cycle Circadien Planétaire 90 Minutes Réelles (`hub_world_clock.gd`, `hub_sim.gd`)** :
       * Passage de `time_dilation = 60.0` (24 min réelles) à `time_dilation = 16.0` :
         $$\text{time\_dilation} = \frac{86\,400\text{ s (24h de jeu)}}{5\,400\text{ s (90 min réelles)}} = 16.0$$
@@ -29,15 +29,20 @@
       * Plein Jour (08h00 - 18h00, 10h in-game) = **37 min 30 s**.
       * Nuit profonde (21h00 - 05h00, 8h in-game) = **30 min 00 s**.
       * Aube + Crépuscule (6h in-game) = **22 min 30 s**.
-    - **Contrôle Strict des Triplons de PNJ (`hub_life.gd`, `triplons.json`)** :
-      * Cause des doublons/triplons identifiée : le système de relève à 3 équipes activait 2 membres simultanément (`phase != "rest"`), plus le 3e pendant son trajet de relève (`_rest_commute`). Le joueur voyait donc plusieurs instructeurs ou donneurs de quêtes du même rôle errer dans Lost Heaven.
-      * Activation du mode strict `single_active_shift: bool = true` (dans `triplons.json` et `hub_life.gd`) : **un seul membre actif en poste (`phase == "work"`) par triplon à un instant T**.
-      * Les remplaçants (en repos ou loisirs) restent inactifs hors du monde de jeu jusqu'à leur prise de service. Plus aucun doublon ni triplon visible.
+    - **Animation Vivante du Monde par les Citoyens en Loisir (`hub_life.gd`, `triplons.json`, `client_net_world.gd`)** :
+      * Clarification produit : les PNJ en quartier libre (`phase == "leisure"`) sont **pleinement actifs et visibles** (`allow_leisure_citizens: true`) pour meubler et animer la ville, tandis que seul le 3ᵉ membre (`phase == "rest"`) se repose dans ses quartiers privés.
+      * Au poste officiel (clinique, board, atelier...), il n'y a **qu'un seul travailleur en service** (`phase == "work"`), évitant tout doublon sur les postes.
+      * Les membres en loisir s'adonnent à de véritables activités citoyennes réparties dans Lost Heaven :
+        - *Taverne & Boisson* : s'installent au comptoir de La Perle ou à l'auberge pour prendre un verre (`activity: "Prend un verre"`).
+        - *Commerce & Marché* : flânent entre les étals du marché pour chiner et marchander (`activity: "Flâne au marché"`).
+        - *Animation & Spectacle* : dansent ou applaudissent près de la scène (`activity: "Danse & Spectacle"`).
+        - *Récolte dans les dunes* : sortent par la porte est ou sud pour cueillir des herbes et ramasser de la ferraille (`activity: "Cueillette / Récup'"`).
+        - *Déambulation urbaine* : arpentent les ruelles et le spatioport (`activity: "Déambule en ville"`).
+      * Affichage dynamique sur le client (`client_net_world.gd`) : l'étiquette nameplate reflète l'activité en cours du PNJ (ex: *« Neris Vohl · Prend un verre »*, *« Sera Quill · Cueillette / Récup' »*).
     - **Spatialisation du Chat Cantina & Fin du Spam Global (`hub_show.gd`, `hub_ws_server.gd`, `hub_sim_ambient.gd`)** :
-      * Les messages d'ambiance et de chant de l'Artiste de scène (`hub_show.gd`) étaient auparavant diffusés à tous les clients du serveur sans restriction de distance.
-      * Filtrage de proximité mis en place : portée spatiale max de 45 m centrée sur la scène de La Perle (`CANTINA / STAGE`).
-      * L'artiste ne déclenche plus ses répliques de set (`LINES_LIVE`) si aucun joueur humain n'est présent dans ou près de la cantina ($\le 55\text{ m}$).
-      * Ajout d'une protection anti-répétition consécutive pour les répliques de scène.
+      * Les messages de chant de l'Artiste de scène sont limités à une portée locale de 45 m centrée sur la scène.
+      * L'artiste ne déclenche plus ses répliques dans le chat si aucun joueur humain n'est présent dans ou devant La Perle ($\le 55\text{ m}$).
+      * Protection anti-répétition consécutive pour les répliques de scène.
     - **Déploiements & Tests Validés** :
       * Test unitaire `test_triplons_circadian.gd` validé : cycle de 90 min vérifié et comptage strict à 1 PNJ actif par triplon (mission, medic, scout, artisan, entertainer, brawler).
       * `prime-hub` déployé sur `.246:8787` (`healthz 200`, `time_dilation: 16.0`, `single_active_shift: true`).

@@ -529,7 +529,7 @@ func apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 				if not bool(e2.get("force_nameplate")):
 					e2.call("set_force_nameplate", true)
 		# C1/C2 — activité courte (status idle|busy|quest) · pas de tag IA
-		if kind == "player" and e2 and e2.has_method("set_label"):
+		if (kind == "player" or kind == "npc") and e2 and e2.has_method("set_label"):
 			var activity := str(ent.get("activity", "")).strip_edges()
 			if activity.is_empty():
 				activity = str(ent.get("goal", "")).strip_edges()
@@ -539,7 +539,7 @@ func apply_ws_entity(ent: Dictionary, your_id: int = 0) -> void:
 			if status == "idle":
 				skip = true
 			if not skip:
-				var short_g := activity if activity.length() <= 14 else activity.substr(0, 12) + "…"
+				var short_g := activity if activity.length() <= 18 else activity.substr(0, 16) + "…"
 				shown = "%s · %s" % [name, short_g]
 			e2.call("set_label", shown)
 		if kind == "beast" and e2 and e2.has_method("set_beast_combat"):

@@ -34,6 +34,15 @@ static func entity_list(entities: Dictionary, slim: bool = false, economy = null
 				var g := str(act.get("goal", "")).strip_edges()
 				if g != "" and status != "idle":
 					slim_row["goal"] = g
+			elif kind == "npc":
+				var act_npc := str(e.get("activity", "")).strip_edges()
+				if act_npc == "":
+					act_npc = str(e.get("goal", "")).strip_edges()
+				if act_npc != "":
+					slim_row["activity"] = act_npc
+				var lp := str(e.get("life_phase", "")).strip_edges()
+				if lp != "":
+					slim_row["life_phase"] = lp
 			elif kind == "beast":
 				var bg := str(e.get("goal", "")).strip_edges()
 				if not bg.is_empty() and bg != "wander":

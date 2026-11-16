@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "single_active_shift": true,
+  "allow_leisure_citizens": true,
   "phase_seconds": {
     "work": [
       480,

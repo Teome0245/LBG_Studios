@@ -16,9 +16,10 @@ var _sched: Dictionary = {}
 const _LODGE_KEYS: Array = ["lodge_w", "lodge_n", "lodge_e", "lodge_s", "inn"]
 
 var collision = null
-## Mode strict triplon : 1 seul membre actif (en poste work) par triplon à la fois.
-## Les relèves (leisure / rest) sont inactives pour éviter les doublons/triplons visibles en ville.
-var single_active_shift: bool = true
+## allow_leisure_citizens : les PNJ en quartier libre (leisure) animent le monde
+## (tavernes, marché, récolte/cueillette dunes, danse/spectacle, déambulation)
+## tandis que le 3e membre (rest) se repose dans ses quartiers privés.
+var allow_leisure_citizens: bool = true
 
 
 func setup(poi_map: Dictionary, collision_svc = null) -> void:
@@ -32,7 +33,7 @@ func setup(poi_map: Dictionary, collision_svc = null) -> void:
 	if typeof(raw) != TYPE_DICTIONARY:
 		push_warning("[prime-hub] life/triplons.json missing")
 		return
-	single_active_shift = bool(raw.get("single_active_shift", true))
+	allow_leisure_citizens = bool(raw.get("allow_leisure_citizens", true))
 	phase_seconds = raw.get("phase_seconds", {
 		"work": [480, 840], "leisure": [300, 600], "rest": [360, 720],
 	})
@@ -106,47 +107,113 @@ func _phase_dur(phase: String) -> float:
 	return _rng.randf_range(float(arr[0]), float(arr[1]))
 
 
-func set_single_active_shift(enabled: bool, entities: Dictionary = {}) -> void:
-	single_active_shift = enabled
-	for eid in _sched.keys():
-		var sch: Dictionary = _sched[eid]
-		if str(sch.get("kind", "")) != "triplon":
-			continue
-		var phase := str(sch.get("phase", "work"))
-		if not entities.has(eid):
-			continue
-		var ent: Dictionary = entities[eid]
-		if single_active_shift:
-			ent["active"] = (phase == "work")
-			if phase != "work":
-				ent["speed"] = 0.0
-				ent["wander_r"] = 0.0
-				ent["target"] = Vector3.ZERO
-		else:
-			ent["active"] = (phase != "rest")
+func _leisure_meta(sch: Dictionary) -> Dictionary:
+	var meta: Dictionary = sch.get("meta", {})
+	var raw_leis: String = str(meta.get("leisure", "")).to_lower()
+	var tid: String = str(sch.get("triplon_id", "")).to_lower()
+
+	# 1. Récolte de ressources / Cueillette / Récupération dans les dunes
+	if raw_leis.contains("cueillir") or raw_leis.contains("dune") or raw_leis.contains("ferraille") or raw_leis.contains("hors"):
+		var p_gather := Vector3(5350.0, 0.15, -737.0) # Dunes porte est
+		if hash(raw_leis) % 2 == 0:
+			p_gather = Vector3(4749.0, 0.15, -1430.0) # Dunes porte sud
+		return {
+			"goal": "gather",
+			"activity": "Cueillette / Récup'",
+			"poi": p_gather,
+			"wander_r": 18.0,
+			"ambient": "Un bon filon de pièces et d'herbes sous le sable.",
+		}
+
+	# 2. Taverne / Cantina / Boisson
+	if raw_leis.contains("verre") or raw_leis.contains("cantina") or raw_leis.contains("perle") or raw_leis.contains("thé") or raw_leis.contains("bar"):
+		var p_tavern := Vector3(5080.0, 0.15, -737.0) # Cantina La Perle
+		if raw_leis.contains("auberge") or raw_leis.contains("thé"):
+			p_tavern = Vector3(4749.0, 0.15, -520.0) # Auberge
+		return {
+			"goal": "drink",
+			"activity": "Prend un verre",
+			"poi": p_tavern,
+			"wander_r": 6.0,
+			"ambient": "Un verre bien mérité après le service.",
+		}
+
+	# 3. Animation / Danse / Spectacle
+	if raw_leis.contains("danse") or raw_leis.contains("musique") or raw_leis.contains("scène") or tid == "entertainer":
+		return {
+			"goal": "dance",
+			"activity": "Danse & Spectacle",
+			"poi": Vector3(5115.0, 0.15, -737.0), # Scène La Perle
+			"wander_r": 5.0,
+			"ambient": "Le rythme fait du bien à l'esprit dans ce désert.",
+		}
+
+	# 4. Commerce / Marché / Bazar
+	if raw_leis.contains("marché") or raw_leis.contains("bazar") or raw_leis.contains("chine") or tid == "artisan":
+		return {
+			"goal": "trade",
+			"activity": "Flâne au marché",
+			"poi": Vector3(4749.0, 0.15, -980.0), # Place du marché
+			"wander_r": 14.0,
+			"ambient": "Les étals regorgent de pièces intéressantes aujourd'hui.",
+		}
+
+	# 5. Déambulation urbaine / Spatioport / Promenade
+	var p_stroll := Vector3(4400.0, 0.15, -737.0) # Spatioport
+	if hash(raw_leis) % 2 == 0:
+		p_stroll = Vector3(4749.0, 0.15, -737.0) # Place centrale
+	return {
+		"goal": "stroll",
+		"activity": "Déambule en ville",
+		"poi": p_stroll,
+		"wander_r": 15.0,
+		"ambient": "Une brise légère traverse le hub aujourd'hui.",
+	}
 
 
 func spawn_all(entities: Dictionary) -> void:
-	## Remplit entities avec PNJ triplons + solos (rest = déjà au logement, inactive).
+	## Remplit entities :
+	## - 1 seul travailleur en service par poste officiel (phase == "work")
+	## - 1 citoyen en loisir actif qui meuble le monde (cantina, marché, récolte, danse...)
+	## - 1 membre au repos dans ses quartiers privés (phase == "rest", invisible)
 	for eid in _sched.keys():
 		var sch: Dictionary = _sched[eid]
 		var meta: Dictionary = sch.get("meta", {})
 		var phase := str(sch.get("phase", "work"))
+		var is_triplon := str(sch.get("kind", "")) == "triplon"
 		var active := false
-		if str(sch.get("kind", "")) == "triplon" and single_active_shift:
-			active = (phase == "work")
+		var pos := Vector3.ZERO
+		var wander := 8.0
+		var activity := "En service"
+		var goal := phase
+		var amb := str(meta.get("ambient", ""))
+
+		if is_triplon:
+			if phase == "work":
+				active = true
+				pos = _pos_for_phase(sch, "work")
+				activity = "En service"
+				wander = 8.0
+			elif phase == "leisure" and allow_leisure_citizens:
+				active = true
+				var l_info := _leisure_meta(sch)
+				pos = l_info["poi"]
+				activity = str(l_info["activity"])
+				goal = str(l_info["goal"])
+				wander = float(l_info["wander_r"])
+				amb = str(l_info["ambient"])
+			else:
+				# rest (ou leisure si désactivé)
+				active = false
+				pos = _pos_for_phase(sch, "rest")
+				wander = 0.0
 		else:
+			# Solos (Jax, Scribe, Sergent...)
 			active = (phase != "rest")
-		var pos := _pos_for_phase(sch, phase)
-		var wander := 10.0
-		if sch.get("kind") == "solo":
+			pos = _pos_for_phase(sch, phase)
 			wander = float(meta.get("wander_r", 10.0))
-		elif phase == "work":
-			wander = 8.0
-		elif phase == "leisure":
-			wander = 14.0
-		elif phase == "rest":
-			wander = 0.0
+			activity = "Citoyen"
+
 		entities[eid] = {
 			"eid": eid,
 			"oid": int(meta.get("oid", 910000)),
@@ -156,7 +223,8 @@ func spawn_all(entities: Dictionary) -> void:
 			"target": Vector3.ZERO,
 			"speed": 0.0 if not active else 7.5,
 			"is_bot": false,
-			"goal": phase,
+			"goal": goal,
+			"activity": activity,
 			"play_mode": "life",
 			"quest_id": "",
 			"linger_until": 0.0,
@@ -164,7 +232,7 @@ func spawn_all(entities: Dictionary) -> void:
 			"home_x": pos.x,
 			"home_z": pos.z,
 			"wander_r": wander,
-			"ambient": str(meta.get("ambient", "")),
+			"ambient": amb,
 			"active": active,
 			"life_phase": phase,
 			"obj_short": str(meta.get("short", "")),
@@ -200,21 +268,36 @@ func _apply_phase(entities: Dictionary, eid: String, sch: Dictionary, phase: Str
 	ent["home_x"] = pos.x
 	ent["home_z"] = pos.z
 	var is_triplon := str(sch.get("kind", "")) == "triplon"
-	if is_triplon and single_active_shift:
+
+	if is_triplon:
 		if phase == "work":
 			ent["active"] = true
 			ent["_rest_commute"] = false
+			ent["goal"] = "work"
+			ent["activity"] = "En service"
 			ent["pos"] = pos
 			ent["target"] = pos
 			ent["speed"] = 7.5
 			ent["wander_r"] = 8.0
-		else:
+		elif phase == "leisure":
+			var l_info := _leisure_meta(sch)
+			ent["active"] = allow_leisure_citizens
+			ent["_rest_commute"] = false
+			ent["goal"] = str(l_info["goal"])
+			ent["activity"] = str(l_info["activity"])
+			ent["pos"] = l_info["poi"]
+			ent["target"] = l_info["poi"]
+			ent["speed"] = 7.5 if allow_leisure_citizens else 0.0
+			ent["wander_r"] = float(l_info["wander_r"])
+			ent["ambient"] = str(l_info["ambient"])
+		else: # rest
 			ent["active"] = false
 			ent["_rest_commute"] = false
 			ent["pos"] = pos
 			ent["target"] = Vector3.ZERO
 			ent["speed"] = 0.0
 			ent["wander_r"] = 0.0
+			ent["activity"] = "Repos"
 		return
 
 	if phase == "rest":
@@ -334,7 +417,7 @@ func stats() -> Dictionary:
 		"work": n_work,
 		"leisure": n_lei,
 		"rest": n_rest,
-		"active_ratio": float(n_work if single_active_shift else (n_work + n_lei)) / float(maxi(total, 1)),
-		"single_active_shift": single_active_shift,
+		"active_ratio": float(n_work + (n_lei if allow_leisure_citizens else 0)) / float(maxi(total, 1)),
+		"allow_leisure_citizens": allow_leisure_citizens,
 		"triplons": triplons.size(),
 	}
