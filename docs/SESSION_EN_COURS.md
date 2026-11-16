@@ -9,6 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-18. **Résolution Faux Positif Audit Ollama & Stabilisation Inférence DNS Compagnon** :
+    - **Faux positif résolu (`ollama_audit.py`)** : Le modèle `lbg-compagnon-e4b-v1:latest` sur `.111` était signalé manquant car l'audit vérifiait une égalité stricte sans supporter le tag `:latest` implicite/explicite. `model_available()` mis à niveau pour gérer les tags et correspondances de base.
+    - **Fin des timeouts & des bascules d'urgence sur 2B (`llm_chat_phase.py`, `local_llm_provider.py`)** :
+      * Sur le CPU Xeon de `.110`, le prompt système cumulé atteignait 6341 caractères (~2800 tokens), prenant plus de 4 minutes de prompt-eval. Le timeout était dépassé (180s), forçant un repli d'urgence sur `qwen3.5:2B` qui hallucinait.
+      * Allègement automatique du prompt système pour les requêtes infra/ops ciblées (suppression des doublons Studio Brain, Écosystème complet et RAG philo), ramenant le prompt à ~2000 caractères et divisant par 3 le temps d'inférence.
+      * Timeout LLM local relevé à 300s dans `local_llm_provider.py` pour laisser le temps au CPU en cas de prompt dense.
+    - **Épuration stricte des sorties et fuites système (`character_layer.py`, `router_prompts.py`)** :
+      * Suppression des formulaires de "dials d'expression" dans les prompts.
+      * Connaissance de référence du serveur DNS AdGuard Home (CT LXC 153 sur Proxmox `.201`, IP `192.168.0.53`) intégrée dans `_OPS_TRUTH`.
+      * Test réel validé : réponse fluide, propre et sans fuite méta émise par `gemma-4-abliterated:12b-qat` sur `.110`.
+    - **Déploiement en production** : Validé et déployé sur `.100:5174` (version `1.0.0+4305a23`).
+
 -17. **Redirection Contextuelle des PNJ Hors-Service / En Loisir vers le Travailleur Actif (`hub_dialogue.gd`, `hub_http.gd`, `server_main.gd`)** :
     - **Identification dynamique de l'état de service** :
       * Lors d'une interaction de dialogue (`/v1/dialogue/invoke`), le système interroge le planning en temps réel de `HubLife` via `attach_sim(sim)`.
