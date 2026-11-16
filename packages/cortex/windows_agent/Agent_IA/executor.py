@@ -1072,6 +1072,52 @@ def copier_fbx_mouvements(recursive=True, **kwargs):
     }
 
 
+def copier_video_vers_onedrive(video_name=None, run_id=None, **kwargs):
+    """Copie la vidéo MP4 générée depuis A:\\LBG_Studios vers O:\\OneDrive\\Pictures\\IA\\Contenue."""
+    import glob
+    import os
+    import shutil
+
+    win_root = os.getenv("LBG_STUDIOS_WIN_ROOT", "A:/LBG_Studios").replace("\\", "/")
+    output_dir = os.path.join(win_root, "tools/studio_content_engine/output")
+    dst_dir = "O:/OneDrive/Pictures/IA/Contenue"
+    try:
+        os.makedirs(dst_dir, exist_ok=True)
+    except Exception as e:
+        return {"status": "error", "error": f"Impossible de créer le dossier destination {dst_dir}: {e}"}
+
+    src_file = None
+    if run_id and video_name:
+        candidate = os.path.join(output_dir, run_id, video_name)
+        if os.path.exists(candidate):
+            src_file = candidate
+    elif video_name:
+        candidates = glob.glob(os.path.join(output_dir, "*", video_name))
+        if candidates:
+            src_file = candidates[-1]
+
+    if not src_file:
+        mp4_files = sorted(
+            glob.glob(os.path.join(output_dir, "drop_*", "*_tiktok.mp4")),
+            key=os.path.getmtime,
+        )
+        if mp4_files:
+            src_file = mp4_files[-1]
+
+    if not src_file or not os.path.exists(src_file):
+        return {"status": "error", "error": f"Fichier vidéo source introuvable dans {output_dir}"}
+
+    dst_file = os.path.join(dst_dir, os.path.basename(src_file))
+    shutil.copy2(src_file, dst_file)
+    return {
+        "status": "ok",
+        "action": "copier_video_vers_onedrive",
+        "src": src_file,
+        "dst": dst_file,
+        "size_bytes": os.path.getsize(dst_file),
+    }
+
+
 def preparer_upload_tiktok(video_path=None, caption=None, **kwargs):
     """Prépare la publication TikTok Studio sur le poste Windows :
     1. Ouvre TikTok Studio Upload dans le navigateur par défaut (Edge).

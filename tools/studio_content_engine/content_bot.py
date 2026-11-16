@@ -111,7 +111,10 @@ def build_short_video(
         with httpx.Client(timeout=10.0) as client:
             res = client.post(
                 "http://192.168.0.10:5005/execute",
-                json={"action": "copier_video_vers_onedrive", "parameters": {}},
+                json={
+                    "action": "copier_video_vers_onedrive",
+                    "parameters": {"video_name": out_mp4.name, "run_id": run_id},
+                },
             )
             if res.status_code == 200 and res.json().get("status") == "success":
                 logger.info("Vidéo synchronisée avec succès vers O:\\OneDrive\\Pictures\\IA\\Contenue !")
