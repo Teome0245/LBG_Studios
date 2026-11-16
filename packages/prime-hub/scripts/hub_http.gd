@@ -71,6 +71,8 @@ func start(sim_node: Node, port: int = 8789, ws: int = 8787) -> Error:
 	started_at = Time.get_unix_time_from_system()
 	if auth == null:
 		setup_services()
+	if dialogue != null and dialogue.has_method("attach_sim"):
+		dialogue.attach_sim(sim)
 	if port <= 0:
 		_listening = false
 		print("[prime-hub] HTTP router only (unified gateway)")

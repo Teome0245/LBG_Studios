@@ -9,6 +9,22 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-17. **Redirection Contextuelle des PNJ Hors-Service / En Loisir vers le Travailleur Actif (`hub_dialogue.gd`, `hub_http.gd`, `server_main.gd`)** :
+    - **Identification dynamique de l'état de service** :
+      * Lors d'une interaction de dialogue (`/v1/dialogue/invoke`), le système interroge le planning en temps réel de `HubLife` via `attach_sim(sim)`.
+      * Si le PNJ sollicité est en quartier libre (`phase == "leisure"`), il clarifie immédiatement sa situation :
+        * Ex: *« Neris Vohl : Je suis en quartier libre en ce moment (thé à l'auberge), je ne suis pas de service ! Si tu as besoin d'une formation, d'un contrat ou de soins, adresse-toi à Daan Oth au Bureau des missions. »*
+      * S'il est en poste (`phase == "work"`), il délivre normalement ses services et quêtes sans redirection.
+    - **Choix d'actions suggérés & Mots-clés conversationnels** :
+      * Le dialogue propose deux boutons d'action contextuels :
+        1. `[Où trouver <Collègue actif> ?]` → Le PNJ explique précisément où se trouve le poste officiel (Bureau des missions, Clinique médicale, Atelier d'artisanat, Centre d'entraînement, Auberge...).
+        2. `[Bonne pause !]` → Le PNJ remercie chaleureusement le joueur (*« Merci ! Ça fait du bien de souffler un peu avant ma prochaine relève. »*).
+    - **Validation & Déploiement** :
+      * Test unitaire headless `packages/prime-hub/tools/test_leisure_dialogue.gd` validé à 100%.
+      * Déploiement en production sur `prime-hub` (`192.168.0.246:8787`).
+      * Test de l'endpoint HTTP live validé sur `.246:8787`.
+      * Manifeste client et patch déployés sur `192.168.0.246:8080`.
+
 -16. **Intégration du Modèle 3D Lia Androïde Cyber & Mouvements Naturels Organiques** :
     - **Modèle 3D Lia Androïde (Cyber Cyan & Métaux)** :
       * Re-génération complète des 9 keyframes 3D plein pied dans `tools/studio_content_engine/assets/compagnon` via Blender 5.2 Cycles CPU avec les textures officielles de Lia Androïde (`body_skin_android.png`, `face_skin_android.png`, `hair_android.png` et iris émissifs cyan `#00f5d4`).

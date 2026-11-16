@@ -200,6 +200,20 @@ const FALLBACK_REPLIES := [
 
 var _registry: Dictionary = {}  # id -> entry
 var events = null
+var economy = null
+var sim = null
+
+const POI_LABELS := {
+	"board": "au Bureau des missions",
+	"clinic": "à la Clinique médicale",
+	"train": "au Centre d'entraînement",
+	"craft": "à l'Atelier d'artisanat",
+	"inn": "à l'Auberge de Lost Heaven",
+	"market": "sur la Place du marché",
+	"cantina": "à La Perle de Scrapaltai",
+	"apron": "au Spatioport",
+	"hall": "à la Mairie",
+}
 
 
 func setup() -> void:
@@ -215,15 +229,67 @@ func setup() -> void:
 			_registry[str(n["id"])] = n
 
 
-var economy = null
-
-
 func attach_events(events_svc) -> void:
 	events = events_svc
 
 
 func attach_economy(economy_svc) -> void:
 	economy = economy_svc
+
+
+func attach_sim(sim_svc) -> void:
+	sim = sim_svc
+
+
+func _check_leisure_redirect(npc_id: String, npc_name: String) -> Dictionary:
+	if sim == null or not ("life" in sim) or sim.life == null:
+		return {}
+	var sch: Dictionary = sim.life._sched.get(npc_id, {})
+	if sch.is_empty() or str(sch.get("kind", "")) != "triplon":
+		return {}
+	var cur_phase := str(sch.get("phase", ""))
+	if cur_phase != "leisure":
+		return {}
+
+	# Ce PNJ est en loisir : trouver le membre du triplon actuellement actif en poste (phase == "work")
+	var tid := str(sch.get("triplon_id", ""))
+	var work_poi := str(sch.get("work_poi", "plaza"))
+	var poi_name := str(POI_LABELS.get(work_poi, "à son poste officiel"))
+	var active_name := ""
+	var active_eid := ""
+
+	for eid in sim.life._sched.keys():
+		var other: Dictionary = sim.life._sched[eid]
+		if str(other.get("triplon_id", "")) == tid and str(other.get("phase", "")) == "work":
+			active_eid = eid
+			active_name = str(other.get("meta", {}).get("name", eid))
+			break
+
+	var my_name := npc_name
+	if my_name.is_empty():
+		my_name = str(sch.get("meta", {}).get("name", "Moi"))
+
+	var activity := str(sch.get("meta", {}).get("leisure", "prendre un moment de repos"))
+
+	var reply := ""
+	if not active_name.is_empty():
+		reply = "%s : Je suis en quartier libre en ce moment (%s), je ne suis pas de service ! Si tu as besoin d'une formation, d'un contrat ou de soins, adresse-toi à %s %s." % [
+			my_name, activity, active_name, poi_name
+		]
+	else:
+		reply = "%s : Je suis actuellement en pause détente (%s), pas de service officiel pour l'instant." % [
+			my_name, activity
+		]
+
+	return {
+		"is_leisure": true,
+		"reply": reply,
+		"worker_name": active_name,
+		"worker_eid": active_eid,
+		"poi_name": poi_name,
+		"activity": activity,
+		"my_name": my_name,
+	}
 
 
 func _event_rumor() -> String:
@@ -248,6 +314,26 @@ func _normalize_npc_id(raw: String) -> String:
 
 
 func _suggested_moves(npc_id: String) -> Array:
+	var l_info := _check_leisure_redirect(npc_id, "")
+	if bool(l_info.get("is_leisure", false)):
+		var wname := str(l_info.get("worker_name", ""))
+		var pname := str(l_info.get("poi_name", ""))
+		var moves: Array = []
+		if not wname.is_empty():
+			moves.append({
+				"id": "move:ask_worker_location",
+				"label": "Où trouver %s ?" % wname,
+				"utterance": "Où puis-je trouver %s exactement ?" % wname,
+				"kind": "info",
+			})
+		moves.append({
+			"id": "move:enjoy_break",
+			"label": "Bonne pause !",
+			"utterance": "Profite bien de ton quartier libre !",
+			"kind": "info",
+		})
+		return moves
+
 	var out: Array = []
 	var entry = _registry.get(npc_id, {})
 	if typeof(entry) == TYPE_DICTIONARY:
@@ -499,6 +585,20 @@ func _pick_reply(
 		place = str(entry.get("zone", place))
 		if npc_name.is_empty():
 			npc_name = str(entry.get("name", ""))
+
+	# --- Redirection automatique des PNJ en quartier libre (leisure) ---
+	var l_info := _check_leisure_redirect(npc_id, npc_name)
+	if bool(l_info.get("is_leisure", false)):
+		var wname := str(l_info.get("worker_name", ""))
+		var pname := str(l_info.get("poi_name", ""))
+		var who_l := str(l_info.get("my_name", npc_name if not npc_name.is_empty() else "Citoyen"))
+		if ("où" in t or "ou est" in t or "ou se trouve" in t or "trouver" in t or "poste" in t or "direction" in t) and not wname.is_empty():
+			return "%s : %s assure le service en ce moment %s. Tu le trouveras facilement sur place !" % [
+				who_l, wname, pname
+			]
+		if "pause" in t or "repos" in t or "santé" in t or "sante" in t or "merci" in t:
+			return "%s : Merci ! Ça fait du bien de souffler un peu avant ma prochaine relève." % who_l
+		return str(l_info.get("reply", ""))
 	var is_greet := t.is_empty() or t in ["bonjour", "bonjour.", "salut", "hello", "hey"] or t.begins_with("bonjour")
 	# C5 — Scribe avant LLM : chronique de session.
 	if npc_id == "npc:scribe":

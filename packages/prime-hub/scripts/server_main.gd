@@ -57,6 +57,7 @@ func _ready() -> void:
 	economy.attach_events(events)
 	dialogue.attach_events(events)
 	dialogue.attach_economy(economy)
+	dialogue.attach_sim(sim)
 	events.attach_world_stream(world_stream)
 	events.setup(Callable(sim, "enqueue_say"))
 
