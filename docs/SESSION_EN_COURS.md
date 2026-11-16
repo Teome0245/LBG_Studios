@@ -9,6 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-14. **Résolution du Problème des Vidéos Répétitives & Diversification Totale du Studio Content** :
+    - **Diagnostic du Problème** : Les 8 dernières vidéos étaient quasi identiques (même sujet générique, même texte lu par Lia, mêmes infographies B-Roll). Causes :
+      1. Backlog `topics_backlog.json` épuisé : le cron générait en boucle le sujet statique `"Ingénierie locale et agents autonomes chez LBG Studios ({now_str})"`.
+      2. Le timeout Ollama trop court échouait et basculait sur un fallback textuel figé à trous.
+      3. Absence de variation graphique dans le compositeur vidéo (toujours le même fond bleu/cyan et les 3 mêmes cartes B-roll).
+    - **Correctifs Appliqués** :
+      * **28 Nouveaux Sujets Uniques Injectés** dans `topics_backlog.json` (SWG Pre-CU, T4C, Godot 4.6 Headless, NavigationServer3D, Lia Compagnon, SQLite WAL, VRM, Shaders...).
+      * **Auto-Replenish Intelligent** dans `cron_daily_publisher.py` : si le backlog passe sous 5 sujets en attente, réapprovisionnement automatique sans jamais dupliquer de sujet existant.
+      * **Générateur Thématique Dynamique** dans `script_generator.py` : fallbacks spécialisés et contextualisés par thématique (MMO, T4C, SWG, DB, 3D, IA) garantissant un script unique même hors ligne.
+      * **Palettes Graphiques & Arrière-plans Thématiques** dans `video_compositor.py` : 4 ambiances visuelles complètes (*Amber* pour le lore/désert/SWG, *Synthwave* pour l'IA/VRM, *Matrix* pour DevOps/DB, *Cyan* pour Godot/Server).
+      * Prochaine vidéo de 21:30 programmée sur : *« Ressusciter Star Wars Galaxies en 2026 : notre recette technique »* (ambiance ambrée, script inédit).
+
 -13. **Passage au Standard Planétaire 64 km × 64 km (4 096 km²), Porte Sud de Lost Heaven, Tracés Réseau Propres & Collisions Falaises** :
     - **Durée du Cycle Jour/Nuit Canonique** :
       * Paramètre `time_dilation = 60.0` dans `hub_world_clock.gd`.

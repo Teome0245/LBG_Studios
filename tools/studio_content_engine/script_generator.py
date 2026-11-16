@@ -180,6 +180,82 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
         return dict(FALLBACK_SCRIPTS[0])
 
     topic_lower = topic.lower()
+    if any(k in topic_lower for k in ["swg", "star wars galaxies", "pre-cu", "artisanat"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Star Wars Galaxies",
+            "hook": "Pourquoi le système d'artisanat et les 32 classes libres de Star Wars Galaxies restent indépassés ?",
+            "problem": "La majorité des MMOs modernes enferment les joueurs dans des classes rigides et un loot aléatoire sans saveur.",
+            "solution": "Dans notre MMO Prime, nous reprenons les arbres 4x4 Pre-CU, l'expérimentation d'ingénierie et les ressources aux stats dynamiques de 1 à 1000.",
+            "metrics": "144 compétences combinables librement, des extracteurs de ressources sur le terrain et zéro restriction de classe.",
+            "cta": "Moi c'est Lia : quelle fonctionnalité de SWG tu regrettes le plus ? Dis-le moi en commentaire et découvre nos sources sur GitHub !",
+            "sentences": [
+                "Pourquoi le système d'artisanat et les 32 classes libres de Star Wars Galaxies restent indépassés ?",
+                "La majorité des MMOs modernes enferment les joueurs dans des classes rigides et un loot aléatoire sans saveur.",
+                "Dans notre MMO Prime, nous réintégrons les arbres de compétences 4x4 Pre-CU et les ressources aux qualités variables de 1 à 1000.",
+                "Chaque pièce d'équipement dépend directement de la pureté du minerai extrait et de la réussite critique lors de l'assemblage.",
+                "Résultat : 144 compétences combinables librement et une véritable économie entre joueurs sans hôtel des ventes centralisé.",
+                "Moi c'est Lia : quelle fonctionnalité de SWG tu regrettes le plus ? Dis-le moi en commentaire et découvre nos sources sur GitHub !",
+            ],
+        }
+
+    if any(k in topic_lower for k in ["t4c", "karma", "mots-clés", "quatrième prophétie", "prophétie"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & La 4ème Prophétie",
+            "hook": "Te rappelles-tu de La 4ème Prophétie, où taper un simple mot-clé déclenchait une quête secrète ?",
+            "problem": "Les points d'exclamation jaunes au-dessus des PNJ ont tué le mystère et l'exploration dans les jeux de rôle.",
+            "solution": "Dans Prime, nous avons recodé un moteur de dialogue par mots-clés T4C couplé à une jauge de Karma dynamique de -1000 à +1000.",
+            "metrics": "Plus de 70 PNJ vivants sur la planète Scrapaltai qui réagissent selon ton alignement moral et tes découvertes.",
+            "cta": "Moi c'est Lia : tu préfères les dialogues par mots-clés ou les choix préenregistrés ? Donne ton avis en commentaire !",
+            "sentences": [
+                "Te rappelles-tu de La 4ème Prophétie, où taper un simple mot-clé déclenchait une quête secrète ?",
+                "Les points d'exclamation jaunes au-dessus des PNJ ont tué le mystère et l'exploration dans les jeux de rôle.",
+                "Dans notre univers Prime, nous avons ressuscité ce moteur de dialogue par mots-clés couplé à une jauge de Karma de -1000 à +1000.",
+                "Les habitants révèlent des secrets uniquement si tu prononces les termes exacts et si ta réputation morale leur convient.",
+                "Bilan : 71 PNJ uniques sur Scrapaltai qui arbitrent leurs réponses en direct sans aucun script linéaire.",
+                "Moi c'est Lia : tu préfères les dialogues par mots-clés ou les choix préenregistrés ? Donne ton avis en commentaire !",
+            ],
+        }
+
+    if any(k in topic_lower for k in ["sqlite", "wal", "base de données"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "Bases de Données & Perf",
+            "hook": "Pourquoi nous utilisons SQLite en mode WAL plutôt que MongoDB ou Redis pour persister notre monde ?",
+            "problem": "Maintenir un cluster de base de données externe pour un jeu multijoueur ajoute de la latence réseau et des points de panne inutiles.",
+            "solution": "Avec le mode Write-Ahead Logging de SQLite, les lectures sont non-bloquantes pendant que les écritures se font à cadence continue.",
+            "metrics": "Écriture asynchrone en moins de 300 microsecondes et une résilience totale aux crashs sans aucune dépendance externe.",
+            "cta": "Moi c'est Lia : quelle base de données tu privilégies pour tes projets ? Dis-le moi en commentaire et regarde nos benchmarks sur GitHub !",
+            "sentences": [
+                "Pourquoi nous utilisons SQLite en mode WAL plutôt que MongoDB ou Redis pour persister notre monde ?",
+                "Maintenir un cluster de base de données externe pour un jeu multijoueur ajoute de la latence réseau et des points de panne inutiles.",
+                "Chez LBG Studios, nous exploitons SQLite en mode Write-Ahead Logging directement branché au serveur Godot headless.",
+                "Les requêtes de lecture restent ultra rapides et non-bloquantes pendant que l'état des joueurs s'écrit de manière atomique.",
+                "Nos tests confirment une écriture en 300 microsecondes et une intégrité parfaite après plus de dix millions de ticks.",
+                "Moi c'est Lia : quelle base de données tu privilégies pour tes projets ? Dis-le moi en commentaire et regarde nos benchmarks sur GitHub !",
+            ],
+        }
+
+    if any(k in topic_lower for k in ["vrm", "danse", "animation", "motion"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "Animation 3D & VRM",
+            "hook": "Comment animer plus de 280 chorégraphies et acrobaties sur un avatar 3D sans studio de motion capture ?",
+            "problem": "Créer des rigs d'animation personnalisés prend des semaines et produit souvent des déformations anatomiques disgracieuses.",
+            "solution": "Nous avons conçu un pipeline de retargeting universel adaptant les cinématiques directement aux os normalisés du standard VRM.",
+            "metrics": "284 animations prêtes à l'emploi, jouables en temps réel dans le navigateur à 60 FPS sans GPU dédié.",
+            "cta": "Moi c'est Lia : quelle animation tu voudrais me voir exécuter ? Dis-le moi en commentaire et teste notre visualiseur sur GitHub !",
+            "sentences": [
+                "Comment animer plus de 280 chorégraphies et acrobaties sur un avatar 3D sans studio de motion capture ?",
+                "Créer des rigs d'animation personnalisés prend des semaines et produit souvent des déformations anatomiques disgracieuses.",
+                "Chez LBG Studios, nous avons développé un algorithme de retargeting universel qui calibre automatiquement les os VRM.",
+                "Les rotations de coude et de buste sont projetées géométriquement pour éviter tout artefact ou étirement non naturel.",
+                "Résultat : 284 animations fluides exécutées directement dans Three.js à 60 images par seconde.",
+                "Moi c'est Lia : quelle animation tu voudrais me voir exécuter ? Dis-le moi en commentaire et teste notre visualiseur sur GitHub !",
+            ],
+        }
+
     if any(k in topic_lower for k in ["npc", "pnj", "conscient", "dialogue", "mort des"]):
         return dict(FALLBACK_SCRIPTS[3])
     if any(k in topic_lower for k in ["procédural", "terrain", "scatter", "world"]):
@@ -252,15 +328,13 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
     )
 
     hosts_and_models = [
-        (OLLAMA_HOST_110, "huihui_ai/qwen3.5-abliterated:9b"),
-        (OLLAMA_HOST_110, "huihui_ai/gemma-4-abliterated:12b"),
-        (OLLAMA_HOST_111, "lbg-compagnon-e4b-v1:latest"),
-        (OLLAMA_HOST_111, "qwen2.5:3b"),
+        (OLLAMA_HOST_111, "qwen2.5:3b", 22.0),
+        (OLLAMA_HOST_111, "lbg-compagnon-e4b-v1:latest", 20.0),
     ]
-    for host, mod in hosts_and_models:
+    for host, mod, tout in hosts_and_models:
         try:
-            logger.info("Tentative de génération script sur %s avec %s (délai: 8s)...", host, mod)
-            with httpx.Client(timeout=8.0) as client:
+            logger.info("Tentative de génération script sur %s avec %s (délai: %.1fs)...", host, mod, tout)
+            with httpx.Client(timeout=tout) as client:
                 res = client.post(
                     f"{host}/api/generate",
                     json={

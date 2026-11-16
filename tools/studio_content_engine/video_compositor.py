@@ -82,21 +82,98 @@ def get_audio_rms_series(wav_path: Path, fps: int = FPS) -> tuple[np.ndarray, fl
     return rms_series, duration
 
 
-def create_dynamic_background(t: float, w: int = WIDTH, h: int = HEIGHT) -> Image.Image:
-    """Génère le fond cyberpunk animé avec défilement perspective et particules."""
-    bg = Image.new("RGBA", (w, h), (10, 15, 26, 255))
+THEME_PALETTES: dict[str, dict[str, Any]] = {
+    "cyan": {  # Architecture Serveur / Godot 4 / Général
+        "base_rgb": (7, 11, 22),
+        "grad_target": (14, 25, 45),
+        "grid_color": (0, 245, 212, 42),
+        "halo_color": (0, 245, 212),
+        "particle_a": (0, 245, 212),
+        "particle_b": (50, 200, 255),
+        "badge_border": (0, 245, 212, 220),
+        "badge_fill": (0, 245, 212, 40),
+        "badge_text": (0, 245, 212, 255),
+        "spectrum_a": (0, 245, 212),
+        "spectrum_b": (50, 200, 255),
+    },
+    "amber": {  # Star Wars Galaxies / T4C / Désert / Scrapaltai / Craft
+        "base_rgb": (22, 12, 8),
+        "grad_target": (45, 26, 15),
+        "grid_color": (255, 175, 60, 42),
+        "halo_color": (255, 160, 40),
+        "particle_a": (255, 185, 70),
+        "particle_b": (255, 90, 40),
+        "badge_border": (255, 175, 60, 220),
+        "badge_fill": (255, 175, 60, 40),
+        "badge_text": (255, 190, 80, 255),
+        "spectrum_a": (255, 175, 60),
+        "spectrum_b": (255, 90, 40),
+    },
+    "synthwave": {  # Lia Compagnon / VRM / 3D / Audio / IA
+        "base_rgb": (18, 9, 26),
+        "grad_target": (38, 16, 52),
+        "grid_color": (255, 0, 180, 42),
+        "halo_color": (255, 40, 190),
+        "particle_a": (255, 0, 180),
+        "particle_b": (180, 70, 255),
+        "badge_border": (255, 0, 180, 220),
+        "badge_fill": (255, 0, 180, 40),
+        "badge_text": (255, 90, 210, 255),
+        "spectrum_a": (255, 0, 180),
+        "spectrum_b": (180, 70, 255),
+    },
+    "matrix": {  # DevOps / Linux / SQLite / Infra / Self-Hosting
+        "base_rgb": (8, 18, 12),
+        "grad_target": (15, 38, 22),
+        "grid_color": (50, 255, 140, 42),
+        "halo_color": (50, 255, 140),
+        "particle_a": (50, 255, 140),
+        "particle_b": (0, 230, 180),
+        "badge_border": (50, 255, 140, 220),
+        "badge_fill": (50, 255, 140, 40),
+        "badge_text": (50, 255, 140, 255),
+        "spectrum_a": (50, 255, 140),
+        "spectrum_b": (0, 230, 180),
+    },
+}
+
+
+def resolve_theme(category: str) -> dict[str, Any]:
+    """Détermine la palette visuelle selon la thématique du sujet."""
+    cat_lower = (category or "").lower()
+    if any(k in cat_lower for k in ["swg", "t4c", "mmo", "game", "tatooine", "scrapaltai", "craft", "rpg", "housing"]):
+        return THEME_PALETTES["amber"]
+    if any(k in cat_lower for k in ["ia", "compagnon", "vrm", "anim", "son", "audio", "musique", "lia", "rag"]):
+        return THEME_PALETTES["synthwave"]
+    if any(k in cat_lower for k in ["devops", "linux", "sqlite", "base", "infra", "hardware", "ci/cd", "audit"]):
+        return THEME_PALETTES["matrix"]
+    return THEME_PALETTES["cyan"]
+
+
+def create_dynamic_background(
+    t: float,
+    w: int = WIDTH,
+    h: int = HEIGHT,
+    palette: dict[str, Any] | None = None,
+) -> Image.Image:
+    """Génère le fond animé thématique avec défilement perspective et particules."""
+    pal = palette or THEME_PALETTES["cyan"]
+    br, bg_c, bb = pal["base_rgb"]
+    tr, tg, tb = pal["grad_target"]
+
+    bg = Image.new("RGBA", (w, h), (br, bg_c, bb, 255))
     draw = ImageDraw.Draw(bg)
 
-    # Dégradé vertical sombre
+    # Dégradé vertical adapté à la thématique
     for y in range(0, h, 8):
         ratio = y / h
-        r = int(7 + ratio * 12)
-        g = int(11 + ratio * 18)
-        b = int(22 + ratio * 32)
+        r = int(br + ratio * (tr - br))
+        g = int(bg_c + ratio * (tg - bg_c))
+        b = int(bb + ratio * (tb - bb))
         draw.rectangle([0, y, w, y + 8], fill=(r, g, b, 255))
 
     # Grille perspective au sol DYNAMIQUE qui défile vers l'avant à 30 FPS
-    grid_color = (0, 245, 212, 42)
+    grid_color = pal["grid_color"]
     horizon_y = 1180
     speed_offset = (t * 2.2) % 1.0
 
@@ -114,23 +191,27 @@ def create_dynamic_background(t: float, w: int = WIDTH, h: int = HEIGHT) -> Imag
         draw.line([(vanishing_x, horizon_y - 200), (vx, h)], fill=grid_color, width=1)
 
     # Particules d'ambiance néon montantes (effet poussière / embers)
+    part_a = pal["particle_a"]
+    part_b = pal["particle_b"]
     for p_i in range(24):
         p_x = int((p_i * 47 + math.sin(t * 1.5 + p_i) * 35) % w)
         p_y = int((h - ((t * 65 + p_i * 85) % h)))
         p_size = (p_i % 3) + 2
         p_alpha = int(100 + math.sin(t * 3.0 + p_i) * 60)
-        p_col = (0, 245, 212, p_alpha) if p_i % 2 == 0 else (255, 0, 128, p_alpha)
+        base_part = part_a if p_i % 2 == 0 else part_b
+        p_col = (base_part[0], base_part[1], base_part[2], p_alpha)
         draw.ellipse([p_x, p_y, p_x + p_size, p_y + p_size], fill=p_col)
 
     # Halo lumineux central pulsant derrière l'avatar
     halo_pulse = math.sin(t * 2.2) * 0.12 + 0.88
     halo = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     halo_draw = ImageDraw.Draw(halo)
+    hr, hg, hb = pal["halo_color"]
     for radius in range(360, 60, -35):
         r_dyn = int(radius * halo_pulse)
         alpha = int((360 - radius) / 360 * 28)
         bbox = [w // 2 - r_dyn, 820 - r_dyn, w // 2 + r_dyn, 820 + r_dyn]
-        halo_draw.ellipse(bbox, fill=(0, 245, 212, alpha))
+        halo_draw.ellipse(bbox, fill=(hr, hg, hb, alpha))
 
     bg = Image.alpha_composite(bg, halo)
     return bg
@@ -500,6 +581,8 @@ def render_video(
         "card_badge": font_card_badge,
     }
 
+    palette = resolve_theme(category)
+
     # Préparation du bandeau supérieur statique
     header_layer = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
     h_draw = ImageDraw.Draw(header_layer)
@@ -509,21 +592,21 @@ def render_video(
         [60, 80, WIDTH - 60, 240],
         radius=24,
         fill=(18, 24, 38, 220),
-        outline=(0, 245, 212, 180),
+        outline=palette["badge_border"],
         width=3,
     )
     # Badge catégorie & avatar
     h_draw.rounded_rectangle(
         [90, 105, 420, 145],
         radius=10,
-        fill=(0, 245, 212, 40),
-        outline=(0, 245, 212, 220),
+        fill=palette["badge_fill"],
+        outline=palette["badge_border"],
         width=2,
     )
     h_draw.text(
         (105, 112),
         f"LIA // {category.upper()}",
-        fill=(0, 245, 212, 255),
+        fill=palette["badge_text"],
         font=font_badge,
     )
 
@@ -707,12 +790,14 @@ def render_video(
             rendered_pose = active_pose
 
         # 4. Assemblage dynamique de la scène
-        # Fond cyberpunk dynamique (grille qui défile + particules en mouvement continu)
-        bg_dynamic = create_dynamic_background(t, WIDTH, HEIGHT)
+        # Fond dynamique thématique (couleurs, grille qui défile + particules adaptées au sujet)
+        bg_dynamic = create_dynamic_background(t, WIDTH, HEIGHT, palette=palette)
         frame = Image.alpha_composite(bg_dynamic, header_layer)
         f_draw = ImageDraw.Draw(frame)
 
         # 5. Spectre audio réactif EN ARRIÈRE-PLAN
+        sa = palette.get("spectrum_a", (0, 245, 212))
+        sb = palette.get("spectrum_b", (50, 200, 255))
         for b_idx in range(num_bars):
             freq_factor = math.sin(t * 12.0 + b_idx * 0.45) * 0.5 + 0.5
             bar_height = int(rms * freq_factor * 180) + 6
@@ -721,9 +806,9 @@ def render_video(
             by0 = spectrum_y_base - bar_height
 
             color_ratio = min(1.0, bar_height / 150.0)
-            br = int(0 + color_ratio * 255)
-            bg_c = int(245 - color_ratio * 145)
-            bb = int(212 + color_ratio * 43)
+            br = int(sa[0] + color_ratio * (sb[0] - sa[0]))
+            bg_c = int(sa[1] + color_ratio * (sb[1] - sa[1]))
+            bb = int(sa[2] + color_ratio * (sb[2] - sa[2]))
 
             f_draw.rounded_rectangle(
                 [bx, by0, bx + bar_width, by1], radius=4, fill=(br, bg_c, bb, 160)

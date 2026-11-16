@@ -182,5 +182,173 @@
     "status": "published",
     "published_at": "2026-11-16T19:09:12.485069",
     "youtube_url": "https://www.youtube.com/shorts/27ZZEZnAW88"
+  },
+  {
+    "id": 24,
+    "topic": "Ressusciter Star Wars Galaxies en 2026 : notre recette technique",
+    "category": "MMO & Game Design",
+    "status": "pending"
+  },
+  {
+    "id": 25,
+    "topic": "Pourquoi la liberté des arbres 4x4 Pre-CU manque aux MMOs modernes",
+    "category": "Game Design & RPG",
+    "status": "pending"
+  },
+  {
+    "id": 26,
+    "topic": "Le système de Karma et de dialogues par mots-clés inspiré de T4C",
+    "category": "Game Design & Immersion",
+    "status": "pending"
+  },
+  {
+    "id": 27,
+    "topic": "10 millions de ticks consécutifs sans crash sur notre serveur Godot 4",
+    "category": "Architecture Serveur MMO",
+    "status": "pending"
+  },
+  {
+    "id": 28,
+    "topic": "Comment découper portes et fenêtres en temps réel dans des bâtiments CAO",
+    "category": "Godot 4 & Procédural",
+    "status": "pending"
+  },
+  {
+    "id": 29,
+    "topic": "Économie de troc P2P et négociations marchandes entre bots et joueurs",
+    "category": "Économie & IA",
+    "status": "pending"
+  },
+  {
+    "id": 30,
+    "topic": "Le mystère du Gouffre Krayt sur Scrapaltai : animer un titan 3D",
+    "category": "World Building 3D",
+    "status": "pending"
+  },
+  {
+    "id": 31,
+    "topic": "Pourquoi les extracteurs Harvesters rendent les joueurs accros au terrain",
+    "category": "MMO & Simulation",
+    "status": "pending"
+  },
+  {
+    "id": 32,
+    "topic": "Comment Lia apprend et mémorise tes projets sans base vectorielle cloud",
+    "category": "IA Locale & Mémoire",
+    "status": "pending"
+  },
+  {
+    "id": 33,
+    "topic": "Compiler Godot 4.6 sans affichage pour économiser 80% de RAM",
+    "category": "DevOps & Performance",
+    "status": "pending"
+  },
+  {
+    "id": 34,
+    "topic": "Second Brain de Lia : Obsidian et graphe de connaissances 3D en direct",
+    "category": "Productivité & RAG",
+    "status": "pending"
+  },
+  {
+    "id": 35,
+    "topic": "280 danses et animations sur un rig VRM sans capture de mouvement",
+    "category": "Animation 3D & VRM",
+    "status": "pending"
+  },
+  {
+    "id": 36,
+    "topic": "Pourquoi SQLite WAL bat les bases NoSQL pour les mondes persistants",
+    "category": "Bases de Données",
+    "status": "pending"
+  },
+  {
+    "id": 37,
+    "topic": "Lip-Sync ultra réaliste par transformée de Fourier FFT audio temps réel",
+    "category": "Tech Art & Son",
+    "status": "pending"
+  },
+  {
+    "id": 38,
+    "topic": "Guerre Civile Galactique : gérer la réputation dynamique des factions",
+    "category": "Game Design & Factions",
+    "status": "pending"
+  },
+  {
+    "id": 39,
+    "topic": "Composer des morceaux Synthwave avec MusicGen en local et zéro euro",
+    "category": "Audio IA & Musique",
+    "status": "pending"
+  },
+  {
+    "id": 40,
+    "topic": "Comment orchestrer des audits nocturnes autonomes avec Systemd Linux",
+    "category": "DevOps & Linux",
+    "status": "pending"
+  },
+  {
+    "id": 41,
+    "topic": "NavMesh multi-zones vs monolithique : la gestion de 7 régions 3D",
+    "category": "Moteur Godot 4",
+    "status": "pending"
+  },
+  {
+    "id": 42,
+    "topic": "Routage multi-LLM : pourquoi séparer cerveau lourd 14B et rapide 3B",
+    "category": "IA Locale & Stratégie",
+    "status": "pending"
+  },
+  {
+    "id": 43,
+    "topic": "Troc, monnaie locale et taxe municipale : simuler une économie vivante",
+    "category": "Économie & Simulation",
+    "status": "pending"
+  },
+  {
+    "id": 44,
+    "topic": "Générer des déserts infinis crédibles avec FastNoiseLite et shaders",
+    "category": "Procédural & Shaders",
+    "status": "pending"
+  },
+  {
+    "id": 45,
+    "topic": "Piloter une flotte de PC Windows et Linux via des agents FastAPI locaux",
+    "category": "DevOps & Automatisation",
+    "status": "pending"
+  },
+  {
+    "id": 46,
+    "topic": "Housing libre et construction de villes de joueurs dans Godot 4",
+    "category": "MMO & Housing",
+    "status": "pending"
+  },
+  {
+    "id": 47,
+    "topic": "Pourquoi le format ASS est le roi des sous-titres animés TikTok",
+    "category": "Pipeline Vidéo",
+    "status": "pending"
+  },
+  {
+    "id": 48,
+    "topic": "Dompter la faune sauvage et élever des bêtes : le métier de Scout",
+    "category": "Game Design & Bestiaire",
+    "status": "pending"
+  },
+  {
+    "id": 49,
+    "topic": "Comment Lia synthétise sa voix avec Piper ONNX en moins de 30ms",
+    "category": "Synthèse Vocale IA",
+    "status": "pending"
+  },
+  {
+    "id": 50,
+    "topic": "Artisanat d expérimentation SWG : quand la qualité des minerais compte",
+    "category": "Crafting & Métrologie",
+    "status": "pending"
+  },
+  {
+    "id": 51,
+    "topic": "Le poste LBG 0€ Cloud : notre configuration matérielle de production",
+    "category": "Hardware & Self-Hosting",
+    "status": "pending"
   }
 ]

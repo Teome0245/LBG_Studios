@@ -37,8 +37,47 @@ def save_backlog(backlog: list[dict]) -> None:
         json.dump(backlog, f, indent=2, ensure_ascii=False)
 
 
+REPLENISH_IDEAS = [
+    ("Pourquoi le multithreading de Godot 4 évite les freeze serveur", "Architecture & Perf"),
+    ("Comment nous avons synchronisé les animations Three.js et VRM", "Frontend 3D & WebGL"),
+    ("Le secret de la mémoire épisodique pour compagnons virtuels", "IA Locale & RAG"),
+    ("Créer un système de combat dynamique sans lag réseau", "MMO & Game Design"),
+    ("Gérer 100 000 objets sans draw-call avec MultiMeshInstance3D", "Graphisme & Shader"),
+    ("Les pièges du cloud pour les studios de jeux vidéo indépendants", "Économie & Tech"),
+    ("Pourquoi l'extraction d'échantillons géologiques est si addictive", "MMO & Gameplay"),
+    ("Comment nous avons automatisé nos audits de code chaque nuit à 00h30", "DevOps & CI/CD"),
+    ("Lia, notre avatar IA : architecture complète de son esprit 0€ cloud", "Compagnon IA"),
+    ("Pourquoi nous préférons des micro-modèles 3B aux géants 70B", "IA Efficace"),
+]
+
+
+def replenish_backlog_if_needed(backlog: list[dict]) -> None:
+    """Réapprovisionne automatiquement le backlog s'il reste moins de 5 sujets en attente."""
+    pending = [item for item in backlog if item.get("status") == "pending"]
+    if len(pending) >= 5:
+        return
+
+    logger.info("Backlog bas (%d sujets restants). Réapprovisionnement automatique...", len(pending))
+    existing_topics = {item.get("topic", "").lower().strip() for item in backlog}
+    cur_id = max((item.get("id", 0) for item in backlog), default=0)
+
+    for topic_title, cat in REPLENISH_IDEAS:
+        if topic_title.lower().strip() not in existing_topics:
+            cur_id += 1
+            backlog.append({
+                "id": cur_id,
+                "topic": topic_title,
+                "category": cat,
+                "status": "pending",
+            })
+            existing_topics.add(topic_title.lower().strip())
+    save_backlog(backlog)
+
+
 def run_daily_drop() -> None:
     backlog = load_backlog()
+    replenish_backlog_if_needed(backlog)
+
     next_item = None
     for item in backlog:
         if item.get("status") == "pending":
@@ -46,15 +85,8 @@ def run_daily_drop() -> None:
             break
 
     if not next_item:
-        logger.info("Tous les sujets du backlog ont été publiés ! Ajout d'un sujet automatique...")
-        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        next_item = {
-            "id": len(backlog) + 1,
-            "topic": f"Ingénierie locale et agents autonomes chez LBG Studios ({now_str})",
-            "category": "Tech & Dev",
-            "status": "pending",
-        }
-        backlog.append(next_item)
+        logger.error("Erreur critique : aucun sujet disponible même après réapprovisionnement.")
+        sys.exit(1)
 
     topic = next_item["topic"]
     logger.info("=== Lancement du Drop Quotidien pour : '%s' ===", topic)
