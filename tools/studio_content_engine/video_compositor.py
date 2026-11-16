@@ -697,66 +697,89 @@ def render_video(
     p_metrics_start = total_duration * 0.68
     p_outro_start = max(total_duration - 4.5, total_duration * 0.88)
 
+    # Variables d'état pour cinématique fluide et naturelle (sans sauts d'images)
+    current_displayed_pose = poses["neutral"]
+    prev_displayed_pose = poses["neutral"]
+    target_displayed_pose = poses["neutral"]
+    blend_progress = 1.0
+
+    smooth_avatar_x = float((WIDTH - poses["neutral"].width) // 2)
+    smooth_tilt = 0.0
+
     for f_idx in range(total_frames):
         t = float(f_idx) / FPS
         rms = rms_series[f_idx]
         is_talking = rms > 0.14
         is_blink = ((t + 1.8) % 3.6) < 0.14
 
-        # 1. Sélection de la pose corporelle et faciale
+        # 1. Sélection de la pose corporelle et faciale cible
         if is_blink and "blink" in poses and not is_talking:
-            active_pose = poses["blink"]
+            chosen_pose = poses["blink"]
         elif t >= p_outro_start:
             # Outro / Call to Action
             if is_talking and "talk_a" in poses:
-                active_pose = poses["talk_a"]
+                chosen_pose = poses["talk_a"]
             elif "joy" in poses:
-                active_pose = poses["joy"]
+                chosen_pose = poses["joy"]
             else:
-                active_pose = poses["neutral"]
+                chosen_pose = poses["neutral"]
         elif p_metrics_start <= t < p_outro_start:
             # Métriques chiffrées & benchmarks -> pose désignation point
             if "point" in poses:
-                active_pose = poses["point"]
+                chosen_pose = poses["point"]
             elif is_talking and "talk_a" in poses:
-                active_pose = poses["talk_a"]
+                chosen_pose = poses["talk_a"]
             else:
-                active_pose = poses["neutral"]
+                chosen_pose = poses["neutral"]
         elif p_solution_start <= t < p_metrics_start:
             # Explication de la solution technique -> gestuelle mains ouvertes
             if is_talking and "explain_talk" in poses:
                 cycle_phase = int(t * 6) % 2
-                active_pose = (
+                chosen_pose = (
                     poses["explain_talk"]
                     if cycle_phase == 0
                     else poses.get("explain", poses["explain_talk"])
                 )
             elif "explain" in poses:
-                active_pose = poses["explain"]
+                chosen_pose = poses["explain"]
             else:
-                active_pose = poses["neutral"]
+                chosen_pose = poses["neutral"]
         elif p_problem_start <= t < p_solution_start:
             # Problème / Écueil -> posture réflexion think
             if "think" in poses:
-                active_pose = poses["think"]
+                chosen_pose = poses["think"]
             elif is_talking and "talk_o" in poses:
-                active_pose = poses["talk_o"]
+                chosen_pose = poses["talk_o"]
             else:
-                active_pose = poses["neutral"]
+                chosen_pose = poses["neutral"]
         else:
             # Intro & Hook
             if is_talking:
                 cycle_phase = int(t * 8) % 2
                 if cycle_phase == 0 and "talk_a" in poses:
-                    active_pose = poses["talk_a"]
+                    chosen_pose = poses["talk_a"]
                 elif "talk_o" in poses:
-                    active_pose = poses["talk_o"]
+                    chosen_pose = poses["talk_o"]
                 else:
-                    active_pose = poses["neutral"]
+                    chosen_pose = poses["neutral"]
             else:
-                active_pose = poses["neutral"]
+                chosen_pose = poses["neutral"]
 
-        # 2. Détermination de la carte infographique active & cadrage dynamique
+        # Déclenchement du morphing / crossfade doux si la pose change
+        if chosen_pose is not target_displayed_pose:
+            prev_displayed_pose = current_displayed_pose
+            target_displayed_pose = chosen_pose
+            blend_progress = 0.0
+
+        if blend_progress < 1.0:
+            blend_progress = min(1.0, blend_progress + 0.20)  # Transition soyeuse sur 5 frames (~160ms)
+            active_pose = Image.blend(prev_displayed_pose, target_displayed_pose, blend_progress)
+            current_displayed_pose = active_pose
+        else:
+            active_pose = target_displayed_pose
+            current_displayed_pose = target_displayed_pose
+
+        # 2. Détermination de la carte infographique active & cadrage dynamique fluide
         active_card = None
         if p_problem_start <= t < p_solution_start:
             active_card = "alert"
@@ -767,24 +790,25 @@ def render_video(
         elif t >= p_outro_start:
             active_card = "outro"
 
-        # Quand une infographie est présente, l'avatar se décale sur la gauche
-        if active_card:
-            avatar_base_x = 35
-        else:
-            # Intro & Hook : avatar centré
-            avatar_base_x = (WIDTH - active_pose.width) // 2
+        # Glissement latéral amorti de l'avatar (camera glide cinéma, sans à-coups)
+        target_base_x = 35.0 if active_card else float((WIDTH - active_pose.width) // 2)
+        smooth_avatar_x += (target_base_x - smooth_avatar_x) * 0.12
 
-        # 3. Micro-mouvements corporels (sway latéral + bobbing + tilt de tête réactif)
-        dy = int(math.sin(t * 2.2) * 6)
-        dx = int(math.sin(t * 1.1) * 8)
-        avatar_x = avatar_base_x + dx
-        avatar_y = 260 + dy
+        # 3. Respiration organique humaine (cycle de 3.3 secondes avec micro-expansion thoracique)
+        breath_phase = math.sin(t * 1.9)
+        breath_dy = int(-breath_phase * 3.5)
+        sway_dx = int(math.sin(t * 0.9) * 4.0)
 
-        # Micro-inclinaison de tête et buste calée sur les syllabes
-        tilt_deg = math.sin(t * 3.2) * 1.5 + (rms * 2.2)
-        if abs(tilt_deg) > 0.2:
+        avatar_x = int(smooth_avatar_x + sway_dx)
+        avatar_y = 258 + breath_dy
+
+        # 4. Inertie naturelle du cou et de la tête (filtre passe-bas contre les saccades)
+        raw_tilt = math.sin(t * 2.4) * 0.9 + (rms * 1.6)
+        smooth_tilt = smooth_tilt * 0.84 + raw_tilt * 0.16
+
+        if abs(smooth_tilt) > 0.1:
             rendered_pose = active_pose.rotate(
-                tilt_deg, resample=Image.Resampling.BICUBIC, expand=False
+                smooth_tilt, resample=Image.Resampling.BICUBIC, expand=False
             )
         else:
             rendered_pose = active_pose

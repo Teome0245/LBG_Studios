@@ -9,6 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-16. **Intégration du Modèle 3D Lia Androïde Cyber & Mouvements Naturels Organiques** :
+    - **Modèle 3D Lia Androïde (Cyber Cyan & Métaux)** :
+      * Re-génération complète des 9 keyframes 3D plein pied dans `tools/studio_content_engine/assets/compagnon` via Blender 5.2 Cycles CPU avec les textures officielles de Lia Androïde (`body_skin_android.png`, `face_skin_android.png`, `hair_android.png` et iris émissifs cyan `#00f5d4`).
+      * Finition fidèle à 100% à l'incarnation de bureau (combinaison mecha cyan brillante, cheveux bleus émissifs, yeux néon).
+    - **Mouvements Naturels & Organiques (`video_compositor.py`)** :
+      * *Pose Blending Soyeux* : transition par morphing / fondu croisé (alpha blending doux sur 5 frames, ~160ms) entre chaque pose (neutral, explain, joy, think, point) au lieu de coupures sèches.
+      * *Respiration Organique Humaine* : cycle respiratoire de 3.3s avec micro-mouvements de soulèvement de poitrine et de bassin.
+      * *Inertie & Amorti Physique* : filtrage passe-bas (EMA) sur les inclinaisons de tête et du cou pour supprimer les saccades brutales liées aux pics audio.
+      * *Camera Glide Cinéma* : glissement latéral progressif et amorti de l'avatar lorsque les infographies B-Roll apparaissent, sans téléportation d'image.
+    - **Validation & Test Vidéo** :
+      * Rendu complet d'un MP4 test 1080x1920 avec sous-titres TikTok et voix Edge-TTS validé avec succès (3.88 Mo).
+
 -15. **Cycle Circadien 90 Min Réelles, Contrôle Strict des Triplons de PNJ & Spatialisation du Chat Cantina** :
     - **Cycle Circadien Planétaire 90 Minutes Réelles (`hub_world_clock.gd`, `hub_sim.gd`)** :
       * Passage de `time_dilation = 60.0` (24 min réelles) à `time_dilation = 16.0` :
