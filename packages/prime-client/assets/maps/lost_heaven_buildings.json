@@ -415,8 +415,8 @@
       "id": "poi:zalem_outpost_command",
       "kind": "town_hall",
       "label": "Poste de commandement Zalem",
-      "x": -1200.0,
-      "z": -600.0,
+      "x": -12800.0,
+      "z": -1600.0,
       "size_m": 84.0,
       "essential": true,
       "door": {
@@ -438,8 +438,8 @@
       "id": "poi:zalem_outpost_workshop",
       "kind": "trainer_artisan",
       "label": "Atelier mécanique relais",
-      "x": -980.0,
-      "z": -440.0,
+      "x": -12580.0,
+      "z": -1440.0,
       "size_m": 76.0,
       "essential": false,
       "door": {
@@ -461,8 +461,8 @@
       "id": "poi:zalem_outpost_barracks",
       "kind": "trainers_combat",
       "label": "Caserne de la milice",
-      "x": -1420.0,
-      "z": -440.0,
+      "x": -13020.0,
+      "z": -1440.0,
       "size_m": 76.0,
       "essential": false,
       "door": {
@@ -484,8 +484,8 @@
       "id": "poi:zalem_outpost_inn",
       "kind": "inn",
       "label": "Relais des convois",
-      "x": -1200.0,
-      "z": -300.0,
+      "x": -12800.0,
+      "z": -1300.0,
       "size_m": 72.0,
       "essential": false,
       "door": {
@@ -507,8 +507,8 @@
       "id": "poi:zalem_outpost_depot",
       "kind": "shops",
       "label": "Dépôt de ravitaillement",
-      "x": -980.0,
-      "z": -700.0,
+      "x": -12580.0,
+      "z": -1700.0,
       "size_m": 72.0,
       "essential": false,
       "door": {
@@ -530,8 +530,8 @@
       "id": "poi:ksar_nomade_tent",
       "kind": "town_hall",
       "label": "Demeure de l'Ancien — Ksar de l'Oasis",
-      "x": 4950.0,
-      "z": -3840.0,
+      "x": 7050.0,
+      "z": -32540.0,
       "size_m": 80.0,
       "essential": true,
       "door": {
@@ -553,8 +553,8 @@
       "id": "poi:ksar_nomade_dispensary",
       "kind": "clinic",
       "label": "Dispensaire des baumes — Oasis",
-      "x": 4760.0,
-      "z": -3730.0,
+      "x": 6860.0,
+      "z": -32430.0,
       "size_m": 68.0,
       "essential": false,
       "door": {
@@ -576,8 +576,8 @@
       "id": "poi:ksar_nomade_bazaar",
       "kind": "shops",
       "label": "Grand Bazar du Ksar — Comptoir de troc",
-      "x": 5160.0,
-      "z": -3730.0,
+      "x": 7260.0,
+      "z": -32430.0,
       "size_m": 76.0,
       "essential": false,
       "door": {
@@ -599,8 +599,8 @@
       "id": "poi:ksar_nomade_inn",
       "kind": "inn",
       "label": "Caravansérail de l'Oasis",
-      "x": 4950.0,
-      "z": -3540.0,
+      "x": 7050.0,
+      "z": -32240.0,
       "size_m": 72.0,
       "essential": false,
       "door": {
@@ -622,8 +622,8 @@
       "id": "poi:ksar_nomade_craft",
       "kind": "trainer_artisan",
       "label": "Forge et Métallerie de l'Oasis",
-      "x": 5160.0,
-      "z": -3920.0,
+      "x": 7260.0,
+      "z": -32620.0,
       "size_m": 68.0,
       "essential": false,
       "door": {
@@ -645,8 +645,8 @@
       "id": "poi:ksar_nomade_gate",
       "kind": "city_gate",
       "label": "Arches de pierre du Ksar",
-      "x": 4950.0,
-      "z": -3420.0,
+      "x": 7050.0,
+      "z": -32120.0,
       "size_m": 48.0,
       "essential": false
     },
@@ -655,8 +655,8 @@
       "kind": "town_hall",
       "label": "Poste de Guet des Dunes — Vigie Est",
       "display_name": "Poste de Guet des Dunes",
-      "x": 6650.0,
-      "z": -1380.0,
+      "x": 41350.0,
+      "z": -8620.0,
       "size_m": 44.0,
       "essential": false,
       "doors": [
@@ -679,8 +679,8 @@
       "kind": "inn",
       "label": "Oasis d'Al-Khali — Étape des Caravanes",
       "display_name": "Oasis d'Al-Khali",
-      "x": 6550.0,
-      "z": -2480.0,
+      "x": 29450.0,
+      "z": -17520.0,
       "size_m": 56.0,
       "essential": false,
       "doors": [
@@ -709,8 +709,8 @@
       "kind": "trainer_artisan",
       "label": "Atelier du Canyon des Épaves",
       "display_name": "Canyon des Épaves",
-      "x": 5650.0,
-      "z": -3250.0,
+      "x": 16350.0,
+      "z": -26750.0,
       "size_m": 48.0,
       "essential": false,
       "doors": [
@@ -727,6 +727,311 @@
         "depth_m": 16.0,
         "apron_m": 10.0
       }
+    },
+    {
+      "id": "poi:ferme_humidite_dome",
+      "kind": "inn",
+      "label": "Dôme d'Habitation Lars-Val",
+      "x": 5150.0,
+      "z": -13800.0,
+      "size_m": 38.0,
+      "essential": true,
+      "door": {
+        "face": "east",
+        "width_m": 12.0,
+        "depth_m": 12.0,
+        "apron_m": 8.0
+      }
+    },
+    {
+      "id": "poi:ferme_humidite_tank",
+      "kind": "workshop",
+      "label": "Station de Pompage & Cuves",
+      "x": 5190.0,
+      "z": -13760.0,
+      "size_m": 30.0,
+      "essential": false,
+      "door": {
+        "face": "west",
+        "width_m": 10.0,
+        "depth_m": 10.0,
+        "apron_m": 6.0
+      }
+    },
+    {
+      "id": "poi:anchor_ridge_mine_hq",
+      "kind": "town_hall",
+      "label": "QG des Mines d'Anchor-Ridge",
+      "x": 9800.0,
+      "z": 28800.0,
+      "size_m": 58.0,
+      "essential": true,
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:anchor_ridge_foundry",
+      "kind": "workshop",
+      "label": "Fonderie de Duracier & Concasseur",
+      "x": 9870.0,
+      "z": 28830.0,
+      "size_m": 48.0,
+      "essential": false,
+      "door": {
+        "face": "west",
+        "width_m": 14.0,
+        "depth_m": 14.0,
+        "apron_m": 8.0
+      }
+    },
+    {
+      "id": "poi:anchor_ridge_cantina",
+      "kind": "cantina",
+      "label": "Le Filon Noir — Cantine des Mineurs",
+      "x": 9730.0,
+      "z": 28770.0,
+      "size_m": 35.0,
+      "essential": false,
+      "door": {
+        "face": "east",
+        "width_m": 10.0,
+        "depth_m": 10.0,
+        "apron_m": 6.0
+      }
+    },
+    {
+      "id": "poi:lac_amethyste_station",
+      "kind": "workshop",
+      "label": "Station Hydrique du Lac d'Améthyste",
+      "x": 22520.0,
+      "z": 39420.0,
+      "size_m": 42.0,
+      "essential": true,
+      "door": {
+        "face": "south",
+        "width_m": 12.0,
+        "depth_m": 12.0,
+        "apron_m": 8.0
+      }
+    },
+    {
+      "id": "poi:mos_espa_market_dome",
+      "kind": "market",
+      "label": "Bazar Marchand de Mos Espa",
+      "x": -25800.0,
+      "z": -7200.0,
+      "size_m": 56.0,
+      "essential": true,
+      "door": {
+        "face": "east",
+        "width_m": 18.0,
+        "depth_m": 18.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:mos_espa_cantina",
+      "kind": "cantina",
+      "label": "Taverne de la Faille",
+      "x": -25730.0,
+      "z": -7160.0,
+      "size_m": 36.0,
+      "essential": false,
+      "door": {
+        "face": "south",
+        "width_m": 12.0,
+        "depth_m": 12.0,
+        "apron_m": 6.0
+      }
+    },
+    {
+      "id": "poi:mos_espa_exchange",
+      "kind": "bank",
+      "label": "Comptoir de Change du Rift",
+      "x": -25860.0,
+      "z": -7240.0,
+      "size_m": 32.0,
+      "essential": false,
+      "door": {
+        "face": "north",
+        "width_m": 10.0,
+        "depth_m": 10.0,
+        "apron_m": 6.0
+      }
+    },
+    {
+      "id": "poi:jawa_salvage_vault",
+      "kind": "workshop",
+      "label": "Atelier Troglodyte des Ferrailleurs",
+      "x": -32400.0,
+      "z": -16800.0,
+      "size_m": 40.0,
+      "essential": true,
+      "door": {
+        "face": "east",
+        "width_m": 12.0,
+        "depth_m": 12.0,
+        "apron_m": 8.0
+      }
+    },
+    {
+      "id": "poi:zalem_citadel_tower",
+      "kind": "town_hall",
+      "label": "Tour Haute du Conseil de Zalem",
+      "x": -31500.0,
+      "z": 5400.0,
+      "size_m": 120.0,
+      "essential": true,
+      "door": {
+        "face": "east",
+        "width_m": 24.0,
+        "depth_m": 24.0,
+        "apron_m": 16.0
+      }
+    },
+    {
+      "id": "poi:zalem_industrial_starport",
+      "kind": "starport_shuttle",
+      "label": "Spatioport Fret & Cargos de Zalem",
+      "x": -31500.0,
+      "z": 5000.0,
+      "size_m": 110.0,
+      "essential": true,
+      "door": {
+        "face": "north",
+        "width_m": 26.0,
+        "depth_m": 26.0,
+        "apron_m": 18.0
+      }
+    },
+    {
+      "id": "poi:zalem_high_foundry",
+      "kind": "workshop",
+      "label": "Hauts-Fourneaux & Fonderie Centrale",
+      "x": -31900.0,
+      "z": 5600.0,
+      "size_m": 90.0,
+      "essential": true,
+      "door": {
+        "face": "east",
+        "width_m": 20.0,
+        "depth_m": 20.0,
+        "apron_m": 12.0
+      }
+    },
+    {
+      "id": "poi:zalem_power_station",
+      "kind": "workshop",
+      "label": "Centrale Thermique à Fusion",
+      "x": -32000.0,
+      "z": 5250.0,
+      "size_m": 75.0,
+      "essential": false,
+      "door": {
+        "face": "east",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:zalem_tech_bazaar",
+      "kind": "market",
+      "label": "Grand Bazar Technologique de Zalem",
+      "x": -31100.0,
+      "z": 5400.0,
+      "size_m": 85.0,
+      "essential": true,
+      "door": {
+        "face": "west",
+        "width_m": 22.0,
+        "depth_m": 22.0,
+        "apron_m": 14.0
+      }
+    },
+    {
+      "id": "poi:zalem_cyber_clinic",
+      "kind": "clinic",
+      "label": "Clinique Cybernétique et Prothèses",
+      "x": -31100.0,
+      "z": 5150.0,
+      "size_m": 60.0,
+      "essential": true,
+      "door": {
+        "face": "west",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:zalem_iron_cantina",
+      "kind": "cantina",
+      "label": "La Forge d'Acier — Cantina Corporative",
+      "x": -31250.0,
+      "z": 5600.0,
+      "size_m": 65.0,
+      "essential": true,
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:zalem_residential_sector_1",
+      "kind": "npc_housing_block",
+      "label": "Secteur d'Habitations Étagées Nord",
+      "x": -31700.0,
+      "z": 5850.0,
+      "size_m": 80.0,
+      "essential": false,
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:zalem_residential_sector_2",
+      "kind": "npc_housing_block",
+      "label": "Secteur d'Habitations Étagées Est",
+      "x": -31300.0,
+      "z": 5850.0,
+      "size_m": 80.0,
+      "essential": false,
+      "door": {
+        "face": "south",
+        "width_m": 16.0,
+        "depth_m": 16.0,
+        "apron_m": 10.0
+      }
+    },
+    {
+      "id": "poi:zalem_monumental_gate",
+      "kind": "city_gate",
+      "label": "Porte Monumentale d'Acier de Zalem",
+      "x": -30800.0,
+      "z": 5300.0,
+      "size_m": 50.0,
+      "essential": true
+    },
+    {
+      "id": "poi:lost_heaven_gate_south",
+      "kind": "city_gate",
+      "name": "Porte Sud de Lost Heaven",
+      "role": "porte_sud_dunes",
+      "x": 4749.0,
+      "y": 0.0,
+      "z": -1387.8,
+      "size_m": 48.0,
+      "color": "#d98c3b"
     }
   ],
   "gabarit_mos_eisley": {

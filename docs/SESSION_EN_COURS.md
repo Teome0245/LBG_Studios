@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-14  
+**Mis à jour** : 2026-11-16  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -8,7 +8,100 @@
 
 ---
 
+## Dernières actions réalisées (2026-11-16)
+-13. **Passage au Standard Planétaire 64 km × 64 km (4 096 km²), Porte Sud de Lost Heaven, Tracés Réseau Propres & Collisions Falaises** :
+    - **Durée du Cycle Jour/Nuit Canonique** :
+      * Paramètre `time_dilation = 60.0` dans `hub_world_clock.gd`.
+      * 1 heure de jeu = 60 secondes réelles (1 minute).
+      * Le cycle planétaire complet de 24h dure exactement **24 minutes réelles** (~12 min de plein jour, ~12 min de nuit/pénombre), modulé en continu selon la longitude $X$ de la caméra (fuseaux horaires du terminateur solaire).
+    - **Création de la Porte Sud de Lost Heaven (`poi:lost_heaven_gate_south`)** :
+      * Ouverture de 62 mètres aménagée dans la palissade Sud (`path:lh_perimeter_fence`) avec piliers Est `(4780, -1387.8)` et Ouest `(4718, -1387.8)`.
+      * Enregistrement de `gate:south_dunes` dans `gate_exits` (couloir praticable $58\text{ m} \times 240\text{ m}$).
+      * Ajout d'une arche monumentale en pierre (`prop:lh_gate_south_arch`) et de lanternes d'éclairage (`prop:lh_gate_south_lamp_w` & `e`).
+      * La route du sud (`road_lh_to_humidity_farm`) part de la place du marché, franchit précisément la Porte Sud et file plein sud vers Lars-Val et Ksar Nomade sans jamais couper le rempart.
+    - **Correction Rigoureuse des Tracés Routiers & Respect des Reliefs** :
+      * *Canyon des Épaves* : la route `road_ksar_to_canyon_alkhali` suit désormais strictement le fond de gorge praticable entre les falaises Nord ($Z \approx -14960$) et Sud ($Z \approx -15080$), sans plus jamais escalader ni couper la roche.
+      * *Autoroute de Zalem* : entre par la Porte Monumentale d'Acier (`poi:zalem_monumental_gate`), sans couper l'enceinte polygonale.
+      * *Piste Caravanière Est* : sort par la Porte Est de Lost Heaven et contourne la ville vers les dunes.
+    - **Gestion Physique des Collisions de Falaises & Obstacles** :
+      * Ajout des polygones de collision infranchissables dans `scrapaltai_zones.json` pour les falaises Nord et Sud du Canyon des Épaves et le bluff rocheux du Ksar Nomade.
+      * Intégration de `zone_polygons` dans `hub_collision.gd` sur le serveur `prime-hub` (`allows(x, z)` bloque désormais les déplacements à travers les falaises côté serveur et côté client).
+    - **Déploiements Validés** :
+      * `prime-hub` déployé sur `.246:8787` (blocks=48, fence_pts=29, zone_polys=3).
+      * Patch client Launchpad déployé sur `.246:8080`.
+      * Client Windows (.10) synchronisé (scripts, données et textures 64 km).
+
+-12. **Harmonisation Géographique 1:1, Cycle Jour/Nuit Progressif (Solar Terminator) & Entités Sol 2D (`scrapaltai_planet.png`, `planet_map_panel.gd`, `lost_heaven_buildings.json`, `lost_heaven_props.json`)** :
+    - **Alignement Géographique Exact 1:1 (Ksar Nomade & Avant-poste Zalem)** :
+      * Correction du décalage géographique majeur : Ksar Nomade et son oasis turquoise repositionnés exactement à `(X: 4950, Z: -3650)` (l'ancien tracé l'affichait à `Z: -4800` et son lac bleu à `X: 2480`).
+      * Avant-poste de Zalem repositionné sur la passe ouest `(X: -1200, Z: -500)` (l'ancienne carte l'affichait avec une inversion de signe à `X: +1200`).
+      * Tracé de la boucle routière ovale en 8 reliant fidèlement Lost Heaven et Ksar Nomade comme observée en jeu.
+    - **Modélisation et Rendu Physique des Éléments Manquants en Jeu** :
+      * Ajout de structures et props complets dans `lost_heaven_buildings.json` et `lost_heaven_props.json` pour que chaque site majeur de la carte soit visible au sol :
+        - *Ferme d'Humidité Lars-Val* `(3850, -2200)` : dôme d'habitation, station de pompage, 5 évaporateurs tripodes atmosphériques GX-8, citernes d'eau douce et caisses.
+        - *Anchor-Ridge* `(4200, 3200)` : QG d'extraction, fonderie & concasseur de duracier, cantine des mineurs, silos miniers, éperons rocheux.
+        - *Lac d'Améthyste* `(5600, 4500)` : nappe d'eau géodique, géodes et aiguilles de cristal pourpre, station hydrique.
+        - *Mos Espa Bazar* `(-2200, -800)` : grand hangar marchand, taverne du rift, comptoir de change, tentes d'étals colorées.
+        - *Camp des Ferrailleurs Jawas* `(-3600, -1200)` : abri troglodyte, carcasse de char des sables, piles de pièces détachées.
+        - *Gouffre du Dragon Krayt* `(-4500, 600)` : fossile colossal de léviathan et falaises de brèche.
+      * Ajout des tracés de pistes au sol (`paths`) reliant tous ces sites (voies sud, est, ouest et nord).
+    - **Cycle Jour/Nuit Progressif Est ↔ Ouest (Solar Terminator)** :
+      * Dans `canvas_of_kings_atmosphere.gd` : calcul de l'heure locale en continu selon la longitude $X$ de la caméra (`local_hour = fposmod(_game_hour + (world_x / 16000.0) * 24.0, 24.0)`). L'aube, le crépuscule, la nuit et l'allumage des lanternes progressent continuellement sans coupure globale instantanée.
+      * Dans `planet_map_panel.gd` (`Ctrl+M`) : projection du terminateur solaire (solar terminator) avec onde sinusoïdale d'inclinaison axiale (12°), bande d'aube/crépuscule ambre, voile bleu nuit et icônes du Soleil ☀️ au zénith et du Croissant de Lune 🌙 au minuit solaire.
+    - **Suppression du Bord Noir ("Bande à gauche") & Dézoom Calibré** :
+      * `player_controller.gd` et `hub_sim.gd` : wrapping toroïdal strict avec `fposmod(pos - min, span) + min` empêchant tout débordement en dehors de `[-8000, +8000]`.
+      * `planet_backdrop.gd` : centrage continu du sol désertique 50 km × 50 km sur la caméra (plus aucun vide noir visible quel que soit le déplacement).
+      * `main.gd` : `CAM_ZOOM_MIN` calibré à `0.25` pour une vue au sol tactique naturelle, la vue planétaire 16 km étant dédiée à la carte `Ctrl+M`.
+    - **Déploiements Validés** :
+      * `prime-hub` déployé sur `.246:8787` (334 navmesh polys, healthz 200).
+      * Patch client Launchpad déployé sur `.246:8080` (v2026-11-16T17:04:13Z, 329 fichiers).
+      * Synchronisation directe vers Windows `.10` (30 fichiers OK, maps png/jpg téléchargées).
+
+-11. **Recalage Géographique Carte Planétaire & Radar Joueur Actif en Direct (`planet_map_panel.gd` & `scrapaltai_planet_map.json`)** :
+    - **Harmonisation Géographique sur le Fond de Carte Steampunk** :
+      * Re-calage des 10 cités et POIs majeurs de Scrapaltai sur les reliefs et nœuds dessinés du fond de carte officiel pour supprimer tout entassement textuel :
+        - *Gouffre du Dragon Krayt* calé au cœur du Grand Rift occidental (`u: 0.240, v: 0.460`).
+        - *Bazar de Mos Espa / Fort Al-Khali* à l'entrée ouest du rift / plaine (`u: 0.380, v: 0.390`).
+        - *Avant-poste Zalem* sur le relais fortifié sud-ouest (`u: 0.450, v: 0.470`).
+        - *Zalem (Capitale)* au carrefour central (`u: 0.488, v: 0.515`).
+        - *Ksar Nomade (Oasis du Sud)* au nœud routier oasis sud (`u: 0.505, v: 0.160`).
+        - *Bourgade minière d'Anchor-Ridge* au pied des falaises septentrionales (`u: 0.540, v: 0.670`).
+        - *Ferme d'Humidité Lars-Val* dans la cuvette de sable central (`u: 0.575, v: 0.420`).
+        - *Lost Heaven (Hub joueur)* au spatioport oriental (`u: 0.655, v: 0.310`).
+        - *Camp des Ferrailleurs Jawas* dans le canyon oriental (`u: 0.770, v: 0.380`).
+        - *Camp Fortifié du Vent Rouge* dans la Mer de Dunes à l'extrême est (`u: 0.855, v: 0.280`).
+    - **Radar Temps Réel du Joueur Actif sur la Carte Planétaire** :
+      * Intégration de la boucle de rafraîchissement temps réel (`_process` / `queue_redraw`).
+      * Affichage d'un curseur joueur pulsant (halo cyan/vert, réticule et balise lisible `● Teome (Vous) [X, Z]`) reflétant la position physique exacte du joueur dans le shard de jeu.
+      * Footer d'information dynamique avec coordonnées GPS en direct.
+    - **Déploiement & Publication** :
+      * Synchronisation vers Windows SDS `.10` (27 fichiers OK).
+      * Publication sur le serveur de patch HTTP `192.168.0.246:8080` (version `2026-11-16T14:34:26Z`, 326 fichiers).
+
+-10. **Correction Menu Radial SWG, Téléportation Dev & Publication Patch Client (.246:8080 & Windows .10)** :
+    - **Restauration de la Téléportation Admin / Dev (`swg_radial_menu.gd`)** :
+      * Cause identifiée : `angles_deg` ne contenait que 6 positions angulaires pré-définies. Dès que le menu contenait plus de 6 options (ex: 10 au sol avec les postures), l'option 6 (`Posture: Accroupi`) se superposait au même angle (`-90°` Nord) par-dessus l'option 0 (`⚡ Téléporter ici (Dev)`), la masquant et interceptant le clic.
+      * Correction : Calcul dynamique des angles (`_get_spoke_angles`) et du rayon de couronne (`spoke_r`) pour distribuer équitablement N boutons sans aucun chevauchement, redimensionnement dynamique du panneau.
+      * Ajout de l'option téléportation Dev sur toutes les cibles (entités, PNJ, structures, monstres) avec extraction des coordonnées `core3_pos`.
+      * Ajout du raccourci direct **Shift + Clic Droit** au sol dans `client_ui_dialogue.gd` pour une téléportation immédiate sans ouvrir le menu.
+    - **Déploiement & Publication** :
+      * Synchronisation vers Windows SDS `.10` (`tools/sync_client_to_win.py`) incluant `swg_radial_menu.gd` (27 fichiers synchronisés).
+      * Publication du patch client sur le serveur Launchpad `192.168.0.246:8080` (version `2026-11-16T14:25:17Z`, 326 fichiers).
+
 ## Dernières actions réalisées (2026-11-15)
+-9. **Déploiement Live & Intégration Client des Villes / POIs de Scrapaltai (Prime Hub & Client)** :
+    - **Synchronisation Client 2D/3D & Carte Planétaire** :
+      * Injection des 6 nouveaux POIs de Scrapaltai (*Anchor-Ridge*, *Ferme Lars-Val*, *Camp Jawas*, *Camp Vent Rouge*, *Gouffre Krayt*, *Mos Espa Bazar*) dans `packages/prime-client/assets/maps/scrapaltai_pois.json` et `scrapaltai_planet_map.json`.
+      * Extension de `tools/sync_client_to_win.py` pour synchroniser les assets maps et scripts de carte vers le poste SDS Windows `.10`.
+      * Déploiement validé sur le poste Windows (26 fichiers transférés avec succès).
+    - **Déploiement & Redémarrage Godot Headless `.246:8787` (`deploy_prime_hub_246.sh`)** :
+      * Export et validation de `catalog_poi.json` (31 POIs).
+      * Service `lbg-prime-hub.service` redémarré avec succès.
+      * NavMesh validé : 7 régions maillées, 372 polygones.
+      * Endpoint `/v1/catalog?type=poi` opérationnel et diffusant les 31 POIs.
+    - **Tests & Validation** :
+      * Tests unitaires `t4c_dialogue_selftest.gd` et `t4c_attributes_selftest.gd` validés à 100%.
+
 -8. **Verrouillage & Invariance Stricte de la Voix de Lia dans les Vidéos (`voice_engine.py`)** :
     - **Diagnostic du Problème** : Dans les deux dernières vidéos (`drop_1794729612` et `drop_1794738612`), Lia alternait entre voix féminine et masculine. Cause : un repli silencieux immédiat et non-retryé sur `fr_FR-upmc-medium` (voix d'homme Pierre UPMC) phrase par phrase dès qu'un glitch websocket Edge TTS survenait.
     - **Garantie d'Invariance Vocale par Vidéo** :
@@ -516,6 +609,50 @@ Réplique exhaustive 100% Star Wars Galaxies Pre-CU : achèvement des **5 Pilier
   - **Améliorations validées** : Caméra reculée (dist: 4.25m, fov: 28°), lipsync spectral FFT calé sur la voix réelle, zéro pixel de bureau / coins arrondis Windows 11 éliminés.
   - **Lia Desktop (Compagnon)** : Nettoyage du menu Tray (retrait de iStripper ➔ ) et intégration du  directement dans .
   - **Lien YouTube Shorts Public** : https://www.youtube.com/shorts/uLV_0kI2ogM
+
+
+### 2026-11-16 (12) — Cadastre Canonique Scrapaltai (16 km × 16 km SWG/Core3) & Nouvelle Carte Régionale 1:1
+
+- **Carte Régionale HD Re-générée & Déployée** :
+  - `packages/prime-client/assets/maps/scrapaltai_planet.png` & `.jpg` (2048×2048) :
+    * Raccordement toroïdal 360° (seamless blend aux frontières X/Z).
+    * Falaises de duracier rouille au Nord, Grand Rift détaillé et embranchements à l'Ouest.
+    * Cratère du Lac d'Améthyste, Oasis du Ksar Nomade, Butte de Zalem et Bassin de Lost Heaven.
+    * Tracé rouge/ocre des routes commerciales de convois.
+    * Cartouche officiel avec mention : "Topologie : Globe Sphérique Continu (World Wrap 360°)".
+  - Patch Launchpad publié sur `.246:8080` (version `2026-11-16T16:03:33Z`).
+- **Bouclage Planétaire Continu (Option A — Toroidal World Wrap)** :
+  - `packages/prime-client/scripts/player_controller.gd` : `wrap_world_pos()` sur les 4 axes [-8000, +8000].
+    * Si X > +8000m ➔ X = -8000m (et inversement).
+    * Si Z > +8000m ➔ Z = -8000m (et inversement).
+    * Recalage immédiat de la caméra `_camera.position` lors du franchissement de bordure pour une transition sans à-coup.
+  - `packages/prime-hub/scripts/hub_sim.gd` : Suppression de l'ancien filtre restrictif (2500..7500) et intégration du wrapping 16 km sur `set_human_pos()`.
+  - Redéploiement `prime-hub` sur `.246:8787` et synchronisation vers client Windows SDS `.10` validés.
+- **Standard Universel Validé pour TOUTES les Planètes du Jeu** :
+  - Règle gravée dans `docs/architecture/STANDARD_PLANETAIRE_16KM.md`.
+  - Toutes les planètes du MMO (Scrapaltai, Arvandor, Khar-Zuun, Mor-Valoth, Terre-One...) auront le même format canonique : **16 km × 16 km** (256 km², X/Z ∈ [-8000, +8000]), zéro jitter float 32-bit, même formule mathématique 1:1, cartes 2048×2048 px.
+- **Refonte Géographique Canonique Option B** :
+  - Adoption de la taille canonique SWG/Core3 (16 384 m × 16 384 m, surface 256 km², X/Z ∈ [-8000, +8000]).
+  - Génération d'une carte régionale haute résolution (`2048×2048` PNG+JPG) via `packages/prime-client/tools/generate_scrapaltai_regional_map.py` :
+    * Falaises de duracier et crêtes au Nord (+Z) avec Anchor-Ridge et Cratère du Lac d'Améthyste.
+    * Le Grand Rift et Canyons à l'Ouest (-X) avec Gouffre du Dragon Krayt, Camp des Jawas et Bazar de Mos Espa.
+    * Plaine centrale avec Zalem (capitale lore) et Avant-poste fortifié de Zalem.
+    * Bassin Est/Sud-Est (+X, -Z) avec Lost Heaven (hub canonique `4749, -737`), Ferme d'Humidité Lars-Val et Camp du Vent Rouge.
+    * Basses terres et oasis au Sud (-Z) avec Ksar Nomade.
+    * Tracé du réseau routier rouge/ocre reliant les avant-postes.
+    * Grille graduée tous les 2000m, rose des vents et cartouche spatioportuaire officiel.
+- **Harmonisation Données Serveur & Client** :
+  - `packages/prime-client/assets/maps/scrapaltai_planet_map.json` & `scrapaltai_pois.json` : Coordonnées réelles alignées.
+  - `packages/prime-hub/data/catalog_poi.json` : Synchronisé avec les nouvelles coordonnées via `agent_catalog`.
+  - `packages/prime-hub/scripts/hub_nav.gd` : Boîtes `ZONES_DEF` mises à jour pour les 7 zones (NavMesh 212 polygones validé).
+  - `packages/prime-client/scripts/planet_map_panel.gd` :
+    * Projection directe 1:1 métrique sans déformation (`_map_rect` carré centré).
+    * Radar joueur vert pulsant en temps réel (`● Teome (Vous)`).
+    * Footer propre affichant la position exacte X/Z et informations de survol des POIs.
+- **Déploiements Validés** :
+  - `prime-hub` déployé et redémarré sur `.246:8787` (`/healthz` 200).
+  - Patch Launchpad publié sur `.246:8080` (version `2026-11-16T15:07:30Z`, 328 fichiers, images PNG/JPG incluses).
+  - Scripts synchronisés vers Windows SDS `.10` (`tools/sync_client_to_win.py`).
 
 ## Historique archivé
 

@@ -25,6 +25,19 @@ func _ensure_ui() -> void:
 	pass
 
 
+func _get_spoke_angles(count: int) -> Array[float]:
+	var angles: Array[float] = []
+	if count <= 6:
+		var base: Array[float] = [-90.0, 0.0, 90.0, 180.0, -45.0, 45.0]
+		for i in range(count):
+			angles.append(base[i])
+	else:
+		var step := 360.0 / float(count)
+		for i in range(count):
+			angles.append(-90.0 + float(i) * step)
+	return angles
+
+
 func build_options_for_context(ctx: Dictionary) -> Array:
 	var kind := str(ctx.get("kind", "ground")).to_lower()
 	var t_name := str(ctx.get("name", "")).to_lower()
@@ -81,6 +94,10 @@ func build_options_for_context(ctx: Dictionary) -> Array:
 		opts.append({"id": "posture_stand", "label": "🚶 Posture: Debout"})
 		opts.append({"id": "open_skills", "label": "Compétences [K]"})
 
+	# Option Dev téléportation toujours accessible sur n'importe quelle cible
+	if kind != "ground":
+		opts.append({"id": "teleport_here", "label": "⚡ Téléporter ici (Dev)"})
+
 	return opts
 
 
@@ -118,17 +135,23 @@ func open_at(screen_pos: Vector2, context: Dictionary) -> void:
 			b.queue_free()
 	_btn_nodes.clear()
 
+	var count := _current_options.size()
+	var spoke_r := SPOKE_RADIUS if count <= 6 else (SPOKE_RADIUS + 32.0)
+	var extent := spoke_r + 90.0
+	custom_minimum_size = Vector2(extent * 2.0, extent * 2.0)
+	size = custom_minimum_size
+	_center_pos = Vector2(extent, extent)
+
 	position = screen_pos - _center_pos
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
-	# Angles canoniques SWG : Haut (-90°), Droite (0°), Bas (+90°), Gauche (180°), Haut-Droite (-45°)
-	var angles_deg := [-90.0, 0.0, 90.0, 180.0, -45.0, 45.0]
-	for i in range(_current_options.size()):
+	var angles_deg := _get_spoke_angles(count)
+	for i in range(count):
 		var opt: Dictionary = _current_options[i]
-		var ang := deg_to_rad(float(angles_deg[i % angles_deg.size()]))
+		var ang := deg_to_rad(angles_deg[i])
 		var dir := Vector2(cos(ang), sin(ang))
-		var anchor_pt := _center_pos + dir * SPOKE_RADIUS
+		var anchor_pt := _center_pos + dir * spoke_r
 		var btn := _make_swg_pill_btn(i, str(opt.get("label", opt.get("id", "Action"))))
 		var bw := 156.0
 		var bh := 24.0
@@ -157,12 +180,14 @@ func _draw() -> void:
 		draw_line(c + d * (RING_RADIUS - 7.0), c + d * (RING_RADIUS + 4.0), Color(0.55, 0.96, 1.0, 0.9), 1.5)
 
 	# Rayons vectoriels reliant l'anneau central à chaque option radiale
-	var angles_deg := [-90.0, 0.0, 90.0, 180.0, -45.0, 45.0]
-	for i in range(_current_options.size()):
-		var ang := deg_to_rad(float(angles_deg[i % angles_deg.size()]))
+	var count := _current_options.size()
+	var spoke_r := SPOKE_RADIUS if count <= 6 else (SPOKE_RADIUS + 32.0)
+	var angles_deg := _get_spoke_angles(count)
+	for i in range(count):
+		var ang := deg_to_rad(angles_deg[i])
 		var dir := Vector2(cos(ang), sin(ang))
 		var p0 := c + dir * RING_RADIUS
-		var p1 := c + dir * (SPOKE_RADIUS - 14.0)
+		var p1 := c + dir * (spoke_r - 14.0)
 		draw_line(p0, p1, Color(0.24, 0.86, 0.96, 0.85), 1.5)
 		draw_circle(p0, 3.0, Color(0.95, 0.82, 0.35, 1.0))
 

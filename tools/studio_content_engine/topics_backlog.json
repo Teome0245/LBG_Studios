@@ -115,8 +115,72 @@
     "id": 15,
     "topic": "Le secret des micro-animations faciales et du lip-sync par FFT audio",
     "category": "Tech Art & Son",
-    "status": "pending",
-    "published_at": null,
+    "status": "published",
+    "published_at": "2026-11-15T14:08:52.291075",
+    "youtube_url": "https://www.youtube.com/shorts/zn7JlhmAQY0"
+  },
+  {
+    "id": 16,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-15 16:30)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-15T16:38:45.971109",
+    "youtube_url": "https://www.youtube.com/shorts/8LQ3O-kuLsQ"
+  },
+  {
+    "id": 17,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-15 19:00)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-15T19:11:16.123280",
     "youtube_url": null
+  },
+  {
+    "id": 18,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-15 21:30)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-15T21:38:40.925452",
+    "youtube_url": "https://www.youtube.com/shorts/cofekGJonGg"
+  },
+  {
+    "id": 19,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-16 09:00)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-16T09:08:44.683918",
+    "youtube_url": "https://www.youtube.com/shorts/5r-Mcywx6O4"
+  },
+  {
+    "id": 20,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-16 11:30)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-16T11:38:55.847408",
+    "youtube_url": "https://www.youtube.com/shorts/Fu7gJraYW7E"
+  },
+  {
+    "id": 21,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-16 14:00)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-16T14:09:42.951917",
+    "youtube_url": "https://www.youtube.com/shorts/IrHxdvX7Hmw"
+  },
+  {
+    "id": 22,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-16 16:30)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-16T16:39:13.732241",
+    "youtube_url": "https://www.youtube.com/shorts/6VnD9nGgaeI"
+  },
+  {
+    "id": 23,
+    "topic": "Ingénierie locale et agents autonomes chez LBG Studios (2026-11-16 19:00)",
+    "category": "Tech & Dev",
+    "status": "published",
+    "published_at": "2026-11-16T19:09:12.485069",
+    "youtube_url": "https://www.youtube.com/shorts/27ZZEZnAW88"
   }
 ]

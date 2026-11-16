@@ -87,7 +87,7 @@ const COLOR_NPC := Color(1.0, 0.5, 0.1, 1.0)
 
 const CAM_SPEED:     float   = 400.0
 const CAM_ZOOM_STEP: float   = 0.15
-const CAM_ZOOM_MIN:  Vector2 = Vector2(0.05, 0.05)
+const CAM_ZOOM_MIN:  Vector2 = Vector2(0.25, 0.25)
 const CAM_ZOOM_MAX:  Vector2 = Vector2(8.0, 8.0)
 
 const LOST_HEAVEN_HUB := Vector3(4749.0, 0.0, -737.0)
@@ -692,11 +692,14 @@ func _handle_world_right_click(screen_pos: Vector2) -> void:
 	if picked:
 		_set_selected_entity(picked.object_id)
 		var e_name := str(picked.get_display_name()) if picked.has_method("get_display_name") else str(picked.get("label_text"))
+		var c3_pos: Vector3 = picked.get("core3_pos") if picked.get("core3_pos") != null else _screen_click_to_core3(screen_pos)
 		var ctx := {
 			"kind": str(picked.get("kind")),
 			"name": e_name,
 			"object_id": int(picked.object_id),
 			"entity_key": str(picked.get("entity_key")),
+			"x": c3_pos.x,
+			"z": c3_pos.z,
 		}
 		swg_radial_menu.open_at(ui_pos, ctx)
 		return

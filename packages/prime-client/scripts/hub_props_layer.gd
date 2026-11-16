@@ -355,6 +355,10 @@ func _draw_prop(p: Dictionary) -> void:
 			_draw_mine_silo(center, p)
 		"cargo_container":
 			_draw_cargo_container(center, p)
+		"moisture_vaporator":
+			_draw_moisture_vaporator(center, p)
+		"crystal_cluster":
+			_draw_crystal_cluster(center, p)
 		_:
 			var fp: Variant = p.get("footprint", null)
 			if fp is Dictionary:
@@ -807,6 +811,47 @@ func _draw_cargo_container(center: Vector2, p: Dictionary) -> void:
 		var t := float(i) / 4.0
 		var lx := lerpf(-w * 0.5, w * 0.5, t)
 		draw_line(xf * Vector2(lx, -h * 0.5), xf * Vector2(lx, h * 0.5), col_dark, 1.0)
+
+func _draw_moisture_vaporator(center: Vector2, p: Dictionary) -> void:
+	# Condenseur d'humidité atmosphérique tripode canon SWG
+	var s := float(p.get("scale", 1.0)) * 12.0
+	var col_steel := Color(0.72, 0.76, 0.82, 0.98)
+	var col_dark := Color(0.18, 0.16, 0.14, 0.98)
+	var col_shadow := Color(0.14, 0.10, 0.06, 0.30)
+	# Ombre allongée du mât
+	draw_line(center + Vector2(2.0, 3.0), center + Vector2(16.0, 20.0), col_shadow, 3.5)
+	# Embase tripode (3 pieds à 120°)
+	for i in range(3):
+		var a := (float(i) / 3.0) * TAU - PI * 0.5
+		var foot := center + Vector2(cos(a), sin(a)) * s
+		draw_line(center, foot, col_dark, 2.4)
+		draw_line(center, foot, col_steel, 1.2)
+		draw_circle(foot, 2.2, col_dark)
+	# Mât central cylindrique
+	draw_circle(center, 4.5, col_dark)
+	draw_circle(center, 3.2, col_steel)
+	# Condenseur supérieur & capteur
+	draw_circle(center, 1.8, Color(0.25, 0.65, 0.85, 0.98))
+
+func _draw_crystal_cluster(center: Vector2, p: Dictionary) -> void:
+	# Bouquet de cristaux géodiques d'améthyste violette
+	var rad := float(p.get("radius_m", 6.0)) * Projection3D2D.SCALE
+	var col_cryst := Color(0.68, 0.28, 0.82, 0.95)
+	var col_light := Color(0.92, 0.70, 0.98, 0.98)
+	var col_dark := Color(0.24, 0.08, 0.32, 0.98)
+	var col_shadow := Color(0.14, 0.08, 0.16, 0.35)
+	draw_circle(center + Vector2(3.0, 4.0), rad * 1.1, col_shadow)
+	# 5 aiguilles de cristal
+	for i in range(5):
+		var a := (float(i) / 5.0) * TAU + 0.2
+		var len_c := rad * (0.8 + 0.5 * sin(float(i) * 2.3))
+		var tip := center + Vector2(cos(a), sin(a)) * len_c
+		var s1 := center + Vector2(cos(a + 0.3), sin(a + 0.3)) * (rad * 0.4)
+		var s2 := center + Vector2(cos(a - 0.3), sin(a - 0.3)) * (rad * 0.4)
+		draw_colored_polygon(PackedVector2Array([center, s1, tip, s2]), col_cryst)
+		draw_polyline(PackedVector2Array([s1, tip, s2]), col_dark, 1.2, false)
+		draw_line(center, tip, col_light, 1.0)
+	draw_circle(center, 3.0, col_dark)
 
 func _color_for_kind(kind: String) -> Color:
 	match kind:

@@ -624,8 +624,11 @@ func set_human_pos(oid: int, x: float, y: float, z: float) -> void:
 	var eid := "player:%d" % oid
 	if not entities.has(eid):
 		return
-	if (absf(x) < 50.0 and absf(z) < 50.0) or x < 2500.0 or x > 7500.0:
+	if absf(x) < 50.0 and absf(z) < 50.0:
 		return
+	# Wrapping toroïdal canonique Option A (64 km × 64 km, X/Z ∈ [-32000, +32000])
+	x = fposmod(x - (-32000.0), 64000.0) + (-32000.0)
+	z = fposmod(z - (-32000.0), 64000.0) + (-32000.0)
 	var cur: Vector3 = entities[eid]["pos"]
 	var clamped: Vector2 = Vector2(x, z)
 	if collision != null:

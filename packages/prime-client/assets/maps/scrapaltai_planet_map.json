@@ -1,142 +1,175 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "planet_id": "scrapaltai",
   "display_name": "Scrapaltai",
-  "reference_image": "scrapaltai_carte_planete_reference.png",
+  "reference_image": "scrapaltai_planet.png",
   "physical": {
-    "diameter_km": 10465,
-    "surface_km2": 344000000,
-    "scale_bar_km": 5000,
-    "tone": "désert rouille · canyons · bassins salés · réseau routes rouges"
+    "diameter_km": 64.0,
+    "surface_km2": 4096.0,
+    "scale_bar_km": 16.0,
+    "tone": "space_western_dieselpunk",
+    "bounds": {
+      "min_x": -32000.0,
+      "max_x": 32000.0,
+      "min_z": -32000.0,
+      "max_z": 32000.0
+    }
   },
   "grid": {
-    "columns": 12,
-    "rows": 4,
-    "origin": "bottom_left",
-    "column_index_from": "left",
-    "row_index_from": "bottom",
+    "columns": 8,
+    "rows": 8,
+    "step_meters": 8000.0,
+    "origin": "center",
     "map_align": {
-      "inset_left": 0.07,
-      "inset_top": 0.11,
-      "inset_right": 0.07,
-      "inset_bottom": 0.20,
-      "note": "Exclut bordure steampunk + légende bas (diamètre/surface) + graduations"
-    },
-    "latitude_bands": [
-      { "row": 1, "label": "60°S → 30°S", "note": "hémisphère sud profond" },
-      { "row": 2, "label": "30°S → 0°", "note": "approche équateur sud — Lost Heaven (map_uv)" },
-      { "row": 3, "label": "0° → 30°N", "note": "bande équatoriale nord — Zalem (map_uv)" },
-      { "row": 4, "label": "30°N → 60°N", "note": "hauts plateaux nord" }
-    ],
-    "notes": "Grille alignée sur la carte steampunk de référence (12 cadrans × 4 bandes lat.). Les libellés longitude sur l’art ne sont pas des coords géodésiques — repère visuel uniquement."
-  },
-  "macro_regions": [
-    {
-      "id": "region:great_rift_west",
-      "label": "Grand Rift occidental",
-      "grid_cols": [1, 2, 3, 4],
-      "grid_rows": [2, 3, 4],
-      "feature": "canyon branché (type Valles) — routes rouges le long des parois"
-    },
-    {
-      "id": "region:zalem_heart",
-      "label": "Cœur de Zalem",
-      "grid_cols": [5, 6, 7],
-      "grid_rows": [2, 3],
-      "feature": "carrefour planétaire — pentagone multicolore, capitale verticale"
-    },
-    {
-      "id": "region:crater_basin_ne",
-      "label": "Bassin du lac NE",
-      "grid_cols": [9, 10, 11, 12],
-      "grid_rows": [3, 4],
-      "feature": "impact / caldeira — grand lac bleu, crêtes concentriques"
-    },
-    {
-      "id": "region:dune_sea_east",
-      "label": "Mer de dunes est",
-      "grid_cols": [7, 8, 9],
-      "grid_rows": [2, 3],
-      "feature": "désert ouvert — avant-postes, route secondaire vers le bassin NE"
+      "inset_left": 0.0,
+      "inset_top": 0.0,
+      "inset_right": 0.0,
+      "inset_bottom": 0.0,
+      "note": "Carte regionale 1:1 sans bordure ni deformation"
     }
-  ],
+  },
   "settlements": [
-    {
-      "id": "city:zalem",
-      "label": "Zalem",
-      "role": "capital",
-      "scale": "metropolis",
-      "grid": { "col": 6, "row": 3 },
-      "map_uv": { "u": 0.488, "v": 0.515 },
-      "status": "lore_canon",
-      "lore_notes": "Métropole verticale au nœud des routes rouges — cité de ferraille / scrap en hauteur. Hommage structurel Gunnm, ton LBG space western.",
-      "notes": "Capitale planétaire — pentagone central carte. Pas jouable v1."
-    },
     {
       "id": "city:lost_heaven",
       "label": "Lost Heaven",
       "role": "hub_joueur",
-      "scale": "small_town",
-      "grid": { "col": 8, "row": 2 },
-      "map_uv": { "u": 0.655, "v": 0.31 },
-      "status": "active_gameplay",
-      "region_id": "region:dune_sea_east",
-      "environment": "avant-poste désertique bord sud-est du bassin NE — route rouge vers Zalem",
-      "core3_playable_shard": {
-        "zone_id": "tatooine",
-        "anchor": { "x": 4749, "y": -737, "z": 32 },
-        "half_size_m": 6500,
-        "note": "Shard Core3 13×13 km = zoom gameplay local, pas la planète entière"
-      }
+      "scale": "capital",
+      "x": 4749.0,
+      "z": -737.0,
+      "environment": "bassin central est — spatioport, cantina La Perle, banques",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:ksar_nomade",
+      "label": "Ksar Nomade",
+      "role": "village",
+      "scale": "oasis",
+      "x": 6000.0,
+      "z": -18000.0,
+      "environment": "oasis sacrée du sud abritant le ksar fortifié et le grand marché de troc",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:canyon_epaves",
+      "label": "Canyon des Épaves",
+      "role": "landmark",
+      "scale": "canyon",
+      "x": 11000.0,
+      "z": -15000.0,
+      "environment": "faille rocheuse jonchée d'épaves de chasseurs et squelette de Léviathan Krayt",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:oasis_al_khali",
+      "label": "Oasis d'Al-Khali",
+      "role": "village",
+      "scale": "oasis",
+      "x": 18000.0,
+      "z": -10000.0,
+      "environment": "étape des caravanes de dunes avec source naturelle et palmiers dattiers",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:guet_dunes",
+      "label": "Guet des Dunes",
+      "role": "outpost",
+      "scale": "outpost",
+      "x": 24000.0,
+      "z": -5000.0,
+      "environment": "vigie orientale surveillant la mer de dunes près de l'épave du cargo Ikaros",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:ferme_humidite",
+      "label": "Ferme d'Humidité Lars-Val",
+      "role": "village",
+      "scale": "rural",
+      "x": 4500.0,
+      "z": -8000.0,
+      "environment": "station rurale de captage et condenseurs atmosphériques",
+      "status": "active_gameplay"
     },
     {
       "id": "city:avant_poste_zalem",
       "label": "Avant-poste Zalem",
       "role": "outpost",
       "scale": "outpost",
-      "grid": { "col": 6, "row": 2 },
-      "map_uv": { "u": 0.525, "v": 0.465 },
-      "status": "active_gameplay",
-      "region_id": "region:dune_sea_east",
-      "faction": "Milice locale",
-      "environment": "relais fortifié sur la route de Zalem — contrôle des convois et garde porte ouest",
-      "core3_playable_shard": {
-        "zone_id": "tatooine",
-        "anchor": { "x": -1200.0, "y": -550.0, "z": 0.15 },
-        "half_size_m": 450,
-        "note": "Avant-poste militaire et technique — Milice locale"
-      }
+      "x": -7000.0,
+      "z": -1000.0,
+      "environment": "garnison minière et passe fortifiée contrôlant la route commerciale ouest",
+      "status": "active_gameplay"
     },
     {
-      "id": "city:ksar_nomade",
-      "label": "Ksar Nomade",
-      "role": "village",
-      "scale": "settlement",
-      "grid": { "col": 8, "row": 1 },
-      "map_uv": { "u": 0.665, "v": 0.150 },
-      "status": "active_gameplay",
-      "region_id": "region:dune_sea_east",
-      "faction": "Civils du desert",
-      "environment": "campement nomade et oasis de ferraille dans les dunes est — refuge des caravanes et herboristes",
-      "core3_playable_shard": {
-        "zone_id": "tatooine",
-        "anchor": { "x": 4950.0, "y": -3800.0, "z": 0.15 },
-        "half_size_m": 450,
-        "note": "Oasis et campement nomade — Civils du désert et Confrérie des soins"
-      }
-    }
-  ],
-  "deprecated_legacy": [
+      "id": "city:zalem",
+      "label": "Zalem (Mégalopole)",
+      "role": "capital",
+      "scale": "metropolis",
+      "x": -18000.0,
+      "z": 3000.0,
+      "environment": "mégalopole de ferraille et haute technologie — 10 quartiers, fonderies et spatioport lourd",
+      "status": "lore_canon"
+    },
     {
-      "id": "city:mos_eisley",
-      "label": "Mos Eisley (legacy SWG)",
-      "grid": { "col": 7, "row": 2 },
-      "status": "deprecated",
-      "note": "Vanilla moteur — même shard Core3 que LH (~4 km) ; hors lore LBG"
+      "id": "city:mos_espa_bazar",
+      "label": "Mos Espa Bazar",
+      "role": "village",
+      "scale": "town",
+      "x": -14000.0,
+      "z": -4000.0,
+      "environment": "grand marché marchand et comptoir de change à la sortie du grand rift",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:camp_ferrailleurs",
+      "label": "Camp des Ferrailleurs Jawas",
+      "role": "outpost",
+      "scale": "camp",
+      "x": -18000.0,
+      "z": -9000.0,
+      "environment": "repaire troglodyte des Jawas sous les parois du canyon de ferraille",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:gouffre_krayt",
+      "label": "Gouffre du Dragon Krayt",
+      "role": "outpost",
+      "scale": "lair",
+      "x": -22000.0,
+      "z": 12000.0,
+      "environment": "antre rocheuse profonde dans les failles occidentales du rift",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:anchor_ridge",
+      "label": "Anchor-Ridge",
+      "role": "village",
+      "scale": "small_town",
+      "x": 7000.0,
+      "z": 16000.0,
+      "environment": "bourgade minière de duracier perchée sur les falaises nord",
+      "status": "active_gameplay"
+    },
+    {
+      "id": "city:lac_amethyste",
+      "label": "Lac d'Améthyste",
+      "role": "landmark",
+      "scale": "landmark",
+      "x": 14000.0,
+      "z": 22000.0,
+      "environment": "cratère d'impact hydrique nord-est et réserve d'eau minérale",
+      "status": "lore_canon"
     }
   ],
-  "transport": {
-    "red_lines": "artères inter-villes (capitale ↔ bassins ↔ rift)",
-    "yellow_lines": "routes locales / pistes secondaires"
+  "topology": {
+    "type": "globe",
+    "wrap_enabled": true,
+    "world_span_m": 32000.0,
+    "bounds": {
+      "min_x": -16000.0,
+      "max_x": 16000.0,
+      "min_z": -16000.0,
+      "max_z": 16000.0
+    },
+    "note": "World wrap continu toroidal (tour de planete 360 degres Est/Ouest et Nord/Sud)"
   }
 }

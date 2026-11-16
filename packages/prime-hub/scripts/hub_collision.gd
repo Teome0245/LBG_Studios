@@ -11,6 +11,7 @@ var enforce_fence: bool = true
 var fence_ring: Array = []
 var gate_exits: Array = []
 var open_fence_segments: Dictionary = {}
+var zone_polygons: Array = []
 
 
 func reload(buildings_path: String = "") -> void:
@@ -67,7 +68,8 @@ func reload(buildings_path: String = "") -> void:
 			"doors": doors_list,
 		})
 	_load_fence_and_gates()
-	print("[prime-hub] collision blocks=%d fence_pts=%d path=%s" % [blocks.size(), fence_ring.size(), path])
+	_load_zone_polygons()
+	print("[prime-hub] collision blocks=%d fence_pts=%d zone_polys=%d path=%s" % [blocks.size(), fence_ring.size(), zone_polygons.size(), path])
 
 
 func _default_buildings_path() -> String:
@@ -136,6 +138,47 @@ func _load_fence_and_gates(props_path: String = "") -> void:
 		break
 
 
+func _load_zone_polygons() -> void:
+	zone_polygons.clear()
+	var root := ProjectSettings.globalize_path("res://").rstrip("/")
+	var candidates := [
+		root.path_join("../prime-client/assets/maps/scrapaltai_zones.json"),
+		"/opt/lbg-hub-runtime/data/scrapaltai_zones.json",
+		"/opt/lbg-prime-hub/data/scrapaltai_zones.json",
+		root.path_join("data/scrapaltai_zones.json"),
+	]
+	for p in candidates:
+		if FileAccess.file_exists(p):
+			var f := FileAccess.open(p, FileAccess.READ)
+			if f != null:
+				var d: Variant = JSON.parse_string(f.get_as_text())
+				if d is Dictionary and d.has("collision") and d["collision"] is Array:
+					for item in d["collision"]:
+						if item is Dictionary and item.has("polygon") and item["polygon"] is Array:
+							var pts := PackedVector2Array()
+							for pt in item["polygon"]:
+								if pt is Array and pt.size() >= 2:
+									pts.append(Vector2(float(pt[0]), float(pt[1])))
+							if pts.size() >= 3:
+								zone_polygons.append(pts)
+			break
+
+
+func _point_in_poly(p: Vector2, poly: PackedVector2Array) -> bool:
+	var inside := false
+	var n := poly.size()
+	if n < 3:
+		return false
+	var j := n - 1
+	for i in range(n):
+		var pi := poly[i]
+		var pj := poly[j]
+		if ((pi.y > p.y) != (pj.y > p.y)) and (p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y + 1e-9) + pi.x):
+			inside = not inside
+		j = i
+	return inside
+
+
 func _door_corridor(door: Dictionary, cx: float, cz: float, half: float) -> Dictionary:
 	var face := str(door.get("face", "south")).to_lower()
 	var hw := float(door.get("width_m", 12.0)) * 0.5
@@ -167,6 +210,9 @@ func _in_door(doors, x: float, z: float) -> bool:
 
 
 func allows(x: float, z: float) -> bool:
+	for poly in zone_polygons:
+		if _point_in_poly(Vector2(x, z), poly):
+			return false
 	for b in blocks:
 		var min_x: float = float(b["min_x"])
 		var max_x: float = float(b["max_x"])

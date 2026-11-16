@@ -12,12 +12,25 @@ const _SEED := 0x7A4F00
 func _ready() -> void:
 	# Couleur de fond par défaut unifiée avec le sable chaud de Scrapaltai (jamais de vide noir/marron sombre)
 	RenderingServer.set_default_clear_color(Color(0.70, 0.60, 0.46, 1.0))
+	set_process(true)
+
+func _process(_delta: float) -> void:
+	# Suivre la caméra pour un fond désertique véritablement infini sans coupure
+	var vp := get_viewport()
+	var cam := vp.get_camera_2d() if vp else null
+	if cam:
+		var cam_p := cam.global_position
+		# Décalage par crans discrets de 500m pour éviter de redessiner à chaque frame
+		var snapped_p := Vector2(snappedf(cam_p.x, 250.0), snappedf(cam_p.y, 250.0))
+		if position != snapped_p:
+			position = snapped_p
+			queue_redraw()
 
 func _draw() -> void:
 	if not draw_enabled:
 		return
-	# Couverture globale statique de toute la planète (36 km × 36 km, aucune couture quel que soit le zoom)
-	var rect := Rect2(-18000.0, -18000.0, 36000.0, 36000.0)
+	# Couverture infinie centrée sur le point d'ancrage local (50 km × 50 km)
+	var rect := Rect2(-25000.0, -25000.0, 50000.0, 50000.0)
 
 	# 1. Base chaude style grès / parchemin désertique
 	draw_rect(rect, Color(0.70, 0.60, 0.46, 1.0))

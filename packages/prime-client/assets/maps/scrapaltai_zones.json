@@ -4,5 +4,75 @@
   "notes": "Polygones Core3 (x,z). Mos Eisley retiré (deprecated ADR 0009). Collisions hub LH = lost_heaven_buildings.json via ZoneLayers. Debug : Ctrl+W eau, Ctrl+C collisions.",
   "water_level_y": -4800.0,
   "water": [],
-  "collision": []
+  "collision": [
+    {
+      "id": "cliff:canyon_epaves_north_wall",
+      "kind": "cliff_rock_wall",
+      "label": "Falaise rocheuse Nord du Canyon des Épaves",
+      "polygon": [
+        [
+          10650.0,
+          -14940.0
+        ],
+        [
+          11350.0,
+          -14750.0
+        ],
+        [
+          11350.0,
+          -14900.0
+        ],
+        [
+          10650.0,
+          -15040.0
+        ]
+      ]
+    },
+    {
+      "id": "cliff:canyon_epaves_south_wall",
+      "kind": "cliff_rock_wall",
+      "label": "Falaise rocheuse Sud du Canyon des Épaves",
+      "polygon": [
+        [
+          10650.0,
+          -15090.0
+        ],
+        [
+          11350.0,
+          -14970.0
+        ],
+        [
+          11350.0,
+          -15180.0
+        ],
+        [
+          10650.0,
+          -15250.0
+        ]
+      ]
+    },
+    {
+      "id": "cliff:ksar_oasis_bluff_wall",
+      "kind": "cliff_rock_wall",
+      "label": "Paroi rocheuse d'enceinte du Ksar Nomade",
+      "polygon": [
+        [
+          5700.0,
+          -18150.0
+        ],
+        [
+          6500.0,
+          -18050.0
+        ],
+        [
+          6500.0,
+          -18300.0
+        ],
+        [
+          5700.0,
+          -18300.0
+        ]
+      ]
+    }
+  ]
 }

@@ -38,6 +38,14 @@ func _ensure_setup() -> void:
 	_setup_hub_lights()
 
 func _process(delta: float) -> void:
+	# Progression continue du cycle Jour/Nuit Est <-> Ouest (Solar Terminator)
+	var vp := get_viewport()
+	var cam := vp.get_camera_2d() if vp else null
+	var world_x: float = (cam.global_position.x / Projection3D2D.SCALE) if cam else 0.0
+	# Décalage de longitude : 64 000 m = 24 heures (1 heure = ~2667 m)
+	var local_hour: float = fposmod(_game_hour + (world_x / 64000.0) * 24.0, 24.0)
+	_apply_lighting_for_hour(local_hour)
+
 	# Scintillement subtil et organique des lanternes la nuit
 	if _lanterns_active:
 		var time_ms := Time.get_ticks_msec() * 0.003
@@ -49,8 +57,6 @@ func _process(delta: float) -> void:
 
 	# Déplacement fluide des particules atmosphériques centré sur la caméra
 	if _particles:
-		var vp := get_viewport()
-		var cam := vp.get_camera_2d() if vp else null
 		if cam:
 			_particles.global_position = cam.global_position
 
@@ -175,36 +181,35 @@ func set_world_clock(wc: Dictionary) -> void:
 	_is_night = bool(wc.get("is_night", false))
 	_lanterns_active = bool(wc.get("night_lanterns_active", _is_night))
 
-	# 1. Calcul de la teinte d'ambiance CanvasModulate selon l'heure
-	var amb_col := _calculate_day_cycle_color(_game_hour)
+func _apply_lighting_for_hour(hour: float) -> void:
+	# 1. Calcul de la teinte d'ambiance CanvasModulate selon l'heure locale
+	var amb_col := _calculate_day_cycle_color(hour)
 	if _modulate:
 		_modulate.color = amb_col
 
-	# 2. Activation des lanternes en pénombre et nuit
+	# 2. Activation des lanternes en pénombre et nuit locale
+	var local_night: bool = (hour < 6.5 or hour > 19.0)
 	for l in _lights_nodes:
 		if l:
-			l.visible = _lanterns_active or _game_hour < 7.0 or _game_hour > 18.5
+			l.visible = local_night
 
 	# 3. Calcul du décalage d'ombre solaire dynamique (Canvas of Kings)
-	# Le soleil se lève à l'Est (6h), zénith (12h), se couche à l'Ouest (18h)
-	var sun_t := (_game_hour - 6.0) / 12.0 # 0.0 à l'aube, 0.5 à midi, 1.0 au crépuscule
+	var sun_t := (hour - 6.0) / 12.0 # 0.0 à l'aube, 0.5 à midi, 1.0 au crépuscule
 	if sun_t >= 0.0 and sun_t <= 1.0:
-		# Angle solaire : de -140 deg à -40 deg
 		_sun_angle = lerpf(-2.4, -0.7, sun_t)
-		var shadow_len := lerpf(18.0, 6.0, sin(sun_t * PI)) # Long à l'aube/crépuscule, court à midi
+		var shadow_len := lerpf(18.0, 6.0, sin(sun_t * PI))
 		_sun_shadow_offset = Vector2(cos(_sun_angle), sin(_sun_angle)) * shadow_len
 		_sun_shadow_alpha = lerpf(0.20, 0.35, sin(sun_t * PI))
 	else:
-		# Nuit : ombre lunaire diffuse très douce
 		_sun_shadow_offset = Vector2(-4.0, 4.0)
 		_sun_shadow_alpha = 0.12
 
-	# 4. Ajustement des particules selon l'ambiance
+	# 4. Ajustement des particules selon l'ambiance locale
 	if _particles:
-		if _is_night:
-			_particles.color = Color(0.6, 0.8, 1.0, 0.25) # Lucciole / éclat nocturne
+		if local_night:
+			_particles.color = Color(0.6, 0.8, 1.0, 0.25)
 		else:
-			_particles.color = Color(1.0, 0.88, 0.60, 0.38) # Poussière dorée
+			_particles.color = Color(1.0, 0.88, 0.60, 0.38)
 
 func get_sun_shadow_offset() -> Vector2:
 	return _sun_shadow_offset

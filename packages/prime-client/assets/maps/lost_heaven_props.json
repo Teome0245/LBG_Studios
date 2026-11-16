@@ -48,6 +48,24 @@
       ],
       "legacy_id": "gate:south_main",
       "depth_west_m": 100.0
+    },
+    {
+      "id": "gate:south_dunes",
+      "label": "Porte sud — route du Ksar & dunes",
+      "building_id": "poi:lost_heaven_gate_south",
+      "role": "route_vers_ksar",
+      "axis": "z",
+      "center": {
+        "x": 4749.0,
+        "z": -1387.8
+      },
+      "width_m": 58.0,
+      "depth_north_m": 120.0,
+      "depth_south_m": 120.0,
+      "fence_open_segment_indices": [
+        13,
+        14
+      ]
     }
   ],
   "paths": [
@@ -578,7 +596,11 @@
           "z": -1370.3
         },
         {
-          "x": 4749.0,
+          "x": 4780.0,
+          "z": -1387.8
+        },
+        {
+          "x": 4718.0,
           "z": -1387.8
         },
         {
@@ -643,80 +665,32 @@
       "closed": false,
       "points": [
         {
-          "x": 4450.0,
-          "z": -760.0
-        },
-        {
-          "x": 4000.0,
-          "z": -680.0
+          "x": 4749.0,
+          "z": -737.0
         },
         {
           "x": 3688.9,
           "z": -675.9
         },
         {
-          "x": 3450.0,
-          "z": -710.0
-        },
-        {
-          "x": 3150.0,
+          "x": 1500.0,
           "z": -680.0
         },
         {
-          "x": 2800.0,
-          "z": -630.0
+          "x": -500.0,
+          "z": -750.0
         },
         {
-          "x": 2450.0,
-          "z": -660.0
+          "x": -2500.0,
+          "z": -850.0
         },
         {
-          "x": 2100.0,
-          "z": -700.0
+          "x": -4800.0,
+          "z": -920.0
         },
         {
-          "x": 1750.0,
-          "z": -670.0
-        },
-        {
-          "x": 1400.0,
-          "z": -610.0
-        },
-        {
-          "x": 1050.0,
-          "z": -580.0
-        },
-        {
-          "x": 700.0,
-          "z": -630.0
-        },
-        {
-          "x": 350.0,
-          "z": -600.0
-        },
-        {
-          "x": 0.0,
-          "z": -560.0
-        },
-        {
-          "x": -350.0,
-          "z": -540.0
-        },
-        {
-          "x": -700.0,
-          "z": -580.0
-        },
-        {
-          "x": -1060.0,
-          "z": -550.0
-        },
-        {
-          "x": -1200.0,
-          "z": -550.0
-        },
-        {
-          "x": -1460.0,
-          "z": -550.0
+          "x": -7000.0,
+          "z": -1000.0
         }
       ]
     },
@@ -728,117 +702,28 @@
       "closed": false,
       "points": [
         {
-          "x": 5155.0,
-          "z": -900.0
-        },
-        {
-          "x": 5450.0,
-          "z": -950.0
+          "x": 4749.0,
+          "z": -737.0
         },
         {
           "x": 5813.6,
           "z": -982.5
         },
         {
-          "x": 6050.0,
-          "z": -1060.0
+          "x": 7500.0,
+          "z": -1500.0
         },
         {
-          "x": 6350.0,
-          "z": -1180.0
+          "x": 11000.0,
+          "z": -3500.0
         },
         {
-          "x": 6650.0,
-          "z": -1380.0
+          "x": 15000.0,
+          "z": -6500.0
         },
         {
-          "x": 6820.0,
-          "z": -1680.0
-        },
-        {
-          "x": 6800.0,
-          "z": -2050.0
-        },
-        {
-          "x": 6550.0,
-          "z": -2480.0
-        },
-        {
-          "x": 6250.0,
-          "z": -2820.0
-        },
-        {
-          "x": 5850.0,
-          "z": -3100.0
-        },
-        {
-          "x": 5650.0,
-          "z": -3250.0
-        },
-        {
-          "x": 5350.0,
-          "z": -3450.0
-        },
-        {
-          "x": 5100.0,
-          "z": -3580.0
-        },
-        {
-          "x": 4950.0,
-          "z": -3470.0
-        },
-        {
-          "x": 4950.0,
-          "z": -3700.0
-        }
-      ]
-    },
-    {
-      "id": "path:road_ksar_to_zalem_traverse",
-      "kind": "road",
-      "label": "Piste Traversière : Ksar de l'Oasis — Avant-poste Zalem",
-      "width_m": 10.0,
-      "closed": false,
-      "points": [
-        {
-          "x": 4950.0,
-          "z": -3700.0
-        },
-        {
-          "x": 4550.0,
-          "z": -3620.0
-        },
-        {
-          "x": 3900.0,
-          "z": -3400.0
-        },
-        {
-          "x": 3100.0,
-          "z": -3050.0
-        },
-        {
-          "x": 2300.0,
-          "z": -2650.0
-        },
-        {
-          "x": 1400.0,
-          "z": -2150.0
-        },
-        {
-          "x": 500.0,
-          "z": -1650.0
-        },
-        {
-          "x": -400.0,
-          "z": -1100.0
-        },
-        {
-          "x": -900.0,
-          "z": -750.0
-        },
-        {
-          "x": -1200.0,
-          "z": -630.0
+          "x": 18000.0,
+          "z": -10000.0
         }
       ]
     },
@@ -850,12 +735,30 @@
       "flip_hatch": false,
       "closed": false,
       "points": [
-        {"x": -1450.0, "z": -120.0},
-        {"x": -1440.0, "z": -280.0},
-        {"x": -1415.0, "z": -450.0},
-        {"x": -1425.0, "z": -620.0},
-        {"x": -1455.0, "z": -820.0},
-        {"x": -1480.0, "z": -1050.0}
+        {
+          "x": -14950.0,
+          "z": 2280.0
+        },
+        {
+          "x": -14940.0,
+          "z": 2120.0
+        },
+        {
+          "x": -14915.0,
+          "z": 1950.0
+        },
+        {
+          "x": -14925.0,
+          "z": 1780.0
+        },
+        {
+          "x": -14955.0,
+          "z": 1580.0
+        },
+        {
+          "x": -14980.0,
+          "z": 1350.0
+        }
       ]
     },
     {
@@ -866,11 +769,26 @@
       "flip_hatch": false,
       "closed": false,
       "points": [
-        {"x": 5950.0, "z": -3120.0},
-        {"x": 5800.0, "z": -3180.0},
-        {"x": 5650.0, "z": -3210.0},
-        {"x": 5500.0, "z": -3220.0},
-        {"x": 5350.0, "z": -3320.0}
+        {
+          "x": 11300.0,
+          "z": -14870.0
+        },
+        {
+          "x": 11150.0,
+          "z": -14930.0
+        },
+        {
+          "x": 11000.0,
+          "z": -14960.0
+        },
+        {
+          "x": 10850.0,
+          "z": -14970.0
+        },
+        {
+          "x": 10700.0,
+          "z": -15070.0
+        }
       ]
     },
     {
@@ -881,11 +799,26 @@
       "flip_hatch": true,
       "closed": false,
       "points": [
-        {"x": 5950.0, "z": -3260.0},
-        {"x": 5800.0, "z": -3310.0},
-        {"x": 5650.0, "z": -3330.0},
-        {"x": 5480.0, "z": -3350.0},
-        {"x": 5320.0, "z": -3430.0}
+        {
+          "x": 11300.0,
+          "z": -15010.0
+        },
+        {
+          "x": 11150.0,
+          "z": -15060.0
+        },
+        {
+          "x": 11000.0,
+          "z": -15080.0
+        },
+        {
+          "x": 10830.0,
+          "z": -15100.0
+        },
+        {
+          "x": 10670.0,
+          "z": -15180.0
+        }
       ]
     },
     {
@@ -896,11 +829,348 @@
       "flip_hatch": true,
       "closed": false,
       "points": [
-        {"x": 4720.0, "z": -3880.0},
-        {"x": 4850.0, "z": -3920.0},
-        {"x": 5050.0, "z": -3930.0},
-        {"x": 5250.0, "z": -3880.0},
-        {"x": 5380.0, "z": -3780.0}
+        {
+          "x": 5770.0,
+          "z": -18230.0
+        },
+        {
+          "x": 5900.0,
+          "z": -18270.0
+        },
+        {
+          "x": 6100.0,
+          "z": -18280.0
+        },
+        {
+          "x": 6300.0,
+          "z": -18230.0
+        },
+        {
+          "x": 6430.0,
+          "z": -18130.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_lh_to_humidity_farm",
+      "kind": "road",
+      "width_m": 10.0,
+      "points": [
+        {
+          "x": 4749.0,
+          "z": -980.0
+        },
+        {
+          "x": 4749.0,
+          "z": -1387.8
+        },
+        {
+          "x": 4749.0,
+          "z": -1800.0
+        },
+        {
+          "x": 4680.0,
+          "z": -3500.0
+        },
+        {
+          "x": 4580.0,
+          "z": -5800.0
+        },
+        {
+          "x": 4500.0,
+          "z": -8000.0
+        },
+        {
+          "x": 4800.0,
+          "z": -11500.0
+        },
+        {
+          "x": 5300.0,
+          "z": -15000.0
+        },
+        {
+          "x": 6000.0,
+          "z": -18000.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_ksar_to_canyon_alkhali",
+      "kind": "road",
+      "width_m": 11.0,
+      "points": [
+        {
+          "x": 6000.0,
+          "z": -18000.0
+        },
+        {
+          "x": 8500.0,
+          "z": -16500.0
+        },
+        {
+          "x": 10500.0,
+          "z": -15120.0
+        },
+        {
+          "x": 10750.0,
+          "z": -15070.0
+        },
+        {
+          "x": 11000.0,
+          "z": -15020.0
+        },
+        {
+          "x": 11250.0,
+          "z": -14960.0
+        },
+        {
+          "x": 11450.0,
+          "z": -14920.0
+        },
+        {
+          "x": 14500.0,
+          "z": -12500.0
+        },
+        {
+          "x": 18000.0,
+          "z": -10000.0
+        },
+        {
+          "x": 21000.0,
+          "z": -7500.0
+        },
+        {
+          "x": 24000.0,
+          "z": -5000.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_zalem_to_mos_espa",
+      "kind": "road",
+      "width_m": 12.0,
+      "points": [
+        {
+          "x": -18000.0,
+          "z": 3000.0
+        },
+        {
+          "x": -16000.0,
+          "z": -500.0
+        },
+        {
+          "x": -14000.0,
+          "z": -4000.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_mos_espa_to_jawas",
+      "kind": "road",
+      "width_m": 8.0,
+      "points": [
+        {
+          "x": -14000.0,
+          "z": -4000.0
+        },
+        {
+          "x": -16000.0,
+          "z": -6500.0
+        },
+        {
+          "x": -18000.0,
+          "z": -9000.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_mos_espa_to_krayt",
+      "kind": "road",
+      "width_m": 8.0,
+      "points": [
+        {
+          "x": -14000.0,
+          "z": -4000.0
+        },
+        {
+          "x": -18000.0,
+          "z": 4000.0
+        },
+        {
+          "x": -22000.0,
+          "z": 12000.0
+        }
+      ]
+    },
+    {
+      "id": "path:road_lh_to_anchor_ridge",
+      "kind": "road",
+      "width_m": 11.0,
+      "points": [
+        {
+          "x": 4749.0,
+          "z": -430.0
+        },
+        {
+          "x": 5200.0,
+          "z": 3500.0
+        },
+        {
+          "x": 5800.0,
+          "z": 8000.0
+        },
+        {
+          "x": 6400.0,
+          "z": 12500.0
+        },
+        {
+          "x": 7000.0,
+          "z": 16000.0
+        },
+        {
+          "x": 10500.0,
+          "z": 19000.0
+        },
+        {
+          "x": 14000.0,
+          "z": 22000.0
+        }
+      ]
+    },
+    {
+      "id": "path:zalem_grand_boulevard",
+      "kind": "road",
+      "width_m": 24.0,
+      "points": [
+        {
+          "x": -17300.0,
+          "z": 2900.0
+        },
+        {
+          "x": -17600.0,
+          "z": 2950.0
+        },
+        {
+          "x": -18000.0,
+          "z": 3000.0
+        },
+        {
+          "x": -18350.0,
+          "z": 3050.0
+        }
+      ]
+    },
+    {
+      "id": "path:zalem_avenue_starport",
+      "kind": "road",
+      "width_m": 18.0,
+      "points": [
+        {
+          "x": -18000.0,
+          "z": 3000.0
+        },
+        {
+          "x": -18000.0,
+          "z": 2620.0
+        }
+      ]
+    },
+    {
+      "id": "path:zalem_avenue_north",
+      "kind": "road",
+      "width_m": 18.0,
+      "points": [
+        {
+          "x": -18000.0,
+          "z": 3000.0
+        },
+        {
+          "x": -18000.0,
+          "z": 3450.0
+        }
+      ]
+    },
+    {
+      "id": "path:highway_outpost_to_zalem_city",
+      "kind": "road",
+      "width_m": 16.0,
+      "points": [
+        {
+          "x": -7000.0,
+          "z": -1000.0
+        },
+        {
+          "x": -9500.0,
+          "z": -200.0
+        },
+        {
+          "x": -12500.0,
+          "z": 800.0
+        },
+        {
+          "x": -15500.0,
+          "z": 1900.0
+        },
+        {
+          "x": -17300.0,
+          "z": 2900.0
+        },
+        {
+          "x": -18000.0,
+          "z": 3000.0
+        }
+      ]
+    },
+    {
+      "id": "path:zalem_perimeter_wall",
+      "kind": "fence",
+      "width_m": 10.0,
+      "closed": true,
+      "points": [
+        {
+          "x": -17300.0,
+          "z": 2850.0
+        },
+        {
+          "x": -17300.0,
+          "z": 2550.0
+        },
+        {
+          "x": -17700.0,
+          "z": 2350.0
+        },
+        {
+          "x": -18300.0,
+          "z": 2350.0
+        },
+        {
+          "x": -18700.0,
+          "z": 2550.0
+        },
+        {
+          "x": -18800.0,
+          "z": 3000.0
+        },
+        {
+          "x": -18700.0,
+          "z": 3500.0
+        },
+        {
+          "x": -18300.0,
+          "z": 3650.0
+        },
+        {
+          "x": -17700.0,
+          "z": 3650.0
+        },
+        {
+          "x": -17300.0,
+          "z": 3200.0
+        },
+        {
+          "x": -17300.0,
+          "z": 2950.0
+        }
       ]
     }
   ],
@@ -909,8 +1179,8 @@
       "id": "prop:ksar_oasis_pool",
       "kind": "oasis_pool",
       "label": "Bassin de l'Oasis du Ksar",
-      "x": 5020.0,
-      "z": -3670.0,
+      "x": 6070.0,
+      "z": -18020.0,
       "radius_m": 25.0,
       "z_draw": 5
     },
@@ -918,8 +1188,8 @@
       "id": "prop:ksar_palm_1",
       "kind": "palm_tree",
       "label": "Palmier de l'Oasis",
-      "x": 5045.0,
-      "z": -3645.0,
+      "x": 6095.0,
+      "z": -17995.0,
       "scale": 1.25,
       "z_draw": 12
     },
@@ -927,8 +1197,8 @@
       "id": "prop:ksar_palm_2",
       "kind": "palm_tree",
       "label": "Palmier de l'Oasis",
-      "x": 4995.0,
-      "z": -3685.0,
+      "x": 6045.0,
+      "z": -18035.0,
       "scale": 1.1,
       "z_draw": 12
     },
@@ -936,8 +1206,8 @@
       "id": "prop:ksar_palm_3",
       "kind": "palm_tree",
       "label": "Palmier de l'Oasis",
-      "x": 5040.0,
-      "z": -3695.0,
+      "x": 6090.0,
+      "z": -18045.0,
       "scale": 1.3,
       "z_draw": 12
     },
@@ -945,8 +1215,8 @@
       "id": "prop:ksar_palm_4",
       "kind": "palm_tree",
       "label": "Palmier de l'Oasis",
-      "x": 4990.0,
-      "z": -3650.0,
+      "x": 6040.0,
+      "z": -18000.0,
       "scale": 1.05,
       "z_draw": 12
     },
@@ -954,8 +1224,8 @@
       "id": "prop:ksar_palm_5",
       "kind": "palm_tree",
       "label": "Palmier de l'Oasis",
-      "x": 5055.0,
-      "z": -3670.0,
+      "x": 6105.0,
+      "z": -18020.0,
       "scale": 1.15,
       "z_draw": 12
     },
@@ -963,8 +1233,8 @@
       "id": "prop:al_khali_oasis_pool",
       "kind": "oasis_pool",
       "label": "Source d'Al-Khali",
-      "x": 6550.0,
-      "z": -2480.0,
+      "x": 18000.0,
+      "z": -10000.0,
       "radius_m": 20.0,
       "z_draw": 5
     },
@@ -972,8 +1242,8 @@
       "id": "prop:al_khali_palm_1",
       "kind": "palm_tree",
       "label": "Palmier d'Al-Khali",
-      "x": 6565.0,
-      "z": -2465.0,
+      "x": 18015.0,
+      "z": -9985.0,
       "scale": 1.15,
       "z_draw": 12
     },
@@ -981,8 +1251,8 @@
       "id": "prop:al_khali_palm_2",
       "kind": "palm_tree",
       "label": "Palmier d'Al-Khali",
-      "x": 6535.0,
-      "z": -2495.0,
+      "x": 17985.0,
+      "z": -10015.0,
       "scale": 1.2,
       "z_draw": 12
     },
@@ -990,8 +1260,8 @@
       "id": "prop:ksar_stone_arch_north",
       "kind": "stone_arch",
       "label": "Arches du Ksar",
-      "x": 4950.0,
-      "z": -3470.0,
+      "x": 6000.0,
+      "z": -17820.0,
       "width_m": 16.0,
       "rot_deg": 0.0,
       "z_draw": 14
@@ -1000,8 +1270,8 @@
       "id": "prop:ksar_stone_arch_east",
       "kind": "stone_arch",
       "label": "Arche Orientale du Ksar",
-      "x": 5120.0,
-      "z": -3600.0,
+      "x": 6170.0,
+      "z": -17950.0,
       "width_m": 14.0,
       "rot_deg": -35.0,
       "z_draw": 14
@@ -1277,56 +1547,56 @@
     {
       "id": "lamp:zalem_gate_w",
       "kind": "lamp",
-      "x": -1460.0,
-      "z": -540.0,
+      "x": -7260.0,
+      "z": -1040.0,
       "color": "#ffea88"
     },
     {
       "id": "lamp:zalem_gate_w2",
       "kind": "lamp",
-      "x": -1460.0,
-      "z": -560.0,
+      "x": -7260.0,
+      "z": -1060.0,
       "color": "#ffea88"
     },
     {
       "id": "lamp:zalem_command",
       "kind": "lamp",
-      "x": -1200.0,
-      "z": -520.0,
+      "x": -7000.0,
+      "z": -1020.0,
       "color": "#ffea88"
     },
     {
       "id": "lamp:zalem_workshop",
       "kind": "lamp",
-      "x": -1060.0,
-      "z": -440.0,
+      "x": -6860.0,
+      "z": -940.0,
       "color": "#ffea88"
     },
     {
       "id": "lamp:zalem_barracks",
       "kind": "lamp",
-      "x": -1340.0,
-      "z": -440.0,
+      "x": -7140.0,
+      "z": -940.0,
       "color": "#ffea88"
     },
     {
       "id": "barrier:zalem_chk_1",
       "kind": "barrier",
-      "x": -1440.0,
-      "z": -535.0
+      "x": -7240.0,
+      "z": -1035.0
     },
     {
       "id": "barrier:zalem_chk_2",
       "kind": "barrier",
-      "x": -1440.0,
-      "z": -565.0
+      "x": -7240.0,
+      "z": -1065.0
     },
     {
       "id": "prop:krayt_skeleton_canyon",
       "kind": "krayt_skeleton",
       "label": "Squelette du Grand Léviathan des Sables",
-      "x": 5650.0,
-      "z": -3270.0,
+      "x": 11000.0,
+      "z": -15020.0,
       "length_m": 52.0,
       "width_m": 26.0,
       "yaw_deg": 22.0,
@@ -1336,8 +1606,8 @@
       "id": "prop:krayt_skeleton_south_dunes",
       "kind": "krayt_skeleton",
       "label": "Fossile de Krayt des Dunes",
-      "x": 5250.0,
-      "z": -1850.0,
+      "x": 10600.0,
+      "z": -13600.0,
       "length_m": 42.0,
       "width_m": 22.0,
       "yaw_deg": -35.0,
@@ -1347,8 +1617,8 @@
       "id": "prop:starship_wreck_east",
       "kind": "starship_wreck",
       "label": "Épave du Cargo Stellaire Ikaros",
-      "x": 6700.0,
-      "z": -1650.0,
+      "x": 24050.0,
+      "z": -5270.0,
       "length_m": 38.0,
       "yaw_deg": 40.0,
       "z_draw": 6
@@ -1357,8 +1627,8 @@
       "id": "prop:starship_wreck_canyon",
       "kind": "starship_wreck",
       "label": "Chasseur stellaire accidenté",
-      "x": 5820.0,
-      "z": -3130.0,
+      "x": 11170.0,
+      "z": -14880.0,
       "length_m": 28.0,
       "yaw_deg": -15.0,
       "z_draw": 6
@@ -1367,8 +1637,8 @@
       "id": "prop:boulders_canyon_1",
       "kind": "boulder_cluster",
       "label": "Éperon rocheux du Canyon Nord",
-      "x": 5550.0,
-      "z": -3320.0,
+      "x": 10900.0,
+      "z": -15070.0,
       "radius_m": 18.0,
       "z_draw": 7
     },
@@ -1376,8 +1646,8 @@
       "id": "prop:boulders_canyon_2",
       "kind": "boulder_cluster",
       "label": "Éperon rocheux du Canyon Sud",
-      "x": 5750.0,
-      "z": -3230.0,
+      "x": 11100.0,
+      "z": -14980.0,
       "radius_m": 18.0,
       "z_draw": 7
     },
@@ -1385,8 +1655,8 @@
       "id": "prop:boulders_ksar_north",
       "kind": "boulder_cluster",
       "label": "Rochers de garde du Ksar",
-      "x": 4900.0,
-      "z": -3520.0,
+      "x": 5950.0,
+      "z": -17870.0,
       "radius_m": 16.0,
       "z_draw": 7
     },
@@ -1412,8 +1682,8 @@
       "id": "prop:ksar_tent_bedouin_1",
       "kind": "nomad_tent",
       "label": "Grande tente bédouine du Ksar",
-      "x": 4920.0,
-      "z": -3760.0,
+      "x": 5970.0,
+      "z": -18110.0,
       "size_m": 22.0,
       "z_draw": 8
     },
@@ -1421,8 +1691,8 @@
       "id": "prop:ksar_tent_bedouin_2",
       "kind": "nomad_tent",
       "label": "Tente de troc bédouine",
-      "x": 5120.0,
-      "z": -3710.0,
+      "x": 6170.0,
+      "z": -18060.0,
       "size_m": 18.0,
       "z_draw": 8
     },
@@ -1430,8 +1700,8 @@
       "id": "prop:ksar_tent_bedouin_3",
       "kind": "nomad_tent",
       "label": "Tente des tisseurs de laine",
-      "x": 4820.0,
-      "z": -3650.0,
+      "x": 5870.0,
+      "z": -18000.0,
       "size_m": 16.0,
       "z_draw": 8
     },
@@ -1439,8 +1709,8 @@
       "id": "prop:ksar_tent_bedouin_4",
       "kind": "nomad_tent",
       "label": "Tente d'hospitalité du Ksar",
-      "x": 5180.0,
-      "z": -3620.0,
+      "x": 6230.0,
+      "z": -17970.0,
       "size_m": 16.0,
       "z_draw": 8
     },
@@ -1448,8 +1718,8 @@
       "id": "prop:ksar_palm_extra_1",
       "kind": "palm_tree",
       "label": "Palmier d'Oasis",
-      "x": 4995.0,
-      "z": -3695.0,
+      "x": 6045.0,
+      "z": -18045.0,
       "scale": 1.25,
       "z_draw": 12
     },
@@ -1457,8 +1727,8 @@
       "id": "prop:ksar_palm_extra_2",
       "kind": "palm_tree",
       "label": "Palmier d'Oasis",
-      "x": 5045.0,
-      "z": -3640.0,
+      "x": 6095.0,
+      "z": -17990.0,
       "scale": 1.4,
       "z_draw": 12
     },
@@ -1466,8 +1736,8 @@
       "id": "prop:ksar_palm_extra_3",
       "kind": "palm_tree",
       "label": "Palmier d'Oasis",
-      "x": 5010.0,
-      "z": -3635.0,
+      "x": 6060.0,
+      "z": -17985.0,
       "scale": 1.1,
       "z_draw": 12
     },
@@ -1475,8 +1745,8 @@
       "id": "prop:zalem_silo_1",
       "kind": "mine_silo",
       "label": "Silo de raffinage minier A",
-      "x": -1050.0,
-      "z": -530.0,
+      "x": -6850.0,
+      "z": -1030.0,
       "radius_m": 16.0,
       "z_draw": 8
     },
@@ -1484,8 +1754,8 @@
       "id": "prop:zalem_silo_2",
       "kind": "mine_silo",
       "label": "Silo de raffinage minier B",
-      "x": -1010.0,
-      "z": -530.0,
+      "x": -6810.0,
+      "z": -1030.0,
       "radius_m": 14.0,
       "z_draw": 8
     },
@@ -1493,8 +1763,8 @@
       "id": "prop:zalem_silo_3",
       "kind": "mine_silo",
       "label": "Cuve de gaz d'extraction C",
-      "x": -970.0,
-      "z": -530.0,
+      "x": -6770.0,
+      "z": -1030.0,
       "radius_m": 14.0,
       "z_draw": 8
     },
@@ -1502,8 +1772,8 @@
       "id": "prop:zalem_container_1",
       "kind": "cargo_container",
       "label": "Conteneur minier lourd",
-      "x": -1140.0,
-      "z": -440.0,
+      "x": -6940.0,
+      "z": -940.0,
       "w_m": 14.0,
       "h_m": 7.0,
       "yaw_deg": 15.0,
@@ -1514,8 +1784,8 @@
       "id": "prop:zalem_container_2",
       "kind": "cargo_container",
       "label": "Conteneur minier scellé",
-      "x": -1155.0,
-      "z": -450.0,
+      "x": -6955.0,
+      "z": -950.0,
       "w_m": 14.0,
       "h_m": 7.0,
       "yaw_deg": 15.0,
@@ -1526,13 +1796,392 @@
       "id": "prop:zalem_container_3",
       "kind": "cargo_container",
       "label": "Caisse d'outillage minier",
-      "x": -1125.0,
-      "z": -430.0,
+      "x": -6925.0,
+      "z": -930.0,
       "w_m": 12.0,
       "h_m": 6.0,
       "yaw_deg": 105.0,
       "color": "#C48A2C",
       "z_draw": 8
+    },
+    {
+      "id": "prop:farm_vaporator_1",
+      "kind": "moisture_vaporator",
+      "label": "Condenseur GX-8",
+      "x": 4460.0,
+      "z": -8030.0,
+      "scale": 1.2,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:farm_vaporator_2",
+      "kind": "moisture_vaporator",
+      "label": "Condenseur GX-8",
+      "x": 4490.0,
+      "z": -8050.0,
+      "scale": 1.1,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:farm_vaporator_3",
+      "kind": "moisture_vaporator",
+      "label": "Condenseur GX-8",
+      "x": 4520.0,
+      "z": -8040.0,
+      "scale": 1.3,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:farm_vaporator_4",
+      "kind": "moisture_vaporator",
+      "label": "Condenseur GX-8",
+      "x": 4470.0,
+      "z": -7970.0,
+      "scale": 1.2,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:farm_vaporator_5",
+      "kind": "moisture_vaporator",
+      "label": "Condenseur GX-8",
+      "x": 4540.0,
+      "z": -8030.0,
+      "scale": 1.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:farm_water_cistern",
+      "kind": "oasis_pool",
+      "label": "Citerne souterraine d'eau douce",
+      "x": 4545.0,
+      "z": -7995.0,
+      "radius_m": 12.0,
+      "z_draw": 2
+    },
+    {
+      "id": "prop:farm_container_1",
+      "kind": "cargo_container",
+      "label": "Caisse de filtres à saumure",
+      "x": 4480.0,
+      "z": -7970.0,
+      "w_m": 8.0,
+      "h_m": 4.0,
+      "yaw_deg": 15.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:anchor_silo_1",
+      "kind": "mine_silo",
+      "label": "Silo de stockage Duracier A",
+      "x": 7050.0,
+      "z": 15970.0,
+      "radius_m": 16.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:anchor_silo_2",
+      "kind": "mine_silo",
+      "label": "Silo de stockage Duracier B",
+      "x": 7080.0,
+      "z": 16010.0,
+      "radius_m": 14.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:anchor_container_1",
+      "kind": "cargo_container",
+      "label": "Conteneur de lingots",
+      "x": 6980.0,
+      "z": 15940.0,
+      "w_m": 14.0,
+      "h_m": 6.0,
+      "yaw_deg": -25.0,
+      "color": "#7a6248",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:anchor_container_2",
+      "kind": "cargo_container",
+      "label": "Conteneur de forage",
+      "x": 7010.0,
+      "z": 15930.0,
+      "w_m": 12.0,
+      "h_m": 5.0,
+      "yaw_deg": 10.0,
+      "color": "#524436",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:anchor_boulders_1",
+      "kind": "boulder_cluster",
+      "label": "Falaise d'extraction nord",
+      "x": 6940.0,
+      "z": 16060.0,
+      "radius_m": 22.0,
+      "z_draw": 3
+    },
+    {
+      "id": "prop:anchor_boulders_2",
+      "kind": "boulder_cluster",
+      "label": "Éperon rocheux minier",
+      "x": 7120.0,
+      "z": 16060.0,
+      "radius_m": 20.0,
+      "z_draw": 3
+    },
+    {
+      "id": "prop:lac_amethyste_basin",
+      "kind": "oasis_pool",
+      "label": "Bassin du Lac d'Améthyste",
+      "x": 14000.0,
+      "z": 22000.0,
+      "radius_m": 85.0,
+      "z_draw": 1
+    },
+    {
+      "id": "prop:lac_cryst_1",
+      "kind": "crystal_cluster",
+      "label": "Géode d'Améthyste Cristalline",
+      "x": 13910.0,
+      "z": 22020.0,
+      "radius_m": 14.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:lac_cryst_2",
+      "kind": "crystal_cluster",
+      "label": "Géode d'Améthyste Cristalline",
+      "x": 14080.0,
+      "z": 22070.0,
+      "radius_m": 16.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:lac_cryst_3",
+      "kind": "crystal_cluster",
+      "label": "Aiguilles de Cristal Pourpre",
+      "x": 14020.0,
+      "z": 21910.0,
+      "radius_m": 12.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:lac_cryst_4",
+      "kind": "crystal_cluster",
+      "label": "Veine Cristalline du Cratère",
+      "x": 13940.0,
+      "z": 21940.0,
+      "radius_m": 15.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:mos_espa_tent_1",
+      "kind": "nomad_tent",
+      "label": "Tente des Tissus & Épices",
+      "x": -13960.0,
+      "z": -4050.0,
+      "radius_m": 12.0,
+      "cloth_color_1": "#9c3826",
+      "cloth_color_2": "#e2a855",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:mos_espa_tent_2",
+      "kind": "nomad_tent",
+      "label": "Étal des Marchands d'Eau",
+      "x": -13990.0,
+      "z": -4070.0,
+      "radius_m": 10.0,
+      "cloth_color_1": "#2d6278",
+      "cloth_color_2": "#dfc8a2",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:mos_espa_crates_1",
+      "kind": "crate_stack",
+      "label": "Piles de caisses de contrebande",
+      "x": -14040.0,
+      "z": -3970.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:jawa_tent_1",
+      "kind": "nomad_tent",
+      "label": "Tente de troglodytes Jawas",
+      "x": -17960.0,
+      "z": -8980.0,
+      "radius_m": 9.0,
+      "cloth_color_1": "#6a4528",
+      "cloth_color_2": "#3e2412",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:jawa_tent_2",
+      "kind": "nomad_tent",
+      "label": "Abri en peaux de bêtes",
+      "x": -18040.0,
+      "z": -9020.0,
+      "radius_m": 8.0,
+      "cloth_color_1": "#5c3d23",
+      "cloth_color_2": "#3e2412",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:jawa_crawler_wreck",
+      "kind": "starship_wreck",
+      "label": "Épave de Char des Sables",
+      "x": -18020.0,
+      "z": -8950.0,
+      "length_m": 26.0,
+      "yaw_deg": 35.0,
+      "z_draw": 3
+    },
+    {
+      "id": "prop:jawa_scrap_1",
+      "kind": "crate_stack",
+      "label": "Pièces détachées et droïdes",
+      "x": -17980.0,
+      "z": -9030.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:krayt_leviathan_chasm",
+      "kind": "krayt_skeleton",
+      "label": "Squelette de Léviathan Ancestral",
+      "x": -22000.0,
+      "z": 12000.0,
+      "length_m": 62.0,
+      "width_m": 32.0,
+      "yaw_deg": -15.0,
+      "z_draw": 5
+    },
+    {
+      "id": "prop:krayt_boulders_chasm",
+      "kind": "boulder_cluster",
+      "label": "Paroi rocheuse du Gouffre",
+      "x": -21960.0,
+      "z": 12040.0,
+      "radius_m": 24.0,
+      "z_draw": 3
+    },
+    {
+      "id": "prop:zalem_city_silo_1",
+      "kind": "mine_silo",
+      "label": "Silo Cryogénique A",
+      "x": -18450.0,
+      "z": 3050.0,
+      "radius_m": 22.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_city_silo_2",
+      "kind": "mine_silo",
+      "label": "Silo de Raffinage B",
+      "x": -18450.0,
+      "z": 3350.0,
+      "radius_m": 24.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_city_silo_3",
+      "kind": "mine_silo",
+      "label": "Cuve Chimique C",
+      "x": -18250.0,
+      "z": 2650.0,
+      "radius_m": 18.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_gate_arch",
+      "kind": "stone_arch",
+      "label": "Arche d'Acier de Zalem",
+      "x": -17300.0,
+      "z": 2900.0,
+      "width_m": 35.0,
+      "rot_deg": 90.0,
+      "z_draw": 6
+    },
+    {
+      "id": "prop:zalem_container_stack_1",
+      "kind": "cargo_container",
+      "label": "Parc de Fret Alpha",
+      "x": -17850.0,
+      "z": 2620.0,
+      "w_m": 22.0,
+      "h_m": 8.0,
+      "yaw_deg": 0.0,
+      "color": "#4a5b6d",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_container_stack_2",
+      "kind": "cargo_container",
+      "label": "Parc de Fret Bêta",
+      "x": -18150.0,
+      "z": 2580.0,
+      "w_m": 20.0,
+      "h_m": 8.0,
+      "yaw_deg": 15.0,
+      "color": "#6d5b4a",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_container_stack_3",
+      "kind": "cargo_container",
+      "label": "Dépôt de Duracier",
+      "x": -18300.0,
+      "z": 3150.0,
+      "w_m": 18.0,
+      "h_m": 7.0,
+      "yaw_deg": -10.0,
+      "color": "#5a6855",
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_bazaar_crates_1",
+      "kind": "crate_stack",
+      "label": "Composants Électroniques",
+      "x": -17550.0,
+      "z": 3020.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:zalem_bazaar_crates_2",
+      "kind": "crate_stack",
+      "label": "Pièces Mécatroniques",
+      "x": -17650.0,
+      "z": 2970.0,
+      "z_draw": 4
+    },
+    {
+      "id": "prop:lh_gate_south_arch",
+      "kind": "stone_arch",
+      "label": "Arche monumentale de la Porte Sud",
+      "x": 4749.0,
+      "y": 0.0,
+      "z": -1387.8,
+      "scale": 1.4,
+      "rot_deg": 0.0
+    },
+    {
+      "id": "prop:lh_gate_south_lamp_w",
+      "kind": "lamp_post",
+      "label": "Lanterne Ouest Porte Sud",
+      "x": 4716.0,
+      "y": 0.0,
+      "z": -1387.8,
+      "scale": 1.0,
+      "rot_deg": 0.0
+    },
+    {
+      "id": "prop:lh_gate_south_lamp_e",
+      "kind": "lamp_post",
+      "label": "Lanterne Est Porte Sud",
+      "x": 4782.0,
+      "y": 0.0,
+      "z": -1387.8,
+      "scale": 1.0,
+      "rot_deg": 0.0
     }
   ],
   "topology_version": 2,

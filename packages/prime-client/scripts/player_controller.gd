@@ -9,8 +9,30 @@ const MOVE_SPEED:      float = 16.0
 const RUN_MULT:        float = 1.75
 const _LastPos = preload("res://scripts/last_position_store.gd")
 
+const WORLD_MIN := -32000.0
+const WORLD_MAX := 32000.0
+const WORLD_SPAN := 64000.0
+
+static func wrap_world_pos(pos: Vector3) -> Vector3:
+	var wx: float = fposmod(pos.x - WORLD_MIN, WORLD_SPAN) + WORLD_MIN
+	var wz: float = fposmod(pos.z - WORLD_MIN, WORLD_SPAN) + WORLD_MIN
+	return Vector3(wx, pos.y, wz)
+
+static func clamp_world_pos(pos: Vector3) -> Vector3:
+	return Vector3(
+		clampf(pos.x, WORLD_MIN, WORLD_MAX),
+		pos.y,
+		clampf(pos.z, WORLD_MIN, WORLD_MAX)
+	)
+
+func constrain_world_pos(pos: Vector3) -> Vector3:
+	if wrap_enabled:
+		return wrap_world_pos(pos)
+	return clamp_world_pos(pos)
+
 @export var enabled:       bool = false
 @export var follow_camera: bool = true
+@export var wrap_enabled:  bool = true
 @export var cmd_host:      String = "127.0.0.1"
 @export var cmd_port:      int   = CMD_PORT
 @export var prefer_ws_move: bool = true
@@ -128,20 +150,25 @@ func _apply_ws_locomotion(delta: float) -> void:
 		return
 	dir = dir.normalized()
 	var speed := MOVE_SPEED * (RUN_MULT if _state["run"] else 1.0)
-	var e: Entity = _em.get_entity(_player_id)
+	var e: Node = _em.get_entity(_player_id)
 	if e == null:
 		return
 	# Toujours core3_pos (pas from_screen) : position écran inclut jitter/bob → dérive diagonale.
-	var core3: Vector3 = e.core3_pos
+	var core3: Vector3 = e.core3_pos as Vector3
 	core3.x += dir.x * speed * delta
 	core3.z += dir.z * speed * delta
 	if _zones:
-		core3 = _zones.clamp_move(e.core3_pos, core3)
+		core3 = _zones.clamp_move(e.core3_pos as Vector3, core3)
+	var prev_c3: Vector3 = core3
+	core3 = constrain_world_pos(core3)
+	var did_wrap: bool = (core3.x != prev_c3.x or core3.z != prev_c3.z)
 	# Snap local (pas move() lissé) — sinon sensation de lag/saccade au clavier.
 	if e.has_method("set_core3_position"):
 		e.set_core3_position(core3)
 	else:
 		_em.move(_player_id, core3)
+	if did_wrap and _camera:
+		_camera.position = e.position
 	_move_accum += delta
 	if _move_accum >= 0.05:
 		_move_accum = 0.0
@@ -163,25 +190,30 @@ func set_click_target(core3: Vector3) -> void:
 func _apply_click_move(delta: float) -> void:
 	if _click_target == Vector3.INF or _player_id == 0 or _em == null:
 		return
-	var e: Entity = _em.get_entity(_player_id)
+	var e: Node = _em.get_entity(_player_id)
 	if e == null:
 		return
-	var to := _click_target - e.core3_pos
+	var to: Vector3 = _click_target - (e.core3_pos as Vector3)
 	to.y = 0.0
 	var dist := to.length()
 	if dist < _CLICK_ARRIVE_M:
 		_click_target = Vector3.INF
 		return
-	var dir := to / dist
+	var dir: Vector3 = to / dist
 	var speed := MOVE_SPEED * (RUN_MULT if _state["run"] else 1.0)
 	var step := minf(dist, speed * delta)
-	var core3 := e.core3_pos + dir * step
+	var core3: Vector3 = (e.core3_pos as Vector3) + dir * step
 	if _zones:
 		core3 = _zones.clamp_move(e.core3_pos, core3)
+	var prev_c3: Vector3 = core3
+	core3 = constrain_world_pos(core3)
+	var did_wrap: bool = (core3.x != prev_c3.x or core3.z != prev_c3.z)
 	if e.has_method("set_core3_position"):
 		e.set_core3_position(core3)
 	else:
 		_em.move(_player_id, core3)
+	if did_wrap and _camera:
+		_camera.position = e.position
 	_move_accum += delta
 	if _move_accum >= 0.05:
 		_move_accum = 0.0
@@ -208,7 +240,7 @@ func _handle_jump() -> void:
 func _follow_player() -> void:
 	if not follow_camera or not _camera or _player_id == 0 or not _em:
 		return
-	var e: Entity = _em.get_entity(_player_id)
+	var e: Node = _em.get_entity(_player_id)
 	if e:
 		_camera.position = _camera.position.lerp(
 			e.position, CAM_FOLLOW_SPEED * get_process_delta_time()
@@ -228,11 +260,11 @@ func request_move_to(x: float, z: float) -> void:
 
 func teleport_to(x: float, z: float) -> void:
 	_click_target = Vector3.INF
-	var core3 := Vector3(x, 0.0, z)
+	var core3 := constrain_world_pos(Vector3(x, 0.0, z))
 	if _zones:
 		core3 = _zones.clamp_move(core3, core3)
 	if _player_id != 0 and _em:
-		var e: Entity = _em.get_entity(_player_id)
+		var e: Node = _em.get_entity(_player_id)
 		if e:
 			if e.has_method("set_core3_position"):
 				e.set_core3_position(core3)

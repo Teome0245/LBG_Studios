@@ -351,6 +351,9 @@ func on_ws_zone_state(payload: Dictionary) -> void:
 			var bl_clock: Node = wm_clock.get_node_or_null("HubBuildingsLayer")
 			if bl_clock and bl_clock.has_method("set_world_clock"):
 				bl_clock.set_world_clock(wc)
+		var pmap_clock: Node = main.get_node_or_null("UI/ModalLayer/PlanetMapPanel")
+		if pmap_clock and pmap_clock.has_method("set_world_clock"):
+			pmap_clock.set_world_clock(wc)
 	var zone := str(payload.get("zone", payload.get("map", main._planet_name)))
 	if zone != "":
 		var z_norm := zone.to_lower()

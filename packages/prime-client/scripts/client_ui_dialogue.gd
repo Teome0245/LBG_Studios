@@ -48,6 +48,14 @@ func unhandled_input(event: InputEvent) -> void:
 			main._handle_world_left_click(main._canvas_mouse_pos())
 			main.get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			if event.shift_pressed:
+				var c3: Vector3 = main._screen_click_to_core3(main._canvas_mouse_pos())
+				var pc: Node = main.get_node_or_null("PlayerController")
+				if pc and pc.has_method("teleport_to"):
+					pc.teleport_to(c3.x, c3.z)
+					main._hotbar_feedback("⚡ Téléportation Shift+Clic (Dev) : %.0f, %.0f" % [c3.x, c3.z])
+					main.get_viewport().set_input_as_handled()
+					return
 			main._handle_world_right_click(main._canvas_mouse_pos())
 			main.get_viewport().set_input_as_handled()
 	if event is InputEventKey and event.pressed:
