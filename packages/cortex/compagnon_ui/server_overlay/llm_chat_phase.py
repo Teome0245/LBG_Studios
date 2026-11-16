@@ -685,6 +685,7 @@ async def run_llm_chat_phase(
             wants_lab_quality_route,
             _MEDIA_CUE_RE,
             _QUALITY_ROUTE_RE,
+            _INFRA_OPS_RE,
         )
 
         is_chill_profile = chat_profile in ("mec_chill", "chill", "philo")
@@ -711,8 +712,12 @@ async def run_llm_chat_phase(
         needs_heavy = bool(
             _MEDIA_CUE_RE.search(prompt or "")
             or _QUALITY_ROUTE_RE.search(prompt or "")
+            or _INFRA_OPS_RE.search(prompt or "")
             or is_chill_profile
             or "e4b" in (preferred or "").lower()
+            or "14b" in (preferred or "").lower()
+            or "coder" in (preferred or "").lower()
+            or "12b" in (preferred or "").lower()
         )
         route_meta = {
             "route_profile": route_profile,
@@ -723,12 +728,13 @@ async def run_llm_chat_phase(
         def _is_heavy(name: str) -> bool:
             n = (name or "").lower()
             # e2b reste light (.111) — pas de forçage heavy
-            return any(x in n for x in (":9b", ":12b", "12b-qat", ":e4b", "e4b"))
+            return any(x in n for x in (":9b", ":12b", "12b-qat", ":e4b", "e4b", "14b", "coder"))
 
         if needs_heavy:
-            # Média / Agir / Chill : E4b-qat (.110) puis 12b puis 9b
+            # Code / Infra / Média / Agir / Chill : 14b / E4b-qat (.110) puis 12b puis 9b
             allow_h = {
                 preferred,
+                "huihui_ai/qwen2.5-coder-abliterate:14b",
                 "huihui_ai/gemma-4-abliterated:E4b-qat",
                 "huihui_ai/gemma-4-abliterated:12b",
                 "huihui_ai/gemma-4-abliterated:12b-qat",

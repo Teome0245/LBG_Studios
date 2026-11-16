@@ -282,6 +282,24 @@ class ChatIntentTests(unittest.TestCase):
         self.assertIn("12b", pref.lower())
         self.assertEqual(rp.lab_route_profile("ouvre Agir dry-run sur le poste"), "code")
 
+    def test_infra_ops_route_heavy(self) -> None:
+        import router_prompts as rp  # noqa: E402
+
+        for p in (
+            "tu pourrais mettre en service un serveurs DNS sur ton Infra (Gladys) ?",
+            "déploie un conteneur lxc sur le proxmox",
+            "installer un serveur dnsmasq sur le réseau local",
+            "peux-tu configurer le serveur adguard ?",
+        ):
+            self.assertTrue(rp.wants_lab_quality_route(p), p)
+            self.assertEqual(rp.lab_route_profile(p), "code", p)
+            self.assertEqual(rp.lab_route_tier(rp.lab_route_profile(p)), "heavy", p)
+            pref = rp.lab_preferred_model(p)
+            self.assertTrue(
+                "12b" in pref.lower() or "14b" in pref.lower() or "coder" in pref.lower(),
+                f"Modèle inattendu (devrait être heavy): {pref}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

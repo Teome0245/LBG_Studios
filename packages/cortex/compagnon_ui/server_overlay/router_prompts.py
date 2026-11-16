@@ -481,6 +481,17 @@ _QUALITY_ROUTE_RE = re.compile(
     r")"
 )
 
+# Administration système, serveurs, infrastructure, réseau, DNS, provisionnement (2B trop faible)
+_INFRA_OPS_RE = re.compile(
+    r"(?i)\b("
+    r"dns|serveur(?:s)?|proxmox|dhcp|adguard|pihole|pi-hole|dnsmasq|bind9|"
+    r"docker|lxc|conteneur(?:s)?|container(?:s)?|vm|hyperviseur|"
+    r"mettre\s+en\s+service|d[ée]ploy(?:er|ement)|install(?:er|ation)|provisionn(?:er|ement)|"
+    r"configur(?:er|ation)\s+(?:serveur|dns|lxc|vm|réseau|reseau|lan|ip)|"
+    r"service\s+dns|serveur\s+dns|r[ée]seau\s+local"
+    r")\b"
+)
+
 # Causerie exploratoire / maturité — 2B trop faible (clarifs + slogans)
 _EXPLORATORY_QUALITY_RE = re.compile(
     r"(?i)\b("
@@ -570,11 +581,12 @@ def wants_exploratory_quality_route(prompt: str) -> bool:
 
 
 def wants_lab_quality_route(prompt: str) -> bool:
-    """Média / DRM / outillage Agir-Team / causerie exploratoire → modèle qualité (.110)."""
+    """Média / DRM / outillage Agir-Team / causerie exploratoire / infra-ops → modèle qualité (.110)."""
     p = prompt or ""
     return bool(
         _MEDIA_CUE_RE.search(p)
         or _QUALITY_ROUTE_RE.search(p)
+        or _INFRA_OPS_RE.search(p)
         or _EXPLORATORY_QUALITY_RE.search(p)
     )
 
@@ -583,7 +595,7 @@ def lab_route_profile(prompt: str, profile: str | None = None) -> str:
     """
     Profil aligné `reason_route_matrix` (ADR route LLM) :
     - chill → E4b-qat (.110) posture philosophique Mec Chill
-    - code → heavy .110 (média / Agir / Team outillage)
+    - code → heavy .110 (média / Agir / Team outillage / infra-ops)
     - dialogue → e2b causerie (light .111)
     - fast → 0.8B courtes consignes
     - router → 2B défaut LAB
@@ -597,7 +609,7 @@ def lab_route_profile(prompt: str, profile: str | None = None) -> str:
         p,
     ):
         return "chill"
-    if _MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p):
+    if _MEDIA_CUE_RE.search(p) or _QUALITY_ROUTE_RE.search(p) or _INFRA_OPS_RE.search(p):
         return "code"
     if _EXPLORATORY_QUALITY_RE.search(p):
         return "dialogue"
@@ -624,6 +636,14 @@ def lab_preferred_model(prompt: str, profile: str | None = None) -> str:
     if route_prof == "chill":
         return lab_chill_model()
     if route_prof == "code":
+        p = prompt or ""
+        if _INFRA_OPS_RE.search(p) or re.search(r"(?i)\b(script|bash|python|patch|diff|code)\b", p):
+            code_m = (
+                os.getenv("LBG_REASON_MODEL_CODE", "").strip()
+                or os.getenv("LBG_COMPAGNON_LAB_CODE_MODEL", "").strip()
+            )
+            if code_m:
+                return code_m
         return lab_quality_model()
     if route_prof == "dialogue":
         return lab_chat_quality_model()
