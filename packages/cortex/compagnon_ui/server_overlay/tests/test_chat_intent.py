@@ -313,6 +313,23 @@ class ChatIntentTests(unittest.TestCase):
         cleaned = cl.clean_meta_leak(dirty)
         self.assertEqual(cleaned, "Voyons la suite ensemble.")
 
+    def test_ollama_audit_model_available(self) -> None:
+        import ollama_audit as oa  # noqa: E402
+
+        installed = {
+            "lbg-compagnon-e4b-v1:latest",
+            "huihui_ai/gemma-4-abliterated:12b-qat",
+            "huihui_ai/qwen3.5-abliterated:2b",
+        }
+        # Doit matcher sans le tag :latest implicite
+        self.assertTrue(oa.model_available("lbg-compagnon-e4b-v1", installed))
+        self.assertTrue(oa.model_available("lbg-compagnon-e4b-v1:latest", installed))
+        # Alias 12b ↔ 12b-qat
+        self.assertTrue(oa.model_available("huihui_ai/gemma-4-abliterated:12b", installed))
+        self.assertTrue(oa.model_available("huihui_ai/gemma-4-abliterated:12b-qat", installed))
+        # Modèle absent
+        self.assertFalse(oa.model_available("unknown-model:latest", installed))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -58,6 +58,11 @@ _OPS_TRUTH = """
      * Contrôle physique / réseau : Le routeur Freebox (.254) permet de vérifier si l'appareil émet encore des trames Ethernet (L2) sur le switch.
      * Canal Ops Slack : Piloté depuis la VM .140 via /etc/lbg-ia-mmo.env (`LBG_SLACK_WEBHOOK_OPS`, `LBG_SLACK_BOT_TOKEN`, `LBG_SLACK_CHANNEL_OPS`). Si Slack est muet, vérifier ces clés et le service `lbg-slack-hitl-poll.service`.
      * Outils canoniques : `tools/diag_nas_and_slack.sh` (diagnostic cerné stockage/slack) et `tools/smoke_lan_surfaces.sh` (surfaces web et services jeu).
+
+8. SERVEUR DNS LOCAL & ADGUARD HOME :
+   - Gladys dispose du script officiel de déploiement d'un serveur DNS AdGuard Home local : `packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh`.
+   - Ce script provisionne un conteneur LXC Ubuntu 24.04 (CT 153) sur l'hyperviseur Proxmox .201 avec l'IP statique 192.168.0.53 (port 53 DNS + interface web :3000/:80).
+   - Si Teome te demande de mettre en service ou déployer le serveur DNS : expose directement ce plan technique (CT 153 AdGuard Home sur .201, IP 192.168.0.53) et propose de déclencher l'action sous validation L2.
 """
 
 BASE_GUARDRAILS = """

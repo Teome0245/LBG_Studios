@@ -98,9 +98,9 @@ def _model_needs_heavy(model: str | None) -> bool:
 
 
 def _model_needs_long_timeout(model: str | None) -> bool:
-    """Timeout long seulement pour 9b/12b (pas e2b — sinon hang UI)."""
+    """Timeout long pour 9b/12b/14b CPU .110 (pas e2b — sinon hang UI)."""
     m = (model or "").lower()
-    return any(x in m for x in (":9b", ":12b", "12b-qat"))
+    return any(x in m for x in (":9b", ":12b", "12b-qat", "14b", "coder"))
 
 
 def _chat_read_timeout_s(model: str | None = None) -> float:
@@ -131,9 +131,9 @@ def _chat_read_timeout_s(model: str | None = None) -> float:
         else:
             s = get_settings()
             base = max(45.0, min(float(getattr(s, "httpx_stream_read_timeout_s", 600.0) or 90.0), 90.0))
-    # 9b/12b CPU sur .110 : plus patient
+    # 9b/12b/14b CPU sur .110 : plus patient (jusqu'à 300s en prompt-eval CPU)
     if _model_needs_long_timeout(model):
-        return max(base, 180.0)
+        return max(base, 300.0)
     # e2b : plafond 75s pour fail-fast cascade
     m = (model or "").lower()
     if "e2b" in m:

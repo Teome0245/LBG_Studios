@@ -13,8 +13,12 @@ from typing import Any
 
 import httpx
 
-from src.http_timeouts import httpx_timeout
-from src.settings import Settings
+try:
+    from src.http_timeouts import httpx_timeout
+    from src.settings import Settings
+except ImportError:
+    httpx_timeout = None  # type: ignore
+    Settings = None  # type: ignore
 
 # Rôles dont le modèle doit être sur le nœud light (111).
 _LIGHT_ROLES = frozenset({"reason_router", "reason_json", "reason_fast", "companion"})
@@ -86,7 +90,7 @@ _ROLE_DEFAULTS: dict[str, dict[str, str]] = {
 
 
 def model_available(name: str, installed: set[str]) -> bool:
-    """True si ``name`` est installé ; alias ``:12b`` ↔ ``:12b-qat`` uniquement."""
+    """True si ``name`` est installé ; alias ``:12b`` ↔ ``:12b-qat`` et ``:latest`` implicite."""
     if not name:
         return True
     if name in installed:
@@ -95,6 +99,14 @@ def model_available(name: str, installed: set[str]) -> bool:
     needle = name.lower()
     if needle in installed_l:
         return True
+    # Support du tag :latest implicite ou explicite sur le même nom de modèle
+    if ":" not in needle:
+        if f"{needle}:latest" in installed_l or any(n.startswith(f"{needle}:") for n in installed_l):
+            return True
+    elif needle.endswith(":latest"):
+        base = needle[:-7]
+        if base in installed_l or any(n.startswith(f"{base}:") for n in installed_l):
+            return True
     # Canon QAT : un seul poids — accepter l'ancien tag :12b si :12b-qat est là (et inverse)
     qat_pair = {
         "huihui_ai/gemma-4-abliterated:12b": "huihui_ai/gemma-4-abliterated:12b-qat",
@@ -106,13 +118,13 @@ def model_available(name: str, installed: set[str]) -> bool:
     if ":" in needle:
         tag = needle.rsplit(":", 1)[-1]
         family = "gemma" if "gemma" in needle else ("qwen" if "qwen" in needle else "")
-        for n in installed_l:
-            ntag = n.rsplit(":", 1)[-1] if ":" in n else n
-            if ntag == tag and (not family or family in n):
-                return True
-            # 12b ↔ 12b-qat même famille
-            if {ntag, tag} == {"12b", "12b-qat"} and (not family or family in n):
-                return True
+        if family and tag in ("12b", "12b-qat", "e4b-qat", "14b", "9b", "2b"):
+            for n in installed_l:
+                ntag = n.rsplit(":", 1)[-1] if ":" in n else n
+                if ntag == tag and family in n:
+                    return True
+                if {ntag, tag} == {"12b", "12b-qat"} and family in n:
+                    return True
     return False
 
 

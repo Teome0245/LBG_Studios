@@ -176,6 +176,7 @@ def main() -> None:
     parser.add_argument("--outdir", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Dossier de sortie")
     parser.add_argument("--youtube", action="store_true", help="Publie sur la chaîne YouTube @LBG-p8k")
     parser.add_argument("--tiktok", action="store_true", help="Prépare la publication sur TikTok Studio")
+    parser.add_argument("--pilot", action="store_true", help="Déploie la vidéo dans Pilot Web drops")
     args = parser.parse_args()
 
     topic = args.topic
@@ -190,6 +191,7 @@ def main() -> None:
         silence_sec=args.silence,
         publish_youtube=args.youtube,
         publish_tiktok=args.tiktok,
+        deploy_pilot=args.pilot,
     )
     print("\n" + "=" * 50)
     print(json.dumps(result, indent=2, ensure_ascii=False))

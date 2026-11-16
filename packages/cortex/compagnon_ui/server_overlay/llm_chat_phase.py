@@ -70,6 +70,13 @@ async def run_llm_chat_phase(
     # A1 — journal de contexte (blocs injectés, sans secrets)
     journal_blocks: list[dict[str, Any]] = []
 
+    is_infra_ops = False
+    try:
+        from src.services.router_prompts import _INFRA_OPS_RE
+        is_infra_ops = bool(_INFRA_OPS_RE.search(prompt or ""))
+    except Exception:
+        is_infra_ops = False
+
     def _journal_short_circuit(source: str, out: Any) -> Any:
         try:
             from src.services.context_journal import attach_context_journal, make_block
@@ -475,7 +482,7 @@ async def run_llm_chat_phase(
         )
         from src.settings import get_settings
 
-        if wants_lan_llm_context(prompt):
+        if wants_lan_llm_context(prompt) and not is_infra_ops:
             audit = await load_lan_llm_audit(settings=get_settings())
             lan_block = format_audit_grounding(audit)
             system_prompt = system_prompt + "\n\n" + lan_block
@@ -508,7 +515,7 @@ async def run_llm_chat_phase(
         if not lab_causerie:
             self_payload = await load_self_status()
             if self_payload is not None:
-                need_full = wants_self_memory_context(prompt) or not lab_mode
+                need_full = (wants_self_memory_context(prompt) or not lab_mode) and not is_infra_ops
                 block = format_self_grounding(self_payload, compact=not need_full)
                 if block:
                     system_prompt = system_prompt + "\n\n" + block
@@ -530,11 +537,11 @@ async def run_llm_chat_phase(
             "Self grounding inject failed (best-effort)",
         )
 
-    # A3 — Studio Brain court (LAB ops uniquement — pas causerie)
+    # A3 — Studio Brain court (LAB ops uniquement — pas causerie ni infra ciblée couverte par _OPS_TRUTH)
     try:
         from src.services.studio_brain import format_studio_brain_block
 
-        if lab_mode and (not lab_causerie):
+        if lab_mode and (not lab_causerie) and (not is_infra_ops):
             brain = format_studio_brain_block()
             if brain:
                 system_prompt = system_prompt + "\n\n" + brain
@@ -555,14 +562,14 @@ async def run_llm_chat_phase(
             "Studio Brain inject failed (best-effort)",
         )
 
-    # P2 — REGISTRE-lite (hosts / Prime / incarnations) si la question touche l'écosystème
+    # P2 — REGISTRE-lite (hosts / Prime / incarnations) si la question touche l'écosystème (hors infra ciblée couverte par _OPS_TRUTH)
     try:
         from src.services.ecosystem_grounding import (
             format_ecosystem_grounding,
             wants_ecosystem_context,
         )
 
-        if (not lab_causerie) and wants_ecosystem_context(prompt):
+        if (not lab_causerie) and (not is_infra_ops) and wants_ecosystem_context(prompt):
             eco = format_ecosystem_grounding()
             if eco:
                 system_prompt = system_prompt + "\n\n" + eco
@@ -583,12 +590,12 @@ async def run_llm_chat_phase(
             "Ecosystem grounding inject failed (best-effort)",
         )
 
-    # P3 — RAG (leçons / expériences / knowledge / philo) si LBG_RAG_ENABLED + indices mémoire ou profil chill
+    # P3 — RAG (leçons / expériences / knowledge / philo) si LBG_RAG_ENABLED + indices mémoire ou profil chill (hors infra ops ciblée)
     try:
         from src.services.rag_grounding import load_rag_block
 
         is_chill_profile = chat_profile in ("mec_chill", "chill", "philo")
-        if (not lab_causerie) or is_chill_profile:
+        if ((not lab_causerie) and (not is_infra_ops)) or is_chill_profile:
             rag_block = await load_rag_block(prompt, profile=chat_profile, force=is_chill_profile)
             if rag_block:
                 system_prompt = system_prompt + "\n\n" + rag_block

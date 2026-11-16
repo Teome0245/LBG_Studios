@@ -572,10 +572,12 @@ def clean_meta_leak(text: str) -> str:
     t = text or ""
     if not t.strip():
         return t
-    # Si le LLM a formulé "**Réponse finale :** ..." à la fin d'un bloc méta, on extrait directement la réponse finale
-    m = re.search(r"(?is)\*\*(?:r[ée]ponse\s+finale|r[ée]ponse)\s*:\*\*\s*[«\"']?(.*?)[»\"']?\s*$", t)
-    if m and len(m.group(1).strip()) > 3:
-        return m.group(1).strip()
+    # Détection directe d'une réponse finale encapsulée
+    m = re.search(r"\*\*(?:r[eé]ponse\s+finale|r[eé]ponse)\s*:\*\*\s*(.+)$", t, flags=re.DOTALL | re.IGNORECASE)
+    if m:
+        candidate = m.group(1).strip().strip("«»\"' ").strip()
+        if candidate:
+            return candidate
     # Supprimer les lignes d'introduction type "Voici une proposition de réponse..."
     t = re.sub(
         r"(?i)^Voici\s+(?:une\s+)?proposition\s+de\s+r[ée]ponse[^\n]*:\s*",
@@ -584,22 +586,12 @@ def clean_meta_leak(text: str) -> str:
         flags=re.MULTILINE,
     )
     # Supprimer les blocs Dials d'expression / Consignes / Formules
-    t = re.sub(
-        r"(?is)\*\*Dials(?:\s+d['\u2019]expression)?[^\n]*\*\*.*?(?=(?:\n\n|\Z))",
-        "",
-        t,
-    )
-    t = re.sub(
-        r"(?is)\*\*Consignes?(?:\s+d['\u2019]expression)?[^\n]*\*\*.*?(?=(?:\n\n|\Z))",
-        "",
-        t,
-    )
-    t = re.sub(
-        r"(?is)\*\*Formules?\s+signature[^\n]*\*\*.*?(?=(?:\n\n|\Z))",
-        "",
-        t,
-    )
-    return t.strip()
+    t = re.sub(r"(?is)\*\*Dials.*?(?=\*\*|\Z)", "", t)
+    t = re.sub(r"(?is)\*\*Consignes?.*?(?=\*\*|\Z)", "", t)
+    t = re.sub(r"(?is)\*\*Formules?.*?(?=\*\*|\Z)", "", t)
+    t = re.sub(r"(?is)\*\*[A-Za-zÀ-ÿ\s'-]+:\*\*\s*", "", t)
+    t = re.sub(r"[ \t]{2,}", " ", t).strip()
+    return t.strip("«»\"' ")
 
 
 def reshape_blacklist(content: str) -> str | None:
