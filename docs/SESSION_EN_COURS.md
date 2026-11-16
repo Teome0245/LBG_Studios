@@ -12,7 +12,7 @@
 -16. **Intégration du Modèle 3D Lia Androïde Cyber & Mouvements Naturels Organiques** :
     - **Modèle 3D Lia Androïde (Cyber Cyan & Métaux)** :
       * Re-génération complète des 9 keyframes 3D plein pied dans `tools/studio_content_engine/assets/compagnon` via Blender 5.2 Cycles CPU avec les textures officielles de Lia Androïde (`body_skin_android.png`, `face_skin_android.png`, `hair_android.png` et iris émissifs cyan `#00f5d4`).
-      * Finition fidèle à 100% à l'incarnation de bureau (combinaison mecha cyan brillante, cheveux bleus émissifs, yeux néon).
+      * Finition fidèle à 100% à l'incarnation de bureau : épiderme mécatronique cyan luminescent (c'est sa véritable peau cybernétique, pas un costume ni une combinaison amovible), cheveux bleus émissifs, yeux néon.
     - **Mouvements Naturels & Organiques (`video_compositor.py`)** :
       * *Pose Blending Soyeux* : transition par morphing / fondu croisé (alpha blending doux sur 5 frames, ~160ms) entre chaque pose (neutral, explain, joy, think, point) au lieu de coupures sèches.
       * *Respiration Organique Humaine* : cycle respiratoire de 3.3s avec micro-mouvements de soulèvement de poitrine et de bassin.
