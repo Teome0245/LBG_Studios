@@ -29,6 +29,7 @@ select = [
 ignore = [
     "E501",  # line-too-long
     "E402",  # module level import not at top of file
+    "E701",  # multiple statements on one line (colon)
     "E722",  # bare except
     "E731",  # do not assign a lambda expression
     "E741",  # ambiguous variable name
