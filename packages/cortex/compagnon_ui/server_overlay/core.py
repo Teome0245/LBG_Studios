@@ -159,6 +159,48 @@ def _resolve_ask_args(body: AskRequest) -> tuple[str, str | None, str | None, st
 
 async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
     prompt, agent, model, mode = _resolve_ask_args(body)
+    cid = (body.conversation_id or "default").strip() or "default"
+
+    # Vérification d'une PendingAction en cours pour cette conversation
+    try:
+        from src.services.pending_actions import (
+            clear_pending_action,
+            execute_pending_action,
+            extract_pending_action_from_assistant_message,
+            get_pending_action,
+            is_confirmation_affirmative,
+            is_confirmation_negative,
+            store_pending_action,
+        )
+    except ImportError:
+        try:
+            from pending_actions import (  # type: ignore
+                clear_pending_action,
+                execute_pending_action,
+                extract_pending_action_from_assistant_message,
+                get_pending_action,
+                is_confirmation_affirmative,
+                is_confirmation_negative,
+                store_pending_action,
+            )
+        except ImportError:
+            get_pending_action = None  # type: ignore
+
+    if get_pending_action:
+        pending = get_pending_action(cid)
+        if pending:
+            if is_confirmation_negative(prompt):
+                clear_pending_action(cid)
+                return {
+                    "ok": True,
+                    "content": "Entendu, action annulée. Je reste à votre écoute pour toute autre demande.",
+                    "response": "Entendu, action annulée. Je reste à votre écoute pour toute autre demande.",
+                    "source": "pending_action_cancelled",
+                }
+            if is_confirmation_affirmative(prompt):
+                clear_pending_action(cid)
+                return await execute_pending_action(pending)
+
     result = await llm_router.dispatch(
         prompt,
         mode=mode,
@@ -168,6 +210,15 @@ async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
         model=model,
     )
     out = ensure_dispatch_dict(result)
+
+    # Détection si la réponse de l'assistant propose une action avec confirmation
+    if get_pending_action:
+        resp_content = str(out.get("content") or out.get("response") or "")
+        detected_action = extract_pending_action_from_assistant_message(resp_content, cid)
+        if detected_action:
+            store_pending_action(cid, detected_action)
+            out["pending_action"] = detected_action.to_card_dict()
+
     try:
         from src.services.team_actions import maybe_attach_session_l2_nudge
 
@@ -179,6 +230,32 @@ async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
     except Exception:
         pass
     return out
+
+
+@router.post("/chat/pending-action/execute")
+async def execute_pending_action_endpoint(body: dict[str, Any]):
+    """Exécution directe 1-clic d'une PendingAction en attente."""
+    cid = str(body.get("conversation_id") or "default").strip()
+    try:
+        from src.services.pending_actions import (
+            clear_pending_action,
+            execute_pending_action,
+            get_pending_action,
+        )
+    except ImportError:
+        try:
+            from pending_actions import (  # type: ignore
+                clear_pending_action,
+                execute_pending_action,
+                get_pending_action,
+            )
+        except ImportError:
+            return {"ok": False, "error": "Module pending_actions indisponible"}
+    pending = get_pending_action(cid)
+    if not pending:
+        return {"ok": False, "error": "Aucune action en attente pour cette conversation"}
+    clear_pending_action(cid)
+    return await execute_pending_action(pending)
 
 
 @router.post("/ask", response_model=AskJSONEnvelope)

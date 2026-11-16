@@ -54,6 +54,7 @@ py-modules = [
     "world_notif_prefs",
     "world_stream",
     "relation_memory",
+    "pending_actions",
 ]
 
 [tool.lbg.overlay]

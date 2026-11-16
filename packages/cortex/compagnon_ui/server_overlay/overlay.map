@@ -42,5 +42,6 @@ tts_api.py	backend/src/routers/tts_api.py
 world_stream.py	backend/src/services/world_stream.py
 world_notif_prefs.py	backend/src/services/world_notif_prefs.py
 relation_memory.py	backend/src/services/relation_memory.py
+pending_actions.py	backend/src/services/pending_actions.py
 character/compagnon_v1.json	backend/src/config/character/compagnon_v1.json
 character/compagnon_v1.json	backend/src/services/character/compagnon_v1.json

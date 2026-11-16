@@ -75,6 +75,7 @@ const MESSAGE_FIELDS = [
   'actionSourceText',
   'context_journal',
   'jobContract',
+  'pending_action',
 ]
 
 function pickFields(msg) {

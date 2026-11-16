@@ -30,7 +30,7 @@ import {
 } from '@/lib/worldNotifPrefs'
 import { resolveRouteTier, routeTierLabel } from '@/lib/modelRoute'
 
-const { messages, loadHistory, addUserMessage, addMessage, breatheConversation, startNewChat } =
+const { messages, loadHistory, addUserMessage, addMessage, breatheConversation, startNewChat, queuePrompt } =
   useChat()
 const scrollRef = ref(null)
 const viewFilter = ref('all')
@@ -64,6 +64,18 @@ function onBreathe() {
 
 function onNewThread() {
   startNewChat()
+}
+
+function confirmPendingAction(action) {
+  if (action) action.resolved = true
+  queuePrompt('oui')
+  window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
+}
+
+function cancelPendingAction(action) {
+  if (action) action.resolved = true
+  queuePrompt('non')
+  window.dispatchEvent(new CustomEvent('compagnon:send-draft'))
 }
 
 watch(messages, () => {
@@ -554,6 +566,40 @@ function triggerCtrlK() {
                 class="inline-block w-1.5 h-4 align-text-bottom bg-teal-400/70 animate-pulse"
                 aria-hidden="true"
               />
+            </div>
+
+            <!-- Action en attente de confirmation 1-clic (Pending Action L2) -->
+            <div
+              v-if="msg.role === 'assistant' && msg.pending_action && !msg.pending_action.resolved && viewFilter !== 'timeline'"
+              class="mt-3 p-3.5 rounded-xl border border-emerald-500/40 bg-emerald-950/30 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shadow-lg ring-1 ring-emerald-400/20 animate-slide-up"
+            >
+              <div class="flex items-center gap-2.5 min-w-[200px]">
+                <span class="flex h-2.5 w-2.5 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <div>
+                  <div class="text-xs font-semibold text-emerald-200">{{ msg.pending_action.label }}</div>
+                  <div v-if="msg.pending_action.summary" class="text-[11px] text-slate-400 leading-snug">{{ msg.pending_action.summary }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-auto">
+                <button
+                  type="button"
+                  @click="confirmPendingAction(msg.pending_action)"
+                  class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 transition-all shadow-md shadow-emerald-950/40 flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <span>▶</span>
+                  <span>{{ msg.pending_action.button_text || 'Confirmer et lancer' }}</span>
+                </button>
+                <button
+                  type="button"
+                  @click="cancelPendingAction(msg.pending_action)"
+                  class="px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-200 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  {{ msg.pending_action.cancel_text || 'Annuler' }}
+                </button>
+              </div>
             </div>
 
             <ApprovalCard

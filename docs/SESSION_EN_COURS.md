@@ -9,6 +9,27 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-20. **Pilotage Fluide & Autonome de Gladys (Pending Actions, HITL L2 1-Clic, Exécution Directe Fermée)** :
+    - **Problème résolu** : Gladys formulait une proposition technique (ex: « Veux-tu que je déclenche le déploiement DNS... »), mais quand l'utilisateur répondait « oui » ou « go », elle réagissait comme un chatbot passif (« On déploie le serveur DNS... Déclenche avec validation L2 ») sans rien exécuter, forçant à chercher des tokens L2 sur Pilot.
+    - **Gestionnaire Conversationnel d'Actions en Attente (`pending_actions.py`)** :
+      * Structure `PendingAction` avec `action_id`, `conversation_id`, `action_type`, `label`, `command`, `timeout_s` et TTL (15 min).
+      * Whitelist sécurisée d'actions canoniques (`CANONICAL_ACTIONS`) : déploiement DNS AdGuard, contrôles stockage Proxmox, audit Ollama, smoke test LAN, diagnostics Godot, watchdogs infra.
+      * Extraction automatique depuis les messages assistants formulant une proposition avec question de confirmation.
+      * Interception immédiate des affirmations utilisateur (`is_confirmation_affirmative` : « oui », « go », « vas-y », « fais-le », « lance », « valide », « d'accord ») et des refus (« non », « annule »).
+    - **Interception & Exécution Sans Friction (`core.py`, `ChatFlow.vue`, `useChat.js`)** :
+      * Dans `core.py` (`_ask_payload`) : si une `pending_action` est en attente et que le prompt est une confirmation, Gladys intercepte l'appel AVANT d'aller au LLM, exécute le script/action de manière asynchrone, efface l'action et renvoie le compte-rendu d'exécution avec la timeline en temps réel.
+      * Dans `ChatFlow.vue` : bandeau interactif compact `[▶ Confirmer et lancer]` / `[Annuler]` affiché directement sous les propositions dans le chat pour permettre le pilotage 1-clic.
+      * Dans `useChat.js` : persistance du champ `pending_action` dans `MESSAGE_FIELDS`.
+    - **Sécurisation & Accès SSH Machine CT 100 → Proxmox .201** :
+      * Clé SSH ed25519 de `root@192.168.0.100` autorisée sur Proxmox `root@192.168.0.201`.
+      * Montage et copie des scripts d'infrastructure dans `/opt/orchestrateur/scripts/` et `/app/scripts/`.
+      * Outils réseau (`openssh-client`, `curl`, `iputils-ping`) et clés injectés dans le conteneur Docker `orchestrateur-backend`.
+    - **Validation de Bout en Bout en Production** :
+      * Tour 1 : Demande « Tu pourrais mettre en service un serveur DNS sur ton infra (Gladys) ? » → Proposition nette formulée par Gladys + armement automatique de la PendingAction `act_dns_adguard_deploy`.
+      * Tour 2 : Réponse utilisateur « oui » → Interception immédiate, exécution en 14 s du script `create_lbg_dns_ct_proxmox.sh`, et retour avec statut opérationnel complet, timeline et URL du service (`http://192.168.0.53:80`).
+      * Tests unitaires `test_pending_actions.py` validés (7/7 tests passants en 0.08 s).
+      * Déployé en production sur `http://192.168.0.100:5174/` (version `1.0.0+10d4c82`).
+
 -19. **Mise en Service Réussie du Serveur DNS Local AdGuard Home (CT 153 sur Proxmox .201)** :
     - **Validation L2 & Exécution Gladys** : Suite à l'approbation dans le chat Compagnon, exécution du script officiel `packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh`.
     - **Provisionnement Proxmox** : Conteneur LXC 153 Ubuntu 24.04 (`lbg-dns-adguard`) créé avec succès sur le storage `local-vm-930g` de l'hyperviseur `192.168.0.201`.
