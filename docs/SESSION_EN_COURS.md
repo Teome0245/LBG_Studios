@@ -9,6 +9,27 @@
 ---
 
 ## Dernières actions réalisées (2026-11-16)
+-15. **Cycle Circadien 90 Min Réelles, Contrôle Strict des Triplons de PNJ & Spatialisation du Chat Cantina** :
+    - **Cycle Circadien Planétaire 90 Minutes Réelles (`hub_world_clock.gd`, `hub_sim.gd`)** :
+      * Passage de `time_dilation = 60.0` (24 min réelles) à `time_dilation = 16.0` :
+        $$\text{time\_dilation} = \frac{86\,400\text{ s (24h de jeu)}}{5\,400\text{ s (90 min réelles)}} = 16.0$$
+      * 1 heure de jeu = **225 secondes réelles** (3 min 45 s).
+      * Plein Jour (08h00 - 18h00, 10h in-game) = **37 min 30 s**.
+      * Nuit profonde (21h00 - 05h00, 8h in-game) = **30 min 00 s**.
+      * Aube + Crépuscule (6h in-game) = **22 min 30 s**.
+    - **Contrôle Strict des Triplons de PNJ (`hub_life.gd`, `triplons.json`)** :
+      * Cause des doublons/triplons identifiée : le système de relève à 3 équipes activait 2 membres simultanément (`phase != "rest"`), plus le 3e pendant son trajet de relève (`_rest_commute`). Le joueur voyait donc plusieurs instructeurs ou donneurs de quêtes du même rôle errer dans Lost Heaven.
+      * Activation du mode strict `single_active_shift: bool = true` (dans `triplons.json` et `hub_life.gd`) : **un seul membre actif en poste (`phase == "work"`) par triplon à un instant T**.
+      * Les remplaçants (en repos ou loisirs) restent inactifs hors du monde de jeu jusqu'à leur prise de service. Plus aucun doublon ni triplon visible.
+    - **Spatialisation du Chat Cantina & Fin du Spam Global (`hub_show.gd`, `hub_ws_server.gd`, `hub_sim_ambient.gd`)** :
+      * Les messages d'ambiance et de chant de l'Artiste de scène (`hub_show.gd`) étaient auparavant diffusés à tous les clients du serveur sans restriction de distance.
+      * Filtrage de proximité mis en place : portée spatiale max de 45 m centrée sur la scène de La Perle (`CANTINA / STAGE`).
+      * L'artiste ne déclenche plus ses répliques de set (`LINES_LIVE`) si aucun joueur humain n'est présent dans ou près de la cantina ($\le 55\text{ m}$).
+      * Ajout d'une protection anti-répétition consécutive pour les répliques de scène.
+    - **Déploiements & Tests Validés** :
+      * Test unitaire `test_triplons_circadian.gd` validé : cycle de 90 min vérifié et comptage strict à 1 PNJ actif par triplon (mission, medic, scout, artisan, entertainer, brawler).
+      * `prime-hub` déployé sur `.246:8787` (`healthz 200`, `time_dilation: 16.0`, `single_active_shift: true`).
+
 -14. **Résolution du Problème des Vidéos Répétitives & Diversification Totale du Studio Content** :
     - **Diagnostic du Problème** : Les 8 dernières vidéos étaient quasi identiques (même sujet générique, même texte lu par Lia, mêmes infographies B-Roll). Causes :
       1. Backlog `topics_backlog.json` épuisé : le cron générait en boucle le sujet statique `"Ingénierie locale et agents autonomes chez LBG Studios ({now_str})"`.

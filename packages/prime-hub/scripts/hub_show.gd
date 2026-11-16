@@ -21,10 +21,13 @@ const LINES_LIVE := [
 	"À La Perle, on ne joue pas neuf : on joue vrai.",
 	"Merci d'être là — le désert attend dehors, ici on respire.",
 	"Danse courte, morale haute. Jax, un verre pour ceux qui tiennent.",
+	"Une mélodie des épaves pour ceux qui ont bravé le vent d'est.",
+	"Les deux soleils déclinent, la scène s'illumine.",
 ]
 const LINES_ENCORE := [
 	"Bis — un dernier couplet avant la pause.",
 	"Encore une mesure… puis on laisse la scène au silence.",
+	"Une dernière note pour la route vers les dunes.",
 ]
 
 var phase: String = "idle"  # idle | live | encore
@@ -32,6 +35,7 @@ var phase_until: float = 0.0
 var show_id: int = 0
 var tips_this_show: int = 0
 var _last_line_at: float = 0.0
+var _last_line_idx: int = -1
 var _trained: Dictionary = {}  # player -> unix last train
 var _attended: Dictionary = {}  # player -> true (arrived / tipped this session)
 
@@ -205,8 +209,8 @@ func _advance_phase(sim, now: float) -> void:
 		phase_until = now + LIVE_S
 		_ensure_artiste(sim, true)
 		_stream(sim, "show.start", "Le spectacle démarre à La Perle.", ARTISTE_NAME)
-		if sim != null and sim.ambient != null:
-			sim.ambient.enqueue_say(ARTISTE_NAME, ARTISTE_OID, "Bonsoir La Perle — on ouvre la scène.", "show")
+		if sim != null and sim.ambient != null and _any_human_near_cantina(sim):
+			sim.ambient.enqueue_say(ARTISTE_NAME, ARTISTE_OID, "Bonsoir La Perle — on ouvre la scène.", "show", STAGE, 45.0)
 	elif phase == "live":
 		phase = "encore"
 		phase_until = now + ENCORE_S
@@ -219,14 +223,33 @@ func _advance_phase(sim, now: float) -> void:
 
 
 func _maybe_line(sim, now: float) -> void:
-	if now - _last_line_at < 18.0:
+	if now - _last_line_at < 22.0:
+		return
+	if not _any_human_near_cantina(sim):
 		return
 	_last_line_at = now
 	var pool: Array = LINES_LIVE if phase == "live" else LINES_ENCORE
 	if pool.is_empty() or sim == null or sim.ambient == null:
 		return
-	var line := str(pool[randi() % pool.size()])
-	sim.ambient.enqueue_say(ARTISTE_NAME, ARTISTE_OID, line, "show")
+	var idx := randi() % pool.size()
+	if pool.size() > 1 and idx == _last_line_idx:
+		idx = (idx + 1) % pool.size()
+	_last_line_idx = idx
+	var line := str(pool[idx])
+	sim.ambient.enqueue_say(ARTISTE_NAME, ARTISTE_OID, line, "show", STAGE, 45.0)
+
+
+func _any_human_near_cantina(sim) -> bool:
+	if sim == null or not ("entities" in sim):
+		return false
+	var c_xz := Vector2(CANTINA.x, CANTINA.z)
+	for eid in sim.entities.keys():
+		var e: Dictionary = sim.entities[eid]
+		if str(e.get("kind", "")) == "player" and not bool(e.get("is_bot", false)):
+			var p: Vector3 = e.get("pos", Vector3.ZERO)
+			if (Vector2(p.x, p.z) - c_xz).length_squared() <= 60.0 * 60.0:
+				return true
+	return false
 
 
 func _ensure_artiste(sim, on_stage: bool) -> void:

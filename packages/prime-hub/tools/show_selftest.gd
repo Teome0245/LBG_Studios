@@ -11,8 +11,8 @@ const HubEconomyScript := preload("res://scripts/hub_economy.gd")
 const HubShowScript := preload("res://scripts/hub_show.gd")
 
 const PLAYER := "ShowTester"
-const CANTINA := Vector3(4939.0, 0.15, -802.0)
-const INN := Vector3(4809.0, 0.15, -672.0)
+const CANTINA := HubShowScript.CANTINA
+const INN := HubShowScript.INN
 
 
 func _init() -> void:

@@ -349,7 +349,25 @@ func _flush_chat() -> void:
 	if sim == null:
 		return
 	for msg in sim.drain_chat():
-		broadcast(msg)
+		var range_m := float(msg.get("range_m", 0.0))
+		var m_pos: Variant = msg.get("pos", null)
+		if range_m > 0.0 and m_pos is Array and (m_pos as Array).size() >= 3:
+			var arr: Array = m_pos
+			var target_pos := Vector3(float(arr[0]), float(arr[1]), float(arr[2]))
+			var r2 := range_m * range_m
+			for c in _clients:
+				var c_oid: int = int(c.get("oid", 0))
+				var eid := "player:%d" % c_oid
+				if sim.entities.has(eid):
+					var p: Vector3 = sim.entities[eid]["pos"]
+					var dx := p.x - target_pos.x
+					var dz := p.z - target_pos.z
+					if dx * dx + dz * dz <= r2:
+						_send(c, msg, false)
+				else:
+					_send(c, msg, false)
+		else:
+			broadcast(msg)
 
 
 func flush_chat() -> void:

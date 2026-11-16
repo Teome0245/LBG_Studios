@@ -24,13 +24,13 @@ func remove_human(oid: int) -> void:
 	_greeted_oids.erase(oid)
 
 
-func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia") -> void:
+func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia", pos: Vector3 = Vector3.ZERO, range_m: float = 0.0) -> void:
 	var t := text.strip_edges()
 	if t.is_empty():
 		return
 	if t.length() > 200:
 		t = t.substr(0, 200)
-	_chat_queue.append({
+	var item := {
 		"type": "chat",
 		"proto": "lbg-ws/2",
 		"from": from_name,
@@ -39,7 +39,11 @@ func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia
 		"text": t,
 		"source": source,
 		"server_time_ms": int(Time.get_unix_time_from_system() * 1000.0),
-	})
+	}
+	if range_m > 0.0:
+		item["range_m"] = range_m
+		item["pos"] = [pos.x, pos.y, pos.z]
+	_chat_queue.append(item)
 
 
 func drain_chat() -> Array:

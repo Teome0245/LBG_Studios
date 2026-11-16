@@ -260,7 +260,7 @@ func reset() -> void:
 	life.setup(POIS, collision)
 	if world_clock == null:
 		world_clock = HubWorldClockScript.new()
-	world_clock.setup(10.0, 60.0, Callable(self, "_on_world_clock_announce"))
+	world_clock.setup(10.0, 16.0, Callable(self, "_on_world_clock_announce"))
 	if world_stream != null:
 		world_clock.attach_world_stream(world_stream)
 	if events != null and events.has_method("attach_world_clock"):
@@ -638,9 +638,9 @@ func set_human_pos(oid: int, x: float, y: float, z: float) -> void:
 		player_store.set_pos(oid, clamped.x, y, clamped.y, str(entities[eid].get("name", "")))
 
 
-func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia") -> void:
+func enqueue_say(from_name: String, oid: int, text: String, source: String = "ia", pos: Vector3 = Vector3.ZERO, range_m: float = 0.0) -> void:
 	if ambient != null:
-		ambient.enqueue_say(from_name, oid, text, source)
+		ambient.enqueue_say(from_name, oid, text, source, pos, range_m)
 
 
 func drain_chat() -> Array:

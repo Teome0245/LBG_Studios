@@ -16,6 +16,9 @@ var _sched: Dictionary = {}
 const _LODGE_KEYS: Array = ["lodge_w", "lodge_n", "lodge_e", "lodge_s", "inn"]
 
 var collision = null
+## Mode strict triplon : 1 seul membre actif (en poste work) par triplon à la fois.
+## Les relèves (leisure / rest) sont inactives pour éviter les doublons/triplons visibles en ville.
+var single_active_shift: bool = true
 
 
 func setup(poi_map: Dictionary, collision_svc = null) -> void:
@@ -29,6 +32,7 @@ func setup(poi_map: Dictionary, collision_svc = null) -> void:
 	if typeof(raw) != TYPE_DICTIONARY:
 		push_warning("[prime-hub] life/triplons.json missing")
 		return
+	single_active_shift = bool(raw.get("single_active_shift", true))
 	phase_seconds = raw.get("phase_seconds", {
 		"work": [480, 840], "leisure": [300, 600], "rest": [360, 720],
 	})
@@ -102,13 +106,37 @@ func _phase_dur(phase: String) -> float:
 	return _rng.randf_range(float(arr[0]), float(arr[1]))
 
 
+func set_single_active_shift(enabled: bool, entities: Dictionary = {}) -> void:
+	single_active_shift = enabled
+	for eid in _sched.keys():
+		var sch: Dictionary = _sched[eid]
+		if str(sch.get("kind", "")) != "triplon":
+			continue
+		var phase := str(sch.get("phase", "work"))
+		if not entities.has(eid):
+			continue
+		var ent: Dictionary = entities[eid]
+		if single_active_shift:
+			ent["active"] = (phase == "work")
+			if phase != "work":
+				ent["speed"] = 0.0
+				ent["wander_r"] = 0.0
+				ent["target"] = Vector3.ZERO
+		else:
+			ent["active"] = (phase != "rest")
+
+
 func spawn_all(entities: Dictionary) -> void:
 	## Remplit entities avec PNJ triplons + solos (rest = déjà au logement, inactive).
 	for eid in _sched.keys():
 		var sch: Dictionary = _sched[eid]
 		var meta: Dictionary = sch.get("meta", {})
 		var phase := str(sch.get("phase", "work"))
-		var active := phase != "rest"
+		var active := false
+		if str(sch.get("kind", "")) == "triplon" and single_active_shift:
+			active = (phase == "work")
+		else:
+			active = (phase != "rest")
 		var pos := _pos_for_phase(sch, phase)
 		var wander := 10.0
 		if sch.get("kind") == "solo":
@@ -126,7 +154,7 @@ func spawn_all(entities: Dictionary) -> void:
 			"name": str(meta.get("name", eid)),
 			"pos": pos,
 			"target": Vector3.ZERO,
-			"speed": 0.0 if phase == "rest" else 7.5,
+			"speed": 0.0 if not active else 7.5,
 			"is_bot": false,
 			"goal": phase,
 			"play_mode": "life",
@@ -171,6 +199,24 @@ func _apply_phase(entities: Dictionary, eid: String, sch: Dictionary, phase: Str
 	ent["goal"] = phase
 	ent["home_x"] = pos.x
 	ent["home_z"] = pos.z
+	var is_triplon := str(sch.get("kind", "")) == "triplon"
+	if is_triplon and single_active_shift:
+		if phase == "work":
+			ent["active"] = true
+			ent["_rest_commute"] = false
+			ent["pos"] = pos
+			ent["target"] = pos
+			ent["speed"] = 7.5
+			ent["wander_r"] = 8.0
+		else:
+			ent["active"] = false
+			ent["_rest_commute"] = false
+			ent["pos"] = pos
+			ent["target"] = Vector3.ZERO
+			ent["speed"] = 0.0
+			ent["wander_r"] = 0.0
+		return
+
 	if phase == "rest":
 		# Marche vers le logement, reste visible, puis inactive à l'arrivée (hub_sim).
 		ent["active"] = true
@@ -288,6 +334,7 @@ func stats() -> Dictionary:
 		"work": n_work,
 		"leisure": n_lei,
 		"rest": n_rest,
-		"active_ratio": float(n_work + n_lei) / float(maxi(total, 1)),
+		"active_ratio": float(n_work if single_active_shift else (n_work + n_lei)) / float(maxi(total, 1)),
+		"single_active_shift": single_active_shift,
 		"triplons": triplons.size(),
 	}

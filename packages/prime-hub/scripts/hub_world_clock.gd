@@ -5,9 +5,10 @@ class_name HubWorldClock
 
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
-## Configuration temporelle : 24 minutes réelles = 24 heures en jeu (time_dilation = 60.0).
-## 1 heure en jeu = 60 secondes réelles. 1 minute en jeu = 1 seconde réelle.
-var time_dilation: float = 60.0
+## Configuration temporelle : 90 minutes réelles = 24 heures en jeu (time_dilation = 16.0).
+## 1 heure en jeu = 225 secondes réelles (3 min 45 s).
+## Jour plein (10h jeu) = 37.5 min | Nuit (8h jeu) = 30 min | Aube/Crépuscule (6h jeu) = 22.5 min.
+var time_dilation: float = 16.0
 var _game_hour: float = 10.0 # 10:00 (Matin / Plein jour) par défaut
 
 var day_phase: String = "day" # "dawn", "day", "dusk", "night"

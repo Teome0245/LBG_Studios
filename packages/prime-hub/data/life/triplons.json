@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "single_active_shift": true,
   "phase_seconds": {
     "work": [
       480,
