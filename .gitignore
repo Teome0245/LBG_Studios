@@ -107,3 +107,8 @@ packages/compagnon-desktop/overlay/vrm/animations/swg_*.vrma
 packages/compagnon-desktop/overlay/audio/*_instru*.wav
 
 
+
+# Secrets OVH / Services
+*.env
+ovh.env
+/etc/lbg/
