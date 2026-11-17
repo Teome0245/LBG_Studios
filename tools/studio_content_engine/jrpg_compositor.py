@@ -217,29 +217,27 @@ def render_jrpg_video(
     rms_series, total_duration = get_audio_rms_series(audio_path, fps=FPS)
     total_frames = len(rms_series)
 
-    # 1. Chargement des poses disponibles (Full, Medium, CloseUp)
-    poses_full: dict[str, Image.Image] = {}
+    # 1. Chargement des poses disponibles (Plan Moyen Haute Définition)
     poses_medium: dict[str, Image.Image] = {}
-    poses_closeup: dict[str, Image.Image] = {}
+    default_w = 940
 
-    for d, target_dict, default_w in [
-        (COMPAGNON_DIR, poses_full, 860),
-        (COMPAGNON_MEDIUM_DIR, poses_medium, 980),
-        (COMPAGNON_CLOSEUP_DIR, poses_closeup, 1020),
-    ]:
-        if d.is_dir():
-            for p_file in d.glob("*.png"):
-                name = p_file.stem
-                im = Image.open(p_file).convert("RGBA")
-                target_h = int(im.height * (default_w / im.width))
-                im_res = im.resize((default_w, target_h), Image.Resampling.LANCZOS)
-                target_dict[name] = im_res
+    if COMPAGNON_MEDIUM_DIR.is_dir():
+        for p_file in COMPAGNON_MEDIUM_DIR.glob("*.png"):
+            name = p_file.stem
+            im = Image.open(p_file).convert("RGBA")
+            target_h = int(im.height * (default_w / im.width))
+            im_res = im.resize((default_w, target_h), Image.Resampling.LANCZOS)
+            poses_medium[name] = im_res
 
-    # Fallback si medium ou closeup sont en cours de rendu
-    if not poses_medium:
-        poses_medium = poses_full
-    if not poses_closeup:
-        poses_closeup = poses_full
+    # Fallback si certaines poses manquent
+    fallback_neutral = poses_medium.get("neutral", list(poses_medium.values())[0])
+    poses_medium.setdefault("talk_a", fallback_neutral)
+    poses_medium.setdefault("talk_o", poses_medium["talk_a"])
+    poses_medium.setdefault("explain", fallback_neutral)
+    poses_medium.setdefault("explain_talk", poses_medium["explain"])
+    poses_medium.setdefault("think", fallback_neutral)
+    poses_medium.setdefault("joy", fallback_neutral)
+    poses_medium.setdefault("blink", fallback_neutral)
 
     font_text = load_font(42, bold=True)
     font_name = load_font(26, bold=True)
@@ -288,7 +286,7 @@ def render_jrpg_video(
         str(output_mp4),
     ]
 
-    logger.info("Encodage vidéo JRPG vers %s (%d frames)...", output_mp4, total_frames)
+    logger.info("Encodage vidéo JRPG fluide vers %s (%d frames)...", output_mp4, total_frames)
     proc = subprocess.Popen(
         ffmpeg_cmd,
         stdin=subprocess.PIPE,
@@ -298,129 +296,109 @@ def render_jrpg_video(
 
     p_intro = min(4.0, total_duration * 0.15)
     p_problem = total_duration * 0.40
-    p_solution = total_duration * 0.70
+    p_solution = total_duration * 0.72
     p_outro = total_duration * 0.88
 
-    # Variables d'état
-    cur_pose_img = poses_medium.get("neutral", list(poses_medium.values())[0])
+    # Variables d'état pour le crossfade soyeux (élimine toute saccade)
+    current_displayed_pose = poses_medium["neutral"]
+    prev_displayed_pose = poses_medium["neutral"]
+    target_displayed_pose = poses_medium["neutral"]
+    blend_progress = 1.0
+
+    # Position X et Y fixes et harmonieuses du buste (cadrage cinéma constant)
+    av_x = (WIDTH - default_w) // 2
 
     for f_idx in range(total_frames):
         t = float(f_idx) / FPS
         rms = rms_series[f_idx]
-        is_talking = rms > 0.14
-        is_blink = ((t + 1.8) % 3.6) < 0.16
+        is_talking = rms > 0.13
+        is_blink = ((t + 1.8) % 3.6) < 0.15
 
-        # Cycle de phonèmes dynamique pour le mouvement naturel des lèvres (8 Hz)
-        mouth_cycle = int(t * 8.5) % 3
+        # Rythme labial naturel (7 Hz : ~140ms par syllabe)
+        mouth_phase = int(t * 7.0) % 2
 
-        # 1. Sélection du plan de caméra et de la pose selon le déroulé narratif
-        if t < p_intro:
-            shot_mode = "medium"
+        # 1. Sélection rigoureuse de la pose : les bras restent STRICTEMENT stables par posture !
+        if t >= p_outro:
+            # Outro / Signature & Joy
             if is_talking:
-                if mouth_cycle == 0:
-                    target_pose = poses_medium.get("talk_a", poses_medium.get("neutral"))
-                elif mouth_cycle == 1:
-                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a", poses_medium.get("neutral")))
-                else:
-                    target_pose = poses_medium.get("neutral") if rms < 0.22 else poses_medium.get("talk_a")
+                target_pose = poses_medium["talk_a"] if mouth_phase == 0 else poses_medium["talk_o"]
             elif is_blink:
-                target_pose = poses_medium.get("blink", poses_medium.get("neutral"))
+                target_pose = poses_medium["blink"]
             else:
-                target_pose = poses_medium.get("neutral")
+                target_pose = poses_medium["joy"]
 
-        elif t < p_problem:
-            shot_mode = "medium"
+        elif p_solution <= t < p_outro:
+            # Phase Solution / Architecture : posture mains ouvertes EXPLAIN
             if is_talking:
-                if mouth_cycle == 0:
-                    target_pose = poses_medium.get("talk_a", poses_medium.get("think", poses_medium.get("neutral")))
-                elif mouth_cycle == 1:
-                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a"))
-                else:
-                    target_pose = poses_medium.get("think", poses_medium.get("neutral"))
+                # Les bras restent ouverts en explain, seule la bouche s'ouvre !
+                target_pose = poses_medium["explain_talk"] if mouth_phase == 0 else poses_medium["explain"]
             elif is_blink:
-                target_pose = poses_medium.get("blink", poses_medium.get("think"))
+                target_pose = poses_medium["explain"]
             else:
-                target_pose = poses_medium.get("think", poses_medium.get("neutral"))
+                target_pose = poses_medium["explain"]
 
-        elif t < p_solution:
-            shot_mode = "medium"
+        elif p_problem <= t < p_solution:
+            # Phase Problème / Défi technique
             if is_talking:
-                if mouth_cycle == 0:
-                    target_pose = poses_medium.get("explain_talk", poses_medium.get("talk_a", poses_medium.get("explain")))
-                elif mouth_cycle == 1:
-                    target_pose = poses_medium.get("talk_o", poses_medium.get("explain_talk", poses_medium.get("talk_a")))
+                # En parole, posture neutre détendue sans gesticuler
+                if mouth_phase == 0:
+                    target_pose = poses_medium["talk_a"]
                 else:
-                    target_pose = poses_medium.get("explain", poses_medium.get("neutral"))
+                    target_pose = poses_medium["talk_o"] if rms > 0.22 else poses_medium["neutral"]
             elif is_blink:
-                target_pose = poses_medium.get("blink", poses_medium.get("explain"))
+                target_pose = poses_medium["blink"]
             else:
-                target_pose = poses_medium.get("explain", poses_medium.get("neutral"))
-
-        elif t < p_outro:
-            shot_mode = "closeup"
-            # Gros plan immersif sur le visage et le regard cyan
-            if is_talking:
-                if mouth_cycle == 0:
-                    target_pose = poses_closeup.get("talk_a", poses_closeup.get("neutral"))
-                elif mouth_cycle == 1:
-                    target_pose = poses_closeup.get("talk_o", poses_closeup.get("talk_a"))
-                else:
-                    target_pose = poses_closeup.get("neutral") if rms < 0.22 else poses_closeup.get("talk_a")
-            elif is_blink:
-                target_pose = poses_closeup.get("blink", poses_closeup.get("neutral"))
-            else:
-                target_pose = poses_closeup.get("neutral")
+                # Lors des pauses orales, posture de réflexion
+                target_pose = poses_medium["think"]
 
         else:
-            shot_mode = "medium"
-            # Outro / Signature & CTA souriant
+            # Intro & Hook percutant : posture neutre face caméra
             if is_talking:
-                if mouth_cycle == 0:
-                    target_pose = poses_medium.get("talk_a", poses_medium.get("joy"))
-                elif mouth_cycle == 1:
-                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a"))
+                if mouth_phase == 0:
+                    target_pose = poses_medium["talk_a"]
                 else:
-                    target_pose = poses_medium.get("joy", poses_medium.get("neutral"))
+                    target_pose = poses_medium["talk_o"] if rms > 0.22 else poses_medium["neutral"]
             elif is_blink:
-                target_pose = poses_medium.get("blink", poses_medium.get("joy"))
+                target_pose = poses_medium["blink"]
             else:
-                target_pose = poses_medium.get("joy", poses_medium.get("neutral"))
+                target_pose = poses_medium["neutral"]
 
-        if target_pose is not None:
-            cur_pose_img = target_pose
+        # 2. Déclenchement du morphing / crossfade doux (lisse toutes les transitions)
+        if target_pose is not target_displayed_pose:
+            prev_displayed_pose = current_displayed_pose
+            target_displayed_pose = target_pose
+            blend_progress = 0.0
 
-        # 2. Composition du frame
+        if blend_progress < 1.0:
+            blend_progress = min(1.0, blend_progress + 0.25)  # 4 frames (~130ms) de fondu doux
+            cur_pose_img = Image.blend(prev_displayed_pose, target_displayed_pose, blend_progress)
+            current_displayed_pose = cur_pose_img
+        else:
+            cur_pose_img = target_displayed_pose
+            current_displayed_pose = target_displayed_pose
+
+        # 3. Composition du frame
         frame = background_layer.copy()
 
-        # Respiration organique subtile
-        breath_y = int(math.sin(t * (2.0 * math.pi / 3.3)) * 4.0)
-
-        # Positionnement de l'avatar selon le cadrage
-        if shot_mode == "closeup":
-            # Visage centré en haut et au milieu (y = 280)
-            av_x = (WIDTH - cur_pose_img.width) // 2
-            av_y = 220 + breath_y
-        else:
-            # Plan moyen : buste centré au milieu au-dessus de la boîte de dialogue
-            av_x = (WIDTH - cur_pose_img.width) // 2
-            av_y = 260 + breath_y
+        # Respiration organique subtile (invariable et douce)
+        breath_y = int(math.sin(t * (2.0 * math.pi / 3.3)) * 3.5)
+        av_y = 120 + breath_y
 
         frame.paste(cur_pose_img, (av_x, av_y), cur_pose_img)
 
-        # 3. Recherche de la phrase active pour la boîte de dialogue
+        # 4. Phrase active pour la boîte de dialogue
         active_sentence = ""
         for s_start, s_end, s_text in sentence_timeline:
             if s_start <= t <= s_end:
                 active_sentence = s_text
                 break
         if not active_sentence and sentence_timeline:
-            # Dernière phrase ou phrase d'accroche par défaut
             if t < sentence_timeline[0][0]:
                 active_sentence = sentence_timeline[0][2]
             else:
                 active_sentence = sentence_timeline[-1][2]
 
-        # 4. Rendu de la boîte de dialogue JRPG
+        # 5. Rendu de la boîte de dialogue JRPG
         f_draw = ImageDraw.Draw(frame)
         draw_jrpg_dialogue_box(
             draw=f_draw,
