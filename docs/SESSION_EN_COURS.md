@@ -9,6 +9,16 @@
 ---
 
 ## Dernières actions réalisées (2026-11-17)
+-24. **Résolution Connectivité IMAP Thunderbird & Dossiers Envoyés (Stalwart CT 154 / .10)** :
+    - **Listeners Stalwart complétés** :
+      * Ajout des listeners `imap` sur port **143** (STARTTLS) et `submission` sur port **587** via `stalwart-cli create NetworkListener`.
+      * Stalwart redémarré et vérifié : écoute active sur 25, 143, 443, 465, 587, 993, 995, 4190, 8080.
+      * Connectivité TCP validée depuis le PC Windows `.10` vers `192.168.0.54` sur les ports 143 et 993 (`TcpTestSucceeded: True`).
+    - **Thunderbird & Exceptions SSL (.10)** :
+      * Certificats auto-signés consolidés dans `cert_override.txt` (`192.168.0.54:143:`, `993:`, `465:`).
+      * Authentification IMAP testée et validée (dossiers `INBOX`, `Drafts`, `Sent Items`, `Deleted Items`, `Junk Mail`).
+      * L'envoi et la sauvegarde automatique dans « Envoyés » sont désormais opérationnels sans blocage réseau.
+
 -23. **Moteur Vidéo JRPG Rétro (Inspiré d'Hina et Saki), Déduplication des Scripts & Automatisation TikTok/OneDrive** :
     - **Inspiration Format Viral "Hina et Saki" (`jrpg_compositor.py`)** :
       * Rendu 3D Cycles CPU avec Lia en multi-cadrages cinématiques : alternance dynamique Plan Moyen (poste de travail) et Gros Plan (visage et yeux cyan émissifs).
