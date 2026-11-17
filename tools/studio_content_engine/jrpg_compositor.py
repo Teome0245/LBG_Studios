@@ -308,43 +308,81 @@ def render_jrpg_video(
         t = float(f_idx) / FPS
         rms = rms_series[f_idx]
         is_talking = rms > 0.14
-        is_blink = ((t + 1.8) % 3.6) < 0.14
+        is_blink = ((t + 1.8) % 3.6) < 0.16
 
-        # 1. Sélection du plan de caméra et du cadrage selon le déroulé narratif
-        # Plan 1 (Intro 0-4s) : Medium Shot face caméra
-        # Plan 2 (Problème 4-15s) : Medium Shot réfléchi
-        # Plan 3 (Solution 15-28s) : Plan d'explication
-        # Plan 4 (Chute / Outro) : CloseUp ou Joy
+        # Cycle de phonèmes dynamique pour le mouvement naturel des lèvres (8 Hz)
+        mouth_cycle = int(t * 8.5) % 3
+
+        # 1. Sélection du plan de caméra et de la pose selon le déroulé narratif
         if t < p_intro:
             shot_mode = "medium"
             if is_talking:
-                target_pose = poses_medium.get("talk_a", poses_medium.get("neutral"))
+                if mouth_cycle == 0:
+                    target_pose = poses_medium.get("talk_a", poses_medium.get("neutral"))
+                elif mouth_cycle == 1:
+                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a", poses_medium.get("neutral")))
+                else:
+                    target_pose = poses_medium.get("neutral") if rms < 0.22 else poses_medium.get("talk_a")
+            elif is_blink:
+                target_pose = poses_medium.get("blink", poses_medium.get("neutral"))
             else:
                 target_pose = poses_medium.get("neutral")
+
         elif t < p_problem:
             shot_mode = "medium"
             if is_talking:
-                target_pose = poses_medium.get("talk_a", poses_medium.get("think", poses_medium.get("neutral")))
+                if mouth_cycle == 0:
+                    target_pose = poses_medium.get("talk_a", poses_medium.get("think", poses_medium.get("neutral")))
+                elif mouth_cycle == 1:
+                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a"))
+                else:
+                    target_pose = poses_medium.get("think", poses_medium.get("neutral"))
+            elif is_blink:
+                target_pose = poses_medium.get("blink", poses_medium.get("think"))
             else:
                 target_pose = poses_medium.get("think", poses_medium.get("neutral"))
+
         elif t < p_solution:
             shot_mode = "medium"
             if is_talking:
-                target_pose = poses_medium.get("explain", poses_medium.get("talk_a", poses_medium.get("neutral")))
+                if mouth_cycle == 0:
+                    target_pose = poses_medium.get("explain_talk", poses_medium.get("talk_a", poses_medium.get("explain")))
+                elif mouth_cycle == 1:
+                    target_pose = poses_medium.get("talk_o", poses_medium.get("explain_talk", poses_medium.get("talk_a")))
+                else:
+                    target_pose = poses_medium.get("explain", poses_medium.get("neutral"))
+            elif is_blink:
+                target_pose = poses_medium.get("blink", poses_medium.get("explain"))
             else:
-                target_pose = poses_medium.get("neutral")
+                target_pose = poses_medium.get("explain", poses_medium.get("neutral"))
+
         elif t < p_outro:
             shot_mode = "closeup"
-            # Gros plan sur le visage et le regard cyan
+            # Gros plan immersif sur le visage et le regard cyan
             if is_talking:
-                target_pose = poses_closeup.get("talk_a", poses_closeup.get("neutral", target_pose))
+                if mouth_cycle == 0:
+                    target_pose = poses_closeup.get("talk_a", poses_closeup.get("neutral"))
+                elif mouth_cycle == 1:
+                    target_pose = poses_closeup.get("talk_o", poses_closeup.get("talk_a"))
+                else:
+                    target_pose = poses_closeup.get("neutral") if rms < 0.22 else poses_closeup.get("talk_a")
+            elif is_blink:
+                target_pose = poses_closeup.get("blink", poses_closeup.get("neutral"))
             else:
-                target_pose = poses_closeup.get("neutral", target_pose)
+                target_pose = poses_closeup.get("neutral")
+
         else:
             shot_mode = "medium"
-            # Outro / Signature
+            # Outro / Signature & CTA souriant
             if is_talking:
-                target_pose = poses_medium.get("talk_a", poses_medium.get("neutral"))
+                if mouth_cycle == 0:
+                    target_pose = poses_medium.get("talk_a", poses_medium.get("joy"))
+                elif mouth_cycle == 1:
+                    target_pose = poses_medium.get("talk_o", poses_medium.get("talk_a"))
+                else:
+                    target_pose = poses_medium.get("joy", poses_medium.get("neutral"))
+            elif is_blink:
+                target_pose = poses_medium.get("blink", poses_medium.get("joy"))
             else:
                 target_pose = poses_medium.get("joy", poses_medium.get("neutral"))
 
