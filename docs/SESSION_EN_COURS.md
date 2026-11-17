@@ -9,6 +9,21 @@
 ---
 
 ## Dernières actions réalisées (2026-11-17)
+-22. **Déploiement Effectif Serveur Mail Stalwart (CT 154 Proxmox .201) & Câblage Thunderbird (.10)** :
+    - **Déploiement Proxmox CT 154** :
+      * CT 154 `lbg-mail` provisionné sur Proxmox `.201`, IP statique `192.168.0.54`, passerelle `.254`, DNS AdGuard `.53`.
+      * Stalwart Mail Server installé et actif sous systemd (`systemctl status stalwart`).
+      * Configuration initiale validée : domaine `laboiteageeks.fr`, compte admin et compte utilisateur `sdesharches@laboiteageeks.fr`.
+      * Résolution de l'authentification OAuth/IP : mode recovery aligné sur `http://192.168.0.54:8080/admin` puis passage en mode normal opérationnel.
+      * Ports en écoute active et vérifiés : **SMTP 465 (SMTPS SSL/TLS)** et **IMAP 993 (IMAPS SSL/TLS)**.
+    - **Intégration Thunderbird (PC Windows .10)** :
+      * Profil serveur sortant Gladys Mail configuré sur `192.168.0.54:465` (SSL/TLS, mot de passe normal).
+      * Validation de l'exception de certificat auto-signé local dans Thunderbird.
+    - **Frontend Compagnon (CT 100)** :
+      * Conteneur Docker `lbg-frontend` recompilé `--no-cache` sur le CT 100 pour intégrer le composant `msg.pending_action` dans `ChatFlow.vue`.
+    - **Sujet Consigné pour la suite (Backlog Gladys)** :
+      * Intégration **OVHcloud** (`https://manager.eu.ovhcloud.com/#/hub/`) à Gladys : API / gestion DNS `laboiteageeks.fr` (enregistrements MX, SPF, DKIM, DMARC pour le serveur mail local).
+
 -21. **Câblage Thunderbird (.10) & Préparation Déploiement Autonome Serveur Mail Stalwart (CT 154 sur Proxmox .201)** :
     - **Câblage Thunderbird sur le PC Windows (`.10:5005`)** :
       * Déclaration de `thunderbird` dans l'allowlist `LBG_DESKTOP_APP_ALLOWLIST` et dans `LBG_DESKTOP_APP_MAP_JSON` avec son chemin exécutable officiel `C:\Program Files\Mozilla Thunderbird\thunderbird.exe`.
