@@ -195,25 +195,33 @@
     "id": 25,
     "topic": "Pourquoi la liberté des arbres 4x4 Pre-CU manque aux MMOs modernes",
     "category": "Game Design & RPG",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T09:07:39.193456",
+    "youtube_url": "https://www.youtube.com/shorts/vTJOT0-1MU8"
   },
   {
     "id": 26,
     "topic": "Le système de Karma et de dialogues par mots-clés inspiré de T4C",
     "category": "Game Design & Immersion",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T11:37:37.284753",
+    "youtube_url": "https://www.youtube.com/shorts/I2R_Eif5ZK8"
   },
   {
     "id": 27,
     "topic": "10 millions de ticks consécutifs sans crash sur notre serveur Godot 4",
     "category": "Architecture Serveur MMO",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T14:08:27.515256",
+    "youtube_url": "https://www.youtube.com/shorts/teuHI-2rt8Q"
   },
   {
     "id": 28,
     "topic": "Comment découper portes et fenêtres en temps réel dans des bâtiments CAO",
     "category": "Godot 4 & Procédural",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T16:38:44.344407",
+    "youtube_url": "https://www.youtube.com/shorts/e9gLo23vRIw"
   },
   {
     "id": 29,

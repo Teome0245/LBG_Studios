@@ -96,6 +96,8 @@ def run_daily_drop() -> None:
         str(ENGINE_DIR / "content_bot.py"),
         "--topic",
         topic,
+        "--style",
+        "jrpg",
         "--youtube",
         "--tiktok",
         "--pilot",

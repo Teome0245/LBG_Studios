@@ -31,6 +31,7 @@ CURRENT_DIR = Path(__file__).resolve().parent
 if str(CURRENT_DIR) not in sys.path:
     sys.path.insert(0, str(CURRENT_DIR))
 
+from jrpg_compositor import render_jrpg_video
 from script_generator import generate_tech_script
 from video_compositor import render_video
 from voice_engine import generate_tiktok_ass_subtitles, synthesize_script
@@ -51,6 +52,7 @@ def build_short_video(
     avatar_dir: Path = COMPAGNON_ASSETS_DIR,
     voice: str | None = None,
     silence_sec: float | None = None,
+    style: str = "jrpg",
     deploy_pilot: bool = True,
     publish_youtube: bool = False,
     publish_tiktok: bool = False,
@@ -88,16 +90,25 @@ def build_short_video(
     generate_tiktok_ass_subtitles(cues, ass_path)
     logger.info("Sous-titres ASS générés : %s", ass_path.name)
 
-    logger.info("=== [4/4] Rendu & Composition Vidéo 1080x1920 (Avatar 3D) ===")
     out_mp4 = work_dir / f"{run_id}_tiktok.mp4"
-    render_video(
-        audio_path=audio_path,
-        ass_path=ass_path,
-        output_mp4=out_mp4,
-        avatar_dir=avatar_dir,
-        title=script_data.get("title", "VEILLE TECH LBG"),
-        category=script_data.get("category", "IA & DEV LOCAL"),
-    )
+    if style == "jrpg":
+        logger.info("=== [4/4] Rendu & Composition Vidéo JRPG Rétro (Style Hina & Saki) ===")
+        render_jrpg_video(
+            audio_path=audio_path,
+            script_data=script_data,
+            cues=cues,
+            output_mp4=out_mp4,
+        )
+    else:
+        logger.info("=== [4/4] Rendu & Composition Vidéo 1080x1920 (Avatar 3D Standard) ===")
+        render_video(
+            audio_path=audio_path,
+            ass_path=ass_path,
+            output_mp4=out_mp4,
+            avatar_dir=avatar_dir,
+            title=script_data.get("title", "VEILLE TECH LBG"),
+            category=script_data.get("category", "IA & DEV LOCAL"),
+        )
 
     elapsed = time.time() - start_time
     file_size_mb = out_mp4.stat().st_size / (1024 * 1024)
@@ -175,6 +186,7 @@ def main() -> None:
     parser.add_argument("--demo", action="store_true", help="Génère la vidéo démo avec script canonique")
     parser.add_argument("--voice", type=str, default=None, help="Voix TTS (défaut: fr-FR-VivienneMultilingualNeural, fallback: fr_FR-siwis-medium)")
     parser.add_argument("--silence", type=float, default=None, help="Secondes de silence au début (défaut: 0.3s)")
+    parser.add_argument("--style", type=str, default="jrpg", choices=["jrpg", "standard"], help="Style de rendu vidéo (jrpg ou standard)")
     parser.add_argument("--model", type=str, default="qwen2.5:3b", help="Modèle Ollama")
     parser.add_argument("--outdir", type=str, default=str(DEFAULT_OUTPUT_DIR), help="Dossier de sortie")
     parser.add_argument("--youtube", action="store_true", help="Publie sur la chaîne YouTube @LBG-p8k")
@@ -192,6 +204,7 @@ def main() -> None:
         model=args.model,
         voice=args.voice,
         silence_sec=args.silence,
+        style=args.style,
         publish_youtube=args.youtube,
         publish_tiktok=args.tiktok,
         deploy_pilot=args.pilot,

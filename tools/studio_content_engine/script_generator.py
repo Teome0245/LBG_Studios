@@ -181,25 +181,148 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
         return dict(FALLBACK_SCRIPTS[0])
 
     topic_lower = topic.lower()
-    if any(k in topic_lower for k in ["swg", "star wars galaxies", "pre-cu", "artisanat"]):
+
+    # 1. Économie de troc, commerce P2P, marchands & négociation (ex: Sujet 29, 43)
+    if any(k in topic_lower for k in ["troc", "marchand", "négociation", "monnaie locale", "taxe municipale", "commerce"]):
         return {
             "title": clean_title_smart(topic, max_len=60),
-            "category": "MMO & Star Wars Galaxies",
-            "hook": "Pourquoi le système d'artisanat et les 32 classes libres de Star Wars Galaxies restent indépassés ?",
-            "problem": "La majorité des MMOs modernes enferment les joueurs dans des classes rigides et un loot aléatoire sans saveur.",
-            "solution": "Dans notre MMO Prime, nous reprenons les arbres 4x4 Pre-CU, l'expérimentation d'ingénierie et les ressources aux stats dynamiques de 1 à 1000.",
-            "metrics": "144 compétences combinables librement, des extracteurs de ressources sur le terrain et zéro restriction de classe.",
-            "cta": "Moi c'est Lia : quelle fonctionnalité de SWG tu regrettes le plus ? Dis-le moi en commentaire et découvre nos sources sur GitHub !",
+            "category": "MMO & Économie Vivante",
+            "hook": "L'hôtel des ventes centralisé et magique a tué l'économie vivante dans les jeux multijoueurs.",
+            "problem": "Quand un joueur clique sur un menu pour vendre instantanément ses objets à l'autre bout du monde, tout le tissu social et marchand s'effondre.",
+            "solution": "Dans notre MMO Prime, nous avons conçu un système de troc direct P2P couplé à des PNJ marchands autonomes dotés de trésoreries locales.",
+            "metrics": "Les prix s'ajustent en direct selon l'offre et la demande régionale, sans aucune maison d'enchères globale.",
+            "cta": "Moi c'est Lia : tu es plutôt troc de proximité ou hôtel des ventes mondial ? Dis-le moi en commentaire et viens voir nos sources sur GitHub !",
             "sentences": [
-                "Pourquoi le système d'artisanat et les 32 classes libres de Star Wars Galaxies restent indépassés ?",
-                "La majorité des MMOs modernes enferment les joueurs dans des classes rigides et un loot aléatoire sans saveur.",
-                "Dans notre MMO Prime, nous réintégrons les arbres de compétences 4x4 Pre-CU et les ressources aux qualités variables de 1 à 1000.",
-                "Chaque pièce d'équipement dépend directement de la pureté du minerai extrait et de la réussite critique lors de l'assemblage.",
-                "Résultat : 144 compétences combinables librement et une véritable économie entre joueurs sans hôtel des ventes centralisé.",
-                "Moi c'est Lia : quelle fonctionnalité de SWG tu regrettes le plus ? Dis-le moi en commentaire et découvre nos sources sur GitHub !",
+                "L'hôtel des ventes centralisé et magique a tué l'économie vivante dans les jeux multijoueurs.",
+                "Quand un joueur clique sur un menu pour vendre instantanément ses objets à l'autre bout du monde, tout le tissu social et marchand s'effondre.",
+                "Dans notre MMO Prime, nous avons conçu un système de troc direct de joueur à joueur couplé à des marchands autonomes.",
+                "Chaque comptoir possède sa propre trésorerie, refuse les surplus locaux et négocie les prix selon la rareté des minerais.",
+                "Résultat : une économie décentralisée sur Scrapaltai où les caravanes et le transport physique de marchandises redeviennent vitaux.",
+                "Moi c'est Lia : tu es plutôt troc de proximité ou hôtel des ventes mondial ? Dis-le moi en commentaire et viens voir nos sources sur GitHub !",
             ],
         }
 
+    # 2. Titans, créatures colossales, faune & Scout (ex: Sujet 30, 48)
+    if any(k in topic_lower for k in ["krayt", "gouffre", "titan", "bête", "faune", "dompter", "scout"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Créatures 3D",
+            "hook": "Animer un titan de 40 mètres qui émerge du sable sans effondrer le framerate : voici notre solution.",
+            "problem": "Les créatures géantes provoquent souvent des collisions instables et des calculs de physique monstrueux qui saturent le serveur de jeu.",
+            "solution": "Grâce aux arbres d'animation d'AnimationTree sur Godot 4.6 et à une synchronisation d'état par paquets delta, l'impact physique est fluide.",
+            "metrics": "Animation cinématique à 60 FPS constants et synchronisation multi-joueurs en moins de 20 millisecondes.",
+            "cta": "Moi c'est Lia : quel monstre légendaire tu aimerais traquer sur Scrapaltai ? Partage ton idée en commentaire et suis le projet sur GitHub !",
+            "sentences": [
+                "Animer un titan de 40 mètres qui émerge du sable sans effondrer le framerate : voici notre solution.",
+                "Les créatures géantes provoquent souvent des collisions instables et des calculs de physique monstrueux qui saturent le serveur de jeu.",
+                "Sur Scrapaltai, notre ver colossal du Gouffre Krayt s'anime via l'AnimationTree de Godot 4 avec cinématique inverse pour épouser le relief.",
+                "Le serveur headless arbitre ses zones d'aggro et diffuse uniquement les deltas de trajectoire compressés aux clients connectés.",
+                "Résultat : des affrontements d'anthologie à 60 images par seconde sans aucune saccade réseau.",
+                "Moi c'est Lia : quel monstre légendaire tu aimerais traquer sur Scrapaltai ? Partage ton idée en commentaire et suis le projet sur GitHub !",
+            ],
+        }
+
+    # 3. Extracteurs, Harvesters & forage de ressources sur le terrain (ex: Sujet 31)
+    if any(k in topic_lower for k in ["harvester", "extracteur", "forage", "gisement"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Exploration",
+            "hook": "Pourquoi poser un extracteur de minerai en plein désert rend les joueurs totalement accros ?",
+            "problem": "Dans la plupart des jeux, récolter des ressources se résume à frapper bêtement un caillou avec une pioche pendant des heures.",
+            "solution": "Dans Prime, nous reprenons la philosophie des Harvesters de SWG : tu prospectes le sol, trouves un filon pur et installes ton unité industrielle.",
+            "metrics": "Les veines de minerais s'épuisent et migrent dynamiquement toutes les deux semaines sur toute la surface de la planète.",
+            "cta": "Moi c'est Lia : tu préfères le minage manuel ou la gestion d'extracteurs automatisés ? Dis-le moi en commentaire et regarde nos devlogs sur GitHub !",
+            "sentences": [
+                "Pourquoi poser un extracteur de minerai en plein désert rend les joueurs totalement accros ?",
+                "Dans la plupart des jeux, récolter des ressources se résume à frapper bêtement un caillou avec une pioche pendant des heures.",
+                "Dans Prime, nous reprenons la philosophie des Harvesters : tu prospectes le sol au scanner, localises un filon rare et poses ton installation.",
+                "L'extracteur consomme de l'énergie, extrait en continu selon le rendement géologique et nécessite d'être entretenu et protégé.",
+                "Chaque veine s'épuise et réapparaît ailleurs, forçant les prospecteurs à cartographier en permanence Scrapaltai.",
+                "Moi c'est Lia : tu préfères le minage manuel ou la gestion d'extracteurs automatisés ? Dis-le moi en commentaire et regarde nos devlogs sur GitHub !",
+            ],
+        }
+
+    # 4. SWG Artisanat & Minerais aux stats variables 1-1000 (ex: Sujet 50)
+    if any(k in topic_lower for k in ["artisanat", "craft", "minerais", "expérimentation"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Star Wars Galaxies",
+            "hook": "Pourquoi le système d'artisanat par expérimentation de Star Wars Galaxies n'a jamais été égalé ?",
+            "problem": "Dans les RPG actuels, fabriquer une épée demande trois lingots génériques et produit exactement la même arme pour tout le monde.",
+            "solution": "Dans Prime, chaque minerai possède 10 attributs uniques variant de 1 à 1000, influençant directement la conductivité, la résistance et le poids.",
+            "metrics": "Une étape d'expérimentation avec réussite critique permet aux maîtres artisans de signer des pièces d'équipement légendaires.",
+            "cta": "Moi c'est Lia : tu aimes l'artisanat complexe ou tu préfères le loot simple ? Donne ton avis en commentaire et explore nos règles sur GitHub !",
+            "sentences": [
+                "Pourquoi le système d'artisanat par expérimentation de Star Wars Galaxies n'a jamais été égalé ?",
+                "Dans les RPG actuels, fabriquer une épée demande trois lingots génériques et produit exactement la même arme pour tout le monde.",
+                "Dans Prime, chaque filon de minerai possède des caractéristiques uniques cotées de 1 à 1000, du point de fusion à la résistance thermique.",
+                "Pendant l'assemblage, l'artisan investit des points d'expérimentation pour maximiser les stats de l'objet ou risquer un échec critique.",
+                "Bilan : des armes et armures uniques au monde, introuvables sur les monstres et signées par leur créateur.",
+                "Moi c'est Lia : tu aimes l'artisanat complexe ou tu préfères le loot simple ? Donne ton avis en commentaire et explore nos règles sur GitHub !",
+            ],
+        }
+
+    # 5. Pre-CU, Arbres 4x4 & 32 professions libres (ex: Sujet 24, 25)
+    if any(k in topic_lower for k in ["pre-cu", "arbres 4x4", "star wars galaxies", "swg", "theorycrafting", "profession"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Game Design Libre",
+            "hook": "Pourquoi les classes rigides des MMOs modernes ont tué le theorycrafting et la créativité des joueurs ?",
+            "problem": "Être enfermé à vie dans le rôle de guerrier ou de mage dès l'écran de création empêche toute personnalisation réelle.",
+            "solution": "Dans Prime, nous réimplémentons les arbres de compétences 4x4 Pre-CU : 250 points à répartir librement entre 32 spécialités.",
+            "metrics": "Plus de 140 compétences combinables pour créer des hybrides uniques comme un Médecin Tireur d'élite ou un Danseur Barde d'assaut.",
+            "cta": "Moi c'est Lia : quel hybride improbable tu rêverais de jouer ? Partage ta combinaison en commentaire et rejoins notre communauté sur GitHub !",
+            "sentences": [
+                "Pourquoi les classes rigides des MMOs modernes ont tué le theorycrafting et la créativité des joueurs ?",
+                "Être enfermé à vie dans le rôle de guerrier ou de mage dès l'écran de création empêche toute personnalisation réelle.",
+                "Dans notre jeu Prime, nous reprenons les arbres de compétences 4x4 Pre-CU avec 250 points d'apprentissage totalement modulaires.",
+                "Chaque joueur peut mixer librement la médecine de combat, le pistolet lourd, l'artisanat d'armures ou le dressage de bêtes.",
+                "Cette totale liberté redonne tout son sens au theorycrafting et brise définitivement la tyrannie des méta-classes prévisibles.",
+                "Moi c'est Lia : quel hybride improbable tu rêverais de jouer ? Partage ta combinaison en commentaire et rejoins notre communauté sur GitHub !",
+            ],
+        }
+
+    # 6. Second Brain, Obsidian & RAG Local de Lia (ex: Sujet 32, 34)
+    if any(k in topic_lower for k in ["second brain", "obsidian", "mémoire", "rag", "graphe"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "IA Locale & Second Brain",
+            "hook": "Comment construire un Second Brain intelligent sans envoyer la moindre note confidentielle sur des serveurs cloud ?",
+            "problem": "Les applications de prise de notes connectées à des API externes exposent tes idées privées et imposent un abonnement mensuel coûteux.",
+            "solution": "Chez LBG Studios, nous couplons un coffre Obsidian en pur Markdown à un moteur RAG local vectorisé avec nomic-embed-text.",
+            "metrics": "Recherche sémantique instantanée en moins de 15 millisecondes pour un coût matériel de zéro euro.",
+            "cta": "Moi c'est Lia : comment tu organises tes notes et ton savoir ? Dis-le moi en commentaire et viens tester nos scripts sur GitHub !",
+            "sentences": [
+                "Comment construire un Second Brain intelligent sans envoyer la moindre note confidentielle sur des serveurs cloud ?",
+                "Les applications de prise de notes connectées à des API externes exposent tes idées privées et imposent un abonnement mensuel coûteux.",
+                "Chez LBG Studios, nous couplons un coffre Obsidian en pur Markdown à un moteur RAG local vectorisé avec nomic-embed-text.",
+                "Chaque note est découpée en fragments sémantiques stockés dans une base locale sans aucune dépendance réseau.",
+                "Bilan : des synthèses contextuelles ultra pertinentes en 15 millisecondes avec une confidentialité absolue de tes données.",
+                "Moi c'est Lia : comment tu organises tes notes et ton savoir ? Dis-le moi en commentaire et viens tester nos scripts sur GitHub !",
+            ],
+        }
+
+    # 7. Housing libre & villes de joueurs (ex: Sujet 46)
+    if any(k in topic_lower for k in ["housing", "ville", "maison", "construction", "bâtiment"]):
+        return {
+            "title": clean_title_smart(topic, max_len=60),
+            "category": "MMO & Housing Libre",
+            "hook": "Le housing instancié dans les MMOs, c'est triste : voici comment nous permettons de bâtir de vraies villes.",
+            "problem": "S'enfermer seul dans une maisonnette invisible coupée du reste du serveur casse totalement la vie communautaire.",
+            "solution": "Dans Prime, les joueurs posent leurs bâtiments directement sur la carte partagée de Scrapaltai, fondent des cités et élisent leur maire.",
+            "metrics": "Chaque structure persiste dans SQLite WAL et génère une zone d'influence politique et économique visible par tous.",
+            "cta": "Moi c'est Lia : tu préfères le housing libre dans le monde ouvert ou les maisons instanciées ? Donne ton avis en commentaire !",
+            "sentences": [
+                "Le housing instancié dans les MMOs, c'est triste : voici comment nous permettons de bâtir de vraies villes.",
+                "S'enfermer seul dans une maisonnette invisible coupée du reste du serveur casse totalement la vie communautaire.",
+                "Dans notre univers Prime, les joueurs posent leurs bâtiments directement sur la carte partagée sans aucune instanciation.",
+                "En regroupant plusieurs résidences, les citoyens fondent une cité officielle, installent un terminal de navette et élisent un maire.",
+                "Chaque cité peut voter des taxes locales, attirer des marchands ambulants et devenir une place commerciale majeure.",
+                "Moi c'est Lia : tu préfères le housing libre dans le monde ouvert ou les maisons instanciées ? Donne ton avis en commentaire !",
+            ],
+        }
+
+    # 8. T4C & Dialogues par mots-clés
     if any(k in topic_lower for k in ["t4c", "karma", "mots-clés", "quatrième prophétie", "prophétie"]):
         return {
             "title": clean_title_smart(topic, max_len=60),
@@ -219,6 +342,7 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
             ],
         }
 
+    # 9. SQLite WAL & Bases de données (ex: Sujet 36)
     if any(k in topic_lower for k in ["sqlite", "wal", "base de données"]):
         return {
             "title": clean_title_smart(topic, max_len=60),
@@ -238,6 +362,7 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
             ],
         }
 
+    # 10. Animation VRM & 280 chorégraphies (ex: Sujet 35)
     if any(k in topic_lower for k in ["vrm", "danse", "animation", "motion"]):
         return {
             "title": clean_title_smart(topic, max_len=60),
@@ -261,11 +386,11 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
         return dict(FALLBACK_SCRIPTS[3])
     if any(k in topic_lower for k in ["procédural", "terrain", "scatter", "world"]):
         return dict(FALLBACK_SCRIPTS[4])
-    if any(k in topic_lower for k in ["websocket", "webtransport", "réseau", "protocole"]):
+    if any(k in topic_lower for k in ["websocket", "webtransport", "protocole"]):
         return dict(FALLBACK_SCRIPTS[5])
-    if any(k in topic_lower for k in ["godot", "headless", "serveur", "multijoueur", "mmo", "tick"]):
+    if any(k in topic_lower for k in ["godot", "headless", "multijoueur", "mmo", "tick"]):
         return dict(FALLBACK_SCRIPTS[2])
-    if any(k in topic_lower for k in ["bot", "nav", "navigation", "simul"]):
+    if any(k in topic_lower for k in ["bot ia", "navigation", "simul"]):
         return dict(FALLBACK_SCRIPTS[1])
 
     clean_topic = topic.strip()
@@ -329,8 +454,9 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
     )
 
     hosts_and_models = [
-        (OLLAMA_HOST_111, "qwen2.5:3b", 22.0),
-        (OLLAMA_HOST_111, "lbg-compagnon-e4b-v1:latest", 20.0),
+        (OLLAMA_HOST_111, "qwen2.5:3b", 35.0),
+        (OLLAMA_HOST_111, "huihui_ai/qwen3.5-abliterated:2B", 25.0),
+        (OLLAMA_HOST_110, "huihui_ai/qwen2.5-coder-abliterate:14b", 20.0),
     ]
     for host, mod, tout in hosts_and_models:
         try:

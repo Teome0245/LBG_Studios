@@ -9,6 +9,20 @@
 ---
 
 ## Dernières actions réalisées (2026-11-17)
+-23. **Moteur Vidéo JRPG Rétro (Inspiré d'Hina et Saki), Déduplication des Scripts & Automatisation TikTok/OneDrive** :
+    - **Inspiration Format Viral "Hina et Saki" (`jrpg_compositor.py`)** :
+      * Rendu 3D Cycles CPU avec Lia en multi-cadrages cinématiques : alternance dynamique Plan Moyen (poste de travail) et Gros Plan (visage et yeux cyan émissifs).
+      * Boîte de dialogue rétro JRPG style PS1 / Final Fantasy VII : dégradé bleu nuit, double-bordure biseautée cyan `#00F5D4`, cartouche `[ LIA // ANDROÏDE IA ⚡ ]` avec diode verte `● ONLINE`, typographie monospace nette et curseur animé `▼`.
+      * Branché comme compositeur par défaut dans `content_bot.py` (`--style jrpg`) et `cron_daily_publisher.py`.
+    - **Résolution Définitive des Vidéos Dupliquées (`script_generator.py`)** :
+      * Cause identifiée : un regroupement trop large de mots-clés (`["swg", "pre-cu", "artisanat"]`) combiné à un timeout Ollama CPU (22s) renvoyait systématiquement le même fallback textuel.
+      * Individualisation stricte de 10 domaines thématiques clés : SWG Craft/Minerais 1-1000 vs Pre-CU Arbres 4x4, Troc P2P & Marchands locaux, Titans/AnimationTree 3D, Harvesters/Extracteurs, Second Brain Obsidian RAG, Housing & Villes, SQLite WAL, VRM 280 chorégraphies.
+      * Ajustement des timeouts de requêtes LLM locales.
+    - **Transfert Vidéo & Pipeline TikTok Windows (`.10:5005`)** :
+      * Déploiement live de la capability `copier_video_vers_onedrive` dans l'agent Windows.
+      * Rendu de test `drop_1794935179_tiktok.mp4` (Sujet 29 : Économie de troc P2P, 3.15 Mo, 37.7s) généré en style JRPG et synchronisé avec succès dans `O:\OneDrive\Pictures\IA\Contenue\`.
+      * Capability `preparer_upload_tiktok` armée pour ouvrir TikTok Studio et copier titre et hashtags dans le presse-papier Windows.
+
 -22. **Déploiement Effectif Serveur Mail Stalwart (CT 154 Proxmox .201) & Câblage Thunderbird (.10)** :
     - **Déploiement Proxmox CT 154** :
       * CT 154 `lbg-mail` provisionné sur Proxmox `.201`, IP statique `192.168.0.54`, passerelle `.254`, DNS AdGuard `.53`.
