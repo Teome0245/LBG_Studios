@@ -3,12 +3,10 @@
 
 Permet à Gladys d'interagir avec l'API OVHcloud pour le domaine laboiteageeks.fr :
 - Audit complet des enregistrements DNS (MX, SPF, DKIM, DMARC, DynHost/A).
-- Génération assistée du token d'accès API (Consumer Key).
 - Synchronisation sécurisée des enregistrements mail (notamment DKIM Stalwart).
 - Application sous contrôle HITL (Human-In-The-Loop) avec confirmation obligatoire.
 
 Usage :
-  python3 ovh_dns_manager.py request-token
   python3 ovh_dns_manager.py audit
   python3 ovh_dns_manager.py plan-mail
   python3 ovh_dns_manager.py apply-mail
@@ -30,6 +28,14 @@ from typing import Any
 
 ZONE_DEFAULT = "laboiteageeks.fr"
 OVH_ENDPOINT = "https://eu.api.ovh.com/1.0"
+
+STALWART_DKIM_SELECTOR = "v1-rsa-20261117"
+STALWART_DKIM_PUBKEY = (
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvQQSrrBJCsnEfcEHmay7Hj4+n6M/OLQxb3Mawv2yGWAPqg5l"
+    "TarrhMvsBhiOwiIwhCm3G1dLeE/H1El7VbpUzdPkYq0nPdBzk4h5KvlMcsy5M5H43PoHte66+MAWtZQexYODR5Sc/IRCndtOOWZajgsFPmfe"
+    "OlgGaBZkgc7XPZ06YLzfUWuQci8YAnUTypVyCTKC4Gmv1563LTAKwEHpCDyhZodek0VXkn0fn+bRQ//LRiZuk3hVxWQLvLnHq+FPiMIQWw1I+"
+    "a3/SpbybAftpjNJvmDhB/6g7jUh6gD22B/LN+OyVqWmxN9tCaUb314W60mjrRR4LWLgAZF2XlipoQIDAQAB"
+)
 
 # Emplacements standards des secrets OVH
 ENV_PATHS = [
@@ -89,7 +95,7 @@ class OvhClient:
         self._sync_time()
 
     def _sync_time(self) -> None:
-        """Synchronise l'horloge avec le serveur OVH pour éviter les rejets d'horodatage."""
+        """Synchronise l'horloge avec le serveur OVH."""
         try:
             req = urllib.request.Request(f"{self.endpoint}/auth/time", headers={"User-Agent": "LBG-Gladys/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -145,62 +151,11 @@ class OvhClient:
             raise RuntimeError(f"Erreur API OVH HTTP {e.code}: {msg}") from e
 
 
-def cmd_request_token(args: argparse.Namespace) -> int:
-    """Génère une demande de Consumer Key avec les droits restreints à laboiteageeks.fr."""
-    creds = load_ovh_credentials()
-    app_key = args.app_key or creds["application_key"]
-    app_secret = args.app_secret or creds["application_secret"]
-
-    if not app_key or not app_secret:
-        print("ℹ️ Clés Application Key ou Secret manquantes.")
-        print("Pour générer vos identifiants d'API OVH :")
-        print("1. Rendez-vous sur : https://eu.api.ovh.com/createToken/")
-        print("2. Nom d'application : Gladys-Compagnon")
-        print(f"3. Droits d'accès : /domain/zone/{ZONE_DEFAULT}* (GET, POST, PUT, DELETE)")
-        print("4. Renseignez ensuite les clés obtenues dans /etc/lbg/ovh.env")
-        return 1
-
-    # Demande d'un Consumer Key via POST /auth/credential
-    payload = {
-        "accessRules": [
-            {"method": "GET", "path": f"/domain/zone/{ZONE_DEFAULT}*"},
-            {"method": "POST", "path": f"/domain/zone/{ZONE_DEFAULT}*"},
-            {"method": "PUT", "path": f"/domain/zone/{ZONE_DEFAULT}*"},
-            {"method": "DELETE", "path": f"/domain/zone/{ZONE_DEFAULT}*"},
-        ],
-        "redirection": "https://laboiteageeks.fr",
-    }
-
-    url = f"{OVH_ENDPOINT}/auth/credential"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Ovh-Application": app_key,
-        "User-Agent": "LBG-Gladys-DNS/1.0",
-    }
-    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
-
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            print("🔑 Demande de Consumer Key initiée avec succès !")
-            print("------------------------------------------------------------")
-            print(f"Consumer Key : {data.get('consumerKey')}")
-            print(f"Lien de validation utilisateur :")
-            print(f"👉 {data.get('validationUrl')}")
-            print("------------------------------------------------------------")
-            print("Action requise : Cliquez sur le lien ci-dessus pour autoriser Gladys.")
-            print("Puis enregistrez le consumerKey dans votre fichier /etc/lbg/ovh.env")
-            return 0
-    except Exception as e:
-        print(f"Erreur lors de la demande de token : {e}")
-        return 1
-
-
 def cmd_audit(args: argparse.Namespace) -> int:
     """Audit complet de la zone DNS chez OVH et comparaison avec la stack locale."""
     creds = load_ovh_credentials()
     if not creds["application_key"] or not creds["consumer_key"]:
-        print("❌ Clés d'API OVH manquantes. Veuillez exécuter 'request-token' ou renseigner /etc/lbg/ovh.env.")
+        print("❌ Clés d'API OVH manquantes dans /etc/lbg/ovh.env.")
         return 1
 
     client = OvhClient(creds["application_key"], creds["application_secret"], creds["consumer_key"])
@@ -210,52 +165,53 @@ def cmd_audit(args: argparse.Namespace) -> int:
     print("=" * 60)
 
     try:
-        # Récupération des IDs d'enregistrements
         record_ids = client.request("GET", f"/domain/zone/{zone}/record")
         records = []
         for rid in record_ids:
             rec = client.request("GET", f"/domain/zone/{zone}/record/{rid}")
             records.append(rec)
 
-        # Analyse des enregistrements clés
         mx_records = [r for r in records if r.get("fieldType") == "MX"]
-        txt_records = [r for r in records if r.get("fieldType") == "TXT"]
+        txt_records = [r for r in records if r.get("fieldType") in ("TXT", "SPF", "DMARC")]
         a_records = [r for r in records if r.get("fieldType") == "A"]
 
         print(f"Total enregistrements DNS trouvés : {len(records)}\n")
 
         print("📌 Enregistrements Mail (MX) :")
         for r in mx_records:
-            print(f"  - {r.get('subDomain') or '@'} -> {r.get('target')} (id: {r.get('id')})")
+            print(f"  - {r.get('subDomain') or '@'} -> {r.get('target')} (ID: {r.get('id')})")
 
         print("\n📌 Enregistrements Adresses (A) :")
         for r in a_records:
             if r.get("subDomain") in ("", "mail", "smtp", "imap"):
                 print(f"  - {r.get('subDomain') or '@'} -> {r.get('target')}")
 
-        print("\n📌 Enregistrements Textes (TXT) :")
-        spf_found = False
-        dmarc_found = False
-        dkim_found = False
+        print("\n📌 Enregistrements Authentification Mail (SPF / DKIM / DMARC) :")
+        spf_ok = False
+        dmarc_ok = False
+        stalwart_dkim_ok = False
 
         for r in txt_records:
-            sub = r.get("subDomain", "")
-            target = r.get("target", "")
-            if "v=spf1" in target:
-                spf_found = True
-                print(f"  - SPF  ({sub or '@'}) : {target}")
-            elif "_dmarc" in sub or "v=DMARC1" in target:
-                dmarc_found = True
-                print(f"  - DMARC({sub}) : {target}")
+            sub = r.get("subDomain", "") or "@"
+            tgt = r.get("target", "")
+            ft = r.get("fieldType")
+            if "v=spf1" in tgt:
+                spf_ok = True
+                print(f"  - [{ft}] SPF  ({sub}) : {tgt}")
+            elif "_dmarc" in sub or "v=DMARC1" in tgt:
+                dmarc_ok = True
+                print(f"  - [{ft}] DMARC({sub}) : {tgt}")
+            elif STALWART_DKIM_SELECTOR in sub:
+                stalwart_dkim_ok = True
+                print(f"  - [{ft}] DKIM Actif Stalwart ({sub}) : {tgt[:35]}... (ID: {r.get('id')})")
             elif "_domainkey" in sub:
-                dkim_found = True
-                print(f"  - DKIM ({sub}) : {target[:40]}... (présent)")
+                print(f"  - [{ft}] DKIM Ancien/Legacy   ({sub}) : {tgt[:35]}...")
 
-        print("\n📊 Bilan de conformité Serveur Stalwart :")
-        print(f"  - MX configuré      : {'✅ OUI' if mx_records else '❌ NON'}")
-        print(f"  - SPF configuré     : {'✅ OUI' if spf_found else '⚠️ À AJUSTER'}")
-        print(f"  - DMARC configuré   : {'✅ OUI' if dmarc_found else '⚠️ MANQUANT'}")
-        print(f"  - DKIM Stalwart lié : {'✅ OUI' if dkim_found else '❌ MANQUANT (Action requise)'}")
+        print("\n📊 Bilan de conformité Serveur Stalwart CT 154 :")
+        print(f"  - Enregistrement MX           : {'✅ OUI (10 mail.laboiteageeks.fr)' if mx_records else '❌ NON'}")
+        print(f"  - SPF Freebox (82.67.2.16)    : {'✅ OUI' if spf_ok else '⚠️ MANQUANT'}")
+        print(f"  - DKIM Stalwart ({STALWART_DKIM_SELECTOR}) : {'✅ OUI' if stalwart_dkim_ok else '❌ NON PUBLIÉ (Action requise)'}")
+        print(f"  - DMARC de protection         : {'✅ OUI' if dmarc_ok else '⚠️ RECOMMANDÉ'}")
 
         return 0
 
@@ -265,23 +221,30 @@ def cmd_audit(args: argparse.Namespace) -> int:
 
 
 def cmd_plan_mail(args: argparse.Namespace) -> int:
-    """Prépare le plan des modifications à apporter pour intégrer le serveur Stalwart."""
+    """Affiche le plan des modifications à appliquer sur OVHcloud."""
     zone = args.zone or ZONE_DEFAULT
-    print(f"📋 Plan de synchronisation DNS pour {zone} :")
+    print(f"📋 Plan d'actions DNS pour {zone} :")
+    print("=" * 60)
+    print(f"1. Publication de la clé DKIM Stalwart :")
+    print(f"   - Type         : TXT")
+    print(f"   - Sous-domaine : {STALWART_DKIM_SELECTOR}._domainkey")
+    print(f"   - Valeur       : \"v=DKIM1; k=rsa; p={STALWART_DKIM_PUBKEY}\"")
+    print(f"   - TTL          : 3600")
     print("------------------------------------------------------------")
-    print("1. Enregistrement DKIM Stalwart (Manquant sur OVH) :")
-    print("   - Sous-domaine : v1-rsa-20261117._domainkey")
+    print("2. Publication de l'enregistrement DMARC :")
     print("   - Type         : TXT")
-    print("   - Cible        : v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvQQSrrBJCsnEfcEHmay7Hj4+n6M/OLQxb3Mawv2yGWAPqg5lTarrhMvsBhiOwiIwhCm3G1dLeE/H1El7VbpUzdPkYq0nPdBzk4h5KvlMcsy5M5H43PoHte66+MAWtZQexYODR5Sc/IRCndtOOWZajgsFPmfeOlgGaBZkgc7XPZ06YLzfUWuQci8YAnUTypVyCTKC4Gmv1563LTAKwEHpCDyhZodek0VXkn0fn+bRQ//LRiZuk3hVxWQLvLnHq+FPiMIQWw1I+a3/SpbybAftpjNJvmDhB/6g7jUh6gD22B/LN+OyVqWmxN9tCaUb314W60mjrRR4LWLgAZF2XlipoQIDAQAB")
+    print("   - Sous-domaine : _dmarc")
+    print("   - Valeur       : \"v=DMARC1; p=none; sp=none; aspf=r;\"")
+    print("   - TTL          : 3600")
     print("------------------------------------------------------------")
-    print("2. Rafraîchissement de zone DNS OVHcloud (SOA update).")
-    print("------------------------------------------------------------")
+    print("3. Rafraîchissement de la zone DNS (POST /refresh)")
+    print("=" * 60)
     print("Pour appliquer ce plan via Gladys, confirmez avec 'apply-mail'.")
     return 0
 
 
 def cmd_apply_mail(args: argparse.Namespace) -> int:
-    """Applique les enregistrements nécessaires chez OVH."""
+    """Applique les enregistrements DKIM et DMARC nécessaires chez OVH."""
     creds = load_ovh_credentials()
     if not creds["application_key"] or not creds["consumer_key"]:
         print("❌ Clés d'API OVH manquantes dans /etc/lbg/ovh.env.")
@@ -290,45 +253,63 @@ def cmd_apply_mail(args: argparse.Namespace) -> int:
     client = OvhClient(creds["application_key"], creds["application_secret"], creds["consumer_key"])
     zone = args.zone or ZONE_DEFAULT
 
-    print(f"🚀 Déploiement des enregistrements mail pour {zone}...")
+    print(f"🚀 Application des modifications DNS pour {zone}...")
 
-    # Ajout du DKIM
-    dkim_target = (
-        "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvQQSrrBJCsnEfcEHmay7Hj4+n6M/OLQxb3Mawv2yGWAPqg5l"
-        "TarrhMvsBhiOwiIwhCm3G1dLeE/H1El7VbpUzdPkYq0nPdBzk4h5KvlMcsy5M5H43PoHte66+MAWtZQexYODR5Sc/IRCndtOOWZajgsFPmfe"
-        "OlgGaBZkgc7XPZ06YLzfUWuQci8YAnUTypVyCTKC4Gmv1563LTAKwEHpCDyhZodek0VXkn0fn+bRQ//LRiZuk3hVxWQLvLnHq+FPiMIQWw1I+"
-        "a3/SpbybAftpjNJvmDhB/6g7jUh6gD22B/LN+OyVqWmxN9tCaUb314W60mjrRR4LWLgAZF2XlipoQIDAQAB"
-    )
+    # Vérification si le DKIM existe déjà pour éviter les doublons
+    record_ids = client.request("GET", f"/domain/zone/{zone}/record")
+    dkim_exists = False
+    dmarc_exists = False
 
-    try:
-        new_rec = client.request("POST", f"/domain/zone/{zone}/record", {
+    for rid in record_ids:
+        rec = client.request("GET", f"/domain/zone/{zone}/record/{rid}")
+        sub = rec.get("subDomain", "")
+        if STALWART_DKIM_SELECTOR in sub:
+            dkim_exists = True
+        if sub == "_dmarc":
+            dmarc_exists = True
+
+    # 1. Ajout du DKIM Stalwart si absent
+    if not dkim_exists:
+        dkim_target = f"\"v=DKIM1; k=rsa; p={STALWART_DKIM_PUBKEY}\""
+        new_dkim = client.request("POST", f"/domain/zone/{zone}/record", {
             "fieldType": "TXT",
-            "subDomain": "v1-rsa-20261117._domainkey",
+            "subDomain": f"{STALWART_DKIM_SELECTOR}._domainkey",
             "target": dkim_target,
             "ttl": 3600,
         })
-        print(f"✅ Enregistrement DKIM créé avec succès (ID: {new_rec.get('id')})")
+        print(f"✅ Enregistrement DKIM Stalwart créé (ID: {new_dkim.get('id')})")
+    else:
+        print(f"ℹ️ Enregistrement DKIM Stalwart déjà présent dans la zone.")
 
-        # Rafraîchissement de zone
+    # 2. Ajout du DMARC si absent
+    if not dmarc_exists:
+        dmarc_target = "\"v=DMARC1; p=none; sp=none; aspf=r;\""
+        new_dmarc = client.request("POST", f"/domain/zone/{zone}/record", {
+            "fieldType": "TXT",
+            "subDomain": "_dmarc",
+            "target": dmarc_target,
+            "ttl": 3600,
+        })
+        print(f"✅ Enregistrement DMARC créé (ID: {new_dmarc.get('id')})")
+    else:
+        print(f"ℹ️ Enregistrement DMARC déjà présent dans la zone.")
+
+    # 3. Rafraîchissement de la zone
+    try:
         client.request("POST", f"/domain/zone/{zone}/refresh")
-        print("✅ Rafraîchissement de la zone DNS OVH demandé.")
-        print("La propagation DNS mondiale prendra entre 5 et 30 minutes.")
-        return 0
-
+        print("✅ Rafraîchissement de la zone DNS OVH demandé avec succès.")
+        print("La diffusion DNS mondiale est amorcée.")
     except Exception as e:
-        print(f"❌ Erreur lors de l'application : {e}")
-        return 1
+        print(f"⚠️ Erreur lors du refresh : {e}")
+
+    return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Gestionnaire DNS OVHcloud pour LBG Studios / Gladys")
     parser.add_argument("--zone", default=ZONE_DEFAULT, help=f"Zone DNS (défaut: {ZONE_DEFAULT})")
-    parser.add_argument("--app-key", help="OVH Application Key")
-    parser.add_argument("--app-secret", help="OVH Application Secret")
 
     sub = parser.add_subparsers(dest="command", required=True)
-
-    sub.add_parser("request-token", help="Demander un Consumer Key d'accès restreint")
     sub.add_parser("audit", help="Auditer la zone DNS OVH")
     sub.add_parser("status", help="Alias pour audit")
     sub.add_parser("plan-mail", help="Afficher le plan des modifications mail")
@@ -336,9 +317,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if args.command == "request-token":
-        return cmd_request_token(args)
-    elif args.command in ("audit", "status"):
+    if args.command in ("audit", "status"):
         return cmd_audit(args)
     elif args.command == "plan-mail":
         return cmd_plan_mail(args)

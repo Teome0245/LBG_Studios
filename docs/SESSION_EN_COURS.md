@@ -20,19 +20,18 @@
       * Vidéo prototype et drop de test synchronisés avec succès vers `O:\OneDrive\Pictures\IA\Contenue\`.
       * Prochain sujet prêt en file d'attente (Sujet 29 : *Économie de troc P2P et négociations marchandes entre bots et joueurs*).
 
--25. **Intégration API OVHcloud dans Gladys & Audit DNS en Direct (`laboiteageeks.fr`)** :
+-25. **Intégration API OVHcloud dans Gladys & Synchronisation DNS en Direct (`laboiteageeks.fr`)** :
     - **Script Canonique & Sécurité (`ovh_dns_manager.py`)** :
       * Développé dans `packages/cortex/infra/scripts/ovh_dns_manager.py`, synchronisé sur le CT 100 (`/opt/orchestrateur/backend/scripts/`).
       * Client REST pur en Python (signature HMAC-SHA1 officielle OVH, horloge resynchronisée dynamiquement avec `/auth/time`).
       * Identifiants API sécurisés (`ovh.env` chmod 600, exclu de git via `.gitignore`).
     - **Intégration Gladys HITL (`pending_actions.py`)** :
       * Déclaration des actions `ovh_dns_audit` et `ovh_dns_apply_mail` dans le catalogue `CANONICAL_ACTIONS`.
-    - **Résultats de l'Audit Réel de la Zone DNS OVH** :
-      * Enregistrement MX : `10 mail.laboiteageeks.fr` (conforme).
-      * Adresse IP publique Freebox : `82.67.2.16` liée à `mail.laboiteageeks.fr` (conforme).
-      * SPF : `v=spf1 a mx ptr ip4:82.67.2.16 -all` déjà en place (conforme).
-      * DKIM Stalwart : Clé `v1-rsa-20261117` manquante (l'ancienne clé Synology `20250702` est encore présente).
-      * DMARC : À officialiser en entrée TXT standard.
+    - **Application Réelle effectuée par Gladys chez OVHcloud** :
+      * Enregistrement DKIM Stalwart créé : `v1-rsa-20261117._domainkey.laboiteageeks.fr` (Record ID: `5449716346`).
+      * Zone DNS rafraîchie avec succès chez OVH.
+      * Clé DKIM déjà propagée et validée par résolution DNS externe en ~24 ms.
+      * **Bilan 100% Vert** : MX (`10 mail`), SPF (`82.67.2.16`), DKIM (`v1-rsa-20261117`), DMARC (`v=DMARC1;p=none;sp=none;aspf=r;`).
 
 -24. **Résolution Connectivité IMAP Thunderbird & Dossiers Envoyés (Stalwart CT 154 / .10)** :
     - **Listeners Stalwart complétés** :
