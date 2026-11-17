@@ -9,6 +9,17 @@
 ---
 
 ## Dernières actions réalisées (2026-11-17)
+-26. **Stabilisation Moteur Vidéo JRPG (Hina & Saki) & Cadence Quotidienne** :
+    - **Résolution Saccades & Mouvements de Bras** :
+      * Élimination complète des sauts de bras parasites : l'avatar utilise désormais une posture de base calme et stable (`POSE_NATURAL_IDLE`).
+      * Seules les lèvres (`talk_a`, `talk_o`, `neutral`) et les yeux (`blink` toutes les 3.8s) s'animent en synchronisation avec l'audio.
+      * Lissage de l'enveloppe RMS et cadence labiale calée à 6.5 Hz pour une prononciation nette sans scintillement.
+    - **Cadrage Stable & Cinématique** :
+      * Suppression des coupures brusques de plans entre caméras différentes : cadrage unifié Plan Moyen / Mi-buste, yeux de Lia alignés sur le tiers supérieur.
+    - **Synchronisation Windows & Préparation Drop 19h00** :
+      * Vidéo prototype et drop de test synchronisés avec succès vers `O:\OneDrive\Pictures\IA\Contenue\`.
+      * Prochain sujet prêt en file d'attente (Sujet 29 : *Économie de troc P2P et négociations marchandes entre bots et joueurs*).
+
 -25. **Intégration API OVHcloud dans Gladys & Audit DNS en Direct (`laboiteageeks.fr`)** :
     - **Script Canonique & Sécurité (`ovh_dns_manager.py`)** :
       * Développé dans `packages/cortex/infra/scripts/ovh_dns_manager.py`, synchronisé sur le CT 100 (`/opt/orchestrateur/backend/scripts/`).
