@@ -8,6 +8,22 @@
 
 ---
 
+## Dernières actions réalisées (2026-11-17)
+-21. **Câblage Thunderbird (.10) & Préparation Déploiement Autonome Serveur Mail Stalwart (CT 154 sur Proxmox .201)** :
+    - **Câblage Thunderbird sur le PC Windows (`.10:5005`)** :
+      * Déclaration de `thunderbird` dans l'allowlist `LBG_DESKTOP_APP_ALLOWLIST` et dans `LBG_DESKTOP_APP_MAP_JSON` avec son chemin exécutable officiel `C:\Program Files\Mozilla Thunderbird\thunderbird.exe`.
+      * Gladys peut désormais ouvrir Thunderbird et piloter la composition de messages (`-compose`) depuis le chat Compagnon.
+    - **Création du Script Canonique `create_lbg_mail_ct_proxmox.sh`** :
+      * Cible propre et isolée sur Proxmox `.201` : **CT 154** (`lbg-mail`), Ubuntu 24.04, 2 Cores, 2048 Mo RAM, 15 Go disque sur `local-vm-930g`.
+      * Réseau statique : **`192.168.0.54/24`** (passerelle Freebox `.254`, résolveur DNS AdGuard `.53` !).
+      * Moteur mail : **Stalwart Mail Server** (tout-en-un moderne en Rust, IMAP 143/993, SMTP 25/587, WebAdmin :8080).
+    - **Armement Sécurisé dans Gladys (`pending_actions.py`, `router_prompts.py`)** :
+      * Action `mail_server_deploy` enregistrée dans `CANONICAL_ACTIONS`.
+      * Algorithme d'extraction mis à niveau en 2 passes : priorité stricte au nom de script exact cité (`create_lbg_mail_ct_proxmox.sh`) avant les mots-clés sémantiques, éliminant tout faux positif avec le CT 153 DNS.
+      * Exclusion des requêtes de déploiement/provisionnement (`_PROVISION_OR_DEPLOY_RE`) du monitoring passif Héphaïstos (`infra_lan_intent.py`).
+      * Connaissance canonique du serveur mail (CT 154 sur `192.168.0.54`) intégrée dans les consignes système `router_prompts.py`.
+      * Synchronisé et validé sur le CT 100 (`/opt/orchestrateur/scripts/` et backend).
+
 ## Dernières actions réalisées (2026-11-16)
 -20. **Pilotage Fluide & Autonome de Gladys (Pending Actions, HITL L2 1-Clic, Exécution Directe Fermée)** :
     - **Problème résolu** : Gladys formulait une proposition technique (ex: « Veux-tu que je déclenche le déploiement DNS... »), mais quand l'utilisateur répondait « oui » ou « go », elle réagissait comme un chatbot passif (« On déploie le serveur DNS... Déclenche avec validation L2 ») sans rien exécuter, forçant à chercher des tokens L2 sur Pilot.

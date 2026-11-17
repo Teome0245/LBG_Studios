@@ -81,12 +81,20 @@ def has_strong_infra_signal(text: str) -> bool:
     return bool(_INFRA_LAN_STRONG_RE.search(text or ""))
 
 
+# Verbes de déploiement / provisionnement : ne doivent PAS être détournés vers le monitoring Héphaïstos
+_PROVISION_OR_DEPLOY_RE = re.compile(
+    r"(?i)\b(d[ée]ploy|mettre\s+en\s+(?:place|service)|install|cr[ée]er|provisionn)\b"
+)
+
+
 def wants_infra_lan_brief(text: str) -> bool:
     """True si la demande vise RAM/disk LAN / Proxmox (pas healthz générique).
 
     Mentionner Prime / .246 seuls (hébergement MMO) ne déclenche pas Héphaïstos.
     """
     body = text or ""
+    if _PROVISION_OR_DEPLOY_RE.search(body):
+        return False
     if is_agent_memory_or_mmo_product(body) and not has_strong_infra_signal(body):
         return False
     if has_strong_infra_signal(body):

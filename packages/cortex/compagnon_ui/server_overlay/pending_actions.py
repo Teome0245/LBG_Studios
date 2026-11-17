@@ -162,7 +162,14 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "script_names": ["create_lbg_dns_ct_proxmox.sh"],
         "summary": "Provisionnement du conteneur LXC Ubuntu 24.04 (CT 153) sur Proxmox .201 avec IP 192.168.0.53",
         "timeout_s": 180,
-        "keywords": [r"dns\s+adguard", r"serveur\s+dns", r"ct\s*153", r"create_lbg_dns_ct_proxmox\.sh"],
+        "keywords": [r"dns\s+adguard", r"serveur\s+dns", r"adguard\s+home", r"create_lbg_dns_ct_proxmox\.sh"],
+    },
+    "mail_server_deploy": {
+        "label": "Mise en service Serveur Mail Stalwart (CT 154 Proxmox .201)",
+        "script_names": ["create_lbg_mail_ct_proxmox.sh"],
+        "summary": "Provisionnement du conteneur LXC 154 sur Proxmox .201 (IP 192.168.0.54) avec Stalwart Mail Server (IMAP/SMTP)",
+        "timeout_s": 240,
+        "keywords": [r"serveur\s+mail", r"stalwart", r"ct\s*154", r"create_lbg_mail_ct_proxmox\.sh", r"service\s+mail"],
     },
     "proxmox_storage_check": {
         "label": "Contrôle du stockage Proxmox .201",
@@ -236,38 +243,40 @@ def extract_pending_action_from_assistant_message(
 
     content_low = content.lower()
 
-    # Recherche dans le catalogue canonique
+    # Passe 1 : Match direct par nom de script exact (priorité maximale)
     for action_key, spec in CANONICAL_ACTIONS.items():
-        matched = False
-        # Match par script direct
         for sname in spec.get("script_names", []):
             if sname.lower() in content_low:
-                matched = True
-                break
+                script_path = _resolve_script_path(sname)
+                cmd = ["bash", str(script_path)] if script_path else ["bash", sname]
+                return PendingAction(
+                    action_id=f"act_{action_key}_{int(time.time())}",
+                    conversation_id=conversation_id,
+                    action_type="script",
+                    label=spec["label"],
+                    summary=spec["summary"],
+                    command=cmd,
+                    timeout_s=spec.get("timeout_s", 120),
+                    context={"action_key": action_key, "script_name": sname},
+                )
 
-        # Match par mots-clés
-        if not matched:
-            for kw in spec.get("keywords", []):
-                if re.search(kw, content_low):
-                    matched = True
-                    break
-
-        if matched:
-            script_name = spec["script_names"][0]
-            script_path = _resolve_script_path(script_name)
-            cmd = ["bash", str(script_path)] if script_path else ["bash", script_name]
-
-            action = PendingAction(
-                action_id=f"act_{action_key}_{int(time.time())}",
-                conversation_id=conversation_id,
-                action_type="script",
-                label=spec["label"],
-                summary=spec["summary"],
-                command=cmd,
-                timeout_s=spec.get("timeout_s", 120),
-                context={"action_key": action_key, "script_name": script_name},
-            )
-            return action
+    # Passe 2 : Match sémantique par mots-clés
+    for action_key, spec in CANONICAL_ACTIONS.items():
+        for kw in spec.get("keywords", []):
+            if re.search(kw, content_low):
+                script_name = spec["script_names"][0]
+                script_path = _resolve_script_path(script_name)
+                cmd = ["bash", str(script_path)] if script_path else ["bash", script_name]
+                return PendingAction(
+                    action_id=f"act_{action_key}_{int(time.time())}",
+                    conversation_id=conversation_id,
+                    action_type="script",
+                    label=spec["label"],
+                    summary=spec["summary"],
+                    command=cmd,
+                    timeout_s=spec.get("timeout_s", 120),
+                    context={"action_key": action_key, "script_name": script_name},
+                )
 
     # Recherche générique d'un script .sh cité
     script_match = re.search(r"([a-zA-Z0-9_\-]+\.sh)", content)
@@ -346,6 +355,8 @@ async def execute_pending_action(action: PendingAction) -> dict[str, Any]:
     found_url = url_match.group(1) if url_match else None
     if not found_url and "dns" in action.label.lower():
         found_url = "http://192.168.0.53:3000/"
+    elif not found_url and "mail" in action.label.lower():
+        found_url = "http://192.168.0.54:8080"
 
     # Construction du message de compte-rendu
     if success:
@@ -356,6 +367,10 @@ async def execute_pending_action(action: PendingAction) -> dict[str, Any]:
         if "dns" in action.label.lower():
             details.append("- **IP DNS statique** : `192.168.0.53` (Port DNS 53)")
             details.append("- **Hyperviseur** : Proxmox .201 (Conteneur LXC 153 en cours d'exécution)")
+        elif "mail" in action.label.lower():
+            details.append("- **IP Mail statique** : `192.168.0.54` (Ports IMAP 993/143, SMTP 587/25)")
+            details.append("- **Hyperviseur** : Proxmox .201 (Conteneur LXC 154 en cours d'exécution)")
+            details.append("- **Administration Stalwart** : [http://192.168.0.54:8080](http://192.168.0.54:8080)")
 
         snippet = stdout.strip().splitlines()[-4:] if stdout.strip() else []
         snippet_text = "\n".join(f"> {line}" for line in snippet) if snippet else ""

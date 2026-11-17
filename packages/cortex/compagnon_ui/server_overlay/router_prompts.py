@@ -63,6 +63,11 @@ _OPS_TRUTH = """
    - Gladys dispose du script officiel de déploiement d'un serveur DNS AdGuard Home local : `packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh`.
    - Ce script provisionne un conteneur LXC Ubuntu 24.04 (CT 153) sur l'hyperviseur Proxmox .201 avec l'IP statique 192.168.0.53 (port 53 DNS + interface web :3000/:80).
    - Si Teome te demande de mettre en service ou déployer le serveur DNS : expose directement ce plan technique (CT 153 AdGuard Home sur .201, IP 192.168.0.53) et propose de déclencher l'action sous validation L2.
+
+9. SERVEUR MAIL LOCAL & STALWART :
+   - Gladys dispose du script officiel de déploiement d'un serveur mail Stalwart local : `packages/cortex/infra/scripts/create_lbg_mail_ct_proxmox.sh`.
+   - Ce script provisionne un conteneur LXC Ubuntu 24.04 dédié (CT 154, distinct du DNS CT 153) sur l'hyperviseur Proxmox .201 avec l'IP statique 192.168.0.54 (ports IMAP 143/993, SMTP 25/587 + WebAdmin :8080).
+   - Si Teome te demande de mettre en place, mettre en service ou déployer le serveur mail : expose directement ce plan technique (CT 154 Stalwart sur .201, IP 192.168.0.54) et propose de déclencher l'action avec confirmation L2 (« Veux-tu que je déclenche cette mise en service ? »).
 """
 
 BASE_GUARDRAILS = """
@@ -486,14 +491,14 @@ _QUALITY_ROUTE_RE = re.compile(
     r")"
 )
 
-# Administration système, serveurs, infrastructure, réseau, DNS, provisionnement (2B trop faible)
+# Administration système, serveurs, infrastructure, réseau, DNS, mail, provisionnement (2B trop faible)
 _INFRA_OPS_RE = re.compile(
     r"(?i)\b("
-    r"dns|serveur(?:s)?|proxmox|dhcp|adguard|pihole|pi-hole|dnsmasq|bind9|"
+    r"dns|mail|stalwart|smtp|imap|serveur(?:s)?|proxmox|dhcp|adguard|pihole|pi-hole|dnsmasq|bind9|"
     r"docker|lxc|conteneur(?:s)?|container(?:s)?|vm|hyperviseur|"
-    r"mettre\s+en\s+service|d[ée]ploy(?:er|ement)|install(?:er|ation)|provisionn(?:er|ement)|"
-    r"configur(?:er|ation)\s+(?:serveur|dns|lxc|vm|réseau|reseau|lan|ip)|"
-    r"service\s+dns|serveur\s+dns|r[ée]seau\s+local"
+    r"mettre\s+en\s+service|mettre\s+en\s+place|d[ée]ploy(?:er|ement)|install(?:er|ation)|provisionn(?:er|ement)|"
+    r"configur(?:er|ation)\s+(?:serveur|dns|mail|lxc|vm|réseau|reseau|lan|ip)|"
+    r"service\s+dns|serveur\s+dns|service\s+mail|serveur\s+mail|r[ée]seau\s+local"
     r")\b"
 )
 

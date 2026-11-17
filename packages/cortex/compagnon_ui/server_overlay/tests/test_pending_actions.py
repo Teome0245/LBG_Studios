@@ -77,6 +77,19 @@ class PendingActionsTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("AdGuard", action.label)
         self.assertEqual(action.context.get("action_key"), "dns_adguard_deploy")
 
+    def test_extract_pending_action_mail(self) -> None:
+        assistant_text = (
+            "On peut déployer un serveur mail Stalwart via le script officiel :\n"
+            "`packages/cortex/infra/scripts/create_lbg_mail_ct_proxmox.sh`.\n\n"
+            "Cela provisionnera un conteneur LXC Ubuntu 24.04 (CT 154) sur l'hyperviseur .201 "
+            "avec l'IP statique 192.168.0.54 et les ports IMAP/SMTP. Veux-tu que je déclenche cette mise en service ?"
+        )
+        action = pa.extract_pending_action_from_assistant_message(assistant_text, "conv_mail")
+        self.assertIsNotNone(action)
+        self.assertEqual(action.conversation_id, "conv_mail")
+        self.assertIn("Stalwart", action.label)
+        self.assertEqual(action.context.get("action_key"), "mail_server_deploy")
+
     def test_extract_pending_action_no_question(self) -> None:
         # Sans point d'interrogation ni formule interrogative, pas d'action en attente
         text = "Voici les informations sur le serveur DNS AdGuard."
