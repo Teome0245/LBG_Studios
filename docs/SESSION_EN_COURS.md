@@ -9,6 +9,36 @@
 ---
 
 ## Dernières actions réalisées (2026-11-17)
+-28. **Conception du Nouveau Site Vitrine La Boîte à Geeks Studios — LBG & Déploiement Gladys (`laboiteageek.fr`)** :
+    - **Nouveau Site Vitrine (`packages/showcase-web/public/`)** :
+      * Titre officiel retenu : **La Boîte à Geeks Studios — LBG**.
+      * Design Cyberpunk / Sci-Fi haut de gamme : palette Midnight Dark (`#070a13`), glassmorphism, liserés néon cyan (`#00f5d4`) et violet (`#a855f7`), typographies *Space Grotesk* et *JetBrains Mono*.
+      * Mise en valeur des 3 Piliers du Studio :
+        1. **O1 Compagnon** : Lia & Gladys (incarnation 3D VRM, multimodalité, pilotage de bureau).
+        2. **O2 Banc d'Essai MMO** : Projet Prime (moteur Godot 4.6, artisanat profond 1-1000, troc P2P, SWG spirit).
+        3. **O3 Esprits IA** : Cortex & Agents locaux souverains (Ollama 0 € cloud, Second Brain persistant).
+      * Responsive mobile/desktop avec micro-interactions et statut live du studio.
+    - **Pipeline de Déploiement Gladys (`deploy_showcase_ovh.py`)** :
+      * Développé dans `packages/cortex/infra/scripts/deploy_showcase_ovh.py` (pur Python `ftplib` / FTPS sans dépendance).
+      * Intégré dans les actions canoniques de Gladys (`showcase_deploy_ovh` dans `pending_actions.py`).
+      * Fichiers synchronisés sur le CT 100 (`/opt/orchestrateur/showcase-web` et `/opt/orchestrateur/backend/scripts/`).
+
+-27. **Extension Topologie Globale & Second Brain de l'Organisme Gladys (`#/topology`)** :
+    - **Inspiration TikTok Toma Tech (Obsidian Graph View & Second Brain IA)** :
+      * Généralisation de la vue graphe interactive `#/topology` au-delà du MMO pour cartographier l'intégralité de l'organisme cybernétique **Gladys** (Infra, Machines, Organes, Services, Agents et Connaissances).
+    - **Architecture & Données Gladys (`gladys_topology_data.json`)** :
+      * 29 nouveaux nœuds et 34 arêtes organiques : Cœur Gladys, Incarnation Lia, Machines physiques (`.10`, `.143`, `.140`, `.110`, `.111`, `.246`, `.54`), Services (`agent-desktop`, `fastapi`, `orchestrator`, `ollama_heavy/light`, `piper_tts`, `godot_hub`, `stalwart_mail`, `adguard_dns`), Agents autonomes (`Antigravity`, `Cline 0€`, `Nocturnal Auditor`, `Content Bot`) et Second Brain documentaire (`ORGANISME_LBG.md`, `OBJECTIVES.md`, `REGISTRE.md`, etc.).
+      * Pont naturel établi entre l'infrastructure Gladys et le banc d'entraînement MMO (`runtime_246` & `prime_hub_service` -> `scrapaltai`).
+    - **Sondes Live Réseau & Télémétrie en Direct (`/v1/pilot/topology`)** :
+      * Sondes TCP asynchrones ultra-rapides (~200ms) vérifiant la disponibilité en direct des ports clés de l'organisme.
+      * Télémétrie instantanée : `live_gladys_count` (16/17 organes en ligne) combiné aux 10 bots IA live sur le Hub Godot.
+      * Paramètre de filtrage REST `?domain=gladys|mmo|all`.
+    - **Frontend Pilot Web (`index.html`, `topology_graph.js`, `topology_graph.css`)** :
+      * Sélecteur de domaine à 3 boutons : **🌐 Vue Globale**, **🧠 Organisme Gladys**, **⚔️ Monde MMO**.
+      * Halos pulsants verts pour les nœuds en ligne, palette de couleurs organiques (machines, services, agents, second brain).
+      * Drawer latéral enrichi affichant pour Gladys l'hôte, le port, le statut live, le rôle organique et le chemin du document canonique.
+      * Bundle Vite synchronisé dans `dist/` (154 tests unitaires backend 100% verts).
+
 -26. **Stabilisation Moteur Vidéo JRPG (Hina & Saki) & Cadence Quotidienne** :
     - **Résolution Saccades & Mouvements de Bras** :
       * Élimination complète des sauts de bras parasites : l'avatar utilise désormais une posture de base calme et stable (`POSE_NATURAL_IDLE`).

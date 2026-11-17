@@ -222,6 +222,14 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "args": ["apply-mail"],
         "keywords": [r"sync\s+mail\s+ovh", r"d[ée]ploiement\s+dkim", r"appliquer\s+dns\s+ovh", r"apply-mail"],
     },
+    "showcase_deploy_ovh": {
+        "label": "Déploiement du site vitrine La Boîte à Geeks Studios — LBG",
+        "script_names": ["deploy_showcase_ovh.py"],
+        "summary": "Mise en ligne des fichiers HTML/CSS/JS sur l'hébergement web OVHcloud (laboiteageek.fr)",
+        "timeout_s": 90,
+        "args": ["deploy"],
+        "keywords": [r"d[ée]ploiement\s+site", r"d[ée]ployer\s+le\s+site", r"mise\s+en\s+ligne\s+site", r"deploy_showcase_ovh\.py", r"site\s+vitrine"],
+    },
 }
 
 
