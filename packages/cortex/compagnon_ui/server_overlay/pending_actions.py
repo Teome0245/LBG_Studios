@@ -206,6 +206,22 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "timeout_s": 60,
         "keywords": [r"run_infra_watchdog", r"watchdog\s+infra"],
     },
+    "ovh_dns_audit": {
+        "label": "Audit DNS OVHcloud (laboiteageeks.fr)",
+        "script_names": ["ovh_dns_manager.py"],
+        "summary": "Inspection des enregistrements DNS (MX, SPF, DKIM, DMARC) via l'API OVHcloud",
+        "timeout_s": 45,
+        "args": ["audit"],
+        "keywords": [r"audit\s+dns", r"dns\s+ovh", r"zone\s+ovh", r"ovh_dns_manager\.py", r"statut\s+dns"],
+    },
+    "ovh_dns_apply_mail": {
+        "label": "Synchronisation DNS Mail OVHcloud (DKIM Stalwart)",
+        "script_names": ["ovh_dns_manager.py"],
+        "summary": "Publication de la clé DKIM v1-rsa-20261117 et rafraîchissement de zone sur OVHcloud",
+        "timeout_s": 60,
+        "args": ["apply-mail"],
+        "keywords": [r"sync\s+mail\s+ovh", r"d[ée]ploiement\s+dkim", r"appliquer\s+dns\s+ovh", r"apply-mail"],
+    },
 }
 
 
@@ -248,7 +264,9 @@ def extract_pending_action_from_assistant_message(
         for sname in spec.get("script_names", []):
             if sname.lower() in content_low:
                 script_path = _resolve_script_path(sname)
-                cmd = ["bash", str(script_path)] if script_path else ["bash", sname]
+                args = spec.get("args", [])
+                runner = "python3" if sname.endswith(".py") else "bash"
+                cmd = [runner, str(script_path)] + args if script_path else [runner, sname] + args
                 return PendingAction(
                     action_id=f"act_{action_key}_{int(time.time())}",
                     conversation_id=conversation_id,
@@ -257,7 +275,7 @@ def extract_pending_action_from_assistant_message(
                     summary=spec["summary"],
                     command=cmd,
                     timeout_s=spec.get("timeout_s", 120),
-                    context={"action_key": action_key, "script_name": sname},
+                    context={"action_key": action_key, "script_name": sname, "args": args},
                 )
 
     # Passe 2 : Match sémantique par mots-clés
@@ -266,7 +284,9 @@ def extract_pending_action_from_assistant_message(
             if re.search(kw, content_low):
                 script_name = spec["script_names"][0]
                 script_path = _resolve_script_path(script_name)
-                cmd = ["bash", str(script_path)] if script_path else ["bash", script_name]
+                args = spec.get("args", [])
+                runner = "python3" if script_name.endswith(".py") else "bash"
+                cmd = [runner, str(script_path)] + args if script_path else [runner, script_name] + args
                 return PendingAction(
                     action_id=f"act_{action_key}_{int(time.time())}",
                     conversation_id=conversation_id,
@@ -275,7 +295,7 @@ def extract_pending_action_from_assistant_message(
                     summary=spec["summary"],
                     command=cmd,
                     timeout_s=spec.get("timeout_s", 120),
-                    context={"action_key": action_key, "script_name": script_name},
+                    context={"action_key": action_key, "script_name": script_name, "args": args},
                 )
 
     # Recherche générique d'un script .sh cité
@@ -310,7 +330,9 @@ async def execute_pending_action(action: PendingAction) -> dict[str, Any]:
     # tenter via SSH vers le poste de dev .143 ou Proxmox .201 selon l'action
     cmd = list(action.command)
     if resolved_path and resolved_path.is_file():
-        cmd = ["bash", str(resolved_path)]
+        runner = "python3" if script_name and script_name.endswith(".py") else "bash"
+        args = action.context.get("args", [])
+        cmd = [runner, str(resolved_path)] + args
     elif script_name == "create_lbg_dns_ct_proxmox.sh":
         # Spécifique DNS Proxmox : si le script n'est pas sur CT100, on peut exécuter
         # directement les commandes pct sur Proxmox .201 via SSH !
