@@ -22,6 +22,8 @@
       * Développé dans `packages/cortex/infra/scripts/deploy_showcase_ovh.py` (pur Python `ftplib` / FTPS sans dépendance).
       * Intégré dans les actions canoniques de Gladys (`showcase_deploy_ovh` dans `pending_actions.py`).
       * Fichiers synchronisés sur le CT 100 (`/opt/orchestrateur/showcase-web` et `/opt/orchestrateur/backend/scripts/`).
+      * **Mise en ligne réussie à 100% sur OVHcloud** : Déploiement automatique effectué sur `ftp.cluster129.hosting.ovh.net` (`laboiteageek.fr` et `laboiteageeks.fr`).
+      * **Validation HTTP Live** : `https://laboiteageek.fr/` renvoie HTTP 200 avec le titre *La Boîte à Geeks Studios — LBG*.
 
 -27. **Extension Topologie Globale & Second Brain de l'Organisme Gladys (`#/topology`)** :
     - **Inspiration TikTok Toma Tech (Obsidian Graph View & Second Brain IA)** :
@@ -38,6 +40,10 @@
       * Halos pulsants verts pour les nœuds en ligne, palette de couleurs organiques (machines, services, agents, second brain).
       * Drawer latéral enrichi affichant pour Gladys l'hôte, le port, le statut live, le rôle organique et le chemin du document canonique.
       * Bundle Vite synchronisé dans `dist/` (154 tests unitaires backend 100% verts).
+
+    - **Directive Pérenne** :
+      * Maintenir systématiquement à jour `gladys_topology_data.json` lors de chaque ajout d'organe, machine, conteneur Proxmox, service réseau ou document clé de l'organisme Gladys, ainsi que `topology_data.json` pour les évolutions du monde MMO (POIs, PNJ, mécaniques).
+      * Chaque déploiement via `tools/deploy_cortex_140.sh` synchronise automatiquement la topologie vivante vers le serveur `.140`.
 
 -26. **Stabilisation Moteur Vidéo JRPG (Hina & Saki) & Cadence Quotidienne** :
     - **Résolution Saccades & Mouvements de Bras** :

@@ -69,6 +69,10 @@ def load_ftp_credentials() -> dict[str, str]:
                             creds["port"] = v
                         elif k in ("OVH_FTP_TARGET_DIR", "ftp_target_dir"):
                             creds["target_dir"] = v
+                        elif k in ("OVH_FTP_USER_ALT", "ftp_user_alt"):
+                            creds["user_alt"] = v
+                        elif k in ("OVH_FTP_PASSWORD_ALT", "ftp_password_alt"):
+                            creds["password_alt"] = v
                 if creds["user"] and creds["password"]:
                     break
             except Exception:
@@ -78,27 +82,36 @@ def load_ftp_credentials() -> dict[str, str]:
 
 
 def connect_ftp(creds: dict[str, str]) -> FTP:
-    """Établit la connexion FTP/FTPS avec l'hébergement OVH."""
+    """Établit la connexion FTP/FTPS avec l'hébergement OVH (avec fallback multi-comptes)."""
     host = creds["host"]
     port = int(creds.get("port", 21))
-    user = creds["user"]
-    password = creds["password"]
 
-    if not user or not password:
-        raise ValueError("Identifiants FTP manquants (OVH_FTP_USER / OVH_FTP_PASSWORD dans /etc/lbg/ovh_ftp.env)")
+    candidates = [
+        (creds["user"], creds["password"]),
+    ]
+    if creds.get("user_alt") and creds.get("password_alt"):
+        candidates.append((creds["user_alt"], creds["password_alt"]))
 
-    # Essai en FTPS (TLS explicite) puis fallback FTP standard
-    try:
-        ftp = FTP_TLS()
-        ftp.connect(host, port, timeout=20)
-        ftp.login(user, password)
-        ftp.prot_p()  # Sécurisation du canal de données
-        return ftp
-    except Exception:
-        ftp = FTP()
-        ftp.connect(host, port, timeout=20)
-        ftp.login(user, password)
-        return ftp
+    last_err = None
+    for user, password in candidates:
+        if not user or not password:
+            continue
+        try:
+            ftp = FTP_TLS()
+            ftp.connect(host, port, timeout=20)
+            ftp.login(user, password)
+            ftp.prot_p()
+            return ftp
+        except Exception:
+            try:
+                ftp = FTP()
+                ftp.connect(host, port, timeout=20)
+                ftp.login(user, password)
+                return ftp
+            except Exception as e:
+                last_err = e
+
+    raise last_err or ValueError("Aucun identifiant FTP valide configuré.")
 
 
 def cmd_check(args: argparse.Namespace) -> int:
