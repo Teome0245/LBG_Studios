@@ -1,7 +1,8 @@
 # world_ground_3d.gd — Rendu Full 3D Haute Fidélité du Monde Planétaire Lost Heaven
-# Intègre la caméra 3ème personne immersive (avec SpringArm3D) et isométrique commutable [V],
-# le ciel procédural PBR, les dunes de sable ondulées, les falaises désertiques,
-# l'avatar articulé avec animations procédurales (marche/sprint/saut) et les effets atmosphériques.
+# Rapproche l'esthétique 3D de l'esprit Star Wars Galaxies (SWG Pre-CU / Tatooine / Mos Eisley)
+# Génère la ville complète de Lost Heaven (15+ bâtiments architecturés, dômes, cantina, spatioport,
+# remparts d'enceinte, voies pavées, évaporateurs d'humidité) à partir des fichiers JSON de la carte.
+# Charge le modèle 3D du Compagnon (Compagnon.vrm) pour l'avatar joueur avec caméra 3ème personne.
 extends SubViewportContainer
 class_name WorldGround3D
 
@@ -11,9 +12,17 @@ signal terrain_clicked_3d(target_pos: Vector3)
 signal camera_mode_changed(mode_name: String)
 
 enum CameraMode {
-	THIRD_PERSON, # Caméra 3ème personne immersive (Follow-cam / Over-the-shoulder MMO)
+	THIRD_PERSON, # Caméra 3ème personne immersive (Over-the-shoulder MMO style SWG)
 	ISOMETRIC     # Caméra isométrique 3/4 classique orbitale (style T4C / RTS)
 }
+
+const BUILDINGS_PATH := "res://assets/maps/lost_heaven_buildings.json"
+const PROPS_PATH := "res://assets/maps/lost_heaven_props.json"
+const VRM_AVATAR_PATH := "res://assets/avatars/Compagnon.vrm"
+
+# Ancre géographique de Lost Heaven dans le monde de Scrapaltai
+const LH_ANCHOR_X: float = 4749.0
+const LH_ANCHOR_Z: float = -737.0
 
 # --- Composants 3D fondamentaux ---
 var _viewport: SubViewport = null
@@ -24,37 +33,32 @@ var _camera: Camera3D = null
 var _sun_light: DirectionalLight3D = null
 var _world_env: WorldEnvironment = null
 var _terrain_root: Node3D = null
+var _city_root: Node3D = null
 var _dust_particles: CPUParticles3D = null
 
-# --- Gestion du Joueur 3D et des PNJ ---
+# --- Gestion du Joueur 3D et du Modèle Compagnon ---
 var _player_node: CharacterBody3D = null
 var _player_mesh: Node3D = null
-var _player_torso: MeshInstance3D = null
-var _player_head: MeshInstance3D = null
-var _player_visor: MeshInstance3D = null
-var _player_backpack: MeshInstance3D = null
-var _player_arm_l: MeshInstance3D = null
-var _player_arm_r: MeshInstance3D = null
-var _player_leg_l: MeshInstance3D = null
-var _player_leg_r: MeshInstance3D = null
+var _vrm_avatar: Node3D = null
+var _procedural_avatar_nodes: Array = []
 var _target_marker: MeshInstance3D = null
-var _active_entities_3d: Dictionary = {} # id -> Node3D
+var _active_entities_3d: Dictionary = {}
 
 # --- Contrôles de Caméra ---
 var current_camera_mode: CameraMode = CameraMode.THIRD_PERSON
-var camera_pitch: float = -18.0 # Degrés (-75 vers le sol, +45 vers le ciel)
-var camera_yaw: float = 0.0     # Orientation orbitale (degrés)
-var camera_zoom: float = 5.5    # Distance au joueur (mètres)
+var camera_pitch: float = -18.0
+var camera_yaw: float = 0.0
+var camera_zoom: float = 5.5
 const MIN_ZOOM_3RD: float = 1.8
 const MAX_ZOOM_3RD: float = 14.0
 const MIN_ZOOM_ISO: float = 12.0
 const MAX_ZOOM_ISO: float = 40.0
 
 # --- Physique & Déplacement Joueur ---
-var player_speed: float = 7.5      # Vitesse normale
-var player_sprint_speed: float = 11.5 # Vitesse sprint (Shift)
-var jump_velocity: float = 6.2     # Impulsion de saut
-var gravity: float = 18.0          # Gravité Scrapaltai
+var player_speed: float = 7.5
+var player_sprint_speed: float = 11.5
+var jump_velocity: float = 6.2
+var gravity: float = 18.0
 var is_click_moving: bool = false
 var click_target_pos: Vector3 = Vector3.ZERO
 var is_orbiting_camera: bool = false
@@ -62,6 +66,7 @@ var last_mouse_pos: Vector2 = Vector2.ZERO
 
 # Animation procédurale
 var _walk_cycle: float = 0.0
+var _idle_timer: float = 0.0
 var _is_moving: bool = false
 
 
@@ -72,7 +77,8 @@ func _init() -> void:
 	_setup_viewport_and_world_3d()
 	_setup_pbr_atmosphere_and_sky()
 	_setup_desert_environment()
-	_setup_detailed_player_avatar()
+	_setup_lost_heaven_city()
+	_setup_player_avatar()
 	_setup_sand_particles()
 
 
@@ -81,11 +87,12 @@ func _ready() -> void:
 		_setup_viewport_and_world_3d()
 		_setup_pbr_atmosphere_and_sky()
 		_setup_desert_environment()
-		_setup_detailed_player_avatar()
+		_setup_lost_heaven_city()
+		_setup_player_avatar()
 		_setup_sand_particles()
 
 
-## 1. Initialisation du SubViewport et de la Hiérarchie de Caméra avec SpringArm3D
+## 1. Initialisation du SubViewport et de la Hiérarchie Caméra
 func _setup_viewport_and_world_3d() -> void:
 	_viewport = SubViewport.new()
 	_viewport.name = "SubViewport"
@@ -101,7 +108,6 @@ func _setup_viewport_and_world_3d() -> void:
 	_world_root.name = "World3DRoot"
 	_viewport.add_child(_world_root)
 
-	# Rig Caméra avec SpringArm3D (évite les collisions de caméra avec le décor)
 	_camera_rig = Node3D.new()
 	_camera_rig.name = "Camera3DRig"
 	_world_root.add_child(_camera_rig)
@@ -110,188 +116,545 @@ func _setup_viewport_and_world_3d() -> void:
 	_spring_arm.name = "CameraSpringArm"
 	_spring_arm.spring_length = camera_zoom
 	_spring_arm.margin = 0.25
-	_spring_arm.position = Vector3(0.0, 1.55, 0.0) # Hauteur tête/épaules
+	_spring_arm.position = Vector3(0.0, 1.55, 0.0)
 	_camera_rig.add_child(_spring_arm)
 
 	_camera = Camera3D.new()
 	_camera.name = "MainCamera3D"
 	_camera.fov = 65.0
 	_camera.near = 0.25
-	_camera.far = 1200.0
+	_camera.far = 2500.0
 	_spring_arm.add_child(_camera)
 
 	_update_camera_settings()
 
 
-## 2. Éclairage PBR, Ciel Procédural Physique & Post-Processing Haute Qualité
+## 2. Éclairage PBR & Ciel Procédural de Scrapaltai
 func _setup_pbr_atmosphere_and_sky() -> void:
-	# Ciel Procédural Physique de Scrapaltai (Teintes oranger, azur profond et soleil chaud)
 	_world_env = WorldEnvironment.new()
 	_world_env.name = "WorldEnvScrapaltaiPBR"
 
 	var env := Environment.new()
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.25, 0.45, 0.72)      # Azur zénith
-	sky_mat.sky_horizon_color = Color(0.94, 0.72, 0.46)  # Doré couchant
+	sky_mat.sky_top_color = Color(0.24, 0.44, 0.70)
+	sky_mat.sky_horizon_color = Color(0.95, 0.72, 0.46)
 	sky_mat.sky_curve = 0.12
 	sky_mat.ground_bottom_color = Color(0.32, 0.22, 0.16)
 	sky_mat.ground_horizon_color = Color(0.88, 0.62, 0.38)
 	sky_mat.ground_curve = 0.08
-	sky_mat.sun_angle_max = 28.0
-	sky_mat.sun_curve = 0.18
 	sky.sky_material = sky_mat
 
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_color = Color(0.9, 0.82, 0.72)
-	env.ambient_light_sky_contribution = 0.65
+	env.ambient_light_energy = 0.75
 
-	# Post-Processing PBR Film / HDR
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 1.05
 	env.ssao_enabled = true
-	env.ssao_radius = 1.6
+	env.ssao_radius = 1.8
 	env.ssao_intensity = 2.2
 	env.glow_enabled = true
-	env.glow_intensity = 0.35
-	env.glow_bloom = 0.18
-	env.glow_hdr_threshold = 0.85
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.86, 0.68, 0.48)
-	env.fog_density = 0.0012
-	env.fog_sky_affect = 0.4
+	env.glow_intensity = 0.65
+	env.glow_bloom = 0.15
+
+	env.volumetric_fog_enabled = true
+	env.volumetric_fog_density = 0.0012
+	env.volumetric_fog_albedo = Color(0.95, 0.80, 0.60)
 
 	_world_env.environment = env
 	_world_root.add_child(_world_env)
 
-	# Soleil chaud de Scrapaltai avec ombres PBR nettes
 	_sun_light = DirectionalLight3D.new()
-	_sun_light.name = "SunScrapaltai"
+	_sun_light.name = "ScrapaltaiSun"
 	_sun_light.rotation_degrees = Vector3(-42.0, 38.0, 0.0)
-	_sun_light.light_color = Color(1.0, 0.92, 0.82)
+	_sun_light.light_color = Color(1.0, 0.94, 0.84)
 	_sun_light.light_energy = 1.45
 	_sun_light.shadow_enabled = true
-	_sun_light.shadow_blur = 1.2
 	_sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	_sun_light.directional_shadow_split_1 = 0.08
-	_sun_light.directional_shadow_split_2 = 0.22
-	_sun_light.directional_shadow_split_3 = 0.55
 	_world_root.add_child(_sun_light)
 
 
-## 3. Environnement Désertique Enrichi : Dunes, Dalles Sci-Fi et Canyons
+## 3. Relief Désertique & Grande Étendue Sablonneuse
 func _setup_desert_environment() -> void:
 	_terrain_root = Node3D.new()
 	_terrain_root.name = "TerrainEnvironment"
 	_world_root.add_child(_terrain_root)
 
-	# Sol principal 600m x 600m
+	# Sol planétaire étendu à 3200m x 3200m pour englober toute la vallée de Lost Heaven
 	var main_ground := MeshInstance3D.new()
 	main_ground.name = "MainSandPlane"
 	var plane_mesh := PlaneMesh.new()
-	plane_mesh.size = Vector2(800.0, 800.0)
-	plane_mesh.subdivide_width = 48
-	plane_mesh.subdivide_depth = 48
+	plane_mesh.size = Vector2(3200.0, 3200.0)
+	plane_mesh.subdivide_width = 64
+	plane_mesh.subdivide_depth = 64
 	main_ground.mesh = plane_mesh
 
 	var sand_mat := StandardMaterial3D.new()
-	sand_mat.albedo_color = Color(0.78, 0.60, 0.40) # Sable ocre doré
+	sand_mat.albedo_color = Color(0.79, 0.62, 0.42)
 	sand_mat.roughness = 0.94
 	sand_mat.metallic = 0.02
 	main_ground.material_override = sand_mat
 
-	# Collision physique du sol
 	var body := StaticBody3D.new()
 	body.name = "GroundStaticBody"
 	var col_shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(800.0, 1.0, 800.0)
+	box.size = Vector3(3200.0, 1.0, 3200.0)
 	col_shape.shape = box
 	col_shape.position = Vector3(0.0, -0.5, 0.0)
 	body.add_child(col_shape)
 	main_ground.add_child(body)
 	_terrain_root.add_child(main_ground)
 
-	# Place centrale pavée de Lost Heaven (dalles hexagonales sci-fi métalliques)
+	# Placette centrale sci-fi d'accueil (Lost Heaven Nexus)
 	var plaza := MeshInstance3D.new()
 	plaza.name = "LostHeavenPlaza"
 	var cyl := CylinderMesh.new()
-	cyl.top_radius = 28.0
-	cyl.bottom_radius = 28.0
-	cyl.height = 0.12
+	cyl.top_radius = 35.0
+	cyl.bottom_radius = 35.0
+	cyl.height = 0.15
 	plaza.mesh = cyl
-	plaza.position = Vector3(0.0, 0.06, 0.0)
+	plaza.position = Vector3(0.0, 0.08, 0.0)
 	var plaza_mat := StandardMaterial3D.new()
-	plaza_mat.albedo_color = Color(0.24, 0.28, 0.32) # Alliage gris acier
+	plaza_mat.albedo_color = Color(0.25, 0.28, 0.33)
 	plaza_mat.metallic = 0.85
 	plaza_mat.roughness = 0.4
 	plaza.material_override = plaza_mat
 	_terrain_root.add_child(plaza)
 
-	# Anneaux d'énergie au centre de la place
+	# Anneaux d'énergie néon cyan au centre
 	var plaza_ring := MeshInstance3D.new()
 	var torus := TorusMesh.new()
-	torus.inner_radius = 26.5
-	torus.outer_radius = 27.5
+	torus.inner_radius = 33.5
+	torus.outer_radius = 34.5
 	plaza_ring.mesh = torus
-	plaza_ring.position = Vector3(0.0, 0.14, 0.0)
+	plaza_ring.position = Vector3(0.0, 0.16, 0.0)
 	var ring_mat := StandardMaterial3D.new()
-	ring_mat.albedo_color = Color(0.0, 0.85, 0.95)
+	ring_mat.albedo_color = Color(0.0, 0.88, 0.96)
 	ring_mat.emission_enabled = true
-	ring_mat.emission = Color(0.0, 0.85, 0.95)
-	ring_mat.emission_energy_multiplier = 1.2
+	ring_mat.emission = Color(0.0, 0.88, 0.96)
+	ring_mat.emission_energy_multiplier = 1.3
 	plaza_ring.material_override = ring_mat
 	_terrain_root.add_child(plaza_ring)
 
-	# Spires rocheuses / Canyons de Scrapaltai en périphérie pour un sentiment d'échelle
+	# Tour Relais Holographique centrale
+	var tower := Node3D.new()
+	tower.name = "CentralRelayMast"
+	tower.position = Vector3(0.0, 0.0, -22.0)
+	var mast := MeshInstance3D.new()
+	var mast_cyl := CylinderMesh.new()
+	mast_cyl.top_radius = 0.7
+	mast_cyl.bottom_radius = 1.6
+	mast_cyl.height = 24.0
+	mast.mesh = mast_cyl
+	mast.position = Vector3(0.0, 12.0, 0.0)
+	var mast_mat := StandardMaterial3D.new()
+	mast_mat.albedo_color = Color(0.32, 0.36, 0.42)
+	mast_mat.metallic = 0.9
+	mast.material_override = mast_mat
+	tower.add_child(mast)
+
+	var beacon := OmniLight3D.new()
+	beacon.light_color = Color(0.0, 0.9, 1.0)
+	beacon.light_energy = 3.5
+	beacon.omni_range = 40.0
+	beacon.position = Vector3(0.0, 24.2, 0.0)
+	tower.add_child(beacon)
+	_terrain_root.add_child(tower)
+
+	# Canyons et falaises lointaines
 	var mesa_positions := [
-		Vector3(-140, 12, -180), Vector3(180, 18, -150),
-		Vector3(-220, 22, 120), Vector3(190, 15, 210),
-		Vector3(-70, 8, 250), Vector3(260, 25, 40)
+		Vector3(-750, 25, -950), Vector3(850, 32, -800),
+		Vector3(-1100, 38, 650), Vector3(980, 28, 920),
+		Vector3(-450, 20, 1250), Vector3(1200, 42, 200)
 	]
 	var rock_mat := StandardMaterial3D.new()
-	rock_mat.albedo_color = Color(0.55, 0.38, 0.28)
-	rock_mat.roughness = 0.95
+	rock_mat.albedo_color = Color(0.58, 0.40, 0.28)
+	rock_mat.roughness = 0.96
 
 	for i in range(mesa_positions.size()):
 		var mesa := MeshInstance3D.new()
-		mesa.name = "MesaCliff_%d" % i
+		mesa.name = "Mesa_%d" % i
 		var m_cyl := CylinderMesh.new()
-		m_cyl.top_radius = randf_range(16.0, 32.0)
-		m_cyl.bottom_radius = m_cyl.top_radius * 1.4
-		m_cyl.height = randf_range(24.0, 48.0)
+		m_cyl.top_radius = randf_range(60.0, 110.0)
+		m_cyl.bottom_radius = m_cyl.top_radius * 1.35
+		m_cyl.height = randf_range(45.0, 95.0)
 		mesa.mesh = m_cyl
 		mesa.position = mesa_positions[i]
 		mesa.material_override = rock_mat
 		_terrain_root.add_child(mesa)
 
-	# Tour Relais Holographique de Lost Heaven (Antenne Sci-Fi centrale)
-	var tower := Node3D.new()
-	tower.name = "RelayTower"
-	tower.position = Vector3(0.0, 0.0, -18.0)
-	var mast := MeshInstance3D.new()
-	var mast_cyl := CylinderMesh.new()
-	mast_cyl.top_radius = 0.6
-	mast_cyl.bottom_radius = 1.4
-	mast_cyl.height = 22.0
-	mast.mesh = mast_cyl
-	mast.position = Vector3(0.0, 11.0, 0.0)
-	var mast_mat := StandardMaterial3D.new()
-	mast_mat.albedo_color = Color(0.3, 0.35, 0.4)
-	mast_mat.metallic = 0.9
-	mast.material_override = mast_mat
-	tower.add_child(mast)
 
-	# Balise lumineuse clignotante au sommet de la tour
-	var beacon := OmniLight3D.new()
-	beacon.light_color = Color(0.0, 0.9, 1.0)
-	beacon.light_energy = 3.5
-	beacon.omni_range = 35.0
-	beacon.position = Vector3(0.0, 22.2, 0.0)
-	tower.add_child(beacon)
-	_terrain_root.add_child(tower)
+## 4. Génération de la Ville Complète de Lost Heaven (Style SWG Mos Eisley / Tatooine)
+func _setup_lost_heaven_city() -> void:
+	_city_root = Node3D.new()
+	_city_root.name = "LostHeavenCity3D"
+	_world_root.add_child(_city_root)
+
+	# Matériaux architecturaux SWG Pre-CU
+	var mat_adobe := StandardMaterial3D.new()
+	mat_adobe.albedo_color = Color(0.82, 0.70, 0.54) # Grès d'adobe Tatooine
+	mat_adobe.roughness = 0.92
+	mat_adobe.metallic = 0.05
+
+	var mat_dome := StandardMaterial3D.new()
+	mat_dome.albedo_color = Color(0.88, 0.84, 0.76) # Dôme crépi blanc sable
+	mat_dome.roughness = 0.85
+	mat_dome.metallic = 0.08
+
+	var mat_metal := StandardMaterial3D.new()
+	mat_metal.albedo_color = Color(0.38, 0.42, 0.46) # Duracier cuivré
+	mat_metal.roughness = 0.45
+	mat_metal.metallic = 0.8
+
+	var mat_banner := StandardMaterial3D.new()
+	mat_banner.albedo_color = Color(0.72, 0.22, 0.16) # Toile bordeaux
+	mat_banner.roughness = 0.9
+
+	# 1. Chargement et génération des bâtiments depuis lost_heaven_buildings.json
+	if FileAccess.file_exists(BUILDINGS_PATH):
+		var f := FileAccess.open(BUILDINGS_PATH, FileAccess.READ)
+		var raw: Variant = JSON.parse_string(f.get_as_text())
+		f.close()
+		if raw is Dictionary and (raw as Dictionary).has("buildings"):
+			for b_raw in (raw as Dictionary)["buildings"]:
+				if b_raw is Dictionary:
+					_spawn_swg_building(b_raw as Dictionary, mat_adobe, mat_dome, mat_metal, mat_banner)
+
+	# 2. Chargement de l'enceinte / remparts depuis lost_heaven_props.json
+	_spawn_perimeter_fence(mat_adobe, mat_metal)
+
+
+## Crée un bâtiment complet typé SWG selon son type (Cantina, Spatioport, Marché, Clinique, Banque, etc.)
+func _spawn_swg_building(b: Dictionary, mat_adobe: Material, mat_dome: Material, mat_metal: Material, mat_banner: Material) -> void:
+	var kind := str(b.get("kind", ""))
+	if kind == "hunt_yard" or kind == "salvage_scrap" or kind == "city_gate":
+		return
+
+	var bx := float(b.get("x", LH_ANCHOR_X))
+	var bz := float(b.get("z", LH_ANCHOR_Z))
+	var size_m := float(b.get("size_m", 60.0))
+	var label := str(b.get("label", b.get("id", "Bâtiment")))
+	var bid := str(b.get("id", ""))
+
+	# Conversion en coordonnées relatives au centre de Lost Heaven
+	# Core3: +X=Est, +Z=Nord -> Godot 3D: +X=Est, -Z=Nord
+	var pos_3d := Vector3(bx - LH_ANCHOR_X, 0.0, -(bz - LH_ANCHOR_Z))
+
+	var b_node := Node3D.new()
+	b_node.name = "Building_%s" % bid.replace("poi:", "")
+	b_node.position = pos_3d
+	_city_root.add_child(b_node)
+
+	# Socle de fondation en dalle surélevée
+	var slab := MeshInstance3D.new()
+	var slab_box := BoxMesh.new()
+	slab_box.size = Vector3(size_m * 0.92, 0.4, size_m * 0.92)
+	slab.mesh = slab_box
+	slab.position = Vector3(0.0, 0.2, 0.0)
+	slab.material_override = mat_metal
+	b_node.add_child(slab)
+
+	# Collision physique
+	var body := StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var cbox := BoxShape3D.new()
+	cbox.size = Vector3(size_m * 0.88, 12.0, size_m * 0.88)
+	col.shape = cbox
+	col.position = Vector3(0.0, 6.0, 0.0)
+	body.add_child(col)
+	b_node.add_child(body)
+
+	# Architecture spécifique selon le rôle SWG
+	match kind:
+		"cantina": # La Perle de Scrapaltai (Cantina de Tatooine avec grande rotonde et dôme)
+			var rotunda := MeshInstance3D.new()
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = size_m * 0.38
+			cyl.bottom_radius = size_m * 0.42
+			cyl.height = 9.5
+			rotunda.mesh = cyl
+			rotunda.position = Vector3(0.0, 4.75, 0.0)
+			rotunda.material_override = mat_adobe
+			b_node.add_child(rotunda)
+
+			var dome := MeshInstance3D.new()
+			var sph := SphereMesh.new()
+			sph.radius = size_m * 0.34
+			sph.height = size_m * 0.30
+			dome.mesh = sph
+			dome.position = Vector3(0.0, 9.2, 0.0)
+			dome.material_override = mat_dome
+			b_node.add_child(dome)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.42), mat_metal, Color(1.0, 0.75, 0.2))
+			_add_building_label(b_node, "✦ CANTINA LA PERLE ✦", Color(1.0, 0.8, 0.3), 13.5)
+
+		"starport_shuttle": # Terminal Spatioport (Grand hangar courbé avec piste d'atterrissage)
+			var hangar := MeshInstance3D.new()
+			var hbox := BoxMesh.new()
+			hbox.size = Vector3(size_m * 0.75, 14.0, size_m * 0.55)
+			hangar.mesh = hbox
+			hangar.position = Vector3(0.0, 7.0, 0.0)
+			hangar.material_override = mat_metal
+			b_node.add_child(hangar)
+
+			# Tour de vigie du spatioport
+			var c_tower := MeshInstance3D.new()
+			var t_cyl := CylinderMesh.new()
+			t_cyl.top_radius = 5.0
+			t_cyl.bottom_radius = 6.0
+			t_cyl.height = 22.0
+			c_tower.mesh = t_cyl
+			c_tower.position = Vector3(size_m * 0.30, 11.0, -size_m * 0.20)
+			c_tower.material_override = mat_adobe
+			b_node.add_child(c_tower)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.28), mat_metal, Color(0.0, 0.9, 1.0))
+			_add_building_label(b_node, "✈ TERMINAL SPATIOPORT ✈", Color(0.0, 0.95, 1.0), 16.5)
+
+		"clinic": # Centre Médical / Dispensaire
+			var clinic_body := MeshInstance3D.new()
+			var c_box := BoxMesh.new()
+			c_box.size = Vector3(size_m * 0.70, 8.5, size_m * 0.70)
+			clinic_body.mesh = c_box
+			clinic_body.position = Vector3(0.0, 4.25, 0.0)
+			clinic_body.material_override = mat_dome
+			b_node.add_child(clinic_body)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.35), mat_metal, Color(0.0, 0.95, 0.85))
+			_add_building_label(b_node, "✚ CENTRE MÉDICAL ✚", Color(0.0, 0.95, 0.85), 11.0)
+
+		"bank": # Banque de Crédits / Coffre blindé
+			var bank_body := MeshInstance3D.new()
+			var b_box := BoxMesh.new()
+			b_box.size = Vector3(size_m * 0.65, 9.0, size_m * 0.65)
+			bank_body.mesh = b_box
+			bank_body.position = Vector3(0.0, 4.5, 0.0)
+			bank_body.material_override = mat_adobe
+			b_node.add_child(bank_body)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.33), mat_metal, Color(1.0, 0.85, 0.2))
+			_add_building_label(b_node, "⬡ BANQUE DE SCRAPALTAI ⬡", Color(1.0, 0.85, 0.2), 11.5)
+
+		"shops", "market": # Grand Marché & Bazar ouvert
+			var market_roof := MeshInstance3D.new()
+			var m_box := BoxMesh.new()
+			m_box.size = Vector3(size_m * 0.75, 1.2, size_m * 0.75)
+			market_roof.mesh = m_box
+			market_roof.position = Vector3(0.0, 7.5, 0.0)
+			market_roof.material_override = mat_banner
+			b_node.add_child(market_roof)
+
+			# Piliers d'angle soutenant la toiture
+			var corners := [
+				Vector3(-size_m * 0.34, 3.75, -size_m * 0.34),
+				Vector3(size_m * 0.34, 3.75, -size_m * 0.34),
+				Vector3(-size_m * 0.34, 3.75, size_m * 0.34),
+				Vector3(size_m * 0.34, 3.75, size_m * 0.34)
+			]
+			for c_pos in corners:
+				var pil := MeshInstance3D.new()
+				var pcyl := CylinderMesh.new()
+				pcyl.top_radius = 1.2
+				pcyl.bottom_radius = 1.2
+				pcyl.height = 7.5
+				pil.mesh = pcyl
+				pil.position = c_pos
+				pil.material_override = mat_adobe
+				b_node.add_child(pil)
+
+			_add_building_label(b_node, "◈ GRAND MARCHÉ & BAZAR ◈", Color(1.0, 0.65, 0.2), 10.0)
+
+		"town_hall": # Mairie / Quartier Général Administratif
+			var th_body := MeshInstance3D.new()
+			var th_box := BoxMesh.new()
+			th_box.size = Vector3(size_m * 0.72, 11.0, size_m * 0.72)
+			th_body.mesh = th_box
+			th_body.position = Vector3(0.0, 5.5, 0.0)
+			th_body.material_override = mat_adobe
+			b_node.add_child(th_body)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.36), mat_metal, Color(0.9, 0.5, 0.2))
+			_add_building_label(b_node, "🏛 MAIRIE DE LOST HEAVEN 🏛", Color(0.95, 0.8, 0.4), 13.0)
+
+		"trainer_artisan", "workshop": # Atelier Mécanique & Fonderie
+			var w_body := MeshInstance3D.new()
+			var w_box := BoxMesh.new()
+			w_box.size = Vector3(size_m * 0.68, 8.0, size_m * 0.68)
+			w_body.mesh = w_box
+			w_body.position = Vector3(0.0, 4.0, 0.0)
+			w_body.material_override = mat_metal
+			b_node.add_child(w_body)
+
+			# Tuyaux de vapeur / cheminée industrielle
+			var pipe := MeshInstance3D.new()
+			var pcyl := CylinderMesh.new()
+			pcyl.top_radius = 1.4
+			pcyl.bottom_radius = 1.4
+			pcyl.height = 14.0
+			pipe.mesh = pcyl
+			pipe.position = Vector3(size_m * 0.22, 7.0, -size_m * 0.22)
+			pipe.material_override = mat_metal
+			b_node.add_child(pipe)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.34), mat_metal, Color(1.0, 0.45, 0.1))
+			_add_building_label(b_node, "⚙ ATELIER MÉCANIQUE ⚙", Color(1.0, 0.55, 0.2), 10.5)
+
+		_: # Logements & autres blocs d'habitation (Dômes modulaires Mos Eisley)
+			var h_body := MeshInstance3D.new()
+			var h_box := BoxMesh.new()
+			h_box.size = Vector3(size_m * 0.60, 6.5, size_m * 0.60)
+			h_body.mesh = h_box
+			h_body.position = Vector3(0.0, 3.25, 0.0)
+			h_body.material_override = mat_adobe
+			b_node.add_child(h_body)
+
+			var h_dome := MeshInstance3D.new()
+			var dsph := SphereMesh.new()
+			dsph.radius = size_m * 0.24
+			dsph.height = size_m * 0.20
+			h_dome.mesh = dsph
+			h_dome.position = Vector3(0.0, 6.2, 0.0)
+			h_dome.material_override = mat_dome
+			b_node.add_child(h_dome)
+
+			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.30), mat_metal, Color(0.8, 0.7, 0.5))
+			if label != "":
+				_add_building_label(b_node, label, Color(0.85, 0.85, 0.85), 8.5)
+
+
+func _add_building_door(parent: Node3D, pos: Vector3, mat: Material, lamp_col: Color) -> void:
+	var door := MeshInstance3D.new()
+	var dbox := BoxMesh.new()
+	dbox.size = Vector3(3.5, 5.0, 1.2)
+	door.mesh = dbox
+	door.position = pos
+	door.material_override = mat
+	parent.add_child(door)
+
+	# Lanterne ambrée / cyan au-dessus de l'entrée
+	var lamp := OmniLight3D.new()
+	lamp.light_color = lamp_col
+	lamp.light_energy = 2.2
+	lamp.omni_range = 10.0
+	lamp.position = pos + Vector3(0.0, 3.6, 0.8)
+	parent.add_child(lamp)
+
+
+func _add_building_label(parent: Node3D, text: String, col: Color, height_y: float) -> void:
+	var lbl := Label3D.new()
+	lbl.text = text
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate = col
+	lbl.outline_modulate = Color(0.02, 0.04, 0.08, 0.9)
+	lbl.font_size = 28
+	lbl.outline_size = 6
+	lbl.position = Vector3(0.0, height_y, 0.0)
+	parent.add_child(lbl)
+
+
+## 5. Construction de l'Enceinte Fortifiée (Remparts de Lost Heaven)
+func _spawn_perimeter_fence(mat_adobe: Material, mat_metal: Material) -> void:
+	if not FileAccess.file_exists(PROPS_PATH):
+		return
+	var f := FileAccess.open(PROPS_PATH, FileAccess.READ)
+	var raw: Variant = JSON.parse_string(f.get_as_text())
+	f.close()
+	if not raw is Dictionary:
+		return
+
+	for item in (raw as Dictionary).get("paths", []):
+		if not item is Dictionary:
+			continue
+		var p: Dictionary = item
+		if str(p.get("id", "")) != "path:lh_perimeter_fence":
+			continue
+
+		var pts: Array = p.get("points", [])
+		if pts.size() < 2:
+			continue
+
+		var fence_root := Node3D.new()
+		fence_root.name = "PerimeterFence3D"
+		_city_root.add_child(fence_root)
+
+		for i in range(pts.size()):
+			var p1: Dictionary = pts[i]
+			var p2: Dictionary = pts[(i + 1) % pts.size()] # Bouclage
+
+			var v1 := Vector3(float(p1.get("x", 0.0)) - LH_ANCHOR_X, 0.0, -(float(p1.get("z", 0.0)) - LH_ANCHOR_Z))
+			var v2 := Vector3(float(p2.get("x", 0.0)) - LH_ANCHOR_X, 0.0, -(float(p2.get("z", 0.0)) - LH_ANCHOR_Z))
+
+			var mid := (v1 + v2) * 0.5
+			var dist := v1.distance_to(v2)
+			if dist <= 0.1 or dist > 350.0:
+				continue # Évite de barrer les portes principales ouvertes
+
+			# Segment de muraille
+			var wall_seg := MeshInstance3D.new()
+			var w_box := BoxMesh.new()
+			w_box.size = Vector3(2.5, 6.0, dist)
+			wall_seg.mesh = w_box
+			wall_seg.position = Vector3(mid.x, 3.0, mid.z)
+			wall_seg.look_at(Vector3(v2.x, 3.0, v2.z), Vector3.UP)
+			wall_seg.material_override = mat_adobe
+			fence_root.add_child(wall_seg)
+
+			# Bastion / Pilier aux intersections
+			var bastion := MeshInstance3D.new()
+			var b_cyl := CylinderMesh.new()
+			b_cyl.top_radius = 2.4
+			b_cyl.bottom_radius = 2.8
+			b_cyl.height = 7.5
+			bastion.mesh = b_cyl
+			bastion.position = Vector3(v1.x, 3.75, v1.z)
+			bastion.material_override = mat_metal
+			fence_root.add_child(bastion)
+		break
+
+
+## 6. Avatar Joueur 3D (Chargement Direct du Modèle Compagnon.vrm via GLTF)
+func _setup_player_avatar() -> void:
+	_player_node = CharacterBody3D.new()
+	_player_node.name = "Player3D"
+	_player_node.position = Vector3(0.0, 0.0, 0.0)
+
+	var col := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.45
+	cap.height = 1.85
+	col.shape = cap
+	col.position = Vector3(0.0, 0.92, 0.0)
+	_player_node.add_child(col)
+
+	_player_mesh = Node3D.new()
+	_player_mesh.name = "AvatarVisualRig"
+	_player_node.add_child(_player_mesh)
+
+	# Tentative de chargement du modèle VRM officiel du Compagnon
+	var loaded_vrm := false
+	if FileAccess.file_exists(VRM_AVATAR_PATH):
+		var doc := GLTFDocument.new()
+		var state := GLTFState.new()
+		if doc.append_from_file(VRM_AVATAR_PATH, state) == OK:
+			var scn := doc.generate_scene(state)
+			if scn != null:
+				_vrm_avatar = scn
+				_vrm_avatar.name = "CompagnonModel"
+				# Orientation et mise à l'échelle naturelle
+				_vrm_avatar.scale = Vector3(1.0, 1.0, 1.0)
+				_vrm_avatar.rotation_degrees = Vector3(0.0, 180.0, 0.0)
+				_player_mesh.add_child(_vrm_avatar)
+				loaded_vrm = true
+
+	# Fallback : Châssis humanoïde mécatronique stylisé si le VRM est absent
+	if not loaded_vrm:
+		_build_stylized_fallback_avatar()
+
+	_world_root.add_child(_player_node)
 
 	# Anneau de ciblage néon au sol
 	_target_marker = MeshInstance3D.new()
@@ -310,21 +673,35 @@ func _setup_desert_environment() -> void:
 	_world_root.add_child(_target_marker)
 
 
-## 4. Particules de Vent & Poussières de Sable Ambiantes
+func _build_stylized_fallback_avatar() -> void:
+	var armor_mat := StandardMaterial3D.new()
+	armor_mat.albedo_color = Color(0.18, 0.28, 0.40)
+	armor_mat.metallic = 0.5
+	armor_mat.roughness = 0.45
+
+	var torso := MeshInstance3D.new()
+	var tbox := BoxMesh.new()
+	tbox.size = Vector3(0.65, 0.75, 0.35)
+	torso.mesh = tbox
+	torso.position = Vector3(0.0, 1.05, 0.0)
+	torso.material_override = armor_mat
+	_player_mesh.add_child(torso)
+	_procedural_avatar_nodes.append(torso)
+
+
+## 7. Particules de Vent & Poussières de Sable Ambiantes
 func _setup_sand_particles() -> void:
 	_dust_particles = CPUParticles3D.new()
 	_dust_particles.name = "SandDustParticles"
-	_dust_particles.amount = 180
-	_dust_particles.lifetime = 4.0
+	_dust_particles.amount = 220
+	_dust_particles.lifetime = 4.5
 	_dust_particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	_dust_particles.emission_box_extents = Vector3(35.0, 4.0, 35.0)
-	_dust_particles.direction = Vector3(1.0, -0.1, 0.5).normalized()
-	_dust_particles.spread = 20.0
-	_dust_particles.initial_velocity_min = 3.0
-	_dust_particles.initial_velocity_max = 7.5
-	_dust_particles.gravity = Vector3(0.0, -0.4, 0.0)
-	_dust_particles.scale_amount_min = 0.08
-	_dust_particles.scale_amount_max = 0.22
+	_dust_particles.emission_box_extents = Vector3(45.0, 5.0, 45.0)
+	_dust_particles.direction = Vector3(1.0, -0.1, 0.4).normalized()
+	_dust_particles.spread = 22.0
+	_dust_particles.initial_velocity_min = 3.5
+	_dust_particles.initial_velocity_max = 8.5
+	_dust_particles.gravity = Vector3(0.0, -0.3, 0.0)
 
 	var p_mesh := SphereMesh.new()
 	p_mesh.radius = 0.08
@@ -339,113 +716,23 @@ func _setup_sand_particles() -> void:
 	_world_root.add_child(_dust_particles)
 
 
-## 5. Avatar Joueur 3D Articulé Haute Définition
-func _setup_detailed_player_avatar() -> void:
-	_player_node = CharacterBody3D.new()
-	_player_node.name = "Player3D"
-	_player_node.position = Vector3(0.0, 0.0, 0.0)
-
-	var col := CollisionShape3D.new()
-	var cap := CapsuleShape3D.new()
-	cap.radius = 0.45
-	cap.height = 1.85
-	col.shape = cap
-	col.position = Vector3(0.0, 0.92, 0.0)
-	_player_node.add_child(col)
-
-	_player_mesh = Node3D.new()
-	_player_mesh.name = "AvatarVisualRig"
-
-	# Matériaux de l'Armure du Pionnier
-	var armor_mat := StandardMaterial3D.new()
-	armor_mat.albedo_color = Color(0.16, 0.26, 0.38) # Bleu nuit composite
-	armor_mat.metallic = 0.4
-	armor_mat.roughness = 0.55
-
-	var metal_mat := StandardMaterial3D.new()
-	metal_mat.albedo_color = Color(0.65, 0.68, 0.72) # Plaques d'acier
-	metal_mat.metallic = 0.85
-	metal_mat.roughness = 0.35
-
-	var glow_mat := StandardMaterial3D.new()
-	glow_mat.albedo_color = Color(0.0, 0.95, 0.85) # Visière cyan émissif
-	glow_mat.emission_enabled = true
-	glow_mat.emission = Color(0.0, 0.95, 0.85)
-
-	# Buste / Plastron
-	_player_torso = MeshInstance3D.new()
-	var torso_box := BoxMesh.new()
-	torso_box.size = Vector3(0.52, 0.65, 0.32)
-	_player_torso.mesh = torso_box
-	_player_torso.position = Vector3(0.0, 1.05, 0.0)
-	_player_torso.material_override = armor_mat
-	_player_mesh.add_child(_player_torso)
-
-	# Tête / Casque
-	_player_head = MeshInstance3D.new()
-	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.22
-	head_mesh.height = 0.44
-	_player_head.mesh = head_mesh
-	_player_head.position = Vector3(0.0, 1.55, 0.0)
-	_player_head.material_override = metal_mat
-	_player_mesh.add_child(_player_head)
-
-	# Visière holographique
-	_player_visor = MeshInstance3D.new()
-	var v_box := BoxMesh.new()
-	v_box.size = Vector3(0.32, 0.10, 0.12)
-	_player_visor.mesh = v_box
-	_player_visor.position = Vector3(0.0, 1.55, 0.18)
-	_player_visor.material_override = glow_mat
-	_player_mesh.add_child(_player_visor)
-
-	# Backpack / Générateur d'énergie dorsal
-	_player_backpack = MeshInstance3D.new()
-	var bp_box := BoxMesh.new()
-	bp_box.size = Vector3(0.36, 0.44, 0.18)
-	_player_backpack.mesh = bp_box
-	_player_backpack.position = Vector3(0.0, 1.08, -0.22)
-	_player_backpack.material_override = metal_mat
-	_player_mesh.add_child(_player_backpack)
-
-	# Bras Gauche et Droit
-	_player_arm_l = MeshInstance3D.new()
-	var arm_capsule := CapsuleMesh.new()
-	arm_capsule.radius = 0.09
-	arm_capsule.height = 0.60
-	_player_arm_l.mesh = arm_capsule
-	_player_arm_l.position = Vector3(-0.35, 1.0, 0.0)
-	_player_arm_l.material_override = armor_mat
-	_player_mesh.add_child(_player_arm_l)
-
-	_player_arm_r = MeshInstance3D.new()
-	_player_arm_r.mesh = arm_capsule
-	_player_arm_r.position = Vector3(0.35, 1.0, 0.0)
-	_player_arm_r.material_override = armor_mat
-	_player_mesh.add_child(_player_arm_r)
-
-	# Jambes Gauche et Droite
-	_player_leg_l = MeshInstance3D.new()
-	var leg_capsule := CapsuleMesh.new()
-	leg_capsule.radius = 0.11
-	leg_capsule.height = 0.72
-	_player_leg_l.mesh = leg_capsule
-	_player_leg_l.position = Vector3(-0.16, 0.42, 0.0)
-	_player_leg_l.material_override = armor_mat
-	_player_mesh.add_child(_player_leg_l)
-
-	_player_leg_r = MeshInstance3D.new()
-	_player_leg_r.mesh = leg_capsule
-	_player_leg_r.position = Vector3(0.16, 0.42, 0.0)
-	_player_leg_r.material_override = armor_mat
-	_player_mesh.add_child(_player_leg_r)
-
-	_player_node.add_child(_player_mesh)
-	_world_root.add_child(_player_node)
+## Positionnement du joueur aux coordonnées monde de Lost Heaven (X, Z absolus)
+func set_player_world_position(world_x: float, world_z: float) -> void:
+	if _player_node == null:
+		return
+	var lx := world_x - LH_ANCHOR_X
+	var lz := -(world_z - LH_ANCHOR_Z)
+	_player_node.position = Vector3(lx, 0.0, lz)
+	if _camera_rig != null:
+		_camera_rig.position = _player_node.position
 
 
-## 6. Bascule entre Caméra 3ème Personne et Caméra Isométrique 3/4
+func get_player_world_position() -> Vector2:
+	if _player_node == null:
+		return Vector2(LH_ANCHOR_X, LH_ANCHOR_Z)
+	return Vector2(LH_ANCHOR_X + _player_node.position.x, LH_ANCHOR_Z - _player_node.position.z)
+
+
 func toggle_camera_mode() -> void:
 	if current_camera_mode == CameraMode.THIRD_PERSON:
 		set_camera_mode(CameraMode.ISOMETRIC)
@@ -463,7 +750,7 @@ func set_camera_mode(mode: CameraMode) -> void:
 		camera_mode_changed.emit("3ème Personne (Over-The-Shoulder)")
 	else:
 		camera_pitch = -45.0
-		camera_zoom = 20.0
+		camera_zoom = 22.0
 		if _camera != null:
 			_camera.fov = 48.0
 		camera_mode_changed.emit("Isométrique 3/4 (T4C / SWG)")
@@ -481,12 +768,11 @@ func _update_camera_settings() -> void:
 	_spring_arm.spring_length = camera_zoom
 
 
-## 7. Boucle Physique : Gravité, Déplacement ZQSD, Sprint, Saut et Animation Procédurale
+## 8. Boucle Physique : Gravité, Déplacement ZQSD, Sprint, Saut et Animation
 func _physics_process(delta: float) -> void:
 	if _player_node == null:
 		return
 
-	# Application de la gravité
 	if not _player_node.is_on_floor():
 		_player_node.velocity.y -= gravity * delta
 	else:
@@ -496,7 +782,6 @@ func _physics_process(delta: float) -> void:
 	var is_sprinting := Input.is_key_pressed(KEY_SHIFT)
 	var cur_speed := player_sprint_speed if is_sprinting else player_speed
 
-	# 1. Déplacement ZQSD
 	var input_dir := Vector2.ZERO
 	if Input.is_action_pressed("ui_up") or Input.is_key_pressed(KEY_Z) or Input.is_key_pressed(KEY_W):
 		input_dir.y -= 1.0
@@ -507,7 +792,6 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("ui_right") or Input.is_key_pressed(KEY_D):
 		input_dir.x += 1.0
 
-	# 2. Saut (Barre d'espace)
 	if Input.is_physical_key_pressed(KEY_SPACE) and _player_node.is_on_floor():
 		_player_node.velocity.y = jump_velocity
 
@@ -531,174 +815,83 @@ func _physics_process(delta: float) -> void:
 			if _target_marker != null:
 				_target_marker.visible = false
 
-	# Application de la vélocité horizontale
 	if move_vec != Vector3.ZERO:
 		_is_moving = true
 		_player_node.velocity.x = move_vec.x * cur_speed
 		_player_node.velocity.z = move_vec.z * cur_speed
 
-		# Orientation fluide de l'avatar dans la direction de la marche
 		var target_angle := atan2(move_vec.x, move_vec.z)
 		_player_mesh.rotation.y = lerp_angle(_player_mesh.rotation.y, target_angle, delta * 14.0)
 
-		# Animation procédurale de foulée (balancement bras & jambes)
 		_walk_cycle += delta * (14.0 if is_sprinting else 9.5)
-		var swing := sin(_walk_cycle) * (0.55 if is_sprinting else 0.35)
-		if _player_arm_l != null: _player_arm_l.rotation.x = -swing
-		if _player_arm_r != null: _player_arm_r.rotation.x = swing
-		if _player_leg_l != null: _player_leg_l.rotation.x = swing * 1.1
-		if _player_leg_r != null: _player_leg_r.rotation.x = -swing * 1.1
-		if _player_torso != null: _player_torso.position.y = 1.05 + abs(sin(_walk_cycle * 2.0)) * 0.04
+
+		# Animation dynamique de l'avatar du Compagnon (foulée et rebond)
+		if _vrm_avatar != null:
+			_vrm_avatar.position.y = abs(sin(_walk_cycle * 2.0)) * 0.05
+			_vrm_avatar.rotation.z = sin(_walk_cycle) * 0.035
 
 		player_moved_3d.emit(_player_node.position)
 	else:
 		_is_moving = false
+		_idle_timer += delta
 		_player_node.velocity.x = move_toward(_player_node.velocity.x, 0.0, cur_speed * delta * 8.0)
 		_player_node.velocity.z = move_toward(_player_node.velocity.z, 0.0, cur_speed * delta * 8.0)
-		# Retour au repos fluide
-		if _player_arm_l != null: _player_arm_l.rotation.x = lerp(_player_arm_l.rotation.x, 0.0, delta * 8.0)
-		if _player_arm_r != null: _player_arm_r.rotation.x = lerp(_player_arm_r.rotation.x, 0.0, delta * 8.0)
-		if _player_leg_l != null: _player_leg_l.rotation.x = lerp(_player_leg_l.rotation.x, 0.0, delta * 8.0)
-		if _player_leg_r != null: _player_leg_r.rotation.x = lerp(_player_leg_r.rotation.x, 0.0, delta * 8.0)
-		if _player_torso != null: _player_torso.position.y = lerp(_player_torso.position.y, 1.05, delta * 8.0)
+
+		if _vrm_avatar != null:
+			_vrm_avatar.position.y = lerp(_vrm_avatar.position.y, sin(_idle_timer * 1.6) * 0.012, delta * 6.0)
+			_vrm_avatar.rotation.z = lerp(_vrm_avatar.rotation.z, 0.0, delta * 8.0)
 
 	_player_node.move_and_slide()
-
-	# Suivi caméra fluide
 	_camera_rig.position = _camera_rig.position.lerp(_player_node.position, delta * 12.0)
 
-	# Le nuage de particules suit le joueur
 	if _dust_particles != null:
 		_dust_particles.position = _player_node.position
 
 
-## 8. Contrôles Souris & Clavier : Rotation Caméra, Zoom Molette & Clic au Sol
+## 9. Contrôles Souris & Clavier : Rotation Caméra, Zoom Molette & Clic au Sol
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		# Clic droit : orbite caméra mouselook
 		if mb.button_index == MOUSE_BUTTON_RIGHT:
 			is_orbiting_camera = mb.pressed
 			last_mouse_pos = mb.position
-		# Clic gauche : click-to-move ou ciblage
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_zoom_camera(-1.0)
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_zoom_camera(1.0)
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			_handle_terrain_click(mb.position)
-		# Molette : zoom fluide avec transition automatique de mode
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_zoom_step(-0.8)
-		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_zoom_step(0.8)
-
+			_handle_left_click(mb.position)
 	elif event is InputEventMouseMotion and is_orbiting_camera:
 		var mm := event as InputEventMouseMotion
-		camera_yaw -= mm.relative.x * 0.32
-		var min_pitch := -78.0 if current_camera_mode == CameraMode.THIRD_PERSON else -65.0
-		var max_pitch := 40.0 if current_camera_mode == CameraMode.THIRD_PERSON else -25.0
-		camera_pitch = clampf(camera_pitch + mm.relative.y * 0.22, min_pitch, max_pitch)
+		var delta_rot: Vector2 = mm.relative
+		camera_yaw -= delta_rot.x * 0.32
+		camera_pitch = clampf(camera_pitch - delta_rot.y * 0.25, -78.0, 42.0)
 		_update_camera_settings()
 
 
-func _zoom_step(step: float) -> void:
+func _zoom_camera(dir: float) -> void:
+	var step := 0.6 if current_camera_mode == CameraMode.THIRD_PERSON else 2.5
+	camera_zoom += dir * step
 	if current_camera_mode == CameraMode.THIRD_PERSON:
-		camera_zoom = clampf(camera_zoom + step, MIN_ZOOM_3RD, MAX_ZOOM_3RD)
-		# Si zoom au maximum, bascule fluide en isométrique
-		if camera_zoom >= MAX_ZOOM_3RD and step > 0:
-			set_camera_mode(CameraMode.ISOMETRIC)
-			return
+		camera_zoom = clampf(camera_zoom, MIN_ZOOM_3RD, MAX_ZOOM_3RD)
 	else:
-		camera_zoom = clampf(camera_zoom + step * 2.0, MIN_ZOOM_ISO, MAX_ZOOM_ISO)
-		# Si zoom au minimum en isométrique, bascule en 3ème personne
-		if camera_zoom <= MIN_ZOOM_ISO and step < 0:
-			set_camera_mode(CameraMode.THIRD_PERSON)
-			return
+		camera_zoom = clampf(camera_zoom, MIN_ZOOM_ISO, MAX_ZOOM_ISO)
 	_update_camera_settings()
 
 
-## 9. Raycasting Click-to-Move
-func _handle_terrain_click(screen_pos: Vector2) -> void:
-	if _camera == null or _world_root == null:
+func _handle_left_click(screen_pos: Vector2) -> void:
+	if _camera == null:
 		return
-
 	var from := _camera.project_ray_origin(screen_pos)
-	var to := from + _camera.project_ray_normal(screen_pos) * 1000.0
+	var dir := _camera.project_ray_normal(screen_pos)
 
-	var space_state := _world_root.get_world_3d().direct_space_state
-	var query := PhysicsRayQueryParameters3D.create(from, to)
-	var result := space_state.intersect_ray(query)
-
-	if not result.is_empty():
-		var hit_pos: Vector3 = result["position"]
-		click_target_pos = hit_pos
-		is_click_moving = true
-		if _target_marker != null:
-			_target_marker.position = Vector3(hit_pos.x, hit_pos.y + 0.06, hit_pos.z)
-			_target_marker.visible = true
-		terrain_clicked_3d.emit(hit_pos)
-
-
-## 10. API d'Apparition des Entités 3D (Harvesters, Créatures, PNJ)
-func spawn_entity_3d(entity_id: String, entity_type: String, world_pos: Vector3, label: String = "") -> Node3D:
-	if _world_root == null:
-		return null
-
-	var ent_node := Node3D.new()
-	ent_node.name = "Entity3D_" + entity_id
-	ent_node.position = world_pos
-
-	var mesh_inst := MeshInstance3D.new()
-	if entity_type == "harvester":
-		# Extracteur SWG industriel imposant avec tête de forage rotative
-		var cyl := CylinderMesh.new()
-		cyl.top_radius = 2.0
-		cyl.bottom_radius = 2.8
-		cyl.height = 5.6
-		mesh_inst.mesh = cyl
-		mesh_inst.position = Vector3(0.0, 2.8, 0.0)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.72, 0.25, 0.18) # Rouge rouille industriel
-		mat.metallic = 0.8
-		mat.roughness = 0.35
-		mesh_inst.material_override = mat
-
-		# Gyrophare d'activité au sommet de l'extracteur
-		var rotor_light := OmniLight3D.new()
-		rotor_light.light_color = Color(1.0, 0.5, 0.1)
-		rotor_light.light_energy = 2.0
-		rotor_light.position = Vector3(0.0, 5.8, 0.0)
-		ent_node.add_child(rotor_light)
-
-	elif entity_type == "creature":
-		# Créature sauvage des dunes (Krayt / Bantha)
-		var box := BoxMesh.new()
-		box.size = Vector3(2.2, 2.0, 3.8)
-		mesh_inst.mesh = box
-		mesh_inst.position = Vector3(0.0, 1.0, 0.0)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.48, 0.38, 0.28) # Brun cuir sauvage
-		mat.roughness = 0.9
-		mesh_inst.material_override = mat
-	else:
-		# PNJ Humanoïde (Marchand, Médecin, Garde)
-		var cap := CapsuleMesh.new()
-		cap.radius = 0.42
-		cap.height = 1.8
-		mesh_inst.mesh = cap
-		mesh_inst.position = Vector3(0.0, 0.9, 0.0)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.82, 0.68, 0.30)
-		mesh_inst.material_override = mat
-
-	ent_node.add_child(mesh_inst)
-
-	if label != "":
-		var lbl := Label3D.new()
-		lbl.text = label
-		lbl.position = Vector3(0.0, 3.0, 0.0)
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.font_size = 26
-		lbl.modulate = Color(1.0, 0.94, 0.78)
-		ent_node.add_child(lbl)
-
-	_world_root.add_child(ent_node)
-	_active_entities_3d[entity_id] = ent_node
-	return ent_node
+	if abs(dir.y) > 0.0001:
+		var t := -from.y / dir.y
+		if t > 0.0:
+			var hit_pos := from + dir * t
+			click_target_pos = hit_pos
+			is_click_moving = true
+			if _target_marker != null:
+				_target_marker.position = Vector3(hit_pos.x, 0.08, hit_pos.z)
+				_target_marker.visible = true
+			terrain_clicked_3d.emit(hit_pos)

@@ -9,6 +9,36 @@
 ---
 
 ## Dernières actions réalisées (2026-11-22)
+- 35. **Prime O2 : Alignement Environnement 3D / 2D (Bâtiments Lost Heaven SWG & Modèle Compagnon VRM)** :
+    - **Alignement Environnemental Complet 2D / 3D (`world_ground_3d.gd`, `lost_heaven_buildings.json`, `lost_heaven_props.json`)** :
+      * Résolution du décalage visuel : la vue 3D charge désormais l'intégralité des 15 bâtiments de Lost Heaven aux coordonnées relatives exactes de la ville.
+      * Style architectural SWG Pre-CU / Tatooine (grès d'adobe, dômes blancs/sable, hangars duracier, auvents de marché, rotonde de la Cantina La Perle, tour de contrôle du spatioport, dispensaire médical).
+      * Enseignes holographiques 3D en lévitation (`Label3D` lisibles en vue 3ème personne au-dessus des portes avec liserés néon).
+      * Remparts fortifiés en 3D générés le long des 29 points de coordonnées (`path:lh_perimeter_fence`) avec bastions et portes monumentales (Porte Est & Porte Ouest).
+      * Extension du terrain désertique PBR à 3200m x 3200m.
+    - **Intégration du Modèle 3D du Compagnon (`Compagnon.vrm`)** :
+      * Remplacement du mannequin procédural basique par le modèle officiel haute définition du Compagnon chargé via `GLTFDocument` (`res://assets/avatars/Compagnon.vrm`).
+      * Animations dynamiques en temps réel (foulée de marche/sprint et oscillation fluide).
+    - **Synchronisation Spatiale 2D / 3D (`main.gd`)** :
+      * La position du joueur est synchronisée dans les deux sens entre le repère monde absolu (X=4749, Z=-737) et le viewport 3D.
+      * Passage fluide `[F10]` conservant la position exacte du joueur dans la ville.
+    - **Publication Launchpad** :
+      * Patch client `version=2026-11-22T19:58:54Z` (335 fichiers) et auto-update Launchpad déployés sur `http://192.168.0.246:8080`.
+
+- 34. **Compagnon O1 : Éradication Divagations Lia sur Topologie LAN (.217 Ancien ESXi vs Proxmox)** :
+    - **Cause racine des hallucinations** :
+      * L'utilisateur ayant demandé « à quoi correspond l'IP 192.168.0.217 sur notre réseau ? », le prompt `ecosystem_grounding` ne listait que les IP actives (.10, .51, .100, .110, .111, .140, .141, .143, .200, .201, .245, .246, .254) sans mentionner l'historique `.217`.
+      * En l'absence de garde-fou formel sur les adresses IP non répertoriées, le LLM (Lia) a confabulé en reliant les termes de son prompt système (« nœud de communication interne », « flux Prime Client », « interface dédiée », « sauvegardes NAS »).
+    - **Mesures d'éradication et durcissement anti-hallucination** :
+      * `ecosystem_grounding.py` : injection du statut de `.217` (ancien hyperviseur VMware ESXi avant Proxmox VE .200/.201, décommissionné/inactif) et ajout de la règle d'interdiction stricte d'inventer des fonctions (« nœud de communication », « interface dédiée », etc.) sur des IP inconnues.
+      * `router_prompts.py` : cartographie enrichie dans `_OPS_TRUTH` et consigne anti-invention répercutée dans `LAB_CAUSERIE_GUARDRAILS`.
+      * `character/compagnon_v1.json` & `studio_brain_v1.json` : vérité opérationnelle renforcée dans `worldview` et les faits canoniques.
+      * `rag_facts.jsonl` : ajout du fait `eco_ip_217_esx` et alignement port hub Godot (`:8787`).
+      * `docs/REGISTRE.md` : ligne `.217` formalisée dans le tableau des hôtes LAN.
+    - **Validation & Déploiement CT100** :
+      * Tests unitaires enrichis et validés (`test_companion_grounding.py`, `test_studio_brain.py`).
+      * Paquet atomique `server_overlay` recompilé et déployé sur CT100 (`192.168.0.100:5174` & backend `:3000`).
+
 - 33. **Prime O2 : Direction Artistique du Multivers (Dés-SWG-isation) & Trinité des Factions** :
     - **Formalisation Canonique de la Direction Artistique (`docs/design/DIRECTION_ARTISTIQUE_PRIME_MULTIVERS.md`)** :
       * Synthèse des 3 piliers : Tech Organique & Bricolée (Gunnm, Cyberpunk, Firefly), Énergie & Alchimie (FMA, Avatar, DBZ, T4C), Ton Héroïque & Méta-Absurde (Discworld, Free Guy).

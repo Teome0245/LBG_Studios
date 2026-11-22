@@ -1039,6 +1039,10 @@ func toggle_3d_mode(enable: Variant = null) -> void:
 
 	if world_ground_3d:
 		world_ground_3d.visible = is_3d_mode
+		if is_3d_mode and entity_manager:
+			var e: Node = entity_manager.get_entity(_possessed_id)
+			if e and "core3_position" in e:
+				world_ground_3d.set_player_world_position(e.core3_position.x, e.core3_position.z)
 
 	# Bascule visibilité du sol 2.5D
 	var wmap: CanvasItem = get_node_or_null("WorldMap") as CanvasItem
@@ -1066,8 +1070,17 @@ func _on_3d_camera_mode_changed(mode_name: String) -> void:
 
 
 func _on_3d_player_moved(new_pos: Vector3) -> void:
-	# Synchronisation de la position pour le HUD et réseau
-	pass
+	# Synchronisation de la position 3D vers le monde 2D, la minimap et le radar
+	var world_x := 4749.0 + new_pos.x
+	var world_z := -737.0 - new_pos.z
+	if entity_manager:
+		var e: Node = entity_manager.get_entity(_possessed_id)
+		if e and "core3_position" in e:
+			e.core3_position = Vector3(world_x, 0.0, world_z)
+			e.position = _Projection3D2D.to_screen(e.core3_position)
+			if camera and not camera_free_pan:
+				camera.position = e.position
+				_cam_target = e.position
 
 
 func _on_3d_terrain_clicked(target_pos: Vector3) -> void:
