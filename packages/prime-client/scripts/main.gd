@@ -230,6 +230,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_mount()
 		elif event.keycode == KEY_F10:
 			toggle_3d_mode()
+		elif event.keycode == KEY_V:
+			_toggle_camera_3d()
 		elif event.keycode == KEY_B:
 			_toggle_spellbook()
 
@@ -1032,6 +1034,8 @@ func toggle_3d_mode(enable: Variant = null) -> void:
 		world_ground_3d.player_moved_3d.connect(_on_3d_player_moved)
 		world_ground_3d.terrain_clicked_3d.connect(_on_3d_terrain_clicked)
 		world_ground_3d.entity_clicked_3d.connect(_on_3d_entity_clicked)
+		if world_ground_3d.has_signal("camera_mode_changed"):
+			world_ground_3d.camera_mode_changed.connect(_on_3d_camera_mode_changed)
 
 	if world_ground_3d:
 		world_ground_3d.visible = is_3d_mode
@@ -1042,9 +1046,23 @@ func toggle_3d_mode(enable: Variant = null) -> void:
 		wmap.visible = not is_3d_mode
 
 	if swg_chat_box:
-		var mode_name := "Full 3D Isométrique Orbital (Godot 4 PBR)" if is_3d_mode else "2.5D Top-Down Canonique"
+		var mode_name := "Full 3D Scrapaltai (3ème Personne / [V] Isométrique)" if is_3d_mode else "2.5D Top-Down Canonique"
 		swg_chat_box.add_log("[color=#44ffbb]🌐 Mode d'Affichage : %s (Touche [F10])[/color]" % mode_name, "spatial")
-	_show_toast("Affichage : %s" % ("Full 3D" if is_3d_mode else "2.5D"))
+	_show_toast("Affichage : %s" % ("Full 3D (3ème Personne)" if is_3d_mode else "2.5D"))
+
+
+func _toggle_camera_3d() -> void:
+	if not is_3d_mode:
+		toggle_3d_mode(true)
+		return
+	if world_ground_3d and world_ground_3d.has_method("toggle_camera_mode"):
+		world_ground_3d.toggle_camera_mode()
+
+
+func _on_3d_camera_mode_changed(mode_name: String) -> void:
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#33eeff]🎥 Caméra 3D : %s (Touche [V])[/color]" % mode_name, "spatial")
+	_show_toast("Caméra : %s" % mode_name)
 
 
 func _on_3d_player_moved(new_pos: Vector3) -> void:

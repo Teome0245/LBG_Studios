@@ -9,6 +9,20 @@
 ---
 
 ## Dernières actions réalisées (2026-11-22)
+-32. **Prime O2 : Caméra 3ème Personne (MMO Follow-Cam), Ciel Procédural PBR & Amélioration Graphique 3D** :
+    - **Caméra 3ème Personne Immersive & Bascule Double Vue (`world_ground_3d.gd`, `main.gd`)** :
+      * Implémentation de la caméra 3ème personne over-the-shoulder via `SpringArm3D` articulé sur la racine du joueur (hauteur d'épaule 1.55m, pitch libre -78° à +40°, zoom de 1.8m à 14m).
+      * Gestion de la touche **`[V]`** (View) pour basculer instantanément entre la vue 3ème personne immersive et la vue isométrique 3/4 classique.
+      * Déplacement ZQSD orienté selon la visée caméra, avec saut dynamique physique (gravité + `KEY_SPACE`) et sprint (Shift à 11.5 m/s).
+    - **Refonte Graphique PBR & Environnement de Lost Heaven** :
+      * Ciel procédural physique haute fidélité (`ProceduralSkyMaterial`) : azur zénithal, dégradé d'horizon cuivré chaud, soleil radiant avec ombres portées en 4 cascades PBR lissées.
+      * Post-processing avancé : Tone Mapping cinématographique ACES, Screen-Space Ambient Occlusion (SSAO) pour l'ombrage de contact au sol, Glow HDR doux pour les liserés et visières holographiques, brouillard volumétrique désertique.
+      * Décor 3D enrichi : place centrale de Lost Heaven en dalles sci-fi métalliques polygonales, anneaux d'énergie néon, sables de Scrapaltai, spires et falaises rocheuses (mesas) en périphérie, tour relais de communication centrale avec balise lumineuse.
+      * Tempête de sable dynamique : particules volumétriques de poussières dorées (`CPUParticles3D`) dérivant au vent autour du joueur.
+      * Avatar joueur 3D haute fidélité : modèle composé articulé (plastron composite, casque acier avec visière cyan émissive, backpack dorsal, membres séparés) avec cycle d'animation procédural complet (marche, foulée de sprint et balancement fluide des bras et jambes).
+    - **Publication Launchpad** :
+      * Nouveau patch `prime` compilé et synchronisé sur le serveur de patch officiel (`http://192.168.0.246:8080`, version `2026-11-22T18:50:31Z`, 335 fichiers).
+
 -31. **Prime O2 : Fusion Moteur SWG Pre-CU & T4C (La 4ème Prophétie) + Fondations Rendu Full 3D Godot 4** :
     - **Fusion Mécaniques SWG & T4C (`hub_t4c_system.gd`, `hub_skills.gd`, `hub_http.gd`)** :
       * Dérivation mathématique en temps réel des 3 jauges HAM (Santé, Action, Esprit) à partir des 5 statistiques T4C (Force, Endurance, Dextérité, Intelligence, Sagesse).
