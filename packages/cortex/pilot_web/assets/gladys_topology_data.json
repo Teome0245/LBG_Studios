@@ -1,0 +1,593 @@
+{
+  "nodes": {
+    "gladys_organism": {
+      "id": "gladys_organism",
+      "title": "Gladys (Organisme Global)",
+      "type": "organism",
+      "domain": "gladys",
+      "desc": "Entité cybernétique globale LBG Studios. Siège de conscience réflexive, coordination distribuée et méta-autonomie.",
+      "path": "docs/ORGANISME_LBG.md",
+      "links_to": [
+        "lia_avatar",
+        "cortex_140",
+        "poste_10",
+        "atelier_143",
+        "inference_110",
+        "inference_111",
+        "runtime_246",
+        "serveur_54",
+        "doc_organisme",
+        "doc_objectifs"
+      ],
+      "incoming_count": 8
+    },
+    "lia_avatar": {
+      "id": "lia_avatar",
+      "title": "Lia (Incarnation 3D & Voix)",
+      "type": "incarnation",
+      "domain": "gladys",
+      "desc": "Incarnation sensible et relationnelle de Gladys. Modèle Three-VRM humanoïde, voix Vivienne/Denise Neural, 284+ animations Mocap SWG.",
+      "path": "packages/cortex/compagnon_ui/server_overlay/router_prompts.py",
+      "links_to": [
+        "gladys_organism",
+        "piper_tts",
+        "poste_10",
+        "cortex_140"
+      ],
+      "incoming_count": 5
+    },
+    "poste_10": {
+      "id": "poste_10",
+      "title": "Poste Teome (.10)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.10",
+      "probe_port": 5005,
+      "role": "Main Droite Symbiotique (Windows SDS)",
+      "desc": "Poste physique de Teome. Interface multimodale (micro, webcam, écran 4K), Agent Desktop UIA sans vol de souris, Launchpad.",
+      "path": "docs/ORGANISME_LBG.md#poste-10",
+      "links_to": [
+        "gladys_organism",
+        "agent_desktop_win",
+        "lia_avatar"
+      ],
+      "incoming_count": 4
+    },
+    "atelier_143": {
+      "id": "atelier_143",
+      "title": "Atelier Omarchy (.143)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.143",
+      "probe_port": 5005,
+      "role": "Atelier Dev & Main Gauche (Linux)",
+      "desc": "Machine de calcul et dev continue. Environnement Linux pur où opèrent les agents de code autonomes (Claude Code, Cline, Antigravity) et la CI.",
+      "path": "docs/ORGANISME_LBG.md#poste-143",
+      "links_to": [
+        "gladys_organism",
+        "agent_desktop_linux",
+        "cline_worker",
+        "content_bot",
+        "antigravity_agent"
+      ],
+      "incoming_count": 5
+    },
+    "cortex_140": {
+      "id": "cortex_140",
+      "title": "Cortex Brain (.140)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.140",
+      "probe_port": 8000,
+      "role": "Cerveau Central & Bus d'État",
+      "desc": "Siège central de l'orchestration, de la mémoire épisodique SQLite/Vector Stores, de la télémétrie ops et de Pilot UI (:8080).",
+      "path": "packages/cortex/backend/main.py",
+      "links_to": [
+        "gladys_organism",
+        "cortex_backend",
+        "orchestrator_service",
+        "nocturnal_auditor"
+      ],
+      "incoming_count": 6
+    },
+    "inference_110": {
+      "id": "inference_110",
+      "title": "Centre Neural RTX Heavy (.110)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.110",
+      "probe_port": 11434,
+      "role": "Inférence Haute Capacité (0€ Cloud)",
+      "desc": "Puissance neurale locale RTX. Modèles lourds Qwen 2.5 Coder 14B / DeepSeek R1 14B, raisonnement complexe et réécriture de code.",
+      "path": ".agents/rules/local-llm-route-matrix.md",
+      "links_to": [
+        "gladys_organism",
+        "ollama_heavy",
+        "doc_matrice_llm"
+      ],
+      "incoming_count": 4
+    },
+    "inference_111": {
+      "id": "inference_111",
+      "title": "Centre Neural Light & TTS (.111)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.111",
+      "probe_port": 11434,
+      "role": "Inférence Rapide & Voix Locale",
+      "desc": "Inférence rapide (modèles 3b/7b) et serveur de synthèse vocale Piper TTS Neural ONNX (:8098).",
+      "path": ".agents/rules/local-llm-route-matrix.md",
+      "links_to": [
+        "gladys_organism",
+        "ollama_light",
+        "piper_tts"
+      ],
+      "incoming_count": 4
+    },
+    "runtime_246": {
+      "id": "runtime_246",
+      "title": "Banc d'Entraînement (.246)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.246",
+      "probe_port": 8787,
+      "role": "Banc Virtuel MMO / Lost Heaven",
+      "desc": "Serveur Godot 4.6 headless :8787 unifié HTTP+WS et serveur de patchs Launchpad :8080. Banc spatial persistant des Joueurs IA O3.",
+      "path": "docs/RUNTIME_GODOT.md",
+      "links_to": [
+        "gladys_organism",
+        "prime_hub_service",
+        "scrapaltai"
+      ],
+      "incoming_count": 5
+    },
+    "serveur_54": {
+      "id": "serveur_54",
+      "title": "Infra Mail & DNS (.54)",
+      "type": "machine",
+      "domain": "gladys",
+      "host": "192.168.0.54",
+      "probe_port": 465,
+      "role": "Conteneurs Proxmox CT (Mail/DNS)",
+      "desc": "Infrastructure réseau souveraine : Serveur Stalwart Mail sécurisé (:465) et Serveur DNS AdGuard Home (:53) pour laboiteageeks.fr.",
+      "path": "docs/SESSION_EN_COURS.md",
+      "links_to": [
+        "gladys_organism",
+        "stalwart_mail",
+        "adguard_dns"
+      ],
+      "incoming_count": 3
+    },
+    "cortex_backend": {
+      "id": "cortex_backend",
+      "title": "FastAPI Backend & Pilot (:8000)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.140",
+      "probe_port": 8000,
+      "desc": "API REST FastAPI, endpoints de télémétrie, Pilot Web UI et bus d'état central.",
+      "path": "packages/cortex/backend/main.py",
+      "links_to": [
+        "cortex_140"
+      ],
+      "incoming_count": 2
+    },
+    "orchestrator_service": {
+      "id": "orchestrator_service",
+      "title": "Cortex Orchestrator (:8010/:3000)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.140",
+      "probe_port": 8010,
+      "desc": "Moteur d'orchestration multi-agents, routage sémantique des intentions et mémoires d'Atlas.",
+      "path": "packages/cortex/orchestrator/main.py",
+      "links_to": [
+        "cortex_140"
+      ],
+      "incoming_count": 2
+    },
+    "agent_desktop_win": {
+      "id": "agent_desktop_win",
+      "title": "Agent Desktop Windows (:5005)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.10",
+      "probe_port": 5005,
+      "desc": "Pilotage sémantique de Windows via UI Automation (UIA) sans confiscation de souris ni de clavier.",
+      "path": "docs/ORGANISME_LBG.md#modalites-de-controle-os",
+      "links_to": [
+        "poste_10"
+      ],
+      "incoming_count": 2
+    },
+    "agent_desktop_linux": {
+      "id": "agent_desktop_linux",
+      "title": "Agent Desktop Linux (:5005)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.143",
+      "probe_port": 5005,
+      "desc": "Pilotage headless du poste Omarchy via AT-SPI pour l'automation d'atelier.",
+      "path": "docs/ORGANISME_LBG.md#modalites-de-controle-os",
+      "links_to": [
+        "atelier_143"
+      ],
+      "incoming_count": 2
+    },
+    "ollama_heavy": {
+      "id": "ollama_heavy",
+      "title": "Ollama Heavy 14B (:11434)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.110",
+      "probe_port": 11434,
+      "desc": "Moteur d'inférence GPU RTX : qwen2.5-coder-abliterate:14b et deepseek-r1:14b.",
+      "path": ".agents/rules/local-llm-route-matrix.md",
+      "links_to": [
+        "inference_110"
+      ],
+      "incoming_count": 2
+    },
+    "ollama_light": {
+      "id": "ollama_light",
+      "title": "Ollama Light 3B/7B (:11434)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.111",
+      "probe_port": 11434,
+      "desc": "Modèles ultra-rapides pour le dialogue réactif, les intentions et les résumés.",
+      "path": ".agents/rules/local-llm-route-matrix.md",
+      "links_to": [
+        "inference_111"
+      ],
+      "incoming_count": 2
+    },
+    "piper_tts": {
+      "id": "piper_tts",
+      "title": "Piper TTS Neural (:8098)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.111",
+      "probe_port": 8098,
+      "desc": "Synthèse vocale française haute performance temps réel pour la voix de Lia.",
+      "path": "packages/cortex/compagnon_ui/server_overlay/voice.py",
+      "links_to": [
+        "inference_111",
+        "lia_avatar"
+      ],
+      "incoming_count": 3
+    },
+    "prime_hub_service": {
+      "id": "prime_hub_service",
+      "title": "Prime Hub Godot (:8787)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.246",
+      "probe_port": 8787,
+      "desc": "Moteur spatial Godot headless : simulation 3D, collision, navigation NavMesh et synchronisation des 10 Bots IA.",
+      "path": "docs/RUNTIME_GODOT.md",
+      "links_to": [
+        "runtime_246",
+        "scrapaltai"
+      ],
+      "incoming_count": 4
+    },
+    "stalwart_mail": {
+      "id": "stalwart_mail",
+      "title": "Serveur Mail Stalwart (:465)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.54",
+      "probe_port": 465,
+      "desc": "Serveur mail local sécurisé SSL/TLS pour l'envoi et la réception de messages par Gladys.",
+      "path": "docs/SESSION_EN_COURS.md",
+      "links_to": [
+        "serveur_54"
+      ],
+      "incoming_count": 2
+    },
+    "adguard_dns": {
+      "id": "adguard_dns",
+      "title": "Serveur DNS AdGuard (:53)",
+      "type": "service",
+      "domain": "gladys",
+      "host": "192.168.0.54",
+      "probe_port": 53,
+      "desc": "Serveur DNS local avec filtrage publicitaire et résolution interne laboiteageeks.fr.",
+      "path": "packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh",
+      "links_to": [
+        "serveur_54"
+      ],
+      "incoming_count": 2
+    },
+    "antigravity_agent": {
+      "id": "antigravity_agent",
+      "title": "Antigravity (Superviseur & Architecte)",
+      "type": "agent",
+      "domain": "gladys",
+      "desc": "Superviseur IA de haut niveau, garant de la conformité architecturale, de la CI et de la validation des livrables.",
+      "path": ".agents/rules/cline-delegation-review.md",
+      "links_to": [
+        "gladys_organism",
+        "atelier_143",
+        "doc_organisme"
+      ],
+      "incoming_count": 3
+    },
+    "cline_worker": {
+      "id": "cline_worker",
+      "title": "Cline / Claude Code Local 0€",
+      "type": "agent",
+      "domain": "gladys",
+      "desc": "Ouvrier de code local propulsé par Ollama .110 (qwen2.5-coder:14b), exécuté en mode autonome illimité à 0€.",
+      "path": "tools/launch_claude_local.sh",
+      "links_to": [
+        "atelier_143",
+        "inference_110"
+      ],
+      "incoming_count": 2
+    },
+    "nocturnal_auditor": {
+      "id": "nocturnal_auditor",
+      "title": "Gladys Nocturnal Auditor",
+      "type": "agent",
+      "domain": "gladys",
+      "desc": "Service et timer systemd autonome exécutant des rondes de tests et diagnostics chaque nuit (00h30-06h30).",
+      "path": "tools/nocturnal_gladys_auditor.py",
+      "links_to": [
+        "cortex_140"
+      ],
+      "incoming_count": 2
+    },
+    "content_bot": {
+      "id": "content_bot",
+      "title": "Content Bot (YouTube/TikTok)",
+      "type": "agent",
+      "domain": "gladys",
+      "desc": "Générateur et monteur autonome de vidéos verticales TikTok Studio et YouTube Shorts.",
+      "path": "tools/studio_content_engine/content_bot.py",
+      "links_to": [
+        "atelier_143"
+      ],
+      "incoming_count": 2
+    },
+    "doc_organisme": {
+      "id": "doc_organisme",
+      "title": "Manifeste Organisme LBG",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Canon architectural et philosophique de Gladys, de Lia et de l'organisme cybernétique distribué.",
+      "path": "docs/ORGANISME_LBG.md",
+      "links_to": [
+        "gladys_organism",
+        "lia_avatar"
+      ],
+      "incoming_count": 4
+    },
+    "doc_objectifs": {
+      "id": "doc_objectifs",
+      "title": "Objectifs Canoniques LBG",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Trinité fondamentale : O1 Compagnon Studio -> O2 MMO banc d'essai -> O3 Joueurs IA synthétiques.",
+      "path": "OBJECTIVES.md",
+      "links_to": [
+        "gladys_organism",
+        "doc_organisme"
+      ],
+      "incoming_count": 3
+    },
+    "doc_registre": {
+      "id": "doc_registre",
+      "title": "Registre Technique & Composants",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Inventaire officiel des packages actifs, packages gelés et architecture des systèmes LBG.",
+      "path": "docs/REGISTRE.md",
+      "links_to": [
+        "gladys_organism"
+      ],
+      "incoming_count": 2
+    },
+    "doc_pipeline_studio": {
+      "id": "doc_pipeline_studio",
+      "title": "Pipeline Studio 3D & Mocap",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Usine 3D de Gladys : Blender headless, retargeting de 284 danses SWG et synchronisation Three-VRM.",
+      "path": "docs/GLADYS_STUDIO_PIPELINE.md",
+      "links_to": [
+        "lia_avatar",
+        "atelier_143"
+      ],
+      "incoming_count": 2
+    },
+    "doc_matrice_llm": {
+      "id": "doc_matrice_llm",
+      "title": "Matrice LLM 110/111",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Canon de routage local Ollama : 110 pour les tâches lourdes et 111 pour les requêtes légères/rapides.",
+      "path": ".agents/rules/local-llm-route-matrix.md",
+      "links_to": [
+        "inference_110",
+        "inference_111"
+      ],
+      "incoming_count": 3
+    },
+    "doc_session": {
+      "id": "doc_session",
+      "title": "Session Vivante & Handoffs",
+      "type": "knowledge",
+      "domain": "gladys",
+      "desc": "Journal opérationnel vivant, pont de continuité Cursor <-> Antigravity et roadmap active.",
+      "path": "docs/SESSION_EN_COURS.md",
+      "links_to": [
+        "gladys_organism"
+      ],
+      "incoming_count": 2
+    }
+  },
+  "edges": [
+    {
+      "source": "gladys_organism",
+      "target": "lia_avatar",
+      "relation": "incarnates_as"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "cortex_140",
+      "relation": "central_brain"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "poste_10",
+      "relation": "right_hand_symbiosis"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "atelier_143",
+      "relation": "left_hand_workshop"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "inference_110",
+      "relation": "cognition_heavy"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "inference_111",
+      "relation": "cognition_light"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "runtime_246",
+      "relation": "simulation_world"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "serveur_54",
+      "relation": "sovereign_infra"
+    },
+    {
+      "source": "poste_10",
+      "target": "agent_desktop_win",
+      "relation": "runs_service"
+    },
+    {
+      "source": "atelier_143",
+      "target": "agent_desktop_linux",
+      "relation": "runs_service"
+    },
+    {
+      "source": "atelier_143",
+      "target": "cline_worker",
+      "relation": "executes_agent"
+    },
+    {
+      "source": "atelier_143",
+      "target": "content_bot",
+      "relation": "executes_pipeline"
+    },
+    {
+      "source": "atelier_143",
+      "target": "antigravity_agent",
+      "relation": "supervised_by"
+    },
+    {
+      "source": "cortex_140",
+      "target": "cortex_backend",
+      "relation": "hosts_api"
+    },
+    {
+      "source": "cortex_140",
+      "target": "orchestrator_service",
+      "relation": "hosts_orchestration"
+    },
+    {
+      "source": "cortex_140",
+      "target": "nocturnal_auditor",
+      "relation": "schedules_nightly"
+    },
+    {
+      "source": "inference_110",
+      "target": "ollama_heavy",
+      "relation": "hosts_engine"
+    },
+    {
+      "source": "inference_111",
+      "target": "ollama_light",
+      "relation": "hosts_engine"
+    },
+    {
+      "source": "inference_111",
+      "target": "piper_tts",
+      "relation": "hosts_speech"
+    },
+    {
+      "source": "runtime_246",
+      "target": "prime_hub_service",
+      "relation": "runs_engine"
+    },
+    {
+      "source": "serveur_54",
+      "target": "stalwart_mail",
+      "relation": "hosts_mail"
+    },
+    {
+      "source": "serveur_54",
+      "target": "adguard_dns",
+      "relation": "hosts_dns"
+    },
+    {
+      "source": "lia_avatar",
+      "target": "piper_tts",
+      "relation": "speaks_with"
+    },
+    {
+      "source": "lia_avatar",
+      "target": "poste_10",
+      "relation": "projects_on_screen"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "doc_organisme",
+      "relation": "governed_by"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "doc_objectifs",
+      "relation": "guided_by"
+    },
+    {
+      "source": "cortex_140",
+      "target": "doc_registre",
+      "relation": "tracks_architecture"
+    },
+    {
+      "source": "atelier_143",
+      "target": "doc_pipeline_studio",
+      "relation": "implements_pipeline"
+    },
+    {
+      "source": "inference_110",
+      "target": "doc_matrice_llm",
+      "relation": "configures_routing"
+    },
+    {
+      "source": "cortex_140",
+      "target": "doc_session",
+      "relation": "maintains_state"
+    },
+    {
+      "source": "runtime_246",
+      "target": "scrapaltai",
+      "relation": "simulates_world"
+    },
+    {
+      "source": "prime_hub_service",
+      "target": "scrapaltai",
+      "relation": "hosts_shard"
+    }
+  ]
+}

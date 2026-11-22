@@ -113,6 +113,8 @@
         "bone": {"id": "os_geants", "name": "Os géants", "base_qty": 2, "oq": 750, "ma": 800}
       },
       "is_tameable": true,
+      "is_mountable": true,
+      "mount_speed_mult": 1.45,
       "taming_difficulty": 4,
       "taming_skill_required": "prospecteur_faune_03",
       "base_health": 400,
@@ -146,6 +148,26 @@
         "bone": {"id": "vertebres_colossales", "name": "Vertèbres colossales", "base_qty": 12, "oq": 950, "ma": 960}
       },
       "is_tameable": false
+    },
+    {
+      "id": "beast:drake_des_sables",
+      "name": "Drake Écailleux des Sables",
+      "biome": "desert",
+      "size": "grand",
+      "behavior": "fier_territorial",
+      "danger_level": 4,
+      "harvest": {
+        "meat": {"id": "viande_drake", "name": "Viande de drake sauvage", "base_qty": 10, "oq": 820, "nutrition": 85},
+        "hide": {"id": "cuirasse_ecailles_drake", "name": "Cuirasse d'écailles de drake", "base_qty": 8, "oq": 890, "pe": 920, "sr": 870},
+        "bone": {"id": "griffes_drake", "name": "Griffes tranchantes de drake", "base_qty": 4, "oq": 860, "cd": 840}
+      },
+      "is_tameable": true,
+      "is_mountable": true,
+      "mount_speed_mult": 1.75,
+      "taming_difficulty": 5,
+      "taming_skill_required": "prospecteur_faune_04",
+      "base_health": 550,
+      "base_damage": 22
     }
   ]
 }

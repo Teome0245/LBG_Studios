@@ -376,7 +376,7 @@ func tame_creature(player: String, beast_eid: String, force_success: bool = fals
 	# Vérifier compétence requise
 	var req_skill := str(cdef.get("taming_skill_required", "prospecteur_faune_01"))
 	var player_has_req := true
-	if skills != null:
+	if not force_success and skills != null:
 		player_has_req = skills.has_box(player, req_skill) or skills.has_box(player, "prospecteur_master")
 
 	if not player_has_req:
@@ -392,7 +392,7 @@ func tame_creature(player: String, beast_eid: String, force_success: bool = fals
 		player_pos = sim.entities[player].get("pos", player_pos)
 	var beast_pos: Vector3 = beast.get("pos", Vector3.ZERO)
 	var dist := Vector2(beast_pos.x - player_pos.x, beast_pos.z - player_pos.z).length()
-	if dist > 14.0:
+	if not force_success and dist > 14.0:
 		return {"ok": false, "error": "too_far", "distance_m": snappedf(dist, 0.1), "max_m": 14.0}
 
 	# Jet de domptage
@@ -600,6 +600,82 @@ func feed_pet(player: String, pet_id: String, food_item_id: String) -> Dictionar
 		"health": new_hp,
 		"max_health": max_hp,
 		"message": "%s est rassasié et plus fidèle !" % str(pet.get("name", "Le familier"))
+	}
+
+
+## Monter sur un familier apprivoisé éligible (Système de Montures façon Wicked Island / SWG)
+func mount_pet(player: String, pet_id: String) -> Dictionary:
+	var pid := pet_id.strip_edges()
+	if not pets_by_id.has(pid):
+		return {"ok": false, "error": "pet_not_found"}
+
+	var pet: Dictionary = pets_by_id[pid]
+	if str(pet.get("owner", "")) != player:
+		return {"ok": false, "error": "not_pet_owner"}
+
+	var active_eid := str(pet.get("active_eid", ""))
+	if active_eid.is_empty() or sim == null or not sim.entities.has(active_eid):
+		return {"ok": false, "error": "pet_not_summoned", "message": "Invoquez d'abord votre créature pour la monter."}
+
+	var species := str(pet.get("species_id", ""))
+	var cdef: Dictionary = bestiary_by_id.get(species, {})
+	var is_mountable := bool(cdef.get("is_mountable", false))
+	if not is_mountable:
+		return {
+			"ok": false,
+			"error": "creature_not_mountable",
+			"message": "%s n'est pas une créature montable." % str(pet.get("name", "Cette bête"))
+		}
+
+	var speed_mult := float(cdef.get("mount_speed_mult", 1.5))
+	pet["state"] = "mounted"
+
+	# Mettre à jour l'entité joueur si elle existe dans la sim
+	if sim != null and sim.entities.has(player):
+		sim.entities[player]["mounted_pet_id"] = pid
+		sim.entities[player]["speed_mult"] = speed_mult
+
+	# Synchroniser l'entité pet
+	if sim != null and sim.entities.has(active_eid):
+		sim.entities[active_eid]["goal"] = "mounted"
+
+	return {
+		"ok": true,
+		"outcome": "mounted",
+		"pet_id": pid,
+		"speed_mult": speed_mult,
+		"message": "Vous chevauchez fièrement votre %s (+%d%% vitesse) !" % [
+			str(pet.get("name", "monture")), int((speed_mult - 1.0) * 100)
+		]
+	}
+
+
+## Descendre de sa monture
+func dismount_pet(player: String, pet_id: String) -> Dictionary:
+	var pid := pet_id.strip_edges()
+	if not pets_by_id.has(pid):
+		return {"ok": false, "error": "pet_not_found"}
+
+	var pet: Dictionary = pets_by_id[pid]
+	if str(pet.get("owner", "")) != player:
+		return {"ok": false, "error": "not_pet_owner"}
+
+	pet["state"] = "follow"
+
+	if sim != null and sim.entities.has(player):
+		sim.entities[player]["mounted_pet_id"] = ""
+		sim.entities[player]["speed_mult"] = 1.0
+
+	var active_eid := str(pet.get("active_eid", ""))
+	if sim != null and sim.entities.has(active_eid):
+		sim.entities[active_eid]["goal"] = "follow"
+
+	return {
+		"ok": true,
+		"outcome": "dismounted",
+		"pet_id": pid,
+		"state": "follow",
+		"message": "Vous êtes descendu de votre monture."
 	}
 
 

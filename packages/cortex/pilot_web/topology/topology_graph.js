@@ -1,6 +1,8 @@
 /**
  * Topology Graph — Second Brain & Knowledge Explorer (LBG Studios)
- * Inspiré du visual web crawler et du réseau de neurones / graphe de connaissances.
+ * Inspiré du visual web crawler, d'Obsidian Second Brain et du graphe de connaissances.
+ * Cartographie à la fois l'Organisme Gladys (Infra, Cerveau, Services, Connaissances)
+ * et le Monde Virtuel MMO (Scrapaltai, Villes, PNJ, Factions, Bots Live).
  */
 
 (function () {
@@ -12,6 +14,7 @@
   let selectedNode = null;
   let hoveredNode = null;
   let activeFilter = "all";
+  let currentDomain = "all";
 
   // Transform (pan & zoom)
   let transform = { x: 0, y: 0, k: 1 };
@@ -23,18 +26,29 @@
   let packets = [];
 
   const COLOR_PALETTE = {
+    // Organisme Gladys
+    organism: { main: "#8b5cf6", glow: "rgba(139, 92, 246, 0.6)", radius: 26, label: "Organisme Global" },
+    incarnation: { main: "#f43f5e", glow: "rgba(244, 63, 94, 0.6)", radius: 23, label: "Incarnation 3D" },
+    machine: { main: "#3b82f6", glow: "rgba(59, 130, 246, 0.5)", radius: 21, label: "Machine / Infra" },
+    service: { main: "#0ea5e9", glow: "rgba(14, 165, 233, 0.5)", radius: 18, label: "Service / Port" },
+    agent: { main: "#10b981", glow: "rgba(16, 185, 129, 0.5)", radius: 18, label: "Agent / Worker" },
+    knowledge: { main: "#eab308", glow: "rgba(234, 179, 8, 0.5)", radius: 17, label: "Second Brain" },
+
+    // MMO Scrapaltai & Lore
     planet: { main: "#f59e0b", glow: "rgba(245, 158, 11, 0.4)", radius: 24, label: "Planète" },
     city: { main: "#ec4899", glow: "rgba(236, 72, 153, 0.4)", radius: 21, label: "Ville / Lieu" },
     npc: { main: "#10b981", glow: "rgba(16, 185, 129, 0.4)", radius: 18, label: "PNJ" },
     faction: { main: "#a855f7", glow: "rgba(168, 85, 247, 0.4)", radius: 20, label: "Faction" },
     mechanic: { main: "#06b6d4", glow: "rgba(6, 182, 212, 0.4)", radius: 16, label: "Mécanique" },
     bot: { main: "#38bdf8", glow: "rgba(56, 189, 248, 0.7)", radius: 17, label: "Joueur IA (Live)" },
+
     default: { main: "#94a3b8", glow: "rgba(148, 163, 184, 0.3)", radius: 15, label: "Document" },
   };
 
   async function loadTopologyData() {
+    const url = currentDomain === "all" ? "/v1/pilot/topology" : `/v1/pilot/topology?domain=${currentDomain}`;
     try {
-      const resp = await fetch("/v1/pilot/topology").catch(() => null);
+      const resp = await fetch(url).catch(() => null);
       if (resp && resp.ok) return await resp.json();
     } catch (_) {}
 
@@ -55,29 +69,37 @@
     const rawNodes = data.nodes;
     const rawEdges = data.edges || [];
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const width = canvas.width || 1200;
+    const height = canvas.height || 800;
     const nodeKeys = Object.keys(rawNodes);
 
-    // Initial positioning in concentric circle
+    // Positionnement concentrique harmonieux
     nodeKeys.forEach((key, idx) => {
       const n = rawNodes[key];
+      const isGladys = n.domain === "gladys" || n.type === "organism" || n.type === "machine";
+      const baseDist = isGladys ? 160 + (idx % 4) * 50 : 260 + (idx % 5) * 60;
       const angle = (idx / nodeKeys.length) * 2 * Math.PI;
-      const dist = 180 + (idx % 3) * 60;
+
       const nodeObj = {
         id: n.id || key,
         title: n.title || key,
         type: n.type || "default",
+        domain: n.domain || "mmo",
         path: n.path || "",
+        desc: n.desc || "",
+        host: n.host || "",
+        probe_port: n.probe_port,
+        role: n.role || "",
+        status: n.status || (n.is_live ? "online" : "offline"),
         links_to: n.links_to || [],
         play_mode: n.play_mode,
         goal: n.goal,
         quest_id: n.quest_id,
         pos: n.pos,
         linked_studio: n.linked_studio,
-        is_live: n.is_live,
-        x: width / 2 + Math.cos(angle) * dist + (Math.random() - 0.5) * 40,
-        y: height / 2 + Math.sin(angle) * dist + (Math.random() - 0.5) * 40,
+        is_live: Boolean(n.is_live),
+        x: width / 2 + Math.cos(angle) * baseDist + (Math.random() - 0.5) * 30,
+        y: height / 2 + Math.sin(angle) * baseDist + (Math.random() - 0.5) * 30,
         vx: 0,
         vy: 0,
         radius: (COLOR_PALETTE[n.type] || COLOR_PALETTE.default).radius,
@@ -91,17 +113,13 @@
         edges.push({
           source: nodeMap[e.source],
           target: nodeMap[e.target],
+          relation: e.relation || "",
         });
       }
     });
 
-    // Populate stats
-    const elNodes = document.getElementById("topo-stat-nodes");
-    const elEdges = document.getElementById("topo-stat-edges");
-    const elBots = document.getElementById("topo-stat-bots");
-    if (elNodes) elNodes.textContent = nodes.length;
-    if (elEdges) elEdges.textContent = edges.length;
-    if (elBots) elBots.textContent = data.live_bots_count || 0;
+    // Statistiques d'en-tête
+    updateHeaderStats(data);
   }
 
   function updateGraphData(data) {
@@ -118,7 +136,9 @@
           quest_id: n.quest_id,
           pos: n.pos,
           linked_studio: n.linked_studio,
-          is_live: n.is_live,
+          is_live: Boolean(n.is_live),
+          status: n.status || (n.is_live ? "online" : "offline"),
+          desc: n.desc || nodeMap[key].desc,
           links_to: n.links_to || nodeMap[key].links_to,
         });
       } else {
@@ -128,14 +148,20 @@
           id: n.id || key,
           title: n.title || key,
           type: n.type || "default",
+          domain: n.domain || "mmo",
           path: n.path || "",
+          desc: n.desc || "",
+          host: n.host || "",
+          probe_port: n.probe_port,
+          role: n.role || "",
+          status: n.status || (n.is_live ? "online" : "offline"),
           links_to: n.links_to || [],
           play_mode: n.play_mode,
           goal: n.goal,
           quest_id: n.quest_id,
           pos: n.pos,
           linked_studio: n.linked_studio,
-          is_live: n.is_live,
+          is_live: Boolean(n.is_live),
           x: canvas.width / 2 + Math.cos(angle) * dist,
           y: canvas.height / 2 + Math.sin(angle) * dist,
           vx: 0,
@@ -153,27 +179,38 @@
         edges.push({
           source: nodeMap[e.source],
           target: nodeMap[e.target],
+          relation: e.relation || "",
         });
       }
     });
 
-    const elNodes = document.getElementById("topo-stat-nodes");
-    const elEdges = document.getElementById("topo-stat-edges");
-    const elBots = document.getElementById("topo-stat-bots");
-    if (elNodes) elNodes.textContent = nodes.length;
-    if (elEdges) elEdges.textContent = edges.length;
-    if (elBots) elBots.textContent = data.live_bots_count || 0;
+    updateHeaderStats(data);
 
-    // Refresh drawer if selected node is a live bot
-    if (selectedNode && selectedNode.type === "bot" && nodeMap[selectedNode.id]) {
+    // Refresh drawer if selected node is live
+    if (selectedNode && nodeMap[selectedNode.id]) {
       showDetails(nodeMap[selectedNode.id]);
     }
   }
 
+  function updateHeaderStats(data) {
+    const elNodes = document.getElementById("topo-stat-nodes");
+    const elEdges = document.getElementById("topo-stat-edges");
+    const elBots = document.getElementById("topo-stat-bots");
+    const elGladys = document.getElementById("topo-stat-gladys");
+
+    if (elNodes) elNodes.textContent = nodes.length;
+    if (elEdges) elEdges.textContent = edges.length;
+    if (elBots) elBots.textContent = data.live_bots_count || 0;
+    if (elGladys) {
+      const liveG = data.live_gladys_count !== undefined ? data.live_gladys_count : "—";
+      const totG = data.total_gladys_services !== undefined ? data.total_gladys_services : 7;
+      elGladys.textContent = `${liveG}/${totG}`;
+    }
+  }
+
   function simulate() {
-    // Force physics
-    const repulsion = 1200;
-    const springLen = 140;
+    const repulsion = 1350;
+    const springLen = 135;
     const springK = 0.04;
     const damping = 0.85;
 
@@ -217,8 +254,8 @@
     const cy = canvas.height / 2;
     nodes.forEach((n) => {
       if (n === dragNode) return;
-      n.vx += (cx - n.x) * 0.002;
-      n.vy += (cy - n.y) * 0.002;
+      n.vx += (cx - n.x) * 0.0018;
+      n.vy += (cy - n.y) * 0.0018;
       n.vx *= damping;
       n.vy *= damping;
       n.x += n.vx;
@@ -249,8 +286,8 @@
       ctx.moveTo(e.source.x, e.source.y);
       ctx.lineTo(e.target.x, e.target.y);
       ctx.strokeStyle = isHighlighted
-        ? "rgba(56, 189, 248, 0.8)"
-        : "rgba(56, 189, 248, 0.15)";
+        ? "rgba(56, 189, 248, 0.85)"
+        : "rgba(56, 189, 248, 0.16)";
       ctx.lineWidth = isHighlighted ? 2.5 : 1;
       ctx.stroke();
     });
@@ -269,6 +306,7 @@
     });
 
     // 3. Draw Nodes
+    const now = Date.now();
     nodes.forEach((n) => {
       if (activeFilter !== "all" && n.type !== activeFilter) return;
 
@@ -290,6 +328,16 @@
       ctx.lineWidth = isSel ? 3 : 1.5;
       ctx.strokeStyle = isSel ? "#ffffff" : "rgba(255,255,255,0.7)";
       ctx.stroke();
+
+      // Live pulse ring for online Gladys nodes & active Bots
+      if (n.is_live || n.status === "online") {
+        const pulseRatio = 0.5 + 0.5 * Math.sin(now / 350 + (n.x % 10));
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius + 3 + pulseRatio * 4, 0, Math.PI * 2);
+        ctx.strokeStyle = n.type === "bot" ? "rgba(56, 189, 248, 0.8)" : "rgba(16, 185, 129, 0.85)";
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+      }
 
       // Label
       ctx.font = isSel ? "bold 13px system-ui" : "11px system-ui";
@@ -360,10 +408,11 @@
       badge.className = `topology-drawer-badge badge-${node.type}`;
     }
     if (title) title.textContent = node.title;
+
     if (pathEl) {
       if (node.type === "bot") {
         let botHtml = `<div style="background:rgba(2,132,199,0.2);border:1px solid #38bdf8;border-radius:6px;padding:10px;margin-bottom:8px;">`;
-        botHtml += `<div style="color:#38bdf8;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;box-shadow:0 0 8px #38bdf8;"></span> En direct sur .246:8787</div>`;
+        botHtml += `<div style="color:#38bdf8;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span class="dot-live"></span> En direct sur Godot Hub .246:8787</div>`;
         botHtml += `<div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:3px;"><strong>Mode :</strong> <span style="color:#f8fafc;">${node.play_mode || 'hub'}</span></div>`;
         botHtml += `<div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:3px;"><strong>Objectif :</strong> <span style="color:#f8fafc;">${node.goal || 'exploration'}</span></div>`;
         if (node.quest_id) {
@@ -377,6 +426,26 @@
         }
         botHtml += `</div>`;
         pathEl.innerHTML = botHtml;
+      } else if (node.domain === "gladys") {
+        const isOnline = node.is_live || node.status === "online";
+        let gladysHtml = `<div style="background:rgba(30,41,59,0.7);border:1px solid ${isOnline ? '#10b981' : 'rgba(148,163,184,0.3)'};border-radius:6px;padding:12px;margin-bottom:8px;">`;
+        gladysHtml += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">`;
+        gladysHtml += `<span class="status-indicator ${isOnline ? 'online' : 'offline'}"><span class="dot-live" style="background:${isOnline ? '#10b981' : '#f87171'}"></span> ${isOnline ? 'EN LIGNE' : 'VEILLE / STANDBY'}</span>`;
+        if (node.host) {
+          gladysHtml += `<span style="font-family:monospace;font-size:0.75rem;color:#38bdf8;">${node.host}${node.probe_port ? `:${node.probe_port}` : ''}</span>`;
+        }
+        gladysHtml += `</div>`;
+        if (node.role) {
+          gladysHtml += `<div style="font-size:0.82rem;color:#facc15;font-weight:600;margin-bottom:6px;">${node.role}</div>`;
+        }
+        if (node.desc) {
+          gladysHtml += `<div style="font-size:0.84rem;color:#e2e8f0;line-height:1.45;margin-bottom:6px;">${node.desc}</div>`;
+        }
+        if (node.path) {
+          gladysHtml += `<div style="font-size:0.74rem;color:#94a3b8;font-family:monospace;word-break:break-all;">Canon : ${node.path}</div>`;
+        }
+        gladysHtml += `</div>`;
+        pathEl.innerHTML = gladysHtml;
       } else if (node.desc) {
         pathEl.innerHTML = `<div style="background:rgba(30,41,59,0.5);border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:10px;margin-bottom:8px;"><div style="font-size:0.86rem;color:#f1f5f9;line-height:1.45;margin-bottom:6px;">${node.desc}</div>${node.zone ? `<div style="font-size:0.78rem;color:#38bdf8;"><strong>Zone :</strong> ${node.zone}</div>` : ''}</div><div style="font-size:0.75rem;color:#94a3b8;">Fiche : docs/lore/${node.path}</div>`;
       } else {
@@ -488,7 +557,24 @@
       transform.k *= zoomFactor;
     }, { passive: false });
 
-    // Filter buttons
+    // Domain switcher buttons (Globe, Gladys, MMO)
+    document.querySelectorAll(".topology-domain-btn").forEach((btn) => {
+      btn.onclick = async () => {
+        document.querySelectorAll(".topology-domain-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentDomain = btn.dataset.domain || "all";
+        const indicator = document.getElementById("topo-domain-indicator");
+        if (indicator) {
+          if (currentDomain === "gladys") indicator.textContent = "(Organisme Gladys : Infra, Cerveau & Services)";
+          else if (currentDomain === "mmo") indicator.textContent = "(Monde Virtuel : Scrapaltai & 10 Bots IA)";
+          else indicator.textContent = "(Organisme .10-.246 & Lost Heaven)";
+        }
+        const freshData = await loadTopologyData();
+        if (freshData) initGraphData(freshData);
+      };
+    });
+
+    // Type filter buttons
     document.querySelectorAll(".topology-filter-btn").forEach((btn) => {
       btn.onclick = () => {
         document.querySelectorAll(".topology-filter-btn").forEach((b) => b.classList.remove("active"));
@@ -525,7 +611,7 @@
     if (!animId) loop();
     setTimeout(triggerSpiderPulse, 600);
 
-    // Polling des 10 bots en direct toutes les 4 secondes
+    // Polling continu (toutes les 4 secondes) pour rafraîchir les statuts des machines et des bots live
     if (livePollTimer) clearInterval(livePollTimer);
     livePollTimer = setInterval(async () => {
       const freshData = await loadTopologyData();
@@ -544,4 +630,3 @@
     }
   };
 })();
-

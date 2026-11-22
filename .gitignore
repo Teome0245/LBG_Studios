@@ -95,6 +95,8 @@ packages/cortex/orchestrator/team/data/prompt_overrides/*.txt
 # Studio Content Bot Video Outputs & Secrets
 tools/studio_content_engine/output/
 tools/studio_content_engine/config/
+*cookies.txt
+*.cookies.json
 
 # SWG extraction (en pause)
 tools/swg_extracted/

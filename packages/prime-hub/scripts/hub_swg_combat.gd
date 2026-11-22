@@ -333,6 +333,7 @@ func execute_tactical_strike(
 	# 4. Application des dégâts au pool HAM ciblé
 	var is_incapacitated := false
 	var remaining_target_pool := 100
+	var defeat_res: Dictionary = {}
 
 	# Cas 1 : Cible est un joueur avec système HAM
 	if ham_medical != null and economy != null and economy._player(target_eid).has("ham"):
@@ -345,6 +346,8 @@ func execute_tactical_strike(
 		if new_val <= 0:
 			is_incapacitated = true
 			apply_state(target_eid, "knockdown", 10.0)
+			if sim != null and sim.defeat_system != null:
+				defeat_res = sim.defeat_system.on_player_incapacitated(target_eid, attacker_id)
 
 	# Cas 2 : Cible est une créature ou PNJ
 	else:
@@ -383,6 +386,8 @@ func execute_tactical_strike(
 		"status_applied": status_inflicted if state_applied else "none",
 		"is_incapacitated": is_incapacitated,
 		"is_deadly_combo": is_deadly_combo,
+		"defeat_triggered": bool(defeat_res.get("triggered", false)),
+		"defeat_session": defeat_res.get("session", {}),
 		"target_posture": get_posture(target_eid)
 	}
 

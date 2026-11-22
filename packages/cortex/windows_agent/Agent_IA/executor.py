@@ -1118,45 +1118,94 @@ def copier_video_vers_onedrive(video_name=None, run_id=None, **kwargs):
     }
 
 
-def preparer_upload_tiktok(video_path=None, caption=None, **kwargs):
-    """Prépare la publication TikTok Studio sur le poste Windows :
-    1. Ouvre TikTok Studio Upload dans le navigateur par défaut (Edge).
-    2. Copie la légende et les hashtags dans le presse-papier Windows via PowerShell.
-    3. Si le fichier vidéo existe, ouvre l'Explorateur Windows avec le fichier sélectionné.
+def auth_tiktok(timeout_sec=180, **kwargs):
+    """Lance l'authentification interactive TikTok Playwright une seule fois
+    pour générer C:\\Agent_IA\\tiktok_cookies.txt."""
+    import os
+    import subprocess
+    auth_script = r"C:\Agent_IA\tiktok_auth.py"
+    if not os.path.exists(auth_script):
+        # Fallback A:
+        auth_script = r"A:\LBG_Studios\packages\cortex\windows_agent\Agent_IA\tiktok_auth.py"
+
+    cmd = ["python", auth_script, r"C:\Agent_IA\tiktok_cookies.txt"]
+    try:
+        proc = subprocess.Popen(cmd, creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0))
+        return {
+            "status": "ok",
+            "action": "auth_tiktok",
+            "message": "Fenêtre d'authentification TikTok ouverte. Connectez-vous pour enregistrer la session.",
+            "pid": proc.pid,
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def preparer_upload_tiktok(video_path=None, caption=None, auto_publish=True, **kwargs):
+    """Publication TikTok Studio 100% automatisée via Playwright.
+
+    Si les cookies C:\\Agent_IA\\tiktok_cookies.txt existent, publie directement
+    la vidéo en tâche de fond sans ouvrir de fenêtres parasites.
+    Si les cookies n'existent pas encore, renvoie 'needs_auth' au lieu d'ouvrir
+    inutilement des onglets dans le navigateur.
     """
     import os
     import subprocess
-    import webbrowser
 
-    results = {}
+    cookie_path = r"C:\Agent_IA\tiktok_cookies.txt"
+    uploader_script = r"C:\Agent_IA\tiktok_uploader_playwright.py"
+    if not os.path.exists(uploader_script):
+        uploader_script = r"A:\LBG_Studios\packages\cortex\windows_agent\Agent_IA\tiktok_uploader_playwright.py"
 
-    if caption:
+    # Vérification présence de la vidéo
+    if video_path and not os.path.exists(video_path):
+        # Vérifier si elle est dans OneDrive
+        onedrive_candidate = os.path.join(r"O:\OneDrive\Pictures\IA\Contenue", os.path.basename(video_path))
+        if os.path.exists(onedrive_candidate):
+            video_path = onedrive_candidate
+
+    if not video_path or not os.path.exists(video_path):
+        return {"status": "error", "error": f"Fichier vidéo introuvable : {video_path}"}
+
+    # Si les cookies n'existent pas encore
+    if not os.path.exists(cookie_path):
+        return {
+            "status": "needs_auth",
+            "error": "Session TikTok non initialisée. Lancez l'action 'auth_tiktok' pour vous connecter une première fois.",
+            "video_path": video_path,
+        }
+
+    # Lancement de l'upload Playwright en subprocess détaché
+    if auto_publish:
+        cmd = [
+            "python",
+            uploader_script,
+            "--video",
+            video_path,
+            "--caption",
+            caption or "Veille Tech LBG Studios #fyp #tech #ia",
+            "--cookies",
+            cookie_path,
+        ]
         try:
-            escaped = caption.replace("'", "''")
-            subprocess.run(["powershell", "-NoProfile", "-Command", f"Set-Clipboard -Value '{escaped}'"], check=False, timeout=5)
-            results["clipboard"] = "copied"
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            return {
+                "status": "ok",
+                "action": "uploader_video_tiktok",
+                "message": "Upload Playwright lancé en arrière-plan",
+                "pid": proc.pid,
+                "video": video_path,
+            }
         except Exception as e:
-            results["clipboard_error"] = str(e)
+            return {"status": "error", "error": f"Échec lancement uploader: {e}"}
 
-    try:
-        url = "https://www.tiktok.com/tiktokstudio/upload"
-        webbrowser.open(url)
-        results["browser"] = "opened"
-    except Exception as e:
-        results["browser_error"] = str(e)
+    return {"status": "ok", "message": "Vidéo prête, auto_publish=False"}
 
-    if video_path and os.path.exists(video_path):
-        try:
-            subprocess.run(["explorer.exe", f"/select,{os.path.normpath(video_path)}"], check=False, timeout=5)
-            results["explorer"] = "opened"
-        except Exception as e:
-            results["explorer_error"] = str(e)
-
-    return {
-        "status": "ok",
-        "action": "preparer_upload_tiktok",
-        "details": results,
-    }
 
 
 

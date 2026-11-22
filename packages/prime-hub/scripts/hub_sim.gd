@@ -33,12 +33,14 @@ const HubBountyHunterScript = preload("res://scripts/hub_bounty_hunter.gd")
 const HubTravelShuttleScript = preload("res://scripts/hub_travel_shuttle.gd")
 const HubGcwBasesScript = preload("res://scripts/hub_gcw_bases.gd")
 const HubCloningInsuranceScript = preload("res://scripts/hub_cloning_insurance.gd")
+const HubT4cSystemScript = preload("res://scripts/hub_t4c_system.gd")
 const HubSpaceJtlScript = preload("res://scripts/hub_space_jtl.gd")
 const HubPlayerCitiesScript = preload("res://scripts/hub_player_cities.gd")
 const HubBioEngineerScript = preload("res://scripts/hub_bio_engineer.gd")
 const HubDroidEngineerScript = preload("res://scripts/hub_droid_engineer.gd")
 const HubThemeParksScript = preload("res://scripts/hub_theme_parks.gd")
 const HubGalaxyPlanetsScript = preload("res://scripts/hub_galaxy_planets.gd")
+const HubDefeatSystemScript = preload("res://scripts/hub_defeat_system.gd")
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 
 const HUMAN_OID := HubSimDefsScript.HUMAN_OID
@@ -89,6 +91,8 @@ var bio_engineer = null
 var droid_engineer = null
 var theme_parks = null
 var galaxy_planets = null
+var defeat_system = null
+var t4c = null
 
 var bot_defs: Array = []
 var tick: int = 0
@@ -132,6 +136,11 @@ func attach_economy(economy_svc) -> void:
 		cloning_insurance.setup(self, economy_svc)
 	if space_jtl != null:
 		space_jtl.setup(self)
+	if defeat_system != null:
+		defeat_system.setup(self, economy_svc, swg_combat, ham_medical)
+	if t4c == null:
+		t4c = HubT4cSystemScript.new()
+	t4c.setup(economy_svc, skills, ham_medical, swg_combat)
 	if autonomy != null and autonomy.has_method("setup_swg_services"):
 		autonomy.setup_swg_services(creatures, vendors_factories, housing_cities, swg_combat, ham_medical, harvesters, faction)
 
@@ -254,6 +263,12 @@ func reset() -> void:
 		theme_parks = HubThemeParksScript.new()
 	if galaxy_planets == null:
 		galaxy_planets = HubGalaxyPlanetsScript.new()
+	if defeat_system == null:
+		defeat_system = HubDefeatSystemScript.new()
+	defeat_system.setup(self, economy, swg_combat, ham_medical)
+	if t4c == null:
+		t4c = HubT4cSystemScript.new()
+	t4c.setup(economy, skills, ham_medical, swg_combat)
 	_load_bot_defs()
 	if life == null:
 		life = HubLifeScript.new()
@@ -910,6 +925,8 @@ func step(dt: float) -> void:
 		droid_engineer.tick(dt * float(_life_tick_every))
 	if theme_parks != null and tick % _life_tick_every == 0:
 		theme_parks.tick(dt * float(_life_tick_every))
+	if defeat_system != null and tick % _life_tick_every == 0:
+		defeat_system.tick(dt * float(_life_tick_every))
 	for eid in entities.keys():
 		var e: Dictionary = entities[eid]
 		if bool(e.get("is_bot", false)):

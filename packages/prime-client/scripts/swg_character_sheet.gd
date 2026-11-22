@@ -8,6 +8,7 @@ extends PanelContainer
 ## 3. Panneau des Résistances (Armure) et explications des blessures.
 
 signal sheet_closed()
+signal spellbook_requested()
 
 const _HubRuntimeCfg := preload("res://scripts/hub_runtime_cfg.gd")
 
@@ -20,6 +21,20 @@ var _citizenship: String = "Citoyen Libre de Lost Heaven"
 var _posture_label: String = "Debout"
 var _battle_fatigue: int = 0
 var _medical_efficiency: float = 1.0
+
+# 5 Caractéristiques Libres T4C (La 4ème Prophétie) & Karma
+var _stats_t4c: Dictionary = {
+	"strength": 20,
+	"endurance": 20,
+	"dexterity": 20,
+	"intelligence": 20,
+	"wisdom": 20,
+	"unspent_stat_points": 0,
+	"karma": 0,
+	"karma_rank": "Neutre"
+}
+var _lbl_t4c_header: Label = null
+var _lbl_t4c_stats: Dictionary = {}
 
 # 9 Attributs SWG : Health, Strength, Constitution, Action, Quickness, Stamina, Mind, Focus, Willpower
 var _stats: Dictionary = {
@@ -200,6 +215,80 @@ func _build_ui() -> void:
 
 	root_vbox.add_child(cols_box)
 
+	# --- Section Caractéristiques T4C (La 4ème Prophétie) & Karma ---
+	var t4c_panel := PanelContainer.new()
+	var t4c_sb := StyleBoxFlat.new()
+	t4c_sb.bg_color = Color(0.04, 0.12, 0.18, 0.85)
+	t4c_sb.set_border_width_all(1)
+	t4c_sb.border_color = Color(0.95, 0.75, 0.25, 0.7)
+	t4c_sb.set_corner_radius_all(4)
+	t4c_sb.content_margin_left = 10
+	t4c_sb.content_margin_right = 10
+	t4c_sb.content_margin_top = 6
+	t4c_sb.content_margin_bottom = 6
+	t4c_panel.add_theme_stylebox_override("panel", t4c_sb)
+
+	var t4c_vbox := VBoxContainer.new()
+	t4c_vbox.add_theme_constant_override("separation", 4)
+
+	var t4c_hdr_row := HBoxContainer.new()
+	_lbl_t4c_header = Label.new()
+	_lbl_t4c_header.text = "◈ CARACTÉRISTIQUES LIBRES (T4C) ◈  Points libres : %d  |  Karma : %d (%s)" % [
+		int(_stats_t4c.get("unspent_stat_points", 0)),
+		int(_stats_t4c.get("karma", 0)),
+		str(_stats_t4c.get("karma_rank", "Neutre"))
+	]
+	_lbl_t4c_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_lbl_t4c_header.add_theme_font_size_override("font_size", 10)
+	_lbl_t4c_header.add_theme_color_override("font_color", Color(0.95, 0.82, 0.35, 1.0))
+	t4c_hdr_row.add_child(_lbl_t4c_header)
+
+	var btn_grimoire := Button.new()
+	btn_grimoire.text = "📖 Grimoire [B]"
+	btn_grimoire.add_theme_font_size_override("font_size", 9)
+	btn_grimoire.pressed.connect(func() -> void:
+		spellbook_requested.emit()
+	)
+	t4c_hdr_row.add_child(btn_grimoire)
+	t4c_vbox.add_child(t4c_hdr_row)
+
+	var t4c_stats_row := HBoxContainer.new()
+	t4c_stats_row.add_theme_constant_override("separation", 14)
+
+	var t4c_keys := [
+		{"k": "strength", "tag": "FOR", "col": Color(0.95, 0.4, 0.4)},
+		{"k": "endurance", "tag": "END", "col": Color(0.95, 0.6, 0.3)},
+		{"k": "dexterity", "tag": "DEX", "col": Color(0.4, 0.95, 0.5)},
+		{"k": "intelligence", "tag": "INT", "col": Color(0.4, 0.8, 1.0)},
+		{"k": "wisdom", "tag": "SAG", "col": Color(0.85, 0.5, 0.95)}
+	]
+
+	for st in t4c_keys:
+		var sk: String = st["k"]
+		var chip := HBoxContainer.new()
+		chip.add_theme_constant_override("separation", 4)
+
+		var lbl := Label.new()
+		lbl.text = "%s: %d" % [st["tag"], int(_stats_t4c.get(sk, 20))]
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_color_override("font_color", st["col"])
+		chip.add_child(lbl)
+		_lbl_t4c_stats[sk] = lbl
+
+		var add_btn := Button.new()
+		add_btn.text = "+"
+		add_btn.custom_minimum_size = Vector2(20, 18)
+		add_btn.add_theme_font_size_override("font_size", 9)
+		add_btn.pressed.connect(func() -> void:
+			allocate_t4c_stat(sk)
+		)
+		chip.add_child(add_btn)
+		t4c_stats_row.add_child(chip)
+
+	t4c_vbox.add_child(t4c_stats_row)
+	t4c_panel.add_child(t4c_vbox)
+	root_vbox.add_child(t4c_panel)
+
 	# --- Résistances et Explications Wounds ---
 	var bot_box := HBoxContainer.new()
 	bot_box.add_theme_constant_override("separation", 12)
@@ -354,6 +443,16 @@ func apply_character_data(d: Dictionary) -> void:
 		if ham.has("battle_fatigue"):
 			_battle_fatigue = int(ham["battle_fatigue"])
 
+	# T4C stats & Karma
+	if d.has("t4c") and typeof(d["t4c"]) == TYPE_DICTIONARY:
+		var t4c: Dictionary = d["t4c"]
+		for tk in t4c.keys():
+			_stats_t4c[str(tk)] = t4c[tk]
+	if d.has("karma"):
+		_stats_t4c["karma"] = int(d["karma"])
+	if d.has("karma_rank"):
+		_stats_t4c["karma_rank"] = str(d["karma_rank"])
+
 	_update_views()
 
 
@@ -381,6 +480,26 @@ func _update_views() -> void:
 			var b: ProgressBar = _stat_bars[k]
 			b.max_value = maxi(10, int(s_data.get("base_max", 1000)))
 			b.value = int(s_data.get("current", 1000))
+
+	# Actualise les étiquettes T4C
+	if _lbl_t4c_header:
+		_lbl_t4c_header.text = "◈ CARACTÉRISTIQUES LIBRES (T4C) ◈  Points libres : %d  |  Karma : %d (%s)" % [
+			int(_stats_t4c.get("unspent_stat_points", 0)),
+			int(_stats_t4c.get("karma", 0)),
+			str(_stats_t4c.get("karma_rank", "Neutre"))
+		]
+	var t4c_tags := {"strength": "FOR", "endurance": "END", "dexterity": "DEX", "intelligence": "INT", "wisdom": "SAG"}
+	for sk in t4c_tags.keys():
+		if _lbl_t4c_stats.has(sk) and _lbl_t4c_stats[sk] != null:
+			(_lbl_t4c_stats[sk] as Label).text = "%s: %d" % [t4c_tags[sk], int(_stats_t4c.get(sk, 20))]
+
+
+func allocate_t4c_stat(stat_name: String) -> void:
+	if _http == null:
+		return
+	var url := "%s/v1/t4c/allocate" % sidecar_base_url.rstrip("/")
+	var body_dict := {"player": player_name, "stat": stat_name, "points": 1}
+	_http.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(body_dict))
 
 
 func refresh_from_server() -> void:

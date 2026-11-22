@@ -77,6 +77,11 @@ Chaque machine physique ou virtuelle du réseau local remplit une fonction organ
 | **`192.168.0.140`** | **Cortex (Cerveau Central & Bus d'État)** | Siège de l'orchestration, de la planification, de la mémoire épisodique/sémantique et de la télémétrie ops. | Orchestrator, Pilot ops (`:8080`), Team Evolution, Bases SQLite / Vector Stores |
 | **`192.168.0.110` / `.111`** | **Centres d'Inférence (Cognition & Langage)** | Puissance de calcul neural local (0 € Cloud, souveraineté totale). Génération de texte, extraction d'intentions, voix locale Piper ONNX. | Ollama (RTX heavy / light), Piper TTS (`:8098`), Whisper |
 | **`192.168.0.246`** | **Banc d'Entraînement (Lost Heaven)** | Monde virtuel spatial persistant où l'entité déploie des corps virtuels (Joueurs IA O3) pour apprendre la navigation 3D, l'interaction sociale et le combat sans risque. | `prime-hub` Godot 4.6 headless (`:8787`), NavigationServer3D, SQLite WAL |
+| **`192.168.0.54`** | **Infrastructure Réseau & Messagerie (Souveraineté)** | Conteneurs Proxmox locaux : Serveur Mail sécurisé Stalwart (:465 SSL) et Serveur DNS AdGuard Home (:53) assurant l'autonomie réseau de `laboiteageeks.fr`. | Stalwart Mail Server, AdGuard Home DNS, certs Let's Encrypt / auto-signés |
+
+> [!NOTE]
+> **Topologie Vivante & Second Brain (`#/topology`)** :  
+> L'intégralité de cette anatomie matérielle et logicielle est cartographiée et sondée en temps réel via l'endpoint `/v1/pilot/topology` et visualisable sur l'interface Pilot [`http://192.168.0.140:8080/#/topology`](http://192.168.0.140:8080/#/topology). Ce graphe (`gladys_topology_data.json`) doit être maintenu à jour à chaque ajout ou évolution d'un organe, machine ou service de Gladys.
 
 ---
 

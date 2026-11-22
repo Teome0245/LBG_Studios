@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="orchestrator_avatar/orchestrator_avatar.css" />
   <link rel="stylesheet" href="face_rig/face_rig.css" />
   <link rel="stylesheet" href="brain_3d/brain_3d.css" />
-  <link rel="stylesheet" href="topology/topology_graph.css" />
+  <link rel="stylesheet" href="topology/topology_graph.css?v=20261117-gladys-v2" />
 </head>
 <body>
   <div class="pilot-shell-bar">
@@ -1417,18 +1417,27 @@
         <div class="topology-stats">
           <span>Nœuds : <strong id="topo-stat-nodes">0</strong></span>
           <span>Relations : <strong id="topo-stat-edges">0</strong></span>
-          <span>Bots en direct : <strong id="topo-stat-bots" style="color:#38bdf8;">0</strong></span>
-          <span class="muted">(docs/lore/ + .246:8787)</span>
+          <span>Gladys Live : <strong id="topo-stat-gladys" style="color:#10b981;">0</strong></span>
+          <span>Bots MMO : <strong id="topo-stat-bots" style="color:#38bdf8;">0</strong></span>
+          <span class="muted" id="topo-domain-indicator">(Organisme .10-.246 &amp; Lost Heaven)</span>
         </div>
+      </div>
+      <div class="topology-domain-selector">
+        <button type="button" class="topology-domain-btn active" data-domain="all">🌐 Vue Globale</button>
+        <button type="button" class="topology-domain-btn" data-domain="gladys">🧠 Organisme Gladys</button>
+        <button type="button" class="topology-domain-btn" data-domain="mmo">⚔️ Monde MMO (Lore &amp; Bots)</button>
       </div>
       <div class="topology-controls">
         <button type="button" class="topology-filter-btn active" data-filter="all">Tous</button>
-        <button type="button" class="topology-filter-btn" data-filter="planet">Planètes</button>
-        <button type="button" class="topology-filter-btn" data-filter="city" style="color:#f472b6;border-color:rgba(236,72,153,0.4);">Villes &amp; Lieux 🏛️</button>
-        <button type="button" class="topology-filter-btn" data-filter="npc">PNJ</button>
-        <button type="button" class="topology-filter-btn" data-filter="faction">Factions</button>
-        <button type="button" class="topology-filter-btn" data-filter="mechanic">Mécaniques</button>
-        <button type="button" class="topology-filter-btn" data-filter="bot" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">Bots IA 🤖</button>
+        <button type="button" class="topology-filter-btn" data-filter="machine" style="color:#60a5fa;border-color:rgba(96,165,250,0.4);">Machines 🖥️</button>
+        <button type="button" class="topology-filter-btn" data-filter="service" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">Services ⚙️</button>
+        <button type="button" class="topology-filter-btn" data-filter="agent" style="color:#34d399;border-color:rgba(52,211,153,0.4);">Agents IA 🤖</button>
+        <button type="button" class="topology-filter-btn" data-filter="knowledge" style="color:#facc15;border-color:rgba(250,204,21,0.4);">Second Brain 📚</button>
+        <button type="button" class="topology-filter-btn" data-filter="city" style="color:#f472b6;border-color:rgba(236,72,153,0.4);">Villes 🏛️</button>
+        <button type="button" class="topology-filter-btn" data-filter="npc">PNJ 👤</button>
+        <button type="button" class="topology-filter-btn" data-filter="faction">Factions 🛡️</button>
+        <button type="button" class="topology-filter-btn" data-filter="mechanic">Mécaniques 🔧</button>
+        <button type="button" class="topology-filter-btn" data-filter="bot" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">Bots Live 🎮</button>
         <button type="button" class="topology-action-btn" id="topo-btn-pulse" title="Déclencher une impulsion à travers le réseau">⚡ Spider Crawl</button>
         <button type="button" class="topology-filter-btn" id="topo-btn-reset" title="Recentrer le graphe">👁️ Recentrer</button>
       </div>
@@ -1789,6 +1798,6 @@
     }
   }
   </script>
-  <script type="module" src="src/main.js?v=20261031-brain3d-v5"></script>
+  <script type="module" src="src/main.js?v=20261117-gladys-v2"></script>
 </body>
 </html>

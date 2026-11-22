@@ -227,138 +227,258 @@
     "id": 29,
     "topic": "Économie de troc P2P et négociations marchandes entre bots et joueurs",
     "category": "Économie & IA",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T19:02:44.332997",
+    "youtube_url": "https://www.youtube.com/shorts/F9Wl4QEgAeg"
   },
   {
     "id": 30,
     "topic": "Le mystère du Gouffre Krayt sur Scrapaltai : animer un titan 3D",
     "category": "World Building 3D",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-17T21:33:53.228992",
+    "youtube_url": "https://www.youtube.com/shorts/ZHtYC7rqy0A"
   },
   {
     "id": 31,
     "topic": "Pourquoi les extracteurs Harvesters rendent les joueurs accros au terrain",
     "category": "MMO & Simulation",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T09:03:11.603273",
+    "youtube_url": "https://www.youtube.com/shorts/K2UxC2nrjew"
   },
   {
     "id": 32,
     "topic": "Comment Lia apprend et mémorise tes projets sans base vectorielle cloud",
     "category": "IA Locale & Mémoire",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T11:33:33.655755",
+    "youtube_url": "https://www.youtube.com/shorts/hxTyb-3omUk"
   },
   {
     "id": 33,
     "topic": "Compiler Godot 4.6 sans affichage pour économiser 80% de RAM",
     "category": "DevOps & Performance",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T14:03:00.852421",
+    "youtube_url": "https://www.youtube.com/shorts/W800dOvHTrU"
   },
   {
     "id": 34,
     "topic": "Second Brain de Lia : Obsidian et graphe de connaissances 3D en direct",
     "category": "Productivité & RAG",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T16:33:36.482292",
+    "youtube_url": null
   },
   {
     "id": 35,
     "topic": "280 danses et animations sur un rig VRM sans capture de mouvement",
     "category": "Animation 3D & VRM",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T19:03:45.507045",
+    "youtube_url": null
   },
   {
     "id": 36,
     "topic": "Pourquoi SQLite WAL bat les bases NoSQL pour les mondes persistants",
     "category": "Bases de Données",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-18T21:33:33.654641",
+    "youtube_url": null
   },
   {
     "id": 37,
     "topic": "Lip-Sync ultra réaliste par transformée de Fourier FFT audio temps réel",
     "category": "Tech Art & Son",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T09:03:43.842416",
+    "youtube_url": null
   },
   {
     "id": 38,
     "topic": "Guerre Civile Galactique : gérer la réputation dynamique des factions",
     "category": "Game Design & Factions",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T11:36:20.219421",
+    "youtube_url": null
   },
   {
     "id": 39,
     "topic": "Composer des morceaux Synthwave avec MusicGen en local et zéro euro",
     "category": "Audio IA & Musique",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T14:05:09.384799",
+    "youtube_url": null
   },
   {
     "id": 40,
     "topic": "Comment orchestrer des audits nocturnes autonomes avec Systemd Linux",
     "category": "DevOps & Linux",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T16:35:12.412371",
+    "youtube_url": null
   },
   {
     "id": 41,
     "topic": "NavMesh multi-zones vs monolithique : la gestion de 7 régions 3D",
     "category": "Moteur Godot 4",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T19:05:28.899275",
+    "youtube_url": null
   },
   {
     "id": 42,
     "topic": "Routage multi-LLM : pourquoi séparer cerveau lourd 14B et rapide 3B",
     "category": "IA Locale & Stratégie",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-19T21:35:58.006107",
+    "youtube_url": null
   },
   {
     "id": 43,
     "topic": "Troc, monnaie locale et taxe municipale : simuler une économie vivante",
     "category": "Économie & Simulation",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T09:09:35.859179",
+    "youtube_url": "https://www.youtube.com/shorts/y7fnKHqb3SE"
   },
   {
     "id": 44,
     "topic": "Générer des déserts infinis crédibles avec FastNoiseLite et shaders",
     "category": "Procédural & Shaders",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T11:33:54.897063",
+    "youtube_url": "https://www.youtube.com/shorts/g7aGQBv4M6I"
   },
   {
     "id": 45,
     "topic": "Piloter une flotte de PC Windows et Linux via des agents FastAPI locaux",
     "category": "DevOps & Automatisation",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T14:04:01.341648",
+    "youtube_url": "https://www.youtube.com/shorts/zbPpPtT6Qaw"
   },
   {
     "id": 46,
     "topic": "Housing libre et construction de villes de joueurs dans Godot 4",
     "category": "MMO & Housing",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T16:34:07.491960",
+    "youtube_url": "https://www.youtube.com/shorts/a3T05p37UvA"
   },
   {
     "id": 47,
     "topic": "Pourquoi le format ASS est le roi des sous-titres animés TikTok",
     "category": "Pipeline Vidéo",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T19:03:55.919644",
+    "youtube_url": "https://www.youtube.com/shorts/kMQM0CgHyoI"
   },
   {
     "id": 48,
     "topic": "Dompter la faune sauvage et élever des bêtes : le métier de Scout",
     "category": "Game Design & Bestiaire",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-20T21:33:39.373496",
+    "youtube_url": "https://www.youtube.com/shorts/FQcLyQAvTsg"
   },
   {
     "id": 49,
     "topic": "Comment Lia synthétise sa voix avec Piper ONNX en moins de 30ms",
     "category": "Synthèse Vocale IA",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-21T09:04:15.279837",
+    "youtube_url": "https://www.youtube.com/shorts/60IUSHNLjNk"
   },
   {
     "id": 50,
     "topic": "Artisanat d expérimentation SWG : quand la qualité des minerais compte",
     "category": "Crafting & Métrologie",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-21T11:34:05.059170",
+    "youtube_url": "https://www.youtube.com/shorts/Y2GI35EimYI"
   },
   {
     "id": 51,
     "topic": "Le poste LBG 0€ Cloud : notre configuration matérielle de production",
     "category": "Hardware & Self-Hosting",
+    "status": "published",
+    "published_at": "2026-11-21T14:04:20.247606",
+    "youtube_url": "https://www.youtube.com/shorts/rBarQr_PzXM"
+  },
+  {
+    "id": 52,
+    "topic": "Pourquoi le multithreading de Godot 4 évite les freeze serveur",
+    "category": "Architecture & Perf",
+    "status": "published",
+    "published_at": "2026-11-21T16:33:50.652151",
+    "youtube_url": "https://www.youtube.com/shorts/qHwdtilS4wc"
+  },
+  {
+    "id": 53,
+    "topic": "Comment nous avons synchronisé les animations Three.js et VRM",
+    "category": "Frontend 3D & WebGL",
+    "status": "published",
+    "published_at": "2026-11-21T19:03:40.990331",
+    "youtube_url": "https://www.youtube.com/shorts/xcEGNn0gbm8"
+  },
+  {
+    "id": 54,
+    "topic": "Le secret de la mémoire épisodique pour compagnons virtuels",
+    "category": "IA Locale & RAG",
+    "status": "published",
+    "published_at": "2026-11-21T21:33:25.969847",
+    "youtube_url": "https://www.youtube.com/shorts/ANz-aJHZxuI"
+  },
+  {
+    "id": 55,
+    "topic": "Créer un système de combat dynamique sans lag réseau",
+    "category": "MMO & Game Design",
+    "status": "published",
+    "published_at": "2026-11-22T09:04:00.515626",
+    "youtube_url": "https://www.youtube.com/shorts/4EDiL7fbczI"
+  },
+  {
+    "id": 56,
+    "topic": "Gérer 100 000 objets sans draw-call avec MultiMeshInstance3D",
+    "category": "Graphisme & Shader",
+    "status": "published",
+    "published_at": "2026-11-22T11:34:25.933630",
+    "youtube_url": "https://www.youtube.com/shorts/9En86ZoFgIE"
+  },
+  {
+    "id": 57,
+    "topic": "Les pièges du cloud pour les studios de jeux vidéo indépendants",
+    "category": "Économie & Tech",
+    "status": "published",
+    "published_at": "2026-11-22T14:03:55.757562",
+    "youtube_url": "https://www.youtube.com/shorts/ae4L65o1v8Y"
+  },
+  {
+    "id": 58,
+    "topic": "Pourquoi l'extraction d'échantillons géologiques est si addictive",
+    "category": "MMO & Gameplay",
+    "status": "published",
+    "published_at": "2026-11-22T16:34:00.925229",
+    "youtube_url": "https://www.youtube.com/shorts/IeacpKLE3E8"
+  },
+  {
+    "id": 59,
+    "topic": "Comment nous avons automatisé nos audits de code chaque nuit à 00h30",
+    "category": "DevOps & CI/CD",
+    "status": "pending"
+  },
+  {
+    "id": 60,
+    "topic": "Lia, notre avatar IA : architecture complète de son esprit 0€ cloud",
+    "category": "Compagnon IA",
+    "status": "pending"
+  },
+  {
+    "id": 61,
+    "topic": "Pourquoi nous préférons des micro-modèles 3B aux géants 70B",
+    "category": "IA Efficace",
     "status": "pending"
   }
 ]

@@ -621,6 +621,53 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 		)
 		return _ok(wout, 200 if bool(wout.get("ok")) else 400)
 
+	# --- Cœur T4C (La 4ème Prophétie) & Hybride SWG ---
+	if method == "GET" and path == "/v1/t4c/stats":
+		if sim == null or sim.t4c == null:
+			return _ok({"ok": false, "error": "t4c_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok(sim.t4c.calculate_ham_derived_pools(p_name))
+	if method == "GET" and path == "/v1/t4c/spellbook":
+		if sim == null or sim.t4c == null:
+			return _ok({"ok": false, "error": "t4c_unavailable"}, 501)
+		var p_name := _query_param(query, "player", "Voyageur")
+		return _ok(sim.t4c.get_spellbook(p_name))
+	if method == "POST" and path == "/v1/t4c/cast":
+		if sim == null or sim.t4c == null:
+			return _ok({"ok": false, "error": "t4c_unavailable"}, 501)
+		var cb := _json_body(req_body)
+		var c_out: Dictionary = sim.t4c.cast_spell(
+			str(cb.get("player", "Voyageur")),
+			str(cb.get("spell_id", "")),
+			str(cb.get("target_id", ""))
+		)
+		return _ok(c_out, 200 if bool(c_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/t4c/equip_check":
+		if sim == null or sim.t4c == null:
+			return _ok({"ok": false, "error": "t4c_unavailable"}, 501)
+		var eqb := _json_body(req_body)
+		var eq_out: Dictionary = sim.t4c.can_equip_item(
+			str(eqb.get("player", "Voyageur")),
+			str(eqb.get("item_id", ""))
+		)
+		return _ok(eq_out, 200 if bool(eq_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/t4c/renaissance":
+		if sim == null or sim.t4c == null:
+			return _ok({"ok": false, "error": "t4c_unavailable"}, 501)
+		var rb := _json_body(req_body)
+		var r_out: Dictionary = sim.t4c.renaissance_seraph(str(rb.get("player", "Voyageur")))
+		return _ok(r_out, 200 if bool(r_out.get("ok")) else 400)
+	if method == "POST" and path == "/v1/t4c/allocate":
+		if sim == null or sim.skills == null:
+			return _ok({"ok": false, "error": "skills_unavailable"}, 501)
+		var ab := _json_body(req_body)
+		var a_out: Dictionary = sim.skills.allocate_t4c_attribute(
+			str(ab.get("player", "Voyageur")),
+			str(ab.get("stat", "strength")),
+			int(ab.get("points", 1))
+		)
+		return _ok(a_out, 200 if bool(a_out.get("ok")) else 400)
+
 	# --- Phase 4 SWG Pre-CU : 4.1 Arbres de compétences 4x4 & Skill Points ---
 	if method == "GET" and path == "/v1/skills/tree":
 		if sim == null or sim.skills == null:
@@ -891,6 +938,26 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			str(fb.get("food_item_id", "viande"))
 		)
 		return _ok(f_res, 200 if bool(f_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/pets/mount":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var mb := _json_body(req_body)
+		var m_res: Dictionary = sim.creatures.mount_pet(
+			str(mb.get("player", "Voyageur")),
+			str(mb.get("pet_id", ""))
+		)
+		return _ok(m_res, 200 if bool(m_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/creatures/pets/dismount":
+		if sim == null or sim.creatures == null:
+			return _ok({"ok": false, "error": "creatures_unavailable"}, 501)
+		var db := _json_body(req_body)
+		var d_res: Dictionary = sim.creatures.dismount_pet(
+			str(db.get("player", "Voyageur")),
+			str(db.get("pet_id", ""))
+		)
+		return _ok(d_res, 200 if bool(d_res.get("ok")) else 400)
 
 	# --- Nids de Créatures (Lairs) & Destruction de Nid SWG Pre-CU ---
 	if method == "GET" and path == "/v1/creatures/lairs":
@@ -1504,6 +1571,55 @@ func _dispatch(method: String, path: String, query: String, req_body: String) ->
 			ab.get("armor", {}) if typeof(ab.get("armor")) == TYPE_DICTIONARY else {}
 		)
 		return _ok(a_res, 200 if bool(a_res.get("ok")) else 400)
+
+	# --- Defeat System / Mécaniques Matures 18+ (Capture, Lutte, Soumission, Rançon) ---
+	if method == "GET" and path.begins_with("/v1/defeat/state"):
+		if sim == null or sim.defeat_system == null:
+			return _ok({"ok": false, "error": "defeat_system_unavailable"}, 501)
+		var q_player := _query_param(path, "player")
+		if q_player.is_empty():
+			q_player = "Voyageur"
+		var st_res: Dictionary = sim.defeat_system.get_defeat_state(q_player)
+		return _ok(st_res, 200)
+
+	if method == "POST" and path == "/v1/defeat/struggle":
+		if sim == null or sim.defeat_system == null:
+			return _ok({"ok": false, "error": "defeat_system_unavailable"}, 501)
+		var body_str := _json_body(req_body)
+		var p_name := str(body_str.get("player", "Voyageur"))
+		var effort := float(body_str.get("effort", 15.0))
+		var str_res: Dictionary = sim.defeat_system.struggle(p_name, effort)
+		return _ok(str_res, 200 if bool(str_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/defeat/submit":
+		if sim == null or sim.defeat_system == null:
+			return _ok({"ok": false, "error": "defeat_system_unavailable"}, 501)
+		var body_sub := _json_body(req_body)
+		var p_sub := str(body_sub.get("player", "Voyageur"))
+		var sub_res: Dictionary = sim.defeat_system.submit(p_sub, false)
+		return _ok(sub_res, 200 if bool(sub_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/defeat/ransom":
+		if sim == null or sim.defeat_system == null:
+			return _ok({"ok": false, "error": "defeat_system_unavailable"}, 501)
+		var body_ran := _json_body(req_body)
+		var p_ran := str(body_ran.get("player", "Voyageur"))
+		var ran_res: Dictionary = sim.defeat_system.pay_ransom(p_ran)
+		return _ok(ran_res, 200 if bool(ran_res.get("ok")) else 400)
+
+	if method == "POST" and path == "/v1/defeat/config":
+		if sim == null or sim.defeat_system == null:
+			return _ok({"ok": false, "error": "defeat_system_unavailable"}, 501)
+		var cfg_body := _json_body(req_body)
+		if cfg_body.has("enabled"):
+			sim.defeat_system.defeat_enabled = bool(cfg_body.get("enabled"))
+		if cfg_body.has("mature_content_enabled"):
+			sim.defeat_system.mature_content_enabled = bool(cfg_body.get("mature_content_enabled"))
+		return _ok({
+			"ok": true,
+			"defeat_enabled": sim.defeat_system.defeat_enabled,
+			"mature_content_enabled": sim.defeat_system.mature_content_enabled
+		}, 200)
 
 	return _ok({"ok": false, "error": "not_found", "path": path}, 404)
 

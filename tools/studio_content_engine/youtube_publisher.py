@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import sys
+import time
 import wsgiref.simple_server
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,9 @@ SCOPES = [
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
 CLIENT_SECRET_FILE = CONFIG_DIR / "client_secret.json"
 TOKEN_FILE = CONFIG_DIR / "youtube_token.json"
-WINDOWS_AGENT_URL = os.environ.get("LBG_WIN_AGENT_URL", "http://192.168.0.10:5005/execute")
+WINDOWS_AGENT_URL = os.environ.get(
+    "LBG_WIN_AGENT_URL", "http://192.168.0.10:5005/execute"
+)
 
 
 def _run_oauth_flow(flow: InstalledAppFlow, port: int = 8088) -> Credentials:
@@ -91,26 +94,40 @@ def _run_oauth_flow(flow: InstalledAppFlow, port: int = 8088) -> Credentials:
                 if resp.status_code == 200:
                     print(" Firefox lancé sur Windows avec pont localhost:8088 actif.")
         except Exception as e:
-            logger.warning("Pont Windows non disponible (%s), ouvre le lien manuellement.", e)
+            logger.warning(
+                "Pont Windows non disponible (%s), ouvre le lien manuellement.", e
+            )
 
-        print(" En attente de l'autorisation dans Firefox (délai: 10 min)...", flush=True)
-        local_server.timeout = 600
-        local_server.handle_request()
+        print(
+            " En attente de l'autorisation Google (en écoute sur le port 8088, délai: 2h)...",
+            flush=True,
+        )
+        local_server.timeout = 5
+        start_wait = time.time()
+        auth_response = None
+        while time.time() - start_wait < 7200:
+            local_server.handle_request()
+            req = getattr(wsgi_app, "last_request_uri", None)
+            if req and ("code=" in req or "error=" in req):
+                auth_response = req
+                break
 
-        auth_response = getattr(wsgi_app, "last_request_uri", None)
         if not auth_response:
             raise TimeoutError("Délai dépassé ou aucune réponse reçue du navigateur.")
 
         from urllib.parse import urlparse, urlunparse
+
         parsed = urlparse(auth_response)
-        clean_auth_response = urlunparse((
-            "https",
-            f"localhost:{port}",
-            parsed.path,
-            parsed.params,
-            parsed.query,
-            parsed.fragment,
-        ))
+        clean_auth_response = urlunparse(
+            (
+                "https",
+                f"localhost:{port}",
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        )
         flow.fetch_token(authorization_response=clean_auth_response)
         return flow.credentials
 
@@ -132,8 +149,15 @@ def get_authenticated_service() -> Any:
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             logger.info("Rafraîchissement du token YouTube...")
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                logger.warning(
+                    "Échec rafraîchissement token (%s), ré-authentification requise.", e
+                )
+                creds = None
+
+        if not creds or not creds.valid:
             if not CLIENT_SECRET_FILE.exists():
                 raise FileNotFoundError(
                     f"Fichier de configuration OAuth manquant : {CLIENT_SECRET_FILE}\n"
@@ -144,7 +168,9 @@ def get_authenticated_service() -> Any:
                 )
 
             logger.info("Lancement du flux d'authentification OAuth pour @LBG-p8k...")
-            flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_FILE), SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                str(CLIENT_SECRET_FILE), SCOPES
+            )
             creds = _run_oauth_flow(flow, port=8088)
 
         with open(TOKEN_FILE, "w", encoding="utf-8") as token_out:
@@ -156,7 +182,11 @@ def get_authenticated_service() -> Any:
 
 def build_dynamic_tags(title: str, base_tags: list[str] | None = None) -> list[str]:
     """Génère des tags riches et ciblés en fonction du sujet de la vidéo."""
-    tags = list(base_tags) if base_tags else ["shorts", "ia", "tech", "lbg studios", "développement", "open source"]
+    tags = (
+        list(base_tags)
+        if base_tags
+        else ["shorts", "ia", "tech", "lbg studios", "développement", "open source"]
+    )
     title_lower = title.lower()
 
     keyword_map = {
@@ -176,7 +206,9 @@ def build_dynamic_tags(title: str, base_tags: list[str] | None = None) -> list[s
                 if r not in tags:
                     tags.append(r)
 
-    return tags[:15]  # YouTube accepte jusqu'à 500 caractères, ~15 tags ciblés est idéal
+    return tags[
+        :15
+    ]  # YouTube accepte jusqu'à 500 caractères, ~15 tags ciblés est idéal
 
 
 def clean_title_for_shorts(title: str, max_len: int = 95) -> str:
@@ -239,8 +271,12 @@ def upload_short_video(
     }
 
     logger.info("Upload du Short vers YouTube (@LBG-p8k)...")
-    media = MediaFileUpload(str(video_path), mimetype="video/mp4", resumable=True, chunksize=1024 * 1024)
-    request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+    media = MediaFileUpload(
+        str(video_path), mimetype="video/mp4", resumable=True, chunksize=1024 * 1024
+    )
+    request = youtube.videos().insert(
+        part="snippet,status", body=body, media_body=media
+    )
 
     response = None
     while response is None:
@@ -263,10 +299,23 @@ def upload_short_video(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Publication YouTube Shorts @LBG-p8k")
-    parser.add_argument("--setup", action="store_true", help="Lance la première authentification OAuth")
+    parser.add_argument(
+        "--setup", action="store_true", help="Lance la première authentification OAuth"
+    )
     parser.add_argument("--video", type=str, help="Chemin du fichier MP4 à uploader")
-    parser.add_argument("--title", type=str, default="Veille IA & Tech LBG Studios", help="Titre de la vidéo")
-    parser.add_argument("--privacy", type=str, default="public", choices=["public", "unlisted", "private"], help="Statut")
+    parser.add_argument(
+        "--title",
+        type=str,
+        default="Veille IA & Tech LBG Studios",
+        help="Titre de la vidéo",
+    )
+    parser.add_argument(
+        "--privacy",
+        type=str,
+        default="public",
+        choices=["public", "unlisted", "private"],
+        help="Statut",
+    )
     args = parser.parse_args()
 
     if args.setup:
@@ -292,4 +341,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

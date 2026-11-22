@@ -51,6 +51,9 @@ const _SwgSpeciesSystemScript = preload("res://scripts/swg_species_system.gd")
 const _SwgSpeciesDialogScript = preload("res://scripts/swg_species_dialog.gd")
 const _SwgDialogBoxScript = preload("res://scripts/swg_dialog_box.gd")
 const _SwgSpaceFlightScript = preload("res://scripts/swg_space_flight_3d.gd")
+const _DefeatOverlayScript = preload("res://scripts/defeat_overlay_panel.gd")
+const _WorldGround3DScript = preload("res://scripts/world_ground_3d.gd")
+const _SwgSpellbookScript = preload("res://scripts/swg_spellbook_panel.gd")
 
 var gameplay_ops: RefCounted = null
 var quest_ops: RefCounted = null
@@ -73,11 +76,17 @@ var swg_inventory_paperdoll: Node = null
 var swg_audio: Node = null
 var swg_faction_system: Node = null
 var swg_faction_dialog: Node = null
+var defeat_overlay: Node = null
 var swg_species_dialog: Node = null
 var swg_dialog_box: Node = null
 var swg_space_flight: Node = null
 var swg_quick_bar: Control = null
+var swg_spellbook_panel: Node = null
+var world_ground_3d: Control = null
+var is_3d_mode: bool = false
 var _lightsaber_active: bool = false
+var _is_mounted: bool = false
+var _active_pet_id: String = ""
 var _swg_action_http: HTTPRequest = null
 
 const COLOR_PLAYER_OFFICIAL := Color(0.2, 0.4, 1.0, 1.0)
@@ -216,6 +225,13 @@ func _zoom_camera(step: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if ui_dialogue:
 		ui_dialogue.unhandled_input(event)
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_T:
+			_toggle_mount()
+		elif event.keycode == KEY_F10:
+			toggle_3d_mode()
+		elif event.keycode == KEY_B:
+			_toggle_spellbook()
 
 
 func _canvas_mouse_pos() -> Vector2:
@@ -380,7 +396,15 @@ func _ensure_swg_ui() -> void:
 	if modal_layer and swg_character_sheet == null:
 		swg_character_sheet = _SwgCharacterSheetScript.new()
 		swg_character_sheet.name = "SwgCharacterSheet"
+		if swg_character_sheet.has_signal("spellbook_requested"):
+			swg_character_sheet.spellbook_requested.connect(_toggle_spellbook)
 		modal_layer.add_child(swg_character_sheet)
+	if modal_layer and swg_spellbook_panel == null:
+		swg_spellbook_panel = _SwgSpellbookScript.new()
+		swg_spellbook_panel.name = "SwgSpellbookPanel"
+		swg_spellbook_panel.spell_cast_requested.connect(_on_spell_cast_requested)
+		swg_spellbook_panel.spell_assign_requested.connect(_on_spell_assign_requested)
+		modal_layer.add_child(swg_spellbook_panel)
 	if modal_layer and swg_bazaar_panel == null:
 		swg_bazaar_panel = _SwgBazaarPanelScript.new()
 		swg_bazaar_panel.name = "SwgBazaarPanel"
@@ -407,6 +431,13 @@ func _ensure_swg_ui() -> void:
 		swg_dialog_box.name = "SwgDialogBox"
 		modal_layer.add_child(swg_dialog_box)
 		swg_dialog_box.option_selected.connect(_on_swg_dialog_option_selected)
+	if modal_layer and defeat_overlay == null:
+		defeat_overlay = _DefeatOverlayScript.new()
+		defeat_overlay.name = "DefeatOverlayPanel"
+		modal_layer.add_child(defeat_overlay)
+		defeat_overlay.struggle_requested.connect(_on_defeat_struggle)
+		defeat_overlay.submit_requested.connect(_on_defeat_submit)
+		defeat_overlay.ransom_requested.connect(_on_defeat_ransom)
 	if swg_space_flight == null:
 		var space_layer := CanvasLayer.new()
 		space_layer.name = "SpaceFlightLayer"
@@ -459,6 +490,7 @@ func _setup_swg_quick_bar(hud_layer: Control) -> void:
 		{"label": "🚀 Espace 3D [F8]", "color": Color(0.2, 0.8, 1.0), "fn": Callable(self, "_toggle_space_flight")},
 		{"label": "✦ Sabre [F4]", "color": Color(0.3, 0.95, 0.85), "fn": Callable(self, "_toggle_lightsaber")},
 		{"label": "✨ Heal [F6]", "color": Color(0.4, 1.0, 0.5), "fn": Callable(self, "_execute_force_heal")},
+		{"label": "🐎 Monture [T]", "color": Color(0.95, 0.65, 0.25), "fn": Callable(self, "_toggle_mount")},
 		{"label": "📡 Sonde [F5]", "color": Color(1.0, 0.4, 0.4), "fn": Callable(self, "_deploy_arakyd_probe")},
 		{"label": "🏛 Mairie", "color": Color(1.0, 0.85, 0.3), "fn": func(): if swg_dialog_box: swg_dialog_box.open_dialog("Hôtel de Ville de Lost Heaven", "terminal_cityhall")},
 		{"label": "🌍 Galaxie", "color": Color(0.7, 0.6, 1.0), "fn": func(): if swg_dialog_box: swg_dialog_box.open_dialog("Console Galactique", "terminal_planets")}
@@ -633,6 +665,10 @@ func _on_swg_quick_panel_requested(panel_key: String) -> void:
 		"character", "sheet":
 			if swg_character_sheet and swg_character_sheet.has_method("toggle"):
 				swg_character_sheet.toggle()
+		"spellbook", "grimoire", "spells", "t4c":
+			_toggle_spellbook()
+		"3d", "toggle_3d":
+			toggle_3d_mode()
 		"datapad":
 			if swg_datapad_panel and swg_datapad_panel.has_method("toggle"):
 				swg_datapad_panel.toggle()
@@ -926,12 +962,145 @@ func _on_swg_action_http_done(result: int, code: int, _headers: PackedStringArra
 		elif d.has("structure"):
 			var st_dict: Dictionary = d.get("structure", {}) if typeof(d.get("structure")) == TYPE_DICTIONARY else {}
 			_hotbar_feedback("Structure : %s (%s) — Solde: %d cr" % [str(st_dict.get("id", "")), str(st_dict.get("kind", "")), int(st_dict.get("maintenance_credits", 0))])
+		elif d.has("outcome"):
+			var oc: String = str(d.get("outcome", ""))
+			if oc == "struggling":
+				if defeat_overlay:
+					defeat_overlay.update_progress(float(d.get("progress", 0.0)), float(d.get("time_left", 30.0)))
+			elif oc == "escaped":
+				if defeat_overlay:
+					defeat_overlay.hide_defeat()
+				_hotbar_feedback("🔓 Vous vous êtes libéré de l'emprise de votre ravisseur !")
+			elif oc == "submitted":
+				if defeat_overlay:
+					defeat_overlay.hide_defeat()
+				_hotbar_feedback("⚠ Vous avez succombé. Vous vous réveillez captif au camp ennemi.")
+			elif oc == "ransomed":
+				if defeat_overlay:
+					defeat_overlay.hide_defeat()
+				_hotbar_feedback("💰 Rançon payée ! Vous êtes libre de repartir.")
+			elif oc == "mounted":
+				_is_mounted = true
+				_active_pet_id = str(d.get("pet_id", ""))
+				_hotbar_feedback("🐎 %s" % str(d.get("message", "Monture activée !")))
+			elif oc == "dismounted":
+				_is_mounted = false
+				_hotbar_feedback("🚶 %s" % str(d.get("message", "Vous descendez de votre monture.")))
 		if d.has("status") and typeof(d.get("status")) == TYPE_DICTIONARY and swg_ham_hud:
 			swg_ham_hud.apply_ham_payload(d["status"] as Dictionary)
 		if d.has("active_statuses") and typeof(d.get("active_statuses")) == TYPE_DICTIONARY and swg_ham_hud:
 			swg_ham_hud.apply_combat_status(d)
 	else:
 		_hotbar_feedback("Action SWG refusée : %s" % str(d.get("error", code)))
+
+
+func _hub_http_base_url() -> String:
+	return _HubRuntimeCfg.http_url() if _HubRuntimeCfg.enabled() else "http://192.168.0.246:8787"
+
+
+func _toggle_spellbook() -> void:
+	_ensure_swg_ui()
+	if swg_spellbook_panel and swg_spellbook_panel.has_method("toggle"):
+		swg_spellbook_panel.toggle()
+
+
+func _on_spell_cast_requested(spell_id: String) -> void:
+	if swg_audio and swg_audio.has_method("play_sound"):
+		swg_audio.play_sound("level_up")
+	if swg_chat_box:
+		swg_chat_box.add_log("[color=#33ddff]⚡ Incantation du sort T4C : %s ![/color]" % spell_id, "spatial")
+
+
+func _on_spell_assign_requested(spell_id: String, spell_data: Dictionary) -> void:
+	var s_name: String = str(spell_data.get("name", spell_id))
+	_show_toast("Sort prêt à être assigné : %s" % s_name)
+
+
+func toggle_3d_mode(enable: Variant = null) -> void:
+	if enable == null:
+		is_3d_mode = not is_3d_mode
+	else:
+		is_3d_mode = bool(enable)
+
+	if is_3d_mode and world_ground_3d == null:
+		world_ground_3d = _WorldGround3DScript.new()
+		world_ground_3d.name = "WorldGround3D"
+		var ui_node: Node = get_node_or_null("UI")
+		if ui_node:
+			ui_node.add_child(world_ground_3d)
+			ui_node.move_child(world_ground_3d, 0)
+		world_ground_3d.player_moved_3d.connect(_on_3d_player_moved)
+		world_ground_3d.terrain_clicked_3d.connect(_on_3d_terrain_clicked)
+		world_ground_3d.entity_clicked_3d.connect(_on_3d_entity_clicked)
+
+	if world_ground_3d:
+		world_ground_3d.visible = is_3d_mode
+
+	# Bascule visibilité du sol 2.5D
+	var wmap: CanvasItem = get_node_or_null("WorldMap") as CanvasItem
+	if wmap:
+		wmap.visible = not is_3d_mode
+
+	if swg_chat_box:
+		var mode_name := "Full 3D Isométrique Orbital (Godot 4 PBR)" if is_3d_mode else "2.5D Top-Down Canonique"
+		swg_chat_box.add_log("[color=#44ffbb]🌐 Mode d'Affichage : %s (Touche [F10])[/color]" % mode_name, "spatial")
+	_show_toast("Affichage : %s" % ("Full 3D" if is_3d_mode else "2.5D"))
+
+
+func _on_3d_player_moved(new_pos: Vector3) -> void:
+	# Synchronisation de la position pour le HUD et réseau
+	pass
+
+
+func _on_3d_terrain_clicked(target_pos: Vector3) -> void:
+	_hotbar_feedback("Navigation 3D : cible (%.1f, %.1f)" % [target_pos.x, target_pos.z])
+
+
+func _on_3d_entity_clicked(entity_id: String, entity_type: String) -> void:
+	_hotbar_feedback("Entité 3D sélectionnée : %s (%s)" % [entity_id, entity_type])
+
+
+func trigger_defeat_overlay(session: Dictionary) -> void:
+	if defeat_overlay:
+		defeat_overlay.show_defeat(session)
+
+
+func _on_defeat_struggle(effort: float) -> void:
+	if _swg_action_http == null:
+		return
+	var base_url: String = _hub_http_base_url()
+	var body_json := JSON.stringify({"player": _local_character_name, "effort": effort})
+	_swg_action_http.request(base_url.rstrip("/") + "/v1/defeat/struggle", ["Content-Type: application/json"], HTTPClient.METHOD_POST, body_json)
+
+
+func _on_defeat_submit() -> void:
+	if _swg_action_http == null:
+		return
+	var base_url: String = _hub_http_base_url()
+	var body_json := JSON.stringify({"player": _local_character_name})
+	_swg_action_http.request(base_url.rstrip("/") + "/v1/defeat/submit", ["Content-Type: application/json"], HTTPClient.METHOD_POST, body_json)
+
+
+func _on_defeat_ransom() -> void:
+	if _swg_action_http == null:
+		return
+	var base_url: String = _hub_http_base_url()
+	var body_json := JSON.stringify({"player": _local_character_name})
+	_swg_action_http.request(base_url.rstrip("/") + "/v1/defeat/ransom", ["Content-Type: application/json"], HTTPClient.METHOD_POST, body_json)
+
+
+func _toggle_mount() -> void:
+	if _swg_action_http == null:
+		return
+	var base_url: String = _hub_http_base_url()
+	if _is_mounted:
+		var p_id: String = _active_pet_id if not _active_pet_id.is_empty() else "pet_9001"
+		var body_dismount := JSON.stringify({"player": _local_character_name, "pet_id": p_id})
+		_swg_action_http.request(base_url.rstrip("/") + "/v1/creatures/pets/dismount", ["Content-Type: application/json"], HTTPClient.METHOD_POST, body_dismount)
+	else:
+		var p_id2: String = _active_pet_id if not _active_pet_id.is_empty() else "pet_9001"
+		var body_mount := JSON.stringify({"player": _local_character_name, "pet_id": p_id2})
+		_swg_action_http.request(base_url.rstrip("/") + "/v1/creatures/pets/mount", ["Content-Type: application/json"], HTTPClient.METHOD_POST, body_mount)
 
 
 func _handle_world_left_click(screen_pos: Vector2) -> void:

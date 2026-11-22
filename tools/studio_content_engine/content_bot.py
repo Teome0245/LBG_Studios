@@ -159,7 +159,11 @@ def build_short_video(
         try:
             from tiktok_publisher import trigger_tiktok_upload
             caption = f"{script_data.get('title', 'Veille Tech')} #fyp #ia #tech #dev #lbgstudios"
-            tt_result = trigger_tiktok_upload(video_name=f"{run_id}_tiktok.mp4", caption=caption)
+            tt_result = trigger_tiktok_upload(
+                video_name=f"{run_id}_tiktok.mp4",
+                caption=caption,
+                local_video_path=out_mp4,
+            )
         except Exception as e:
             logger.error("Échec préparation TikTok : %s", e)
 

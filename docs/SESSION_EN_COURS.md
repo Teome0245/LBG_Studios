@@ -9,6 +9,25 @@
 ---
 
 ## Dernières actions réalisées (2026-11-22)
+-31. **Prime O2 : Fusion Moteur SWG Pre-CU & T4C (La 4ème Prophétie) + Fondations Rendu Full 3D Godot 4** :
+    - **Fusion Mécaniques SWG & T4C (`hub_t4c_system.gd`, `hub_skills.gd`, `hub_http.gd`)** :
+      * Dérivation mathématique en temps réel des 3 jauges HAM (Santé, Action, Esprit) à partir des 5 statistiques T4C (Force, Endurance, Dextérité, Intelligence, Sagesse).
+      * Système de prérequis stricts d'équipement T4C (`can_equip_item`).
+      * Grimoire de Sorts T4C (`SPELLS_CATALOG`) : sorts arcaniques et divins conditionnels (Étincelle, Guérison Mineure, Bouclier de Silice, Éclair de Plasma, Prière du Séraphin, Souffle de l'Abyme) avec consommation de Mind (HAM) et seuils de Karma (+/-200).
+      * Cérémonie de Renaissance Séraphin / Démon (`renaissance_seraph`).
+      * Nouveaux endpoints REST déployés sur VM 246 (`:8787`) : `/v1/t4c/stats`, `/v1/t4c/spellbook`, `/v1/t4c/cast`, `/v1/t4c/allocate`, `/v1/t4c/renaissance`. Tests automatisés et curl validés en direct.
+    - **Interface Client Prime (`prime-client`) — Grimoire & Fiche de Caractéristiques** :
+      * Nouveau panneau dédié `SwgSpellbookPanel` (`swg_spellbook_panel.gd`) : affichage du grimoire, prérequis dynamiques, consommation de Mind, bouton d'incantation et assignation hotbar.
+      * Fiche de personnage SWG enrichie (`swg_character_sheet.gd`) : intégration des caractéristiques T4C, affichage du Karma, allocation interactive des points d'attributs via `+` et bouton d'ouverture rapide du Grimoire.
+      * Raccourci touche `[B]` pour basculer le Grimoire T4C à la volée.
+    - **Transition Full 3D Godot 4 (`world_ground_3d.gd`, `main.gd`)** :
+      * Moteur de rendu 3D `WorldGround3D` sous `SubViewportContainer` :
+        - Terrain 3D PBR désertique Scrapaltai (600m x 600m) avec brume atmosphérique et éclairage solaire chaud.
+        - Caméra isométrique 3/4 orbitale articulée avec zoom molette (6m à 38m) et rotation orbitale au clic droit.
+        - Avatar joueur 3D (`CharacterBody3D`) avec déplacement fluide ZQSD orienté selon l'angle de caméra, et click-to-move T4C par raycast physique direct sur le sol 3D.
+        - Support du spawn 3D pour Harvesters, créatures et PNJ.
+      * Intégration dans `main.gd` : bascule instantanée 2.5D / Full 3D via la touche `[F10]` ou commande `/3d`, tout en conservant l'intégralité du HUD 2D SWG (HAM, cible, chat, inventaire).
+
 -30. **Hygiène Infra LAN (.10, .201), Triage Slack & Boucle de Contrôle Failed (Thémis / Gladys)** :
     - **Poste Windows 11 (.10) — Rapatriement Bureau & Espace Disque** :
       * Rapatriement automatisé des 54 raccourcis et icônes d'outils du studio (Antigravity, Cursor, VS Code, Godot, Blender, Sourcetree...) depuis l'imbrication OneDrive vers le vrai Bureau `C:\Users\sdesh\Desktop`.
