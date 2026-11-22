@@ -9,7 +9,21 @@
 ---
 
 ## Dernières actions réalisées (2026-11-22)
--32. **Prime O2 : Caméra 3ème Personne (MMO Follow-Cam), Ciel Procédural PBR & Amélioration Graphique 3D** :
+- 33. **Prime O2 : Direction Artistique du Multivers (Dés-SWG-isation) & Trinité des Factions** :
+    - **Formalisation Canonique de la Direction Artistique (`docs/design/DIRECTION_ARTISTIQUE_PRIME_MULTIVERS.md`)** :
+      * Synthèse des 3 piliers : Tech Organique & Bricolée (Gunnm, Cyberpunk, Firefly), Énergie & Alchimie (FMA, Avatar, DBZ, T4C), Ton Héroïque & Méta-Absurde (Discworld, Free Guy).
+      * Déclinaison par couche de jeu (Godot 4 Full 3D PBR) : silhouettes & prothèses, architecture scrap-punk de Lost Heaven, HUD bio-énergétique et VFX de transmutation alchimique.
+      * Matrice de prompts IA pour le Studio de Contenu (`tools/studio_content_engine/`).
+    - **Modernisation des Factions & Règles d'Engagement (`swg_faction_system.gd`, `swg_faction_dialog.gd`)** :
+      * Implémentation de la Trinité des Factions du Multivers : *Convergence Synthetika* (Tech / `#00e5ff`), *Cercle des Arcanes Primordiaux* (Alchimie / `#ffd700`), *Coalition des Mondes Brisés* (Corsaires / `#ff7043`).
+      * Rangs d'influence thématiques spécifiques par faction, dévises et palettes visuelles.
+      * Maintien strict de la rétro-compatibilité SWG (points FP, permissions On-Leave, Special Forces PvP).
+    - **Tests & Déploiement Launchpad** :
+      * Suite de tests headless Godot validée en 9s (`[OK] Tous les tests headless Godot ont réussi`).
+      * Patch client officiel compilé et synchronisé sur `http://192.168.0.246:8080/patches/prime/manifest.json` (`version=2026-11-22T19:30:47Z`, 335 fichiers).
+      * Auto-update Launchpad généré (`app.asar` et archive Windows).
+
+- 32. **Prime O2 : Caméra 3ème Personne (MMO Follow-Cam), Ciel Procédural PBR & Amélioration Graphique 3D** :
     - **Caméra 3ème Personne Immersive & Bascule Double Vue (`world_ground_3d.gd`, `main.gd`)** :
       * Implémentation de la caméra 3ème personne over-the-shoulder via `SpringArm3D` articulé sur la racine du joueur (hauteur d'épaule 1.55m, pitch libre -78° à +40°, zoom de 1.8m à 14m).
       * Gestion de la touche **`[V]`** (View) pour basculer instantanément entre la vue 3ème personne immersive et la vue isométrique 3/4 classique.
