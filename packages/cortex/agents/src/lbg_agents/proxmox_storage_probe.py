@@ -127,6 +127,7 @@ pvesm=$(pvesm status 2>/dev/null | awk '/local-lvm/ {{gsub(/%/,"",$NF); print $N
 qm_prime=$(qm status "$VMID" 2>/dev/null | awk '{{print $2}}' || echo unknown)
 nas_src=$(findmnt -n -o SOURCE --target /mnt/pve/nas-lun-backup 2>/dev/null || echo missing)
 nas_fstype=$(findmnt -n -o FSTYPE --target /mnt/pve/nas-lun-backup 2>/dev/null || echo missing)
+nas_pve_status=$(pvesm status 2>/dev/null | awk '/nas-lun-backup/ {{print $3}}' | head -1)
 root_src=$(findmnt -n -o SOURCE --target / 2>/dev/null || echo missing)
 echo "data_pct=${{data_pct:-na}}"
 echo "vg_free=${{vg_free:-na}}"
@@ -134,6 +135,7 @@ echo "pvesm_local_lvm=${{pvesm:-na}}"
 echo "vm_prime_status=${{qm_prime}}"
 echo "nas_backup_source=${{nas_src}}"
 echo "nas_backup_fstype=${{nas_fstype}}"
+echo "nas_pve_status=${{nas_pve_status}}"
 echo "root_source=${{root_src}}"
 """
     ok, stdout, stderr = _ssh_proxmox_host(host, script)
@@ -163,7 +165,11 @@ echo "root_source=${{root_src}}"
     # Bug historique .200 : dir storage sans montage → dumps sur root local
     nas_on_root = nas_src == root_src or nas_src.endswith("pve-root") or nas_src == "/"
     nas_missing = nas_src in {"missing", ""} or nas_fstype in {"missing", ""}
-    if nas_missing or nas_on_root:
+    nas_pve_status = str(kv.get("nas_pve_status") or "").lower()
+    if nas_pve_status == "disabled":
+        # Stockage désactivé explicitement (ex. NAS Synology hors ligne) — pas de risque d'écriture sur root
+        alerts.append("nas-lun-backup désactivé dans Proxmox (NAS hors ligne)")
+    elif nas_missing or nas_on_root:
         outcome = "critical"
         alerts.append(
             f"nas-lun-backup on local root (source={nas_src} fstype={nas_fstype}) "

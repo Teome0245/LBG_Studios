@@ -230,6 +230,20 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "args": ["deploy"],
         "keywords": [r"d[ée]ploiement\s+site", r"d[ée]ployer\s+le\s+site", r"mise\s+en\s+ligne\s+site", r"deploy_showcase_ovh\.py", r"site\s+vitrine"],
     },
+    "prime_bots_ensure": {
+        "label": "Reconnexion des bots IA sur Prime (246)",
+        "script_names": ["ensure_ia_bots_online_vm.sh"],
+        "summary": "Rétablissement et reconnexion des bots IA (Lia, Nix) sur le serveur Prime VM 246",
+        "timeout_s": 60,
+        "keywords": [r"bots?\s+de\s+prime", r"remets?\s+en\s+ligne\s+les\s+bots", r"reconnecte.*bots?", r"lia\s+et\s+nix", r"ensure_ia_bots_online_vm\.sh"],
+    },
+    "proxmox_nas_storage_toggle": {
+        "label": "Gestion du stockage de sauvegarde NAS sur Proxmox .201",
+        "script_names": ["toggle_proxmox_nas_storage.sh"],
+        "summary": "Activation ou désactivation du stockage nas-lun-backup sur l'hyperviseur Proxmox .201",
+        "timeout_s": 30,
+        "keywords": [r"d[ée]sactive.*nas[-_]lun[-_]backup", r"d[ée]sactive.*stockage\s+nas", r"stockage\s+nas[-_]lun[-_]backup"],
+    },
 }
 
 

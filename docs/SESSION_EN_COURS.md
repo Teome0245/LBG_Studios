@@ -1,10 +1,55 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-16  
+**Mis à jour** : 2026-11-22  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Organisme Global Gladys & Incarnation Lia — Pilotage Multimodal OS (.10 & .143 via agent-desktop)**.
+**Fil** : canon O1/O2/O3 — **Hygiène Infra LAN (.10, .201), Triage Alertes Slack & Boucle de Contrôle Failed (Thémis / Gladys)**.
+
+---
+
+## Dernières actions réalisées (2026-11-22)
+-30. **Hygiène Infra LAN (.10, .201), Triage Slack & Boucle de Contrôle Failed (Thémis / Gladys)** :
+    - **Poste Windows 11 (.10) — Rapatriement Bureau & Espace Disque** :
+      * Rapatriement automatisé des 54 raccourcis et icônes d'outils du studio (Antigravity, Cursor, VS Code, Godot, Blender, Sourcetree...) depuis l'imbrication OneDrive vers le vrai Bureau `C:\Users\sdesh\Desktop`.
+      * Résolution de la boucle de jonction récursive NTFS `AppData\Local\Application Data` qui bloquait les outils d'audit, libérant **+77 Go** d'espace disque (passage de 15 Go à 92.6 Go libres).
+    - **Hyperviseur Proxmox (.201) — Élimination Définitive de la Saturation Swap** :
+      * Baisse de `vm.swappiness` de 60 à 10 persistée dans `/etc/sysctl.d/99-swappiness.conf`.
+      * Activation du VirtIO memory ballooning dynamique sur VM 246 (4096 Mo) et VM 140 (8192 Mo).
+      * Purge intégrale du Swap (`swapoff -a && swapon -a`) : swap passé de **7.62 Go (95.26%) à 0 B utilisé (0%)** avec ~8 Go de mémoire physique libre.
+    - **Sonde Stockage Héphaïstos — Élimination Faux Positifs Slack** :
+      * Mise à jour de `packages/cortex/agents/src/lbg_agents/proxmox_storage_probe.py` : vérification de l'état `disabled` de `nas-lun-backup` (NAS Synology éteint), évitant le statut `critical` récurrent sur Slack. Déployé sur l'orchestrateur (VM 140).
+    - **Boucle de Contrôle des Failed & Relance Sécurisée (Thémis / Gladys)** :
+      * Refactorisation de `packages/cortex/orchestrator/team/failure_followup.py` avec `control_check_before_retry` :
+        - Blocage immédiat des boucles aveugles sur erreurs logicielles permanentes (`FileNotFoundError`, code manquant).
+        - Contrôle actif de rétablissement réseau/ports (test de socket avant relance).
+        - Plafond strict des relances automatiques à 2 essais max (`LBG_TEAM_FAILURE_MAX_RETRIES=2`) pour immuniser contre les tempêtes de tâches.
+      * Tests unitaires automatisés validés (`packages/cortex/orchestrator/tests/test_team_failure_followup.py`).
+      * Déployé et activé en production sur VM 140 via `/etc/systemd/system/lbg-orchestrator.service.d/failure-retry.conf`.
+
+---
+
+## Dernières actions réalisées (2026-11-20)
+-29. **Résolution Critique du Pipeline de Publication Vidéo (TikTok Studio & YouTube Shorts @LBG-p8k)** :
+    - **TikTok Studio — Résolution Définitive & Publication en Ligne** :
+      * *Cause racine des échecs* : Deux surcouches interactives TikTok (`tiktok-cookie-banner` et tutoriel `react-joyride`) interceptaient les clics de soumission (`intercepts pointer events`), et un sélecteur générique ciblait par erreur le bouton *Posts* du menu latéral de navigation au lieu du bouton d'action.
+      * *Moteur Playwright direct (`tiktok_playwright_direct.py`)* :
+        - Élimination déterministe dans le DOM de `tiktok-cookie-banner`, `#react-joyride-portal` et `.react-joyride__overlay`.
+        - Clic forcé sur les dialogues de consentement (`Allow all`, `Got it`).
+        - Ciblage précis du vrai bouton de soumission : `button[data-e2e="post_video_button"]` (avec fallback `button.Button__root--type-primary`).
+        - Gestion de la modale de confirmation TikTok (`Post now`).
+      * *Branchement & Test de Validation en Production* :
+        - Intégré dans `tools/studio_content_engine/tiktok_publisher.py` (`upload_local_tiktok`).
+        - Publication réelle effectuée avec succès pour le Sujet 42 (*Routage multi-LLM : pourquoi séparer cerveau lourd 14B et rapide 3B*).
+        - Statut vérifié en direct sur `tiktokstudio/content` : **18 Posts en ligne** (vidéo active).
+    - **YouTube Shorts — Liaison Officielle @lbg-p8k & Rattrapage Progressif** :
+      * Authentification renouvelée avec succès sous Firefox sur le compte officiel **La Boite à Geek (@lbg-p8k)**.
+      * Vidéo du matin (Sujet 43) en ligne : `https://www.youtube.com/shorts/y7fnKHqb3SE`.
+      * **Rattrapage progressif démarré** avec succès :
+        - Sujet 31 : `https://www.youtube.com/shorts/K2UxC2nrjew` (*Pourquoi les extracteurs Harvesters rendent les joueurs accros*)
+        - Sujet 32 : `https://www.youtube.com/shorts/hxTyb-3omUk` (*Comment Lia apprend et mémorise tes projets sans base vectorielle cloud*)
+        - Sujet 33 : `https://www.youtube.com/shorts/W800dOvHTrU` (*Pourquoi Godot Headless bat les serveurs C++ pour économiser 80% de RAM*)
+      * Quotas API préservés pour la cadence automatique de la journée (prochains drops à 11h30, 14h00, 16h30, 19h00, 21h30).
 
 ---
 
