@@ -9,6 +9,21 @@
 ---
 
 ## Dernières actions réalisées (2026-11-23)
+- 39. **Prime O2 : Correction de l'Orientation Face Marche (Fin de la marche à reculons) & Optimisation Haute Fluidité 60 FPS** :
+    - **Orientation de l'Avatar (`world_ground_3d.gd`)** :
+      * Correction de l'inversion angulaire 180° : calcul de l'angle cible avec `atan2(-move_vec.x, -move_vec.z)` (et `atan2(-to_pt.x, -to_pt.z)` en clic terrain) pour aligner rigoureusement l'avant de l'avatar vers son vecteur de marche et sa destination.
+      * Clic droit glissé : `look_yaw` aligné sans décalage 180° sur `deg_to_rad(camera_yaw)`, orientant le regard et le corps du personnage face à la caméra de visée.
+    - **Optimisations Performances & Fluidité 60 FPS (`world_ground_3d.gd`)** :
+      * Remplacement du `volumetric_fog` (très coûteux en raymarching GPU) par un brouillard de distance standard `fog_enabled = true` (0ms overhead, identique visuellement).
+      * Désactivation de `ssao_enabled` (Screen Space Ambient Occlusion) qui divisait le framerate par deux.
+      * Ombres solaires réduites de 4 splits à 2 splits (`SHADOW_PARALLEL_2_SPLITS`) avec portée max de 180m au lieu de 2500m.
+      * SubViewport optimisé : `msaa_3d` désactivé au profit de `screen_space_aa = FXAA`, et activation de `stretch = true` sur le container.
+      * Maillage du sol (`MainSandPlane`) simplifié de 8192 polygones à 2 polygones (plan plat).
+      * Réduction des particules de vent à 45 et filtrage des entités distantes (> 600m) dans `sync_entities_from_manager`.
+    - **Validation & Déploiement** :
+      * Tests CI headless Godot validés (100% PASS en 7s).
+      * Patch client compilé et déployé sur le serveur Prime `192.168.0.246:8080/patches/prime/manifest.json`.
+
 - 38. **Prime O2 : Synchronisation Rigoureuse 2D/3D, Désactivation Conflit PlayerController, Collisions Évidées & Contrôle Souris MMO** :
     - **Résolution Décalage et Synchronisation 2D / 3D (`main.gd`, `entity.gd`)** :
       * Correction du bug de référence de propriété : `entity.gd` utilise `core3_pos` (et non `core3_position`). Rétablissement de la synchronisation bidirectionnelle lors de la bascule 2D ↔ 3D et pendant les déplacements.

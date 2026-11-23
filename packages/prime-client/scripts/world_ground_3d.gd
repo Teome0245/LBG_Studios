@@ -93,6 +93,7 @@ func _init() -> void:
 	name = "WorldGround3D"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_PASS
+	stretch = true
 	_setup_viewport_and_world_3d()
 	_setup_pbr_atmosphere_and_sky()
 	_setup_desert_environment()
@@ -112,9 +113,9 @@ func _ready() -> void:
 		_setup_lost_heaven_city()
 		_setup_player_avatar()
 		_setup_sand_particles()
-	_entities_root = Node3D.new()
-	_entities_root.name = "Entities3D"
-	_world_root.add_child(_entities_root)
+		_entities_root = Node3D.new()
+		_entities_root.name = "Entities3D"
+		_world_root.add_child(_entities_root)
 
 
 ## 1. Initialisation du SubViewport et de la Hiérarchie Caméra
@@ -125,7 +126,7 @@ func _setup_viewport_and_world_3d() -> void:
 	_viewport.transparent_bg = false
 	_viewport.handle_input_locally = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_viewport.msaa_3d = Viewport.MSAA_4X
+	_viewport.msaa_3d = Viewport.MSAA_DISABLED
 	_viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
 	add_child(_viewport)
 
@@ -148,13 +149,13 @@ func _setup_viewport_and_world_3d() -> void:
 	_camera.name = "MainCamera3D"
 	_camera.fov = 65.0
 	_camera.near = 0.25
-	_camera.far = 2500.0
+	_camera.far = 1200.0
 	_spring_arm.add_child(_camera)
 
 	_update_camera_settings()
 
 
-## 2. Éclairage PBR & Ciel Procédural de Scrapaltai
+## 2. Éclairage PBR & Ciel Procédural de Scrapaltai (Optimisé 60 FPS)
 func _setup_pbr_atmosphere_and_sky() -> void:
 	_world_env = WorldEnvironment.new()
 	_world_env.name = "WorldEnvScrapaltaiPBR"
@@ -173,20 +174,21 @@ func _setup_pbr_atmosphere_and_sky() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.50
+	env.ambient_light_energy = 0.65
 
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.92
-	env.ssao_enabled = true
-	env.ssao_radius = 1.8
-	env.ssao_intensity = 2.0
+	env.tonemap_exposure = 0.95
+	env.ssao_enabled = false
 	env.glow_enabled = true
-	env.glow_intensity = 0.45
-	env.glow_bloom = 0.10
+	env.glow_intensity = 0.35
+	env.glow_bloom = 0.08
 
-	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.00035
-	env.volumetric_fog_albedo = Color(0.92, 0.78, 0.58)
+	# Brouillard de profondeur standard (très haute fluidité, 0 raymarching GPU)
+	env.volumetric_fog_enabled = false
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.92, 0.78, 0.58)
+	env.fog_density = 0.0004
+	env.fog_aerial_perspective = 0.45
 
 	_world_env.environment = env
 	_world_root.add_child(_world_env)
@@ -197,7 +199,8 @@ func _setup_pbr_atmosphere_and_sky() -> void:
 	_sun_light.light_color = Color(1.0, 0.94, 0.84)
 	_sun_light.light_energy = 1.15
 	_sun_light.shadow_enabled = true
-	_sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	_sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	_sun_light.directional_shadow_max_distance = 180.0
 	_world_root.add_child(_sun_light)
 
 
@@ -212,8 +215,8 @@ func _setup_desert_environment() -> void:
 	main_ground.name = "MainSandPlane"
 	var plane_mesh := PlaneMesh.new()
 	plane_mesh.size = Vector2(3200.0, 3200.0)
-	plane_mesh.subdivide_width = 64
-	plane_mesh.subdivide_depth = 64
+	plane_mesh.subdivide_width = 1
+	plane_mesh.subdivide_depth = 1
 	main_ground.mesh = plane_mesh
 
 	var sand_mat := StandardMaterial3D.new()
@@ -1007,12 +1010,12 @@ func _build_stylized_fallback_avatar() -> void:
 	_procedural_avatar_nodes.append(torso)
 
 
-## 7. Particules de Vent & Poussières de Sable Ambiantes
+## 7. Particules de Vent & Poussières de Sable Ambiantes (Optimisé)
 func _setup_sand_particles() -> void:
 	_dust_particles = CPUParticles3D.new()
 	_dust_particles.name = "SandDustParticles"
-	_dust_particles.amount = 220
-	_dust_particles.lifetime = 4.5
+	_dust_particles.amount = 45
+	_dust_particles.lifetime = 4.0
 	_dust_particles.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	_dust_particles.emission_box_extents = Vector3(45.0, 5.0, 45.0)
 	_dust_particles.direction = Vector3(1.0, -0.1, 0.4).normalized()
@@ -1138,7 +1141,8 @@ func _physics_process(delta: float) -> void:
 		_player_node.velocity.x = move_vec.x * cur_speed
 		_player_node.velocity.z = move_vec.z * cur_speed
 
-		var target_angle := atan2(move_vec.x, move_vec.z)
+		# Orientation rigoureuse face à la destination de marche (vers l'avant)
+		var target_angle := atan2(-move_vec.x, -move_vec.z)
 		_player_mesh.rotation.y = lerp_angle(_player_mesh.rotation.y, target_angle, delta * 14.0)
 
 		_walk_cycle += delta * (14.0 if is_sprinting else 9.5)
@@ -1283,7 +1287,7 @@ func _gui_input(event: InputEvent) -> void:
 			camera_pitch = clampf(camera_pitch - delta_rot.y * 0.25, -78.0, 42.0)
 			_update_camera_settings()
 			if _player_mesh != null:
-				var look_yaw := deg_to_rad(camera_yaw + 180.0)
+				var look_yaw := deg_to_rad(camera_yaw)
 				_player_mesh.rotation.y = look_yaw
 
 
@@ -1312,12 +1316,12 @@ func _handle_left_click(screen_pos: Vector2) -> void:
 			if _target_marker != null:
 				_target_marker.position = Vector3(hit_pos.x, 0.08, hit_pos.z)
 				_target_marker.visible = true
-			# Aligner immédiatement l'orientation vers le point de marche
+			# Aligner immédiatement l'orientation de l'avatar vers le point de destination
 			if _player_mesh != null and _player_node != null:
 				var to_pt := hit_pos - _player_node.position
 				to_pt.y = 0.0
 				if to_pt.length() > 0.2:
-					_player_mesh.rotation.y = atan2(to_pt.x, to_pt.z)
+					_player_mesh.rotation.y = atan2(-to_pt.x, -to_pt.z)
 			terrain_clicked_3d.emit(hit_pos)
 
 
@@ -1352,9 +1356,13 @@ func sync_entities_from_manager(entity_mgr: Node, local_possessed_id: int) -> vo
 		if oid <= 0 or oid == local_possessed_id:
 			continue # Ignorer son propre avatar local déjà géré par _player_node
 
-		current_ids[oid] = true
 		var world_pos: Vector3 = e_node.get_world_pos_3d() if e_node.has_method("get_world_pos_3d") else (e_node.get("core3_pos") if e_node.get("core3_pos") != null else Vector3.ZERO)
 		var pos_3d := Vector3(world_pos.x - LH_ANCHOR_X, 0.0, -(world_pos.z - LH_ANCHOR_Z))
+		# Ne synchroniser que les entités situées à portée visuelle de Lost Heaven (< 600m)
+		if pos_3d.length() > 600.0:
+			continue
+
+		current_ids[oid] = true
 		var kind: String = str(e_node.get("kind"))
 		var d_name: String = str(e_node.get_display_name()) if e_node.has_method("get_display_name") else str(e_node.get("label_text"))
 
