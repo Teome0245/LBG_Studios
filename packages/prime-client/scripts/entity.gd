@@ -296,6 +296,10 @@ func _process(delta: float) -> void:
 		_last_draw_pos = position
 		queue_redraw()
 
+func get_world_pos_3d() -> Vector3:
+	var base := _visual_home if _use_visual_override else core3_pos
+	return base + _patrol_offset_m()
+
 func _refresh_screen_pos() -> void:
 	var base := _visual_home if _use_visual_override else core3_pos
 	var world := base + _patrol_offset_m()

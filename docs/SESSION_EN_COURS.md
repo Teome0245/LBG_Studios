@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-22  
+**Mis à jour** : 2026-11-23  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -8,7 +8,58 @@
 
 ---
 
-## Dernières actions réalisées (2026-11-22)
+## Dernières actions réalisées (2026-11-23)
+- 38. **Prime O2 : Synchronisation Rigoureuse 2D/3D, Désactivation Conflit PlayerController, Collisions Évidées & Contrôle Souris MMO** :
+    - **Résolution Décalage et Synchronisation 2D / 3D (`main.gd`, `entity.gd`)** :
+      * Correction du bug de référence de propriété : `entity.gd` utilise `core3_pos` (et non `core3_position`). Rétablissement de la synchronisation bidirectionnelle lors de la bascule 2D ↔ 3D et pendant les déplacements.
+      * Élimination du conflit de locomotion double : `PlayerController` 2D est désormais désactivé en mode 3D (`pc.enabled = not is_3d_mode`), évitant que les touches ZQSD et les clics souris ne tirent l'avatar dans deux directions contradictoires.
+      * Exposition de `get_world_pos_3d()` dans `entity.gd` tenant compte de `_visual_home` et des ancres PNJ : les PNJ (Tobin Ress, Kell Asa, Jax Moro, Bram, etc.) apparaissent désormais à leur position exacte en 3D au lieu d'être déportés à 4.7 km.
+    - **Gestion des Collisions & Suppression des Faux Remparts (`world_ground_3d.gd`)** :
+      * Suppression intégrale des remparts intérieurs artificiels `InnerCityRamparts` (rayon 65m) qui n'existaient pas en 2D et bloquaient la circulation au centre-ville.
+      * Murailles extérieures (`path:lh_perimeter_fence`) calibrées à 3.8m de hauteur avec ouverture franche des portes (indices 7, 13, 14, 22) sans mur ni boîte de collision bloquante.
+      * Bâtiments ouverts (Grand Marché & Bazar) : suppression de la boîte de collision englobante ; seules les 4 colonnes d'angle possèdent une collision cylindrique fine, rendant l'ensemble de la halle marchande traversable.
+      * Bâtiments pleins : réduction de l'AABB de collision à 65% de la taille pour permettre de s'approcher librement des portes et façades sans heurter des murs invisibles.
+    - **Ergonomie Souris & Orientation Personnage (`world_ground_3d.gd`)** :
+      * Clic Gauche : seuil de drag de 6px. En simple clic franc (< 6px), déclenche le déplacement vers le point cliqué et tourne l'avatar vers sa cible. En glissement (> 6px), orbite libre autour du personnage sans forcer la rotation de l'avatar.
+      * Clic Droit : en simple clic franc (< 6px), déclenche le menu radial officiel SWG sous le curseur. En glissement (> 6px), oriente simultanément le regard et le corps de l'avatar dans la direction de visée.
+      * Déplacement ZQSD : rotation fluide du personnage vers sa direction de marche sans à-coups ni conflit avec la caméra.
+    - **Validation & Déploiement** :
+      * Suite de tests CI Godot headless validée (100% PASS en 9s).
+      * Patch client compilé et déployé sur le serveur Prime `192.168.0.246:8080/patches/prime/manifest.json`.
+
+- 37. **Prime O2 : Rendu SWG Haute Fidélité, PNJ & Joueurs 3D Live, Rues & Décor et Contrôle Souris MMO** :
+    - **Orientation Souris MMO & Clic Droit Radial (`world_ground_3d.gd`, `main.gd`)** :
+      * Clic Gauche : contrôle de l'orientation de la caméra et de l'avatar 3D avec drag & drop souple, déplacement au sol.
+      * Clic Droit : déclenchement direct du menu radial officiel SWG (`SwgRadialMenu`) sous le curseur à la position exacte du monde 3D cliquée (`terrain_right_clicked_3d`).
+    - **Apparition & Synchronisation des PNJ et Autres Joueurs en 3D (`world_ground_3d.gd`, `main.gd`)** :
+      * Liaison en temps réel du gestionnaire d'entités `entity_manager` vers l'arbre de rendu 3D (`sync_entities_from_manager`).
+      * Affichage des PNJ (or/ambre), bots/joueurs (bleu cyber) et objets/créatures avec leurs étiquettes holographiques 3D en lévitation (`Label3D` avec billboard).
+    - **Fidélité Visuelle SWG : Rues Pavées, Échelle Bâtiments & Props de Lost Heaven** :
+      * Correction d'échelle : l'emprise des bâtiments a été normalisée à l'échelle humaine (environ 35% de l'empreinte de zone 2D) pour supprimer l'effet de gigantisme et restituer les façades intimes de Mos Eisley.
+      * Rues pavées et voies marchandes générées en 3D (`_spawn_streets_and_paths`) d'après les 29 chemins de `lost_heaven_props.json`.
+      * Éléments de décor SWG déployés : étals de marché avec auvents de toile, empilements de conteneurs cargo, lanternes avec éclairage omni et rangées d'évapo-condenseurs d'humidité périphériques.
+    - **Pipeline Gladys (.143)** :
+      * Prêt pour le renfort de Gladys via l'Atelier Omarchy (`.143`) pour la génération de meshes GLB dédiés via Blender headless.
+    - **Validation & Déploiement** :
+      * CI Godot headless validée (100% PASS en 10s).
+      * Patch client compilé et déployé sur le serveur Prime `192.168.0.246:8080/patches/prime/manifest.json`.
+
+- 36. **Prime O2 : Fin de la T-Pose de l'Avatar 3D, Murailles & Remparts Visibles, Éclairage PBR SWG & Dédoublonnage UI** :
+    - **Fin de la T-Pose & Animation Procédurale Squelettique (`world_ground_3d.gd`)** :
+      * Modèle Compagnon VRM (`Compagnon.vrm`) inspecté via `GLTFDocument` : liaison dynamique des 98 os (`Skeleton3D` : `J_Bip_L_UpperArm`, `J_Bip_R_UpperArm`, `J_Bip_L_LowerArm`, `J_Bip_R_LowerArm`, `J_Bip_L_UpperLeg`, `J_Bip_R_UpperLeg`, `J_Bip_L_LowerLeg`, `J_Bip_R_LowerLeg`, `J_Bip_C_Spine`).
+      * Pose naturelle au repos (`_apply_avatar_idle_pose`) : bras rabattus le long du corps (~70° d'inclinaison Z), avant-bras fléchis et respiration lente sur la colonne vertébrale.
+      * Pose et foulée dynamiques en course/marche (`_apply_avatar_walk_pose`) : balancement alterné des bras et jambes en opposition de phase, flexion des genoux et foulée naturelle.
+    - **Enceinte, Remparts & PBR Ambiance SWG (`world_ground_3d.gd`)** :
+      * Remparts intérieurs immédiats (`InnerCityRamparts`) ceinturant le Nexus (rayon 65m, hauteur 5.5m) avec 4 arches monumentales néon ouvrant sur les 4 grandes avenues (Nord, Sud, Est, Ouest) et bastions cylindriques.
+      * Remparts extérieurs d'horizon rehaussés à 12m de hauteur avec forteresses d'angle de 15m.
+      * Éclairage PBR calibré pour supprimer le blanc brûlé et restaurer les teintes ocre chaudes de Tatooine (`sand_mat.albedo_color = Color(0.76, 0.61, 0.44)`, rugosité 0.98, lumière solaire `1.15`, tonemap exposure `0.92`, brouillard volumétrique sablonneux discret `0.00035`).
+    - **Nettoyage & Ergonomie UI (`client_ui_dialogue.gd`, `main.gd`, `mission_board_panel.gd`)** :
+      * Suppression du double panneau de dialogue : masque `HubChatPanel` au profit de la boîte officielle unifiée `SwgChatBox` en bas à gauche.
+      * Décalage des barres supérieures superposées : `SwgQuickBar` et `QuestObjectiveHud` positionnés proprement sous la barre d'action centrale (`offset_top = 70.0`) sans chevauchement.
+    - **Validation CI & Déploiement** :
+      * Suite de tests headless Godot validée (`ci_godot_headless.sh --quick`).
+      * Patch client compilé et déployé sur le serveur Prime `192.168.0.246:8080/patches/prime/manifest.json`. Auto-update prêt pour le Launchpad Gladys.
+
 - 35. **Prime O2 : Alignement Environnement 3D / 2D (Bâtiments Lost Heaven SWG & Modèle Compagnon VRM)** :
     - **Alignement Environnemental Complet 2D / 3D (`world_ground_3d.gd`, `lost_heaven_buildings.json`, `lost_heaven_props.json`)** :
       * Résolution du décalage visuel : la vue 3D charge désormais l'intégralité des 15 bâtiments de Lost Heaven aux coordonnées relatives exactes de la ville.

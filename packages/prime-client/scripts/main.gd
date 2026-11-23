@@ -192,6 +192,8 @@ func _init_modules() -> void:
 func _process(delta: float) -> void:
 	_handle_camera_move(delta)
 	_frame_count += 1
+	if is_3d_mode and world_ground_3d != null and entity_manager != null and (_frame_count % 3 == 0):
+		world_ground_3d.sync_entities_from_manager(entity_manager, _possessed_id)
 	if _frame_count % 60 == 0:
 		_update_info()
 
@@ -465,8 +467,8 @@ func _setup_swg_quick_bar(hud_layer: Control) -> void:
 	panel.anchor_bottom = 0.0
 	panel.offset_left = -660.0
 	panel.offset_right = -12.0
-	panel.offset_top = 10.0
-	panel.offset_bottom = 48.0
+	panel.offset_top = 70.0
+	panel.offset_bottom = 108.0
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.focus_mode = Control.FOCUS_NONE
 
@@ -1034,15 +1036,35 @@ func toggle_3d_mode(enable: Variant = null) -> void:
 		world_ground_3d.player_moved_3d.connect(_on_3d_player_moved)
 		world_ground_3d.terrain_clicked_3d.connect(_on_3d_terrain_clicked)
 		world_ground_3d.entity_clicked_3d.connect(_on_3d_entity_clicked)
+		if world_ground_3d.has_signal("terrain_right_clicked_3d"):
+			world_ground_3d.terrain_right_clicked_3d.connect(_on_3d_terrain_right_clicked)
 		if world_ground_3d.has_signal("camera_mode_changed"):
 			world_ground_3d.camera_mode_changed.connect(_on_3d_camera_mode_changed)
+
+	var pc: Node = get_node_or_null("PlayerController")
+	if pc and "enabled" in pc:
+		pc.enabled = not is_3d_mode
 
 	if world_ground_3d:
 		world_ground_3d.visible = is_3d_mode
 		if is_3d_mode and entity_manager:
 			var e: Node = entity_manager.get_entity(_possessed_id)
-			if e and "core3_position" in e:
-				world_ground_3d.set_player_world_position(e.core3_position.x, e.core3_position.z)
+			if e:
+				var c3: Vector3 = e.get_world_pos_3d() if e.has_method("get_world_pos_3d") else (e.get("core3_pos") if e.get("core3_pos") != null else Vector3(4749.0, 0.0, -737.0))
+				world_ground_3d.set_player_world_position(c3.x, c3.z)
+		elif not is_3d_mode and entity_manager and world_ground_3d:
+			var p3d: Vector2 = world_ground_3d.get_player_world_position()
+			var e: Node = entity_manager.get_entity(_possessed_id)
+			if e:
+				var c3_back := Vector3(p3d.x, 0.0, p3d.y)
+				if e.has_method("set_core3_position"):
+					e.set_core3_position(c3_back)
+				elif "core3_pos" in e:
+					e.core3_pos = c3_back
+					e.position = _Projection3D2D.to_screen(c3_back)
+				if camera and not camera_free_pan:
+					camera.position = e.position
+					_cam_target = e.position
 
 	# Bascule visibilité du sol 2.5D
 	var wmap: CanvasItem = get_node_or_null("WorldMap") as CanvasItem
@@ -1075,9 +1097,13 @@ func _on_3d_player_moved(new_pos: Vector3) -> void:
 	var world_z := -737.0 - new_pos.z
 	if entity_manager:
 		var e: Node = entity_manager.get_entity(_possessed_id)
-		if e and "core3_position" in e:
-			e.core3_position = Vector3(world_x, 0.0, world_z)
-			e.position = _Projection3D2D.to_screen(e.core3_position)
+		if e:
+			var new_c3 := Vector3(world_x, 0.0, world_z)
+			if e.has_method("set_core3_position"):
+				e.set_core3_position(new_c3)
+			elif "core3_pos" in e:
+				e.core3_pos = new_c3
+				e.position = _Projection3D2D.to_screen(new_c3)
 			if camera and not camera_free_pan:
 				camera.position = e.position
 				_cam_target = e.position
@@ -1085,6 +1111,22 @@ func _on_3d_player_moved(new_pos: Vector3) -> void:
 
 func _on_3d_terrain_clicked(target_pos: Vector3) -> void:
 	_hotbar_feedback("Navigation 3D : cible (%.1f, %.1f)" % [target_pos.x, target_pos.z])
+
+
+func _on_3d_terrain_right_clicked(screen_pos: Vector2, target_pos: Vector3) -> void:
+	# Clic droit dans le monde 3D : ouverture immédiate du menu radial SWG
+	_ensure_swg_ui()
+	if swg_radial_menu == null:
+		return
+	var world_x := 4749.0 + target_pos.x
+	var world_z := -737.0 - target_pos.z
+	var g_ctx := {
+		"kind": "ground",
+		"name": "Terrain (%.0f, %.0f)" % [world_x, world_z],
+		"x": world_x,
+		"z": world_z,
+	}
+	swg_radial_menu.open_at(screen_pos, g_ctx)
 
 
 func _on_3d_entity_clicked(entity_id: String, entity_type: String) -> void:
