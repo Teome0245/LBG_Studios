@@ -351,7 +351,21 @@ async def execute_pending_action(action: PendingAction) -> dict[str, Any]:
     # Si le script n'est pas trouvable localement sur la machine où tourne FastAPI (ex. CT100),
     # tenter via SSH vers le poste de dev .143 ou Proxmox .201 selon l'action
     cmd = list(action.command)
-    if resolved_path and resolved_path.is_file():
+    if action.action_type == "intent_adoption":
+        from intent_forge import adopt_intent_from_manifest  # type: ignore
+        m_path = action.context.get("manifest_path")
+        res_adopt = adopt_intent_from_manifest(m_path) if m_path else {"ok": False, "error": "manifest_path manquant"}
+        returncode = 0 if res_adopt.get("ok") else 1
+        stdout = f"Intention adoptée avec succès dans learned_intents.json : {res_adopt.get('action')}" if returncode == 0 else ""
+        stderr = str(res_adopt.get("error") or "")
+    elif action.action_type == "capability_adoption":
+        from capability_forge import adopt_capability_from_staging  # type: ignore
+        m_path = action.context.get("manifest_path")
+        res_adopt = adopt_capability_from_staging(m_path) if m_path else {"ok": False, "error": "manifest_path manquant"}
+        returncode = 0 if res_adopt.get("ok") else 1
+        stdout = f"Capacité installée avec succès dans skills/learned/{res_adopt.get('name')}" if returncode == 0 else ""
+        stderr = str(res_adopt.get("error") or "")
+    elif resolved_path and resolved_path.is_file():
         runner = "python3" if script_name and script_name.endswith(".py") else "bash"
         args = action.context.get("args", [])
         cmd = [runner, str(resolved_path)] + args
@@ -415,6 +429,10 @@ async def execute_pending_action(action: PendingAction) -> dict[str, Any]:
             details.append("- **IP Mail statique** : `192.168.0.54` (Ports IMAP 993/143, SMTP 587/25)")
             details.append("- **Hyperviseur** : Proxmox .201 (Conteneur LXC 154 en cours d'exécution)")
             details.append("- **Administration Stalwart** : [http://192.168.0.54:8080](http://192.168.0.54:8080)")
+        elif action.action_type in ("intent_adoption", "capability_adoption"):
+            details.append(f"- **Type d'adoption** : `{action.action_type}`")
+            details.append(f"- **Cible** : `{action.context.get('action') or action.context.get('capability_name')}`")
+            details.append(f"- **Manifeste de staging validé** : `{action.context.get('manifest_path')}`")
 
         snippet = stdout.strip().splitlines()[-4:] if stdout.strip() else []
         snippet_text = "\n".join(f"> {line}" for line in snippet) if snippet else ""

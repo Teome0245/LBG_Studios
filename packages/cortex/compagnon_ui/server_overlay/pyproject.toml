@@ -29,6 +29,7 @@ py-modules = [
     "ecosystem_grounding",
     "infra_lan_intent",
     "intent_forge",
+    "capability_forge",
     "llm_chat_phase",
     "local_llm_provider",
     "mission_watch_intent",

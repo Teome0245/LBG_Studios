@@ -112,4 +112,9 @@ flowchart LR
   * Adoption effective enregistrée dans `learned_intents.json`.
 - **Phase 3 (Branchement runtime Compagnon)** : **TERMINÉE (17/17 tests PASS)**.
   * Routage actif dans `core.py` : intercepte les intentions apprises via `match_learned_intent`, propose confirmation PendingAction, enregistre en continu les nouveaux misses avec filtre anti-bruit. Kill-switch `LBG_LEARNED_INTENTS_ENABLED=0`.
-- **Phase 4 (Capability Forge & Podman .143)** : Prochaine étape.
+- **Phase 4 (Capability Forge & Isolation Sandbox)** : **TERMINÉE (7/7 tests PASS)**.
+  * Code : `packages/cortex/compagnon_ui/server_overlay/capability_forge.py`
+  * Tests : `packages/cortex/compagnon_ui/server_overlay/tests/test_capability_forge.py`
+  * Sécurité : analyse statique AST stricte (anti-eval, anti-exec, anti-shell=True), assignation déterministe du risque (`high` pour toute modification/suppression de fichier), isolation sandbox sous Bubblewrap (`bwrap`) sans réseau, exécution sous-processus découplée de l'orchestrateur.
+  * Adoption L2 par Pilot (`#/tasks`) ou Chat (`pending_actions.py`) vers `packages/cortex/skills/learned/<name>/`.
+- **Phase 5 (Visibilité Topologie & Audit Nocturne)** : Prochaine étape.

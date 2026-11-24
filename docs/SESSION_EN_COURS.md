@@ -10,15 +10,16 @@
 
 ## Dernières actions réalisées (2026-11-24)
 - 41. **Apprentissage d'intentions & forge de capacités sécurisés (héritage Lyra `intent_learning` / `agent_autoupgrade`)** :
-    - Arbitrages validés : adoption L2 dans Pilot ET en Chat (« oui / go »), seuil récurrence de 3 occurrences de miss, sandbox conteneur Podman sur `.143`.
+    - Arbitrages validés : adoption L2 dans Pilot ET en Chat (« oui / go »), seuil récurrence de 3 occurrences de miss, sandbox conteneur Podman / bwrap sur `.143`.
     - **Patch de timeout Cline CLI** : modification du timeout Ollama interne dans le binaire compilé (`var m=300000;` -> `var m=1800000`, 30 minutes au lieu de 5 minutes) évitant les blocages 504 sur CPU `.110`.
-    - **Phases 1, 2 & 3 terminées & validées (17/17 tests PASS, ruff clean, 154 tests backend PASS)** :
+    - **Phases 1, 2, 3 & 4 terminées & validées (24/24 tests overlay PASS, ruff clean, 154 tests backend PASS)** :
       * Journal des intentions manquées (`record_intent_miss`, `load_intent_misses`) vers `intent_misses.jsonl`.
       * Validations déterministes strictes : anti-ReDoS, pas de quantificateurs imbriqués, pas de backreferences, pas de faux positifs, pas de collision d'actions existantes, vérification de la capability cible.
       * Cycle P2 : clustering automatique dès 3 occurrences (`cluster_intent_misses`), écriture du manifeste de staging (`write_intent_manifest`), création de tâche L2 Pilot et PendingAction Chat (`create_intent_pending_action`), adoption finale dans `learned_intents.json`.
       * Phase 3 (Runtime live) : `core.py` vérifie `match_learned_intent` en priorité secondaire contrôlée, crée une PendingAction de confirmation, et enregistre en continu les misses sur prompts non triviaux. Kill-switch `LBG_LEARNED_INTENTS_ENABLED=0`.
-      * Suite de tests complète : `packages/cortex/compagnon_ui/server_overlay/tests/test_intent_forge.py`.
-    - Prochain pas : **Phase 4** (Capability Forge & conteneur Podman sur `.143`).
+      * Phase 4 (Capability Forge P4) : `packages/cortex/compagnon_ui/server_overlay/capability_forge.py`. Génère des skills autonomes (`SKILL.md` + `run.py`), validation statique stricte par AST (`eval`, `exec`, `os.system`, `subprocess(shell=True)` interdits), classification déterministe du niveau de risque (toute écriture/suppression = `high`), isolation en sandbox sous Bubblewrap/unshare sans réseau, adoption atomique vers `skills/learned/<name>/` via ack L2 Pilot ou Chat.
+      * Tests unitaires dédiés : `test_intent_forge.py` (17 tests) + `test_capability_forge.py` (7 tests) + `test_pending_actions.py` (8 tests).
+    - Prochain pas : **Phase 5** (intégration de la visibilité topologique `#/topology` pour `intent_forge` et `capability_forge` + section dédiée dans l'audit nocturne).
 - 40. **Gladys Cerveau & Skills : Silos Contextuels par Domaine (`knowledge/domains/`), Standardisation des Skills (`packages/cortex/skills/`) & Topologie Live Pilot (`#/topology`)** :
     - **Silos de Connaissances par Domaine (`packages/cortex/knowledge/domains/`)** :
       * Création des 4 silos contextuels modulaires au format JSON canonique :
