@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "domain_showcase_web",
+  "name": "Vitrine Publique Web & Déploiement OVH",
+  "max_chars": 2000,
+  "character_pack": "compagnon_v1",
+  "facts": [
+    "Site vitrine officiel : La Boîte à Geeks Studios hébergé sur cluster OVH sous le domaine laboiteageek.fr.",
+    "Source du projet : packages/showcase-web (Vite + HTML/CSS/Vanilla JS moderne, responsive, zéro dépendance lourde).",
+    "Piliers présentés : 1. Lia & Gladys (compagnon IA multimodal) · 2. Scrapaltai & Lost Heaven (MMO 3D Godot) · 3. Joueurs IA Autonomes (O3).",
+    "Pipeline de déploiement : script packages/cortex/infra/scripts/deploy_showcase_ovh.py (build Vite local -> rsync SSH /var/www/laboiteageek.fr).",
+    "Sécurité & dry-run : déploiement déclenchable via action L2 Gladys showcase_deploy_ovh avec validation humaine HITL."
+  ],
+  "lessons": [
+    {
+      "id": "showcase_build_before_push",
+      "summary": "Toujours valider npm run build en local dans packages/showcase-web avant toute synchronisation rsync vers OVH."
+    },
+    {
+      "id": "showcase_https_and_assets",
+      "summary": "Vérifier la validité des certificats Let's Encrypt et le chargement des assets statiques (vidéos WebM, images WEBP) après déploiement."
+    }
+  ]
+}

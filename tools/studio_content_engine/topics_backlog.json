@@ -467,18 +467,24 @@
     "id": 59,
     "topic": "Comment nous avons automatisé nos audits de code chaque nuit à 00h30",
     "category": "DevOps & CI/CD",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-22T19:03:53.730288",
+    "youtube_url": "https://www.youtube.com/shorts/4_C2qJs1GFQ"
   },
   {
     "id": 60,
     "topic": "Lia, notre avatar IA : architecture complète de son esprit 0€ cloud",
     "category": "Compagnon IA",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-22T21:34:22.418768",
+    "youtube_url": "https://www.youtube.com/shorts/M1ekzMN9b-o"
   },
   {
     "id": 61,
     "topic": "Pourquoi nous préférons des micro-modèles 3B aux géants 70B",
     "category": "IA Efficace",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-23T09:04:01.622580",
+    "youtube_url": "https://www.youtube.com/shorts/q9Lzbq6_Wtk"
   }
 ]

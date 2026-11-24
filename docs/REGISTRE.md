@@ -93,6 +93,7 @@ Serveurs jeu (runtime) :
 | **`.142`** | — | **IP libérée** (CT `lbg-hands` détruit 2026-10-02) — rôles absorbés par `.143` ; [`migration_hands_142_to_143.md`](migration_hands_142_to_143.md) |
 | **`.143`** | VM `lbg-omarchy` | **R720 `.201`** — éditeur + **mains** `linux_agent` `:5005` + Présence Agents D7 ; [`omarchy_vm_143.md`](../packages/cortex/docs/omarchy_vm_143.md) · [`ecosystem_dev_143.md`](../packages/cortex/docs/ecosystem_dev_143.md) |
 | **`.200` / `.201`** | Proxmox | `.200` = NUC (hôte CT 111) · `.201` = R720 (CT 100 / 110 / 141 · VM 140 / **143** / 245 / 246) |
+| **`.217`** | — | **Ancien VMware ESXi** (historique avant bascule Proxmox VE .200/.201) — **décommissionné, éteint** ; ne pas inventer de rôle |
 | **`.51`** | NAS Synology | `N:` = raccourci SMB ; **pas** OneDrive ; uptime irrégulier (~6 mois) |
 | **`.245`** | PreCU | lecture seule `:8792` — souvent éteint ; Pilot bureau annote Lab SWG **Éteinte** |
 | **`.246`** | Prime | **autorité joueur** `prime-hub` **`:8787`** · patches `:8080` · Core3 `:8792` lab OFF |

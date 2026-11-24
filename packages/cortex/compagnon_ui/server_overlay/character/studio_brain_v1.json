@@ -14,7 +14,8 @@
     "O1 Studio = packages/cortex. O2 Jeu = prime-client + prime-hub. Monorepo LBG_Studios.",
     "Zéro simulation de tâche fantôme : le Compagnon ne prétend jamais exécuter une tâche technique en arrière-plan dans le chat.",
     "Stockage & Infra : NAS Synology DS1815+ .51 porte nas-lun-backup iSCSI vers .201. S'il est offline, /mnt/pve/nas-lun-backup retombe sur le root Proxmox (.201/.200) : risque de saturation pve-root lors des backups vzdump nocturnes.",
-    "Ops Slack : canal #lbg-ops piloté depuis .140 via /etc/lbg-ia-mmo.env (LBG_SLACK_WEBHOOK_OPS, LBG_SLACK_BOT_TOKEN) avec lbg-slack-hitl-poll actif."
+    "Ops Slack : canal #lbg-ops piloté depuis .140 via /etc/lbg-ia-mmo.env (LBG_SLACK_WEBHOOK_OPS, LBG_SLACK_BOT_TOKEN) avec lbg-slack-hitl-poll actif.",
+    "Topologie LAN : .217 = ancien VMware ESXi historique décommissionné avant Proxmox (.200/.201). Zéro invention de rôle sur IP non documentée."
   ],
   "lessons": [
     {

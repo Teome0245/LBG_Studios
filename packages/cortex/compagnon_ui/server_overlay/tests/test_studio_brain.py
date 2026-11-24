@@ -35,7 +35,7 @@ class StudioBrainTests(unittest.TestCase):
         self.assertLessEqual(int(pack.get("max_chars") or 4000), 4000)
         self.assertGreaterEqual(len(pack.get("facts") or []), 4)
         self.assertGreaterEqual(len(pack.get("lessons") or []), 1)
-        self.assertLessEqual(len(pack.get("lessons") or []), 5)
+        self.assertLessEqual(len(pack.get("lessons") or []), 8)
         self.assertEqual(pack.get("character_pack"), "compagnon_v1")
 
     def test_format_contains_facts_and_lessons(self) -> None:
@@ -70,6 +70,16 @@ class StudioBrainTests(unittest.TestCase):
             self.assertLessEqual(len(block), 220)
         finally:
             Path(path).unlink(missing_ok=True)
+
+    def test_domain_pack_loads_and_formats(self) -> None:
+        mmo_pack = sb.load_domain_pack("mmo_prime")
+        self.assertTrue(mmo_pack, "pack domain mmo_prime introuvable")
+        self.assertEqual(mmo_pack.get("id"), "domain_mmo_prime")
+        self.assertIn("prime-hub", str(mmo_pack.get("facts")))
+
+        block = sb.format_studio_brain_block(domain="mmo_prime")
+        self.assertIn("Silo O2 MMO Prime", block)
+        self.assertIn("8787", block)
 
     def test_enabled_default(self) -> None:
         with mock.patch.dict(os.environ, {}, clear=False):

@@ -28,6 +28,20 @@ class EcosystemGroundingTests(unittest.TestCase):
         self.assertIn("pas la RAM", block)
         self.assertNotIn(":8792", block)
 
+    def test_wants_on_ip_217_and_esx(self) -> None:
+        self.assertTrue(
+            eco.wants_ecosystem_context(
+                "tu peux retrouver à quoi correspond l'IP 192.168.0.217 sur notre réseaux ?"
+            )
+        )
+        self.assertTrue(eco.wants_ecosystem_context("à quoi servait l'ancien ESX ?"))
+        self.assertTrue(eco.wants_ecosystem_context("c'est quoi la machine .217 ?"))
+        block = eco.format_ecosystem_grounding()
+        self.assertIn("192.168.0.217", block)
+        self.assertIn("ESXi", block)
+        self.assertIn("décommissionné", block)
+        self.assertIn("nœud de communication", block)  # mentionné dans l'interdiction
+
     def test_no_false_positive_plain_hello(self) -> None:
         self.assertFalse(eco.wants_ecosystem_context("bonjour, comment ça va ?"))
 

@@ -42,11 +42,44 @@ def _pack_candidates() -> list[Path]:
     return out
 
 
+def _domain_candidates(domain: str) -> list[Path]:
+    here = Path(__file__).resolve()
+    clean = domain.strip().lower()
+    out: list[Path] = []
+    out.append(here.parent.parent.parent / "knowledge" / "domains" / f"{clean}.json")
+    for parent in here.parents:
+        cand = parent / "knowledge" / "domains" / f"{clean}.json"
+        if cand.is_file():
+            out.append(cand)
+            break
+    out.append(Path(f"/opt/orchestrateur/backend/knowledge/domains/{clean}.json"))
+    return out
+
+
 def pack_path() -> Path | None:
     for cand in _pack_candidates():
         if cand.is_file():
             return cand
     return None
+
+
+def domain_pack_path(domain: str) -> Path | None:
+    for cand in _domain_candidates(domain):
+        if cand.is_file():
+            return cand
+    return None
+
+
+def load_domain_pack(domain: str) -> dict[str, Any]:
+    """Charge le silo de connaissances spécifique à un domaine (ex: compagnon, mmo_prime, infra_lan, showcase_web)."""
+    p = domain_pack_path(domain)
+    if p is None:
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
 
 
 def load_pack() -> dict[str, Any]:
@@ -70,11 +103,14 @@ def load_pack() -> dict[str, Any]:
             return _cache or {}
 
 
-def format_studio_brain_block(*, max_chars: int | None = None) -> str:
-    """Bloc injecté system prompt — LAB ops. '' si désactivé / vide."""
+def format_studio_brain_block(*, domain: str | None = None, max_chars: int | None = None) -> str:
+    """Bloc injecté system prompt — LAB ops ou silo ciblé. '' si désactivé / vide."""
     if not studio_brain_enabled():
         return ""
-    pack = load_pack()
+    if domain:
+        pack = load_domain_pack(domain)
+    else:
+        pack = load_pack()
     if not pack:
         return ""
     budget = int(max_chars if max_chars is not None else pack.get("max_chars") or DEFAULT_MAX_CHARS)
@@ -82,8 +118,9 @@ def format_studio_brain_block(*, max_chars: int | None = None) -> str:
     floor = 120 if max_chars is not None else 500
     budget = max(floor, min(budget, 8000))
 
+    domain_tag = f" — Silo {pack.get('name') or domain}" if domain else ""
     lines: list[str] = [
-        "[Studio Brain LBG — faits courts, ne pas inventer hors de cette liste]",
+        f"[Studio Brain LBG{domain_tag} — faits courts, ne pas inventer hors de cette liste]",
         f"Pack : {pack.get('id') or 'studio_brain_v1'} · character → {pack.get('character_pack') or 'compagnon_v1'}",
         "Faits :",
     ]

@@ -362,6 +362,11 @@ func on_hotbar_slot(index: int) -> void:
 
 
 func ensure_hub_chat_ui() -> void:
+	if main and main.swg_chat_box != null:
+		# L'interface officielle SwgChatBox est active : masquer le panneau doublon HubChatPanel
+		if hub_chat_root != null and is_instance_valid(hub_chat_root):
+			hub_chat_root.visible = false
+		return
 	if hub_chat_root != null and is_instance_valid(hub_chat_root):
 		return
 	if main == null:

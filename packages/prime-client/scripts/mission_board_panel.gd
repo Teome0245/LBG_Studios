@@ -293,14 +293,14 @@ func _ensure_objective_hud() -> void:
 		_objective_hud = Label.new()
 		_objective_hud.name = "QuestObjectiveHud"
 		hud_layer.add_child(_objective_hud)
-	# Toujours réaligner (évite un ancien placement bas si le label existait déjà).
+	# Toujours réaligner (placé sous la hotbar à Y=70 pour éviter toute superposition).
 	_objective_hud.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	_objective_hud.anchor_left = 0.15
 	_objective_hud.anchor_right = 0.85
 	_objective_hud.offset_left = 0.0
 	_objective_hud.offset_right = 0.0
-	_objective_hud.offset_top = 10.0
-	_objective_hud.offset_bottom = 34.0
+	_objective_hud.offset_top = 70.0
+	_objective_hud.offset_bottom = 94.0
 	_objective_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_objective_hud.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_objective_hud.add_theme_font_size_override("font_size", 13)

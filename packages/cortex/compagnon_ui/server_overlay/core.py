@@ -201,6 +201,46 @@ async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
                 clear_pending_action(cid)
                 return await execute_pending_action(pending)
 
+    # Phase 3 : Vérification si le prompt déclenche une intention apprise L2
+    try:
+        from src.services.intent_forge import match_learned_intent
+    except ImportError:
+        try:
+            from intent_forge import match_learned_intent  # type: ignore
+        except ImportError:
+            match_learned_intent = None  # type: ignore
+
+    matched_learned = match_learned_intent(prompt) if match_learned_intent else None
+    if matched_learned and get_pending_action:
+        action_name = str(matched_learned.get("action") or "action")
+        label = str(matched_learned.get("label") or action_name)
+        target_cap = str(matched_learned.get("target_capability") or "capability")
+        from pending_actions import PendingAction  # type: ignore
+
+        learned_action = PendingAction(
+            action_id=f"act_learned_{action_name}_{int(time.time())}",
+            conversation_id=cid,
+            action_type="learned_capability",
+            label=label,
+            summary=f"Exécution de l'action apprise `{label}` (capacité : `{target_cap}`).",
+            command=["capability_exec", target_cap],
+            context={"action_key": action_name, "target_capability": target_cap},
+            button_text=f"Exécuter {label}",
+            cancel_text="Annuler",
+        )
+        store_pending_action(cid, learned_action)
+        resp_text = (
+            f"J'ai reconnu votre intention **{label}** (action apprise validée L2 ciblant `{target_cap}`). "
+            "Souhaitez-vous que je l'exécute ?"
+        )
+        return {
+            "ok": True,
+            "content": resp_text,
+            "response": resp_text,
+            "source": "learned_intent_matched",
+            "pending_action": learned_action.to_card_dict(),
+        }
+
     result = await llm_router.dispatch(
         prompt,
         mode=mode,
@@ -210,6 +250,21 @@ async def _ask_payload(body: AskRequest, llm_router: RouterIA) -> dict:
         model=model,
     )
     out = ensure_dispatch_dict(result)
+
+    # Enregistrement discret des misses d'intentions si la réponse est un fallback ou conversation standard
+    try:
+        from src.services.intent_forge import record_intent_miss
+    except ImportError:
+        try:
+            from intent_forge import record_intent_miss  # type: ignore
+        except ImportError:
+            record_intent_miss = None  # type: ignore
+
+    if record_intent_miss and not matched_learned:
+        # On n'enregistre que si ce n'est ni une salutation banale ni une action reconnue
+        from chat_intent import is_greeting_chat
+        if not is_greeting_chat(prompt) and len(prompt.strip()) > 5:
+            record_intent_miss(prompt, conversation_id=cid)
 
     # Détection si la réponse de l'assistant propose une action avec confirmation
     if get_pending_action:

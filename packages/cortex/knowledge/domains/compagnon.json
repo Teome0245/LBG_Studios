@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "domain_compagnon",
+  "name": "O1 Compagnon & Studio Dialogue",
+  "max_chars": 2000,
+  "character_pack": "compagnon_v1",
+  "facts": [
+    "Compagnon UI chat accessible sur http://192.168.0.100:5174 et API orchestrateur port :3000.",
+    "Modèle de causerie Compagnon : lbg-compagnon-e4b-v1 (Gemma 4 abliterated) sur .111:11434, fallback e2b.",
+    "Mémoire Compagnon : court-terme = tours chat PG, long-terme = RAG pgvector (rag_facts, lessons), self-state = drives/intent/memory_refs. Pas de MemGPT.",
+    "Gouvernance : niveaux L1 (lecture seule), L2 (approbation Pilot), L3 (autonomie). Jamais d'auto-exec destructeur. Zéro tâche fantôme simulée dans le chat.",
+    "Worldview Compagnon : craft avant spectacle, vérité opérationnelle, contre-pouvoir Agir dry-run, pas de formules moralisatrices ou de 'En tant qu'IA'."
+  ],
+  "lessons": [
+    {
+      "id": "compagnon_context_and_truth",
+      "summary": "Contexte borné + Respire ; L1/L2 gouvernance et pas serveurs ; .140 serveur ; zéro tâche fantôme simulée."
+    },
+    {
+      "id": "lesson_rag_not_weights",
+      "summary": "Faits studio / leçons / état LAN vont en RAG + Self + leçons JSON. Jamais de fine-tune pour 'mémoriser' le studio."
+    },
+    {
+      "id": "world_notif_prefs",
+      "summary": "Rapports monde filtrables (Monde / Social / Ops) — greeting et stream respectent les préférences."
+    }
+  ]
+}

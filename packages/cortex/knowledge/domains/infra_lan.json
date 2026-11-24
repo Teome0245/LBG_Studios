@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "domain_infra_lan",
+  "name": "Infrastructure Réseau & Matériel LAN",
+  "max_chars": 2000,
+  "character_pack": "compagnon_v1",
+  "facts": [
+    "Matrice d'inférence LLM : .110 Heavy RTX (qwen 2.5 coder 14b, 12b code/PM, E4b forge) · .111 Light (qwen 2B/0.8B triage, E4b causerie, nomic-embed-text :11434).",
+    "Cortex & Pilot : machine .140 physique (FastAPI :8000, Pilot UI /pilot/, orchestrateur :8010). Ne jamais confondre .140 avec un modèle LLM.",
+    "Atelier d'usinage 3D : machine .143 (Omarchy Linux, Blender headless, éditeur de code, port :5005). Ne jamais pointer Ollama sur .143.",
+    "Hyperviseurs Proxmox : .200 et .201. NAS Synology DS1815+ sur .51 portant nas-lun-backup iSCSI vers .201. Si .51 offline, bascule sur pve-root (risque saturation).",
+    "Ancienne IP .217 : Ancien VMware ESXi historique décommissionné et éteint. Interdiction formelle d'inventer un rôle sur cette IP.",
+    "Supervision Ops : Slack #lbg-ops piloté depuis .140 via /etc/lbg-ia-mmo.env avec boucle de contrôle et alertes hitl-poll."
+  ],
+  "lessons": [
+    {
+      "id": "infra_nas_and_slack_diag_2026-10-23",
+      "summary": "NAS .51 offline = suspension des sauvegardes vzdump Proxmox pour protéger pve-root. Slack muet = vérifier /etc/lbg-ia-mmo.env sur .140."
+    },
+    {
+      "id": "lesson_no_second_os",
+      "summary": "Pas de second orchestrateur opaque (CrewAI/Manus) sur le chemin critique LAN. Greffer sur Cortex/Team."
+    },
+    {
+      "id": "diag_tools_hygiene",
+      "summary": "Diagnostiquer l'état LAN via tools/smoke_lan_surfaces.sh et tools/diag_nas_and_slack.sh avant toute intervention infra."
+    }
+  ]
+}

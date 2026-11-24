@@ -1,9 +1,8 @@
 """Test de l'endpoint /v1/pilot/topology (Second Brain & Knowledge Explorer)."""
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from backend.main import app
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.mark.asyncio
@@ -26,6 +25,19 @@ async def test_pilot_topology_endpoint():
         assert "lia_avatar" in nodes
         assert "scrapaltai" in nodes
         assert "live_gladys_count" in data
+
+        # Vérification des silos de connaissances et skills Gladys
+        assert "domain_compagnon" in nodes
+        assert "domain_mmo_prime" in nodes
+        assert "domain_infra_lan" in nodes
+        assert "domain_showcase_web" in nodes
+        assert "skill_nocturnal_audit" in nodes
+        assert "skill_deploy_showcase" in nodes
+        assert "skill_blender_143" in nodes
+        assert "skill_smoke_lan" in nodes
+        assert "skill_self_healing" in nodes
+        assert nodes["domain_compagnon"]["is_live"] is True
+        assert nodes["skill_nocturnal_audit"]["is_live"] is True
 
 
 @pytest.mark.asyncio

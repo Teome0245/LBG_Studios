@@ -95,10 +95,10 @@ async def get_pilot_topology(domain: str | None = Query(None, description="Filtr
             all_nodes[nid]["is_live"] = is_up
             all_nodes[nid]["status"] = "online" if is_up else "offline"
 
-    # Marquer les connaissances et l'organisme comme statut nominal
+    # Marquer les connaissances, l'organisme, les domaines et les skills comme statut nominal
     for nid, node in all_nodes.items():
         if node.get("domain") == "gladys":
-            if node.get("type") in ("organism", "knowledge", "incarnation"):
+            if node.get("type") in ("organism", "knowledge", "incarnation", "skill", "domain"):
                 node["is_live"] = True
                 node["status"] = "online"
             elif "is_live" not in node:

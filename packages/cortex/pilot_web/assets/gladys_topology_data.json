@@ -8,16 +8,25 @@
       "desc": "Entité cybernétique globale LBG Studios. Siège de conscience réflexive, coordination distribuée et méta-autonomie.",
       "path": "docs/ORGANISME_LBG.md",
       "links_to": [
-        "lia_avatar",
+        "inference_110",
+        "runtime_246",
+        "doc_objectifs",
+        "skill_nocturnal_audit",
         "cortex_140",
         "poste_10",
+        "domain_compagnon",
+        "skill_deploy_showcase",
         "atelier_143",
-        "inference_110",
-        "inference_111",
-        "runtime_246",
-        "serveur_54",
         "doc_organisme",
-        "doc_objectifs"
+        "domain_mmo_prime",
+        "lia_avatar",
+        "skill_smoke_lan",
+        "inference_111",
+        "skill_self_healing",
+        "skill_blender_143",
+        "domain_infra_lan",
+        "domain_showcase_web",
+        "serveur_54"
       ],
       "incoming_count": 8
     },
@@ -426,6 +435,116 @@
         "gladys_organism"
       ],
       "incoming_count": 2
+    },
+    "domain_compagnon": {
+      "id": "domain_compagnon",
+      "title": "Silo Savoir : O1 Compagnon",
+      "type": "domain",
+      "domain": "gladys",
+      "desc": "Silo contextuel focalisé sur le dialogue, la persona et l'UI Compagnon (.100:5174/:3000).",
+      "path": "packages/cortex/knowledge/domains/compagnon.json",
+      "links_to": [
+        "orchestrator_service"
+      ],
+      "incoming_count": 1
+    },
+    "domain_mmo_prime": {
+      "id": "domain_mmo_prime",
+      "title": "Silo Savoir : O2 MMO Prime",
+      "type": "domain",
+      "domain": "gladys",
+      "desc": "Silo contextuel focalisé sur le runtime Godot .246:8787 et le client Prime.",
+      "path": "packages/cortex/knowledge/domains/mmo_prime.json",
+      "links_to": [
+        "prime_hub_service"
+      ],
+      "incoming_count": 1
+    },
+    "domain_infra_lan": {
+      "id": "domain_infra_lan",
+      "title": "Silo Savoir : Infra LAN",
+      "type": "domain",
+      "domain": "gladys",
+      "desc": "Silo contextuel focalisé sur la topologie matérielle, Proxmox, NAS et Slack #lbg-ops.",
+      "path": "packages/cortex/knowledge/domains/infra_lan.json",
+      "links_to": [
+        "cortex_140"
+      ],
+      "incoming_count": 1
+    },
+    "domain_showcase_web": {
+      "id": "domain_showcase_web",
+      "title": "Silo Savoir : Vitrine Web",
+      "type": "domain",
+      "domain": "gladys",
+      "desc": "Silo contextuel focalisé sur laboiteageek.fr et le pipeline de déploiement OVH.",
+      "path": "packages/cortex/knowledge/domains/showcase_web.json",
+      "links_to": [
+        "serveur_54"
+      ],
+      "incoming_count": 1
+    },
+    "skill_nocturnal_audit": {
+      "id": "skill_nocturnal_audit",
+      "title": "Skill : Audit Nocturne 0€",
+      "type": "skill",
+      "domain": "gladys",
+      "desc": "Ronde d'inspection nocturne autonome et rapport de santé LAN (0€ Cloud).",
+      "path": "packages/cortex/skills/gladys-nocturnal-audit/SKILL.md",
+      "links_to": [
+        "nocturnal_auditor"
+      ],
+      "incoming_count": 1
+    },
+    "skill_deploy_showcase": {
+      "id": "skill_deploy_showcase",
+      "title": "Skill : Déploiement OVH",
+      "type": "skill",
+      "domain": "gladys",
+      "desc": "Build Vite et synchronisation SSH rsync du site vitrine vers le cluster OVH.",
+      "path": "packages/cortex/skills/gladys-deploy-showcase-ovh/SKILL.md",
+      "links_to": [
+        "domain_showcase_web"
+      ],
+      "incoming_count": 1
+    },
+    "skill_blender_143": {
+      "id": "skill_blender_143",
+      "title": "Skill : Atelier 3D (.143)",
+      "type": "skill",
+      "domain": "gladys",
+      "desc": "Délégation headless Blender pour modélisation, baking et animations sur Omarchy.",
+      "path": "packages/cortex/skills/gladys-blender-pipeline-143/SKILL.md",
+      "links_to": [
+        "atelier_143"
+      ],
+      "incoming_count": 1
+    },
+    "skill_smoke_lan": {
+      "id": "skill_smoke_lan",
+      "title": "Skill : Smoke Surfaces LAN",
+      "type": "skill",
+      "domain": "gladys",
+      "desc": "Vérification fonctionnelle et de non-régression des 4 surfaces vitales LBG en <10s.",
+      "path": "packages/cortex/skills/gladys-smoke-lan/SKILL.md",
+      "links_to": [
+        "cortex_backend",
+        "prime_hub_service"
+      ],
+      "incoming_count": 1
+    },
+    "skill_self_healing": {
+      "id": "skill_self_healing",
+      "title": "Skill : Auto-Réparation 0€",
+      "type": "skill",
+      "domain": "gladys",
+      "desc": "Cycle cybernétique d'auto-évaluation et réparation locale avec ouvrier Qwen 14B.",
+      "path": "packages/cortex/skills/gladys-self-healing/SKILL.md",
+      "links_to": [
+        "cline_worker",
+        "inference_110"
+      ],
+      "incoming_count": 1
     }
   },
   "edges": [
@@ -588,6 +707,91 @@
       "source": "prime_hub_service",
       "target": "scrapaltai",
       "relation": "hosts_shard"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "domain_compagnon",
+      "relation": "silo_domain"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "domain_mmo_prime",
+      "relation": "silo_domain"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "domain_infra_lan",
+      "relation": "silo_domain"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "domain_showcase_web",
+      "relation": "silo_domain"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "skill_nocturnal_audit",
+      "relation": "operates_skill"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "skill_deploy_showcase",
+      "relation": "operates_skill"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "skill_blender_143",
+      "relation": "operates_skill"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "skill_smoke_lan",
+      "relation": "operates_skill"
+    },
+    {
+      "source": "gladys_organism",
+      "target": "skill_self_healing",
+      "relation": "operates_skill"
+    },
+    {
+      "source": "skill_blender_143",
+      "target": "atelier_143",
+      "relation": "targets_machine"
+    },
+    {
+      "source": "skill_nocturnal_audit",
+      "target": "nocturnal_auditor",
+      "relation": "powers_agent"
+    },
+    {
+      "source": "skill_self_healing",
+      "target": "cline_worker",
+      "relation": "coordinates_worker"
+    },
+    {
+      "source": "skill_smoke_lan",
+      "target": "cortex_backend",
+      "relation": "probes_surface"
+    },
+    {
+      "source": "domain_compagnon",
+      "target": "orchestrator_service",
+      "relation": "anchors_dialogue"
+    },
+    {
+      "source": "domain_mmo_prime",
+      "target": "prime_hub_service",
+      "relation": "anchors_world"
+    },
+    {
+      "source": "domain_infra_lan",
+      "target": "cortex_140",
+      "relation": "anchors_infra"
+    },
+    {
+      "source": "domain_showcase_web",
+      "target": "serveur_54",
+      "relation": "anchors_web"
     }
   ]
 }

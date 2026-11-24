@@ -32,6 +32,8 @@
     machine: { main: "#3b82f6", glow: "rgba(59, 130, 246, 0.5)", radius: 21, label: "Machine / Infra" },
     service: { main: "#0ea5e9", glow: "rgba(14, 165, 233, 0.5)", radius: 18, label: "Service / Port" },
     agent: { main: "#10b981", glow: "rgba(16, 185, 129, 0.5)", radius: 18, label: "Agent / Worker" },
+    domain: { main: "#14b8a6", glow: "rgba(20, 184, 166, 0.6)", radius: 18, label: "Silo Connaissance" },
+    skill: { main: "#ec4899", glow: "rgba(236, 72, 153, 0.6)", radius: 17, label: "Skill Gladys" },
     knowledge: { main: "#eab308", glow: "rgba(234, 179, 8, 0.5)", radius: 17, label: "Second Brain" },
 
     // MMO Scrapaltai & Lore

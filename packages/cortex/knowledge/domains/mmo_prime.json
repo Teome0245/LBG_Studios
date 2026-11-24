@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "domain_mmo_prime",
+  "name": "O2 MMO Prime & Lost Heaven",
+  "max_chars": 2000,
+  "character_pack": "compagnon_v1",
+  "facts": [
+    "Autorité joueur Lost Heaven : serveur Godot headless prime-hub sur 192.168.0.246:8787 (HTTP + WebSockets unifiés, peel natif).",
+    "Client joueur : packages/prime-client (Godot 4.6) + Launchpad >= 2.1.4 (Prime only). Serveur de patch sur .246:8080/patches/prime/manifest.json.",
+    "Chemin joueur : Core3, gateway SOE (:8765/:50000) et spike Python hub_runtime sont STRICTEMENT OFF et interdits sur le chemin joueur.",
+    "Joueurs hub (humains ou IA) : même classe joueur unifiée — pas de badge 'bot' artificiel. PNJ = monde fonctionnel.",
+    "Navigation 3D : NavigationServer3D Godot et NavigationRegion3D calibrés sur Scrapaltai / Lost Heaven. Orientation avatar face marche atan2(-x, -z).",
+    "Économie & combat : zéro mutation LLM libre sur économie, combat, craft, quêtes et réputation (OBJECTIVES.md)."
+  ],
+  "lessons": [
+    {
+      "id": "godot_g5_runtime_2026-10-07",
+      "summary": "Feature jeu -> prime-hub :8787 + prime-client. Ne jamais relancer Core3 pour le joueur."
+    },
+    {
+      "id": "sync_2d_3d_consistency",
+      "summary": "Synchronisation des positions joueur et PNJ via core3_pos et get_world_pos_3d() pour éviter tout décalage spatial."
+    },
+    {
+      "id": "headless_ci_validation",
+      "summary": "Validation obligatoire des évolutions MMO via tools/ci_godot_headless.sh avant tout déploiement de patch."
+    }
+  ]
+}

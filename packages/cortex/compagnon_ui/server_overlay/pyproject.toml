@@ -28,6 +28,7 @@ py-modules = [
     "desktop_dispatch",
     "ecosystem_grounding",
     "infra_lan_intent",
+    "intent_forge",
     "llm_chat_phase",
     "local_llm_provider",
     "mission_watch_intent",

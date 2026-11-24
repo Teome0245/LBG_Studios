@@ -1,14 +1,46 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-23  
+**Mis à jour** : 2026-11-24  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
-**Fil** : canon O1/O2/O3 — **Hygiène Infra LAN (.10, .201), Triage Alertes Slack & Boucle de Contrôle Failed (Thémis / Gladys)**.
+**Fil** : canon O1/O2/O3 — **Gladys Cerveau & Skills : Silos Contextuels par Domaine (`knowledge/domains/`), Standardisation des Skills (`packages/cortex/skills/`) & Intégration Topologie Live Pilot (`#/topology`)**.
 
 ---
 
-## Dernières actions réalisées (2026-11-23)
+## Dernières actions réalisées (2026-11-24)
+- 41. **Apprentissage d'intentions & forge de capacités sécurisés (héritage Lyra `intent_learning` / `agent_autoupgrade`)** :
+    - Arbitrages validés : adoption L2 dans Pilot ET en Chat (« oui / go »), seuil récurrence de 3 occurrences de miss, sandbox conteneur Podman sur `.143`.
+    - **Patch de timeout Cline CLI** : modification du timeout Ollama interne dans le binaire compilé (`var m=300000;` -> `var m=1800000`, 30 minutes au lieu de 5 minutes) évitant les blocages 504 sur CPU `.110`.
+    - **Phases 1, 2 & 3 terminées & validées (17/17 tests PASS, ruff clean, 154 tests backend PASS)** :
+      * Journal des intentions manquées (`record_intent_miss`, `load_intent_misses`) vers `intent_misses.jsonl`.
+      * Validations déterministes strictes : anti-ReDoS, pas de quantificateurs imbriqués, pas de backreferences, pas de faux positifs, pas de collision d'actions existantes, vérification de la capability cible.
+      * Cycle P2 : clustering automatique dès 3 occurrences (`cluster_intent_misses`), écriture du manifeste de staging (`write_intent_manifest`), création de tâche L2 Pilot et PendingAction Chat (`create_intent_pending_action`), adoption finale dans `learned_intents.json`.
+      * Phase 3 (Runtime live) : `core.py` vérifie `match_learned_intent` en priorité secondaire contrôlée, crée une PendingAction de confirmation, et enregistre en continu les misses sur prompts non triviaux. Kill-switch `LBG_LEARNED_INTENTS_ENABLED=0`.
+      * Suite de tests complète : `packages/cortex/compagnon_ui/server_overlay/tests/test_intent_forge.py`.
+    - Prochain pas : **Phase 4** (Capability Forge & conteneur Podman sur `.143`).
+- 40. **Gladys Cerveau & Skills : Silos Contextuels par Domaine (`knowledge/domains/`), Standardisation des Skills (`packages/cortex/skills/`) & Topologie Live Pilot (`#/topology`)** :
+    - **Silos de Connaissances par Domaine (`packages/cortex/knowledge/domains/`)** :
+      * Création des 4 silos contextuels modulaires au format JSON canonique :
+        - `compagnon.json` : O1 Compagnon, persona E4b, chat `:5174`/`:3000`, RAG pgvector, gouvernance L1/L2/L3.
+        - `mmo_prime.json` : O2 MMO Prime, hub Godot `.246:8787` (HTTP+WS), client Prime, zéro Core3 joueur, Navigation 3D.
+        - `infra_lan.json` : Matrice LLM `.110`/`.111`, Cortex `.140`, Atelier Omarchy `.143`, Proxmox `.200`/`.201`, NAS `.51`, Slack `#lbg-ops`.
+        - `showcase_web.json` : Vitrine officielle `laboiteageek.fr`, Vite showcase-web, déploiement OVH rsync.
+      * API Python dédiée `packages/cortex/knowledge/domains/__init__.py` : `list_domains()`, `load_domain()`, `format_domain_block()`.
+      * Évolution rétro-compatible de `packages/cortex/compagnon_ui/server_overlay/studio_brain.py` : support de `load_domain_pack(domain)` et `format_studio_brain_block(domain=...)` permettant un chargement ciblé à coût de tokens minimal (~1.5 Ko vs saturation globale). Tests unitaires validés (6/6 PASS).
+    - **Standardisation des Skills Gladys (`packages/cortex/skills/`)** :
+      * Formalisation des 5 compétences opérationnelles clés sous le standard unifié `SKILL.md` (frontmatter YAML + guide) + runner CLI exécutable `run.sh` :
+        - `gladys-nocturnal-audit/` : Audit nocturne 0€, sonde d'intégrité LAN et consignation du journal.
+        - `gladys-deploy-showcase-ovh/` : Compilation Vite et déploiement SSH/rsync sur `laboiteageek.fr`.
+        - `gladys-blender-pipeline-143/` : Délégation headless Blender sur l'Atelier Omarchy (`.143`).
+        - `gladys-smoke-lan/` : Smoke test fonctionnel déterministe des 4 surfaces LAN en <10s.
+        - `gladys-self-healing/` : Boucle cybernétique d'auto-évaluation et réparation locale avec ouvrier Qwen 14B.
+    - **Visibilité Graphique Topologie Live Pilot ([`#/topology`](http://192.168.0.140:8080/#/topology))** :
+      * Enrichissement de `packages/cortex/pilot_web/assets/gladys_topology_data.json` : ajout des 4 nœuds de type `domain` et 5 nœuds de type `skill` rattachés directement à `gladys_organism` (38 nœuds, 49 arêtes).
+      * Endpoint FastAPI `backend/api/v1/routes/pilot/topology.py` : prise en compte des types `domain` et `skill` avec statut live nominal.
+      * Moteur graphique `pilot_web/topology/topology_graph.js` et styles `topology_graph.css` : ajout des badges et couleurs de halo dédiées (Cyan `#14b8a6` pour les Domaines, Rose Magenta `#ec4899` pour les Skills Gladys).
+      * Tests d'intégration `test_pilot_topology.py` et suite complète Cortex validés (154/154 PASS).
+
 - 39. **Prime O2 : Correction de l'Orientation Face Marche (Fin de la marche à reculons) & Optimisation Haute Fluidité 60 FPS** :
     - **Orientation de l'Avatar (`world_ground_3d.gd`)** :
       * Correction de l'inversion angulaire 180° : calcul de l'angle cible avec `atan2(-move_vec.x, -move_vec.z)` (et `atan2(-to_pt.x, -to_pt.z)` en clic terrain) pour aligner rigoureusement l'avant de l'avatar vers son vecteur de marche et sa destination.

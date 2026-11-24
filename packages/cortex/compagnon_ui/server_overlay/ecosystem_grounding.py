@@ -29,6 +29,7 @@ _ECOSYSTEM_HINTS = re.compile(
     r"\bnas\b|\bsynology\b|\.51\b|192\.168\.0\.51|"
     r"\bproxmox\b|\b200\b|\b201\b|192\.168\.0\.(?:200|201)|"
     r"\bfreebox\b|\bslack\b|\b#lbg-ops\b|"
+    r"\.217\b|192\.168\.0\.217|\besxi?\b|vmware|"
     r"\bpilot\b|\bcompagnon\b|\bstudio\s+lbg\b"
     r")"
 )
@@ -51,13 +52,18 @@ _ECOSYSTEM_FACTS = """\
 - Incarnations : studio = Lyra/Compagnon · MMO = Lia (Rang 2 persona)
 - Mémoire à renforcer côté MMO = Self / leçons / session_summary — pas la RAM des VM
 - Source monorepo : LBG_Studios (cortex = O1 Studio · prime-client = O2 Jeu)
+- Ancien VMware ESXi historique (décommissionné avant Proxmox) : 192.168.0.217 (inactif, remplacé par Proxmox .200/.201 — ne fait plus partie des services actifs)
 
 RÈGLES STRICTES D'INFRASTRUCTURE ET DE COMPORTEMENT :
 1. IL N'EXISTE AUCUN SERVEUR PHYSIQUE NI VM APPELÉ « L1 » OU « L2 ». L1 et L2 désignent EXCLUSIVEMENT des niveaux de gouvernance et de validation humaine HITL (L1=lecture seule/sondes, L2=approbation humaine Pilot).
 2. .140 est le serveur Pilot/Cortex, JAMAIS un modèle d'IA.
 3. Le Compagnon ne simule JAMAIS d'actions techniques en tâche de fond (« je lance le test », « en cours d'optimisation », « c'est parti sur le terrain »).
 4. Si l'humain signale qu'une entité n'existe pas, l'abandonner immédiatement sans chercher à justifier son absence ou prétendre qu'elle est hors ligne.
-5. Si le NAS .51 est indisponible, le LUN iSCSI décroche et /mnt/pve/nas-lun-backup retombe sur le disque racine Proxmox (.201/.200) : les sauvegardes vzdump doivent être suspendues."""
+5. Si le NAS .51 est indisponible, le LUN iSCSI décroche et /mnt/pve/nas-lun-backup retombe sur le disque racine Proxmox (.201/.200) : les sauvegardes vzdump doivent être suspendues.
+6. ANTI-DIVAGATION STRICTE SUR LES ADRESSES IP ET L'INFRASTRUCTURE : Ne JAMAIS inventer de rôle, de flux ou de fonction pour une adresse IP inconnue ou demandée.
+   - Si l'IP 192.168.0.217 est demandée : indiquer clairement et sobrement qu'il s'agissait de l'ancien serveur hyperviseur VMware ESXi historique utilisé avant la migration vers Proxmox VE (.200/.201), aujourd'hui décommissionné, éteint et inactif.
+   - Si une autre IP inconnue ou non listée est demandée : affirmer avec franchise qu'elle ne figure pas dans le registre actif de l'écosystème LBG et ne correspond à aucun service studio en ligne.
+   - INTERDICTION ABSOLUE d'inventer des fonctions imaginaires comme « nœud de communication interne », « interface dédiée », « composant Prime Client », « gestion du compagnon » ou « flux de sauvegarde NAS » pour combler une absence de données."""
 
 
 def wants_ecosystem_context(prompt: str) -> bool:
@@ -66,4 +72,3 @@ def wants_ecosystem_context(prompt: str) -> bool:
 
 def format_ecosystem_grounding() -> str:
     return _ECOSYSTEM_FACTS.strip()
-
