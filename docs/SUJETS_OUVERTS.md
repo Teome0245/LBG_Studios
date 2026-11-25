@@ -1,6 +1,6 @@
 # Sujets ouverts — LBG Studios
 
-**Mis à jour** : 2026-10-14  
+**Mis à jour** : 2026-11-25  
 **Rôle** : liste des sujets **pas encore traités** (hors tickets déjà `done`).  
 **Pas** un plan d’exécution détaillé — juste le backlog explicite.  
 Quand un sujet est clos : le déplacer en § Clos (avec date) ou le supprimer.
@@ -22,7 +22,7 @@ _Aucun sujet ouvert en attente — O-FEEL-1, O-FEEL-2 et O-FEEL-3 clos._
 
 ### O1 — Mains code / coûts LLM
 
-_Aucun sujet ouvert en attente — O-IDE-1, O-IDE-2 et O-IDE-3 clos (2026-10-13)._
+- **O-HW-R720-MOE** *(en réserve / plus tard)* : Piste architecture **MoE** (`Qwen3-30B-A3B` / `Qwen3-Coder-30B-A3B`) + offload hybride RAM/VRAM (`llama.cpp --override-tensor`) sur le **PowerEdge R720 (`.201` / `.110`)** — soit en RAM DDR3 ECC étendue seule, soit couplée à un petit GPU PCIe ≤75 W type Tesla P4 8 Go sans câble d'alim Dell. Voir [`llm_cloud_free_vs_local.md`](../packages/cortex/docs/llm_cloud_free_vs_local.md).
 
 
 ### O1 — Autonomie Campus / CI / desktop

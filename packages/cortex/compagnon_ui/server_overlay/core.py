@@ -4,6 +4,7 @@ Routes racine historiquement inline dans `app/factory.py` : /history, /models, /
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from fastapi import APIRouter, Depends

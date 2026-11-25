@@ -9,7 +9,7 @@ description: Protocole de délégation de code à Cline (génération) et contr�
 
 ## 1. Rôles et responsabilités
 
-- **Cline (`huihui_ai/qwen2.5-coder-abliterate:14b` sur `.110`)** :
+- **Cline (`huihui_ai/qwen3-coder-abliterated:30b` sur `.110`)** :
   - Reçoit les mandats de code ciblés (fichiers explicites, jamais tout le monorepo).
   - Écrit / édite le code source sur la machine `.143`.
   - Peut être déclenché soit par Antigravity en CLI (`cline -P ollama ...`), soit par l'utilisateur via l'extension VS Code.

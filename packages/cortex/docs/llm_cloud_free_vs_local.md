@@ -78,6 +78,21 @@ Pas d’install tant qu’il n’y a pas de GPU lab. Si un jour : wrapper OpenAI
 
 ---
 
+## Note — MoE + Offload hybride RAM/VRAM pour le PowerEdge R720 (en réserve)
+
+**Source veille (2026-11-25)** : Kiara • IA locale — [*Ta carte de 8 Go peut faire tourner une grosse IA : la technique secrète du MoE*](https://www.youtube.com/watch?v=eYNdQTp2dPs).
+
+Principe : contrairement à un modèle dense (ex. 14B où 100 % des poids sont calculés à chaque token), un modèle **MoE (*Mixture of Experts*)** comme `Qwen3-30B-A3B` ou `Qwen3-Coder-30B-A3B` stocke ~18–20 Go en Q4_K_M mais **n’active qu’environ 3B paramètres par token**. Avec `llama.cpp` (`--override-tensor` / `-ot ".ffn_.*_exps.=CPU"`), on place le routeur, les couches d’attention et le KV Cache en VRAM (≤8 Go) et les experts MoE en RAM système.
+
+| Scénario sur R720 (`.201` / CT `.110`) | Intérêt concret | Prérequis / Vigilance R720 |
+|----------------------------------------|-----------------|----------------------------|
+| **A. Sans aucun GPU (Xeon + RAM pure)** | **Validé par benchmark live (2026-11-25)** sur `.110` (32 Go LXC, `2× Xeon E5-2650 v2`) : `huihui_ai/qwen3-coder-abliterated:30b` (MoE 30B-A3B, 19 Go RAM) bat `huihui_ai/qwen2.5-coder-abliterate:14b` dense sur toute la ligne : **Prefill ×2,40** (`19,75` vs `8,22 tok/s`) et **Génération ×1,48** (`1,57` vs `1,06 tok/s`, `119 s` vs `182 s` sur 180 tok). | Sur R720 64 Go actuels : monte l'hôte `.201` à `57/62 Go` (`5,7 Go` dispos, `~800 Mo` swap) et disque `.110` à `79 %` (`16 Go` libres). Pour basculer H24 en confort total : purger un modèle legacy non routé sur `.110` + réduire l'enveloppe vide de `VM 140` ou ajouter de la DDR3 ECC dans les 16 slots libres du R720. |
+| **B. Petit GPU PCIe ≤8 Go + RAM R720** | Le GPU absorbe le *prompt processing* (gros contexte Cline / RAG) et le KV Cache ; les Xeon + RAM servent les experts MoE (`-ot`). | Privilégier une carte **≤75 W sur slot PCIe sans câble d’alim Dell propriétaire** : ex. **NVIDIA Tesla P4 (8 Go, ~60–80 €)** ou **Quadro T1000 / RTX A2000**. *(Bonus `.201` : les ventilos châssis à 100 % refroidissent parfaitement une Tesla P4 passive — cf. [`runbook_r720_idrac_hs.md`](runbook_r720_idrac_hs.md)).* |
+
+**Décision actuelle** : **Mis de côté (parking R&D / upgrade R720)**. Aucun changement sur `reason_route_matrix()` tant qu’une extension RAM DDR3 ou carte PCIe ≤75 W n’est pas planifiée.
+
+---
+
 ## Hors scope
 
 - Push `LBG_REASON_EPHEMERAL_*` vers `.140`  

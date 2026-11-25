@@ -204,7 +204,7 @@ def _recommendations(
     has_qwen_coder = any("qwen2.5-coder" in n for n in heavy_names_l)
     if has_qwen_coder:
         recs.append(
-            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen2.5-coder-abliterate:14b sur heavy 110."
+            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen3-coder-abliterated:30b sur heavy 110."
         )
     if has_ablit_12:
         recs.append(

@@ -61,12 +61,26 @@ def ssh_identity() -> str:
     return (os.environ.get("LBG_SSH_IDENTITY") or "").strip()
 
 
+def _precu_optional() -> bool:
+    return os.environ.get("LBG_GUEST_METRICS_PRECU_REQUIRED", "0").strip().lower() not in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
 def default_wall_hosts() -> list[dict[str, str]]:
     """Hôtes du mur INFRA LAN (labels Pilot / Cockpit)."""
     return [
         {"id": "web", "label": "Front web", "host": os.environ.get("LBG_LAN_HOST_WEB", "192.168.0.100").strip() or "192.168.0.100"},
         {"id": "core", "label": "Core", "host": os.environ.get("LBG_LAN_HOST_CORE", "192.168.0.140").strip() or "192.168.0.140"},
-        {"id": "precu", "label": "Core3 SWG", "host": os.environ.get("LBG_LAN_HOST_PRECU", "192.168.0.245").strip() or "192.168.0.245"},
+        {
+            "id": "precu",
+            "label": "Core3 SWG",
+            "host": os.environ.get("LBG_LAN_HOST_PRECU", "192.168.0.245").strip() or "192.168.0.245",
+            "optional": "1" if _precu_optional() else "0",
+        },
         {"id": "prime", "label": "Prime monde", "host": os.environ.get("LBG_LAN_HOST_MMO", "192.168.0.246").strip() or "192.168.0.246"},
     ]
 
@@ -241,7 +255,19 @@ def probe_guest_host(spec: dict[str, str]) -> dict[str, Any]:
         base["transport"] = "ssh"
 
     if not ok:
-        base["error"] = (stderr or stdout or "probe failed").strip()[:400]
+        err_msg = (stderr or stdout or "probe failed").strip()[:400]
+        if str(spec.get("optional") or "").strip().lower() in ("1", "true", "yes", "on"):
+            base.update(
+                {
+                    "ok": True,
+                    "optional": True,
+                    "outcome": "off",
+                    "error": err_msg,
+                    "alerts": [],
+                }
+            )
+            return base
+        base["error"] = err_msg
         base["alerts"] = [f"sonde KO: {base['error']}"]
         return base
 
@@ -293,7 +319,7 @@ def probe_guest_host(spec: dict[str, str]) -> dict[str, Any]:
     return base
 
 
-_OUTCOME_RANK = {"ok": 0, "warn": 1, "critical": 2}
+_OUTCOME_RANK = {"ok": 0, "off": 0, "warn": 1, "critical": 2}
 
 
 def _aggregate(hosts: list[dict[str, Any]]) -> dict[str, Any]:

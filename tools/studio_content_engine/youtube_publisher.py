@@ -297,6 +297,92 @@ def upload_short_video(
     }
 
 
+def upload_long_video(
+    video_path: Path,
+    title: str,
+    description: str,
+    tags: list[str] | None = None,
+    thumbnail_path: Path | None = None,
+    privacy_status: str = "public",
+) -> dict[str, str]:
+    """Upload une vidéo longue 16:9 (1920x1080) avec chapitres horodatés et miniature 1280x720."""
+    if not video_path.exists():
+        raise FileNotFoundError(f"Fichier vidéo introuvable : {video_path}")
+
+    youtube = get_authenticated_service()
+
+    clean_title = title.strip()
+    if len(clean_title) > 98:
+        truncated = clean_title[:95]
+        sp = truncated.rfind(" ")
+        clean_title = (truncated[:sp] if sp > 40 else truncated).strip() + "..."
+
+    base_long_tags = [
+        "ia locale",
+        "homelab",
+        "self hosting",
+        "llm local",
+        "hardware ia",
+        "ollama",
+        "lbg studios",
+        "open source",
+    ]
+    final_tags = build_dynamic_tags(clean_title, tags or base_long_tags)
+
+    body = {
+        "snippet": {
+            "title": clean_title,
+            "description": description,
+            "tags": final_tags,
+            "categoryId": "28",
+            "defaultLanguage": "fr",
+            "defaultAudioLanguage": "fr",
+        },
+        "status": {
+            "privacyStatus": privacy_status,
+            "selfDeclaredMadeForKids": False,
+        },
+    }
+
+    logger.info("Upload de la Vidéo Longue 16:9 vers YouTube (@LBG-p8k)...")
+    media = MediaFileUpload(
+        str(video_path), mimetype="video/mp4", resumable=True, chunksize=2 * 1024 * 1024
+    )
+    request = youtube.videos().insert(
+        part="snippet,status", body=body, media_body=media
+    )
+
+    response = None
+    while response is None:
+        status, response = request.next_chunk()
+        if status:
+            logger.info("Upload vidéo longue : %d%%...", int(status.progress() * 100))
+
+    video_id = response.get("id")
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    logger.info("Vidéo longue publiée avec succès : %s", video_url)
+
+    thumb_status = "skipped"
+    if thumbnail_path and thumbnail_path.exists():
+        try:
+            thumb_media = MediaFileUpload(str(thumbnail_path), mimetype="image/png")
+            youtube.thumbnails().set(videoId=video_id, media_body=thumb_media).execute()
+            thumb_status = "uploaded"
+            logger.info("Miniature personnalisée 1280x720 appliquée avec succès !")
+        except Exception as exc:
+            thumb_status = f"warning: {exc}"
+            logger.warning("Miniature personnalisée non appliquée (%s)", exc)
+
+    return {
+        "status": "published",
+        "video_id": video_id,
+        "video_url": video_url,
+        "title": clean_title,
+        "thumbnail": thumb_status,
+        "privacy": privacy_status,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Publication YouTube Shorts @LBG-p8k")
     parser.add_argument(

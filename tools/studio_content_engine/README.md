@@ -1,107 +1,73 @@
-# Studio Content Engine — Générateur Autonome de Vidéos TikTok / Shorts (0 €)
+# Studio Content Engine — Générateur Autonome de Vidéos 3D TikTok / Shorts (0 €)
 
-Pipeline d'automatisation de production vidéo courte verticale (9:16 - 1080×1920) pour TikTok, YouTube Shorts et Instagram Reels, 100% local et sans frais de cloud récurrents.
+Pipeline d'automatisation de production vidéo courte verticale (9:16 - 1080×1920 @ 30 FPS) pour TikTok, YouTube Shorts et Instagram Reels, 100% local et sans frais de cloud récurrents.
 
 ---
 
-## Architecture de la Pipeline
+## Modes de Rendu (Style Nexura Domina WebGL Three-VRM)
 
-```
-[ Idée / Sujet Tech ]
-         │
-         ▼
-[ 1. Script Viral LLM ] ──► Ollama local (.111:11434 / .110:11434)
-  - Hook 3s anti-scroll    (qwen2.5:3b / gemma-4 / fallback canonique)
-  - Douleur / Problème
-  - Solution technique 0€
-  - Call to Action
-         │
-         ▼
-[ 2. Synthèse Vocale ]  ──► Piper TTS sidecar (.111:8098/v1/tts)
-  - Rendu instantané WAV 22050 Hz
-  - Concaténation et calage temporel des phrases
-         │
-         ▼
-[ 3. Sous-titres TikTok ] ──► Moteur ASS (Advanced SubStation Alpha)
-  - Style néon jaune & blanc, contour 6px noir
-  - Découpage par bloc d'impact
-         │
-         ▼
-[ 4. Rendu 3D Avatar & Composition FFmpeg ]
-  - Poses clés 3D pré-calculées sous Blender 5.2.2 LTS (Mia.vrm) :
-    * neutral.png, talk_a.png, talk_o.png, blink.png, joy.png
-  - Lip-sync dynamique réagissant à l'enveloppe RMS audio
-  - Clignements d'yeux procéduraux (toutes les 3.6s)
-  - Micro-mouvements de respiration et balancement
-  - Spectre audio réactif (28 barres néon animées)
-  - En-tête Cyberpunk LBG Studios & badges
-         │
-         ▼
-[ Vidéo MP4 Finalisée ] ──► 1080×1920 @ 30 FPS, H.264 / AAC (~3 Mo)
-```
+1. **`stage3d` (Défaut — Shorts Tech / MMO Parlés 3D)** :
+   - Scène 3D temps réel (`Compagnon.vrm` sous Three-VRM + projecteurs volumétriques cyan/magenta, grille perspective animée, particules).
+   - Poses et gestes mocap `.vrma` face caméra + caméras cinématiques mobiles (`push_in`, `front_arc`, `sway`, `pull_out`, `bust`).
+   - Sous-titres karaoké courts (2–3 mots pop néon) positionnés en zone sûre TikTok/Shorts au-dessus de l'égaliseur.
+   - Mixage voix de Lia (`Vivienne` / repli `Piper`) + nappe instrumentale synthwave discrète (-17.5 dB) + égaliseur FFT 24 bandes.
+2. **`music3d` (Clips Musicaux / Chorégraphies 3D)** :
+   - Mode concert virtuel 3D inspiré de *Nexura Domina* (`uLV_0kI2ogM`).
+   - Micro cyber 3D néon en main, enchaînements de danses mocap `.vrma` (Maraschino, Bellydance, Hip-Hop, danses natives SWG Poplock/Moonwalk, Capoeira) et caméras drone.
+   - Masters audio stéréo 0€ cloud (`nexura_domina_v1`, `lia_cyberpunk_song_30s_master`, `lia_synthwave_30s_master`, `lia_synthwave_energy_master_60s`).
+3. **`jrpg` / `standard` (Legacy)** :
+   - Conserves pour rétro-compatibilité.
+
+### Exécution Hybride GPU `.10` ↔ `.143`
+- Si le PC Windows `.10` est allumé **et** inactif depuis au moins 3 minutes (`LBG_WIN10_MIN_IDLE_SEC=180`), le rendu s'effectue avec accélération matérielle GPU dans un profil isolé sans toucher aux fenêtres de l'utilisateur.
+- Sinon, repli 100% automatique et transparent en tâche de fond sur `.143` (`Xvfb` + Chromium WebGL + FFmpeg).
 
 ---
 
 ## Commandes Rapides
 
-### 1. Génération de démonstration instantanée
-```bash
-packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py --demo
-```
-
-### 2. Génération sur un sujet personnalisé
+### 1. Générer un Short Tech / MMO parlé en scène 3D (défaut)
 ```bash
 packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py \
-  --topic "Pourquoi nos 10 bots IA tournent sur Godot 4.6 headless"
+  --topic "Pourquoi fusionner Star Wars Galaxies Pre-CU et La 4ème Prophétie en 3D"
 ```
+
+### 2. Générer un Clip Musical / Chorégraphie 3D
+```bash
+packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py \
+  --style music3d --music-preset nexura_drop_highlight
+```
+Presets musicaux disponibles : `nexura_drop_highlight`, `cyberpunk_protocol_30s`, `swg_cantina_groove`, `synthwave_energy_show`, `nexura_climax_encore`.
 
 ### 3. Publication Automatique (YouTube Shorts & TikTok)
-
-#### YouTube Shorts (@LBG-p8k)
-1. Télécharger `client_secret.json` depuis la Google Cloud Console (API YouTube Data v3 activée) et le placer dans :
-   `tools/studio_content_engine/config/client_secret.json`
-2. Lancer la première authentification :
-   ```bash
-   packages/cortex/.venv/bin/python tools/studio_content_engine/youtube_publisher.py --setup
-   ```
-3. Publier directement :
-   ```bash
-   packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py --demo --youtube
-   ```
-
-#### TikTok Studio (Assistance Instantanée 0 Clic)
-Le module déclenche directement sur le poste Windows :
-- L'ouverture du navigateur sur `https://www.tiktok.com/tiktokstudio/upload`
-- La mise en surbrillance du MP4 dans l'explorateur Windows (`O:\OneDrive\Pictures\IA\Contenue\`)
-- La copie automatique du titre et des hashtags dans le presse-papier Windows (prêt pour `Ctrl+V`)
-
 ```bash
-packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py --demo --tiktok
+packages/cortex/.venv/bin/python tools/studio_content_engine/content_bot.py \
+  --style stage3d --topic "Mon sujet Tech" --youtube --tiktok
 ```
 
-### 4. Automatisation Quotidienne (2 Vidéos par Jour)
-Le système tourne de manière autonome via un timer systemd Linux :
-- **Horaires** : Déclenchement automatique chaque jour à **11h30** et **17h30**.
-- **Gestionnaire** : `cron_daily_publisher.py` dépile le fichier `topics_backlog.json`.
-- **YouTube Shorts** : Publication 100% automatique en public sur la chaîne officielle **La Boite à Geek (`@lbg-p8k`)**.
-- **TikTok Manual Helper** : La vidéo MP4 est synchronisée sur `O:\OneDrive\Pictures\IA\Contenue\` avec sa fiche mémo texte (`*_tiktok_memo.txt`) contenant la légende exacte et les hashtags viraux.
+### 4. Automatisation Quotidienne Alternée (`cron_daily_publisher.py`)
+Le planificateur systemd (`lbg-content-daily.timer`) dépile `topics_backlog.json` en alternant automatiquement les **Shorts Tech/MMO parlés 3D (`stage3d`)** et les **Clips Musicaux 3D (`music3d`)**, et réapprovisionne automatiquement la file sans jamais tomber à sec.
 
-Vérifier le statut du planificateur :
 ```bash
 systemctl --user status lbg-content-daily.timer
-systemctl --user list-timers
-```
-
-Déclencher un drop manuellement hors planning :
-```bash
 packages/cortex/.venv/bin/python tools/studio_content_engine/cron_daily_publisher.py
 ```
 
-### 5. (Re)génération des poses 3D sous Blender
-Si vous modifiez l'éclairage, la caméra ou l'avatar (`Compagnon.vrm`, `NeonNeko.vrm`) :
-```bash
-blender -b --python tools/studio_content_engine/blender_render_keyframes.py
-```
+### 5. Vidéos Longues YouTube 16:9 (4 à 15 min — Style Kiara + Lia 3D)
+Génère des épisodes complets en `1920×1080` @ 30.00 FPS avec **plateau Hero + Split-Screen (1/3 Lia 3D + 2/3 slides techniques animées : comparatifs, schémas d'architecture, terminaux bash, barres de benchmarks)**, chapitres YouTube horodatés et miniature `1280×720` automatique.
+
+1. **Mode Brouillon validé par défaut** (génère `script_long.json` + `BROUILLON_A_VALIDER.md` pour relecture avant rendu) :
+   ```bash
+   packages/cortex/.venv/bin/python tools/studio_content_engine/longform_bot.py --minutes 6
+   ```
+2. **Rendu HD 16:9 après validation du brouillon** :
+   ```bash
+   packages/cortex/.venv/bin/python tools/studio_content_engine/longform_bot.py --render tools/studio_content_engine/output/long_xxx --youtube
+   ```
+3. **Mode `--auto` d'une traite** (écriture → voix → miniature HD → rendu 16:9 → publication YouTube) :
+   ```bash
+   packages/cortex/.venv/bin/python tools/studio_content_engine/longform_bot.py --topic "Mon sujet IA locale" --minutes 8 --auto --youtube
+   ```
 
 ---
 
@@ -111,8 +77,5 @@ blender -b --python tools/studio_content_engine/blender_render_keyframes.py
 |---|---|
 | **Résolution** | 1080 × 1920 (Vertical 9:16) |
 | **Framerate** | 30 FPS |
-| **Codec Vidéo** | H.264 (libx264, profile High, CRF 20, yuv420p) |
-| **Codec Audio** | AAC LC mono 22050 Hz |
-| **Poids moyen** | ~3.0 Mo pour 25 secondes |
-| **Temps de génération** | ~30 secondes (0 coût API) |
-
+| **Codec Vidéo** | H.264 (`libx264`, High Profile, CRF 18–19, `yuv420p`) |
+| **Codec Audio** | AAC LC 256 kb/s, 44.1 kHz stéréo |

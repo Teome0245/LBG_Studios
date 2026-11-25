@@ -15,7 +15,7 @@ _LIGHT_PROFILES = frozenset({"router", "json", "fast"})
 # Heavy 110 — code/PM/dialogue ≤12B abliterated QAT ; garde-fous maturité A/B/C.
 # Canon : gemma-4-abliterated:12b-qat (pas d'alias :12b — un seul tag).
 HEAVY_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:12b-qat"
-CODE_REASON_DEFAULT = "huihui_ai/qwen2.5-coder-abliterate:14b"
+CODE_REASON_DEFAULT = "huihui_ai/qwen3-coder-abliterated:30b"
 FORGE_REASON_DEFAULT = "huihui_ai/gemma-4-abliterated:E4b-qat"
 LIGHT_CLEAN_DEFAULT = "huihui_ai/qwen3.5-abliterated:2B"
 LIGHT_FAST_DEFAULT = "huihui_ai/qwen3.5-abliterated:0.8B"

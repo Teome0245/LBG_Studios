@@ -131,3 +131,25 @@ def test_thresholds(monkeypatch):
     monkeypatch.setenv("LBG_GUEST_DISK_CRIT_PCT", "85")
     assert disk_warn_pct() == 70
     assert disk_crit_pct() == 85
+
+
+def test_default_wall_precu_245_off_is_not_error(monkeypatch):
+    monkeypatch.delenv("LBG_GUEST_METRICS_HOSTS", raising=False)
+    monkeypatch.delenv("LBG_GUEST_METRICS_PRECU_REQUIRED", raising=False)
+
+    def fake_ssh(host, timeout_s=12.0):
+        if host.endswith(".245"):
+            return False, "", "ssh: connect to host 192.168.0.245 port 22: Connection timed out"
+        return True, "disk_pct=30\nload1=0.2\nnproc=4\nmem_pct=20\n", ""
+
+    with patch("lbg_agents.guest_metrics_probe._run_probe_ssh", side_effect=fake_ssh):
+        with patch("lbg_agents.guest_metrics_probe._local_ips", return_value=set()):
+            wall = probe_guest_metrics_wall()
+
+    assert wall["ok"] is True
+    assert wall["outcome"] == "ok"
+    assert wall["stressed"] == []
+    assert wall["alerts"] == []
+    precu_row = next(h for h in wall["hosts"] if h["id"] == "precu")
+    assert precu_row["outcome"] == "off"
+

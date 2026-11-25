@@ -1,12 +1,34 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-24  
+**Mis à jour** : 2026-11-25  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
 **Fil** : canon O1/O2/O3 — **Gladys Cerveau & Skills : Silos Contextuels par Domaine (`knowledge/domains/`), Standardisation des Skills (`packages/cortex/skills/`) & Intégration Topologie Live Pilot (`#/topology`)**.
 
 ---
+
+## Dernières actions réalisées (2026-11-25)
+- 44. **Studio Content Engine V3.2 — Format Vidéos Longues YouTube 16:9 (4–15 min, façon `@KiaraIAFR` + Lia 3D) & Miniature `1280×720` Auto** :
+    - **Générateur de Scripts & Slides Multi-Chapitres (`tools/studio_content_engine/longform_script_builder.py`)** :
+      * Calibrage dynamique de 4 à 15 minutes (`--minutes`), plans directeurs vérifiés (MoE 30B-A3B sur 8 Go VRAM / R720, Homelab Gladys 0€ Cloud) + générateur multi-passes Ollama (`think=False`).
+      * **Double workflow** : mode brouillon humain par défaut (`script_long.json` + `BROUILLON_A_VALIDER.md`) façon Kiara, ou mode autonome de bout en bout (`--auto`).
+      * File hebdomadaire prête de 8 épisodes dans `longform_backlog.json` + planificateur `cron_weekly_longform.py`.
+    - **Plateau TV / Ingénierie WebGL 16:9 Déterministe 30.00 FPS (`assets/stage3d/render_longform_16x9.html` + `longform_bot.py`)** :
+      * Barre supérieure de progression par chapitres + alternance **Plateau Hero** (intro/conclusion) et **Split-Screen 1/3 Lia 3D + 2/3 Slides Techniques Animées** (`comparison` 2 colonnes, `diagram` flux d'architecture, `terminal` bash colorisé, `benchmarks` barres animées) + bandeau sous-titres 16:9 épuré.
+      * Génération automatique de la miniature YouTube `1280×720` (`thumbnail_1280x720.png`) et de `youtube_description.txt` avec horodatages exacts des chapitres (`00:00`, `00:36`…), branchés dans `upload_long_video()` (`youtube_publisher.py`).
+      * **Épisode 1 complet rendu et publié en ligne sur `@LBG-p8k`** : *« Faire tourner une grosse IA 30B sur 8 Go de VRAM (ou sans GPU) : le secret du MoE »* — `74,1 Mo`, `3 min 44 s`, 6 chapitres, **6719/6720 frames uniques = 30.00 FPS**, miniature personnalisée `1280×720` appliquée (`https://www.youtube.com/watch?v=uuLTxEZk-eg`), `ruff check` 100% clean.
+- 43. **Studio Content Engine V3.1 — Moteur Shorts 9:16 3D WebGL Déterministe style *Nexura Domina* (`stage3d` + `music3d`, 30.00 FPS, 0 saccade)** :
+    - **Compositeur WebGL Three-VRM Déterministe (`stage3d_compositor.py` + `assets/stage3d/render_stage3d.html`)** :
+      * Horloge virtuelle fixe (`1/30 s`) streamant chaque trame JPEG par WebSocket vers `ffmpeg -f image2pipe` (sur `.10` en Chrome `--headless=new --use-angle=d3d11` invisible si libre, sinon repli `.143` `Xvfb`), sélecteur sémantique de gestes `select_semantic_tech_motion` et sous-titres karaoké courts.
+      * Alternance automatique `stage3d` ↔ `music3d` active dans `cron_daily_publisher.py` (drop de 11h30 publié en ligne avec succès : `vLd7QWQrGRI`).
+- 42. **Hygiène R720 (`.201`), Passage `.110` à 32 Go RAM, Immunisation Slack `.245` & Veille MoE (`O-HW-R720-MOE`)** :
+    - **Opérations Proxmox `.201`** : arrêt propre de `VM 245` (`ServeurSWG` Pre-CU qui consommait 10 Go de RAM), purge intégrale des 8 Go de Swap saturés (`8.0 Go → 0 B utilisé`, **16 Go disponibles** sur les 64 Go physiques du R720 qui dispose encore de 16 slots DIMM vides), et passage à chaud du plafond LXC de **`.110` (`ollama-110`) de 24 Go à 32 Go** (`pct set 110 -memory 32768`, 25 Go disponibles dans le CT avec `OLLAMA_MAX_LOADED_MODELS=1` déjà actif).
+    - **Immunisation Gladys / Slack contre les fausses alertes `.245` volontairement éteinte** : exclusion par défaut de `precu` (`.245`) dans `vm_memory_probe.py` (`lbg-infra-watchdog`), passage en statut optionnel `off` (rang 0 sans alerte ni tâche Héphaïstos) dans `guest_metrics_probe.py` (`lbg-team-ops-guest-job`), filtrage des apparitions/disparitions de `.245`/`.217` dans `spawn_network_inventory_job.py`, tolérance `smoke_vm_lan.sh` (`lbg-p03-team-qa-smoke`), et déploiement live sur VM `140` (`/opt/LBG_IA_MMO` + `/etc/lbg-ia-mmo.env`).
+    - **Consignation, Benchmark Live MoE & Bascule Officielle sur `.110` (`O-HW-R720-MOE`)** :
+      * Pull de `huihui_ai/qwen3-coder-abliterated:30b` (MoE 30,5B totaux / 3,3B actifs, 18 Go disque, 19 Go RAM `ollama ps`) et benchmark A/B réel sur `2× Xeon E5-2650 v2` (CPU pur, `num_ctx=4096`, 180 tokens générés) face à `huihui_ai/qwen2.5-coder-abliterate:14b` (dense) : **Prefill ×2,40 plus rapide (`19,75` vs `8,22 tok/s`)**, **Génération ×1,48 plus rapide (`1,57` vs `1,06 tok/s`)**, temps total réduit de `181,7s` à `119,2s` (−34 %) avec la qualité d'un 30B.
+      * **Purge modèles obsolètes sur `.110`** : suppression de `llava:latest` (4,7 Go) et `lbg-cline-plan:9b` (6,6 Go) → disque CT 110 redescendu à 73 % (21 Go libres sur 79 Go).
+      * **Bascule officielle de la matrice LLM & ouvriers de code** : profil `code` / `LBG_REASON_MODEL_CODE` basculé sur `huihui_ai/qwen3-coder-abliterated:30b` dans l'orchestrateur (`reason_llm.py`, `ollama_audit.py`, `admin_infra_platform.py`), `/etc/lbg-ia-mmo.env` sur `.140` (service `lbg-orchestrator` redémarré avec succès), canons `.agents/rules/` & `.cursor/rules/`, et configurations locales de développement Cline (`providers.json`) et Claude Code (`settings.json`) sur `.143`. Suite tests backend 154/154 validée. R720 `.201` monte à `57/62 Go` (`5,7 Go` dispos, swap `817 Mo`) — voir [`llm_cloud_free_vs_local.md`](../packages/cortex/docs/llm_cloud_free_vs_local.md).
 
 ## Dernières actions réalisées (2026-11-24)
 - 41. **Apprentissage d'intentions & forge de capacités sécurisés (héritage Lyra `intent_learning` / `agent_autoupgrade`)** :

@@ -486,5 +486,102 @@
     "status": "published",
     "published_at": "2026-11-23T09:04:01.622580",
     "youtube_url": "https://www.youtube.com/shorts/q9Lzbq6_Wtk"
+  },
+  {
+    "id": 62,
+    "topic": "Comment notre forge d'intentions IA apprend sans jamais exposer le système",
+    "category": "IA Locale & Sécurité",
+    "format": "stage3d",
+    "status": "published",
+    "published_at": "2026-11-25T11:44:55.743791",
+    "youtube_url": "https://www.youtube.com/shorts/vLd7QWQrGRI"
+  },
+  {
+    "id": 63,
+    "topic": "LIA — Nexura Domina (Drop Electro 3D) | Performance VRM",
+    "category": "Clip 3D & Chorégraphie VRM",
+    "format": "music3d",
+    "status": "published",
+    "music_preset": "nexura_drop_highlight",
+    "published_at": "2026-11-25T14:11:33.085220",
+    "youtube_url": "https://www.youtube.com/shorts/rQRs7u7okAY"
+  },
+  {
+    "id": 64,
+    "topic": "Pourquoi fusionner Star Wars Galaxies Pre-CU et La 4ème Prophétie en 3D",
+    "category": "MMO & Game Design",
+    "format": "stage3d",
+    "status": "published",
+    "published_at": "2026-11-25T16:44:16.177407",
+    "youtube_url": "https://www.youtube.com/shorts/KoYNiM5nQLk"
+  },
+  {
+    "id": 65,
+    "topic": "LIA — Cyberpunk Protocol (Live 3D 128 BPM) | LBG Studios",
+    "category": "Performance Musicale IA",
+    "format": "music3d",
+    "status": "published",
+    "music_preset": "cyberpunk_protocol_30s",
+    "published_at": "2026-11-25T19:09:31.180780",
+    "youtube_url": "https://www.youtube.com/shorts/MudUjdyPj2E"
+  },
+  {
+    "id": 66,
+    "topic": "Comment passer de 30 à 60 FPS sur Godot 4 en coupant le brouillard volumétrique",
+    "category": "Moteur Godot 4 & Perf",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 67,
+    "topic": "LIA — Cantina Lost Heaven (Danses SWG 3D) | Mocap VRM",
+    "category": "Chorégraphie MMO & VRM",
+    "format": "music3d",
+    "status": "pending",
+    "music_preset": "swg_cantina_groove"
+  },
+  {
+    "id": 68,
+    "topic": "Isoler du code généré par IA dans une sandbox Bubblewrap sans réseau",
+    "category": "DevSecOps & Agents IA",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 69,
+    "topic": "LIA — Synthwave Overdrive (Concert 3D) | 100% Local",
+    "category": "Live Virtuel Three-VRM",
+    "format": "music3d",
+    "status": "pending",
+    "music_preset": "synthwave_energy_show"
+  },
+  {
+    "id": 70,
+    "topic": "Comment convertir les danses binaires de Star Wars Galaxies vers Three-VRM",
+    "category": "Animation 3D & Reverse",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 71,
+    "topic": "LIA — Nexura Domina Climax (Solo Scénique 3D) | LBG Studios",
+    "category": "Clip Officiel 3D",
+    "format": "music3d",
+    "status": "pending",
+    "music_preset": "nexura_climax_encore"
+  },
+  {
+    "id": 72,
+    "topic": "Découper le cerveau d'un agent IA en silos de connaissances JSON légers",
+    "category": "Architecture RAG & LLM",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 73,
+    "topic": "Synchroniser vue 2D tactique et monde Full 3D en temps réel sous Godot 4",
+    "category": "Architecture MMO 3D",
+    "format": "stage3d",
+    "status": "pending"
   }
 ]

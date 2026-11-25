@@ -5,7 +5,7 @@
 set -euo pipefail
 
 OLLAMA_HOST="${LBG_OLLAMA_110:-http://192.168.0.110:11434}"
-DEFAULT_MODEL="${LBG_CODER_MODEL:-huihui_ai/qwen2.5-coder-abliterate:14b}"
+DEFAULT_MODEL="${LBG_CODER_MODEL:-huihui_ai/qwen3-coder-abliterated:30b}"
 CLAUDE_BIN="/home/lbg/.local/bin/claude"
 
 if [[ ! -x "$CLAUDE_BIN" ]]; then

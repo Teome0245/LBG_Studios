@@ -183,7 +183,9 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
     topic_lower = topic.lower()
 
     # 1. Économie de troc, commerce P2P, marchands & négociation (ex: Sujet 29, 43)
-    if any(k in topic_lower for k in ["troc", "marchand", "négociation", "monnaie locale", "taxe municipale", "commerce"]):
+    if any(
+        k in topic_lower for k in ["troc", "marchand", "négociation", "monnaie locale", "taxe municipale", "commerce"]
+    ):
         return {
             "title": clean_title_smart(topic, max_len=60),
             "category": "MMO & Économie Vivante",
@@ -263,7 +265,9 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
         }
 
     # 5. Pre-CU, Arbres 4x4 & 32 professions libres (ex: Sujet 24, 25)
-    if any(k in topic_lower for k in ["pre-cu", "arbres 4x4", "star wars galaxies", "swg", "theorycrafting", "profession"]):
+    if any(
+        k in topic_lower for k in ["pre-cu", "arbres 4x4", "star wars galaxies", "swg", "theorycrafting", "profession"]
+    ):
         return {
             "title": clean_title_smart(topic, max_len=60),
             "category": "MMO & Game Design Libre",
@@ -393,29 +397,36 @@ def _match_fallback_script(topic: str | None) -> dict[str, Any]:
     if any(k in topic_lower for k in ["bot ia", "navigation", "simul"]):
         return dict(FALLBACK_SCRIPTS[1])
 
-    clean_topic = topic.strip()
-    if clean_topic.lower().startswith("comment "):
-        core_topic = clean_topic[8:].strip()
-    elif clean_topic.lower().startswith("pourquoi "):
-        core_topic = clean_topic[9:].strip()
+    clean_topic = topic.strip().rstrip(".!?").strip()
+    lower_t = clean_topic.lower()
+    if lower_t.startswith(("pourquoi ", "comment ", "quel ", "quelle ", "quels ", "quelles ")):
+        hook_line = f"{clean_topic} ?"
+        sol_line = (
+            "Chez LBG Studios, nous avons conçu une architecture 100% locale sur nos propres serveurs "
+            "pour répondre à ce défi sans aucun compromis."
+        )
     else:
-        core_topic = clean_topic
+        hook_line = f"{clean_topic} : pourquoi dépendre d'un abonnement cloud payant quand tout peut tourner chez toi ?"
+        sol_line = (
+            f"Chez LBG Studios, toute la brique liée à « {clean_topic} » s'exécute à 100% en local "
+            "directement sur notre infrastructure."
+        )
 
     clean_title = clean_title_smart(clean_topic, max_len=60)
     return {
         "title": clean_title,
         "category": "Tech & Architecture Locale",
-        "hook": f"Tu veux exploiter {core_topic} sans dépendre du moindre abonnement cloud payant ?",
+        "hook": hook_line,
         "problem": "La majorité des architectures actuelles imposent des API fermées, des coûts récurrents imprévisibles et une dépendance totale au réseau extérieur.",
-        "solution": f"Chez LBG Studios, nous avons développé une approche 100% locale pour maîtriser {core_topic} directement sur notre matériel.",
-        "metrics": "Zéro euro de frais cloud par mois, une réactivité immédiate et une confidentialité absolue de tes données de production.",
+        "solution": sol_line,
+        "metrics": "Zéro euro de frais cloud par mois, une réactivité immédiate et une confidentialité absolue de nos données de production.",
         "cta": "Moi c'est Lia de La Boîte à Geek : que penses-tu de cette approche 0€ cloud ? Dis-le moi en commentaire et retrouve nos sources sur GitHub !",
         "sentences": [
-            f"Tu veux exploiter {core_topic} sans dépendre du moindre abonnement cloud payant ?",
+            hook_line,
             "La majorité des architectures actuelles imposent des API fermées, des coûts récurrents imprévisibles et une dépendance totale au réseau extérieur.",
-            f"Chez LBG Studios, nous avons développé une approche 100% locale pour maîtriser {core_topic} directement sur notre matériel.",
-            "En associant des briques open source optimisées et des modèles spécialisés sur machine dédiée, le système tourne sans dépendre d'internet.",
-            "Bilan : zéro euro de frais cloud par mois, une réactivité immédiate et une confidentialité absolue de nos données de production.",
+            sol_line,
+            "En associant Godot 4 headless, des micro-modèles quantifiés et des bus WebSockets légers, le système tourne à 60 ticks par seconde sans dépendre d'internet.",
+            "Bilan : zéro euro de frais cloud par mois, moins de 1,2 gigaoctet de RAM et une maîtrise totale de nos données.",
             "Moi c'est Lia de La Boîte à Geek : que penses-tu de cette approche 0€ cloud ? Dis-le moi en commentaire et retrouve nos sources sur GitHub !",
         ],
     }
@@ -437,7 +448,9 @@ def ensure_lia_signature(data: dict[str, Any]) -> dict[str, Any]:
     # S'assurer que le CTA final contient la signature Lia et une incitation au commentaire
     last_idx = len(sentences) - 1
     if not any("lia" in s.lower() for s in sentences):
-        sentences[last_idx] = f"Moi c'est Lia de La Boîte à Geek : qu'est-ce que tu en penses ? Dis-le moi en commentaire et retrouve nos sources sur GitHub !"
+        sentences[last_idx] = (
+            f"Moi c'est Lia de La Boîte à Geek : qu'est-ce que tu en penses ? Dis-le moi en commentaire et retrouve nos sources sur GitHub !"
+        )
 
     data["sentences"] = sentences
     return data
@@ -453,25 +466,26 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
         f"(5 à 6 phrases percutantes, ultra concrètes et chiffrées sans salutation) en français sur le sujet : '{topic}'."
     )
 
-    hosts_and_models = [
-        (OLLAMA_HOST_111, "qwen2.5:3b", 35.0),
-        (OLLAMA_HOST_111, "huihui_ai/qwen3.5-abliterated:2B", 25.0),
-        (OLLAMA_HOST_110, "huihui_ai/qwen2.5-coder-abliterate:14b", 20.0),
+    # Matrice LLM locale canonique (.agents/rules/local-llm-route-matrix.md) : Qwen think=False
+    hosts_and_models: list[tuple[str, str, float, bool | None]] = [
+        (OLLAMA_HOST_111, "huihui_ai/qwen3.5-abliterated:2B", 22.0, False),
+        (OLLAMA_HOST_111, "huihui_ai/gemma-4-abliterated:E4b-qat", 25.0, None),
+        (OLLAMA_HOST_110, "huihui_ai/gemma-4-abliterated:E4b-qat", 28.0, None),
     ]
-    for host, mod, tout in hosts_and_models:
+    for host, mod, tout, think_flag in hosts_and_models:
         try:
             logger.info("Tentative de génération script sur %s avec %s (délai: %.1fs)...", host, mod, tout)
+            req_json: dict[str, Any] = {
+                "model": mod,
+                "system": SYSTEM_PROMPT,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.7, "num_ctx": 2048},
+            }
+            if think_flag is not None:
+                req_json["think"] = think_flag
             with httpx.Client(timeout=tout) as client:
-                res = client.post(
-                    f"{host}/api/generate",
-                    json={
-                        "model": mod,
-                        "system": SYSTEM_PROMPT,
-                        "prompt": prompt,
-                        "stream": False,
-                        "options": {"temperature": 0.7, "num_ctx": 2048},
-                    },
-                )
+                res = client.post(f"{host}/api/generate", json=req_json)
                 if res.status_code == 200:
                     raw_text = res.json().get("response", "").strip()
                     match = re.search(r"\{.*\}", raw_text, re.DOTALL)
@@ -481,7 +495,12 @@ def generate_tech_script(topic: str | None = None, model: str = DEFAULT_MODEL) -
                             # Titre propre sans troncature brutale
                             if "title" in data:
                                 data["title"] = clean_title_smart(data["title"], max_len=65)
-                            logger.info("Script enrichi généré avec succès par %s (%s) (%d phrases) !", host, mod, len(data["sentences"]))
+                            logger.info(
+                                "Script enrichi généré avec succès par %s (%s) (%d phrases) !",
+                                host,
+                                mod,
+                                len(data["sentences"]),
+                            )
                             return ensure_lia_signature(data)
         except Exception as e:
             logger.warning("Échec génération sur %s (%s) : %s", host, mod, e)

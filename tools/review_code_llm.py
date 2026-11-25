@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 DEFAULT_OLLAMA_HOST = os.environ.get("LBG_OLLAMA_REVIEW_HOST", "http://192.168.0.110:11434")
-DEFAULT_MODEL = os.environ.get("LBG_OLLAMA_REVIEW_MODEL", "huihui_ai/qwen2.5-coder-abliterate:14b")
+DEFAULT_MODEL = os.environ.get("LBG_OLLAMA_REVIEW_MODEL", "huihui_ai/qwen3-coder-abliterated:30b")
 FALLBACK_HOST = "http://192.168.0.111:11434"
 FALLBACK_MODEL = "huihui_ai/gemma-4-abliterated:E4b-qat"
 

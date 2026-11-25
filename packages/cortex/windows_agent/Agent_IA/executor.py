@@ -1207,5 +1207,95 @@ def preparer_upload_tiktok(video_path=None, caption=None, auto_publish=True, **k
     return {"status": "ok", "message": "Vidéo prête, auto_publish=False"}
 
 
+def get_user_idle_seconds(**kwargs):
+    """Retourne le nombre de secondes depuis la dernière interaction clavier/souris sur Windows."""
+    import ctypes
+
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    lii = LASTINPUTINFO()
+    lii.cbSize = ctypes.sizeof(LASTINPUTINFO)
+    if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
+        return {"status": "error", "idle_seconds": 0}
+    millis = ctypes.windll.kernel32.GetTickCount() - lii.dwTime
+    idle_sec = max(0.0, float(millis) / 1000.0)
+    return {"status": "ok", "idle_seconds": round(idle_sec, 2)}
+
+
+def render_stage3d_clip(
+    stage_url=None,
+    duration_sec=32.0,
+    min_idle_sec=180,
+    **kwargs,
+):
+    """Exécute le moteur déterministe Stage3D en mode GPU headless invisible sur .10 (GTX 1050 Ti).
+
+    - Zéro fenêtre visible sur le bureau (Chrome `--headless=new` accéléré Direct3D11).
+    - N'interrompt jamais le navigateur ou l'overlay de l'utilisateur.
+    - Les frames JPEG sont streamées directement via WebSocket vers le FFmpeg de .143.
+    """
+    import os
+    import subprocess
+
+    if not stage_url:
+        return {"status": "error", "reason": "missing_stage_url"}
+
+    idle_info = get_user_idle_seconds()
+    idle_sec = float(idle_info.get("idle_seconds", 0.0))
+    if idle_sec < float(min_idle_sec):
+        return {
+            "status": "busy",
+            "reason": f"user_active_idle_{idle_sec:.1f}s_lt_{min_idle_sec}s",
+            "idle_seconds": idle_sec,
+        }
+
+    browser_bin = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    if not os.path.exists(browser_bin):
+        browser_bin = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+    if not os.path.exists(browser_bin):
+        return {"status": "error", "reason": "browser_not_found"}
+
+    profile_dir = r"C:\Agent_IA\stage3d_headless_gpu_profile"
+    os.makedirs(profile_dir, exist_ok=True)
+
+    browser_proc = None
+    try:
+        browser_proc = subprocess.Popen(
+            [
+                browser_bin,
+                "--headless=new",
+                "--window-size=1080,1920",
+                "--enable-gpu",
+                "--ignore-gpu-blocklist",
+                "--enable-webgl",
+                "--use-angle=d3d11",
+                "--disable-background-timer-throttling",
+                "--disable-renderer-backgrounding",
+                "--autoplay-policy=no-user-gesture-required",
+                "--disable-http-cache",
+                f"--user-data-dir={profile_dir}",
+                "--no-first-run",
+                "--no-default-browser-check",
+                stage_url,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        browser_proc.wait(timeout=max(45.0, float(duration_sec) * 2.5))
+        return {"status": "ok", "idle_seconds": idle_sec}
+    except subprocess.TimeoutExpired:
+        return {"status": "ok", "note": "closed_after_timeout", "idle_seconds": idle_sec}
+    except Exception as exc:
+        return {"status": "error", "reason": str(exc)}
+    finally:
+        if browser_proc is not None:
+            try:
+                subprocess.run(["taskkill", "/F", "/PID", str(browser_proc.pid), "/T"], capture_output=True)
+            except Exception:
+                pass
+
+
+
 
 

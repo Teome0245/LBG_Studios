@@ -109,6 +109,43 @@ def _maybe_spawn_hephaistos(diff: dict[str, Any], slim: dict[str, Any]) -> dict[
         return {"ok": False, "error": str(exc)}
 
 
+def _ignored_inventory_hosts() -> set[str]:
+    raw = os.environ.get(
+        "LBG_NETWORK_INVENTORY_IGNORE_HOSTS",
+        "192.168.0.245,192.168.0.217",
+    ).strip()
+    return {h.strip() for h in raw.split(",") if h.strip()}
+
+
+def _is_ignored_inventory_row(row: Any, ignored_hosts: set[str]) -> bool:
+    if not isinstance(row, dict):
+        return False
+    host = str(row.get("host") or "").strip()
+    role = str(row.get("role") or "").strip().lower()
+    if host in ignored_hosts:
+        return True
+    if role == "precu" and not truthy(os.environ.get("LBG_NETWORK_INVENTORY_ALERT_PRECU", "0")):
+        return True
+    return False
+
+
+def _actionable_diff(diff: dict[str, Any]) -> dict[str, Any]:
+    ignored = _ignored_inventory_hosts()
+    appeared = [
+        r for r in (diff.get("appeared") or []) if not _is_ignored_inventory_row(r, ignored)
+    ]
+    disappeared = [
+        r for r in (diff.get("disappeared") or []) if not _is_ignored_inventory_row(r, ignored)
+    ]
+    return {
+        **diff,
+        "appeared": appeared,
+        "disappeared": disappeared,
+        "n_appeared": len(appeared),
+        "n_disappeared": len(disappeared),
+    }
+
+
 def run_job(*, persist: bool = True) -> dict[str, Any]:
     if not job_enabled():
         return {
@@ -128,7 +165,8 @@ def run_job(*, persist: bool = True) -> dict[str, Any]:
             "nas_probe": truthy(os.environ.get("LBG_NETWORK_INVENTORY_NAS_PROBE", "0")),
         },
     )
-    diff = out.get("diff") if isinstance(out.get("diff"), dict) else {}
+    raw_diff = out.get("diff") if isinstance(out.get("diff"), dict) else {}
+    diff = _actionable_diff(raw_diff)
     n_app = int(diff.get("n_appeared") or 0)
     n_dis = int(diff.get("n_disappeared") or 0)
     changed = n_app > 0 or n_dis > 0

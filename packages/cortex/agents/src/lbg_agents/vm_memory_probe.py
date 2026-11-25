@@ -69,6 +69,14 @@ def _excluded_probe_labels() -> set[str]:
     return out
 
 
+def _is_optional_precu(label: str, host: str) -> bool:
+    if _truthy(os.environ.get("LBG_VM_MEMORY_PROBE_PRECU_REQUIRED", "0")):
+        return False
+    lbl = (label or "").strip().lower()
+    hst = (host or "").strip()
+    return lbl in {"precu", "245"} or hst == "192.168.0.245"
+
+
 def _probe_hosts() -> list[tuple[str, str]]:
     raw = os.environ.get("LBG_VM_MEMORY_PROBE_HOSTS", "").strip()
     excluded = _excluded_probe_labels()
@@ -154,6 +162,8 @@ def _status(metrics: dict[str, Any]) -> str:
 
 
 def _format_host_line(label: str, host: str, entry: dict[str, Any]) -> str:
+    if entry.get("status") == "off":
+        return f"• {label} ({host}) [OFF] : éteinte volontairement"
     m = entry.get("metrics") or {}
     if not entry.get("ok"):
         return f"• {label} ({host}) — KO : {entry.get('error', '?')}"
@@ -219,6 +229,18 @@ def run_vm_memory_probe(
     for label, host in hosts:
         ok, stdout, err = _run_probe(host)
         if not ok:
+            if _is_optional_precu(label, host):
+                entries.append(
+                    {
+                        "label": label,
+                        "host": host,
+                        "ok": True,
+                        "optional": True,
+                        "status": "off",
+                        "error": err or "offline",
+                    }
+                )
+                continue
             entry = {"label": label, "host": host, "ok": False, "error": err or "?"}
             entries.append(entry)
             worst = "critical"

@@ -38,7 +38,7 @@ _ROLE_DEFAULTS: dict[str, dict[str, str]] = {
     },
     "reason_code": {
         "model_env": "LBG_REASON_MODEL_CODE",
-        "default": "huihui_ai/qwen2.5-coder-abliterate:14b",
+        "default": "huihui_ai/qwen3-coder-abliterated:30b",
         "host": "heavy",
     },
     "reason_pm": {
@@ -275,7 +275,7 @@ def _recommendations(
         )
     if any("qwen2.5-coder" in n for n in heavy_l):
         recs.append(
-            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen2.5-coder-abliterate:14b sur heavy 110."
+            "Code spécialisé : LBG_REASON_MODEL_CODE=huihui_ai/qwen3-coder-abliterated:30b sur heavy 110."
         )
     if any("12b-qat" in n and "gemma" in n for n in heavy_l):
         recs.append(

@@ -1,0 +1,60 @@
+[
+  {
+    "id": 1,
+    "topic": "Faire tourner une grosse IA 30B sur 8 Go de VRAM (ou sans GPU) : le secret du MoE",
+    "minutes": 5.5,
+    "category": "Hardware & IA Locale",
+    "status": "published",
+    "published_at": "2026-11-25T20:16:12.691081",
+    "youtube_url": "https://www.youtube.com/watch?v=uuLTxEZk-eg"
+  },
+  {
+    "id": 2,
+    "topic": "Construire un Homelab IA 100% Local à 0€/mois : visite guidée de notre infrastructure Gladys",
+    "minutes": 6.0,
+    "category": "Homelab & Architecture",
+    "status": "pending"
+  },
+  {
+    "id": 3,
+    "topic": "Serveur Dell PowerEdge d'occasion vs Mini-PC neuf : quel matériel acheter pour l'IA locale en 2026 ?",
+    "minutes": 7.0,
+    "category": "Guide Achat Hardware",
+    "status": "pending"
+  },
+  {
+    "id": 4,
+    "topic": "Faire tourner un MMORPG 3D complet et 10 joueurs IA sur un seul serveur Linux sans GPU (Godot 4.6)",
+    "minutes": 6.5,
+    "category": "MMO 3D & Simulation IA",
+    "status": "pending"
+  },
+  {
+    "id": 5,
+    "topic": "Pourquoi tes petits modèles locaux hallucinent (et comment nos silos JSON règlent le problème)",
+    "minutes": 6.0,
+    "category": "RAG & Prompt Engineering",
+    "status": "pending"
+  },
+  {
+    "id": 6,
+    "topic": "Cartes graphiques à moins de 150 € pour l'IA locale : VRAM, bande passante et pièges à éviter",
+    "minutes": 8.0,
+    "category": "Hardware Budget",
+    "status": "pending"
+  },
+  {
+    "id": 7,
+    "topic": "Comment notre studio génère ses vidéos 3D et sa musique 100% en local sans aucun abonnement cloud",
+    "minutes": 6.0,
+    "category": "Pipeline Créatif 0€",
+    "status": "pending"
+  },
+  {
+    "id": 8,
+    "topic": "Laisser une IA coder ses propres outils sans danger : AST statique et Sandbox Bubblewrap sous Linux",
+    "minutes": 7.5,
+    "category": "Sécurité & Agents Autonomes",
+    "status": "pending"
+  }
+]

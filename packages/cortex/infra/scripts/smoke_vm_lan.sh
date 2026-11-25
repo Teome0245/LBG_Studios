@@ -100,6 +100,10 @@ remote_active_all() {
   fi
   echo "=== ${label} (${host}) ==="
   if ! ssh "${SSH_OPTS[@]}" "${VM_USER}@${host}" "true"; then
+    if [[ "${host}" == "192.168.0.245" && "${LBG_SMOKE_PRECU_REQUIRED:-0}" != "1" ]]; then
+      echo "  INFO : PreCU (${host}) éteinte volontairement — ignorée par le smoke LAN"
+      return
+    fi
     echo "  SSH indisponible — ${VM_USER}@${host}"
     ssh_connect_failed=1
     fail=1

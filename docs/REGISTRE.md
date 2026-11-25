@@ -98,7 +98,7 @@ Serveurs jeu (runtime) :
 | **`.245`** | PreCU | lecture seule `:8792` — souvent éteint ; Pilot bureau annote Lab SWG **Éteinte** |
 | **`.246`** | Prime | **autorité joueur** `prime-hub` **`:8787`** · patches `:8080` · Core3 `:8792` lab OFF |
 
-LLM : `think: false` (Qwen). `.110` = 24 Go RAM **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).
+LLM : `think: false` (Qwen). `.110` = 32 Go RAM LXC (R720 `.201` 64 Go physiques) **sans GPU** — interactif → 2B/9b ; 12b = batch ; PoC GPU → Colab (`reason_ephemeral_colab.md`).
 
 ### Plan d’adressage Freebox (`.254`) — 2026-09-27
 

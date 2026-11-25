@@ -46,3 +46,30 @@ def test_job_stable_and_changed(monkeypatch) -> None:
     assert out2["outcome"] == "changed"
     assert "+1" in out2["reply"] and "−1" in out2["reply"]
     assert out2["hephaistos_spawn"]["skipped"] is True
+
+
+def test_job_ignores_voluntary_precu_245_shutdown(monkeypatch) -> None:
+    monkeypatch.setenv("LBG_NETWORK_INVENTORY_JOB_ENABLED", "1")
+    monkeypatch.setenv("LBG_NETWORK_INVENTORY_NOTIFY", "1")
+    monkeypatch.setenv("LBG_NETWORK_INVENTORY_SPAWN_OPS", "1")
+    monkeypatch.delenv("LBG_NETWORK_INVENTORY_ALERT_PRECU", raising=False)
+
+    precu_off = {
+        "ok": True,
+        "n_devices": 22,
+        "n_present": 18,
+        "by_role": {"precu": 1, "mmo": 1},
+        "diff": {
+            "n_appeared": 0,
+            "n_disappeared": 1,
+            "appeared": [],
+            "disappeared": [{"host": "192.168.0.245", "label": "mmo-db-precu", "role": "precu"}],
+        },
+        "reply": "Inventaire LAN",
+    }
+    with patch("lbg_agents.spawn_network_inventory_job.run_network_inventory", return_value=precu_off):
+        out = run_job(persist=False)
+    assert out["outcome"] == "stable"
+    assert "hephaistos_spawn" not in out
+    assert "notified" not in out
+

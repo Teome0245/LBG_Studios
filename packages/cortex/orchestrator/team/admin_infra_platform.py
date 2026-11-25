@@ -505,7 +505,7 @@ def audit_admin_infra_platform() -> dict[str, Any]:
     ip140 = _host_ip("LBG_LAN_HOST_CORE", "192.168.0.140")
     orch_url = os.environ.get("LBG_ORCHESTRATOR_URL", f"http://{ip140}:8010").strip().rstrip("/")
     topology = {
-        "llm_heavy": "192.168.0.110:11434 (CT ollama, code=qwen2.5-coder-abliterate:14b, pm/dialogue=gemma-4-abliterated:12b-qat, forge=E4b-qat)",
+        "llm_heavy": "192.168.0.110:11434 (CT ollama, code=qwen3-coder-abliterated:30b, pm/dialogue=gemma-4-abliterated:12b-qat, forge=E4b-qat)",
         "llm_light": "192.168.0.111:11434 (NUC CT, Clean qwen3.5:2B / Fast qwen3.5:0.8B)",
         "pilot": "192.168.0.140:8080 (Nginx Pilot canonique — proxy API locale)",
         "lan_executor": "192.168.0.141 (CT lbg-executor — poll /v1/team/wsl/poll, remplace WSL .10)",

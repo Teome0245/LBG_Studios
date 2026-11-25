@@ -31,7 +31,7 @@
       "models": [
         {
           "provider": "local",
-          "name": "huihui_ai/qwen2.5-coder-abliterate:14b"
+          "name": "huihui_ai/qwen3-coder-abliterated:30b"
         },
         {
           "provider": "local",

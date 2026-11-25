@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LBG Stage3D Deterministic Turbo Renderer</title>
+<script>
+// ============================================================================
+// Horloge Virtuelle Déterministe + Optimisation WebGL Sans MSAA Coûteux CPU
+// ============================================================================
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const isHqGpu = params.get("hq3d") === "1";
+
+  if (!isHqGpu) {
+    try {
+      Object.defineProperty(window, "devicePixelRatio", { get: () => 1 });
+    } catch (_) {}
+  }
+
+  const realPerfNow = performance.now.bind(performance);
+  const realRAF = window.requestAnimationFrame.bind(window);
+  const origGetContext = HTMLCanvasElement.prototype.getContext;
+
+  HTMLCanvasElement.prototype.getContext = function(type, attrs) {
+    if (type === "webgl" || type === "webgl2" || type === "experimental-webgl") {
+      attrs = Object.assign({}, attrs || {}, {
+        preserveDrawingBuffer: true,
+        antialias: isHqGpu,
+        powerPreference: "high-performance"
+      });
+    }
+    return origGetContext.call(this, type, attrs);
+  };
+
+  let virtualMode = false;
+  let virtualNowMs = 0;
+  let rafQueue = [];
+  let rafId = 1;
+
+  Object.defineProperty(performance, "now", {
+    configurable: true,
+    value: function() {
+      return virtualMode ? virtualNowMs : realPerfNow();
+    }
+  });
+
+  window.requestAnimationFrame = function(cb) {
+    if (!virtualMode) {
+      return realRAF(function(ts) {
+        if (virtualMode) {
+          rafQueue.push(cb);
+        } else {
+          cb(ts);
+        }
+      });
+    }
+    rafQueue.push(cb);
+    return ++rafId;
+  };
+
+  window.__lockVirtualClock = async function() {
+    if (virtualMode) return;
+    virtualNowMs = realPerfNow();
+    virtualMode = true;
+    await new Promise(r => realRAF(() => realRAF(r)));
+  };
+
+  window.__advanceVirtualFrame = function(dtSec) {
+    virtualNowMs += dtSec * 1000.0;
+    const batch = rafQueue.splice(0, rafQueue.length);
+    for (let i = 0; i < batch.length; i++) {
+      try {
+        batch[i](virtualNowMs);
+      } catch (err) {
+        console.error("[VirtualClock] RAF error:", err);
+      }
+    }
+  };
+})();
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #03050c;
+  }
+  #avatar-host {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 450px;
+    height: 800px;
+    opacity: 0.001;
+    pointer-events: none;
+    z-index: 1;
+  }
+  #master-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="avatar-host"></div>
+<canvas id="master-canvas"></canvas>
+
+<script src="/overlay/vrm/vrm_pet.bundle.js?v=stage3d_turbo_v3"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const HQ_3D = params.get("hq3d") === "1";
+const WS_URL = params.get("ws") || "";
+const TIMELINE_URL = params.get("timeline") || "/job/stage_timeline.json";
+
+// Sur CPU (.143), on compose en 720x1280 ultra-rapide (upscalé Lanczos 1080x1920 par FFmpeg SIMD) ; sur GPU (.10), natif 1080x1920
+const MASTER_W = HQ_3D ? 1080 : 720;
+const MASTER_H = HQ_3D ? 1920 : 1280;
+const S = MASTER_W / 1080.0;
+
+const masterCanvas = document.getElementById("master-canvas");
+masterCanvas.width = MASTER_W;
+masterCanvas.height = MASTER_H;
+const masterCtx = masterCanvas.getContext("2d", { alpha: false });
+masterCtx.imageSmoothingEnabled = true;
+masterCtx.imageSmoothingQuality = HQ_3D ? "high" : "medium";
+
+let timeline = null;
+let petInstance = null;
+let webglCanvas = null;
+let currentMotionId = "";
+let activeMotionLabel = "Initialisation";
+let activeExpLabel = "Présence Cyber";
+
+// Canvases pré-calculés une seule fois au démarrage (zéro gradient radial plein écran par frame !)
+let bgBakedCanvas = null;
+let leftGlowBaked = null;
+let rightGlowBaked = null;
+
+function buildBakedStageLayers(palette) {
+  const cPrimary = palette === "amber_cyan" ? "255, 176, 58" : "0, 245, 212";
+  const cSecondary = palette === "amber_cyan" ? "0, 229, 255" : "244, 63, 94";
+
+  bgBakedCanvas = document.createElement("canvas");
+  bgBakedCanvas.width = MASTER_W;
+  bgBakedCanvas.height = MASTER_H;
+  const bctx = bgBakedCanvas.getContext("2d", { alpha: false });
+  const grad = bctx.createRadialGradient(MASTER_W * 0.5, MASTER_H * 0.40, 40 * S, MASTER_W * 0.5, MASTER_H * 0.48, MASTER_H * 0.78);
+  grad.addColorStop(0, "#0d1730");
+  grad.addColorStop(0.52, "#060915");
+  grad.addColorStop(1, "#020308");
+  bctx.fillStyle = grad;
+  bctx.fillRect(0, 0, MASTER_W, MASTER_H);
+
+  const gw = 240, gh = 420;
+  leftGlowBaked = document.createElement("canvas");
+  leftGlowBaked.width = gw;
+  leftGlowBaked.height = gh;
+  const lgCtx = leftGlowBaked.getContext("2d");
+  const lg = lgCtx.createRadialGradient(gw * 0.18, gh * 0.32, 6, gw * 0.22, gh * 0.36, gw * 0.72);
+  lg.addColorStop(0, `rgba(${cPrimary}, 0.42)`);
+  lg.addColorStop(1, "rgba(0, 0, 0, 0)");
+  lgCtx.fillStyle = lg;
+  lgCtx.fillRect(0, 0, gw, gh);
+
+  rightGlowBaked = document.createElement("canvas");
+  rightGlowBaked.width = gw;
+  rightGlowBaked.height = gh;
+  const rgCtx = rightGlowBaked.getContext("2d");
+  const rg = rgCtx.createRadialGradient(gw * 0.82, gh * 0.34, 6, gw * 0.78, gh * 0.38, gw * 0.72);
+  rg.addColorStop(0, `rgba(${cSecondary}, 0.38)`);
+  rg.addColorStop(1, "rgba(0, 0, 0, 0)");
+  rgCtx.fillStyle = rg;
+  rgCtx.fillRect(0, 0, gw, gh);
+}
+
+const PROCEDURAL_POSES = new Set([
+  "idle", "focus", "victory", "fingerHeart", "crossArms",
+  "cyberGroove", "aeysaSinging", "pointLeft", "pointRight",
+  "pointScreen", "wave", "think", "approve", "cheer", "bow", "dance"
+]);
+
+const CAM_PRESETS = {
+  full:        { type: "fixed", dist: 4.30, lookY: 0.94, angle: 0.0, fov: 28 },
+  mid:         { type: "fixed", dist: 3.20, lookY: 1.12, angle: 0.0, fov: 27 },
+  bust:        { type: "fixed", dist: 1.98, lookY: 1.36, angle: 0.0, fov: 25 },
+  bust_left:   { type: "fixed", dist: 2.02, lookY: 1.36, angle: -0.24, fov: 25 },
+  bust_right:  { type: "fixed", dist: 2.02, lookY: 1.36, angle: 0.24, fov: 25 },
+  closeup:     { type: "fixed", dist: 1.65, lookY: 1.42, angle: 0.0, fov: 24 },
+  push_in:     { type: "mobile", mode: "lerp", distStart: 3.55, distEnd: 1.95, lookYStart: 1.04, lookYEnd: 1.36, angleStart: -0.14, angleEnd: 0.08, fov: 26 },
+  pull_out:    { type: "mobile", mode: "lerp", distStart: 1.95, distEnd: 3.85, lookYStart: 1.36, lookYEnd: 0.98, angleStart: 0.06, angleEnd: -0.10, fov: 27 },
+  front_arc:   { type: "mobile", mode: "lerp", distStart: 2.90, distEnd: 2.70, lookYStart: 1.16, lookYEnd: 1.20, angleStart: -0.34, angleEnd: 0.34, fov: 26 },
+  sway:        { type: "mobile", mode: "sway", dist: 2.65, lookY: 1.20, amp: 0.24, fov: 26 },
+  drone_arc180:{ type: "mobile", mode: "lerp", distStart: 3.50, distEnd: 3.50, lookYStart: 1.02, lookYEnd: 1.02, angleStart: -1.15, angleEnd: 1.15, fov: 28 },
+  drone_orbit: { type: "mobile", mode: "orbit", dist: 3.90, lookY: 0.96, fov: 28, rotations: 1 },
+  drone_orbit_close: { type: "mobile", mode: "orbit", dist: 2.25, lookY: 1.32, fov: 25, rotations: 1 }
+};
+
+const PARTICLES = [];
+for (let i = 0; i < 34; i++) {
+  const seed = (i * 9301 + 49297) % 233280;
+  const r1 = seed / 233280.0;
+  const r2 = ((seed * 7 + 12345) % 233280) / 233280.0;
+  const r3 = ((seed * 13 + 67891) % 233280) / 233280.0;
+  PARTICLES.push({
+    x0: r1,
+    y0: r2,
+    size: (1.8 + r3 * 3.2) * S,
+    speed: 0.048 + r2 * 0.085,
+    drift: (r1 - 0.5) * 0.025,
+    cyan: i % 5 !== 0 && i % 3 !== 0
+  });
+}
+
+function fmtTime(sec) {
+  const s = Math.max(0, sec);
+  const mins = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${mins < 10 ? "0" : ""}${mins}:${rem < 10 ? "0" : ""}${rem.toFixed(2)}`;
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function wrapTextLines(ctx, text, maxWidth, maxLines) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = "";
+  for (const w of words) {
+    const test = cur ? cur + " " + w : w;
+    if (ctx.measureText(test).width <= maxWidth || !cur) {
+      cur = test;
+    } else {
+      lines.push(cur);
+      cur = w;
+      if (lines.length >= maxLines - 1) break;
+    }
+  }
+  const usedWords = lines.join(" ").split(/\s+/).filter(Boolean).length;
+  const rest = words.slice(usedWords).join(" ");
+  if (rest) {
+    let last = rest;
+    while (ctx.measureText(last).width > maxWidth && last.length > 4) {
+      last = last.slice(0, -2).trim() + "…";
+    }
+    lines.push(last);
+  } else if (cur && lines.length === 0) {
+    lines.push(cur);
+  }
+  return lines.slice(0, maxLines);
+}
+
+function getTelemetryFrame(curT) {
+  if (!timeline?.telemetry || timeline.telemetry.length === 0) {
+    return { bass: 0.28, rms: 0.0, low: 0.0, high: 0.0, bars: new Array(24).fill(0.16) };
+  }
+  const fps = timeline.telemetry_fps || 30;
+  const idx = Math.max(0, Math.min(timeline.telemetry.length - 1, Math.floor(curT * fps)));
+  return timeline.telemetry[idx];
+}
+
+async function applyChoreoAt(curT, forceImmediate) {
+  if (!timeline || !petInstance) return;
+  const clampedT = Math.max(0, Math.min(timeline.duration, curT));
+
+  if (timeline.motions && timeline.motions.length > 0) {
+    const activeMotion = timeline.motions.find(m => clampedT >= m.start && clampedT < m.end) || timeline.motions[timeline.motions.length - 1];
+    if (activeMotion) {
+      const motionKey = `${activeMotion.start}_${activeMotion.file || activeMotion.pose}`;
+      if (motionKey !== currentMotionId) {
+        currentMotionId = motionKey;
+        activeMotionLabel = activeMotion.label || activeMotion.name || "Live";
+
+        if (activeMotion.pose && PROCEDURAL_POSES.has(activeMotion.pose)) {
+          if (petInstance.stopVRMA) petInstance.stopVRMA(0.28);
+          if (petInstance.setPose) petInstance.setPose(activeMotion.pose, 20000);
+        } else if (activeMotion.file && petInstance.playVRMA) {
+          await petInstance.playVRMA(activeMotion.file, {
+            loop: activeMotion.loop !== false,
+            fadeSec: forceImmediate ? 0.01 : 0.32,
+            timeScale: activeMotion.speed || 1.0
+          });
+        }
+        if (timeline.mic_visible && petInstance.setMicVisible) {
+          petInstance.setMicVisible(true);
+        }
+      }
+    }
+  }
+
+  if (timeline.cameras && timeline.cameras.length > 0 && petInstance.setCamera) {
+    const activeCam = timeline.cameras.find(c => clampedT >= c.start && clampedT < c.end) || timeline.cameras[timeline.cameras.length - 1];
+    if (activeCam) {
+      const p = CAM_PRESETS[activeCam.preset] || CAM_PRESETS.mid;
+      const dur = Math.max(0.1, activeCam.end - activeCam.start);
+      const progress = Math.max(0, Math.min(1, (clampedT - activeCam.start) / dur));
+      const smooth = progress * progress * (3 - 2 * progress);
+
+      if (p.type === "mobile") {
+        if (p.mode === "lerp") {
+          const dist = p.distStart + (p.distEnd - p.distStart) * smooth;
+          const lookY = p.lookYStart + (p.lookYEnd - p.lookYStart) * smooth;
+          const angle = (p.angleStart || 0) + ((p.angleEnd || 0) - (p.angleStart || 0)) * smooth;
+          petInstance.setCamera({ dist, lookY, height: lookY + 0.08, angle, fov: p.fov, immediate: true });
+        } else if (p.mode === "orbit") {
+          const angle = progress * Math.PI * 2 * (p.rotations || 1);
+          petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.09, angle, fov: p.fov, immediate: true });
+        } else if (p.mode === "sway") {
+          const angle = Math.sin(progress * Math.PI * 2.0) * (p.amp || 0.24);
+          petInstance.setCamera({ dist: p.dist, lookY: p.lookY, height: p.lookY + 0.08, angle, fov: p.fov, immediate: true });
+        }
+      } else {
+        petInstance.setCamera({
+          dist: p.dist,
+          lookY: p.lookY,
+          height: p.lookY + 0.08,
+          angle: p.angle || 0,
+          fov: p.fov,
+          immediate: Boolean(forceImmediate)
+        });
+      }
+    }
+  }
+
+  const tf = getTelemetryFrame(clampedT);
+  const activeExp = timeline.expressions?.find(e => clampedT >= e.start && clampedT < e.end);
+  const preset = activeExp ? activeExp.preset : (timeline.mode === "music" ? "diva" : "tech_focus");
+  if (activeExp?.label) activeExpLabel = activeExp.label;
+
+  if (petInstance.setLiveSinging) {
+    if (currentMotionId.endsWith("fingerHeart") && tf.rms < 0.08) {
+      petInstance.setLiveSinging(false);
+    } else {
+      let aa = 0, oh = 0, ih = 0, relaxed = 0.16, happy = 0.0, blink = 0.0;
+      const energy = Math.min(1.0, Math.max(0, (tf.rms - 0.05) * 1.65));
+
+      if (energy > 0.02) {
+        if (preset === "climax") {
+          aa = Math.min(1.0, energy * 1.12);
+          oh = tf.low > tf.high ? energy * 0.52 : energy * 0.20;
+          ih = tf.high >= tf.low ? energy * 0.34 : 0.10;
+          relaxed = 0.36;
+          blink = 0.18 + Math.sin(clampedT * 4.2) * 0.10;
+        } else if (preset === "idol" || preset === "cta_joy") {
+          aa = energy * 0.68;
+          ih = Math.max(0.24, energy * 0.44);
+          oh = energy * 0.20;
+          relaxed = 0.20;
+        } else if (preset === "diva") {
+          aa = energy * 0.86;
+          oh = (Math.sin(clampedT * 10.5) > 0.2 ? 0.46 : 0.15) * energy;
+          ih = 0.24 * energy;
+          relaxed = 0.30;
+        } else {
+          const syll = Math.sin(clampedT * 19.0);
+          aa = energy * (0.62 + Math.max(0, syll) * 0.32);
+          oh = energy * (tf.low * 0.52);
+          ih = energy * (tf.high * 0.45);
+          relaxed = 0.16;
+        }
+      } else {
+        relaxed = 0.18;
+        if (preset === "idol" || preset === "cta_joy") ih = 0.22;
+      }
+
+      const blinkCycle = (clampedT + 1.45) % 3.9;
+      if (blinkCycle < 0.13) {
+        blink = Math.max(blink, Math.sin((blinkCycle / 0.13) * Math.PI) * 0.95);
+      }
+
+      petInstance.setLiveSinging(true, { aa, oh, ih, relaxed, happy, blink });
+    }
+  }
+}
+
+// Composition ultra-rapide (< 2 ms CPU : zéro shadowBlur logiciel !)
+function compositeMasterFrame(curT) {
+  const W = MASTER_W;
+  const H = MASTER_H;
+  const ctx = masterCtx;
+  const tf = getTelemetryFrame(curT);
+  const bass = tf.bass ?? 0.25;
+
+  const palette = timeline?.palette || "cyan_rose";
+  const cPrimary = palette === "amber_cyan" ? "255, 176, 58" : "0, 245, 212";
+  const hexPrimary = palette === "amber_cyan" ? "#ffb03a" : "#00f5d4";
+  const cSecondary = palette === "amber_cyan" ? "0, 229, 255" : "244, 63, 94";
+  const hexSecondary = palette === "amber_cyan" ? "#00e5ff" : "#f43f5e";
+
+  // 1. Fond pré-calculé + Halos réactifs par simple blit alpha
+  ctx.drawImage(bgBakedCanvas, 0, 0);
+  ctx.save();
+  ctx.globalAlpha = 0.42 + bass * 0.58;
+  ctx.drawImage(leftGlowBaked, 0, 0, W, H);
+  ctx.drawImage(rightGlowBaked, 0, 0, W, H);
+
+  // Projecteurs volumétriques linéaires (très rapides)
+  ctx.globalAlpha = 0.11 + bass * 0.09;
+  const p1 = ctx.createLinearGradient(0, 0, W * 0.45, H);
+  p1.addColorStop(0, `rgb(${cPrimary})`);
+  p1.addColorStop(1, "transparent");
+  ctx.fillStyle = p1;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.08, 0);
+  ctx.lineTo(W * 0.52 + Math.sin(curT * 1.35) * (95 * S), H);
+  ctx.lineTo(W * 0.22, H);
+  ctx.fill();
+
+  const p2 = ctx.createLinearGradient(W, 0, W * 0.55, H);
+  p2.addColorStop(0, `rgb(${cSecondary})`);
+  p2.addColorStop(1, "transparent");
+  ctx.fillStyle = p2;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.92, 0);
+  ctx.lineTo(W * 0.48 + Math.cos(curT * 1.30) * (95 * S), H);
+  ctx.lineTo(W * 0.78, H);
+  ctx.fill();
+  ctx.restore();
+
+  // Grille perspective animée
+  const horizonY = H * 0.71;
+  const speedOffset = (curT * 1.65) % 1.0;
+  ctx.lineWidth = Math.max(1.2, 2.0 * S);
+  const numLines = 12;
+  for (let k = 0; k < numLines; k++) {
+    const normK = (k + speedOffset) / numLines;
+    const gy = horizonY + (H - horizonY) * Math.pow(normK, 2.15);
+    ctx.strokeStyle = `rgba(${cPrimary}, ${normK * 0.38})`;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+  }
+  const stepX = W * 0.14;
+  for (let vx = -W * 0.28; vx <= W * 1.28; vx += stepX) {
+    ctx.strokeStyle = `rgba(${cPrimary}, 0.18)`;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, horizonY - 90 * S);
+    ctx.lineTo(vx, H);
+    ctx.stroke();
+  }
+
+  // Particules montantes
+  for (const pt of PARTICLES) {
+    let py = (pt.y0 - curT * pt.speed * 1.35) % 1.0;
+    if (py < 0) py += 1.0;
+    let px = (pt.x0 + Math.sin(curT * 0.9 + pt.y0 * 6.28) * pt.drift * 2.0) % 1.0;
+    if (px < 0) px += 1.0;
+    ctx.fillStyle = pt.cyan ? `rgba(${cPrimary}, 0.65)` : `rgba(${cSecondary}, 0.60)`;
+    ctx.beginPath();
+    ctx.arc(px * W, py * H, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. Avatar 3D WebGL Three-VRM
+  if (webglCanvas && webglCanvas.width > 0 && webglCanvas.height > 0) {
+    ctx.drawImage(webglCanvas, 0, 0, W, H);
+  }
+
+  // 3. TOP HUD CARD (ombres franches rapides sans Gaussian blur)
+  const tx = 54 * S, ty = 46 * S, tw = 972 * S;
+  const fTitlePx = Math.round(35 * S);
+  ctx.font = `900 ${fTitlePx}px 'Liberation Sans', 'Noto Sans', sans-serif`;
+  const titleText = "✦ " + (timeline?.title || "LIA // LBG STUDIOS");
+  const titleLines = wrapTextLines(ctx, titleText, tw - 76 * S, 2);
+  const th = (titleLines.length > 1 ? 236 : 194) * S;
+
+  roundRectPath(ctx, tx, ty + 10 * S, tw, th, 32 * S);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+  ctx.fill();
+
+  roundRectPath(ctx, tx, ty, tw, th, 32 * S);
+  ctx.fillStyle = "rgba(11, 16, 32, 0.91)";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.5, 3 * S);
+  ctx.strokeStyle = "rgba(0, 245, 212, 0.76)";
+  ctx.stroke();
+
+  // Badge gauche
+  const badgeLeft = (timeline?.badge_left || "LIVE STUDIO 3D").toUpperCase();
+  ctx.font = `800 ${Math.round(21 * S)}px 'Liberation Sans', sans-serif`;
+  const blW = ctx.measureText(badgeLeft).width + 58 * S;
+  const blX = tx + 34 * S, blY = ty + 24 * S, blH = 40 * S;
+  roundRectPath(ctx, blX, blY, blW, blH, 20 * S);
+  ctx.fillStyle = "rgba(0, 245, 212, 0.16)";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.2, 2 * S);
+  ctx.strokeStyle = "#00f5d4";
+  ctx.stroke();
+
+  const pulse = 0.55 + 0.45 * Math.sin(curT * 6.5);
+  ctx.fillStyle = `rgba(0, 245, 212, ${0.25 * pulse})`;
+  ctx.beginPath();
+  ctx.arc(blX + 22 * S, blY + blH / 2, (11 + pulse * 3) * S, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#00f5d4";
+  ctx.beginPath();
+  ctx.arc(blX + 22 * S, blY + blH / 2, (6.2 + pulse * 1.5) * S, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.textBaseline = "middle";
+  ctx.fillText(badgeLeft, blX + 38 * S, blY + blH / 2 + 1 * S);
+
+  // Badge droit
+  const badgeRight = (timeline?.badge_right || "100% LOCAL • 0€ CLOUD").toUpperCase();
+  const brW = ctx.measureText(badgeRight).width + 44 * S;
+  const brX = tx + tw - 34 * S - brW, brY = ty + 24 * S, brH = 40 * S;
+  roundRectPath(ctx, brX, brY, brW, brH, 20 * S);
+  ctx.fillStyle = "rgba(244, 63, 94, 0.16)";
+  ctx.fill();
+  ctx.strokeStyle = "#f43f5e";
+  ctx.stroke();
+  ctx.fillStyle = "#fda4af";
+  ctx.fillText(badgeRight, brX + 22 * S, brY + brH / 2 + 1 * S);
+
+  // Titre
+  ctx.font = `900 ${fTitlePx}px 'Liberation Sans', 'Noto Sans', sans-serif`;
+  ctx.textBaseline = "top";
+  titleLines.forEach((line, idx) => {
+    const ly = ty + (80 + idx * 44) * S;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillText(line, tx + 36 * S, ly + 3 * S);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(line, tx + 36 * S, ly);
+  });
+
+  // Ligne télémétrie monospace
+  const metaY = ty + th - 32 * S;
+  ctx.font = `700 ${Math.round(21 * S)}px 'JetBrains Mono', 'Liberation Mono', monospace`;
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(226, 232, 240, 0.78)";
+  const seqPrefix = "SÉQUENCE : ";
+  ctx.fillText(seqPrefix, tx + 36 * S, metaY);
+  const prefW = ctx.measureText(seqPrefix).width;
+  ctx.fillStyle = "#00f5d4";
+  ctx.fillText(activeMotionLabel, tx + 36 * S + prefW, metaY);
+
+  const tcStr = `${fmtTime(Math.min(curT, timeline?.duration || 30))} / ${fmtTime(timeline?.duration || 30)}`;
+  const tcW = ctx.measureText(tcStr).width;
+  ctx.fillStyle = "rgba(226, 232, 240, 0.80)";
+  ctx.fillText(tcStr, tx + tw - 36 * S - tcW, metaY);
+
+  // 4. SOUS-TITRES KARAOKÉ COURTS POP NÉON
+  if (timeline?.show_subtitles && timeline.karaoke && timeline.karaoke.length > 0) {
+    const cue = timeline.karaoke.find(k => curT >= k.start && curT <= k.end);
+    if (cue && cue.words && cue.words.length > 0) {
+      const upperWords = cue.words.map(w => String(w).toUpperCase());
+      const baseFontPx = Math.round(46 * S);
+      const actFontPx = Math.round(52 * S);
+      ctx.font = `900 ${baseFontPx}px 'Liberation Sans', 'Noto Sans', sans-serif`;
+      const wordGap = 28 * S;
+      const maxPillW = 860 * S;
+
+      const rows = [];
+      let curRow = [];
+      let curW = 0;
+      upperWords.forEach((uw, idx) => {
+        const wWidth = ctx.measureText(uw).width * (idx === cue.active_index ? 1.14 : 1.0);
+        if (curRow.length > 0 && curW + wordGap + wWidth > maxPillW - 80 * S) {
+          rows.push(curRow);
+          curRow = [{ text: uw, idx, width: wWidth }];
+          curW = wWidth;
+        } else {
+          curW += (curRow.length > 0 ? wordGap : 0) + wWidth;
+          curRow.push({ text: uw, idx, width: wWidth });
+        }
+      });
+      if (curRow.length > 0) rows.push(curRow);
+
+      let widestRow = 0;
+      for (const r of rows) {
+        const rw = r.reduce((acc, it) => acc + it.width, 0) + wordGap * Math.max(0, r.length - 1);
+        if (rw > widestRow) widestRow = rw;
+      }
+
+      const pillW = Math.min(900 * S, Math.max(280 * S, widestRow + 84 * S));
+      const pillH = (rows.length * 62 + 34) * S;
+      const pillX = (W - pillW) / 2;
+      const pillY = 1585 * S - pillH;
+
+      roundRectPath(ctx, pillX, pillY + 8 * S, pillW, pillH, 28 * S);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+      ctx.fill();
+
+      roundRectPath(ctx, pillX, pillY, pillW, pillH, 28 * S);
+      ctx.fillStyle = "rgba(7, 11, 24, 0.84)";
+      ctx.fill();
+      ctx.lineWidth = Math.max(1.5, 2.5 * S);
+      ctx.strokeStyle = "rgba(0, 245, 212, 0.58)";
+      ctx.stroke();
+
+      ctx.textBaseline = "middle";
+      rows.forEach((r, rIdx) => {
+        const rowW = r.reduce((acc, it) => acc + it.width, 0) + wordGap * Math.max(0, r.length - 1);
+        let cursorX = (W - rowW) / 2;
+        const rowCenterY = pillY + (22 + rIdx * 62 + 28) * S;
+
+        for (const item of r) {
+          const isAct = item.idx === cue.active_index;
+          ctx.lineJoin = "round";
+          if (isAct) {
+            ctx.font = `900 ${actFontPx}px 'Liberation Sans', 'Noto Sans', sans-serif`;
+            ctx.lineWidth = Math.max(4, 8 * S);
+            ctx.strokeStyle = "#020617";
+            ctx.strokeText(item.text, cursorX, rowCenterY - 2 * S);
+            ctx.fillStyle = "#fde047";
+            ctx.fillText(item.text, cursorX, rowCenterY - 2 * S);
+          } else {
+            ctx.font = `900 ${baseFontPx}px 'Liberation Sans', 'Noto Sans', sans-serif`;
+            ctx.lineWidth = Math.max(3.5, 7 * S);
+            ctx.strokeStyle = "#020617";
+            ctx.strokeText(item.text, cursorX, rowCenterY);
+            ctx.fillStyle = "#f8fafc";
+            ctx.fillText(item.text, cursorX, rowCenterY);
+          }
+          cursorX += item.width + wordGap;
+        }
+      });
+    }
+  }
+
+  // 5. BOTTOM EQUALIZER CARD (24 BANDES FFT)
+  const bx = 54 * S, by = 1724 * S, bw = 972 * S, bh = 148 * S;
+  roundRectPath(ctx, bx, by + 8 * S, bw, bh, 30 * S);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fill();
+
+  roundRectPath(ctx, bx, by, bw, bh, 30 * S);
+  ctx.fillStyle = "rgba(11, 16, 32, 0.91)";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.5, 2.5 * S);
+  ctx.strokeStyle = "rgba(244, 63, 94, 0.58)";
+  ctx.stroke();
+
+  const bars = tf.bars || new Array(24).fill(0.16);
+  const eqX = bx + 36 * S, eqY = by + 24 * S, eqW = bw - 72 * S, eqH = 62 * S;
+  const gap = 8 * S;
+  const barW = (eqW - gap * (bars.length - 1)) / bars.length;
+  for (let i = 0; i < bars.length; i++) {
+    const val = Math.max(0.12, Math.min(1.0, bars[i]));
+    const barH = val * eqH;
+    ctx.fillStyle = i < bars.length / 2 ? hexPrimary : hexSecondary;
+    ctx.fillRect(eqX + i * (barW + gap), eqY + (eqH - barH), barW, barH);
+  }
+
+  const fY = by + bh - 30 * S;
+  ctx.font = `700 ${Math.round(20 * S)}px 'JetBrains Mono', 'Liberation Mono', monospace`;
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#94a3b8";
+  const fLeft = timeline?.footer_left || "VOX : SYNCHRO LIPSYNC FFT";
+  ctx.fillText(fLeft, bx + 36 * S, fY);
+
+  ctx.fillStyle = "#ec4899";
+  const expW = ctx.measureText(activeExpLabel).width;
+  ctx.fillText(activeExpLabel, bx + (bw - expW) / 2, fY);
+
+  const fRight = "LBG STUDIOS";
+  const frW = ctx.measureText(fRight).width;
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillText(fRight, bx + bw - 36 * S - frW, fY);
+}
+
+async function runDeterministicWsExport(wsUrl) {
+  const fps = timeline.telemetry_fps || 30;
+  const totalFrames = Math.max(1, Math.ceil(timeline.duration * fps));
+  const dt = 1.0 / fps;
+
+  await window.__lockVirtualClock();
+
+  await applyChoreoAt(0.0, true);
+  for (let w = 0; w < 10; w++) {
+    window.__advanceVirtualFrame(dt);
+  }
+
+  const ws = new WebSocket(wsUrl);
+  ws.binaryType = "arraybuffer";
+
+  let ackResolve = null;
+  ws.onmessage = (ev) => {
+    if (ev.data === "ACK" && ackResolve) {
+      const r = ackResolve;
+      ackResolve = null;
+      r();
+    }
+  };
+
+  await new Promise((resolve, reject) => {
+    ws.onopen = resolve;
+    ws.onerror = reject;
+  });
+
+  for (let f = 0; f < totalFrames; f++) {
+    const curT = f / fps;
+    await applyChoreoAt(curT, f === 0);
+    window.__advanceVirtualFrame(dt);
+    compositeMasterFrame(curT);
+
+    const blob = await new Promise(res => masterCanvas.toBlob(res, "image/jpeg", 0.93));
+    const buf = await blob.arrayBuffer();
+
+    const waitAck = ((f + 1) % 15 === 0) || (f === totalFrames - 1);
+    let pAck = null;
+    if (waitAck) {
+      pAck = new Promise(r => { ackResolve = r; });
+    }
+    ws.send(buf);
+    if (pAck) {
+      await pAck;
+    }
+  }
+
+  ws.send("DONE");
+  ws.close();
+  window.__STAGE_FINISHED = true;
+}
+
+async function init() {
+  const hostEl = document.getElementById("avatar-host");
+  if (HQ_3D) {
+    hostEl.style.width = "1080px";
+    hostEl.style.height = "1920px";
+  } else {
+    hostEl.style.width = "450px";
+    hostEl.style.height = "800px";
+  }
+
+  const res = await fetch(TIMELINE_URL + "?t=" + Date.now());
+  timeline = await res.json();
+  buildBakedStageLayers(timeline.palette || "cyan_rose");
+
+  window.petInstance = petInstance = window.__createVrmPet(hostEl, {
+    modelUrl: "/overlay/vrm/Compagnon.vrm",
+    framing: "full"
+  });
+
+  while (!petInstance || !petInstance.ready) {
+    await new Promise(r => setTimeout(r, 60));
+  }
+  webglCanvas = hostEl.querySelector("canvas");
+
+  if (timeline.motions && petInstance.loadVRMA) {
+    const seen = new Set();
+    const preloadPromises = [];
+    for (const m of timeline.motions) {
+      if (m.file && m.file.endsWith(".vrma") && !seen.has(m.file)) {
+        seen.add(m.file);
+        const exactKey = m.file.toLowerCase().replace(/[-_\s]/g, "");
+        preloadPromises.push(petInstance.loadVRMA(exactKey, m.file).catch(() => null));
+      }
+    }
+    await Promise.all(preloadPromises);
+  }
+
+  if (petInstance.setMicVisible) {
+    petInstance.setMicVisible(Boolean(timeline.mic_visible));
+  }
+  await applyChoreoAt(0.0, true);
+  await new Promise(r => setTimeout(r, 120));
+
+  if (WS_URL) {
+    await runDeterministicWsExport(WS_URL);
+  } else {
+    const t0 = performance.now();
+    function liveLoop() {
+      const curT = ((performance.now() - t0) / 1000.0) % Math.max(1, timeline.duration);
+      applyChoreoAt(curT, false);
+      compositeMasterFrame(curT);
+      requestAnimationFrame(liveLoop);
+    }
+    requestAnimationFrame(liveLoop);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
