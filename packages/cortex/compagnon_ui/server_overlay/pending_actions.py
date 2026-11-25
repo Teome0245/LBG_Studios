@@ -162,7 +162,7 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "script_names": ["create_lbg_dns_ct_proxmox.sh"],
         "summary": "Provisionnement du conteneur LXC Ubuntu 24.04 (CT 153) sur Proxmox .201 avec IP 192.168.0.53",
         "timeout_s": 180,
-        "keywords": [r"dns\s+adguard", r"serveur\s+dns", r"adguard\s+home", r"create_lbg_dns_ct_proxmox\.sh"],
+        "keywords": [r"d[ée]ploiement.*adguard", r"d[ée]ployer.*adguard", r"mise\s+en\s+service.*adguard", r"provisionner.*adguard", r"installer.*adguard", r"create_lbg_dns_ct_proxmox\.sh", r"serveur\s+dns\s+adguard"],
     },
     "mail_server_deploy": {
         "label": "Mise en service Serveur Mail Stalwart (CT 154 Proxmox .201)",
@@ -244,11 +244,42 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "timeout_s": 30,
         "keywords": [r"d[ée]sactive.*nas[-_]lun[-_]backup", r"d[ée]sactive.*stockage\s+nas", r"stockage\s+nas[-_]lun[-_]backup"],
     },
+    "adguard_unblock_domain": {
+        "label": "Déblocage / Whitelist domaine sur AdGuard Home (192.168.0.53)",
+        "script_names": ["gladys_adguard_manager"],
+        "summary": "Ajout d'une règle d'exception dans AdGuard Home et rechargement à chaud",
+        "timeout_s": 30,
+        "keywords": [r"d[ée]bloqu(?:er|e|age)?.*adguard", r"adguard.*d[ée]bloqu", r"whitelist.*adguard", r"autoris(?:er|e).*adguard"],
+    },
+    "adguard_inspect_blocked": {
+        "label": "Inspection des blocages DNS AdGuard Home (192.168.0.53)",
+        "script_names": ["gladys_adguard_manager"],
+        "args": ["--blocked", "--limit", "10"],
+        "summary": "Lecture des requêtes et domaines bloqués récemment par le résolveur AdGuard Home",
+        "timeout_s": 30,
+        "keywords": [r"(?<!d[ée])bloqu(?:age|es|er|e)?.*adguard", r"adguard.*(?<!d[ée])bloqu", r"logs.*adguard", r"dns.*bloqu", r"requ[êe]tes?\s+bloqu[ée]es?"],
+    },
+    "mail_health_check": {
+        "label": "Contrôle de santé du serveur Mailcow & Postfix (CT 155)",
+        "script_names": ["gladys_mailcow_manager"],
+        "args": ["--health"],
+        "summary": "Vérification des 18 conteneurs Mailcow, de SOGo et de la file d'attente SMTP Postfix",
+        "timeout_s": 30,
+        "keywords": [r"sant[ée].*mail(?:cow)?", r"serveur.*mail.*(?:ok|sant[ée]|marche)", r"mailq", r"queue.*postfix"],
+    },
+    "mail_brief_report": {
+        "label": "Compte-rendu messagerie & courriers non lus (Mailcow & boîtes unifiées)",
+        "script_names": ["gladys_mailcow_manager"],
+        "args": ["--brief"],
+        "summary": "Synthèse des emails non lus et état de la messagerie pour le compte-rendu de Stève",
+        "timeout_s": 30,
+        "keywords": [r"compte[- ]rendu.*mail", r"brief.*mail", r"r[ée]sum[ée].*mail", r"courriers?.*non\s+lus?", r"mails?.*non\s+lus?", r"bo[îi]te.*mail"],
+    },
 }
 
 
 def _resolve_script_path(script_name: str) -> Path | None:
-    """Recherche le script sur les chemins standards CT100 ou dev."""
+    """Recherche le script sur les chemins standards CT100, dev ou skills appris."""
     candidates = [
         Path("/app/scripts") / script_name,
         Path("/opt/orchestrateur/scripts") / script_name,
@@ -257,6 +288,11 @@ def _resolve_script_path(script_name: str) -> Path | None:
         Path("/home/lbg/Projets/LBG_Studios/packages/cortex/infra/scripts") / script_name,
         Path("/home/lbg/projects/LBG_Studios/packages/cortex/infra/scripts") / script_name,
         Path(__file__).resolve().parents[3] / "infra" / "scripts" / script_name,
+        # Skills appris
+        Path(__file__).resolve().parents[2] / "skills" / "learned" / script_name / "run.py",
+        Path(__file__).resolve().parents[1] / "skills" / "learned" / script_name / "run.py",
+        Path("/home/lbg/Projets/LBG_Studios/packages/cortex/skills/learned") / script_name / "run.py",
+        Path("/home/lbg/projects/LBG_Studios/packages/cortex/skills/learned") / script_name / "run.py",
     ]
     for c in candidates:
         if c.is_file():

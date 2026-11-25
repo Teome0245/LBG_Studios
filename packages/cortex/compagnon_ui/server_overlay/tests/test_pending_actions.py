@@ -131,6 +131,37 @@ class PendingActionsTests(unittest.IsolatedAsyncioTestCase):
         # En temps réel actuel time.time() > 100 + 900
         self.assertIsNone(retrieved)
 
+    async def test_extract_adguard_actions(self) -> None:
+        # Inspection des blocages
+        text_inspect = (
+            "Je peux inspecter les requêtes bloquées sur AdGuard Home (192.168.0.53). "
+            "Veux-tu que je consulte les blocages récents ?"
+        )
+        action_inspect = pa.extract_pending_action_from_assistant_message(text_inspect, "conv_adguard")
+        self.assertIsNotNone(action_inspect)
+        self.assertEqual(action_inspect.context.get("action_key"), "adguard_inspect_blocked")
+        self.assertIn("gladys_adguard_manager", action_inspect.command[1])
+
+        # Déblocage d'un domaine
+        text_unblock = (
+            "Le domaine tracking.example.com a été bloqué par AdGuard. "
+            "Souhaites-tu que je débloque ce domaine sur AdGuard ?"
+        )
+        action_unblock = pa.extract_pending_action_from_assistant_message(text_unblock, "conv_adguard_unblock")
+        self.assertIsNotNone(action_unblock)
+        self.assertEqual(action_unblock.context.get("action_key"), "adguard_unblock_domain")
+        self.assertIn("gladys_adguard_manager", action_unblock.command[1])
+
+    async def test_extract_mail_actions(self) -> None:
+        text_brief = (
+            "Je peux te préparer le résumé de tes courriers non lus sur tes différentes boîtes. "
+            "Veux-tu que je génère le compte-rendu des mails ?"
+        )
+        action_brief = pa.extract_pending_action_from_assistant_message(text_brief, "conv_mail_brief")
+        self.assertIsNotNone(action_brief)
+        self.assertEqual(action_brief.context.get("action_key"), "mail_brief_report")
+        self.assertIn("gladys_mailcow_manager", action_brief.command[1])
+
     async def test_execute_pending_action_success(self) -> None:
         action = pa.PendingAction(
             action_id="act_echo",

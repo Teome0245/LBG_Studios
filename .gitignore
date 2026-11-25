@@ -84,7 +84,10 @@ team_trace.jsonl
 # Méta-autonomie — artefacts runtime staging / overrides appliqués
 packages/cortex/orchestrator/team/staging/agent_mutator/*/
 packages/cortex/orchestrator/team/staging/feature_proposer/*/
+packages/cortex/compagnon_ui/server_overlay/staging/capability_forge/*/
+packages/cortex/compagnon_ui/server_overlay/staging/intent_forge/*/
 packages/cortex/orchestrator/team/data/prompt_overrides/*.txt
+tools/studio_content_engine/custom_music_tracks.json
 
 # Exception Pilot avatar (léger)
 !packages/cortex/pilot_web/orchestrator_avatar/models/*.glb

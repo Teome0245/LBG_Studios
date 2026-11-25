@@ -9,6 +9,45 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25)
+- 48. **Jalon Matériel Planifié (3–4 décembre 2026 — Upgrade GPU RTX 3060 12 Go sur `.10` & recyclage GTX 1050 Ti sur R720 `.201`)** :
+    - **PC Windows (`.10`)** : passage de la GTX 1050 Ti à une **MSI GeForce RTX 3060 VENTUS 2X 12G OC** (12 Go VRAM : rendu 3D/audio instantané + LLM 8B–14B / offload MoE 30B rapide).
+    - **Serveur R720 (`.201` `lbgr720`)** : retrait de la vieille `NVIDIA Tesla M2090` (`42:00.0`, Fermi `sm_20` obsolète, 225 W, actuellement sur `vfio-pci`) et remplacement par la **GTX 1050 Ti (4 Go, Pascal `sm_61`, CUDA 12 / NVENC)** — IOMMU déjà actif sur `.201` (`intel_iommu=on iommu=pt`). Cible prioritaire : **passthrough PCIe vers VM `143` (`lbg-omarchy`)** pour diviser par ~6 le temps de rendu WebGL Three-VRM / Blender / NVENC H24 (14 min → ~2 min par Short sans `.10`), ou partage LXC Proxmox. Sujet d'épisode YouTube dédié prêt à tourner lors du montage.
+- 47. **Gladys Cerveau & Capability Forge — Auto-Upgrade Appris : Contrôle Serveur Mail & Digest Courriers (`gladys_mailcow_manager`)** :
+    - **Forge de Compétence Autonome Mailcow (CT 155 sur Proxmox .201 / `mail.laboiteageeks.fr`)** :
+      * Spécification et génération du skill appris `gladys_mailcow_manager` dans `packages/cortex/skills/learned/gladys_mailcow_manager/` (`SKILL.md` + `run.py`).
+      * **Validation AST Stricte & Sandbox Bubblewrap (`bwrap`) sur `.143`** : 0 faille, code de retour 0 sous isolation réseau stricte.
+      * **Cycle L2 & Adoption** : Manifeste `manifest.json` en staging adopté dans l'arborescence officielle des compétences.
+    - **Fonctionnalités Live Opérationnelles sur le LAN** :
+      * `--health` : inspection des 18 conteneurs Docker Mailcow (Postfix, Dovecot, SOGo, Rspamd, Nginx, Acme, MySQL, Redis) et file d'attente SMTP `mailq`.
+      * `--unread` : extraction des en-têtes des courriers non lus sur Dovecot (`sdesharches@laboiteageeks.fr`, date, expéditeur, objet).
+      * `--brief` : compte-rendu consolidé pour le Morning Brief IA (santé serveur + résumé des nouveaux courriers + état des synchronisations multi-boîtes).
+    - **Intégration Dialogue & Pending Actions (`server_overlay`)** :
+      * Ajout des actions canoniques `mail_health_check` et `mail_brief_report` dans `pending_actions.py` et cadrage dans `router_prompts.py`.
+      * Tests unitaires `test_pending_actions.py` étendus à 10/10 PASS, `ruff check` 100% clean.
+- 46. **Gladys Cerveau & Capability Forge — Auto-Upgrade Appris : Pilotage DNS AdGuard Home (`gladys_adguard_manager`)** :
+    - **Forge de Compétence Autonome sous Garde-fous A4 / AST** :
+      * Spécification et génération du skill appris `gladys_adguard_manager` dans `packages/cortex/skills/learned/gladys_adguard_manager/` (`SKILL.md` + `run.py`).
+      * **Validation AST Stricte (`check_ast_safety`)** : 0 appel interdit (`eval`/`exec`), pas de `shell=True`, modules restreints, niveau de risque déterministe `HIGH` (écriture de règles DNS).
+      * **Isolation Sandbox Bubblewrap (`bwrap`) sur `.143`** : test automatique réussi (`returncode=0` sous `bwrap` avec réseau coupé et arborescence read-only).
+      * **Cycle L2 & Adoption** : Manifeste `manifest.json` en staging validé et adopté via `adopt_capability_from_staging`.
+    - **Fonctionnalités Live Opérationnelles sur le LAN** :
+      * `--blocked [--limit N]` : interrogation directe du `querylog.json` de CT 153 sur Proxmox `.201` via SSH / `pct exec` et restitution claire des domaines bloqués (domaines, clients `.150`, `.112`, horodatages et règles).
+      * `--unblock <domaine>` : déblocage sous garde-fous L2 avec insertion de règle `@@||domaine^$important` dans `/opt/AdGuardHome/AdGuardHome.yaml`, validation syntaxique `--check-config` et rechargement à chaud `-s reload` sans coupure DNS.
+    - **Intégration Dialogue & Pending Actions (`server_overlay`)** :
+      * Actions canoniques `adguard_inspect_blocked` et `adguard_unblock_domain` branchées dans `pending_actions.py` et `router_prompts.py` avec résolution dynamique des skills appris dans `_resolve_script_path`.
+      * Suites de tests `test_pending_actions.py` (9/9) et `test_capability_forge.py` (7/7) 100% PASS, `ruff check` clean, suite backend 154/154 PASS.
+- 45. **Studio Content Engine V3.3 — Clip Musical Original Hebdomadaire (1 Long 60s + 2 Shorts 30s), Phonétique TTS `0€`, Transparence R720 `~150 €`, Sources Vérifiées & TikTok Parallèle** :
+    - **Usine Musicale Originale Hebdomadaire (`cron_weekly_original_clip.py` + `systemd/lbg-music-weekly.timer`)** :
+      * Génère chaque **Samedi à 13h45** via `.venv_audio` (`tools/studio_music_generator_v3.py`) un nouveau morceau original complet de `60s` (MusicGen instrumental + paroles originales Ollama + chant Lia mixé).
+      * **Double exploitation virale & chaîne** : publie **1 Clip Officiel 16:9 intégral (`60s`) + miniature `1280×720`** sur YouTube (`1 650` unités le samedi → jamais de collision avec les vidéos longues Mar/Jeu/Dim, plafond max **`9 650 / 10 000`** unités respecté) **ET** découpe **2 Shorts verticaux `30s`** (`Part 1 — Couplet & Montée` + `Part 2 — Refrain & Drop Final`) inscrits dans `custom_music_tracks.json` (lu dynamiquement par `stage3d_compositor.py`) et en tête de `topics_backlog.json`.
+    - **Correction Phonétique TTS `0€` (`voice_engine.py`)** :
+      * Suppression du hiatus vocalique `« à zéro euro »` / token collé `0€` que `VivienneMultilingualNeural` prononçait comme *« héro euros »* : table `PHONETIC_ORAL_RULES` convertissant `0€` / `0 €/mois` / `zéro euro(s)` en `« zéro centime (par mois) »`, `150€` en `« 150 euros »`, et francisant `MoE`, `VRAM`, `CPU`, `GPU`, `PCIe`, `WAL`, `4x4`, `P2P`, `homelab` à l'oral tout en conservant l'affichage `0 €` dans les slides et sous-titres.
+    - **Transparence Coût Matériel Épisode 2 (`~150 €` R720), Sources Officielles E-E-A-T & Monétisation (Tous Piliers O1/O2/O3)** :
+      * Épisode 2 (`gladys_homelab_architecture` dans `longform_script_builder.py` et `longform_backlog.json`) refondu avec transparence totale : investissement initial du **Dell PowerEdge R720 d'occasion (~150 €)** + électricité/amortissement comparé à ~960 €/an de SaaS/VPS (« zéro abonnement Cloud ne veut pas dire matériel magique gratuit »).
+      * Ajout systématique du bloc `📚 SOURCES OFFICIELLES & DOCUMENTATION TECHNIQUE` (ArXiv Qwen3 MoE, Dell R720 Technical Guide, Godot Engine 4.6 Docs, Proxmox VE Docs, SQLite WAL, Stalwart Mail RFC, SWG `.ans` binary animation specs) dans `longform_script_builder.py`, `longform_bot.py` et `youtube_publisher.py`.
+      * Extension de `longform_backlog.json` (12 épisodes calibrés à `7,0–8,5 min` pour éligibilité Watchtime / mid-rolls YouTube Partner) et `REPLENISH_SCHEDULE` (`cron_daily_publisher.py`) couvrant tous les piliers du projet : O1 Compagnon/Gladys/Forge AST, O2 MMO Prime Godot 4.6 SWG+T4C (`.246:8787`), O3 Joueurs IA multi-jeux, Rétro-ingénierie `.vrma`, Self-hosting Mail/DNS et Hardware.
+    - **Garantie TikTok en Parallèle sur chaque Short (`cron_daily_publisher.py`)** :
+      * Parsing JSON du retour de `content_bot.py --youtube --tiktok`, journalisation de `tiktok_status` dans `topics_backlog.json` et **rattrapage automatique immédiat** via Playwright headless (`upload_local_tiktok`, cookies `.143` valides 358 jours) si l'envoi TikTok initial n'est pas confirmé.
 - 44. **Studio Content Engine V3.2 — Format Vidéos Longues YouTube 16:9 (4–15 min, façon `@KiaraIAFR` + Lia 3D) & Miniature `1280×720` Auto** :
     - **Générateur de Scripts & Slides Multi-Chapitres (`tools/studio_content_engine/longform_script_builder.py`)** :
       * Calibrage dynamique de 4 à 15 minutes (`--minutes`), plans directeurs vérifiés (MoE 30B-A3B sur 8 Go VRAM / R720, Homelab Gladys 0€ Cloud) + générateur multi-passes Ollama (`think=False`).
@@ -18,6 +57,7 @@
       * Barre supérieure de progression par chapitres + alternance **Plateau Hero** (intro/conclusion) et **Split-Screen 1/3 Lia 3D + 2/3 Slides Techniques Animées** (`comparison` 2 colonnes, `diagram` flux d'architecture, `terminal` bash colorisé, `benchmarks` barres animées) + bandeau sous-titres 16:9 épuré.
       * Génération automatique de la miniature YouTube `1280×720` (`thumbnail_1280x720.png`) et de `youtube_description.txt` avec horodatages exacts des chapitres (`00:00`, `00:36`…), branchés dans `upload_long_video()` (`youtube_publisher.py`).
       * **Épisode 1 complet rendu et publié en ligne sur `@LBG-p8k`** : *« Faire tourner une grosse IA 30B sur 8 Go de VRAM (ou sans GPU) : le secret du MoE »* — `74,1 Mo`, `3 min 44 s`, 6 chapitres, **6719/6720 frames uniques = 30.00 FPS**, miniature personnalisée `1280×720` appliquée (`https://www.youtube.com/watch?v=uuLTxEZk-eg`), `ruff check` 100% clean.
+      * **Cadencement automatique 5 Shorts/jour + 3 Longs/semaine actif sous systemd** : `lbg-content-daily.timer` réglé à **5 Shorts/jour** (`09h30, 12h15, 15h30, 18h30, 21h15` = `8 000` unités API) + `lbg-longform-weekly.timer` activé à **3 Vidéos Longues 16:9/semaine** (`Mar, Jeu, Dim 16h30` → en ligne vers `17h05` = `+1 650` unités API, soit **`9 650 / 10 000` unités max/jour** sans jamais dépasser le quota gratuit YouTube Data API v3).
 - 43. **Studio Content Engine V3.1 — Moteur Shorts 9:16 3D WebGL Déterministe style *Nexura Domina* (`stage3d` + `music3d`, 30.00 FPS, 0 saccade)** :
     - **Compositeur WebGL Three-VRM Déterministe (`stage3d_compositor.py` + `assets/stage3d/render_stage3d.html`)** :
       * Horloge virtuelle fixe (`1/30 s`) streamant chaque trame JPEG par WebSocket vers `ffmpeg -f image2pipe` (sur `.10` en Chrome `--headless=new --use-angle=d3d11` invisible si libre, sinon repli `.143` `Xvfb`), sélecteur sémantique de gestes `select_semantic_tech_motion` et sous-titres karaoké courts.

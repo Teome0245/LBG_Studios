@@ -40,6 +40,11 @@ CANONICAL_EPISODES: dict[str, dict[str, Any]] = {
         "badge_topic": "HARDWARE & IA LOCALE",
         "palette": "cyan_rose",
         "keywords": ["moe", "8 go", "vram", "30b", "override-tensor", "r720", "carte graphique"],
+        "sources": [
+            "Documentation officielle llama.cpp (--override-tensor) : https://github.com/ggml-org/llama.cpp",
+            "Rapport technique officiel Qwen3 (Architecture MoE 30B-A3B) : https://github.com/QwenLM/Qwen3",
+            "Fiche technique serveur Dell PowerEdge R720 : https://i.dell.com/sites/csdocuments/Shared-Content_data-Sheets_Documents/en/aa/Dell-PowerEdge-R720-Spec-Sheet.pdf",
+        ],
         "chapters": [
             {
                 "title": "Introduction : le mur de la VRAM",
@@ -180,123 +185,149 @@ CANONICAL_EPISODES: dict[str, dict[str, Any]] = {
         ],
     },
     "gladys_homelab_architecture": {
-        "title": "Construire un Homelab IA 100% Local à 0€/mois : visite guidée de notre infrastructure Gladys",
-        "subtitle": "Proxmox, routage multi-LLM (.110 / .111), sécurité sandbox et compagnon 3D temps réel",
-        "thumbnail_hook": "0€ DE CLOUD !",
-        "thumbnail_sub": "NOTRE HOMELAB IA",
-        "badge_topic": "HOMELAB & ARCHITECTURE",
+        "title": "Notre Homelab IA sur un serveur à 150 € d'occasion (sans abonnement Cloud) : visite guidée de Gladys",
+        "subtitle": "Vrai budget matériel (Dell R720 d'occasion), Proxmox VE, routage multi-LLM, silos RAG et sécurité Bubblewrap",
+        "thumbnail_hook": "SERVEUR IA À 150 € !",
+        "thumbnail_sub": "0 ABONNEMENT CLOUD",
+        "badge_topic": "HOMELAB & VRAI BUDGET",
         "palette": "cyan_rose",
-        "keywords": ["homelab", "gladys", "proxmox", "infrastructure", "0€", "routage"],
+        "keywords": ["homelab", "gladys", "proxmox", "infrastructure", "150", "r720", "visite guidée"],
+        "sources": [
+            "Proxmox Virtual Environment (Documentation officielle LXC/KVM) : https://pve.proxmox.com/pve-docs/",
+            "Dell PowerEdge R720 Technical Guide (Architecture bi-Xeon E5 & 24 slots DDR3 ECC) : https://dl.dell.com/manuals/all-products/esuprt_ser_stor_net/esuprt_poweredge/poweredge-r720_owner's%20manual_en-us.pdf",
+            "Ollama — Exécution locale de modèles quantifiés : https://github.com/ollama/ollama",
+            "Bubblewrap — Isolation sandbox Linux non-privilégiée : https://github.com/containers/bubblewrap",
+            "Godot Engine 4.6 — Déploiement serveur dédié Headless : https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_dedicated_servers.html",
+        ],
         "chapters": [
             {
-                "title": "Pourquoi nous avons banni les abonnements API Cloud",
+                "title": "La vérité sur le « sans abonnement Cloud » : combien ça coûte vraiment ?",
                 "layout": "hero",
                 "slide_type": "hero",
-                "slide_title": "Zéro Euro d'API Cloud en Production H24",
-                "slide_subtitle": "Comment faire tourner un compagnon IA, des agents autonomes et un serveur MMO 3D chez soi",
+                "slide_title": "Zéro Abonnement Cloud ≠ Matériel Gratuit",
+                "slide_subtitle": "Transparence totale : ~150 € d'investissement dans un Dell PowerEdge R720 d'occasion pour héberger Gladys H24",
                 "highlights": [
-                    "Séparation stricte cerveau rapide vs cerveau lourd",
-                    "Découpage en silos de connaissances JSON légers",
-                    "Exécution sécurisée par sandbox sans exposition réseau",
+                    "Vrai prix d'achat : ~150 € d'occasion pour le serveur Dell R720",
+                    "Zéro facture mensuelle d'API (OpenAI, Anthropic, synthèse vocale)",
+                    "Visite complète : LLM locaux, sécurité sandbox et serveur MMO 3D",
                 ],
                 "sentences": [
-                    "Quand on fait tourner des agents d'intelligence artificielle vingt-quatre heures sur vingt-quatre pour surveiller des serveurs, coder ou animer un compagnon virtuel, les factures d'API cloud deviennent vite incontrôlables.",
-                    "Au-delà du prix, envoyer en permanence le contexte de son réseau et de ses projets vers des serveurs externes pose un vrai problème de souveraineté.",
-                    "Moi c'est Lia, l'incarnation 3D de notre organisme Gladys chez LBG Studios : aujourd'hui je t'ouvre le capot de notre infrastructure locale qui tourne intégralement à zéro euro par mois d'abonnement.",
+                    "Quand on parle d'intelligence artificielle auto-hébergée sans abonnement cloud, il faut être totalement honnête dès la première seconde : ne pas payer d'API chaque mois ne veut pas dire que le matériel tombe du ciel gratuitement.",
+                    "Pour faire tourner notre écosystème vingt-quatre heures sur vingt-quatre sans dépendre de serveurs externes, il a fallu investir dans du vrai matériel, mais bien moins cher qu'on ne l'imagine souvent.",
+                    "Le cœur de notre homelab repose sur un serveur d'entreprise Dell PowerEdge R720 acheté environ 150 euros d'occasion, épaulé par un mini-PC basse consommation.",
+                    "Moi c'est Lia, l'incarnation 3D de notre organisme Gladys chez LBG Studios : aujourd'hui je te fais visiter toute notre architecture réelle, ses vrais coûts, ses performances et la façon dont un serveur à 150 euros remplace des centaines d'euros d'abonnements annuels.",
                 ],
             },
             {
-                "title": "Topologie matérielle : Proxmox, NUC et Serveur R720",
+                "title": "Topologie matérielle : pourquoi un Dell R720 à 150 € + un NUC ?",
                 "layout": "split",
                 "slide_type": "diagram",
-                "slide_title": "Topologie Réseau & Répartition des Rôles",
+                "slide_title": "Répartition Matérielle sous Proxmox VE",
                 "nodes": [
-                    {"label": "NUC Basse Conso", "sub": "LLM Rapide 2B/4B + Piper TTS ONNX"},
-                    {"label": "Serveur Proxmox R720", "sub": "Orchestrateur Cortex + LLM Lourd + Hub 3D"},
-                    {"label": "Atelier Linux & PC GPU", "sub": "Rendu 3D, Blender Headless & Bureau"},
+                    {"label": "Mini-PC NUC", "sub": "Modèles 2B/4B rapides + Voix ONNX"},
+                    {"label": "Dell R720 (~150 € occase)", "sub": "Bi-Xeon + 64 Go ECC (16 slots libres)"},
+                    {"label": "Services Isolés LXC/VM", "sub": "Cortex, LLM 30B MoE, Mail & Hub Godot"},
                 ],
                 "bullets": [
-                    "Isolation propre en conteneurs LXC légers et VM dédiées sous Proxmox VE",
-                    "Un nœud léger répond en quelques dizaines de millisecondes pour la voix et le chat",
-                    "Un nœud lourd de 32 Go de RAM traite le code et les tâches de fond sans bloquer l'interface",
+                    "Dell PowerEdge R720 (~150 € d'occasion) : 64 Go DDR3 ECC et 16 emplacements mémoire encore libres",
+                    "Un nœud NUC léger répond en quelques millisecondes pour la voix et le dialogue instantané",
+                    "Conteneur LLM lourd (32 Go alloués) sur le R720 : fait tourner Qwen3 30B MoE sans carte graphique",
                 ],
                 "sentences": [
-                    "La première erreur quand on monte un homelab IA, c'est de vouloir tout empiler sur un seul énorme modèle qui met dix secondes à répondre au moindre bonjour.",
-                    "Nous avons séparé physiquement et logiquement nos machines sous Proxmox VE selon la latence attendue.",
-                    "Un mini-serveur basse consommation héberge les micro-modèles rapides de 2 à 4 milliards de paramètres ainsi que la synthèse vocale neuronale en ONNX pour garantir un dialogue instantané.",
-                    "En parallèle, notre serveur Dell PowerEdge R720 regroupe l'orchestrateur FastAPI, le nœud LLM lourd doté de 32 gigaoctets de RAM pour la génération de code, et le serveur de jeu Godot en mode headless.",
+                    "Pourquoi avoir choisi un serveur rack Dell PowerEdge R720 d'occasion autour de 150 euros plutôt qu'un gros PC gamer neuf ?",
+                    "Le premier atout imbattable des serveurs d'entreprise déclassés, c'est la mémoire vive DDR3 ECC à bas prix et le nombre de canaux mémoire des processeurs bi-Xeon.",
+                    "Avec 64 gigaoctets de RAM installés et encore seize emplacements DIMM libres sur la carte mère, nous avons pu allouer 32 gigaoctets dédiés à notre conteneur Ollama lourd pour exécuter un modèle Mixture of Experts de 30 milliards de paramètres directement sur le processeur.",
+                    "À côté, un petit NUC silencieux garde en mémoire les micro-modèles rapides de 2 à 4 milliards ainsi que la synthèse vocale Piper en ONNX, pendant que le R720 héberge aussi notre serveur mail Stalwart, notre DNS AdGuard et notre serveur de jeu 3D.",
                 ],
             },
             {
-                "title": "Économiser les tokens grâce aux Silos de Connaissances",
+                "title": "Économiser les ressources avec les Silos de Connaissances JSON",
                 "layout": "split",
                 "slide_type": "comparison",
                 "col_left_title": "Approche Naïve (Prompt Géant)",
                 "col_left_items": [
                     "Injecter 15 000 tokens de doc à chaque question",
-                    "Sature le CPU sur les petites machines locales",
-                    "Dilue l'attention et provoque des hallucinations",
-                    "Temps d'attente de 15 à 30 secondes",
+                    "Gaspille le CPU et la RAM sur serveur local",
+                    "Dilue l'attention et génère des hallucinations",
+                    "Latence de 15 à 30 secondes par message",
                 ],
                 "col_right_title": "Silos Contextuels Gladys (~1,5 Ko)",
                 "col_right_items": [
                     "4 silos JSON isolés (Compagnon, MMO, Infra, Web)",
-                    "Chargement ciblé uniquement du domaine utile",
-                    "Garde-fous stricts anti-invention d'adresses ou d'états",
-                    "Réponse précise avec 10× moins de calcul",
+                    "Chargement ciblé uniquement du domaine demandé",
+                    "Garde-fous stricts interdisant d'inventer des rôles",
+                    "Réponse rapide et fidèle sur matériel à 150 €",
                 ],
-                "slide_title": "Gérer le Contexte sur de Petits Modèles Locaux",
+                "slide_title": "Optimiser le Contexte pour Matériel Abordable",
                 "sentences": [
-                    "Sur du matériel local abordable, le vrai trésor à protéger n'est pas seulement le nombre de paramètres, c'est la taille du prompt envoyé au modèle.",
-                    "Si tu injectes toute la documentation de ton infrastructure à chaque message, même un bon modèle local va ramer et finir par mélanger les concepts.",
-                    "Nous avons donc découpé le cerveau de Gladys en silos JSON modulaires d'environ un virgule cinq kilo-octet chacun : compagnon, infrastructure, monde MMO et vitrine web.",
-                    "Avant d'interroger le LLM, le routeur charge uniquement le silo concerné avec des règles strictes interdisant d'inventer le rôle d'une machine éteinte ou inconnue.",
+                    "Quand on travaille sur un serveur à 150 euros sans carte graphique hors de prix, chaque millier de tokens envoyé dans le prompt compte double.",
+                    "Injecter toute la documentation technique à chaque question saturerait inutilement les processeurs Xeon et ferait dérailler les petits modèles.",
+                    "Nous avons donc structuré la mémoire de Gladys en quatre silos JSON ultra-compacts d'environ un virgule cinq kilo-octet : compagnon, infrastructure réseau, monde MMO Prime et vitrine web.",
+                    "Avant chaque réponse, le routeur charge uniquement le silo pertinent avec des garde-fous stricts qui interdisent au modèle d'inventer l'état d'une machine éteinte ou inconnue.",
                 ],
             },
             {
-                "title": "Sécuriser un agent qui génère ses propres outils",
+                "title": "Sécuriser une IA qui forge ses propres compétences",
                 "layout": "split",
                 "slide_type": "terminal",
-                "slide_title": "Forge de Capacités & Sandbox Bubblewrap",
+                "slide_title": "Forge de Capacités & Sandbox Linux Bubblewrap",
                 "code_lines": [
-                    "# Pipeline de validation déterministe avant adoption :",
-                    "1. Analyse statique AST Python (zéro eval / exec / shell=True)",
-                    "2. Exécution isolée sans réseau :",
+                    "# Validation déterministe en 3 barrières avant adoption :",
+                    "1. Audit statique AST Python (bloque eval, exec, shell=True)",
+                    "2. Test en bulle isolée coupée du réseau :",
                     "   bwrap --ro-bind /usr /usr --unshare-net --tmpfs /tmp python run.py",
-                    "3. Validation humaine L2 en 1 clic dans le chat ou Pilot",
+                    "3. Approbation humaine L2 en 1 clic dans le chat ou Pilot",
                 ],
                 "bullets": [
-                    "Détection automatique quand une demande revient 3 fois sans outil dédié",
-                    "Classification déterministe du risque (toute écriture = niveau élevé)",
-                    "Aucun script généré par IA ne touche le système hôte sans feu vert humain",
+                    "Détection automatique lorsqu'un besoin revient 3 fois sans outil existant",
+                    "Isolation par namespaces noyau Linux (Bubblewrap) sans aucun accès LAN/Internet",
+                    "Validation humaine obligatoire avant toute mise en service sur le réseau",
                 ],
                 "sentences": [
-                    "Mais comment permettre à une IA locale d'évoluer et de créer de nouveaux scripts d'automatisation sans risquer une catastrophe sur ses serveurs ?",
-                    "Nous avons construit une forge de capacités en trois verrous déterministes.",
-                    "Dès qu'une intention revient trois fois sans outil existant, Gladys prépare une compétence candidate et passe son code au crible d'un analyseur syntaxique AST qui bloque tout appel dangereux.",
-                    "Ensuite, le script est testé dans une bulle Linux Bubblewrap totalement coupée du réseau, avant de me demander une confirmation explicite en un clic pour l'adopter.",
+                    "Un homelab IA devient vraiment passionnant quand l'agent peut créer lui-même les scripts qui lui manquent, mais hors de question de lui laisser un accès root aveugle.",
+                    "Dès qu'une demande échoue trois fois faute d'outil dédié, la forge de Gladys rédige une compétence candidate et lui impose trois filtres de sécurité.",
+                    "D'abord, une inspection syntaxique AST rejette toute fonction système dangereuse ; ensuite, le script est exécuté dans un conteneur léger Bubblewrap totalement privé de réseau.",
+                    "Enfin, Gladys présente un bouton de validation humaine dans le chat : rien n'est activé en production sans notre accord explicite.",
                 ],
             },
             {
-                "title": "Bilan énergétique, coûts et prochaines étapes",
+                "title": "Vrai bilan financier, électricité et amortissement",
                 "layout": "split",
                 "slide_type": "benchmarks",
-                "slide_title": "Bilan Chiffré de la Stack Locale LBG",
+                "slide_title": "Coût Réel d'Investissement vs Abonnements Cloud",
                 "metrics": [
-                    {"label": "Facture API Cloud (OpenAI / Anthropic / TTS)", "value": "0 € / mois", "pct": 100, "color": "cyan"},
-                    {"label": "Mémoire vive du serveur MMO Godot 4.6 Headless", "value": "0.8 Go RAM", "pct": 22, "color": "cyan"},
-                    {"label": "Sondes d'intégrité réseau & services LAN", "value": "< 200 ms", "pct": 88, "color": "amber"},
-                    {"label": "Tests automatisés Backend & Overlay", "value": "178 PASS", "pct": 100, "color": "cyan"},
+                    {"label": "Achat Serveur Dell R720 d'occasion (investissement)", "value": "~150 € une fois", "pct": 38, "color": "amber"},
+                    {"label": "Équivalent SaaS + API LLM + Serveur VPS (sur 1 an)", "value": "~960 € / an", "pct": 95, "color": "rose"},
+                    {"label": "RAM mobilisée par le serveur MMO Godot 4.6 Headless", "value": "0.8 Go RAM", "pct": 18, "color": "cyan"},
+                    {"label": "Abonnements Cloud récurrents payés par le studio", "value": "Aucun (0 €/mois)", "pct": 100, "color": "cyan"},
                 ],
                 "bullets": [
-                    "Audit nocturne autonome à 00h30 sans consommer de crédits externes",
-                    "Extensible à volonté en ajoutant de la DDR3 ECC d'occasion ou un petit GPU 75W",
+                    "Électricité maîtrisée : extinction des VM lab inutiles (comme l'ancien serveur de référence) et purge du swap",
+                    "Investissement matériel de ~150 € amorti en moins de 3 mois face aux offres cloud équivalentes",
                 ],
                 "sentences": [
-                    "Au quotidien, cette architecture nous permet de faire tourner nos audits nocturnes, notre pipeline vidéo 3D et notre monde virtuel multijoueur avec une maîtrise totale des coûts.",
-                    "Le serveur MMO Godot headless consomme moins d'un gigaoctet de RAM, les sondes réseau répondent en moins de deux cents millisecondes et cent soixante-dix-huit tests automatiques verrouillent chaque mise à jour.",
-                    "Dis-moi en commentaire par quelle brique tu aimerais commencer ton propre homelab IA, ou quel service tu auto-héberges déjà chez toi !",
-                    "Pense à t'abonner pour les prochains guides matériels et architectures locales, et viens explorer le dépôt GitHub de LBG Studios !",
+                    "Faisons les comptes honnêtement : entre un serveur Dell R720 autour de 150 euros à l'achat et sa consommation électrique sur l'année, est-ce vraiment rentable ?",
+                    "Si on devait louer dans le cloud un serveur dédié de 64 gigas de RAM, additionné d'abonnements mensuels aux API de code, de chat et de synthèse vocale, la facture dépasserait facilement quatre-vingts euros par mois, soit près de mille euros par an.",
+                    "En optimisant nos machines, par exemple en coupant les machines virtuelles de test inutilisées et en faisant tourner notre monde multijoueur Godot headless dans seulement huit cents mégaoctets de RAM, l'investissement de départ est amorti en moins de trois mois.",
+                    "Surtout, le matériel t'appartient, tes données restent chez toi et tu peux l'améliorer à ton rythme avec des composants d'occasion très accessibles.",
+                ],
+            },
+            {
+                "title": "Conclusion : par où commencer ton Homelab IA ?",
+                "layout": "hero",
+                "slide_type": "hero",
+                "slide_title": "Prêt à monter ton propre laboratoire IA ?",
+                "slide_subtitle": "Commence petit, mesure tout et garde 100 % du contrôle technique !",
+                "highlights": [
+                    "Pas besoin de 2 000 € : un mini-PC ou un serveur d'occasion à 150 € suffit pour démarrer",
+                    "Toutes nos architectures, docs et sources vérifiées sont dans la description",
+                    "Abonne-toi pour suivre l'évolution de Gladys, de Lia et de notre MMO Prime !",
+                ],
+                "sentences": [
+                    "Tu l'as vu, monter un vrai laboratoire d'intelligence artificielle souverain ne demande pas un budget de multinationale, mais simplement du matériel d'occasion bien choisi et une architecture logicielle disciplinée.",
+                    "J'ai mis dans la description toutes les documentations officielles de Proxmox, Ollama, Bubblewrap, Godot et la fiche technique du R720 pour que tu puisses tout vérifier par toi-même.",
+                    "Dis-moi en commentaire quel budget tu te fixes pour ton homelab et quelle brique de notre studio tu veux qu'on détaille en tutoriel complet la semaine prochaine !",
+                    "Pense à liker la vidéo et à t'abonner à La Boîte à Geek pour soutenir le projet, ça aide énormément la chaîne à grandir !",
                 ],
             },
         ],
@@ -376,6 +407,34 @@ def _expand_chapter_for_target_words(chapter: dict[str, Any], min_sentences: int
         sentences.insert(insert_pos, fallbacks.pop(0))
     ch["sentences"] = sentences
     return ch
+
+
+def resolve_trusted_sources_for_topic(topic: str) -> list[str]:
+    """Sélectionne des sources primaires officielles et vérifiables selon la thématique."""
+    low = topic.lower()
+    refs: list[str] = []
+    if any(k in low for k in ["proxmox", "homelab", "r720", "serveur", "lxc", "vm"]):
+        refs.append("Proxmox VE Official Documentation : https://pve.proxmox.com/pve-docs/")
+        refs.append("Dell PowerEdge R720 Owner's Manual : https://dl.dell.com/manuals/all-products/esuprt_ser_stor_net/esuprt_poweredge/poweredge-r720_owner's%20manual_en-us.pdf")
+    if any(k in low for k in ["llm", "ollama", "moe", "q4", "quantif", "vram", "gpu", "modèle", "3b", "30b"]):
+        refs.append("llama.cpp Official Repository & GGUF Spec : https://github.com/ggml-org/llama.cpp")
+        refs.append("Ollama Documentation Officielle : https://github.com/ollama/ollama/tree/main/docs")
+    if any(k in low for k in ["godot", "mmo", "3d", "headless", "navmesh", "swg", "t4c", "artisanat"]):
+        refs.append("Godot Engine 4.6 Official Docs (Dedicated Servers & 3D) : https://docs.godotengine.org/en/stable/")
+    if any(k in low for k in ["sqlite", "wal", "base de données", "persistance"]):
+        refs.append("SQLite Write-Ahead Logging (Documentation officielle) : https://www.sqlite.org/wal.html")
+    if any(k in low for k in ["sandbox", "sécurité", "bubblewrap", "ast", "forge"]):
+        refs.append("Bubblewrap Unprivileged Sandboxing Tool : https://github.com/containers/bubblewrap")
+        refs.append("Python AST Module Official Reference : https://docs.python.org/3/library/ast.html")
+    if any(k in low for k in ["vrm", "avatar", "danse", "animation", "webgl", "three"]):
+        refs.append("VRM Consortium & @pixiv/three-vrm Specification : https://github.com/pixiv/three-vrm")
+    if not refs:
+        refs = [
+            "Ollama Official Documentation : https://github.com/ollama/ollama/tree/main/docs",
+            "Godot Engine Official Documentation : https://docs.godotengine.org/en/stable/",
+        ]
+    refs.append("Monorepo Open Source & Benchmarks LBG Studios : https://github.com/Teome0245/LBG_Studios")
+    return refs[:5]
 
 
 def _build_custom_topic_episode(topic: str, target_minutes: float) -> dict[str, Any]:
@@ -510,6 +569,7 @@ def _build_custom_topic_episode(topic: str, target_minutes: float) -> dict[str, 
         "thumbnail_sub": thumb_sub,
         "badge_topic": "IA LOCALE & INGÉNIERIE",
         "palette": "cyan_rose",
+        "sources": resolve_trusted_sources_for_topic(topic),
         "chapters": chapters,
     }
 
@@ -589,6 +649,15 @@ def export_markdown_review(episode: dict[str, Any], json_path: Path, md_path: Pa
         lines.append("**Voix de Lia :**")
         for s in ch.get("sentences", []):
             lines.append(f"> {s}")
+        lines.append("")
+
+    if episode.get("sources"):
+        lines.append("---")
+        lines.append("")
+        lines.append("## Sources officielles & documentation vérifiée")
+        lines.append("")
+        for src in episode["sources"]:
+            lines.append(f"- {src}")
         lines.append("")
 
     md_path.write_text("\n".join(lines), encoding="utf-8")

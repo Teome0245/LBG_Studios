@@ -70,11 +70,17 @@ _OPS_TRUTH = """
    - Gladys dispose du script officiel de déploiement d'un serveur DNS AdGuard Home local : `packages/cortex/infra/scripts/create_lbg_dns_ct_proxmox.sh`.
    - Ce script provisionne un conteneur LXC Ubuntu 24.04 (CT 153) sur l'hyperviseur Proxmox .201 avec l'IP statique 192.168.0.53 (port 53 DNS + interface web :3000/:80).
    - Si Teome te demande de mettre en service ou déployer le serveur DNS : expose directement ce plan technique (CT 153 AdGuard Home sur .201, IP 192.168.0.53) et propose de déclencher l'action sous validation L2.
+   - Gladys dispose du skill appris `gladys_adguard_manager` (`packages/cortex/skills/learned/gladys_adguard_manager/run.py`) :
+     * Pour inspecter les blocages : interroge `--blocked` et présente la liste claire des domaines rejetés avec clients et horodatages.
+     * Pour débloquer un domaine : propose explicitement la confirmation (« Veux-tu que je débloque <domaine> sur AdGuard ? ») et lance `--unblock <domaine>` sous validation L2 (« oui » / clic).
 
-9. SERVEUR MAIL LOCAL & STALWART :
-   - Gladys dispose du script officiel de déploiement d'un serveur mail Stalwart local : `packages/cortex/infra/scripts/create_lbg_mail_ct_proxmox.sh`.
-   - Ce script provisionne un conteneur LXC Ubuntu 24.04 dédié (CT 154, distinct du DNS CT 153) sur l'hyperviseur Proxmox .201 avec l'IP statique 192.168.0.54 (ports IMAP 143/993, SMTP 25/587 + WebAdmin :8080).
-   - Si Teome te demande de mettre en place, mettre en service ou déployer le serveur mail : expose directement ce plan technique (CT 154 Stalwart sur .201, IP 192.168.0.54) et propose de déclencher l'action avec confirmation L2 (« Veux-tu que je déclenche cette mise en service ? »).
+9. SERVEUR MAIL & AGENDA (MAILCOW / SOGO & STALWART) :
+   - Le serveur mail actif en production est Mailcow (Dockerized) sur CT 155 (`192.168.0.155` / `mail.laboiteageeks.fr`) avec Postfix, Dovecot et SOGo (Webmail + Agenda CalDAV).
+   - Gladys dispose du skill appris `gladys_mailcow_manager` (`packages/cortex/skills/learned/gladys_mailcow_manager/run.py`) :
+     * Pour contrôler la santé du serveur mail (`--health`) : vérifie l'état des conteneurs clés et la file d'attente Postfix.
+     * Pour relever les courriers non lus (`--unread`) : extrait les derniers messages reçus sur la boîte principale Dovecot.
+     * Pour le compte-rendu matinal (`--brief`) : génère une synthèse complète pour le Morning Brief de Stève.
+   - Gladys dispose aussi du script officiel de déploiement d'un serveur mail Stalwart local alternatif : `packages/cortex/infra/scripts/create_lbg_mail_ct_proxmox.sh` (CT 154 sur .201).
 """
 
 BASE_GUARDRAILS = """

@@ -1,0 +1,9 @@
+[Unit]
+Description=LBG Studios - Déclencheur 3 Vidéos Longues 16:9 par Semaine (Mar, Jeu, Dim 16h30 -> prime-time 17h10)
+
+[Timer]
+OnCalendar=Tue,Thu,Sun *-*-* 16:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

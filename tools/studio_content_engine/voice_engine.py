@@ -33,12 +33,30 @@ DEFAULT_LENGTH_SCALE = float(os.environ.get("LBG_STUDIO_VOICE_SPEED", "0.92"))
 INITIAL_SILENCE_SEC = float(os.environ.get("LBG_STUDIO_INITIAL_SILENCE", "0.3"))
 
 
-# Dictionnaire de correction phonétique pour la voix française (GitHub -> Guite Heube, etc.)
+# Dictionnaire de correction phonétique pour la voix française
+# Note critique : sur fr-FR-VivienneMultilingualNeural, "0€" ou la liaison voyelle "zéro euro"
+# sonne souvent comme "héro euros". On force une diction française nette ("zéro centime" / "N euros").
 PHONETIC_ORAL_RULES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"(?<![\d.,])\b0\s*€\s*/\s*mois\b", re.IGNORECASE), "zéro centime par mois"),
+    (re.compile(r"(?<![\d.,])\b0[.,]0+\s*€", re.IGNORECASE), "zéro centime"),
+    (re.compile(r"(?<![\d.,])\b0\s*€", re.IGNORECASE), "zéro centime"),
+    (re.compile(r"\bzéro\s+euros?\b", re.IGNORECASE), "zéro centime"),
+    (re.compile(r"(\d+)\s*€"), r"\1 euros"),
     (re.compile(r"\bgithub\b", re.IGNORECASE), "Guite Heube"),
-    (re.compile(r"\bopen source\b", re.IGNORECASE), "opène source"),
+    (re.compile(r"\bopen[- ]source\b", re.IGNORECASE), "opène source"),
+    (re.compile(r"\bself[- ]hosting\b", re.IGNORECASE), "auto-hébergement"),
+    (re.compile(r"\bhomelab\b", re.IGNORECASE), "home-labe"),
     (re.compile(r"\bapi\b", re.IGNORECASE), "A P I"),
     (re.compile(r"\bllm\b", re.IGNORECASE), "L L M"),
+    (re.compile(r"\bmoe\b", re.IGNORECASE), "M O E"),
+    (re.compile(r"\bvram\b", re.IGNORECASE), "vé-rame"),
+    (re.compile(r"\bram\b", re.IGNORECASE), "rame"),
+    (re.compile(r"\bcpu\b", re.IGNORECASE), "C P U"),
+    (re.compile(r"\bgpu\b", re.IGNORECASE), "G P U"),
+    (re.compile(r"\bpcie\b", re.IGNORECASE), "P C I express"),
+    (re.compile(r"\bwal\b"), "W A L"),
+    (re.compile(r"\b4x4\b", re.IGNORECASE), "quatre par quatre"),
+    (re.compile(r"\bp2p\b", re.IGNORECASE), "pair à pair"),
     (re.compile(r"\bframework\b", re.IGNORECASE), "fraimwork"),
 ]
 

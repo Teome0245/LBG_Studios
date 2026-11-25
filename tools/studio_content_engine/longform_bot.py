@@ -154,7 +154,7 @@ def build_youtube_description_with_chapters(episode: dict[str, Any], chapter_tim
     lines = [
         episode.get("subtitle") or episode["title"],
         "",
-        "Présenté par Lia (Avatar 3D temps réel Compagnon.vrm) — Contenu technique vérifié par l'équipe LBG Studios (0€ Cloud).",
+        "Présenté par Lia (Avatar 3D temps réel Compagnon.vrm) — Contenu, mesures et sources vérifiés par l'équipe LBG Studios.",
         "",
         "⏱️ CHAPITRES DE LA VIDÉO :",
     ]
@@ -162,10 +162,18 @@ def build_youtube_description_with_chapters(episode: dict[str, Any], chapter_tim
         ts = "00:00" if idx == 0 else format_yt_timestamp(ch["start"])
         lines.append(f"{ts} - {ch['title']}")
 
+    sources = episode.get("sources") or []
+    if sources:
+        lines += ["", "📚 SOURCES OFFICIELLES & DOCUMENTATION TECHNIQUE :"]
+        for src in sources:
+            lines.append(f"• {src}")
+
     lines += [
         "",
-        "🔗 Code source, configurations & stack open source : https://github.com/Teome0245/LBG_Studios",
-        "🌐 Site du studio : https://laboiteageek.fr",
+        "🛠️ SOUTENIR & SUIVRE LBG STUDIOS :",
+        "• Abonne-toi et active la cloche pour nos prochains guides IA locale, Homelab & Devlog MMO 3D !",
+        "• Vitrine officielle & univers Prime : https://laboiteageek.fr",
+        "• Dépôt Open Source (Code, Architectures & Benchmarks) : https://github.com/Teome0245/LBG_Studios",
         "",
         "#IALocale #Homelab #SelfHosting #LLM #Ollama #Hardware #GodotEngine #OpenSource #LBGStudios",
     ]

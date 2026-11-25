@@ -1,0 +1,10 @@
+[Unit]
+Description=LBG Studios - Usine Hebdomadaire Clip Musical Original (1 Long 16:9 60s + 2 Shorts 30s)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/lbg/Projets/LBG_Studios
+ExecStart=/home/lbg/Projets/LBG_Studios/packages/cortex/.venv/bin/python /home/lbg/Projets/LBG_Studios/tools/studio_content_engine/cron_weekly_original_clip.py
+StandardOutput=journal
+StandardError=journal

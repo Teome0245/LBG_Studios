@@ -247,10 +247,13 @@ def upload_short_video(
 
     default_desc = (
         f"{title}\n\n"
-        "⚡ Vidéo 100% générée par le Studio Content Engine de LBG Studios (0€ Cloud).\n"
-        "💬 Donnez votre avis en commentaire : vous utilisez quelle stack chez vous ?\n\n"
-        "🔗 GitHub du projet : https://github.com/Teome0245/LBG_Studios\n\n"
-        "#Shorts #IA #Tech #IntelligenceArtificielle #GodotEngine #OpenSource #Dev #SelfHosting"
+        "✦ Présenté par Lia (Avatar 3D temps réel Three-VRM) — LBG Studios.\n"
+        "💬 Donne ton avis en commentaire : tu tournes sur quelle configuration chez toi ?\n\n"
+        "📚 Documentation & Sources vérifiées :\n"
+        "• Site officiel LBG Studios & Projet MMO Prime : https://laboiteageek.fr\n"
+        "• Code source & benchmarks : https://github.com/Teome0245/LBG_Studios\n"
+        "• Moteur 3D : https://docs.godotengine.org/ | Modèles locaux : https://github.com/ollama/ollama\n\n"
+        "#Shorts #IALocale #Tech #Homelab #GodotEngine #OpenSource #Dev #LBGStudios"
     )
     final_desc = description if description else default_desc
     final_tags = build_dynamic_tags(title, tags)

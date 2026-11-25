@@ -1,15 +1,13 @@
 [Unit]
-Description=LBG Studios - Déclencheur 6 Vidéos par Jour (Quota YouTube Sécurisé 9600/10000 pts)
+Description=LBG Studios - Déclencheur 5 Shorts 3D par Jour (8000 pts API, compatible Vidéo Longue le même jour)
 
 [Timer]
-OnCalendar=*-*-* 09:00:00
-OnCalendar=*-*-* 11:30:00
-OnCalendar=*-*-* 14:00:00
-OnCalendar=*-*-* 16:30:00
-OnCalendar=*-*-* 19:00:00
-OnCalendar=*-*-* 21:30:00
+OnCalendar=*-*-* 09:30:00
+OnCalendar=*-*-* 12:15:00
+OnCalendar=*-*-* 15:30:00
+OnCalendar=*-*-* 18:30:00
+OnCalendar=*-*-* 21:15:00
 Persistent=true
 
 [Install]
 WantedBy=timers.target
-

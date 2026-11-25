@@ -5,56 +5,84 @@
     "minutes": 5.5,
     "category": "Hardware & IA Locale",
     "status": "published",
-    "published_at": "2026-11-25T20:16:12.691081",
+    "published_at": "2026-11-25T20:16:10",
     "youtube_url": "https://www.youtube.com/watch?v=uuLTxEZk-eg"
   },
   {
     "id": 2,
-    "topic": "Construire un Homelab IA 100% Local à 0€/mois : visite guidée de notre infrastructure Gladys",
-    "minutes": 6.0,
-    "category": "Homelab & Architecture",
+    "topic": "Notre Homelab IA sur un serveur à 150 € d'occasion (sans abonnement Cloud) : visite guidée de Gladys",
+    "minutes": 6.5,
+    "category": "Homelab & Vrai Budget",
     "status": "pending"
   },
   {
     "id": 3,
-    "topic": "Serveur Dell PowerEdge d'occasion vs Mini-PC neuf : quel matériel acheter pour l'IA locale en 2026 ?",
-    "minutes": 7.0,
+    "topic": "Serveur Dell PowerEdge à 150 € d'occasion vs Mini-PC neuf : quel matériel acheter pour l'IA locale ?",
+    "minutes": 8.5,
     "category": "Guide Achat Hardware",
     "status": "pending"
   },
   {
     "id": 4,
-    "topic": "Faire tourner un MMORPG 3D complet et 10 joueurs IA sur un seul serveur Linux sans GPU (Godot 4.6)",
-    "minutes": 6.5,
-    "category": "MMO 3D & Simulation IA",
+    "topic": "Créer un MMORPG 3D complet et 10 joueurs IA sur un seul serveur Linux sans GPU (Godot 4.6 Headless)",
+    "minutes": 8.0,
+    "category": "Pilier O2 MMO Prime & O3 Bots IA",
     "status": "pending"
   },
   {
     "id": 5,
-    "topic": "Pourquoi tes petits modèles locaux hallucinent (et comment nos silos JSON règlent le problème)",
-    "minutes": 6.0,
-    "category": "RAG & Prompt Engineering",
+    "topic": "Compagnon IA 3D sur Bureau Windows & Linux : VRM temps réel, voix locale et pilotage sans vol de souris",
+    "minutes": 7.5,
+    "category": "Pilier O1 Compagnon Lia",
     "status": "pending"
   },
   {
     "id": 6,
-    "topic": "Cartes graphiques à moins de 150 € pour l'IA locale : VRAM, bande passante et pièges à éviter",
-    "minutes": 8.0,
-    "category": "Hardware Budget",
+    "topic": "Fusionner Star Wars Galaxies Pre-CU et La 4ème Prophétie en Full 3D : artisanat, Karma et arbres 4x4",
+    "minutes": 8.5,
+    "category": "Game Design MMO Prime",
     "status": "pending"
   },
   {
     "id": 7,
-    "topic": "Comment notre studio génère ses vidéos 3D et sa musique 100% en local sans aucun abonnement cloud",
-    "minutes": 6.0,
-    "category": "Pipeline Créatif 0€",
+    "topic": "Pourquoi tes petits modèles locaux hallucinent : nos silos JSON de 1,5 Ko et graphe de topologie live",
+    "minutes": 7.0,
+    "category": "RAG & Cerveau Gladys",
     "status": "pending"
   },
   {
     "id": 8,
-    "topic": "Laisser une IA coder ses propres outils sans danger : AST statique et Sandbox Bubblewrap sous Linux",
+    "topic": "Cartes graphiques à moins de 150 € sans câble d'alim (Tesla P4, RTX A2000) : le guide VRAM pour l'IA",
+    "minutes": 8.5,
+    "category": "Hardware Budget & VRAM",
+    "status": "pending"
+  },
+  {
+    "id": 9,
+    "topic": "Auto-héberger son propre Serveur Mail Rust (Stalwart) et DNS AdGuard pilotés par une IA locale",
     "minutes": 7.5,
+    "category": "Self-Hosting & Souveraineté",
+    "status": "pending"
+  },
+  {
+    "id": 10,
+    "topic": "Laisser une IA coder ses propres outils sans danger : analyse AST et Sandbox Linux Bubblewrap",
+    "minutes": 8.0,
     "category": "Sécurité & Agents Autonomes",
+    "status": "pending"
+  },
+  {
+    "id": 11,
+    "topic": "Joueurs IA autonomes (Pilier O3) : comment entraîner des bots dans un MMO sans triche ni LLM sur l'économie",
+    "minutes": 7.5,
+    "category": "Pilier O3 Joueurs IA",
+    "status": "pending"
+  },
+  {
+    "id": 12,
+    "topic": "Reverse-engineering 3D : convertir 300 animations binaires d'un vieux MMO vers le standard ouvert Three-VRM",
+    "minutes": 7.0,
+    "category": "Tech Art & Animation 3D",
     "status": "pending"
   }
 ]

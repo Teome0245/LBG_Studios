@@ -1,9 +1,9 @@
-"""cron_daily_publisher.py — Planificateur autonome TikTok & YouTube Shorts (Alternance Scène 3D Tech + Clips Musicaux 3D).
+"""cron_daily_publisher.py — Planificateur autonome 5 Shorts/jour (YouTube Shorts + TikTok Studio en parallèle).
 
-1. Parcourt `topics_backlog.json` pour trouver le prochain sujet `pending` (et réapprovisionne sans jamais tomber à sec).
-2. Alterne automatiquement les Shorts Tech/MMO parlés en scène 3D (`--style stage3d`) et les Clips Musicaux / Chorégraphies 3D (`--style music3d`).
-3. Lance `content_bot.py` avec publication YouTube Shorts et TikTok Studio.
-4. Synchronise la vidéo et la fiche mémo vers `O:\\OneDrive\\Pictures\\IA\\Contenue\\` si `.10` est actif.
+1. Parcourt `topics_backlog.json` (couvrant O1 Compagnon/Gladys, O2 MMO Prime, O3 Bots IA, Hardware & Clips 3D).
+2. Alterne automatiquement les Shorts Tech/MMO parlés (`stage3d`) et les Clips Musicaux 3D (`music3d`).
+3. Publie systématiquement sur YouTube Shorts (`@lbg-p8k`) ET sur TikTok Studio en parallèle (avec retry de sécurité).
+4. Enregistre `youtube_url` ET `tiktok_status` dans `topics_backlog.json`.
 """
 
 from __future__ import annotations
@@ -36,11 +36,11 @@ def save_backlog(backlog: list[dict[str, Any]]) -> None:
         json.dump(backlog, f, indent=2, ensure_ascii=False)
 
 
-# Catalogue alterné : Shorts Tech/MMO parlés en scène 3D + Clips Musicaux / Chorégraphies 3D
+# Couverture complète de tous les piliers LBG Studios (O1, O2, O3, Hardware & Clips 3D)
 REPLENISH_SCHEDULE: list[dict[str, str]] = [
     {
-        "topic": "Comment notre forge d'intentions IA apprend sans jamais exposer le système",
-        "category": "IA Locale & Sécurité",
+        "topic": "Pourquoi un serveur Dell R720 à 150 € d'occasion bat les abonnements Cloud pour l'IA",
+        "category": "Homelab & Hardware",
         "format": "stage3d",
     },
     {
@@ -50,19 +50,13 @@ REPLENISH_SCHEDULE: list[dict[str, str]] = [
         "music_preset": "nexura_drop_highlight",
     },
     {
-        "topic": "Pourquoi fusionner Star Wars Galaxies Pre-CU et La 4ème Prophétie en 3D",
-        "category": "MMO & Game Design",
+        "topic": "Comment nos 10 joueurs IA vivent et commercent dans notre MMO 3D sans tricher",
+        "category": "Pilier O3 Joueurs IA",
         "format": "stage3d",
     },
     {
-        "topic": "LIA — Cyberpunk Protocol (Live 3D 128 BPM) | LBG Studios",
-        "category": "Performance Musicale IA",
-        "format": "music3d",
-        "music_preset": "cyberpunk_protocol_30s",
-    },
-    {
-        "topic": "Comment passer de 30 à 60 FPS sur Godot 4 en coupant le brouillard volumétrique",
-        "category": "Moteur Godot 4 & Perf",
+        "topic": "Piloter Windows et Linux par IA sans jamais voler la souris grâce à l'accessibilité native",
+        "category": "Pilier O1 Compagnon & Bureau",
         "format": "stage3d",
     },
     {
@@ -72,19 +66,29 @@ REPLENISH_SCHEDULE: list[dict[str, str]] = [
         "music_preset": "swg_cantina_groove",
     },
     {
-        "topic": "Isoler du code généré par IA dans une sandbox Bubblewrap sans réseau",
-        "category": "DevSecOps & Agents IA",
+        "topic": "Artisanat Star Wars Galaxies : pourquoi des minerais notés de 1 à 1000 changent tout",
+        "category": "Pilier O2 MMO Prime",
         "format": "stage3d",
     },
     {
-        "topic": "LIA — Synthwave Overdrive (Concert 3D) | 100% Local",
+        "topic": "Faire tourner un modèle MoE 30B sur processeur Xeon sans aucune carte graphique",
+        "category": "IA Locale & Benchmarks",
+        "format": "stage3d",
+    },
+    {
+        "topic": "LIA — Synthwave Overdrive (Concert 3D) | Studio LBG",
         "category": "Live Virtuel Three-VRM",
         "format": "music3d",
         "music_preset": "synthwave_energy_show",
     },
     {
-        "topic": "Comment convertir les danses binaires de Star Wars Galaxies vers Three-VRM",
-        "category": "Animation 3D & Reverse",
+        "topic": "Graphe de topologie live : surveiller 17 services et conteneurs Proxmox en 200 millisecondes",
+        "category": "Gladys & Observabilité",
+        "format": "stage3d",
+    },
+    {
+        "topic": "Basculer instantanément entre vue 2D tactique et monde Full 3D PBR à 60 FPS sous Godot 4",
+        "category": "Moteur Godot 4 & 3D",
         "format": "stage3d",
     },
     {
@@ -94,25 +98,29 @@ REPLENISH_SCHEDULE: list[dict[str, str]] = [
         "music_preset": "nexura_climax_encore",
     },
     {
-        "topic": "Découper le cerveau d'un agent IA en silos de connaissances JSON légers",
-        "category": "Architecture RAG & LLM",
+        "topic": "Auto-héberger son serveur Mail en Rust avec Stalwart et DNS AdGuard pilotés par IA",
+        "category": "Self-Hosting & Réseau",
         "format": "stage3d",
     },
     {
-        "topic": "Synchroniser vue 2D tactique et monde Full 3D en temps réel sous Godot 4",
-        "category": "Architecture MMO 3D",
+        "topic": "Le système de Karma et de Renaissance inspiré de La Quatrième Prophétie dans notre MMO",
+        "category": "Game Design & T4C",
+        "format": "stage3d",
+    },
+    {
+        "topic": "Découper la mémoire d'un agent IA en silos JSON de 1,5 Ko pour éliminer les hallucinations",
+        "category": "RAG & Cerveau Gladys",
         "format": "stage3d",
     },
 ]
 
 
 def replenish_backlog_if_needed(backlog: list[dict[str, Any]]) -> None:
-    """Réapprovisionne le backlog avec alternance Tech 3D / Clip Musical 3D sans jamais tomber à sec."""
     pending = [item for item in backlog if item.get("status") == "pending"]
-    if len(pending) >= 4:
+    if len(pending) >= 5:
         return
 
-    logger.info("Backlog bas (%d sujets en attente). Réapprovisionnement alterné 3D...", len(pending))
+    logger.info("Backlog Shorts bas (%d en attente). Réapprovisionnement multi-piliers...", len(pending))
     existing_topics = {item.get("topic", "").lower().strip() for item in backlog}
     cur_id = max((int(item.get("id", 0)) for item in backlog), default=0)
 
@@ -134,15 +142,13 @@ def replenish_backlog_if_needed(backlog: list[dict[str, Any]]) -> None:
             existing_topics.add(key)
             added += 1
 
-    # Si tout le catalogue initial a déjà été publié, générer un nouveau cycle numéroté
     if added == 0:
         cycle_num = (len(backlog) // max(1, len(REPLENISH_SCHEDULE))) + 1
         for entry in REPLENISH_SCHEDULE[:6]:
             cur_id += 1
-            suffixed_topic = f"{entry['topic']} #{cycle_num}"
             new_item = {
                 "id": cur_id,
-                "topic": suffixed_topic,
+                "topic": f"{entry['topic']} #{cycle_num}",
                 "category": entry["category"],
                 "format": entry["format"],
                 "status": "pending",
@@ -168,7 +174,7 @@ def run_daily_drop() -> None:
     if style not in ("stage3d", "music3d", "jrpg", "standard"):
         style = "stage3d"
 
-    logger.info("=== Lancement du Drop 3D [%s] pour : '%s' ===", style, topic)
+    logger.info("=== Lancement du Drop 3D [%s] (YouTube + TikTok //) : '%s' ===", style, topic)
 
     cmd = [
         str(VENV_PYTHON),
@@ -190,65 +196,48 @@ def run_daily_drop() -> None:
         sys.exit(res.returncode)
 
     yt_url = None
-    mp4_name = None
-    title = topic
-    for line in res.stdout.splitlines():
-        if "https://www.youtube.com/shorts/" in line:
-            parts = line.split("https://www.youtube.com/shorts/")
-            if len(parts) > 1:
-                vid_id = parts[1].strip().split()[0].replace('"', "").replace(",", "")
-                yt_url = f"https://www.youtube.com/shorts/{vid_id}"
+    tiktok_status = "unknown"
+    mp4_path: Path | None = None
 
-    drops = sorted((ENGINE_DIR / "output").glob("drop_*"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if drops:
-        mp4_files = list(drops[0].glob("*_tiktok.mp4"))
-        if mp4_files:
-            mp4_name = mp4_files[0].name
+    # Extraire le JSON récapitulatif de fin de content_bot.py
+    try:
+        sep = "=" * 50
+        if sep in res.stdout:
+            blocks = [b.strip() for b in res.stdout.split(sep) if b.strip().startswith("{")]
+            if blocks:
+                parsed = json.loads(blocks[-1])
+                yt_url = (parsed.get("youtube") or {}).get("video_url")
+                tiktok_status = (parsed.get("tiktok") or {}).get("status", "unknown")
+                if parsed.get("mp4_path"):
+                    mp4_path = Path(parsed["mp4_path"])
+    except Exception as exc:
+        logger.warning("Lecture JSON sortie content_bot : %s", exc)
+
+    # Filet de sécurité TikTok parallèle : si le 1er essai Playwright a échoué, relancer une fois directement !
+    if tiktok_status not in ("success", "ok") and mp4_path and mp4_path.exists():
+        logger.warning("Statut TikTok initial = '%s' -> tentative de rattrapage immédiat sur TikTok Studio...", tiktok_status)
+        try:
+            sys.path.insert(0, str(ENGINE_DIR))
+            from tiktok_publisher import upload_local_tiktok
+
+            tags = (
+                "#fyp #vtuber #3d #cyberpunk #aiidol #godotengine #lbgstudios"
+                if style == "music3d"
+                else "#fyp #ia #tech #homelab #dev #godotengine #3d #lbgstudios"
+            )
+            retry_tt = upload_local_tiktok(mp4_path, caption=f"{topic} {tags}")
+            tiktok_status = retry_tt.get("status", tiktok_status)
+        except Exception as exc:
+            logger.error("Échec retry TikTok : %s", exc)
 
     next_item["status"] = "published"
     next_item["format"] = style
     next_item["published_at"] = datetime.datetime.now().isoformat()
     next_item["youtube_url"] = yt_url
+    next_item["tiktok_status"] = tiktok_status
     save_backlog(backlog)
 
-    if mp4_name:
-        hashtags = (
-            "#fyp #vtuber #3d #cyberpunk #aiidol #godotengine #lbgstudios"
-            if style == "music3d"
-            else "#fyp #ia #tech #dev #godotengine #3d #opensource #lbgstudios"
-        )
-        txt_content = (
-            f"TITRE : {title}\n"
-            f"STYLE : {style}\n"
-            f"FICHIER VIDÉO : {mp4_name}\n"
-            f"LIEN YOUTUBE SHORTS : {yt_url}\n"
-            f"DATE : {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
-            "--- LÉGENDE TIKTOK (À COPIER-COLLER) ---\n"
-            f"{title}\n\n"
-            "Rendu 3D temps réel généré par le Studio Content Engine de LBG Studios (0€ Cloud).\n"
-            f"{hashtags}\n"
-        )
-        try:
-            import httpx
-
-            with httpx.Client(timeout=5.0) as client:
-                txt_filename = mp4_name.replace(".mp4", "_tiktok_memo.txt")
-                client.post(
-                    "http://192.168.0.10:5005/execute",
-                    json={
-                        "action": "write_file",
-                        "parameters": {
-                            "path": f"O:\\OneDrive\\Pictures\\IA\\Contenue\\{txt_filename}",
-                            "content": txt_content,
-                        },
-                    },
-                )
-                logger.info("Fiche mémo TikTok créée : O:\\OneDrive\\Pictures\\IA\\Contenue\\%s", txt_filename)
-        except Exception as e:
-            logger.warning("Écriture mémo Windows ignorée (.10 hors ligne) : %s", e)
-
-    logger.info("=== Drop Quotidien Terminé avec Succès ===")
-    logger.info("YouTube : %s", yt_url)
+    logger.info("=== Drop Quotidien Terminé : YouTube=%s | TikTok=%s ===", yt_url, tiktok_status)
 
 
 if __name__ == "__main__":

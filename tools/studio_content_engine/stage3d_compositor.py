@@ -522,11 +522,27 @@ def build_tech_timeline(
     }
 
 
+CUSTOM_TRACKS_FILE = ENGINE_DIR / "custom_music_tracks.json"
+
+
+def _load_all_music_presets() -> list[dict[str, Any]]:
+    presets = list(MUSIC_SHOW_PRESETS)
+    if CUSTOM_TRACKS_FILE.exists():
+        try:
+            extra = json.loads(CUSTOM_TRACKS_FILE.read_text(encoding="utf-8"))
+            if isinstance(extra, list):
+                presets = extra + presets
+        except Exception as exc:
+            logger.warning("Lecture custom_music_tracks.json ignorée : %s", exc)
+    return presets
+
+
 def pick_music_preset(preset_id_or_topic: str | None = None) -> dict[str, Any]:
+    all_presets = _load_all_music_presets()
     if preset_id_or_topic:
         low = preset_id_or_topic.lower()
-        for p in MUSIC_SHOW_PRESETS:
-            if p["id"] in low or p["title"].lower() in low:
+        for p in all_presets:
+            if p["id"].lower() in low or p["title"].lower() in low:
                 return p
         if "swg" in low or "cantina" in low or "moonwalk" in low:
             return MUSIC_SHOW_PRESETS[2]
@@ -536,11 +552,11 @@ def pick_music_preset(preset_id_or_topic: str | None = None) -> dict[str, Any]:
             return MUSIC_SHOW_PRESETS[3]
         if "climax" in low or "encore" in low:
             return MUSIC_SHOW_PRESETS[4]
-        idx = int(hashlib.md5(low.encode("utf-8")).hexdigest()[:6], 16) % len(MUSIC_SHOW_PRESETS)
-        return MUSIC_SHOW_PRESETS[idx]
+        idx = int(hashlib.md5(low.encode("utf-8")).hexdigest()[:6], 16) % len(all_presets)
+        return all_presets[idx]
 
-    idx = int(time.time() // 60) % len(MUSIC_SHOW_PRESETS)
-    return MUSIC_SHOW_PRESETS[idx]
+    idx = int(time.time() // 60) % len(all_presets)
+    return all_presets[idx]
 
 
 def build_music_timeline_and_audio(
