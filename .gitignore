@@ -97,6 +97,7 @@ tools/studio_content_engine/custom_music_tracks.json
 
 # Studio Content Bot Video Outputs & Secrets
 tools/studio_content_engine/output/
+tools/studio_content_engine/art_drops/**/*.png
 tools/studio_content_engine/config/
 *cookies.txt
 *.cookies.json

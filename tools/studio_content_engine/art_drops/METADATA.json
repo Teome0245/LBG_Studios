@@ -1,0 +1,75 @@
+{
+  "deviantart": [
+    {
+      "file": "01_lia_character_sheet_4k.png",
+      "title": "Lia 01 - Cybernetic Android Companion Character Sheet [LBG Studios]",
+      "category": "Digital Art > Concept Art > Character Design",
+      "tags": [
+        "godotengine",
+        "vrm",
+        "characterdesign",
+        "cyberpunk",
+        "conceptart",
+        "3dart",
+        "blender",
+        "threejs",
+        "indiegamedev",
+        "android",
+        "scifi"
+      ],
+      "description": "Complete character turnaround and technical specification sheet for Lia (Unit LIA-01), the neural AI companion of the open-source MMO project developed by LBG Studios.\n\n• Engine: Godot 4.6 & Three-VRM\n• Armature: Standard VRM Humanoid 1.0 with spring bones hair dynamics\n• Cognitive Engine: MiniMind 25M edge neural SFT running locally\n• Shading: PBR Cybernetic skin with cyan emissive ocular matrix (480nm)\n\n🔗 Open-Source Repository: https://github.com/Teome0245/LBG_Studios\n📺 Video Devlogs: https://www.youtube.com/@lbg-p8k\n\nMade with Blender, Godot Engine and Python."
+    },
+    {
+      "file": "02_lost_heaven_concept_4k.png",
+      "title": "Lost Heaven Outpost - Desert Vaporators & Cantina Concept Art",
+      "category": "Digital Art > Concept Art > Environments",
+      "tags": [
+        "starwarsgalaxies",
+        "conceptart",
+        "environmentart",
+        "scifi",
+        "desert",
+        "godot4",
+        "mmorpg",
+        "tatooine",
+        "gamedev",
+        "cyberpunk"
+      ],
+      "description": "Atmospheric sci-fi concept art of the Lost Heaven outpost, located in the Scrapaltai desert basin. Inspired by the rugged frontier of Star Wars Galaxies (SWG) and the cybernetic dust of Gunnm.\n\nFeaturing the massive GX-8 moisture vaporator with thermoelectric refrigeration coils, the amber neon arch of the Cantina 'La Perle', and the twin suns twilight horizon.\n\n• Simulation: Godot 4.6 headless server on LAN\n• Open-source codebase: https://github.com/Teome0245/LBG_Studios\n• YouTube Channel: https://www.youtube.com/@lbg-p8k"
+    }
+  ],
+  "pinterest": [
+    {
+      "file": "01_mmo_architecture_0euro_pin.png",
+      "title": "Comment faire tourner un MMO avec 0€ de frais de serveur ? (Godot 4 + SQLite WAL)",
+      "board": "Game Development & Architecture",
+      "destination_url": "https://github.com/Teome0245/LBG_Studios",
+      "description": "Découvrez comment héberger un monde MMO 3D persistant sans payer le moindre centime d'abonnement cloud AWS ou GCP. Architecture complète : serveur headless Godot 4.6 (60 TPS déterministes, 85 Mo de RAM), persistance locale en SQLite WAL, et agents PNJ autonomes propulsés par un micro-modèle IA MiniMind 25M. Code source 100% open-source sur GitHub !",
+      "keywords": [
+        "game dev",
+        "godot engine",
+        "mmo",
+        "architecture logicielle",
+        "python",
+        "indie game",
+        "serveur de jeu"
+      ]
+    },
+    {
+      "file": "02_vrm_companion_avatar_pin.png",
+      "title": "Créer un Avatar 3D VRM interactif en Python & Three-VRM (Tutoriel Game Dev)",
+      "board": "3D Character Design & VRM",
+      "destination_url": "https://github.com/Teome0245/LBG_Studios",
+      "description": "Tutoriel complet pour intégrer un avatar 3D humanoïde au format VRM dans une application WebGL ou un jeu vidéo. Gestion des morph targets émotionnels (joie, réflexion, parole), synchronisation labiale (lip-sync RMS) et pilotage en direct via FastAPI et des LLM locaux. Téléchargez le modèle et les scripts sur notre dépôt GitHub.",
+      "keywords": [
+        "vrm",
+        "avatar 3d",
+        "threejs",
+        "blender",
+        "character design",
+        "python",
+        "tutoriel dev"
+      ]
+    }
+  ]
+}
