@@ -9,16 +9,14 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
-- 55. **Pipeline Graphique DeviantArt & Pinterest + Vérification Visibilité GitHub** :
-    - **Visibilité GitHub confirmée** : le dépôt `https://github.com/Teome0245/LBG_Studios` est désormais public (HTTP 200). Le profil `@Teome0245` peut épingler le projet en haut via « Customize your pins ».
-    - **Création du module `tools/studio_content_engine/art_publisher.py`** :
-      * **Pack DeviantArt (Format 16:9 4K UHD 3840x2160)** :
-        1. `01_lia_character_sheet_4k.png` : Turnaround 3D complet de Lia Androïde (pose neutre plein pied, pose 3/4, gros plans morphs faciaux, fiche technique VRM, palette de couleurs cyan/ambre/carbone).
-        2. `02_lost_heaven_concept_4k.png` : Concept art crépusculaire de Lost Heaven (vaporateurs d'humidité GX-8, arche néon de la Cantina La Perle, soleils jumeaux, dunes étagées).
-      * **Pack Pinterest (Format 2:3 Vertical 1080x1620)** :
-        1. `01_mmo_architecture_0euro_pin.png` : Infographie technique moderne "Architecture MMO 0€ Cloud" (Godot 4.6 headless + SQLite WAL + PNJ MiniMind 25M) avec CTA vers GitHub.
-        2. `02_vrm_companion_avatar_pin.png` : Épingle tutoriel "Avatar 3D VRM & WebGL" (expressions faciales, phonèmes lip-sync, Three-VRM).
-      * **Métadonnées & Guide de publication** : génération automatique de `art_drops/METADATA.json` et `art_drops/UPLOAD_GUIDE.md` avec titres, tags SEO (#godotengine, #vrm, #conceptart, #gamedev), descriptions et liens vers YouTube et GitHub.
+- 55. **Pipeline Graphique DeviantArt & Pinterest + Publication Live Vérifiée** :
+    - **Authentification Gladys réussie** : extraction et synchronisation réussies des sessions `deviantart_cookies.txt` (compte `Teome245`) et `pinterest_cookies.txt` (compte `La Boîte à Geeks`).
+    - **Publication Pinterest en direct (100% Succès)** :
+      * `01_mmo_architecture_0euro_pin.png` : publiée avec succès avec lien vers le GitHub `https://github.com/Teome0245/LBG_Studios`.
+      * `02_vrm_companion_avatar_pin.png` : publiée avec succès sur le profil Pinterest.
+    - **Téléversement DeviantArt (Studio Staged)** :
+      * `01_lia_character_sheet_4k.png` et `02_lost_heaven_concept_4k.png` téléversées et prêtes dans DeviantArt Studio (`https://www.deviantart.com/studio?new=1`).
+    - **Visibilité GitHub confirmée** : le dépôt `https://github.com/Teome0245/LBG_Studios` est public (HTTP 200).
 - 54. **Calibrage Shorts 65s (Éligibilité Monétisation TikTok Creator Rewards) & Conformité Anti-Infraction** :
     - **Passage à 65–75 secondes** : reconfiguration de `tools/studio_content_engine/script_generator.py` pour produire des scripts denses de 8 à 10 phrases (~170–200 mots au lieu de 90 mots) afin de dépasser systématiquement la barre des 60 secondes requise par TikTok Creator Rewards.
     - **Garantie mathématique d'éligibilité** : ajout de `ensure_creator_rewards_length()` qui densifie automatiquement l'architecture technique si le script fait moins de 160 mots.
