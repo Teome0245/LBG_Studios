@@ -14,6 +14,7 @@ Configuration requise :
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import logging
 import os
@@ -235,8 +236,13 @@ def upload_short_video(
     description: str | None = None,
     tags: list[str] | None = None,
     privacy_status: str = "public",
+    schedule_minutes: int = 45,
 ) -> dict[str, str]:
-    """Upload un Short vertical sur la chaîne YouTube @LBG-p8k."""
+    """Upload un Short vertical sur la chaîne YouTube @LBG-p8k.
+    
+    Par défaut, la vidéo est programmée (+45 min) pour permettre à l'algorithme
+    YouTube de terminer l'encodage HD 1080p et l'analyse de transcription audio avant diffusion publique.
+    """
     if not video_path.exists():
         raise FileNotFoundError(f"Fichier vidéo introuvable : {video_path}")
 
@@ -248,15 +254,33 @@ def upload_short_video(
     default_desc = (
         f"{title}\n\n"
         "✦ Présenté par Lia (Avatar 3D temps réel Three-VRM) — LBG Studios.\n"
-        "💬 Donne ton avis en commentaire : tu tournes sur quelle configuration chez toi ?\n\n"
-        "📚 Documentation & Sources vérifiées :\n"
-        "• Site officiel LBG Studios & Projet MMO Prime : https://laboiteageek.fr\n"
-        "• Code source & benchmarks : https://github.com/Teome0245/LBG_Studios\n"
-        "• Moteur 3D : https://docs.godotengine.org/ | Modèles locaux : https://github.com/ollama/ollama\n\n"
+        "💬 Question du jour : Quelle est ta configuration pour faire tourner de l'IA ou du jeu en local ? Dis-le en commentaire ! 👇\n\n"
+        "📚 Documentation & Code Open-Source :\n"
+        "• Dépôt GitHub LBG Studios : https://github.com/Teome0245/LBG_Studios\n"
+        "• Site officiel & Découverte MMO Prime : https://laboiteageek.fr\n"
+        "• Moteur de jeu : https://docs.godotengine.org/ | Inférence locale : https://github.com/ollama/ollama\n\n"
         "#Shorts #IALocale #Tech #Homelab #GodotEngine #OpenSource #Dev #LBGStudios"
     )
     final_desc = description if description else default_desc
     final_tags = build_dynamic_tags(title, tags)
+
+    status_dict: dict[str, Any] = {
+        "selfDeclaredMadeForKids": False,
+    }
+    if schedule_minutes > 0:
+        publish_time = (
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(minutes=schedule_minutes)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        status_dict["privacyStatus"] = "private"
+        status_dict["publishAt"] = publish_time
+        logger.info(
+            "Programmation du Short pour dans %d minutes (garantie HD 1080p + indexation IA) : %s",
+            schedule_minutes,
+            publish_time,
+        )
+    else:
+        status_dict["privacyStatus"] = privacy_status
 
     body = {
         "snippet": {
@@ -267,10 +291,7 @@ def upload_short_video(
             "defaultLanguage": "fr",
             "defaultAudioLanguage": "fr",
         },
-        "status": {
-            "privacyStatus": privacy_status,
-            "selfDeclaredMadeForKids": False,
-        },
+        "status": status_dict,
     }
 
     logger.info("Upload du Short vers YouTube (@LBG-p8k)...")
@@ -289,14 +310,15 @@ def upload_short_video(
 
     video_id = response.get("id")
     video_url = f"https://www.youtube.com/shorts/{video_id}"
-    logger.info("Short publié avec succès ! Lien : %s", video_url)
+    logger.info("Short uploadé avec succès ! Lien : %s (statut: %s)", video_url, status_dict.get("publishAt") or privacy_status)
 
     return {
-        "status": "published",
+        "status": "scheduled" if schedule_minutes > 0 else "published",
         "video_id": video_id,
         "video_url": video_url,
         "title": clean_title,
-        "privacy": privacy_status,
+        "privacy": status_dict.get("privacyStatus", privacy_status),
+        "publishAt": status_dict.get("publishAt", "now"),
     }
 
 
@@ -307,8 +329,9 @@ def upload_long_video(
     tags: list[str] | None = None,
     thumbnail_path: Path | None = None,
     privacy_status: str = "public",
+    schedule_minutes: int = 45,
 ) -> dict[str, str]:
-    """Upload une vidéo longue 16:9 (1920x1080) avec chapitres horodatés et miniature 1280x720."""
+    """Upload une vidéo longue 16:9 (1920x1080) avec chapitres horodatés, miniature 1280x720 et publication programmée."""
     if not video_path.exists():
         raise FileNotFoundError(f"Fichier vidéo introuvable : {video_path}")
 
@@ -332,6 +355,24 @@ def upload_long_video(
     ]
     final_tags = build_dynamic_tags(clean_title, tags or base_long_tags)
 
+    status_dict: dict[str, Any] = {
+        "selfDeclaredMadeForKids": False,
+    }
+    if schedule_minutes > 0:
+        publish_time = (
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(minutes=schedule_minutes)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        status_dict["privacyStatus"] = "private"
+        status_dict["publishAt"] = publish_time
+        logger.info(
+            "Programmation vidéo longue pour dans %d minutes (garantie HD 1080p/4K + sous-titres) : %s",
+            schedule_minutes,
+            publish_time,
+        )
+    else:
+        status_dict["privacyStatus"] = privacy_status
+
     body = {
         "snippet": {
             "title": clean_title,
@@ -341,10 +382,7 @@ def upload_long_video(
             "defaultLanguage": "fr",
             "defaultAudioLanguage": "fr",
         },
-        "status": {
-            "privacyStatus": privacy_status,
-            "selfDeclaredMadeForKids": False,
-        },
+        "status": status_dict,
     }
 
     logger.info("Upload de la Vidéo Longue 16:9 vers YouTube (@LBG-p8k)...")
@@ -363,7 +401,7 @@ def upload_long_video(
 
     video_id = response.get("id")
     video_url = f"https://www.youtube.com/watch?v={video_id}"
-    logger.info("Vidéo longue publiée avec succès : %s", video_url)
+    logger.info("Vidéo longue enregistrée : %s (statut: %s)", video_url, status_dict.get("publishAt") or privacy_status)
 
     thumb_status = "skipped"
     if thumbnail_path and thumbnail_path.exists():
@@ -405,6 +443,12 @@ def main() -> None:
         choices=["public", "unlisted", "private"],
         help="Statut",
     )
+    parser.add_argument(
+        "--schedule",
+        type=int,
+        default=45,
+        help="Délai de programmation en minutes pour laisser YouTube encoder en HD et analyser la vidéo (défaut: 45)",
+    )
     args = parser.parse_args()
 
     if args.setup:
@@ -424,6 +468,7 @@ def main() -> None:
         video_path=Path(args.video),
         title=args.title,
         privacy_status=args.privacy,
+        schedule_minutes=args.schedule,
     )
     print(json.dumps(result, indent=2))
 

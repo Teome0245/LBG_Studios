@@ -9,6 +9,25 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 58. **Optimisation Algorithme YouTube & Publications Multi-Plateformes (DeviantArt, Pinterest, GitHub)** :
+    - **Analyse Algorithmique YouTube** : analyse des retours d'expérience créateurs (Hervé / RVYT Business & Benoît / Wizard Academy). Constat : la publication immédiate en public sabote la rétention initiale car YouTube n'a encodé que le 360p SD et n'a pas fini l'indexation sémantique audio.
+    - **Mise à jour `youtube_publisher.py`** : ajout systématique de la publication programmée (`--schedule 45` minutes avec `privacyStatus: "private"` et `publishAt: ISO8601`) pour les Shorts et les vidéos longues, assurant 100% de disponibilité HD 1080p/4K et transcription avant la première impression.
+    - **Validation Profils & Auth** : GitHub `Teome0245` vérifié 100% public (4 dépôts ouverts) ; Pinterest `La Boîte à Geeks` opérationnel ; DeviantArt `Teome245` prêt dans DeviantArt Studio.
+- 57. **Méthodologie MMO Solo & Anti-Scope Creep (Inspiré de Taku @Taku_GD)** :
+    - **Création du canon de développement** : [`docs/design/METHODOLOGIE_DEV_SOLO_MMO_PRIME.md`](design/METHODOLOGIE_DEV_SOLO_MMO_PRIME.md) fixant les 4 piliers d'acier de LBG pour briser la malédiction du dev solo de MMO :
+      * *Pilier 1 (Core Loop Sacré)* : interdépendance fermée SWG/T4C (récolte -> craft -> cantina/buffs/karma), refus des 40 sous-systèmes inachevés.
+      * *Pilier 2 (Runtime Frugal & Vivant)* : binaire unique Godot 4.6 headless (`.246:8787`) à 800 Mo de RAM + SQLite déterministe.
+      * *Pilier 3 (Monde Habité O3)* : 36 PNJ MiniMind + 10 bots joueurs IA autonomes garantissant un monde vivant même avec 1 seul joueur humain.
+      * *Pilier 4 (Gladys O1)* : automatisation des tests de non-régression (`ci_godot_headless.sh`), des devlogs et de la surveillance.
+    - **Inscription au Registre** : document référencé dans `docs/REGISTRE.md` sous le pôle Lore & Méthodologie.
+    - **Backlog Vidéo Longue** : ajout de l'épisode `id: 14` dans `tools/studio_content_engine/longform_backlog.json` (*« "Ne développe JAMAIS un MMO seul"... Pourquoi 95 % des indés abandonnent et notre méthode pour réussir »*).
+- 56. **Studio Content Engine V3.3 — Épisode Long YouTube 16:9 Publié (GPU Chinois 64 Go vs notre setup GTX 1050 Ti 4 Go)** :
+    - **Sujet & Soutien Kiara (@KiaraIAFR)** : réaction constructive et chiffrée à l'actualité hardware et à la vidéo de Kiara sur les 8 Go de VRAM (`https://www.youtube.com/watch?v=5vybxpZKbs4`).
+    - **Ancrage matériel honnête du lab** : démystification du GPU chinois de 64 Go (Moore Threads / mods) face à la RTX 5090 (32 Go à 2 500 €) en opposant notre réalité : zéro carte à 8 Go, notre seul GPU dédié est une antique **Nvidia GeForce GTX 1050 Ti (4 Go)** sur PC d'appoint, épaulée par le serveur R720 de Gladys (bi-Xeon, RAM ECC, 4 silos JSON de 1,5 Ko).
+    - **Rendu & Publication YouTube réussis** :
+      * Vidéo HD 16:9 (`247.6 s`, 7 429 frames) calculée via le pipeline déterministe Three-VRM (Lia 3D) et FFmpeg.
+      * Miniature personnalisée HD `1280×720` (*« 64 GO VS NOTRE 1050 TI ! / LA VÉRITÉ SUR LA VRAM »*) appliquée avec succès.
+      * Publication sur YouTube (`https://www.youtube.com/watch?v=gONil_8Gzpo`, ID `gONil_8Gzpo`) avec description complète, chapitres horodatés et tags dynamiques.
 - 55. **Pipeline Graphique DeviantArt & Pinterest + Publication Live Vérifiée** :
     - **Authentification Gladys réussie** : extraction et synchronisation réussies des sessions `deviantart_cookies.txt` (compte `Teome245`) et `pinterest_cookies.txt` (compte `La Boîte à Geeks`).
     - **Publication Pinterest en direct (100% Succès)** :
