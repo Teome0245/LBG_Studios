@@ -9,6 +9,19 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 51. **Résolution CPU CT 110 (24 vCPUs), Forge Dataset PNJ MiniMind & Refonte Graphique SWG Godot 4.6** :
+    - **Diagnostic & Résolution CPU 100% sur CT 110 (`ollama-110`)** :
+      * Identification du processus zombie : le test OpenClaude d'hier soir (`task-580`) était resté bloqué sur socket ouverte vers `.110:11434`, forçant `llama-server` à tourner en boucle CPU.
+      * Processus tué sur `.143` + service Ollama redémarré sur CT 110.
+      * **Augmentation CPU CT 110** : passage à chaud de **16 cœurs à 24 cœurs CPU** sur Proxmox (`pct set 110 -cores 24`). Utilisation CPU retombée immédiatement à 0% (70.6% idle) et 31.8 Go de RAM libre.
+    - **Forge du Dataset PNJ pour MiniMind (`tools/minimind/`)** :
+      * Création du générateur `build_prime_npc_dataset.py` produisant `dataset/prime_npcs_sft.jsonl` (386 paires de dialogues au format Chat couvrant les 71 PNJ de Lost Heaven/Mos Eisley avec le ton sobre et pragmatique de SWG).
+      * Dépendances d'entraînement (`datasets`, `torch`, `transformers`) installées et prêtes dans `.venv_audio`.
+    - **Refonte Graphique SWG PBR dans Godot 4.6 (`packages/prime-client/scripts/world_ground_3d.gd`)** :
+      * **Soleils binaire Tatooine** : ajout du soleil secondaire compagnon `ScrapaltaiSunSecondary` (Vector3(-34, 56, 0), teinte ambre douce sans shadow map) complétant le soleil primaire doré ACES.
+      * **Relief sablonneux PBR & Rides éoliennes** : génération procédurale via `FastNoiseLite` d'une Normal Map `sand_normal` (bump 2.4, uv1_scale 180×180) pour un scintillement rasante du sable sans surcoût de polygones.
+      * **Patine et argile érodée des bâtiments** : Normal Map procédurale de crépi `plaster_norm` appliquée sur `mat_adobe` et `mat_dome`, et réhausse métallique du duracier `mat_metal`.
+      * Validation par `client_modular_selftest.gd` (code 0) et déploiement du patch client sur le serveur `.246:8080/patches/prime/manifest.json`.
 - 50. **Intégration des 3 Pépites Open Source (OpenClaude, MiniMind, Academic Research Skills)** :
     - **1. OpenClaude sur Ollama `.110` (0 € Cloud)** :
       * Installation de `@twigpine/openclaude` (CLI coding-agent indépendant).

@@ -186,25 +186,36 @@ func _setup_pbr_atmosphere_and_sky() -> void:
 	# Brouillard de profondeur standard (très haute fluidité, 0 raymarching GPU)
 	env.volumetric_fog_enabled = false
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.92, 0.78, 0.58)
-	env.fog_density = 0.0004
-	env.fog_aerial_perspective = 0.45
+	env.fog_light_color = Color(0.95, 0.80, 0.60)
+	env.fog_density = 0.00035
+	env.fog_aerial_perspective = 0.50
 
 	_world_env.environment = env
 	_world_root.add_child(_world_env)
 
+	# --- Système Solaire Binaire SWG (Tatooine : Tatoo I & Tatoo II) ---
+	# Soleil primaire doré dominant (Tatoo I)
 	_sun_light = DirectionalLight3D.new()
-	_sun_light.name = "ScrapaltaiSun"
+	_sun_light.name = "ScrapaltaiSunPrimary"
 	_sun_light.rotation_degrees = Vector3(-42.0, 38.0, 0.0)
-	_sun_light.light_color = Color(1.0, 0.94, 0.84)
+	_sun_light.light_color = Color(1.0, 0.93, 0.82)
 	_sun_light.light_energy = 1.15
 	_sun_light.shadow_enabled = true
 	_sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	_sun_light.directional_shadow_max_distance = 180.0
 	_world_root.add_child(_sun_light)
 
+	# Soleil secondaire compagnon (Tatoo II — astre blanc/ambre doux)
+	var sun_secondary := DirectionalLight3D.new()
+	sun_secondary.name = "ScrapaltaiSunSecondary"
+	sun_secondary.rotation_degrees = Vector3(-34.0, 56.0, 0.0)
+	sun_secondary.light_color = Color(0.98, 0.88, 0.75)
+	sun_secondary.light_energy = 0.40
+	sun_secondary.shadow_enabled = false # Pas de surcoût de shadow maps
+	_world_root.add_child(sun_secondary)
 
-## 3. Relief Désertique & Grande Étendue Sablonneuse
+
+## 3. Relief Désertique & Grande Étendue Sablonneuse (Shader PBR & Rides Éoliennes)
 func _setup_desert_environment() -> void:
 	_terrain_root = Node3D.new()
 	_terrain_root.name = "TerrainEnvironment"
@@ -219,10 +230,22 @@ func _setup_desert_environment() -> void:
 	plane_mesh.subdivide_depth = 1
 	main_ground.mesh = plane_mesh
 
+	# Génération procédurale de rides de sable (Normal Map PBR éolienne)
 	var sand_mat := StandardMaterial3D.new()
-	sand_mat.albedo_color = Color(0.76, 0.61, 0.44)
-	sand_mat.roughness = 0.98
+	sand_mat.albedo_color = Color(0.80, 0.66, 0.48)
+	sand_mat.roughness = 0.94
 	sand_mat.metallic = 0.01
+
+	var sand_noise := FastNoiseLite.new()
+	sand_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	sand_noise.frequency = 0.035
+	var sand_normal := NoiseTexture2D.new()
+	sand_normal.as_normal_map = true
+	sand_normal.bump_strength = 2.4
+	sand_normal.noise = sand_noise
+	sand_mat.normal_enabled = true
+	sand_mat.normal_texture = sand_normal
+	sand_mat.uv1_scale = Vector3(180.0, 180.0, 1.0) # Répétition fine du grain de sable
 	main_ground.material_override = sand_mat
 
 	var body := StaticBody3D.new()
@@ -321,21 +344,35 @@ func _setup_lost_heaven_city() -> void:
 	_city_root.name = "LostHeavenCity3D"
 	_world_root.add_child(_city_root)
 
-	# Matériaux architecturaux SWG Pre-CU
+	# Matériaux architecturaux SWG Pre-CU (PBR Usé & Relief d'argile)
+	var plaster_noise := FastNoiseLite.new()
+	plaster_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	plaster_noise.frequency = 0.12
+	var plaster_norm := NoiseTexture2D.new()
+	plaster_norm.as_normal_map = true
+	plaster_norm.bump_strength = 1.4
+	plaster_norm.noise = plaster_noise
+
 	var mat_adobe := StandardMaterial3D.new()
-	mat_adobe.albedo_color = Color(0.82, 0.70, 0.54) # Grès d'adobe Tatooine
-	mat_adobe.roughness = 0.92
-	mat_adobe.metallic = 0.05
+	mat_adobe.albedo_color = Color(0.84, 0.72, 0.55) # Grès d'adobe Tatooine chaud
+	mat_adobe.roughness = 0.94
+	mat_adobe.metallic = 0.02
+	mat_adobe.normal_enabled = true
+	mat_adobe.normal_texture = plaster_norm
+	mat_adobe.uv1_scale = Vector3(12.0, 12.0, 12.0)
 
 	var mat_dome := StandardMaterial3D.new()
-	mat_dome.albedo_color = Color(0.88, 0.84, 0.76) # Dôme crépi blanc sable
-	mat_dome.roughness = 0.85
-	mat_dome.metallic = 0.08
+	mat_dome.albedo_color = Color(0.90, 0.86, 0.78) # Dôme crépi blanc sable
+	mat_dome.roughness = 0.82
+	mat_dome.metallic = 0.04
+	mat_dome.normal_enabled = true
+	mat_dome.normal_texture = plaster_norm
+	mat_dome.uv1_scale = Vector3(8.0, 8.0, 8.0)
 
 	var mat_metal := StandardMaterial3D.new()
-	mat_metal.albedo_color = Color(0.38, 0.42, 0.46) # Duracier cuivré
-	mat_metal.roughness = 0.45
-	mat_metal.metallic = 0.8
+	mat_metal.albedo_color = Color(0.40, 0.44, 0.48) # Duracier cuivré
+	mat_metal.roughness = 0.40
+	mat_metal.metallic = 0.88
 
 	var mat_banner := StandardMaterial3D.new()
 	mat_banner.albedo_color = Color(0.72, 0.22, 0.16) # Toile bordeaux
