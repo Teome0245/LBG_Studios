@@ -1,12 +1,16 @@
 {
   "active_phase": 1,
   "demographic_target": 300,
-  "growth_rate_npcs_per_week": 10,
+  "time_mode": "game_time",
+  "time_dilation": 16.0,
+  "growth_rate_game_days": 7,
+  "growth_rate_npcs_per_period": 10,
   "player_bots_excluded_from_resident_census": true,
   "phases": {
     "1": {
       "name": "Phase 1 : Pilote 10 PNJ Emblématiques",
-      "duration_weeks": 2,
+      "duration_game_days": 14,
+      "irl_duration_hours": 21.0,
       "target_population": 10,
       "enabled": true,
       "npcs": [
@@ -24,7 +28,8 @@
     },
     "2": {
       "name": "Phase 2 : Expansion Oasis, Mines & Fermes (+10 PNJ)",
-      "duration_weeks": 1,
+      "duration_game_days": 7,
+      "irl_duration_hours": 10.5,
       "target_population": 20,
       "enabled": false,
       "npcs": [
@@ -42,7 +47,8 @@
     },
     "3": {
       "name": "Phase 3 : Élite, Commerces & Scène (+10 PNJ)",
-      "duration_weeks": 1,
+      "duration_game_days": 7,
+      "irl_duration_hours": 10.5,
       "target_population": 30,
       "enabled": false,
       "npcs": [
@@ -59,8 +65,9 @@
       ]
     },
     "4": {
-      "name": "Phase 4+ : Croissance Démographique Planétaire (Objectif 300 PNJ)",
-      "duration_weeks": 27,
+      "name": "Phase 4+ : Croissance Démographique Continue (Objectif 300 PNJ)",
+      "duration_game_days": 189,
+      "irl_duration_days": 11.8,
       "target_population": 300,
       "enabled": false,
       "settlements": [
@@ -78,6 +85,29 @@
       ]
     }
   },
+  "life_cycle_milestone": {
+    "trigger_condition": "population_reaches_target_or_day_189",
+    "target_population_trigger": 300,
+    "eta_irl_days": 11.8,
+    "features": {
+      "aging": {
+        "enabled": true,
+        "stages": ["apprentice", "artisan_master", "elder_retired"]
+      },
+      "mortality": {
+        "natural_old_age": true,
+        "environmental_hazards": ["sandstorm", "beast_assault", "water_depletion"]
+      },
+      "dynasty_and_recruitment": {
+        "births_and_arrivals": true,
+        "shuttle_colonists_influx": true
+      },
+      "inheritance": {
+        "transfer_workshop_and_house": true,
+        "preserve_memory_stream_chronicle": true
+      }
+    }
+  },
   "urbanism_and_construction_rules": {
     "zero_hallucinated_resources": true,
     "require_schematics_and_mats": true,
@@ -85,9 +115,10 @@
       "ephemeral": ["camp_fire", "nomad_tent", "trail_marker"],
       "permanent": ["adobe_house", "craft_workshop", "merchant_stall", "harvester_outpost"]
     },
-    "maintenance_decay_hours": 72
+    "maintenance_decay_hours_in_game": 72
   },
   "settings": {
+    "recency_half_life_game_hours": 32,
     "recency_half_life_seconds": 7200,
     "weights": {
       "recency": 1.0,

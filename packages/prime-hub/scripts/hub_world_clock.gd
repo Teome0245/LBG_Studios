@@ -10,6 +10,8 @@ const _HubPaths = preload("res://scripts/hub_paths.gd")
 ## Jour plein (10h jeu) = 37.5 min | Nuit (8h jeu) = 30 min | Aube/Crépuscule (6h jeu) = 22.5 min.
 var time_dilation: float = 16.0
 var _game_hour: float = 10.0 # 10:00 (Matin / Plein jour) par défaut
+var total_game_hours: float = 10.0
+var game_day: int = 1
 
 var day_phase: String = "day" # "dawn", "day", "dusk", "night"
 var is_night: bool = false
@@ -49,11 +51,16 @@ func tick(dt: float) -> void:
 	if dt <= 0.0:
 		return
 	var old_phase := day_phase
-	# Progression de l'horloge : dt secondes réelles * dilation / 3600 secondes par heure
-	_game_hour = fposmod(_game_hour + (dt * time_dilation / 3600.0), 24.0)
+	var old_day := game_day
+	var delta_hours := dt * time_dilation / 3600.0
+	total_game_hours += delta_hours
+	_game_hour = fposmod(_game_hour + delta_hours, 24.0)
+	game_day = int(total_game_hours / 24.0) + 1
 	_update_phase_state()
 	if old_phase != day_phase:
 		_notify_phase_change(old_phase, day_phase)
+	if game_day > old_day:
+		_stream("world.day_dawn", "Un nouveau jour se lève sur Scrapaltaï — Jour %d." % game_day, "Horloge Planétaire", "scrapaltai", {"game_day": game_day})
 
 
 func _update_phase_state() -> void:
@@ -175,6 +182,8 @@ func get_light_color() -> String:
 
 func get_time_state() -> Dictionary:
 	return {
+		"game_day": game_day,
+		"total_game_hours": snappedf(total_game_hours, 0.01),
 		"game_hour": snappedf(_game_hour, 0.01),
 		"time_string": get_time_string(),
 		"day_phase": day_phase,

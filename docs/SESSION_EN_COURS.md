@@ -9,6 +9,11 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 61. **Indexation Démographique en Temps de Jeu & Jalon Cycle de Vie Complet (J189 In-Game / ~11,5 Jours Réels)** :
+    - **Calibration Circadienne In-Game (`time_dilation = 16.0`)** : 24h de jeu = 90 min réelles (1h30). La Phase 1 (14 jours de jeu) s'accomplit en **21 heures réelles**, permettant une progression organique et observable sans attendre 6 mois IRL.
+    - **Suivi `game_day` dans `hub_world_clock.gd`** : progression automatique du calendrier planétaire et notification d'aurore par événement mondial (`world.day_dawn`).
+    - **Spécification du Jalon Cycle de Vie (Cap 300 PNJ)** : à l'atteinte de l'équilibre démographique planétaire (~J189 in-game / ~11,8 jours réels), déclenchement du cycle complet : vieillissement par stades (apprenti -> maître -> aîné), mortalité naturelle ou par fléaux climatiques (`sandstorm`), naissances/arrivées de navettes, et transmission déterministe d'héritage d'ateliers avec biographie archivée par le Scribe.
+    - **Mise à jour `generative_cohorts.json` & Canon** : [`docs/design/DEMOGRAPHIE_URBANISME_EMERGENT_SCRAPALTAI.md`](design/DEMOGRAPHIE_URBANISME_EMERGENT_SCRAPALTAI.md).
 - 60. **Veille Concurrents & Justification Stratégique (Prism 2033, Epitome, SpaceMolt vs LBG Studios)** :
     - **Création du canon d'analyse** : [`docs/world/VEILLE_CONCURRENTS_PRISM_EPITOME_SPACEMOLT.md`](world/VEILLE_CONCURRENTS_PRISM_EPITOME_SPACEMOLT.md) démontrant pourquoi l'approche LBG est plus pérenne et réaliste.
     - **Démystification Prism 2033 & Epitome** : ces projets UE5 reposent sur des API Cloud tierces (OpenAI), créant un gouffre financier intenable à l'échelle d'un MMO et s'exposant aux critiques d'« AI slop » sans boucle économique prouvée.

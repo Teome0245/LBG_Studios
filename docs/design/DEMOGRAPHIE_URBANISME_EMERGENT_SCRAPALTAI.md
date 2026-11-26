@@ -23,11 +23,19 @@ Une clarification essentielle régit l'écosystème de simulation :
 
 ## 2. Démographie Cible & Faisabilité Technique (Cap à ~300 PNJ)
 
-### Trajectoire de Croissance (+10 PNJ par semaine)
-- **Phase 1 (Actuelle - 2 semaines)** : 10 PNJ pilotes emblématiques de Lost Heaven.
-- **Phase 2 (+1 semaine)** : 20 PNJ (ouverture des mines d'Anchor-Ridge et de l'oasis du Ksar Nomade).
-- **Phase 3 (+1 semaine)** : 30 PNJ (marchands, artistes et gardes de Mos Eisley et des portes).
-- **Phase 4 (Croissance continue, ~27 semaines)** : Expansion méthodique de **+10 PNJ/semaine** jusqu'à l'équilibre démographique planétaire de **~300 PNJ**.
+### Calendrier en « Temps de Jeu » (Dilatation Circadienne $\times 16$)
+Le monde de Scrapaltaï tourne avec une accélération de simulation calibrée :  
+$$\mathbf{1\text{ jour en jeu (24h in-game)}} = \mathbf{90\text{ minutes réelles (1h 30 min)}} \quad (\text{soit } 16\text{ jours de jeu par jour IRL})$$
+
+Les étapes de croissance démographique sont indexées sur les **jours de jeu** (`game_day`), permettant une progression organique et dynamique :
+
+| Phase | Période en Jeu | Durée Réelle IRL ($\times 16$) | Population Cible | Périmètre & Colonies |
+| :--- | :--- | :--- | :--- | :--- |
+| **Phase 1 (Pilote)** | **14 jours de jeu** (2 semaines in-game) | **21 heures réelles** | **10 PNJ** | Les 10 PNJ pilotes de Lost Heaven (La Perle, clinique, atelier, missions). |
+| **Phase 2** | **+7 jours de jeu** (1 semaine in-game) | **+10h 30 min réelles** | **20 PNJ** | Expansion vers l'Oasis du Ksar Nomade, les mines d'Anchor-Ridge et fermes d'humidité. |
+| **Phase 3** | **+7 jours de jeu** (1 semaine in-game) | **+10h 30 min réelles** | **30 PNJ** | Artisans, artistes de scène, ferrailleurs Jawas et milice de Mos Eisley. |
+| **Phase 4 (Continue)** | **+7 jours / palier de 10 PNJ** | **+10h 30 min / palier** | **Jusqu'à 300 PNJ** | Répartition planétaire équilibrée sur tous les biomes, villages et camps nomades. |
+| **Jalon Équilibre** | **Jour 189 de jeu** (~27 semaines in-game) | **~11 jours et demi réels** | **300 PNJ** | **Déclenchement du Cycle de Vie Complet (Vieillissement, Morts, Naissances).** |
 
 ### Pourquoi 300 PNJ tournent à l'aise sur notre serveur (`.246:8787`)
 1. **Spatial Hashing & Tick LOD (Level of Detail)** :
@@ -74,16 +82,22 @@ flowchart TD
 
 ---
 
-## 4. Cycle de Vie des PNJ (Life Cycle)
+## 4. Jalon Majeur : Le Cycle de Vie Complet (À ~11,5 Jours Réels / Jour 189 In-Game)
 
-1. **Arrivée / Naissance Sociale** :
-   - Arrivée par navette au Starport de Lost Heaven ou recrutement par une caravane nomade.
-2. **Apprentissage & Rôle** :
-   - Progression dans l'arbre de compétences SWG (un apprenti forgeron apprend le travail des alliages).
-3. **Activité & Fondation** :
-   - Accumulation de crédits et de matériaux, choix d'une zone propice, érection d'un commerce ou d'une maison.
-4. **Relève / Transmission** :
-   - Retraite ou départ par navette, transmission des outils et de l'échoppe à un apprenti.
+Dès que la population atteint son seuil d'équilibre démographique planétaire (~300 PNJ), le système active le **Cycle de Vie Dynamique** :
+
+1. **Vieillissement Circadien & Stades de Vie** :
+   - *Jeunesse & Apprentissage* : Les nouveaux venus apprennent un métier SWG auprès des maîtres formateurs.
+   - *Maturité & Maîtrise* : Exploitation active d'ateliers, comptoirs, fermes d'humidité ou patrouilles de garde.
+   - *Séniorité & Sagesse Nomade* : Retrait progressif de l'artisanat lourd, fréquentation de La Perle, transmission d'histoires et de rumeurs aux voyageurs.
+2. **Mortalité Réelle (Naturelle ou Accidentelle)** :
+   - *Mort Naturelle de Vieillesse* : Fin de vie paisible pour les aînés ayant accompli leur cycle.
+   - *Morts Liées aux Événements & Fléaux* : Tempêtes de sable cataclysmiques (`sandstorm`), attaques de meutes de chacals/krayts, ou pénurie prolongée d'eau lors de blocus de convois.
+3. **Naissances, Dynasties & Nouveaux Colons** :
+   - *Arrivées régulières* : Débarquement de navettes de colons au Starport de Lost Heaven ou intégration d'orphelins du désert par les caravanes nomades.
+4. **Héritage Déterministe & Préservation de la Mémoire** :
+   - *Transmission des biens* : Lorsqu'un artisan disparaît, son atelier, ses stocks de ferraille et sa maison en adobe sont légués à son apprenti ou mis aux enchères de quartier.
+   - *Mémoire collective éternelle* : Le flux mémoriel de l'artisan n'est pas perdu : le **Scribe de Lost Heaven** (`npc:scribe`) archive sa biographie dans la **Chronique de Scrapaltaï** (`prime_hub.sqlite3`), et les anciens compagnons continuent de citer son nom au comptoir de Jax.
 
 ---
 
