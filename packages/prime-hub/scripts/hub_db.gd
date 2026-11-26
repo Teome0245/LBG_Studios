@@ -38,6 +38,18 @@ CREATE TABLE IF NOT EXISTS player_state(
 	data TEXT NOT NULL,
 	updated_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS npc_memories(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	npc_id TEXT NOT NULL,
+	timestamp INTEGER NOT NULL,
+	event_type TEXT NOT NULL DEFAULT 'observation',
+	content TEXT NOT NULL,
+	importance INTEGER NOT NULL DEFAULT 5,
+	reflected INTEGER NOT NULL DEFAULT 0,
+	tags TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_npc_memories_lookup ON npc_memories(npc_id, timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_npc_memories_reflection ON npc_memories(npc_id, reflected, importance);
 """
 
 static var _shared = null

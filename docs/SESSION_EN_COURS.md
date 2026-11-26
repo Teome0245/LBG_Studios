@@ -9,6 +9,25 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 60. **Veille Concurrents & Justification Stratégique (Prism 2033, Epitome, SpaceMolt vs LBG Studios)** :
+    - **Création du canon d'analyse** : [`docs/world/VEILLE_CONCURRENTS_PRISM_EPITOME_SPACEMOLT.md`](world/VEILLE_CONCURRENTS_PRISM_EPITOME_SPACEMOLT.md) démontrant pourquoi l'approche LBG est plus pérenne et réaliste.
+    - **Démystification Prism 2033 & Epitome** : ces projets UE5 reposent sur des API Cloud tierces (OpenAI), créant un gouffre financier intenable à l'échelle d'un MMO et s'exposant aux critiques d'« AI slop » sans boucle économique prouvée.
+    - **Alignement Hybride SpaceMolt (O3) + Stanford Smallville (O2)** : SpaceMolt a inspiré notre contrat d'actions machine-readable pour nos 10 bots joueurs IA, tandis que Stanford structure la vie sociale et la mémoire épisodique de nos 300 PNJ résidents.
+    - **Frugalité d'acier 0 €** : hébergement 100% souverain sur Godot 4.6 headless (`.246:8787`), SQLite WAL déterministe et micro-modèle local `prime-npc:25m` (56 tok/s CPU).
+- 59. **Stanford Generative Agents (Smallville) pour les PNJ de Lost Heaven (Déploiement Progressif en 4 Cohortes)** :
+    - **Architecture & Design Canonique** : création de [`docs/design/STANFORD_GENERATIVE_NPCS_ARCHITECTURE.md`](design/STANFORD_GENERATIVE_NPCS_ARCHITECTURE.md) et de [`docs/design/DEMOGRAPHIE_URBANISME_EMERGENT_SCRAPALTAI.md`](design/DEMOGRAPHIE_URBANISME_EMERGENT_SCRAPALTAI.md).
+    - **Distinction Fondamentale O3 vs O2** : les 10 Bots Joueurs IA sont des *joueurs* à part entière (sessions de jeu, déconnexions/reconnexions, liberté de mouvement). Les PNJ sont les *résidents permanents* du monde.
+    - **Croissance Démographique Planétaire (+10 PNJ/semaine -> ~300 PNJ)** : montée en charge progressive sur Scrapaltaï gérée sans surcoût serveur via Spatial Hashing et Tick LOD.
+    - **Urbanisme Émergent sans Hallucination** : les PNJ artisans bâtissent des structures réelles (éphémères ou pérennes via SWG Housing/Usines) en consommant des ressources primaires et en payant la maintenance.
+    - **Moteur Cognitif Stanford (`hub_generative_memory.gd`)** :
+      * *Memory Stream* : table SQLite `npc_memories` avec indexation rapide (`npc_id`, `timestamp`, `event_type`, `importance`, `tags`).
+      * *Retrieval pondéré* : formule exacte de Stanford calculant le score $\alpha \cdot \text{Récence} + \beta \cdot \text{Importance} + \gamma \cdot \text{Pertinence lexicale/sémantique}$.
+      * *Cycle de Réflexion* : synthèse d'ordre supérieur déclenchée dès que le total d'importance dépasse le seuil (35 points), insérant des pensées profondes (importance 9).
+    - **Déploiement par Cohortes Configurable (`generative_cohorts.json`)** :
+      * *Phase 1 (Pilote 2 semaines)* : 10 PNJ emblématiques (Jax Moro, Daan Oth, Kell Asa, Tobin Ress, Odo Merr, Yara Nis, Capitaine Vael, Soren Kray, Ancien Nadir, Rumeuriste).
+      * *Phases 2 & 3 (1 semaine chacune)* : +10 PNJ par semaine.
+      * *Phase 4* : expansion continue vers l'équilibre démographique planétaire (~300 PNJ) avec suivi live sur Pilot Topologie (`http://192.168.0.140:8080/#/topology`).
+    - **Intégration & Validation Headless** : branché dans `hub_dialogue.gd` et validé à 100% par `tools/generative_memory_selftest.gd` (code 0) et intégré dans `ci_godot_headless.sh`.
 - 58. **Optimisation Algorithme YouTube & Publications Multi-Plateformes (DeviantArt, Pinterest, GitHub)** :
     - **Analyse Algorithmique YouTube** : analyse des retours d'expérience créateurs (Hervé / RVYT Business & Benoît / Wizard Academy). Constat : la publication immédiate en public sabote la rétention initiale car YouTube n'a encodé que le 360p SD et n'a pas fini l'indexation sémantique audio.
     - **Mise à jour `youtube_publisher.py`** : ajout systématique de la publication programmée (`--schedule 45` minutes avec `privacyStatus: "private"` et `publishAt: ISO8601`) pour les Shorts et les vidéos longues, assurant 100% de disponibilité HD 1080p/4K et transcription avant la première impression.

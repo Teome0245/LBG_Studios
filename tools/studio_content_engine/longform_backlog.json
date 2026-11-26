@@ -13,7 +13,29 @@
     "topic": "Notre Homelab IA sur un serveur à 150 € d'occasion (sans abonnement Cloud) : visite guidée de Gladys",
     "minutes": 6.5,
     "category": "Homelab & Vrai Budget",
-    "status": "pending"
+    "status": "published",
+    "updated_at": "2026-11-26T17:12:03.877442",
+    "youtube_url": "https://www.youtube.com/watch?v=rIk3psMZcKQ"
+  },
+  {
+    "id": 13,
+    "topic": "Un GPU chinois de 64 Go défonce la RTX 5090 ? La vérité VRAM & notre setup GTX 1050 Ti (4 Go)",
+    "minutes": 6.1,
+    "category": "Hardware & Vérité du Lab",
+    "status": "published",
+    "published_at": "2026-11-26T20:36:42",
+    "youtube_url": "https://www.youtube.com/watch?v=gONil_8Gzpo",
+    "reference_url": "https://www.youtube.com/watch?v=5vybxpZKbs4",
+    "notes": "Soutien à Kiara (@KiaraIAFR). Décryptage VRAM : Moore Threads / 5090 vs notre GTX 1050 Ti (4 Go) sur PC d'appoint + serveur R720 Gladys."
+  },
+  {
+    "id": 14,
+    "topic": "« Ne développe JAMAIS un MMO seul »... Pourquoi 95 % des indés abandonnent et notre méthode pour réussir",
+    "minutes": 8.0,
+    "category": "Game Design & Devlog MMO Prime",
+    "status": "pending",
+    "reference_url": "https://www.youtube.com/watch?v=mgdEWu264WA",
+    "notes": "Inspiré de la vidéo de Taku (@Taku_GD). Les 4 piliers LBG : Core loop SWG/T4C, serveur Godot 4.6 headless à 800 Mo de RAM, 10 Joueurs IA (O3) pour que le monde ne soit jamais vide, et Gladys (O1) en co-dév."
   },
   {
     "id": 3,

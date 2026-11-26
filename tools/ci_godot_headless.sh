@@ -146,6 +146,7 @@ else
   run_test "Achèvement SWG Pre-CU (Jedi, Bounties, Travel, Bases, Clonage) & JTL" "res://tools/swg_complete_features_selftest.gd"
   run_test "Attributs Libres (FOR/DEX/END/INT/SAG) & Karma (T4C / La 4ème Prophétie)" "res://tools/t4c_attributes_selftest.gd"
   run_test "Dialogue par Mots-Clés (T4C) & Extension Territoriale Scrapaltai" "res://tools/t4c_dialogue_selftest.gd"
+  run_test "Mémoire Stanford Generative Agents & Réflexion PNJ (O2/O3 Smallville)" "res://tools/generative_memory_selftest.gd"
   run_client_test "Client Prime modulaire & Inventaire DnD" "res://tools/client_modular_selftest.gd"
   run_client_test "World Terrain Builder & Scatter Procédural" "res://tools/terrain_builder_selftest.gd"
 fi

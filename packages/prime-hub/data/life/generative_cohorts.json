@@ -1,0 +1,101 @@
+{
+  "active_phase": 1,
+  "demographic_target": 300,
+  "growth_rate_npcs_per_week": 10,
+  "player_bots_excluded_from_resident_census": true,
+  "phases": {
+    "1": {
+      "name": "Phase 1 : Pilote 10 PNJ Emblématiques",
+      "duration_weeks": 2,
+      "target_population": 10,
+      "enabled": true,
+      "npcs": [
+        "npc:core3_barman_jax",
+        "npc:core3_daan_oth",
+        "npc:core3_artisan_trainer_c",
+        "npc:core3_brawler_trainer_c",
+        "npc:core3_medic_trainer_c",
+        "npc:core3_scout_trainer_c",
+        "npc:capitaine_vael",
+        "npc:mecanicien_soren",
+        "npc:ancien_nadir",
+        "npc:rumeuriste"
+      ]
+    },
+    "2": {
+      "name": "Phase 2 : Expansion Oasis, Mines & Fermes (+10 PNJ)",
+      "duration_weeks": 1,
+      "target_population": 20,
+      "enabled": false,
+      "npcs": [
+        "npc:guerisseur_miran",
+        "npc:core3_talen_ress",
+        "npc:scribe",
+        "npc:sergent_rue",
+        "npc:videur",
+        "npc:fermier_valen",
+        "npc:prospecteur_durn",
+        "npc:chimiste_sela",
+        "npc:ferrailleur_kliktik",
+        "npc:chamane_uror"
+      ]
+    },
+    "3": {
+      "name": "Phase 3 : Élite, Commerces & Scène (+10 PNJ)",
+      "duration_weeks": 1,
+      "target_population": 30,
+      "enabled": false,
+      "npcs": [
+        "npc:artiste_scene",
+        "npc:armurier_kane",
+        "npc:scientist_mos",
+        "npc:agent_circulation",
+        "npc:alchemist",
+        "npc:smith",
+        "npc:guide_quartier",
+        "npc:habitue_cantina",
+        "npc:core3_artisan_trainer_a",
+        "npc:core3_brawler_trainer_a"
+      ]
+    },
+    "4": {
+      "name": "Phase 4+ : Croissance Démographique Planétaire (Objectif 300 PNJ)",
+      "duration_weeks": 27,
+      "target_population": 300,
+      "enabled": false,
+      "settlements": [
+        "lost_heaven",
+        "mos_eisley",
+        "outpost_zalem",
+        "outpost_ksar",
+        "anchor_ridge",
+        "moisture_farm",
+        "canyon_camp",
+        "nomad_red_wind"
+      ],
+      "npcs": [
+        "resident_npcs_pool"
+      ]
+    }
+  },
+  "urbanism_and_construction_rules": {
+    "zero_hallucinated_resources": true,
+    "require_schematics_and_mats": true,
+    "structures": {
+      "ephemeral": ["camp_fire", "nomad_tent", "trail_marker"],
+      "permanent": ["adobe_house", "craft_workshop", "merchant_stall", "harvester_outpost"]
+    },
+    "maintenance_decay_hours": 72
+  },
+  "settings": {
+    "recency_half_life_seconds": 7200,
+    "weights": {
+      "recency": 1.0,
+      "importance": 1.5,
+      "relevance": 2.0
+    },
+    "max_retrieved_memories": 4,
+    "reflection_importance_threshold": 35,
+    "ollama_reflection_model": "huihui_ai/gemma-4-abliterated:E4b-qat"
+  }
+}

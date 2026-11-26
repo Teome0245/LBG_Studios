@@ -551,30 +551,42 @@
     "topic": "Isoler du code généré par IA dans une sandbox Bubblewrap sans réseau",
     "category": "DevSecOps & Agents IA",
     "format": "stage3d",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-26T12:33:57.701599",
+    "youtube_url": "https://www.youtube.com/shorts/xGu1ZVIbF6c",
+    "tiktok_status": "success"
   },
   {
     "id": 69,
     "topic": "LIA — Synthwave Overdrive (Concert 3D) | 100% Local",
     "category": "Live Virtuel Three-VRM",
     "format": "music3d",
-    "status": "pending",
-    "music_preset": "synthwave_energy_show"
+    "status": "published",
+    "music_preset": "synthwave_energy_show",
+    "published_at": "2026-11-26T15:44:33.937999",
+    "youtube_url": "https://www.youtube.com/shorts/LxUB6uhosqg",
+    "tiktok_status": "success"
   },
   {
     "id": 70,
     "topic": "Comment convertir les danses binaires de Star Wars Galaxies vers Three-VRM",
     "category": "Animation 3D & Reverse",
     "format": "stage3d",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-26T18:54:38.852906",
+    "youtube_url": "https://www.youtube.com/shorts/NKoGWXNkyJQ",
+    "tiktok_status": "needs_auth"
   },
   {
     "id": 71,
     "topic": "LIA — Nexura Domina Climax (Solo Scénique 3D) | LBG Studios",
     "category": "Clip Officiel 3D",
     "format": "music3d",
-    "status": "pending",
-    "music_preset": "nexura_climax_encore"
+    "status": "published",
+    "music_preset": "nexura_climax_encore",
+    "published_at": "2026-11-26T21:27:37.279157",
+    "youtube_url": "https://www.youtube.com/shorts/zn7ZdaiUljQ",
+    "tiktok_status": "needs_auth"
   },
   {
     "id": 72,
@@ -587,6 +599,84 @@
     "id": 73,
     "topic": "Synchroniser vue 2D tactique et monde Full 3D en temps réel sous Godot 4",
     "category": "Architecture MMO 3D",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 74,
+    "topic": "Pourquoi un serveur Dell R720 à 150 € d'occasion bat les abonnements Cloud pour l'IA",
+    "category": "Homelab & Hardware",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 75,
+    "topic": "Comment nos 10 joueurs IA vivent et commercent dans notre MMO 3D sans tricher",
+    "category": "Pilier O3 Joueurs IA",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 76,
+    "topic": "Piloter Windows et Linux par IA sans jamais voler la souris grâce à l'accessibilité native",
+    "category": "Pilier O1 Compagnon & Bureau",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 77,
+    "topic": "Artisanat Star Wars Galaxies : pourquoi des minerais notés de 1 à 1000 changent tout",
+    "category": "Pilier O2 MMO Prime",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 78,
+    "topic": "Faire tourner un modèle MoE 30B sur processeur Xeon sans aucune carte graphique",
+    "category": "IA Locale & Benchmarks",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 79,
+    "topic": "LIA — Synthwave Overdrive (Concert 3D) | Studio LBG",
+    "category": "Live Virtuel Three-VRM",
+    "format": "music3d",
+    "status": "pending",
+    "music_preset": "synthwave_energy_show"
+  },
+  {
+    "id": 80,
+    "topic": "Graphe de topologie live : surveiller 17 services et conteneurs Proxmox en 200 millisecondes",
+    "category": "Gladys & Observabilité",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 81,
+    "topic": "Basculer instantanément entre vue 2D tactique et monde Full 3D PBR à 60 FPS sous Godot 4",
+    "category": "Moteur Godot 4 & 3D",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 82,
+    "topic": "Auto-héberger son serveur Mail en Rust avec Stalwart et DNS AdGuard pilotés par IA",
+    "category": "Self-Hosting & Réseau",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 83,
+    "topic": "Le système de Karma et de Renaissance inspiré de La Quatrième Prophétie dans notre MMO",
+    "category": "Game Design & T4C",
+    "format": "stage3d",
+    "status": "pending"
+  },
+  {
+    "id": 84,
+    "topic": "Découper la mémoire d'un agent IA en silos JSON de 1,5 Ko pour éliminer les hallucinations",
+    "category": "RAG & Cerveau Gladys",
     "format": "stage3d",
     "status": "pending"
   }

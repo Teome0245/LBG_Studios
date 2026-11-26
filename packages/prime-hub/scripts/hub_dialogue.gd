@@ -2,6 +2,7 @@ extends RefCounted
 class_name HubDialogue
 const _HubPaths = preload("res://scripts/hub_paths.gd")
 const HubWikiScript = preload("res://scripts/hub_wiki.gd")
+const HubGenerativeMemoryScript = preload("res://scripts/hub_generative_memory.gd")
 
 ## Dialogue PNJ — stubs + LLM Ollama optionnel (timeout court).
 
@@ -712,6 +713,20 @@ func invoke(body: Dictionary) -> Dictionary:
 				npc_id = str(eid)
 				break
 	var memory := _session_memory_line(ss, npc_name)
+	# Stanford Generative Agents — Retrieval mémoire épisodique & réflexions (Ticket Stanford)
+	var gen_mem_svc = HubGenerativeMemoryScript.get_shared()
+	var gen_mems: Array = []
+	if gen_mem_svc != null and gen_mem_svc.is_npc_eligible(npc_id):
+		gen_mems = gen_mem_svc.retrieve_memories(npc_id, player_text, 2)
+		if not gen_mems.is_empty():
+			var gen_hint := ""
+			for gm in gen_mems:
+				var c := str(gm.get("content", ""))
+				if not c.is_empty():
+					gen_hint += (", " if not gen_hint.is_empty() else "") + c
+			if not gen_hint.is_empty():
+				memory = ("%s · [Souvenirs: %s]" % [memory, gen_hint]) if not memory.is_empty() else ("[Souvenirs: %s]" % gen_hint)
+
 	# C2 — mémoire relations persistée (tip / quête / don / rencontre).
 	var rel_hint := ""
 	if economy != null and economy.has_method("relation_memory_hint") and not npc_id.is_empty():
@@ -731,6 +746,12 @@ func invoke(body: Dictionary) -> Dictionary:
 				"Tu as déjà croisé %s à Lost Heaven." % who.substr(0, 40)
 			)
 	var reply := _pick_reply(npc_id, npc_name, player_text, memory, player, history)
+	# Stanford Memory Stream — Enregistrement continu de l'échange
+	if gen_mem_svc != null and gen_mem_svc.is_npc_eligible(npc_id):
+		if not player_text.is_empty():
+			gen_mem_svc.record_event(npc_id, "%s a dit : %s" % [player, player_text], 4, "dialogue", "player,chat")
+		if not reply.is_empty():
+			gen_mem_svc.record_event(npc_id, "J'ai répondu à %s : %s" % [player, reply], 3, "dialogue", "reply")
 	var moves := _suggested_moves(npc_id)
 	var t4c_kws: Array = []
 	if T4C_NPC_KEYWORDS.has(npc_id):
@@ -749,6 +770,8 @@ func invoke(body: Dictionary) -> Dictionary:
 		"history_turns": history.size(),
 		"tracked_quest": str(ss.get("tracked_quest", "")),
 		"t4c_keywords": t4c_kws,
+		"generative_memories": gen_mems,
+		"generative_memory_active": gen_mem_svc != null and gen_mem_svc.is_npc_eligible(npc_id),
 	}
 	if npc_id == "npc:scribe" and economy != null and economy.has_method("chronicle"):
 		meta["chronicle"] = economy.chronicle(player, true)
@@ -760,6 +783,7 @@ func invoke(body: Dictionary) -> Dictionary:
 		"session_summary": ss,
 		"source": "prime_hub",
 		"t4c_keywords": t4c_kws,
+		"generative_memories": gen_mems,
 	}
 	return {
 		"ok": true,
