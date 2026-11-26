@@ -1,7 +1,7 @@
-"""art_auth.py — Script d'authentification interactive DeviantArt & Pinterest pour Gladys / LBG Studios.
+"""art_auth.py — Script d'authentification interactive DeviantArt & Pinterest (0 dépendance externe).
 
-Ouvre un navigateur Playwright visible sur Windows (.10).
-L'utilisateur valide la session (ou se connecte une fois).
+Ouvre un navigateur Chromium visible sur le bureau Windows (.10).
+L'utilisateur valide sa connexion (ou clique sur son profil).
 Dès que la session est détectée, les cookies sont sauvegardés dans C:\\Agent_IA\\
 et synchronisés immédiatement sur .143 (A:\\LBG_Studios\\tools\\studio_content_engine\\).
 """
@@ -15,10 +15,25 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
-from tiktok_uploader.auth import save_cookies
 
 DEFAULT_AGENT_DIR = Path(r"C:\Agent_IA")
 MIRROR_ENGINE_DIR = Path(r"A:\LBG_Studios\tools\studio_content_engine")
+
+
+def save_netscape_cookies(filepath: Path, cookies: list[dict]) -> None:
+    lines = ["# Netscape HTTP Cookie File\n# http://curl.haxx.se/rfc/cookie_spec.html\n\n"]
+    for c in cookies:
+        domain = c.get("domain", "")
+        flag = "TRUE" if domain.startswith(".") else "FALSE"
+        path = c.get("path", "/")
+        secure = "TRUE" if c.get("secure", False) else "FALSE"
+        expires = int(c.get("expires", 0))
+        name = c.get("name", "")
+        value = c.get("value", "")
+        lines.append(f"{domain}\t{flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}")
+
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    filepath.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def authenticate_deviantart(timeout_sec: int = 180) -> bool:
@@ -26,8 +41,8 @@ def authenticate_deviantart(timeout_sec: int = 180) -> bool:
     print("  AUTHENTIFICATION DEVIANTART (LBG STUDIOS)")
     print("=" * 60)
     print("Ouverture du navigateur Chromium...")
-    print("Veuillez vous connecter à votre compte Teome245 sur DeviantArt.")
-    print(f"Délai max : {timeout_sec}s")
+    print("Veuillez vous connecter a votre compte Teome245 sur DeviantArt.")
+    print(f"Delai max : {timeout_sec}s")
     print("-" * 60)
 
     with sync_playwright() as p:
@@ -48,20 +63,19 @@ def authenticate_deviantart(timeout_sec: int = 180) -> bool:
 
         while time.time() - start_time < timeout_sec:
             cookies = context.cookies()
-            # Détection de cookies de session DeviantArt
             has_auth = any(c["name"] in ("userinfo", "auth_secure", "auth", "_deviantart_session") for c in cookies)
 
             if has_auth and not ("login" in page.url.lower()):
                 time.sleep(3)
                 fresh_cookies = context.cookies()
                 local_path = DEFAULT_AGENT_DIR / "deviantart_cookies.txt"
-                save_cookies(str(local_path), fresh_cookies)
-                print(f"\n[SUCCÈS] Session DeviantArt enregistrée : {local_path}")
+                save_netscape_cookies(local_path, fresh_cookies)
+                print(f"\n[SUCCES] Session DeviantArt enregistree : {local_path}")
 
                 mirror_path = MIRROR_ENGINE_DIR / "deviantart_cookies.txt"
                 try:
-                    save_cookies(str(mirror_path), fresh_cookies)
-                    print(f"[SUCCÈS] Cookies synchronisés en direct sur .143 : {mirror_path}")
+                    save_netscape_cookies(mirror_path, fresh_cookies)
+                    print(f"[SUCCES] Cookies synchronises en direct sur .143 : {mirror_path}")
                 except Exception as e_m:
                     print(f"[WARN] Synchro miroir .143 : {e_m}")
 
@@ -82,8 +96,8 @@ def authenticate_pinterest(timeout_sec: int = 180) -> bool:
     print("  AUTHENTIFICATION PINTEREST (LBG STUDIOS)")
     print("=" * 60)
     print("Ouverture du navigateur Chromium...")
-    print("Veuillez vous connecter à votre compte 'La Boîte à Geeks' sur Pinterest.")
-    print(f"Délai max : {timeout_sec}s")
+    print("Veuillez vous connecter a votre compte 'La Boite a Geeks' sur Pinterest.")
+    print(f"Delai max : {timeout_sec}s")
     print("-" * 60)
 
     with sync_playwright() as p:
@@ -110,13 +124,13 @@ def authenticate_pinterest(timeout_sec: int = 180) -> bool:
                 time.sleep(3)
                 fresh_cookies = context.cookies()
                 local_path = DEFAULT_AGENT_DIR / "pinterest_cookies.txt"
-                save_cookies(str(local_path), fresh_cookies)
-                print(f"\n[SUCCÈS] Session Pinterest enregistrée : {local_path}")
+                save_netscape_cookies(local_path, fresh_cookies)
+                print(f"\n[SUCCES] Session Pinterest enregistree : {local_path}")
 
                 mirror_path = MIRROR_ENGINE_DIR / "pinterest_cookies.txt"
                 try:
-                    save_cookies(str(mirror_path), fresh_cookies)
-                    print(f"[SUCCÈS] Cookies synchronisés en direct sur .143 : {mirror_path}")
+                    save_netscape_cookies(mirror_path, fresh_cookies)
+                    print(f"[SUCCES] Cookies synchronises en direct sur .143 : {mirror_path}")
                 except Exception as e_m:
                     print(f"[WARN] Synchro miroir .143 : {e_m}")
 
