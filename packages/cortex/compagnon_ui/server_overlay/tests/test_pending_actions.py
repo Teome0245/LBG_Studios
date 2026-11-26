@@ -162,6 +162,32 @@ class PendingActionsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(action_brief.context.get("action_key"), "mail_brief_report")
         self.assertIn("gladys_mailcow_manager", action_brief.command[1])
 
+    async def test_extract_opnsense_actions(self) -> None:
+        text_status = "Je peux vérifier la santé d'OPNsense et des passerelles. Veux-tu que je lance le contrôle ?"
+        action_status = pa.extract_pending_action_from_assistant_message(text_status, "conv_opn_status")
+        self.assertIsNotNone(action_status)
+        self.assertEqual(action_status.context.get("action_key"), "opnsense_status")
+        self.assertIn("gladys_opnsense_manager", action_status.command[1])
+
+        text_blocked = "Veux-tu que je consulte les derniers paquets bloqués dans les logs OPNsense ?"
+        action_blocked = pa.extract_pending_action_from_assistant_message(text_blocked, "conv_opn_blocked")
+        self.assertIsNotNone(action_blocked)
+        self.assertEqual(action_blocked.context.get("action_key"), "opnsense_blocked_logs")
+        self.assertIn("gladys_opnsense_manager", action_blocked.command[1])
+
+    async def test_extract_proxmox_actions(self) -> None:
+        text_inv = "Veux-tu que je lance l'inventaire Proxmox des VMs et conteneurs LXC ?"
+        action_inv = pa.extract_pending_action_from_assistant_message(text_inv, "conv_pve_inv")
+        self.assertIsNotNone(action_inv)
+        self.assertEqual(action_inv.context.get("action_key"), "proxmox_inventory")
+        self.assertIn("gladys_proxmox_manager", action_inv.command[1])
+
+        text_bkp = "Veux-tu que je consulte la liste des sauvegardes Proxmox existantes ?"
+        action_bkp = pa.extract_pending_action_from_assistant_message(text_bkp, "conv_pve_bkp")
+        self.assertIsNotNone(action_bkp)
+        self.assertEqual(action_bkp.context.get("action_key"), "proxmox_backups_list")
+        self.assertIn("gladys_proxmox_manager", action_bkp.command[1])
+
     async def test_execute_pending_action_success(self) -> None:
         action = pa.PendingAction(
             action_id="act_echo",

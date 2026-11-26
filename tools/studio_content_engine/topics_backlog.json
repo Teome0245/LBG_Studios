@@ -540,8 +540,11 @@
     "topic": "LIA — Cantina Lost Heaven (Danses SWG 3D) | Mocap VRM",
     "category": "Chorégraphie MMO & VRM",
     "format": "music3d",
-    "status": "pending",
-    "music_preset": "swg_cantina_groove"
+    "status": "published",
+    "music_preset": "swg_cantina_groove",
+    "published_at": "2026-11-26T09:41:15.645927",
+    "youtube_url": "https://www.youtube.com/shorts/FZJqPEbMYIg",
+    "tiktok_status": "success"
   },
   {
     "id": 68,

@@ -2818,6 +2818,17 @@ async def execute_action(request: ActionRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/thunderbird/recent")
+async def thunderbird_recent(limit: int = 15, account: str = ""):
+    """Lecture seule des derniers messages indexés dans Thunderbird (Gloda SQLite)."""
+    try:
+        from thunderbird_reader import read_thunderbird_recent
+
+        return read_thunderbird_recent(limit=limit, account_filter=account)
+    except Exception as e:
+        return {"ok": False, "error": str(e), "messages": []}
+
+
 @app.post("/install")
 async def install_capability(request: InstallRequest):
     try:

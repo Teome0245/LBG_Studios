@@ -81,6 +81,16 @@ _OPS_TRUTH = """
      * Pour relever les courriers non lus (`--unread`) : extrait les derniers messages reçus sur la boîte principale Dovecot.
      * Pour le compte-rendu matinal (`--brief`) : génère une synthèse complète pour le Morning Brief de Stève.
    - Gladys dispose aussi du script officiel de déploiement d'un serveur mail Stalwart local alternatif : `packages/cortex/infra/scripts/create_lbg_mail_ct_proxmox.sh` (CT 154 sur .201).
+
+10. PARE-FEU OPNSENSE (LBG-OPNsense / 192.168.0.20) :
+   - Gladys dispose du skill appris `gladys_opnsense_manager` (`packages/cortex/skills/learned/gladys_opnsense_manager/run.py`) connecté à l'API REST OPNsense :
+     * Lecture (L0) : `--status` (santé, passerelles, services), `--blocked` (paquets bloqués), `--leases` (baux DHCP), `--aliases`.
+     * Mutation (L2 HIGH obligatoire) : `--alias-add <alias> <ip>` et `--alias-del <alias> <ip>` uniquement après confirmation explicite de Teome.
+
+11. HYPERVISEUR PROXMOX VE (lbgr720 / 192.168.0.201) :
+   - Gladys dispose du skill appris `gladys_proxmox_manager` (`packages/cortex/skills/learned/gladys_proxmox_manager/run.py`) :
+     * Lecture (L0) : `--inventory` (hôte, RAM, stockages, LXC/VMs), `--backups [VMID]`, `--snapshots <VMID>`.
+     * Mutation (L2 HIGH obligatoire) : `--backup <VMID> --storage backup-temp` (vzdump zstd, refuse tout stockage inactif), `--snapshot <VMID> <NAME>`, `--power <start|shutdown|reboot> <VMID>`. Aucune suppression/destroy exposée.
 """
 
 BASE_GUARDRAILS = """

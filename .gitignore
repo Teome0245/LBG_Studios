@@ -101,6 +101,10 @@ tools/studio_content_engine/config/
 *cookies.txt
 *.cookies.json
 
+# Outils externes / micro-modèles R&D
+tools/minimind/
+tools/academic_research_skills/
+
 # SWG extraction (en pause)
 tools/swg_extracted/
 *.ans

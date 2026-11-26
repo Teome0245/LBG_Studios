@@ -275,6 +275,38 @@ CANONICAL_ACTIONS: dict[str, dict[str, Any]] = {
         "timeout_s": 30,
         "keywords": [r"compte[- ]rendu.*mail", r"brief.*mail", r"r[ée]sum[ée].*mail", r"courriers?.*non\s+lus?", r"mails?.*non\s+lus?", r"bo[îi]te.*mail"],
     },
+    "opnsense_status": {
+        "label": "Supervision pare-feu OPNsense (192.168.0.20)",
+        "script_names": ["gladys_opnsense_manager"],
+        "args": ["--status"],
+        "summary": "Contrôle de santé OPNsense, passerelles WAN/LAN et services actifs",
+        "timeout_s": 30,
+        "keywords": [r"opnsense.*(?:sant[ée]|statut|status|[ée]tat|passerelle)", r"(?:sant[ée]|statut|[ée]tat).*opnsense", r"pare[- ]feu.*(?:sant[ée]|statut|[ée]tat)"],
+    },
+    "opnsense_blocked_logs": {
+        "label": "Inspection des paquets bloqués OPNsense (192.168.0.20)",
+        "script_names": ["gladys_opnsense_manager"],
+        "args": ["--blocked", "--limit", "15"],
+        "summary": "Lecture des derniers paquets bloqués par le pare-feu OPNsense",
+        "timeout_s": 30,
+        "keywords": [r"opnsense.*bloqu", r"bloqu.*opnsense", r"logs?.*opnsense", r"paquets?\s+bloqu[ée]s?"],
+    },
+    "proxmox_inventory": {
+        "label": "Inventaire Proxmox lbgr720 (LXC, VMs, RAM & stockages)",
+        "script_names": ["gladys_proxmox_manager"],
+        "args": ["--inventory"],
+        "summary": "État complet de l'hyperviseur Proxmox .201 (conteneurs, VMs, mémoire et disques)",
+        "timeout_s": 30,
+        "keywords": [r"inventaire.*proxmox", r"proxmox.*(?:vm|lxc|conteneur|[ée]tat|sant[ée])", r"lbgr720.*(?:[ée]tat|inventaire|vm|lxc)"],
+    },
+    "proxmox_backups_list": {
+        "label": "Liste des sauvegardes Proxmox lbgr720",
+        "script_names": ["gladys_proxmox_manager"],
+        "args": ["--backups"],
+        "summary": "Consultation des sauvegardes vzdump disponibles sur backup-temp et local",
+        "timeout_s": 30,
+        "keywords": [r"backups?.*proxmox", r"proxmox.*backups?", r"sauvegardes?.*proxmox", r"proxmox.*sauvegardes?", r"sauvegardes?.*(?:ct|lxc|vm)\s*\d+"],
+    },
 }
 
 

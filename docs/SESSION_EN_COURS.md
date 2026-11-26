@@ -8,7 +8,29 @@
 
 ---
 
-## Dernières actions réalisées (2026-11-25)
+## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 50. **Intégration des 3 Pépites Open Source (OpenClaude, MiniMind, Academic Research Skills)** :
+    - **1. OpenClaude sur Ollama `.110` (0 € Cloud)** :
+      * Installation de `@twigpine/openclaude` (CLI coding-agent indépendant).
+      * Création du lanceur `tools/launch_openclaude_local.sh` et du modèle `lbg-qwen3-coder:30b` sur `.110` avec fenêtre de contexte calibrée à `32768` tokens (`num_ctx 32768`).
+      * Permet de déléguer des tâches de code autonomes complètes en local sans consommer le quota Cloud Antigravity.
+    - **2. MiniMind (Micro-modèles PNJ O2/O3 pour Godot 4.6)** :
+      * Clonage et analyse de `jingyaogong/minimind` dans `tools/minimind/`.
+      * Téléchargement et validation du modèle quantifié `MiniMind2-Small-Q4.gguf` (**17 Mo seulement** pour 25M paramètres).
+      * Architecture prête pour entraîner un micro-modèle de PNJ (dialogues SWG/T4C) exécutable directement dans `prime-hub` (`.246:8787`) à >200 tok/s pour ~30 Mo de RAM.
+    - **3. Academic Research Skills (Sourcing & E-E-A-T)** :
+      * Intégration de `Imbad0202/academic-research-skills` (+57 000 étoiles) dans `packages/cortex/skills/` et `~/.agents/skills/` (`academic-deep-research` et `academic-paper-reviewer`).
+      * Pipeline 13-agents pour vérifier systématiquement les sources, éliminer les hallucinations techniques et sourcer avec rigueur les scripts de nos vidéos longues YouTube et notre RAG.
+- 49. **Gladys Cerveau & Capability Forge — Quadruplé Souverain Live : AdGuard, Mailcow/Thunderbird, OPNsense & Proxmox (`gladys_proxmox_manager`)** :
+    - **Mailcow CT 155 + Failover IMAP + Thunderbird `.10:5005`** :
+      * 4 Sync Jobs Free (`sdesharches`, `desharches`, `wow.sdesharches`, `laura.desharches`) injectés et actifs dans `imapsync` sur CT 155 (10 min, `delete1=0`) + failover IMAP direct (`~/.config/lbg/mail_secrets.json`, `chmod 600`).
+      * Correction syntaxe `C:\Agent_IA\executor.py` sur `.10` (`r'C:\Users'`, `r'reg query'`), démarrage auto Windows confirmé (`LBG Agent_IA.lnk` + `LBG-AgentIA-logon` Ready), et installation à distance de `read_thunderbird_recent` (lecture seule Gloda SQLite sans mot de passe, validée live sur Free + Gmail).
+    - **Pare-feu OPNsense (`packages/cortex/skills/learned/gladys_opnsense_manager/`)** :
+      * Forgé et adopté via Capability Forge P4 (AST OK, Sandbox `bwrap` OK, Risque `HIGH`), clé API importée dans `~/.config/lbg/opnsense_secrets.json` (`chmod 600`, fichier temporaire supprimé) et **validé live** sur `192.168.0.20` (`OPNsense 26.7.9_3`, `WAN_DHCP`/`WAN_DHCP6` Online, 12/12 services actifs, logs pare-feu temps réel).
+    - **Hyperviseur Proxmox VE (`packages/cortex/skills/learned/gladys_proxmox_manager/`)** :
+      * Forgé et adopté via Capability Forge P4 (AST OK, Sandbox `bwrap` OK, Risque `HIGH`), **validé live** sur `lbgr720` (`192.168.0.201`, uptime 33 j, 17 Go RAM dispo, 6 LXC + 4 VMs actives, backup CT 110 sur `backup-temp`).
+      * Actions L0 (`--inventory`, `--backups [VMID]`, `--snapshots <VMID>`) + mutations L2 sécurisées (`--backup`, `--snapshot`, `--power start|shutdown|reboot`, zéro `destroy`/`purge`, refus des stockages inactifs).
+      * Branché dans `pending_actions.py` (`proxmox_inventory`, `proxmox_backups_list`) et `router_prompts.py`. Tests `test_pending_actions.py` 12/12 PASS, `ruff check` clean.
 - 48. **Jalon Matériel Planifié (3–4 décembre 2026 — Upgrade GPU RTX 3060 12 Go sur `.10` & recyclage GTX 1050 Ti sur R720 `.201`)** :
     - **PC Windows (`.10`)** : passage de la GTX 1050 Ti à une **MSI GeForce RTX 3060 VENTUS 2X 12G OC** (12 Go VRAM : rendu 3D/audio instantané + LLM 8B–14B / offload MoE 30B rapide).
     - **Serveur R720 (`.201` `lbgr720`)** : retrait de la vieille `NVIDIA Tesla M2090` (`42:00.0`, Fermi `sm_20` obsolète, 225 W, actuellement sur `vfio-pci`) et remplacement par la **GTX 1050 Ti (4 Go, Pascal `sm_61`, CUDA 12 / NVENC)** — IOMMU déjà actif sur `.201` (`intel_iommu=on iommu=pt`). Cible prioritaire : **passthrough PCIe vers VM `143` (`lbg-omarchy`)** pour diviser par ~6 le temps de rendu WebGL Three-VRM / Blender / NVENC H24 (14 min → ~2 min par Short sans `.10`), ou partage LXC Proxmox. Sujet d'épisode YouTube dédié prêt à tourner lors du montage.

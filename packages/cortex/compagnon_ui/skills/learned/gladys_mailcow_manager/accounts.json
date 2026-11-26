@@ -1,0 +1,83 @@
+[
+  {
+    "id": "lbg",
+    "email": "sdesharches@laboiteageeks.fr",
+    "type": "local_mailcow",
+    "host": "192.168.0.155",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "INBOX"
+  },
+  {
+    "id": "free_sdesharches",
+    "email": "sdesharches@free.fr",
+    "type": "external_imap",
+    "host": "imap.free.fr",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Free_sdesharches"
+  },
+  {
+    "id": "free_desharches",
+    "email": "desharches@free.fr",
+    "type": "external_imap",
+    "host": "imap.free.fr",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Free_desharches"
+  },
+  {
+    "id": "free_wow",
+    "email": "wow.sdesharches@free.fr",
+    "type": "external_imap",
+    "host": "imap.free.fr",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Free_wow"
+  },
+  {
+    "id": "free_laura",
+    "email": "laura.desharches@free.fr",
+    "type": "external_imap",
+    "host": "imap.free.fr",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Free_laura"
+  },
+  {
+    "id": "gmail_teome245",
+    "email": "teome245@gmail.com",
+    "type": "external_imap",
+    "host": "imap.gmail.com",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Gmail_teome245"
+  },
+  {
+    "id": "gmail_teome_anders",
+    "email": "teome.anders@gmail.com",
+    "type": "external_imap",
+    "host": "imap.gmail.com",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Gmail_teome_anders"
+  },
+  {
+    "id": "tuanis_steve",
+    "email": "steve.desharches@tuanisconseil.fr",
+    "type": "external_imap",
+    "host": "ssl0.ovh.net",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "TuanisConseil"
+  },
+  {
+    "id": "infomaniak_sdesharches",
+    "email": "sdesharches@ikmail.com",
+    "type": "external_imap",
+    "host": "mail.infomaniak.com",
+    "port": 993,
+    "ssl": true,
+    "destination_folder": "Infomaniak"
+  }
+]
