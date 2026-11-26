@@ -565,8 +565,8 @@ def upload_pinterest_native(
 
         try:
             logger.info("Navigation vers Pinterest Pin Creation...")
-            page.goto("https://www.pinterest.com/pin-creation-tool/", wait_until="domcontentloaded", timeout=45000)
-            time.sleep(4)
+            page.goto("https://fr.pinterest.com/pin-creation-tool/", wait_until="domcontentloaded", timeout=45000)
+            time.sleep(5)
 
             if "login" in page.url.lower():
                 return {"status": "needs_auth", "error": "Session Pinterest expirée ou invalide"}
@@ -591,18 +591,32 @@ def upload_pinterest_native(
                 desc_area.fill(description)
 
             # Remplissage Lien de destination
-            link_input = page.locator("input[placeholder*='lien' i], input[placeholder*='link' i]").first
+            link_input = page.locator("input[placeholder*='lien' i], input[placeholder*='link' i], [data-test-id='storyboard-selector-link'] input").first
             if link_input.count() > 0:
                 link_input.fill(destination_url)
 
+            # Sélection d'un tableau (Board)
+            board_btn = page.locator("[data-test-id='board-dropdown-select-button']").first
+            if board_btn.count() > 0:
+                logger.info("Sélection du tableau Pinterest...")
+                board_btn.click()
+                time.sleep(1.5)
+                # Sélectionner le premier tableau disponible ou existant dans la liste
+                first_board = page.locator("[data-test-id='board-row'], div[role='listbox'] div[role='option'], div[data-test-id*='board']").first
+                if first_board.count() > 0:
+                    first_board.click()
+                    time.sleep(1)
+
             # Clic Publier
+            time.sleep(2)
             pub_btn = page.locator("button:has-text('Publier'), button:has-text('Publish')").first
-            if pub_btn.count() > 0:
+            if pub_btn.count() > 0 and pub_btn.is_enabled():
                 logger.info("Clic sur 'Publier' Pinterest...")
                 pub_btn.click()
                 time.sleep(6)
                 return {"status": "success", "platform": "pinterest", "image": str(image_path)}
             else:
+                logger.info("Brouillon d'épingle enregistré sur Pinterest (prêt pour finalisation).")
                 return {"status": "staged", "platform": "pinterest", "image": str(image_path)}
 
         except Exception as e:
