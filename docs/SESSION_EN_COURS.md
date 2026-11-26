@@ -9,6 +9,10 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 54. **Calibrage Shorts 65s (Éligibilité Monétisation TikTok Creator Rewards) & Conformité Anti-Infraction** :
+    - **Passage à 65–75 secondes** : reconfiguration de `tools/studio_content_engine/script_generator.py` pour produire des scripts denses de 8 à 10 phrases (~170–200 mots au lieu de 90 mots) afin de dépasser systématiquement la barre des 60 secondes requise par TikTok Creator Rewards.
+    - **Garantie mathématique d'éligibilité** : ajout de `ensure_creator_rewards_length()` qui densifie automatiquement l'architecture technique si le script fait moins de 160 mots.
+    - **Filtre anti-infraction politique** : remplacement systématique par regex des termes électoraux/fiscaux sensibles (`maire`, `élire`, `taxes`) par du vocabulaire de gameplay (`guide local`, `frais`).
 - 53. **Triptyque Réalisé : Modèle MiniMind PNJ, Refonte Graphique SWG & Validation Runtime Jeu** :
     - **1. Micro-modèle PNJ Prime (`prime-npc:25m`)** :
       * Modèle GGUF quantifié 25M paramètres (17 Mo) transféré sur CT 110 (`ollama-110`).
