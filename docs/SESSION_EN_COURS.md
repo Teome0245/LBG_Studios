@@ -9,6 +9,12 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 52. **Enrichissement Multiversel du Dataset PNJ MiniMind (`tools/prime_npc_minimind/`)** :
+    - Intégration des 3 piliers canoniques de `docs/design/DIRECTION_ARTISTIQUE_PRIME_MULTIVERS.md` dans `build_prime_npc_dataset.py` :
+      * **Pilier 1 (Tech Organique & Bricolée / Gunnm / Cyberpunk / Steampunk)** : prothèses laiton/polymère, châssis Mechari, implants neuronaux, manomètres à vapeur.
+      * **Pilier 2 (Énergie, Chi & Alchimie / FMA / Avatar TLA / DBZ / T4C)** : cercles de transmutation dans le sable, flux de Chi, projection de silice/plasma, auras de karma.
+      * **Pilier 3 (Ton Héroïque & Absurde Méta / Discworld / Free Guy / Firefly)** : droïdes philosophes de cantina, quêtes absurdes, humour méta sur la simulation et les patchs de Scrapaltai.
+    - Dataset régénéré : **571 dialogues multiversels** dans `tools/prime_npc_minimind/dataset/prime_npcs_sft.jsonl`.
 - 51. **Résolution CPU CT 110 (24 vCPUs), Forge Dataset PNJ MiniMind & Refonte Graphique SWG Godot 4.6** :
     - **Diagnostic & Résolution CPU 100% sur CT 110 (`ollama-110`)** :
       * Identification du processus zombie : le test OpenClaude d'hier soir (`task-580`) était resté bloqué sur socket ouverte vers `.110:11434`, forçant `llama-server` à tourner en boucle CPU.
