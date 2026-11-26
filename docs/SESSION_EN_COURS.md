@@ -9,6 +9,18 @@
 ---
 
 ## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+- 53. **Triptyque Réalisé : Modèle MiniMind PNJ, Refonte Graphique SWG & Validation Runtime Jeu** :
+    - **1. Micro-modèle PNJ Prime (`prime-npc:25m`)** :
+      * Modèle GGUF quantifié 25M paramètres (17 Mo) transféré sur CT 110 (`ollama-110`).
+      * Modelfile configuré avec le system prompt canonique multiversel (SWG, Gunnm, FMA/T4C, Firefly).
+      * Modèle instancié avec succès dans Ollama (`prime-npc:25m`, 51 Mo en RAM, vitesse 56.2 tok/s sur CPU).
+    - **2. Refonte Graphique SWG Poussée (`world_ground_3d.gd`)** :
+      * **Cantina La Perle** : arche au néon ambré (`#ff730d`, rayon 3.6m, lueur volumétrique 14m) + grilles d'aération circulaires et conduits de vapeur verticaux en cuivre patiné (`Color(0.68, 0.42, 0.22)`).
+      * **Vaporateurs d'humidité GX-8 authentiques** : factorisation via `_create_moisture_vaporator()` avec boîtier thermo-électrique cubique à la base, voyant LED cyan de condensation (`#00d9ff`), disques étagés et antenne sommitale fine (10.4m).
+      * Validation par `client_modular_selftest.gd` (code 0) et publication du patch client sur `http://192.168.0.246:8080/patches/prime/manifest.json`.
+    - **3. Vérification des Composants en Jeu (`.246:8787`)** :
+      * Smoke test LAN complet (`tools/smoke_lan_surfaces.sh --functional`) : toutes les surfaces au vert (Pilot `:8080`, Cockpit `:8093`, Orchestrateur `:5174`/`:3000`, Prime Hub Godot `:8787`).
+      * Santé Prime Hub G5+ : uptime 319 500s (~88 h), 36 PNJ autonomes en cycles dynamiques (travail, repos, loisir), 10 bots joueurs IA, 7 bêtes désertiques, show live à la Cantina (artiste de scène, quête `lh_show_perle`).
 - 52. **Enrichissement Multiversel du Dataset PNJ MiniMind (`tools/prime_npc_minimind/`)** :
     - Intégration des 3 piliers canoniques de `docs/design/DIRECTION_ARTISTIQUE_PRIME_MULTIVERS.md` dans `build_prime_npc_dataset.py` :
       * **Pilier 1 (Tech Organique & Bricolée / Gunnm / Cyberpunk / Steampunk)** : prothèses laiton/polymère, châssis Mechari, implants neuronaux, manomètres à vapeur.

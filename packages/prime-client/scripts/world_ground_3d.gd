@@ -465,6 +465,12 @@ func _spawn_swg_building(b: Dictionary, mat_adobe: Material, mat_dome: Material,
 			dome.material_override = mat_dome
 			b_node.add_child(dome)
 
+			# Détails SWG : Grilles de ventilation et conduits cuivrés sur la rotonde
+			_add_cantina_wall_fans(b_node, size_m * 0.40, mat_metal)
+
+			# Enseigne néon holographique de cantina SWG
+			_add_cantina_neon_arch(b_node, size_m * 0.42)
+
 			_add_building_door(b_node, Vector3(0.0, 0.0, size_m * 0.42), mat_metal, Color(1.0, 0.75, 0.2))
 			_add_building_label(b_node, "✦ CANTINA LA PERLE ✦", Color(1.0, 0.8, 0.3), 13.5)
 
@@ -640,6 +646,71 @@ func _add_building_label(parent: Node3D, text: String, col: Color, height_y: flo
 	lbl.outline_size = 6
 	lbl.position = Vector3(0.0, height_y, 0.0)
 	parent.add_child(lbl)
+
+
+## Détails SWG Cantina : Grilles d'aération circulaires et conduits de vapeur en cuivre
+func _add_cantina_wall_fans(parent: Node3D, radius: float, mat_metal: Material) -> void:
+	var copper_mat := StandardMaterial3D.new()
+	copper_mat.albedo_color = Color(0.68, 0.42, 0.22) # Cuivre patiné Scrapaltai
+	copper_mat.metallic = 0.85
+	copper_mat.roughness = 0.35
+
+	for angle_deg in [-50.0, 50.0, 130.0, -130.0]:
+		var rad := deg_to_rad(angle_deg)
+		var fan_pos := Vector3(sin(rad) * (radius + 0.1), 5.5, cos(rad) * (radius + 0.1))
+
+		# Conduit de descente vertical
+		var conduit := MeshInstance3D.new()
+		var ccyl := CylinderMesh.new()
+		ccyl.top_radius = 0.25
+		ccyl.bottom_radius = 0.25
+		ccyl.height = 6.0
+		conduit.mesh = ccyl
+		conduit.position = Vector3(fan_pos.x, 3.0, fan_pos.z)
+		conduit.material_override = copper_mat
+		parent.add_child(conduit)
+
+		# Grille de ventilateur ronde
+		var grill := MeshInstance3D.new()
+		var g_cyl := CylinderMesh.new()
+		g_cyl.top_radius = 1.1
+		g_cyl.bottom_radius = 1.1
+		g_cyl.height = 0.3
+		grill.mesh = g_cyl
+		grill.position = fan_pos
+		grill.rotation = Vector3(PI * 0.5, rad, 0.0)
+		grill.material_override = mat_metal
+		parent.add_child(grill)
+
+
+## Détails SWG Cantina : Arche au néon holographique au-dessus de l'entrée principale
+func _add_cantina_neon_arch(parent: Node3D, radius: float) -> void:
+	var neon_node := Node3D.new()
+	neon_node.position = Vector3(0.0, 7.2, radius + 0.6)
+
+	var arch := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 3.2
+	torus.outer_radius = 3.6
+	arch.mesh = torus
+	arch.rotation.x = PI * 0.5
+	var neon_mat := StandardMaterial3D.new()
+	neon_mat.albedo_color = Color(1.0, 0.45, 0.05) # Ambre chaud Cantina
+	neon_mat.emission_enabled = true
+	neon_mat.emission = Color(1.0, 0.45, 0.05)
+	neon_mat.emission_energy_multiplier = 2.4
+	arch.material_override = neon_mat
+	neon_node.add_child(arch)
+
+	# Lueur volumétrique
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(1.0, 0.55, 0.1)
+	glow.light_energy = 2.8
+	glow.omni_range = 14.0
+	glow.position = Vector3(0.0, 0.0, 0.5)
+	neon_node.add_child(glow)
+
+	parent.add_child(neon_node)
 
 
 ## 5. Construction de l'Enceinte Fortifiée & Remparts de Lost Heaven
@@ -899,31 +970,7 @@ func _spawn_swg_props(mat_adobe: Material, mat_metal: Material, mat_banner: Mate
 
 			"moisture_vaporator", _:
 				if "vaporator" in pid:
-					# Évaporateur d'humidité Tatooine
-					var vap := Node3D.new()
-					vap.position = p_pos
-					var mast := MeshInstance3D.new()
-					var mcyl := CylinderMesh.new()
-					mcyl.top_radius = 0.2
-					mcyl.bottom_radius = 0.5
-					mcyl.height = 9.0
-					mast.mesh = mcyl
-					mast.position = Vector3(0.0, 4.5, 0.0)
-					mast.material_override = mat_metal
-					vap.add_child(mast)
-
-					# Disques de condensation
-					for di in range(3):
-						var disc := MeshInstance3D.new()
-						var dcyl := CylinderMesh.new()
-						dcyl.top_radius = 1.6 - di * 0.3
-						dcyl.bottom_radius = 1.6 - di * 0.3
-						dcyl.height = 0.2
-						disc.mesh = dcyl
-						disc.position = Vector3(0.0, 3.5 + di * 2.0, 0.0)
-						disc.material_override = mat_adobe
-						vap.add_child(disc)
-					props_root.add_child(vap)
+					props_root.add_child(_create_moisture_vaporator(p_pos, mat_metal, mat_adobe))
 
 	# 6 Évaporateurs d'humidité périphériques pour le cachet SWG Tatooine
 	var vaporator_coords := [
@@ -935,28 +982,66 @@ func _spawn_swg_props(mat_adobe: Material, mat_metal: Material, mat_banner: Mate
 		Vector3(0.0, 0.0, 75.0)
 	]
 	for vc in vaporator_coords:
-		var vap := Node3D.new()
-		vap.position = vc
-		var mast := MeshInstance3D.new()
-		var mcyl := CylinderMesh.new()
-		mcyl.top_radius = 0.2
-		mcyl.bottom_radius = 0.45
-		mcyl.height = 8.5
-		mast.mesh = mcyl
-		mast.position = Vector3(0.0, 4.25, 0.0)
-		mast.material_override = mat_metal
-		vap.add_child(mast)
-		for di in range(3):
-			var disc := MeshInstance3D.new()
-			var dcyl := CylinderMesh.new()
-			dcyl.top_radius = 1.5 - di * 0.25
-			dcyl.bottom_radius = 1.5 - di * 0.25
-			dcyl.height = 0.18
-			disc.mesh = dcyl
-			disc.position = Vector3(0.0, 3.2 + di * 1.8, 0.0)
-			disc.material_override = mat_adobe
-			vap.add_child(disc)
-		props_root.add_child(vap)
+		props_root.add_child(_create_moisture_vaporator(vc, mat_metal, mat_adobe))
+
+
+## Crée un évaporateur d'humidité GX-8 authentique SWG (mât, disques, boîtier base + LED cyan)
+func _create_moisture_vaporator(pos: Vector3, mat_metal: Material, mat_adobe: Material) -> Node3D:
+	var vap := Node3D.new()
+	vap.position = pos
+
+	# Boîtier thermo-électrique cubique à la base
+	var base_box := MeshInstance3D.new()
+	var bbox := BoxMesh.new()
+	bbox.size = Vector3(1.6, 1.4, 1.6)
+	base_box.mesh = bbox
+	base_box.position = Vector3(0.0, 0.7, 0.0)
+	base_box.material_override = mat_metal
+	vap.add_child(base_box)
+
+	# Voyant LED cyan de condensation nocturne
+	var led := OmniLight3D.new()
+	led.light_color = Color(0.0, 0.85, 1.0)
+	led.light_energy = 1.2
+	led.omni_range = 4.0
+	led.position = Vector3(0.0, 1.2, 0.9)
+	vap.add_child(led)
+
+	# Mât central
+	var mast := MeshInstance3D.new()
+	var mcyl := CylinderMesh.new()
+	mcyl.top_radius = 0.18
+	mcyl.bottom_radius = 0.42
+	mcyl.height = 8.5
+	mast.mesh = mcyl
+	mast.position = Vector3(0.0, 4.95, 0.0)
+	mast.material_override = mat_metal
+	vap.add_child(mast)
+
+	# 3 Disques de condensation thermo-électriques
+	for di in range(3):
+		var disc := MeshInstance3D.new()
+		var dcyl := CylinderMesh.new()
+		dcyl.top_radius = 1.6 - di * 0.28
+		dcyl.bottom_radius = 1.6 - di * 0.28
+		dcyl.height = 0.2
+		disc.mesh = dcyl
+		disc.position = Vector3(0.0, 4.0 + di * 1.8, 0.0)
+		disc.material_override = mat_adobe
+		vap.add_child(disc)
+
+	# Antenne sommitale fine
+	var top_ant := MeshInstance3D.new()
+	var acyl := CylinderMesh.new()
+	acyl.top_radius = 0.04
+	acyl.bottom_radius = 0.08
+	acyl.height = 2.4
+	top_ant.mesh = acyl
+	top_ant.position = Vector3(0.0, 10.4, 0.0)
+	top_ant.material_override = mat_metal
+	vap.add_child(top_ant)
+
+	return vap
 
 
 ## 6. Avatar Joueur 3D (Chargement Direct du Modèle Compagnon.vrm via GLTF)
