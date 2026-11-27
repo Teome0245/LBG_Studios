@@ -21,12 +21,16 @@ logger = logging.getLogger("lbg.world_stream")
 # Détection de questions sur le monde live
 _WORLD_STREAM_QUERY_RE = re.compile(
     r"(?i)\b("
-    r"quoi\s+de\s+neuf\s+(?:en\s+jeu|dans\s+le\s+monde|au\s+hub|sur\s+lost\s+heaven)|"
-    r"qu[''\u2019]est[- ]ce\s+qui\s+se\s+passe\s+(?:en\s+jeu|au\s+hub|[àa]\s+lost\s+heaven|dans\s+le\s+monde)|"
+    r"quoi\s+de\s+neuf\s+(?:en\s+jeu|dans\s+le\s+monde|au\s+hub|sur\s+lost\s+heaven|sur\s+scrapalta[ïi])|"
+    r"qu[''\u2019]est[- ]ce\s+qui\s+se\s+passe\s+(?:en\s+jeu|au\s+hub|[àa]\s+lost\s+heaven|dans\s+le\s+monde|sur\s+scrapalta[ïi])|"
+    r"comment\s+(?:s[''\u2019]en\s+sortent|vont|évoluent|tournent)\s+(?:les\s+)?(?:pnj|habitants|citoyens|colons)|"
+    r"(?:des\s+)?nouvelles\s+des\s+(?:pnj|habitants|colons)|"
+    r"état\s+des\s+pnj|"
+    r"sur\s+scrapalta[ïi]|"
     r"[ée]v[ée]nements?\s+(?:du\s+monde|en\s+jeu|live\s+world|r[ée]cents?)|"
     r"live\s+world\s+stream|"
     r"flux\s+(?:du\s+monde|monde|hub)|"
-    r"nouvelles\s+(?:du\s+hub|du\s+monde|de\s+lost\s+heaven|du\s+jeu)|"
+    r"nouvelles\s+(?:du\s+hub|du\s+monde|de\s+lost\s+heaven|du\s+jeu|de\s+scrapalta[ïi])|"
     r"(?:derniers?\s+)?faits?\s+marquants?\s+(?:en\s+jeu|du\s+monde|du\s+hub)"
     r")\b"
 )
@@ -203,14 +207,52 @@ def format_world_context_block(*, limit: int = 3) -> str:
     return "\n".join(lines)
 
 
+def fetch_hub_health(*, timeout: float = 1.5) -> dict[str, Any]:
+    """Récupère l'état agrégé du hub (:8787/healthz)."""
+    base = (
+        os.getenv("LBG_PRIME_HUB_URL")
+        or os.getenv("LBG_HUB_HTTP_URL")
+        or "http://192.168.0.246:8787"
+    ).strip().rstrip("/")
+    url = f"{base}/healthz"
+    try:
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            return json.loads(raw) if raw.strip() else {}
+    except Exception as e:
+        logger.debug("hub health fetch failed (%s): %s", url, e)
+        return {}
+
+
 def format_world_stream_report(data: dict[str, Any]) -> str:
     """Réponse collègue quand l'utilisateur demande des nouvelles du monde."""
-    if not data.get("ok"):
+    health = fetch_hub_health()
+    clock = (health.get("active_event") or {}).get("world_clock") or {}
+    life = health.get("life") or {}
+    npc_count = health.get("npc_count", 0)
+
+    bits = []
+    if clock and clock.get("game_day"):
+        day = clock.get("game_day")
+        hour_str = clock.get("time_string", "10:00")
+        phase_label = clock.get("day_phase_label", "Plein jour")
+        weather = ((health.get("active_event") or {}).get("weather") or {}).get("label", "Ciel dégagé")
+        work_n = life.get("work", 0)
+        leisure_n = life.get("leisure", 0)
+        rest_n = life.get("rest", 0)
+        bits.append(
+            f"Sur Scrapaltaï, la simulation tourne à plein régime ! Nous sommes au **Jour {day}** ({phase_label}, {hour_str}). "
+            f"Météo : {weather}. La planète compte actuellement **{npc_count} PNJ actifs** "
+            f"({work_n} au travail, {leisure_n} à La Perle / loisir, {rest_n} au repos)."
+        )
+    elif not data.get("ok"):
         err = str(data.get("error") or "hub injoignable")
         return (
             f"Je n'ai pas pu joindre le flux d'événements du hub ({err}). "
             "Vérifie que `prime-hub` tourne sur le port `:8787`."
         )
+
     events = data.get("events") if isinstance(data.get("events"), list) else []
     try:
         from src.services.world_notif_prefs import filter_events
@@ -221,17 +263,17 @@ def format_world_stream_report(data: dict[str, Any]) -> str:
             filter_events = None  # type: ignore
     if filter_events:
         events = filter_events(events)
-    if not events:
-        return "Le flux du monde est calme pour l'instant : aucun événement récent enregistré sur Lost Heaven."
 
-    bits = ["Voici les derniers faits marquants sur Lost Heaven :"]
-    for ev in events[-5:]:
-        if not isinstance(ev, dict):
-            continue
-        t = str(ev.get("text", "")).strip()
-        if t:
-            bits.append(f"- {t}")
-    bits.append("Je t'écoute, tu voulais intervenir sur le jeu ou continuer sur le studio ?")
+    if events:
+        bits.append("\n**Derniers faits marquants récents :**")
+        for ev in events[-5:]:
+            if not isinstance(ev, dict):
+                continue
+            t = str(ev.get("text", "")).strip()
+            if t:
+                bits.append(f"- {t}")
+
+    bits.append("\nJe t'écoute, tu voulais observer un quartier particulier ou travailler sur le studio ?")
     return "\n".join(bits)
 
 

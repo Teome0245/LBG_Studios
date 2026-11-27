@@ -1,6 +1,6 @@
 # Session en cours — LBG Studios
 
-**Mis à jour** : 2026-11-25  
+**Mis à jour** : 2026-11-27  
 **Branche** : `main`  
 **Outil** : partagé Cursor ↔ Antigravity — **lire au démarrage, mettre à jour avant de partir**.  
 **Backlog non traité** : [`SUJETS_OUVERTS.md`](SUJETS_OUVERTS.md)  
@@ -8,7 +8,11 @@
 
 ---
 
-## Dernières actions réalisées (2026-11-25 / 2026-11-26)
+## Dernières actions réalisées (2026-11-27)
+- 62. **Grounding Live Gladys (CT100) & Résolution Tâches d'Arrière-Plan** :
+    - **Résolution Tâche IDE `task-74`** : le test de mémoire générative resté en arrière-plan dans l'IDE a été terminé proprement (`manage_task`).
+    - **Ancrage Réel de Gladys sur Scrapaltaï (`world_stream.py`)** : la regex `_WORLD_STREAM_QUERY_RE` a été étendue pour capturer les questions sur les PNJ, habitants, citoyens, et Scrapaltaï. Gladys interroge désormais systématiquement le Hub (`http://192.168.0.246:8787/healthz` et `/v1/world/stream`) pour relayer l'état réel (Jour in-game, météo, PNJ au travail/loisirs/repos, événements mondiaux récents) évitant toute hallucination de game design.
+    - **Déploiement CT100 (`192.168.0.100`)** : recompilation et redémarrage des conteneurs `lbg-frontend` et `orchestrateur-backend` validés.
 - 61. **Indexation Démographique en Temps de Jeu & Jalon Cycle de Vie Complet (J189 In-Game / ~11,5 Jours Réels)** :
     - **Calibration Circadienne In-Game (`time_dilation = 16.0`)** : 24h de jeu = 90 min réelles (1h30). La Phase 1 (14 jours de jeu) s'accomplit en **21 heures réelles**, permettant une progression organique et observable sans attendre 6 mois IRL.
     - **Suivi `game_day` dans `hub_world_clock.gd`** : progression automatique du calendrier planétaire et notification d'aurore par événement mondial (`world.day_dawn`).
