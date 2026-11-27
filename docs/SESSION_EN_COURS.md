@@ -9,6 +9,15 @@
 ---
 
 ## Dernières actions réalisées (2026-11-27)
+- 64. **Anti-Roue Libre & Transparence Cognitive de Gladys (Garde-fous & Télémétrie Live)** :
+    - **Verrou d'intégrité télémétrique (`_OPS_TRUTH`, `LAB_CAUSERIE_GUARDRAILS`, `BASE_GUARDRAILS`)** : interdiction stricte de broder ou de spéculer sur l'état d'entités concrètes (Scrapaltaï, PNJ, serveurs, bots, NAS) si aucune télémétrie live n'est fournie dans le prompt. Gladys est désormais contrainte d'admettre le manque de données et de proposer d'interroger la sonde ou le serveur (`.246:8787`).
+    - **Signalement systématique du mode créatif (`causerie_lab_nudge`)** : pour toute discussion de design, lore ou brainstorming sans télémétrie, consigne de préfixer par `[Réflexion créative]` ou d'indiquer explicitement qu'il s'agit d'une hypothèse conceptuelle.
+    - **Étiquetage source UI (`ChatFlow.vue`)** : attribution du badge `Compagnon · Scrapaltaï Live (.246)` dès que les faits proviennent directement du flux du Hub de jeu.
+    - **Validation & Déploiement CT100** : passage des 154 tests pytest backend et des suites unittest, recompilation frontend et redéploiement des conteneurs sur `192.168.0.100`.
+- 63. **Remédiation Incident Infra (140/141), Ajustement Swap CT 111 & Audit Complet Parc Proxmox** :
+    - **Résolution Blocage 140/141** : Identification d'une saturation du ThreadPoolExecutor Python d'uvicorn sur `lbg-orchestrator.service` (:8010) suite à des blocages synchrones (lia_autonomy/proactive). Redémarrage propre du service sur 140. Rétablissement automatique du daemon `lbg-lan-executor` sur CT 141 (retour au statut `IDLE`, sonde 141 redevenue verte).
+    - **Résolution Récurrence Swap CT 111 (NUC)** : Identification du phénomène de *sticky swap* causé par `lbg-laya-serve` (1.7 Go de swap inerte) sur un swap virtuel sous-dimensionné à 2 Go. Extension du swap à **8 Go** sur Proxmox `.200` (`pct set 111 -swap 8192`) et reboot : 0% swap utilisé, alerte Atlas purgée définitivement.
+    - **Audit Exhaustif Parc Proxmox** : Contrôle et validation à 100% de l'ensemble des conteneurs et VMs des nœuds `lbgr720` (.201) et `proxmox` (.200) : CTs 100 (Web/Docker), 110 (Ollama Heavy), 111 (Ollama Light), 141 (Executor), 150 (DC), 153 (AdGuard DNS), 155 (Mailcow) ; VMs 140 (Cortex), 143 (Omarchy), 160 (OPNsense), 246 (Prime Godot).
 - 62. **Grounding Live Gladys (CT100) & Résolution Tâches d'Arrière-Plan** :
     - **Résolution Tâche IDE `task-74`** : le test de mémoire générative resté en arrière-plan dans l'IDE a été terminé proprement (`manage_task`).
     - **Ancrage Réel de Gladys sur Scrapaltaï (`world_stream.py`)** : la regex `_WORLD_STREAM_QUERY_RE` a été étendue pour capturer les questions sur les PNJ, habitants, citoyens, et Scrapaltaï. Gladys interroge désormais systématiquement le Hub (`http://192.168.0.246:8787/healthz` et `/v1/world/stream`) pour relayer l'état réel (Jour in-game, météo, PNJ au travail/loisirs/repos, événements mondiaux récents) évitant toute hallucination de game design.

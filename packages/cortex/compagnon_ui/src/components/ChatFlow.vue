@@ -180,6 +180,7 @@ function aiLabel(msg) {
   if (src.startsWith('team') || src.includes('campus')) return 'Team Ops'
   if (src.includes('cursor')) return 'Cursor Agent'
   if (src.includes('desktop')) return 'Agent Poste'
+  if (src === 'world_stream') return 'Compagnon · Scrapaltaï Live (.246)'
   if (src && src !== 'assistant' && src !== 'memory' && src !== 'user') return `AI · ${msg.source}`
   return 'Compagnon'
 }
