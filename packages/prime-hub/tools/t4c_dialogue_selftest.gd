@@ -97,4 +97,6 @@ func _init() -> void:
 	print("[+] PASS: Mots-clés transversaux (Krayt, Prophétie, Anchor-Ridge) validés")
 
 	print("[+] TOUS LES TESTS DIALOGUES & MOTS-CLÉS T4C ONT RÉUSSI AVEC SUCCÈS !")
+	const HubDbScript := preload("res://scripts/hub_db.gd")
+	HubDbScript.shutdown_shared()
 	quit(0)

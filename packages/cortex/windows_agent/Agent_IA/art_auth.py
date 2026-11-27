@@ -65,7 +65,7 @@ def authenticate_deviantart(timeout_sec: int = 180) -> bool:
             cookies = context.cookies()
             has_auth = any(c["name"] in ("userinfo", "auth_secure", "auth", "_deviantart_session") for c in cookies)
 
-            if has_auth and not ("login" in page.url.lower()):
+            if has_auth and "login" not in page.url.lower():
                 time.sleep(3)
                 fresh_cookies = context.cookies()
                 local_path = DEFAULT_AGENT_DIR / "deviantart_cookies.txt"
@@ -120,7 +120,7 @@ def authenticate_pinterest(timeout_sec: int = 180) -> bool:
             cookies = context.cookies()
             has_auth = any(c["name"] in ("_auth", "_pinterest_sess") for c in cookies)
 
-            if has_auth and not ("login" in page.url.lower()):
+            if has_auth and "login" not in page.url.lower():
                 time.sleep(3)
                 fresh_cookies = context.cookies()
                 local_path = DEFAULT_AGENT_DIR / "pinterest_cookies.txt"

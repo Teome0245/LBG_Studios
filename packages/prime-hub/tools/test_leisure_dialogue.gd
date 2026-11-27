@@ -104,4 +104,6 @@ func _init() -> void:
 	assert(reply_work.find("quartier libre") == -1, "Le PNJ en service ne doit PAS dire qu'il est en quartier libre")
 
 	print("\n>>> TOUS LES TESTS DE REDIRECTION PNJ EN LOISIR ONT RÉUSSI AVEC SUCCÈS ! <<<")
+	const HubDbScript := preload("res://scripts/hub_db.gd")
+	HubDbScript.shutdown_shared()
 	quit(0)

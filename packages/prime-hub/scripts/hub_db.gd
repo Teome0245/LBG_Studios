@@ -77,6 +77,13 @@ static func get_shared():
 	return _shared
 
 
+static func shutdown_shared() -> void:
+	if _shared != null:
+		var s = _shared
+		_shared = null
+		s.shutdown()
+
+
 static func escape_sql(s: String) -> String:
 	return s.replace("'", "''")
 

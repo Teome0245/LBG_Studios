@@ -133,4 +133,6 @@ func _init() -> void:
 
 	print("[+] PASS: Intégration dynamique des rumeurs dans les dialogues PNJ validée")
 	print("[+] Émergence Sociale & Rumeurs Inter-Villages (Ticket 2.2) : Tous les tests passent avec succès !")
+	const HubDbScript := preload("res://scripts/hub_db.gd")
+	HubDbScript.shutdown_shared()
 	quit(0)
