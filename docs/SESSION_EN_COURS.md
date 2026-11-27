@@ -9,6 +9,10 @@
 ---
 
 ## Dernières actions réalisées (2026-11-27)
+- 66. **Sécurisation Dépôt Public GitHub & Clôture Alertes Secrets (GitGuardian / Groq / OpenRouter)** :
+    - **Désindexation `lbg.env`** : Retrait définitif du fichier `packages/cortex/infra/secrets/lbg.env` du tracking Git (`git rm --cached`), préservé localement et strictement ignoré par `.gitignore`.
+    - **Neutralisation Snippets `.example`** : Remplacement des mots de passe de test déclencheurs de faux positifs (`BotIA4Kael246`, `LbgBridge!2026`) par des placeholders génériques (`CHANGE_ME_*`).
+    - **Validation Souveraineté 100% Locale** : Confirmation que le stack de production (Gladys sur CT 100 via Ollama `.111`, agents via Ollama `.110`, MMO via `prime-npc:25m` sur `.246`) n'a aucune dépendance active envers Groq ou OpenRouter, garantissant un fonctionnement 100% souverain, privé et à 0 €.
 - 65. **Résolution Échecs GitHub Actions (`CI` & `Godot Headless`)** :
     - **Lint Python (Ruff `E713`)** : Correction de deux occurrences `not ("login" in page.url.lower())` -> `"login" not in page.url.lower()` dans `packages/cortex/windows_agent/Agent_IA/art_auth.py`. Job `Ruff (lint Python)` validé vert en 24 s sur GitHub.
     - **Core Dump Godot Headless (`rumor_propagation_selftest.gd`)** : Résolution du crash SIGABRT causé par un thread d'arrière-plan SQLite WAL non terminé (`HubDb`). Ajout de `HubDb.shutdown_shared()` dans `hub_db.gd` et appel systématique avant `quit(0)` dans `rumor_propagation_selftest.gd`, `t4c_dialogue_selftest.gd` et `test_leisure_dialogue.gd`.
