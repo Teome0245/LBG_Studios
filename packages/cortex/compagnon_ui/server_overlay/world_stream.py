@@ -23,10 +23,15 @@ _WORLD_STREAM_QUERY_RE = re.compile(
     r"(?i)\b("
     r"quoi\s+de\s+neuf\s+(?:en\s+jeu|dans\s+le\s+monde|au\s+hub|sur\s+lost\s+heaven|sur\s+scrapalta[ïi])|"
     r"qu[''\u2019]est[- ]ce\s+qui\s+se\s+passe\s+(?:en\s+jeu|au\s+hub|[àa]\s+lost\s+heaven|dans\s+le\s+monde|sur\s+scrapalta[ïi])|"
-    r"comment\s+(?:s[''\u2019]en\s+sortent|vont|évoluent|tournent)\s+(?:les\s+)?(?:pnj|habitants|citoyens|colons)|"
+    r"(?:[cs]e\s+comport\w*|progress\w*|activit[ée]\w*|[ée]tat\w*|statut\w*)\s+(?:de\s+nos\s+|des\s+|les\s+|nos\s+)?(?:pnj|habitants|citoyens|colons)|"
+    r"(?:pnj|habitants|citoyens|colons)\b.{0,40}\b(?:[cs]e\s+comport\w*|progress\w*|activit[ée]\w*|[ée]tat\w*|statut\w*|transition\w*|cycle\w*|state\s*change\w*)|"
+    r"\b(?:pnj|habitants|citoyens|colons)\b.{0,40}\b(?:comment\s+ils?\s+vont|comment\s+ils?\s+tournent)|"
+    r"comment\s+(?:s[''\u2019]en\s+sortent|vont|[ée]voluent|tournent|[cs]e\s+comportent?|progressent?)\s+(?:les\s+|nos\s+)?(?:pnj|habitants|citoyens|colons)|"
     r"(?:des\s+)?nouvelles\s+des\s+(?:pnj|habitants|colons)|"
-    r"état\s+des\s+pnj|"
+    r"[ée]tat\s+des\s+pnj|"
     r"sur\s+scrapalta[ïi]|"
+    r"interrog\w*\s+(?:le\s+)?hub|"
+    r"(?:m[ée]triques?|logs?)\s+(?:du\s+hub|des\s+pnj|de\s+state\s*change)|"
     r"[ée]v[ée]nements?\s+(?:du\s+monde|en\s+jeu|live\s+world|r[ée]cents?)|"
     r"live\s+world\s+stream|"
     r"flux\s+(?:du\s+monde|monde|hub)|"
@@ -50,11 +55,60 @@ def world_stream_enabled(*, lab: bool = False) -> bool:
     return True
 
 
-def wants_world_stream(prompt: str) -> bool:
+def wants_world_stream(prompt: str, short_ctx: list | None = None) -> bool:
     text = (prompt or "").strip()
     if not text or len(text) > 400:
         return False
-    return bool(_WORLD_STREAM_QUERY_RE.search(text))
+    if bool(_WORLD_STREAM_QUERY_RE.search(text)):
+        return True
+    # Si short_ctx fourni et que l'utilisateur donne un accord / go-ahead
+    # alors que le fil récent parle du hub, des pnj, de scrapaltai ou de state change :
+    if short_ctx and len(text) <= 80:
+        low = text.lower()
+        is_go = any(
+            g in low
+            for g in (
+                "ok",
+                "allons",
+                "allez",
+                "vas-y",
+                "vas y",
+                "go",
+                "on y va",
+                "parti",
+                "fais ça",
+                "lance",
+                "oui",
+                "d'accord",
+                "d accord",
+                "je veux bien",
+                "volontiers",
+                "avec plaisir",
+            )
+        )
+        if is_go:
+            for item in reversed(list(short_ctx)[-4:]):
+                content = ""
+                if isinstance(item, dict):
+                    content = str(item.get("content") or item.get("prompt") or "").lower()
+                elif isinstance(item, str):
+                    content = item.lower()
+                if any(
+                    cue in content
+                    for cue in (
+                        "hub",
+                        ":8787",
+                        ".246",
+                        "pnj",
+                        "scrapaltai",
+                        "lost heaven",
+                        "state change",
+                        "cycles de jeu",
+                        "interrogation du hub",
+                    )
+                ):
+                    return True
+    return False
 
 
 def hub_world_stream_url(since: int = 0, limit: int = 20) -> str:
@@ -241,10 +295,18 @@ def format_world_stream_report(data: dict[str, Any]) -> str:
         work_n = life.get("work", 0)
         leisure_n = life.get("leisure", 0)
         rest_n = life.get("rest", 0)
+        scheduled_n = life.get("npc_scheduled", 0)
+        active_ratio = round(float(life.get("active_ratio", 0.0)) * 100, 1)
         bits.append(
-            f"Sur Scrapaltaï, la simulation tourne à plein régime ! Nous sommes au **Jour {day}** ({phase_label}, {hour_str}). "
-            f"Météo : {weather}. La planète compte actuellement **{npc_count} PNJ actifs** "
-            f"({work_n} au travail, {leisure_n} à La Perle / loisir, {rest_n} au repos)."
+            f"Sur Scrapaltaï, la simulation tourne à plein régime sur le Hub (.246:8787) !\n\n"
+            f"**Horloge planétaire :** Jour {day} ({phase_label}, {hour_str}) — Météo : {weather}.\n"
+            f"**Répartition des états PNJ (cycle circadien live) :**\n"
+            f"- **PNJ au monde :** {npc_count} au total ({scheduled_n} programmés dans le cycle actif)\n"
+            f"- **Au travail (ateliers, chantiers) :** {work_n}\n"
+            f"- **En loisirs / détente (La Perle, cantina) :** {leisure_n}\n"
+            f"- **Au repos (auberge, logements) :** {rest_n}\n"
+            f"- **Taux d'activité globale :** {active_ratio}%\n"
+            f"\nLes transitions sont synchronisées par l'horloge circadienne globale et les routines d'ateliers."
         )
     elif not data.get("ok"):
         err = str(data.get("error") or "hub injoignable")
@@ -282,12 +344,13 @@ async def attach_world_stream_if_needed(
     *,
     prompt: str,
     lab: bool = False,
+    short_ctx: list | None = None,
 ) -> Any:
     if not isinstance(result, dict):
         return result
     if not world_stream_enabled(lab=lab):
         return result
-    if not wants_world_stream(prompt):
+    if not wants_world_stream(prompt, short_ctx=short_ctx):
         return result
     if result.get("world_stream"):
         return result

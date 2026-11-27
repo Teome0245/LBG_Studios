@@ -9,6 +9,75 @@
 ---
 
 ## Dernières actions réalisées (2026-11-27)
+- 73. **Intégration Craft Anything v0.6.1 & Gladys Studio Pipeline (Atelier .143 & Poste Teome .10 Windows)** :
+    - **Installation & Déploiement Hybride (Atelier .143 + Poste Teome .10)** :
+      * Sur `.143` (Atelier Omarchy) : installation des binaires `craft-anything` et `craft-anything-cli`, configuration MCP globale (Claude Code, Antigravity, Cursor, Codex, OpenCode, VS Code) et injection des skills `~/.agents/skills/craft-anything/`.
+      * Sur `.10` (Poste Teome Windows) : déploiement autonome sur le disque `E:\CraftAnything\` (version portable 64-bit avec raccourci Bureau), partage réseau `\\192.168.0.143\projects\CraftAnything_Windows\`.
+      * Pilotage Gladys en direct sur `.10:5005` : ouverture orchestrée des interfaces et des guides de déploiement via l'agent interactif desktop.
+    - **Branchement Cerveau Local 0 € & Résolution Dépassement Contexte Ollama (4k -> 32k)** :
+      * Branchement de Craft Anything sur le modèle local `huihui_ai/qwen3-coder-abliterated:30b` via Ollama sur `192.168.0.110:11434/v1`.
+      * Résolution de l'erreur `exceed_context_size_error` (5271 tokens > 4096 tokens) : extension permanente du contexte à **32 768 tokens** sur le service systemd d'Ollama (`/etc/systemd/system/ollama.service.d/override.conf` avec `OLLAMA_CONTEXT_LENGTH=32768`), service rechargé et opérationnel.
+    - **Alignement avec nos Clients Godot 4 (`swg-client` / `prime-client`)** :
+      * Mode « Travailler sur mon projet » orienté sur nos clients (`A:\LBG_Studios\packages\swg-client`).
+      * Téléchargement automatique de Godot 4.4.1 pour la simulation et la boucle de rétro-ingénierie/test en direct.
+      * Rédaction de la documentation opérationnelle complète dans [`docs/CRAFT_ANYTHING_GLADYS.md`](CRAFT_ANYTHING_GLADYS.md).
+- 72. **Sentinelle Présence Physique Freebox (API OS v16.1 & Concept Moli OS) pour Gladys** :
+    - **Concept Moli OS / Domotique Frugale 0 € (Rudy IO)** : Ancrage de la présence physique de Teome sans aucun capteur propriétaire supplémentaire, via la joignabilité en direct de ses terminaux Wi-Fi/LAN sur l'API Freebox OS v16.1 (`192.168.0.254`).
+    - **Module `physical_presence.py` & Intégration `freebox_client.py`** :
+      * Détection temps réel des terminaux personnels de Teome (`PC-SDESHARCHES` `.10`, `Sds-Phone` `.204`, `REDMI-15C` `.222`) et surveillance de l'ambiance domotique (`Google-Nest-Mini` `.75`).
+      * Cache local glissant de 30 secondes pour une fluidité d'interrogation sans surcharge de la box.
+      * Ajout de `freebox_client.py` dans `overlay.map` pour un packaging atomique complet dans l'image Docker `orchestrateur-backend`.
+    - **Routage Heuristique P1 & Découplage Profil (`reflection_router.py` & `llm_chat_phase.py`)** :
+      * Intégration de `wants_physical_presence` dans `_heuristic` de `reflection_router.py` : décision `action="answer"` immédiate (0 ms, confiance 0.98), éradiquant tout risque de faux `ask_user` par le SLM de réflexion.
+      * Découplage du mode lab dans `llm_chat_phase.py` : le compagnon au quotidien répond aux requêtes sensorielles de présence en profil `compagnon` standard tout comme en profil lab.
+      * Mise en forme naturelle et chaleureuse pour la synthèse vocale et l'interface Gladys.
+    - **Validation & Déploiement CT 100 (`192.168.0.100`)** :
+      * 24 tests unitaires `test_physical_presence.py` et `test_reflection_router.py` passants vert en 23 ms, Ruff conforme.
+      * Déploiement atomique sur CT 100 (`deploy_compagnon_100.sh --smoke`) et validation en direct de la détection live : réponses immédiates de Gladys confirmant la présence de Teome avec la liste exacte de ses terminaux actifs et le statut du Google Nest Mini.
+- 71. **Déploiement & Stabilisation VM LiberNT (Windows NT Open-Source x86_64, VM 210 sur Proxmox .200)** :
+    - **Ciblage Nœud Proxmox Frugal (`.200` NUC)** : Pour préserver le R720 `.201` (dont le swap est déjà sous tension à 7.6/8 Go à cause de l'overcommit VM 140/143/246/CT 110), déploiement sur le nœud Proxmox `.200` (NUC, 22 Go RAM dispo, 0 swap).
+    - **Approvisionnement ISO & Création VM 210** :
+      * Téléchargement de la dernière release officielle Clang Debug AMD64 (`nt10.0-043-2555-g8e478a22a1e`, `bootcd-iso` 565 Mo) sur le stockage `local:iso/`.
+      * Provisionnement initial `VM 210` (`LiberNT-Test`) sur `local-lvm` (32 Go disque, 2 vCPU host, net0 `e1000` bridge `vmbr0`).
+    - **Résolution des Crashs & Particularités du Kernel NT LiberNT (SeaBIOS / QEMU)** :
+      * *1er BSOD (`STOP 0x7E` dans `usbport.sys!HalAllocateAdapterChannel`)* : déclenché par l'émulation tablette tactile USB de Proxmox. Résolution par désactivation `--tablet 0`.
+      * *Disque absent de l'installeur* : le sous-système SATA (AHCI) n'étant pas encore géré par le setup LiberNT, bascule du disque virtuel en **IDE standard (`ide0`)** et architecture **i440fx (`pc`)**.
+      * *2e BSOD (`STOP 0x7E` dans `atapi.sys!HalAllocateAdapterChannel`)* : bogue amont identifié (issue #576 LiberNT) où 4096 Mo de RAM pousse une plage mémoire au-delà de 4 Go, faisant crasher le rebond DMA 32-bit ATAPI dans la HAL. Résolution immédiate par ajustement à **2048 Mo de RAM**.
+    - **Validation & Statut Live** : Démarrage réussi, chargement complet du Ramdisk et accès direct à l'assistant d'installation graphique LiberNT (Development Preview 24H2 26100.1) sur la console noVNC Proxmox `.200`. VM laissée active pour les tests ultérieurs de l'utilisateur.
+- 70. **Architecture LOD Cognitif Dual-Tier PNJ (1/3 LFM3 vs 2/3 `prime-npc:25m`) dans `hub_dialogue.gd`** :
+    - **Principe de Tiering Cognitif** : Dans Lost Heaven (30 à 300 PNJ), allocation frugale des ressources d'inférence locale :
+      * **Tier 1 (1/3 des PNJ)** : PNJ majeurs, artisans (forgerons, mécaniciens), barmans (Jax Moro), leaders/quêtes (Capitaine Vael, Daan Oth, Soren, rumeuriste) + sélection déterministe (`hash % 3 == 0`). Routés sur **LFM3** (1.7B tri-hybride sur `.111`) pour le tool-calling, dialogue riche et mémoire Stanford.
+      * **Tier 2/3 (2/3 des PNJ)** : Ouvriers, gardes de base, fermiers, passants ordinaires. Routés sur **`prime-npc:25m`** (notre micro-modèle local MiniMind, 17 Mo / 51 Mo RAM, 56 tok/s CPU, synchronisé sur CT `.111` et `.110`).
+    - **Implémentation Godot (`hub_dialogue.gd`)** :
+      * Ajout de `_is_tier1_npc(npc_id, role_hint)` combinant filtres de rôles clés et modulo 3 déterministe.
+      * Routage dynamique dans `_llm_line` : support de `LBG_HUB_LLM_TIER1_BASE_URL` (défaut `http://192.168.0.111:11434`), `LBG_HUB_LLM_TIER1_MODEL` (défaut `lfm3`), et Tier 2 vers `LBG_HUB_LLM_MODEL` (défaut `prime-npc:25m`).
+      * Priorité stricte du Moteur de Mots-Clés T4C (`T4C_NPC_KEYWORDS` et `FALLBACK_REPLIES`) sur l'inférence générative, garantissant l'intégrité des quêtes et du lore canonique.
+    - **Validation Intégrale** : Passage avec succès de l'ensemble des suites de dialogue et mémoire Godot headless (`t4c_dialogue_selftest.gd`, `generative_memory_selftest.gd`, `rumor_propagation_selftest.gd`, `test_leisure_dialogue.gd`).
+- 69. **Intégration & Benchmark LFM3 (Liquid AI 1.7B) sur CT 111 & Cerveau d'Actions PNJ / Routing** :
+    - **Mise à niveau Infra CT 111 (`.111`)** : Mise à jour d'Ollama de `v0.32.5` vers `v0.40.18` (requis pour supporter l'architecture tri-hybride LFM3 : convolutions courtes guidées + sliding-window attention). Téléchargement réussi du modèle officiel `lfm3` (~1.1 Go en RAM, 0 €).
+    - **Évaluation & Règle Critique `think: false`** : Identification de l'émission par défaut de tokens de réflexion interne (`thinking`) saturant le budget `num_predict`. Ajout impératif de `"think": False` dans `_ollama_light_reflect` (`reflection_router.py`) et mise à jour de la règle locale `.agents/rules/local-llm-route-matrix.md`.
+    - **Validation Cerveau PNJ / Agent de Jeu (Action Selection & Dialogue RP)** :
+      * Test sur 3 situations de jeu Lost Heaven (Goran le forgeron) avec JSON Schema enum strict (`saluer`, `continuer_travail`, `proposer_troc`).
+      * Résultat 100% réussi : adéquation parfaite de l'action sélectionnée et réplique RP immersive en français en ~1-2 s sur CPU NUC.
+    - **Normalisation Sémantique dans `reflection_router.py`** :
+      * Les petits SLM ont tendance à émettre des verbes d'action directs (`deploy`, `question`). Ajout d'un mappage automatique gracieux (`question`/`chat` -> `answer`, `deploy`/`smoke` -> `team`) dans `_parse_llm_json`.
+    - **Validation Tests & CI** : 19 tests unitaires `test_reflection_router.py` passés, 154 tests pytest backend validés vert, contrôle Ruff validé.
+- 68. **Éradication Fausse Promesse (« Je lance l'interrogation... ») & Interrogation Live Hub Godot PNJ (.246:8787)** :
+    - **Analyse Root Cause** : Après validation par l'utilisateur (« ok, allons y »), Gladys répondait en roleplay texte « Je lance l'interrogation du Hub (.246:8787)... » sans exécuter d'action réelle. Deux blocages identifiés : (1) la regex `_WORLD_STREAM_QUERY_RE` ne couvrait pas les questions de progression/comportement des PNJ (`ce comporte`, `progresse`, `state change`) ; (2) `wants_world_stream` n'évaluait pas `short_ctx` lors des confirmations (« ok, allons y »).
+    - **Ancrage Dynamique & Suivi de Fil (`world_stream.py` & `llm_chat_phase.py`)** :
+      * Extension de `_WORLD_STREAM_QUERY_RE` aux variations de comportement, progression, métriques et état des PNJ.
+      * Évaluation contextuelle (`short_ctx`) : si l'assistant a proposé d'interroger le Hub au tour précédent et que l'utilisateur valide (`ok, allons y`, `vas-y`, `oui`), activation automatique du flux direct live world stream.
+      * Enrichissement du rapport `format_world_stream_report` avec les métriques réelles de `/healthz` (Jour planétaire, Nuit/Jour, météo, PNJ au travail/loisirs/repos, ratio d'activité).
+      * Interdiction formelle dans `BASE_GUARDRAILS` de formuler des promesses d'interrogation dans le vide.
+    - **Validation & Déploiement CT 100** : Tests unitaires `test_world_stream.py` et `test_reflection_router.py` passés (25/25), 154 tests pytest backend validés, déploiement atomique sur `192.168.0.100` (`deploy_compagnon_100.sh --smoke`) et validation en direct de la génération du rapport dans le conteneur backend.
+- 67. **Résolution Amnésie Cognitive P1 Gladys sur Acquiescements & Confirmations (« oui je veux bien »)** :
+    - **Analyse Root Cause** : Après une proposition proactive de Gladys (« On pourrait lancer une requête pour voir la distribution des états... »), la réponse utilisateur courte (« oui je veux bien. ») était ignorée par l'heuristique `_CONFIRMATION_RE` (trop restrictive). Le routeur de réflexion P1 appelait le LLM de réflexion sans contexte conversationnel (`short_ctx`), qui classifiait la phrase isolée comme fragment sans sujet (`ask_user`), provoquant la bulle absurde `[AI - REFLECTION] "De quoi s'agit-il exactement?"`.
+    - **Extension Heuristique `_CONFIRMATION_RE` (`reflection_router.py`)** : Couverture exhaustive des formules d'accord et d'acquiescement françaises (`oui je veux bien`, `je veux bien`, `oui vas-y`, `volontiers`, `avec plaisir`, `carrément`, `pourquoi pas`, `d'accord`, `ok ça marche`, `fais ça`, etc.). Résolution directe en `action="answer"` (0 ms, 0 token LLM).
+    - **Garde-fous cognitifs & Continuité de Fil (`router_prompts.py` & `reflection_router.py`)** :
+      * Prise en compte de `short_ctx` dans `_heuristic` : si l'assistant a formulé une proposition ou question au tour précédent, toute réponse courte affirmative est automatiquement traitée en continuation de dialogue (`answer`).
+      * Downgrade automatique dans `_parse_llm_json` : interdiction absolue de basculer en `ask_user` sur une réponse affirmative.
+      * Protection `short_social_reply` : interdiction de court-circuiter avec un « OK. Je t'écoute. » inerte si un fil de causerie ou travail est en cours dans `short_ctx`.
+    - **Tests & Déploiement CT 100** : Validation par 34 tests unitaires (`test_reflection_router.py` et `test_chat_intent.py`), 154 tests pytest backend, contrôle Ruff vert, et déploiement atomique sur `192.168.0.100` via `deploy_compagnon_100.sh --smoke`. Tests en direct dans le conteneur `orchestrateur-backend` validés avec succès sur l'ensemble des phrases d'accord.
 - 66. **Sécurisation Dépôt Public GitHub & Clôture Alertes Secrets (GitGuardian / Groq / OpenRouter)** :
     - **Désindexation `lbg.env`** : Retrait définitif du fichier `packages/cortex/infra/secrets/lbg.env` du tracking Git (`git rm --cached`), préservé localement et strictement ignoré par `.gitignore`.
     - **Neutralisation Snippets `.example`** : Remplacement des mots de passe de test déclencheurs de faux positifs (`BotIA4Kael246`, `LbgBridge!2026`) par des placeholders génériques (`CHANGE_ME_*`).

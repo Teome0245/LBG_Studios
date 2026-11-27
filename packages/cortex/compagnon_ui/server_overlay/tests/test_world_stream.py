@@ -70,6 +70,15 @@ class WorldStreamTests(unittest.TestCase):
         self.assertTrue(ws.wants_world_stream("événements du monde"))
         self.assertTrue(ws.wants_world_stream("live world stream"))
         self.assertTrue(ws.wants_world_stream("nouvelles du hub"))
+        self.assertTrue(ws.wants_world_stream("tu peux regarder comment ce comporte nos pnj comment il progresse ?"))
+        self.assertTrue(ws.wants_world_stream("progression des pnj"))
+        self.assertTrue(ws.wants_world_stream("état des pnj"))
+        self.assertTrue(
+            ws.wants_world_stream(
+                "ok, allons y.",
+                short_ctx=[{"role": "assistant", "content": "Je propose qu'on utilise le Hub pour extraire les logs des PNJ"}],
+            )
+        )
         self.assertFalse(ws.wants_world_stream("bonjour"))
         self.assertFalse(ws.wants_world_stream("fais le café"))
 

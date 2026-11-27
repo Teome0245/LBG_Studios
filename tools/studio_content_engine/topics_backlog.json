@@ -593,14 +593,20 @@
     "topic": "Découper le cerveau d'un agent IA en silos de connaissances JSON légers",
     "category": "Architecture RAG & LLM",
     "format": "stage3d",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-27T11:54:34.977438",
+    "youtube_url": null,
+    "tiktok_status": "needs_auth"
   },
   {
     "id": 73,
     "topic": "Synchroniser vue 2D tactique et monde Full 3D en temps réel sous Godot 4",
     "category": "Architecture MMO 3D",
     "format": "stage3d",
-    "status": "pending"
+    "status": "published",
+    "published_at": "2026-11-27T14:35:45.561834",
+    "youtube_url": null,
+    "tiktok_status": "needs_auth"
   },
   {
     "id": 74,

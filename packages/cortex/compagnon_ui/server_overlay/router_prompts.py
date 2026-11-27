@@ -57,6 +57,7 @@ _OPS_TRUTH = """
    - Si la question de l'humain porte sur l'état réel, la présence ou l'activité d'un système ou d'une simulation (Scrapaltaï, PNJ, colons, Lost Heaven, bots joueurs, serveurs, NAS, VMs) et qu'aucune télémétrie en direct n'est injectée dans ton prompt :
      * REFUS DE SPÉCULER : Interdiction absolue d'extrapoler, de deviner ou de donner un avis vague de game design pour meubler.
      * RÉPONSE OBLIGATOIRE : Dis sobrement que tu n'as pas de télémétrie en direct sous les yeux pour ce système et propose d'interroger la sonde ou le serveur concerné (ex: « Je n'ai pas les données en direct sous les yeux pour Scrapaltaï / les PNJ. Souhaites-tu que j'interroge le Hub (.246:8787) ? »).
+     * INTERDICTION DE SIMULER UNE ACTION : Ne dis JAMAIS « Je lance l'interrogation... », « Je fais une requête au Hub... », « J'exécute la commande... » dans le vide sans afficher les résultats concrets de cette action. Sois direct et factuel : restitue les données ou propose une commande concrète.
    - DISTINCTION EXPLICITE DU MODE CRÉATIF / CAUSERIE :
      * Si la discussion porte sur des idées, du game design pur, du lore ou du brainstorming (sans rapport avec un état d'exécution en direct), signale-le explicitement au début de ta réponse :
        « [Réflexion créative] » ou « D'un point de vue conceptuel (hors télémétrie live) : ... ».
@@ -434,6 +435,16 @@ def short_social_reply(prompt: str, short_ctx: list | None = None) -> str | None
             except Exception:
                 pass
         return "Salut — ça va de mon côté. Je t'écoute, collègue studio."
+    # Si short_ctx indique une causerie sticky ou travail en cours, ne pas court-circuiter avec un "OK. Je t'écoute." froid
+    try:
+        from src.services.chat_intent import wants_sticky_causerie
+    except ImportError:
+        try:
+            from chat_intent import wants_sticky_causerie  # type: ignore
+        except ImportError:
+            wants_sticky_causerie = None  # type: ignore
+    if wants_sticky_causerie and wants_sticky_causerie(prompt, short_ctx=short_ctx):
+        return None
     return "OK. Je t'écoute."
 
 

@@ -440,30 +440,63 @@ func _enrich_session_summary(ss: Dictionary, player: String) -> Dictionary:
 	return out
 
 
+func _is_tier1_npc(npc_id: String, role_hint: String) -> bool:
+	## Détermine si le PNJ relève du Tier 1 (1/3 : LFM3 structuré) ou du Tier 2/3 (2/3 : Mini LLM).
+	var id_low := npc_id.to_lower()
+	var role_low := role_hint.to_lower()
+	var key_roles := [
+		"artisan", "forgeron", "mecanicien", "barman", "aubergiste",
+		"capitaine", "chef", "garde_elite", "chimiste", "rumeuriste",
+		"trainer", "scribe", "medecin", "guerisseur"
+	]
+	for k in key_roles:
+		if k in id_low or k in role_low:
+			return true
+	# Répartition déterministe 1/3 pour les citoyens et passants ordinaires
+	return (absi(npc_id.hash()) % 3) == 0
+
+
 func _llm_line(
 	npc_name: String,
 	role_hint: String,
 	player_text: String,
 	place: String,
 	memory: String = "",
-	history: Array = []
+	history: Array = [],
+	npc_id: String = ""
 ) -> String:
 	var disabled := OS.get_environment("LBG_HUB_LLM_DISABLED").strip_edges().to_lower()
 	if disabled in ["1", "true", "yes"]:
 		return ""
-	var base := OS.get_environment("LBG_HUB_LLM_BASE_URL").strip_edges()
-	if base.is_empty():
-		base = OS.get_environment("LBG_DIALOGUE_LLM_BASE_URL").strip_edges()
-	if base.is_empty():
-		base = "http://192.168.0.110:11434"
+
+	var is_tier1 := _is_tier1_npc(npc_id, role_hint)
+	var base := ""
+	var model := ""
+
+	if is_tier1:
+		# Tier 1 (1/3 des PNJ — Métiers, Artisans, Quêtes) : LFM3 sur .111
+		base = OS.get_environment("LBG_HUB_LLM_TIER1_BASE_URL").strip_edges()
+		if base.is_empty():
+			base = "http://192.168.0.111:11434"
+		model = OS.get_environment("LBG_HUB_LLM_TIER1_MODEL").strip_edges()
+		if model.is_empty():
+			model = "lfm3"
+	else:
+		# Tier 2/3 (2/3 des PNJ — Ambiance, Ouvriers, Foule) : micro-modèle local frugal (prime-npc:25m)
+		base = OS.get_environment("LBG_HUB_LLM_BASE_URL").strip_edges()
+		if base.is_empty():
+			base = OS.get_environment("LBG_DIALOGUE_LLM_BASE_URL").strip_edges()
+		if base.is_empty():
+			base = "http://192.168.0.111:11434"
+		model = OS.get_environment("LBG_HUB_LLM_MODEL").strip_edges()
+		if model.is_empty():
+			model = OS.get_environment("LBG_DIALOGUE_LLM_MODEL").strip_edges()
+		if model.is_empty():
+			model = "prime-npc:25m"
+
 	base = base.rstrip("/")
 	if base.ends_with("/v1"):
 		base = base.substr(0, base.length() - 3)
-	var model := OS.get_environment("LBG_HUB_LLM_MODEL").strip_edges()
-	if model.is_empty():
-		model = OS.get_environment("LBG_DIALOGUE_LLM_MODEL").strip_edges()
-	if model.is_empty():
-		model = "huihui_ai/gemma-4-abliterated:E4b-qat"
 	var system := (
 		"Tu es %s, %s à %s (Lost Heaven). Réponds en français, 1 phrase courte, ton PNJ, pas de markdown."
 		% [npc_name, role_hint, place]
@@ -611,16 +644,16 @@ func _pick_reply(
 			var ch_line := _scribe_chronicle_line(player)
 			if not ch_line.is_empty():
 				return ch_line
-	var llm := _llm_line(
-		npc_name if not npc_name.is_empty() else "PNJ",
-		role.substr(0, 120),
-		player_text,
-		place,
-		memory,
-		history
-	)
-	if not llm.is_empty():
-		return llm
+
+	# --- Moteur de Mots-Clés T4C Spécifiques au PNJ (La 4ème Prophétie Dialogue Engine) ---
+	if T4C_NPC_KEYWORDS.has(npc_id):
+		var kw_dict: Dictionary = T4C_NPC_KEYWORDS[npc_id]
+		for kw in kw_dict.keys():
+			if str(kw) in t:
+				var reply_text: String = str(kw_dict[kw])
+				var who := npc_name if not npc_name.is_empty() else "PNJ"
+				return "%s : %s" % [who, reply_text]
+
 	var rumor := _event_rumor()
 	var tr := _travel_rumor()
 	var rumor_npcs := [
@@ -656,14 +689,23 @@ func _pick_reply(
 			return "Rumeuriste : Les échos de %s rapportés par %s : %s" % [orig, sbot, txt]
 		return "%s : D'après %s (%s) : %s" % [npc_name if not npc_name.is_empty() else "PNJ", sbot, orig, txt]
 
-	# --- Moteur de Mots-Clés T4C Spécifiques au PNJ (La 4ème Prophétie Dialogue Engine) ---
-	if T4C_NPC_KEYWORDS.has(npc_id):
-		var kw_dict: Dictionary = T4C_NPC_KEYWORDS[npc_id]
-		for kw in kw_dict.keys():
-			if str(kw) in t:
-				var reply_text: String = str(kw_dict[kw])
-				var who := npc_name if not npc_name.is_empty() else "PNJ"
-				return "%s : %s" % [who, reply_text]
+	# --- Mots-Clés Transversaux Universels (T4C Fallbacks lore / orientation) ---
+	for pair in FALLBACK_REPLIES:
+		if str(pair[0]) in t:
+			return str(pair[1])
+
+	# --- Inférence LLM générative locale (Tier 1: LFM3 / Tier 2/3: prime-npc:25m) ---
+	var llm := _llm_line(
+		npc_name if not npc_name.is_empty() else "PNJ",
+		role.substr(0, 120),
+		player_text,
+		place,
+		memory,
+		history,
+		npc_id
+	)
+	if not llm.is_empty():
+		return llm
 
 	if is_greet and GREETINGS.has(npc_id):
 		var greet := str(GREETINGS[npc_id])
@@ -680,9 +722,6 @@ func _pick_reply(
 			var txt := str(tr.get("text", ""))
 			return "%s Un mot frais de %s via %s : %s" % [greet, orig, sbot, txt]
 		return greet
-	for pair in FALLBACK_REPLIES:
-		if str(pair[0]) in t:
-			return str(pair[1])
 	var who := npc_name if not npc_name.is_empty() else "PNJ"
 	if "a dit" in memory:
 		return "%s : oui — à ce sujet, dis-moi ce qu'il te faut concrètement." % who

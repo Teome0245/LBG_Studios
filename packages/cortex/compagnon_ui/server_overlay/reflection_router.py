@@ -64,9 +64,9 @@ Règles :
 - cursor : tâche code/repo GitHub (résumer un fichier, refactor, PR, OBJECTIVES.md)
 - desktop : ouvrir/lancer une application sur le PC Windows (vghd, notepad, vlc…)
 - tools : UNIQUEMENT diagnostic multi-outils LAN explicite (« fais un diagnostic complet », « bilan complet », « auto-audit »). Ne JAMAIS choisir tools pour une question ordinaire, un bug d'affichage, une question sur les serveurs, la topologie réseau, ou « tu peux vérifier ? ».
-- ask_user : UNIQUEMENT fragment sans sujet (ex. « ok ? », « aide », « ça ») ; clarify = question courte FR
-Interdit :
-- ask_user si le message a déjà un sujet (même exploratoire)
+- ask_user : UNIQUEMENT fragment sans sujet (ex. « aide », « ça ») ; clarify = question courte FR. INTERDIT sur tout acquiescement, accord ou réponse affirmative (ex: « oui », « oui je veux bien », « d'accord », « ok », « vas-y ») : choisis answer.
+- Interdit :
+- ask_user si le message a déjà un sujet (même exploratoire) ou s'il s'agit d'une réponse/accord à une question précédente
 - recopier ces règles dans reason ou clarify
 - clarify="si ask_user" ou reason qui cite « trop vague pour agir »
 Réponds UNIQUEMENT le JSON."""
@@ -129,14 +129,32 @@ _CONFIRMATION_RE = re.compile(
     r"absolument|"
     r"voil[àa]|"
     r"parfait(?:ement)?|"
-    r"oui(?:\s+(?:c['’]est\s+(?:bien\s+)?[çc]a|voil[àa]|exactement|tout\s+[àa]\s+fait))?|"
-    r"ok\s*(?:faity?|fais[- ](?:le|y)|vas[- ]y|roule|c['’]est\s+parti|go)?|"
+    r"oui(?:\s+(?:"
+    r"c['’]est\s+(?:bien\s+)?[çc]a|voil[àa]|exactement|tout\s+[àa]\s+fait|"
+    r"je\s+veux\s+bien|s['’]il\s+te\s+pla[îi]t|s['’]il\s+vous\s+pla[îi]t|stp|svp|"
+    r"vas[- ]y|allons[- ]y|allez|go|volontiers|avec\s+plaisir|carr[ée]ment|"
+    r"pourquoi\s+pas|bien\s+s[ûu]r|[çc]a\s+marche|on\s+fait\s+[çc]a|"
+    r"fais\s+(?:[çc]a|le|y)|lance|envoie"
+    r"))?|"
+    r"je\s+veux\s+bien|"
+    r"volontiers|"
+    r"avec\s+plaisir|"
+    r"carr[ée]ment|"
+    r"pourquoi\s+pas|"
+    r"si\s+tu\s+(?:veux|peux)|"
+    r"on\s+fait\s+(?:[çc]a|comme\s+[çc]a)|"
+    r"partons\s+l[àa][- ]dessus|on\s+part\s+l[àa][- ]dessus|"
+    r"ok\s*(?:faity?|fais[- ](?:le|y|[çc]a)|vas[- ]y|roule|c['’]est\s+parti|go|[çc]a\s+marche|pour\s+moi)?|"
     r"faity?|"
-    r"fais[- ](?:le|y)|"
+    r"fais[- ](?:le|y|[çc]a)|"
     r"vas[- ]y|"
-    r"d['’]accord|"
+    r"allons[- ]y|"
+    r"d['’\s]?accord|"
     r"entendu|"
     r"bien\s+s[ûu]r|"
+    r"bien\s+re[çc]u|"
+    r"compris|"
+    r"not[ée]|"
     r"[çc]a\s+marche"
     r")[\s.!?]*$"
 )
@@ -239,7 +257,7 @@ def _contextual_followup(
     return None
 
 
-def _heuristic(prompt: str) -> ReflectionDecision | None:
+def _heuristic(prompt: str, short_ctx: list | None = None) -> ReflectionDecision | None:
     """Décision certaine sans LLM. ``None`` = ambigu → LLM light."""
     text = (prompt or "").strip()
     if not text:
@@ -272,9 +290,24 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
 
     low = text.lower()
 
-    # Confirmations ou acquiescements conversationnels (« c'est bien ça. », « ok faity », « vas-y », etc.)
+    # Confirmations ou acquiescements conversationnels (« c'est bien ça. », « oui je veux bien », « vas-y », etc.)
     if _CONFIRMATION_RE.match(text):
         return ReflectionDecision("answer", "confirmation conversationnelle", None, "heuristic", 0.0, 0.98)
+
+    # Si short_ctx fourni : acquiescement court suite à une proposition/question de l'assistant
+    if short_ctx and len(text) <= 80:
+        last_item = None
+        for item in reversed(short_ctx):
+            if isinstance(item, dict):
+                r = str(item.get("role") or "").lower()
+                if r in ("assistant", "ai", "compagnon"):
+                    last_item = item
+                    break
+        if last_item:
+            prev_content = str(last_item.get("content") or "").lower()
+            if any(cue in prev_content for cue in ("?", "propose", "pourrait", "veux-tu", "souhaites-tu", "tu veux", "on regarde", "lancer")):
+                if any(k in low for k in ("oui", "d'accord", "ok", "vas-y", "bien", "pourquoi pas", "fais", "lance", "go")):
+                    return ReflectionDecision("answer", "acquiescement suite proposition assistant", None, "heuristic", 0.0, 0.98)
 
     # Avatar, animation, danse, interface, bulle, affichage → Compagnon (answer)
     if _AVATAR_OR_UI_RE.search(text) and not any(t in low for t in ("deploy", "smoke", "sondes", "healthz", "status campus")):
@@ -287,6 +320,25 @@ def _heuristic(prompt: str) -> ReflectionDecision | None:
     # Questions sur les serveurs réels ou recadrage d'hallucinations d'infrastructure → answer (pas tools)
     if _INFRA_QUESTIONS_OR_REBUTTAL_RE.search(text) and not any(t in low for t in ("deploy", "smoke", "healthz", "proxmox")):
         return ReflectionDecision("answer", "question topologie / recadrage serveurs → answer", None, "heuristic", 0.0, 0.95)
+
+    # Sentinelle Freebox — Présence physique Teome (Gladys)
+    try:
+        from src.services.physical_presence import wants_physical_presence
+    except ImportError:
+        try:
+            from physical_presence import wants_physical_presence  # type: ignore
+        except ImportError:
+            wants_physical_presence = None
+
+    if wants_physical_presence and wants_physical_presence(text):
+        return ReflectionDecision(
+            "answer",
+            "présence physique / Freebox (sentinelle)",
+            None,
+            "heuristic",
+            0.0,
+            0.98,
+        )
 
     # Identité / causerie Compagnon (avant infra / tools / LLM light)
     if is_companion_chat(text):
@@ -516,6 +568,11 @@ def _parse_llm_json(raw: str, prompt: str = "") -> ReflectionDecision | None:
     except Exception:
         return None
     action = str(data.get("action") or "").strip().lower()
+    # Mappings de synonymes sémantiques émis par les petits SLM (ex. lfm3)
+    if action in ("chat", "question", "avatar", "dialogue", "causerie"):
+        action = "answer"
+    elif action in ("deploy", "smoke", "infra", "ops", "sondes", "status"):
+        action = "team"
     if action not in _VALID_ACTIONS:
         return None
     if action == "passthrough":
@@ -533,6 +590,19 @@ def _parse_llm_json(raw: str, prompt: str = "") -> ReflectionDecision | None:
             return ReflectionDecision("answer", "ask_user sans clarify→answer", None, "llm", 0.0, 0.55)
     if action == "ask_user" and clarify_s and _PROMPT_LEAK_RE.search(clarify_s):
         return ReflectionDecision("answer", "clarify leak→answer", None, "llm", 0.0, 0.55)
+
+    # Garde-fou anti-ask_user sur acquiescement : si l'utilisateur répond oui / ok / d'accord,
+    # c'est une réponse au tour précédent, jamais une demande d'aide dans le vide
+    if action == "ask_user" and prompt:
+        text_p = prompt.strip()
+        if _CONFIRMATION_RE.match(text_p) or re.match(
+            r"(?i)^\s*(oui\b|d['’]accord\b|je\s+veux\s+bien\b|vas[- ]y\b|ok\b|avec\s+plaisir\b|volontiers\b|carr[ée]ment\b|pourquoi\s+pas\b|fais\s+(?:[çc]a|le)\b|on\s+fait\s+[çc]a\b)",
+            text_p,
+        ):
+            logger.info("LLM reflection downgrade ask_user -> answer sur acquiescement (%r)", prompt[:50])
+            action = "answer"
+            reason = "confirmation conversationnelle (downgrade ask_user)"
+            clarify_s = None
 
     # Garde-fou anti-hallucination tools : ne jamais activer les outils multi-sondes
     # si le prompt ne demande pas explicitement de diagnostic ou de bilan large
@@ -585,6 +655,7 @@ async def _ollama_light_reflect(prompt: str, *, settings: Settings) -> Reflectio
         "model": model,
         "stream": False,
         "format": "json",
+        "think": False,
         "options": {"temperature": 0.1, "num_predict": 120},
         "messages": [
             {"role": "system", "content": _REFLECT_SYSTEM},
@@ -669,6 +740,7 @@ async def reflect_action(
     *,
     settings: Settings,
     memory: dict[str, str] | None = None,
+    short_ctx: list | None = None,
 ) -> ReflectionDecision:
     """Point d'entrée P1."""
     if not reflection_enabled(settings):
@@ -678,7 +750,7 @@ async def reflect_action(
     if ctx is not None:
         return ctx
 
-    h = _heuristic(prompt)
+    h = _heuristic(prompt, short_ctx=short_ctx)
     if h is not None:
         return h
 

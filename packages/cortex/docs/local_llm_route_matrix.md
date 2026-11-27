@@ -55,8 +55,8 @@ ollama pull huihui_ai/gemma-4-abliterated:e2b
 
 | Hôte | Rôle | Modèles routés |
 |------|------|----------------|
-| **110** heavy | code / PM / dialogue — **CPU only** (pas de GPU) | `huihui_ai/qwen3-coder-abliterated:30b` (code MoE), `huihui_ai/gemma-4-abliterated:12b-qat` (PM/dialogue, alias `:12b`), `huihui_ai/gemma-4-abliterated:E4b-qat` (chill/forge) |
-| **111** light (NUC) | délestage latence / **Compagnon LAB** | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast), **`huihui_ai/gemma-4-abliterated:E4b-qat`** (causerie/chill) |
+| **110** heavy | code / PM / dialogue — **CPU only** (pas de GPU) | `huihui_ai/qwen3-coder-abliterated:30b` (code MoE), `huihui_ai/gemma-4-abliterated:12b-qat` (PM/dialogue, alias `:12b`), `huihui_ai/gemma-4-abliterated:E4b-qat` (chill/forge), `prime-npc:25m` (micro-modèle PNJ 17 Mo) |
+| **111** light (NUC) | délestage latence / **Compagnon LAB** / PNJ | **`huihui_ai/qwen3.5-abliterated:2B`** (Clean), **`huihui_ai/qwen3.5-abliterated:0.8B`** (Fast), **`huihui_ai/gemma-4-abliterated:E4b-qat`** (causerie/chill), **`lfm3`** (1.7B tri-hybride, PNJ Tier 1 & routing), **`prime-npc:25m`** (PNJ Tier 2/3 ambiance) |
 
 > `.110` sans GPU : préférer **E4b/2B/9b** pour l’interactif ; **14B/12b-qat** = batch / patient. Qualité type heavy en PoC → Colab T4 (`LBG_REASON_EPHEMERAL_*`, défaut `qwen3.5-abliterated:9b`).
 
