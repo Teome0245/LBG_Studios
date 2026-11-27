@@ -9,6 +9,10 @@
 ---
 
 ## Dernières actions réalisées (2026-11-27)
+- 65. **Résolution Échecs GitHub Actions (`CI` & `Godot Headless`)** :
+    - **Lint Python (Ruff `E713`)** : Correction de deux occurrences `not ("login" in page.url.lower())` -> `"login" not in page.url.lower()` dans `packages/cortex/windows_agent/Agent_IA/art_auth.py`. Job `Ruff (lint Python)` validé vert en 24 s sur GitHub.
+    - **Core Dump Godot Headless (`rumor_propagation_selftest.gd`)** : Résolution du crash SIGABRT causé par un thread d'arrière-plan SQLite WAL non terminé (`HubDb`). Ajout de `HubDb.shutdown_shared()` dans `hub_db.gd` et appel systématique avant `quit(0)` dans `rumor_propagation_selftest.gd`, `t4c_dialogue_selftest.gd` et `test_leisure_dialogue.gd`.
+    - **Validation Intégrale** : Les deux workflows GitHub Actions (`CI` et `Godot Headless`) sont passés avec succès (**✓ SUCCESS**). La suite complète locale (28 suites headless Godot) a également réussi à 100% en 381s.
 - 64. **Anti-Roue Libre & Transparence Cognitive de Gladys (Garde-fous & Télémétrie Live)** :
     - **Verrou d'intégrité télémétrique (`_OPS_TRUTH`, `LAB_CAUSERIE_GUARDRAILS`, `BASE_GUARDRAILS`)** : interdiction stricte de broder ou de spéculer sur l'état d'entités concrètes (Scrapaltaï, PNJ, serveurs, bots, NAS) si aucune télémétrie live n'est fournie dans le prompt. Gladys est désormais contrainte d'admettre le manque de données et de proposer d'interroger la sonde ou le serveur (`.246:8787`).
     - **Signalement systématique du mode créatif (`causerie_lab_nudge`)** : pour toute discussion de design, lore ou brainstorming sans télémétrie, consigne de préfixer par `[Réflexion créative]` ou d'indiquer explicitement qu'il s'agit d'une hypothèse conceptuelle.
