@@ -43,11 +43,13 @@ flowchart LR
 
 ### 2.1. Sur l'Atelier Omarchy (`.143`)
 - **Binaires** : `/home/lbg/.local/bin/craft-anything` et `craft-anything-cli`.
+- **Outil d'Orchestration Gladys** : `tools/gladys_craft_anything.py` (CLI d'automatisation Gladys avec timeout 1800s et profils Ollama 30b/14b).
 - **Intégrations MCP** : Enregistré dans `Claude Code`, `Antigravity`, `Cursor`, `Codex`, `OpenCode`, `VS Code`.
 - **Skills** : Installés dans `~/.agents/skills/craft-anything/` et `~/.claude/skills/craft-anything/`.
-- **Backends IA configurés** :
+- **Backends IA configurés (`~/.config/craft-anything/config.toml`)** :
   - `Claude Code` (CLI locale).
-  - `Ollama 110 (Gladys)` : `http://192.168.0.110:11434/v1` (modèle `huihui_ai/qwen3-coder-abliterated:30b`).
+  - `Ollama 110 (Gladys)` : `huihui_ai/qwen3-coder-abliterated:30b` avec `timeout_secs = 1800`.
+  - `Ollama 110 (Gladys 14b)` : `huihui_ai/qwen2.5-coder-abliterate:14b` avec `timeout_secs = 1800`.
 
 ### 2.2. Sur le Poste Windows (`.10`)
 - **Répertoire d'installation** : `E:\CraftAnything\` (version portable autonome 64-bit).

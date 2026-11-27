@@ -30,6 +30,8 @@ class PhysicalPresenceTests(unittest.TestCase):
             "statut freebox",
             "nest mini connecté ?",
             "es-tu au courant que je suis là ?",
+            "tu peux me dire quoi sur ma présence, l'écosystème Wi-Fi/LAN ou le Nest Mini ?",
+            "ma présence",
         ]
         for p in positive_prompts:
             self.assertTrue(pp.wants_physical_presence(p), f"Should match: {p}")

@@ -20,18 +20,19 @@ logger = logging.getLogger("lbg.physical_presence")
 # Match questions sur la présence réelle de Teome ou l'état physique du réseau
 _PHYSICAL_PRESENCE_RE = re.compile(
     r"(?i)\b("
-    r"suis[- ]je\s+(?:l[àa]|au\s+bureau|chez\s+moi|[àa]\s+la\s+maison)|"
+    r"suis[- ]je\s+(?:l[àa]|au\s+bureau|chez\s+moi|[àa]\s+la\s+maison|connect[ée])|"
     r"je\s+suis\s+(?:l[àa]|au\s+bureau|chez\s+moi|[àa]\s+la\s+maison)|"
     r"est[- ]ce\s+que\s+je\s+suis\s+(?:l[àa]|au\s+bureau|chez\s+moi|[àa]\s+la\s+maison)|"
-    r"pr[ée]sence\s+(?:physique|teome|bureau|maison)|"
-    r"qui\s+est\s+(?:l[àa]|au\s+bureau|[àa]\s+la\s+maison)|"
+    r"(?:ma|ta|la|notre)?\s*pr[ée]sence\s+(?:physique|r[ée]elle|bureau|domicile|maison|teome)|"
+    r"(?:ma|notre)\s+pr[ée]sence\b|"
+    r"qui\s+est\s+(?:l[àa]|au\s+bureau|[àa]\s+la\s+maison|connect[ée])|"
     r"d[ée]tect(?:eur|ion)\s+de\s+pr[ée]sence|"
-    r"t[ée]l[ée]phones?\s+connect[ée]s?|"
-    r"appareils?\s+connect[ée]s?|"
-    r"wifi\s+freebox|freebox\s+lan|statut\s+freebox|"
-    r"nest\s+mini\s+connect[ée]|"
-    r"suis[- ]je\s+connect[ée]|"
-    r"es[- ]tu\s+au\s+courant\s+que\s+je\s+suis\s+l[àa]"
+    r"(?:t[ée]l[ée]phones?|smartphones?|appareils?|terminaux|mat[ée]riel)\s+connect[ée]s?|"
+    r"[ée]cosyst[èe]me\s+(?:wi[- ]?fi|lan|r[ée]seau)|"
+    r"wi[- ]?fi\s+(?:de\s+la\s+)?freebox|freebox\s*(?:os|lan|wifi|wi[- ]?fi)?|statut\s+freebox|"
+    r"nest\s+mini|google\s+nest|"
+    r"es[- ]tu\s+au\s+courant\s+que\s+je\s+suis\s+l[àa]|"
+    r"qui\s+est\s+sur\s+le\s+(?:wi[- ]?fi|wifi|lan|r[ée]seau)"
     r")\b"
 )
 

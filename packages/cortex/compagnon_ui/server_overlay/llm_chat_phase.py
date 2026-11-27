@@ -183,6 +183,38 @@ async def run_llm_chat_phase(
             "plan_suivi short-circuit failed: %s", e
         )
 
+    # Sentinelle Freebox — détection de présence physique réelle de Teome (priorité absolue sur le MMO)
+    try:
+        try:
+            from src.services.physical_presence import (
+                attach_physical_presence_if_needed,
+                wants_physical_presence,
+            )
+        except ImportError:
+            from physical_presence import (  # type: ignore
+                attach_physical_presence_if_needed,
+                wants_physical_presence,
+            )
+
+        if wants_physical_presence(prompt):
+            seed = router.normalize_llm(
+                "présence physique",
+                "physical_presence",
+                "local",
+                latency=0.0,
+            )
+            if isinstance(seed, dict):
+                return _journal_short_circuit(
+                    "physical_presence",
+                    await attach_physical_presence_if_needed(
+                        seed, prompt=prompt, lab=lab_mode
+                    ),
+                )
+    except Exception as e:
+        logging.getLogger("lbg.router.physical_presence").warning(
+            "physical_presence short-circuit failed: %s", e
+        )
+
     # Phase C2 — retour terrain présence → causerie (fetch hub, pas dump ops)
     try:
         from src.services.presence_report import (
@@ -286,38 +318,6 @@ async def run_llm_chat_phase(
     except Exception as e:
         logging.getLogger("lbg.router.relation_memory").warning(
             "relation_memory short-circuit failed: %s", e
-        )
-
-    # Sentinelle Freebox — détection de présence physique réelle de Teome
-    try:
-        try:
-            from src.services.physical_presence import (
-                attach_physical_presence_if_needed,
-                wants_physical_presence,
-            )
-        except ImportError:
-            from physical_presence import (  # type: ignore
-                attach_physical_presence_if_needed,
-                wants_physical_presence,
-            )
-
-        if wants_physical_presence(prompt):
-            seed = router.normalize_llm(
-                "présence physique",
-                "physical_presence",
-                "local",
-                latency=0.0,
-            )
-            if isinstance(seed, dict):
-                return _journal_short_circuit(
-                    "physical_presence",
-                    await attach_physical_presence_if_needed(
-                        seed, prompt=prompt, lab=lab_mode
-                    ),
-                )
-    except Exception as e:
-        logging.getLogger("lbg.router.physical_presence").warning(
-            "physical_presence short-circuit failed: %s", e
         )
 
     # D6.5 — « soumets ce plan au studio » : réutilise le plan du fil, skip LLM

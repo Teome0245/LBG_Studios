@@ -10,6 +10,9 @@
 
 ## Dernières actions réalisées (2026-11-27)
 - 73. **Intégration Craft Anything v0.6.1 & Gladys Studio Pipeline (Atelier .143 & Poste Teome .10 Windows)** :
+    - **Intégration comme Outil Officiel Gladys & Timeout 1800s** :
+      * Création de `tools/gladys_craft_anything.py` : outil d'orchestration CLI pour Gladys (`doctor`, `triage`, `rebuild`) avec timeout étendu à **1800 secondes (30 min)**.
+      * Configuration de deux profils Ollama 0€ sur `.143` (`config.toml`) : `Ollama 110 (Gladys)` en 30b et `Ollama 110 (Gladys 14b)` en 14b, tous deux calés à `timeout_secs = 1800`.
     - **Installation & Déploiement Hybride (Atelier .143 + Poste Teome .10)** :
       * Sur `.143` (Atelier Omarchy) : installation des binaires `craft-anything` et `craft-anything-cli`, configuration MCP globale (Claude Code, Antigravity, Cursor, Codex, OpenCode, VS Code) et injection des skills `~/.agents/skills/craft-anything/`.
       * Sur `.10` (Poste Teome Windows) : déploiement autonome sur le disque `E:\CraftAnything\` (version portable 64-bit avec raccourci Bureau), partage réseau `\\192.168.0.143\projects\CraftAnything_Windows\`.
@@ -29,7 +32,8 @@
       * Ajout de `freebox_client.py` dans `overlay.map` pour un packaging atomique complet dans l'image Docker `orchestrateur-backend`.
     - **Routage Heuristique P1 & Découplage Profil (`reflection_router.py` & `llm_chat_phase.py`)** :
       * Intégration de `wants_physical_presence` dans `_heuristic` de `reflection_router.py` : décision `action="answer"` immédiate (0 ms, confiance 0.98), éradiquant tout risque de faux `ask_user` par le SLM de réflexion.
-      * Découplage du mode lab dans `llm_chat_phase.py` : le compagnon au quotidien répond aux requêtes sensorielles de présence en profil `compagnon` standard tout comme en profil lab.
+      * Découplage du mode lab et priorisation en tête de chaîne dans `llm_chat_phase.py` : la sentinelle physique s'évalue avant les modules de simulation Scrapaltaï/MMO (`presence_report`, `world_stream`), évitant toute confusion lexicale sur le mot « présence ».
+      * Regex élargie (`_PHYSICAL_PRESENCE_RE`) couvrant les formulations naturelles : « ma présence », « l'écosystème Wi-Fi/LAN », « Nest Mini », « qui est connecté », etc.
       * Mise en forme naturelle et chaleureuse pour la synthèse vocale et l'interface Gladys.
     - **Validation & Déploiement CT 100 (`192.168.0.100`)** :
       * 24 tests unitaires `test_physical_presence.py` et `test_reflection_router.py` passants vert en 23 ms, Ruff conforme.
