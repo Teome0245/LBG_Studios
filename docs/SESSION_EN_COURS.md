@@ -9,6 +9,26 @@
 ---
 
 ## Dernières actions réalisées (2026-11-27)
+- 75. **Studio Vidéo Lia « Chrome Catwalk Runway » (Esthétique Sorayama / Haute Couture Pinterest)** :
+    - **Keyframe Haute Définition IA Référence Lia** :
+      * Génération réussie du keyframe maître ([lia_chrome_catwalk_keyframe.jpg](file:///home/lbg/Projets/LBG_Studios/packages/cortex/compagnon_ui/public/vrm/lia_chrome_catwalk_keyframe.jpg)) : Lia réincarnée en gynoïde haute couture (traits de visage fins en porcelaine synthétique, coupe au carré bleu glacier/cyan, yeux néon cyan `#00f5d4`, armure anatomique en chrome liquide poli miroir avec articulations titane/carbone noir mat, démarche de défilé dans le couloir blanc symétrique).
+      * Rendu photoréaliste bluffant, prêt pour l'animation Image-to-Video.
+    - **Studio 3D & Moteur de Rendu WebGL (`chrome_runway.html`)** :
+      * Chargement du modèle officiel de Lia (`Compagnon.vrm`) avec métamorphose en Chrome Miroir Liquide PBR (`MeshPhysicalMaterial`, `metalness: 1.0`, `roughness: 0.025`, `clearcoat: 1.0`) et yeux cyber cyan émissifs (`#00f5d4`).
+      * Couloir sci-fi blanc épuré symétrique avec plafonniers néons générant des reflets spéculaires dynamiques sur l'armure.
+      * Animation défilé de mode fluide via `Catwalk Walking.vrma`.
+      * Régie caméra automatisée découpée en 3 plans sur 12 secondes (plein pied, plongée épaule/nuque, gros plan torse/reflets) + mode caméra libre OrbitControls.
+      * Enregistreur vidéo haute définition 9:16 (MediaRecorder 60 FPS) intégré en un clic pour générer le clip test (Approche 2) ou servir de guide au raffinement IA (Approche 3).
+    - **Déploiement Live CT 100** : Immédiatement accessible sur `http://192.168.0.100:5174/vrm/chrome_runway.html`.
+- 74. **Résolution Dépassement Contexte Open WebUI (`prime-npc:25m`, 12974 > 4096 tokens)** :
+    - **Diagnostic Root Cause** : Dans Open WebUI (`192.168.0.100:3080`), une simple salutation (`bonjour`) sur `prime-npc:25m` générait l'erreur `request (12974 tokens) exceeds the available context size (4096 tokens)`.
+      * Ollama détectait automatiquement la capability `tools` sur l'architecture `llama`.
+      * Open WebUI injectait donc l'intégralité de ses 15 schémas de fonctions/outils natifs (code interpreter, web search, etc.) dans chaque prompt, totalisant 12 974 tokens.
+      * Le Modelfile Ollama n'avait pas de `PARAMETER num_ctx`, plafonnant l'allocation par défaut à 4 096 tokens.
+    - **Résolution Ciblée & Optimisation Frugale** :
+      * *Ollama (.111 & .110)* : Modelfile de `prime-npc:25m` recompilé avec `PARAMETER num_ctx 16384` (le modèle supporte 32k dans ses métadonnées GGUF, avec un KV-cache de seulement ~15 Mo de RAM pour ce 25M).
+      * *Open WebUI (.100 `webui.db`)* : Déclaration explicite du profil `prime-npc:25m` avec `capabilities` d'outils désactivées (`builtin_tools: false`, `code_interpreter: false`, `web_search: false`).
+      * Résultat : disparition de l'overhead de 13k tokens, réponse PNJ quasi-instantanée (~70 ms sur CPU) et compatibilité parfaite dans Open WebUI.
 - 73. **Intégration Craft Anything v0.6.1 & Gladys Studio Pipeline (Atelier .143 & Poste Teome .10 Windows)** :
     - **Intégration comme Outil Officiel Gladys & Timeout 1800s** :
       * Création de `tools/gladys_craft_anything.py` : outil d'orchestration CLI pour Gladys (`doctor`, `triage`, `rebuild`) avec timeout étendu à **1800 secondes (30 min)**.
@@ -1396,3 +1416,13 @@ Lis dans l’ordre : AGENTS.md → docs/SESSION_EN_COURS.md → docs/PRIORITES_A
 Confirme en ≤10 lignes : objectif, contraintes, prochain pas — avant toute édition.
 En fin de session : mets à jour docs/SESSION_EN_COURS.md.
 ```
+
+- 76. **Intégration Blender MCP & Usine à Skills Locale 0 € (Gladys & LBG Studios)** :
+    - **Contrôle de Blender par Gladys & Antigravity (Blender MCP)** :
+      * Installation et configuration du pont `mcp-for-blender` sous `~/.config/blender/5.2/scripts/addons/blender_mcp.py`.
+      * Création des scripts d'orchestration locale : `tools/blender_headless_mcp.py` et `tools/gladys_blender.sh` (support automatique GUI ou headless via `xvfb-run -a`).
+      * Déclaration du serveur MCP `blender` (`uvx mcp-for-blender`) dans `~/.gemini/settings.json`.
+    - **Usine à Skills Locale 0 € (`tools/gladys_skill_factory.py`)** :
+      * Outil CLI souverain permettant à Gladys ou aux agents de transformer automatiquement n'importe quelle doc/consigne en Skill LBG normalisée (`SKILL.md` + frontmatter YAML strict + `run.sh`).
+      * Intégration directe avec notre modèle local Ollama `.110` (`qwen3-coder-abliterated:30b`).
+      * Première skill auto-générée avec succès : `packages/cortex/skills/gladys-blender-mcp/`.
